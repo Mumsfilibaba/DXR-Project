@@ -5,9 +5,13 @@
 struct FCascadeMatrices
 {
     // 0-64
-    float4x4 ViewProj;
-    // 64-128
     float4x4 View;
+    // 64-128
+    float4x4 ViewProj;
+    // 128-196
+    float4x4 InvView;
+    // 196-256
+    float4x4 InvViewProj;
 };
 
 struct FCascadeSplit
@@ -32,6 +36,10 @@ struct FCascadeSplit
     float  MinDepth;
     float  MaxDepth;
     float  PreviousSplit;
+
+    // 144-160
+    float3 CascadeCameraPosition;
+    float  Padding0;
 };
 
 struct FCascadeGenerationInfo
@@ -70,6 +78,7 @@ struct FDirectionalLight
 
     // 48-112
     float4x4 ShadowMatrix;
+    
 };
 
 #endif

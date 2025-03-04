@@ -21,7 +21,7 @@
 static TAutoConsoleVariable<int32> CVarMaxDrawCallsPerCommandList(
     "D3D12RHI.MaxDrawCallsPerCommandList",
     "Number of draw-calls allowed before submitting the current CommandList to the GPU",
-    1000);
+    10000);
 
 FResourceBarrierBatcher::FResourceBarrierBatcher(FD3D12CommandContext& InContext)
     : Context(InContext)

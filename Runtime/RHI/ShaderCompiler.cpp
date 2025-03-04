@@ -605,6 +605,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
     // If the error encountered an error
     if (FAILED(CompilationResult))
+
     {
         // Retrieve errors
         TComPtr<IDxcBlobUtf8> PrintBlob;

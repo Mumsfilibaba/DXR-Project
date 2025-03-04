@@ -126,8 +126,8 @@ void Main(FComputeShaderInput Input)
 
     // We use a specific extent in the z-direction, this is in order to prevent that some
     // objects are not visibe in the shadow-map and that are "behind" the camera. 
-    float LightNearPlane = 100.0;
-    float LightFarPlane  = 300.0;
+    float LightNearPlane = 120.0;
+    float LightFarPlane  = 250.0;
 
     // Setup ShadowView
     float3 LightDirection = normalize(GenerationInfo.LightDirection);
@@ -165,15 +165,7 @@ void Main(FComputeShaderInput Input)
     
     // Create final matrix
     float4x4 ShadowMatrix = mul(ShadowView, ShadowProjection);
-    
-    // Store final matrices
-    {
-        FCascadeMatrices Matrices;
-        Matrices.View     = ShadowView;
-        Matrices.ViewProj = ShadowMatrix;
-        MatrixBuffer[CascadeIndex] = Matrices;
-    }
-    
+       
     // Create Frustom Planes
     float4x4 InvShadowView = float4x4(
         float4(LightRotationMatrix[0], 0.0),
@@ -184,6 +176,17 @@ void Main(FComputeShaderInput Input)
     float4x4 InvShadowProjection = InverseScaleTranslation(ShadowProjection);
     float4x4 InvShadowMatrix     = mul(InvShadowView, InvShadowProjection);
     
+    // Store final matrices
+    {
+        FCascadeMatrices Matrices;
+        Matrices.View        = ShadowView;
+        Matrices.ViewProj    = ShadowMatrix;
+        Matrices.InvView     = InvShadowView;
+        Matrices.InvViewProj = InvShadowMatrix;
+
+        MatrixBuffer[CascadeIndex] = Matrices;
+    }
+
     float3 Corners[8] =
     {
         float3( 1.0, -1.0, 0.0),
@@ -224,13 +227,13 @@ void Main(FComputeShaderInput Input)
     const float4x4 InvCascadeMatrix    = mul(mul(InvTextureScaleBias, InvShadowProjection), InvShadowView);
     
     // Calculate the position of the lower corner of the cascade partition, in the UV space of the first cascade partition...
-    float3 CascadeCorner = mul(float4(0.0, 0.0, 0.0, 1.0), InvCascadeMatrix).xyz;
-    CascadeCorner = mul(float4(CascadeCorner, 1.0), GenerationInfo.ShadowMatrix).xyz;
+    float3 LowerCorner = mul(float4(0.0, 0.0, 0.0, 1.0), InvCascadeMatrix).xyz;
+    LowerCorner = mul(float4(LowerCorner, 1.0), GenerationInfo.ShadowMatrix).xyz;
 
     // ... and then the same for the upper window.
-    float3 OtherCorner = mul(float4(1.0, 1.0, 1.0, 1.0), InvCascadeMatrix).xyz;
-    OtherCorner = mul(float4(OtherCorner, 1.0), GenerationInfo.ShadowMatrix).xyz;
-      
+    float3 UpperCorner = mul(float4(1.0, 1.0, 1.0, 1.0), InvCascadeMatrix).xyz;
+    UpperCorner = mul(float4(UpperCorner, 1.0), GenerationInfo.ShadowMatrix).xyz;
+    
     // Store Split-Data
     {
         FCascadeSplit Split;
@@ -249,9 +252,14 @@ void Main(FComputeShaderInput Input)
             Split.FrustumPlanes[Index] = FrustumPlanes[Index];
         }
 
-        float3 CascadeScale = 1.0 / (OtherCorner - CascadeCorner);
-        Split.Offsets = float4(-CascadeCorner, 0.0);
+        // Scales used when we sample the cascades later
+        float3 CascadeScale = 1.0 / (UpperCorner - LowerCorner);
+        Split.Offsets = float4(-LowerCorner, 0.0);
         Split.Scale   = float4( CascadeScale, 1.0);
+        
+        // We might want the position for the cascade
+        Split.CascadeCameraPosition = ShadowEyePos;
+        Split.Padding0              = 0.0;
 
         SplitBuffer[CascadeIndex] = Split;
     }

@@ -13,7 +13,6 @@
     #define ENABLE_DEBUG 0
 #endif
 
-// Soft shadows settings
 #ifndef SHADOW_FILTER_MODE_PCF_GRID
     #define SHADOW_FILTER_MODE_PCF_GRID 0
 #endif
@@ -26,7 +25,6 @@
     #define SHADOW_FILTER_MODE_PCSS 1
 #endif
 
-// Poisson Disc Settings
 #ifndef NUM_PCF_SAMPLES
     #define NUM_PCF_SAMPLES 32
 #endif
@@ -36,10 +34,9 @@
 #endif
 
 #ifndef NUM_BLOCKER_SAMPLES
-    #define NUM_BLOCKER_SAMPLES 16
+    #define NUM_BLOCKER_SAMPLES 32
 #endif
 
-// Cascaded Shadow Mapping Settings
 #ifndef SELECT_CASCADE_FROM_PROJECTION
     #define SELECT_CASCADE_FROM_PROJECTION 1
 #endif
@@ -49,13 +46,18 @@
 #endif
 
 #ifndef CASCADE_FADE_FACTOR
-    #define CASCADE_FADE_FACTOR 0.1
+    #define CASCADE_FADE_FACTOR 0.05
 #endif
 
+#define ENABLE_FRAME_INDEX 1
+#define ENABLE_FIRST_CASCADE_ONLY 0
 
-#define ENABLE_FRAME_INDEX 0
+#define MAX_PCSS_FILTER_SIZE 0.999
+#define MIN_PCSS_FILTER_SIZE 0.01
+#define SEARCH_REGION_SCALE 2.0
+#define PENUMBRA_SCALE 30.0
 
-#define USE_ORTHO 0
+#define USE_ORTHO 1
 
 // Camera and Light
 #if SHADER_LANG == SHADER_LANG_MSL
@@ -136,7 +138,7 @@ float GetShadowMapSize()
 
 struct FFilterSetup
 {
-    float3 WorldPosition;
+    float3 PositionWS;
     float3 Normal; 
     float2 ShadowPosition;
 
@@ -153,7 +155,7 @@ float2 ComputeBlockerDepth(uint CascadeIndex, FFilterSetup FilterSetup, float Se
     float BlockerDepthSum = 0.0;
 
     // Calculate the size of the filter
-    const float2 FilterRadius = SearchSize.xx;
+    const float2 FilterRadius = SearchSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
 
     // Use Poisson sampling for the blocker search
     for (int Sample = 0; Sample < NUM_BLOCKER_SAMPLES; ++Sample)
@@ -179,9 +181,10 @@ float2 ComputeBlockerDepth(uint CascadeIndex, FFilterSetup FilterSetup, float Se
 
 float ShadowAmountPCSS(uint CascadeIndex, FFilterSetup FilterSetup, float PenumbraSize)
 {
-    float Result = 0.0;
-    const float2 FilterRadius = PenumbraSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
+    PenumbraSize = clamp(PenumbraSize, MIN_PCSS_FILTER_SIZE, MAX_PCSS_FILTER_SIZE);
+    const float2 FilterRadius  = PenumbraSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
 
+    float Result = 0.0;
     for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
     {
         float2 SampleOffset = GetPoissonSample(Sample) * FilterRadius;
@@ -306,18 +309,18 @@ float ShadowAmountSimple(uint CascadeIndex, FFilterSetup FilterSetup)
 float PCSS_SearchRadiusUV(float DepthVS, float NearPlane)
 {
     const float LightRadiusUV = LightBuffer.LightSize;
-	return LightRadiusUV * DepthVS / DepthVS;
+    return SEARCH_REGION_SCALE * LightRadiusUV * (DepthVS - NearPlane) / DepthVS;
 }
 
 float PCSS_PenumbraRadiusUV(float RecieverDepthVS, float BlockerDepthVS)
 {
-    return abs(RecieverDepthVS - BlockerDepthVS) / BlockerDepthVS;
+    return PENUMBRA_SCALE * (abs(RecieverDepthVS - BlockerDepthVS) / BlockerDepthVS);
 }
 
 float PCSS_ProjectToLightUV(float PenumbraRadiusUV, float DepthVS, float NearPlane)
 {
     const float LightRadiusUV = LightBuffer.LightSize;
-	return LightRadiusUV * PenumbraRadiusUV * NearPlane / DepthVS;
+	return LightRadiusUV * PenumbraRadiusUV;
 }
 
 float PCSS_ClipToEye(float DepthVS, float NearPlane, float FarPlane)
@@ -342,7 +345,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     const float BiasedDepth = ShadowPosition.z - ShadowBias;
 
     FFilterSetup FilterSetup;
-    FilterSetup.WorldPosition  = PositionWS;
+    FilterSetup.PositionWS     = PositionWS;
     FilterSetup.Normal         = NormalWS;
     FilterSetup.ShadowPosition = ShadowPosition.xy;
     FilterSetup.BiasedDepth    = BiasedDepth;
@@ -362,7 +365,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     PositionVS.xyz /= PositionVS.w;
 
     // Calculate the blocker search radius
-    const float DepthVS             = -PositionVS.z;
+    const float DepthVS             = PositionVS.z;
     const float BlockerSearchSizeUV = PCSS_SearchRadiusUV(DepthVS, CascadeSplit.NearPlane);
 
     // In case we did not find any blockers, then we can just stop here
@@ -373,11 +376,11 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     }
 
     // PCSS Step 2: Penumbra size
-    const float AvgBlockerDepthVS = BlockerInfo.x;
-    const float BlockerDepthVS    = PCSS_ClipToEye(AvgBlockerDepthVS, CascadeSplit.NearPlane, CascadeSplit.FarPlane);
-    const float PenumbraWidth     = PCSS_PenumbraRadiusUV(DepthVS, BlockerDepthVS);
+    const float AvgBlockerDepth   = BlockerInfo.x;
+    const float AvgBlockerDepthVS = PCSS_ClipToEye(AvgBlockerDepth, CascadeSplit.NearPlane, CascadeSplit.FarPlane);
+    const float PenumbraWidth     = PCSS_PenumbraRadiusUV(DepthVS, AvgBlockerDepthVS);
     const float PenumbraRadius    = PCSS_ProjectToLightUV(PenumbraWidth, DepthVS, CascadeSplit.NearPlane);
-    
+
     // PCSS Step 3: Filter the shadows
     return ShadowAmountPCSS(CascadeIndex, FilterSetup, PenumbraRadius);
 #elif SHADOW_FILTER_MODE_PCF_GRID
@@ -392,7 +395,8 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint CascadeIndex, inout uint RandomSeed)
 {
     // Calculate z-position in view-space
-    const float  ViewPosZ           = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInv);
+    const float ViewPosZ = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInv);
+
     const float3 ProjectionPosition = mul(float4(PositionWS, 1.0), LightBuffer.ShadowMatrix).xyz;
 
     // Find current cascade
@@ -424,22 +428,29 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint 
     #endif
     }
 
+#if ENABLE_FIRST_CASCADE_ONLY
+    if (CascadeIndex > 0)
+    {
+        return 1.0;
+    }
+#endif
+
     // Calculate shadow factor
     float ShadowAmount = CascadeShadowAmount(CascadeIndex, PositionWS, Normal, ProjectionPosition, RandomSeed);
 
-    // Blend between this and next cascade
+// Blend between this and next cascade
+#if BLEND_CASCADES && !ENABLE_FIRST_CASCADE_ONLY
     FCascadeSplit CascadeSplit = ShadowSplitsBuffer[CascadeIndex];
-
-#if BLEND_CASCADES
+    
     float NextSplit  = CascadeSplit.Split;
     float SplitSize  = (CascadeIndex == 0) ? NextSplit : (NextSplit - ShadowSplitsBuffer[CascadeIndex - 1].Split);
     float FadeFactor = (NextSplit - ViewPosZ) / SplitSize;
-  
+    
 #if SELECT_CASCADE_FROM_PROJECTION
     const float4 Offsets = CascadeSplit.Offsets;
     const float4 Scale   = CascadeSplit.Scale;
 
-    float3 CascadePosition = ProjectionPosition + Offsets.xyz;
+    float3 CascadePosition  = ProjectionPosition + Offsets.xyz;
     CascadePosition *= Scale.xyz;
     CascadePosition  = abs(CascadePosition * 2.0 - 1.0);
 
@@ -472,11 +483,11 @@ void Main(FComputeShaderInput Input)
         return;
     }
 
-    const float  Depth         = DepthBuffer.Load(int3(Pixel, 0)); 
-    const float2 PixelCenter   = float2(Pixel) + 0.5;
-    const float2 TexCoord      = PixelCenter / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
-    const float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
-    const float3 Normal        = UnpackNormal(GBufferNormal);
+    const float  Depth       = DepthBuffer.Load(int3(Pixel, 0)); 
+    const float2 PixelCenter = float2(Pixel) + 0.5;
+    const float2 TexCoord    = PixelCenter / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+    const float3 PositionWS  = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
+    const float3 Normal      = UnpackNormal(GBufferNormal);
 
     // Random Seed when doing soft shadows
 #if ENABLE_FRAME_INDEX
@@ -492,7 +503,7 @@ void Main(FComputeShaderInput Input)
     uint CascadeIndex = 0;
 
     // Calculate the Shadow
-    const float ShadowAmount = ComputeShadow(WorldPosition, Normal, Depth, CascadeIndex, RandomSeed);
+    const float ShadowAmount = ComputeShadow(PositionWS, Normal, Depth, CascadeIndex, RandomSeed);
     Output[Pixel] = ShadowAmount;
 
     // Output debug-information needed when visualizing the cascades

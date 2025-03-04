@@ -1,6 +1,6 @@
 #pragma once
-#include "Light.h"
 #include "Core/Math/Matrix4.h"
+#include "Engine/World/Lights/Light.h"
 
 #define NUM_SHADOW_CASCADES (4)
 
@@ -49,16 +49,6 @@ public:
         return ShadowMatrix;
     }
 
-    FORCEINLINE const FMatrix4& GetViewMatrix() const
-    {
-        return ViewMatrix;
-    }
-
-    FORCEINLINE const FMatrix4& GetProjectionMatrix() const
-    {
-        return ProjectionMatrix;
-    }
-
     FORCEINLINE float GetCascadeSplitLambda() const
     {
         return CascadeSplitLambda;
@@ -75,12 +65,8 @@ private:
     FVector3 UpVector;
     FVector3 LookAt;
     FVector3 Position;
-
     FMatrix4 ShadowMatrix;
 
-    FMatrix4 ViewMatrix;
-    FMatrix4 ProjectionMatrix;
-
-    float    CascadeSplitLambda;
-    float    Size;
+    float CascadeSplitLambda;
+    float Size;
 };

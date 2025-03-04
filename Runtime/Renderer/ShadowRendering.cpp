@@ -933,8 +933,8 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable = true;
+        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = true;
 
         NewPipelineStateInstance.DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);

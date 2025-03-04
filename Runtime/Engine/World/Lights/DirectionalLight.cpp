@@ -44,8 +44,6 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     }));
 
     ShadowMatrix.SetIdentity();
-    ViewMatrix.SetIdentity();
-    ProjectionMatrix.SetIdentity();
 }
 
 void FDirectionalLight::Tick(FCamera& Camera)
@@ -91,7 +89,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
 
     {
         FVector3 ShadowLookAt           = FrustumCenter - Direction;
-        FVector3 ShadowPosition         = FrustumCenter + (Direction * -0.5f);
+        FVector3 ShadowPosition         = FrustumCenter + Direction * -0.5f;
         FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
         FMatrix4 ShadowProjectionMatrix = FMatrix4::OrthographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
         ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
@@ -118,9 +116,6 @@ void FDirectionalLight::Tick(FCamera& Camera)
 
         ShadowNearPlane = -Extents.Z;
         ShadowFarPlane  =  Extents.Z;
-
-        ViewMatrix       = FMatrix4::LookAt(Position, LightDirection, UpVector);
-        ProjectionMatrix = FMatrix4::OrthographicProjection(MinExtents.X, MaxExtents.X, MinExtents.Y, MaxExtents.Y, ShadowNearPlane, ShadowFarPlane);
     }
 }
 

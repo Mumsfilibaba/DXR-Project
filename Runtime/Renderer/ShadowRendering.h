@@ -32,35 +32,44 @@ enum class ECascadeRenderPassType : int32
 
 struct FCascadeMatricesHLSL
 {
-    // 0-128
-    FMatrix4 ViewProjection;
+    // 0-64
     FMatrix4 View;
+    // 64-128
+    FMatrix4 ViewProjection;
+    // 128-196
+    FMatrix4 InvView;
+    // 196-256
+    FMatrix4 InvViewProjection;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeMatricesHLSL);
 
 struct FCascadeSplitHLSL
 {
-    // 0-96
+    // 0-64
     FVector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
 
-    // 96-112
+    // 64-96
     FVector4 Offsets;
     FVector4 Scale;
     
-    // 112-128
+    // 96-112
     FVector3 MinExtent;
     float    Split;
     
-    // 128-144
+    // 112-128
     FVector3 MaxExtent;
     float    NearPlane;
     
-    // 144-160
+    // 128-144
     float FarPlane;
     float MinDepth;
     float MaxDepth;
     float PreviousSplit;
+
+    // 144-160
+    FVector3 CascadeCameraPosition;
+    float    Padding0;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeSplitHLSL);

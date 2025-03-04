@@ -186,7 +186,7 @@ struct FFrameResources
     const EFormat ShadowMaskFormat   = EFormat::R8_Unorm;
     const EFormat ShadowMapFormat    = EFormat::D32_Float;
     const EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
-    
+
     // Limits
     const uint32 MaxPointLights       = 256;
     const uint32 MaxDirectionalLights = 256;
@@ -227,9 +227,8 @@ struct FFrameResources
     FRHITextureRef FinalTarget;
     FRHITextureRef GBuffer[GBuffer_NumBuffers];
 
-    // TODO: Move to the RenderPass and store only the final downsized texture
-    // Two resources that can be ping-ponged between
-    inline static constexpr int32 NumReducedDepthBuffers = 2;
+    // TODO: Depth-pyramid, could be used for other techniques as well 
+    static constexpr int32 NumReducedDepthBuffers = 2;
     FRHITextureRef ReducedDepthBuffer[NumReducedDepthBuffers];
 
     // PointLights

@@ -141,6 +141,7 @@ public:
     int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
+
     uint32 GetNodeMask()  const { return NodeMask; }
     uint32 GetNodeCount() const { return NodeCount; }
 
