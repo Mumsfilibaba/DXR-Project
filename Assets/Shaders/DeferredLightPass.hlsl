@@ -235,17 +235,17 @@ void Main(FComputeShaderInput Input)
     GroupMemoryBarrierWithGroupSync();
 
     // Discard pixels not rendered to the GBuffer
-    const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0)).rgb;
-    if (length(GBufferNormal) == 0)
+    if (Depth == 1.0)
     {
-        Output[Pixel] = Float4(0.0);
+        Output[Pixel] = 0.0;
         return;
     }
 
-    const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5)) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
+    const float2 PixelFloat    = saturate((float2(Pixel) + 0.5) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
     const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInv);
     const float3 WorldPosition = mul(float4(ViewPosition, 1.0), CameraBuffer.ViewInv).xyz;
 
+    const float3 GBufferNormal   = NormalBuffer.Load(int3(Pixel, 0)).rgb;
     const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(Pixel, 0)).rgb);
     const float3 GBufferMaterial = MaterialTex.Load(int3(Pixel, 0)).rgb;
 
@@ -259,10 +259,10 @@ void Main(FComputeShaderInput Input)
     const float GBufferMetallic  = saturate(GBufferMaterial.g);
     const float GBufferAO        = saturate(BASE_OCCLUSION + (GBufferMaterial.b * ScreenSpaceAO));
     
-    float3 F0 = Float3(0.04);
+    float3 F0 = 0.04;
     F0 = lerp(F0, GBufferAlbedo, GBufferMetallic);
 
-    float3 L0 = Float3(0.0);
+    float3 L0 = 0.0;
 
     // Pointlights
     for (uint i = 0; i < GroupPointLightCounter; ++i)
@@ -336,7 +336,7 @@ void Main(FComputeShaderInput Input)
         
         float3 F  = FresnelSchlick_Roughness(F0, View, ObjectNormal, GBufferRoughness);
         float3 Ks = F;
-        float3 Kd = Float3(1.0) - Ks;
+        float3 Kd = 1.0 - Ks;
         float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, ObjectNormal, 0.0).rgb;
         float3 Diffuse    = Irradiance * GBufferAlbedo * Kd;
 
@@ -352,7 +352,7 @@ void Main(FComputeShaderInput Input)
 #if DRAW_TILE_OCCUPANCY
     const uint TotalLightCount = GroupPointLightCounter + GroupShadowPointLightCounter;
     
-    float4 Tint = Float4(1.0);
+    float4 Tint = 1.0;
     
     [[branch]]
     if (TotalLightCount > 0)
@@ -389,7 +389,7 @@ void Main(FComputeShaderInput Input)
 #elif DRAW_SHADOW_CASCADE
     const uint CascadeIndex = CascadeIndexBuffer[Pixel];
 
-    float4 Tint = Float4(1.0);
+    float4 Tint = 1.0;
     if (CascadeIndex == 0)
     {
         Tint = float4(1.0, 0.0, 0.0, 1.0);

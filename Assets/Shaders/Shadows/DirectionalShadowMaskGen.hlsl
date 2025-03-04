@@ -340,7 +340,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 
     // Calculate Biased Depth
     const float NDotL       = saturate(dot(NormalWS, LightBuffer.Direction)); 
-    const float BiasScale   = (1.0 - NDotL);
+    const float BiasScale   = 1.0 - NDotL;
     const float ShadowBias  = min(max(0.0001, LightBuffer.ShadowBias), BiasScale * max(0.0005, LightBuffer.MaxShadowBias));
     const float BiasedDepth = ShadowPosition.z - ShadowBias;
 
@@ -476,18 +476,18 @@ void Main(FComputeShaderInput Input)
     const uint2 Pixel = Input.DispatchThreadID.xy;
    
     // Discard pixels not rendered to the GBuffer
-    float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0));
-    if (dot(GBufferNormal, GBufferNormal) == 0)
+    const float Depth = DepthBuffer.Load(int3(Pixel, 0)); 
+    if (Depth == 1.0)
     {
         Output[Pixel] = 1.0;
         return;
     }
 
-    const float  Depth       = DepthBuffer.Load(int3(Pixel, 0)); 
-    const float2 PixelCenter = float2(Pixel) + 0.5;
-    const float2 TexCoord    = PixelCenter / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
-    const float3 PositionWS  = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
-    const float3 Normal      = UnpackNormal(GBufferNormal);
+    const float2 PixelCenter   = float2(Pixel) + 0.5;
+    const float2 TexCoord      = PixelCenter / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+    const float3 PositionWS    = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
+    const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0));
+    const float3 Normal        = UnpackNormal(GBufferNormal);
 
     // Random Seed when doing soft shadows
 #if ENABLE_FRAME_INDEX

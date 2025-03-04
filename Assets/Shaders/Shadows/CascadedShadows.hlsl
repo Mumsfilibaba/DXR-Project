@@ -3,36 +3,35 @@
 #include "CascadeStructs.hlsli"
 
 #ifndef ENABLE_PACKED_MATERIAL_TEXTURE
-    #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
+    #define ENABLE_PACKED_MATERIAL_TEXTURE 0
 #endif
 #ifndef ENABLE_ALPHA_MASK
-    #define ENABLE_ALPHA_MASK (0)
+    #define ENABLE_ALPHA_MASK 0
 #endif
 #ifndef ENABLE_PARALLAX_MAPPING
-    #define ENABLE_PARALLAX_MAPPING (0)
+    #define ENABLE_PARALLAX_MAPPING 0
 #endif
 
-// Cascaded-Shadow-Maps defines
 #ifndef MAX_CASCADES
-    #define MAX_CASCADES (4)
+    #define MAX_CASCADES 4
 #endif
 #ifndef ENABLE_CASCADE_VS_INSTANCING
-    #define ENABLE_CASCADE_VS_INSTANCING (0)
+    #define ENABLE_CASCADE_VS_INSTANCING 0
 #endif
 #ifndef ENABLE_CASCADE_GS_INSTANCING
-    #define ENABLE_CASCADE_GS_INSTANCING (0)
+    #define ENABLE_CASCADE_GS_INSTANCING 0
 #endif
 #ifndef ENABLE_CASCADE_VIEW_INSTANCING
-    #define ENABLE_CASCADE_VIEW_INSTANCING (0)
+    #define ENABLE_CASCADE_VIEW_INSTANCING 0
 #endif
 #if !ENABLE_CASCADE_VS_INSTANCING && !ENABLE_CASCADE_GS_INSTANCING && !ENABLE_CASCADE_VIEW_INSTANCING
-    #define ENABLE_CASCADE_MULTI_PASS (1)
+    #define ENABLE_CASCADE_MULTI_PASS 1
 #endif
 
 // NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
 // and have the RenderTargetArrayIndex inside the PSO to be set to BaseLayer which then gets offset by using SV_RenderTargetArrayIndex
 #if ENABLE_CASCADE_VIEW_INSTANCING && SHADER_LANG == SHADER_LANG_HLSL
-    #define ENABLE_VIEW_INSTANCING_WORK_AROUND (1)
+    #define ENABLE_VIEW_INSTANCING_WORK_AROUND 1
 #endif
 
 struct FPerCascade

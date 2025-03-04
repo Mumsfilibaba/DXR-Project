@@ -4,18 +4,6 @@
 #include "Constants.hlsli"
 #include "DepthHelpers.hlsli"
 
-// Float helpers
-
-float2 Float2(float Scalar)
-{
-    return float2(Scalar, Scalar);
-}
-
-float3 Float3(float Scalar)
-{
-    return float3(Scalar, Scalar, Scalar);
-}
-
 float4 Float4(float Scalar)
 {
     return float4(Scalar, Scalar, Scalar, Scalar);
@@ -115,7 +103,7 @@ float Lerp(float A, float B, float P)
 
 float3 Lerp(float3 A, float3 B, float P)
 {
-    return (Float3(-P) * B) + ((A * Float3(P)) + B);
+    return (-P * B) + ((A * P) + B);
 }
 
 // Normal-Mapping Helpers

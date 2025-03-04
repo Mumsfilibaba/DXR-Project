@@ -1,6 +1,6 @@
 #include "Constants.hlsli"
 
-#define NUM_THREADS (16)
+#define NUM_THREADS 16
 
 // Shader Constants
 SHADER_CONSTANT_BLOCK_BEGIN

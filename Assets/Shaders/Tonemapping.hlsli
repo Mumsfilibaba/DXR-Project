@@ -7,25 +7,25 @@
 // Gamma
 float3 ApplyGamma(float3 Color)
 {
-    return pow(Color, Float3(GAMMA));
+    return pow(Color, GAMMA);
 }
 
 float3 ApplyGammaInv(float3 InputColor)
 {
-    return pow(InputColor, Float3(1.0f / GAMMA));
+    return pow(InputColor, 1.0 / GAMMA);
 }
 
 // Reinhard Tonemapping
 float3 SimpleReinhardMapping(float3 Color, float Intensity)
 {
-    return Color / (Float3(Intensity) + Color);
+    return Color / (Intensity + Color);
 }
 
 // ACES Tonemapping
 float3 RTTAndODTFit(float3 v)
 {
-    float3 a = v * (v + 0.0245786f) - 0.000090537f;
-    float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+    float3 a = v * (v + 0.0245786) - 0.000090537;
+    float3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
     return a / b;
 }
 
@@ -33,16 +33,16 @@ float3 ACESFitted(float3 Color)
 {
     const float3x3 InputMatrix =
     {
-        { 0.59719f, 0.35458f, 0.04823f },
-        { 0.07600f, 0.90834f, 0.01566f },
-        { 0.02840f, 0.13383f, 0.83777f },
+        { 0.59719, 0.35458, 0.04823 },
+        { 0.07600, 0.90834, 0.01566 },
+        { 0.02840, 0.13383, 0.83777 },
     };
 
     const float3x3 OutputMatrix =
     {
-        { 1.60475f, -0.53108f, -0.07367f },
-        { -0.10208f, 1.10813f, -0.00605f },
-        { -0.00327f, -0.07276f, 1.07602f },
+        {  1.60475, -0.53108, -0.07367 },
+        { -0.10208,  1.10813, -0.00605 },
+        { -0.00327, -0.07276,  1.07602 },
     };
 
     Color = mul(InputMatrix, Color);

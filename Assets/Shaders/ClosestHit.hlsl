@@ -109,7 +109,7 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     const float SampledRoughness = 1.0f; //RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.Roughness;
     const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
-    //float3 ReflectedColor = Float3(0.0f);
+    //float3 ReflectedColor = 0.0;
     //if (PayLoad.CurrentDepth < 4)
     //{
     //    RayDesc Ray;
@@ -133,13 +133,13 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     //float3 FresnelReflect = FresnelSchlick(-WorldRayDirection(), Normal, AlbedoColor);
     //ReflectedColor = FresnelReflect * ReflectedColor;
 
-    float3 F0 = Float3(0.04f);
+    float3 F0 = 0.04;
     F0 = lerp(F0, AlbedoColor, SampledMetallic);
 
     float3 IncidentRadiance = float3(10.0f, 10.0f, 10.0f);
     float3 L0 = DirectRadiance(F0, Normal, ViewDir, LightDir, IncidentRadiance, AlbedoColor, SampledRoughness, SampledMetallic);
     
-    float3 Ambient = Float3(0.03f) * AlbedoColor * SampledAO;
+    float3 Ambient = 0.03 * AlbedoColor * SampledAO;
     float3 Color   = Ambient + L0;
     
     // Add rays together

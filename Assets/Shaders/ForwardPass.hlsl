@@ -215,11 +215,11 @@ float4 PSMain(FPSInput Input) : SV_Target0
         discard;
     }
     
-    float3 F0 = Float3(0.04f);
+    float3 F0 = 0.04;
     F0 = lerp(F0, SampledAlbedo, SampledMetallic);
 
-    float NDotV = max(dot(N, V), 0.0f);
-    float3 L0 = Float3(0.0f);
+    float NDotV = max(dot(N, V), 0.0);
+    float3 L0 = 0.0;
     
     // Pointlights
     for (int i = 0; i < 0; i++)
@@ -229,7 +229,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
 
         float3 L = LightPosRad.Position - WorldPosition;
         float DistanceSqrd = dot(L, L);
-        float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+        float Attenuation  = 1.0f / max(DistanceSqrd, 0.01 * 0.01);
         L = normalize(L);
 
         float3 IncidentRadiance = Light.Color * Attenuation;
@@ -244,11 +244,11 @@ float4 PSMain(FPSInput Input) : SV_Target0
         const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[i];
      
         float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(i), ShadowMapSampler0, WorldPosition, N, Light, LightPosRad);
-        if (ShadowFactor > 0.001f)
+        if (ShadowFactor > 0.001)
         {
             float3 L = LightPosRad.Position - WorldPosition;
             float DistanceSqrd = dot(L, L);
-            float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+            float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
             L = normalize(L);
             
             float3 IncidentRadiance = Light.Color * Attenuation;
@@ -284,13 +284,13 @@ float4 PSMain(FPSInput Input) : SV_Target0
         
         float3 F  = FresnelSchlick_Roughness(F0, V, N, Roughness);
         float3 Ks = F;
-        float3 Kd = Float3(1.0f) - Ks;
-        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0f).rgb;
+        float3 Kd = 1.0 - Ks;
+        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0).rgb;
         float3 Diffuse    = Irradiance * SampledAlbedo * Kd;
 
         float3 R = reflect(-V, N);
-        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, Roughness * (7.0f - 1.0f)).rgb;
-        float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0f).rg;
+        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, Roughness * (7.0 - 1.0)).rgb;
+        float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
         float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
 
         float3 Ambient = (Diffuse + Specular) * SampledAO;

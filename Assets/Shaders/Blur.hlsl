@@ -7,8 +7,8 @@ SHADER_CONSTANT_BLOCK_BEGIN
     int2 ScreenSize;
 SHADER_CONSTANT_BLOCK_END
 
-#define NUM_THREADS (16)
-#define KERNEL_SIZE (5)
+#define NUM_THREADS 16
+#define KERNEL_SIZE 5
 
 groupshared min16float GTextureCache[NUM_THREADS][NUM_THREADS];
 

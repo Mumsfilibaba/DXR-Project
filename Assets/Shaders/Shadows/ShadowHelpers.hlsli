@@ -5,12 +5,8 @@
 #include "../Random.hlsli"
 #include "../Poisson.hlsli"
 
-/*
-* Calculate PointLight Shadow
-*/
-
-#define POINT_LIGHT_SAMPLES (4)
-#define NUM_OFFSET_SAMPLES (20)
+#define POINT_LIGHT_SAMPLES 4
+#define NUM_OFFSET_SAMPLES 20
 
 static const float3 SampleOffsetDirections[NUM_OFFSET_SAMPLES] =
 {

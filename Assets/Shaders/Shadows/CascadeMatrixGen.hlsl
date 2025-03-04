@@ -4,7 +4,7 @@
 #include "../Matrices.hlsli"
 #include "CascadeStructs.hlsli"
 
-#define NUM_THREADS (4)
+#define NUM_THREADS 4
 
 ConstantBuffer<FCamera>                CameraBuffer   : register(b0);
 ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b1);
