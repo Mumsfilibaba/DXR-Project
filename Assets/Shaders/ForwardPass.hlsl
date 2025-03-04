@@ -93,10 +93,10 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
     
-    float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), Constants.TransformBuffer.Transform).xyz);
+    float3 Normal = normalize(mul(float4(Input.Normal, 0.0), Constants.TransformBuffer.Transform).xyz);
     Output.Normal = Normal;
     
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), Constants.TransformBuffer.Transform).xyz);
+    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), Constants.TransformBuffer.Transform).xyz);
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent = Tangent;
     
@@ -105,7 +105,7 @@ FVSOutput VSMain(FVSInput Input)
 
     Output.TexCoord = Input.TexCoord;
 
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.TransformBuffer.Transform);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0), Constants.TransformBuffer.Transform);
     Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
     Output.WorldPosition = WorldPosition.xyz;
 
@@ -130,11 +130,11 @@ struct FPSInput
     bool   bIsFrontFace    : SV_IsFrontFace;
 };
 
-static const float HEIGHT_SCALE = 0.03f;
+static const float HEIGHT_SCALE = 0.03;
 
 float SampleHeightMap(float2 TexCoords)
 {
-    return 1.0f - HeightMap.Sample(MaterialSampler, TexCoords).r;
+    return 1.0 - HeightMap.Sample(MaterialSampler, TexCoords).r;
 }
 
 float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
@@ -142,8 +142,8 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     const float MinLayers = 32;
     const float MaxLayers = 64;
 
-    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
-    float LayerDepth = 1.0f / NumLayers;
+    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0, 0.0, 1.0), ViewDir)));
+    float LayerDepth = 1.0 / NumLayers;
     
     float2 P = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
     float2 DeltaTexCoords = P / NumLayers;
@@ -151,7 +151,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float2 CurrentTexCoords     = TexCoords;
     float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
     
-    float CurrentLayerDepth = 0.0f;
+    float CurrentLayerDepth = 0.0;
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
         CurrentTexCoords     -= DeltaTexCoords;
@@ -165,7 +165,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
 
     float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
-    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
+    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0 - Weight);
 
     return FinalTexCoords;
 }
@@ -173,14 +173,14 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 float4 PSMain(FPSInput Input) : SV_Target0
 {
     float2 TexCoords = Input.TexCoord;
-    TexCoords.y = 1.0f - TexCoords.y;
+    TexCoords.y = 1.0 - TexCoords.y;
 
 #if 0 
     if (MaterialBuffer.EnableHeight != 0)
     {
         float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
         TexCoords      = ParallaxMapping(TexCoords, ViewDir);
-        if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
+        if (TexCoords.x > 1.0 || TexCoords.y > 1.0 || TexCoords.x < 0.0 || TexCoords.y < 0.0)
         {
             discard;
         }
@@ -210,7 +210,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
     const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
     const float	SampledAlpha     = AlphaTex.Sample(MaterialSampler, TexCoords);
     const float Roughness        = SampledRoughness;
-    if (SampledAlpha < 0.5f)
+    if (SampledAlpha < 0.5)
     {
         discard;
     }
@@ -229,7 +229,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
 
         float3 L = LightPosRad.Position - WorldPosition;
         float DistanceSqrd = dot(L, L);
-        float Attenuation  = 1.0f / max(DistanceSqrd, 0.01 * 0.01);
+        float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
         L = normalize(L);
 
         float3 IncidentRadiance = Light.Color * Attenuation;
@@ -280,7 +280,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
     // Image Based Lightning
     float3 FinalColor = L0;
     {
-        const float NDotV = max(dot(N, V), 0.0f);
+        const float NDotV = max(dot(N, V), 0.0);
         
         float3 F  = FresnelSchlick_Roughness(F0, V, N, Roughness);
         float3 Ks = F;

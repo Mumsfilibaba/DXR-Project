@@ -24,9 +24,9 @@ void RayGen()
     float2 TexCoord = float2(DispatchIndex.xy) / float2(DispatchDimensions.xy);
 
     float Depth = GBufferDepth.SampleLevel(GBufferSampler, TexCoord, 0).r;
-    //if (Depth >= 1.0f)
+    //if (Depth >= 1.0)
     //{
-    //    OutTexture[DispatchIndex.xy] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    //    OutTexture[DispatchIndex.xy] = float4(0.0, 0.0, 0.0, 1.0);
     //    return;
     //}
     
@@ -42,10 +42,10 @@ void RayGen()
     float2 crd  = float2(launchIndex.xy);
     float2 dims = float2(launchDim.xy);
 
-    float2 d = ((crd / dims) * 2.f - 1.f);
+    float2 d = ((crd / dims) * 2.0 - 1.0);
     
     float3 Forward = normalize(CameraBuffer.Forward);
-    float3 Right   = normalize(cross(float3(0.0f, 1.0f, 0.0f), Forward));
+    float3 Right   = normalize(cross(float3(0.0, 1.0, 0.0), Forward));
     float3 Up      = normalize(-cross(Right, Forward));
     
     float3 Direction = Forward + (Right * (d.x * CameraBuffer.AspectRatio)) + (Up * (-d.y));
@@ -54,12 +54,12 @@ void RayGen()
     Ray.Origin    = CameraBuffer.Position; //WorldPosition + (WorldNormal * RAY_OFFSET);
     Ray.Direction = normalize(Direction);  //normalize(reflect(ViewDir, WorldNormal));
     Ray.TMin      = CameraBuffer.NearPlane;
-    Ray.TMax      = 10000.0f;
+    Ray.TMax      = 10000.0;
 
     RayPayload PayLoad;
     PayLoad.CurrentDepth = 1;
 
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
 
-    OutTexture[DispatchIndex.xy] = float4(PayLoad.Color, 1.0f);
+    OutTexture[DispatchIndex.xy] = float4(PayLoad.Color, 1.0);
 }

@@ -4,9 +4,6 @@
 
 #define GAUSSIAN_SIGMA 0.5
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Filter Functions
-
 float BoxFilter(float Sample)
 {
     return Sample <= 1.0;
@@ -90,7 +87,7 @@ float3 SampleTextureCatmullRom(Texture2D<float3> InTexture, SamplerState InLinea
     // down the sample location to get the exact center of our "starting" texel. The starting texel will be at
     // location [1, 1] in the grid, where [0, 0] is the top left corner.
     float2 SamplePos = TexCoord * TexSize;
-    float2 TexPos1 = floor(SamplePos - 0.5f) + 0.5f;
+    float2 TexPos1 = floor(SamplePos - 0.5) + 0.5;
 
     // Compute the fractional offset from our starting texel to our original sample location, which we'll
     // feed into the Catmull-Rom spline function to get our filter weights.
@@ -99,10 +96,10 @@ float3 SampleTextureCatmullRom(Texture2D<float3> InTexture, SamplerState InLinea
     // Compute the Catmull-Rom weights using the fractional offset that we calculated earlier.
     // These equations are pre-expanded based on our knowledge of where the texels will be located,
     // which lets us avoid having to evaluate a piece-wise function.
-    float2 w0 = f * (-0.5f + f * (1.0 - 0.5f * f));
-    float2 w1 = 1.0 + f * f * (-2.5f + 1.5f * f);
-    float2 w2 = f * (0.5f + f * (2.0 - 1.5f * f));
-    float2 w3 = f * f * (-0.5f + 0.5f * f);
+    float2 w0 = f * (-0.5 + f * (1.0 - 0.5 * f));
+    float2 w1 = 1.0 + f * f * (-2.5 + 1.5 * f);
+    float2 w2 = f * (0.5 + f * (2.0 - 1.5 * f));
+    float2 w3 = f * f * (-0.5 + 0.5 * f);
 
     // Work out weighting factors and sampling offsets that will let us use bilinear filtering to
     // simultaneously evaluate the middle 2 samples from the 4x4 grid.

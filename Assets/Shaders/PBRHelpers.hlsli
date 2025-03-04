@@ -37,13 +37,13 @@ float DistributionGGX(float3 N, float3 H, float Roughness)
 
 //float3 FresnelSchlick(float CosTheta, float3 F0)
 //{
-//    return F0 + (1.0f - F0) * pow(1.0f - CosTheta, 5.0f);
+//    return F0 + (1.0 - F0) * pow(1.0 - CosTheta, 5.0);
 //}
 
 //float3 FresnelSchlickRoughness(float CosTheta, float3 F0, float Roughness)
 //{
-//    float R = 1.0f - Roughness;
-//    return F0 + (max(float3(R, R, R), F0) - F0) * pow(1.0f - CosTheta, 5.0f);
+//    float R = 1.0 - Roughness;
+//    return F0 + (max(float3(R, R, R), F0) - F0) * pow(1.0 - CosTheta, 5.0);
 //}
 
 // Fresnel Schlick

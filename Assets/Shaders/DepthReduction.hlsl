@@ -2,9 +2,9 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-#define NUM_THREADS       (16)
+#define NUM_THREADS 16
 #define NUM_THREADS_TOTAL (NUM_THREADS * NUM_THREADS)
-#define REVERSED_DEPTH    (0)
+#define REVERSED_DEPTH 0
 
 // Handles first reduction
 Texture2D<float>  DepthBuffer : register(t0);
@@ -36,12 +36,12 @@ void ReductionMainInital(FComputeShaderInput Input)
     // Start reduction
     float4x4 Projection = transpose(Constants.CamProjection);
     
-    float MinDepth = 1.0f;
-    float MaxDepth = 0.0f;
+    float MinDepth = 1.0;
+    float MaxDepth = 0.0;
     
     // Linearize depth 1/z
     float DepthSample = DepthBuffer[TexCoords];
-    if (DepthSample < 1.0f)
+    if (DepthSample < 1.0)
     {
         DepthSample = Projection._43 / (DepthSample - Projection._33);
         DepthSample = saturate((DepthSample - Constants.NearPlane) / (Constants.FarPlane - Constants.NearPlane));
@@ -88,9 +88,9 @@ void ReductionMain(FComputeShaderInput Input)
     
     // Start reduction
     float2 MinMaxSample = InputMinMax[TexCoords];
-    if (MinMaxSample.x == 0.0f)
+    if (MinMaxSample.x == 0.0)
     {
-        MinMaxSample.x = 1.0f;
+        MinMaxSample.x = 1.0;
     }
 
     GroupMinZ[GroupThreadIndex] = MinMaxSample.x;

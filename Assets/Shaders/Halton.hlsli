@@ -20,10 +20,10 @@ float RadicalInverse3(uint a)
     const float OneMinusEpsilon = 0x1.fffffep-1;
     
     const uint Base = 3;
-    const float InvBase = 1.0f / float(Base);
+    const float InvBase = 1.0 / float(Base);
     
     uint ReversedDigits = 0;
-    float InvBaseN = 1.0f;
+    float InvBaseN = 1.0;
     
     while (a)
     {
@@ -54,11 +54,11 @@ float2 Halton23(uint i)
 
 float3 HemispherePointUniform(float U, float V) 
 {
-	float Phi      = V * 2.0f * PI;
-	float CosTheta = 1.0f - U;
+	float Phi      = V * 2.0 * PI;
+	float CosTheta = 1.0 - U;
     
     // TODO: FastSqrt? 
-	float SinTheta = sqrt(1.0f - (CosTheta * CosTheta));
+	float SinTheta = sqrt(1.0 - (CosTheta * CosTheta));
 	return float3(cos(Phi) * SinTheta, sin(Phi) * SinTheta, CosTheta);
 }
 
@@ -74,7 +74,7 @@ min16float3 HemispherePointUniform(min16float U, min16float V)
 
 float2 OneToMinusOne_Halton23(uint i)
 {
-    return (Halton23(i) * 2.0f) - 1.0f;
+    return (Halton23(i) * 2.0) - 1.0;
 }
 
 #endif

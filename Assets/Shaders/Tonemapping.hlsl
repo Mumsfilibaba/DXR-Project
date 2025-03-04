@@ -9,5 +9,5 @@ float4 TonemappingPS(float2 TexCoord : TEXCOORD0) : SV_TARGET
     float3 Color = FinalImage.Sample(PointSampler, TexCoord).rgb;
     Color = ACESFitted(Color);
     Color = ApplyGammaInv(Color);
-    return float4(Color, 1.0f);
+    return float4(Color, 1.0);
 }

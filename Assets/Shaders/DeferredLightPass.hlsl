@@ -6,27 +6,27 @@
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 
-#define NUM_THREADS        (16)
+#define NUM_THREADS 16
 #define TOTAL_THREAD_COUNT (NUM_THREADS * NUM_THREADS)
 
-#define BASE_OCCLUSION (0.1f)
+#define BASE_OCCLUSION 0.1
 
 // Can be defined from the application
 #ifndef MAX_LIGHTS_PER_TILE
-    #define MAX_LIGHTS_PER_TILE (1024)
+    #define MAX_LIGHTS_PER_TILE 1024
 #endif
 
 #ifdef DRAW_TILE_DEBUG 
-    #define DRAW_TILE_OCCUPANCY (1)
+    #define DRAW_TILE_OCCUPANCY 1
 #else
-    #define DRAW_TILE_OCCUPANCY (0)
+    #define DRAW_TILE_OCCUPANCY 0
 #endif
 
 //#define DRAW_CASCADE_DEBUG
 #ifdef DRAW_CASCADE_DEBUG
-    #define DRAW_SHADOW_CASCADE (1)
+    #define DRAW_SHADOW_CASCADE 1
 #else
-    #define DRAW_SHADOW_CASCADE (0)
+    #define DRAW_SHADOW_CASCADE 0
 #endif
 
 // G-Buffer

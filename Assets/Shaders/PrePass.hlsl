@@ -67,14 +67,14 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output = (FVSOutput)0;
 
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.Transform.Transform);
+    const float4 WorldPosition = mul(float4(Input.Position, 1.0), Constants.Transform.Transform);
     Output.Position = mul(WorldPosition, CameraBuffer.ViewProjection);
 
 #if ENABLE_PARALLAX_MAPPING
     // Normal
     const float4x4 TransformInv = Constants.Transform.TransformInv;  
-    float3 Normal  = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
+    float3 Normal  = normalize(mul(float4(Input.Normal, 0.0), TransformInv).xyz);
+    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), TransformInv).xyz);
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
     float3 Bitangent = normalize(cross(Tangent, Normal));
 
@@ -107,7 +107,7 @@ static const float HEIGHT_SCALE = 0.03f;
 
 float SampleHeightMap(float2 TexCoords)
 {
-    return 1.0f - HeightTex.Sample(MaterialSampler, TexCoords);
+    return 1.0 - HeightTex.Sample(MaterialSampler, TexCoords);
 }
 
 float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
@@ -115,8 +115,8 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     const float MinLayers = 32;
     const float MaxLayers = 64;
 
-    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
-    float LayerDepth = 1.0f / NumLayers;
+    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0, 0.0, 1.0), ViewDir)));
+    float LayerDepth = 1.0 / NumLayers;
     
     float2 P              = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
     float2 DeltaTexCoords = P / NumLayers;
@@ -124,7 +124,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float2 CurrentTexCoords     = TexCoords;
     float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
     
-    float CurrentLayerDepth	= 0.0f;
+    float CurrentLayerDepth	= 0.0;
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
         CurrentTexCoords     -= DeltaTexCoords;
@@ -138,7 +138,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
 
     float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
-    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
+    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0 - Weight);
     return FinalTexCoords;
 }
 #endif
@@ -147,7 +147,7 @@ void PSMain(FPSInput Input)
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
-    TexCoords.y = 1.0f - TexCoords.y;
+    TexCoords.y = 1.0 - TexCoords.y;
 
 #if ENABLE_PARALLAX_MAPPING
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);

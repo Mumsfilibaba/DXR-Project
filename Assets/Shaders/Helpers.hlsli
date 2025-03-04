@@ -4,41 +4,36 @@
 #include "Constants.hlsli"
 #include "DepthHelpers.hlsli"
 
-float4 Float4(float Scalar)
-{
-    return float4(Scalar, Scalar, Scalar, Scalar);
-}
-
 // Mapping Helpers
 
 float MinusOneToOne(float v)
 {
-    return v * 0.5f + 0.5f;
+    return v * 0.5 + 0.5;
 }
 
 float2 MinusOneToOne(float2 v)
 {
-    return v * 0.5f + 0.5f;
+    return v * 0.5 + 0.5;
 }
 
 float3 MinusOneToOne(float3 v)
 {
-    return v * 0.5f + 0.5f;
+    return v * 0.5 + 0.5;
 }
 
 float OneToMinusOne(float v)
 {
-    return v * 2.0f - 1.0f;
+    return v * 2.0 - 1.0;
 }
 
 float2 OneToMinusOne(float2 v)
 {
-    return v * 2.0f - 1.0f;
+    return v * 2.0 - 1.0;
 }
 
 float3 OneToMinusOne(float3 v)
 {
-    return v * 2.0f - 1.0f;
+    return v * 2.0 - 1.0;
 }
 
 // Luma
@@ -122,7 +117,7 @@ min16float3 ApplyNormalMapping(min16float3 MappedNormal, min16float3 Normal, min
 
 float3 UnpackNormal(float3 TextureSample)
 {
-    return normalize((TextureSample * 2.0f) - 1.0f);
+    return normalize((TextureSample * 2.0) - 1.0);
 }
 
 min16float3 UnpackNormal(min16float3 TextureSample)
@@ -133,8 +128,8 @@ min16float3 UnpackNormal(min16float3 TextureSample)
 float3 UnpackNormalBC5(float3 TextureSample)
 {
 	float2 NormalXY = TextureSample.rg;	
-	NormalXY = (NormalXY * 2.0f) - 1.0f;
-	float NormalZ = sqrt(saturate(1.0f - dot(NormalXY, NormalXY)));
+	NormalXY = (NormalXY * 2.0) - 1.0;
+	float NormalZ = sqrt(saturate(1.0 - dot(NormalXY, NormalXY)));
 	return float3(NormalXY.xy, NormalZ);
 }
 
@@ -148,7 +143,7 @@ min16float3 UnpackNormalBC5(min16float3 TextureSample)
 
 float3 PackNormal(float3 Normal)
 {
-    return (normalize(Normal) + 1.0f) * 0.5f;
+    return (normalize(Normal) + 1.0) * 0.5;
 }
 
 min16float3 PackNormal(min16float3 Normal)
@@ -162,15 +157,15 @@ min16float3 PackNormal(min16float3 Normal)
 float3 ClipAABB(float3 MinAABB, float3 MaxAABB, float3 Q)
 {
     // NOTE: Only clips towards AABB center (but fast!)
-    float3 ClipO = 0.5f * (MaxAABB + MinAABB);
-    float3 ClipE = 0.5f * (MaxAABB - MinAABB) + FLT32_EPSILON;
+    float3 ClipO = 0.5 * (MaxAABB + MinAABB);
+    float3 ClipE = 0.5 * (MaxAABB - MinAABB) + FLT32_EPSILON;
 
     float3 ClipV  = Q - ClipO;
     float3 UnitV  = ClipV / ClipE;
     float3 UnitA  = abs(UnitV);
     float  UnitMa = max(UnitA.x, max(UnitA.y, UnitA.z));
 
-    if (UnitMa > 1.0f)
+    if (UnitMa > 1.0)
     {
         return ClipO + (ClipV / UnitMa);
     }

@@ -87,17 +87,17 @@ FVSOutput VSMain(FVSInput Input)
 {
     // Position
     const float4x4 Transform     = Constants.Transform.Transform; 
-    const float4   WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
+    const float4   WorldPosition = mul(float4(Input.Position, 1.0), Transform);
 
     // Normal
     const float4x4 TransformInv = Constants.Transform.TransformInv;  
-    float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
+    float3 Normal = normalize(mul(float4(Input.Normal, 0.0), TransformInv).xyz);
 
     // Check if the triangle is back-facing (based on the direction of the normal)
     // float IsBackFacing = sign(dot(Normal, WorldPosition.xyz - Transform[3].xyz));
     // Normal = normalize(Normal * IsBackFacing);
 
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
+    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), TransformInv).xyz);
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
 
     float3 Bitangent = normalize(cross(Tangent, Normal));
@@ -152,11 +152,11 @@ struct FPSOutput
 
 #if ENABLE_PARALLAX_MAPPING
 // TODO: We do not want any constants like this, it should be a constantbuffer or something similar
-static const float HEIGHT_SCALE = 0.03f;
+static const float HEIGHT_SCALE = 0.03;
 
 float SampleHeightMap(float2 TexCoords)
 {
-    return 1.0f - HeightTex.Sample(MaterialSampler, TexCoords);
+    return 1.0 - HeightTex.Sample(MaterialSampler, TexCoords);
 }
 
 float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
@@ -164,8 +164,8 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     const float MinLayers = 32;
     const float MaxLayers = 64;
 
-    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0f, 0.0f, 1.0f), ViewDir)));
-    float LayerDepth = 1.0f / NumLayers;
+    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0, 0.0, 1.0), ViewDir)));
+    float LayerDepth = 1.0 / NumLayers;
     
     float2 P              = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
     float2 DeltaTexCoords = P / NumLayers;
@@ -173,7 +173,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float2 CurrentTexCoords     = TexCoords;
     float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
     
-    float CurrentLayerDepth	= 0.0f;
+    float CurrentLayerDepth	= 0.0;
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
         CurrentTexCoords     -= DeltaTexCoords;
@@ -187,7 +187,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
 
     float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
-    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
+    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0 - Weight);
     return FinalTexCoords;
 }
 #endif
@@ -195,7 +195,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 FPSOutput PSMain(FPSInput Input)
 {
     float2 TexCoords = Input.TexCoord;
-    TexCoords.y = 1.0f - TexCoords.y;
+    TexCoords.y = 1.0 - TexCoords.y;
 
 #if ENABLE_PARALLAX_MAPPING
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
@@ -263,9 +263,9 @@ FPSOutput PSMain(FPSInput Input)
     const float FinalRoughness = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
 
     FPSOutput Output;
-    Output.Albedo   = float4(SampledAlbedo, 1.0f);
-    Output.Normal   = float4(OutputNormal, 1.0f);
-    Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
+    Output.Albedo   = float4(SampledAlbedo, 1.0);
+    Output.Normal   = float4(OutputNormal, 1.0);
+    Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0);
 
     const float3 PositionNDC     = (Input.ClipPosition.xyz / Input.ClipPosition.w);
     const float3 PrevPositionNDC = (Input.PrevClipPosition.xyz / Input.PrevClipPosition.w);

@@ -25,7 +25,7 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
     Output.TexCoord = Input.Position;
-    Output.Position = mul(float4(Input.Position, 1.0f), Constants.ViewProjection);
+    Output.Position = mul(float4(Input.Position, 1.0), Constants.ViewProjection);
     Output.Position = Output.Position.xyww;
     return Output;
 }

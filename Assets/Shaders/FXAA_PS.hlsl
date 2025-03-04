@@ -79,9 +79,9 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     if (Range < max(FXAA_EDGE_THRESHOLD_MIN, RangeMax * FXAA_EDGE_THRESHOLD))
     {
 #if DEBUG
-        return float4(ToFloat3(M.a), 1.0f);
+        return float4(ToFloat3(M.a), 1.0);
 #else
-        return float4(M.rgb, 1.0f);
+        return float4(M.rgb, 1.0);
 #endif
     }
     
@@ -91,7 +91,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_TARGET0
     
     float LumaL  = (LumaN + LumaS + LumaW + LumaE) * 0.25;
     float RangeL = abs(LumaL - LumaM);
-    float BlendL = max(0.0f, (RangeL / Range) - FXAA_SUBPIX_TRIM) * FXAA_SUBPIX_TRIM_SCALE;
+    float BlendL = max(0.0, (RangeL / Range) - FXAA_SUBPIX_TRIM) * FXAA_SUBPIX_TRIM_SCALE;
     BlendL       = min(BlendL, FXAA_SUBPIX_CAP);
     
 #if DEBUG_RANGE

@@ -33,7 +33,7 @@ uint XORShift(uint Value)
 float NextRandom(inout uint Seed)
 {
     Seed = XORShift(Seed);
-    return float(Seed) * (1.0f / 4294967296.0f);
+    return float(Seed) * (1.0 / 4294967296.0);
 }
 
 min16float NextRandomMin16(inout uint Seed)
@@ -70,7 +70,7 @@ int NextRandomInt(inout uint Seed)
 
 float NextRandomNeg(inout uint Seed)
 {
-    return NextRandom(Seed) * 2.0f - 1.0f;
+    return NextRandom(Seed) * 2.0 - 1.0;
 }
 
 float CranleyPatterssonRotation(float Value, inout uint Seed)

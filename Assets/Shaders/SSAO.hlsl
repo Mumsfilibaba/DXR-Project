@@ -61,7 +61,7 @@ void Main(FComputeShaderInput Input)
     // Unpack Normal
     float3 Normal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
     Normal = UnpackNormal(Normal);
-    Normal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
+    Normal = mul(float4(Normal, 0.0), CameraBuffer.View).xyz;
 
     const float Radius = max(Constants.Radius, 0.01);
     const float Bias   = max(Constants.Bias, 0.0);
@@ -89,7 +89,7 @@ void Main(FComputeShaderInput Input)
     float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
 
     // Trace screen-space AO
-    float Occlusion = 0.0f;
+    float Occlusion = 0.0;
     for (uint Index = 0; Index < KernelSize; ++Index)
     {
         const float3 Sample = HaltonSamples[Index];
