@@ -53,7 +53,7 @@
 #define ENABLE_FIRST_CASCADE_ONLY 0
 
 #define MAX_PCSS_FILTER_SIZE 0.999
-#define MIN_PCSS_FILTER_SIZE 0.01
+#define MIN_PCSS_FILTER_SIZE 0.05
 #define SEARCH_REGION_SCALE 2.0
 #define PENUMBRA_SCALE 30.0
 
@@ -155,6 +155,7 @@ float2 ComputeBlockerDepth(uint CascadeIndex, FFilterSetup FilterSetup, float Se
     float BlockerDepthSum = 0.0;
 
     // Calculate the size of the filter
+    SearchSize = clamp(SearchSize, MIN_PCSS_FILTER_SIZE, MAX_PCSS_FILTER_SIZE);
     const float2 FilterRadius = SearchSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
 
     // Use Poisson sampling for the blocker search
