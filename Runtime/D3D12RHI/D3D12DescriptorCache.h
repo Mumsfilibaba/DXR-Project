@@ -301,7 +301,6 @@ private:
 
 using FD3D12SamplerLookupTable = FD3D12LookupTable<FD3D12UniqueSamplerTable, D3D12_GPU_DESCRIPTOR_HANDLE>;
 
-
 struct FD3D12DescriptorHandleCache
 {
     FD3D12DescriptorHandleCache()
@@ -326,7 +325,6 @@ struct FD3D12DescriptorHandleCache
 
     D3D12_GPU_DESCRIPTOR_HANDLE Handles[ShaderVisibility_Count];
 };
-
 
 class FD3D12LocalDescriptorHeap : public FD3D12DeviceChild
 {

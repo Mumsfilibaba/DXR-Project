@@ -1,7 +1,7 @@
-#include "DirectionalLight.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Engine/World/Camera.h"
+#include "Engine/World/Lights/DirectionalLight.h"
 
 static TAutoConsoleVariable<float> CVarSunSize(
     "Scene.Lightning.Sun.Size",

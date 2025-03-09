@@ -3,6 +3,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedPtr.h"
 #include "RHI/RHITypes.h"
+#include "RendererCore/Interfaces/ISceneObject.h"
 
 class FMaterial;
 class FRHIBuffer;
@@ -32,7 +33,7 @@ struct FTransformBufferHLSL
 
 MARK_AS_REALLOCATABLE(FTransformBufferHLSL);
 
-class ENGINE_API FProxySceneComponent
+class ENGINE_API FProxySceneComponent : public ISceneObject
 {
 public:
     FProxySceneComponent();
@@ -72,7 +73,7 @@ public:
 
     // Reference to the material array
     TArray<TSharedPtr<FMaterial>> Materials;
-    
+
     // Occlusion
     FRHIQuery*              CurrentOcclusionQuery;
     FRHIQuery*              OcclusionQueries[NUM_OCCLUSION_QUERIES];

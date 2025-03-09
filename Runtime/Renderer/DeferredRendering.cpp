@@ -6,8 +6,8 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/DeferredRendering.h"
-#include "Renderer/Scene.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "Renderer/Scene/Scene.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTileDebug(
     "Renderer.Debug.DrawTiledLightning", 
@@ -178,7 +178,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         PSOInitializer.RasterizerState                    = NewPipelineInstance.RasterizerState.Get();
         PSOInitializer.ShaderState.VertexShader           = NewPipelineInstance.VertexShader.Get();
         PSOInitializer.ShaderState.PixelShader            = NewPipelineInstance.PixelShader.Get();
-        PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
+        PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
 
         NewPipelineInstance.PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!NewPipelineInstance.PipelineState)
@@ -209,9 +209,9 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
-    const FClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
+    const FClearValue DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
     FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Depth])
     {
@@ -478,12 +478,12 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         PSOInitializer.RasterizerState                        = NewPipelineInstance.RasterizerState.Get();
         PSOInitializer.ShaderState.VertexShader               = NewPipelineInstance.VertexShader.Get();
         PSOInitializer.ShaderState.PixelShader                = NewPipelineInstance.PixelShader.Get();
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.AlbedoFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[2] = FrameResources.MaterialFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[3] = FrameResources.VelocityFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::AlbedoFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[1] = FGlobalTextureFormats::NormalFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[2] = FGlobalTextureFormats::MaterialFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[3] = FGlobalTextureFormats::VelocityFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
         NewPipelineInstance.PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!NewPipelineInstance.PipelineState)
@@ -514,7 +514,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::AlbedoFormat, Width, Height, 1, 1, Usage);
 
     // Albedo
     FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
@@ -528,7 +528,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Normal
-    TextureInfo.Format = FrameResources.NormalFormat;
+    TextureInfo.Format = FGlobalTextureFormats::NormalFormat;
 
     FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Normal])
@@ -541,7 +541,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Material Properties
-    TextureInfo.Format = FrameResources.MaterialFormat;
+    TextureInfo.Format = FGlobalTextureFormats::MaterialFormat;
 
     FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Material])
@@ -554,7 +554,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Velocity
-    TextureInfo.Format = FrameResources.VelocityFormat;
+    TextureInfo.Format = FGlobalTextureFormats::VelocityFormat;
 
     FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Velocity])
@@ -930,7 +930,7 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
-    FRHITextureInfo FinalTargetInfo = FRHITextureInfo::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage);
+    FRHITextureInfo FinalTargetInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage);
     FrameResources.FinalTarget = RHICreateTexture(FinalTargetInfo, EResourceAccess::PixelShaderResource);
     if (FrameResources.FinalTarget)
     {
@@ -944,7 +944,7 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
     return true;
 }
 
-void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources)
+void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightPass");
 
@@ -975,14 +975,21 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         CommandList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
-    const FProxyLightProbe& Skylight = FrameResources.Skylight;
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
     CommandList.SetShaderResourceView(LightPassShader, nullptr, 4); // DXR-Reflection
-    CommandList.SetShaderResourceView(LightPassShader, Skylight.IrradianceMap->GetShaderResourceView(), 5);
-    CommandList.SetShaderResourceView(LightPassShader, Skylight.SpecularIrradianceMap->GetShaderResourceView(), 6);
+
+    if (Scene)
+    {
+        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        {
+            CommandList.SetShaderResourceView(LightPassShader, SkyLight->DiffuseCubeMap->GetShaderResourceView(), 5);
+            CommandList.SetShaderResourceView(LightPassShader, SkyLight->SpecularCubeMap->GetShaderResourceView(), 6);
+        }
+    }
+
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 7);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.DirectionalShadowMask->GetShaderResourceView(), 8);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.PointLightShadowMaps->GetShaderResourceView(), 9);
@@ -1001,7 +1008,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.DirectionalLightDataBuffer.Get(), 5);
 
     CommandList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
-    CommandList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
+    CommandList.SetSamplerState(LightPassShader, FrameResources.LightProbeSampler.Get(), 1);
     CommandList.SetSamplerState(LightPassShader, FrameResources.GBufferSampler.Get(), 2);
     CommandList.SetSamplerState(LightPassShader, FrameResources.PointLightShadowSampler.Get(), 3);
 
@@ -1024,11 +1031,19 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     const int32 RenderWidth  = FrameResources.CurrentWidth;
     const int32 RenderHeight = FrameResources.CurrentHeight;
 
+    LightPassSettings.NumSkyLightMips             = 0;
     LightPassSettings.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
     LightPassSettings.NumPointLights              = FrameResources.PointLightsData.Size();
-    LightPassSettings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
     LightPassSettings.ScreenWidth                 = static_cast<int32>(RenderWidth);
     LightPassSettings.ScreenHeight                = static_cast<int32>(RenderHeight);
+
+    if (Scene)
+    {
+        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        {
+            LightPassSettings.NumSkyLightMips = SkyLight->SpecularCubeMap->GetNumMipLevels();
+        }
+    }
 
     // Enable point-light shadows based on CVar
     if (IConsoleVariable* CVarEnablePointLightShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
@@ -1314,7 +1329,7 @@ bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
     PSOInitializer.RasterizerState                    = RasterizerState.Get();
     PSOInitializer.ShaderState.VertexShader           = VertexShader.Get();
     PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
+    PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)

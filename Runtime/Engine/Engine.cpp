@@ -20,7 +20,7 @@
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 #if ENGINE_DEBUG_INPUT
-    #include "Engine/Debug/InputDebugInputHandler.h"
+#include "Engine/Debug/InputDebugInputHandler.h"
 #endif
 
 ENGINE_API FEngine* GEngine = nullptr;

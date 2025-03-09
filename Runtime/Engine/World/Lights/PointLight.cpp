@@ -1,4 +1,4 @@
-#include "PointLight.h"
+#include "Engine/World/Lights/PointLight.h"
 
 FOBJECT_IMPLEMENT_CLASS(FPointLight);
 

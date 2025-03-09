@@ -76,7 +76,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     uint32 Width  = Resources.MainViewport->GetWidth();
     uint32 Height = Resources.MainViewport->GetHeight();
 
-    FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(Resources.RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
     Resources.RTOutput = RHICreateTexture(RTOutputInfo, EResourceAccess::UnorderedAccess);
     if (!Resources.RTOutput)
     {
@@ -182,7 +182,13 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     Resources.GlobalResources.AddSamplerState(Resources.GBufferSampler.Get());
     Resources.GlobalResources.AddSamplerState(Sampler);
     Resources.GlobalResources.AddShaderResourceView(Resources.RTScene->GetShaderResourceView());
-    Resources.GlobalResources.AddShaderResourceView(Resources.Skybox->GetShaderResourceView());
+
+    if (Scene->Skybox)
+    {
+        FRHITexture* Skybox = Scene->Skybox->CubeMap.Get();
+        Resources.GlobalResources.AddShaderResourceView(Skybox->GetShaderResourceView());
+    }
+
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView());
     Resources.GlobalResources.AddShaderResourceView(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView());
 

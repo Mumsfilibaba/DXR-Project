@@ -1,6 +1,6 @@
-#include "Actor.h"
 #include "Engine/World/World.h"
 #include "Engine/World/Components/Component.h"
+#include "Engine/World/Actors/Actor.h"
 
 FOBJECT_IMPLEMENT_CLASS(FActor);
 
@@ -109,6 +109,7 @@ void FActor::AddComponent(FComponent* InComponent)
 
     if (FSceneComponent* RendererComponent = Cast<FSceneComponent>(InComponent))
     {
+        CHECK(World != nullptr);
         World->AddRendererComponent(RendererComponent);
     }
 }

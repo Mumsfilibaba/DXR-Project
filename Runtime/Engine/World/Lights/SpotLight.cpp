@@ -1,4 +1,4 @@
-#include "SpotLight.h"
+#include "Engine/World/Lights/SpotLight.h"
 
 FOBJECT_IMPLEMENT_CLASS(FSpotLight);
 

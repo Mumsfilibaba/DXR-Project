@@ -486,9 +486,9 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
             {
                 Width          = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
                 Height         = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
-                NumArrayLayers = FMath::Max<uint8>(RenderTargetView.NumArraySlices, NumArrayLayers);
+                NumArrayLayers = FMath::Max<uint32>(RenderTargetView.NumArraySlices, NumArrayLayers);
                 NumSamples     = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
-                
+
                 RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
                 RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
                 RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
@@ -521,7 +521,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
         {
             Width          = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
             Height         = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
-            NumArrayLayers = FMath::Max<uint8>(DepthStencilView.NumArraySlices, NumArrayLayers);
+            NumArrayLayers = FMath::Max<uint32>(DepthStencilView.NumArraySlices, NumArrayLayers);
             NumSamples     = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
             
             RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;

@@ -1,7 +1,7 @@
 #pragma once 
-#include "Component.h"
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/String.h"
+#include "Engine/World/Components/Component.h"
 
 DECLARE_DELEGATE(FInputActionDelegate);
 DECLARE_DELEGATE(FInputAxisDelegate, float);

@@ -1,5 +1,5 @@
 #pragma once
-#include "Light.h"
+#include "Engine/World/Lights/Light.h"
 
 class ENGINE_API FSpotLight : public FLight
 {

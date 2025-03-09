@@ -8,8 +8,12 @@
 #include <Engine/World/World.h>
 #include <Engine/World/Lights/PointLight.h>
 #include <Engine/World/Lights/DirectionalLight.h>
+#include <Engine/World/Lights/SkyLight.h>
 #include <Engine/World/Actors/PlayerController.h>
 #include <Engine/World/Components/MeshComponent.h>
+#include <Engine/World/Components/SkyboxComponent.h>
+#include <RendererCore/TextureFactory.h>
+#include <Renderer/FrameResources.h>
 #include <Application/ApplicationInterface.h>
 
 // TODO: Custom random
@@ -36,106 +40,60 @@ FSandbox::~FSandbox()
 
 bool FSandbox::Init()
 {
-    // Initialize World
-    MAYBE_UNUSED FActor*         NewActor     = nullptr;
-    MAYBE_UNUSED FMeshComponent* NewComponent = nullptr;
-
     // Store the Engine's world pointer 
     FWorld* CurrentWorld = GEngine->GetWorld();
 
-    // Load Scene
+    bool bResult = false;
+#if LOAD_SPONZA
+    bResult = CreateSponza(CurrentWorld);
+#elif LOAD_BISTRO
+    bResult = CreateBistro(CurrentWorld);
+#elif LOAD_SUN_TEMPLE
+    bResult = CreateSunTemple(CurrentWorld);
+#elif LOAD_EMERALD_SQUARE
+    bResult = CreateEmeraldSquare(CurrentWorld);
+#endif
+
+    if (!bResult)
     {
-    #if LOAD_SPONZA
-        TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"));
-        Sponza->SetUniformScale(0.015f);
-
-        const int32 NumMaterials = Sponza->GetNumMaterials();
-        for (int32 Index = 0; Index < NumMaterials; Index++)
-        {
-            const TSharedPtr<FMaterial>& Material = Sponza->GetMaterial(Index);
-            if (Material->AlphaMask)
-            {
-                const EMaterialFlags Flags = EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided;
-                Material->SetMaterialFlags(Flags, true);
-            }
-        }
-
-        Sponza->AddToWorld(CurrentWorld);
-    #elif LOAD_BISTRO
-        TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
-        int32 NumMaterials = BistroInterior->GetNumMaterials();
-        for (int32 Index = 0; Index < NumMaterials; Index++)
-        {
-            const TSharedPtr<FMaterial>& Material = BistroInterior->GetMaterial(Index);
-
-            EMaterialFlags Flags = EMaterialFlags::PackedParams;
-            if (Material->GetName().Contains("DoubleSided"))
-            {
-                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
-            }
-            
-            Material->SetMaterialFlags(Flags, true);
-        }
-        
-        BistroInterior->AddToWorld(CurrentWorld);
-
-        TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
-        NumMaterials = BistroExterior->GetNumMaterials();
-        for (int32 Index = 0; Index < NumMaterials; Index++)
-        {
-            const TSharedPtr<FMaterial>& Material = BistroExterior->GetMaterial(Index);
-            
-            EMaterialFlags Flags = EMaterialFlags::PackedParams;
-            if (Material->GetName().Contains("DoubleSided"))
-            {
-                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
-            }
-            
-            Material->SetMaterialFlags(Flags, true);
-        }
-        
-        BistroExterior->AddToWorld(CurrentWorld);
-     #elif LOAD_SUN_TEMPLE
-        TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
-        int32 NumMaterials = SunTemple->GetNumMaterials();
-        for (int32 Index = 0; Index < NumMaterials; Index++)
-        {
-            const TSharedPtr<FMaterial>& Material = SunTemple->GetMaterial(Index);
-
-            EMaterialFlags Flags = EMaterialFlags::PackedParams;
-            if (Material->GetName().Contains("DoubleSided"))
-            {
-                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
-            }
-            
-            Material->SetMaterialFlags(Flags, true);
-        }
-        
-        SunTemple->AddToWorld(CurrentWorld);
-     #elif LOAD_EMERALD_SQUARE
-        TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
-        int32 NumMaterials = EmeraldSquare_Day->GetNumMaterials();
-        for (int32 Index = 0; Index < NumMaterials; Index++)
-        {
-            const TSharedPtr<FMaterial>& Material = EmeraldSquare_Day->GetMaterial(Index);
-
-            EMaterialFlags Flags = EMaterialFlags::PackedParams;
-            if (Material->GetName().Contains("DoubleSided"))
-            {
-                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
-            }
-            
-            Material->SetMaterialFlags(Flags, true);
-        }
-        
-        EmeraldSquare_Day->AddToWorld(CurrentWorld);
-    #endif
+        DEBUG_BREAK();
     }
 
-#if LOAD_SPONZA
+    LOG_INFO("Finished loading game");
+    return true;
+}
+
+void FSandbox::Tick(float)
+{
+}
+
+bool FSandbox::CreateSponza(FWorld* InWorld)
+{
+    // Load Scene
+    TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"));
+    if (!Sponza)
+    {
+        return false;
+    }
+
+    Sponza->SetUniformScale(0.015f);
+
+    const int32 NumMaterials = Sponza->GetNumMaterials();
+    for (int32 Index = 0; Index < NumMaterials; Index++)
+    {
+        const TSharedPtr<FMaterial>& Material = Sponza->GetMaterial(Index);
+        if (Material->AlphaMask)
+        {
+            const EMaterialFlags Flags = EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided;
+            Material->SetMaterialFlags(Flags, true);
+        }
+    }
+
+    Sponza->AddToWorld(InWorld);
+
     // Create Spheres
     FMeshCreateInfo SphereMeshInfo = FMeshFactory::CreateSphere(3);
-    
+
     TSharedPtr<FMesh> SphereMesh = MakeSharedPtr<FMesh>();
     SphereMesh->Init(SphereMeshInfo);
 
@@ -157,14 +115,14 @@ bool FSandbox::Init()
     {
         for (uint32 x = 0; x < SphereCountX; x++)
         {
-            NewActor = CurrentWorld->CreateActor();
+            FActor* NewActor = InWorld->CreateActor();
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
                 NewActor->SetName(FString::CreateFormatted("Sphere[%d]", SphereIndex));
                 SphereIndex++;
 
-                NewComponent = NewObject<FMeshComponent>();
+                FMeshComponent* NewComponent = NewObject<FMeshComponent>();
                 if (NewComponent)
                 {
                     TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -172,13 +130,13 @@ bool FSandbox::Init()
                     NewMaterial->RoughnessMap = GEngine->BaseTexture;
                     NewMaterial->AOMap        = GEngine->BaseTexture;
                     NewMaterial->MetallicMap  = GEngine->BaseTexture;
-                    
+
                     NewMaterial->Initialize();
                     NewMaterial->SetName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
 
                     NewComponent->SetMesh(SphereMesh);
                     NewComponent->SetMaterial(NewMaterial);
-                    
+
                     NewActor->AddComponent(NewComponent);
                 }
             }
@@ -193,7 +151,7 @@ bool FSandbox::Init()
 #if ENABLE_SPHERES_TEST
     {
         constexpr uint32 kNumSpheres = 4096 * 8;
-        constexpr float  kMaxRadius  = 32.0f;
+        constexpr float  kMaxRadius = 32.0f;
 
         std::default_random_engine Generator;
 
@@ -206,8 +164,8 @@ bool FSandbox::Init()
         for (uint32 i = 0; i < kNumSpheres; ++i)
         {
             const float Radius = Random1(Generator) * kMaxRadius;
-            const float Alpha  = Random0(Generator);
-            const float Theta  = Random0(Generator);
+            const float Alpha = Random0(Generator);
+            const float Theta = Random0(Generator);
 
             const float CosAlpha = FMath::Cos(Alpha);
             const float SinAlpha = FMath::Sin(Alpha);
@@ -241,11 +199,11 @@ bool FSandbox::Init()
                 {
                     NewComponent->Initialize(NewActor, MakeShared<FMaterial>(MaterialInfo), SphereMesh);
 
-                    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-                    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
+                    NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
+                    NewComponent->Material->NormalMap = GEngine->BaseNormal;
                     NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-                    NewComponent->Material->AOMap        = GEngine->BaseTexture;
-                    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
+                    NewComponent->Material->AOMap = GEngine->BaseTexture;
+                    NewComponent->Material->MetallicMap = GEngine->BaseTexture;
                     NewComponent->Material->Initialize();
 
                     NewActor->AddComponent(NewComponent);
@@ -253,13 +211,13 @@ bool FSandbox::Init()
             }
 
             MaterialInfo.Roughness = Random2(Generator);
-            MaterialInfo.Metallic  = Random3(Generator);
+            MaterialInfo.Metallic = Random3(Generator);
         }
     }
 #endif
 
     // Create Other Meshes
-    NewActor = CurrentWorld->CreateActor();
+    FActor* NewActor = InWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Cube");
@@ -271,7 +229,7 @@ bool FSandbox::Init()
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags   |= EMaterialFlags::EnableHeight | EMaterialFlags::EnableNormalMapping;
 
-        NewComponent = NewObject<FMeshComponent>();
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
             FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
@@ -280,7 +238,7 @@ bool FSandbox::Init()
             FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
             FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
             FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
-            
+
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
             NewMaterial->NormalMap    = NormalMap->GetRHITexture();
@@ -288,14 +246,14 @@ bool FSandbox::Init()
             NewMaterial->HeightMap    = HeightMap->GetRHITexture();
             NewMaterial->AOMap        = AOMap->GetRHITexture();
             NewMaterial->MetallicMap  = MetallicMap->GetRHITexture();
-            
+
             NewMaterial->Initialize();
             NewMaterial->SetName("GateMaterial");
 
             FMeshCreateInfo CubeMeshData = FMeshFactory::CreateCube();
             TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
             CubeMesh->Init(CubeMeshData);
-            
+
             NewComponent->SetMesh(CubeMesh);
             NewComponent->SetMaterial(NewMaterial);
 
@@ -303,7 +261,7 @@ bool FSandbox::Init()
         }
     }
 
-    NewActor = CurrentWorld->CreateActor();
+    NewActor = InWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Plane");
@@ -317,7 +275,7 @@ bool FSandbox::Init()
         MaterialInfo.Roughness        = 0.5f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        NewComponent = NewObject<FMeshComponent>();
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -325,22 +283,22 @@ bool FSandbox::Init()
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
-            
+
             NewMaterial->Initialize();
             NewMaterial->SetName("PlaneMaterial");
 
             FMeshCreateInfo PlaneMeshData = FMeshFactory::CreatePlane(10, 10);
             TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
             PlaneMesh->Init(PlaneMeshData);
-            
+
             NewComponent->SetMesh(PlaneMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
         }
     }
-    
-    NewActor = CurrentWorld->CreateActor();
+
+    NewActor = InWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Cone");
@@ -354,7 +312,7 @@ bool FSandbox::Init()
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        NewComponent = NewObject<FMeshComponent>();
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -362,23 +320,23 @@ bool FSandbox::Init()
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
-            
+
             NewMaterial->Initialize();
             NewMaterial->SetName("ConeMaterial");
 
             FMeshCreateInfo ConeMeshData = FMeshFactory::CreateCone(32, 0.5f);
-            
+
             TSharedPtr<FMesh> ConeMesh = MakeSharedPtr<FMesh>();
             ConeMesh->Init(ConeMeshData);
-            
+
             NewComponent->SetMesh(ConeMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
         }
     }
-    
-    NewActor = CurrentWorld->CreateActor();
+
+    NewActor = InWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Torus");
@@ -392,7 +350,7 @@ bool FSandbox::Init()
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        NewComponent = NewObject<FMeshComponent>();
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -400,23 +358,23 @@ bool FSandbox::Init()
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
-            
+
             NewMaterial->Initialize();
             NewMaterial->SetName("TorusMaterial");
 
             FMeshCreateInfo TorusMeshData = FMeshFactory::CreateTorus(1.0f, 0.4f, 48, 32);
-            
+
             TSharedPtr<FMesh> TorusMesh = MakeSharedPtr<FMesh>();
             TorusMesh->Init(TorusMeshData);
-            
+
             NewComponent->SetMesh(TorusMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
         }
     }
-    
-    NewActor = CurrentWorld->CreateActor();
+
+    NewActor = InWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Teapot");
@@ -431,7 +389,7 @@ bool FSandbox::Init()
         MaterialInfo.Roughness        = 0.2f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::DoubleSided;
 
-        NewComponent = NewObject<FMeshComponent>();
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -439,23 +397,23 @@ bool FSandbox::Init()
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
-            
+
             NewMaterial->Initialize();
             NewMaterial->SetName("TeapotMaterial");
 
             FMeshCreateInfo TeapotMeshData = FMeshFactory::CreateTeapot(12);
-            
+
             TSharedPtr<FMesh> TeapotMesh = MakeSharedPtr<FMesh>();
             TeapotMesh->Init(TeapotMeshData);
-            
+
             NewComponent->SetMesh(TeapotMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
         }
     }
-    
-    NewActor = CurrentWorld->CreateActor();
+
+    NewActor = InWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Pyramid");
@@ -469,7 +427,7 @@ bool FSandbox::Init()
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        NewComponent = NewObject<FMeshComponent>();
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -477,15 +435,15 @@ bool FSandbox::Init()
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
-            
+
             NewMaterial->Initialize();
             NewMaterial->SetName("PyramidMaterial");
 
             FMeshCreateInfo PyramidMeshData = FMeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f);
-            
+
             TSharedPtr<FMesh> PyramidMesh = MakeSharedPtr<FMesh>();
             PyramidMesh->Init(PyramidMeshData);
-            
+
             NewComponent->SetMesh(PyramidMesh);
             NewComponent->SetMaterial(NewMaterial);
 
@@ -500,7 +458,7 @@ bool FSandbox::Init()
         FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
         FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
         FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
-        
+
         MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
@@ -522,7 +480,7 @@ bool FSandbox::Init()
         {
             for (int32 MeshIndex = 0; MeshIndex < NumMeshes; MeshIndex++)
             {
-                NewActor = CurrentWorld->CreateActor();
+                NewActor = InWorld->CreateActor();
                 if (NewActor)
                 {
                     const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
@@ -530,7 +488,7 @@ bool FSandbox::Init()
                     NewActor->GetTransform().SetUniformScale(0.25f);
                     NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
-                    NewComponent = NewObject<FMeshComponent>();
+                    FMeshComponent* NewComponent = NewObject<FMeshComponent>();
                     if (NewComponent)
                     {
                         NewComponent->SetMesh(Mesh);
@@ -553,25 +511,25 @@ bool FSandbox::Init()
     CylinderMaterial->RoughnessMap = GEngine->BaseTexture;
     CylinderMaterial->AOMap        = GEngine->BaseTexture;
     CylinderMaterial->MetallicMap  = GEngine->BaseTexture;
-    
+
     CylinderMaterial->Initialize();
     CylinderMaterial->SetName("CylinderMaterial");
 
     FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(32, 0.4f, 5.0f);
-    
+
     TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
     CylinderMesh->Init(CylinderMeshData);
-    
+
     for (uint32 i = 0; i < 8; i++)
     {
-        NewActor = CurrentWorld->CreateActor();
+        NewActor = InWorld->CreateActor();
         if (NewActor)
         {
             NewActor->SetName(FString::CreateFormatted("Cylinder %d", i));
             NewActor->GetTransform().SetUniformScale(1.0f);
             NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 2.5f, 60.0f);
 
-            NewComponent = NewObject<FMeshComponent>();
+            FMeshComponent* NewComponent = NewObject<FMeshComponent>();
             if (NewComponent)
             {
                 NewComponent->SetMesh(CylinderMesh);
@@ -580,86 +538,111 @@ bool FSandbox::Init()
             }
         }
     }
-#endif
 
+    // Load Skybox
+    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
+    if (!Skybox)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Add Camera
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
-        // TODO: Camera should be a component
-        CurrentWorld->AddCamera(Player->GetCamera());
-        CurrentWorld->AddActor(Player);
+        // Add camera to the world
+        InWorld->AddCamera(Player->GetCamera());
+        InWorld->AddActor(Player);
+
+        // Add Skybox
+        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
+        {
+            // Set skybox cube-map
+            SkyboxComponent->SetCubeMap(Skybox);
+            Player->AddComponent(SkyboxComponent);
+        }
     }
 
     // Add PointLights
-#if LOAD_SPONZA
     const float Intensity      = 100.0f;
     const float ShadowFarPlane = 40.0f;
-    if (FPointLight* Light0 = NewObject<FPointLight>())
+    if (FPointLight* PointLight0 = NewObject<FPointLight>())
     {
-        Light0->SetPosition(FVector3(15.0f, 1.5f, 0.0f));
-        Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light0->SetShadowBias(0.001f);
-        Light0->SetMaxShadowBias(0.009f);
-        Light0->SetShadowFarPlane(ShadowFarPlane);
-        Light0->SetIntensity(Intensity);
-        Light0->SetShadowCaster(true);
-        CurrentWorld->AddLight(Light0);
+        PointLight0->SetPosition(FVector3(15.0f, 1.5f, 0.0f));
+        PointLight0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight0->SetShadowBias(0.001f);
+        PointLight0->SetMaxShadowBias(0.009f);
+        PointLight0->SetShadowFarPlane(ShadowFarPlane);
+        PointLight0->SetIntensity(Intensity);
+        PointLight0->SetShadowCaster(true);
+
+        InWorld->AddLight(PointLight0);
     }
-    if (FPointLight* Light1 = NewObject<FPointLight>())
+
+    if (FPointLight* PointLight1 = NewObject<FPointLight>())
     {
-        Light1->SetPosition(FVector3(-15.0f, 1.5f, 0.0f));
-        Light1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light1->SetShadowBias(0.001f);
-        Light1->SetMaxShadowBias(0.009f);
-        Light1->SetShadowFarPlane(ShadowFarPlane);
-        Light1->SetIntensity(Intensity);
-        Light1->SetShadowCaster(true);
-        CurrentWorld->AddLight(Light1);
+        PointLight1->SetPosition(FVector3(-15.0f, 1.5f, 0.0f));
+        PointLight1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight1->SetShadowBias(0.001f);
+        PointLight1->SetMaxShadowBias(0.009f);
+        PointLight1->SetShadowFarPlane(ShadowFarPlane);
+        PointLight1->SetIntensity(Intensity);
+        PointLight1->SetShadowCaster(true);
+
+        InWorld->AddLight(PointLight1);
     }
-    if (FPointLight* Light2 = NewObject<FPointLight>())
+
+    if (FPointLight* PointLight2 = NewObject<FPointLight>())
     {
-        Light2->SetPosition(FVector3(17.0f, 10.0f, 6.0f));
-        Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light2->SetShadowBias(0.001f);
-        Light2->SetMaxShadowBias(0.009f);
-        Light2->SetShadowFarPlane(ShadowFarPlane);
-        Light2->SetIntensity(Intensity);
-        Light2->SetShadowCaster(true);
-        CurrentWorld->AddLight(Light2);
+        PointLight2->SetPosition(FVector3(17.0f, 10.0f, 6.0f));
+        PointLight2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight2->SetShadowBias(0.001f);
+        PointLight2->SetMaxShadowBias(0.009f);
+        PointLight2->SetShadowFarPlane(ShadowFarPlane);
+        PointLight2->SetIntensity(Intensity);
+        PointLight2->SetShadowCaster(true);
+
+        InWorld->AddLight(PointLight2);
     }
-    if (FPointLight* Light3 = NewObject<FPointLight>())
+
+    if (FPointLight* PointLight3 = NewObject<FPointLight>())
     {
-        Light3->SetPosition(FVector3(-18.0f, 10.0f, 6.0f));
-        Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light3->SetShadowBias(0.001f);
-        Light3->SetMaxShadowBias(0.009f);
-        Light3->SetShadowFarPlane(ShadowFarPlane);
-        Light3->SetIntensity(Intensity);
-        Light3->SetShadowCaster(true);
-        CurrentWorld->AddLight(Light3);
+        PointLight3->SetPosition(FVector3(-18.0f, 10.0f, 6.0f));
+        PointLight3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight3->SetShadowBias(0.001f);
+        PointLight3->SetMaxShadowBias(0.009f);
+        PointLight3->SetShadowFarPlane(ShadowFarPlane);
+        PointLight3->SetIntensity(Intensity);
+        PointLight3->SetShadowCaster(true);
+
+        InWorld->AddLight(PointLight3);
     }
-    if (FPointLight* Light4 = NewObject<FPointLight>())
+
+    if (FPointLight* PointLight4 = NewObject<FPointLight>())
     {
-        Light4->SetPosition(FVector3(17.0f, 10.0f, -7.0f));
-        Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light4->SetShadowBias(0.001f);
-        Light4->SetMaxShadowBias(0.009f);
-        Light4->SetShadowFarPlane(ShadowFarPlane);
-        Light4->SetIntensity(Intensity);
-        Light4->SetShadowCaster(true);
-        CurrentWorld->AddLight(Light4);
+        PointLight4->SetPosition(FVector3(17.0f, 10.0f, -7.0f));
+        PointLight4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight4->SetShadowBias(0.001f);
+        PointLight4->SetMaxShadowBias(0.009f);
+        PointLight4->SetShadowFarPlane(ShadowFarPlane);
+        PointLight4->SetIntensity(Intensity);
+        PointLight4->SetShadowCaster(true);
+
+        InWorld->AddLight(PointLight4);
     }
-    if (FPointLight* Light5 = NewObject<FPointLight>())
+
+    if (FPointLight* PointLight5 = NewObject<FPointLight>())
     {
-        Light5->SetPosition(FVector3(-18.0f, 10.0f, -7.0f));
-        Light5->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light5->SetShadowBias(0.001f);
-        Light5->SetMaxShadowBias(0.009f);
-        Light5->SetShadowFarPlane(ShadowFarPlane);
-        Light5->SetIntensity(Intensity);
-        Light5->SetShadowCaster(true);
-        CurrentWorld->AddLight(Light5);
+        PointLight5->SetPosition(FVector3(-18.0f, 10.0f, -7.0f));
+        PointLight5->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight5->SetShadowBias(0.001f);
+        PointLight5->SetMaxShadowBias(0.009f);
+        PointLight5->SetShadowFarPlane(ShadowFarPlane);
+        PointLight5->SetIntensity(Intensity);
+        PointLight5->SetShadowCaster(true);
+
+        InWorld->AddLight(PointLight5);
     }
-#endif
 
 #if ENABLE_LIGHT_TEST
     {
@@ -686,32 +669,370 @@ bool FSandbox::Init()
     }
 #endif
 
-    // Add DirectionalLight
-    if (FDirectionalLight* Light4 = NewObject<FDirectionalLight>())
+    // Add SkyLight
+    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
     {
-        Light4->SetShadowBias(0.0005f);
-        Light4->SetMaxShadowBias(0.0009f);
-        Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light4->SetIntensity(50.0f);
-    #if LOAD_SUN_TEMPLE
-        Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(-55.0f), 0.0f));
-    #else
-        Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
-    #endif
-        Light4->SetCascadeSplitLambda(0.9f);
-        CurrentWorld->AddLight(Light4);
+        SkyLight->SetCubeMap(Skybox);
+        InWorld->AddLight(SkyLight);
     }
 
-    // if (FLightProbe* LightProbe = NewObject<FLightProbe>())
-    // {
-    //     LightProbe->SetPosition(FVector3(0.0f));
-    //     CurrentWorld->AddLightProbe(LightProbe);
-    // }
+    // Add DirectionalLight
+    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    {
+        DirectionalLight->SetShadowBias(0.0005f);
+        DirectionalLight->SetMaxShadowBias(0.0009f);
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetIntensity(50.0f);
+        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+        DirectionalLight->SetCascadeSplitLambda(0.9f);
 
-    LOG_INFO("Finished loading game");
+        InWorld->AddLight(DirectionalLight);
+    }
+
     return true;
 }
 
-void FSandbox::Tick(float)
+bool FSandbox::CreateBistro(FWorld* InWorld)
 {
+    TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
+    if (!BistroInterior)
+    {
+        return false;
+    }
+
+    int32 NumMaterials = BistroInterior->GetNumMaterials();
+    for (int32 Index = 0; Index < NumMaterials; Index++)
+    {
+        const TSharedPtr<FMaterial>& Material = BistroInterior->GetMaterial(Index);
+
+        EMaterialFlags Flags = EMaterialFlags::PackedParams;
+        if (Material->GetName().Contains("DoubleSided"))
+        {
+            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+        }
+
+        Material->SetMaterialFlags(Flags, true);
+    }
+
+    BistroInterior->AddToWorld(InWorld);
+
+    TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
+    if (!BistroExterior)
+    {
+        return false;
+    }
+
+    NumMaterials = BistroExterior->GetNumMaterials();
+    for (int32 Index = 0; Index < NumMaterials; Index++)
+    {
+        const TSharedPtr<FMaterial>& Material = BistroExterior->GetMaterial(Index);
+
+        EMaterialFlags Flags = EMaterialFlags::PackedParams;
+        if (Material->GetName().Contains("DoubleSided"))
+        {
+            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+        }
+
+        Material->SetMaterialFlags(Flags, true);
+    }
+
+    BistroExterior->AddToWorld(InWorld);
+
+    // Load Skybox
+    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Scenes/Bistro/san_giuseppe_bridge_4k.hdr");
+    if (!Skybox)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Add Camera
+    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    {
+        // Add camera to the world
+        InWorld->AddCamera(Player->GetCamera());
+        InWorld->AddActor(Player);
+
+        // Add Skybox
+        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
+        {
+            // Set skybox cube-map
+            SkyboxComponent->SetCubeMap(Skybox);
+            Player->AddComponent(SkyboxComponent);
+        }
+    }
+
+    // Add SkyLight
+    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
+    {
+        SkyLight->SetCubeMap(Skybox);
+        InWorld->AddLight(SkyLight);
+    }
+
+    // Add DirectionalLight
+    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    {
+        DirectionalLight->SetShadowBias(0.0005f);
+        DirectionalLight->SetMaxShadowBias(0.0009f);
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetIntensity(50.0f);
+        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+        DirectionalLight->SetCascadeSplitLambda(0.9f);
+
+        InWorld->AddLight(DirectionalLight);
+    }
+
+    return true;
+}
+
+bool FSandbox::CreateSunTemple(FWorld* InWorld)
+{
+    TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
+    if (!SunTemple)
+    {
+        return false;
+    }
+
+    int32 NumMaterials = SunTemple->GetNumMaterials();
+    for (int32 Index = 0; Index < NumMaterials; Index++)
+    {
+        const TSharedPtr<FMaterial>& Material = SunTemple->GetMaterial(Index);
+
+        EMaterialFlags Flags = EMaterialFlags::PackedParams;
+        if (Material->GetName().Contains("DoubleSided"))
+        {
+            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+        }
+
+        Material->SetMaterialFlags(Flags, true);
+    }
+
+    SunTemple->AddToWorld(InWorld);
+
+    // Load Skybox
+    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Skybox.hdr");
+    if (!Skybox)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Add Camera
+    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    {
+        // Add camera to the world
+        InWorld->AddCamera(Player->GetCamera());
+        InWorld->AddActor(Player);
+
+        // Add Skybox
+        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
+        {
+            // Set skybox cube-map
+            SkyboxComponent->SetCubeMap(Skybox);
+            Player->AddComponent(SkyboxComponent);
+        }
+    }
+
+    // Add SkyLight
+    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
+    {
+        SkyLight->SetCubeMap(Skybox);
+        InWorld->AddLight(SkyLight);
+    }
+
+    // Add DirectionalLight
+    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    {
+        DirectionalLight->SetShadowBias(0.0005f);
+        DirectionalLight->SetMaxShadowBias(0.0009f);
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetIntensity(50.0f);
+        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(-55.0f), 0.0f));
+        DirectionalLight->SetCascadeSplitLambda(0.9f);
+
+        InWorld->AddLight(DirectionalLight);
+    }
+
+    return true;
+}
+
+bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
+{
+    TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
+    if (!EmeraldSquare_Day)
+    {
+        return false;
+    }
+
+    int32 NumMaterials = EmeraldSquare_Day->GetNumMaterials();
+    for (int32 Index = 0; Index < NumMaterials; Index++)
+    {
+        const TSharedPtr<FMaterial>& Material = EmeraldSquare_Day->GetMaterial(Index);
+
+        EMaterialFlags Flags = EMaterialFlags::PackedParams;
+        if (Material->GetName().Contains("DoubleSided"))
+        {
+            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+        }
+
+        Material->SetMaterialFlags(Flags, true);
+    }
+
+    EmeraldSquare_Day->AddToWorld(InWorld);
+
+    // Load Skybox
+    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr");
+    if (!Skybox)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Add Camera
+    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    {
+        // Add camera to the world
+        InWorld->AddCamera(Player->GetCamera());
+        InWorld->AddActor(Player);
+
+        // Add Skybox
+        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
+        {
+            // Set skybox cube-map
+            SkyboxComponent->SetCubeMap(Skybox);
+            Player->AddComponent(SkyboxComponent);
+        }
+    }
+
+    // Add SkyLight
+    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
+    {
+        SkyLight->SetCubeMap(Skybox);
+        InWorld->AddLight(SkyLight);
+    }
+
+    // Add DirectionalLight
+    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    {
+        DirectionalLight->SetShadowBias(0.0005f);
+        DirectionalLight->SetMaxShadowBias(0.0009f);
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetIntensity(50.0f);
+        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+        DirectionalLight->SetCascadeSplitLambda(0.9f);
+
+        InWorld->AddLight(DirectionalLight);
+    }
+
+    return true;
+}
+
+bool FSandbox::CreateLightDemo(FWorld* InWorld)
+{
+    // Load Skybox
+    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
+    if (!Skybox)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Add Camera
+    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    {
+        // Add camera to the world
+        InWorld->AddCamera(Player->GetCamera());
+        InWorld->AddActor(Player);
+
+        // Add Skybox
+        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
+        {
+            // Set skybox cube-map
+            SkyboxComponent->SetCubeMap(Skybox);
+            Player->AddComponent(SkyboxComponent);
+        }
+    }
+
+    // Add SkyLight
+    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
+    {
+        SkyLight->SetCubeMap(Skybox);
+        InWorld->AddLight(SkyLight);
+    }
+
+    // Add DirectionalLight
+    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    {
+        DirectionalLight->SetShadowBias(0.0005f);
+        DirectionalLight->SetMaxShadowBias(0.0009f);
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetIntensity(50.0f);
+        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+        DirectionalLight->SetCascadeSplitLambda(0.9f);
+
+        InWorld->AddLight(DirectionalLight);
+    }
+
+    return true;
+}
+
+FRHITextureRef FSandbox::LoadSkyboxFromPanorama(const FString& Filename)
+{
+    FTexture2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
+    if (!Panorama)
+    {
+        DEBUG_BREAK();
+        return nullptr;
+    }
+    else
+    {
+        Panorama->SetDebugName(Filename);
+    }
+
+    // Convert the Panorama into a cube-map
+    FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
+    if (!PanoramaRHI)
+    {
+        DEBUG_BREAK();
+        return nullptr;
+    }
+
+    const uint32 SkyboxSize   = 1024;
+    const uint32 NumMiplevels = FTextureFactoryHelpers::TextureSizeToMiplevels(SkyboxSize);
+
+    constexpr ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, TextureFlags);
+
+    FRHITextureRef Skybox = RHICreateTexture(TextureInfo);
+    if (!Skybox)
+    {
+        DEBUG_BREAK();
+        return nullptr;
+    }
+
+    const bool bResult = FTextureFactory::Get().TextureCubeFromPanorma(PanoramaRHI.Get(), Skybox.Get(), ETextureFactoryFlags::GenerateMips);
+    if (!bResult)
+    {
+        return nullptr;
+    }
+    else
+    {
+        Skybox->SetDebugName("Skybox Uncompressed");
+    }
+
+    // Unload the panorama
+    FAssetManager::Get().UnloadTexture(Panorama);
+
+    // Compress the CubeMap
+    FRHITextureRef CompressedSkybox;
+    
+    FTextureCompressor& TextureCompressor = FTextureFactory::Get().GetTextureCompressor();
+    TextureCompressor.CompressCubeMapBC6(Skybox, CompressedSkybox);
+
+    if (CompressedSkybox)
+    {
+        CompressedSkybox->SetDebugName("Skybox Compressed");
+    }
+
+    return CompressedSkybox;
 }

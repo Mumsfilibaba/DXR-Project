@@ -1,11 +1,14 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Math/Frustum.h"
+#include "Core/Threading/ScopedLock.h"
 #include "Engine/World/World.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Engine/World/Lights/PointLight.h"
+#include "Engine/World/Lights/SkyLight.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
-#include "Renderer/Scene.h"
+#include "Renderer/Scene/Scene.h"
+#include "Renderer/Scene/SceneSkybox.h"
 
 bool GFreezeRendering = false;
 
@@ -40,14 +43,21 @@ FScene::FScene(FWorld* InWorld)
     , VisiblePrimitives()
     , VisibleMeshBatches()
     , Lights()
-    , DirectionalLight()
     , PointLights()
+    , SkyLight(nullptr)
+    , DirectionalLight(nullptr)
+    , Skybox(nullptr)
     , Materials()
+    , DeferredObjects()
+    , DeferredObjectsCS()
 {
 }
 
 FScene::~FScene()
 {
+    // Delete all the objects that are deferred
+    DeleteDeferredObjects();
+
     // Primitives
     for (FProxySceneComponent* Component : Primitives)
     {
@@ -65,6 +75,9 @@ FScene::~FScene()
     Lights.Clear();
     PointLights.Clear();
 
+    // Remove potential SkyLight
+    SAFE_DELETE(SkyLight);
+
     // Remove potential DirectionalLight
     SAFE_DELETE(DirectionalLight);
 
@@ -75,6 +88,9 @@ FScene::~FScene()
 
 void FScene::Tick()
 {
+    // Delete all the objects that are deferred
+    DeleteDeferredObjects();
+
     if (GFreezeRendering)
     {
         return;
@@ -98,6 +114,7 @@ void FScene::AddCamera(FCamera* InCamera)
     // TODO: For now it is replacing the current camera
     if (InCamera)
     {
+        // TODO: Defer deletion
         Camera = InCamera;
     }
 }
@@ -110,7 +127,15 @@ void FScene::AddLight(FLight* InLight)
 
         if (FDirectionalLight* InDirectionalLight = Cast<FDirectionalLight>(InLight))
         {
+            DeferDeletion(DirectionalLight);
             DirectionalLight = new FSceneDirectionalLight(InDirectionalLight);
+        }
+        else if (FSkyLight* InSkyLight = Cast<FSkyLight>(InLight))
+        {
+            DeferDeletion(SkyLight);
+
+            SkyLight = new FSceneSkyLight(InSkyLight);
+            SkyLight->FilterStaticCubeMaps();
         }
         else if (FPointLight* InPointLight = Cast<FPointLight>(InLight))
         {
@@ -123,12 +148,22 @@ void FScene::AddLight(FLight* InLight)
     }
 }
 
+void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
+{
+    DeferDeletion(Skybox);
+
+    if (InSkyboxComponent)
+    {
+        Skybox = new FSceneSkybox(InSkyboxComponent);
+    }
+}
+
 void FScene::AddProxyComponent(FProxySceneComponent* InComponent)  
 {
     if (InComponent)
     {
         Primitives.Add(InComponent);
-        
+
         for (int32 Index = 0; Index < InComponent->Materials.Size(); Index++)
         {
             CHECK(InComponent->Materials[Index] != nullptr);
@@ -407,5 +442,29 @@ void FScene::UpdateBatches()
                 }
             }
         }
+    }
+}
+
+void FScene::DeferDeletion(ISceneObject* InObject)
+{
+    if (InObject)
+    {
+        TScopedLock Lock(DeferredObjectsCS);
+        DeferredObjects.Emplace(InObject);
+    }
+}
+
+void FScene::DeleteDeferredObjects()
+{
+    TArray<ISceneObject*> LocalDeferredObjects;
+
+    {
+        TScopedLock Lock(DeferredObjectsCS);
+        LocalDeferredObjects = Move(DeferredObjects);
+    }
+
+    for (ISceneObject* Object : LocalDeferredObjects)
+    {
+        SAFE_DELETE(Object);
     }
 }

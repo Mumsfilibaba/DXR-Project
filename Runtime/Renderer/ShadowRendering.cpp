@@ -10,8 +10,8 @@
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/ShadowRendering.h"
-#include "Renderer/Scene.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "Renderer/Scene/Scene.h"
 
 static TAutoConsoleVariable<bool> CVarPointLightsEnableSinglePassRendering(
     "Renderer.PointLights.EnableSinglePassRendering",
@@ -282,7 +282,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         PSOInitializer.ShaderState.VertexShader           = NewPipelineStateInstance.VertexShader.Get();
         PSOInitializer.ShaderState.PixelShader            = NewPipelineStateInstance.PixelShader.Get();
         PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
-        PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.ShadowMapFormat;
+        PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
 
         if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
@@ -343,10 +343,10 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 
 bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 {
-    const FClearValue DepthClearValue(Resources.ShadowMapFormat, 1.0f, 0);
+    const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
 
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
-    FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(Resources.ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
+    FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(FGlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
     Resources.PointLightShadowMaps = RHICreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
     if (Resources.PointLightShadowMaps)
     {
@@ -998,7 +998,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             PSOInitializer.ShaderState.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.ShadowMapFormat;
+        PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
 
         NewPipelineStateInstance.PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
@@ -1044,8 +1044,8 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
 
-    const FClearValue DepthClearValue(Resources.ShadowMapFormat, 1.0f, 0);
-    FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(Resources.ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
+    const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
+    FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(FGlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
     Resources.ShadowMapCascades = RHICreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
     if (Resources.ShadowMapCascades)
     {
@@ -1400,7 +1400,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
 
-    FRHITextureInfo ShadowMaskInfo = FRHITextureInfo::CreateTexture2D(Resources.ShadowMaskFormat, Width, Height, 1, 1, Flags);
+    FRHITextureInfo ShadowMaskInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
     Resources.DirectionalShadowMask = RHICreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
     if (Resources.DirectionalShadowMask)
     {

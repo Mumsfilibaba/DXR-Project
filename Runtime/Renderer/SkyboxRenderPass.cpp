@@ -1,5 +1,3 @@
-#include "SkyboxRenderPass.h"
-#include "Scene.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -8,6 +6,8 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
 #include "RendererCore/TextureFactory.h"
+#include "Renderer/SkyboxRenderPass.h"
+#include "Renderer/Scene/Scene.h"
 
 static TAutoConsoleVariable<bool> CVarClearBeforeSkyboxEnabled(
     "Renderer.Skybox.ClearBeforeSkybox",
@@ -33,11 +33,6 @@ FSkyboxRenderPass::~FSkyboxRenderPass()
 
 bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 {
-    if (!TextureCompressor.Initialize())
-    {
-        return false;
-    }
-
     // Sphere-data
     TArray<FVector3> SkyboxVertices;
     TArray<uint16>   SkyboxIndicies16;
@@ -92,53 +87,6 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     else
     {
         SkyboxIndexBuffer->SetDebugName("Skybox IndexBuffer");
-    }
-
-    // Create Texture Cube
-    const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-    FTexture2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
-    if (!Panorama)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        Panorama->SetDebugName(PanoramaSourceFilename);
-    }
-
-    // Convert the Panorama into a cube-map
-    FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
-    if (!PanoramaRHI)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    const uint32 SkyboxSize   = 1024;
-    const uint32 NumMiplevels = FTextureFactoryHelpers::TextureSizeToMiplevels(SkyboxSize);
-
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
-    FRHITextureRef Skybox = RHICreateTexture(TextureInfo);
-
-    const bool bResult = FTextureFactory::Get().TextureCubeFromPanorma(PanoramaRHI.Get(), Skybox.Get(), ETextureFactoryFlags::GenerateMips);
-    if (!bResult)
-    {
-        return false;
-    }
-    else
-    {
-        Skybox->SetDebugName("Skybox Uncompressed");
-    }
-    
-    // Unload the panorama
-    FAssetManager::Get().UnloadTexture(Panorama);
-
-    // Compress the CubeMap
-    TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
-    if (FrameResources.Skybox)
-    {
-        FrameResources.Skybox->SetDebugName("Skybox Compressed");
     }
 
     FRHISamplerStateInfo Initializer;
@@ -237,9 +185,9 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     PSOInitializer.RasterizerState                        = RasterizerState.Get();
     PSOInitializer.ShaderState.VertexShader               = SkyboxVertexShader.Get();
     PSOInitializer.ShaderState.PixelShader                = SkyboxPixelShader.Get();
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
     PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
@@ -297,7 +245,12 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     constexpr uint32 NumConstants = sizeof(FSimpleCameraBufferHLSL) / sizeof(uint32);
     CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, NumConstants);
 
-    FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
+    FRHIShaderResourceView* SkyboxSRV = nullptr;
+    if (Scene->Skybox)
+    {
+        SkyboxSRV = Scene->Skybox->CubeMap->GetShaderResourceView();
+    }
+
     CommandList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
 
     CommandList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);

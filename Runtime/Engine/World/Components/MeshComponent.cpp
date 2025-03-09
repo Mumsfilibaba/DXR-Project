@@ -1,5 +1,5 @@
-#include "MeshComponent.h"
-#include "ProxySceneComponent.h"
+#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/ProxySceneComponent.h"
 
 FOBJECT_IMPLEMENT_CLASS(FMeshComponent);
 

@@ -1,4 +1,4 @@
-#include "SceneComponent.h"
+#include "Engine/World/Components/SceneComponent.h"
 
 FOBJECT_IMPLEMENT_CLASS(FSceneComponent);
 

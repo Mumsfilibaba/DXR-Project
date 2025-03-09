@@ -152,10 +152,10 @@ private:
 
     TArray<FKeyState>         KeyStates;
     TArray<FAxisState>        AxisStates;
-    
+
     TArray<FActionKeyMapping> ActionKeyMappings;
     TArray<FAxisMapping>      AxisMappings;
     TArray<FAxisKeyMapping>   AxisKeyMappings;
-    
+
     TArray<FInputComponent*>  ActiveInputComponents;
 };

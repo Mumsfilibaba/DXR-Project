@@ -1,16 +1,16 @@
 #pragma once
-#include "World/World.h"
-#include "World/SceneViewport.h"
-#include "Resources/Material.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
 #include "Application/ApplicationInterface.h"
 #include "RHI/RHIResources.h"
+#include "Engine/Resources/Material.h"
+#include "Engine/World/World.h"
+#include "Engine/World/SceneViewport.h"
 
 #define ENGINE_DEBUG_INPUT 0
 
 #if ENGINE_DEBUG_INPUT
-    struct FInputDebugInputHandler;
+struct FInputDebugInputHandler;
 #endif
 
 class ENGINE_API FEngine

@@ -7,8 +7,8 @@
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
-#include "Renderer/Scene.h"
 #include "Renderer/DebugRendering.h"
+#include "Renderer/Scene/Scene.h"
 
 FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -122,9 +122,9 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         PSOInitializer.ShaderState.VertexShader               = AABBVertexShader.Get();
         PSOInitializer.ShaderState.PixelShader                = AABBPixelShader.Get();
         PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::LineList;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.FinalTargetFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
+        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
         AABBPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!AABBPipelineState)
@@ -266,9 +266,9 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         PSOInitializer.ShaderState.VertexShader               = LightDebugVS.Get();
         PSOInitializer.ShaderState.PixelShader                = LightDebugPS.Get();
         PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.FinalTargetFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
+        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
         LightDebugPSO = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!LightDebugPSO)
@@ -407,9 +407,9 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         PSOInitializer.ShaderState.VertexShader               = OcclusionVolumeVS.Get();
         PSOInitializer.ShaderState.PixelShader                = OcclusionVolumePS.Get();
         PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.FinalTargetFormat;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
+        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
         OcclusionVolumePSO = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!OcclusionVolumePSO)

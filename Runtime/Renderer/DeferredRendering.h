@@ -46,7 +46,7 @@ public:
 
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
     FRHIComputePipelineStateRef TiledLightPassPSO;

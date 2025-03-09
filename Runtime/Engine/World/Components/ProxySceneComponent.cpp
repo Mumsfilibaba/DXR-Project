@@ -1,7 +1,7 @@
-#include "ProxySceneComponent.h"
+#include "Core/Memory/Memory.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIQuery.h"
-#include "Core/Memory/Memory.h"
+#include "Engine/World/Components/ProxySceneComponent.h"
 
 FProxySceneComponent::FProxySceneComponent()
     : Materials()

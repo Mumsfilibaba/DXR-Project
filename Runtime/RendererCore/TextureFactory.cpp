@@ -7,9 +7,14 @@
 FTextureFactory* FTextureFactory::Instance = nullptr;
 
 FTextureFactory::FTextureFactory()
-    : LinearSampler(nullptr)
+    : TextureCompressor()
+    , LinearSampler(nullptr)
     , PanoramaPSO(nullptr)
     , PanoramCS(nullptr)
+    , GenerateMipsTex2D_PSO(nullptr)
+    , GenerateMipsTex2D_CS(nullptr)
+    , GenerateMipsTexCube_PSO(nullptr)
+    , GenerateMipsTexCube_CS(nullptr)
 {
 }
 
@@ -29,6 +34,14 @@ FTextureFactory::~FTextureFactory()
     // GenerateMips TextureCube
     GenerateMipsTexCube_PSO.Reset();
     GenerateMipsTexCube_CS.Reset();
+
+    // Specular IrradianceGen
+    SpecularCubeMapFilter_PSO.Reset();
+    SpecularCubeMapFilter_CS.Reset();
+
+    // Diffuse IrradianceGen
+    DiffuseCubeMapFilter_PSO.Reset();
+    DiffuseCubeMapFilter_CS.Reset();
 }
 
 bool FTextureFactory::Initialize()
@@ -49,6 +62,11 @@ void FTextureFactory::Release()
 
 bool FTextureFactory::CreateResources()
 {
+    if (!TextureCompressor.Initialize())
+    {
+        return false;
+    }
+
     // Compile and create shader
     TArray<uint8> Code;
 
@@ -124,17 +142,75 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    // Sampler
-    FRHISamplerStateInfo SamplerInfo;
-    SamplerInfo.AddressU = ESamplerMode::Wrap;
-    SamplerInfo.AddressV = ESamplerMode::Wrap;
-    SamplerInfo.AddressW = ESamplerMode::Wrap;
-    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
-    SamplerInfo.MinLOD   = 0.0f;
-    SamplerInfo.MaxLOD   = TNumericLimits<float>::Max();
+    // Create "Diffuse cube-map filter" pipeline
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
+    {
+        LOG_ERROR("Failed to compile IrradianceGen Shader");
+    }
 
-    LinearSampler = RHICreateSamplerState(SamplerInfo);
+    DiffuseCubeMapFilter_CS = RHICreateComputeShader(Code);
+    if (!DiffuseCubeMapFilter_CS)
+    {
+        LOG_ERROR("Failed to create IrradianceGen Shader");
+    }
+
+    DiffuseCubeMapFilter_PSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(DiffuseCubeMapFilter_CS.Get()));
+    if (!DiffuseCubeMapFilter_PSO)
+    {
+        LOG_ERROR("Failed to create IrradianceGen PipelineState");
+    }
+    else
+    {
+        DiffuseCubeMapFilter_PSO->SetDebugName("Diffuse cube-map filter PSO");
+    }
+
+    // Create "Specular cube-map filter" pipeline
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
+    {
+        LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
+    }
+
+    SpecularCubeMapFilter_CS = RHICreateComputeShader(Code);
+    if (!SpecularCubeMapFilter_CS)
+    {
+        LOG_ERROR("Failed to create Specular IrradianceGen Shader");
+    }
+
+    SpecularCubeMapFilter_PSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(SpecularCubeMapFilter_CS.Get()));
+    if (!SpecularCubeMapFilter_PSO)
+    {
+        LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");
+    }
+    else
+    {
+        SpecularCubeMapFilter_PSO->SetDebugName("Specular cube-map filter PSO");
+    }
+
+    // Sampler
+    FRHISamplerStateInfo LinearSamplerInfo;
+    LinearSamplerInfo.AddressU = ESamplerMode::Wrap;
+    LinearSamplerInfo.AddressV = ESamplerMode::Wrap;
+    LinearSamplerInfo.AddressW = ESamplerMode::Wrap;
+    LinearSamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    LinearSamplerInfo.MinLOD   = 0.0f;
+    LinearSamplerInfo.MaxLOD   = TNumericLimits<float>::Max();
+
+    LinearSampler = RHICreateSamplerState(LinearSamplerInfo);
     if (!LinearSampler)
+    {
+        return false;
+    }
+
+    FRHISamplerStateInfo CubeMapFilterSamplerInfo;
+    CubeMapFilterSamplerInfo.AddressU = ESamplerMode::Wrap;
+    CubeMapFilterSamplerInfo.AddressV = ESamplerMode::Wrap;
+    CubeMapFilterSamplerInfo.AddressW = ESamplerMode::Wrap;
+    CubeMapFilterSamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+
+    CubeMapFilterSampler = RHICreateSamplerState(CubeMapFilterSamplerInfo);
+    if (!CubeMapFilterSampler)
     {
         return false;
     }
@@ -273,7 +349,12 @@ bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture)
 {
     // Schedule miplevel generation without an existing CommandList
     FRHICommandList CommandList;
-    GenerateMiplevels(CommandList, Texture);
+
+    const bool bResult = GenerateMiplevels(CommandList, Texture);
+    if (!bResult)
+    {
+        return false;
+    }
 
     // Then execute immediately
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
@@ -469,5 +550,168 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
     }
 
+    return true;
+}
+
+bool FTextureFactory::FilterSpecularCubeMap(FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap, uint32 NumMipLevels)
+{
+    // Schedule miplevel generation without an existing CommandList
+    FRHICommandList CommandList;
+
+    const bool bResult = FilterSpecularCubeMap(CommandList, SrcCubeMap, DstCubeMap, NumMipLevels);
+    if (!bResult)
+    {
+        return false;
+    }
+
+    // Then execute immediately
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap, uint32 NumMipLevels)
+{
+    if (!SrcCubeMap)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    if (!DstCubeMap)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    TArray<FRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
+
+    const int32 SpecularIrradianceMiplevels = DstCubeMap->GetNumMipLevels();
+    for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
+    {
+        FRHITextureUAVInfo UAVInfo = FRHITextureUAVInfo(DstCubeMap, DstCubeMap->GetFormat(), MipLevel, 0, 1);
+        FRHIUnorderedAccessViewRef UAV = RHICreateUnorderedAccessView(UAVInfo);
+        if (UAV)
+        {
+            SpecularIrradianceMapUAVs.Emplace(UAV);
+        }
+        else
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+    }
+
+    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
+
+    CommandList.SetComputePipelineState(SpecularCubeMapFilter_PSO.Get());
+    
+    CommandList.SetShaderResourceView(SpecularCubeMapFilter_CS.Get(), SrcCubeMap->GetShaderResourceView(), 0);
+    CommandList.SetSamplerState(SpecularCubeMapFilter_CS.Get(), CubeMapFilterSampler.Get(), 0);
+
+    const uint32 SpecularCubeMapSize = DstCubeMap->GetWidth();
+    const uint32 NumMiplevels        = FMath::Clamp<uint32>(DstCubeMap->GetNumMipLevels(), 1, NumMipLevels);
+    const uint32 SkyboxWidth         = SrcCubeMap->GetWidth();
+    const float  RoughnessDelta      = 1.0f / (NumMiplevels - 1);
+
+    float  Roughness    = 0.0f;
+    uint32 CurrentWidth = SpecularCubeMapSize;
+    for (uint32 Mip = 0; Mip < NumMiplevels; Mip++)
+    {
+        struct FSpecularIrradianceGenConstants
+        {
+            float  Roughness;
+            uint32 SourceFaceResolution;
+            uint32 CurrentFaceResolution;
+        } Constants;
+
+        Constants.Roughness             = Roughness;
+        Constants.SourceFaceResolution  = SkyboxWidth;
+        Constants.CurrentFaceResolution = CurrentWidth;
+
+        constexpr uint32 NumConstants = sizeof(FSpecularIrradianceGenConstants) / sizeof(uint32);
+        CommandList.Set32BitShaderConstants(SpecularCubeMapFilter_CS.Get(), &Constants, NumConstants);
+
+        FRHIUnorderedAccessView* UnorderedAccessView = SpecularIrradianceMapUAVs[Mip].Get();
+        CommandList.SetUnorderedAccessView(SpecularCubeMapFilter_CS.Get(), UnorderedAccessView, 0);
+
+        constexpr uint32 NumThreads = 16;
+        constexpr uint32 ThreadsZ   = 6;
+
+        const uint32 ThreadWidth  = FMath::DivideByMultiple(CurrentWidth, NumThreads);
+        const uint32 ThreadHeight = FMath::DivideByMultiple(CurrentWidth, NumThreads);
+        CommandList.Dispatch(ThreadWidth, ThreadHeight, ThreadsZ);
+
+        CommandList.UnorderedAccessTextureBarrier(DstCubeMap);
+
+        CurrentWidth = FMath::Max<uint32>(CurrentWidth / 2, 1U);
+        Roughness += RoughnessDelta;
+    }
+
+    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+    return true;
+}
+
+bool FTextureFactory::FilterDiffuseCubeMap(FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap)
+{
+    // Schedule miplevel generation without an existing CommandList
+    FRHICommandList CommandList;
+
+    const bool bResult = FilterDiffuseCubeMap(CommandList, SrcCubeMap, DstCubeMap);
+    if (!bResult)
+    {
+        return false;
+    }
+
+    // Then execute immediately
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap)
+{
+    if (!SrcCubeMap)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    if (!DstCubeMap)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHITextureUAVInfo UAVInfo(DstCubeMap, DstCubeMap->GetFormat(), 0, 0, 1);
+    FRHIUnorderedAccessViewRef DstCubeMapUAV = RHICreateUnorderedAccessView(UAVInfo);
+    if (!DstCubeMapUAV)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
+
+    CommandList.SetComputePipelineState(DiffuseCubeMapFilter_PSO.Get());
+
+    CommandList.SetShaderResourceView(DiffuseCubeMapFilter_CS.Get(), SrcCubeMap->GetShaderResourceView(), 0);
+    CommandList.SetUnorderedAccessView(DiffuseCubeMapFilter_CS.Get(), DstCubeMapUAV.Get(), 0);
+    CommandList.SetSamplerState(DiffuseCubeMapFilter_CS.Get(), CubeMapFilterSampler.Get(), 0);
+
+    constexpr uint32 NumThreads = 16;
+    constexpr uint32 ThreadsZ   = 6;
+
+    const uint32 DiffuseCubeMapSize = static_cast<uint32>(DstCubeMap->GetWidth());
+
+    const uint32 ThreadWidth  = FMath::DivideByMultiple(DiffuseCubeMapSize, NumThreads);
+    const uint32 ThreadHeight = FMath::DivideByMultiple(DiffuseCubeMapSize, NumThreads);
+    CommandList.Dispatch(ThreadWidth, ThreadHeight, ThreadsZ);
+
+    CommandList.UnorderedAccessTextureBarrier(DstCubeMap);
+
+    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
     return true;
 }

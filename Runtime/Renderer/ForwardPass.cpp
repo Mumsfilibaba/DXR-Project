@@ -6,8 +6,8 @@
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/ForwardPass.h"
-#include "Renderer/Scene.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "Renderer/Scene/Scene.h"
 
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -99,9 +99,9 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.RasterizerState                        = RasterizerState.Get();
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
     PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
     PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
@@ -150,16 +150,22 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     CommandList.SetConstantBuffer(PShader.Get(), FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
     CommandList.SetConstantBuffer(PShader.Get(), FrameResources.DirectionalLightDataBuffer.Get(), 5);
 
-    const FProxyLightProbe& Skylight = FrameResources.Skylight;
-    CommandList.SetShaderResourceView(PShader.Get(), Skylight.IrradianceMap->GetShaderResourceView(), 0);
-    CommandList.SetShaderResourceView(PShader.Get(), Skylight.SpecularIrradianceMap->GetShaderResourceView(), 1);
+    if (Scene)
+    {
+        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        {
+            CommandList.SetShaderResourceView(PShader.Get(), SkyLight->DiffuseCubeMap->GetShaderResourceView(), 0);
+            CommandList.SetShaderResourceView(PShader.Get(), SkyLight->SpecularCubeMap->GetShaderResourceView(), 1);
+        }
+    }
+
     CommandList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
     //TODO: Fix directional-light shadows
     //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
     CommandList.SetShaderResourceView(PShader.Get(), FrameResources.PointLightShadowMaps->GetShaderResourceView(), 4);
 
     CommandList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
-    CommandList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
+    CommandList.SetSamplerState(PShader.Get(), FrameResources.LightProbeSampler.Get(), 2);
     CommandList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
     //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 

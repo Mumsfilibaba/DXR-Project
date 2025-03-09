@@ -131,38 +131,28 @@ struct FCascadeGenerationInfoHLSL
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
 
-struct FProxyLightProbe
-{
-    void Release()
-    {
-        IrradianceMap.Reset();
-        SpecularIrradianceMap.Reset();
-
-        IrradianceMapUAV.Reset();
-        for (FRHIUnorderedAccessViewRef& UAV : SpecularIrradianceMapUAVs)
-        {
-            UAV.Reset();
-        }
-
-        SpecularIrradianceMapUAVs.Clear();
-        WeakSpecularIrradianceMapUAVs.Clear();
-    }
-
-    FRHITextureRef IrradianceMap;
-    FRHITextureRef SpecularIrradianceMap;
-
-    // TODO: We should be able to do this without the UAVs saved
-    FRHIUnorderedAccessViewRef         IrradianceMapUAV;
-    TArray<FRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
-    TArray<FRHIUnorderedAccessView*>   WeakSpecularIrradianceMapUAVs;
-};
-
 struct FOcclusionVolume
 {
     FRHIBufferRef VertexBuffer;
     FRHIBufferRef IndexBuffer;
     uint32        IndexCount;
     EIndexFormat  IndexFormat;
+};
+
+struct FGlobalTextureFormats
+{
+    static const EFormat DepthBufferFormat  = EFormat::D32_Float;
+    static const EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
+    static const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
+    static const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
+    static const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
+    static const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
+    static const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
+    static const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
+    static const EFormat VelocityFormat     = EFormat::R16G16_Float;
+    static const EFormat ShadowMaskFormat   = EFormat::R8_Unorm;
+    static const EFormat ShadowMapFormat    = EFormat::D32_Float;
+    static const EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
 };
 
 struct FFrameResources
@@ -173,19 +163,6 @@ struct FFrameResources
     bool Initialize();
     void Release();
     void BuildLightBuffers(FRHICommandList& CommandList, FScene* Scene);
-
-    const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
-    const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
-    const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
-    const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
-    const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
-    const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    const EFormat VelocityFormat     = EFormat::R16G16_Float;
-    const EFormat ShadowMaskFormat   = EFormat::R8_Unorm;
-    const EFormat ShadowMapFormat    = EFormat::D32_Float;
-    const EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
 
     // Limits
     const uint32 MaxPointLights       = 256;
@@ -213,11 +190,9 @@ struct FFrameResources
     FRHISamplerStateRef ShadowSamplerPoint;
     FRHISamplerStateRef ShadowSamplerPointCmp;
     FRHISamplerStateRef ShadowSamplerLinearCmp;
-    FRHISamplerStateRef IrradianceSampler;
+    FRHISamplerStateRef LightProbeSampler;
     FRHISamplerStateRef GBufferSampler;
     FRHISamplerStateRef FXAASampler;
-
-    FRHITextureRef Skybox;
 
     FRHITextureRef      IntegrationLUT;
     FRHISamplerStateRef IntegrationLUTSampler;
@@ -267,10 +242,6 @@ struct FFrameResources
 
     // Occlusion Cube
     FOcclusionVolume OcclusionVolume;
-
-    // SkyLight
-    FProxyLightProbe Skylight;
-    FProxyLightProbe LocalProbe;
 
     // RayTracing
     FRHITextureRef         RTOutput;

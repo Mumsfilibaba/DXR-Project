@@ -1,6 +1,6 @@
 #pragma once
-#include "Light.h"
 #include "Core/Math/Matrix4.h"
+#include "Engine/World/Lights/Light.h"
 
 class ENGINE_API FPointLight : public FLight
 {

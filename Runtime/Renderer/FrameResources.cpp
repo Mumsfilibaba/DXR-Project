@@ -3,8 +3,8 @@
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Renderer/Scene.h"
 #include "Renderer/FrameResources.h"
+#include "Renderer/Scene/Scene.h"
 
 static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Renderer.CSM.CascadeSize",
@@ -429,13 +429,11 @@ void FFrameResources::Release()
     ShadowSamplerPoint.Reset();
     ShadowSamplerPointCmp.Reset();
     ShadowSamplerLinearCmp.Reset();
-    IrradianceSampler.Reset();
+    LightProbeSampler.Reset();
     GBufferSampler.Reset();
 
     IntegrationLUT.Reset();
     IntegrationLUTSampler.Reset();
-
-    Skybox.Reset();
 
     SSAOBuffer.Reset();
     FinalTarget.Reset();
@@ -470,9 +468,6 @@ void FFrameResources::Release()
 
     PointLightShadowMaps.Reset();
     ShadowMapCascades.Reset();
-
-    Skylight.Release();
-    LocalProbe.Release();
 
     CascadeMatrixBuffer.Reset();
     CascadeMatrixBufferSRV.Reset();

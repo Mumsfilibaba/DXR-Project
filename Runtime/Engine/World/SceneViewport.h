@@ -1,7 +1,7 @@
 #pragma once
-#include "World.h"
 #include "Application/IViewport.h"
 #include "Application/Widgets/ViewportWidget.h"
+#include "Engine/World/World.h"
 
 class ENGINE_API FSceneViewport : public IViewport
 {

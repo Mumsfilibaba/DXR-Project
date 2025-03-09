@@ -1,9 +1,9 @@
-#include "Scene.h"
-#include "SceneRenderer.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
+#include "Renderer/SceneRenderer.h"
 #include "Renderer/RendererModule.h"
+#include "Renderer/Scene/Scene.h"
 
 IMPLEMENT_ENGINE_MODULE(FRendererModule, Renderer);
 

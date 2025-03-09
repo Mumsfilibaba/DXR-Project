@@ -1,4 +1,4 @@
-#include "InputComponent.h"
+#include "Engine/World/Components/InputComponent.h"
 
 FOBJECT_IMPLEMENT_CLASS(FInputComponent);
 

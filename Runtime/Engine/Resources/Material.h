@@ -42,9 +42,10 @@ struct FMaterialInfo
 
 struct FMaterialHLSL
 {
+    // 0-16 
     FVector3 Albedo           = FVector3(1.0f);
     float    Roughness        = 1.0f;
-
+    // 16-32
     float    Metallic         = 0.0f;
     float    AmbientOcclusion = 1.0f;
     int32    Padding0         = 0;

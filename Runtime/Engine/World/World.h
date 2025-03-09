@@ -1,14 +1,11 @@
 #pragma once
-#include "Camera.h"
-#include "Actors/PlayerController.h"
-#include "Lights/Light.h"
-#include "Reflections/LightProbe.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
+#include "Engine/World/Camera.h"
+#include "Engine/World/Actors/PlayerController.h"
+#include "Engine/World/Lights/Light.h"
+#include "Engine/World/Reflections/LightProbe.h"
 #include "RendererCore/Interfaces/IScene.h"
-
-// TODO: Remove
-#include "Engine/World/Components/ProxySceneComponent.h"
 
 class FSceneComponent;
 
@@ -28,6 +25,7 @@ public:
 
     /**
      * @brief Create a new actor and add it to the world 
+     * 
      * @return Returns the newly created actor
      */
     FActor* CreateActor();
@@ -39,48 +37,56 @@ public:
 
      /**
       * @brief Ticks all actors in the world, should be called once per frame
+      * 
       * @param DeltaTime The time between this and the last tick in seconds
       */
     void Tick(float DeltaTime);
 
     /**
      * @brief Adds a camera into the world 
+     * 
      * @param InCamera Camera to add to the world
      */
     void AddCamera(FCamera* InCamera);
 
     /**
      * @brief Adds an actor into the world 
+     * 
      * @param InActor Actor to add to the world
      */
     void AddActor(FActor* InActor);
 
     /**
      * @brief Adds a player-controller into the world
+     * 
      * @param InPlayerController PlayerController to add to the world
      */
     void AddPlayerController(FPlayerController* InPlayerController);
 
     /**
      * @brief Adds an light into the world
+     * 
      * @param InLight Light to add to the world
      */
     void AddLight(FLight* InLight);
 
     /**
      * @brief Adds a light-probe into the world
+     * 
      * @param InLightProbe LightProbe to add to the world
      */
     void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
      * @brief Function called when adding a new RendererComponent
+     * 
      * @param RendererComponent New RendererComponent just added to the world
      */
     void AddRendererComponent(FSceneComponent* RendererComponent);
 
     /**
       * @brief Sets the scene representation in the renderer
+      * 
       * @param InScene Interface to the renderer scene representation
       */
     void SetSceneInterface(IScene* InScene);
@@ -91,27 +97,6 @@ public:
     IScene* GetSceneInterface() const
     {
         return Scene;
-    }
-
-    /**
-     * @brief Retrieve all components of a certain type
-     * @return Returns an array of all components of the specified type
-     */
-    template<typename ComponentType>
-    TArray<ComponentType> GetAllComponentsOfType() const
-    {
-        // TODO: Cache this result
-
-        TArray<ComponentType> Components;
-        for (FActor* Actor : Actors)
-        {
-            if (ComponentType* Component = Actor->GetComponentOfType<ComponentType>())
-            {
-                Components.Emplace(*Component);
-            }
-        }
-
-        return ::Move(Components);
     }
 
     /**

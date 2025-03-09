@@ -1,7 +1,7 @@
-#include "PlayerController.h"
-#include "PlayerInput.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/World/Components/InputComponent.h"
+#include "Engine/World/Actors/PlayerController.h"
+#include "Engine/World/Actors/PlayerInput.h"
 
 FOBJECT_IMPLEMENT_CLASS(FPlayerController);
 

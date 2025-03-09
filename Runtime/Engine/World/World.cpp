@@ -1,8 +1,9 @@
-#include "World.h"
-#include "Components/MeshComponent.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Model.h"
 #include "RHI/RHIResources.h"
+#include "Engine/World/World.h"
+#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/SkyboxComponent.h"
 
 FWorld::FWorld()
     : Actors()
@@ -97,20 +98,16 @@ void FWorld::AddActor(FActor* InActor)
         CHECK(InActor->GetWorld() == nullptr);
         InActor->SetWorld(this);
         Actors.Emplace(InActor);
-    }
-    else
-    {
-        DEBUG_BREAK();
-    }
 
-    if (FPlayerController* PlayerController = Cast<FPlayerController>(InActor))
-    {
-        AddPlayerController(PlayerController);
-    }
+        if (FPlayerController* PlayerController = Cast<FPlayerController>(InActor))
+        {
+            AddPlayerController(PlayerController);
+        }
 
-    if (FSceneComponent* RendererComponent = InActor->GetComponentOfType<FSceneComponent>())
-    {
-        AddRendererComponent(RendererComponent);
+        if (FSceneComponent* RendererComponent = InActor->GetComponentOfType<FSceneComponent>())
+        {
+            AddRendererComponent(RendererComponent);
+        }
     }
 }
 
@@ -157,11 +154,21 @@ void FWorld::AddLightProbe(FLightProbe* InLightProbe)
 
 void FWorld::AddRendererComponent(FSceneComponent* RendererComponent)
 {
-    if (Scene && RendererComponent)
+    if (!Scene)
+    {
+        return;
+    }
+
+    if (RendererComponent)
     {
         if (FProxySceneComponent* ProxyComponent = RendererComponent->CreateProxyComponent())
         {
+            // TODO: Support other components than mesh components
             Scene->AddProxyComponent(ProxyComponent);
+        }
+        else if (FSkyboxComponent* SkyboxComponent = Cast<FSkyboxComponent>(RendererComponent))
+        {
+            Scene->AddSkybox(SkyboxComponent);
         }
     }
 }

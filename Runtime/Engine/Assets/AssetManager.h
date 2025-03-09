@@ -23,6 +23,7 @@ public:
     void UpdateRegistryFile();
     
 private:
+
     // Maps the original path to the engine file
     TMap<FString, FString> RegistryMap;
     FString                RegistryFilename;
@@ -41,6 +42,7 @@ public:
     /** @brief Retrieve the AssetManager instance */
     static FAssetManager& Get();
 
+public:
     TSharedRef<FTexture> LoadTexture(const FString& Filename, bool bGenerateMips = true);
     void UnloadTexture(const TSharedRef<FTexture>& Texture);
     

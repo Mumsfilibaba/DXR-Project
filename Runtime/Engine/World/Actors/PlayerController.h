@@ -1,5 +1,5 @@
 #pragma once
-#include "Actor.h"
+#include "Engine/World/Actors/Actor.h"
 
 class FPlayerInput;
 class FInputComponent;

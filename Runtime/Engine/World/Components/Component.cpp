@@ -1,4 +1,4 @@
-#include "Component.h"
+#include "Engine/World/Components/Component.h"
 
 FOBJECT_IMPLEMENT_CLASS(FComponent);
 

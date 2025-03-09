@@ -352,53 +352,6 @@ bool FSceneRenderer::Initialize()
         }
     }
 
-    // Copy over the texture
-    {
-        LightProbeRenderer->RenderSkyLightProbe(CommandList, Resources);
-        
-        FRHITextureInfo IrradianceProbeInfo = Resources.Skylight.IrradianceMap->GetInfo();
-        IrradianceProbeInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
-
-        FRHITextureInfo SpecularIrradianceProbeInfo = Resources.Skylight.SpecularIrradianceMap->GetInfo();
-        SpecularIrradianceProbeInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
-
-        FRHITextureRef IrradianceMap = RHICreateTexture(IrradianceProbeInfo, EResourceAccess::CopyDest);
-        if (!IrradianceMap)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            IrradianceMap->SetDebugName("Irradiance Map");
-        }
-
-        FRHITextureRef SpecularIrradianceMap = RHICreateTexture(SpecularIrradianceProbeInfo, EResourceAccess::CopyDest);
-        if (!SpecularIrradianceMap)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            SpecularIrradianceMap->SetDebugName("Specular Irradiance Map");
-        }
-
-        CommandList.TransitionTexture(Resources.Skylight.IrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopySource));
-        CommandList.TransitionTexture(Resources.Skylight.SpecularIrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopySource));
-
-        CommandList.CopyTexture(IrradianceMap.Get(), Resources.Skylight.IrradianceMap.Get());
-        CommandList.CopyTexture(SpecularIrradianceMap.Get(), Resources.Skylight.SpecularIrradianceMap.Get());
-
-        CommandList.TransitionTexture(IrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
-        CommandList.TransitionTexture(SpecularIrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
-
-        Resources.Skylight.IrradianceMap         = IrradianceMap;
-        Resources.Skylight.SpecularIrradianceMap = SpecularIrradianceMap;
-
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
-    }
-
     // Register ImGui Windows
     if (IImguiPlugin::IsEnabled())
     {
@@ -795,9 +748,16 @@ void FSceneRenderer::Tick(FScene* Scene)
     // ShadowMask and GBuffer
     CommandList.TransitionTexture(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
     CommandList.TransitionTexture(Resources.BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
-    CommandList.TransitionTexture(Resources.Skylight.IrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTexture(Resources.Skylight.SpecularIrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+
+    if (Scene)
+    {
+        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        {
+            CommandList.TransitionTexture(SkyLight->DiffuseCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+            CommandList.TransitionTexture(SkyLight->SpecularCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+        }
+    }
 
     // In order to render the shadow-mask, we want all these features to be enabled
     const bool bEnableShadowMask = CVarShadowMaskEnabled.GetValue();
@@ -821,7 +781,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     }
 
     // Main LightPass
-    TiledLightPass->Execute(CommandList, Resources);
+    TiledLightPass->Execute(CommandList, Resources, Scene);
 
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
     CommandList.TransitionTexture(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget));
@@ -846,8 +806,15 @@ void FSceneRenderer::Tick(FScene* Scene)
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
-    CommandList.TransitionTexture(Resources.Skylight.IrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
-    CommandList.TransitionTexture(Resources.Skylight.SpecularIrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    if (Scene)
+    {
+        if (FSceneSkyLight* SkyLight = Scene->SkyLight)
+        {
+            CommandList.TransitionTexture(SkyLight->DiffuseCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+            CommandList.TransitionTexture(SkyLight->SpecularCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+        }
+    }
+
     CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
 
     AddDebugTexture(

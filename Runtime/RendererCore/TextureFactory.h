@@ -4,6 +4,7 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHISamplerState.h"
 #include "RHI/RHIPipelineState.h"
+#include "RendererCore/TextureCompressor.h"
 
 class FRHITexture;
 
@@ -35,6 +36,8 @@ public:
     }
 
 public:
+
+    // Helper function to create a texture from memory
     FRHITexture* LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, ETextureFactoryFlags Flags, EFormat Format);
 
     // Source is a panorama image and Dest is a cube texture
@@ -45,13 +48,29 @@ public:
     bool GenerateMiplevels(FRHITexture* Texture);
     bool GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture);
 
+    // Filters a cube-map for use in specular light-calculations
+    bool FilterSpecularCubeMap(FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap, uint32 NumMipLevels = uint32(~0));
+    bool FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap, uint32 NumMipLevels = uint32(~0));
+
+    // Filters a cube-map for use in diffuse light-calculations
+    bool FilterDiffuseCubeMap(FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap);
+    bool FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap);
+
+    FORCEINLINE FTextureCompressor& GetTextureCompressor() 
+    {
+        return TextureCompressor;
+    }
+
 private:
     FTextureFactory();
     ~FTextureFactory();
 
     bool CreateResources();
 
+    FTextureCompressor          TextureCompressor;
+
     FRHISamplerStateRef         LinearSampler;
+    FRHISamplerStateRef         CubeMapFilterSampler;
 
     FRHIComputePipelineStateRef PanoramaPSO;
     FRHIComputeShaderRef        PanoramCS;
@@ -61,6 +80,12 @@ private:
 
     FRHIComputePipelineStateRef GenerateMipsTexCube_PSO;
     FRHIComputeShaderRef        GenerateMipsTexCube_CS;
+
+    FRHIComputePipelineStateRef DiffuseCubeMapFilter_PSO;
+    FRHIComputeShaderRef        DiffuseCubeMapFilter_CS;
+    
+    FRHIComputePipelineStateRef SpecularCubeMapFilter_PSO;
+    FRHIComputeShaderRef        SpecularCubeMapFilter_CS;
 
     static FTextureFactory* Instance;
 };

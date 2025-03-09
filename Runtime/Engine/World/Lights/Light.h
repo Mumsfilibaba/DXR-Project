@@ -55,7 +55,7 @@ public:
 
 protected:
     FVector3 Color;
-    float    Intensity = 1.0f;
+    float    Intensity;
     float    ShadowNearPlane;
     float    ShadowFarPlane;
     float    ShadowBias;

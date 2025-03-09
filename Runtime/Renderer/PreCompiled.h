@@ -1,19 +1,25 @@
 #pragma once
 #include "Renderer/Performance/GPUProfiler.h"
 
-#include "Renderer/RendererUtilities/GPUTextureCompressor.h"
+#include "Renderer/Scene/MeshBatch.h"
+#include "Renderer/Scene/Scene.h"
+#include "Renderer/Scene/SceneLights.h"
+#include "Renderer/Scene/SceneSkybox.h"
 
 #include "Renderer/Widgets/GPUProfilerWidget.h"
 #include "Renderer/Widgets/RendererInfoWidget.h"
+#include "Renderer/Widgets/RendererSettingsWidget.h"
 #include "Renderer/Widgets/TextureDebugWidget.h"
 
 #include "Renderer/DebugRendering.h"
 #include "Renderer/DeferredRendering.h"
 #include "Renderer/ForwardPass.h"
+#include "Renderer/FrameResources.h"
+#include "Renderer/LightProbeRenderer.h"
+#include "Renderer/PostProcessing.h"
 #include "Renderer/RayTracer.h"
 #include "Renderer/RendererModule.h"
 #include "Renderer/RenderPass.h"
-#include "Renderer/Scene.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/ScreenSpaceOcclusionRendering.h"
 #include "Renderer/ShadowRendering.h"
