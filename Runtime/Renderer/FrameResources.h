@@ -11,7 +11,8 @@
 #include "Renderer/RendererModule.h"
 
 #define MAX_LIGHTS_PER_TILE (1024)
-#define NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS (8)
+#define NUM_SHADOW_CASTING_POINT_LIGHTS (8)
+#define NUM_LIGHT_PROBES (4)
 
 enum EGBufferIndex
 {
@@ -131,6 +132,23 @@ struct FCascadeGenerationInfoHLSL
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
 
+struct FLightProbeInfoHLSL
+{
+    // 0-16
+    FVector3 BoxOriginWS;
+    float    BoxProjection;
+
+    // 16-32
+    FVector3 BoxMinWS;
+    float    Padding0;
+
+    // 32-48
+    FVector3 BoxMaxWS;
+    float    Padding1;
+};
+
+MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
+
 struct FOcclusionVolume
 {
     FRHIBufferRef VertexBuffer;
@@ -228,9 +246,10 @@ struct FFrameResources
     bool                       CascadeGenerationDataDirty;
     FRHIBufferRef              CascadeGenerationDataBuffer;
 
-    FRHITextureRef ShadowMapCascades;
-    FRHITextureRef DirectionalShadowMask;
-    FRHITextureRef CascadeIndexBuffer;
+    FRHITextureRef            ShadowCascades;
+    FRHIShaderResourceViewRef ShadowCascadesSRVs[NUM_SHADOW_CASCADES];
+    FRHITextureRef            DirectionalShadowMask;
+    FRHITextureRef            CascadeIndexBuffer;
 
     FRHIBufferRef              CascadeMatrixBuffer;
     FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;
@@ -239,6 +258,10 @@ struct FFrameResources
     FRHIBufferRef              CascadeSplitsBuffer;
     FRHIShaderResourceViewRef  CascadeSplitsBufferSRV;
     FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
+
+    // Light-Probes
+    FRHIBufferRef               LightProbeBuffer;
+    TArray<FLightProbeInfoHLSL> LightProbeInfos;
 
     // Occlusion Cube
     FOcclusionVolume OcclusionVolume;

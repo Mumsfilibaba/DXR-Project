@@ -12,7 +12,7 @@ FD3D12LocalDescriptorHeap::FD3D12LocalDescriptorHeap(FD3D12Device* InDevice, FD3
     , Heap(nullptr)
     , Block(nullptr)
     , CurrentHandle(0)
-    , bSamplers(bInSamplers)
+    , bIsSamplerHeap(bInSamplers)
 {
 }
 
@@ -40,7 +40,7 @@ uint32 FD3D12LocalDescriptorHeap::AllocateHandles(uint32 NumHandles)
 bool FD3D12LocalDescriptorHeap::Realloc()
 {
     // Delete the old block if it exists
-    FD3D12OnlineDescriptorHeap& GlobalHeap = bSamplers ? GetDevice()->GetGlobalSamplerHeap() : GetDevice()->GetGlobalResourceHeap();
+    FD3D12OnlineDescriptorHeap& GlobalHeap = bIsSamplerHeap ? GetDevice()->GetGlobalSamplerHeap() : GetDevice()->GetGlobalResourceHeap();
     if (Block)
     {
         GlobalHeap.FreeBlockDeferred(Block);
@@ -132,6 +132,11 @@ void FD3D12DescriptorCache::DirtyStateResources()
     ConstantBufferCache.ClearAll();
     ShaderResourceViewCache.ClearAll();
     UnorderedAccessViewCache.ClearAll();
+}
+
+void FD3D12DescriptorCache::InvalidateCachedSamplerTables()
+{
+    SamplerCache.Clear();
 }
 
 void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetCache& Cache)

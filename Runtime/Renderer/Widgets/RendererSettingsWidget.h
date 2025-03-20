@@ -18,8 +18,10 @@ private:
     void DrawSSAOSettings();
     void DrawTAASettings();
     void DrawFXAASettings();
-    void DrawOtherSettings();
+    void DrawDisplaySettings();
+    void DrawCullingSettings();
     void DrawDebugSettings();
+    void DrawTonemappingSettings();
 
     FDelegateHandle ImGuiDelegateHandle;
 };

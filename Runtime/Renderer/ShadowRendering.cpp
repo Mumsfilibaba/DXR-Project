@@ -316,6 +316,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 {
     FRHIBufferInfo PerShadowMapBufferInfo(sizeof(FPerShadowMapHLSL), sizeof(FPerShadowMapHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
     PerShadowMapBuffer = RHICreateBuffer(PerShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!PerShadowMapBuffer)
     {
         DEBUG_BREAK();
@@ -328,6 +329,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 
     FRHIBufferInfo SinglePassShadowMapBufferInfo(sizeof(FSinglePassPointLightBufferHLSL), sizeof(FSinglePassPointLightBufferHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
     SinglePassShadowMapBuffer = RHICreateBuffer(SinglePassShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!SinglePassShadowMapBuffer)
     {
         DEBUG_BREAK();
@@ -348,6 +350,7 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
     FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(FGlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
     Resources.PointLightShadowMaps = RHICreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
+
     if (Resources.PointLightShadowMaps)
     {
         Resources.PointLightShadowMaps->SetDebugName("PointLight ShadowMaps");
@@ -700,6 +703,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     FRHIBufferInfo CascadeMatrixBufferInfo(sizeof(FCascadeMatricesHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatricesHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
     Resources.CascadeMatrixBuffer = RHICreateBuffer(CascadeMatrixBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
+
     if (!Resources.CascadeMatrixBuffer)
     {
         DEBUG_BREAK();
@@ -712,6 +716,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     FRHIBufferSRVInfo SRVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInfo);
+
     if (!Resources.CascadeMatrixBufferSRV)
     {
         DEBUG_BREAK();
@@ -720,6 +725,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     FRHIBufferUAVInfo UAVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInfo);
+
     if (!Resources.CascadeMatrixBufferUAV)
     {
         DEBUG_BREAK();
@@ -728,6 +734,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     FRHIBufferInfo CascadeSplitsBufferInfo(sizeof(FCascadeSplitHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeSplitHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
     Resources.CascadeSplitsBuffer = RHICreateBuffer(CascadeSplitsBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
+
     if (!Resources.CascadeSplitsBuffer)
     {
         DEBUG_BREAK();
@@ -740,6 +747,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     SRVInfo = FRHIBufferSRVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInfo);
+
     if (!Resources.CascadeSplitsBufferSRV)
     {
         DEBUG_BREAK();
@@ -748,6 +756,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     UAVInfo = FRHIBufferUAVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInfo);
+
     if (!Resources.CascadeSplitsBufferUAV)
     {
         DEBUG_BREAK();
@@ -1027,6 +1036,7 @@ bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
 {
     FRHIBufferInfo PerCascadeBufferInfo(sizeof(FPerCascadeHLSL), sizeof(FPerCascadeHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
     PerCascadeBuffer = RHICreateBuffer(PerCascadeBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!PerCascadeBuffer)
     {
         DEBUG_BREAK();
@@ -1046,15 +1056,36 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
     FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(FGlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
-    Resources.ShadowMapCascades = RHICreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
-    if (Resources.ShadowMapCascades)
+    Resources.ShadowCascades = RHICreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
+
+    if (Resources.ShadowCascades)
     {
         const FString DebugName = FString::CreateFormatted("Shadow Map Cascades");
-        Resources.ShadowMapCascades->SetDebugName(DebugName);
+        Resources.ShadowCascades->SetDebugName(DebugName);
     }
     else
     {
+        DEBUG_BREAK();
         return false;
+    }
+
+    for (int32 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
+    {
+        FRHITextureSRVInfo SRVInfo;
+        SRVInfo.Texture         = Resources.ShadowCascades.Get();
+        SRVInfo.Format          = CastSRVFormat(Resources.ShadowCascades->GetFormat());
+        SRVInfo.NumSlices       = 1;
+        SRVInfo.NumMips         = 1;
+        SRVInfo.MinLODClamp     = 0;
+        SRVInfo.FirstMipLevel   = 0;
+        SRVInfo.FirstArraySlice = Index;
+
+        Resources.ShadowCascadesSRVs[Index] = RHICreateShaderResourceView(SRVInfo);
+        if (!Resources.ShadowCascadesSRVs[Index])
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     return true;
@@ -1099,7 +1130,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     const ECascadeRenderPassType RenderPassType = GetRenderMapRenderPassType();
     if (Scene->DirectionalLight)
     {
-        CommandList.TransitionTexture(Resources.ShadowMapCascades.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
+        CommandList.TransitionTexture(Resources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
 
         if (RenderPassType == ECascadeRenderPassType::SinglePass)
         {
@@ -1118,7 +1149,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             Execute<ECascadeRenderPassType::MultiPass>(CommandList, Resources, Scene);
         }
 
-        CommandList.TransitionTexture(Resources.ShadowMapCascades.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionTexture(Resources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render DirectionalLight ShadowMaps");
@@ -1139,7 +1170,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     if constexpr (bIsSinglePass)
     {
         FRHIBeginRenderPassInfo RenderPass;
-        RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowMapCascades.Get());
+        RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowCascades.Get());
         RenderPass.DepthStencilView.ArrayIndex     = 0;
         RenderPass.DepthStencilView.NumArraySlices = NUM_SHADOW_CASCADES;
 
@@ -1261,7 +1292,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
             FRHIBeginRenderPassInfo RenderPass;
-            RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowMapCascades.Get());
+            RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowCascades.Get());
             RenderPass.DepthStencilView.ArrayIndex = static_cast<uint16>(Index);
 
             CommandList.BeginRenderPass(RenderPass);
@@ -1383,6 +1414,7 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
 
     FRHIBufferInfo SettingsBufferInfo(sizeof(FDirectionalShadowSettingsHLSL), sizeof(FDirectionalShadowSettingsHLSL), EBufferUsageFlags::ConstantBuffer);
     ShadowSettingsBuffer = RHICreateBuffer(SettingsBufferInfo, EResourceAccess::ConstantBuffer);
+
     if (!ShadowSettingsBuffer)
     {
         DEBUG_BREAK();
@@ -1402,6 +1434,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 
     FRHITextureInfo ShadowMaskInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
     Resources.DirectionalShadowMask = RHICreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
+
     if (Resources.DirectionalShadowMask)
     {
         Resources.DirectionalShadowMask->SetDebugName("Directional Shadow Mask 0");
@@ -1413,6 +1446,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 
     FRHITextureInfo CascadeIndexBufferInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
     Resources.CascadeIndexBuffer = RHICreateTexture(CascadeIndexBufferInfo, EResourceAccess::NonPixelShaderResource);
+
     if (Resources.CascadeIndexBuffer)
     {
         Resources.CascadeIndexBuffer->SetDebugName("Cascade Index Debug Buffer");
@@ -1439,7 +1473,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     ShadowSettings.FilterSize    = FMath::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
     ShadowSettings.MaxFilterSize = FMath::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
-    ShadowSettings.ShadowMapSize = Resources.ShadowMapCascades->GetWidth();
+    ShadowSettings.ShadowMapSize = Resources.ShadowCascades->GetWidth();
     ShadowSettings.FrameIndex    = GetRenderer()->GetFrameCounter().GetFrameIndex();
 
     CommandList.TransitionBuffer(ShadowSettingsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
@@ -1473,7 +1507,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
     CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 3);
-    CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.ShadowMapCascades->GetShaderResourceView(), 4);
+    CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.ShadowCascades->GetShaderResourceView(), 4);
 
     CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.DirectionalShadowMask->GetUnorderedAccessView(), 0);
 
@@ -1612,6 +1646,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
 
     FComputePipelineStateInstance PipelineStateInstance;
     PipelineStateInstance.Shader = RHICreateComputeShader(ShaderCode);
+
     if (!PipelineStateInstance.Shader)
     {
         DEBUG_BREAK();
@@ -1620,6 +1655,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
 
     FRHIComputePipelineStateInitializer MaskPSOInitializer(PipelineStateInstance.Shader.Get());
     PipelineStateInstance.PipelineState = RHICreateComputePipelineState(MaskPSOInitializer);
+
     if (!PipelineStateInstance.PipelineState)
     {
         DEBUG_BREAK();

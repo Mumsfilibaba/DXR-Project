@@ -1,7 +1,7 @@
 #include "PBRHelpers.hlsli"
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
-#include "Tonemapping.hlsli"
+#include "ColorSpaceTransforms.hlsli"
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 
@@ -112,7 +112,7 @@ FVSOutput VSMain(FVSInput Input)
     float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
     TangentSpace          = transpose(TangentSpace);
     
-    Output.TangentViewPos  = mul(CameraBuffer.Position, TangentSpace);
+    Output.TangentViewPos  = mul(CameraBuffer.PositionWS, TangentSpace);
     Output.TangentPosition = mul(WorldPosition.xyz, TangentSpace);
 
     return Output;
@@ -173,7 +173,6 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 float4 PSMain(FPSInput Input) : SV_Target0
 {
     float2 TexCoords = Input.TexCoord;
-    TexCoords.y = 1.0 - TexCoords.y;
 
 #if 0 
     if (MaterialBuffer.EnableHeight != 0)
@@ -187,10 +186,10 @@ float4 PSMain(FPSInput Input) : SV_Target0
     }
 #endif
 
-    float3 SampledAlbedo = ApplyGamma(AlbedoTex.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
+    float3 SampledAlbedo = SRGBToLinear(AlbedoTex.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
     
     const float3 WorldPosition = Input.WorldPosition;
-    const float3 V             = normalize(CameraBuffer.Position - WorldPosition);
+    const float3 V             = normalize(CameraBuffer.PositionWS - WorldPosition);
     float3 N = normalize(Input.Normal);
     if (!Input.bIsFrontFace)
     {

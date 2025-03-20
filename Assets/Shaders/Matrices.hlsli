@@ -2,7 +2,7 @@
 #define MATRICES_HLSLI
 
 // Left handed
-float4x4 OrtographicMatrix(float Left, float Right, float Bottom, float Top, float Near, float Far)
+float4x4 OrthoFloat4x4(float Left, float Right, float Bottom, float Top, float Near, float Far)
 {
     float Width  = 1.0 / (Right - Left);
     float Height = 1.0 / (Top - Bottom);

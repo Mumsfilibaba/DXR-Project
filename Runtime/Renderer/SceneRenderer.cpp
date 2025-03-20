@@ -96,7 +96,13 @@ static TAutoConsoleVariable<bool> CVarDrawOcclusionVolumes(
 
 static TAutoConsoleVariable<bool> CVarDrawPointLights(
     "Renderer.Debug.DrawPointLights", 
-    "Draws all the PointLights as spheres with the light-color",
+    "Draws all the point-lights as spheres with the light-color",
+    false,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarDrawLightProbes(
+    "Renderer.Debug.LightProbes",
+    "Draws all the light-probes as spheres with the cube-map",
     false,
     EConsoleVariableFlags::Default);
 
@@ -518,6 +524,8 @@ void FSceneRenderer::Tick(FScene* Scene)
     CameraBuffer.ViewInv                     = Camera->GetViewInverseMatrix();
     CameraBuffer.Projection                  = Camera->GetProjectionMatrix();
     CameraBuffer.ProjectionInv               = Camera->GetProjectionInverseMatrix();
+    CameraBuffer.ProjectionUnjittered        = CameraBuffer.Projection;
+    CameraBuffer.ProjectionInvUnjittered     = CameraBuffer.ProjectionInv;
     CameraBuffer.Position                    = Camera->GetPosition();
     CameraBuffer.Forward                     = Camera->GetForwardVector();
     CameraBuffer.Right                       = Camera->GetRightVector();
@@ -800,11 +808,14 @@ void FSceneRenderer::Tick(FScene* Scene)
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowMapCascades->GetShaderResourceView()),
-        Resources.ShadowMapCascades,
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
+    for (int32 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
+    {
+        AddDebugTexture(
+            MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowCascadesSRVs[Index].Get()),
+            Resources.ShadowCascades,
+            EResourceAccess::NonPixelShaderResource,
+            EResourceAccess::NonPixelShaderResource);
+    }
 
     if (Scene)
     {
@@ -833,6 +844,12 @@ void FSceneRenderer::Tick(FScene* Scene)
     if (CVarDrawPointLights.GetValue())
     {
         DebugRenderer->RenderPointLights(CommandList, Resources, Scene);
+    }
+
+    // Debug LightProbes
+    if (CVarDrawLightProbes.GetValue())
+    {
+        DebugRenderer->RenderLightProbes(CommandList, Resources, Scene);
     }
 
     // Debug AABBs

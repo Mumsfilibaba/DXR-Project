@@ -26,7 +26,10 @@ struct FCamera
     float4x4 Projection;
     float4x4 ProjectionInv;
     
-    float3   Position;
+    float4x4 ProjectionUnjittered;
+    float4x4 ProjectionInvUnjittered;
+
+    float3   PositionWS;
     float    NearPlane;
     
     float3   Forward;
@@ -89,6 +92,21 @@ struct FMaterial
     float  AO;
     int    Padding0;
     int    Padding1;
+};
+
+struct FLightProbeInfo
+{
+    // 0-16
+    float3 BoxOriginWS;
+    float  BoxProjection;
+
+    // 16-32
+    float3 BoxMinWS;
+    float  Padding0;
+
+    // 32-48
+    float3 BoxMaxWS;
+    float  Padding1;
 };
 
 #endif

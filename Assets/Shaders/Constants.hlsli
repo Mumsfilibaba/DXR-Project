@@ -2,10 +2,11 @@
 #define CONSTANTS_HLSLI
 #include "CoreDefines.hlsli"
 
-#define PI (3.14159265359)
-#define PI_2 (3.14159265359)
+#define PI (3.14159265359)   // π  (pi)
+#define PI_2 (6.28318530718) // 2π (pi doubled)
+
 #define INV_PI (1.0 / PI)
-#define GAMMA (2.2)
+#define STANDARD_GAMMA (2.2)
 
 #define MIN_ROUGHNESS (0.0)
 #define MAX_ROUGHNESS (1.0)

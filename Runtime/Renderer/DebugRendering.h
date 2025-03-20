@@ -12,31 +12,42 @@ public:
     virtual ~FDebugRenderer();
 
     bool Initialize(FFrameResources& Resources);
+
     void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
     void RenderOcclusionVolumes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
+    void RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
 
 private:
-    // Object AABBS
+    // Geometry Data
     FRHIBufferRef                AABBVertexBuffer;
-    FRHIBufferRef                AABBIndexBuffer;
-    uint32                       AABBIndexCount;
+    FRHIBufferRef                AABBIndexBuffer_Wireframe;
+    FRHIBufferRef                AABBIndexBuffer_Solid;
+    uint32                       AABBIndexCount_Wireframe;
+    uint32                       AABBIndexCount_Solid;
 
-    FRHIGraphicsPipelineStateRef AABBPipelineState;
-    FRHIVertexShaderRef          AABBVertexShader;
-    FRHIPixelShaderRef           AABBPixelShader;
+    FRHIBufferRef                SphereVertexBuffer;
+    FRHIBufferRef                SphereIndexBuffer;
+    uint32                       SphereIndexCount;
 
-    // Occlusion Volumes
-    FRHIGraphicsPipelineStateRef OcclusionVolumePSO;
-    FRHIVertexShaderRef          OcclusionVolumeVS;
-    FRHIPixelShaderRef           OcclusionVolumePS;
+    // Wireframe AABBs
+    FRHIGraphicsPipelineStateRef AABB_NoDepth_PSO;
+    FRHIGraphicsPipelineStateRef AABB_Depth_PSO;
+    FRHIVertexShaderRef          AABB_VS;
+    FRHIPixelShaderRef           AABB_PS;
+
+    // Solid AABBs
+    FRHIGraphicsPipelineStateRef AABBSolid_PSO;
+    FRHIVertexShaderRef          AABBSolid_VS;
+    FRHIPixelShaderRef           AABBSolid_PS;
 
     // PointLights
-    FRHIGraphicsPipelineStateRef LightDebugPSO;
-    FRHIVertexShaderRef          LightDebugVS;
-    FRHIPixelShaderRef           LightDebugPS;
+    FRHIGraphicsPipelineStateRef LightDebug_PSO;
+    FRHIVertexShaderRef          LightDebug_VS;
+    FRHIPixelShaderRef           LightDebug_PS;
 
-    FRHIBufferRef                DbgSphereVertexBuffer;
-    FRHIBufferRef                DbgSphereIndexBuffer;
-    uint32                       DbgSphereIndexCount;
+    // LightProbes
+    FRHIGraphicsPipelineStateRef ProbeDebug_PSO;
+    FRHIVertexShaderRef          ProbeDebug_VS;
+    FRHIPixelShaderRef           ProbeDebug_PS;
 };

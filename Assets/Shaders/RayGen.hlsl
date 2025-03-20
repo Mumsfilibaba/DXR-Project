@@ -34,7 +34,7 @@ void RayGen()
     float3 WorldNormal   = GBufferNormal.SampleLevel(GBufferSampler, TexCoord, 0).rgb;
     WorldNormal = UnpackNormal(WorldNormal);
     
-    float3 ViewDir = normalize(WorldPosition - CameraBuffer.Position);
+    float3 ViewDir = normalize(WorldPosition - CameraBuffer.PositionWS);
     
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim   = DispatchRaysDimensions();
@@ -51,7 +51,7 @@ void RayGen()
     float3 Direction = Forward + (Right * (d.x * CameraBuffer.AspectRatio)) + (Up * (-d.y));
     
     RayDesc Ray;
-    Ray.Origin    = CameraBuffer.Position; //WorldPosition + (WorldNormal * RAY_OFFSET);
+    Ray.Origin    = CameraBuffer.PositionWS; //WorldPosition + (WorldNormal * RAY_OFFSET);
     Ray.Direction = normalize(Direction);  //normalize(reflect(ViewDir, WorldNormal));
     Ray.TMin      = CameraBuffer.NearPlane;
     Ray.TMax      = 10000.0;

@@ -1,50 +1,53 @@
 #include "RHI/RHITexture.h"
-#include "Engine/World/Lights/SkyLight.h"
 #include "RendererCore/TextureFactory.h"
-#include "Renderer/Scene/SceneLights.h"
+#include "Renderer/Scene/SceneLightProbe.h"
 #include "Renderer/FrameResources.h"
 
-FScenePointLight::FScenePointLight(FPointLight* InPointLight)
-    : PointLight(InPointLight)
-{
-}
-
-FScenePointLight::~FScenePointLight()
-{
-    PointLight = nullptr;
-}
-
-FSceneDirectionalLight::FSceneDirectionalLight(FDirectionalLight* InDirectionalLight)
-    : DirectionalLight(InDirectionalLight)
-{
-}
-
-FSceneDirectionalLight::~FSceneDirectionalLight()
-{
-    DirectionalLight = nullptr;
-}
-
-FSceneSkyLight::FSceneSkyLight(FSkyLight* InSkyLight)
-    : SkyLight(InSkyLight)
+FSceneLightProbe::FSceneLightProbe(FLightProbe* InLightProbe)
+    : LightProbe(InLightProbe)
     , SpecularCubeMap(nullptr)
     , DiffuseCubeMap(nullptr)
+    , Origin()
+    , BoxMin()
+    , BoxMax()
+    , bBoxProjection(false)
 {
-    if (SkyLight)
+    if (LightProbe)
     {
-        SourceCubeMap = SkyLight->GetCubeMap();
+        SourceCubeMap = InLightProbe->GetCubeMap();
     }
 }
 
-FSceneSkyLight::~FSceneSkyLight()
+FSceneLightProbe::~FSceneLightProbe()
 {
-    SkyLight = nullptr;
+    LightProbe = nullptr;
 }
 
-void FSceneSkyLight::FilterStaticCubeMaps()
+void FSceneLightProbe::Tick()
+{
+    if (LightProbe)
+    {
+        // Update state
+        Origin         = LightProbe->GetPosition();
+        bBoxProjection = LightProbe->GetBoxProjection();
+
+        // Update box
+        FVector3 BoxOffset = LightProbe->GetBoxOffset();
+        FVector3 BoxExtent = LightProbe->GetBoxExtents();
+
+        FVector3 BoxMidPoint   = Origin + BoxOffset;
+        FVector3 BoxExtentHalf = BoxExtent * 0.5f;
+
+        BoxMin = BoxMidPoint - BoxExtentHalf;
+        BoxMax = BoxMidPoint + BoxExtentHalf;
+    }
+}
+
+void FSceneLightProbe::FilterStaticCubeMaps()
 {
     if (!SourceCubeMap)
     {
-        LOG_WARNING("[FSceneSkyLight::FilterStaticCubeMaps] Trying to filter cube-map without a source");
+        LOG_WARNING("[FSceneLightProbe::FilterStaticCubeMaps] Trying to filter cube-map without a source");
         return;
     }
 
@@ -52,11 +55,11 @@ void FSceneSkyLight::FilterStaticCubeMaps()
     constexpr EFormat TempCubeMapFormat = EFormat::R16G16B16A16_Float;
 
     // Create specular cube-map
-    constexpr uint32 SpecularCubeMapSize = 256;
+    constexpr uint32 SpecularCubeMapSize = 512;
     const uint32 SpecularIrradianceMiplevels = FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
 
     const ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
-    FRHITextureInfo SpecularCubeMapInfo = FRHITextureInfo::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1,TextureFlags);
+    FRHITextureInfo SpecularCubeMapInfo = FRHITextureInfo::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1, TextureFlags);
 
     FRHITextureRef TempSpecularCubeMap = RHICreateTexture(SpecularCubeMapInfo, EResourceAccess::PixelShaderResource);
     if (!TempSpecularCubeMap)
@@ -93,7 +96,7 @@ void FSceneSkyLight::FilterStaticCubeMaps()
     constexpr uint32 NumMipsSkipped = 3;
 
     // Calculate the amount of compressed miplevels
-    const int32 NumSpecularMipLevels =  FMath::Max<int32>(static_cast<int32>(SpecularIrradianceMiplevels) - NumMipsSkipped, 1);
+    const int32 NumSpecularMipLevels = FMath::Max<int32>(static_cast<int32>(SpecularIrradianceMiplevels) - NumMipsSkipped, 1);
 
     bool bResult = FTextureFactory::Get().FilterSpecularCubeMap(CommandList, SourceCubeMap.Get(), TempSpecularCubeMap.Get(), NumSpecularMipLevels);
     if (!bResult)

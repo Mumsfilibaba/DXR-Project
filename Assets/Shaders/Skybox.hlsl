@@ -1,13 +1,14 @@
 #include "Helpers.hlsli"
 #include "Constants.hlsli"
+#include "Tonemapping.hlsli"
 
 // Resources
 SHADER_CONSTANT_BLOCK_BEGIN
     float4x4 ViewProjection;
 SHADER_CONSTANT_BLOCK_END
 
-TextureCube<float4> Skybox        : register(t0);
-SamplerState        SkyboxSampler : register(s0);
+TextureCube<float4> Skybox : register(t0);
+SamplerState SkyboxSampler : register(s0);
 
 // VertexShader
 struct FVSInput
@@ -24,7 +25,7 @@ struct FVSOutput
 FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
-    Output.TexCoord = Input.Position;
+    Output.TexCoord = normalize(Input.Position);
     Output.Position = mul(float4(Input.Position, 1.0), Constants.ViewProjection);
     Output.Position = Output.Position.xyww;
     return Output;
@@ -33,7 +34,9 @@ FVSOutput VSMain(FVSInput Input)
 // PixelShader
 float4 PSMain(float3 TexCoord : TEXCOORD0) : SV_TARGET0
 {
-    float3 Color = Skybox.Sample(SkyboxSampler, TexCoord).rgb;
-    float FinalLuminance = Luminance(Color);
-    return float4(Color, FinalLuminance);
+    float3 SkyboxColor = Skybox.Sample(SkyboxSampler, normalize(TexCoord)).rgb;
+
+    // Store Luminance since FXAA assumes it to be in this channel
+    float FinalLuminance = Luminance(SkyboxColor);
+    return float4(SkyboxColor, FinalLuminance);
 }

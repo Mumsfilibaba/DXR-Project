@@ -19,10 +19,10 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA (1)
+#define LOAD_SPONZA (0)
 #define LOAD_BISTRO (0)
 #define LOAD_SUN_TEMPLE (0)
-#define LOAD_EMERALD_SQUARE (0)
+#define LOAD_EMERALD_SQUARE (1)
 
 #define ENABLE_LIGHT_TEST (0)
 #define ENABLE_SPHERES_TEST (0)
@@ -44,6 +44,7 @@ bool FSandbox::Init()
     FWorld* CurrentWorld = GEngine->GetWorld();
 
     bool bResult = false;
+
 #if LOAD_SPONZA
     bResult = CreateSponza(CurrentWorld);
 #elif LOAD_BISTRO
@@ -540,7 +541,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     }
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -739,7 +740,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     BistroExterior->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Scenes/Bistro/san_giuseppe_bridge_4k.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/Bistro/san_giuseppe_bridge_4k.hdr");
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -787,7 +788,8 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
 
 bool FSandbox::CreateSunTemple(FWorld* InWorld)
 {
-    TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
+    const EMeshImportFlags ImportFlags = EMeshImportFlags::InvertAxisX;
+    TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx", ImportFlags);
     if (!SunTemple)
     {
         return false;
@@ -810,7 +812,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     SunTemple->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Skybox.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Skybox.hdr");
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -840,6 +842,46 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
         InWorld->AddLight(SkyLight);
     }
 
+    // Add Light-Probes
+    if (FLightProbe* LightProbe = NewObject<FLightProbe>())
+    {
+        // Load Reflection Probe
+        FRHITextureRef ReflectionProbe = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection.hdr");
+        if (!ReflectionProbe)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        LightProbe->SetPosition(FVector3(0.0f, 13.0f, 0.5f));
+        LightProbe->SetBoxExtent(FVector3(19.0f, 21.5f, 22.0f));
+        LightProbe->SetBoxOffset(FVector3(0.0f, 0.0f, 0.0f));
+        LightProbe->SetCubeMap(ReflectionProbe);
+        LightProbe->SetBoxProjection(true);
+
+        InWorld->AddLightProbe(LightProbe);
+    }
+
+    // Add Light-Probes
+    if (FLightProbe* LightProbe = NewObject<FLightProbe>())
+    {
+        // Load Reflection Probe
+        FRHITextureRef ReflectionProbe = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple_Reflection_Interior.hdr");
+        if (!ReflectionProbe)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        LightProbe->SetPosition(FVector3(0.0f, 6.0f, 30.0f));
+        LightProbe->SetBoxExtent(FVector3(19.0f, 21.5f, 22.0f));
+        LightProbe->SetBoxOffset(FVector3(0.0f, 0.0f, 0.0f));
+        LightProbe->SetCubeMap(ReflectionProbe);
+        LightProbe->SetBoxProjection(true);
+
+        InWorld->AddLightProbe(LightProbe);
+    }
+
     // Add DirectionalLight
     if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
     {
@@ -847,7 +889,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
         DirectionalLight->SetMaxShadowBias(0.0009f);
         DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(-55.0f), 0.0f));
+        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(-55.0f), FMath::ToRadians(325.0f), 0.0f));
         DirectionalLight->SetCascadeSplitLambda(0.9f);
 
         InWorld->AddLight(DirectionalLight);
@@ -858,7 +900,8 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
 
 bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
 {
-    TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
+    const EMeshImportFlags ImportFlags = EMeshImportFlags::RecalculateTangents | EMeshImportFlags::Default;
+    TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), ImportFlags);
     if (!EmeraldSquare_Day)
     {
         return false;
@@ -881,7 +924,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     EmeraldSquare_Day->AddToWorld(InWorld);
 
     // Load Skybox
-    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr");
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/symmetrical_garden_4k.hdr");
     if (!Skybox)
     {
         DEBUG_BREAK();
@@ -927,56 +970,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     return true;
 }
 
-bool FSandbox::CreateLightDemo(FWorld* InWorld)
-{
-    // Load Skybox
-    FRHITextureRef Skybox = LoadSkyboxFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
-    if (!Skybox)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    // Add Camera
-    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
-    {
-        // Add camera to the world
-        InWorld->AddCamera(Player->GetCamera());
-        InWorld->AddActor(Player);
-
-        // Add Skybox
-        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
-        {
-            // Set skybox cube-map
-            SkyboxComponent->SetCubeMap(Skybox);
-            Player->AddComponent(SkyboxComponent);
-        }
-    }
-
-    // Add SkyLight
-    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
-    {
-        SkyLight->SetCubeMap(Skybox);
-        InWorld->AddLight(SkyLight);
-    }
-
-    // Add DirectionalLight
-    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
-    {
-        DirectionalLight->SetShadowBias(0.0005f);
-        DirectionalLight->SetMaxShadowBias(0.0009f);
-        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
-        DirectionalLight->SetCascadeSplitLambda(0.9f);
-
-        InWorld->AddLight(DirectionalLight);
-    }
-
-    return true;
-}
-
-FRHITextureRef FSandbox::LoadSkyboxFromPanorama(const FString& Filename)
+FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
 {
     FTexture2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     if (!Panorama)

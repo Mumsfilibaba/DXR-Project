@@ -4,19 +4,10 @@
 
 struct FSceneSkybox : public ISceneObject
 {
-    FSceneSkybox(FSkyboxComponent* InSkybox)
-        : Skybox(InSkybox)
-    {
-        if (InSkybox)
-        {
-            CubeMap = InSkybox->GetCubeMap();
-        }
-    }
+    FSceneSkybox(FSkyboxComponent* InSkybox);
+    ~FSceneSkybox();
 
-    ~FSceneSkybox()
-    {
-        Skybox = nullptr;
-    }
+    virtual void Tick() override final { }
 
     // Pointer to the light in the world
     FSkyboxComponent* Skybox;

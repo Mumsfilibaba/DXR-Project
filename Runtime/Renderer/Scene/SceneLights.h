@@ -19,18 +19,13 @@ struct FScenePointLight : public ISceneObject
         float    FarPlane;
     };
 
-    FScenePointLight(FPointLight* InLight)
-        : Light(InLight)
-    {
-    }
-    
-    ~FScenePointLight()
-    {
-        Light = nullptr;
-    }
+    FScenePointLight(FPointLight* InPointLight);
+    ~FScenePointLight();
+
+    virtual void Tick() override final { }
 
     // Pointer to the light in the world
-    FPointLight* Light;
+    FPointLight* PointLight;
 
     // Shadow generation information
     FFrustum    Frustums[RHI_NUM_CUBE_FACES];
@@ -47,18 +42,13 @@ struct FScenePointLight : public ISceneObject
 
 struct FSceneDirectionalLight : public ISceneObject
 {
-    FSceneDirectionalLight(FDirectionalLight* InLight)
-        : Light(InLight)
-    {
-    }
+    FSceneDirectionalLight(FDirectionalLight* InDirectionalLight);
+    ~FSceneDirectionalLight();
 
-    ~FSceneDirectionalLight()
-    {
-        Light = nullptr;
-    }
+    virtual void Tick() override final { }
 
     // Pointer to the light in the world
-    FDirectionalLight* Light;
+    FDirectionalLight* DirectionalLight;
 
     // Store data for rendering all cascades
     TArray<FMeshBatch>            MeshBatches;
@@ -67,14 +57,16 @@ struct FSceneDirectionalLight : public ISceneObject
 
 struct FSceneSkyLight : public ISceneObject
 {
-    FSceneSkyLight(FSkyLight* InLight);
+    FSceneSkyLight(FSkyLight* InSkyLight);
     ~FSceneSkyLight();
+
+    virtual void Tick() override final { }
 
     // Filters the source into the necessary cube-maps
     void FilterStaticCubeMaps();
 
     // Pointer to the light in the world
-    FSkyLight* Light;
+    FSkyLight* SkyLight;
 
     // Source cube-map
     FRHITextureRef SourceCubeMap;

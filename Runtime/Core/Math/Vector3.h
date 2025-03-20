@@ -49,6 +49,7 @@ public:
         if (LengthSqrd != 0.0f)
         {
             const float RcpLength = 1.0f / FMath::Sqrt(LengthSqrd);
+
             X *= RcpLength;
             Y *= RcpLength;
             Z *= RcpLength;
@@ -97,7 +98,7 @@ public:
     FORCEINLINE bool IsUnitVector() const noexcept
     {
         const float LengthDiff = FMath::Abs(1.0f - GetLengthSquared());
-        return (LengthDiff < FMath::kIsEqualEpsilon);
+        return LengthDiff < FMath::kIsEqualEpsilon;
     }
 
     /**

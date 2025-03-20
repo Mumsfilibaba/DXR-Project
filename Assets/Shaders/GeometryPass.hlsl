@@ -1,7 +1,8 @@
 #include "PBRHelpers.hlsli"
 #include "Structs.hlsli"
 #include "Constants.hlsli"
-#include "Tonemapping.hlsli"
+#include "ColorSpaceTransforms.hlsli"
+#include "FastMath.hlsli"
 
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)
@@ -17,6 +18,10 @@
 
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK (0)
+#endif
+
+#ifndef ENABLE_DOUBLE_SIDED
+    #define ENABLE_DOUBLE_SIDED (1)
 #endif
 
 // PerFrame
@@ -78,46 +83,43 @@ struct FVSOutput
     float3 TangentPosition  : TANGENTPOSITION0;
 #endif
 
-    float4 ClipPosition     : POSITION0;
-    float4 PrevClipPosition : POSITION1;
+    float3 PositionWS       : POSITION0;
+    float4 ClipPosition     : POSITION1;
+    float4 PrevClipPosition : POSITION2;
     float4 Position         : SV_Position;
 };
 
 FVSOutput VSMain(FVSInput Input)
 {
     // Position
-    const float4x4 Transform     = Constants.Transform.Transform; 
-    const float4   WorldPosition = mul(float4(Input.Position, 1.0), Transform);
+    const float4 PositionWS = mul(float4(Input.Position, 1.0), Constants.Transform.Transform);
 
     // Normal
     const float4x4 TransformInv = Constants.Transform.TransformInv;  
     float3 Normal = normalize(mul(float4(Input.Normal, 0.0), TransformInv).xyz);
 
-    // Check if the triangle is back-facing (based on the direction of the normal)
-    // float IsBackFacing = sign(dot(Normal, WorldPosition.xyz - Transform[3].xyz));
-    // Normal = normalize(Normal * IsBackFacing);
-
+    // Tangent 
     float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), TransformInv).xyz);
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
-
+    
+    // Bitangent 
     float3 Bitangent = normalize(cross(Tangent, Normal));
 
     FVSOutput Output;
-    Output.Normal    = Normal;
-    Output.Tangent   = Tangent;
-    Output.Bitangent = Bitangent;
-    Output.Position  = mul(WorldPosition, CameraBuffer.ViewProjection);
-
+    Output.Normal           = Normal;
+    Output.Tangent          = Tangent;
+    Output.Bitangent        = Bitangent;
+    Output.Position         = mul(PositionWS, CameraBuffer.ViewProjection);
+    Output.PositionWS       = PositionWS.xyz;
     // TODO: Handle moving objects (aka PrevTransform)
     Output.ClipPosition     = Output.Position;
-    Output.PrevClipPosition = mul(WorldPosition, CameraBuffer.PrevViewProjection);
-
-    Output.TexCoord = Input.TexCoord;
+    Output.PrevClipPosition = mul(PositionWS, CameraBuffer.PrevViewProjection);
+    Output.TexCoord         = Input.TexCoord;
 
 #if ENABLE_PARALLAX_MAPPING
     const float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
-    Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.Position);
-    Output.TangentPosition = mul(TangentSpace, WorldPosition.xyz);
+    Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.PositionWS);
+    Output.TangentPosition = mul(TangentSpace, PositionWS.xyz);
 #endif
 
     return Output;
@@ -137,8 +139,9 @@ struct FPSInput
     float3 TangentPosition : TANGENTPOSITION0;
 #endif
 
-    float4 ClipPosition     : POSITION0;
-    float4 PrevClipPosition : POSITION1;
+    float3 PositionWS       : POSITION0;
+    float4 ClipPosition     : POSITION1;
+    float4 PrevClipPosition : POSITION2;
     float4 Position         : SV_Position;
 };
 
@@ -195,9 +198,11 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 FPSOutput PSMain(FPSInput Input)
 {
     float2 TexCoords = Input.TexCoord;
+
+    // Handle parallax mapping
+#if ENABLE_PARALLAX_MAPPING
     TexCoords.y = 1.0 - TexCoords.y;
 
-#if ENABLE_PARALLAX_MAPPING
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
     TexCoords      = ParallaxMapping(TexCoords, ViewDir);
     if (TexCoords.x > 1.0 || TexCoords.y > 1.0 || TexCoords.x < 0.0 || TexCoords.y < 0.0)
@@ -206,6 +211,7 @@ FPSOutput PSMain(FPSInput Input)
     }
 #endif
 
+    // If we are using a packed albedo texture, sample it here 
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     const float4 AlbedoAlphaMask = AlbedoAlphaMap.Sample(MaterialSampler, TexCoords);
 #endif
@@ -219,7 +225,7 @@ FPSOutput PSMain(FPSInput Input)
         }
     #else
         const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
-        
+
         [[branch]]
         if (AlphaMask < 0.5)
         {
@@ -228,47 +234,90 @@ FPSOutput PSMain(FPSInput Input)
     #endif
 #endif
 
+    // Sample albedo
 #if ENABLE_PACKED_MATERIAL_TEXTURE
-    float3 SampledAlbedo = ApplyGamma(AlbedoAlphaMask.rgb) * MaterialBuffer.Albedo;
+    float3 Albedo = SRGBToLinear(AlbedoAlphaMask.rgb);
 #else
-    float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords)) * MaterialBuffer.Albedo;
+    float3 Albedo = SRGBToLinear(AlbedoMap.Sample(MaterialSampler, TexCoords));
 #endif
+    Albedo *= MaterialBuffer.Albedo;
 
+    // Sample normal
 #if ENABLE_NORMAL_MAPPING
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords);
     SampledNormal = UnpackNormalBC5(SampledNormal);
 
+    // Ensure Tangent frame is orthogonal
     float3 Tangent   = normalize(Input.Tangent);
     float3 Bitangent = normalize(Input.Bitangent);
     float3 Normal    = normalize(Input.Normal);
 
-    float3 OutputNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
-    OutputNormal = PackNormal(OutputNormal);
+    Normal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
 #else
-    float3 OutputNormal = normalize(Input.Normal);
-    OutputNormal = PackNormal(OutputNormal);
+    float3 Normal = normalize(Input.Normal);
 #endif
 
+#if ENABLE_DOUBLE_SIDED
+    {
+        // Check if the triangle is back-facing (based on the direction of the normal)
+        float3 ViewDir = normalize(CameraBuffer.PositionWS - Input.PositionWS);
+        
+        float Facing = dot(Normal, ViewDir);
+        // Facing = Facing >= 0.0 ? 1.0 : -1.0;
+
+        // If facing is negative, the triangle is back-facing.
+        Normal = normalize(Normal * Facing);
+    }
+#endif
+
+    // Pack the normal and prepare for output
+    Normal = PackNormal(Normal);
+
+    // Sample material params
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     const float3 AO_Roughness_Metal = AO_Roughness_Metal_Tex.Sample(MaterialSampler, TexCoords);
-    const float  SampledAO          = AO_Roughness_Metal.r * MaterialBuffer.AO;
-    const float  SampledRoughness   = AO_Roughness_Metal.g * MaterialBuffer.Roughness;
-    const float  SampledMetallic    = AO_Roughness_Metal.b * MaterialBuffer.Metallic;
+    float Occlusion = AO_Roughness_Metal.r;
+    float Roughness = AO_Roughness_Metal.g;
+    float Metallic  = AO_Roughness_Metal.b;
 #else
-    const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords)        * MaterialBuffer.AO;
-    const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords)  * MaterialBuffer.Metallic;
-    const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
+    float Occlusion = AOTex.Sample(MaterialSampler, TexCoords);
+    float Metallic  = MetallicTex.Sample(MaterialSampler, TexCoords);
+    float Roughness = RoughnessTex.Sample(MaterialSampler, TexCoords);
 #endif
 
-    const float FinalRoughness = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    Occlusion *= MaterialBuffer.AO;
+    Roughness *= MaterialBuffer.Roughness;
+    Metallic  *= MaterialBuffer.Metallic;
 
+    // Specular anti-aliasing
+    {
+        static const float Strength         = 1.0;
+        static const float MaxRoughnessGain = 0.02;
+
+        float  Roughness2         = Roughness * Roughness;
+        float3 DnDu               = ddx(Normal);
+        float3 DnDv               = ddy(Normal);
+        float  Variance           = (dot(DnDu, DnDu) + dot(DnDv, DnDv));
+        float  KernelRoughness2   = min(Variance * Strength, MaxRoughnessGain);
+        float  FilteredRoughness2 = saturate(Roughness2 + KernelRoughness2);
+        
+        Roughness = FastSqrt(FilteredRoughness2);
+    }
+
+    // Ensure we do not go above or below a certain roughness threshold
+    Roughness = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+
+    // Velocity
+    float3 PositionNDC     = (Input.ClipPosition.xyz / Input.ClipPosition.w);
+    float3 PrevPositionNDC = (Input.PrevClipPosition.xyz / Input.PrevClipPosition.w);
+    float2 Velocity        = (PositionNDC.xy - CameraBuffer.Jitter) - (PrevPositionNDC.xy - CameraBuffer.PrevJitter);
+
+    // Output
     FPSOutput Output;
-    Output.Albedo   = float4(SampledAlbedo, 1.0);
-    Output.Normal   = float4(OutputNormal, 1.0);
-    Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0);
+    Output.Albedo   = float4(Albedo, 1.0);
+    Output.Normal   = float4(Normal, 1.0);
+    Output.Material = float4(Roughness, Metallic, Occlusion, 1.0);
+    Output.Velocity = Velocity;
 
-    const float3 PositionNDC     = (Input.ClipPosition.xyz / Input.ClipPosition.w);
-    const float3 PrevPositionNDC = (Input.PrevClipPosition.xyz / Input.PrevClipPosition.w);
-    Output.Velocity = (PositionNDC.xy - CameraBuffer.Jitter) - (PrevPositionNDC.xy - CameraBuffer.PrevJitter);
     return Output;
 }

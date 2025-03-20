@@ -95,10 +95,22 @@ void FRendererSettingsWidget::Draw()
                 DrawFXAASettings();
             }
 
-            // Other
-            if (ImGui::CollapsingHeader("Other", ImGuiTreeNodeFlags_None))
+            // Tonemapping
+            if (ImGui::CollapsingHeader("Tonemapping", ImGuiTreeNodeFlags_None))
             {
-                DrawOtherSettings();
+                DrawTonemappingSettings();
+            }
+
+            // Display
+            if (ImGui::CollapsingHeader("Display", ImGuiTreeNodeFlags_None))
+            {
+                DrawDisplaySettings();
+            }
+
+            // Display
+            if (ImGui::CollapsingHeader("Culling", ImGuiTreeNodeFlags_None))
+            {
+                DrawCullingSettings();
             }
 
             // Debug
@@ -371,14 +383,14 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::Text("Enable view instancing");
         ImGui::NextColumn();
 
-        int32 FilterFunction = CVarFilterFunction->GetInt();
-
         const char* Items[] = 
         {
             "Grid PCF",
             "Poisson Disc PCF",
             "Percentage Closer Soft Shadows (PCSS)"
         };
+
+        int32 FilterFunction = FMath::Clamp<int32>(CVarFilterFunction->GetInt(), 0, 2);
 
         constexpr uint32 ItemSize = ARRAY_COUNT(Items);
         if (ImGui::Combo("##FilterFunction", &FilterFunction, Items, ItemSize))
@@ -395,7 +407,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::Text("Filter size");
         ImGui::NextColumn();
 
-        int32 FilterSize = CVarFilterSize->GetInt();
+        int32 FilterSize = FMath::Clamp<int32>(CVarFilterSize->GetInt(), 16, 1024);
         if (ImGui::SliderInt("##FilterSize", &FilterSize, 16, 1024, "%d"))
         {
             CVarFilterSize->SetAsInt(FilterSize, EConsoleVariableFlags::SetByCode);
@@ -410,7 +422,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::Text("Max filter-size");
         ImGui::NextColumn();
 
-        int32 MaxFilterSize = CVarMaxFilterSize->GetInt();
+        int32 MaxFilterSize = FMath::Clamp<int32>(CVarMaxFilterSize->GetInt(), 256, 1024);
         if (ImGui::SliderInt("##MaxFilterSize", &MaxFilterSize, 256, 1024, "%d"))
         {
             CVarMaxFilterSize->SetAsInt(MaxFilterSize, EConsoleVariableFlags::SetByCode);
@@ -435,8 +447,6 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             16, 32, 64, 128,
         };
 
-        const int32 NumPoissonDiscSamples = CVarNumPoissonDiscSamples->GetInt();
-
         int32 ItemIndex = [](int32 NumSamples)
         {
             if (NumSamples >= 128)
@@ -455,7 +465,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             {
                 return 0;
             }
-        }(NumPoissonDiscSamples);
+        }(CVarNumPoissonDiscSamples->GetInt());
 
         constexpr int32 ItemCount = ARRAY_COUNT(Items);
         if (ImGui::Combo("##NumPoissonDiscSamples", &ItemIndex, Items, ItemCount))
@@ -483,8 +493,6 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             1024, 2048, 4096, 8192,
         };
 
-        const int32 CascadeSize = CVarCascadeSize->GetInt();
-
         int32 ItemIndex = [](int32 InCascadeSize)
         {
             if (InCascadeSize >= 8192)
@@ -503,7 +511,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             {
                 return 0;
             }
-        }(CascadeSize);
+        }(CVarCascadeSize->GetInt());
 
         constexpr int32 ItemCount = ARRAY_COUNT(Items);
         if (ImGui::Combo("##CascadeSize", &ItemIndex, Items, ItemCount))
@@ -586,8 +594,6 @@ void FRendererSettingsWidget::DrawPointLightShadowSettings()
             128, 256, 512, 1024,
         };
 
-        const int32 PointLightShadowMapSize = CVarPointLightShadowMapSize->GetInt();
-
         int32 ItemIndex = [](int32 InPointLightShadowMapSize)
         {
             if (InPointLightShadowMapSize >= 1024)
@@ -606,7 +612,7 @@ void FRendererSettingsWidget::DrawPointLightShadowSettings()
             {
                 return 0;
             }
-        }(PointLightShadowMapSize);
+        }(CVarPointLightShadowMapSize->GetInt());
 
         constexpr int32 ItemCount = ARRAY_COUNT(Items);
         if (ImGui::Combo("##PointLightShadowMapSize", &ItemIndex, Items, ItemCount))
@@ -689,7 +695,7 @@ void FRendererSettingsWidget::DrawSSAOSettings()
         ImGui::Text("Kernel-size");
         ImGui::NextColumn();
 
-        int32 KernelSize = CVarKernelSize->GetInt();
+        int32 KernelSize = FMath::Clamp<int32>(CVarKernelSize->GetInt(), 1, 128);
         if (ImGui::SliderInt("##KernelSize", &KernelSize, 1, 128, "%d"))
         {
             CVarKernelSize->SetAsInt(KernelSize, EConsoleVariableFlags::SetByCode);
@@ -797,7 +803,7 @@ void FRendererSettingsWidget::DrawFXAASettings()
     ImGui::Columns(1);
 }
 
-void FRendererSettingsWidget::DrawOtherSettings()
+void FRendererSettingsWidget::DrawDisplaySettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
@@ -817,6 +823,16 @@ void FRendererSettingsWidget::DrawOtherSettings()
 
         ImGui::NextColumn();
     }
+
+    // Reset the columns
+    ImGui::Columns(1);
+}
+
+void FRendererSettingsWidget::DrawCullingSettings()
+{
+    // Setup the columns
+    ImGui::Columns(2, nullptr, false);
+    ImGui::SetColumnWidth(0, ColumnWidth);
 
     // Enable frustum-culling
     if (IConsoleVariable* CVarEnableFrustumCulling = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling"))
@@ -868,6 +884,68 @@ void FRendererSettingsWidget::DrawDebugSettings()
         if (ImGui::Checkbox("##EnableDebugDrawPointLights", &bEnableDebugDrawPointLights))
         {
             CVarEnableDebugDrawPointLights->SetAsBool(bEnableDebugDrawPointLights, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // Enable debug-draw light-probes
+    if (IConsoleVariable* CVarEnableDebugDrawLightProbes = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.LightProbes"))
+    {
+        ImGui::Text("Enable debug-draw light-probes");
+        ImGui::NextColumn();
+
+        bool bEnableDebugDrawLightProbes = CVarEnableDebugDrawLightProbes->GetBool();
+        if (ImGui::Checkbox("##EnableDebugDrawLightProbes", &bEnableDebugDrawLightProbes))
+        {
+            CVarEnableDebugDrawLightProbes->SetAsBool(bEnableDebugDrawLightProbes, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // Reset the columns
+    ImGui::Columns(1);
+}
+
+void FRendererSettingsWidget::DrawTonemappingSettings()
+{
+    // Setup the columns
+    ImGui::Columns(2, nullptr, false);
+    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    // Tonemapping Function
+    if (IConsoleVariable* CVarTonemappingFunction = FConsoleManager::Get().FindConsoleVariable("Renderer.Tonemapping.Function"))
+    {
+        ImGui::Text("Tonemapping Function");
+        ImGui::NextColumn();
+
+        const char* Items[] =
+        {
+            "Default", "ACES", "Reinhard", "Uncharted 2"
+        };
+
+        int32 ItemIndex = FMath::Clamp<int32>(CVarTonemappingFunction->GetInt(), 0, 3);
+
+        constexpr int32 ItemCount = ARRAY_COUNT(Items);
+        if (ImGui::Combo("##PointLightShadowMapSize", &ItemIndex, Items, ItemCount))
+        {
+            CVarTonemappingFunction->SetAsInt(ItemIndex, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // ReinhardIntensity
+    if (IConsoleVariable* CVarTonemappingReinhardIntensity = FConsoleManager::Get().FindConsoleVariable("Renderer.Tonemapping.ReinhardIntensity"))
+    {
+        ImGui::Text("Reinhard Intensity");
+        ImGui::NextColumn();
+
+        float ReinhardIntensity = CVarTonemappingReinhardIntensity->GetFloat();
+        if (ImGui::SliderFloat("##ReinhardIntensity", &ReinhardIntensity, 0.1f, 10.0f, "%.2f"))
+        {
+            CVarTonemappingReinhardIntensity->SetAsFloat(ReinhardIntensity, EConsoleVariableFlags::SetByCode);
         }
 
         ImGui::NextColumn();

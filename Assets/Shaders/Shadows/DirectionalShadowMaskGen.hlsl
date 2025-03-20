@@ -49,7 +49,8 @@
     #define CASCADE_FADE_FACTOR 0.05
 #endif
 
-#define ENABLE_FRAME_INDEX 1
+// Debugging defines
+#define ENABLE_FRAME_INDEX 0
 #define ENABLE_FIRST_CASCADE_ONLY 0
 
 #define MAX_PCSS_FILTER_SIZE 0.999
@@ -396,7 +397,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint CascadeIndex, inout uint RandomSeed)
 {
     // Calculate z-position in view-space
-    const float ViewPosZ = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInv);
+    const float ViewPosZ = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInvUnjittered);
 
     const float3 ProjectionPosition = mul(float4(PositionWS, 1.0), LightBuffer.ShadowMatrix).xyz;
 
@@ -486,7 +487,7 @@ void Main(FComputeShaderInput Input)
 
     const float2 PixelCenter   = float2(Pixel) + 0.5;
     const float2 TexCoord      = PixelCenter / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
-    const float3 PositionWS    = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
+    const float3 PositionWS    = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInvUnjittered);
     const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0));
     const float3 Normal        = UnpackNormal(GBufferNormal);
 

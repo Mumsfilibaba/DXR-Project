@@ -50,6 +50,10 @@ struct FCameraHLSL
     FMatrix4 Projection;
     FMatrix4 ProjectionInv;
 
+    // 448-576
+    FMatrix4 ProjectionUnjittered;
+    FMatrix4 ProjectionInvUnjittered;
+
     // 576-592
     FVector3 Position;
     float    NearPlane = 0.0f;

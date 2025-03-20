@@ -7,10 +7,13 @@ struct FModelCreateInfo;
 
 enum class EMeshImportFlags : uint8
 {
-    None             = 0,
-    ApplyScaleFactor = BIT(1),
-    ForceLeftHanded  = BIT(2),
-    
+    None = 0,
+
+    ApplyScaleFactor    = BIT(1),
+    ForceLeftHanded     = BIT(2),
+    InvertAxisX         = BIT(3),
+    RecalculateTangents = BIT(4),
+
     Default = ForceLeftHanded
 };
 

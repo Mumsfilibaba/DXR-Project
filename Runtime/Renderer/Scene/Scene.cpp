@@ -9,6 +9,7 @@
 #include "Engine/Resources/Material.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneSkybox.h"
+#include "Renderer/Scene/SceneLightProbe.h"
 
 bool GFreezeRendering = false;
 
@@ -75,6 +76,14 @@ FScene::~FScene()
     Lights.Clear();
     PointLights.Clear();
 
+    // Light-Probes
+    for (FSceneLightProbe* SceneLightProbe : LightProbes)
+    {
+        SAFE_DELETE(SceneLightProbe);
+    }
+
+    LightProbes.Clear();
+
     // Remove potential SkyLight
     SAFE_DELETE(SkyLight);
 
@@ -95,6 +104,9 @@ void FScene::Tick()
     {
         return;
     }
+
+    // Sync objects with the world
+    SyncWithWorld();
 
     // Updates LightData
     UpdateLights();
@@ -148,6 +160,17 @@ void FScene::AddLight(FLight* InLight)
     }
 }
 
+void FScene::AddLightProbe(FLightProbe* InLightProbe)
+{
+    if (InLightProbe)
+    {
+        FSceneLightProbe* NewLightProbe = new FSceneLightProbe(InLightProbe);
+        NewLightProbe->FilterStaticCubeMaps();
+
+        LightProbes.Add(NewLightProbe);
+    }
+}
+
 void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
 {
     DeferDeletion(Skybox);
@@ -172,6 +195,14 @@ void FScene::AddProxyComponent(FProxySceneComponent* InComponent)
     }
 }
 
+void FScene::SyncWithWorld()
+{
+    for (FSceneLightProbe* LightProbe : LightProbes)
+    {
+        LightProbe->Tick();
+    }
+}
+
 void FScene::UpdateLights()
 {
     TRACE_SCOPE("UpdateLights");
@@ -192,16 +223,16 @@ void FScene::UpdateLights()
         for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
         {
             // Update Frustum
-            ScenePointLight->Frustums[FaceIndex] = FFrustum(ScenePointLight->Light->GetShadowFarPlane(), ScenePointLight->Light->GetViewMatrix(FaceIndex), ScenePointLight->Light->GetProjectionMatrix(FaceIndex));
+            ScenePointLight->Frustums[FaceIndex] = FFrustum(ScenePointLight->PointLight->GetShadowFarPlane(), ScenePointLight->PointLight->GetViewMatrix(FaceIndex), ScenePointLight->PointLight->GetProjectionMatrix(FaceIndex));
             
             // Update ShadowData
-            FMatrix4 LightMatrix = ScenePointLight->Light->GetMatrix(FaceIndex);
+            FMatrix4 LightMatrix = ScenePointLight->PointLight->GetMatrix(FaceIndex);
             LightMatrix = LightMatrix.GetTranspose();
 
             ScenePointLight->ShadowData[FaceIndex].Matrix    = LightMatrix;
-            ScenePointLight->ShadowData[FaceIndex].Position  = ScenePointLight->Light->GetPosition();
-            ScenePointLight->ShadowData[FaceIndex].NearPlane = ScenePointLight->Light->GetShadowNearPlane();
-            ScenePointLight->ShadowData[FaceIndex].FarPlane  = ScenePointLight->Light->GetShadowFarPlane();
+            ScenePointLight->ShadowData[FaceIndex].Position  = ScenePointLight->PointLight->GetPosition();
+            ScenePointLight->ShadowData[FaceIndex].NearPlane = ScenePointLight->PointLight->GetShadowNearPlane();
+            ScenePointLight->ShadowData[FaceIndex].FarPlane  = ScenePointLight->PointLight->GetShadowFarPlane();
         }
     }
 }

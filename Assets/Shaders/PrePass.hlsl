@@ -65,13 +65,14 @@ struct FVSOutput
 
 FVSOutput VSMain(FVSInput Input)
 {
-    FVSOutput Output = (FVSOutput)0;
+    FVSOutput Output;
 
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0), Constants.Transform.Transform);
-    Output.Position = mul(WorldPosition, CameraBuffer.ViewProjection);
+    // Position
+    const float4 PositionWS = mul(float4(Input.Position, 1.0), Constants.Transform.Transform);
+    Output.Position = mul(PositionWS, CameraBuffer.ViewProjection);
 
-#if ENABLE_PARALLAX_MAPPING
     // Normal
+#if ENABLE_PARALLAX_MAPPING
     const float4x4 TransformInv = Constants.Transform.TransformInv;  
     float3 Normal  = normalize(mul(float4(Input.Normal, 0.0), TransformInv).xyz);
     float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), TransformInv).xyz);
@@ -79,13 +80,14 @@ FVSOutput VSMain(FVSInput Input)
     float3 Bitangent = normalize(cross(Tangent, Normal));
 
     const float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
-    Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.Position);
-    Output.TangentPosition = mul(TangentSpace, WorldPosition.xyz);
+    Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.PositionWS);
+    Output.TangentPosition = mul(TangentSpace, PositionWS.xyz);
 #endif
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     Output.TexCoord = Input.TexCoord;
 #endif
+
     return Output;
 }
 
@@ -147,11 +149,13 @@ void PSMain(FPSInput Input)
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
-    TexCoords.y = 1.0 - TexCoords.y;
 
 #if ENABLE_PARALLAX_MAPPING
+    TexCoords.y = 1.0 - TexCoords.y;
+
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
-    TexCoords      = ParallaxMapping(TexCoords, ViewDir);
+    TexCoords = ParallaxMapping(TexCoords, ViewDir);
+
     if (TexCoords.x > 1.0 || TexCoords.y > 1.0 || TexCoords.x < 0.0 || TexCoords.y < 0.0)
     {
         discard;

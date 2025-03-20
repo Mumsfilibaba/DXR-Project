@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Templates/TypeHash.h"
+#include "Core/Misc/CRC.h"
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12Descriptors.h"
@@ -10,7 +11,7 @@
 #if DEBUG_BUILD
     #define D3D12_BREAK_ON_HASH_COLLISION (1)
 #else
-    #define D3D12_BREAK_ON_HASH_COLLISION (0)
+    #define D3D12_BREAK_ON_HASH_COLLISION (1)
 #endif
 
 class FD3D12CommandContext;
@@ -205,14 +206,13 @@ struct FD3D12UniqueSamplerTable
         return FMemory::Memcmp(UniqueIDs, Other.UniqueIDs, sizeof(UniqueIDs)) != 0;
     }
 
+    friend uint64 GetHashForType(const FD3D12UniqueSamplerTable& Table)
+    {
+        return FCRC32::Generate(Table.UniqueIDs, sizeof(Table.UniqueIDs));
+    }
+
     uint16 UniqueIDs[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
 };
-
-// TODO: Add CRC32 here
-inline uint64 GetHashForType(const FD3D12UniqueSamplerTable& Table)
-{
-    return HashIntegers<uint16, D3D12_DEFAULT_SAMPLER_STATE_COUNT>(Table.UniqueIDs);
-}
 
 struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 {
@@ -356,7 +356,7 @@ private:
     FD3D12DescriptorHeapRef      Heap;
     FD3D12OnlineDescriptorBlock* Block;
     uint32                       CurrentHandle;
-    bool                         bSamplers;
+    bool                         bIsSamplerHeap;
 };
 
 class FD3D12DescriptorCache : public FD3D12DeviceChild
@@ -366,9 +366,11 @@ public:
     ~FD3D12DescriptorCache() = default;
 
     bool Initialize();
+
     void DirtyState();
     void DirtyStateSamplers();
     void DirtyStateResources();
+    void InvalidateCachedSamplerTables();
 
     void SetRenderTargets(FD3D12RenderTargetCache& Cache);
     void SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers);

@@ -7,7 +7,8 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 #if AABB_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
 
 SHADER_CONSTANT_BLOCK_BEGIN
-    float4x4 TransformMat;
+    float4x4 WorldMatrix;
+    float4   Color;
 SHADER_CONSTANT_BLOCK_END
 
 struct FVSInput
@@ -17,15 +18,16 @@ struct FVSInput
 
 float4 AABB_VSMain(FVSInput Input) : SV_Position
 {
-    return mul(mul(float4(Input.Position, 1.0f), Constants.TransformMat), CameraBuffer.ViewProjection);
+    return mul(mul(float4(Input.Position, 1.0), Constants.WorldMatrix), CameraBuffer.ViewProjection);
 }
 
 float4 AABB_PSMain() : SV_Target
 {
-    return float4(1.0f, 0.0f, 0.0f, 1.0f);
+    const float3 Color = Constants.Color.rgb;
+    return float4(Color, 1.0);
 }
 
-#endif
+#endif // AABB_DEBUG
 
 // PointLight Debug
 #if POINTLIGHT_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
@@ -47,21 +49,21 @@ struct FVSInput
 float4 Light_VSMain(FVSInput Input) : SV_Position
 {
     float3 Pos = Input.Position + Constants.WorldPosition;
-    return mul(float4(Pos, 1.0f), CameraBuffer.ViewProjection);
+    return mul(float4(Pos, 1.0), CameraBuffer.ViewProjection);
 }
 
 float4 Light_PSMain() : SV_Target
 {
-    return float4(Constants.Color.rgb, 1.0f);
+    return float4(Constants.Color.rgb, 1.0);
 }
 
-#endif
+#endif // POINTLIGHT_DEBUG
 
-// Occlusion Volume Debug
-#if OCCLUSION_VOLUME_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
+// AABB Solid Debug
+#if AABB_SOLID_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
 
 SHADER_CONSTANT_BLOCK_BEGIN
-    float4x4 TransformMat;
+    float4x4 WorldMatrix;
     float4   Color;
 SHADER_CONSTANT_BLOCK_END
 
@@ -70,14 +72,67 @@ struct FVSInput
     float3 Position : POSITION0;
 };
 
-float4 OcclusionDebug_VSMain(FVSInput Input) : SV_Position
+float4 AABBSolidDebug_VSMain(FVSInput Input) : SV_Position
 {
-    return mul(mul(float4(Input.Position, 1.0f), Constants.TransformMat), CameraBuffer.ViewProjection);
+    return mul(mul(float4(Input.Position, 1.0), Constants.WorldMatrix), CameraBuffer.ViewProjection);
 }
 
-float4 OcclusionDebug_PSMain() : SV_Target
+float4 AABBSolidDebug_PSMain() : SV_Target
 {
     return float4(Constants.Color);
 }
 
-#endif
+#endif // AABB_SOLID_DEBUG
+
+// LightProbe Debug
+#if LIGHTPROBE_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
+
+TextureCube<float4> CubeMap : register(t0);
+SamplerState CubeMapSampler : register(s0);
+
+SHADER_CONSTANT_BLOCK_BEGIN
+    float3 WorldPosition;
+    float  Padding;
+SHADER_CONSTANT_BLOCK_END
+
+struct FVSInput
+{
+    float3 Position : POSITION0;
+    float3 Normal   : NORMAL0;
+    float3 Tangent  : TANGENT0;
+    float2 TexCoord : TEXCOORD0;
+};
+
+struct FVSOutput
+{
+    float3 Normal     : NORMAL0;
+    float3 PositionWS : POSITION0;
+    float4 Position   : SV_Position;
+};
+
+FVSOutput Probe_VSMain(FVSInput Input)
+{
+    FVSOutput Output;
+    Output.Normal     = normalize(Input.Position);
+    Output.PositionWS = Input.Position + Constants.WorldPosition;
+    Output.Position   = mul(float4(Output.PositionWS, 1.0), CameraBuffer.ViewProjection);
+    return Output;
+}
+
+struct FPSInput
+{
+    float3 Normal     : NORMAL0;
+    float3 PositionWS : POSITION0;
+};
+
+float4 Probe_PSMain(FPSInput Input) : SV_Target
+{
+    const float3 ViewWS     = normalize(CameraBuffer.PositionWS - Input.PositionWS);
+    const float3 NormalWS   = normalize(Input.Normal);
+    const float3 Reflection = reflect(-ViewWS, NormalWS);
+    
+    const float3 CubeMapSample = CubeMap.SampleLevel(CubeMapSampler, Reflection, 0.0).rgb;
+    return float4(CubeMapSample, 1.0);
+}
+
+#endif // LIGHTPROBE_DEBUG

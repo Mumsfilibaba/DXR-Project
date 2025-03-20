@@ -302,8 +302,8 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
         const int32 MeshIndex = *MeshID;
         return Models[MeshIndex];
     }
-        
-    // Insert the a new model into the assetmanager
+
+    // Insert the a new model into the AssetManager
     const auto InsertModel = [this](const FString& Filename, const FModelCreateInfo& InCreateInfo)
     {
         TSharedRef<FModel> NewModel = new FModel();
@@ -311,7 +311,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
         {
             return TSharedRef<FModel>(nullptr);
         }
-        
+
         const int32 Index = Models.Size();
         Models.Emplace(NewModel);
         ModelsMap.Add(Filename, Index);
@@ -320,7 +320,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
 
     TSharedRef<FModel> NewModel;
     FModelCreateInfo NewCreateInfo;
-    
+
     // If we have enabled serialization then look up the cached model
     const bool bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
     if (bEnableAssetConversion)
@@ -328,12 +328,12 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
         if (FString* ExistingPath = AssetRegistry->FindFile(FinalPath))
         {
             const FStringView FileNameView(*ExistingPath);
-            
+
             if (ModelImporter->ImportFromFile(FileNameView, Flags, NewCreateInfo))
             {
                 NewModel = InsertModel(FinalPath, NewCreateInfo);
             }
-            
+
             if (NewModel)
             {
                 LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
@@ -345,13 +345,13 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
             }
         }
     }
-    
+
     // If we did not load custom format, reload source file
     bool bResult = false;
-    
+
     {
         SCOPED_LOCK(ModelImportersCS);
-        
+
         for (TSharedPtr<IModelImporter> Importer : ModelImporters)
         {
             const FStringView FileNameView(FinalPath);
@@ -362,18 +362,18 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
             }
         }
     }
-    
+
     if (bResult)
     {
         NewModel = InsertModel(FinalPath, NewCreateInfo);
     }
-    
+
     if (!NewModel)
     {
         LOG_ERROR("[FAssetManager]: Unsupported mesh format. Failed to load '%s'.", *FinalPath);
         return nullptr;
     }
-    
+
     if (bEnableAssetConversion)
     {
         const FString NewFilename = ReplaceExtension(FinalPath, ".dxrmesh");
@@ -382,7 +382,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
             AssetRegistry->AddEntry(FinalPath, NewFilename);
         }
     }
-    
+
     LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
     return NewModel;
 }

@@ -4,6 +4,7 @@ class FCamera;
 class FLight;
 class FProxySceneComponent;
 class FSkyboxComponent;
+class FLightProbe;
 
 struct IScene
 {
@@ -17,6 +18,9 @@ struct IScene
 
     // Adds a light to the scene
     virtual void AddLight(FLight* InLight) = 0;
+
+    // Adds a light-probe to the scene
+    virtual void AddLightProbe(FLightProbe* InLightProbe) = 0;
 
     // Adds a Skybox to the light
     virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) = 0;

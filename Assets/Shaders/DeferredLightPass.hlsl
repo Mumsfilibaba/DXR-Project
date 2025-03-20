@@ -16,17 +16,23 @@
     #define MAX_LIGHTS_PER_TILE 1024
 #endif
 
+// Tile Occupancy Debug
 #ifdef DRAW_TILE_DEBUG 
     #define DRAW_TILE_OCCUPANCY 1
 #else
     #define DRAW_TILE_OCCUPANCY 0
 #endif
 
-//#define DRAW_CASCADE_DEBUG
+// Cascade Debug
 #ifdef DRAW_CASCADE_DEBUG
     #define DRAW_SHADOW_CASCADE 1
 #else
     #define DRAW_SHADOW_CASCADE 0
+#endif
+
+// Enable Box-Projection for Light-Probes
+#ifndef ENABLE_LIGHT_PROBE_BOX_PROJECTION
+    #define ENABLE_LIGHT_PROBE_BOX_PROJECTION 1
 #endif
 
 // G-Buffer
@@ -38,29 +44,35 @@ Texture2D<float>  DepthStencilTex : register(t3);
 // Reflections
 Texture2D<float4> DXRReflection : register(t4);
 
-// Reflection probe
-TextureCube<float4> IrradianceMap         : register(t5);
-TextureCube<float4> SpecularIrradianceMap : register(t6);
-Texture2D<float2>   IntegrationLUT        : register(t7);
+// Pre-integrated LUT
+Texture2D<float2> IntegrationLUT : register(t5);
+
+// SkyLight
+TextureCube<float4> SkyLightDiffuseCubeMap  : register(t6);
+TextureCube<float4> SkyLightSpecularCubeMap : register(t7);
+
+// Light-Probe
+TextureCube<float4> ProbeDiffuseCubeMap  : register(t8);
+TextureCube<float4> ProbeSpecularCubeMap : register(t9);
 
 // Shadow Cascade
-Texture2D<float> DirectionalShadowMask : register(t8);
+Texture2D<float> DirectionalShadowMask : register(t10);
 
 // Point Shadows
-TextureCubeArray<float> PointLightShadowMaps : register(t9);
+TextureCubeArray<float> PointLightShadowMaps : register(t11);
 
 // SSAOBuffer
-Texture2D<float> SSAOBuffer : register(t10);
+Texture2D<float> SSAOBuffer : register(t12);
 
 // Shadow Cascade Data - (Debug data)
 #if DRAW_SHADOW_CASCADE
-Texture2D<uint> CascadeIndexBuffer : register(t11);
+Texture2D<uint> CascadeIndexBuffer : register(t13);
 #endif
 
 // Samplers
-SamplerState LUTSampler        : register(s0);
-SamplerState IrradianceSampler : register(s1);
-SamplerState GBufferSampler    : register(s2);
+SamplerState LUTSampler         : register(s0);
+SamplerState EnvironmentSampler : register(s1);
+SamplerState GBufferSampler     : register(s2);
 
 // Point-Lights
 SamplerComparisonState ShadowMapSampler0 : register(s3);
@@ -70,11 +82,13 @@ SHADER_CONSTANT_BLOCK_BEGIN
     int NumPointLights;
     int NumShadowCastingPointLights;
     int NumSkyLightMips;
-    int ScreenWidth;
+    int NumLightProbes;
 
-    // 16-24
+    // 16-32
+    int ScreenWidth;
     int ScreenHeight;
     int bEnablePointLightShadows;
+    int Padding0;
 SHADER_CONSTANT_BLOCK_END
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
@@ -100,16 +114,103 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 }
 
 ConstantBuffer<FDirectionalLight> DirectionalLightBuffer : register(b5);
+ConstantBuffer<FLightProbeInfo>   LightProbeInfoBuffer   : register(b6);
 
+// Scene Output
 RWTexture2D<float4> Output : register(u0);
 
+// SpecularEnvironment
+
+struct FSpecularEnvironmentInfo
+{
+    float3 ReflectionUVW;
+    float  Roughness;
+};
+
+float3 SpecularEnvironment(TextureCube<float4> SpecularCubeMap, FSpecularEnvironmentInfo EnvironmentInfo)
+{
+    // Use a modified version of roughness when selecting miplevels
+    float ModifiedRoughness = EnvironmentInfo.Roughness;
+    ModifiedRoughness *= 1.7 - (0.7 * ModifiedRoughness);
+
+    // Calculate the miplevel that we want to sample
+    const float SpecularMipLevel = ModifiedRoughness * ((float)(Constants.NumSkyLightMips) - 1.0);
+    
+    // Sample and return specular cube-map
+    return SpecularCubeMap.SampleLevel(EnvironmentSampler, EnvironmentInfo.ReflectionUVW, SpecularMipLevel).rgb;
+}
+
+float2 GetIntegrationConstants(float NDotV, float Roughness)
+{
+    return IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
+}
+
+// Diffuse Environment
+
+struct FDiffuseEnvironmentInfo
+{
+    float3 NormalUVW;
+};
+
+float3 DiffuseEnvironment(TextureCube<float4> DiffuseCubeMap, FDiffuseEnvironmentInfo EnvironmentInfo)
+{
+    // Sample and return the diffuse cube-map
+    return DiffuseCubeMap.SampleLevel(EnvironmentSampler, EnvironmentInfo.NormalUVW, 0.0).rgb;
+}
+
+// Box-Projection
+struct FBoxProjectionInfo
+{
+    float3 ReflectionUVW;
+    float3 PositionWS;
+    float3 CubeMapPositionWS;
+    float3 BoxMinWS;
+    float3 BoxMaxWS;
+    float  BoxProjection;
+};
+
+float3 BoxProjection(FBoxProjectionInfo BoxProjectionInfo)
+{
+#if ENABLE_LIGHT_PROBE_BOX_PROJECTION
+    [[branch]]
+    if (BoxProjectionInfo.BoxProjection > 0.0)
+    {
+        const float3 ReflectionUVW   = BoxProjectionInfo.ReflectionUVW;
+        const float3 Position        = BoxProjectionInfo.PositionWS;        // viewer's position
+        const float3 CubeMapPosition = BoxProjectionInfo.CubeMapPositionWS; // probe's world position
+
+        // Compute the relative positions from the viewer.
+        float3 RelativeMin = BoxProjectionInfo.BoxMinWS - Position;
+        float3 RelativeMax = BoxProjectionInfo.BoxMaxWS - Position;
+
+        float x = (ReflectionUVW.x > 0 ? RelativeMax.x : RelativeMin.x) / ReflectionUVW.x;
+        float y = (ReflectionUVW.y > 0 ? RelativeMax.y : RelativeMin.y) / ReflectionUVW.y;
+        float z = (ReflectionUVW.z > 0 ? RelativeMax.z : RelativeMin.z) / ReflectionUVW.z;
+
+        float Scalar = min(min(x, y), z);
+        
+        // Return the new sampling direction.
+        return ReflectionUVW * Scalar + (Position - CubeMapPosition);
+    }
+    else
+#endif
+    {
+        return BoxProjectionInfo.ReflectionUVW;
+    }
+}
+
+bool IsInsideAABB(float3 Position, float3 BoxMin, float3 BoxMax)
+{
+    return (Position.x >= BoxMin.x && Position.x <= BoxMax.x) && (Position.y >= BoxMin.y && Position.y <= BoxMax.y) && (Position.z >= BoxMin.z && Position.z <= BoxMax.z);
+}
+
 // Tiled Light Culling
-groupshared uint GroupMinZ;
-groupshared uint GroupMaxZ;
-groupshared uint GroupPointLightCounter;
-groupshared uint GroupPointLightIndices[MAX_LIGHTS_PER_TILE];
-groupshared uint GroupShadowPointLightCounter;
-groupshared uint GroupShadowPointLightIndices[MAX_LIGHTS_PER_TILE];
+groupshared uint GGroupMinZ;
+groupshared uint GGroupMaxZ;
+groupshared uint GGroupPointLightCounter;
+groupshared uint GGroupPointLightIndices[MAX_LIGHTS_PER_TILE];
+groupshared uint GGroupShadowPointLightCounter;
+groupshared uint GGroupShadowPointLightIndices[MAX_LIGHTS_PER_TILE];
 
 float GetNumTilesX()
 {
@@ -121,19 +222,14 @@ float GetNumTilesY()
     return DivideByMultiple(Constants.ScreenHeight, NUM_THREADS);
 }
 
-float2 GetIntegrationConstants(float NDotV, float Roughness)
-{
-    return IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
-}
-
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(FComputeShaderInput Input)
 {
     uint ThreadIndex = Input.GroupThreadID.y * NUM_THREADS + Input.GroupThreadID.x;
     if (ThreadIndex == 0)
     {
-        GroupMinZ = 0x7f7fffff;
-        GroupMaxZ = 0;
+        GGroupMinZ = 0x7f7fffff;
+        GGroupMaxZ = 0;
     }
 
     GroupMemoryBarrierWithGroupSync();
@@ -146,16 +242,17 @@ void Main(FComputeShaderInput Input)
     uint z = asuint(ViewPosZ);
     if (Depth < 1.0)
     {
-        InterlockedMin(GroupMinZ, z);
-        InterlockedMax(GroupMaxZ, z);
+        InterlockedMin(GGroupMinZ, z);
+        InterlockedMax(GGroupMaxZ, z);
     }
 
     GroupMemoryBarrierWithGroupSync();
 
-    float MinZ = asfloat(GroupMinZ);
-    float MaxZ = asfloat(GroupMaxZ);
+    float MinZ = asfloat(GGroupMinZ);
+    float MaxZ = asfloat(GGroupMaxZ);
 
     float4 Frustum[4];
+
     {
         float pxm    = float(NUM_THREADS * Input.GroupID.x);
         float pym    = float(NUM_THREADS * Input.GroupID.y);
@@ -189,12 +286,13 @@ void Main(FComputeShaderInput Input)
 
     if (ThreadIndex == 0)
     {
-        GroupPointLightCounter       = 0;
-        GroupShadowPointLightCounter = 0;
+        GGroupPointLightCounter       = 0;
+        GGroupShadowPointLightCounter = 0;
     }
 
     GroupMemoryBarrierWithGroupSync();
 
+    [loop]
     for (uint i = ThreadIndex; i < Constants.NumPointLights; i += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = PointLightsPosRad[i].Position;
@@ -208,12 +306,13 @@ void Main(FComputeShaderInput Input)
             (-ViewPos.z + MinZ < Radius) && (ViewPos.z - MaxZ < Radius))
         {
             uint Index = 0;
-            InterlockedAdd(GroupPointLightCounter, 1, Index);
-            GroupPointLightIndices[Index] = i;
+            InterlockedAdd(GGroupPointLightCounter, 1, Index);
+            GGroupPointLightIndices[Index] = i;
         }
     }
 
     // Cull point-light shadows
+    [loop]
     for (uint j = ThreadIndex; j < Constants.NumShadowCastingPointLights; j += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = ShadowCastingPointLightsPosRad[j].Position;
@@ -227,23 +326,24 @@ void Main(FComputeShaderInput Input)
             (-ViewPos.z + MinZ < Radius) && (ViewPos.z - MaxZ < Radius))
         {
             uint Index = 0;
-            InterlockedAdd(GroupShadowPointLightCounter, 1, Index);
-            GroupShadowPointLightIndices[Index] = j;
+            InterlockedAdd(GGroupShadowPointLightCounter, 1, Index);
+            GGroupShadowPointLightIndices[Index] = j;
         }
     }
 
     GroupMemoryBarrierWithGroupSync();
 
     // Discard pixels not rendered to the GBuffer
+    [[branch]]
     if (Depth == 1.0)
     {
         Output[Pixel] = 0.0;
         return;
     }
 
-    const float2 PixelFloat    = saturate((float2(Pixel) + 0.5) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
-    const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInv);
-    const float3 WorldPosition = mul(float4(ViewPosition, 1.0), CameraBuffer.ViewInv).xyz;
+    const float2 PixelFloat   = saturate((float2(Pixel) + 0.5) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
+    const float3 ViewPosition = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInv);
+    const float3 PositionWS   = mul(float4(ViewPosition, 1.0), CameraBuffer.ViewInv).xyz;
 
     const float3 GBufferNormal   = NormalBuffer.Load(int3(Pixel, 0)).rgb;
     const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(Pixel, 0)).rgb);
@@ -252,8 +352,8 @@ void Main(FComputeShaderInput Input)
     // Sample with a sampler since the texture is not necessarilly the same size as the screen
     const float ScreenSpaceAO = SSAOBuffer.SampleLevel(GBufferSampler, PixelFloat, 0).r;
     
-    const float3 ObjectNormal = UnpackNormal(GBufferNormal);
-    const float3 View = normalize(CameraBuffer.Position - WorldPosition);
+    const float3 NormalWS = UnpackNormal(GBufferNormal);
+    const float3 ViewWS   = normalize(CameraBuffer.PositionWS - PositionWS);
 
     const float GBufferRoughness = saturate(GBufferMaterial.r);
     const float GBufferMetallic  = saturate(GBufferMaterial.g);
@@ -265,92 +365,149 @@ void Main(FComputeShaderInput Input)
     float3 L0 = 0.0;
 
     // Pointlights
-    for (uint i = 0; i < GroupPointLightCounter; ++i)
+    [loop]
+    for (uint i = 0; i < GGroupPointLightCounter; ++i)
     {
-        const int Index = GroupPointLightIndices[i];
+        const int Index = GGroupPointLightIndices[i];
 
         const FPointLight     Light       = PointLights[Index];
         const FPositionRadius LightPosRad = PointLightsPosRad[Index];
 
-        float3 L = LightPosRad.Position - WorldPosition;
+        float3 L = LightPosRad.Position - PositionWS;
         float  DistanceSqrd = dot(L, L);
         float  Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
         L = normalize(L);
 
         float3 IncidentRadiance = Light.Color * Attenuation;
-        IncidentRadiance = DirectRadiance(F0, ObjectNormal, View, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
+        IncidentRadiance = DirectRadiance(F0, NormalWS, ViewWS, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
             
         L0 += IncidentRadiance;
     }
 
     // Point-light shadows
-    for (uint i = 0; i < GroupShadowPointLightCounter; i++)
+    [loop]
+    for (uint i = 0; i < GGroupShadowPointLightCounter; i++)
     {
-        int Index = GroupShadowPointLightIndices[i];
+        int Index = GGroupShadowPointLightIndices[i];
         const FShadowPointLight Light       = ShadowCastingPointLights[Index];
         const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[Index];
 
         float ShadowFactor;
+        
+        [branch]
         if (Constants.bEnablePointLightShadows)
         {
-            ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, WorldPosition, ObjectNormal, Light, LightPosRad);
+            ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, PositionWS, NormalWS, Light, LightPosRad);
         }
         else
         {
-            ShadowFactor = 1.0f;
+            ShadowFactor = 1.0;
         }
 
+        [branch]
         if (ShadowFactor > 0.001)
         {
-            float3 L = LightPosRad.Position - WorldPosition;
-            float DistanceSqrd = dot(L, L);
-            float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
+            float3 L = LightPosRad.Position - PositionWS;
+            float  DistanceSqrd = dot(L, L);
+            float  Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
             L = normalize(L);
 
             float3 IncidentRadiance = Light.Color * Attenuation;
-            IncidentRadiance = DirectRadiance(F0, ObjectNormal, View, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
+            IncidentRadiance = DirectRadiance(F0, NormalWS, ViewWS, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
 
             L0 += IncidentRadiance * ShadowFactor;
         }
     }
 
     // DirectionalLights
+    float ShadowMask = DirectionalShadowMask.Load(int3(Pixel, 0));
+
     {
         const FDirectionalLight Light = DirectionalLightBuffer;
         float3 L = normalize(-Light.Direction);
         
-        float ShadowFactor = DirectionalShadowMask.Load(int3(Pixel, 0));
-        if (ShadowFactor > 0.0)
+        [branch]
+        if (ShadowMask > 0.0)
         {
             float3 IncidentRadiance = Light.Color;
-            IncidentRadiance = DirectRadiance(F0, ObjectNormal, View, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);      
-            L0 += IncidentRadiance * ShadowFactor;
+            IncidentRadiance = DirectRadiance(F0, NormalWS, ViewWS, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);      
+            L0 += IncidentRadiance * ShadowMask;
         }
     }
-    
+
+    // Modify shadow-mask when sampling environment
+    ShadowMask = max(0.7, ShadowMask);
+
     // Image Based Lightning
     float3 FinalColor = L0;
+
     {
-        const float  NDotV      = max(dot(ObjectNormal, View), 0.0);
-        const float3 Reflection = reflect(-View, ObjectNormal);
+        float  NDotV      = max(dot(NormalWS, ViewWS), 0.0);
+        float3 Reflection = reflect(-ViewWS, NormalWS);
         
-        float3 F  = FresnelSchlick_Roughness(F0, View, ObjectNormal, GBufferRoughness);
+        float3 F  = FresnelSchlick_Roughness(F0, ViewWS, NormalWS, GBufferRoughness);
         float3 Ks = F;
         float3 Kd = 1.0 - Ks;
-        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, ObjectNormal, 0.0).rgb;
-        float3 Diffuse    = Irradiance * GBufferAlbedo * Kd;
 
-        float  SpecularMipLevel = GBufferRoughness * ((float)(Constants.NumSkyLightMips) - 1.0);
-        float3 PrefilteredMap   = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, SpecularMipLevel).rgb;
-        float2 BRDFIntegration  = GetIntegrationConstants(NDotV, GBufferRoughness);
-        float3 Specular         = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
+        // Sample cube-maps
+        FDiffuseEnvironmentInfo DiffuseEnvironmentInfo;
+        DiffuseEnvironmentInfo.NormalUVW = NormalWS;
 
-        float3 Ambient = (Diffuse + Specular) * GBufferAO;
-        FinalColor     = Ambient + L0;
+        FSpecularEnvironmentInfo SpecularEnvironmentInfo;
+        SpecularEnvironmentInfo.Roughness = GBufferRoughness;
+
+        float3 DiffuseSample;
+        float3 SpecularSample;
+        
+        [[branch]]
+        if (Constants.NumLightProbes > 0)
+        {
+            [[branch]]
+            if (IsInsideAABB(PositionWS, LightProbeInfoBuffer.BoxMinWS, LightProbeInfoBuffer.BoxMaxWS))
+            {
+                FBoxProjectionInfo BoxProjectionInfo;
+                BoxProjectionInfo.ReflectionUVW     = normalize(Reflection);
+                BoxProjectionInfo.PositionWS        = PositionWS;
+                BoxProjectionInfo.CubeMapPositionWS = LightProbeInfoBuffer.BoxOriginWS;
+                BoxProjectionInfo.BoxMinWS          = LightProbeInfoBuffer.BoxMinWS;
+                BoxProjectionInfo.BoxMaxWS          = LightProbeInfoBuffer.BoxMaxWS;
+                BoxProjectionInfo.BoxProjection     = LightProbeInfoBuffer.BoxProjection;
+                
+                SpecularEnvironmentInfo.ReflectionUVW = BoxProjection(BoxProjectionInfo);
+
+                SpecularSample = SpecularEnvironment(ProbeSpecularCubeMap, SpecularEnvironmentInfo);
+                DiffuseSample  = DiffuseEnvironment(ProbeDiffuseCubeMap, DiffuseEnvironmentInfo);
+            }
+            else
+            {
+                SpecularEnvironmentInfo.ReflectionUVW = Reflection;
+
+                // Apply shadow-mask so that environment is not too visible in the shadowed areas
+                SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, SpecularEnvironmentInfo) * ShadowMask;
+                DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, DiffuseEnvironmentInfo) * ShadowMask;
+            }
+        }
+        else
+        {
+            SpecularEnvironmentInfo.ReflectionUVW = Reflection;
+
+            // Apply shadow-mask so that environment is not too visible in the shadowed areas
+            SpecularSample = SpecularEnvironment(SkyLightSpecularCubeMap, SpecularEnvironmentInfo)* ShadowMask;
+            DiffuseSample  = DiffuseEnvironment(SkyLightDiffuseCubeMap, DiffuseEnvironmentInfo) * ShadowMask;
+        }
+
+        // Perform calculations
+        float2 BRDFIntegration = GetIntegrationConstants(NDotV, GBufferRoughness);
+        
+        float3 Specular = SpecularSample * (Ks * BRDFIntegration.x + BRDFIntegration.y);
+        float3 Diffuse  = DiffuseSample * GBufferAlbedo * Kd;
+        float3 Ambient  = (Diffuse + Specular) * GBufferAO;
+        FinalColor = Ambient + L0;
+        // FinalColor = SpecularSample;
     }
 
 #if DRAW_TILE_OCCUPANCY
-    const uint TotalLightCount = GroupPointLightCounter + GroupShadowPointLightCounter;
+    const uint TotalLightCount = GGroupPointLightCounter + GGroupShadowPointLightCounter;
     
     float4 Tint = 1.0;
     

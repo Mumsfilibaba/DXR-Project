@@ -203,7 +203,6 @@ void Cascade_PSMain(FPSCascadeInput Input)
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
-    TexCoords.y = 1.0f - TexCoords.y;
 
     // TODO: Perform Parallax mapping
 

@@ -9,6 +9,18 @@ static TAutoConsoleVariable<bool> CVarFXAADebug(
     "Enables FXAA (Anti-Aliasing) Debugging mode",
     false);
 
+static TAutoConsoleVariable<int32> CVarTonemappingFunction(
+    "Renderer.Tonemapping.Function",
+    "Select function to use during tonemapping. 0: Default 1: ACES 2: Reinhard 3: Uncharted 2",
+    1,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarTonemappingReinhardIntensity(
+    "Renderer.Tonemapping.ReinhardIntensity",
+    "Intensity/\"Exposure\" when using Reinhard tonemapping",
+    1.0f,
+    EConsoleVariableFlags::Default);
+
 FTonemapPass::FTonemapPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , TonemapPSO(nullptr)
@@ -110,6 +122,22 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
 
 void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
+    // Function to return a enum from the tonemapping cvar
+    const auto GetTonemappingFunctionCVar = []()
+    {
+        const int32 Function = CVarTonemappingFunction.GetValue();
+        switch (Function)
+        {
+            case 0:
+            case 1: return ETonemappingType::ACES;
+            case 2: return ETonemappingType::Reinhard;
+            case 3: return ETonemappingType::Uncharted2;
+
+            // Default to ACES
+            default: return ETonemappingType::ACES;
+        }
+    };
+
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Tonemapping and BackBuffer-Blit");
 
     TRACE_SCOPE("Tonemapping and BackBuffer-Blit");
@@ -135,6 +163,15 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     FRHIShaderResourceView* FinalTargetSRV = FrameResources.FinalTarget->GetShaderResourceView();
     CommandList.SetShaderResourceView(TonemapShader.Get(), FinalTargetSRV, 0);
     CommandList.SetSamplerState(TonemapShader.Get(), FrameResources.GBufferSampler.Get(), 0);
+
+    FTonemapInfoHLSL TonemapInfo;
+    TonemapInfo.TonemappingType   = GetTonemappingFunctionCVar();
+    TonemapInfo.ReinhardIntensity = FMath::Clamp<float>(CVarTonemappingReinhardIntensity.GetValue(), 0.1f, 10.0f);
+    TonemapInfo.Padding0          = 0.0f;
+    TonemapInfo.Padding1          = 0.0f;
+
+    constexpr uint32 NumConstants = sizeof(FTonemapInfoHLSL) / sizeof(uint32);
+    CommandList.Set32BitShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
 
     CommandList.DrawInstanced(3, 1, 0, 0);
 
@@ -305,16 +342,13 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& Fra
         float Height;
     } Settings;
 
-    const float RenderWidth  = static_cast<float>(FrameResources.CurrentWidth);
-    const float RenderHeight = static_cast<float>(FrameResources.CurrentHeight);
+    Settings.Width  = static_cast<float>(FrameResources.CurrentWidth);
+    Settings.Height = static_cast<float>(FrameResources.CurrentHeight);
 
-    Settings.Width = RenderWidth;
-    Settings.Height = RenderHeight;
-
-    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(Settings.Width, Settings.Height, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
 
-    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    FScissorRegion ScissorRegion(Settings.Width, Settings.Height, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
     FRHIBeginRenderPassInfo RenderPass;

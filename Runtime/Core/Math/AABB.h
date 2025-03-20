@@ -24,6 +24,19 @@ public:
     }
 
     /**
+     * @brief Constructs an AABB given width, height, and depth, centered at (0,0,0).
+     * @param Width The width of the box along the x-axis.
+     * @param Height The height of the box along the y-axis.
+     * @param Depth The depth of the box along the z-axis.
+     */
+    FORCEINLINE FAABB(float Width, float Height, float Depth)
+    {
+        const FVector3 HalfSize = FVector3(Width * 0.5f, Height * 0.5f, Depth * 0.5f);
+        Min = FVector3(-HalfSize.X, -HalfSize.Y, -HalfSize.Z);
+        Max = FVector3( HalfSize.X,  HalfSize.Y,  HalfSize.Z);
+    }
+
+    /**
      * @brief Calculates the center position of the bounding box.
      * @return The center position of the bounding box.
      */

@@ -184,7 +184,6 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
-    TexCoords.y = 1.0f - TexCoords.y;
 
     // TODO: Do parallax-mapping
 

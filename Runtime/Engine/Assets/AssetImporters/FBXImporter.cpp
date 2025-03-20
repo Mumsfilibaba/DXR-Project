@@ -23,7 +23,7 @@ static FString ExtractPath(const FString& FullFilePath)
     }
 }
 
-static FMatrix4 ToFloat4x4(const ofbx::DMatrix& Matrix)
+static FMatrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
 {
     FMatrix4 Result;
     for (uint32 y = 0; y < 4; y++)
@@ -36,6 +36,18 @@ static FMatrix4 ToFloat4x4(const ofbx::DMatrix& Matrix)
     }
 
     return Result;
+}
+
+static bool DoesFlipHandness(const FMatrix4& Matrix)
+{
+    FVector3 X(1.0f, 0.0f, 0.0f);
+    X = Matrix.TransformNormal(X);
+    
+    FVector3 Y(0.0f, 1.0f, 0.0f);
+    Y = Matrix.TransformNormal(Y);
+
+    FVector3 Z = Matrix.GetInverse().TransformCoord(X.CrossProduct(Y));
+    return Z.Z < 0.0f;
 }
 
 static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
@@ -86,17 +98,6 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         return false;
     }
 
-    EFBXFlags FBXFlags = EFBXFlags::None;
-    if ((InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None)
-    {
-        FBXFlags |= EFBXFlags::ApplyScaleFactor;
-    }
-
-    if ((InFlags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None)
-    {
-        FBXFlags |= EFBXFlags::ForceLeftHanded;
-    }
-
     // Estimate sizes to avoid to many allocations
     uint32 MaterialCount = 0;
     for (int32 MeshIndex = 0; MeshIndex < FBXScene->getMeshCount(); ++MeshIndex)
@@ -109,8 +110,8 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     TArray<int32> PartitionIndicies;
 
     // Unique tables
-    TMap<FVertex, uint32> UniqueVertices;
     TMap<uint64, uint32>  UniqueMaterials;
+    TMap<FVertex, uint32> UniqueVertices;
     UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
@@ -155,9 +156,14 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             OutModelInfo.Materials.Add(Move(MaterialCreateInfo));
         }
 
-        const FMatrix4 Matrix          = ToFloat4x4(CurrentMesh->getGlobalTransform());
-        const FMatrix4 GeometricMatrix = ToFloat4x4(CurrentMesh->getGeometricMatrix());
-        const FMatrix4 Transform       = Matrix * GeometricMatrix;
+        const bool bApplyScaleFactor = (InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None;
+
+        const FMatrix4 ScaleMatrix     = FMatrix4::Scale(bApplyScaleFactor ? GlobalSettings->UnitScaleFactor : 1.0f);
+        const FMatrix4 GlobalTransform = FBXConvertMatrix(CurrentMesh->getGlobalTransform());
+        const FMatrix4 GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
+        const FMatrix4 Transform       = GlobalTransform * GeometricMatrix * ScaleMatrix;
+
+        const bool bDoesFlipHandedness = DoesFlipHandness(Transform);
 
         const ofbx::GeometryData& GeometryData = CurrentMesh->getGeometryData();
         ofbx::Vec3Attributes Positions = GeometryData.getPositions();
@@ -166,7 +172,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         ofbx::Vec2Attributes TexCoords = GeometryData.getUVs();
 
         const int32 PartitionCount = GeometryData.getPartitionCount();
-        
+
         FMeshCreateInfo MeshCreateInfo;
         MeshCreateInfo.Indices.Reserve(Positions.count);
         MeshCreateInfo.Vertices.Reserve(Positions.values_count);
@@ -205,12 +211,6 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     const FVector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
                     Vertex.Position = Transform.Transform(Position);
 
-                    // Apply the scene scale
-                    if ((FBXFlags & EFBXFlags::ApplyScaleFactor) != EFBXFlags::None)
-                    {
-                        Vertex.Position *= GlobalSettings->UnitScaleFactor;
-                    }
-
                     // Normal
                     if (Normals.values)
                     {
@@ -230,8 +230,9 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                     // TexCoords
                     if (TexCoords.values)
                     {
+                        // We need to correct UVs (I assume since DirectX coordinate system)
                         const ofbx::Vec2 OfbxTexCoord = TexCoords.get(VertexIdx);
-                        Vertex.TexCoord = FVector2(OfbxTexCoord.x, OfbxTexCoord.y);
+                        Vertex.TexCoord = FVector2(OfbxTexCoord.x, 1.0f - OfbxTexCoord.y);
                     }
 
                     // Only push unique vertices
@@ -272,19 +273,25 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             }
         }
 
-        // If there are no tangents, then we calculate them
-        if (!Tangents.values)
-        {
-            MeshCreateInfo.CalculateTangents();
-        }
-
         // Convert to left-handed
-        if ((FBXFlags & EFBXFlags::ForceLeftHanded) != EFBXFlags::None)
+        if ((InFlags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None)
         {
             if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
             {
                 MeshCreateInfo.ReverseHandedness();
             }
+        }
+
+        if ((InFlags & EMeshImportFlags::InvertAxisX) != EMeshImportFlags::None)
+        {
+            MeshCreateInfo.InvertAxisX();
+        }
+
+        // If there are no tangents, then we calculate them
+        const bool bRecalculateTangents = (InFlags & EMeshImportFlags::RecalculateTangents) != EMeshImportFlags::None;
+        if (!Tangents.values || bRecalculateTangents)
+        {
+            MeshCreateInfo.CalculateTangents();
         }
 
         // Add the mesh to our scene

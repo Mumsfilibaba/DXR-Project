@@ -39,6 +39,8 @@ public:
     FProxySceneComponent();
     virtual ~FProxySceneComponent();
 
+    virtual void Tick() override final { }
+
     void UpdateOcclusion();
 
     bool IsOccluded() const

@@ -123,7 +123,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     GPU_TRACE_SCOPE(CommandList, "Forward Pass");
 
-    CommandList.TransitionTexture(FrameResources.ShadowMapCascades.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTexture(FrameResources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
 
     const float RenderWidth  = float(FrameResources.CurrentWidth);
     const float RenderHeight = float(FrameResources.CurrentHeight);
@@ -214,7 +214,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTexture(FrameResources.ShadowMapCascades.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTexture(FrameResources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End ForwardPass");
 }

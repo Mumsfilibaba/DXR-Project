@@ -71,14 +71,14 @@ void FDirectionalLight::Tick(FCamera& Camera)
     };
 
     // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
-    FMatrix4 InverseViewProjection = Camera.GetViewProjectionInverseMatrix();
-    InverseViewProjection = InverseViewProjection.GetTranspose();
+    FMatrix4 InvViewProjection = Camera.GetViewProjectionInverseMatrix();
+    InvViewProjection = InvViewProjection.GetTranspose();
 
     // Calculate the center of frustum
     FVector3 FrustumCenter = FVector3(0.0f);
     for (int32 Corner = 0; Corner < 8; ++Corner)
     {
-        FrustumCorners[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
+        FrustumCorners[Corner] = InvViewProjection.TransformCoord(FrustumCorners[Corner]);
         FrustumCenter += FrustumCorners[Corner];
     }
 
@@ -95,9 +95,11 @@ void FDirectionalLight::Tick(FCamera& Camera)
         ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
     }
 
+#if 0
     // Generate a bounds-matrix
     {
         float Radius = 0.0f;
+
         for (int32 Index = 0; Index < 8; ++Index)
         {
             const float Distance = (FrustumCorners[Index] - FrustumCenter).GetLength();
@@ -117,6 +119,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
         ShadowNearPlane = -Extents.Z;
         ShadowFarPlane  =  Extents.Z;
     }
+#endif
 }
 
 void FDirectionalLight::SetRotation(const FVector3& InRotation)

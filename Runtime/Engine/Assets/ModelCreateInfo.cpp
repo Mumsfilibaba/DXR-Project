@@ -106,34 +106,107 @@ void FMeshCreateInfo::CalculateSoftNormals()
     }
 }
 
+static FVector3 GetOrthoNormal(const FVector3& Tangent, const FVector3& Normal)
+{
+    return (Tangent - (Tangent.DotProduct(Normal)) * Normal).GetNormalized();
+};
+
 void FMeshCreateInfo::CalculateTangents()
 {
     CHECK(Indices.Size() % 3 == 0);
 
-    auto CalculateTangentFromVectors = [](FVertex& Vertex1, const FVertex& Vertex2, const FVertex& Vertex3)
-    {
-        FVector3 Edge1   = Vertex2.Position - Vertex1.Position;
-        FVector3 Edge2   = Vertex3.Position - Vertex1.Position;
-        FVector2 UVEdge1 = Vertex2.TexCoord - Vertex1.TexCoord;
-        FVector2 UVEdge2 = Vertex3.TexCoord - Vertex1.TexCoord;
-
-        const float RcpDenominator = 1.0f / (UVEdge1.X * UVEdge2.Y - UVEdge2.X * UVEdge1.Y);
-
-        FVector3 Tangent = RcpDenominator * ((UVEdge2.Y * Edge1) - (UVEdge1.Y * Edge2));
-        Tangent.Normalize();
-
-        Vertex1.Tangent = Tangent;
-    };
+    TArray<FVector3> TangentAccumulation;
+    TangentAccumulation.Resize(Vertices.Size());
 
     for (int32 i = 0; i < Indices.Size(); i += 3)
     {
-        FVertex& Vertex1 = Vertices[Indices[i + 0]];
-        FVertex& Vertex2 = Vertices[Indices[i + 1]];
-        FVertex& Vertex3 = Vertices[Indices[i + 2]];
+        const uint32 Index0 = Indices[i + 0];
+        const uint32 Index1 = Indices[i + 1];
+        const uint32 Index2 = Indices[i + 2];
 
-        CalculateTangentFromVectors(Vertex1, Vertex2, Vertex3);
-        CalculateTangentFromVectors(Vertex2, Vertex3, Vertex1);
-        CalculateTangentFromVectors(Vertex3, Vertex1, Vertex2);
+        FVector3 Edge1    = Vertices[Index1].Position - Vertices[Index0].Position;
+        FVector3 Edge2    = Vertices[Index2].Position - Vertices[Index0].Position;
+        FVector2 DeltaUV1 = Vertices[Index1].TexCoord - Vertices[Index0].TexCoord;
+        FVector2 DeltaUV2 = Vertices[Index2].TexCoord - Vertices[Index0].TexCoord;
+
+        const float Denom    = DeltaUV1.X * DeltaUV2.Y - DeltaUV2.X * DeltaUV1.Y;
+        const float RcpDenom = FMath::Abs<float>(Denom) > 0.0f ? 1.0f / Denom : 0.0f;
+
+        FVector3 Tangent;
+        Tangent.X = RcpDenom * (DeltaUV2.Y * Edge1.X - DeltaUV1.Y * Edge2.X);
+        Tangent.Y = RcpDenom * (DeltaUV2.Y * Edge1.Y - DeltaUV1.Y * Edge2.Y);
+        Tangent.Z = RcpDenom * (DeltaUV2.Y * Edge1.Z - DeltaUV1.Y * Edge2.Z);
+
+        TangentAccumulation[Index0] += Tangent;
+        TangentAccumulation[Index1] += Tangent;
+        TangentAccumulation[Index2] += Tangent;
+    }
+
+    for (int32 i = 0; i < Vertices.Size(); i++)
+    {
+        FVector3 Tangent = TangentAccumulation[i].Normalize();
+        Vertices[i].Tangent = GetOrthoNormal(Tangent, Vertices[i].Normal);
+    }
+}
+
+void FMeshCreateInfo::ValidateTangents()
+{
+    const auto IsValid = [](const FVector3& Vector)
+    {
+        return !Vector.ContainsInfinity() && !Vector.ContainsNaN();
+    };
+
+    TArray<FVector3> TangentAccumulation;
+    TangentAccumulation.Resize(Vertices.Size());
+
+    // Loop over each triangle (assumes indices are in groups of 3).
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        const uint32 Index0 = Indices[i + 0];
+        const uint32 Index1 = Indices[i + 1];
+        const uint32 Index2 = Indices[i + 2];
+
+        FVertex& Vertex1 = Vertices[Index0];
+        FVertex& Vertex2 = Vertices[Index1];
+        FVertex& Vertex3 = Vertices[Index2];
+
+        // Use FVector3's member functions to check for infinity or NaN in normals and tangents.
+        const bool bValid1 = IsValid(Vertex1.Tangent);
+        const bool bValid2 = IsValid(Vertex2.Tangent);
+        const bool bValid3 = IsValid(Vertex3.Tangent);
+
+        // If any vertex in the triangle has invalid data, recalculate based on triangle geometry.
+        if (!bValid1 || !bValid2 || !bValid3)
+        {
+            // Compute two edge vectors from the triangle.
+            FVector3 Edge1 = Vertex2.Position - Vertex1.Position;
+            FVector3 Edge2 = Vertex3.Position - Vertex1.Position;
+
+            // Calculate the triangle's normal using the cross product, then normalize.
+            FVector3 TriangleNormal = Edge1.CrossProduct(Edge2).GetNormalized();
+
+            // Select an arbitrary vector not parallel to the normal.
+            FVector3 Arbitrary = (FMath::Abs<float>(TriangleNormal.X) < 0.9f) ? FVector3(1.0f, 0.0f, 0.0f) : FVector3(0.0f, 1.0f, 0.0f);
+
+            // Compute a tangent vector perpendicular to the normal.
+            FVector3 TriangleTangent = TriangleNormal.CrossProduct(Arbitrary).GetNormalized();
+
+            // Update vertices with invalid tangent.
+            if (!bValid1)
+            {
+                Vertex1.Tangent = GetOrthoNormal(TriangleTangent, TriangleNormal);
+            }
+
+            if (!bValid2)
+            {
+                Vertex2.Tangent = GetOrthoNormal(TriangleTangent, TriangleNormal);
+            }
+
+            if (!bValid3)
+            {
+                Vertex3.Tangent = GetOrthoNormal(TriangleTangent, TriangleNormal);
+            }
+        }
     }
 }
 
@@ -141,6 +214,26 @@ void FMeshCreateInfo::ReverseHandedness()
 {
     CHECK(Indices.Size() % 3 == 0);
 
+    // Reverse the triangle winding order
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        uint32 TempIndex = Indices[i + 1];
+        Indices[i + 1]   = Indices[i + 2];
+        Indices[i + 2]   = TempIndex;
+    }
+
+    // Invert Z for positions, normals, and tangents
+    for (int32 i = 0; i < Vertices.Size(); ++i)
+    {
+        Vertices[i].Position.Z *= -1.0f;
+        Vertices[i].Normal.Z   *= -1.0f;
+        Vertices[i].Tangent.Z  *= -1.0f;
+    }
+}
+
+void FMeshCreateInfo::InvertAxisX()
+{
+    // Reverse the triangle winding order
     for (int32 i = 0; i < Indices.Size(); i += 3)
     {
         uint32 TempIndex = Indices[i + 1];
@@ -148,10 +241,12 @@ void FMeshCreateInfo::ReverseHandedness()
         Indices[i + 2] = TempIndex;
     }
 
+    // Invert X for positions, normals, and tangents
     for (int32 i = 0; i < Vertices.Size(); ++i)
     {
-        Vertices[i].Position.Z = Vertices[i].Position.Z * -1.0f;
-        Vertices[i].Normal.Z   = Vertices[i].Normal.Z   * -1.0f;
+        Vertices[i].Position.X *= -1.0f;
+        Vertices[i].Normal.X   *= -1.0f;
+        Vertices[i].Tangent.X  *= -1.0f;
     }
 }
 

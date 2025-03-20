@@ -59,7 +59,10 @@ struct ENGINE_API FMeshCreateInfo
     void CalculateSoftNormals();
     void CalculateTangents();
 
+    void ValidateTangents();
+
     void ReverseHandedness();
+    void InvertAxisX();
 
     TArray<uint16> GetSmallIndices() const;
 

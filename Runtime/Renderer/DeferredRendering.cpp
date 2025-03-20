@@ -396,8 +396,17 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
         }
         else
-        {            
+        {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
+        }
+
+        if (Material->IsDoubleSided())
+        {
+            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(1)");
+        }
+        else
+        {
+            ShaderDefines.Emplace("ENABLE_DOUBLE_SIDED", "(0)");
         }
 
         FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
@@ -981,23 +990,36 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
     CommandList.SetShaderResourceView(LightPassShader, nullptr, 4); // DXR-Reflection
 
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 5);
+
     if (Scene)
     {
+        // Global SkyLight as a fallback
         if (FSceneSkyLight* SkyLight = Scene->SkyLight)
         {
-            CommandList.SetShaderResourceView(LightPassShader, SkyLight->DiffuseCubeMap->GetShaderResourceView(), 5);
-            CommandList.SetShaderResourceView(LightPassShader, SkyLight->SpecularCubeMap->GetShaderResourceView(), 6);
+            CommandList.SetShaderResourceView(LightPassShader, SkyLight->DiffuseCubeMap->GetShaderResourceView(), 6);
+            CommandList.SetShaderResourceView(LightPassShader, SkyLight->SpecularCubeMap->GetShaderResourceView(), 7);
+        }
+
+        // Local Light-Probe
+        if (!Scene->LightProbes.IsEmpty())
+        {
+            // TODO: Support more than the first probe
+            if (FSceneLightProbe* LightProbe = Scene->LightProbes.FirstElement())
+            {
+                CommandList.SetShaderResourceView(LightPassShader, LightProbe->DiffuseCubeMap->GetShaderResourceView(), 8);
+                CommandList.SetShaderResourceView(LightPassShader, LightProbe->SpecularCubeMap->GetShaderResourceView(), 9);
+            }
         }
     }
 
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 7);
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.DirectionalShadowMask->GetShaderResourceView(), 8);
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.PointLightShadowMaps->GetShaderResourceView(), 9);
-    CommandList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 10);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.DirectionalShadowMask->GetShaderResourceView(), 10);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.PointLightShadowMaps->GetShaderResourceView(), 11);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 12);
 
     if (bDrawCascades)
     {
-        CommandList.SetShaderResourceView(LightPassShader, FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 11);
+        CommandList.SetShaderResourceView(LightPassShader, FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 13);
     }
 
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
@@ -1006,6 +1028,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.ShadowCastingPointLightsBuffer.Get(), 3);
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.DirectionalLightDataBuffer.Get(), 5);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.LightProbeBuffer.Get(), 6);
 
     CommandList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
     CommandList.SetSamplerState(LightPassShader, FrameResources.LightProbeSampler.Get(), 1);
@@ -1021,11 +1044,13 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         int32 NumPointLights;
         int32 NumShadowCastingPointLights;
         int32 NumSkyLightMips;
+        int32 NumLightProbes;
+
+        // 16-32
         int32 ScreenWidth;
-        
-        // 16-24
         int32 ScreenHeight;
         int32 bEnablePointLightShadows;
+        int32 Padding0;
     } LightPassSettings;
 
     const int32 RenderWidth  = FrameResources.CurrentWidth;
@@ -1034,8 +1059,10 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     LightPassSettings.NumSkyLightMips             = 0;
     LightPassSettings.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
     LightPassSettings.NumPointLights              = FrameResources.PointLightsData.Size();
+    LightPassSettings.NumLightProbes              = FrameResources.LightProbeInfos.Size();
     LightPassSettings.ScreenWidth                 = static_cast<int32>(RenderWidth);
     LightPassSettings.ScreenHeight                = static_cast<int32>(RenderHeight);
+    LightPassSettings.Padding0                    = 0;
 
     if (Scene)
     {

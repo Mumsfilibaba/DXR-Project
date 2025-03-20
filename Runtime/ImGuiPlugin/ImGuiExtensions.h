@@ -22,8 +22,10 @@ namespace ImGuiExtensions
         return ImGui::Button(Label);
     }
 
-    FORCEINLINE void DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
+    FORCEINLINE bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
     {
+        bool bResult = false;
+
         ImGui::PushID(Label);
         ImGui::Columns(2, nullptr, false);
 
@@ -47,7 +49,9 @@ namespace ImGuiExtensions
         if (ImGui::Button("X", ButtonSize))
         {
             OutValue.X = ResetValue;
+            bResult = true;
         }
+
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
@@ -62,7 +66,9 @@ namespace ImGuiExtensions
         if (ImGui::Button("Y", ButtonSize))
         {
             OutValue.Y = ResetValue;
+            bResult = true;
         }
+
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
@@ -77,7 +83,9 @@ namespace ImGuiExtensions
         if (ImGui::Button("Z", ButtonSize))
         {
             OutValue.Z = ResetValue;
+            bResult = true;
         }
+
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
@@ -89,6 +97,8 @@ namespace ImGuiExtensions
         ImGui::PopStyleVar();
         ImGui::Columns(1);
         ImGui::PopID();
+
+        return bResult;
     }
 
     FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)

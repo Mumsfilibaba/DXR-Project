@@ -395,6 +395,30 @@ NODISCARD constexpr bool IsTypelessFormat(EFormat Format)
     }
 }
 
+// Converts a format into a SRV compatible one
+NODISCARD constexpr EFormat CastSRVFormat(EFormat Format)
+{
+    switch (Format)
+    {
+        // TODO: Fix formats better
+        case EFormat::R32G32B32A32_Typeless: return EFormat::R32G32B32A32_Float;
+        case EFormat::R32G32B32_Typeless:    return EFormat::R32G32B32_Float;
+        case EFormat::R16G16B16A16_Typeless: return EFormat::R16G16B16A16_Float;
+        case EFormat::R32G32_Typeless:       return EFormat::R32G32B32_Float;
+        case EFormat::R10G10B10A2_Typeless:  return EFormat::R10G10B10A2_Unorm;
+        case EFormat::R8G8B8A8_Typeless:     return EFormat::R8G8B8A8_Unorm;
+        case EFormat::R16G16_Typeless:       return EFormat::R16G16_Float;
+        case EFormat::R32_Typeless:
+        case EFormat::D32_Float:             return EFormat::R32_Float;
+        case EFormat::R24G8_Typeless:        return EFormat::R24_Unorm_X8_Typeless;
+        case EFormat::R8G8_Typeless:         return EFormat::R8G8_Unorm;
+        case EFormat::R16_Typeless:          return EFormat::R16_Float;
+        case EFormat::D16_Unorm:             return EFormat::R16_Unorm;
+        case EFormat::R8_Typeless:           return EFormat::R8_Unorm;
+        default:                             return Format;
+    }
+}
+
 enum class EIndexFormat : uint8
 {
     Unknown = 0,

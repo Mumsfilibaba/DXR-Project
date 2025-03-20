@@ -8,6 +8,7 @@
 #include "Renderer/Scene/MeshBatch.h"
 #include "Renderer/Scene/SceneLights.h"
 #include "Renderer/Scene/SceneSkybox.h"
+#include "Renderer/Scene/SceneLightProbe.h"
 
 class FWorld;
 class FMaterial;
@@ -32,11 +33,17 @@ public:
     // Adds a light to the scene
     virtual void AddLight(FLight* InLight) override final;
 
+    // Adds a light-probe to the scene
+    virtual void AddLightProbe(FLightProbe* InLightProbe) override final;
+
     // Adds a Skybox to the light
     virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) override final;
 
     // TODO: Adds a new mesh to be drawn, but most renderer primitives should take this path
     virtual void AddProxyComponent(FProxySceneComponent* InComponent) override final;
+
+    // Update all scene objects with the world version of the object
+    void SyncWithWorld();
 
     // Update Lights
     void UpdateLights();
@@ -83,6 +90,9 @@ public:
 
     // All materials
     TArray<FMaterial*> Materials;
+
+    // All LightProbes
+    TArray<FSceneLightProbe*> LightProbes;
 
     // Objects to be deleted next frame
     TArray<ISceneObject*> DeferredObjects;

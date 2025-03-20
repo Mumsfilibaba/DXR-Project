@@ -150,6 +150,11 @@ void FWorld::AddLightProbe(FLightProbe* InLightProbe)
     {
         DEBUG_BREAK();
     }
+
+    if (Scene)
+    {
+        Scene->AddLightProbe(InLightProbe);
+    }
 }
 
 void FWorld::AddRendererComponent(FSceneComponent* RendererComponent)

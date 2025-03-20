@@ -4,6 +4,25 @@
 #include "Renderer/RenderPass.h"
 #include "Renderer/FrameResources.h"
 
+enum class ETonemappingType : int32
+{
+    Unknown    = 0,
+    ACES       = 1,
+    Reinhard   = 2,
+    Uncharted2 = 3,
+};
+
+struct FTonemapInfoHLSL
+{
+    // 0-16
+    ETonemappingType TonemappingType;
+    float            ReinhardIntensity;
+    float            Padding0;
+    float            Padding1;
+};
+
+MARK_AS_REALLOCATABLE(FTonemapInfoHLSL);
+
 class FTonemapPass : public FRenderPass
 {
 public:

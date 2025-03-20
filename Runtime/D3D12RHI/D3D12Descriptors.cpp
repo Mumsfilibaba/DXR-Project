@@ -10,7 +10,6 @@ static TAutoConsoleVariable<int32> CVarNumOfflineDescriptors(
     D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT,
     EConsoleVariableFlags::Default);
 
-
 FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12Device* InDevice, ID3D12DescriptorHeap* InHeap, D3D12_DESCRIPTOR_HEAP_TYPE InType, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags, uint32 InNumDescriptors)
     : FD3D12DeviceChild(InDevice)
     , Heap(MakeComPtr<ID3D12DescriptorHeap>(InHeap))
@@ -162,7 +161,6 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
     Heaps.Emplace(Heap, Desc.NumDescriptors);
     return true;
 }
-
 
 FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : FD3D12DeviceChild(InDevice)

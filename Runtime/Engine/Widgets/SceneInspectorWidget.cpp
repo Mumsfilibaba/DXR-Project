@@ -393,6 +393,58 @@ void FSceneInspectorWidget::DrawSceneInfo()
         ImGui::NewLine();
     }
 
+    // Light-Probes
+    if (ImGui::CollapsingHeader("Light-Probes", ImGuiTreeNodeFlags_None))
+    {
+        int32 LightProbeIndex = 0;
+        for (FLightProbe* CurrentLightProbe : CurrentWorld->GetLightProbes())
+        {
+            ImGui::PushID(CurrentLightProbe);
+
+            if (ImGui::TreeNode("##LightProbe", "LightProbe %d", LightProbeIndex++))
+            {
+                // Position
+                FVector3 Position = CurrentLightProbe->GetPosition();
+                ImGuiExtensions::DrawFloat3Control("Position", Position, 0.0f, ColumnWidth);
+                CurrentLightProbe->SetPosition(Position);
+
+                // Box Extent
+                FVector3 BoxExtent = CurrentLightProbe->GetBoxExtents();
+                ImGuiExtensions::DrawFloat3Control("Box Extent", BoxExtent, 0.0f, ColumnWidth);
+                CurrentLightProbe->SetBoxExtent(BoxExtent);
+
+                // Box Offset
+                FVector3 BoxOffset = CurrentLightProbe->GetBoxOffset();
+                ImGuiExtensions::DrawFloat3Control("Box Origin", BoxOffset, 0.0f, ColumnWidth);
+                CurrentLightProbe->SetBoxOffset(BoxOffset);
+
+                // Enable or disable box-projection
+                ImGui::Columns(2, nullptr, false);
+                ImGui::SetColumnWidth(0, ColumnWidth);
+
+                ImGui::Text("Enable Box-Projection");
+                ImGui::NextColumn();
+
+                bool bBoxProjection = CurrentLightProbe->GetBoxProjection();
+                if (ImGui::Checkbox("##BoxProjection", &bBoxProjection))
+                {
+                    CurrentLightProbe->SetBoxProjection(bBoxProjection);
+                }
+
+                ImGui::NextColumn();
+
+                // Reset the columns
+                ImGui::Columns(1);
+
+                ImGui::TreePop();
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::NewLine();
+    }
+
     // Actors
     if (ImGui::CollapsingHeader("Actors", ImGuiTreeNodeFlags_None))
     {

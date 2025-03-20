@@ -52,11 +52,11 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
 
 /* D3D12 Feature Support */
 
-D3D12RHI_API bool GD3D12ForceBinding           = false;
-D3D12RHI_API bool GD3D12SupportPipelineCache   = false;
-D3D12RHI_API bool GD3D12SupportTightAlignment  = false;
-D3D12RHI_API bool GD3D12SupportGPUUploadHeaps  = false;
-D3D12RHI_API bool GD3D12SupportBindless        = false;
+D3D12RHI_API bool GD3D12ForceBinding            = false;
+D3D12RHI_API bool GD3D12SupportPipelineCache    = false;
+D3D12RHI_API bool GD3D12SupportTightAlignment   = false;
+D3D12RHI_API bool GD3D12SupportGPUUploadHeaps   = false;
+D3D12RHI_API bool GD3D12SupportBindless         = false;
 D3D12RHI_API bool GD3D12SupportEnhancedBarriers = false;
 
 D3D12RHI_API D3D12_RESOURCE_BINDING_TIER      GD3D12ResourceBindingTier     = D3D12_RESOURCE_BINDING_TIER_1;

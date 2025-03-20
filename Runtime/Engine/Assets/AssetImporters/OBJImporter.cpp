@@ -130,7 +130,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
                 if (Index.texcoord_index >= 0)
                 {
                     const uint32 TexCoordIndex = NumTexCoordsPerTriangle * Index.texcoord_index;
-                    Vertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
+                    Vertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], 1.0f - Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
                 uint32 VertexIndex;
@@ -152,15 +152,9 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
             SubMeshInfo.VertexCount = MeshCreateInfo.Vertices.Size() - SubMeshInfo.BaseVertex;
             SubMeshInfo.IndexCount  = MeshCreateInfo.Indices.Size() - SubMeshInfo.StartIndex;
             MeshCreateInfo.SubMeshes.Add(SubMeshInfo);
-            
+
             // Calculate tangents and create mesh
             MeshCreateInfo.CalculateTangents();
-
-            const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
-            if (bReverseHandedness)
-            {
-                MeshCreateInfo.ReverseHandedness();
-            }
 
             if (Shape.name.empty())
             {

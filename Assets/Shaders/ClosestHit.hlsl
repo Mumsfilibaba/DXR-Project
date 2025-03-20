@@ -2,6 +2,7 @@
 #include "Structs.hlsli"
 #include "RayTracingHelpers.hlsli"
 #include "Constants.hlsli"
+#include "ColorSpaceTransforms.hlsli"
 
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0);
@@ -96,12 +97,12 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     Normal = ApplyNormalMapping(MappedNormal, Normal, Tangent, Bitangent);
     
     float LOD = (min(RayTCurrent(), 1000.0f) / 1000.0f) * 15.0f;
-    float3 AlbedoColor = ApplyGamma(MaterialTextures[AlbedoIndex].SampleLevel(TextureSampler, TexCoords, LOD).rgb);
+    float3 AlbedoColor = SRGBToLinear(MaterialTextures[AlbedoIndex].SampleLevel(TextureSampler, TexCoords, LOD).rgb);
     
     // Send a new ray for reflection
     const float3 HitPosition = WorldHitPosition();
     const float3 LightDir    = normalize(float3(0.0f, 1.0f, 0.0f));
-    const float3 ViewDir     = normalize(CameraBuffer.Position - HitPosition);
+    const float3 ViewDir     = normalize(CameraBuffer.PositionWS - HitPosition);
     
     //// MaterialProperties
     const float SampledAO        = 1.0f; //AOMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.AO;

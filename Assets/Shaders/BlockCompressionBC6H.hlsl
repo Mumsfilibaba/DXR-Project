@@ -41,7 +41,7 @@ float3 TexCoordToCubeMapDir(in float2 TexCoord, in uint FaceIndex)
 	// Convert TexCoord into [-1, 1] range:
 	TexCoord = TexCoord * 2.0 - 1.0;
 
-	// and UV.y should point upwards:
+	// ... and UV.y should point upwards:
 	TexCoord.y *= -1.0;
 
 	switch (FaceIndex)
@@ -752,9 +752,9 @@ void Main(uint3 GroupID : SV_GroupID, uint3 DispatchThreadID : SV_DispatchThread
 	if (all(BlockCoord < Constants.TextureSizeInBlocks))
 	{
 		// Gather Texels for current 4x4 Block
-		// 0 1 2 3
-		// 4 5 6 7
-		// 8 9 10 11
+		// 0  1  2  3
+		// 4  5  6  7
+		// 8  9  10 11
 		// 12 13 14 15
 		const float2 TexCoord = BlockCoord * Constants.TextureSizeRcp * 4.0 + Constants.TextureSizeRcp;
 

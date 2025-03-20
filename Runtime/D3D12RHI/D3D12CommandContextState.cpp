@@ -160,7 +160,7 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
 
             NumSamplerDescriptors += NumSamplers[CurrentStage];
         }
-
+        
         if (!CommonState.DescriptorCache.GetSamplerHeap().HasSpace(NumSamplerDescriptors))
         {
             if (!CommonState.DescriptorCache.GetSamplerHeap().Realloc())
@@ -169,7 +169,10 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
                 return;
             }
 
-            LOG_INFO("SamplerHeap Roll-Over");
+            // The current descriptor-block is now freed, therefore we also need to reset the cached sampler-descriptor-table
+            CommonState.DescriptorCache.InvalidateCachedSamplerTables();
+
+            LOG_WARNING("SamplerHeap Roll-Over");
         }
     }
 

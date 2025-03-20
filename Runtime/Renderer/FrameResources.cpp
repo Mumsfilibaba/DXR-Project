@@ -90,8 +90,10 @@ bool FFrameResources::Initialize()
     IrradianceProbeSize         = ClampTextureSize(32, 512, CVarEnvironmentIrradianceProbeSize.GetValue());
     SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, CVarEnvironmentSpecularIrradianceProbeSize.GetValue());
 
+    // Directional-Light
     FRHIBufferInfo BufferInfo(sizeof(FDirectionalLightDataHLSL), sizeof(FDirectionalLightDataHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     DirectionalLightDataBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!DirectionalLightDataBuffer)
     {
         DEBUG_BREAK();
@@ -104,6 +106,7 @@ bool FFrameResources::Initialize()
 
     BufferInfo = FRHIBufferInfo(sizeof(FCascadeGenerationInfoHLSL), sizeof(FCascadeGenerationInfoHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     CascadeGenerationDataBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!CascadeGenerationDataBuffer)
     {
         DEBUG_BREAK();
@@ -114,10 +117,12 @@ bool FFrameResources::Initialize()
         CascadeGenerationDataBuffer->SetDebugName("CascadeGenerationData Buffer");
     }
 
+    // Point-Lights
     PointLightsData.Reserve(MAX_LIGHTS_PER_TILE);
 
     BufferInfo = FRHIBufferInfo(PointLightsData.CapacityInBytes(), PointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     PointLightsBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!PointLightsBuffer)
     {
         DEBUG_BREAK();
@@ -132,6 +137,7 @@ bool FFrameResources::Initialize()
 
     BufferInfo = FRHIBufferInfo(PointLightsPosRad.CapacityInBytes(), PointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     PointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!PointLightsPosRadBuffer)
     {
         DEBUG_BREAK();
@@ -142,10 +148,11 @@ bool FFrameResources::Initialize()
         PointLightsPosRadBuffer->SetDebugName("PointLights Position and Radius Buffer");
     }
 
-    ShadowCastingPointLightsData.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
+    ShadowCastingPointLightsData.Reserve(NUM_SHADOW_CASTING_POINT_LIGHTS);
 
     BufferInfo = FRHIBufferInfo(ShadowCastingPointLightsData.CapacityInBytes(), ShadowCastingPointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     ShadowCastingPointLightsBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!ShadowCastingPointLightsBuffer)
     {
         DEBUG_BREAK();
@@ -156,10 +163,11 @@ bool FFrameResources::Initialize()
         ShadowCastingPointLightsBuffer->SetDebugName("ShadowCasting PointLights Buffer");
     }
 
-    ShadowCastingPointLightsPosRad.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
+    ShadowCastingPointLightsPosRad.Reserve(NUM_SHADOW_CASTING_POINT_LIGHTS);
 
     BufferInfo = FRHIBufferInfo(ShadowCastingPointLightsPosRad.CapacityInBytes(), ShadowCastingPointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
     ShadowCastingPointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
     if (!ShadowCastingPointLightsPosRadBuffer)
     {
         DEBUG_BREAK();
@@ -170,6 +178,23 @@ bool FFrameResources::Initialize()
         ShadowCastingPointLightsPosRadBuffer->SetDebugName("ShadowCastingPointLightsPosRadBuffer");
     }
 
+    // Light-Probes
+    LightProbeInfos.Reserve(NUM_LIGHT_PROBES);
+
+    BufferInfo = FRHIBufferInfo(LightProbeInfos.CapacityInBytes(), LightProbeInfos.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    LightProbeBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
+    if (!LightProbeBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        LightProbeBuffer->SetDebugName("Light-Probe Infos");
+    }
+
+    // Occlusion volumes
     TStaticArray<FVector3, 16> Vertices =
     {
         FVector3(-0.515f, -0.515f, -0.515f), // 0
@@ -235,6 +260,7 @@ bool FFrameResources::Initialize()
 
     BufferInfo = FRHIBufferInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
     OcclusionVolume.IndexBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::Common, Indices.Data());
+
     if (!OcclusionVolume.IndexBuffer)
     {
         DEBUG_BREAK();
@@ -253,19 +279,21 @@ bool FFrameResources::Initialize()
 
 void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Scene)
 {
-    PointLightsPosRad.Clear();
-    PointLightsData.Clear();
-    ShadowCastingPointLightsPosRad.Clear();
-    ShadowCastingPointLightsData.Clear();
-
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Update Lights");
 
     TRACE_SCOPE("Update LightBuffers");
 
+    PointLightsPosRad.Clear();
+    PointLightsData.Clear();
+    ShadowCastingPointLightsPosRad.Clear();
+    ShadowCastingPointLightsData.Clear();
+    ShadowCastingPointLightsData.Clear();
+    LightProbeInfos.Clear();
+
     // Update DirectionalLight
     if (Scene->DirectionalLight)
     {
-        FDirectionalLight* DirectionalLight = Scene->DirectionalLight->Light;
+        FDirectionalLight* DirectionalLight = Scene->DirectionalLight->DirectionalLight;
 
         // Pre-multiply light intensity TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
         FVector3 Color = DirectionalLight->GetColor();
@@ -305,7 +333,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     // Update PointLights
     for (int32 Index = 0; Index < Scene->PointLights.Size(); Index++)
     {
-        FPointLight* PointLight = Scene->PointLights[Index]->Light;
+        FPointLight* PointLight = Scene->PointLights[Index]->PointLight;
 
         // Pre-multiply light intensity TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
         FVector3 Color = PointLight->GetColor();
@@ -336,6 +364,22 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         }
     }
 
+    // Update LightProbes
+    for (int32 Index = 0; Index < Scene->LightProbes.Size(); Index++)
+    {
+        FSceneLightProbe* LightProbe = Scene->LightProbes[Index];
+
+        FLightProbeInfoHLSL Info;
+        Info.BoxOriginWS   = LightProbe->Origin;
+        Info.BoxProjection = LightProbe->bBoxProjection ? 1.0f : 0.0f;
+        Info.BoxMinWS      = LightProbe->BoxMin;
+        Info.Padding0      = 0.0f;
+        Info.BoxMaxWS      = LightProbe->BoxMax;
+        Info.Padding1      = 0.0f;
+
+        LightProbeInfos.Emplace(Info);
+    }
+
     // Update GPU Buffers
     if (PointLightsData.SizeInBytes() > static_cast<int32>(PointLightsBuffer->GetSize()))
     {
@@ -351,6 +395,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     {
         FRHIBufferInfo BufferInfo(PointLightsPosRad.CapacityInBytes(), PointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         PointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
         if (!PointLightsPosRadBuffer)
         {
             DEBUG_BREAK();
@@ -361,6 +406,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     {
         FRHIBufferInfo BufferInfo(ShadowCastingPointLightsData.CapacityInBytes(), ShadowCastingPointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         ShadowCastingPointLightsBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
         if (!ShadowCastingPointLightsBuffer)
         {
             DEBUG_BREAK();
@@ -371,19 +417,38 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     {
         FRHIBufferInfo BufferInfo(ShadowCastingPointLightsPosRad.CapacityInBytes(), ShadowCastingPointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         ShadowCastingPointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
         if (!ShadowCastingPointLightsPosRadBuffer)
         {
             DEBUG_BREAK();
         }
     }
 
+    if (LightProbeInfos.SizeInBytes() > static_cast<int32>(LightProbeBuffer->GetSize()))
+    {
+        FRHIBufferInfo BufferInfo(LightProbeInfos.CapacityInBytes(), LightProbeInfos.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+        LightProbeBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+
+        if (!LightProbeBuffer)
+        {
+            DEBUG_BREAK();
+        }
+    }
+
+    // Directional-Light
     CommandList.TransitionBuffer(DirectionalLightDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.TransitionBuffer(CascadeGenerationDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+
+    // Point-Lights
     CommandList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
 
+    // Light-Probes
+    CommandList.TransitionBuffer(LightProbeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+
+    // Directional-Light
     if (DirectionalLightDataDirty)
     {
         CommandList.UpdateBuffer(DirectionalLightDataBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalLightDataHLSL)), &DirectionalLightData);
@@ -396,6 +461,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CascadeGenerationDataDirty = false;
     }
 
+    // Point-Lights
     if (!PointLightsData.IsEmpty())
     {
         CommandList.UpdateBuffer(PointLightsBuffer.Get(), FBufferRegion(0, PointLightsData.SizeInBytes()), PointLightsData.Data());
@@ -408,12 +474,24 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CommandList.UpdateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), FBufferRegion(0, ShadowCastingPointLightsPosRad.SizeInBytes()), ShadowCastingPointLightsPosRad.Data());
     }
 
+    // Light-Probes
+    if (!LightProbeInfos.IsEmpty())
+    {
+        CommandList.UpdateBuffer(LightProbeBuffer.Get(), FBufferRegion(0, LightProbeInfos.SizeInBytes()), LightProbeInfos.Data());
+    }
+
+    // Directional-Light
     CommandList.TransitionBuffer(DirectionalLightDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     CommandList.TransitionBuffer(CascadeGenerationDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+
+    // Point-Lights
     CommandList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     CommandList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     CommandList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     CommandList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+
+    // Light-Probes
+    CommandList.TransitionBuffer(LightProbeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Update Lights");
 }
@@ -467,7 +545,7 @@ void FFrameResources::Release()
     CascadeGenerationDataBuffer.Reset();
 
     PointLightShadowMaps.Reset();
-    ShadowMapCascades.Reset();
+    ShadowCascades.Reset();
 
     CascadeMatrixBuffer.Reset();
     CascadeMatrixBufferSRV.Reset();
@@ -476,6 +554,8 @@ void FFrameResources::Release()
     CascadeSplitsBuffer.Reset();
     CascadeSplitsBufferSRV.Reset();
     CascadeSplitsBufferUAV.Reset();
+
+    LightProbeBuffer.Reset();
 
     OcclusionVolume.VertexBuffer.Reset();
     OcclusionVolume.IndexBuffer.Reset();
