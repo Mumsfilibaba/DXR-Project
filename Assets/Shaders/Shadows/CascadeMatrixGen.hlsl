@@ -72,7 +72,7 @@ void Main(FComputeShaderInput Input)
         [unroll]
         for (int Index = 0; Index < 8; ++Index)
         {
-            float4 Corner = mul(float4(FrustumCornersWS[Index], 1.0), CameraBuffer.ViewProjectionInvUnjittered);
+            float4 Corner = mul(float4(FrustumCornersWS[Index], 1.0), CameraBuffer.ViewProjectionInv);
             FrustumCornersWS[Index] = Corner.xyz / Corner.w;
         }
     }
@@ -86,9 +86,12 @@ void Main(FComputeShaderInput Input)
         [unroll]
         for (int Index = 0; Index < 4; ++Index)
         {
-            const float3 Distance = FrustumCornersWS[Index + 4] - FrustumCornersWS[Index];
-            FrustumCornersWS[Index + 4] = FrustumCornersWS[Index] + (Distance * SplitDist);
-            FrustumCornersWS[Index]     = FrustumCornersWS[Index] + (Distance * PrevSplitDist);
+            float3 CornerRay     = FrustumCornersWS[Index + 4] - FrustumCornersWS[Index];
+            float3 NearCornerRay = CornerRay * PrevSplitDist;
+            float3 FarCornerRay  = CornerRay * SplitDist;
+
+            FrustumCornersWS[Index + 4] = FrustumCornersWS[Index] + FarCornerRay;
+            FrustumCornersWS[Index]     = FrustumCornersWS[Index] + NearCornerRay;
         }
     }
 
@@ -123,8 +126,9 @@ void Main(FComputeShaderInput Input)
     const float CascadeResolution = GenerationInfo.CascadeResolution;
     
     // Calculate the extents for this cascade...
-    float3 MaxExtents =  SphereRadius;
-    float3 MinExtents = -MaxExtents;
+    float3 MaxExtents     =  SphereRadius;
+    float3 MinExtents     = -MaxExtents;
+    float3 CascadeExtents =  MaxExtents - MinExtents;
 
     // We use a specific extent in the z-direction, this is in order to prevent that some
     // objects are not visibe in the shadow-map and that are "behind" the camera.
@@ -136,7 +140,7 @@ void Main(FComputeShaderInput Input)
     float3 LightDirection = normalize(GenerationInfo.LightDirection);
     
     // Create the position for the shadow rendering
-    float3 ShadowEyePos = FrustumCenter - (LightDirection * LightPositionOffset);
+    float3 ShadowEyePos = FrustumCenter - LightDirection * LightPositionOffset;
 
     // Constant upvector in order to keep the cascades stable
     float3 LightUp = float3(0.0, 1.0, 0.0);
@@ -153,27 +157,27 @@ void Main(FComputeShaderInput Input)
     // Create the projection
     float4x4 Projection = OrthoFloat4x4(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, LightNearPlane, LightFarPlane);
     
-    // Create a temportary view-projection matrix used to stabilize the cascades
-    float4x4 ViewProjection = mul(View, Projection);
-    
     // Stabilize cascades
     [branch]
     if (GenerationInfo.bEnableStableCascades)
     {
-        float3 ShadowOrigin = 0.0;
-        ShadowOrigin = mul(float4(ShadowOrigin, 1.0), ViewProjection).xyz;
-        ShadowOrigin = ShadowOrigin * (CascadeResolution / 2.0);
-        
-        float3 RoundedOrigin = ceil(ShadowOrigin);
-        float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
-        RoundedOffset = RoundedOffset * (2.0 / CascadeResolution);
+        // Create a temportary view-projection matrix used to stabilize the cascades
+        float4x4 ShadowViewProj = mul(View, Projection);
+
+        const float ShadowTexelSize = 2.0 / CascadeResolution;
+
+        float3 ShadowOrigin = mul(float4(0.0, 0.0, 0.0, 1.0), ShadowViewProj).xyz;
+        ShadowOrigin = ShadowOrigin * (CascadeResolution * 0.5);
+
+        float3 RoundedOrigin = round(ShadowOrigin);
+        float3 RoundedOffset = (RoundedOrigin - ShadowOrigin) * ShadowTexelSize;
 
         Projection[3][0] += RoundedOffset.x;
         Projection[3][1] += RoundedOffset.y;
     }
 
     // Create the final view-projection matrix after we have stabilized the projection matrix
-    ViewProjection = mul(View, Projection);
+    float4x4 ViewProjection = mul(View, Projection);
 
     // Create inverse matrices
     float4x4 InvProjection     = InverseScaleTranslation(Projection);

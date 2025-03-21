@@ -396,7 +396,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint CascadeIndex, inout uint RandomSeed)
 {
     // Calculate z-position in view-space
-    const float  ViewPosZ           = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInvUnjittered);
+    const float  ViewPosZ           = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInv);
     const float3 ProjectionPosition = mul(float4(PositionWS, 1.0), LightBuffer.ShadowMatrix).xyz;
 
     // Find current cascade
@@ -484,7 +484,7 @@ void Main(FComputeShaderInput Input)
 
     const float2 PixelCenter   = float2(Pixel) + 0.5;
     const float2 TexCoord      = PixelCenter / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
-    const float3 PositionWS    = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInvUnjittered);
+    const float3 PositionWS    = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
     const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0));
     const float3 Normal        = UnpackNormal(GBufferNormal);
 
