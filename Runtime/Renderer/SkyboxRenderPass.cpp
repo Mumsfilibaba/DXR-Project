@@ -31,7 +31,7 @@ FSkyboxRenderPass::~FSkyboxRenderPass()
     SkyboxPixelShader.Reset();
 }
 
-bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
+bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
 {
     // Sphere-data
     TArray<FVector3> SkyboxVertices;

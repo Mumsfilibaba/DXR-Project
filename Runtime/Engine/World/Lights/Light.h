@@ -18,11 +18,6 @@ public:
         ShadowBias = InShadowBias;
     }
 
-    FORCEINLINE void SetMaxShadowBias(float InShadowBias)
-    {
-        MaxShadowBias = InShadowBias;
-    }
-
     FORCEINLINE float GetIntensity() const
     {
         return Intensity;
@@ -48,16 +43,10 @@ public:
         return ShadowBias;
     }
 
-    FORCEINLINE float GetMaxShadowBias() const
-    {
-        return MaxShadowBias;
-    }
-
 protected:
     FVector3 Color;
     float    Intensity;
     float    ShadowNearPlane;
     float    ShadowFarPlane;
     float    ShadowBias;
-    float    MaxShadowBias;
 };

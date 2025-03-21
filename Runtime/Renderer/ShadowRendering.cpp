@@ -31,6 +31,12 @@ static TAutoConsoleVariable<bool> CVarCSMDebugCascades(
     false,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<bool> CVarCSMStableCascades(
+    "Renderer.CSM.StableCascades",
+    "Set to true to enable stable cascades when generating shadow cascade matrices",
+    true,
+    EConsoleVariableFlags::Default);
+
 static TAutoConsoleVariable<bool> CVarCSMEnableSinglePassRendering(
     "Renderer.CSM.EnableSinglePassRendering",
     "Enables instancing for cascade rendering via VertexShaders, enabling a single-pass for rendering a full cube-map, which creates less overhead on the CPU",
@@ -106,7 +112,7 @@ FPointLightRenderPass::~FPointLightRenderPass()
     SinglePassShadowMapBuffer.Reset();
 }
 
-FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources)
+FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& /* FrameResources */)
 {
     FPointLightShaderCombination ShaderCombination;
     ShaderCombination.MaterialFlags  = static_cast<int32>(Material->GetMaterialFlags());
@@ -381,8 +387,6 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         {
             return ECubeMapRenderPassType::MultiPass;
         }
-        
-        return ECubeMapRenderPassType::Unknown;
     };
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Render PointLight ShadowMaps");
@@ -802,7 +806,7 @@ FCascadedShadowsRenderPass::~FCascadedShadowsRenderPass()
     PerCascadeBuffer.Reset();
 }
 
-FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineStateInstance(ECascadeRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources)
+FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineStateInstance(ECascadeRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& /* FrameResources */ )
 {
     FCascadedShadowsShaderCombination ShaderCombination;
     ShaderCombination.RenderPassType = RenderPassType;
@@ -1069,7 +1073,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
         return false;
     }
 
-    for (int32 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
+    for (uint16 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
     {
         FRHITextureSRVInfo SRVInfo;
         SRVInfo.Texture         = Resources.ShadowCascades.Get();
@@ -1117,8 +1121,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         {
             return ECascadeRenderPassType::MultiPass;
         }
-
-        return ECascadeRenderPassType::Unknown;
     };
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Render DirectionalLight ShadowMaps");

@@ -67,8 +67,8 @@ private:
 
 struct FPointLightDataHLSL
 {
-    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
-    float Padding0;
+    FVector3 Color    = FVector3(1.0f, 1.0f, 1.0f);
+    float    Padding0 = 0.0f;
 };
 
 MARK_AS_REALLOCATABLE(FPointLightDataHLSL);
@@ -76,16 +76,14 @@ MARK_AS_REALLOCATABLE(FPointLightDataHLSL);
 struct FShadowCastingPointLightDataHLSL
 {
     // 0-16
-    FVector3 Color   = FVector3(1.0f, 1.0f, 1.0f);
-    float ShadowBias = 0.005f;
-    
-    // 16-24
-    float FarPlane      = 10.0f;
-    float MaxShadowBias = 0.05f;
-    
-    // 24-32
-    float Padding0;
-    float Padding1;
+    FVector3 Color      = FVector3(1.0f, 1.0f, 1.0f);
+    float    ShadowBias = 0.005f;
+
+    // 16-32
+    float FarPlane = 10.0f;
+    float Padding0 = 0.0f;
+    float Padding1 = 0.0f;
+    float Padding2 = 0.0f;
 };
 
 MARK_AS_REALLOCATABLE(FShadowCastingPointLightDataHLSL);
@@ -93,17 +91,17 @@ MARK_AS_REALLOCATABLE(FShadowCastingPointLightDataHLSL);
 struct FDirectionalLightDataHLSL
 {
     // 0-16
-    FVector3 Color   = FVector3(1.0f, 1.0f, 1.0f);
-    float ShadowBias = 0.005f;
+    FVector3 Color      = FVector3(1.0f, 1.0f, 1.0f);
+    float    ShadowBias = 0.005f;
 
     // 16-32
-    FVector3 Direction  = FVector3(0.0f, -1.0f, 0.0f);
-    float MaxShadowBias = 0.05f;
-    
+    FVector3 Direction = FVector3(0.0f, -1.0f, 0.0f);
+    float    Padding0  = 0.0f;
+
     // 32-48
-    FVector3 UpVector = FVector3(0.0f, 0.0f, -1.0f);
-    float LightSize   = 0.0f;
-    
+    FVector3 UpVector  = FVector3(0.0f, 0.0f, -1.0f);
+    float    LightSize = 0.0f;
+
     // 48-112
     FMatrix4 ShadowMatrix;
 };
@@ -114,18 +112,24 @@ struct FCascadeGenerationInfoHLSL
 {
     // 0-64
     FMatrix4 ShadowMatrix;
-    
+
     // 64-80
     FVector3 LightDirection;
-    float CascadeSplitLambda;
-    
+    float    CascadeSplitLambda;
+
     // 80-96
     FVector3 LightUp;
-    float CascadeResolution;
+    float    CascadeResolution;
 
     // 96-112
-    int32 bDepthReductionEnabled;
     int32 MaxCascadeIndex;
+    int32 bEnableTightFrustum;
+    int32 bEnableStableCascades;
+    float LightPositionOffset;
+
+    // 112-128
+    float LightNearPlane;
+    float LightFarPlane;
     int32 Padding0;
     int32 Padding1;
 };

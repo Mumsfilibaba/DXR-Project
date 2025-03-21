@@ -6,10 +6,13 @@ struct FCascadeMatrices
 {
     // 0-64
     float4x4 View;
+    
     // 64-128
     float4x4 ViewProj;
+    
     // 128-196
     float4x4 InvView;
+
     // 196-256
     float4x4 InvViewProj;
 };
@@ -56,10 +59,16 @@ struct FCascadeGenerationInfo
     float  CascadeResolution;
 
     // 96-112
-    int    bDepthReductionEnabled;
-    int    MaxCascadeIndex;
-    int    Padding0;
-    int    Padding1;
+    int   MaxCascadeIndex;
+    int   bEnableTightFrustum;
+    int   bEnableStableCascades;
+    float LightPositionOffset;
+
+    // 112-128
+    float LightNearPlane;
+    float LightFarPlane;
+    int   Padding0;
+    int   Padding1;
 };
 
 struct FDirectionalLight
@@ -70,7 +79,7 @@ struct FDirectionalLight
     
     // 16-32
     float3   Direction;
-    float    MaxShadowBias;
+    float    Padding0;
 
     // 32-48
     float3   Up;

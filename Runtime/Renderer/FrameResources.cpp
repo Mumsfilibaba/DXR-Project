@@ -11,6 +11,26 @@ static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Specifies the resolution of each Shadow Cascade",
     2048);
 
+static TAutoConsoleVariable<float> CVarCascadeSplitLambda(
+    "Renderer.CSM.CascadeSplitLambda",
+    "Determines how the Cascades should be split for the Cascaded Shadow Maps",
+    0.95f);
+
+static TAutoConsoleVariable<float> CVarCascadePositionOffset(
+    "Renderer.CSM.CascadePositionOffset",
+    "The the offset from the center of the shadow-frustum when using Cascaded Shadow Maps",
+    200.0f);
+
+static TAutoConsoleVariable<float> CVarCascadeNearPlane(
+    "Renderer.CSM.CascadeNearPlane",
+    "The near-plane for each cascade when using Cascaded Shadow Maps",
+    120.0f);
+
+static TAutoConsoleVariable<float> CVarCascadeFarPlane(
+    "Renderer.CSM.CascadeFarPlane",
+    "The far-plane for each cascade when using Cascaded Shadow Maps",
+    250.0f);
+
 static TAutoConsoleVariable<int32> CVarPointLightShadowMapSize(
     "Renderer.Shadows.PointLightShadowMapSize",
     "Specifies the resolution of each Shadow Cascade",
@@ -299,32 +319,46 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         FVector3 Color = DirectionalLight->GetColor();
         Color = Color * DirectionalLight->GetIntensity();
 
+        // Update directional-light
         DirectionalLight->Tick(*Scene->Camera);
 
+        // Update data necessary for other stages
         DirectionalLightData.Color         = Color;
         DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
         DirectionalLightData.Direction     = DirectionalLight->GetDirectionVector();
         DirectionalLightData.UpVector      = DirectionalLight->GetUpVector();
-        DirectionalLightData.MaxShadowBias = DirectionalLight->GetMaxShadowBias();
         DirectionalLightData.LightSize     = DirectionalLight->GetSize();
         DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
         DirectionalLightData.ShadowMatrix  = DirectionalLightData.ShadowMatrix.GetTranspose();
         DirectionalLightDataDirty          = true;
 
-        CascadeGenerationData.CascadeSplitLambda = DirectionalLight->GetCascadeSplitLambda();
-        CascadeGenerationData.LightUp            = DirectionalLightData.UpVector;
-        CascadeGenerationData.LightDirection     = DirectionalLightData.Direction;
-        CascadeGenerationData.CascadeResolution  = static_cast<float>(CascadeSize);
-        CascadeGenerationData.ShadowMatrix       = DirectionalLightData.ShadowMatrix;
-        CascadeGenerationData.MaxCascadeIndex    = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
+        // Update HLSL data
+        CascadeGenerationData.CascadeSplitLambda  = CVarCascadeSplitLambda.GetValue();
+        CascadeGenerationData.LightUp             = DirectionalLightData.UpVector;
+        CascadeGenerationData.LightDirection      = DirectionalLightData.Direction;
+        CascadeGenerationData.CascadeResolution   = static_cast<float>(CascadeSize);
+        CascadeGenerationData.ShadowMatrix        = DirectionalLightData.ShadowMatrix;
+        CascadeGenerationData.MaxCascadeIndex     = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
+        CascadeGenerationData.LightPositionOffset = CVarCascadePositionOffset.GetValue();
+        CascadeGenerationData.LightNearPlane      = CVarCascadeNearPlane.GetValue();
+        CascadeGenerationData.LightFarPlane       = CVarCascadeFarPlane.GetValue();
 
-        if (IConsoleVariable* CVarPrePassDepthReduce = FConsoleManager::Get().FindConsoleVariable("Renderer.PrePass.DepthReduce"))
+        if (IConsoleVariable* CVarCSMTightFrustum = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
         {
-            CascadeGenerationData.bDepthReductionEnabled = CVarPrePassDepthReduce->GetBool();
+            CascadeGenerationData.bEnableTightFrustum = CVarCSMTightFrustum->GetBool();
         }
         else
         {
-            CascadeGenerationData.bDepthReductionEnabled = true;
+            CascadeGenerationData.bEnableTightFrustum = true;
+        }
+
+        if (IConsoleVariable* CVarCSMStableCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.StableCascades"))
+        {
+            CascadeGenerationData.bEnableStableCascades = CVarCSMStableCascades->GetBool();
+        }
+        else
+        {
+            CascadeGenerationData.bEnableStableCascades = true;
         }
 
         CascadeGenerationDataDirty = true;
@@ -346,10 +380,12 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         if (PointLight->IsShadowCaster())
         {
             FShadowCastingPointLightDataHLSL Data;
-            Data.Color         = Color;
-            Data.FarPlane      = PointLight->GetShadowFarPlane();
-            Data.MaxShadowBias = PointLight->GetMaxShadowBias();
-            Data.ShadowBias    = PointLight->GetShadowBias();
+            Data.Color      = Color;
+            Data.FarPlane   = PointLight->GetShadowFarPlane();
+            Data.ShadowBias = PointLight->GetShadowBias();
+            Data.Padding0   = 0.0f;
+            Data.Padding1   = 0.0f;
+            Data.Padding2   = 0.0f;
 
             ShadowCastingPointLightsData.Emplace(Data);
             ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);

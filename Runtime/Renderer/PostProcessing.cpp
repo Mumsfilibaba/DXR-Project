@@ -120,7 +120,7 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
     return true;
 }
 
-void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
+void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* /* Scene */)
 {
     // Function to return a enum from the tonemapping cvar
     const auto GetTonemappingFunctionCVar = []()
@@ -328,7 +328,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
+void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* /* Scene */)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin FXAA");
 

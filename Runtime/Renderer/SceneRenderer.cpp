@@ -124,9 +124,9 @@ static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
     false,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
-    "Renderer.PrePass.DepthReduce",
-    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer",
+static TAutoConsoleVariable<bool> CVarCSMTightFrustum(
+    "Renderer.CSM.TightFrustum",
+    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that fits the scene",
     true,
     EConsoleVariableFlags::Default);
 
@@ -566,6 +566,8 @@ void FSceneRenderer::Tick(FScene* Scene)
     CameraBuffer.ViewInv                     = CameraBuffer.ViewInv.GetTranspose();
     CameraBuffer.Projection                  = CameraBuffer.Projection.GetTranspose();
     CameraBuffer.ProjectionInv               = CameraBuffer.ProjectionInv.GetTranspose();
+    CameraBuffer.ProjectionUnjittered        = CameraBuffer.ProjectionUnjittered.GetTranspose();
+    CameraBuffer.ProjectionInvUnjittered     = CameraBuffer.ProjectionInvUnjittered.GetTranspose();
 
     // Update GPU Camera Buffer
     CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
@@ -663,7 +665,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     }
 
     // Depth Reduce
-    if (CVarPrePassDepthReduce.GetValue())
+    if (CVarCSMTightFrustum.GetValue())
     {
         DepthReducePass->Execute(CommandList, Resources, Scene);
     }

@@ -193,17 +193,6 @@ void FSceneInspectorWidget::DrawSceneInfo()
                         ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
                     }
 
-                    // Max Shadow Bias
-                    ImGui::NextColumn();
-                    ImGui::Text("Max Shadow Bias");
-                    ImGui::NextColumn();
-
-                    float MaxShadowBias = CurrentPointLight->GetMaxShadowBias();
-                    if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
-                    {
-                        CurrentPointLight->SetMaxShadowBias(MaxShadowBias);
-                    }
-
                     // Shadow Near Plane
                     ImGui::NextColumn();
                     ImGui::Text("Shadow Near Plane");
@@ -336,33 +325,6 @@ void FSceneInspectorWidget::DrawSceneInfo()
                     if (ImGui::IsItemHovered())
                     {
                         ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
-                    }
-
-                    // Max Shadow Bias
-                    ImGui::NextColumn();
-                    ImGui::Text("Max Shadow Bias");
-                    ImGui::NextColumn();
-
-                    float MaxShadowBias = CurrentDirectionalLight->GetMaxShadowBias();
-                    if (ImGui::SliderFloat("##MaxShadowBias", &MaxShadowBias, 0.0001f, 0.1f, "%.4f"))
-                    {
-                        CurrentDirectionalLight->SetMaxShadowBias(MaxShadowBias);
-                    }
-
-                    // Cascade Split Lambda
-                    ImGui::NextColumn();
-                    ImGui::Text("Cascade Split Lambda");
-                    ImGui::NextColumn();
-
-                    float CascadeSplitLambda = CurrentDirectionalLight->GetCascadeSplitLambda();
-                    if (ImGui::SliderFloat("##CascadeSplitLambda", &CascadeSplitLambda, 0.0f, 1.0f, "%.2f"))
-                    {
-                        CurrentDirectionalLight->SetCascadeSplitLambda(CascadeSplitLambda);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Value modifying the splits for the shadow map cascades");
                     }
 
                     // Size

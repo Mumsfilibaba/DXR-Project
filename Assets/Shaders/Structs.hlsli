@@ -55,18 +55,22 @@ struct FPositionRadius
 
 struct FPointLight
 {
+    // 0-16
     float3 Color;
     float  Padding0;
 };
 
 struct FShadowPointLight
 {
+    // 0-16
     float3 Color;
     float  ShadowBias;
-    float  FarPlane;
-    float  MaxShadowBias;
-    float  Padding0;
-    float  Padding1;
+    
+    // 16-32
+    float FarPlane;
+    float Padding0;
+    float Padding1;
+    float Padding2;
 };
 
 struct FVertex
@@ -85,13 +89,15 @@ struct FTransform
 
 struct FMaterial
 {
+    // 0-16
     float3 Albedo;
     float  Roughness;
     
-    float  Metallic;
-    float  AO;
-    int    Padding0;
-    int    Padding1;
+    // 16-32
+    float Metallic;
+    float AO;
+    int   Padding0;
+    int   Padding1;
 };
 
 struct FLightProbeInfo

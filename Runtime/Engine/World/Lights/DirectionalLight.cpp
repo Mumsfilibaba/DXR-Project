@@ -8,11 +8,6 @@ static TAutoConsoleVariable<float> CVarSunSize(
     "Sets the size of the sun, used to determine the penumbra for soft-shadows", 
     0.05f);
 
-static TAutoConsoleVariable<float> CVarCascadeSplitLambda(
-    "Scene.Lightning.CascadeSplitLambda",
-    "Determines how the Cascades should be split for the Cascaded Shadow Maps", 
-    1.0f);
-
 FOBJECT_IMPLEMENT_CLASS(FDirectionalLight);
 
 FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer)
@@ -21,7 +16,6 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
     , Position(0.0f, 0.0f, 0.0f)
-    , CascadeSplitLambda(CVarCascadeSplitLambda.GetValue())
     , Size(CVarSunSize.GetValue())
 {
     // TODO: Probably move to scene
@@ -31,15 +25,6 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
         {
             const float NewSize = FMath::Clamp(SunLight->GetFloat(), 0.0f, 1.0f);
             this->Size = NewSize;
-        }
-    }));
-
-    CVarCascadeSplitLambda->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* CascadeSplitLambda)
-    {
-        if (CascadeSplitLambda && CascadeSplitLambda->IsVariableFloat())
-        {
-            const float NewLambda = FMath::Clamp(CascadeSplitLambda->GetFloat(), 0.0f, 1.0f);
-            this->CascadeSplitLambda = NewLambda;
         }
     }));
 
@@ -125,11 +110,6 @@ void FDirectionalLight::Tick(FCamera& Camera)
 void FDirectionalLight::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
-}
-
-void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
-{
-    CVarCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda, EConsoleVariableFlags::SetByCode);
 }
 
 void FDirectionalLight::SetSize(float InSize)

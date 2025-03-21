@@ -362,6 +362,36 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::NextColumn();
     }
 
+    // Enable Tight Frustum
+    if (IConsoleVariable* CVarCSMTightFrustum = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
+    {
+        ImGui::Text("Enable Tight Frustum");
+        ImGui::NextColumn();
+
+        bool bEnableTightFrustum = CVarCSMTightFrustum->GetBool();
+        if (ImGui::Checkbox("##TightFrustum", &bEnableTightFrustum))
+        {
+            CVarCSMTightFrustum->SetAsBool(bEnableTightFrustum, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // Enable Stable Cascades
+    if (IConsoleVariable* CVarCSMStableCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.StableCascades"))
+    {
+        ImGui::Text("Enable Stable Cascades");
+        ImGui::NextColumn();
+
+        bool bEnableStableCascades = CVarCSMStableCascades->GetBool();
+        if (ImGui::Checkbox("##StableCascades", &bEnableStableCascades))
+        {
+            CVarCSMStableCascades->SetAsBool(bEnableStableCascades, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
     // Select cascade from projection
     if (IConsoleVariable* CVarSelectCascadeFromProjection = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.SelectCascadeFromProjection"))
     {
@@ -372,6 +402,66 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         if (ImGui::Checkbox("##SelectCascadeFromProjection", &bSelectCascadeFromProjection))
         {
             CVarSelectCascadeFromProjection->SetAsBool(bSelectCascadeFromProjection, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // Cascade Split Lambda
+    if (IConsoleVariable* CVarCascadeSplitLambda = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeSplitLambda"))
+    {
+        ImGui::Text("Cascade Split Lambda");
+        ImGui::NextColumn();
+
+        float CascadeSplitLambda = CVarCascadeSplitLambda->GetFloat();
+        if (ImGui::SliderFloat("##CascadeSplitLambda", &CascadeSplitLambda, 0.0f, 1.0f, "%.2f"))
+        {
+            CVarCascadeSplitLambda->SetAsFloat(CascadeSplitLambda, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // Cascade Position Offset
+    if (IConsoleVariable* CVarCascadePositionOffset = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadePositionOffset"))
+    {
+        ImGui::Text("Cascade Position Offset");
+        ImGui::NextColumn();
+
+        float CascadePositionOffset = CVarCascadePositionOffset->GetFloat();
+        if (ImGui::SliderFloat("##CascadePositionOffset", &CascadePositionOffset, 0.0f, 1000.0f, "%.1f"))
+        {
+            CVarCascadePositionOffset->SetAsFloat(CascadePositionOffset, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // Cascade Near Plane
+    if (IConsoleVariable* CVarCascadeNearPlane = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeNearPlane"))
+    {
+        ImGui::Text("Cascade Near Plane");
+        ImGui::NextColumn();
+
+        float CascadeNearPlane = CVarCascadeNearPlane->GetFloat();
+        if (ImGui::SliderFloat("##CascadeNearPlane", &CascadeNearPlane, 0.0f, 1000.0f, "%.1f"))
+        {
+            CVarCascadeNearPlane->SetAsFloat(CascadeNearPlane, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
+    // Cascade Far Plane
+    if (IConsoleVariable* CVarCascadeFarPlane = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeFarPlane"))
+    {
+        ImGui::Text("Cascade Far Plane");
+        ImGui::NextColumn();
+
+        float CascadeFarPlane = CVarCascadeFarPlane->GetFloat();
+        if (ImGui::SliderFloat("##CascadeFarPlane", &CascadeFarPlane, 0.0f, 1000.0f, "%.1f"))
+        {
+            CVarCascadeFarPlane->SetAsFloat(CascadeFarPlane, EConsoleVariableFlags::SetByCode);
         }
 
         ImGui::NextColumn();

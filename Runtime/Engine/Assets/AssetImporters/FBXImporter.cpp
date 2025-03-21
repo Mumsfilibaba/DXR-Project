@@ -38,6 +38,7 @@ static FMatrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
     return Result;
 }
 
+#if 0 // Currently unused
 static bool DoesFlipHandness(const FMatrix4& Matrix)
 {
     FVector3 X(1.0f, 0.0f, 0.0f);
@@ -49,6 +50,7 @@ static bool DoesFlipHandness(const FMatrix4& Matrix)
     FVector3 Z = Matrix.GetInverse().TransformCoord(X.CrossProduct(Y));
     return Z.Z < 0.0f;
 }
+#endif
 
 static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Material, ofbx::Texture::TextureType Type)
 {
@@ -162,8 +164,6 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         const FMatrix4 GlobalTransform = FBXConvertMatrix(CurrentMesh->getGlobalTransform());
         const FMatrix4 GeometricMatrix = FBXConvertMatrix(CurrentMesh->getGeometricMatrix());
         const FMatrix4 Transform       = GlobalTransform * GeometricMatrix * ScaleMatrix;
-
-        const bool bDoesFlipHandedness = DoesFlipHandness(Transform);
 
         const ofbx::GeometryData& GeometryData = CurrentMesh->getGeometryData();
         ofbx::Vec3Attributes Positions = GeometryData.getPositions();

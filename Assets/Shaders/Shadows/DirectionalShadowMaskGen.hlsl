@@ -341,9 +341,8 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     ShadowPosition *= CascadeSplit.Scale.xyz;
 
     // Calculate Biased Depth
-    const float NDotL       = saturate(dot(NormalWS, LightBuffer.Direction)); 
-    const float BiasScale   = 1.0 - NDotL;
-    const float ShadowBias  = min(max(0.0001, LightBuffer.ShadowBias), BiasScale * max(0.0005, LightBuffer.MaxShadowBias));
+    const float BiasScale   = 1.0 - saturate(dot(NormalWS, normalize(LightBuffer.Direction)));
+    const float ShadowBias  = max(max(0.0001, LightBuffer.ShadowBias) * BiasScale, 0.0005);
     const float BiasedDepth = ShadowPosition.z - ShadowBias;
 
     FFilterSetup FilterSetup;
@@ -397,8 +396,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint CascadeIndex, inout uint RandomSeed)
 {
     // Calculate z-position in view-space
-    const float ViewPosZ = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInvUnjittered);
-
+    const float  ViewPosZ           = Depth_ProjToView(DepthVS, CameraBuffer.ProjectionInvUnjittered);
     const float3 ProjectionPosition = mul(float4(PositionWS, 1.0), LightBuffer.ShadowMatrix).xyz;
 
     // Find current cascade
@@ -422,8 +420,7 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint 
             CascadeIndex = Index;
         }
     #else
-        const float CurrentSplit = CascadeSplit.Split;
-        if (ViewPosZ < CurrentSplit)
+        if (ViewPosZ < CascadeSplit.Split)
         {
             CascadeIndex = Index;
         }
@@ -445,7 +442,7 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint 
     FCascadeSplit CascadeSplit = ShadowSplitsBuffer[CascadeIndex];
     
     float NextSplit  = CascadeSplit.Split;
-    float SplitSize  = (CascadeIndex == 0) ? NextSplit : (NextSplit - ShadowSplitsBuffer[CascadeIndex - 1].Split);
+    float SplitSize  = NextSplit - CascadeSplit.PreviousSplit;
     float FadeFactor = (NextSplit - ViewPosZ) / SplitSize;
     
 #if SELECT_CASCADE_FROM_PROJECTION

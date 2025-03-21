@@ -1289,7 +1289,7 @@ FOcclusionPass::~FOcclusionPass()
     PipelineState.Reset();
 }
 
-bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
+bool FOcclusionPass::Initialize(FFrameResources& /* FrameResources */)
 {
     TArray<uint8> ShaderCode;
 

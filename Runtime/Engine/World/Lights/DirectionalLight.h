@@ -16,7 +16,6 @@ public:
 
     // Rotation in Radians
     void SetRotation(const FVector3& InRotation);
-    void SetCascadeSplitLambda(float InCascadeSplitLambda);
     void SetSize(float InSize);
 
     FORCEINLINE const FVector3& GetDirectionVector() const
@@ -49,11 +48,6 @@ public:
         return ShadowMatrix;
     }
 
-    FORCEINLINE float GetCascadeSplitLambda() const
-    {
-        return CascadeSplitLambda;
-    }
-
     FORCEINLINE float GetSize() const
     {
         return Size;
@@ -66,7 +60,5 @@ private:
     FVector3 LookAt;
     FVector3 Position;
     FMatrix4 ShadowMatrix;
-
-    float CascadeSplitLambda;
-    float Size;
+    float    Size;
 };

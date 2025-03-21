@@ -34,10 +34,13 @@ struct FCascadeMatricesHLSL
 {
     // 0-64
     FMatrix4 View;
+
     // 64-128
     FMatrix4 ViewProjection;
+
     // 128-196
     FMatrix4 InvView;
+
     // 196-256
     FMatrix4 InvViewProjection;
 };
@@ -52,15 +55,13 @@ struct FCascadeSplitHLSL
     // 64-96
     FVector4 Offsets;
     FVector4 Scale;
-    
-    // 96-112
+
+    // 96-128
     FVector3 MinExtent;
     float    Split;
-    
-    // 112-128
     FVector3 MaxExtent;
     float    NearPlane;
-    
+
     // 128-144
     float FarPlane;
     float MinDepth;

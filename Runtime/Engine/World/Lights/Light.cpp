@@ -9,7 +9,6 @@ FLight::FLight(const FObjectInitializer& ObjectInitializer)
     , ShadowNearPlane(1.0f)
     , ShadowFarPlane(30.0f)
     , ShadowBias(0.005f)
-    , MaxShadowBias(0.05f)
 {
 }
 
