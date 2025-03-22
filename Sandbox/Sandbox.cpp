@@ -19,7 +19,7 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA (0)
+#define LOAD_SPONZA (1)
 #define LOAD_BISTRO (0)
 #define LOAD_SUN_TEMPLE (0)
 #define LOAD_EMERALD_SQUARE (1)
@@ -565,13 +565,13 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     }
 
     // Add PointLights
-    const float Intensity      = 100.0f;
-    const float ShadowFarPlane = 40.0f;
+    const float Intensity      = 80.0f;
+    const float ShadowFarPlane = 35.0f;
     if (FPointLight* PointLight0 = NewObject<FPointLight>())
     {
-        PointLight0->SetPosition(FVector3(15.0f, 1.5f, 0.0f));
+        PointLight0->SetPosition(FVector3(15.0f, 2.5f, 0.0f));
         PointLight0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        PointLight0->SetShadowBias(0.001f);
+        PointLight0->SetShadowBias(0.02f);
         PointLight0->SetShadowFarPlane(ShadowFarPlane);
         PointLight0->SetIntensity(Intensity);
         PointLight0->SetShadowCaster(true);
@@ -581,9 +581,9 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     if (FPointLight* PointLight1 = NewObject<FPointLight>())
     {
-        PointLight1->SetPosition(FVector3(-15.0f, 1.5f, 0.0f));
+        PointLight1->SetPosition(FVector3(-15.0f, 2.5f, 0.0f));
         PointLight1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        PointLight1->SetShadowBias(0.001f);
+        PointLight1->SetShadowBias(0.02f);
         PointLight1->SetShadowFarPlane(ShadowFarPlane);
         PointLight1->SetIntensity(Intensity);
         PointLight1->SetShadowCaster(true);
@@ -595,7 +595,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         PointLight2->SetPosition(FVector3(17.0f, 10.0f, 6.0f));
         PointLight2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        PointLight2->SetShadowBias(0.001f);
+        PointLight2->SetShadowBias(0.02f);
         PointLight2->SetShadowFarPlane(ShadowFarPlane);
         PointLight2->SetIntensity(Intensity);
         PointLight2->SetShadowCaster(true);
@@ -607,7 +607,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         PointLight3->SetPosition(FVector3(-18.0f, 10.0f, 6.0f));
         PointLight3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        PointLight3->SetShadowBias(0.001f);
+        PointLight3->SetShadowBias(0.02f);
         PointLight3->SetShadowFarPlane(ShadowFarPlane);
         PointLight3->SetIntensity(Intensity);
         PointLight3->SetShadowCaster(true);
@@ -619,7 +619,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         PointLight4->SetPosition(FVector3(17.0f, 10.0f, -7.0f));
         PointLight4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        PointLight4->SetShadowBias(0.001f);
+        PointLight4->SetShadowBias(0.02f);
         PointLight4->SetShadowFarPlane(ShadowFarPlane);
         PointLight4->SetIntensity(Intensity);
         PointLight4->SetShadowCaster(true);
@@ -631,7 +631,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     {
         PointLight5->SetPosition(FVector3(-18.0f, 10.0f, -7.0f));
         PointLight5->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        PointLight5->SetShadowBias(0.001f);
+        PointLight5->SetShadowBias(0.02f);
         PointLight5->SetShadowFarPlane(ShadowFarPlane);
         PointLight5->SetIntensity(Intensity);
         PointLight5->SetShadowCaster(true);

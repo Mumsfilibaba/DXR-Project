@@ -54,8 +54,8 @@
 #define ENABLE_FIRST_CASCADE_ONLY 0
 
 #define MAX_PCSS_FILTER_SIZE 0.999
-#define MIN_PCSS_FILTER_SIZE 0.05
-#define SEARCH_REGION_SCALE 2.0
+#define MIN_PCSS_FILTER_SIZE 0.01
+#define SEARCH_REGION_SCALE 1.0
 #define PENUMBRA_SCALE 30.0
 
 #define USE_ORTHO 1
@@ -470,9 +470,9 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint 
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
-void Main(FComputeShaderInput Input)
+void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
-    const uint2 Pixel = Input.DispatchThreadID.xy;
+    const uint2 Pixel = DispatchThreadID.xy;
    
     // Discard pixels not rendered to the GBuffer
     const float Depth = DepthBuffer.Load(int3(Pixel, 0)); 

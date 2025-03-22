@@ -33,21 +33,21 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 groupshared float3 HaltonSamples[MAX_SAMPLES];
 
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
-void Main(FComputeShaderInput Input)
+void Main(uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {
     // Start with generating the samples for this group
     const uint KernelSize = min(max(Constants.KernelSize, 1), MAX_SAMPLES);
-    if (Input.GroupIndex < KernelSize)
+    if (GroupIndex < KernelSize)
     {
-        const float2 HammerslySample    = Hammersley2(Input.GroupIndex, KernelSize);
-        HaltonSamples[Input.GroupIndex] = HemispherePointUniform(HammerslySample.x, HammerslySample.y);
+        const float2 HammerslySample    = Hammersley2(GroupIndex, KernelSize);
+        HaltonSamples[GroupIndex] = HemispherePointUniform(HammerslySample.x, HammerslySample.y);
     }
 
     GroupMemoryBarrierWithGroupSync();
 
     // Texture coordinate
     const float2 TexSize   = Constants.ScreenSize;
-    const uint2  Pixel     = Input.DispatchThreadID.xy;   
+    const uint2  Pixel     = DispatchThreadID.xy;   
     const float2 TexCoords = ((float2)Pixel) / TexSize;
 
     // Early out on pixels not rendered to

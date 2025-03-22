@@ -223,9 +223,9 @@ float GetNumTilesY()
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
-void Main(FComputeShaderInput Input)
+void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID)
 {
-    uint ThreadIndex = Input.GroupThreadID.y * NUM_THREADS + Input.GroupThreadID.x;
+    uint ThreadIndex = GroupThreadID.y * NUM_THREADS + GroupThreadID.x;
     if (ThreadIndex == 0)
     {
         GGroupMinZ = 0x7f7fffff;
@@ -234,7 +234,7 @@ void Main(FComputeShaderInput Input)
 
     GroupMemoryBarrierWithGroupSync();
 
-    uint2 Pixel    = Input.DispatchThreadID.xy;
+    uint2 Pixel    = DispatchThreadID.xy;
     float Depth    = DepthStencilTex.Load(int3(Pixel, 0));
     float ViewPosZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
 
@@ -254,10 +254,10 @@ void Main(FComputeShaderInput Input)
     float4 Frustum[4];
 
     {
-        float pxm    = float(NUM_THREADS * Input.GroupID.x);
-        float pym    = float(NUM_THREADS * Input.GroupID.y);
-        float pxp    = float(NUM_THREADS * (Input.GroupID.x + 1));
-        float pyp    = float(NUM_THREADS * (Input.GroupID.y + 1));
+        float pxm    = float(NUM_THREADS * GroupID.x);
+        float pym    = float(NUM_THREADS * GroupID.y);
+        float pxp    = float(NUM_THREADS * (GroupID.x + 1));
+        float pyp    = float(NUM_THREADS * (GroupID.y + 1));
         float Width  = NUM_THREADS * GetNumTilesX();
         float Height = NUM_THREADS * GetNumTilesY();
 

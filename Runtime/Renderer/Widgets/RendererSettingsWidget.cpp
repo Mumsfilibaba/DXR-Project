@@ -10,7 +10,7 @@ static TAutoConsoleVariable<bool> CVarDrawSettingsWindow(
     false);
 
 // Same column size for all different types
-static constexpr float ColumnWidth = 400.0f;
+static constexpr float ColumnWidth = 450.0f;
 
 FRendererSettingsWidget::FRendererSettingsWidget()
     : ImGuiDelegateHandle()

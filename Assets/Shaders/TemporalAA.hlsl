@@ -39,9 +39,9 @@ float3 InvTonemap(float3 x)
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
-void Main(FComputeShaderInput Input)
+void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
-    const uint2 TexCoord = Input.DispatchThreadID.xy;
+    const uint2 TexCoord = DispatchThreadID.xy;
 
     // Sample neightbourhood and find the maxvalues
     float3 SampleTotal  = 0.0;

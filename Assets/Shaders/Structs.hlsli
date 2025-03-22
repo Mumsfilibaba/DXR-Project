@@ -2,14 +2,6 @@
 #define STRUCTS_HLSLI
 #include "CoreDefines.hlsli"
 
-struct FComputeShaderInput
-{
-    uint3 GroupID          : SV_GroupID;
-    uint3 GroupThreadID    : SV_GroupThreadID;
-    uint3 DispatchThreadID : SV_DispatchThreadID;
-    uint  GroupIndex       : SV_GroupIndex;
-};
-
 struct FCamera
 {
     float4x4 PrevViewProjection;

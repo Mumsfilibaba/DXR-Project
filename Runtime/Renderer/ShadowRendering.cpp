@@ -176,6 +176,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
 
         FGraphicsPipelineStateInstance NewPipelineStateInstance;
         NewPipelineStateInstance.VertexShader = RHICreateVertexShader(ShaderCode);
+
         if (!NewPipelineStateInstance.VertexShader)
         {
             DEBUG_BREAK();
@@ -958,6 +959,9 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        RasterizerStateInitializer.bDepthClipEnable = false;
+
+        // TODO: Revisit depth-bias
         RasterizerStateInitializer.bEnableDepthBias     = true;
         RasterizerStateInitializer.DepthBias            = 1.0f;
         RasterizerStateInitializer.DepthBiasClamp       = 0.05f;
@@ -981,6 +985,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 
         FRHIBlendStateInitializer BlendStateInitializer;
         NewPipelineStateInstance.BlendState = RHICreateBlendState(BlendStateInitializer);
+
         if (!NewPipelineStateInstance.BlendState)
         {
             DEBUG_BREAK();

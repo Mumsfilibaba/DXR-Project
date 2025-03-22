@@ -25,12 +25,11 @@ static const int OFFSETS[KERNEL_SIZE] =
 };
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
-void Main(FComputeShaderInput Input)
+void Main(uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID)
 {
-    const int2 Pixel = min(Input.DispatchThreadID.xy, int2(Constants.ScreenSize));   
+    const int2 Pixel = min(DispatchThreadID.xy, int2(Constants.ScreenSize));   
 
     // Cache texture fetches
-    const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
     GTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[Pixel];
     
     GroupMemoryBarrierWithGroupSync();

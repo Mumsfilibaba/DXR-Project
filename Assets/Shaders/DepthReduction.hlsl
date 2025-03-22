@@ -22,16 +22,16 @@ groupshared float GroupMinZ[NUM_THREADS_TOTAL];
 groupshared float GroupMaxZ[NUM_THREADS_TOTAL];
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
-void ReductionMainInital(FComputeShaderInput Input)
+void ReductionMainInital(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint GroupIndex : SV_GroupIndex)
 {  
     // Retrieve thread indicies
     uint2 TextureSize;
     DepthBuffer.GetDimensions(TextureSize.x, TextureSize.y);
     
-    uint2 TexCoords = Input.GroupID.xy * NUM_THREADS + Input.GroupThreadID.xy;
+    uint2 TexCoords = GroupID.xy * NUM_THREADS + GroupThreadID.xy;
     TexCoords = min(TexCoords, TextureSize - 1);
 
-    const uint GroupThreadIndex = Input.GroupIndex;
+    const uint GroupThreadIndex = GroupIndex;
    
     // Start reduction
     float4x4 Projection = transpose(Constants.CamProjection);
@@ -69,22 +69,22 @@ void ReductionMainInital(FComputeShaderInput Input)
     
     if (GroupThreadIndex == 0)
     {
-        OutputMinMax[Input.GroupID.xy] = float2(GroupMinZ[0], GroupMaxZ[0]);
+        OutputMinMax[GroupID.xy] = float2(GroupMinZ[0], GroupMaxZ[0]);
     }
 }
 
 // Handles the rest of the Reductions
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
-void ReductionMain(FComputeShaderInput Input)
+void ReductionMain(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint GroupIndex : SV_GroupIndex)
 {
     // Retrieve thread indicies
     uint2 TextureSize;
     InputMinMax.GetDimensions(TextureSize.x, TextureSize.y);
     
-    uint2 TexCoords = Input.GroupID.xy * NUM_THREADS + Input.GroupThreadID.xy;
+    uint2 TexCoords = GroupID.xy * NUM_THREADS + GroupThreadID.xy;
     TexCoords = min(TexCoords, TextureSize - 1);
 
-    const uint GroupThreadIndex = Input.GroupIndex;
+    const uint GroupThreadIndex = GroupIndex;
     
     // Start reduction
     float2 MinMaxSample = InputMinMax[TexCoords];
@@ -112,6 +112,6 @@ void ReductionMain(FComputeShaderInput Input)
     
     if (GroupThreadIndex == 0)
     {
-        OutputMinMax[Input.GroupID.xy] = float2(GroupMinZ[0], GroupMaxZ[0]);
+        OutputMinMax[GroupID.xy] = float2(GroupMinZ[0], GroupMaxZ[0]);
     }
 }

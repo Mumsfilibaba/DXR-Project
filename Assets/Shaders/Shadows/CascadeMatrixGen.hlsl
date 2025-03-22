@@ -1,7 +1,7 @@
 #include "../Helpers.hlsli"
 #include "../Structs.hlsli"
 #include "../Constants.hlsli"
-#include "../Matrices.hlsli"
+#include "../Matrix.hlsli"
 #include "CascadeStructs.hlsli"
 
 #define NUM_THREADS (NUM_SHADOW_CASCADES)
@@ -15,10 +15,10 @@ RWStructuredBuffer<FCascadeSplit>    SplitBuffer  : register(u1);
 Texture2D<float2> MinMaxDepthTex : register(t0);
 
 [numthreads(NUM_THREADS, 1, 1)]
-void Main(FComputeShaderInput Input)
+void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
     // Retrieve the cascade-index for this thread
-    const int CascadeIndex = min(int(Input.DispatchThreadID.x), min(GenerationInfo.MaxCascadeIndex, NUM_SHADOW_CASCADES - 1));
+    const int CascadeIndex = min(int(DispatchThreadID.x), min(GenerationInfo.MaxCascadeIndex, NUM_SHADOW_CASCADES - 1));
     
     // Get the minimum and maximum depth of the scene
     float2 MinMaxDepth = float2(0.0, 1.0);
@@ -72,7 +72,7 @@ void Main(FComputeShaderInput Input)
         [unroll]
         for (int Index = 0; Index < 8; ++Index)
         {
-            float4 Corner = mul(float4(FrustumCornersWS[Index], 1.0), CameraBuffer.ViewProjectionInv);
+            float4 Corner = mul(float4(FrustumCornersWS[Index], 1.0), CameraBuffer.ViewProjectionInvUnjittered);
             FrustumCornersWS[Index] = Corner.xyz / Corner.w;
         }
     }
@@ -124,7 +124,7 @@ void Main(FComputeShaderInput Input)
 
     // Cache the shadow-map size
     const float CascadeResolution = GenerationInfo.CascadeResolution;
-    
+
     // Calculate the extents for this cascade...
     float3 MaxExtents     =  SphereRadius;
     float3 MinExtents     = -MaxExtents;
@@ -132,9 +132,9 @@ void Main(FComputeShaderInput Input)
 
     // We use a specific extent in the z-direction, this is in order to prevent that some
     // objects are not visibe in the shadow-map and that are "behind" the camera.
-    float LightNearPlane      = GenerationInfo.LightNearPlane;
-    float LightFarPlane       = GenerationInfo.LightFarPlane;
-    float LightPositionOffset = GenerationInfo.LightPositionOffset;
+    float LightNearPlane      = GenerationInfo.LightNearPlane;      // 0.0;             
+    float LightFarPlane       = GenerationInfo.LightFarPlane;       // CascadeExtents.z;
+    float LightPositionOffset = GenerationInfo.LightPositionOffset; // MinExtents.z;    
 
     // Setup Shadow-View
     float3 LightDirection = normalize(GenerationInfo.LightDirection);
@@ -151,11 +151,11 @@ void Main(FComputeShaderInput Input)
     LightRotation[0] = normalize(cross(LightUp, LightRotation[2]));
     LightRotation[1] = cross(LightRotation[2], LightRotation[0]);
 
-    float4x4 View    = InverseRotationTranslation(LightRotation, ShadowEyePos);
+    float4x4 View    = FMatrix::InvRotationTranslation(LightRotation, ShadowEyePos);
     float4x4 InvView = float4x4(float4(LightRotation[0], 0.0), float4(LightRotation[1], 0.0), float4(LightRotation[2], 0.0), float4(ShadowEyePos, 1.0));
 
     // Create the projection
-    float4x4 Projection = OrthoFloat4x4(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, LightNearPlane, LightFarPlane);
+    float4x4 Projection = FMatrix::OrthographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, LightNearPlane, LightFarPlane);
     
     // Stabilize cascades
     [branch]
@@ -167,9 +167,9 @@ void Main(FComputeShaderInput Input)
         const float ShadowTexelSize = 2.0 / CascadeResolution;
 
         float3 ShadowOrigin = mul(float4(0.0, 0.0, 0.0, 1.0), ShadowViewProj).xyz;
-        ShadowOrigin = ShadowOrigin * (CascadeResolution * 0.5);
+        ShadowOrigin = ShadowOrigin * CascadeResolution * 0.5;
 
-        float3 RoundedOrigin = round(ShadowOrigin);
+        float3 RoundedOrigin = floor(ShadowOrigin);
         float3 RoundedOffset = (RoundedOrigin - ShadowOrigin) * ShadowTexelSize;
 
         Projection[3][0] += RoundedOffset.x;
@@ -180,7 +180,7 @@ void Main(FComputeShaderInput Input)
     float4x4 ViewProjection = mul(View, Projection);
 
     // Create inverse matrices
-    float4x4 InvProjection     = InverseScaleTranslation(Projection);
+    float4x4 InvProjection     = FMatrix::InvScaleTranslation(Projection);
     float4x4 InvViewProjection = mul(InvView, InvProjection);
 
     // Store final matrices
@@ -230,7 +230,7 @@ void Main(FComputeShaderInput Input)
         float4(0.0,  0.0, 1.0, 0.0),
         float4(0.5,  0.5, 0.0, 1.0));
         
-    const float4x4 InvTextureScaleBias = InverseScaleTranslation(TextureScaleBias);
+    const float4x4 InvTextureScaleBias = FMatrix::InvScaleTranslation(TextureScaleBias);
     const float4x4 InvCascadeMatrix    = mul(mul(InvTextureScaleBias, InvProjection), InvView);
     
     // Calculate the position of the lower corner of the cascade partition, in the UV space of the first cascade partition...
@@ -262,11 +262,11 @@ void Main(FComputeShaderInput Input)
         // Scales used when we sample the cascades later
         float3 CascadeScale = 1.0 / (UpperCorner - LowerCorner);
         Split.Offsets = float4(-LowerCorner, 0.0);
-        Split.Scale   = float4( CascadeScale, 1.0);
+        Split.Scale   = float4(CascadeScale, 1.0);
         
         // We might want the position for the cascade
         Split.CascadeCameraPosition = ShadowEyePos;
-        Split.Padding0              = 0.0;
+        Split.Padding0              = SphereRadius;
 
         SplitBuffer[CascadeIndex] = Split;
     }

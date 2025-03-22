@@ -4,13 +4,13 @@
 RWTexture2D<uint> Output : register(u0);
 
 [numthreads(1, 1, 1)]
-void Main(FComputeShaderInput Input)
+void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
     uint Width;
     uint Height;
     Output.GetDimensions(Width, Height);
     
-    int2   TexCoord = int2(Input.DispatchThreadID.xy);
+    int2   TexCoord = int2(DispatchThreadID.xy);
     float2 Center   = float2(Width / 2, Height / 2);
     float  Distance = length(float2(TexCoord) - Center);
     
