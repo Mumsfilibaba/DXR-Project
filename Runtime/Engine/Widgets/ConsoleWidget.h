@@ -54,8 +54,8 @@ private:
 
     // The current candidates of registered console-objects
     TArray<TPair<IConsoleObject*, FString>> Candidates;
-    int32 CandidatesIndex = -1;
-    int32 HistoryIndex    = -1;
+    int32 SelectedCandidateIndex = -1;
+    int32 HistoryIndex           = -1;
 
     // Index in the history
     TArray<TPair<FString, ELogSeverity>> Messages;

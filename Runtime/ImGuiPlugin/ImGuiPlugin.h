@@ -65,7 +65,7 @@ public:
     void OnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
     float OnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
     void OnPlatformChangedViewport(ImGuiViewport* Viewport);
-    
+
 private:
 
     ImGuiIO*                       PluginImGuiIO;

@@ -196,6 +196,7 @@ static FORCEINLINE ImGuiKey GetImGuiGamepadAnalogSource(EAnalogSourceName::Type 
 bool FImGuiEventHandler::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogEvent)
 {
     const bool bIsNegative = AnalogEvent.GetAnalogValue() < 0.0f;
+
     const ImGuiKey GamepadButton = GetImGuiGamepadAnalogSource(AnalogEvent.GetAnalogSource(), bIsNegative);
     if (GamepadButton != ImGuiKey_None)
     {

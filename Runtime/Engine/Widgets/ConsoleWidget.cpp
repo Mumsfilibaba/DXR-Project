@@ -13,7 +13,7 @@ FConsoleWidget::FConsoleWidget()
     , ImGuiDelegateHandle()
     , PopupSelectedText()
     , Candidates()
-    , CandidatesIndex(-1)
+    , SelectedCandidateIndex(-1)
     , HistoryIndex(-1)
     , Messages()
     , MessagesCS()
@@ -72,20 +72,28 @@ void FConsoleWidget::Draw()
     const ImVec2 MainViewportSize = ImGuiExtensions::GetMainViewportSize();
     const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
-    const float Scale  = FrameBufferScale.x;
-    const float Width  = MainViewportSize.x;
-    const float Height = 256.0f * Scale;
+    const float Scale          = FrameBufferScale.x;
+    const float TotalWidth     = MainViewportSize.x;
+    const float TextAreaHeight = 384.0f * Scale;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
     const ImGuiStyle& Style = ImGui::GetStyle();
-    ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ WindowBG.x, WindowBG.y, WindowBG.z, 0.8f });
 
+    const ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(WindowBG.x, WindowBG.y, WindowBG.z, 0.7f));
+
+    const ImVec2 WindowPadding = ImVec2(10.0f * Scale, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, WindowPadding);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+
+    const ImVec2 WindowSize = ImVec2(TotalWidth, 0.0f);
+    ImGui::SetNextWindowSize(WindowSize, ImGuiCond_Always);
     ImGui::SetNextWindowPos(MainViewportPos, ImGuiCond_Always, ImVec2(0.0f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_Always);
 
     const ImGuiWindowFlags StyleFlags =
         ImGuiWindowFlags_NoMove |
@@ -94,268 +102,282 @@ void FConsoleWidget::Draw()
         ImGuiWindowFlags_AlwaysAutoResize | 
         ImGuiWindowFlags_NoSavedSettings;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f * Scale, 10.0f * Scale));
-
-    if (ImGui::Begin("Console Window", nullptr, StyleFlags))
+    ImGui::Begin("Console", nullptr, StyleFlags);
     {
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
 
-        const ImGuiWindowFlags PopupFlags =
+        const ImGuiWindowFlags TextChildWindowPopupFlags =
+            ImGuiWindowFlags_NoInputs |
             ImGuiWindowFlags_NoDecoration |
             ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoSavedSettings |
             ImGuiWindowFlags_NoFocusOnAppearing;
 
-        ImGui::BeginChild("##ChildWindow", ImVec2(Width, Height), false, PopupFlags);
-        if (!Candidates.IsEmpty())
+        const ImVec4 ChildWindowBG = Style.Colors[ImGuiCol_ChildBg];
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(ChildWindowBG.x, ChildWindowBG.y, ChildWindowBG.z, 0.0f));
+
+        const ImGuiChildFlags TextChildWindowFlags = ImGuiChildFlags_None;
+
+        const ImVec2 TextChildWindowSize = ImVec2(WindowSize.x - (WindowPadding.x * 2.0f), TextAreaHeight);
+        ImGui::BeginChild("##TextChildWindow", TextChildWindowSize, TextChildWindowFlags, TextChildWindowPopupFlags);
         {
-            bool bIsActiveIndex = false;
-
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
-            ImGui::PushAllowKeyboardFocus(false);
-
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-
-            const float Padding = 8.0f * Scale;
-            float VariableNameWidth  = 30.0f * Scale;
-            float VariableValueWidth = 20.0f * Scale;
-
-            // First find the maximum length of each column for the selectable
-            Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
+            if (!Candidates.IsEmpty())
             {
-                VariableNameWidth = FMath::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
+                ImGui::PushAllowKeyboardFocus(false);
 
-                if (IConsoleVariable* Variable = Candidate.First->AsVariable())
+                ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
+
+                ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
+
+                const float Padding = 8.0f * Scale;
+
+                float VariableNameWidth  = 30.0f * Scale;
+                float VariableValueWidth = 20.0f * Scale;
+
+                // First find the maximum length of each column for the selectable
+                Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
                 {
-                    const FString Value = Variable->GetString();
-                    VariableValueWidth = FMath::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
-                }
-            });
+                    VariableNameWidth = FMath::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
 
-            VariableNameWidth  += Padding;
-            VariableValueWidth += Padding;
+                    if (IConsoleVariable* Variable = Candidate.First->AsVariable())
+                    {
+                        const FString Value = Variable->GetString();
+                        VariableValueWidth = FMath::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
+                    }
+                });
 
-            // Draw UI
-            for (int32 i = 0; i < Candidates.Size(); i++)
-            {
-                const TPair<IConsoleObject*, FString>& Candidate = Candidates[i];
-                bIsActiveIndex = (CandidatesIndex == i);
+                VariableNameWidth  += Padding;
+                VariableValueWidth += Padding;
 
-                // VariableName
-                ImGui::PushID(i);
-                if (ImGui::Selectable(*Candidate.Second, &bIsActiveIndex))
+                // Draw UI
+                bool bIsActiveIndex = false;
+                for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)
                 {
-                    FCString::Strcpy(TextBuffer.Data(), *Candidate.Second);
-                    PopupSelectedText = Candidate.Second;
+                    const TPair<IConsoleObject*, FString>& Candidate = Candidates[CandidateIndex];
+                    bIsActiveIndex = SelectedCandidateIndex == CandidateIndex;
 
-                    Candidates.Clear();
-                    CandidatesIndex = -1;
+                    // VariableName
+                    ImGui::PushID(CandidateIndex);
 
-                    bUpdateCursorPosition = true;
+                    const ImVec2 SelectableSize(ImGui::GetContentRegionAvail().x, 20.0f);
+                    if (ImGui::Selectable(*Candidate.Second, &bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize))
+                    {
+                        FCString::Strcpy(TextBuffer.Data(), *Candidate.Second);
+                        PopupSelectedText = Candidate.Second;
+
+                        Candidates.Clear();
+                        SelectedCandidateIndex = -1;
+
+                        bUpdateCursorPosition = true;
+
+                        ImGui::PopID();
+                        break;
+                    }
+
+                    ImGui::SameLine(VariableNameWidth);
+
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+
+                    const char* PostFixText = "";
+                    const char* SetByText   = "";
+
+                    // Value
+                    const float PostFixTextLength = 
+                        FMath::Max(ImGui::CalcTextSize("Bool").x,
+                        FMath::Max(ImGui::CalcTextSize("Int").x,
+                        FMath::Max(ImGui::CalcTextSize("Float").x,
+                        ImGui::CalcTextSize("String").x)));
+
+                    const float SetByTextLength =
+                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
+                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
+                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
+                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
+                        ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
+
+                    IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
+                    if (ConsoleVariable)
+                    {
+                        const FString Value = ConsoleVariable->GetString();
+                        ImGui::Text("%s", *Value);
+
+                        if (ConsoleVariable->IsVariableBool())
+                        {
+                            PostFixText = "Bool";
+                        }
+                        else if (ConsoleVariable->IsVariableInt())
+                        {
+                            PostFixText = "Int";
+                        }
+                        else if (ConsoleVariable->IsVariableFloat())
+                        {
+                            PostFixText = "Float";
+                        }
+                        else if (ConsoleVariable->IsVariableString())
+                        {
+                            PostFixText = "String";
+                        }
+
+                        const EConsoleVariableFlags VariableFlags = (ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask);
+                        SetByText = SetByFlagToString(VariableFlags);
+                    }
+                    else if (Candidate.First->AsCommand())
+                    {
+                        PostFixText = "Command";
+                    }
+
+                    // Offset from the start is name + value
+                    const float PostFixOffset = VariableNameWidth + VariableValueWidth;
+                    ImGui::SameLine(PostFixOffset);
+
+                    // PostFix
+                    ImGui::Text("[%s]", PostFixText);
+
+                    const float SetByOffset = PostFixOffset + PostFixTextLength + 20.0f * Scale;
+                    if (ConsoleVariable)
+                    {
+                        ImGui::SameLine(SetByOffset);
+                        ImGui::Text("[%s]", SetByText);
+                    }
+
+                    const float HelpStringOffset = SetByOffset + SetByTextLength + 20.0f * Scale;
+                    ImGui::SameLine(HelpStringOffset);
+
+                    const CHAR* HelpString = Candidate.First->GetHelpString();
+                    ImGui::Text(" [Help: %s]", HelpString);
+
+                    ImGui::PopStyleColor();
 
                     ImGui::PopID();
-                    break;
+
+                    if (bIsActiveIndex && bCandidateSelectionChanged)
+                    {
+                        ImGui::SetScrollHereY();
+
+                        PopupSelectedText = Candidate.Second;
+                        bCandidateSelectionChanged = false;
+                    }
                 }
 
-                ImGui::SameLine(VariableNameWidth);
-
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
-
-                const CHAR* PostFix = "";
-                const CHAR* SetBy   = "";
-
-                // Value
-                static float PostFixSize = 
-                    FMath::Max(ImGui::CalcTextSize("Bool").x,
-                    FMath::Max(ImGui::CalcTextSize("Int").x,
-                    FMath::Max(ImGui::CalcTextSize("Float").x,
-                    ImGui::CalcTextSize("String").x)));
-
-                static float SetBySize = 
-                    FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
-                    FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
-                    FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
-                    FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
-                    ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
-
-                IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
-                if (ConsoleVariable)
-                {
-                    const FString Value = ConsoleVariable->GetString();
-                    ImGui::Text("%s", *Value);
-
-                    if (ConsoleVariable->IsVariableBool())
-                    {
-                        PostFix = "Bool";
-                    }
-                    else if (ConsoleVariable->IsVariableInt())
-                    {
-                        PostFix = "Int";
-                    }
-                    else if (ConsoleVariable->IsVariableFloat())
-                    {
-                        PostFix = "Float";
-                    }
-                    else if (ConsoleVariable->IsVariableString())
-                    {
-                        PostFix = "String";
-                    }
-
-                    const EConsoleVariableFlags VariableFlags = (ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask);
-                    SetBy = SetByFlagToString(VariableFlags);
-                }
-                else if (Candidate.First->AsCommand())
-                {
-                    PostFix = "Command";
-                }
-
-                // Offset from the start is name + value
-                const float PostFixOffset = VariableNameWidth + VariableValueWidth;
-                ImGui::SameLine(PostFixOffset);
-
-                // PostFix
-                ImGui::Text("[%s]", PostFix);
-
-                const float SetByOffset = PostFixOffset + PostFixSize + 20.0f * Scale;
-                if (ConsoleVariable)
-                {
-                    ImGui::SameLine(SetByOffset);
-                    ImGui::Text("[%s]", SetBy);
-                }
-
-                const float HelpStringOffset = SetByOffset + SetBySize + 20.0f * Scale;
-                ImGui::SameLine(HelpStringOffset);
-
-                const CHAR* HelpString = Candidate.First->GetHelpString();
-                ImGui::Text(" [Help: %s]", HelpString);
+                ImGui::PopStyleVar();
 
                 ImGui::PopStyleColor();
+                ImGui::PopStyleColor();
 
-                ImGui::PopID();
-
-                if (bIsActiveIndex && bCandidateSelectionChanged)
-                {
-                    ImGui::SetScrollHereY();
-                    PopupSelectedText = Candidate.Second;
-                    bCandidateSelectionChanged = false;
-                }
-            }
-
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
-
-            ImGui::PopAllowKeyboardFocus();
-            ImGui::PopStyleVar();
-        }
-        else
-        {
-            SCOPED_LOCK(MessagesCS);
-            
-            for (const TPair<FString, ELogSeverity>& Text : Messages)
-            {
-                ImVec4 Color;
-                if (Text.Second == ELogSeverity::Info)
-                {
-                    Color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-                }
-                else if (Text.Second == ELogSeverity::Warning)
-                {
-                    Color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
-                }
-                else if (Text.Second == ELogSeverity::Error)
-                {
-                    Color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-                }
-
-                ImGui::TextColored(Color, "%s", *Text.First);
-            }
-
-            if (bScrollDown)
-            {
-                ImGui::SetScrollHereY();
-                bScrollDown = false;
-            }
-        }
-
-        ImGui::EndChild();
-
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
-
-        // Draw the Input Sign for the text input 
-        {
-            ImVec2 CursorPos = ImGui::GetCursorScreenPos();
-            ImGui::SetCursorScreenPos(ImVec2(CursorPos.x, CursorPos.y + 2.0f * Scale));
-
-            ImGui::Text(">");
-            ImGui::SameLine();
-
-            CursorPos = ImGui::GetCursorScreenPos();
-            ImGui::SetCursorScreenPos(ImVec2(CursorPos.x, CursorPos.y - 2.0f * Scale));
-        }
-
-        // Text Input
-        ImGui::PushItemWidth(Width - 32.0f * Scale);
-
-        const ImGuiInputTextFlags InputFlags =
-            ImGuiInputTextFlags_EnterReturnsTrue |
-            ImGuiInputTextFlags_CallbackCompletion |
-            ImGuiInputTextFlags_CallbackHistory |
-            ImGuiInputTextFlags_CallbackAlways |
-            ImGuiInputTextFlags_CallbackEdit;
-
-        // Prepare callback for ImGui
-        auto Callback = [](ImGuiInputTextCallbackData* Data) -> int32
-        {
-            FConsoleWidget* This = reinterpret_cast<FConsoleWidget*>(Data->UserData);
-            return This->TextCallback(Data);
-        };
-
-        const bool bResult = ImGui::InputText("###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this));
-        if (bResult && TextBuffer[0] != 0)
-        {
-            if (CandidatesIndex != -1)
-            {
-                FCString::Strcpy(TextBuffer.Data(), *PopupSelectedText);
-
-                Candidates.Clear();
-                CandidatesIndex = -1;
-                bUpdateCursorPosition = true;
+                ImGui::PopAllowKeyboardFocus();
             }
             else
             {
-                const FString Text = FString(TextBuffer.Data());
-                FConsoleManager::Get().ExecuteCommand(*this, Text);
+                SCOPED_LOCK(MessagesCS);
 
-                TextBuffer[0] = 0;
-                bScrollDown = true;
+                const auto GetColorFromLogSeverity = [](ELogSeverity Severity)
+                {
+                    switch (Severity)
+                    {
+                        case ELogSeverity::Info:    return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+                        case ELogSeverity::Warning: return ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+                        case ELogSeverity::Error:   return ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+                        default:                    return ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+                    }
+                };
 
-                ImGui::SetItemDefaultFocus();
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 6.0f));
+
+                for (const TPair<FString, ELogSeverity>& Text : Messages)
+                {
+                    const ImVec4 Color = GetColorFromLogSeverity(Text.Second);
+                    ImGui::TextColored(Color, "%s", *Text.First);
+                }
+
+                ImGui::PopStyleVar();
+
+                if (bScrollDown)
+                {
+                    ImGui::SetScrollHereY();
+                    bScrollDown = false;
+                }
+            }
+
+            ImGui::EndChild();
+        }
+
+        // Text Input
+        {
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
+
+            const float DummyTextInputPadding = 4.0f;
+            ImGui::Dummy(ImVec2(0.0f, DummyTextInputPadding));
+
+            const float TextInputWidth = TotalWidth - (WindowPadding.x * 2.0f);
+            ImGui::PushItemWidth(TextInputWidth);
+
+            const ImGuiInputTextFlags InputFlags =
+                ImGuiInputTextFlags_EnterReturnsTrue |
+                ImGuiInputTextFlags_CallbackCompletion |
+                ImGuiInputTextFlags_CallbackHistory |
+                ImGuiInputTextFlags_CallbackAlways |
+                ImGuiInputTextFlags_CallbackEdit;
+
+            // Prepare callback for ImGui
+            const auto TextInputCallback = [](ImGuiInputTextCallbackData* CallbackData)
+            {
+                FConsoleWidget* ConsoleWidget = reinterpret_cast<FConsoleWidget*>(CallbackData->UserData);
+                return ConsoleWidget->TextCallback(CallbackData);
+            };
+
+            const bool bResult = ImGui::InputText("###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, TextInputCallback, reinterpret_cast<void*>(this));
+            if (bResult && TextBuffer[0] != 0)
+            {
+                if (SelectedCandidateIndex >= 0)
+                {
+                    FCString::Strcpy(TextBuffer.Data(), *PopupSelectedText);
+
+                    SelectedCandidateIndex = -1;
+                    bUpdateCursorPosition  = true;
+
+                    Candidates.Clear();
+                }
+                else
+                {
+                    const FString Text = FString(TextBuffer.Data());
+                    FConsoleManager::Get().ExecuteCommand(*this, Text);
+
+                    TextBuffer[0] = 0;
+                    bScrollDown   = true;
+
+                    ImGui::SetItemDefaultFocus();
+                    ImGui::SetKeyboardFocusHere(-1);
+                }
+            }
+
+            if (ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
+            {
                 ImGui::SetKeyboardFocusHere(-1);
             }
-        }
 
-        if (ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
-        {
-            ImGui::SetKeyboardFocusHere(-1);
-        }
+            ImGui::PopItemWidth();
 
-        ImGui::PopItemWidth();
+            ImGui::Dummy(ImVec2(0.0f, DummyTextInputPadding));
+
+            ImGui::PopStyleColor();
+        }
 
         ImGui::PopStyleColor();
         ImGui::PopStyleColor();
+
+        ImGui::End();
     }
 
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleColor();
-
-    ImGui::End();
-
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
 }
 
 void FConsoleWidget::Log(const FString& Message)
@@ -380,166 +402,173 @@ void FConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
     bScrollDown = true;
 }
 
-int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
+int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
 {
     if (bUpdateCursorPosition)
     {
-        Data->CursorPos = int32(PopupSelectedText.Length());
-        PopupSelectedText.Clear();
+        CallbackData->CursorPos = int32(PopupSelectedText.Length());
         bUpdateCursorPosition = false;
+
+        PopupSelectedText.Clear();
     }
 
-    switch (Data->EventFlag)
+    switch (CallbackData->EventFlag)
     {
-    case ImGuiInputTextFlags_CallbackEdit:
-    {
-        const char* WordEnd   = Data->Buf + Data->CursorPos;
-        const char* WordStart = WordEnd;
-        while (WordStart > Data->Buf)
+        case ImGuiInputTextFlags_CallbackEdit:
         {
-            const char c = WordStart[-1];
-            if (c == ' ' || c == '\t' || c == ',' || c == ';')
+            const char* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const char* WordStart = WordEnd;
+
+            while (WordStart > CallbackData->Buf)
             {
-                break;
-            }
-
-            WordStart--;
-        }
-
-        Candidates.Clear();
-        bCandidateSelectionChanged = true;
-        CandidatesIndex = -1;
-
-        const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
-        if (WordLength <= 0)
-        {
-            break;
-        }
-
-        const FStringView CandidateName(WordStart, WordLength);
-        FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
-        break;
-    }
-    case ImGuiInputTextFlags_CallbackCompletion:
-    {
-        const char* WordEnd   = Data->Buf + Data->CursorPos;
-        const char* WordStart = WordEnd;
-        if (Data->BufTextLen > 0)
-        {
-            while (WordStart > Data->Buf)
-            {
-                const char c = WordStart[-1];
-                if (c == ' ' || c == '\t' || c == ',' || c == ';')
+                const char CurrentChar = WordStart[-1];
+                if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                 {
                     break;
                 }
 
                 WordStart--;
             }
+
+            Candidates.Clear();
+
+            bCandidateSelectionChanged = true;
+            SelectedCandidateIndex = -1;
+
+            const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
+            if (WordLength > 0)
+            {
+                const FStringView CandidateName(WordStart, WordLength);
+                FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
+            }
+
+            break;
         }
-
-        const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
-        if (WordLength > 0)
+        case ImGuiInputTextFlags_CallbackCompletion:
         {
-            if (Candidates.Size() == 1)
+            const char* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const char* WordStart = WordEnd;
+
+            if (CallbackData->BufTextLen > 0)
             {
-                const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
-                const int32 Count = WordLength;
-                Data->DeleteChars(Pos, Count);
-                Data->InsertChars(Data->CursorPos, *Candidates[0].Second);
-
-                CandidatesIndex = -1;
-                bCandidateSelectionChanged = true;
-                Candidates.Clear();
-            }
-            else if (!Candidates.IsEmpty() && CandidatesIndex != -1)
-            {
-                const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
-                const int32 Count = WordLength;
-                Data->DeleteChars(Pos, Count);
-                Data->InsertChars(Data->CursorPos, *PopupSelectedText);
-
-                PopupSelectedText = "";
-
-                Candidates.Clear();
-                CandidatesIndex = -1;
-                bCandidateSelectionChanged = true;
-            }
-        }
-
-        break;
-    }
-    case ImGuiInputTextFlags_CallbackHistory:
-    {
-        if (Candidates.IsEmpty())
-        {
-            const TArray<FString>& History = FConsoleManager::Get().GetHistory();
-            if (History.IsEmpty())
-            {
-                HistoryIndex = -1;
-            }
-
-            const int32 PrevHistoryIndex = HistoryIndex;
-            if (Data->EventKey == ImGuiKey_UpArrow)
-            {
-                if (HistoryIndex == -1)
+                while (WordStart > CallbackData->Buf)
                 {
-                    HistoryIndex = History.Size() - 1;
-                }
-                else if (HistoryIndex > 0)
-                {
-                    HistoryIndex--;
-                }
-            }
-            else if (Data->EventKey == ImGuiKey_DownArrow)
-            {
-                if (HistoryIndex != -1)
-                {
-                    HistoryIndex++;
-                    if (HistoryIndex >= static_cast<int32>(History.Size()))
+                    const char CurrentChar = WordStart[-1];
+                    if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                     {
-                        HistoryIndex = -1;
+                        break;
+                    }
+
+                    WordStart--;
+                }
+            }
+
+            const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
+            if (WordLength > 0)
+            {
+                if (Candidates.Size() == 1)
+                {
+                    const int32 Pos   = static_cast<int32>(WordStart - CallbackData->Buf);
+                    const int32 Count = WordLength;
+
+                    CallbackData->DeleteChars(Pos, Count);
+                    CallbackData->InsertChars(CallbackData->CursorPos, *Candidates[0].Second);
+
+                    SelectedCandidateIndex = -1;
+                    bCandidateSelectionChanged = true;
+
+                    Candidates.Clear();
+                }
+                else if (!Candidates.IsEmpty() && SelectedCandidateIndex != -1)
+                {
+                    const int32 Pos   = static_cast<int32>(WordStart - CallbackData->Buf);
+                    const int32 Count = WordLength;
+
+                    CallbackData->DeleteChars(Pos, Count);
+                    CallbackData->InsertChars(CallbackData->CursorPos, *PopupSelectedText);
+
+                    PopupSelectedText = "";
+
+                    SelectedCandidateIndex = -1;
+                    bCandidateSelectionChanged = true;
+
+                    Candidates.Clear();
+                }
+            }
+
+            break;
+        }
+        case ImGuiInputTextFlags_CallbackHistory:
+        {
+            if (Candidates.IsEmpty())
+            {
+                const TArray<FString>& History = FConsoleManager::Get().GetHistory();
+                if (History.IsEmpty())
+                {
+                    HistoryIndex = -1;
+                }
+
+                const int32 PrevHistoryIndex = HistoryIndex;
+                if (CallbackData->EventKey == ImGuiKey_UpArrow)
+                {
+                    if (HistoryIndex == -1)
+                    {
+                        HistoryIndex = History.Size() - 1;
+                    }
+                    else if (HistoryIndex > 0)
+                    {
+                        HistoryIndex--;
+                    }
+                }
+                else if (CallbackData->EventKey == ImGuiKey_DownArrow)
+                {
+                    if (HistoryIndex != -1)
+                    {
+                        HistoryIndex++;
+                        if (HistoryIndex >= static_cast<int32>(History.Size()))
+                        {
+                            HistoryIndex = -1;
+                        }
+                    }
+                }
+
+                if (PrevHistoryIndex != HistoryIndex)
+                {
+                    const char* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
+                    CallbackData->DeleteChars(0, CallbackData->BufTextLen);
+                    CallbackData->InsertChars(0, HistoryStr);
+                }
+            }
+            else
+            {
+                if (CallbackData->EventKey == ImGuiKey_UpArrow)
+                {
+                    bCandidateSelectionChanged = true;
+                    if (SelectedCandidateIndex <= 0)
+                    {
+                        SelectedCandidateIndex = Candidates.Size() - 1;
+                    }
+                    else
+                    {
+                        SelectedCandidateIndex--;
+                    }
+                }
+                else if (CallbackData->EventKey == ImGuiKey_DownArrow)
+                {
+                    bCandidateSelectionChanged = true;
+                    if (SelectedCandidateIndex >= int32(Candidates.Size()) - 1)
+                    {
+                        SelectedCandidateIndex = 0;
+                    }
+                    else
+                    {
+                        SelectedCandidateIndex++;
                     }
                 }
             }
 
-            if (PrevHistoryIndex != HistoryIndex)
-            {
-                const CHAR* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
-                Data->DeleteChars(0, Data->BufTextLen);
-                Data->InsertChars(0, HistoryStr);
-            }
+            break;
         }
-        else
-        {
-            if (Data->EventKey == ImGuiKey_UpArrow)
-            {
-                bCandidateSelectionChanged = true;
-                if (CandidatesIndex <= 0)
-                {
-                    CandidatesIndex = Candidates.Size() - 1;
-                }
-                else
-                {
-                    CandidatesIndex--;
-                }
-            }
-            else if (Data->EventKey == ImGuiKey_DownArrow)
-            {
-                bCandidateSelectionChanged = true;
-                if (CandidatesIndex >= int32(Candidates.Size()) - 1)
-                {
-                    CandidatesIndex = 0;
-                }
-                else
-                {
-                    CandidatesIndex++;
-                }
-            }
-        }
-
-        break;
-    }
     }
 
     return 0;

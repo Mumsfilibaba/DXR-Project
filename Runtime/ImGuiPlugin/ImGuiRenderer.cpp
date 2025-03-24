@@ -104,47 +104,10 @@ bool FImGuiRenderer::InitializeRHI()
         FontTexture->SetDebugName("ImGui FontTexture");
     }
 
-    const CHAR* VSSource =
-        R"*(
-        struct FShaderConstants
-        {
-            float4x4 ProjectionMatrix;
-        };
-        
-        #if SHADER_LANG == SHADER_LANG_SPIRV
-            [[vk::push_constant]]
-            FShaderConstants Constants;
-        #else
-            ConstantBuffer<FShaderConstants> Constants : register(b0, space1);
-        #endif
-
-        struct FVSInput
-        {
-            float2 Position : POSITION;
-            float2 TexCoord : TEXCOORD0;
-            float4 Color    : COLOR0;
-        };
-
-        struct FPSInput
-        {
-            float4 Position : SV_POSITION;
-            float4 Color    : COLOR0;
-            float2 TexCoord : TEXCOORD0;
-        };
-
-        FPSInput Main(FVSInput Input)
-        {
-            FPSInput Output;
-            Output.Position = mul(Constants.ProjectionMatrix, float4(Input.Position.xy, 0.0f, 1.0f));
-            Output.Color    = Input.Color;
-            Output.TexCoord = Input.TexCoord;
-            return Output;
-        })*";
-
     TArray<uint8> ShaderCode;
 
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -157,26 +120,8 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
     
-    const CHAR* PSSource =
-        R"*(
-        struct PS_INPUT
-        {
-            float4 Position : SV_POSITION;
-            float4 Color    : COLOR0;
-            float2 TexCoord : TEXCOORD0;
-        };
-
-        SamplerState Sampler0 : register(s0);
-        Texture2D    Texture0 : register(t0);
-
-        float4 Main(PS_INPUT Input) : SV_Target
-        {
-            float4 OutColor = Input.Color * Texture0.Sample(Sampler0, Input.TexCoord);
-            return OutColor;
-        })*";
-
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-    if (!FShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ImGui.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;

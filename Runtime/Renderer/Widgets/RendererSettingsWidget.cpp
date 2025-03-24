@@ -38,8 +38,8 @@ void FRendererSettingsWidget::Draw()
         const uint32 WindowWidth  = GEngine->GetEngineWindow()->GetWidth();
         const uint32 WindowHeight = GEngine->GetEngineWindow()->GetHeight();
 
-        const float Width  = FMath::Max(WindowWidth * 0.3f, 400.0f);
-        const float Height = WindowHeight * 0.7f;
+        const float Width  = FMath::Clamp<float>(WindowWidth * 0.3f, 128.0f, 576.0);
+        const float Height = FMath::Clamp<float>(WindowHeight * 0.7f, 256.0f, 756.0);
 
         ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
