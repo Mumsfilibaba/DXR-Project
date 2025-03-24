@@ -282,7 +282,7 @@ void FConsoleWidget::Draw()
                     }
                 };
 
-                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 6.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 8.0f));
 
                 for (const TPair<FString, ELogSeverity>& Text : Messages)
                 {
@@ -306,7 +306,7 @@ void FConsoleWidget::Draw()
         {
             ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
 
-            const float DummyTextInputPadding = 4.0f;
+            const float DummyTextInputPadding = 6.0f;
             ImGui::Dummy(ImVec2(0.0f, DummyTextInputPadding));
 
             const float TextInputWidth = TotalWidth - (WindowPadding.x * 2.0f);
