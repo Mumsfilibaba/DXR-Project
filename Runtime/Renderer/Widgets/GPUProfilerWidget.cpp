@@ -144,12 +144,13 @@ void FGPUProfilerWidget::DrawGPUData(float Width)
 
 void FGPUProfilerWidget::DrawWindow()
 {
-    // Draw DebugWindow with DebugStrings
-    const ImVec2 DisplaySize = ImGuiExtensions::GetDisplaySize();
-    const float Width  = FMath::Max<float>(DisplaySize.x * 0.6f, 400.0f);
-    const float Height = DisplaySize.y * 0.75f;
+    const ImVec2 Size     = ImGuiExtensions::GetMainViewportSize();
+    const ImVec2 Position = ImGuiExtensions::GetMainViewportPos();
 
-    ImGui::SetNextWindowPos(ImVec2(DisplaySize.x * 0.5f, DisplaySize.y * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    const float Width  = FMath::Clamp<float>(Size.x * 0.6f, 384.0f, 1152.0f);
+    const float Height = FMath::Clamp<float>(Size.y * 0.5f, 320.0f, 960.0f);
+
+    ImGui::SetNextWindowPos(ImVec2(Size.x * 0.5f, Size.y * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
     const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;

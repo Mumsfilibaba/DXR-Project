@@ -145,16 +145,29 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
         ImGui::EndTable();
     }
 
+    // Size constants
+    constexpr int32 NumColumns           = 5;
+    constexpr int32 NumColumnsExceptName = NumColumns - 1;
+
+    constexpr float NameColumnWidthPercentage  = 0.4f;
+    constexpr float OtherColumnWidthPercentage = 1.0f - NameColumnWidthPercentage;
+
+    const float NameColumnWidth  = Width * NameColumnWidthPercentage;
+    const float OtherColumnWidth = (Width * OtherColumnWidthPercentage) / static_cast<float>(NumColumnsExceptName);
+
     // Retrieve a copy of the CPU samples
     FFrameProfiler::Get().GetFunctionInfo(ThreadInfos);
 
     int32 ThreadIndex = 0;
     for (const FFrameProfilerThreadInfo& ThreadInfo : ThreadInfos)
     {
+        bool bIsMainThread = false;
+
         FString ThreadName;
         if (FThreadManager::Get().IsMainThread(ThreadInfo.ThreadHandle))
         {
             ThreadName = "MainThread";
+            bIsMainThread = true;
         }
         else
         {
@@ -165,22 +178,24 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
             }
 
             ThreadName = Thread->GetName();
-
             if (ThreadName.IsEmpty())
             {
-                ThreadName = FString::CreateFormatted("Thread%d", ThreadIndex);
+                ThreadName = FString::CreateFormatted("Thread %d", ThreadIndex);
             }
         }
 
-        if (ImGui::CollapsingHeader(*ThreadName, ImGuiTreeNodeFlags_DefaultOpen))
+        const ImGuiTreeNodeFlags TreeFlags = bIsMainThread ? ImGuiTreeNodeFlags_DefaultOpen : ImGuiTreeNodeFlags_None;
+        if (ImGui::CollapsingHeader(*ThreadName, TreeFlags))
         {
-            if (ImGui::BeginTable("Functions", 5, TableFlags | ImGuiTableFlags_Resizable))
+            if (ImGui::BeginTable("Functions", NumColumns, TableFlags | ImGuiTableFlags_Resizable))
             {
-                ImGui::TableSetupColumn("Trace Name", ImGuiTableColumnFlags_WidthStretch);
-                ImGui::TableSetupColumn("Total Calls");
-                ImGui::TableSetupColumn("Avg");
-                ImGui::TableSetupColumn("Min");
-                ImGui::TableSetupColumn("Max");
+                constexpr ImGuiTableColumnFlags ColumnFlags = ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_NoSort;
+                ImGui::TableSetupColumn("Trace Name", ColumnFlags, NameColumnWidth);
+                ImGui::TableSetupColumn("Total Calls", ColumnFlags, OtherColumnWidth);
+                ImGui::TableSetupColumn("Avg", ColumnFlags, OtherColumnWidth);
+                ImGui::TableSetupColumn("Min", ColumnFlags, OtherColumnWidth);
+                ImGui::TableSetupColumn("Max", ColumnFlags, OtherColumnWidth);
+
                 ImGui::TableHeadersRow();
 
                 for (auto Sample : ThreadInfo.FunctionInfoMap)
@@ -219,12 +234,11 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
 
 void FFrameProfilerWidget::DrawWindow()
 {
-    // Draw DebugWindow with DebugStrings
     const ImVec2 Size     = ImGuiExtensions::GetMainViewportSize();
     const ImVec2 Position = ImGuiExtensions::GetMainViewportPos();
 
-    const float Width  = FMath::Max<float>(Size.x * 0.6f, 400.0f);
-    const float Height = Size.y * 0.75f;
+    const float Width  = FMath::Clamp<float>(Size.x * 0.6f, 384.0f, 1152.0f);
+    const float Height = FMath::Clamp<float>(Size.y * 0.5f, 320.0f, 960.0f);
 
     ImGui::SetNextWindowPos(ImVec2(Position.x + (Size.x * 0.5f), Position.y + (Size.y * 0.175f)), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
