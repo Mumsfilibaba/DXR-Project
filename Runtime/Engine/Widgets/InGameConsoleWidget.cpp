@@ -1,4 +1,3 @@
-#include "ConsoleWidget.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
@@ -6,22 +5,22 @@
 #include "Application/ApplicationInterface.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
+#include "Engine/Widgets/InGameConsoleWidget.h"
 
-FConsoleWidget::FConsoleWidget()
+FInGameConsoleWidget::FInGameConsoleWidget()
     : IOutputDevice()
     , InputHandler(MakeSharedPtr<FConsoleInputHandler>())
     , ImGuiDelegateHandle()
-    , PopupSelectedText()
     , Candidates()
-    , SelectedCandidateIndex(-1)
-    , HistoryIndex(-1)
+    , SelectedCandidateIndex(InvalidIndex)
+    , HistoryIndex(InvalidIndex)
     , Messages()
     , MessagesCS()
     , TextBuffer() 
     , bUpdateCursorPosition(false)
     , bIsActive(false)
     , bCandidateSelectionChanged(false)
-    , bScrollDown(false)
+    , bShouldScrollText(false)
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
@@ -30,20 +29,20 @@ FConsoleWidget::FConsoleWidget()
 
     if (FApplicationInterface::IsInitialized())
     {
-        InputHandler->HandleKeyEventDelegate.BindRaw(this, &FConsoleWidget::HandleKeyPressedEvent);
+        InputHandler->HandleKeyEventDelegate.BindRaw(this, &FInGameConsoleWidget::HandleKeyPressedEvent);
         FApplicationInterface::Get().RegisterInputHandler(InputHandler);
     }
 
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FConsoleWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FInGameConsoleWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 
     TextBuffer.Fill(0);
 }
 
-FConsoleWidget::~FConsoleWidget()
+FInGameConsoleWidget::~FInGameConsoleWidget()
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
@@ -61,13 +60,16 @@ FConsoleWidget::~FConsoleWidget()
     }
 }
 
-void FConsoleWidget::Draw()
+void FInGameConsoleWidget::Draw()
 {
-    if (!bIsActive)
+    if (bIsActive)
     {
-        return;
+        DrawConsole();
     }
+}
 
+void FInGameConsoleWidget::DrawConsole()
+{
     const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
     const ImVec2 MainViewportSize = ImGuiExtensions::GetMainViewportSize();
     const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
@@ -76,6 +78,8 @@ void FConsoleWidget::Draw()
     const float TotalWidth     = MainViewportSize.x;
     const float TextAreaHeight = 384.0f * Scale;
 
+    const float Transparency = 0.8f;
+
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
@@ -83,7 +87,7 @@ void FConsoleWidget::Draw()
     const ImGuiStyle& Style = ImGui::GetStyle();
 
     const ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(WindowBG.x, WindowBG.y, WindowBG.z, 0.7f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(WindowBG.x, WindowBG.y, WindowBG.z, Transparency));
 
     const ImVec2 WindowPadding = ImVec2(10.0f * Scale, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, WindowPadding);
@@ -104,7 +108,7 @@ void FConsoleWidget::Draw()
 
     ImGui::Begin("Console", nullptr, StyleFlags);
     {
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, 0.6f));
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ImVec4(0.3f, 0.3f, 0.3f, Transparency));
 
         const ImGuiWindowFlags TextChildWindowPopupFlags =
             ImGuiWindowFlags_NoInputs |
@@ -161,23 +165,16 @@ void FConsoleWidget::Draw()
                     ImGui::PushID(CandidateIndex);
 
                     const ImVec2 SelectableSize(ImGui::GetContentRegionAvail().x, 20.0f);
-                    if (ImGui::Selectable(*Candidate.Second, &bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize))
-                    {
-                        FCString::Strcpy(TextBuffer.Data(), *Candidate.Second);
-                        PopupSelectedText = Candidate.Second;
+                    ImGui::Selectable(*Candidate.Second, bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
 
-                        Candidates.Clear();
-                        SelectedCandidateIndex = -1;
-
-                        bUpdateCursorPosition = true;
-
-                        ImGui::PopID();
-                        break;
-                    }
+                    // If the selectable is not visible we want to scroll to it
+                    const bool bIsSelectableVisible = ImGuiExtensions::IsItemFullyVisible();
 
                     ImGui::SameLine(VariableNameWidth);
 
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+                    ImGui::AlignTextToFramePadding();
+
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.85f, 0.85f, 1.0f));
 
                     const char* PostFixText = "";
                     const char* SetByText   = "";
@@ -187,14 +184,14 @@ void FConsoleWidget::Draw()
                         FMath::Max(ImGui::CalcTextSize("Bool").x,
                         FMath::Max(ImGui::CalcTextSize("Int").x,
                         FMath::Max(ImGui::CalcTextSize("Float").x,
-                        ImGui::CalcTextSize("String").x)));
+                                   ImGui::CalcTextSize("String").x)));
 
                     const float SetByTextLength =
                         FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
                         FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
                         FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
                         FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
-                        ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
+                                   ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
 
                     IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                     if (ConsoleVariable)
@@ -244,18 +241,22 @@ void FConsoleWidget::Draw()
                     const float HelpStringOffset = SetByOffset + SetByTextLength + 20.0f * Scale;
                     ImGui::SameLine(HelpStringOffset);
 
-                    const CHAR* HelpString = Candidate.First->GetHelpString();
+                    const char* HelpString = Candidate.First->GetHelpString();
                     ImGui::Text(" [Help: %s]", HelpString);
 
                     ImGui::PopStyleColor();
 
                     ImGui::PopID();
 
+                    // Check if we need to scroll to the current selected item
                     if (bIsActiveIndex && bCandidateSelectionChanged)
                     {
-                        ImGui::SetScrollHereY();
+                        // Only scroll if the selectable was is not visible
+                        if (!bIsSelectableVisible)
+                        {
+                            ImGui::SetScrollHereY(0.0f);
+                        }
 
-                        PopupSelectedText = Candidate.Second;
                         bCandidateSelectionChanged = false;
                     }
                 }
@@ -284,18 +285,19 @@ void FConsoleWidget::Draw()
 
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 8.0f));
 
-                for (const TPair<FString, ELogSeverity>& Text : Messages)
+                for (const FConsoleMessage& Text : Messages)
                 {
-                    const ImVec4 Color = GetColorFromLogSeverity(Text.Second);
-                    ImGui::TextColored(Color, "%s", *Text.First);
+                    const ImVec4 Color = GetColorFromLogSeverity(Text.Severity);
+                    ImGui::TextColored(Color, "%s", *Text.Message);
                 }
 
                 ImGui::PopStyleVar();
 
-                if (bScrollDown)
+                // Scroll down so that the last text is visible
+                if (bShouldScrollText)
                 {
-                    ImGui::SetScrollHereY();
-                    bScrollDown = false;
+                    ImGui::SetScrollHereY(1.0f);
+                    bShouldScrollText = false;
                 }
             }
 
@@ -304,7 +306,7 @@ void FConsoleWidget::Draw()
 
         // Text Input
         {
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.1f, 0.1f, 0.1f, Transparency));
 
             const float DummyTextInputPadding = 6.0f;
             ImGui::Dummy(ImVec2(0.0f, DummyTextInputPadding));
@@ -322,38 +324,42 @@ void FConsoleWidget::Draw()
             // Prepare callback for ImGui
             const auto TextInputCallback = [](ImGuiInputTextCallbackData* CallbackData)
             {
-                FConsoleWidget* ConsoleWidget = reinterpret_cast<FConsoleWidget*>(CallbackData->UserData);
-                return ConsoleWidget->TextCallback(CallbackData);
+                FInGameConsoleWidget* ConsoleWidget = reinterpret_cast<FInGameConsoleWidget*>(CallbackData->UserData);
+                return ConsoleWidget->InputTextCallback(CallbackData);
             };
 
+            // Always set keyboard focus to the input field
+            ImGui::SetKeyboardFocusHere();
+
+            // Actually draw and handle text input... (Most logic happens in the callback)
             const bool bResult = ImGui::InputText("###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, TextInputCallback, reinterpret_cast<void*>(this));
-            if (bResult && TextBuffer[0] != 0)
+           
+            // ImGui::InputText returns true when enter is pressed (see. ImGuiInputTextFlags_EnterReturnsTrue) ...
+            if (bResult)
             {
-                if (SelectedCandidateIndex >= 0)
+                // ... if the text-buffer has some input we handle that ...
+                if (TextBuffer[0] != 0)
                 {
-                    FCString::Strcpy(TextBuffer.Data(), *PopupSelectedText);
+                    if (SelectedCandidateIndex >= 0)
+                    {
+                        CHECK(Candidates.IsEmpty() == false);
 
-                    SelectedCandidateIndex = -1;
-                    bUpdateCursorPosition  = true;
+                        const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
+                        FCString::Strcpy(TextBuffer.Data(), *NewTextData);
+                        bUpdateCursorPosition = true;
+                    }
+                    else
+                    {
+                        const FString Text = FString(TextBuffer.Data());
+                        FConsoleManager::Get().ExecuteCommand(*this, Text);
 
-                    Candidates.Clear();
+                        TextBuffer[0] = 0;
+                        bShouldScrollText = true;
+                    }
                 }
-                else
-                {
-                    const FString Text = FString(TextBuffer.Data());
-                    FConsoleManager::Get().ExecuteCommand(*this, Text);
 
-                    TextBuffer[0] = 0;
-                    bScrollDown   = true;
-
-                    ImGui::SetItemDefaultFocus();
-                    ImGui::SetKeyboardFocusHere(-1);
-                }
-            }
-
-            if (ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0))
-            {
-                ImGui::SetKeyboardFocusHere(-1);
+                // ... however, we always clear the candidates
+                InvalidateCandidates();
             }
 
             ImGui::PopItemWidth();
@@ -380,40 +386,45 @@ void FConsoleWidget::Draw()
     ImGui::PopStyleColor();
 }
 
-void FConsoleWidget::Log(const FString& Message)
+void FInGameConsoleWidget::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
+void FInGameConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
     constexpr int32 MaxMessages = 100;
 
-    // Insert in the beginning to get the correct order
-    Messages.Add(MakePair<FString, ELogSeverity>(Message, Severity));
-
+    Messages.Emplace(Message, Severity);
     if (Messages.Size() > MaxMessages)
     {
         Messages.RemoveAt(0);
     }
 
-    bScrollDown = true;
+    bShouldScrollText = true;
 }
 
-int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
+void FInGameConsoleWidget::InvalidateCandidates()
 {
+    SelectedCandidateIndex = InvalidIndex;
+    bCandidateSelectionChanged = true;
+    Candidates.Clear();
+}
+
+int32 FInGameConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
+{
+    // If we have completed using the Enter key, then we need to update the cursor-position
     if (bUpdateCursorPosition)
     {
-        CallbackData->CursorPos = int32(PopupSelectedText.Length());
+        CallbackData->CursorPos = CallbackData->BufTextLen;
         bUpdateCursorPosition = false;
-
-        PopupSelectedText.Clear();
     }
 
     switch (CallbackData->EventFlag)
     {
+        // This callback is called whenever we edit the text in the InputText field
         case ImGuiInputTextFlags_CallbackEdit:
         {
             const char* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
@@ -430,20 +441,32 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
                 WordStart--;
             }
 
-            Candidates.Clear();
-
-            bCandidateSelectionChanged = true;
-            SelectedCandidateIndex = -1;
+            // When we edit we want to search for new candidates, we do this by "reseting" candidate index and array
+            InvalidateCandidates();
 
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength > 0)
             {
                 const FStringView CandidateName(WordStart, WordLength);
                 FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
+
+                // If we found any candidates, then want to reset the history index, otherwise the index will be the 
+                // the same if we erase the text in the input-field and start iterating through the history.
+                if (!Candidates.IsEmpty())
+                {
+                    HistoryIndex = InvalidIndex;
+                }
+            }
+            else
+            {
+                // If we have deleted all characters, then we want to scroll the console text down to the latest again
+                bShouldScrollText = true;
             }
 
             break;
         }
+
+        // This callback is called when we press TAB when the console InputText field has keyboard- focus
         case ImGuiInputTextFlags_CallbackCompletion:
         {
             const char* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
@@ -466,74 +489,93 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
             const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
             if (WordLength > 0)
             {
-                if (Candidates.Size() == 1)
+                // We might not have a selection-index if we have not pressed the up- or down-key
+                if (!Candidates.IsEmpty() && SelectedCandidateIndex > InvalidIndex)
                 {
                     const int32 Pos   = static_cast<int32>(WordStart - CallbackData->Buf);
                     const int32 Count = WordLength;
 
+                    const FString& NewTextData = Candidates[SelectedCandidateIndex].Second;
                     CallbackData->DeleteChars(Pos, Count);
-                    CallbackData->InsertChars(CallbackData->CursorPos, *Candidates[0].Second);
+                    CallbackData->InsertChars(CallbackData->CursorPos, *NewTextData);
 
-                    SelectedCandidateIndex = -1;
-                    bCandidateSelectionChanged = true;
+                    // If we used tried to complete the command and there actually was text, then we want to clear the candidate array
+                    InvalidateCandidates();
 
-                    Candidates.Clear();
-                }
-                else if (!Candidates.IsEmpty() && SelectedCandidateIndex != -1)
-                {
-                    const int32 Pos   = static_cast<int32>(WordStart - CallbackData->Buf);
-                    const int32 Count = WordLength;
-
-                    CallbackData->DeleteChars(Pos, Count);
-                    CallbackData->InsertChars(CallbackData->CursorPos, *PopupSelectedText);
-
-                    PopupSelectedText = "";
-
-                    SelectedCandidateIndex = -1;
-                    bCandidateSelectionChanged = true;
-
-                    Candidates.Clear();
+                    // During completion, we also want to scroll down after drawing the text-history, since the candidates field will 
+                    // no longer be shown.
+                    bShouldScrollText = true;
                 }
             }
 
             break;
         }
+
+        // We have two options when this callback is called (I.e when the user presses either up or down arrows on the keyboard)
+        //  1. We want to select one of the options that fits what we have type (auto-completion)
+        //  2. We want to use a previous command
         case ImGuiInputTextFlags_CallbackHistory:
         {
+            // If the candidates are empty, that means that we have not types anything into the input line
+            // so this will route the arrow-keys to flip through the history (The commands previously used)
             if (Candidates.IsEmpty())
             {
-                const TArray<FString>& History = FConsoleManager::Get().GetHistory();
-                if (History.IsEmpty())
-                {
-                    HistoryIndex = -1;
-                }
+                // If we have no candidates we should have and invalid candidate-index
+                CHECK(SelectedCandidateIndex == InvalidIndex);
 
                 const int32 PrevHistoryIndex = HistoryIndex;
-                if (CallbackData->EventKey == ImGuiKey_UpArrow)
+
+                const TArray<FString>& History = FConsoleManager::Get().GetHistory();
+                if (!History.IsEmpty())
                 {
-                    if (HistoryIndex == -1)
+                    // If we have any console-history then we can go through the history by pressing the down-arrow key
+                    if (CallbackData->EventKey == ImGuiKey_UpArrow)
                     {
-                        HistoryIndex = History.Size() - 1;
-                    }
-                    else if (HistoryIndex > 0)
-                    {
-                        HistoryIndex--;
-                    }
-                }
-                else if (CallbackData->EventKey == ImGuiKey_DownArrow)
-                {
-                    if (HistoryIndex != -1)
-                    {
-                        HistoryIndex++;
-                        if (HistoryIndex >= static_cast<int32>(History.Size()))
+                        // If we have a history-index (non-invalid index), this means that we have already started to go through the 
+                        // console history and we can just decrement the index.
+                        if (HistoryIndex != InvalidIndex)
                         {
-                            HistoryIndex = -1;
+                            HistoryIndex--;
+
+                            // If we try and go further than we have indices, then we clamp the index to zero
+                            if (HistoryIndex < 0)
+                            {
+                                HistoryIndex = 0;
+                            }
+                        }
+                        else
+                        {
+                            // If we currently have not pressed the history, then we set the index to the last history entry
+                            HistoryIndex = History.LastElementIndex();
+                        }
+                    }
+                    else if (CallbackData->EventKey == ImGuiKey_DownArrow)
+                    {
+                        // if the up arrow is pressed, then we need to have already pressed the down-arrow,
+                        // otherwise we do not do anything.
+
+                        if (HistoryIndex != InvalidIndex)
+                        {
+                            HistoryIndex++;
+
+                            // If we try and go beyond the history array then we "exit" going through the history
+                            if (HistoryIndex >= History.Size())
+                            {
+                                HistoryIndex = InvalidIndex;
+                            }
                         }
                     }
                 }
+                else
+                {
+                    // If we have no history, then we set the index to invalid
+                    HistoryIndex = InvalidIndex;
+                }
 
+                // If the index changed then we insert the new history text into the text-field
                 if (PrevHistoryIndex != HistoryIndex)
                 {
+                    // If the history-index is invalid, then we clear the input-text field
                     const char* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
                     CallbackData->DeleteChars(0, CallbackData->BufTextLen);
                     CallbackData->InsertChars(0, HistoryStr);
@@ -541,12 +583,15 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
             }
             else
             {
+                // If we have candidates we should have an invalid history-index
+                CHECK(HistoryIndex == InvalidIndex);
+
+                const int32 PreviousSelectedCandidateIndex = SelectedCandidateIndex;
                 if (CallbackData->EventKey == ImGuiKey_UpArrow)
                 {
-                    bCandidateSelectionChanged = true;
                     if (SelectedCandidateIndex <= 0)
                     {
-                        SelectedCandidateIndex = Candidates.Size() - 1;
+                        SelectedCandidateIndex = Candidates.LastElementIndex();
                     }
                     else
                     {
@@ -555,8 +600,7 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
                 }
                 else if (CallbackData->EventKey == ImGuiKey_DownArrow)
                 {
-                    bCandidateSelectionChanged = true;
-                    if (SelectedCandidateIndex >= int32(Candidates.Size()) - 1)
+                    if (SelectedCandidateIndex >= Candidates.LastElementIndex())
                     {
                         SelectedCandidateIndex = 0;
                     }
@@ -564,6 +608,11 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
                     {
                         SelectedCandidateIndex++;
                     }
+                }
+
+                if (PreviousSelectedCandidateIndex != SelectedCandidateIndex)
+                {
+                    bCandidateSelectionChanged = true;
                 }
             }
 
@@ -574,7 +623,7 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* CallbackData)
     return 0;
 }
 
-void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
+void FInGameConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
 {
     CHECK(InputHandler.IsValid());
 
@@ -585,6 +634,9 @@ void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
         {
             bIsActive = !bIsActive;
             InputHandler->bConsoleToggled = bIsActive;
+
+            HistoryIndex           = InvalidIndex;
+            SelectedCandidateIndex = InvalidIndex;
         }
     }
 }

@@ -45,15 +45,14 @@ void FSceneInspectorWidget::Draw()
         ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
-        const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoSavedSettings;
+        const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
         if (ImGui::Begin("SceneInspector", &bDrawInspector, Flags))
         {
             DrawSceneInfo();
+            ImGui::End();
+
+            CVarDrawSceneInspector->SetAsBool(bDrawInspector, EConsoleVariableFlags::SetByCode);
         }
-
-        ImGui::End();
-
-        CVarDrawSceneInspector->SetAsBool(bDrawInspector, EConsoleVariableFlags::SetByCode);
     }
 }
 

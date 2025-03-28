@@ -8,6 +8,25 @@ struct FImGuiViewport;
 
 namespace ImGuiExtensions
 {
+    FORCEINLINE bool IsItemFullyVisible()
+    {
+        ImGuiWindow* Window = ImGui::GetCurrentWindow();
+        if (Window == nullptr)
+        {
+            return false;
+        }
+
+        // Get the item's bounding box in screen space
+        ImVec2 ItemMin = ImGui::GetItemRectMin();
+        ImVec2 ItemMax = ImGui::GetItemRectMax();
+
+        // Get the current window's clipping rectangle. In a child window, this corresponds to the visible area of the child.
+        const ImRect& ClipRect = Window->ClipRect;
+
+        // NOTE: ClipRect.x and ClipRect.y are the top-left; ClipRect.z and ClipRect.w are the bottom-right.
+        return (ItemMin.x >= ClipRect.Min.x && ItemMin.y >= ClipRect.Min.y && ItemMax.x <= ClipRect.Max.x && ItemMax.y <= ClipRect.Max.y);
+    }
+
     FORCEINLINE bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f)
     {
         ImGuiStyle& Style = ImGui::GetStyle();

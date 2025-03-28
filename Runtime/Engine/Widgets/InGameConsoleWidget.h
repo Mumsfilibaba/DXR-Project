@@ -31,40 +31,62 @@ struct FConsoleInputHandler final : public FInputHandler
     bool bConsoleToggled = false;
 };
 
-class FConsoleWidget final : public IOutputDevice
+struct FConsoleMessage
+{
+    FConsoleMessage() = default;
+
+    FConsoleMessage(const FString& InMessage, ELogSeverity InSeverity)
+        : Message(InMessage)
+        , Severity(InSeverity)
+    {
+    }
+
+    FString      Message;
+    ELogSeverity Severity;
+};
+
+class FInGameConsoleWidget final : public IOutputDevice
 {
 public:
-    FConsoleWidget();
-    ~FConsoleWidget();
+    FInGameConsoleWidget();
+    ~FInGameConsoleWidget();
 
+    // IOutputDevice Interface
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
+    // Draw the interface
     void Draw();
+    void DrawConsole();
 
 private:
-    int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
+    static constexpr int32 InvalidIndex = -1;
+
     void HandleKeyPressedEvent(const FKeyEvent& Event);
+
+    // ImGui callback for the text-input field
+    int32 InputTextCallback(struct ImGuiInputTextCallbackData* CallbackData);
+
+    // Clear the candidates array and reset the index
+    void InvalidateCandidates();
 
     TSharedPtr<FConsoleInputHandler> InputHandler;
     FDelegateHandle                  ImGuiDelegateHandle;
 
-    // Text to display in the input box when browsing through the history
-    FString PopupSelectedText;
-
     // The current candidates of registered console-objects
     TArray<TPair<IConsoleObject*, FString>> Candidates;
-    int32 SelectedCandidateIndex = -1;
-    int32 HistoryIndex           = -1;
 
     // Index in the history
-    TArray<TPair<FString, ELogSeverity>> Messages;
-    FCriticalSection                     MessagesCS;
+    TArray<FConsoleMessage> Messages;
+    FCriticalSection        MessagesCS;
+
+    int32 SelectedCandidateIndex = InvalidIndex;
+    int32 HistoryIndex           = InvalidIndex;
 
     TStaticArray<CHAR, 256> TextBuffer;
 
     bool bUpdateCursorPosition;
     bool bIsActive;
     bool bCandidateSelectionChanged;
-    bool bScrollDown;
+    bool bShouldScrollText;
 };

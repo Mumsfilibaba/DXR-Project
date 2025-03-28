@@ -11,7 +11,7 @@
 #include "Engine/Engine.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Widgets/ConsoleWidget.h"
+#include "Engine/Widgets/InGameConsoleWidget.h"
 #include "Engine/Widgets/FrameProfilerWidget.h"
 #include "Engine/Widgets/SceneInspectorWidget.h"
 #include "RHI/RHI.h"
@@ -290,7 +290,7 @@ bool FEngine::Init()
         IImguiPlugin::Get().SetMainViewport(EngineViewportWidget);
 
         ProfilerWidget  = MakeSharedPtr<FFrameProfilerWidget>();
-        ConsoleWidget   = MakeSharedPtr<FConsoleWidget>();
+        ConsoleWidget   = MakeSharedPtr<FInGameConsoleWidget>();
         InspectorWidget = MakeSharedPtr<FSceneInspectorWidget>();
     }
 

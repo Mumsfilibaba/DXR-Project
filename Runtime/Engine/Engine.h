@@ -79,7 +79,7 @@ private:
 #endif
 
     /** @brief In-game Console Widget */
-    TSharedPtr<class FConsoleWidget> ConsoleWidget;
+    TSharedPtr<class FInGameConsoleWidget> ConsoleWidget;
 
     /** @brief Profiler Widget */
     TSharedPtr<class FFrameProfilerWidget> ProfilerWidget;
