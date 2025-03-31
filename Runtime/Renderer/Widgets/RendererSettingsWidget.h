@@ -8,6 +8,7 @@ public:
     ~FRendererSettingsWidget();
 
     void Draw();
+    void DrawWindow();
 
 private:
     void DrawDeferredRenderingSettings();

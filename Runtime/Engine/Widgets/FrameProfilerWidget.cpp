@@ -67,8 +67,11 @@ void FFrameProfilerWidget::DrawFPS()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    ImGui::Begin("FPS Window", nullptr, Flags);
-    ImGui::Text("%d", FFrameProfiler::Get().GetFramesPerSecond());
+    if (ImGui::Begin("FPS Window", nullptr, Flags))
+    {
+        ImGui::Text("%d", FFrameProfiler::Get().GetFramesPerSecond());
+    }
+
     ImGui::End();
 
     ImGui::PopStyleColor();

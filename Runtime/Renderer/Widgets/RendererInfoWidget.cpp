@@ -140,10 +140,10 @@ void FRendererInfoWidget::Draw()
             ImGui::Text("%d", FRHIStats::NumCommands.Load());
 
             ImGui::Columns(1);
-
-            ImGui::End();
-
+    
             CVarDrawRendererInfo->SetAsBool(bDrawRendererInfo, EConsoleVariableFlags::SetByCode);
         }
+
+        ImGui::End();
     }
 }

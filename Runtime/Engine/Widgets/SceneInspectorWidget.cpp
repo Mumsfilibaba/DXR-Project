@@ -48,10 +48,10 @@ void FSceneInspectorWidget::Draw()
         if (ImGui::Begin("SceneInspector", &bDrawInspector, Flags))
         {
             DrawSceneInfo();
-            ImGui::End();
-
             CVarDrawSceneInspector->SetAsBool(bDrawInspector, EConsoleVariableFlags::SetByCode);
         }
+
+        ImGui::End();
     }
 }
 
