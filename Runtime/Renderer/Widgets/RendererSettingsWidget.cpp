@@ -337,6 +337,21 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::NextColumn();
     }
 
+    // Enable depth-clipping
+    if (IConsoleVariable* CVarCSMEnableDepthClipping = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableDepthClipping"))
+    {
+        ImGui::Text("Enable depth-clipping for cascade rendering");
+        ImGui::NextColumn();
+
+        bool bEnableDepthClipping = CVarCSMEnableDepthClipping->GetBool();
+        if (ImGui::Checkbox("##EnableDepthClipping", &bEnableDepthClipping))
+        {
+            CVarCSMEnableDepthClipping->SetAsBool(bEnableDepthClipping, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
     // Rotate samples
     if (IConsoleVariable* CVarEnableRotateSamples = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.RotateSamples"))
     {

@@ -55,6 +55,12 @@ static TAutoConsoleVariable<bool> CVarCSMEnableViewInstancing(
     false,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<bool> CVarCSMEnableDepthClipping(
+    "Renderer.CSM.EnableDepthClipping",
+    "Enables depth-clipping for cascade rendering.",
+    false,
+    EConsoleVariableFlags::Default);
+
 static TAutoConsoleVariable<int32> CVarCSMFilterMode(
     "Renderer.CSM.FilterMode",
     "Select mode when filer Cascaded Shadow Maps. 0: Percentage Closer Filtering (PCF) 1: Percentage Closer Soft Shadows (PCSS)",
@@ -121,7 +127,7 @@ FPointLightRenderPass::~FPointLightRenderPass()
 FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& /* FrameResources */)
 {
     FPointLightShaderCombination ShaderCombination;
-    ShaderCombination.MaterialFlags  = static_cast<int32>(Material->GetMaterialFlags());
+    ShaderCombination.MaterialFlags  = static_cast<uint32>(Material->GetMaterialFlags());
     ShaderCombination.RenderPassType = RenderPassType;
     
     FGraphicsPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(ShaderCombination);
@@ -816,8 +822,9 @@ FCascadedShadowsRenderPass::~FCascadedShadowsRenderPass()
 FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineStateInstance(ECascadeRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& /* FrameResources */ )
 {
     FCascadedShadowsShaderCombination ShaderCombination;
-    ShaderCombination.RenderPassType = RenderPassType;
-    ShaderCombination.MaterialFlags  = static_cast<int32>(Material->GetMaterialFlags());
+    ShaderCombination.RenderPassType       = RenderPassType;
+    ShaderCombination.bEnableDepthClipping = CVarCSMEnableDepthClipping.GetValue();
+    ShaderCombination.MaterialFlags        = static_cast<uint32>(Material->GetMaterialFlags());
 
     FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(ShaderCombination);
     if (!CachedDirectionalLightPSO)
@@ -965,7 +972,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        RasterizerStateInitializer.bDepthClipEnable = false;
+        RasterizerStateInitializer.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
 
         // TODO: Revisit depth-bias
         RasterizerStateInitializer.bEnableDepthBias     = true;

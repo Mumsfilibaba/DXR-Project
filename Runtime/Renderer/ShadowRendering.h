@@ -7,7 +7,7 @@
 
 #define NUM_FRUSTUM_PLANES (6)
 
-enum class ECubeMapRenderPassType : int32
+enum class ECubeMapRenderPassType : uint8
 {
     Unknown = 0,
     MultiPass,
@@ -18,7 +18,7 @@ enum class ECubeMapRenderPassType : int32
     Last = GeometryShaderSinglePass,
 };
 
-enum class ECascadeRenderPassType : int32
+enum class ECascadeRenderPassType : uint8
 {
     Unknown = 0,
     MultiPass,
@@ -146,9 +146,9 @@ struct FPointLightShaderCombination
         {
             // Type of RenderPass
             ECubeMapRenderPassType RenderPassType;
-            
+
             // Material-flags
-            int32 MaterialFlags;
+            uint32 MaterialFlags;
         };
 
         uint64 Hash;
@@ -225,8 +225,11 @@ struct FCascadedShadowsShaderCombination
             // Type of RenderPass
             ECascadeRenderPassType RenderPassType;
 
+            // True if depth-clipping should be enabled
+            bool bEnableDepthClipping;
+
             // Material-flags
-            int32 MaterialFlags;
+            uint32 MaterialFlags;
         };
 
         uint64 Hash;
