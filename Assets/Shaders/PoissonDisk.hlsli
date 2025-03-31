@@ -1,5 +1,5 @@
-#ifndef POISSON_HLSLI
-#define POISSON_HLSLI
+#ifndef POISSON_DISK_HLSLI
+#define POISSON_DISK_HLSLI
 
 static const float2 PoissonDisk16[16] =
 {

@@ -33,95 +33,101 @@ FRendererSettingsWidget::~FRendererSettingsWidget()
 void FRendererSettingsWidget::Draw()
 {
     bool bDrawSettingsWindow = CVarDrawSettingsWindow.GetValue();
-    if (bDrawSettingsWindow)
+    if (!bDrawSettingsWindow)
     {
-        const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
+        return;
+    }
 
-        const float Width  = FMath::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
-        const float Height = FMath::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
+    const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
 
-        ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
+    const float Width  = FMath::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
+    const float Height = FMath::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
 
-        const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
-        if (ImGui::Begin("Renderer Settings", &bDrawSettingsWindow, Flags))
-        {
-            // Deferred Rendering Settings
-            if (ImGui::CollapsingHeader("Deferred Rendering", ImGuiTreeNodeFlags_None))
-            {
-                DrawDeferredRenderingSettings();
-            }
+    ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
-            // Shadows
-            if (ImGui::CollapsingHeader("Shadows", ImGuiTreeNodeFlags_None))
-            {
-                DrawShadowSettings();
-            }
+    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
+    if (ImGui::Begin("Renderer Settings", &bDrawSettingsWindow, Flags))
+    {
+        DrawWindow();
+    }
 
-            // Cascaded Shadows
-            if (ImGui::CollapsingHeader("Cascaded Shadow Maps", ImGuiTreeNodeFlags_None))
-            {
-                DrawCascadedShadowSettings();
-            }
+    CVarDrawSettingsWindow->SetAsBool(bDrawSettingsWindow, EConsoleVariableFlags::SetByCode);
+    ImGui::End();
+}
 
-            // Point-light shadows
-            if (ImGui::CollapsingHeader("Point-light Shadow Maps", ImGuiTreeNodeFlags_None))
-            {
-                DrawPointLightShadowSettings();
-            }
+void FRendererSettingsWidget::DrawWindow()
+{
+    // Deferred Rendering Settings
+    if (ImGui::CollapsingHeader("Deferred Rendering", ImGuiTreeNodeFlags_None))
+    {
+        DrawDeferredRenderingSettings();
+    }
 
-            // Skybox
-            if (ImGui::CollapsingHeader("Skybox", ImGuiTreeNodeFlags_None))
-            {
-                DrawSkyboxSettings();
-            }
+    // Shadows
+    if (ImGui::CollapsingHeader("Shadows", ImGuiTreeNodeFlags_None))
+    {
+        DrawShadowSettings();
+    }
 
-            // Screen-Space Occlusion Settings
-            if (ImGui::CollapsingHeader("SSAO", ImGuiTreeNodeFlags_None))
-            {
-                DrawSSAOSettings();
-            }
+    // Cascaded Shadows
+    if (ImGui::CollapsingHeader("Cascaded Shadow Maps", ImGuiTreeNodeFlags_None))
+    {
+        DrawCascadedShadowSettings();
+    }
 
-            // Temporal AA
-            if (ImGui::CollapsingHeader("Temporal Anti-aliasing (TAA)", ImGuiTreeNodeFlags_None))
-            {
-                DrawTAASettings();
-            }
+    // Point-light shadows
+    if (ImGui::CollapsingHeader("Point-light Shadow Maps", ImGuiTreeNodeFlags_None))
+    {
+        DrawPointLightShadowSettings();
+    }
 
-            // FXAA
-            if (ImGui::CollapsingHeader("FXAA", ImGuiTreeNodeFlags_None))
-            {
-                DrawFXAASettings();
-            }
+    // Skybox
+    if (ImGui::CollapsingHeader("Skybox", ImGuiTreeNodeFlags_None))
+    {
+        DrawSkyboxSettings();
+    }
 
-            // Tonemapping
-            if (ImGui::CollapsingHeader("Tonemapping", ImGuiTreeNodeFlags_None))
-            {
-                DrawTonemappingSettings();
-            }
+    // Screen-Space Occlusion Settings
+    if (ImGui::CollapsingHeader("SSAO", ImGuiTreeNodeFlags_None))
+    {
+        DrawSSAOSettings();
+    }
 
-            // Display
-            if (ImGui::CollapsingHeader("Display", ImGuiTreeNodeFlags_None))
-            {
-                DrawDisplaySettings();
-            }
+    // Temporal AA
+    if (ImGui::CollapsingHeader("Temporal Anti-aliasing (TAA)", ImGuiTreeNodeFlags_None))
+    {
+        DrawTAASettings();
+    }
 
-            // Display
-            if (ImGui::CollapsingHeader("Culling", ImGuiTreeNodeFlags_None))
-            {
-                DrawCullingSettings();
-            }
+    // FXAA
+    if (ImGui::CollapsingHeader("FXAA", ImGuiTreeNodeFlags_None))
+    {
+        DrawFXAASettings();
+    }
 
-            // Debug
-            if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_None))
-            {
-                DrawDebugSettings();
-            }
-        }
+    // Tonemapping
+    if (ImGui::CollapsingHeader("Tonemapping", ImGuiTreeNodeFlags_None))
+    {
+        DrawTonemappingSettings();
+    }
 
-        ImGui::End();
+    // Display
+    if (ImGui::CollapsingHeader("Display", ImGuiTreeNodeFlags_None))
+    {
+        DrawDisplaySettings();
+    }
 
-        CVarDrawSettingsWindow->SetAsBool(bDrawSettingsWindow, EConsoleVariableFlags::SetByCode);
+    // Display
+    if (ImGui::CollapsingHeader("Culling", ImGuiTreeNodeFlags_None))
+    {
+        DrawCullingSettings();
+    }
+
+    // Debug
+    if (ImGui::CollapsingHeader("Debug", ImGuiTreeNodeFlags_None))
+    {
+        DrawDebugSettings();
     }
 }
 
@@ -466,17 +472,40 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::NextColumn();
     }
 
+    // Filter mode
+    if (IConsoleVariable* CVarFilterMode = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))
+    {
+        ImGui::Text("Filter Mode");
+        ImGui::NextColumn();
+
+        const char* Items[] =
+        {
+            "Percentage Closer Filtering (PCF)",
+            "Percentage Closer Soft Shadows (PCSS)",
+        };
+
+        int32 FilterMode = FMath::Clamp<int32>(CVarFilterMode->GetInt(), 0, 1);
+
+        constexpr uint32 ItemSize = ARRAY_COUNT(Items);
+        if (ImGui::Combo("##FilterMode", &FilterMode, Items, ItemSize))
+        {
+            CVarFilterMode->SetAsInt(FilterMode, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
     // Filter function
     if (IConsoleVariable* CVarFilterFunction = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterFunction"))
     {
-        ImGui::Text("Enable view instancing");
+        ImGui::Text("Filter Function");
         ImGui::NextColumn();
 
         const char* Items[] = 
         {
-            "Grid PCF",
-            "Poisson Disc PCF",
-            "Percentage Closer Soft Shadows (PCSS)"
+            "Grid",
+            "Poisson Disk",
+            "Vogel Disk"
         };
 
         int32 FilterFunction = FMath::Clamp<int32>(CVarFilterFunction->GetInt(), 0, 2);

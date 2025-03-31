@@ -55,10 +55,16 @@ static TAutoConsoleVariable<bool> CVarCSMEnableViewInstancing(
     false,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<int32> CVarCSMFilterMode(
+    "Renderer.CSM.FilterMode",
+    "Select mode when filer Cascaded Shadow Maps. 0: Percentage Closer Filtering (PCF) 1: Percentage Closer Soft Shadows (PCSS)",
+    0,
+    EConsoleVariableFlags::Default);
+
 static TAutoConsoleVariable<int32> CVarCSMFilterFunction(
     "Renderer.CSM.FilterFunction",
-    "Select function to use to filer Cascaded Shadow Maps. 0: Grid PCF 1: Poisson Disc PCF 2: Percentage Closer Soft Shadows (PCSS)",
-    2,
+    "Select function to use to filer Cascaded Shadow Maps. 0: Grid 1: Poisson Disk 2: Vogel Disk",
+    1,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMFilterSize(
@@ -1553,34 +1559,56 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     TArray<FShaderDefine> Defines;
 
     FString DebugName = "ShadowMask PSO (";
-    if (Combination.FilterFunction == CSMFilterFunction_GridPCF)
+
+    // Filter function
+    if (Combination.FilterFunction == ECSMFilterFunction::Grid)
     {
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "1");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "0");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "0");
-        DebugName += " GridPCF ";
+        Defines.Emplace("FILTER_FUNCTION_GRID", "1");
+        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
+        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
+        DebugName += "Grid ";
     }
-    else if (Combination.FilterFunction == CSMFilterFunction_PoissonDiscPCF)
+    else if (Combination.FilterFunction == ECSMFilterFunction::PoissonDisk)
     {
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "0");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "1");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "0");
-        DebugName += " PoissonDiscPCF ";
+        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
+        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "1");
+        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
+        DebugName += "Poisson-Disk ";
     }
-    else if (Combination.FilterFunction == CSMFilterFunction_PCSS)
+    else if (Combination.FilterFunction == ECSMFilterFunction::VogelDisk)
     {
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "0");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "0");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "1");
-        DebugName += " PCSS ";
+        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
+        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
+        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "1");
+        DebugName += "Vogel-Disk ";
     }
     else
     {
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "0");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "0");
-        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "0");
+        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
+        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
+        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
     }
 
+    // Filter mode
+    if (Combination.FilterMode == ECSMFilterMode::PCF)
+    {
+        Defines.Emplace("FILTER_MODE_PCF", "1");
+        Defines.Emplace("FILTER_MODE_PCSS", "0");
+        DebugName += " (PCF) ";
+    }
+    else if (Combination.FilterMode == ECSMFilterMode::PCSS)
+    {
+        Defines.Emplace("FILTER_MODE_PCF", "0");
+        Defines.Emplace("FILTER_MODE_PCSS", "1");
+        DebugName += " (PCSS) ";
+    }
+    else
+    {
+        Defines.Emplace("FILTER_MODE_PCF", "0");
+        Defines.Emplace("FILTER_MODE_PCSS", "0");
+    }
+
+    // Debug-mode
     if (Combination.bDebugMode)
     {
         Defines.Emplace("ENABLE_DEBUG", "1");
@@ -1591,6 +1619,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
         Defines.Emplace("ENABLE_DEBUG", "0");
     }
 
+    // Rotate samples
     if (Combination.bRotateSamples)
     {
         Defines.Emplace("ROTATE_SAMPLES", "1");
@@ -1601,6 +1630,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
         Defines.Emplace("ROTATE_SAMPLES", "0");
     }
 
+    // Select cascades from projection
     if (Combination.bSelectCascadeFromProjection)
     {
         Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "1");
@@ -1611,41 +1641,43 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
         Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "0");
     }
 
+    // Blend cascades
     if (Combination.bBlendCascades)
     {
-        Defines.Emplace("BLEND_CASCADES", "1");
+        Defines.Emplace("ENABLE_CASCADE_BLENDING", "1");
         DebugName += " BlendCascades ";
     }
     else
     {
-        Defines.Emplace("BLEND_CASCADES", "0");
+        Defines.Emplace("ENABLE_CASCADE_BLENDING", "0");
     }
 
-    if (Combination.NumPoissonSamples <= 16)
+    // Number of samples
+    if (Combination.NumSamples <= 16)
     {
-        Defines.Emplace("NUM_PCF_SAMPLES", "16");
-        DebugName += " NumPoissonSamples=16 ";
+        Defines.Emplace("NUM_SAMPLES", "16");
+        DebugName += " NumSamples=16";
     }
-    else if (Combination.NumPoissonSamples <= 32)
+    else if (Combination.NumSamples <= 32)
     {
-        Defines.Emplace("NUM_PCF_SAMPLES", "32");
-        DebugName += " NumPoissonSamples=32 ";
+        Defines.Emplace("NUM_SAMPLES", "32");
+        DebugName += " NumSamples=32";
     }
-    else if (Combination.NumPoissonSamples <= 64)
+    else if (Combination.NumSamples <= 64)
     {
-        Defines.Emplace("NUM_PCF_SAMPLES", "64");
-        DebugName += " NumPoissonSamples=64 ";
+        Defines.Emplace("NUM_SAMPLES", "64");
+        DebugName += " NumSamples=64";
     }
-    else if (Combination.NumPoissonSamples <= 128)
+    else if (Combination.NumSamples <= 128)
     {
-        Defines.Emplace("NUM_PCF_SAMPLES", "128");
-        DebugName += " NumPoissonSamples=128 ";
+        Defines.Emplace("NUM_SAMPLES", "128");
+        DebugName += " NumSamples=128";
     }
 
     DebugName += ")";
 
     FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/ShadowMaskGen.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -1680,10 +1712,11 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
 
 void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination)
 {
-    OutCombination.FilterFunction               = CVarCSMFilterFunction.GetValue();
+    OutCombination.FilterMode                   = static_cast<ECSMFilterMode>(FMath::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, 1));
+    OutCombination.FilterFunction               = static_cast<ECSMFilterFunction>(FMath::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 2));
     OutCombination.bDebugMode                   = CVarCSMDebugCascades.GetValue();
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
     OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
-    OutCombination.NumPoissonSamples            = CVarCSMNumPoissonDiscSamples.GetValue();
+    OutCombination.NumSamples                   = CVarCSMNumPoissonDiscSamples.GetValue();
 }

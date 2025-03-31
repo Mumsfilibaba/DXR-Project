@@ -267,11 +267,17 @@ struct FDirectionalShadowSettingsHLSL
 
 MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
 
-enum ECSMFilterFunction
+enum ECSMFilterMode : uint8
 {
-    CSMFilterFunction_GridPCF = 0,
-    CSMFilterFunction_PoissonDiscPCF = 1,
-    CSMFilterFunction_PCSS = 2,
+    PCF  = 0,
+    PCSS = 1,
+};
+
+enum ECSMFilterFunction : uint8
+{
+    Grid        = 0,
+    PoissonDisk = 1,
+    VogelDisk   = 2,
 };
 
 struct FShadowMaskShaderCombination
@@ -300,28 +306,33 @@ struct FShadowMaskShaderCombination
     {
         struct
         {
+            // Filter Mode to use
+            ECSMFilterMode FilterMode : 4;
+
             // Filter Function to use
-            uint64 FilterFunction : 3;
+            ECSMFilterFunction FilterFunction : 4;
 
             // Rotate the samples when using Poisson Disc
-            uint64 bRotateSamples : 1;
+            bool bRotateSamples : 1;
 
             // DebugMode
-            uint64 bDebugMode : 1;
+            bool bDebugMode : 1;
 
             // Select cascade from projection instead of ViewZ
-            uint64 bSelectCascadeFromProjection : 1;
+            bool bSelectCascadeFromProjection : 1;
 
             // BlendBetween cascades
-            uint64 bBlendCascades : 1;
+            bool bBlendCascades : 1;
 
-            // Number of Poisson samples
-            uint64 NumPoissonSamples : 8;
+            // Number of samples (Valid for poisson- and vogel-disk)
+            uint8 NumSamples : 8;
         };
 
         uint64 Hash;
     };
 };
+
+static_assert(sizeof(FShadowMaskShaderCombination) == sizeof(uint64), "FShadowMaskShaderCombination must have the same size as uint64");
 
 class FShadowMaskRenderPass : public FRenderPass
 {

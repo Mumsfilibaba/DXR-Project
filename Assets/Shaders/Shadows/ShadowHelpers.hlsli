@@ -3,7 +3,7 @@
 #include "../Structs.hlsli"
 #include "../Helpers.hlsli"
 #include "../Random.hlsli"
-#include "../Poisson.hlsli"
+#include "../PoissonDisk.hlsli"
 
 #define POINT_LIGHT_SAMPLES 4
 #define NUM_OFFSET_SAMPLES 20

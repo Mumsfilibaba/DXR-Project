@@ -172,7 +172,7 @@ struct FGlobalTextureFormats
     static const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
     static const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     static const EFormat VelocityFormat     = EFormat::R16G16_Float;
-    static const EFormat ShadowMaskFormat   = EFormat::R8_Unorm;
+    static const EFormat ShadowMaskFormat   = EFormat::R32_Float;
     static const EFormat ShadowMapFormat    = EFormat::D32_Float;
     static const EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
 };

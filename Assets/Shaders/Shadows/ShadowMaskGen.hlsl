@@ -1,7 +1,8 @@
 #include "../Structs.hlsli"
 #include "../Random.hlsli"
 #include "../Helpers.hlsli"
-#include "../Poisson.hlsli"
+#include "../PoissonDisk.hlsli"
+#include "../VogelDisk.hlsli"
 #include "../Halton.hlsli"
 #include "CascadeStructs.hlsli"
 
@@ -13,20 +14,28 @@
     #define ENABLE_DEBUG 0
 #endif
 
-#ifndef SHADOW_FILTER_MODE_PCF_GRID
-    #define SHADOW_FILTER_MODE_PCF_GRID 0
+#ifndef FILTER_FUNCTION_GRID
+    #define FILTER_FUNCTION_GRID 0
 #endif
 
-#ifndef SHADOW_FILTER_MODE_PCF_POISSION_DISC
-    #define SHADOW_FILTER_MODE_PCF_POISSION_DISC 0
+#ifndef FILTER_FUNCTION_POISSON_DISK
+    #define FILTER_FUNCTION_POISSON_DISK 0
 #endif
 
-#ifndef SHADOW_FILTER_MODE_PCSS
-    #define SHADOW_FILTER_MODE_PCSS 1
+#ifndef FILTER_FUNCTION_VOGEL_DISK
+    #define FILTER_FUNCTION_VOGEL_DISK 0
 #endif
 
-#ifndef NUM_PCF_SAMPLES
-    #define NUM_PCF_SAMPLES 32
+#ifndef FILTER_MODE_PCF
+    #define FILTER_MODE_PCF 1
+#endif
+
+#ifndef FILTER_MODE_PCSS
+    #define FILTER_MODE_PCSS 0
+#endif
+
+#ifndef NUM_SAMPLES
+    #define NUM_SAMPLES 32
 #endif
 
 #ifndef ROTATE_SAMPLES
@@ -41,8 +50,8 @@
     #define SELECT_CASCADE_FROM_PROJECTION 1
 #endif
 
-#ifndef BLEND_CASCADES
-    #define BLEND_CASCADES 1
+#ifndef ENABLE_CASCADE_BLENDING
+    #define ENABLE_CASCADE_BLENDING 1
 #endif
 
 #ifndef CASCADE_FADE_FACTOR
@@ -50,11 +59,10 @@
 #endif
 
 // Debugging defines
-#define ENABLE_FRAME_INDEX 0
 #define ENABLE_FIRST_CASCADE_ONLY 0
 
 #define MAX_PCSS_FILTER_SIZE 0.999
-#define MIN_PCSS_FILTER_SIZE 0.01
+#define MIN_PCSS_FILTER_SIZE 0.03
 #define SEARCH_REGION_SCALE 1.0
 #define PENUMBRA_SCALE 30.0
 
@@ -102,33 +110,49 @@ SamplerComparisonState ShadowSamplerLinearCmp : register(s1);
 
 SamplerState ShadowSamplerPoint : register(s2);
 
-float2 GetPoissonSample(uint Index)
+float2 GenerateSampleOffset(uint SampleIndex)
 {
-#if (NUM_PCF_SAMPLES == 16)
-    return PoissonDisk16[Index];
-#elif (NUM_PCF_SAMPLES == 32)
-    return PoissonDisk32[Index];
-#elif (NUM_PCF_SAMPLES == 64)
-    return PoissonDisk64[Index];
-#elif (NUM_PCF_SAMPLES == 128)
-    return PoissonDisk128[Index];
+#if FILTER_FUNCTION_POISSON_DISK
+
+    // Sample from predefined poisson-disks
+#if (NUM_SAMPLES == 16)
+    return PoissonDisk16[SampleIndex];
+#elif (NUM_SAMPLES == 32)
+    return PoissonDisk32[SampleIndex];
+#elif (NUM_SAMPLES == 64)
+    return PoissonDisk64[SampleIndex];
+#elif (NUM_SAMPLES == 128)
+    return PoissonDisk128[SampleIndex];
 #else
     return 0.0;
 #endif
+
+#else
+    // Generate a vogel sample
+    return VogelDiskSample(SampleIndex, NUM_SAMPLES, 1);
+#endif
 }
 
-float2 GetBlockerPoissonSample(uint Index)
+float2 GenerateBlockerSampleOffset(uint SampleIndex)
 {
+#if FILTER_FUNCTION_POISSON_DISK
+
+    // Sample from predefined poisson-disks
 #if (NUM_BLOCKER_SAMPLES == 16)
-    return PoissonDisk16[Index];
+    return PoissonDisk16[SampleIndex];
 #elif (NUM_BLOCKER_SAMPLES == 32)
-    return PoissonDisk32[Index];
+    return PoissonDisk32[SampleIndex];
 #elif (NUM_BLOCKER_SAMPLES == 64)
-    return PoissonDisk64[Index];
+    return PoissonDisk64[SampleIndex];
 #elif (NUM_BLOCKER_SAMPLES == 128)
-    return PoissonDisk128[Index];
+    return PoissonDisk128[SampleIndex];
 #else
     return 0.0;
+#endif
+
+#else
+    // Generate a vogel sample
+    return VogelDiskSample(SampleIndex, NUM_BLOCKER_SAMPLES, 1);
 #endif
 }
 
@@ -142,7 +166,6 @@ struct FFilterSetup
     float3 PositionWS;
     float3 Normal; 
     float2 ShadowPosition;
-
     float  BiasedDepth;
 
 #if ROTATE_SAMPLES
@@ -152,21 +175,25 @@ struct FFilterSetup
 
 float2 ComputeBlockerDepth(uint CascadeIndex, FFilterSetup FilterSetup, float SearchSize)
 {
+    const float FilterSize    = 256.0;
+    const float ShadowMapSize = GetShadowMapSize();
+
+    // Calculate the size of the filter
+    float2 FilterRadius = SearchSize.xx * FilterSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
+    FilterRadius = (FilterRadius * 0.5) / ShadowMapSize;
+
+    // Find blockers
     float NumBlockers     = 0.0;
     float BlockerDepthSum = 0.0;
 
-    // Calculate the size of the filter
-    SearchSize = clamp(SearchSize, MIN_PCSS_FILTER_SIZE, MAX_PCSS_FILTER_SIZE);
-    const float2 FilterRadius = SearchSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
-
-    // Use Poisson sampling for the blocker search
     for (int Sample = 0; Sample < NUM_BLOCKER_SAMPLES; ++Sample)
     {
-        float2 SampleOffset = GetBlockerPoissonSample(Sample) * FilterRadius;
-
+        float2 SampleOffset = GenerateBlockerSampleOffset(Sample);
     #if ROTATE_SAMPLES
+
         SampleOffset = mul(SampleOffset, FilterSetup.SampleRotationMatrix);
     #endif
+        SampleOffset = SampleOffset * FilterRadius;
 
         // Accumulate blockers
         float SampleDepth = ShadowCascades.SampleLevel(ShadowSamplerPoint, float3(FilterSetup.ShadowPosition + SampleOffset, CascadeIndex), 0);
@@ -183,26 +210,40 @@ float2 ComputeBlockerDepth(uint CascadeIndex, FFilterSetup FilterSetup, float Se
 
 float ShadowAmountPCSS(uint CascadeIndex, FFilterSetup FilterSetup, float PenumbraSize)
 {
-    PenumbraSize = clamp(PenumbraSize, MIN_PCSS_FILTER_SIZE, MAX_PCSS_FILTER_SIZE);
-    const float2 FilterRadius  = PenumbraSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
+    // Calculate the size of the filter
+    float2 FilterSize = 16382.0;
+    FilterSize = FilterSize * PenumbraSize.xx * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy);
 
     float Result = 0.0;
-    for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
-    {
-        float2 SampleOffset = GetPoissonSample(Sample) * FilterRadius;
-    
-    #if ROTATE_SAMPLES
-        SampleOffset = mul(SampleOffset, FilterSetup.SampleRotationMatrix);
-    #endif
 
-        Result += ShadowCascades.SampleCmpLevelZero(ShadowSamplerPointCmp, float3(FilterSetup.ShadowPosition + SampleOffset, CascadeIndex), FilterSetup.BiasedDepth);
+    [branch]
+    if (FilterSize.x > 1.0 || FilterSize.y > 1.0)
+    {
+        const float  ShadowMapSize = GetShadowMapSize();
+        const float2 FilterRadius  = (FilterSize * 0.5) / ShadowMapSize;
+
+        for (int Sample = 0; Sample < NUM_SAMPLES; ++Sample)
+        {
+            float2 SampleOffset = GenerateSampleOffset(Sample);
+        #if ROTATE_SAMPLES
+            SampleOffset = mul(SampleOffset, FilterSetup.SampleRotationMatrix);
+        #endif
+            SampleOffset = SampleOffset * FilterRadius;
+
+            Result += ShadowCascades.SampleCmpLevelZero(ShadowSamplerPointCmp, float3(FilterSetup.ShadowPosition + SampleOffset, CascadeIndex), FilterSetup.BiasedDepth);
+        }
+
+        Result = Result / float(NUM_SAMPLES);
+    }
+    else
+    {
+        Result = ShadowCascades.SampleCmpLevelZero(ShadowSamplerLinearCmp, float3(FilterSetup.ShadowPosition, CascadeIndex), FilterSetup.BiasedDepth);
     }
 
-    Result = Result / float(NUM_PCF_SAMPLES);
     return saturate(Result);
 }
 
-float ShadowAmountPoissonDisc(uint CascadeIndex, FFilterSetup FilterSetup)
+float ShadowAmountDiscPCF(uint CascadeIndex, FFilterSetup FilterSetup)
 {
     const float2 MaxFilterSize = SettingsBuffer.MaxFilterSize / abs(ShadowSplitsBuffer[0].Scale.xy);
     const float2 FilterSize    = clamp(min(SettingsBuffer.FilterSize.xx, MaxFilterSize) * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy), 1.0, SettingsBuffer.MaxFilterSize);
@@ -215,18 +256,18 @@ float ShadowAmountPoissonDisc(uint CascadeIndex, FFilterSetup FilterSetup)
         const float  ShadowMapSize = GetShadowMapSize();
         const float2 FilterRadius  = (FilterSize * 0.5) / ShadowMapSize;
 
-        for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
+        for (int Sample = 0; Sample < NUM_SAMPLES; ++Sample)
         {
-            float2 SampleOffset = GetPoissonSample(Sample) * FilterRadius;
-        
+            float2 SampleOffset = GenerateSampleOffset(Sample);
         #if ROTATE_SAMPLES
             SampleOffset = mul(SampleOffset, FilterSetup.SampleRotationMatrix);
         #endif
+            SampleOffset = SampleOffset * FilterRadius;
 
             Result += ShadowCascades.SampleCmpLevelZero(ShadowSamplerPointCmp, float3(FilterSetup.ShadowPosition + SampleOffset, CascadeIndex), FilterSetup.BiasedDepth);
         }
 
-        Result = Result / float(NUM_PCF_SAMPLES);
+        Result = Result / float(NUM_SAMPLES);
     }
     else
     {
@@ -236,7 +277,7 @@ float ShadowAmountPoissonDisc(uint CascadeIndex, FFilterSetup FilterSetup)
     return saturate(Result);
 }
 
-float ShadowAmountGrid(uint CascadeIndex, FFilterSetup FilterSetup)
+float ShadowAmountGridPCF(uint CascadeIndex, FFilterSetup FilterSetup)
 {
     const float2 MaxFilterSize = SettingsBuffer.MaxFilterSize / abs(ShadowSplitsBuffer[0].Scale.xy);
     const float2 FilterSize    = clamp(min(SettingsBuffer.FilterSize.xx, MaxFilterSize) * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy), 1.0, SettingsBuffer.MaxFilterSize);
@@ -310,19 +351,22 @@ float ShadowAmountSimple(uint CascadeIndex, FFilterSetup FilterSetup)
 
 float PCSS_SearchRadiusUV(float DepthVS, float NearPlane)
 {
-    const float LightRadiusUV = LightBuffer.LightSize;
-    return SEARCH_REGION_SCALE * LightRadiusUV * (DepthVS - NearPlane) / DepthVS;
+    return LightBuffer.LightSize * (DepthVS - NearPlane) / DepthVS;
+}
+
+float PCSS_PenumbraRadius(float RecieverDepthVS, float BlockerDepthVS) 
+{
+    return abs(LightBuffer.LightSize * (RecieverDepthVS - BlockerDepthVS) / BlockerDepthVS);
 }
 
 float PCSS_PenumbraRadiusUV(float RecieverDepthVS, float BlockerDepthVS)
 {
-    return PENUMBRA_SCALE * (abs(RecieverDepthVS - BlockerDepthVS) / BlockerDepthVS);
+    return abs(RecieverDepthVS - BlockerDepthVS) / BlockerDepthVS;
 }
 
 float PCSS_ProjectToLightUV(float PenumbraRadiusUV, float DepthVS, float NearPlane)
 {
-    const float LightRadiusUV = LightBuffer.LightSize;
-	return LightRadiusUV * PenumbraRadiusUV;
+	return LightBuffer.LightSize * PenumbraRadiusUV * NearPlane / DepthVS;
 }
 
 float PCSS_ClipToEye(float DepthVS, float NearPlane, float FarPlane)
@@ -350,7 +394,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     FilterSetup.Normal         = NormalWS;
     FilterSetup.ShadowPosition = ShadowPosition.xy;
     FilterSetup.BiasedDepth    = BiasedDepth;
-
+    
 #if ROTATE_SAMPLES
     float Theta    = NextRandom(RandomSeed) * PI_2;
     float CosTheta = cos(Theta);
@@ -358,16 +402,16 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     FilterSetup.SampleRotationMatrix = float2x2(float2(CosTheta, -SinTheta), float2(SinTheta,  CosTheta));
 #endif
 
-#if SHADOW_FILTER_MODE_PCSS
+#if FILTER_MODE_PCSS
+    
     // PCSS Step 1: With PCSS we need to calculate the number of blockers and the average depth
-    FCascadeMatrices CascadeMatrices = ShadowMatricesBuffer[CascadeIndex];
+    // FCascadeMatrices CascadeMatrices = ShadowMatricesBuffer[CascadeIndex];
 
-    float4 PositionVS = mul(float4(PositionWS, 1.0), CascadeMatrices.View);
-    PositionVS.xyz /= PositionVS.w;
+    // float4 PositionVS = mul(float4(PositionWS, 1.0), CascadeMatrices.View);
+    // PositionVS.xyz /= PositionVS.w;
 
     // Calculate the blocker search radius
-    const float DepthVS             = PositionVS.z;
-    const float BlockerSearchSizeUV = PCSS_SearchRadiusUV(DepthVS, CascadeSplit.NearPlane);
+    const float BlockerSearchSizeUV = PCSS_SearchRadiusUV(PositionWS.z, CascadeSplit.NearPlane);
 
     // In case we did not find any blockers, then we can just stop here
     const float2 BlockerInfo = ComputeBlockerDepth(CascadeIndex, FilterSetup, BlockerSearchSizeUV);
@@ -379,17 +423,29 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     // PCSS Step 2: Penumbra size
     const float AvgBlockerDepth   = BlockerInfo.x;
     const float AvgBlockerDepthVS = PCSS_ClipToEye(AvgBlockerDepth, CascadeSplit.NearPlane, CascadeSplit.FarPlane);
-    const float PenumbraWidth     = PCSS_PenumbraRadiusUV(DepthVS, AvgBlockerDepthVS);
-    const float PenumbraRadius    = PCSS_ProjectToLightUV(PenumbraWidth, DepthVS, CascadeSplit.NearPlane);
-
+    // const float PenumbraWidth     = PCSS_PenumbraRadiusUV(PositionVS.z, AvgBlockerDepthVS);
+    // const float PenumbraRadius    = PCSS_ProjectToLightUV(PenumbraWidth, PositionVS.z, CascadeSplit.NearPlane);
+    const float PenumbraRadius = PCSS_PenumbraRadius(PositionWS.z, AvgBlockerDepthVS);
+    return PenumbraRadius;
+    
     // PCSS Step 3: Filter the shadows
     return ShadowAmountPCSS(CascadeIndex, FilterSetup, PenumbraRadius);
-#elif SHADOW_FILTER_MODE_PCF_GRID
-    return ShadowAmountGrid(CascadeIndex, FilterSetup);
-#elif SHADOW_FILTER_MODE_PCF_POISSION_DISC
-    return ShadowAmountPoissonDisc(CascadeIndex, FilterSetup);
+
+#elif FILTER_MODE_PCF
+
+#if FILTER_FUNCTION_GRID
+    // PCF using a grid
+    return ShadowAmountGridPCF(CascadeIndex, FilterSetup);
 #else
+    // PCF using a random disk (Poisson or Vogel)
+    return ShadowAmountDiscPCF(CascadeIndex, FilterSetup);
+#endif
+
+#else
+    
+    // Fallback to a single sample 
     return ShadowAmountSimple(CascadeIndex, FilterSetup);
+
 #endif
 }
 
@@ -438,7 +494,7 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, inout uint 
     float ShadowAmount = CascadeShadowAmount(CascadeIndex, PositionWS, Normal, ProjectionPosition, RandomSeed);
 
 // Blend between this and next cascade
-#if BLEND_CASCADES && !ENABLE_FIRST_CASCADE_ONLY
+#if ENABLE_CASCADE_BLENDING && !ENABLE_FIRST_CASCADE_ONLY
     FCascadeSplit CascadeSplit = ShadowSplitsBuffer[CascadeIndex];
     
     float NextSplit  = CascadeSplit.Split;
@@ -488,15 +544,8 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0));
     const float3 Normal        = UnpackNormal(GBufferNormal);
 
-    // Random Seed when doing soft shadows
-#if ENABLE_FRAME_INDEX
-    const uint FrameIndex = SettingsBuffer.FrameIndex;
-#else
-    const uint FrameIndex = 0;
-#endif
-
     // Initialize random-seed
-    uint RandomSeed = InitRandom(Pixel, CameraBuffer.ViewportWidth, FrameIndex);
+    uint RandomSeed = InitRandom(Pixel, CameraBuffer.ViewportWidth, 0);
     
     // Cascade-index is written to for debug purposes
     uint CascadeIndex = 0;

@@ -2,7 +2,7 @@
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
 #include "Constants.hlsli"
-#include "Poisson.hlsli"
+#include "PoissonDisk.hlsli"
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 

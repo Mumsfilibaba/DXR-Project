@@ -34,25 +34,27 @@ FSceneInspectorWidget::~FSceneInspectorWidget()
 void FSceneInspectorWidget::Draw()
 {
     bool bDrawInspector = CVarDrawSceneInspector.GetValue();
-    if (bDrawInspector)
+    if (!bDrawInspector)
     {
-        const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
-
-        const float Width  = FMath::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
-        const float Height = FMath::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
-
-        ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
-
-        const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
-        if (ImGui::Begin("SceneInspector", &bDrawInspector, Flags))
-        {
-            DrawSceneInfo();
-            CVarDrawSceneInspector->SetAsBool(bDrawInspector, EConsoleVariableFlags::SetByCode);
-        }
-
-        ImGui::End();
+        return;
     }
+
+    const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
+
+    const float Width  = FMath::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
+    const float Height = FMath::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
+
+    ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
+
+    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
+    if (ImGui::Begin("SceneInspector", &bDrawInspector, Flags))
+    {
+        DrawSceneInfo();
+    }
+
+    CVarDrawSceneInspector->SetAsBool(bDrawInspector, EConsoleVariableFlags::SetByCode);
+    ImGui::End();
 }
 
 void FSceneInspectorWidget::DrawSceneInfo()

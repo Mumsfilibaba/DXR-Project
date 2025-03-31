@@ -19,6 +19,9 @@
 
 #define FLT32_EPSILON (1.192092896e-07)
 
+#define RPC_16 (0.0625)
+#define RPC_32 (0.03125)
+
 #define NUM_SHADOW_CASCADES (4)
 #define NUM_FRUSTUM_PLANES (6)
 
