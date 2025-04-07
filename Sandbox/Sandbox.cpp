@@ -19,10 +19,11 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA (1)
+#define LOAD_LIGHT_SANDBOX (1)
+#define LOAD_SPONZA (0)
 #define LOAD_BISTRO (0)
 #define LOAD_SUN_TEMPLE (0)
-#define LOAD_EMERALD_SQUARE (1)
+#define LOAD_EMERALD_SQUARE (0)
 
 #define ENABLE_LIGHT_TEST (0)
 #define ENABLE_SPHERES_TEST (0)
@@ -45,7 +46,9 @@ bool FSandbox::Init()
 
     bool bResult = false;
 
-#if LOAD_SPONZA
+#if LOAD_LIGHT_SANDBOX
+    bResult = CreateLightSandbox(CurrentWorld);
+#elif LOAD_SPONZA
     bResult = CreateSponza(CurrentWorld);
 #elif LOAD_BISTRO
     bResult = CreateBistro(CurrentWorld);
@@ -949,6 +952,130 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
         DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
         DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+
+        InWorld->AddLight(DirectionalLight);
+    }
+
+    return true;
+}
+
+bool FSandbox::CreateLightSandbox(FWorld* InWorld)
+{
+    FMaterialInfo MaterialInfo;
+
+    // Create Other Meshes
+    FActor* NewActor = InWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Plane");
+        NewActor->GetTransform().SetRotation(FMath::kHalfPI_f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(30.0f);
+        NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 0.0f);
+
+        MaterialInfo.Albedo           = FFloatColor::White;
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 0.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+
+            NewMaterial->Initialize();
+            NewMaterial->SetName("PlaneMaterial");
+
+            FMeshCreateInfo PlaneMeshData = FMeshFactory::CreatePlane(10, 10);
+
+            TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
+            PlaneMesh->Init(PlaneMeshData);
+
+            NewComponent->SetMesh(PlaneMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    MaterialInfo.Albedo           = FFloatColor(0.4f, 0.4f, 0.4f, 1.0f);
+    MaterialInfo.AmbientOcclusion = 1.0f;
+    MaterialInfo.Metallic         = 0.0f;
+    MaterialInfo.Roughness        = 1.0f;
+    MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+    TSharedPtr<FMaterial> CylinderMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+    CylinderMaterial->AlbedoMap    = GEngine->BaseTexture;
+    CylinderMaterial->RoughnessMap = GEngine->BaseTexture;
+    CylinderMaterial->AOMap        = GEngine->BaseTexture;
+    CylinderMaterial->MetallicMap  = GEngine->BaseTexture;
+
+    CylinderMaterial->Initialize();
+    CylinderMaterial->SetName("CylinderMaterial");
+
+    FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(16, 0.5f, 2.0f);
+
+    TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
+    CylinderMesh->Init(CylinderMeshData);
+
+    NewActor = InWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName(FString::CreateFormatted("Cylinder"));
+        NewActor->GetTransform().SetScale(1.0f, 4.0f, 1.0f);
+        NewActor->GetTransform().SetTranslation(0.0f, 4.0f, 10.0f);
+
+        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->SetMesh(CylinderMesh);
+            NewComponent->SetMaterial(CylinderMaterial);
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    // Load Skybox
+    FRHITextureRef Skybox = LoadCubeMapFromPanorama(ENGINE_LOCATION"/Assets/Textures/arches.hdr");
+    if (!Skybox)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Add Camera
+    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
+    {
+        // Add camera to the world
+        InWorld->AddCamera(Player->GetCamera());
+        InWorld->AddActor(Player);
+
+        // Add Skybox
+        if (FSkyboxComponent* SkyboxComponent = NewObject<FSkyboxComponent>())
+        {
+            // Set skybox cube-map
+            SkyboxComponent->SetCubeMap(Skybox);
+            Player->AddComponent(SkyboxComponent);
+        }
+    }
+
+    // Add SkyLight
+    if (FSkyLight* SkyLight = NewObject<FSkyLight>())
+    {
+        SkyLight->SetCubeMap(Skybox);
+        InWorld->AddLight(SkyLight);
+    }
+
+    // Add DirectionalLight
+    if (FDirectionalLight* DirectionalLight = NewObject<FDirectionalLight>())
+    {
+        DirectionalLight->SetShadowBias(0.0005f);
+        DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        DirectionalLight->SetIntensity(50.0f);
+        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(45.0f), 0.0f, 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }

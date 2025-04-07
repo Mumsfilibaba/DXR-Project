@@ -1,5 +1,4 @@
 #include "Engine/World/Components/MeshComponent.h"
-#include "Engine/World/Components/ProxySceneComponent.h"
 
 FOBJECT_IMPLEMENT_CLASS(FMeshComponent);
 
@@ -10,36 +9,8 @@ FMeshComponent::FMeshComponent(const FObjectInitializer& ObjectInitializer)
 {
 }
 
-FProxySceneComponent* FMeshComponent::CreateProxyComponent()
+FMeshComponent::~FMeshComponent()
 {
-    FProxySceneComponent* NewComponent = new FProxySceneComponent();
-    NewComponent->Geometry     = Mesh->GetRayTracingGeometry();
-    NewComponent->VertexBuffer = Mesh->GetVertexBuffer(EVertexStream::Packed);
-    NewComponent->NumVertices  = Mesh->GetVertexCount();
-    NewComponent->IndexBuffer  = Mesh->GetIndexBuffer();
-    NewComponent->NumIndices   = Mesh->GetIndexCount();
-    NewComponent->IndexFormat  = Mesh->GetIndexFormat();
-
-    NewComponent->CurrentActor = GetActorOwner();
-    NewComponent->Mesh         = Mesh;
-    NewComponent->Materials    = Materials;
-    CHECK(NewComponent->Materials == Materials);
-    return NewComponent;
-}
-
-TSharedPtr<FMesh> FMeshComponent::GetMesh() const
-{
-    return Mesh;
-}
-
-TSharedPtr<FMaterial> FMeshComponent::GetMaterial(int32 Index) const
-{
-    return (Materials.Size() > Index) ? Materials[Index] : nullptr;
-}
-
-int32 FMeshComponent::GetNumMaterials() const
-{
-    return Materials.Size();
 }
 
 void FMeshComponent::SetMesh(const TSharedPtr<FMesh>& InMesh)

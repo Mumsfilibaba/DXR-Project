@@ -78,11 +78,11 @@ public:
     void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
-     * @brief Function called when adding a new RendererComponent
+     * @brief Function called when adding a new SceneComponent
      * 
-     * @param RendererComponent New RendererComponent just added to the world
+     * @param SceneComponent New SceneComponent just added to the world
      */
-    void AddRendererComponent(FSceneComponent* RendererComponent);
+    void AddSceneComponent(FSceneComponent* SceneComponent);
 
     /**
       * @brief Sets the scene representation in the renderer

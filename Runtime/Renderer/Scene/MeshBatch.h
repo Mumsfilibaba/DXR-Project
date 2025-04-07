@@ -3,7 +3,7 @@
 #include "Core/Math/Frustum.h"
 #include "Core/Math/Vector3.h"
 
-class FProxySceneComponent;
+class FSceneStaticMesh;
 class FMaterial;
 
 struct FMeshBatch
@@ -11,7 +11,7 @@ struct FMeshBatch
     struct FMeshReference
     {
         FMeshReference()
-            : Primitive(nullptr)
+            : StaticMesh(nullptr)
             , SubMeshIndex(0)
             , BaseVertex(0)
             , VertexCount(0)
@@ -20,19 +20,19 @@ struct FMeshBatch
         {
         }
 
-        FProxySceneComponent* Primitive;
-        int32                 SubMeshIndex;
-        uint32                BaseVertex;
-        uint32                VertexCount;
-        uint32                StartIndex;
-        uint32                IndexCount;
+        FSceneStaticMesh* StaticMesh;
+        int32             SubMeshIndex;
+        uint32            BaseVertex;
+        uint32            VertexCount;
+        uint32            StartIndex;
+        uint32            IndexCount;
     };
 
     FMeshBatch(FMaterial* InMaterial);
     ~FMeshBatch();
     
-    void AddPrimitive(FProxySceneComponent* Primitive, int32 MaterialIndex);
+    void AddStaticMesh(FSceneStaticMesh* StaticMesh, int32 MaterialIndex);
 
     FMaterial*             Material;
-    TArray<FMeshReference> Primitives;
+    TArray<FMeshReference> MeshReferences;
 };

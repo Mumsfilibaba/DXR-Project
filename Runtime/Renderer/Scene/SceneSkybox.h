@@ -1,10 +1,10 @@
 #pragma once
 #include "Engine/World/Components/SkyboxComponent.h"
-#include "RendererCore/Interfaces/ISceneObject.h"
+#include "Renderer/Scene/SceneObject.h"
 
-struct FSceneSkybox : public ISceneObject
+struct FSceneSkybox : public FSceneObject
 {
-    FSceneSkybox(FSkyboxComponent* InSkybox);
+    FSceneSkybox(FScene* InScene, FSkyboxComponent* InSkybox);
     ~FSceneSkybox();
 
     virtual void Tick() override final { }

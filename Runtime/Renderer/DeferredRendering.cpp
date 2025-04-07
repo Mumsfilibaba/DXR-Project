@@ -4,10 +4,10 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/DeferredRendering.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTileDebug(
     "Renderer.Debug.DrawTiledLightning", 
@@ -290,9 +290,9 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
         }
 
-        for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+        for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
-            FProxySceneComponent* Component = MeshReference.Primitive;
+            FSceneStaticMesh* Component = MeshReference.StaticMesh;
             if (Component->IsOccluded())
             {
                 continue;
@@ -674,9 +674,9 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
         CommandList.SetConstantBuffers(PipelineInstance->PixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
         CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
-        for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+        for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
-            FProxySceneComponent* Component = MeshReference.Primitive;
+            FSceneStaticMesh* Component = MeshReference.StaticMesh;
             if (Component->IsOccluded())
             {
                 continue;
@@ -1402,11 +1402,11 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
     CommandList.SetIndexBuffer(FrameResources.OcclusionVolume.IndexBuffer.Get(), FrameResources.OcclusionVolume.IndexFormat);
     CommandList.SetConstantBuffer(VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+    for (FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
     {
         // Create Query
         Component->CurrentOcclusionQueryIndex = (Component->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
-        Component->CurrentOcclusionQuery = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
+        Component->CurrentOcclusionQuery      = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
 
         if (!Component->CurrentOcclusionQuery)
         {
@@ -1431,7 +1431,7 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
 
-        TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetTransformMatrix();
+        TransformPerObject.Transform = Component->Actor->GetTransform().GetTransformMatrix();
         TransformPerObject.Transform = (ScaleMatrix * TranslationMatrix) * TransformPerObject.Transform;
         TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
 

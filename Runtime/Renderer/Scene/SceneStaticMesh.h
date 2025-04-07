@@ -3,9 +3,10 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedPtr.h"
 #include "RHI/RHITypes.h"
-#include "RendererCore/Interfaces/ISceneObject.h"
+#include "Renderer/Scene/SceneObject.h"
 
 class FMaterial;
+class FMeshComponent;
 class FRHIBuffer;
 class FRHIQuery;
 class FRHIRayTracingGeometry;
@@ -33,13 +34,13 @@ struct FTransformBufferHLSL
 
 MARK_AS_REALLOCATABLE(FTransformBufferHLSL);
 
-class ENGINE_API FProxySceneComponent : public ISceneObject
+class FSceneStaticMesh : public FSceneObject
 {
 public:
-    FProxySceneComponent();
-    virtual ~FProxySceneComponent();
+    FSceneStaticMesh(FScene* InScene, FMeshComponent* MeshComponent);
+    virtual ~FSceneStaticMesh();
 
-    virtual void Tick() override final { }
+    virtual void Tick() override final;
 
     void UpdateOcclusion();
 
@@ -65,7 +66,8 @@ public:
     }
     
     // Reference to the Actor
-    class FActor* CurrentActor;
+    class FActor*   Actor;
+    FMeshComponent* MeshComponent;
 
     // TransformMatrix for this object
     FTransformBufferHLSL TransformBuffer;

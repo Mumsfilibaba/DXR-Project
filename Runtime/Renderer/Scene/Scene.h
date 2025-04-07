@@ -4,9 +4,11 @@
 #include "Core/Math/Vector3.h"
 #include "RendererCore/Interfaces/IScene.h"
 #include "RHI/RHICore.h"
-#include "RendererCore/Interfaces/ISceneObject.h"
+#include "Renderer/Scene/SceneObject.h"
 #include "Renderer/Scene/MeshBatch.h"
-#include "Renderer/Scene/SceneLights.h"
+#include "Renderer/Scene/SceneDirectionalLight.h"
+#include "Renderer/Scene/ScenePointLight.h"
+#include "Renderer/Scene/SceneSkyLight.h"
 #include "Renderer/Scene/SceneSkybox.h"
 #include "Renderer/Scene/SceneLightProbe.h"
 
@@ -39,8 +41,8 @@ public:
     // Adds a Skybox to the light
     virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) override final;
 
-    // TODO: Adds a new mesh to be drawn, but most renderer primitives should take this path
-    virtual void AddProxyComponent(FProxySceneComponent* InComponent) override final;
+    // Adds a static mesh to the scene
+    virtual void AddStaticMesh(FMeshComponent* InMeshComponent) override final;
 
     // Update all scene objects with the world version of the object
     void SyncWithWorld();
@@ -52,13 +54,13 @@ public:
     void UpdateVisibility();
 
     // Updates primitives transform matrices to be ready for the GPU
-    void UpdatePrimitives();
+    void UpdateStaticMeshes();
 
     // Updates MeshBatches
     void UpdateBatches();
 
     // Defers deletion of objects
-    void DeferDeletion(ISceneObject* InObject);
+    void DeferDeletion(FSceneObject* InObject);
 
     // Deletes enqueues objects
     void DeleteDeferredObjects();
@@ -69,11 +71,11 @@ public:
     // TODO: Differ the Renderer's camera from the World's
     FCamera* Camera;
 
-    // All Primitives in this scene
-    TArray<FProxySceneComponent*> Primitives;
+    // All static meshes in this scene
+    TArray<FSceneStaticMesh*> StaticMeshes;
 
-    // Visible Primitives (From the main camera's point of view)
-    TArray<FProxySceneComponent*> VisiblePrimitives;
+    // Visible static meshes (From the main camera's point of view)
+    TArray<FSceneStaticMesh*> VisibleStaticMeshes;
 
     // Batches of meshes that are visible (From the main camera's point of view)
     TArray<FMeshBatch> VisibleMeshBatches;
@@ -82,8 +84,8 @@ public:
     TArray<FLight*>           Lights;
     TArray<FScenePointLight*> PointLights;
 
-    FSceneSkyLight*           SkyLight;
-    FSceneDirectionalLight*   DirectionalLight;
+    FSceneSkyLight*         SkyLight;
+    FSceneDirectionalLight* DirectionalLight;
 
     // Pointer to skybox
     FSceneSkybox* Skybox;
@@ -95,6 +97,6 @@ public:
     TArray<FSceneLightProbe*> LightProbes;
 
     // Objects to be deleted next frame
-    TArray<ISceneObject*> DeferredObjects;
+    TArray<FSceneObject*> DeferredObjects;
     FCriticalSection      DeferredObjectsCS;
 };

@@ -21,6 +21,7 @@ private:
     bool CreateBistro(FWorld* InWorld);
     bool CreateSunTemple(FWorld* InWorld);
     bool CreateEmeraldSquare(FWorld* InWorld);
+    bool CreateLightSandbox(FWorld* InWorld);
 
     FRHITextureRef LoadCubeMapFromPanorama(const FString& Filename);
 };

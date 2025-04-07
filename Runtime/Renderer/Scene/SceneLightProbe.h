@@ -1,10 +1,10 @@
 #pragma once
 #include "Engine/World/Reflections/LightProbe.h"
-#include "RendererCore/Interfaces/ISceneObject.h"
+#include "Renderer/Scene/SceneObject.h"
 
-struct FSceneLightProbe : public ISceneObject
+struct FSceneLightProbe : public FSceneObject
 {
-    FSceneLightProbe(FLightProbe* InLightProbe);
+    FSceneLightProbe(FScene* InScene, FLightProbe* InLightProbe);
     ~FSceneLightProbe();
 
     virtual void Tick() override final;

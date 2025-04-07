@@ -10,7 +10,8 @@ static TAutoConsoleVariable<bool> CVarDrawSettingsWindow(
     false);
 
 // Same column size for all different types
-static constexpr float ColumnWidth = 450.0f;
+static constexpr float FirstColumnWidth  = 410.0f;
+static constexpr float SecondColumnWidth = 500.0f;
 
 FRendererSettingsWidget::FRendererSettingsWidget()
     : ImGuiDelegateHandle()
@@ -40,7 +41,7 @@ void FRendererSettingsWidget::Draw()
 
     const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
 
-    const float Width  = FMath::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
+    const float Width  = FMath::Clamp<float>(Size.x * 0.45f, 128.0f, 864.0);
     const float Height = FMath::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
 
     ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
@@ -135,7 +136,9 @@ void FRendererSettingsWidget::DrawDeferredRenderingSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Draw tile-debug
     if (IConsoleVariable* CVarDrawTiledLightning = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawTiledLightning"))
@@ -220,7 +223,9 @@ void FRendererSettingsWidget::DrawShadowSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable shadows
     if (IConsoleVariable* CVarEnableShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.Shadows"))
@@ -245,7 +250,9 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Draw cascades
     if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
@@ -664,7 +671,9 @@ void FRendererSettingsWidget::DrawPointLightShadowSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable point-light shadows
     if (IConsoleVariable* CVarEnablePointLightShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
@@ -765,7 +774,9 @@ void FRendererSettingsWidget::DrawSkyboxSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable Skybox
     if (IConsoleVariable* CVarEnableSkybox = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.Skybox"))
@@ -805,7 +816,9 @@ void FRendererSettingsWidget::DrawSSAOSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable SSAO
     if (IConsoleVariable* CVarEnableSSAO = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.SSAO"))
@@ -875,7 +888,9 @@ void FRendererSettingsWidget::DrawTAASettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable TemporalAA
     if (IConsoleVariable* CVarEnableTemporalAA = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.TemporalAA"))
@@ -900,7 +915,9 @@ void FRendererSettingsWidget::DrawFXAASettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable FXAA
     if (IConsoleVariable* CVarEnableFXAA = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FXAA"))
@@ -940,7 +957,9 @@ void FRendererSettingsWidget::DrawDisplaySettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable VSync
     if (IConsoleVariable* CVarEnableVSync = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.VerticalSync"))
@@ -965,7 +984,9 @@ void FRendererSettingsWidget::DrawCullingSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable frustum-culling
     if (IConsoleVariable* CVarEnableFrustumCulling = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling"))
@@ -990,7 +1011,9 @@ void FRendererSettingsWidget::DrawDebugSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Enable debug-draw AABBs
     if (IConsoleVariable* CVarEnableDebugDrawAABBs = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawAABBs"))
@@ -1045,7 +1068,9 @@ void FRendererSettingsWidget::DrawTonemappingSettings()
 {
     // Setup the columns
     ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, ColumnWidth);
+
+    ImGui::SetColumnWidth(0, FirstColumnWidth);
+    ImGui::SetColumnWidth(1, SecondColumnWidth);
 
     // Tonemapping Function
     if (IConsoleVariable* CVarTonemappingFunction = FConsoleManager::Get().FindConsoleVariable("Renderer.Tonemapping.Function"))

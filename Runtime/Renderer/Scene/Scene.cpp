@@ -10,38 +10,16 @@
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneSkybox.h"
 #include "Renderer/Scene/SceneLightProbe.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 bool GFreezeRendering = false;
-
-FMeshBatch::FMeshBatch(FMaterial* InMaterial)
-    : Material(InMaterial)
-    , Primitives()
-{
-}
-
-FMeshBatch::~FMeshBatch()
-{
-}
-
-void FMeshBatch::AddPrimitive(FProxySceneComponent* Primitive, int32 MaterialIndex)
-{
-    const FSubMesh& SubMesh = Primitive->Mesh->GetSubMesh(MaterialIndex);
-
-    FMeshReference& MeshReference = Primitives.Emplace();
-    MeshReference.Primitive    = Primitive;
-    MeshReference.SubMeshIndex = MaterialIndex;
-    MeshReference.BaseVertex   = SubMesh.BaseVertex;
-    MeshReference.StartIndex   = SubMesh.StartIndex;
-    MeshReference.VertexCount  = SubMesh.VertexCount;
-    MeshReference.IndexCount   = SubMesh.IndexCount;
-}
 
 FScene::FScene(FWorld* InWorld)
     : IScene()
     , World(InWorld)
     , Camera(nullptr)
-    , Primitives()
-    , VisiblePrimitives()
+    , StaticMeshes()
+    , VisibleStaticMeshes()
     , VisibleMeshBatches()
     , Lights()
     , PointLights()
@@ -59,13 +37,13 @@ FScene::~FScene()
     // Delete all the objects that are deferred
     DeleteDeferredObjects();
 
-    // Primitives
-    for (FProxySceneComponent* Component : Primitives)
+    // StaticMeshes
+    for (FSceneStaticMesh* StaticMesh : StaticMeshes)
     {
-        SAFE_DELETE(Component);
+        SAFE_DELETE(StaticMesh);
     }
 
-    Primitives.Clear();
+    StaticMeshes.Clear();
 
     // Lights
     for (FScenePointLight* ScenePointLight : PointLights)
@@ -115,7 +93,7 @@ void FScene::Tick()
     UpdateVisibility();
 
     // Prepares primitives for the GPU (Matrices being in correct format etc)
-    UpdatePrimitives();
+    UpdateStaticMeshes();
 
     // Batches all the visible primitives based on material
     UpdateBatches();
@@ -140,20 +118,20 @@ void FScene::AddLight(FLight* InLight)
         if (FDirectionalLight* InDirectionalLight = Cast<FDirectionalLight>(InLight))
         {
             DeferDeletion(DirectionalLight);
-            DirectionalLight = new FSceneDirectionalLight(InDirectionalLight);
+            DirectionalLight = new FSceneDirectionalLight(this, InDirectionalLight);
         }
         else if (FSkyLight* InSkyLight = Cast<FSkyLight>(InLight))
         {
             DeferDeletion(SkyLight);
 
-            SkyLight = new FSceneSkyLight(InSkyLight);
+            SkyLight = new FSceneSkyLight(this, InSkyLight);
             SkyLight->FilterStaticCubeMaps();
         }
         else if (FPointLight* InPointLight = Cast<FPointLight>(InLight))
         {
             if (InPointLight->IsShadowCaster())
             {
-                FScenePointLight* ScenePointLight = new FScenePointLight(InPointLight); 
+                FScenePointLight* ScenePointLight = new FScenePointLight(this, InPointLight); 
                 PointLights.Add(ScenePointLight);
             }
         }
@@ -164,7 +142,7 @@ void FScene::AddLightProbe(FLightProbe* InLightProbe)
 {
     if (InLightProbe)
     {
-        FSceneLightProbe* NewLightProbe = new FSceneLightProbe(InLightProbe);
+        FSceneLightProbe* NewLightProbe = new FSceneLightProbe(this, InLightProbe);
         NewLightProbe->FilterStaticCubeMaps();
 
         LightProbes.Add(NewLightProbe);
@@ -177,20 +155,21 @@ void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
 
     if (InSkyboxComponent)
     {
-        Skybox = new FSceneSkybox(InSkyboxComponent);
+        Skybox = new FSceneSkybox(this, InSkyboxComponent);
     }
 }
 
-void FScene::AddProxyComponent(FProxySceneComponent* InComponent)  
+void FScene::AddStaticMesh(FMeshComponent* InMeshComponent)  
 {
-    if (InComponent)
+    if (InMeshComponent)
     {
-        Primitives.Add(InComponent);
+        FSceneStaticMesh* NewStaticMesh = new FSceneStaticMesh(this, InMeshComponent);
+        StaticMeshes.Add(NewStaticMesh);
 
-        for (int32 Index = 0; Index < InComponent->Materials.Size(); Index++)
+        for (int32 Index = 0; Index < NewStaticMesh->Materials.Size(); Index++)
         {
-            CHECK(InComponent->Materials[Index] != nullptr);
-            Materials.AddUnique(InComponent->Materials[Index].Get());
+            CHECK(NewStaticMesh->Materials[Index] != nullptr);
+            Materials.AddUnique(NewStaticMesh->Materials[Index].Get());
         }
     }
 }
@@ -210,9 +189,9 @@ void FScene::UpdateLights()
     // Update DirectionalLight
     if (DirectionalLight)
     {
-        if (DirectionalLight->Primitives.Capacity() < Primitives.Capacity())
+        if (DirectionalLight->StaticMeshes.Capacity() < StaticMeshes.Capacity())
         {
-            DirectionalLight->Primitives.Reserve(Primitives.Capacity());
+            DirectionalLight->StaticMeshes.Reserve(StaticMeshes.Capacity());
         }
     }
 
@@ -241,23 +220,23 @@ void FScene::UpdateVisibility()
 {
     TRACE_SCOPE("UpdateVisibility - FrustumCulling");
 
-    if (Primitives.Capacity() > Primitives.Size())
+    if (StaticMeshes.Capacity() > StaticMeshes.Size())
     {
-        Primitives.Shrink();
+        StaticMeshes.Shrink();
     }
 
-    if (VisiblePrimitives.Capacity() < Primitives.Capacity())
+    if (VisibleStaticMeshes.Capacity() < StaticMeshes.Capacity())
     {
-        VisiblePrimitives.Reserve(Primitives.Capacity());
+        VisibleStaticMeshes.Reserve(StaticMeshes.Capacity());
     }
 
     // Clear for this frame
-    VisiblePrimitives.Clear();
+    VisibleStaticMeshes.Clear();
 
     // Clear  DirectionalLight
     if (DirectionalLight)
     {
-        DirectionalLight->Primitives.Clear();
+        DirectionalLight->StaticMeshes.Clear();
     }
 
     // Clear PointLights
@@ -266,20 +245,20 @@ void FScene::UpdateVisibility()
         FScenePointLight* ScenePointLight = PointLights[Index];
 
         // Single Pass
-        ScenePointLight->SinglePassPrimitives.Clear();
+        ScenePointLight->SinglePassStaticMeshes.Clear();
 
         // Multi-pass (One pass per face)
         for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
         {
-            ScenePointLight->Primitives[FaceIndex].Clear();
+            ScenePointLight->StaticMeshes[FaceIndex].Clear();
         }
     }
 
     // Perform frustum culling
     const FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-    for (FProxySceneComponent* Component : Primitives)
+    for (FSceneStaticMesh* Component : StaticMeshes)
     {
-        FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+        FMatrix4 TransformMatrix = Component->Actor->GetTransform().GetTransformMatrix();
 
         const FAABB& BoundingBox = Component->Mesh->GetAABB();
         const FVector3 Max = TransformMatrix.Transform(BoundingBox.Max);
@@ -290,7 +269,7 @@ void FScene::UpdateVisibility()
         if (CameraFrustum.IntersectsAABB(Box))
         {
             Component->UpdateFrustumVisbility(true);
-            VisiblePrimitives.Add(Component);
+            VisibleStaticMeshes.Add(Component);
         }
         else
         {
@@ -300,7 +279,7 @@ void FScene::UpdateVisibility()
         // Update the visibility DirectionalLight
         if (DirectionalLight)
         {
-            DirectionalLight->Primitives.Add(Component);
+            DirectionalLight->StaticMeshes.Add(Component);
         }
 
         // Update the visibility PointLights
@@ -314,7 +293,7 @@ void FScene::UpdateVisibility()
             {
                 if (ScenePointLight->Frustums[FaceIndex].IntersectsAABB(Box))
                 {
-                    ScenePointLight->Primitives[FaceIndex].Add(Component);
+                    ScenePointLight->StaticMeshes[FaceIndex].Add(Component);
                     bIsVisibleSinglePass = true;
                 }
             }
@@ -322,24 +301,19 @@ void FScene::UpdateVisibility()
             // ... if it is visible for any face we add it to the single-pass
             if (bIsVisibleSinglePass)
             {
-                ScenePointLight->SinglePassPrimitives.Add(Component);
+                ScenePointLight->SinglePassStaticMeshes.Add(Component);
             }
         }
     }
 }
 
-void FScene::UpdatePrimitives()
+void FScene::UpdateStaticMeshes()
 {
-    TRACE_SCOPE("UpdatePrimitives");
+    TRACE_SCOPE("UpdateStaticMeshes");
 
-    for (FProxySceneComponent* Component : Primitives)
+    for (FSceneStaticMesh* StaticMesh : StaticMeshes)
     {
-        FActor* CurrentActor = Component->CurrentActor;
-
-        // Retrieve the transforms for each object so that they are ready for the GPU
-        Component->TransformBuffer.Transform    = CurrentActor->GetTransform().GetTransformMatrix();
-        Component->TransformBuffer.Transform    = Component->TransformBuffer.Transform.GetTranspose();
-        Component->TransformBuffer.TransformInv = CurrentActor->GetTransform().GetTransformMatrixInverse();
+        StaticMesh->Tick();
     }
 }
 
@@ -352,7 +326,7 @@ void FScene::UpdateBatches()
 
     // Batch primitives for the Camera-View
     TMap<uint64, int32> MaterialToBatchIndex;
-    for (FProxySceneComponent* Component : VisiblePrimitives)
+    for (FSceneStaticMesh* Component : VisibleStaticMeshes)
     {
         const int32 NumMaterials = Component->GetNumMaterials();
         for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
@@ -372,7 +346,7 @@ void FScene::UpdateBatches()
                 MaterialToBatchIndex.Add(MaterialID, BatchIndex);
             }
 
-            VisibleMeshBatches[BatchIndex].AddPrimitive(Component, MaterialIndex);
+            VisibleMeshBatches[BatchIndex].AddStaticMesh(Component, MaterialIndex);
         }
     }
 
@@ -383,7 +357,7 @@ void FScene::UpdateBatches()
         MaterialToBatchIndex.Clear();
         DirectionalLight->MeshBatches.Clear();
 
-        for (FProxySceneComponent* Component : DirectionalLight->Primitives)
+        for (FSceneStaticMesh* Component : DirectionalLight->StaticMeshes)
         {
             const int32 NumMaterials = Component->GetNumMaterials();
             for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
@@ -403,7 +377,7 @@ void FScene::UpdateBatches()
                     MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                 }
                 
-                DirectionalLight->MeshBatches[BatchIndex].AddPrimitive(Component, MaterialIndex);
+                DirectionalLight->MeshBatches[BatchIndex].AddStaticMesh(Component, MaterialIndex);
             }
         }
     }
@@ -417,7 +391,7 @@ void FScene::UpdateBatches()
         MaterialToBatchIndex.Clear();
         ScenePointLight->SinglePassMeshBatch.Clear();
 
-        for (FProxySceneComponent* Component : ScenePointLight->SinglePassPrimitives)
+        for (FSceneStaticMesh* Component : ScenePointLight->SinglePassStaticMeshes)
         {
             const int32 NumMaterials = Component->GetNumMaterials();
             for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
@@ -437,7 +411,7 @@ void FScene::UpdateBatches()
                     MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                 }
                 
-                ScenePointLight->SinglePassMeshBatch[BatchIndex].AddPrimitive(Component, MaterialIndex);
+                ScenePointLight->SinglePassMeshBatch[BatchIndex].AddStaticMesh(Component, MaterialIndex);
             }
         }
 
@@ -449,7 +423,7 @@ void FScene::UpdateBatches()
             TArray<FMeshBatch>& MeshBatches = ScenePointLight->MeshBatches[FaceIndex];
             MeshBatches.Clear();
 
-            for (FProxySceneComponent* Component : ScenePointLight->Primitives[FaceIndex])
+            for (FSceneStaticMesh* Component : ScenePointLight->StaticMeshes[FaceIndex])
             {
                 const int32 NumMaterials = Component->GetNumMaterials();
                 for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
@@ -469,14 +443,14 @@ void FScene::UpdateBatches()
                         MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                     }
                     
-                    MeshBatches[BatchIndex].AddPrimitive(Component, MaterialIndex);
+                    MeshBatches[BatchIndex].AddStaticMesh(Component, MaterialIndex);
                 }
             }
         }
     }
 }
 
-void FScene::DeferDeletion(ISceneObject* InObject)
+void FScene::DeferDeletion(FSceneObject* InObject)
 {
     if (InObject)
     {
@@ -487,14 +461,14 @@ void FScene::DeferDeletion(ISceneObject* InObject)
 
 void FScene::DeleteDeferredObjects()
 {
-    TArray<ISceneObject*> LocalDeferredObjects;
+    TArray<FSceneObject*> LocalDeferredObjects;
 
     {
         TScopedLock Lock(DeferredObjectsCS);
         LocalDeferredObjects = Move(DeferredObjects);
     }
 
-    for (ISceneObject* Object : LocalDeferredObjects)
+    for (FSceneObject* Object : LocalDeferredObjects)
     {
         SAFE_DELETE(Object);
     }

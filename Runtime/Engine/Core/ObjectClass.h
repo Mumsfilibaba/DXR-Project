@@ -68,11 +68,10 @@ public:
     uint64 GetAlignment() const { return Alignment; }
 
 private:
-    FObjectClass*     SuperClass;
-    const CHAR* Name;
-    uint64      Size;
-    uint64      Alignment;
-
+    FObjectClass*                SuperClass;
+    const CHAR*                  Name;
+    uint64                       Size;
+    uint64                       Alignment;
     StaticClassFunctionType      StaticClassFunc;
     StaticDefaultConstructorType DefaultConstructorFunc;
 };

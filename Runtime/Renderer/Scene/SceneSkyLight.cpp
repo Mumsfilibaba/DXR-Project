@@ -1,31 +1,12 @@
 #include "RHI/RHITexture.h"
 #include "Engine/World/Lights/SkyLight.h"
 #include "RendererCore/TextureFactory.h"
-#include "Renderer/Scene/SceneLights.h"
+#include "Renderer/Scene/SceneSkyLight.h"
 #include "Renderer/FrameResources.h"
 
-FScenePointLight::FScenePointLight(FPointLight* InPointLight)
-    : PointLight(InPointLight)
-{
-}
-
-FScenePointLight::~FScenePointLight()
-{
-    PointLight = nullptr;
-}
-
-FSceneDirectionalLight::FSceneDirectionalLight(FDirectionalLight* InDirectionalLight)
-    : DirectionalLight(InDirectionalLight)
-{
-}
-
-FSceneDirectionalLight::~FSceneDirectionalLight()
-{
-    DirectionalLight = nullptr;
-}
-
-FSceneSkyLight::FSceneSkyLight(FSkyLight* InSkyLight)
-    : SkyLight(InSkyLight)
+FSceneSkyLight::FSceneSkyLight(FScene* InScene, FSkyLight* InSkyLight)
+    : FSceneObject(InScene)
+    , SkyLight(InSkyLight)
     , SpecularCubeMap(nullptr)
     , DiffuseCubeMap(nullptr)
 {

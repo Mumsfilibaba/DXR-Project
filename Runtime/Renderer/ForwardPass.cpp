@@ -4,10 +4,10 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
-#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/ForwardPass.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -191,9 +191,9 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         FRHISamplerState* SamplerState = Material->GetMaterialSampler();
         CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);
 
-        for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+        for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
-            FProxySceneComponent* Component = MeshReference.Primitive;
+            FSceneStaticMesh* Component = MeshReference.StaticMesh;
 
             FRHIBuffer* VertexBuffers[] =
             {

@@ -104,9 +104,9 @@ void FWorld::AddActor(FActor* InActor)
             AddPlayerController(PlayerController);
         }
 
-        if (FSceneComponent* RendererComponent = InActor->GetComponentOfType<FSceneComponent>())
+        if (FSceneComponent* SceneComponent = InActor->GetComponentOfType<FSceneComponent>())
         {
-            AddRendererComponent(RendererComponent);
+            AddSceneComponent(SceneComponent);
         }
     }
 }
@@ -157,21 +157,20 @@ void FWorld::AddLightProbe(FLightProbe* InLightProbe)
     }
 }
 
-void FWorld::AddRendererComponent(FSceneComponent* RendererComponent)
+void FWorld::AddSceneComponent(FSceneComponent* SceneComponent)
 {
     if (!Scene)
     {
         return;
     }
 
-    if (RendererComponent)
+    if (SceneComponent)
     {
-        if (FProxySceneComponent* ProxyComponent = RendererComponent->CreateProxyComponent())
+        if (FMeshComponent* MeshComponent = Cast<FMeshComponent>(SceneComponent))
         {
-            // TODO: Support other components than mesh components
-            Scene->AddProxyComponent(ProxyComponent);
+            Scene->AddStaticMesh(MeshComponent);
         }
-        else if (FSkyboxComponent* SkyboxComponent = Cast<FSkyboxComponent>(RendererComponent))
+        else if (FSkyboxComponent* SkyboxComponent = Cast<FSkyboxComponent>(SceneComponent))
         {
             Scene->AddSkybox(SkyboxComponent);
         }

@@ -3,8 +3,13 @@
 
 #include "Renderer/Scene/MeshBatch.h"
 #include "Renderer/Scene/Scene.h"
-#include "Renderer/Scene/SceneLights.h"
+#include "Renderer/Scene/SceneDirectionalLight.h"
+#include "Renderer/Scene/SceneLightProbe.h"
+#include "Renderer/Scene/SceneObject.h"
+#include "Renderer/Scene/ScenePointLight.h"
 #include "Renderer/Scene/SceneSkybox.h"
+#include "Renderer/Scene/SceneSkyLight.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 #include "Renderer/Widgets/GPUProfilerWidget.h"
 #include "Renderer/Widgets/RendererInfoWidget.h"

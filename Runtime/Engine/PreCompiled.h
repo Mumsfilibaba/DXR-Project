@@ -32,7 +32,6 @@
 #include "Engine/World/Components/Component.h"
 #include "Engine/World/Components/InputComponent.h"
 #include "Engine/World/Components/MeshComponent.h"
-#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Engine/World/Components/SceneComponent.h"
 #include "Engine/World/Components/SkyboxComponent.h"
 

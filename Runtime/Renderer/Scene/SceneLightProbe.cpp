@@ -3,8 +3,9 @@
 #include "Renderer/Scene/SceneLightProbe.h"
 #include "Renderer/FrameResources.h"
 
-FSceneLightProbe::FSceneLightProbe(FLightProbe* InLightProbe)
-    : LightProbe(InLightProbe)
+FSceneLightProbe::FSceneLightProbe(FScene* InScene, FLightProbe* InLightProbe)
+    : FSceneObject(InScene)
+    , LightProbe(InLightProbe)
     , SpecularCubeMap(nullptr)
     , DiffuseCubeMap(nullptr)
     , Origin()

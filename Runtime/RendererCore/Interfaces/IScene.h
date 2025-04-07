@@ -2,7 +2,7 @@
 
 class FCamera;
 class FLight;
-class FProxySceneComponent;
+class FMeshComponent;
 class FSkyboxComponent;
 class FLightProbe;
 
@@ -25,6 +25,6 @@ struct IScene
     // Adds a Skybox to the light
     virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) = 0;
 
-    // Add a Renderer version of a component
-    virtual void AddProxyComponent(FProxySceneComponent* InComponent) = 0;
+    // Add a static Mesh
+    virtual void AddStaticMesh(FMeshComponent* InMeshComponent) = 0;
 };

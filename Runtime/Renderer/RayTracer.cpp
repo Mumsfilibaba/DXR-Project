@@ -5,6 +5,7 @@
 #include "Engine/Resources/Model.h"
 #include "Renderer/RayTracer.h"
 #include "Renderer/SceneRenderer.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 bool FRayTracer::Initialize(FFrameResources& Resources)
 {
@@ -109,7 +110,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     FRHISamplerState* Sampler = nullptr;
 
-    for (const FProxySceneComponent* Component : Scene->Primitives)
+    for (const FSceneStaticMesh* Component : Scene->StaticMeshes)
     {
         FMaterial* Material = Component->GetMaterial();
         if (Material->HasAlphaMask())
@@ -125,7 +126,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->AOMap));
         Sampler = Material->GetMaterialSampler();
 
-        const FMatrix3x4 TinyTransform = Component->CurrentActor->GetTransform().GetTinyMatrix();
+        const FMatrix3x4 TinyTransform = Component->Actor->GetTransform().GetTinyMatrix();
 
         uint32 HitGroupIndex = 0;
         if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Component->Mesh.Get()))

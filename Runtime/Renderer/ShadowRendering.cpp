@@ -8,10 +8,10 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
-#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/ShadowRendering.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 static TAutoConsoleVariable<bool> CVarPointLightsEnableSinglePassRendering(
     "Renderer.PointLights.EnableSinglePassRendering",
@@ -517,9 +517,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     }
                 }
 
-                for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+                for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
                 {
-                    FProxySceneComponent* Component = MeshReference.Primitive;
+                    FSceneStaticMesh* Component = MeshReference.StaticMesh;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
                         FRHIBuffer* VertexBuffers[] =
@@ -542,7 +542,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                    ShadowPerObjectBuffer.WorldMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                    ShadowPerObjectBuffer.WorldMatrix = Component->Actor->GetTransform().GetTransformMatrix();
                     ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
@@ -632,9 +632,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         }
                     }
 
-                    for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+                    for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
                     {
-                        FProxySceneComponent* Component = MeshReference.Primitive;
+                        FSceneStaticMesh* Component = MeshReference.StaticMesh;
                         if (Material->HasHeightMap() || Material->HasAlphaMask())
                         {
                             FRHIBuffer* VertexBuffers[] =
@@ -657,7 +657,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                        ShadowPerObjectBuffer.WorldMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                        ShadowPerObjectBuffer.WorldMatrix = Component->Actor->GetTransform().GetTransformMatrix();
                         ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
 
                         constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
@@ -1251,9 +1251,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             }
 
             // Draw all the objects
-            for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+            for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
             {
-                FProxySceneComponent* Component = MeshReference.Primitive;
+                FSceneStaticMesh* Component = MeshReference.StaticMesh;
                 if (Material->HasHeightMap() || Material->HasAlphaMask())
                 {
                     FRHIBuffer* VertexBuffers[] =
@@ -1276,7 +1276,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                ShadowPerObjectBuffer.WorldMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                ShadowPerObjectBuffer.WorldMatrix = Component->Actor->GetTransform().GetTransformMatrix();
                 ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
 
                 constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
@@ -1355,9 +1355,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerCascadeBuffer.Get(), 0);
                 CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
 
-                for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+                for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
                 {
-                    FProxySceneComponent* Component = MeshReference.Primitive;
+                    FSceneStaticMesh* Component = MeshReference.StaticMesh;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
                         FRHIBuffer* VertexBuffers[] =
@@ -1380,7 +1380,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                    ShadowPerObjectBuffer.WorldMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                    ShadowPerObjectBuffer.WorldMatrix = Component->Actor->GetTransform().GetTransformMatrix();
                     ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);

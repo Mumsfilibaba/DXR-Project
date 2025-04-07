@@ -13,6 +13,7 @@
 #include "RendererCore/TextureFactory.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 #define SUPPORT_VARIABLE_RATE_SHADING (0)
 
@@ -594,14 +595,14 @@ void FSceneRenderer::Tick(FScene* Scene)
     {
         if (CVarBasePassOcclusionCulling.GetValue())
         {
-            for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+            for (FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
             {
                 Component->UpdateOcclusion();
             }
         }
         else
         {
-            for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+            for (FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
             {
                 Component->NumFramesOccluded = 0;
             }

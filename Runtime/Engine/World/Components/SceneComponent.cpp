@@ -8,3 +8,7 @@ FSceneComponent::FSceneComponent(const FObjectInitializer& ObjectInitializer)
     SetTickable(false);
     SetStartable(false);
 }
+
+FSceneComponent::~FSceneComponent()
+{
+}

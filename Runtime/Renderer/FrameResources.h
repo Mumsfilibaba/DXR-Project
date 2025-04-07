@@ -6,7 +6,6 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIRayTracing.h"
 #include "Engine/World/World.h"
-#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Renderer/RendererModule.h"
 

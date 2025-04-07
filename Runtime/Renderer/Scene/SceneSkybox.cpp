@@ -1,7 +1,8 @@
 #include "Renderer/Scene/SceneSkybox.h"
 
-FSceneSkybox::FSceneSkybox(FSkyboxComponent* InSkybox)
-    : Skybox(InSkybox)
+FSceneSkybox::FSceneSkybox(FScene* InScene, FSkyboxComponent* InSkybox)
+    : FSceneObject(InScene)
+    , Skybox(InSkybox)
 {
     if (InSkybox)
     {

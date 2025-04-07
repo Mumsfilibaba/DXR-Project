@@ -11,17 +11,30 @@ public:
     FOBJECT_DECLARE_CLASS(FMeshComponent, FSceneComponent);
 
     FMeshComponent(const FObjectInitializer& ObjectInitializer);
-    ~FMeshComponent() = default;
-
-    virtual FProxySceneComponent* CreateProxyComponent() override final;
-
-    TSharedPtr<FMesh>     GetMesh() const;
-    TSharedPtr<FMaterial> GetMaterial(int32 Index = 0) const;
-    
-    int32 GetNumMaterials() const;
+    ~FMeshComponent();
 
     void SetMesh(const TSharedPtr<FMesh>& InMesh);
     void SetMaterial(const TSharedPtr<FMaterial>& InMaterial, int32 Index = 0);
+
+    TSharedPtr<FMesh> GetMesh() const
+    {
+        return Mesh;
+    }
+
+    TSharedPtr<FMaterial> GetMaterial(int32 Index = 0) const
+    {
+        return (Materials.Size() > Index) ? Materials[Index] : nullptr;
+    }
+
+    const TArray<TSharedPtr<FMaterial>> GetMaterials() const 
+    {
+        return Materials;
+    }
+
+    int32 GetNumMaterials() const
+    {
+        return Materials.Size();
+    }
 
 private:
     TSharedPtr<FMesh>             Mesh;

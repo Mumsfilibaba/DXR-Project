@@ -136,7 +136,7 @@ public:
         return KeyState.bIsDown && !KeyState.bPreviousState;
     }
 
-    FIntVector2 GetCursorPosition() const;
+    FIntVector2 GetCursorPosition()   const;
     FKeyState   GetKeyState(FKey Key) const;
     FAxisState  GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 

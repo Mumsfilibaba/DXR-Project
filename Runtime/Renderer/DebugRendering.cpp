@@ -6,10 +6,10 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/DebugRendering.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneLightProbe.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 struct FAABBShaderInfoHLSL
 {
@@ -631,7 +631,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer_Wireframe.Get(), EIndexFormat::uint16);
 
-    for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
+    for (const FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
     {
         if (Component->IsOccluded())
         {
@@ -644,7 +644,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
-        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetTransformMatrix();
+        FMatrix4 TransformMatrix   = Component->Actor->GetTransform().GetTransformMatrix();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
 
         FAABBShaderInfoHLSL ShaderData;
@@ -679,7 +679,7 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
     CommandList.SetVertexBuffers(MakeArrayView(&Resources.OcclusionVolume.VertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(Resources.OcclusionVolume.IndexBuffer.Get(), Resources.OcclusionVolume.IndexFormat);
 
-    for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
+    for (const FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
     {
         struct FShaderData
         {
@@ -698,7 +698,7 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
 
-        ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+        ShaderData.TransformMatrix = Component->Actor->GetTransform().GetTransformMatrix();
         ShaderData.TransformMatrix = (ScaleMatrix * TranslationMatrix) * ShaderData.TransformMatrix;
         ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
         ShaderData.Color           = FVector4(0.8f, 0.8f, 0.8f, 0.5f);
