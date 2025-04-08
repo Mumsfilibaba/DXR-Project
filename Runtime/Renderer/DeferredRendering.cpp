@@ -292,8 +292,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
-            FSceneStaticMesh* Component = MeshReference.StaticMesh;
-            if (Component->IsOccluded())
+            FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
+            if (StaticMesh->IsOccluded())
             {
                 continue;
             }
@@ -302,8 +302,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                    Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -312,9 +312,9 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                    Component->Mesh->GetVertexBuffer(EVertexStream::Normals),
-                    Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
@@ -323,16 +323,16 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
             }
 
-            CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
+            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &Component->TransformBuffer, NumConstants);
+            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->TransformBuffer, NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -676,24 +676,24 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
-            FSceneStaticMesh* Component = MeshReference.StaticMesh;
-            if (Component->IsOccluded())
+            FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
+            if (StaticMesh->IsOccluded())
             {
                 continue;
             }
 
             FRHIBuffer* VertexBuffers[] =
             {
-                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                Component->Mesh->GetVertexBuffer(EVertexStream::Normals),
-                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
             };
             
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
-            CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
+            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &Component->TransformBuffer, NumConstants);
+            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->TransformBuffer, NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -1402,13 +1402,13 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
     CommandList.SetIndexBuffer(FrameResources.OcclusionVolume.IndexBuffer.Get(), FrameResources.OcclusionVolume.IndexFormat);
     CommandList.SetConstantBuffer(VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    for (FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
+    for (FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
     {
         // Create Query
-        Component->CurrentOcclusionQueryIndex = (Component->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
-        Component->CurrentOcclusionQuery      = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
+        StaticMesh->CurrentOcclusionQueryIndex = (StaticMesh->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
+        StaticMesh->CurrentOcclusionQuery      = StaticMesh->OcclusionQueries[StaticMesh->CurrentOcclusionQueryIndex];
 
-        if (!Component->CurrentOcclusionQuery)
+        if (!StaticMesh->CurrentOcclusionQuery)
         {
             FRHIQuery* NewOcclusionQuery = RHICreateQuery(EQueryType::Occlusion);
             if (!NewOcclusionQuery)
@@ -1416,11 +1416,11 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
                 continue;
             }
 
-            Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex] = NewOcclusionQuery;
-            Component->CurrentOcclusionQuery = NewOcclusionQuery;
+            StaticMesh->OcclusionQueries[StaticMesh->CurrentOcclusionQueryIndex] = NewOcclusionQuery;
+            StaticMesh->CurrentOcclusionQuery = NewOcclusionQuery;
         }
 
-        const FAABB& BoundingBox = Component->Mesh->GetAABB();
+        const FAABB& BoundingBox = StaticMesh->Mesh->GetAABB();
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
         Scale.X = FMath::Max<float>(Scale.X, 0.005f);
@@ -1431,16 +1431,16 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
 
-        TransformPerObject.Transform = Component->Actor->GetTransform().GetTransformMatrix();
+        TransformPerObject.Transform = StaticMesh->Actor->GetTransform().GetTransformMatrix();
         TransformPerObject.Transform = (ScaleMatrix * TranslationMatrix) * TransformPerObject.Transform;
         TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
 
         constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
         CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, NumConstants);
 
-        CommandList.BeginQuery(Component->CurrentOcclusionQuery);
+        CommandList.BeginQuery(StaticMesh->CurrentOcclusionQuery);
         CommandList.DrawIndexedInstanced(FrameResources.OcclusionVolume.IndexCount, 1, 0, 0, 0);
-        CommandList.EndQuery(Component->CurrentOcclusionQuery);
+        CommandList.EndQuery(StaticMesh->CurrentOcclusionQuery);
     }
 
     CommandList.EndRenderPass();

@@ -2,7 +2,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
-#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/Widgets/SceneInspectorWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -491,7 +491,7 @@ void FSceneInspectorWidget::DrawSceneInfo()
                 Actor->GetTransform().SetScale(Scale0);
 
                 // MeshComponent
-                if (FMeshComponent* MeshComponent = Actor->GetComponentOfType<FMeshComponent>())
+                if (FStaticMeshComponent* MeshComponent = Actor->GetComponentOfType<FStaticMeshComponent>())
                 {
                     if (ImGui::CollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_None))
                     {

@@ -1,6 +1,6 @@
 #include "Engine/Engine.h"
 #include "Engine/World/World.h"
-#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Assets/ModelCreateInfo.h"

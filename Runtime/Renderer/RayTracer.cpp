@@ -110,9 +110,9 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     FRHISamplerState* Sampler = nullptr;
 
-    for (const FSceneStaticMesh* Component : Scene->StaticMeshes)
+    for (const FSceneStaticMesh* StaticMesh : Scene->StaticMeshes)
     {
-        FMaterial* Material = Component->GetMaterial();
+        FMaterial* Material = StaticMesh->GetMaterial();
         if (Material->HasAlphaMask())
         {
             continue;
@@ -126,26 +126,26 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->AOMap));
         Sampler = Material->GetMaterialSampler();
 
-        const FMatrix3x4 TinyTransform = Component->Actor->GetTransform().GetTinyMatrix();
+        const FMatrix3x4 TinyTransform = StaticMesh->Actor->GetTransform().GetTinyMatrix();
 
         uint32 HitGroupIndex = 0;
-        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Component->Mesh.Get()))
+        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(StaticMesh->Mesh.Get()))
         {
             HitGroupIndex = *ExistingIndex;
         }
         else
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
-            Resources.RTMeshToHitGroupIndex[Component->Mesh.Get()] = HitGroupIndex;
+            Resources.RTMeshToHitGroupIndex[StaticMesh->Mesh.Get()] = HitGroupIndex;
             
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
 
-            if (FRHIShaderResourceView* VertexBufferSRV = Component->Mesh->GetVertexBufferSRV(EVertexStream::Packed))
+            if (FRHIShaderResourceView* VertexBufferSRV = StaticMesh->Mesh->GetVertexBufferSRV(EVertexStream::Packed))
             {
                 HitGroupResources.AddShaderResourceView(VertexBufferSRV);
             }
-            if (FRHIShaderResourceView* IndexBufferSRV = Component->Mesh->GetIndexBufferSRV())
+            if (FRHIShaderResourceView* IndexBufferSRV = StaticMesh->Mesh->GetIndexBufferSRV())
             {
                 HitGroupResources.AddShaderResourceView(IndexBufferSRV);
             }
@@ -154,7 +154,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         }
 
         FRHIRayTracingGeometryInstance Instance;
-        Instance.Geometry      = Component->Geometry;
+        Instance.Geometry      = StaticMesh->Geometry;
         Instance.Flags         = ERayTracingInstanceFlags::None;
         Instance.HitGroupIndex = HitGroupIndex;
         Instance.InstanceIndex = AlbedoIndex;

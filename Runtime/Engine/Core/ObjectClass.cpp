@@ -11,7 +11,7 @@ void FObjectClass::GlobalRegisterClass(
 {
     // Class-name cannot be nullptr, this is probably an indication of a serious issue
     CHECK(ClassName != nullptr);
-    
+
     // Class info should always be nullptr when initializing, otherwise something is really wrong
     CHECK(OutClassInfo.ClassSingleton == nullptr);
 

@@ -2,7 +2,7 @@
 
 class FCamera;
 class FLight;
-class FMeshComponent;
+class FStaticMeshComponent;
 class FSkyboxComponent;
 class FLightProbe;
 
@@ -26,5 +26,5 @@ struct IScene
     virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) = 0;
 
     // Add a static Mesh
-    virtual void AddStaticMesh(FMeshComponent* InMeshComponent) = 0;
+    virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) = 0;
 };

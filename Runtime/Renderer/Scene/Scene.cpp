@@ -159,7 +159,7 @@ void FScene::AddSkybox(FSkyboxComponent* InSkyboxComponent)
     }
 }
 
-void FScene::AddStaticMesh(FMeshComponent* InMeshComponent)  
+void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)  
 {
     if (InMeshComponent)
     {
@@ -256,11 +256,11 @@ void FScene::UpdateVisibility()
 
     // Perform frustum culling
     const FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-    for (FSceneStaticMesh* Component : StaticMeshes)
+    for (FSceneStaticMesh* StaticMesh : StaticMeshes)
     {
-        FMatrix4 TransformMatrix = Component->Actor->GetTransform().GetTransformMatrix();
+        FMatrix4 TransformMatrix = StaticMesh->Actor->GetTransform().GetTransformMatrix();
 
-        const FAABB& BoundingBox = Component->Mesh->GetAABB();
+        const FAABB& BoundingBox = StaticMesh->Mesh->GetAABB();
         const FVector3 Max = TransformMatrix.Transform(BoundingBox.Max);
         const FVector3 Min = TransformMatrix.Transform(BoundingBox.Min);
 
@@ -268,18 +268,18 @@ void FScene::UpdateVisibility()
         FAABB Box(Max, Min);
         if (CameraFrustum.IntersectsAABB(Box))
         {
-            Component->UpdateFrustumVisbility(true);
-            VisibleStaticMeshes.Add(Component);
+            StaticMesh->UpdateFrustumVisbility(true);
+            VisibleStaticMeshes.Add(StaticMesh);
         }
         else
         {
-            Component->UpdateFrustumVisbility(false);
+            StaticMesh->UpdateFrustumVisbility(false);
         }
 
         // Update the visibility DirectionalLight
         if (DirectionalLight)
         {
-            DirectionalLight->StaticMeshes.Add(Component);
+            DirectionalLight->StaticMeshes.Add(StaticMesh);
         }
 
         // Update the visibility PointLights
@@ -293,7 +293,7 @@ void FScene::UpdateVisibility()
             {
                 if (ScenePointLight->Frustums[FaceIndex].IntersectsAABB(Box))
                 {
-                    ScenePointLight->StaticMeshes[FaceIndex].Add(Component);
+                    ScenePointLight->StaticMeshes[FaceIndex].Add(StaticMesh);
                     bIsVisibleSinglePass = true;
                 }
             }
@@ -301,7 +301,7 @@ void FScene::UpdateVisibility()
             // ... if it is visible for any face we add it to the single-pass
             if (bIsVisibleSinglePass)
             {
-                ScenePointLight->SinglePassStaticMeshes.Add(Component);
+                ScenePointLight->SinglePassStaticMeshes.Add(StaticMesh);
             }
         }
     }
@@ -326,12 +326,12 @@ void FScene::UpdateBatches()
 
     // Batch primitives for the Camera-View
     TMap<uint64, int32> MaterialToBatchIndex;
-    for (FSceneStaticMesh* Component : VisibleStaticMeshes)
+    for (FSceneStaticMesh* StaticMesh : VisibleStaticMeshes)
     {
-        const int32 NumMaterials = Component->GetNumMaterials();
+        const int32 NumMaterials = StaticMesh->GetNumMaterials();
         for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
         {
-            FMaterial* Material = Component->GetMaterial(MaterialIndex);
+            FMaterial* Material = StaticMesh->GetMaterial(MaterialIndex);
             const uint64 MaterialID = reinterpret_cast<uint64>(Material);
 
             int32 BatchIndex;
@@ -346,7 +346,7 @@ void FScene::UpdateBatches()
                 MaterialToBatchIndex.Add(MaterialID, BatchIndex);
             }
 
-            VisibleMeshBatches[BatchIndex].AddStaticMesh(Component, MaterialIndex);
+            VisibleMeshBatches[BatchIndex].AddStaticMesh(StaticMesh, MaterialIndex);
         }
     }
 
@@ -357,12 +357,12 @@ void FScene::UpdateBatches()
         MaterialToBatchIndex.Clear();
         DirectionalLight->MeshBatches.Clear();
 
-        for (FSceneStaticMesh* Component : DirectionalLight->StaticMeshes)
+        for (FSceneStaticMesh* StaticMesh : DirectionalLight->StaticMeshes)
         {
-            const int32 NumMaterials = Component->GetNumMaterials();
+            const int32 NumMaterials = StaticMesh->GetNumMaterials();
             for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
             {
-                FMaterial* Material = Component->GetMaterial(MaterialIndex);
+                FMaterial* Material = StaticMesh->GetMaterial(MaterialIndex);
                 const uint64 MaterialID = reinterpret_cast<uint64>(Material);
                 
                 int32 BatchIndex;
@@ -377,7 +377,7 @@ void FScene::UpdateBatches()
                     MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                 }
                 
-                DirectionalLight->MeshBatches[BatchIndex].AddStaticMesh(Component, MaterialIndex);
+                DirectionalLight->MeshBatches[BatchIndex].AddStaticMesh(StaticMesh, MaterialIndex);
             }
         }
     }
@@ -391,12 +391,12 @@ void FScene::UpdateBatches()
         MaterialToBatchIndex.Clear();
         ScenePointLight->SinglePassMeshBatch.Clear();
 
-        for (FSceneStaticMesh* Component : ScenePointLight->SinglePassStaticMeshes)
+        for (FSceneStaticMesh* StaticMesh : ScenePointLight->SinglePassStaticMeshes)
         {
-            const int32 NumMaterials = Component->GetNumMaterials();
+            const int32 NumMaterials = StaticMesh->GetNumMaterials();
             for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
             {
-                FMaterial* Material = Component->GetMaterial(MaterialIndex);
+                FMaterial* Material = StaticMesh->GetMaterial(MaterialIndex);
                 const uint64 MaterialID = reinterpret_cast<uint64>(Material);
                 
                 int32 BatchIndex;
@@ -411,7 +411,7 @@ void FScene::UpdateBatches()
                     MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                 }
                 
-                ScenePointLight->SinglePassMeshBatch[BatchIndex].AddStaticMesh(Component, MaterialIndex);
+                ScenePointLight->SinglePassMeshBatch[BatchIndex].AddStaticMesh(StaticMesh, MaterialIndex);
             }
         }
 
@@ -423,12 +423,12 @@ void FScene::UpdateBatches()
             TArray<FMeshBatch>& MeshBatches = ScenePointLight->MeshBatches[FaceIndex];
             MeshBatches.Clear();
 
-            for (FSceneStaticMesh* Component : ScenePointLight->StaticMeshes[FaceIndex])
+            for (FSceneStaticMesh* StaticMesh : ScenePointLight->StaticMeshes[FaceIndex])
             {
-                const int32 NumMaterials = Component->GetNumMaterials();
+                const int32 NumMaterials = StaticMesh->GetNumMaterials();
                 for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
                 {
-                    FMaterial* Material = Component->GetMaterial(MaterialIndex);
+                    FMaterial* Material = StaticMesh->GetMaterial(MaterialIndex);
                     const uint64 MaterialID = reinterpret_cast<uint64>(Material);
                     
                     int32 BatchIndex;
@@ -443,7 +443,7 @@ void FScene::UpdateBatches()
                         MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                     }
                     
-                    MeshBatches[BatchIndex].AddStaticMesh(Component, MaterialIndex);
+                    MeshBatches[BatchIndex].AddStaticMesh(StaticMesh, MaterialIndex);
                 }
             }
         }

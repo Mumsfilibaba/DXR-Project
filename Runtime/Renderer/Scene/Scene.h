@@ -42,7 +42,7 @@ public:
     virtual void AddSkybox(FSkyboxComponent* InSkyboxComponent) override final;
 
     // Adds a static mesh to the scene
-    virtual void AddStaticMesh(FMeshComponent* InMeshComponent) override final;
+    virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) override final;
 
     // Update all scene objects with the world version of the object
     void SyncWithWorld();

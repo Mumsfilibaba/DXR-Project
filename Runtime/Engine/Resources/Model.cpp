@@ -389,7 +389,7 @@ void FModel::AddToWorld(FWorld* World)
             NewActor->SetName(Mesh->GetName());
             NewActor->GetTransform().SetUniformScale(UniformScale);
 
-            FMeshComponent* MeshComponent = NewObject<FMeshComponent>();
+            FStaticMeshComponent* MeshComponent = NewObject<FStaticMeshComponent>();
             if (MeshComponent)
             {
                 MeshComponent->SetMesh(Mesh);

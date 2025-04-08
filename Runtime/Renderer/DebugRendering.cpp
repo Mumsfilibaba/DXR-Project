@@ -631,20 +631,20 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer_Wireframe.Get(), EIndexFormat::uint16);
 
-    for (const FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
+    for (const FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
     {
-        if (Component->IsOccluded())
+        if (StaticMesh->IsOccluded())
         {
             continue;
         }
 
-        const FAABB& Box = Component->Mesh->GetAABB();
+        const FAABB& Box = StaticMesh->Mesh->GetAABB();
         FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         FVector3 Position = Box.GetCenter();
 
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
-        FMatrix4 TransformMatrix   = Component->Actor->GetTransform().GetTransformMatrix();
+        FMatrix4 TransformMatrix   = StaticMesh->Actor->GetTransform().GetTransformMatrix();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
 
         FAABBShaderInfoHLSL ShaderData;
@@ -679,7 +679,7 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
     CommandList.SetVertexBuffers(MakeArrayView(&Resources.OcclusionVolume.VertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(Resources.OcclusionVolume.IndexBuffer.Get(), Resources.OcclusionVolume.IndexFormat);
 
-    for (const FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
+    for (const FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
     {
         struct FShaderData
         {
@@ -687,7 +687,7 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
             FVector4 Color;
         } ShaderData;
 
-        const FAABB& BoundingBox = Component->Mesh->GetAABB();
+        const FAABB& BoundingBox = StaticMesh->Mesh->GetAABB();
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
         Scale.X = FMath::Max<float>(Scale.X, 0.005f);
@@ -698,7 +698,7 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
 
-        ShaderData.TransformMatrix = Component->Actor->GetTransform().GetTransformMatrix();
+        ShaderData.TransformMatrix = StaticMesh->Actor->GetTransform().GetTransformMatrix();
         ShaderData.TransformMatrix = (ScaleMatrix * TranslationMatrix) * ShaderData.TransformMatrix;
         ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
         ShaderData.Color           = FVector4(0.8f, 0.8f, 0.8f, 0.5f);

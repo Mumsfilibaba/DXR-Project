@@ -1,19 +1,19 @@
-#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 
-FOBJECT_IMPLEMENT_CLASS(FMeshComponent);
+FOBJECT_IMPLEMENT_CLASS(FStaticMeshComponent);
 
-FMeshComponent::FMeshComponent(const FObjectInitializer& ObjectInitializer)
+FStaticMeshComponent::FStaticMeshComponent(const FObjectInitializer& ObjectInitializer)
     : FSceneComponent(ObjectInitializer)
     , Mesh(nullptr)
     , Materials()
 {
 }
 
-FMeshComponent::~FMeshComponent()
+FStaticMeshComponent::~FStaticMeshComponent()
 {
 }
 
-void FMeshComponent::SetMesh(const TSharedPtr<FMesh>& InMesh)
+void FStaticMeshComponent::SetMesh(const TSharedPtr<FMesh>& InMesh)
 {
     Mesh = InMesh;
     
@@ -24,7 +24,7 @@ void FMeshComponent::SetMesh(const TSharedPtr<FMesh>& InMesh)
     }
 }
 
-void FMeshComponent::SetMaterial(const TSharedPtr<FMaterial>& InMaterial, int32 Index)
+void FStaticMeshComponent::SetMaterial(const TSharedPtr<FMaterial>& InMaterial, int32 Index)
 {
     if (Materials.Size() <= Index)
     {

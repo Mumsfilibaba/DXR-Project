@@ -29,9 +29,9 @@
 #include "Engine/World/Actors/PlayerController.h"
 #include "Engine/World/Actors/PlayerInput.h"
 
-#include "Engine/World/Components/Component.h"
+#include "Engine/World/Components/ActorComponent.h"
 #include "Engine/World/Components/InputComponent.h"
-#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/World/Components/SceneComponent.h"
 #include "Engine/World/Components/SkyboxComponent.h"
 

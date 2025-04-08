@@ -1,10 +1,10 @@
 #pragma once
-#include "Engine/World/Components/Component.h"
+#include "Engine/World/Components/ActorComponent.h"
 
-class ENGINE_API FSceneComponent : public FComponent
+class ENGINE_API FSceneComponent : public FActorComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FSceneComponent, FComponent);
+    FOBJECT_DECLARE_CLASS(FSceneComponent, FActorComponent);
 
     FSceneComponent(const FObjectInitializer& ObjectInitializer);
     virtual ~FSceneComponent();

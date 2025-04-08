@@ -103,7 +103,7 @@ void CInspectorWindow::DrawSceneInfo()
                 }
 
                 // MeshComponent
-                FMeshComponent* MeshComponent = Actor->GetComponentOfType<FMeshComponent>();
+                FStaticMeshComponent* MeshComponent = Actor->GetComponentOfType<FStaticMeshComponent>();
                 if ( MeshComponent )
                 {
                     if ( ImGui::TreeNode( "MeshComponent" ) )

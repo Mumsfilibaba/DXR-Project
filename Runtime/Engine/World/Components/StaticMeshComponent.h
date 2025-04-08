@@ -5,13 +5,13 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Components/SceneComponent.h"
 
-class ENGINE_API FMeshComponent : public FSceneComponent
+class ENGINE_API FStaticMeshComponent : public FSceneComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FMeshComponent, FSceneComponent);
+    FOBJECT_DECLARE_CLASS(FStaticMeshComponent, FSceneComponent);
 
-    FMeshComponent(const FObjectInitializer& ObjectInitializer);
-    ~FMeshComponent();
+    FStaticMeshComponent(const FObjectInitializer& ObjectInitializer);
+    ~FStaticMeshComponent();
 
     void SetMesh(const TSharedPtr<FMesh>& InMesh);
     void SetMaterial(const TSharedPtr<FMaterial>& InMaterial, int32 Index = 0);

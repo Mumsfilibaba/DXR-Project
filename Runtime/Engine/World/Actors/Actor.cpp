@@ -1,5 +1,5 @@
 #include "Engine/World/World.h"
-#include "Engine/World/Components/Component.h"
+#include "Engine/World/Components/ActorComponent.h"
 #include "Engine/World/Actors/Actor.h"
 
 FOBJECT_IMPLEMENT_CLASS(FActor);
@@ -68,7 +68,7 @@ FActor::FActor(const FObjectInitializer& ObjectInitializer)
 
 FActor::~FActor()
 {
-    for (FComponent* CurrentComponent : Components)
+    for (FActorComponent* CurrentComponent : Components)
     {
         SAFE_DELETE(CurrentComponent);
     }
@@ -78,7 +78,7 @@ FActor::~FActor()
 
 void FActor::Start()
 {
-    for (FComponent* Component : Components)
+    for (FActorComponent* Component : Components)
     {
         if (Component->IsStartable())
         {
@@ -89,7 +89,7 @@ void FActor::Start()
 
 void FActor::Tick(float DeltaTime)
 {
-    for (FComponent* Component : Components)
+    for (FActorComponent* Component : Components)
     {
         if (Component->IsTickable())
         {
@@ -98,7 +98,7 @@ void FActor::Tick(float DeltaTime)
     }
 }
 
-void FActor::AddComponent(FComponent* InComponent)
+void FActor::AddComponent(FActorComponent* InComponent)
 {
     CHECK(InComponent != nullptr);
     CHECK(InComponent->GetActorOwner() == nullptr);
@@ -121,7 +121,7 @@ void FActor::SetName(const FString& InName)
 
 bool FActor::HasComponentOfClass(class FObjectClass* ComponentClass) const
 {
-    for (FComponent* Component : Components)
+    for (FActorComponent* Component : Components)
     {
         if (IsSubClassOf(Component, ComponentClass))
         {
@@ -132,9 +132,9 @@ bool FActor::HasComponentOfClass(class FObjectClass* ComponentClass) const
     return false;
 }
 
-FComponent* FActor::GetComponentOfClass(class FObjectClass* ComponentClass) const
+FActorComponent* FActor::GetComponentOfClass(class FObjectClass* ComponentClass) const
 {
-    for (FComponent* Component : Components)
+    for (FActorComponent* Component : Components)
     {
         if (IsSubClassOf(Component, ComponentClass))
         {

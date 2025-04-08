@@ -1,11 +1,11 @@
 #pragma once
 #include <Engine/World/Actors/Actor.h>
-#include <Engine/World/Components/Component.h>
+#include <Engine/World/Components/ActorComponent.h>
 
-class SANDBOX_API FMovingBallComponent : public FComponent
+class SANDBOX_API FMovingBallComponent : public FActorComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FMovingBallComponent, FComponent);
+    FOBJECT_DECLARE_CLASS(FMovingBallComponent, FActorComponent);
 
     FMovingBallComponent(const FObjectInitializer& ObjectInitializer);
     ~FMovingBallComponent() = default;

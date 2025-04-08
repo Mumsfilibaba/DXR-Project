@@ -3,7 +3,7 @@
 FOBJECT_IMPLEMENT_CLASS(FMovingBallComponent)
 
 FMovingBallComponent::FMovingBallComponent(const FObjectInitializer& ObjectInitializer)
-    : FComponent(ObjectInitializer)
+    : FActorComponent(ObjectInitializer)
     , Speed(0.0f)
     , CurrentSpeed(0.0f)
 {

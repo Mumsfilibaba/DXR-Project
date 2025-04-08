@@ -8,7 +8,7 @@
 #include "Engine/Core/Object.h"
 
 class FWorld;
-class FComponent;
+class FActorComponent;
 
 class ENGINE_API FActorTransform
 {
@@ -103,7 +103,7 @@ public:
      *
      * @param InComponent Component to add to the Actor
      */
-    void AddComponent(FComponent* InComponent);
+    void AddComponent(FActorComponent* InComponent);
 
     /**
      * @brief Set name of the actor
@@ -137,7 +137,7 @@ public:
      * @param ComponentClass ClassObject of the component to retrieve
      * @return Returns a pointer to the requested component, or nullptr if no component of the type exists
      */
-    FComponent* GetComponentOfClass(class FObjectClass* ComponentClass) const;
+    FActorComponent* GetComponentOfClass(class FObjectClass* ComponentClass) const;
 
     /**
      * @brief Retrieve a component from the actor of the component-class
@@ -254,7 +254,7 @@ private:
     FString             Name;
     FWorld*             World;
     FActorTransform     Transform;
-    TArray<FComponent*> Components;
+    TArray<FActorComponent*> Components;
 
     bool bIsStartable : 1;
     bool bIsTickable  : 1;

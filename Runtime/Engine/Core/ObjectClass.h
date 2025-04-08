@@ -4,9 +4,8 @@
 class FObjectClass;
 class FObjectInitializer;
 
-// This information is stored globally via the FOBJECT_IMPLEMENT_CLASS macro.
-// It is used to ensure that the class is only implemented once and to prevent
-// that a function is not implemented multiple times
+// This information is stored globally via the FOBJECT_IMPLEMENT_CLASS macro. It is used to ensure 
+// that the class is only implemented once and to prevent that a function is not implemented multiple times
 struct FGlobalObjectClassInfo
 {
     FGlobalObjectClassInfo()
@@ -16,7 +15,6 @@ struct FGlobalObjectClassInfo
     
     FObjectClass* ClassSingleton;
 };
-
 
 // This class contains information about a class, such as size, alignment and name of the class.
 // For now it is mostly used to quickly see if a class is subclassed instead of using dynamic cast.
@@ -34,7 +32,8 @@ public:
         FObjectClass::StaticClassFunctionType SuperStaticClassFunc,
         FObjectClass::StaticClassFunctionType StaticClassFunc,
         FObjectClass::StaticDefaultConstructorType DefaultConstructorFunc);
-    
+
+public:
     FObjectClass(const CHAR* InName, uint64 InSize, uint64 InAlignment, StaticClassFunctionType InStaticClassFunc, StaticDefaultConstructorType InDefaultConstructorFunc);
     ~FObjectClass();
 

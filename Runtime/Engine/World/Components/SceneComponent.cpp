@@ -3,7 +3,7 @@
 FOBJECT_IMPLEMENT_CLASS(FSceneComponent);
 
 FSceneComponent::FSceneComponent(const FObjectInitializer& ObjectInitializer)
-    : FComponent(ObjectInitializer)
+    : FActorComponent(ObjectInitializer)
 {
     SetTickable(false);
     SetStartable(false);

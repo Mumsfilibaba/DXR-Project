@@ -595,16 +595,16 @@ void FSceneRenderer::Tick(FScene* Scene)
     {
         if (CVarBasePassOcclusionCulling.GetValue())
         {
-            for (FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
+            for (FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
             {
-                Component->UpdateOcclusion();
+                StaticMesh->UpdateOcclusion();
             }
         }
         else
         {
-            for (FSceneStaticMesh* Component : Scene->VisibleStaticMeshes)
+            for (FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
             {
-                Component->NumFramesOccluded = 0;
+                StaticMesh->NumFramesOccluded = 0;
             }
         }
     }

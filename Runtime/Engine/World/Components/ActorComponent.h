@@ -6,13 +6,13 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FActor;
 
-class ENGINE_API FComponent : public FObject
+class ENGINE_API FActorComponent : public FObject
 {
 public:
-    FOBJECT_DECLARE_CLASS(FComponent, FObject);
+    FOBJECT_DECLARE_CLASS(FActorComponent, FObject);
 
-    FComponent(const FObjectInitializer& ObjectInitializer);
-    virtual ~FComponent() = default;
+    FActorComponent(const FObjectInitializer& ObjectInitializer);
+    virtual ~FActorComponent() = default;
 
     virtual void Start() { }
     virtual void Tick(float DeltaTime) { }

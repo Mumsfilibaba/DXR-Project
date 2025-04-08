@@ -10,7 +10,7 @@
 #include <Engine/World/Lights/DirectionalLight.h>
 #include <Engine/World/Lights/SkyLight.h>
 #include <Engine/World/Actors/PlayerController.h>
-#include <Engine/World/Components/MeshComponent.h>
+#include <Engine/World/Components/StaticMeshComponent.h>
 #include <Engine/World/Components/SkyboxComponent.h>
 #include <RendererCore/TextureFactory.h>
 #include <Renderer/FrameResources.h>
@@ -126,7 +126,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 NewActor->SetName(FString::CreateFormatted("Sphere[%d]", SphereIndex));
                 SphereIndex++;
 
-                FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+                FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
                 if (NewComponent)
                 {
                     TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -198,7 +198,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 NewActor->SetName("Random Sphere[" + ToString(i) + "]");
 
                 // MeshComponent
-                NewComponent = NewObject<FMeshComponent>();
+                NewComponent = NewObject<FStaticMeshComponent>();
                 if (NewComponent)
                 {
                     NewComponent->Initialize(NewActor, MakeShared<FMaterial>(MaterialInfo), SphereMesh);
@@ -233,7 +233,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags   |= EMaterialFlags::EnableHeight | EMaterialFlags::EnableNormalMapping;
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
@@ -279,7 +279,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.Roughness        = 0.5f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -316,7 +316,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -354,7 +354,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -393,7 +393,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.Roughness        = 0.2f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::DoubleSided;
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -431,7 +431,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -492,7 +492,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                     NewActor->GetTransform().SetUniformScale(0.25f);
                     NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
-                    FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+                    FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
                     if (NewComponent)
                     {
                         NewComponent->SetMesh(Mesh);
@@ -533,7 +533,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             NewActor->GetTransform().SetUniformScale(1.0f);
             NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 2.5f, 60.0f);
 
-            FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+            FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
             if (NewComponent)
             {
                 NewComponent->SetMesh(CylinderMesh);
@@ -978,7 +978,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         MaterialInfo.Roughness        = 1.0f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
@@ -1029,7 +1029,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         NewActor->GetTransform().SetScale(1.0f, 4.0f, 1.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 4.0f, 10.0f);
 
-        FMeshComponent* NewComponent = NewObject<FMeshComponent>();
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
             NewComponent->SetMesh(CylinderMesh);

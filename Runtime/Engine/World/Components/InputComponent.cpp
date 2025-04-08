@@ -3,7 +3,7 @@
 FOBJECT_IMPLEMENT_CLASS(FInputComponent);
 
 FInputComponent::FInputComponent(const FObjectInitializer& ObjectInitializer)
-    : FComponent(ObjectInitializer)
+    : FActorComponent(ObjectInitializer)
     , ActionBindings()
 {
     bIsTickable  = false;

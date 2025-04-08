@@ -6,7 +6,7 @@
 #include "Renderer/Scene/SceneObject.h"
 
 class FMaterial;
-class FMeshComponent;
+class FStaticMeshComponent;
 class FRHIBuffer;
 class FRHIQuery;
 class FRHIRayTracingGeometry;
@@ -37,7 +37,7 @@ MARK_AS_REALLOCATABLE(FTransformBufferHLSL);
 class FSceneStaticMesh : public FSceneObject
 {
 public:
-    FSceneStaticMesh(FScene* InScene, FMeshComponent* MeshComponent);
+    FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshComponent);
     virtual ~FSceneStaticMesh();
 
     virtual void Tick() override final;
@@ -67,7 +67,7 @@ public:
     
     // Reference to the Actor
     class FActor*   Actor;
-    FMeshComponent* MeshComponent;
+    FStaticMeshComponent* MeshComponent;
 
     // TransformMatrix for this object
     FTransformBufferHLSL TransformBuffer;

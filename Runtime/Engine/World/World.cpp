@@ -2,7 +2,7 @@
 #include "Engine/Resources/Model.h"
 #include "RHI/RHIResources.h"
 #include "Engine/World/World.h"
-#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/World/Components/SkyboxComponent.h"
 
 FWorld::FWorld()
@@ -166,7 +166,7 @@ void FWorld::AddSceneComponent(FSceneComponent* SceneComponent)
 
     if (SceneComponent)
     {
-        if (FMeshComponent* MeshComponent = Cast<FMeshComponent>(SceneComponent))
+        if (FStaticMeshComponent* MeshComponent = Cast<FStaticMeshComponent>(SceneComponent))
         {
             Scene->AddStaticMesh(MeshComponent);
         }

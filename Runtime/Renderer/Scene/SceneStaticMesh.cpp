@@ -4,10 +4,10 @@
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
-#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
-FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, FMeshComponent* MeshComponent)
+FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshComponent)
     : FSceneObject(InScene)
     , Materials()
     , Mesh(nullptr)

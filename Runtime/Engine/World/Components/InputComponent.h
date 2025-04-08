@@ -1,7 +1,7 @@
 #pragma once 
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/String.h"
-#include "Engine/World/Components/Component.h"
+#include "Engine/World/Components/ActorComponent.h"
 
 DECLARE_DELEGATE(FInputActionDelegate);
 DECLARE_DELEGATE(FInputAxisDelegate, float);
@@ -51,10 +51,10 @@ struct FAxisInputBinding
     FInputAxisDelegate ActionDelegate;
 };
 
-class ENGINE_API FInputComponent : public FComponent
+class ENGINE_API FInputComponent : public FActorComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FInputComponent, FComponent);
+    FOBJECT_DECLARE_CLASS(FInputComponent, FActorComponent);
 
     FInputComponent(const FObjectInitializer& ObjectInitializer);
     ~FInputComponent() = default;
