@@ -65,7 +65,7 @@ struct FD3D12OfflineDescriptor
 {
     FD3D12OfflineDescriptor()
         : Handle{0}
-        , HeapIndex{0}
+        , HeapIndex(0)
     {
     }
 

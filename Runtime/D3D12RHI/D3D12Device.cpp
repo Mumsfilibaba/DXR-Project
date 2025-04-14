@@ -67,6 +67,9 @@ D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER      GD3D12SamplerFeedbackTier     = D3
 D3D12RHI_API D3D12_VIEW_INSTANCING_TIER       GD3D12ViewInstancingTier      = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
 D3D12RHI_API D3D_SHADER_MODEL                 GD3D12HighestShaderModel      = D3D_SHADER_MODEL_NONE;
 
+D3D12RHI_API uint32 GD3D12MaxSamplerDescriptorHeapSize  = 0;
+D3D12RHI_API uint32 GD3D12MaxResourceDescriptorHeapSize = 0;
+
 /* Device Removed Handling */
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
@@ -668,17 +671,21 @@ bool FD3D12Device::Initialize()
     } 
 
     // Create DescriptorHeaps
-    const uint32 ResourceDescriptorBlockSize = CVarResourceOnlineDescriptorBlockSize.GetValue();
+    const uint32 NumOnlineResourceDescriptors = FMath::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
+    const uint32 ResourceDescriptorBlockSize  = FMath::Min<uint32>(CVarResourceOnlineDescriptorBlockSize.GetValue(), NumOnlineResourceDescriptors);
+
     GlobalResourceHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!GlobalResourceHeap->Initialize(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, ResourceDescriptorBlockSize))
+    if (!GlobalResourceHeap->Initialize(NumOnlineResourceDescriptors, ResourceDescriptorBlockSize))
     {
         D3D12_ERROR("Failed to create global resource descriptor heap");
         return false;
     }
 
-    const uint32 SamplerDescriptorBlockSize = CVarSamplerOnlineDescriptorBlockSize.GetValue();
+    const uint32 NumOnlineSamplerDescriptors = FMath::Min<uint32>(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxSamplerDescriptorHeapSize);
+    const uint32 SamplerDescriptorBlockSize  = FMath::Min<uint32>(CVarSamplerOnlineDescriptorBlockSize.GetValue(), NumOnlineSamplerDescriptors);
+
     GlobalSamplerHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!GlobalSamplerHeap->Initialize(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, SamplerDescriptorBlockSize))
+    if (!GlobalSamplerHeap->Initialize(NumOnlineSamplerDescriptors, SamplerDescriptorBlockSize))
     {
         D3D12_ERROR("Failed to create global sampler descriptor heap");
         return false;
@@ -1045,14 +1052,30 @@ void FD3D12Device::QueryFeatureSupport()
 
     // Check for GPU Upload-Heap Support
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS16 Features17;
-        FMemory::Memzero(&Features17);
+        D3D12_FEATURE_DATA_D3D12_OPTIONS16 Features16;
+        FMemory::Memzero(&Features16);
 
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &Features17, sizeof(Features17));
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &Features16, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS16));
         if (SUCCEEDED(Result))
         {
-            GD3D12SupportGPUUploadHeaps = Features17.GPUUploadHeapSupported;
+            GD3D12SupportGPUUploadHeaps = Features16.GPUUploadHeapSupported;
             D3D12_INFO("[FD3D12Device] Supports GPUUploadHeaps: %s", GD3D12SupportGPUUploadHeaps ? "true" : "false");
+        }
+    }
+
+    // Retrieve DescriptorHeap information
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS19 Features19;
+        FMemory::Memzero(&Features19);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS19, &Features19, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS19));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12MaxSamplerDescriptorHeapSize = Features19.MaxSamplerDescriptorHeapSizeWithStaticSamplers;
+            D3D12_INFO("[FD3D12Device] Max Sampler Descriptor-Heap size: %u", GD3D12MaxSamplerDescriptorHeapSize);
+
+            GD3D12MaxResourceDescriptorHeapSize = Features19.MaxViewDescriptorHeapSize;
+            D3D12_INFO("[FD3D12Device] Max Resource Descriptor-Heap size: %u", GD3D12MaxResourceDescriptorHeapSize);
         }
     }
 

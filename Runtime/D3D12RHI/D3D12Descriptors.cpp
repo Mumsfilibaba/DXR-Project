@@ -43,7 +43,6 @@ FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12DescriptorHeap* InHeap, uint32 
     StartHandleGPU = InHeap->GetGPUHandle(InHandleOffset);
 }
 
-
 FD3D12OfflineDescriptorHeap::FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : FD3D12DeviceChild(InDevice)
     , Heaps()

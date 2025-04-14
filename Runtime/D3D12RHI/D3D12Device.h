@@ -41,6 +41,9 @@ extern D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER      GD3D12SamplerFeedbackTier;
 extern D3D12RHI_API D3D12_VIEW_INSTANCING_TIER       GD3D12ViewInstancingTier;
 extern D3D12RHI_API D3D_SHADER_MODEL                 GD3D12HighestShaderModel;
 
+extern D3D12RHI_API uint32 GD3D12MaxSamplerDescriptorHeapSize;
+extern D3D12RHI_API uint32 GD3D12MaxResourceDescriptorHeapSize;
+
 class FD3D12Adapter
 {
 public:
@@ -128,7 +131,7 @@ public:
 
     FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return *GlobalResourceHeap; }
     FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap()  { return *GlobalSamplerHeap; }
-    
+
     FD3D12QueryHeapManager* GetQueryHeapManager(EQueryType QueryType);
 
     FD3D12OfflineDescriptorHeap& GetResourceOfflineDescriptorHeap()     { return *ResourceOfflineDescriptorHeap; }
