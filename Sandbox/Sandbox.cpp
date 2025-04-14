@@ -221,8 +221,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 #endif
 
     // Create Other Meshes
-    FActor* NewActor = InWorld->CreateActor();
-    if (NewActor)
+    if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Cube");
         NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
@@ -265,8 +264,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
-    NewActor = InWorld->CreateActor();
-    if (NewActor)
+    if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Plane");
         NewActor->GetTransform().SetRotation(FMath::HalfPI_Float, 0.0f, 0.0f);
@@ -302,8 +300,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
-    NewActor = InWorld->CreateActor();
-    if (NewActor)
+    if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Cone");
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
@@ -340,8 +337,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
-    NewActor = InWorld->CreateActor();
-    if (NewActor)
+    if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Torus");
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
@@ -378,8 +374,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
-    NewActor = InWorld->CreateActor();
-    if (NewActor)
+    if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Teapot");
         NewActor->GetTransform().SetRotation(-FMath::HalfPI_Float, FMath::HalfPI_Float, 0.0f);
@@ -417,8 +412,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         }
     }
 
-    NewActor = InWorld->CreateActor();
-    if (NewActor)
+    if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Pyramid");
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
@@ -484,8 +478,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         {
             for (int32 MeshIndex = 0; MeshIndex < NumMeshes; MeshIndex++)
             {
-                NewActor = InWorld->CreateActor();
-                if (NewActor)
+                if (FActor* NewActor = InWorld->CreateActor())
                 {
                     const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
                     NewActor->SetName(FString::CreateFormatted("Street Light (%s) %d", *Mesh->GetName(), i));
@@ -524,10 +517,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
     CylinderMesh->Init(CylinderMeshData);
 
-    for (uint32 i = 0; i < 8; i++)
+    constexpr uint32 NumCylinders = 8;
+    for (uint32 i = 0; i < NumCylinders; i++)
     {
-        NewActor = InWorld->CreateActor();
-        if (NewActor)
+        if (FActor* NewActor = InWorld->CreateActor())
         {
             NewActor->SetName(FString::CreateFormatted("Cylinder %d", i));
             NewActor->GetTransform().SetUniformScale(1.0f);
@@ -962,80 +955,174 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
 bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 {
     FMaterialInfo MaterialInfo;
+    MaterialInfo.Albedo           = FFloatColor::White;
+    MaterialInfo.AmbientOcclusion = 1.0f;
+    MaterialInfo.Metallic         = 0.0f;
+    MaterialInfo.Roughness        = 1.0f;
+    MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-    // Create Other Meshes
-    FActor* NewActor = InWorld->CreateActor();
-    if (NewActor)
+    TSharedPtr<FMaterial> BasicMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+    BasicMaterial->AlbedoMap    = GEngine->BaseTexture;
+    BasicMaterial->RoughnessMap = GEngine->BaseTexture;
+    BasicMaterial->AOMap        = GEngine->BaseTexture;
+    BasicMaterial->MetallicMap  = GEngine->BaseTexture;
+
+    BasicMaterial->Initialize();
+    BasicMaterial->SetName("Basic-Material");
+
+    // Create Plane
+    if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Plane");
         NewActor->GetTransform().SetRotation(FMath::HalfPI_Float, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(30.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 0.0f);
 
-        MaterialInfo.Albedo           = FFloatColor::White;
-        MaterialInfo.AmbientOcclusion = 1.0f;
-        MaterialInfo.Metallic         = 0.0f;
-        MaterialInfo.Roughness        = 1.0f;
-        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
-
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
-            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-            NewMaterial->RoughnessMap = GEngine->BaseTexture;
-            NewMaterial->AOMap        = GEngine->BaseTexture;
-            NewMaterial->MetallicMap  = GEngine->BaseTexture;
-
-            NewMaterial->Initialize();
-            NewMaterial->SetName("PlaneMaterial");
-
             FMeshCreateInfo PlaneMeshData = FMeshFactory::CreatePlane(10, 10);
 
             TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
             PlaneMesh->Init(PlaneMeshData);
 
             NewComponent->SetMesh(PlaneMesh);
-            NewComponent->SetMaterial(NewMaterial);
+            NewComponent->SetMaterial(BasicMaterial);
 
             NewActor->AddComponent(NewComponent);
         }
     }
 
-    MaterialInfo.Albedo           = FFloatColor(0.4f, 0.4f, 0.4f, 1.0f);
-    MaterialInfo.AmbientOcclusion = 1.0f;
-    MaterialInfo.Metallic         = 0.0f;
-    MaterialInfo.Roughness        = 1.0f;
-    MaterialInfo.MaterialFlags    = EMaterialFlags::None;
-
-    TSharedPtr<FMaterial> CylinderMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-    CylinderMaterial->AlbedoMap    = GEngine->BaseTexture;
-    CylinderMaterial->RoughnessMap = GEngine->BaseTexture;
-    CylinderMaterial->AOMap        = GEngine->BaseTexture;
-    CylinderMaterial->MetallicMap  = GEngine->BaseTexture;
-
-    CylinderMaterial->Initialize();
-    CylinderMaterial->SetName("CylinderMaterial");
-
-    FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(16, 0.5f, 2.0f);
-
-    TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
-    CylinderMesh->Init(CylinderMeshData);
-
-    NewActor = InWorld->CreateActor();
-    if (NewActor)
+    // Create plane
+    if (FActor* NewActor = InWorld->CreateActor())
     {
-        NewActor->SetName(FString::CreateFormatted("Cylinder"));
+        NewActor->SetName("Cylinder");
         NewActor->GetTransform().SetScale(1.0f, 4.0f, 1.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 4.0f, 10.0f);
 
         FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
         if (NewComponent)
         {
+            FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(16, 0.5f, 2.0f);
+
+            TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
+            CylinderMesh->Init(CylinderMeshData);
+
             NewComponent->SetMesh(CylinderMesh);
-            NewComponent->SetMaterial(CylinderMaterial);
+            NewComponent->SetMaterial(BasicMaterial);
             NewActor->AddComponent(NewComponent);
         }
+    }
+
+    // Create small hut
+    FMeshCreateInfo CubeMeshData = FMeshFactory::CreateCube();
+
+    TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
+    CubeMesh->Init(CubeMeshData);
+
+    if (FActor* NewActor = InWorld->CreateActor())
+    {
+        NewActor->SetName("Wall 1");
+        NewActor->GetTransform().SetScale(0.05f, 2.0f, 4.0f);
+        NewActor->GetTransform().SetTranslation(9.975f, 1.0f, -8.0f);
+
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->SetMesh(CubeMesh);
+            NewComponent->SetMaterial(BasicMaterial);
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    if (FActor* NewActor = InWorld->CreateActor())
+    {
+        NewActor->SetName("Wall 2");
+        NewActor->GetTransform().SetScale(4.0f, 2.0f, 0.05f);
+        NewActor->GetTransform().SetTranslation(8.0f, 1.0f, -9.975f);
+
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->SetMesh(CubeMesh);
+            NewComponent->SetMaterial(BasicMaterial);
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    if (FActor* NewActor = InWorld->CreateActor())
+    {
+        NewActor->SetName("Wall 3");
+        NewActor->GetTransform().SetScale(4.0f, 2.0f, 0.05f);
+        NewActor->GetTransform().SetTranslation(8.0f, 1.0f, -5.975f);
+
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->SetMesh(CubeMesh);
+            NewComponent->SetMaterial(BasicMaterial);
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    if (FActor* NewActor = InWorld->CreateActor())
+    {
+        NewActor->SetName("Roof");
+        NewActor->GetTransform().SetScale(4.0f, 0.05f, 4.0f);
+        NewActor->GetTransform().SetTranslation(8.0f, 1.975f, -8.0f);
+
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->SetMesh(CubeMesh);
+            NewComponent->SetMaterial(BasicMaterial);
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    if (FActor* NewActor = InWorld->CreateActor())
+    {
+        NewActor->SetName("Cube 1");
+        NewActor->GetTransform().SetScale(0.5f, 1.0f, 0.5f);
+        NewActor->GetTransform().SetTranslation(8.0f, 0.5f, -7.0f);
+
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->SetMesh(CubeMesh);
+            NewComponent->SetMaterial(BasicMaterial);
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    if (FActor* NewActor = InWorld->CreateActor())
+    {
+        NewActor->SetName("Cube 2");
+        NewActor->GetTransform().SetScale(0.5f, 1.0f, 0.5f);
+        NewActor->GetTransform().SetTranslation(8.0f, 0.5f, -9.0f);
+
+        FStaticMeshComponent* NewComponent = NewObject<FStaticMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->SetMesh(CubeMesh);
+            NewComponent->SetMaterial(BasicMaterial);
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    // Add PointLight
+    const float Intensity = 10.0f;
+    if (FPointLight* PointLight = NewObject<FPointLight>())
+    {
+        PointLight->SetPosition(FVector3(8.0f, 1.0f, -8.0f));
+        PointLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        PointLight->SetShadowBias(0.006f);
+        PointLight->SetShadowNearPlane(0.01f);
+        PointLight->SetShadowFarPlane(30.0f);
+        PointLight->SetIntensity(Intensity);
+        PointLight->SetShadowCaster(true);
+
+        InWorld->AddLight(PointLight);
     }
 
     // Load Skybox
@@ -1049,6 +1136,8 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     // Add Camera
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
+        Player->SetName("PlayerController");
+
         // Add camera to the world
         InWorld->AddCamera(Player->GetCamera());
         InWorld->AddActor(Player);
