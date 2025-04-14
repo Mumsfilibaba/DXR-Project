@@ -434,66 +434,6 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::NextColumn();
     }
 
-    // Cascade Split Lambda
-    if (IConsoleVariable* CVarCascadeSplitLambda = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeSplitLambda"))
-    {
-        ImGui::Text("Cascade Split Lambda");
-        ImGui::NextColumn();
-
-        float CascadeSplitLambda = CVarCascadeSplitLambda->GetFloat();
-        if (ImGui::SliderFloat("##CascadeSplitLambda", &CascadeSplitLambda, 0.0f, 1.0f, "%.2f"))
-        {
-            CVarCascadeSplitLambda->SetAsFloat(CascadeSplitLambda, EConsoleVariableFlags::SetByCode);
-        }
-
-        ImGui::NextColumn();
-    }
-
-    // Cascade Position Offset
-    if (IConsoleVariable* CVarCascadePositionOffset = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadePositionOffset"))
-    {
-        ImGui::Text("Cascade Position Offset");
-        ImGui::NextColumn();
-
-        float CascadePositionOffset = CVarCascadePositionOffset->GetFloat();
-        if (ImGui::SliderFloat("##CascadePositionOffset", &CascadePositionOffset, 0.0f, 1000.0f, "%.1f"))
-        {
-            CVarCascadePositionOffset->SetAsFloat(CascadePositionOffset, EConsoleVariableFlags::SetByCode);
-        }
-
-        ImGui::NextColumn();
-    }
-
-    // Cascade Near Plane
-    if (IConsoleVariable* CVarCascadeNearPlane = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeNearPlane"))
-    {
-        ImGui::Text("Cascade Near Plane");
-        ImGui::NextColumn();
-
-        float CascadeNearPlane = CVarCascadeNearPlane->GetFloat();
-        if (ImGui::SliderFloat("##CascadeNearPlane", &CascadeNearPlane, 0.0f, 1000.0f, "%.1f"))
-        {
-            CVarCascadeNearPlane->SetAsFloat(CascadeNearPlane, EConsoleVariableFlags::SetByCode);
-        }
-
-        ImGui::NextColumn();
-    }
-
-    // Cascade Far Plane
-    if (IConsoleVariable* CVarCascadeFarPlane = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeFarPlane"))
-    {
-        ImGui::Text("Cascade Far Plane");
-        ImGui::NextColumn();
-
-        float CascadeFarPlane = CVarCascadeFarPlane->GetFloat();
-        if (ImGui::SliderFloat("##CascadeFarPlane", &CascadeFarPlane, 0.0f, 1000.0f, "%.1f"))
-        {
-            CVarCascadeFarPlane->SetAsFloat(CascadeFarPlane, EConsoleVariableFlags::SetByCode);
-        }
-
-        ImGui::NextColumn();
-    }
-
     // Filter mode
     if (IConsoleVariable* CVarFilterMode = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))
     {

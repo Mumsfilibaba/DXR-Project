@@ -74,17 +74,3 @@ private:
     FRHIComputePipelineStateRef ReduceDepthPSO;
     FRHIComputeShaderRef        ReduceDepthShader;
 };
-
-class FOcclusionPass : public FRenderPass
-{
-public:
-    FOcclusionPass(FSceneRenderer* InRenderer);
-    virtual ~FOcclusionPass();
-
-    bool Initialize(FFrameResources& FrameResources);
-    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
-
-private:
-    FRHIVertexShaderRef          VertexShader;
-    FRHIGraphicsPipelineStateRef PipelineState;
-};

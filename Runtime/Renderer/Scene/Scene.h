@@ -11,6 +11,7 @@
 #include "Renderer/Scene/SceneSkyLight.h"
 #include "Renderer/Scene/SceneSkybox.h"
 #include "Renderer/Scene/SceneLightProbe.h"
+#include "Renderer/Scene/SceneView.h"
 
 class FWorld;
 class FMaterial;
@@ -45,19 +46,10 @@ public:
     virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) override final;
 
     // Update all scene objects with the world version of the object
-    void SyncWithWorld();
-
-    // Update Lights
-    void UpdateLights();
+    void SyncSceneAndWorld();
 
     // Performs frustum culling
-    void UpdateVisibility();
-
-    // Updates primitives transform matrices to be ready for the GPU
-    void UpdateStaticMeshes();
-
-    // Updates MeshBatches
-    void UpdateBatches();
+    void PrepareViewsForRendering();
 
     // Defers deletion of objects
     void DeferDeletion(FSceneObject* InObject);
@@ -69,25 +61,18 @@ public:
     FWorld* World;
 
     // TODO: Differ the Renderer's camera from the World's
-    FCamera* Camera;
+    FCamera*   Camera;
+    FSceneView CameraView;
 
     // All static meshes in this scene
     TArray<FSceneStaticMesh*> StaticMeshes;
 
-    // Visible static meshes (From the main camera's point of view)
-    TArray<FSceneStaticMesh*> VisibleStaticMeshes;
-
-    // Batches of meshes that are visible (From the main camera's point of view)
-    TArray<FMeshBatch> VisibleMeshBatches;
-
     // All Lights in the Scene
-    TArray<FLight*>           Lights;
     TArray<FScenePointLight*> PointLights;
+    FSceneSkyLight*           SkyLight;
+    FSceneDirectionalLight*   DirectionalLight;
 
-    FSceneSkyLight*         SkyLight;
-    FSceneDirectionalLight* DirectionalLight;
-
-    // Pointer to skybox
+    // Pointer to Skybox
     FSceneSkybox* Skybox;
 
     // All materials

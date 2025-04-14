@@ -452,7 +452,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 const FScenePointLight::FShadowData& Data = ScenePointLight->ShadowData[FaceIndex];
                 SinglePassPointLightBuffer.LightPosition               = Data.Position;
                 SinglePassPointLightBuffer.LightFarPlane               = Data.FarPlane;
-                SinglePassPointLightBuffer.LightProjections[FaceIndex] = Data.Matrix;
+                SinglePassPointLightBuffer.LightProjections[FaceIndex] = Data.ViewProjMatrix;
             }
 
             CommandList.TransitionBuffer(SinglePassShadowMapBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
@@ -476,7 +476,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             FScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            for (const FMeshBatch& Batch : ScenePointLight->SinglePassMeshBatch)
+            for (const FMeshBatch& Batch : ScenePointLight->SinglePassShadowView.GetMeshBatches())
             {
                 FMaterial* Material = Batch.Material;
                 FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
@@ -577,7 +577,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
             {
                 FScenePointLight::FShadowData& Data = ScenePointLight->ShadowData[FaceIndex];
-                PerShadowMapData.Matrix   = Data.Matrix;
+                PerShadowMapData.Matrix   = Data.ViewProjMatrix;
                 PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
 
@@ -601,7 +601,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 FScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
                 CommandList.SetScissorRect(ScissorRegion);
 
-                for (const FMeshBatch& Batch : ScenePointLight->MeshBatches[FaceIndex])
+                const TArray<FMeshBatch>& MeshBatches = ScenePointLight->ShadowView[FaceIndex].GetMeshBatches();
+                for (const FMeshBatch& Batch : MeshBatches)
                 {
                     FMaterial* Material = Batch.Material;
                     FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
@@ -1211,7 +1212,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
         CommandList.SetScissorRect(ScissorRegion);
 
-        for (const FMeshBatch& Batch : SceneDirectionalLight->MeshBatches)
+        for (const FMeshBatch& Batch : SceneDirectionalLight->ShadowView.GetMeshBatches())
         {
             FMaterial* Material = Batch.Material;
             FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
@@ -1324,7 +1325,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            for (const FMeshBatch& Batch : SceneDirectionalLight->MeshBatches)
+            for (const FMeshBatch& Batch : SceneDirectionalLight->ShadowView.GetMeshBatches())
             {
                 FMaterial* Material = Batch.Material;
                 FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);

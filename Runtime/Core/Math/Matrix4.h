@@ -400,7 +400,7 @@ public:
      * @param Epsilon Threshold for comparison
      * @return True if equal within Epsilon, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
@@ -1400,7 +1400,7 @@ public:
      */
     static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
-        if ((Fov < FMath::kOneDegree_f) || (Fov > (FMath::kPI_f - FMath::kOneDegree_f)))
+        if ((Fov < FMath::OneDegree_Float) || (Fov > (FMath::PI_Float - FMath::OneDegree_Float)))
         {
             return FMatrix4();
         }

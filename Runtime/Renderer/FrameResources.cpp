@@ -11,26 +11,6 @@ static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Specifies the resolution of each Shadow Cascade",
     2048);
 
-static TAutoConsoleVariable<float> CVarCascadeSplitLambda(
-    "Renderer.CSM.CascadeSplitLambda",
-    "Determines how the Cascades should be split for the Cascaded Shadow Maps",
-    0.95f);
-
-static TAutoConsoleVariable<float> CVarCascadePositionOffset(
-    "Renderer.CSM.CascadePositionOffset",
-    "The the offset from the center of the shadow-frustum when using Cascaded Shadow Maps",
-    200.0f);
-
-static TAutoConsoleVariable<float> CVarCascadeNearPlane(
-    "Renderer.CSM.CascadeNearPlane",
-    "The near-plane for each cascade when using Cascaded Shadow Maps",
-    120.0f);
-
-static TAutoConsoleVariable<float> CVarCascadeFarPlane(
-    "Renderer.CSM.CascadeFarPlane",
-    "The far-plane for each cascade when using Cascaded Shadow Maps",
-    250.0f);
-
 static TAutoConsoleVariable<int32> CVarPointLightShadowMapSize(
     "Renderer.Shadows.PointLightShadowMapSize",
     "Specifies the resolution of each Shadow Cascade",
@@ -46,48 +26,10 @@ static TAutoConsoleVariable<int32> CVarEnvironmentSpecularIrradianceProbeSize(
     "Specifies the resolution of each Specular Irradiance Probe (Cube-Map) size",
     256);
 
-// TODO: Move to FMath
-static int32 NextPower2(int32 Value)
-{
-    if ((Value & (Value - 1)) == 0)
-    {
-        return Value;
-    }
-
-    // Find the next power of 2
-    int32 RoundedValue = 1;
-    while (RoundedValue < Value)
-    {
-        RoundedValue <<= 1;
-    }
-
-    return RoundedValue;
-}
-
-static int32 ClosestPowerOf2(int32 Value)
-{
-    if (Value <= 0)
-    {
-        return 0;
-    }
-
-    const int32 NextPow = NextPower2(Value);
-    const int32 PrevPow = NextPow >> 1;
-
-    if (Value - PrevPow <= NextPow - Value)
-    {
-        return PrevPow;
-    }
-    else
-    {
-        return NextPow;
-    }
-}
-
 static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
 {
     const int32 Result = FMath::Clamp(NewSize, MinSize, MaxSize);
-    return ClosestPowerOf2(Result);
+    return FMath::ClosestPowerOfTwo(Result);
 }
 
 FFrameResources::FFrameResources()
@@ -214,86 +156,6 @@ bool FFrameResources::Initialize()
         LightProbeBuffer->SetDebugName("Light-Probe Infos");
     }
 
-    // Occlusion volumes
-    TStaticArray<FVector3, 16> Vertices =
-    {
-        FVector3(-0.515f, -0.515f, -0.515f), // 0
-        FVector3( 0.515f, -0.515f, -0.515f), // 1
-        FVector3( 0.515f,  0.515f, -0.515f), // 2
-        FVector3(-0.515f,  0.515f, -0.515f), // 3
-        FVector3(-0.515f, -0.515f,  0.515f), // 4
-        FVector3( 0.515f, -0.515f,  0.515f), // 5
-        FVector3( 0.515f,  0.515f,  0.515f), // 6
-        FVector3(-0.515f,  0.515f,  0.515f), // 7
-
-        FVector3(-0.485f, -0.485f, -0.485f), // 8
-        FVector3( 0.485f, -0.485f, -0.485f), // 9
-        FVector3( 0.485f,  0.485f, -0.485f), // 10
-        FVector3(-0.485f,  0.485f, -0.485f), // 11
-        FVector3(-0.485f, -0.485f,  0.485f), // 12
-        FVector3( 0.485f, -0.485f,  0.485f), // 13
-        FVector3( 0.485f,  0.485f,  0.485f), // 14
-        FVector3(-0.485f,  0.485f,  0.485f), // 15
-    };
-
-    BufferInfo = FRHIBufferInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
-    OcclusionVolume.VertexBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::Common, Vertices.Data());
-    if (!OcclusionVolume.VertexBuffer)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        OcclusionVolume.VertexBuffer->SetDebugName("Occlusion Cube VertexBuffer");
-    }
-
-    // Create IndexBuffer
-    TStaticArray<uint16, 72> Indices =
-    {
-        // Front face
-        4, 5, 6, 4, 6, 7,
-        // Back face
-        0, 3, 2, 0, 2, 1,
-        // Left face
-        0, 4, 7, 0, 7, 3,
-        // Right face
-        1, 2, 6, 1, 6, 5,
-        // Top face
-        3, 7, 6, 3, 6, 2,
-        // Bottom face
-        0, 1, 5, 0, 5, 4,
-
-        // Front face
-        12, 13, 14, 12, 14, 15,
-        // Back face
-        8, 11, 10, 8, 10, 9,
-        // Left face
-        8, 12, 15, 8, 15, 11,
-        // Right face
-        9, 10, 14, 9, 14, 13,
-        // Top face
-        11, 15, 14, 11, 14, 10,
-        // Bottom face
-        8, 9, 13, 8, 13, 12
-    };
-
-    BufferInfo = FRHIBufferInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
-    OcclusionVolume.IndexBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::Common, Indices.Data());
-
-    if (!OcclusionVolume.IndexBuffer)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        OcclusionVolume.IndexBuffer->SetDebugName("Occlusion Cube IndexBuffer");
-
-        OcclusionVolume.IndexCount  = Indices.Size();
-        OcclusionVolume.IndexFormat = EIndexFormat::uint16;
-    }
-
     return true;
 }
 
@@ -311,37 +173,28 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     LightProbeInfos.Clear();
 
     // Update DirectionalLight
-    if (Scene->DirectionalLight)
+    if (FSceneDirectionalLight* DirectionalLight = Scene->DirectionalLight)
     {
-        FDirectionalLight* DirectionalLight = Scene->DirectionalLight->DirectionalLight;
-
-        // Pre-multiply light intensity TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
-        FVector3 Color = DirectionalLight->GetColor();
-        Color = Color * DirectionalLight->GetIntensity();
-
-        // Update directional-light
-        DirectionalLight->Tick(*Scene->Camera);
-
         // Update data necessary for other stages
-        DirectionalLightData.Color         = Color;
-        DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
-        DirectionalLightData.Direction     = DirectionalLight->GetDirectionVector();
-        DirectionalLightData.UpVector      = DirectionalLight->GetUpVector();
-        DirectionalLightData.LightSize     = DirectionalLight->GetSize();
-        DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
+        DirectionalLightData.Color         = DirectionalLight->Color;
+        DirectionalLightData.ShadowBias    = DirectionalLight->ShadowBias;
+        DirectionalLightData.Direction     = DirectionalLight->Direction;
+        DirectionalLightData.UpVector      = DirectionalLight->UpVector;
+        DirectionalLightData.LightSize     = DirectionalLight->LightArea;
+        DirectionalLightData.ShadowMatrix  = DirectionalLight->ShadowMatrix;
         DirectionalLightData.ShadowMatrix  = DirectionalLightData.ShadowMatrix.GetTranspose();
-        DirectionalLightDataDirty          = true;
+        DirectionalLightDataDirty = true;
 
         // Update HLSL data
-        CascadeGenerationData.CascadeSplitLambda  = CVarCascadeSplitLambda.GetValue();
+        CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->CascadeSplitLambda;
+        CascadeGenerationData.LightPositionOffset = DirectionalLight->ShadowPositionOffset;
+        CascadeGenerationData.LightNearPlane      = DirectionalLight->ShadowNearPlane;
+        CascadeGenerationData.LightFarPlane       = DirectionalLight->ShadowFarPlane;
         CascadeGenerationData.LightUp             = DirectionalLightData.UpVector;
         CascadeGenerationData.LightDirection      = DirectionalLightData.Direction;
-        CascadeGenerationData.CascadeResolution   = static_cast<float>(CascadeSize);
         CascadeGenerationData.ShadowMatrix        = DirectionalLightData.ShadowMatrix;
+        CascadeGenerationData.CascadeResolution   = static_cast<float>(CascadeSize);
         CascadeGenerationData.MaxCascadeIndex     = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
-        CascadeGenerationData.LightPositionOffset = CVarCascadePositionOffset.GetValue();
-        CascadeGenerationData.LightNearPlane      = CVarCascadeNearPlane.GetValue();
-        CascadeGenerationData.LightFarPlane       = CVarCascadeFarPlane.GetValue();
 
         if (IConsoleVariable* CVarCSMTightFrustum = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
         {
@@ -592,7 +445,4 @@ void FFrameResources::Release()
     CascadeSplitsBufferUAV.Reset();
 
     LightProbeBuffer.Reset();
-
-    OcclusionVolume.VertexBuffer.Reset();
-    OcclusionVolume.IndexBuffer.Reset();
 }

@@ -113,11 +113,11 @@ void FSceneInspectorWidget::DrawSceneInfo()
 
             // Rotation
             FVector3 Rotation = Camera->GetRotation();
-            Rotation = FMath::ToDegrees(Rotation);
+            Rotation = FVector3::RadiansToDegrees(Rotation);
 
             ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
 
-            Rotation = FMath::ToRadians(Rotation);
+            Rotation = FVector3::DegreesToRadians(Rotation);
 
             Camera->SetRotation(Rotation.X, Rotation.Y, Rotation.Z);
 
@@ -179,7 +179,7 @@ void FSceneInspectorWidget::DrawSceneInfo()
                     ImGui::SetColumnWidth(0, ColumnWidth);
 
                     // Bias
-                    ImGui::Text("Shadow Bias");
+                    ImGui::Text("Shadow-bias");
                     ImGui::NextColumn();
 
                     float ShadowBias = CurrentPointLight->GetShadowBias();
@@ -195,7 +195,7 @@ void FSceneInspectorWidget::DrawSceneInfo()
 
                     // Shadow Near Plane
                     ImGui::NextColumn();
-                    ImGui::Text("Shadow Near Plane");
+                    ImGui::Text("Shadow near-plane");
                     ImGui::NextColumn();
 
                     float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
@@ -204,15 +204,25 @@ void FSceneInspectorWidget::DrawSceneInfo()
                         CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
                     }
 
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("Shadow-map near-plane");
+                    }
+
                     // Shadow Far Plane
                     ImGui::NextColumn();
-                    ImGui::Text("Shadow Far Plane");
+                    ImGui::Text("Shadow far-plane");
                     ImGui::NextColumn();
 
                     float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
                     if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
                     {
                         CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
+                    }
+
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("Shadow-map far-plane");
                     }
 
                     ImGui::Columns(1);
@@ -260,20 +270,20 @@ void FSceneInspectorWidget::DrawSceneInfo()
                     bool bSetRotation = false;
                     FVector3 Rotation = CurrentDirectionalLight->GetRotation();
 
-                    ImGui::Text("Rotation Theta (Degrees)");
+                    ImGui::Text("Rotation theta (degrees)");
                     ImGui::NextColumn();
 
-                    float RotationTheta = FMath::ToDegrees(Rotation.X);
+                    float RotationTheta = FMath::RadiansToDegrees(Rotation.X);
                     if (ImGui::SliderFloat("##RotationTheta", &RotationTheta, -90.0f, 90.0f, "%.2f"))
                     {
                         bSetRotation = true;
                     }
 
                     ImGui::NextColumn();
-                    ImGui::Text("Rotation Phi (Degrees)");
+                    ImGui::Text("Rotation phi (degrees)");
                     ImGui::NextColumn();
 
-                    float RotationPhi = FMath::ToDegrees(Rotation.Y);
+                    float RotationPhi = FMath::RadiansToDegrees(Rotation.Y);
                     if (ImGui::SliderFloat("##RotationPhi", &RotationPhi, 0.0f, 360.0f, "%.2f"))
                     {
                         bSetRotation = true;
@@ -281,8 +291,8 @@ void FSceneInspectorWidget::DrawSceneInfo()
 
                     if (bSetRotation)
                     {
-                        Rotation.X = FMath::ToRadians(RotationTheta);
-                        Rotation.Y = FMath::ToRadians(RotationPhi);
+                        Rotation.X = FMath::DegreesToRadians(RotationTheta);
+                        Rotation.Y = FMath::DegreesToRadians(RotationPhi);
                         CurrentDirectionalLight->SetRotation(Rotation);
                     }
 
@@ -298,22 +308,11 @@ void FSceneInspectorWidget::DrawSceneInfo()
                     // Shadow Settings
                     ImGui::SeparatorText("Shadows");
 
-                    FVector3 LookAt = CurrentDirectionalLight->GetLookAt();
-                    ImGuiExtensions::DrawFloat3Control("LookAt", LookAt, 0.0f, ColumnWidth);
-
                     ImGui::Columns(2, nullptr, false);
                     ImGui::SetColumnWidth(0, ColumnWidth);
 
-                    // Read only translation
-                    ImGui::Text("Translation");
-                    ImGui::NextColumn();
-
-                    FVector3 Position = CurrentDirectionalLight->GetPosition();
-                    ImGui::InputFloat3("##Translation", Position.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
-
                     // Shadow Bias
-                    ImGui::NextColumn();
-                    ImGui::Text("Shadow Bias");
+                    ImGui::Text("Shadow-bias");
                     ImGui::NextColumn();
 
                     float ShadowBias = CurrentDirectionalLight->GetShadowBias();
@@ -327,15 +326,74 @@ void FSceneInspectorWidget::DrawSceneInfo()
                         ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
                     }
 
-                    // Size
+                    // Cascade Split Lambda
                     ImGui::NextColumn();
-                    ImGui::Text("Light Size");
+                    ImGui::Text("Cascade Split Lambda");
                     ImGui::NextColumn();
 
-                    float LightSize = CurrentDirectionalLight->GetSize();
-                    if (ImGui::SliderFloat("##LightSize", &LightSize, 0.0f, 1.0f, "%.2f"))
+                    float CascadeSplitLambda = CurrentDirectionalLight->GetCascadeSplitLambda();
+                    if (ImGui::SliderFloat("##CascadeSplitLambda", &CascadeSplitLambda, 0.0f, 1.0f, "%.2f"))
                     {
-                        CurrentDirectionalLight->SetSize(LightSize);
+                        CurrentDirectionalLight->SetCascadeSplitLambda(CascadeSplitLambda);
+                    }
+
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("Lambda for determine the splits of the shadow-cascades");
+                    }
+
+                    // Cascade Position Offset
+                    ImGui::NextColumn();
+                    ImGui::Text("Cascade Position Offset");
+                    ImGui::NextColumn();
+
+                    float CascadePositionOffset = CurrentDirectionalLight->GetShadowPositionOffset();
+                    if (ImGui::SliderFloat("##CascadePositionOffset", &CascadePositionOffset, 0.0f, 1000.0f, "%.1f"))
+                    {
+                        CurrentDirectionalLight->SetShadowPositionOffset(CascadePositionOffset);
+                    }
+
+                    // Shadow Near Plane
+                    ImGui::NextColumn();
+                    ImGui::Text("Shadow near-plane");
+                    ImGui::NextColumn();
+
+                    float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
+                    if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.0f, 1000.0f, "%.1f"))
+                    {
+                        CurrentDirectionalLight->SetShadowNearPlane(ShadowNearPlane);
+                    }
+
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("Shadow-map near-plane");
+                    }
+
+                    // Shadow Far Plane
+                    ImGui::NextColumn();
+                    ImGui::Text("Shadow far-plane");
+                    ImGui::NextColumn();
+
+                    float ShadowFarPlane = CurrentDirectionalLight->GetShadowFarPlane();
+                    if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 0.0f, 1000.0f, "%.1f"))
+                    {
+                        CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);
+                    }
+
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("Shadow-map far-plane");
+                    }
+
+                    // Size
+                    ImGui::NextColumn();
+                    ImGui::Text("Light area");
+                    ImGui::NextColumn();
+
+                    float LightArea = CurrentDirectionalLight->GetLightArea();
+                    if (ImGui::SliderFloat("##LightArea", &LightArea, 0.0f, 1.0f, "%.2f"))
+                    {
+                        CurrentDirectionalLight->SetLightArea(LightArea);
                     }
 
                     if (ImGui::IsItemHovered())
@@ -447,11 +505,11 @@ void FSceneInspectorWidget::DrawSceneInfo()
 
                 // Rotation
                 FVector3 Rotation = Actor->GetTransform().GetRotation();
-                Rotation = FMath::ToDegrees(Rotation);
+                Rotation = FVector3::RadiansToDegrees(Rotation);
 
                 ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
 
-                Rotation = FMath::ToRadians(Rotation);
+                Rotation = FVector3::DegreesToRadians(Rotation);
 
                 Actor->GetTransform().SetRotation(Rotation);
 

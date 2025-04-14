@@ -3,116 +3,45 @@
 #include "Engine/World/Camera.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 
-static TAutoConsoleVariable<float> CVarSunSize(
-    "Scene.Lightning.Sun.Size",
-    "Sets the size of the sun, used to determine the penumbra for soft-shadows", 
-    0.05f);
-
 FOBJECT_IMPLEMENT_CLASS(FDirectionalLight);
 
 FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer)
-    : FLight(ObjectInitializer)
-    , Direction(0.0f, -1.0f, 0.0f)
+    : FLight(ObjectInitializer, 120.0f, 250.0f)
+    , Direction(-FVector3::Up)
     , Rotation(0.0f, 0.0f, 0.0f)
-    , LookAt(0.0f, 0.0f, 0.0f)
-    , Position(0.0f, 0.0f, 0.0f)
-    , Size(CVarSunSize.GetValue())
+    , ShadowPositionOffset(200.0f)
+    , CascadeSplitLambda(0.95f)
+    , LightArea(0.05f)
 {
-    // TODO: Probably move to scene
-    CVarSunSize->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* SunLight)
-    {
-        if (SunLight && SunLight->IsVariableFloat())
-        {
-            const float NewSize = FMath::Clamp(SunLight->GetFloat(), 0.0f, 1.0f);
-            this->Size = NewSize;
-        }
-    }));
-
-    ShadowMatrix.SetIdentity();
 }
 
-void FDirectionalLight::Tick(FCamera& Camera)
+FDirectionalLight::~FDirectionalLight()
 {
-    // Update direction based on rotation
-    {
-        FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.X, Rotation.Y, Rotation.Z);
-
-        FVector3 StartDirection(0.0f, -1.0f, 0.0f);
-        StartDirection = RotationMatrix.TransformNormal(StartDirection);
-        Direction      = StartDirection.GetNormalized();
-    }
-
-    // Update ShadowMatrix
-    FVector3 FrustumCorners[8] =
-    {
-        FVector3(-1.0f,  1.0f, 0.0f),
-        FVector3( 1.0f,  1.0f, 0.0f),
-        FVector3( 1.0f, -1.0f, 0.0f),
-        FVector3(-1.0f, -1.0f, 0.0f),
-        FVector3(-1.0f,  1.0f, 1.0f),
-        FVector3( 1.0f,  1.0f, 1.0f),
-        FVector3( 1.0f, -1.0f, 1.0f),
-        FVector3(-1.0f, -1.0f, 1.0f),
-    };
-
-    // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
-    FMatrix4 InvViewProjection = Camera.GetViewProjectionInverseMatrix();
-    InvViewProjection = InvViewProjection.GetTranspose();
-
-    // Calculate the center of frustum
-    FVector3 FrustumCenter = FVector3(0.0f);
-    for (int32 Corner = 0; Corner < 8; ++Corner)
-    {
-        FrustumCorners[Corner] = InvViewProjection.TransformCoord(FrustumCorners[Corner]);
-        FrustumCenter += FrustumCorners[Corner];
-    }
-
-    FrustumCenter /= 8.0f;
-
-    // Calculate a Shadow-matrix
-    UpVector = FVector3(0.0f, 1.0f, 0.0f);
-
-    {
-        FVector3 ShadowLookAt           = FrustumCenter - Direction;
-        FVector3 ShadowPosition         = FrustumCenter + Direction * -0.5f;
-        FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
-        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrthographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
-        ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
-    }
-
-#if 0
-    // Generate a bounds-matrix
-    {
-        float Radius = 0.0f;
-
-        for (int32 Index = 0; Index < 8; ++Index)
-        {
-            const float Distance = (FrustumCorners[Index] - FrustumCenter).GetLength();
-            Radius = FMath::Max(Radius, Distance);
-        }
-
-        Radius = FMath::Ceil(Radius * 16.0f) / 16.0f;
-
-        FVector3 MaxExtents = FVector3(Radius);
-        FVector3 MinExtents = -MaxExtents;
-
-        // Setup ShadowView
-        FVector3 Extents        = MaxExtents - MinExtents;
-        FVector3 LightDirection = Direction.GetNormalized();
-        Position = FrustumCenter - LightDirection * MaxExtents.Z;
-
-        ShadowNearPlane = -Extents.Z;
-        ShadowFarPlane  =  Extents.Z;
-    }
-#endif
 }
 
 void FDirectionalLight::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
+
+    // Update direction based on rotation
+    FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.X, Rotation.Y, Rotation.Z);
+
+    // Create the proper direction
+    FVector3 StartDirection = -FVector3::Up;
+    Direction = RotationMatrix.TransformNormal(StartDirection).GetNormalized();
 }
 
-void FDirectionalLight::SetSize(float InSize)
+void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
-    CVarSunSize->SetAsFloat(InSize, EConsoleVariableFlags::SetByCode);
+    CascadeSplitLambda = InCascadeSplitLambda;
+}
+
+void FDirectionalLight::SetShadowPositionOffset(float InShadowPositionOffset)
+{
+    ShadowPositionOffset = InShadowPositionOffset;
+}
+
+void FDirectionalLight::SetLightArea(float InLightArea)
+{
+    LightArea = InLightArea;
 }

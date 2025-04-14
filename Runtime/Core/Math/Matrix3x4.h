@@ -94,7 +94,7 @@ public:
      * @param Epsilon Threshold for comparison
      * @return True if equal within Epsilon, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix3x4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix3x4& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
     {
         Epsilon = FMath::Abs(Epsilon);
 

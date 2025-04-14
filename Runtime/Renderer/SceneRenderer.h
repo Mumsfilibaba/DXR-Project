@@ -151,7 +151,6 @@ private:
 
     FDepthPrePass*              DepthPrePass;
     FDeferredBasePass*          BasePass;
-    FOcclusionPass*             OcclusionPass;
     FDepthReducePass*           DepthReducePass;
     FTiledLightPass*            TiledLightPass;
     FPointLightRenderPass*      PointLightRenderPass;

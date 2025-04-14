@@ -60,10 +60,10 @@ public:
     /**
      * @brief Compares this plane with another plane within a specified threshold.
      * @param Other The plane to compare against.
-     * @param Epsilon The threshold for comparison. Defaults to FMath::kIsEqualEpsilon.
+     * @param Epsilon The threshold for comparison. Defaults to FMath::FloatCompareEpsilon.
      * @return True if planes are approximately equal, false otherwise.
      */
-    FORCEINLINE bool IsEqual(const FPlane& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FPlane& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);

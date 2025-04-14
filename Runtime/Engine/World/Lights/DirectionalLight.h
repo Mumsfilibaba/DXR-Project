@@ -10,22 +10,23 @@ public:
     FOBJECT_DECLARE_CLASS(FDirectionalLight, FLight);
 
     FDirectionalLight(const FObjectInitializer& ObjectInitializer);
-    ~FDirectionalLight() = default;
-
-    void Tick(class FCamera& Camera);
+    ~FDirectionalLight();
 
     // Rotation in Radians
     void SetRotation(const FVector3& InRotation);
-    void SetSize(float InSize);
+
+    // Lambda for determine the splits of the shadow-cascades
+    void SetCascadeSplitLambda(float InCascadeSplitLambda);
+
+    // Offset from the calculated camera position, that then becomes the point-of-view of the shadow-cascade
+    void SetShadowPositionOffset(float InShadowPositionOffset);
+
+    // Area of the light-source
+    void SetLightArea(float InLightArea);
 
     FORCEINLINE const FVector3& GetDirectionVector() const
     {
         return Direction;
-    }
-
-    FORCEINLINE const FVector3& GetUpVector() const
-    {
-        return UpVector;
     }
 
     FORCEINLINE const FVector3& GetRotation() const
@@ -33,32 +34,25 @@ public:
         return Rotation;
     }
 
-    FORCEINLINE const FVector3& GetPosition() const
+    FORCEINLINE float GetShadowPositionOffset() const
     {
-        return Position;
+        return ShadowPositionOffset;
     }
 
-    FORCEINLINE const FVector3& GetLookAt() const
+    FORCEINLINE float GetCascadeSplitLambda() const
     {
-        return LookAt;
+        return CascadeSplitLambda;
     }
 
-    FORCEINLINE const FMatrix4& GetShadowMatrix() const
+    FORCEINLINE float GetLightArea() const
     {
-        return ShadowMatrix;
-    }
-
-    FORCEINLINE float GetSize() const
-    {
-        return Size;
+        return LightArea;
     }
 
 private:
     FVector3 Direction;
     FVector3 Rotation;
-    FVector3 UpVector;
-    FVector3 LookAt;
-    FVector3 Position;
-    FMatrix4 ShadowMatrix;
-    float    Size;
+    float    ShadowPositionOffset;
+    float    CascadeSplitLambda;
+    float    LightArea;
 };

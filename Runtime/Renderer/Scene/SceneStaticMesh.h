@@ -8,23 +8,7 @@
 class FMaterial;
 class FStaticMeshComponent;
 class FRHIBuffer;
-class FRHIQuery;
 class FRHIRayTracingGeometry;
-
-#define NUM_OCCLUSION_QUERIES (3)
-#define OCCLUSION_DELAY (6)
-
-struct FFrustumVisibility
-{
-    FFrustumVisibility()
-        : bIsVisible(false)
-        , bWasVisible(false)
-    {
-    }
-
-    bool bIsVisible  : 1;
-    bool bWasVisible : 1;
-};
 
 struct FTransformBufferHLSL
 {
@@ -42,22 +26,9 @@ public:
 
     virtual void Tick() override final;
 
-    void UpdateOcclusion();
-
-    bool IsOccluded() const
-    {
-        return NumFramesOccluded > OCCLUSION_DELAY;
-    }
-
-    void UpdateFrustumVisbility(bool bIsVisible)
-    {
-        FrustumVisibility.bWasVisible = FrustumVisibility.bIsVisible;
-        FrustumVisibility.bIsVisible  = bIsVisible;
-    }
-
     FMaterial* GetMaterial(int32 Index = 0) const
     {
-        return (Materials.Size() > Index) ? Materials[Index].Get() : nullptr;
+        return Materials.IsValidIndex(Index) ? Materials[Index].Get() : nullptr;
     }
     
     int32 GetNumMaterials() const
@@ -66,24 +37,20 @@ public:
     }
     
     // Reference to the Actor
-    class FActor*   Actor;
+    class FActor*         Actor;
     FStaticMeshComponent* MeshComponent;
 
     // TransformMatrix for this object
     FTransformBufferHLSL TransformBuffer;
+
+    // AABB in world-space
+    FAABB WorldBounds;
 
     // Reference to the Mesh
     TSharedPtr<class FMesh> Mesh;
 
     // Reference to the material array
     TArray<TSharedPtr<FMaterial>> Materials;
-
-    // Occlusion
-    FRHIQuery*              CurrentOcclusionQuery;
-    FRHIQuery*              OcclusionQueries[NUM_OCCLUSION_QUERIES];
-    uint32                  CurrentOcclusionQueryIndex;
-    uint32                  NumFramesOccluded;
-    FFrustumVisibility      FrustumVisibility;
 
     // Geometry Objects
     FRHIRayTracingGeometry* Geometry;

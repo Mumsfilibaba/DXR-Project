@@ -89,12 +89,6 @@ static TAutoConsoleVariable<bool> CVarDrawAABBs(
     false,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarDrawOcclusionVolumes(
-    "Renderer.Debug.DrawOcclusionVolumes",
-    "Draws all the objects bounding boxes that are used for occlusion culling",
-    false,
-    EConsoleVariableFlags::Default);
-
 static TAutoConsoleVariable<bool> CVarDrawPointLights(
     "Renderer.Debug.DrawPointLights", 
     "Draws all the point-lights as spheres with the light-color",
@@ -131,15 +125,9 @@ static TAutoConsoleVariable<bool> CVarCSMTightFrustum(
     true,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
-    "Renderer.BasePass.OcclusionCulling",
-    "Should occlusion culling be performed or not",
-    false,
-    EConsoleVariableFlags::Default);
-
 static FAutoConsoleCommand CVarFreezeRendering(
     "Renderer.FreezeRendering",
-    "Freezes the updating of Frustum and Occlusion culling",
+    "Freezes the updating of Frustum culling",
     FConsoleCommandDelegate::CreateLambda([]()
     {
         GFreezeRendering = !GFreezeRendering;
@@ -156,7 +144,6 @@ FSceneRenderer::FSceneRenderer()
     , HaltonState()
     , DepthPrePass(nullptr)
     , BasePass(nullptr)
-    , OcclusionPass(nullptr)
     , DepthReducePass(nullptr)
     , TiledLightPass(nullptr)
     , PointLightRenderPass(nullptr)
@@ -188,7 +175,6 @@ FSceneRenderer::~FSceneRenderer()
 
     SAFE_DELETE(DepthPrePass);
     SAFE_DELETE(BasePass);
-    SAFE_DELETE(OcclusionPass);
     SAFE_DELETE(DepthReducePass);
     SAFE_DELETE(TiledLightPass);
     SAFE_DELETE(PointLightRenderPass);
@@ -391,12 +377,6 @@ bool FSceneRenderer::InitializeRenderPasses()
         return false;
     }
 
-    OcclusionPass = new FOcclusionPass(this);
-    if (!OcclusionPass->Initialize(Resources))
-    {
-        return false;
-    }
-
     TiledLightPass = new FTiledLightPass(this);
     if (!TiledLightPass->Initialize(Resources))
     {
@@ -590,25 +570,6 @@ void FSceneRenderer::Tick(FScene* Scene)
         }
     }
 
-    // Update occlusion
-    if (!GFreezeRendering)
-    {
-        if (CVarBasePassOcclusionCulling.GetValue())
-        {
-            for (FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
-            {
-                StaticMesh->UpdateOcclusion();
-            }
-        }
-        else
-        {
-            for (FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
-            {
-                StaticMesh->NumFramesOccluded = 0;
-            }
-        }
-    }
-
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Normal].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Material].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
@@ -657,12 +618,6 @@ void FSceneRenderer::Tick(FScene* Scene)
     if (CVarBasePassEnabled.GetValue())
     {
         BasePass->Execute(CommandList, Resources, Scene);
-    }
-
-    // Occlusion Pass
-    if (CVarBasePassOcclusionCulling.GetValue())
-    {
-        OcclusionPass->Execute(CommandList, Resources, Scene);
     }
 
     // Depth Reduce
@@ -859,12 +814,6 @@ void FSceneRenderer::Tick(FScene* Scene)
     if (CVarDrawAABBs.GetValue())
     {
         DebugRenderer->RenderObjectAABBs(CommandList, Resources, Scene);
-    }
-
-    // Debug Occlusion Boxes
-    if (CVarDrawOcclusionVolumes.GetValue())
-    {
-        DebugRenderer->RenderOcclusionVolumes(CommandList, Resources, Scene);
     }
 
     // Temporal AA

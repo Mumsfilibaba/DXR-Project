@@ -56,11 +56,11 @@ void CInspectorWindow::DrawSceneInfo()
 
                     // Rotation
                     FVector3 Rotation = Actor->GetTransform().GetRotation();
-                    Rotation = FMath::ToDegrees( Rotation );
+                    Rotation = FMath::RadiansToDegrees( Rotation );
 
                     DrawFloat3Control( "Rotation", Rotation, 0.0f, 100.0f, 1.0f );
 
-                    Rotation = FMath::ToRadians( Rotation );
+                    Rotation = FMath::DegreesToRadians( Rotation );
 
                     Actor->GetTransform().SetRotation( Rotation );
 
@@ -322,11 +322,11 @@ void CInspectorWindow::DrawSceneInfo()
                     if ( ImGui::TreeNode( "Transform" ) )
                     {
                         FVector3 Rotation = CurrentDirectionalLight->GetRotation();
-                        Rotation = FMath::ToDegrees( Rotation );
+                        Rotation = FMath::RadiansToDegrees( Rotation );
 
                         DrawFloat3Control( "Rotation", Rotation, 0.0f, ColumnWidth, 1.0f );
 
-                        Rotation = FMath::ToDegrees( Rotation );
+                        Rotation = FMath::RadiansToDegrees( Rotation );
 
                         CurrentDirectionalLight->SetRotation( Rotation );
 

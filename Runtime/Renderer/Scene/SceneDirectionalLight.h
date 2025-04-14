@@ -4,6 +4,7 @@
 #include "Core/Math/Matrix4.h"
 #include "Core/Math/Frustum.h"
 #include "Renderer/Scene/SceneObject.h"
+#include "Renderer/Scene/SceneView.h"
 
 class FDirectionalLight;
 
@@ -17,15 +18,18 @@ struct FSceneDirectionalLight : public FSceneObject
     // Pointer to the light in the world
     FDirectionalLight* DirectionalLight;
 
-    // Store data for rendering all cascades
-    TArray<FMeshBatch>        MeshBatches;
-    TArray<FSceneStaticMesh*> StaticMeshes;
+    // View for shadow rendering
+    FSceneView ShadowView;
 
+    // Light properties
+    FVector3 Color;
     FVector3 Direction;
-    FVector3 Rotation;
     FVector3 UpVector;
-    FVector3 LookAt;
-    FVector3 Position;
     FMatrix4 ShadowMatrix;
-    float    Size;
+    float    ShadowNearPlane;
+    float    ShadowFarPlane;
+    float    ShadowBias;
+    float    ShadowPositionOffset;
+    float    CascadeSplitLambda;
+    float    LightArea;
 };

@@ -3,11 +3,18 @@
 FOBJECT_IMPLEMENT_CLASS(FPointLight);
 
 FPointLight::FPointLight(const FObjectInitializer& ObjectInitializer)
-    : FLight(ObjectInitializer)
-    , Matrices()
+    : FLight(ObjectInitializer, 1.0f, 30.0f)
+    , ViewProjMatrices()
+    , ViewMatrices()
+    , ProjMatrices()
     , Position(0.0f, 0.0f, 0.0f)
+    , bShadowCaster(false)
 {
     CalculateMatrices();
+}
+
+FPointLight::~FPointLight()
+{
 }
 
 void FPointLight::SetPosition(const FVector3& InPosition)
@@ -69,11 +76,11 @@ void FPointLight::CalculateMatrices()
 
     for (uint32 Face = 0; Face < 6; ++Face)
     {
-        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(FMath::kPI_f / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
+        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(FMath::HalfPI_Float, 1.0f, ShadowNearPlane, ShadowFarPlane);
         const FMatrix4 LightView       = FMatrix4::LookTo(Position, Directions[Face], UpVectors[Face]);
 
-        ViewMatrices[Face] = LightView;
-        ProjMatrices[Face] = LightProjection;
-        Matrices[Face]     = LightView * LightProjection;
+        ViewMatrices[Face]     = LightView;
+        ProjMatrices[Face]     = LightProjection;
+        ViewProjMatrices[Face] = LightView * LightProjection;
     }
 }

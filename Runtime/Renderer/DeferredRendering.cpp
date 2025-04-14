@@ -247,7 +247,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
+    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         CHECK(Material != nullptr);
@@ -293,11 +293,6 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
-            if (StaticMesh->IsOccluded())
-            {
-                continue;
-            }
-
             if (Material->HasAlphaMask() || Material->IsDoubleSided())
             {
                 FRHIBuffer* VertexBuffers[] =
@@ -607,7 +602,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
+    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         if (Material->ShouldRenderInForwardPass())
@@ -677,10 +672,6 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
-            if (StaticMesh->IsOccluded())
-            {
-                continue;
-            }
 
             FRHIBuffer* VertexBuffers[] =
             {
@@ -1242,7 +1233,8 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
     CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
-    CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, FMath::BytesToNum32BitConstants(sizeof(ReductionConstants)));
+    constexpr uint32 NumConstants = sizeof(FReductionConstants) / sizeof(uint32);
+    CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NumConstants);
 
     uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
     uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
@@ -1274,176 +1266,4 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
     
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
-}
-
-FOcclusionPass::FOcclusionPass(FSceneRenderer* InRenderer)
-    : FRenderPass(InRenderer)
-    , VertexShader(nullptr)
-    , PipelineState(nullptr)
-{
-}
-
-FOcclusionPass::~FOcclusionPass()
-{
-    VertexShader.Reset();
-    PipelineState.Reset();
-}
-
-bool FOcclusionPass::Initialize(FFrameResources& /* FrameResources */)
-{
-    TArray<uint8> ShaderCode;
-
-    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/OcclusionPass.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    VertexShader = RHICreateVertexShader(ShaderCode);
-    if (!VertexShader)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIVertexLayoutInitializerList VertexElementList =
-    {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
-    };
-
-    FRHIVertexLayoutRef InputLayoutState = RHICreateVertexLayout(VertexElementList);
-    if (!InputLayoutState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIDepthStencilStateInitializer DepthStencilInitializer;
-    DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-    DepthStencilInitializer.bDepthEnable      = true;
-    DepthStencilInitializer.bDepthWriteEnable = false;
-
-    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
-    if (!DepthStencilState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIRasterizerStateInitializer RasterizerStateInitializer;
-    RasterizerStateInitializer.CullMode = ECullMode::None;
-
-    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
-    if (!RasterizerState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIBlendStateInitializer BlendStateInitializer;
-    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
-    if (!BlendState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.BlendState                         = BlendState.Get();
-    PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
-    PSOInitializer.VertexInputLayout                  = InputLayoutState.Get();
-    PSOInitializer.RasterizerState                    = RasterizerState.Get();
-    PSOInitializer.ShaderState.VertexShader           = VertexShader.Get();
-    PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
-
-    PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
-    if (!PipelineState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        PipelineState->SetDebugName("Occlusion Culling PipelineState");
-    }
-
-    return true;
-}
-
-void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
-{
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Occlusion Pass");
-
-    TRACE_SCOPE("Occlusion Pass");
-
-    GPU_TRACE_SCOPE(CommandList, "Occlusion Pass");
-
-    FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load, EAttachmentStoreAction::DontCare);
-
-    CommandList.BeginRenderPass(RenderPass);
-
-    const float RenderWidth  = float(FrameResources.CurrentWidth);
-    const float RenderHeight = float(FrameResources.CurrentHeight);
-
-    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
-    CommandList.SetViewport(ViewportRegion);
-
-    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
-    CommandList.SetScissorRect(ScissorRegion);
-
-    FTransformBufferHLSL TransformPerObject;
-    TransformPerObject.TransformInv = FMatrix4::Identity();
-
-    CommandList.SetGraphicsPipelineState(PipelineState.Get());
-    CommandList.SetVertexBuffers(MakeArrayView(&FrameResources.OcclusionVolume.VertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(FrameResources.OcclusionVolume.IndexBuffer.Get(), FrameResources.OcclusionVolume.IndexFormat);
-    CommandList.SetConstantBuffer(VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-
-    for (FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
-    {
-        // Create Query
-        StaticMesh->CurrentOcclusionQueryIndex = (StaticMesh->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
-        StaticMesh->CurrentOcclusionQuery      = StaticMesh->OcclusionQueries[StaticMesh->CurrentOcclusionQueryIndex];
-
-        if (!StaticMesh->CurrentOcclusionQuery)
-        {
-            FRHIQuery* NewOcclusionQuery = RHICreateQuery(EQueryType::Occlusion);
-            if (!NewOcclusionQuery)
-            {
-                continue;
-            }
-
-            StaticMesh->OcclusionQueries[StaticMesh->CurrentOcclusionQueryIndex] = NewOcclusionQuery;
-            StaticMesh->CurrentOcclusionQuery = NewOcclusionQuery;
-        }
-
-        const FAABB& BoundingBox = StaticMesh->Mesh->GetAABB();
-
-        FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
-        Scale.X = FMath::Max<float>(Scale.X, 0.005f);
-        Scale.Y = FMath::Max<float>(Scale.Y, 0.005f);
-        Scale.Z = FMath::Max<float>(Scale.Z, 0.005f);
-
-        FVector3 Position          = BoundingBox.GetCenter();
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
-
-        TransformPerObject.Transform = StaticMesh->Actor->GetTransform().GetTransformMatrix();
-        TransformPerObject.Transform = (ScaleMatrix * TranslationMatrix) * TransformPerObject.Transform;
-        TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
-
-        constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, NumConstants);
-
-        CommandList.BeginQuery(StaticMesh->CurrentOcclusionQuery);
-        CommandList.DrawIndexedInstanced(FrameResources.OcclusionVolume.IndexCount, 1, 0, 0, 0);
-        CommandList.EndQuery(StaticMesh->CurrentOcclusionQuery);
-    }
-
-    CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Occlusion Pass");
 }

@@ -169,7 +169,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     CommandList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
     //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
-    for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
+    for (const FMeshBatch& Batch : Scene->CameraView.GetMeshBatches())
     {
         FMaterial* Material = Batch.Material;
         if (!Material->ShouldRenderInForwardPass())

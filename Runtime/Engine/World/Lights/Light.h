@@ -8,24 +8,32 @@ public:
     FOBJECT_DECLARE_CLASS(FLight, FObject);
 
     FLight(const FObjectInitializer& ObjectInitializer);
-    virtual ~FLight() = default;
+    FLight(const FObjectInitializer& ObjectInitializer, float InShadowNearPlane, float InShadowFarPlane);
+    virtual ~FLight();
 
+    // Set color of a light
     void SetColor(const FVector3& InColor);
+
+    // Set intensity of the light
     void SetIntensity(float InIntensity);
 
-    FORCEINLINE void SetShadowBias(float InShadowBias)
+    // Set near-plane for shadows
+    void SetShadowNearPlane(float InShadowNearPlane);
+
+    // Set near-plane for shadows
+    void SetShadowFarPlane(float InShadowFarPlane);
+
+    // Set shadow-bias
+    void SetShadowBias(float InShadowBias);
+
+    FORCEINLINE const FVector3& GetColor() const
     {
-        ShadowBias = InShadowBias;
+        return Color;
     }
 
     FORCEINLINE float GetIntensity() const
     {
         return Intensity;
-    }
-
-    FORCEINLINE const FVector3& GetColor() const
-    {
-        return Color;
     }
 
     FORCEINLINE float GetShadowNearPlane() const

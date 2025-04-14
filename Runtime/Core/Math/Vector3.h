@@ -5,6 +5,17 @@ class FVector3
 {
 public:
 
+    /** @brief Engine up-direction */
+    static CORE_API const FVector3 Up;
+
+    /** @brief Engine forward-direction */
+    static CORE_API const FVector3 Forward;
+
+    /** @brief Engine right-direction */
+    static CORE_API const FVector3 Right;
+
+public:
+
     /**
      * @brief Default constructor (initializes components to zero).
      */
@@ -75,7 +86,7 @@ public:
      * @param Epsilon The threshold for comparison.
      * @return True if vectors are approximately equal, false otherwise.
      */
-    inline bool IsEqual(const FVector3& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FVector3& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
     {
         Epsilon = FMath::Abs(Epsilon);
 
@@ -98,7 +109,7 @@ public:
     FORCEINLINE bool IsUnitVector() const noexcept
     {
         const float LengthDiff = FMath::Abs(1.0f - GetLengthSquared());
-        return LengthDiff < FMath::kIsEqualEpsilon;
+        return LengthDiff < FMath::FloatCompareEpsilon;
     }
 
     /**
@@ -321,9 +332,9 @@ public:
      * @param Radians Vector in radians.
      * @return Vector with components in degrees.
      */
-    static FORCEINLINE FVector3 ToDegrees(const FVector3& Radians) noexcept
+    static FORCEINLINE FVector3 RadiansToDegrees(const FVector3& Radians) noexcept
     {
-        return FVector3(FMath::ToDegrees(Radians.X), FMath::ToDegrees(Radians.Y), FMath::ToDegrees(Radians.Z));
+        return FVector3(FMath::RadiansToDegrees(Radians.X), FMath::RadiansToDegrees(Radians.Y), FMath::RadiansToDegrees(Radians.Z));
     }
 
     /**
@@ -331,9 +342,9 @@ public:
      * @param Degrees Vector in degrees.
      * @return Vector with components in radians.
      */
-    static FORCEINLINE FVector3 ToRadians(const FVector3& Degrees) noexcept
+    static FORCEINLINE FVector3 DegreesToRadians(const FVector3& Degrees) noexcept
     {
-        return FVector3(FMath::ToRadians(Degrees.X), FMath::ToRadians(Degrees.Y), FMath::ToRadians(Degrees.Z));
+        return FVector3(FMath::DegreesToRadians(Degrees.X), FMath::DegreesToRadians(Degrees.Y), FMath::DegreesToRadians(Degrees.Z));
     }
 
 public:

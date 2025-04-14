@@ -77,28 +77,28 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     // Camera Rotation
     if (FMath::Abs(RightThumbX.Value) > Deadzone)
     {
-        Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
+        Camera->Rotate(0.0f, FMath::DegreesToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Right))
     {
-        Camera->Rotate(0.0f, FMath::ToRadians(RotationSpeed * DeltaTime), 0.0f);
+        Camera->Rotate(0.0f, FMath::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Left))
     {
-        Camera->Rotate(0.0f, FMath::ToRadians(-RotationSpeed * DeltaTime), 0.0f);
+        Camera->Rotate(0.0f, FMath::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f);
     }
 
     if (FMath::Abs(RightThumbY.Value) > Deadzone)
     {
-        Camera->Rotate(FMath::ToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->Rotate(FMath::DegreesToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Up))
     {
-        Camera->Rotate(FMath::ToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->Rotate(FMath::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Down))
     {
-        Camera->Rotate(FMath::ToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->Rotate(FMath::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
 
     // Camera Movement

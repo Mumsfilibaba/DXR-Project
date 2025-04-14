@@ -94,7 +94,6 @@ void FFrustum::GenerateFrustumCorners(const FMatrix4& CombinedMatrix)
 
 bool FFrustum::IntersectsAABB(const FAABB& Box) const
 {
-    // Get the center and half-extents of the bounding box
     const FVector3 Center  = Box.GetCenter();
     const float HalfWidth  = Box.GetWidth()  / 2.0f;
     const float HalfHeight = Box.GetHeight() / 2.0f;
@@ -111,7 +110,6 @@ bool FFrustum::IntersectsAABB(const FAABB& Box) const
     BoxCorners[6] = FVector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
     BoxCorners[7] = FVector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
 
-    // Check each frustum plane
     for (int32 PlaneIndex = 0; PlaneIndex < 6; ++PlaneIndex)
     {
         int32 NumOutside = 0;
@@ -133,6 +131,5 @@ bool FFrustum::IntersectsAABB(const FAABB& Box) const
         }
     }
 
-    // The box intersects the frustum
     return true;
 }

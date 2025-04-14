@@ -7,19 +7,22 @@
 
 struct FMath
 {
-    inline static constexpr double kPI        = 3.1415926535898;
-    inline static constexpr double kE         = 2.7182818284590;
-    inline static constexpr double kHalfPI    = kPI / 2.0;
-    inline static constexpr double kTwoPI     = kPI * 2.0;
-    inline static constexpr double kOneDegree = kPI / 180.0;
+public:
+    static constexpr double PI        = 3.1415926535898;
+    static constexpr double E         = 2.7182818284590;
+    static constexpr double HalfPI    = PI / 2.0;
+    static constexpr double TwoPI     = PI * 2.0;
+    static constexpr double OneDegree = PI / 180.0;
 
-    inline static constexpr float kPI_f        = 3.141592653f;
-    inline static constexpr float kE_f         = 2.718281828f;
-    inline static constexpr float kHalfPI_f    = kPI_f / 2.0f;
-    inline static constexpr float kTwoPI_f     = 2.0f * kPI_f;
-    inline static constexpr float kOneDegree_f = kPI_f / 180.0f;
+    static constexpr float PI_Float        = 3.141592653f;
+    static constexpr float E_Float         = 2.718281828f;
+    static constexpr float HalfPI_Float    = PI_Float / 2.0f;
+    static constexpr float TwoPI_Float     = 2.0f * PI_Float;
+    static constexpr float OneDegree_Float = PI_Float / 180.0f;
 
-    inline static constexpr float kIsEqualEpsilon = 0.0005f;
+    static constexpr float FloatCompareEpsilon = 0.0005f;
+
+public: // Standard Math
 
     template<typename T>
     static FORCEINLINE T Sqrt(T Value) requires(TIsFloatingPoint<T>::Value)
@@ -28,57 +31,7 @@ struct FMath
     }
 
     template<typename T>
-    static constexpr T DivideByMultiple(T Value, uint32 Alignment) requires(TIsInteger<T>::Value)
-    {
-        return static_cast<T>((Value + Alignment - 1) / Alignment);
-    }
-
-    template<typename T>
-    static constexpr T AlignUp(T Value, T Alignment) requires(TIsInteger<T>::Value)
-    {
-        const T Mask = Alignment - 1;
-        return ((Value + Mask) & (~Mask));
-    }
-
-    template<typename T>
-    static constexpr T AlignDown(T Value, T Alignment) requires(TIsInteger<T>::Value)
-    {
-        const T Mask = Alignment - 1;
-        return (Value & (~Mask));
-    }
-
-    template<typename T>
-    static constexpr T Lerp(T First, T Second, T Factor) requires(TIsFloatingPoint<T>::Value)
-    {
-        return First + Factor * (Second - First);
-    }
-
-    template<typename T>
-    static constexpr T Min(T First, T Second) requires(TIsArithmetic<T>::Value)
-    {
-        return (First <= Second) ? First : Second;
-    }
-
-    template<typename T>
-    static constexpr T Max(T First, T Second) requires(TIsArithmetic<T>::Value)
-    {
-        return (First >= Second) ? First : Second;
-    }
-
-    template<typename T>
-    static constexpr T Clamp(T Value, T MinValue, T MaxValue) requires(TIsArithmetic<T>::Value)
-    {
-        return Min(MaxValue, Max(MinValue, Value));
-    }
-
-    template<typename T>
-    static constexpr T Saturate(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return Clamp(Value, T(0.0), T(1.0));
-    }
-
-    template<typename T>
-    static constexpr T Abs(T Value) requires(TIsArithmetic<T>::Value)
+    static FORCEINLINE constexpr T Abs(T Value) requires(TIsArithmetic<T>::Value)
     {
         return std::abs(Value);
     }
@@ -96,15 +49,27 @@ struct FMath
     }
 
     template<typename T>
-    static constexpr T ToRadians(T Value)
+    static FORCEINLINE T Floor(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return Value * static_cast<T>(kPI_f / 180.0f);
+        return static_cast<T>(std::floor(Value));
     }
 
     template<typename T>
-    static constexpr T ToDegrees(T Value)
+    static FORCEINLINE int32 FloorToInt(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return Value * static_cast<T>(180.0f / kPI_f);
+        return static_cast<int32>(std::floor(Value));
+    }
+
+    template<typename T>
+    static FORCEINLINE T Ceil(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return static_cast<T>(std::ceil(Value));
+    }
+
+    template<typename T>
+    static FORCEINLINE int32 CeilToInt(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return static_cast<int32>(std::ceil(Value));
     }
 
     template<typename T>
@@ -150,15 +115,9 @@ struct FMath
     }
 
     template<typename T>
-    static FORCEINLINE T Ceil(T Value) requires(TIsFloatingPoint<T>::Value)
+    static FORCEINLINE T FMod(T Value, T Divider) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::ceil(Value));
-    }
-
-    template<typename T>
-    static FORCEINLINE T Floor(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::floor(Value));
+        return static_cast<T>(std::fmod(Value, Divider));
     }
 
     template<typename T>
@@ -173,7 +132,95 @@ struct FMath
         return std::isinf(Value);
     }
 
-    static constexpr float CubicInterp(float P0, float P1, float P2, float P3, float T)
+public: // Alignment
+
+    template<typename T>
+    static FORCEINLINE constexpr T DivideByMultiple(T Value, uint32 Alignment) requires(TIsInteger<T>::Value)
+    {
+        return static_cast<T>((Value + Alignment - 1) / Alignment);
+    }
+
+    template<typename T>
+    static FORCEINLINE constexpr T AlignUp(T Value, T Alignment) requires(TIsInteger<T>::Value)
+    {
+        const T Mask = Alignment - 1;
+        return ((Value + Mask) & (~Mask));
+    }
+
+    template<typename T>
+    static FORCEINLINE constexpr T AlignDown(T Value, T Alignment) requires(TIsInteger<T>::Value)
+    {
+        const T Mask = Alignment - 1;
+        return (Value & (~Mask));
+    }
+
+    static FORCEINLINE constexpr bool IsPowerOfTwo(uint32 Value) 
+    {
+        return Value && ((Value & (Value - 1)) == 0);
+    }
+
+    static constexpr uint32 ClosestPowerOfTwo(uint32 Value)
+    {
+        // Handle the edge case where Value is 0
+        if (Value == 0)
+        {
+            return 1;
+        }
+        
+        // If already a power of two, return Value
+        if (IsPowerOfTwo(Value))
+        {
+            return Value;
+        }
+        
+        // Find the upper power of two (The power of two that comes after value)
+        uint32 UpperPower = 1;
+        while (UpperPower < Value)
+        {
+            UpperPower <<= 1;
+        }
+        
+        // The previous power of two
+        const uint32 LowerPower = UpperPower >> 1;
+        
+        // Compare differences: if Value is closer to LowerPower, return LowerPower; otherwise return UpperPower.
+        if (Value - LowerPower < UpperPower - Value)
+        {
+            return LowerPower;
+        }
+        else
+        {
+            return UpperPower;
+        }
+    }
+
+    static constexpr uint32 NextPowerOfTwo(uint32 Value)
+    {
+        // Handle the edge case where Value is 0
+        if (Value == 0)
+        {
+            return 1;
+        }
+
+        // Shift Candidate until it is strictly greater than Value.
+        uint32 Candidate = 1;
+        while (Candidate <= Value)
+        {
+            Candidate <<= 1;
+        }
+        
+        return Candidate;
+    }
+
+public: // Interpolation
+
+    template<typename T>
+    static FORCEINLINE constexpr T Lerp(T First, T Second, T Factor) requires(TIsFloatingPoint<T>::Value)
+    {
+        return First + Factor * (Second - First);
+    }
+
+    static FORCEINLINE constexpr float CubicInterp(float P0, float P1, float P2, float P3, float T)
     {
         float A = P3 - P2 - P0 + P1;
         float B = P0 - P1 - A;
@@ -182,14 +229,51 @@ struct FMath
         return (A * T * T * T) + (B * T * T) + (C * T) + D;
     }
 
-    static constexpr uint32 BytesToNum32BitConstants(uint32 Bytes)
+public: // Min, Max, Clamp, ...
+
+    template<typename T>
+    static FORCEINLINE constexpr T Min(T First, T Second) requires(TIsArithmetic<T>::Value)
     {
-        return Bytes / 4;
+        return (First <= Second) ? First : Second;
     }
 
-    template<const uint32 kBits>
-    static constexpr uint64 MaxNum()
+    template<typename T>
+    static FORCEINLINE constexpr T Max(T First, T Second) requires(TIsArithmetic<T>::Value)
     {
-        return (static_cast<uint64>(1) << kBits) - 1;
+        return (First >= Second) ? First : Second;
+    }
+
+    template<typename T>
+    static FORCEINLINE constexpr T Clamp(T Value, T MinValue, T MaxValue) requires(TIsArithmetic<T>::Value)
+    {
+        return Min(MaxValue, Max(MinValue, Value));
+    }
+
+    template<typename T>
+    static FORCEINLINE constexpr T Saturate(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return Clamp(Value, T(0.0), T(1.0));
+    }
+
+public: // Conversions
+
+    template<typename T>
+    static FORCEINLINE constexpr T DegreesToRadians(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return Value * static_cast<T>(PI / 180.0);
+    }
+
+    template<typename T>
+    static FORCEINLINE constexpr T RadiansToDegrees(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return Value * static_cast<T>(180.0 / PI);
+    }
+
+public: // Other
+
+    template<const uint64 NumBits>
+    static FORCEINLINE constexpr uint64 MaxNum()
+    {
+        return (static_cast<uint64>(1) << NumBits) - 1;
     }
 };

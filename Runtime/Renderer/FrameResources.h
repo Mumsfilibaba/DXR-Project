@@ -152,14 +152,6 @@ struct FLightProbeInfoHLSL
 
 MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
 
-struct FOcclusionVolume
-{
-    FRHIBufferRef VertexBuffer;
-    FRHIBufferRef IndexBuffer;
-    uint32        IndexCount;
-    EIndexFormat  IndexFormat;
-};
-
 struct FGlobalTextureFormats
 {
     static const EFormat DepthBufferFormat  = EFormat::D32_Float;
@@ -265,9 +257,6 @@ struct FFrameResources
     // Light-Probes
     FRHIBufferRef               LightProbeBuffer;
     TArray<FLightProbeInfoHLSL> LightProbeInfos;
-
-    // Occlusion Cube
-    FOcclusionVolume OcclusionVolume;
 
     // RayTracing
     FRHITextureRef         RTOutput;

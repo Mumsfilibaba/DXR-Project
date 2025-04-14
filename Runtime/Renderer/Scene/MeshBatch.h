@@ -1,10 +1,11 @@
 #pragma once
-#include "Core/Containers/Array.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Math/Vector3.h"
+#include "Core/Containers/Array.h"
+#include "Core/Containers/Map.h"
 
-class FSceneStaticMesh;
 class FMaterial;
+class FSceneStaticMesh;
 
 struct FMeshBatch
 {
@@ -35,4 +36,16 @@ struct FMeshBatch
 
     FMaterial*             Material;
     TArray<FMeshReference> MeshReferences;
+};
+
+struct FMeshBatcher
+{
+    FMeshBatcher();
+    ~FMeshBatcher();
+
+    void AddStaticMesh(FSceneStaticMesh* StaticMesh);
+    void Clear();
+
+    TArray<FMeshBatch>      MeshBatches;
+    TMap<FMaterial*, int32> MaterialToBatchIndex;
 };

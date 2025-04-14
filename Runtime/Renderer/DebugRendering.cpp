@@ -404,7 +404,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
         else
         {
-            LightDebug_PSO->SetDebugName("Light Debug PipelineState");
+            LightDebug_PSO->SetDebugName("Light Debug PSO");
         }
     }
 
@@ -515,7 +515,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
         else
         {
-            AABBSolid_PSO->SetDebugName("Occlusion Volume PipelineState");
+            AABBSolid_PSO->SetDebugName("AABB Solid Debug PSO");
         }
     }
 
@@ -606,7 +606,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
         else
         {
-            ProbeDebug_PSO->SetDebugName("LightProbe Debug PipelineState");
+            ProbeDebug_PSO->SetDebugName("LightProbe Debug PSO");
         }
     }
 
@@ -631,13 +631,8 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer_Wireframe.Get(), EIndexFormat::uint16);
 
-    for (const FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
+    for (const FSceneStaticMesh* StaticMesh : Scene->CameraView.GetStaticMeshes())
     {
-        if (StaticMesh->IsOccluded())
-        {
-            continue;
-        }
-
         const FAABB& Box = StaticMesh->Mesh->GetAABB();
         FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         FVector3 Position = Box.GetCenter();
@@ -660,60 +655,6 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.EndRenderPass();
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End AABB DebugPass");
-}
-
-void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
-{
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Occlusion Volume DebugPass");
-
-    TRACE_SCOPE("Occlusion Volume DebugPass");
-
-    FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
-
-    CommandList.BeginRenderPass(RenderPass);
-
-    CommandList.SetGraphicsPipelineState(AABBSolid_PSO.Get());
-    CommandList.SetVertexBuffers(MakeArrayView(&Resources.OcclusionVolume.VertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(Resources.OcclusionVolume.IndexBuffer.Get(), Resources.OcclusionVolume.IndexFormat);
-
-    for (const FSceneStaticMesh* StaticMesh : Scene->VisibleStaticMeshes)
-    {
-        struct FShaderData
-        {
-            FMatrix4 TransformMatrix;
-            FVector4 Color;
-        } ShaderData;
-
-        const FAABB& BoundingBox = StaticMesh->Mesh->GetAABB();
-
-        FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
-        Scale.X = FMath::Max<float>(Scale.X, 0.005f);
-        Scale.Y = FMath::Max<float>(Scale.Y, 0.005f);
-        Scale.Z = FMath::Max<float>(Scale.Z, 0.005f);
-
-        FVector3 Position          = BoundingBox.GetCenter();
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
-
-        ShaderData.TransformMatrix = StaticMesh->Actor->GetTransform().GetTransformMatrix();
-        ShaderData.TransformMatrix = (ScaleMatrix * TranslationMatrix) * ShaderData.TransformMatrix;
-        ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
-        ShaderData.Color           = FVector4(0.8f, 0.8f, 0.8f, 0.5f);
-
-        CommandList.SetConstantBuffer(AABBSolid_VS.Get(), Resources.CameraBuffer.Get(), 0);
-
-        constexpr uint32 NumConstants = sizeof(FShaderData) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(AABBSolid_VS.Get(), &ShaderData, NumConstants);
-
-        CommandList.DrawIndexedInstanced(Resources.OcclusionVolume.IndexCount, 1, 0, 0, 0);
-    }
-
-    CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Occlusion Volume DebugPass");
 }
 
 void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
@@ -741,19 +682,15 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
         float    Padding;
     } PointLightData;
 
-    for (FLight* Light : Scene->Lights)
+    for (FScenePointLight* PointLight : Scene->PointLights)
     {
-        if (FPointLight* CurrentPointLight = Cast<FPointLight>(Light))
-        {
-            FVector3 Color = CurrentPointLight->GetColor();
-            PointLightData.Color         = FVector4(Color.X, Color.Y, Color.Z, 1.0f);
-            PointLightData.WorldPosition = CurrentPointLight->GetPosition();
+        PointLightData.Color         = FVector4(PointLight->Color.X, PointLight->Color.Y, PointLight->Color.Z, 1.0f);
+        PointLightData.WorldPosition = PointLight->Position;
 
-            constexpr uint32 NumConstants = sizeof(FPointlightDebugData) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(LightDebug_VS.Get(), &PointLightData, NumConstants);
+        constexpr uint32 NumConstants = sizeof(FPointlightDebugData) / sizeof(uint32);
+        CommandList.Set32BitShaderConstants(LightDebug_VS.Get(), &PointLightData, NumConstants);
 
-            CommandList.DrawIndexedInstanced(SphereIndexCount, 1, 0, 0, 0);
-        }
+        CommandList.DrawIndexedInstanced(SphereIndexCount, 1, 0, 0, 0);
     }
 
     CommandList.EndRenderPass();

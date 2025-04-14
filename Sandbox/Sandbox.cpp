@@ -159,7 +159,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
         std::default_random_engine Generator;
 
-        std::uniform_real_distribution<float> Random0(0.0f, FMath::kTwoPI_f);
+        std::uniform_real_distribution<float> Random0(0.0f, FMath::TwoPI_Float);
         std::uniform_real_distribution<float> Random1(0.05f, 1.0);
         std::uniform_real_distribution<float> Random2(0.05f, 0.7);
         std::uniform_real_distribution<float> Random3(0.5f, 1.0);
@@ -269,7 +269,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     if (NewActor)
     {
         NewActor->SetName("Plane");
-        NewActor->GetTransform().SetRotation(FMath::kHalfPI_f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetRotation(FMath::HalfPI_Float, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(50.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
@@ -382,7 +382,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     if (NewActor)
     {
         NewActor->SetName("Teapot");
-        NewActor->GetTransform().SetRotation(-FMath::kHalfPI_f, FMath::kHalfPI_f, 0.0f);
+        NewActor->GetTransform().SetRotation(-FMath::HalfPI_Float, FMath::HalfPI_Float, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 37.5f);
 
@@ -680,7 +680,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+        DirectionalLight->SetRotation(FVector3(FMath::DegreesToRadians(35.0f), FMath::DegreesToRadians(135.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -771,7 +771,7 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+        DirectionalLight->SetRotation(FVector3(FMath::DegreesToRadians(35.0f), FMath::DegreesToRadians(135.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -881,7 +881,7 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(-55.0f), FMath::ToRadians(325.0f), 0.0f));
+        DirectionalLight->SetRotation(FVector3(FMath::DegreesToRadians(-55.0f), FMath::DegreesToRadians(325.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -951,7 +951,7 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+        DirectionalLight->SetRotation(FVector3(FMath::DegreesToRadians(35.0f), FMath::DegreesToRadians(135.0f), 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }
@@ -968,7 +968,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     if (NewActor)
     {
         NewActor->SetName("Plane");
-        NewActor->GetTransform().SetRotation(FMath::kHalfPI_f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetRotation(FMath::HalfPI_Float, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(30.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 0.0f);
 
@@ -1075,7 +1075,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
         DirectionalLight->SetShadowBias(0.0005f);
         DirectionalLight->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         DirectionalLight->SetIntensity(50.0f);
-        DirectionalLight->SetRotation(FVector3(FMath::ToRadians(45.0f), 0.0f, 0.0f));
+        DirectionalLight->SetRotation(FVector3(FMath::DegreesToRadians(45.0f), 0.0f, 0.0f));
 
         InWorld->AddLight(DirectionalLight);
     }

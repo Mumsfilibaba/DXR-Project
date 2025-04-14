@@ -13,17 +13,12 @@ FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshCo
     , Mesh(nullptr)
     , Actor(nullptr)
     , Geometry(nullptr)
-    , CurrentOcclusionQuery(nullptr)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
     , NumVertices(0)
     , NumIndices(0)
     , IndexFormat(EIndexFormat::Unknown)
-    , CurrentOcclusionQueryIndex(0)
-    , NumFramesOccluded(0)
 {
-    FMemory::Memzero(OcclusionQueries, sizeof(OcclusionQueries));
-
     Mesh = MeshComponent->GetMesh();
     CHECK(Mesh != nullptr);
 
@@ -40,13 +35,6 @@ FSceneStaticMesh::FSceneStaticMesh(FScene* InScene, FStaticMeshComponent* MeshCo
 
 FSceneStaticMesh::~FSceneStaticMesh()
 {
-    for (FRHIQuery* Query : OcclusionQueries)
-    {
-        if (Query)
-        {
-            Query->Release();
-        }
-    }
 }
 
 void FSceneStaticMesh::Tick()
@@ -56,42 +44,11 @@ void FSceneStaticMesh::Tick()
     TransformBuffer.Transform    = Transform.GetTransformMatrix();
     TransformBuffer.Transform    = TransformBuffer.Transform.GetTranspose();
     TransformBuffer.TransformInv = Transform.GetTransformMatrixInverse();
-}
 
-void FSceneStaticMesh::UpdateOcclusion()
-{
-    const auto CheckOcclusion = [this]()
-    {
-        if (!FrustumVisibility.bWasVisible)
-        {
-            return false;
-        }
+    // Create a world bounding-box
+    const FAABB& LocalBounds = Mesh->GetAABB();
 
-        if (!CurrentOcclusionQuery)
-        {
-            return false;
-        }
-
-        uint64 NumSamples;
-        if (!GetRHI()->RHIGetQueryResult(CurrentOcclusionQuery, NumSamples))
-        {
-            return false;
-        }
-
-        if (!NumSamples)
-        {
-            return true;
-        }
-
-        return false;
-    };
-
-    if (CheckOcclusion())
-    {
-        NumFramesOccluded++;
-    }
-    else
-    {
-        NumFramesOccluded = 0;
-    }
+    const FVector3 Max = Transform.GetTransformMatrix().Transform(LocalBounds.Max);
+    const FVector3 Min = Transform.GetTransformMatrix().Transform(LocalBounds.Min);
+    WorldBounds = FAABB(Max, Min); 
 }

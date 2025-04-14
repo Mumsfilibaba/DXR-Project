@@ -14,7 +14,6 @@ public:
     bool Initialize(FFrameResources& Resources);
 
     void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
-    void RenderOcclusionVolumes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
     void RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
 

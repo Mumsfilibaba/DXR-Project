@@ -165,7 +165,7 @@ public:
      * @param Epsilon The threshold for comparison.
      * @return True if vectors are approximately equal, false otherwise.
      */
-    inline bool IsEqual(const FVector4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    inline bool IsEqual(const FVector4& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
@@ -198,7 +198,7 @@ public:
     FORCEINLINE bool IsUnitVector() const noexcept
     {
         const float LengthDiff = FMath::Abs(1.0f - GetLengthSquared());
-        return LengthDiff < FMath::kIsEqualEpsilon;
+        return LengthDiff < FMath::FloatCompareEpsilon;
     }
 
     /**
@@ -457,9 +457,9 @@ public:
      * @param Radians Vector in radians.
      * @return Vector with components in degrees.
      */
-    static FORCEINLINE FVector4 ToDegrees(const FVector4& Radians) noexcept
+    static FORCEINLINE FVector4 RadiansToDegrees(const FVector4& Radians) noexcept
     {
-        return FVector4(FMath::ToDegrees(Radians.X), FMath::ToDegrees(Radians.Y), FMath::ToDegrees(Radians.Z), FMath::ToDegrees(Radians.W));
+        return FVector4(FMath::RadiansToDegrees(Radians.X), FMath::RadiansToDegrees(Radians.Y), FMath::RadiansToDegrees(Radians.Z), FMath::RadiansToDegrees(Radians.W));
     }
 
     /**
@@ -467,9 +467,9 @@ public:
      * @param Degrees Vector in degrees.
      * @return Vector with components in radians.
      */
-    static FORCEINLINE FVector4 ToRadians(const FVector4& Degrees) noexcept
+    static FORCEINLINE FVector4 DegreesToRadians(const FVector4& Degrees) noexcept
     {
-        return FVector4(FMath::ToRadians(Degrees.X), FMath::ToRadians(Degrees.Y), FMath::ToRadians(Degrees.Z), FMath::ToRadians(Degrees.W));
+        return FVector4(FMath::DegreesToRadians(Degrees.X), FMath::DegreesToRadians(Degrees.Y), FMath::DegreesToRadians(Degrees.Z), FMath::DegreesToRadians(Degrees.W));
     }
 
 public:

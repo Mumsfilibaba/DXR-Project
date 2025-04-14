@@ -4,6 +4,7 @@
 #include "Core/Math/Matrix4.h"
 #include "Core/Math/Frustum.h"
 #include "Renderer/Scene/SceneObject.h"
+#include "Renderer/Scene/SceneView.h"
 
 class FPointLight;
 
@@ -11,7 +12,7 @@ struct FScenePointLight : public FSceneObject
 {
     struct FShadowData
     {
-        FMatrix4 Matrix;
+        FMatrix4 ViewProjMatrix;
         FVector3 Position;
         float    NearPlane;
         float    FarPlane;
@@ -20,20 +21,21 @@ struct FScenePointLight : public FSceneObject
     FScenePointLight(FScene* InScene, FPointLight* InPointLight);
     ~FScenePointLight();
 
-    virtual void Tick() override final { }
+    virtual void Tick() override final;
 
     // Pointer to the light in the world
     FPointLight* PointLight;
 
     // Shadow generation information
-    FFrustum    Frustums[RHI_NUM_CUBE_FACES];
     FShadowData ShadowData[RHI_NUM_CUBE_FACES];
-    
+
     // Store data for each face
-    TArray<FMeshBatch>        MeshBatches[RHI_NUM_CUBE_FACES];
-    TArray<FSceneStaticMesh*> StaticMeshes[RHI_NUM_CUBE_FACES];
+    FSceneView ShadowView[RHI_NUM_CUBE_FACES];
 
     // Store data for a single pass cube-map
-    TArray<FMeshBatch>        SinglePassMeshBatch;
-    TArray<FSceneStaticMesh*> SinglePassStaticMeshes;
+    FSceneView SinglePassShadowView;
+
+    FVector3 Position;
+    FVector3 Color;
+    float    ShadowBias;
 };
