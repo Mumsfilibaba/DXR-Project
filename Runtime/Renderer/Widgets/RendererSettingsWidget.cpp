@@ -446,9 +446,9 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             "Percentage Closer Soft Shadows (PCSS)",
         };
 
-        int32 FilterMode = FMath::Clamp<int32>(CVarFilterMode->GetInt(), 0, 1);
-
         constexpr uint32 ItemSize = ARRAY_COUNT(Items);
+
+        int32 FilterMode = FMath::Clamp<int32>(CVarFilterMode->GetInt(), 0, 1);
         if (ImGui::Combo("##FilterMode", &FilterMode, Items, ItemSize))
         {
             CVarFilterMode->SetAsInt(FilterMode, EConsoleVariableFlags::SetByCode);
@@ -470,9 +470,9 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             "Vogel Disk"
         };
 
-        int32 FilterFunction = FMath::Clamp<int32>(CVarFilterFunction->GetInt(), 0, 2);
-
         constexpr uint32 ItemSize = ARRAY_COUNT(Items);
+
+        int32 FilterFunction = FMath::Clamp<int32>(CVarFilterFunction->GetInt(), 0, 2);
         if (ImGui::Combo("##FilterFunction", &FilterFunction, Items, ItemSize))
         {
             CVarFilterFunction->SetAsInt(FilterFunction, EConsoleVariableFlags::SetByCode);
@@ -1023,9 +1023,9 @@ void FRendererSettingsWidget::DrawTonemappingSettings()
             "Default", "ACES", "Reinhard", "Uncharted 2"
         };
 
-        int32 ItemIndex = FMath::Clamp<int32>(CVarTonemappingFunction->GetInt(), 0, 3);
-
         constexpr int32 ItemCount = ARRAY_COUNT(Items);
+
+        int32 ItemIndex = FMath::Clamp<int32>(CVarTonemappingFunction->GetInt(), 0, 3);
         if (ImGui::Combo("##PointLightShadowMapSize", &ItemIndex, Items, ItemCount))
         {
             CVarTonemappingFunction->SetAsInt(ItemIndex, EConsoleVariableFlags::SetByCode);
