@@ -14,19 +14,17 @@ public:
 
     /**
      * @brief Constructs a frustum based on view and projection matrices.
-     * @param FarPlane Far plane distance of the camera.
      * @param View View matrix of the camera.
      * @param Projection Projection matrix of the camera.
      */
-    FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Projection);
+    FFrustum(const FMatrix4& View, const FMatrix4& Projection);
 
     /**
      * @brief Initializes or updates the frustum based on view and projection matrices.
-     * @param FarPlane Far plane distance of the camera.
      * @param View View matrix of the camera.
      * @param Projection Projection matrix of the camera.
      */
-    void Initialize(float FarPlane, const FMatrix4& View, const FMatrix4& Projection);
+    void Initialize(const FMatrix4& View, const FMatrix4& Projection);
 
     /**
      * @brief Checks if a bounding box intersects with the frustum.

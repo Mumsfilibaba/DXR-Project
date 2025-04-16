@@ -633,14 +633,14 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
     for (const FSceneStaticMesh* StaticMesh : Scene->CameraView.GetStaticMeshes())
     {
-        const FAABB& Box = StaticMesh->Mesh->GetAABB();
-        FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
-        FVector3 Position = Box.GetCenter();
+        const FAABB& WorldBounds = StaticMesh->GetWorldBounds();
+
+        FVector3 Scale    = FVector3(WorldBounds.GetWidth(), WorldBounds.GetHeight(), WorldBounds.GetDepth());
+        FVector3 Position = WorldBounds.GetCenter();
 
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
-        FMatrix4 TransformMatrix   = StaticMesh->Actor->GetTransform().GetTransformMatrix();
-        TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
+        FMatrix4 TransformMatrix   = ScaleMatrix * TranslationMatrix;
 
         FAABBShaderInfoHLSL ShaderData;
         ShaderData.WorldMatrix = TransformMatrix.GetTranspose();

@@ -5,7 +5,7 @@
 #include "Application/ApplicationInterface.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include "Engine/Widgets/InGameConsoleWidget.h"
+#include "Engine/EngineUI/InGameConsoleWidget.h"
 
 FInGameConsoleWidget::FInGameConsoleWidget()
     : IOutputDevice()

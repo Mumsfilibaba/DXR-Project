@@ -26,15 +26,15 @@ void FSceneView::PrepareView(uint32 MaxMeshes)
     MeshBatcher.Clear();
 }
 
-void FSceneView::SetupFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Projection)
+void FSceneView::SetupFrustum(const FMatrix4& View, const FMatrix4& Projection)
 {
     if (!Frustum)
     {
-        Frustum = MakeUniquePtr<FFrustum>(FarPlane, View, Projection);
+        Frustum = MakeUniquePtr<FFrustum>(View, Projection);
     }
     else
     {
-        Frustum->Initialize(FarPlane, View, Projection);
+        Frustum->Initialize(View, Projection);
     }
 }
 
@@ -48,7 +48,7 @@ bool FSceneView::AddStaticMesh(FSceneStaticMesh* StaticMesh)
     }
 
     // If there are a frustum
-    if (Frustum->IntersectsAABB(StaticMesh->WorldBounds))
+    if (Frustum->IntersectsAABB(StaticMesh->GetWorldBounds()))
     {
         MeshBatcher.AddStaticMesh(StaticMesh);
         return true;

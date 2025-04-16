@@ -20,23 +20,7 @@ public:
     virtual void Close() override final;
 
 private:
-    void UpdateFileSize()
-    {
-        if ((FileHandle != 0) && (FileHandle != INVALID_HANDLE_VALUE))
-        {
-            LARGE_INTEGER TempFileSize;
-            if (!GetFileSizeEx(FileHandle, &TempFileSize))
-            {
-                FileSize = -1;
-            }
-            else
-            {
-                FileSize = static_cast<int64>(TempFileSize.QuadPart);
-            }
-        }
-
-        CHECK(IsValid());
-    }
+    void UpdateFileSize();
 
     HANDLE FileHandle;
     int64  FilePointer;

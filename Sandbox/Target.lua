@@ -17,7 +17,6 @@ sandbox.add_module_dependencies
     "NullRHI",
     "VulkanRHI",
     "RendererCore",
-    "Project",
 }
 
 if is_platform_mac() then

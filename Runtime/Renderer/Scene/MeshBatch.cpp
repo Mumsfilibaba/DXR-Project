@@ -18,7 +18,7 @@ void FMeshBatch::AddStaticMesh(FSceneStaticMesh* StaticMesh, int32 MaterialIndex
     MeshReference.StaticMesh   = StaticMesh;
     MeshReference.SubMeshIndex = MaterialIndex;
     
-    const FSubMesh& SubMesh = StaticMesh->Mesh->GetSubMesh(MaterialIndex);
+    const FSubMesh& SubMesh = StaticMesh->GetMesh()->GetSubMesh(MaterialIndex);
     MeshReference.BaseVertex  = SubMesh.BaseVertex;
     MeshReference.StartIndex  = SubMesh.StartIndex;
     MeshReference.VertexCount = SubMesh.VertexCount;
@@ -40,19 +40,19 @@ void FMeshBatcher::AddStaticMesh(FSceneStaticMesh* StaticMesh)
     const int32 NumMaterials = StaticMesh->GetNumMaterials();
     for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
     {
-        FMaterial* Material = StaticMesh->GetMaterial(MaterialIndex);
+        TSharedPtr<FMaterial> Material = StaticMesh->GetMaterial(MaterialIndex);
 
         int32 BatchIndex;
-        if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(Material))
+        if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(Material.Get()))
         {
             BatchIndex = *ExistingBatchIndex;
         }
         else
         {
             BatchIndex = MeshBatches.Size();
-            MeshBatches.Emplace(Material);
+            MeshBatches.Emplace(Material.Get());
 
-            MaterialToBatchIndex.Add(Material, BatchIndex);
+            MaterialToBatchIndex.Add(Material.Get(), BatchIndex);
         }
 
         MeshBatches[BatchIndex].AddStaticMesh(StaticMesh, MaterialIndex);

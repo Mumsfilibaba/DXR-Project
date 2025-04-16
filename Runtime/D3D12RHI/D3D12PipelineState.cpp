@@ -1,7 +1,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Project/ProjectManager.h"
+#include "Core/Misc/Paths.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Device.h"
@@ -1100,7 +1100,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     FFileHandleRef CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
@@ -1154,7 +1154,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
 bool FD3D12PipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
     
     FFileHandleRef CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)

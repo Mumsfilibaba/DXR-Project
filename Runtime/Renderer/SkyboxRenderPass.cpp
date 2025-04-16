@@ -248,7 +248,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     FRHIShaderResourceView* SkyboxSRV = nullptr;
     if (Scene->Skybox)
     {
-        SkyboxSRV = Scene->Skybox->CubeMap->GetShaderResourceView();
+        SkyboxSRV = Scene->Skybox->GetCubeMap()->GetShaderResourceView();
     }
 
     CommandList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);

@@ -47,8 +47,6 @@ bool FSceneViewport::InitializeRHI()
     ViewportInfo.Width        = static_cast<uint16>(WindowSize.X);
     ViewportInfo.Height       = static_cast<uint16>(WindowSize.Y);
     ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
-
-    // TODO: Change so that we use RGBA for all RHIs that support it?
     ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
 
     FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);

@@ -3,8 +3,8 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Parse.h"
+#include "Core/Misc/Paths.h"
 #include "RHI/RHICommandList.h"
-#include "Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
@@ -35,8 +35,8 @@ FAssetRegistry::FAssetRegistry()
     : RegistryMap()
     , RegistryFilename()
 {
-    const FString AssetPath   = FString(FProjectManager::Get().GetAssetPath());
-    const FString ProjectName = FString(FProjectManager::Get().GetProjectName());
+    const FString AssetPath   = FPaths::GetAssetDir();
+    const FString ProjectName = FPaths::GetProjectName();
     RegistryFilename = AssetPath + "/" + ProjectName + ".assetregistry";
 }
 

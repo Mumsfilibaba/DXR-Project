@@ -4,7 +4,6 @@
 #include "Core/Misc/Parse.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/CRC.h"
-#include "Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/ModelImporter.h"
 #include "Engine/Assets/AssetImporters/FBXImporter.h"

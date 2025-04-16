@@ -21,9 +21,9 @@
 #include "Engine/Resources/Resource.h"
 #include "Engine/Resources/Texture.h"
 
-#include "Engine/Widgets/InGameConsoleWidget.h"
-#include "Engine/Widgets/FrameProfilerWidget.h"
-#include "Engine/Widgets/SceneInspectorWidget.h"
+#include "Engine/EngineUI/InGameConsoleWidget.h"
+#include "Engine/EngineUI/FrameProfilerWidget.h"
+#include "Engine/EngineUI/SceneInspectorWidget.h"
 
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Actors/PlayerController.h"

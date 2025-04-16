@@ -21,7 +21,6 @@ engine_module.add_module_dependencies
     "Application",
     "RHI",
     "RendererCore",
-    "Project",
     "ImGuiPlugin",
 }
 

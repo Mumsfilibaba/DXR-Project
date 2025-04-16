@@ -8,12 +8,31 @@
 
 class FDirectionalLight;
 
-struct FSceneDirectionalLight : public FSceneObject
+class FSceneDirectionalLight : public FSceneObject
 {
+public:
     FSceneDirectionalLight(FScene* InScene, FDirectionalLight* InDirectionalLight);
     ~FSceneDirectionalLight();
 
+    // FSceneObject Interface
     virtual void Tick() override final;
+
+    FSceneView&       GetShadowView()       { return ShadowView; }
+    const FSceneView& GetShadowView() const { return ShadowView; }
+
+    const FVector3& GetColor()           const { return Color; }
+    const FVector3& GetDirectionVector() const { return Direction; }
+    const FVector3& GetUpVector()        const { return UpVector; }
+    const FMatrix4& GetShadowMatrix()    const { return ShadowMatrix; }
+
+    float GetShadowNearPlane()      const { return ShadowNearPlane; }
+    float GetShadowFarPlane()       const { return ShadowFarPlane; }
+    float GetShadowBias()           const { return ShadowBias; }
+    float GetShadowPositionOffset() const { return ShadowPositionOffset; }
+    float GetCascadeSplitLambda()   const { return CascadeSplitLambda; }
+    float GetLightArea()            const { return LightArea; }
+
+private:
 
     // Pointer to the light in the world
     FDirectionalLight* DirectionalLight;

@@ -2,7 +2,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include "Renderer/Widgets/GPUProfilerWidget.h"
+#include "Renderer/RendererUI/GPUProfilerWidget.h"
 
 static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Renderer.DrawGPUProfiler",

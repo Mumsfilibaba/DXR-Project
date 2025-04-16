@@ -524,8 +524,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -534,16 +534,16 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                     }
 
-                    CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
+                    CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
-                    ShadowPerObjectBuffer.WorldMatrix = StaticMesh->Actor->GetTransform().GetTransformMatrix();
-                    ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
+                    const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
+                    ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                     CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
@@ -640,26 +640,26 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
                             };
-                            
+
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
                         }
                         else
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
                             };
-                            
+
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                         }
 
-                        CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
+                        CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
-                        ShadowPerObjectBuffer.WorldMatrix = StaticMesh->Actor->GetTransform().GetTransformMatrix();
-                        ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
+                        const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
+                        ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                         constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                         CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
@@ -1212,7 +1212,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
         CommandList.SetScissorRect(ScissorRegion);
 
-        for (const FMeshBatch& Batch : SceneDirectionalLight->ShadowView.GetMeshBatches())
+        for (const FMeshBatch& Batch : SceneDirectionalLight->GetShadowView().GetMeshBatches())
         {
             FMaterial* Material = Batch.Material;
             FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
@@ -1259,8 +1259,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     FRHIBuffer* VertexBuffers[] =
                     {
-                        StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                        StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                        StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                        StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
                     };
 
                     CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -1269,16 +1269,16 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     FRHIBuffer* VertexBuffers[] =
                     {
-                        StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                        StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
                     };
 
                     CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                 }
 
-                CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
+                CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
-                ShadowPerObjectBuffer.WorldMatrix = StaticMesh->Actor->GetTransform().GetTransformMatrix();
-                ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
+                const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
+                ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                 constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                 CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
@@ -1306,7 +1306,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         for (uint32 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
         {
             FPerCascadeHLSL PerCascadeData;
-            PerCascadeData.CascadeIndex = static_cast<int32>(Index);;
+            PerCascadeData.CascadeIndex = static_cast<int32>(Index);
 
             CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
             CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
@@ -1325,7 +1325,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            for (const FMeshBatch& Batch : SceneDirectionalLight->ShadowView.GetMeshBatches())
+            for (const FMeshBatch& Batch : SceneDirectionalLight->GetShadowView().GetMeshBatches())
             {
                 FMaterial* Material = Batch.Material;
                 FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
@@ -1363,8 +1363,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
                         };
 
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -1373,16 +1373,16 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                            StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
                         };
 
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                     }
 
-                    CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
+                    CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
-                    ShadowPerObjectBuffer.WorldMatrix = StaticMesh->Actor->GetTransform().GetTransformMatrix();
-                    ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
+                    const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
+                    ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                     CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);

@@ -1,13 +1,13 @@
 #include "Core/Math/Frustum.h"
 
-FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Projection)
+FFrustum::FFrustum(const FMatrix4& View, const FMatrix4& Projection)
     : Planes()
     , Points()
 {
-    Initialize(FarPlane, View, Projection);
+    Initialize(View, Projection);
 }
 
-void FFrustum::Initialize(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
+void FFrustum::Initialize(const FMatrix4& InView, const FMatrix4& InProjection)
 {
     // Combine the view and projection matrices
     FMatrix4 CombinedMatrix = InView * InProjection;

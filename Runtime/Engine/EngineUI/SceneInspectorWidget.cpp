@@ -3,7 +3,7 @@
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
-#include "Engine/Widgets/SceneInspectorWidget.h"
+#include "Engine/EngineUI/SceneInspectorWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 

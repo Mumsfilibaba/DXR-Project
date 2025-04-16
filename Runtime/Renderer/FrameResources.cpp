@@ -176,20 +176,20 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     if (FSceneDirectionalLight* DirectionalLight = Scene->DirectionalLight)
     {
         // Update data necessary for other stages
-        DirectionalLightData.Color         = DirectionalLight->Color;
-        DirectionalLightData.ShadowBias    = DirectionalLight->ShadowBias;
-        DirectionalLightData.Direction     = DirectionalLight->Direction;
-        DirectionalLightData.UpVector      = DirectionalLight->UpVector;
-        DirectionalLightData.LightSize     = DirectionalLight->LightArea;
-        DirectionalLightData.ShadowMatrix  = DirectionalLight->ShadowMatrix;
+        DirectionalLightData.Color         = DirectionalLight->GetColor();
+        DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
+        DirectionalLightData.Direction     = DirectionalLight->GetDirectionVector();
+        DirectionalLightData.UpVector      = DirectionalLight->GetUpVector();
+        DirectionalLightData.LightSize     = DirectionalLight->GetLightArea();
+        DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
         DirectionalLightData.ShadowMatrix  = DirectionalLightData.ShadowMatrix.GetTranspose();
         DirectionalLightDataDirty = true;
 
         // Update HLSL data
-        CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->CascadeSplitLambda;
-        CascadeGenerationData.LightPositionOffset = DirectionalLight->ShadowPositionOffset;
-        CascadeGenerationData.LightNearPlane      = DirectionalLight->ShadowNearPlane;
-        CascadeGenerationData.LightFarPlane       = DirectionalLight->ShadowFarPlane;
+        CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->GetCascadeSplitLambda();
+        CascadeGenerationData.LightPositionOffset = DirectionalLight->GetShadowPositionOffset();
+        CascadeGenerationData.LightNearPlane      = DirectionalLight->GetShadowNearPlane();
+        CascadeGenerationData.LightFarPlane       = DirectionalLight->GetShadowFarPlane();
         CascadeGenerationData.LightUp             = DirectionalLightData.UpVector;
         CascadeGenerationData.LightDirection      = DirectionalLightData.Direction;
         CascadeGenerationData.ShadowMatrix        = DirectionalLightData.ShadowMatrix;

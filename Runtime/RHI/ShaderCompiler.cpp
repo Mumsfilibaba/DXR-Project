@@ -214,7 +214,7 @@ private:
 
 FShaderCompiler* FShaderCompiler::Instance = nullptr;
 
-FShaderCompiler::FShaderCompiler(FStringView InAssetPath)
+FShaderCompiler::FShaderCompiler(const FString& InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
@@ -236,11 +236,11 @@ FShaderCompiler::~FShaderCompiler()
     glslang_finalize_process();
 }
 
-bool FShaderCompiler::Create(FStringView InAssetFolderPath)
+bool FShaderCompiler::Create(const FString& InAssetPath)
 {
     CHECK(Instance == nullptr);
 
-    Instance = new FShaderCompiler(InAssetFolderPath);
+    Instance = new FShaderCompiler(InAssetPath);
     if (!Instance->Initialize())
     {
         delete Instance;
@@ -551,7 +551,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     const FString EntryPoint = CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV ? "main" : CompileInfo.EntryPoint;
 
     // Handle language selection
-    FString Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), PreprocessedBlob->GetBufferSize());
+    FString Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), static_cast<int32>(PreprocessedBlob->GetBufferSize()));
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
         // When not using HLSL, we want to emit SPIR-V

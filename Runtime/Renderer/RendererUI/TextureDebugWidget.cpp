@@ -1,7 +1,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include "Renderer/Widgets/TextureDebugWidget.h"
+#include "Renderer/RendererUI/TextureDebugWidget.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
     "Renderer.Debug.ViewRenderTargets",

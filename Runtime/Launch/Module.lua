@@ -23,5 +23,4 @@ launch_module.add_module_dependencies
     "Renderer",
     "RendererCore",
     "Engine",
-    "Project",
 }

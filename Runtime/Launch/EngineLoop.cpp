@@ -8,7 +8,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
-#include "Project/ProjectManager.h"
+#include "Core/Misc/Paths.h"
 #include "Application/ApplicationInterface.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -64,6 +64,13 @@ static bool InitializeOutputDevices()
     }
 
     return true;
+}
+
+static void LogStartupInformation()
+{
+    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
+    LOG_INFO("ProjectName=%s", *FPaths::GetProjectName());
+    LOG_INFO("ProjectDir=%s", *FPaths::GetProjectDir());
 }
 
 FEngineLoop::FEngineLoop()
@@ -164,12 +171,6 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FProjectManager::Initialize())
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
-        return -1;
-    }
-
     if (!FThreadManager::Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
@@ -190,7 +191,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FShaderCompiler::Create(FProjectManager::Get().GetAssetPath()))
+    if (!FShaderCompiler::Create(FPaths::GetAssetDir()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return -1;
@@ -230,6 +231,9 @@ int32 FEngineLoop::Init()
         LOG_ERROR("Failed to initialize engine");
         return -1;
     }
+
+    // Log some startup information after the engine is loaded
+    LogStartupInformation();
 
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 

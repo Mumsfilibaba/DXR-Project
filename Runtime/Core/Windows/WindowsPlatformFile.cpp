@@ -131,7 +131,7 @@ bool FWindowsFileHandle::Truncate(int64 NewSize)
 
 bool FWindowsFileHandle::IsValid() const
 {
-    return (FileHandle != 0) && (FileHandle != INVALID_HANDLE_VALUE) && (FileSize != -1);
+    return FileHandle != 0 && FileHandle != INVALID_HANDLE_VALUE && FileSize != -1;
 }
 
 void FWindowsFileHandle::Close()
@@ -146,26 +146,36 @@ void FWindowsFileHandle::Close()
     delete this;
 }
 
+void FWindowsFileHandle::UpdateFileSize()
+{
+    if (FileHandle != 0 && FileHandle != INVALID_HANDLE_VALUE)
+    {
+        LARGE_INTEGER TempFileSize;
+        if (!GetFileSizeEx(FileHandle, &TempFileSize))
+        {
+            FileSize = -1;
+        }
+        else
+        {
+            FileSize = static_cast<int64>(TempFileSize.QuadPart);
+        }
+    }
+
+    CHECK(IsValid());
+}
+
 
 IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
 {
     ::SetLastError(S_OK);
 
-    HANDLE NewHandle = CreateFileA(
-        *Filename,
-        GENERIC_READ,
-        0,
-        0,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        0);
-
+    HANDLE NewHandle = CreateFileA(*Filename, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
         FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
         
-        auto Position = ErrorString.FindLast("\r\n");
+        int32 Position = ErrorString.FindLast("\r\n");
         if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
@@ -174,23 +184,20 @@ IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
         LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", *ErrorString);
         return nullptr;
     }
-
-    return new FWindowsFileHandle(NewHandle);
+    else
+    {
+        ::SetLastError(S_OK);
+        return new FWindowsFileHandle(NewHandle);
+    }
 }
 
 IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
 {
     ::SetLastError(S_OK);
 
-    HANDLE NewHandle = ::CreateFileA(
-        *Filename,
-        GENERIC_WRITE,
-        0,
-        0,
-        CREATE_ALWAYS,
-        FILE_ATTRIBUTE_NORMAL,
-        0);
+    const DWORD CreationDisposition = bTruncate ? CREATE_ALWAYS : OPEN_ALWAYS;
 
+    HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL, 0);
     if (NewHandle == INVALID_HANDLE_VALUE)
     {
         FString ErrorString;
@@ -207,6 +214,7 @@ IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bT
     }
     else
     {
+        ::SetLastError(S_OK);
         return new FWindowsFileHandle(NewHandle);
     }
 }
@@ -239,10 +247,12 @@ FString FWindowsPlatformFile::GetCurrentWorkingDirectory()
 
     FString Result;
     Result.Resize(Length);
+
     Length = ::GetCurrentDirectoryA(Result.Size(), Result.Data());
     if (!Length)
     {
         FString Error;
+
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
         LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, *Error);
         return FString();

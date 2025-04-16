@@ -11,10 +11,10 @@
 #include "Renderer/Scene/SceneSkyLight.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
-#include "Renderer/Widgets/GPUProfilerWidget.h"
-#include "Renderer/Widgets/RendererInfoWidget.h"
-#include "Renderer/Widgets/RendererSettingsWidget.h"
-#include "Renderer/Widgets/TextureDebugWidget.h"
+#include "Renderer/RendererUI/GPUProfilerWidget.h"
+#include "Renderer/RendererUI/RendererInfoWidget.h"
+#include "Renderer/RendererUI/RendererSettingsWidget.h"
+#include "Renderer/RendererUI/TextureDebugWidget.h"
 
 #include "Renderer/DebugRendering.h"
 #include "Renderer/DeferredRendering.h"

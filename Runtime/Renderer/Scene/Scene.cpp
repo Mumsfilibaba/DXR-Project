@@ -154,10 +154,10 @@ void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)
         FSceneStaticMesh* NewStaticMesh = new FSceneStaticMesh(this, InMeshComponent);
         StaticMeshes.Add(NewStaticMesh);
 
-        for (int32 Index = 0; Index < NewStaticMesh->Materials.Size(); Index++)
+        for (uint32 Index = 0; Index < NewStaticMesh->GetNumMaterials(); Index++)
         {
-            CHECK(NewStaticMesh->Materials[Index] != nullptr);
-            Materials.AddUnique(NewStaticMesh->Materials[Index].Get());
+            CHECK(NewStaticMesh->GetMaterial(Index) != nullptr);
+            Materials.AddUnique(NewStaticMesh->GetMaterial(Index).Get());
         }
     }
 }
@@ -203,12 +203,12 @@ void FScene::PrepareViewsForRendering()
 
     // Prepare camera-view
     CameraView.PrepareView(StaticMeshes.Capacity());
-    CameraView.SetupFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+    CameraView.SetupFrustum(Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
 
     // Prepare directional-light shadow-view
     if (DirectionalLight)
     {
-        DirectionalLight->ShadowView.PrepareView(StaticMeshes.Capacity());
+        DirectionalLight->GetShadowView().PrepareView(StaticMeshes.Capacity());
     }
 
     // Prepare point-light shadow-views
@@ -220,7 +220,7 @@ void FScene::PrepareViewsForRendering()
             PointLight->ShadowView[FaceIndex].PrepareView();
 
             // TODO: Move to light-update?
-            PointLight->ShadowView[FaceIndex].SetupFrustum(PointLight->PointLight->GetShadowFarPlane(), PointLight->PointLight->GetViewMatrix(FaceIndex), PointLight->PointLight->GetProjectionMatrix(FaceIndex));
+            PointLight->ShadowView[FaceIndex].SetupFrustum(PointLight->PointLight->GetViewMatrix(FaceIndex), PointLight->PointLight->GetProjectionMatrix(FaceIndex));
         }
 
         // Single Pass
@@ -236,7 +236,7 @@ void FScene::PrepareViewsForRendering()
         // Update the visibility directional-light view
         if (DirectionalLight)
         {
-            DirectionalLight->ShadowView.AddStaticMesh(StaticMesh);
+            DirectionalLight->GetShadowView().AddStaticMesh(StaticMesh);
         }
 
         // Update the visibility PointLights

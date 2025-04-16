@@ -56,7 +56,6 @@ vulkan_rhi.add_module_dependencies
     'Core',
     'CoreApplication',
     'RHI',
-    'Project',
 }
 
 if is_platform_mac() then

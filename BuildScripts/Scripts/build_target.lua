@@ -100,18 +100,15 @@ function target_build_rules(name, workspace)
             local upper_case_name = self.name:upper()
             local module_api_name = upper_case_name .. "_API"
 
-            -- TODO: Should this be created as a module instead? 
             -- In a monolithic build, the client should be linked statically 
+            -- TODO: Should this be created as a module instead? 
             if self.is_monolithic then                
                 self.kind               = "WindowedApp"
                 self.runtime_linking    = false
                 self.is_dynamic         = false
                 self.embed_dependencies = true
 
-                -- TODO: These should be handled via file and loaded into the Project-Module
                 -- Defines
-                self.add_defines({ 'PROJECT_NAME="' .. self.name .. '"' })
-                self.add_defines({ 'PROJECT_LOCATION="' .. self.get_path() .. '"' })
                 self.add_defines({ module_api_name })
 
                 -- Generate the project

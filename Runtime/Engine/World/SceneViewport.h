@@ -95,7 +95,7 @@ public:
     }
 
 private:
-    TWeakPtr<FViewportWidget>      Viewport;
-    TSharedRef<FRHIViewport> RHIViewport;
-    FWorld*                  World;
+    TWeakPtr<FViewportWidget> Viewport;
+    TSharedRef<FRHIViewport>  RHIViewport;
+    FWorld*                   World;
 };

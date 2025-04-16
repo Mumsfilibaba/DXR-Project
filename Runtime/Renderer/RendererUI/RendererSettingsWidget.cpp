@@ -1,6 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Engine/Engine.h"
-#include "Renderer/Widgets/RendererSettingsWidget.h"
+#include "Renderer/RendererUI/RendererSettingsWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 

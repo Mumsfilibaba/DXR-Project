@@ -586,7 +586,7 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     MeshCreateInfo.Indices.Resize(NumIndices);
 
     // Angle between each side segment
-    const float Angle = (2.0f * FMath::PI) / static_cast<float>(Sides);
+    const float Angle = (2.0f * FMath::PI_Float) / static_cast<float>(Sides);
     
     // Create the center vertex for the base cap
     MeshCreateInfo.Vertices[0].Position = FVector3(0.0f, 0.0f, 0.0f);

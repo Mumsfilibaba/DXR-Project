@@ -2,7 +2,7 @@
 #include "Core/Threading/TaskManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Project/ProjectManager.h"
+#include "Core/Misc/Paths.h"
 #include "VulkanRHI/VulkanPipelineState.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanShader.h"
@@ -702,7 +702,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
     }
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
 
     FFileHandleRef CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
@@ -763,7 +763,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
 bool FVulkanPipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
-    const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;
+    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
     
     FFileHandleRef CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)

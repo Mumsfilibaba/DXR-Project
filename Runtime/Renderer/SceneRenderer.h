@@ -21,10 +21,10 @@
 #include "Renderer/TemporalAA.h"
 #include "Renderer/PostProcessing.h"
 #include "Renderer/Scene/Scene.h"
-#include "Renderer/Widgets/TextureDebugWidget.h"
-#include "Renderer/Widgets/RendererInfoWidget.h"
-#include "Renderer/Widgets/GPUProfilerWidget.h"
-#include "Renderer/Widgets/RendererSettingsWidget.h"
+#include "Renderer/RendererUI/TextureDebugWidget.h"
+#include "Renderer/RendererUI/RendererInfoWidget.h"
+#include "Renderer/RendererUI/GPUProfilerWidget.h"
+#include "Renderer/RendererUI/RendererSettingsWidget.h"
 
 class FViewportWidget;
 class FSceneRenderer;

@@ -17,6 +17,5 @@ if is_platform_windows() then
         "Core",
         "CoreApplication",
         "RHI",
-        "Project",
     }
 end

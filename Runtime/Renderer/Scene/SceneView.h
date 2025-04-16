@@ -15,7 +15,7 @@ public:
     void PrepareView(uint32 MaxMeshes = 0);
 
     // Creates the FFrustum for this view
-    void SetupFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Projection);
+    void SetupFrustum(const FMatrix4& View, const FMatrix4& Projection);
 
     // Add a static mesh to this view if the mesh is in view
     bool AddStaticMesh(FSceneStaticMesh* StaticMesh);
@@ -31,6 +31,7 @@ public:
     }
 
 private:
+
     // Frustum for this view
     TUniquePtr<FFrustum> Frustum;
 

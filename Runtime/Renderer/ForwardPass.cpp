@@ -197,16 +197,16 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
             FRHIBuffer* VertexBuffers[] =
             {
-                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::Normals),
-                StaticMesh->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Normals),
+                StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
             };
 
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
-            CommandList.SetIndexBuffer(StaticMesh->IndexBuffer, StaticMesh->IndexFormat);
+            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(VShader.Get(), &StaticMesh->TransformBuffer, NumConstants);
+            CommandList.Set32BitShaderConstants(VShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }

@@ -47,7 +47,7 @@ struct FShaderCompileInfo;
 class RHI_API FShaderCompiler
 {
 public:
-    static bool Create(FStringView AssetFolderPath);
+    static bool Create(const FString& InAssetPath);
     static void Destroy();
 
     static FORCEINLINE FShaderCompiler& Get()
@@ -63,7 +63,7 @@ public:
     bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
-    FShaderCompiler(FStringView InAssetPath);
+    FShaderCompiler(const FString& InAssetPath);
     ~FShaderCompiler();
 
     bool Initialize();

@@ -3,7 +3,7 @@
 #include "RHI/RHI.h"
 #include "Application/ApplicationInterface.h"
 #include "Renderer/SceneRenderer.h"
-#include "Renderer/Widgets/RendererInfoWidget.h"
+#include "Renderer/RendererUI/RendererInfoWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 

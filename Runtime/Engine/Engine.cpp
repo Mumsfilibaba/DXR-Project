@@ -3,7 +3,7 @@
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Math/Math.h"
-#include "Project/ProjectManager.h"
+#include "Core/Misc/Paths.h"
 #include "Application/ApplicationInterface.h"
 #include "Application/Widgets/WindowWidget.h"
 #include "Application/Widgets/ViewportWidget.h"
@@ -11,9 +11,9 @@
 #include "Engine/Engine.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Widgets/InGameConsoleWidget.h"
-#include "Engine/Widgets/FrameProfilerWidget.h"
-#include "Engine/Widgets/SceneInspectorWidget.h"
+#include "Engine/EngineUI/InGameConsoleWidget.h"
+#include "Engine/EngineUI/FrameProfilerWidget.h"
+#include "Engine/EngineUI/SceneInspectorWidget.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -261,8 +261,8 @@ bool FEngine::Init()
     }
 
     // Load Game-Module
-    const char* GameModuleName = *FProjectManager::Get().GetProjectModuleName();
-    GameModule = FModuleManager::Get().LoadModule<FGameModule>(GameModuleName);
+    const FString GameModuleName = FPaths::GetProjectModuleName();
+    GameModule = FModuleManager::Get().LoadModule<FGameModule>(*GameModuleName);
     if (!GameModule)
     {
         LOG_ERROR("Failed to load Game-module, the application may not behave as intended");
@@ -279,7 +279,7 @@ bool FEngine::Init()
         CoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
     }
 
-    // Create the scene viewport (Contains back-buffer etc.)
+    // Create the scene viewport
     if (!CreateSceneViewport())
     {
         return false;
@@ -375,7 +375,7 @@ void FEngine::Release()
     {
         GameModule->Release();
 
-        const CHAR* GameModuleName = *FProjectManager::Get().GetProjectModuleName();
+        const CHAR* GameModuleName = *FPaths::GetProjectModuleName();
         FModuleManager::Get().UnloadModule(GameModuleName);
         GameModule = nullptr;
     }
