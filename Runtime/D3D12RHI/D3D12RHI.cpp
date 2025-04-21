@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "D3D12RHI/D3D12CommandList.h"
@@ -28,7 +29,15 @@ FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
 FRHI* FD3D12RHIModule::CreateRHI()
 {
-    return new FD3D12RHI();
+    TUniquePtr<FD3D12RHI> NewRHI = MakeUniquePtr<FD3D12RHI>();
+    if (!NewRHI->Initialize())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewRHI.Release();
+    }
 }
 
 FD3D12RHI::FD3D12RHI()
@@ -47,7 +56,10 @@ FD3D12RHI::~FD3D12RHI()
     const auto FlushDeletionQueues = [this]()
     {
         // NOTE: Objects could contain other objects, that now need to be flushed
-        FRHICommandListExecutor::Get().FlushDeletedResources();
+        if (FRHICommandListExecutor::IsInitialized())
+        {
+            FRHICommandListExecutor::Get().FlushDeletedResources();
+        }
 
         while (!DeletionQueue.IsEmpty())
         {
@@ -60,7 +72,10 @@ FD3D12RHI::~FD3D12RHI()
             FD3D12DeferredObject::ProcessItems(Items);
 
             // NOTE: Objects could contain other objects, that now need to be flushed
-            FRHICommandListExecutor::Get().FlushDeletedResources();
+            if (FRHICommandListExecutor::IsInitialized())
+            {
+                FRHICommandListExecutor::Get().FlushDeletedResources();
+            }
         }
     };
 
@@ -241,7 +256,7 @@ bool FD3D12RHI::Initialize()
     return true;
 }
 
-FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InTextureInfo);
     if (!NewTexture->Initialize(DirectCommandContext, InInitialState, InInitialData))
@@ -254,7 +269,7 @@ FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
     }
 }
 
-FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
     TSharedRef<FD3D12Buffer> NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
     if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
@@ -267,7 +282,7 @@ FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EReso
     }
 }
 
-FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
+FRHISamplerState* FD3D12RHI::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
 {
     TScopedLock Lock(SamplerStateMapCS);
 
@@ -309,7 +324,7 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateInfo& I
     return Result.ReleaseOwnership();
 }
 
-FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
+FRHIRayTracingScene* FD3D12RHI::CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
 {
     FRayTracingSceneBuildInfo BuildInfo;
     BuildInfo.Instances    = InSceneInfo.Instances.Data();
@@ -329,7 +344,7 @@ FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSce
     return D3D12Scene.ReleaseOwnership();
 }
 
-FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
+FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
 {
     FRayTracingGeometryBuildInfo BuildInfo;
     BuildInfo.VertexBuffer = InGeometryInfo.VertexBuffer;
@@ -352,7 +367,7 @@ FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTrac
     return D3D12Geometry.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
+FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(InInfo.Texture);
     CHECK(D3D12Texture != nullptr);
@@ -441,7 +456,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
     }
 }
 
-FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
+FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InInfo.Buffer);
     CHECK(D3D12Buffer != nullptr);
@@ -486,7 +501,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHIBufferS
     }
 }
 
-FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
+FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(InInfo.Texture);
     CHECK(D3D12Texture != nullptr);
@@ -560,7 +575,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
     }
 }
 
-FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
+FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InInfo.Buffer);
     CHECK(D3D12Buffer != nullptr);
@@ -604,7 +619,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHIBuffe
     }
 }
 
-FRHIComputeShader* FD3D12RHI::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
+FRHIComputeShader* FD3D12RHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12ComputeShader> NewShader = new FD3D12ComputeShader(GetDevice(), ShaderCode);
     if (!NewShader->Initialize())
@@ -617,7 +632,7 @@ FRHIComputeShader* FD3D12RHI::RHICreateComputeShader(const TArray<uint8>& Shader
     }
 }
 
-FRHIVertexShader* FD3D12RHI::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
+FRHIVertexShader* FD3D12RHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12VertexShader> NewShader = new FD3D12VertexShader(GetDevice(), ShaderCode);
     if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
@@ -630,7 +645,7 @@ FRHIVertexShader* FD3D12RHI::RHICreateVertexShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIHullShader* FD3D12RHI::RHICreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* FD3D12RHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12HullShader> NewShader = new FD3D12HullShader(GetDevice(), ShaderCode);
     if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
@@ -643,7 +658,7 @@ FRHIHullShader* FD3D12RHI::RHICreateHullShader(const TArray<uint8>& ShaderCode)
     }
 }
 
-FRHIDomainShader* FD3D12RHI::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* FD3D12RHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12DomainShader> NewShader = new FD3D12DomainShader(GetDevice(), ShaderCode);
     if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
@@ -656,7 +671,7 @@ FRHIDomainShader* FD3D12RHI::RHICreateDomainShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIGeometryShader* FD3D12RHI::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* FD3D12RHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12GeometryShader> NewShader = new FD3D12GeometryShader(GetDevice(), ShaderCode);
     if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
@@ -669,21 +684,21 @@ FRHIGeometryShader* FD3D12RHI::RHICreateGeometryShader(const TArray<uint8>& Shad
     }
 }
 
-FRHIMeshShader* FD3D12RHI::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* FD3D12RHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-FRHIAmplificationShader* FD3D12RHI::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* FD3D12RHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     // TODO: Finish this
     UNREFERENCED_VARIABLE(ShaderCode);
     return nullptr;
 }
 
-FRHIPixelShader* FD3D12RHI::RHICreatePixelShader(const TArray<uint8>& ShaderCode)
+FRHIPixelShader* FD3D12RHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12PixelShader> NewShader = new FD3D12PixelShader(GetDevice(), ShaderCode);
     if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
@@ -696,7 +711,7 @@ FRHIPixelShader* FD3D12RHI::RHICreatePixelShader(const TArray<uint8>& ShaderCode
     }
 }
 
-FRHIRayGenShader* FD3D12RHI::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
+FRHIRayGenShader* FD3D12RHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12RayGenShader> NewShader = new FD3D12RayGenShader(GetDevice(), ShaderCode);
     if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
@@ -710,7 +725,7 @@ FRHIRayGenShader* FD3D12RHI::RHICreateRayGenShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIRayAnyHitShader* FD3D12RHI::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayAnyHitShader* FD3D12RHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12RayAnyHitShader> NewShader = new FD3D12RayAnyHitShader(GetDevice(), ShaderCode);
     if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
@@ -724,7 +739,7 @@ FRHIRayAnyHitShader* FD3D12RHI::RHICreateRayAnyHitShader(const TArray<uint8>& Sh
     }
 }
 
-FRHIRayClosestHitShader* FD3D12RHI::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayClosestHitShader* FD3D12RHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12RayClosestHitShader> NewShader = new FD3D12RayClosestHitShader(GetDevice(), ShaderCode);
     if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
@@ -738,7 +753,7 @@ FRHIRayClosestHitShader* FD3D12RHI::RHICreateRayClosestHitShader(const TArray<ui
     }
 }
 
-FRHIRayMissShader* FD3D12RHI::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
+FRHIRayMissShader* FD3D12RHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     TSharedRef<FD3D12RayMissShader> NewShader = new FD3D12RayMissShader(GetDevice(), ShaderCode);
     if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
@@ -752,27 +767,27 @@ FRHIRayMissShader* FD3D12RHI::RHICreateRayMissShader(const TArray<uint8>& Shader
     }
 }
 
-FRHIDepthStencilState* FD3D12RHI::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
 {
     return new FD3D12DepthStencilState(InInitializer);
 }
 
-FRHIRasterizerState* FD3D12RHI::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
 {
     return new FD3D12RasterizerState(InInitializer);
 }
 
-FRHIBlendState* FD3D12RHI::RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
 {
     return new FD3D12BlendState(InInitializer);
 }
 
-FRHIVertexLayout* FD3D12RHI::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIVertexLayout* FD3D12RHI::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
     return new FD3D12VertexLayout(InInitializerList);
 }
 
-FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
 {
     FD3D12GraphicsPipelineStateRef NewPipelineState = new FD3D12GraphicsPipelineState(GetDevice());
     if (!NewPipelineState->Initialize(InInitializer))
@@ -785,7 +800,7 @@ FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIG
     }
 }
 
-FRHIComputePipelineState* FD3D12RHI::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
 {
     FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInitializer.Shader));
     if (!NewPipelineState->Initialize())
@@ -798,7 +813,7 @@ FRHIComputePipelineState* FD3D12RHI::RHICreateComputePipelineState(const FRHICom
     }
 }
 
-FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
+FRHIRayTracingPipelineState* FD3D12RHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
 {
     FD3D12RayTracingPipelineStateRef NewPipelineState = new FD3D12RayTracingPipelineState(GetDevice());
     if (!NewPipelineState->Initialize(InInitializer))
@@ -811,12 +826,12 @@ FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const F
     }
 }
 
-FRHIQuery* FD3D12RHI::RHICreateQuery(EQueryType InQueryType)
+FRHIQuery* FD3D12RHI::CreateQuery(EQueryType InQueryType)
 {
     return new FD3D12Query(GetDevice(), InQueryType);
 }
 
-FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
+FRHIViewport* FD3D12RHI::CreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
     CHECK(InViewportInfo.WindowHandle != nullptr);
 
@@ -831,7 +846,7 @@ FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInf
     }
 }
 
-bool FD3D12RHI::RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const
+bool FD3D12RHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const
 {
     if (!Adapter)
     {
@@ -856,7 +871,7 @@ bool FD3D12RHI::RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMe
     return true;
 }
 
-bool FD3D12RHI::RHIQueryUAVFormatSupport(EFormat Format) const
+bool FD3D12RHI::QueryUAVFormatSupport(EFormat Format) const
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
     FMemory::Memzero(&FeatureData);
@@ -884,7 +899,7 @@ bool FD3D12RHI::RHIQueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
-bool FD3D12RHI::RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult)
+bool FD3D12RHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult)
 {
     FD3D12Query* D3D12Result = static_cast<FD3D12Query*>(Query);
     if (!D3D12Result)
@@ -896,7 +911,7 @@ bool FD3D12RHI::RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult)
     return true;
 }
 
-void FD3D12RHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
+void FD3D12RHI::EnqueueResourceDeletion(FRHIResource* Resource)
 {
     if (Resource)
     {
@@ -905,42 +920,42 @@ void FD3D12RHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
 }
 
 
-FString FD3D12RHI::RHIGetAdapterName() const 
+FString FD3D12RHI::GetAdapterName() const 
 { 
     CHECK(Adapter != nullptr);
     return Adapter->GetDescription(); 
 }
 
-IRHICommandContext* FD3D12RHI::RHIObtainCommandContext()
+IRHICommandContext* FD3D12RHI::ObtainCommandContext()
 {
     return DirectCommandContext;
 }
 
-void* FD3D12RHI::RHIGetAdapter() 
+void* FD3D12RHI::GetNativeAdapter() 
 {
     CHECK(Adapter != nullptr);
     return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
 }
 
-void* FD3D12RHI::RHIGetDevice()
+void* FD3D12RHI::GetNativeDevice()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12Device());
 }
 
-void* FD3D12RHI::RHIGetDirectCommandQueue()
+void* FD3D12RHI::GetNativeDirectCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
 }
 
-void* FD3D12RHI::RHIGetComputeCommandQueue()
+void* FD3D12RHI::GetNativeComputeCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Compute));
 }
 
-void* FD3D12RHI::RHIGetCopyCommandQueue()
+void* FD3D12RHI::GetNativeCopyCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));

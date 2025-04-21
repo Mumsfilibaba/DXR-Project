@@ -77,14 +77,14 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    PanoramCS = RHICreateComputeShader(Code);
+    PanoramCS = FRHI::Get()->CreateComputeShader(Code);
     if (!PanoramCS)
     {
         return false;
     }
 
     // Create "Cube-Map from Panorama" pipeline
-    PanoramaPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(PanoramCS.Get()));
+    PanoramaPSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(PanoramCS.Get()));
     if (PanoramaPSO)
     {
         PanoramaPSO->SetDebugName("Generate CubeMap RootSignature");
@@ -101,14 +101,14 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    GenerateMipsTex2D_CS = RHICreateComputeShader(Code);
+    GenerateMipsTex2D_CS = FRHI::Get()->CreateComputeShader(Code);
     if (!GenerateMipsTex2D_CS)
     {
         return false;
     }
 
     // Create "GenerateMips Texure2D" pipeline
-    GenerateMipsTex2D_PSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(GenerateMipsTex2D_CS.Get()));
+    GenerateMipsTex2D_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(GenerateMipsTex2D_CS.Get()));
     if (GenerateMipsTex2D_PSO)
     {
         GenerateMipsTex2D_PSO->SetDebugName("GenerateMips Texure2D PSO");
@@ -125,14 +125,14 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    GenerateMipsTexCube_CS = RHICreateComputeShader(Code);
+    GenerateMipsTexCube_CS = FRHI::Get()->CreateComputeShader(Code);
     if (!GenerateMipsTexCube_CS)
     {
         return false;
     }
 
     // Create "GenerateMips TexureCube" pipeline
-    GenerateMipsTexCube_PSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(GenerateMipsTexCube_CS.Get()));
+    GenerateMipsTexCube_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(GenerateMipsTexCube_CS.Get()));
     if (GenerateMipsTexCube_PSO)
     {
         GenerateMipsTexCube_PSO->SetDebugName("GenerateMips TexureCube PSO");
@@ -149,13 +149,13 @@ bool FTextureFactory::CreateResources()
         LOG_ERROR("Failed to compile IrradianceGen Shader");
     }
 
-    DiffuseCubeMapFilter_CS = RHICreateComputeShader(Code);
+    DiffuseCubeMapFilter_CS = FRHI::Get()->CreateComputeShader(Code);
     if (!DiffuseCubeMapFilter_CS)
     {
         LOG_ERROR("Failed to create IrradianceGen Shader");
     }
 
-    DiffuseCubeMapFilter_PSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(DiffuseCubeMapFilter_CS.Get()));
+    DiffuseCubeMapFilter_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(DiffuseCubeMapFilter_CS.Get()));
     if (!DiffuseCubeMapFilter_PSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -172,13 +172,13 @@ bool FTextureFactory::CreateResources()
         LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
     }
 
-    SpecularCubeMapFilter_CS = RHICreateComputeShader(Code);
+    SpecularCubeMapFilter_CS = FRHI::Get()->CreateComputeShader(Code);
     if (!SpecularCubeMapFilter_CS)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
     }
 
-    SpecularCubeMapFilter_PSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(SpecularCubeMapFilter_CS.Get()));
+    SpecularCubeMapFilter_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(SpecularCubeMapFilter_CS.Get()));
     if (!SpecularCubeMapFilter_PSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");
@@ -197,7 +197,7 @@ bool FTextureFactory::CreateResources()
     LinearSamplerInfo.MinLOD   = 0.0f;
     LinearSamplerInfo.MaxLOD   = TNumericLimits<float>::Max();
 
-    LinearSampler = RHICreateSamplerState(LinearSamplerInfo);
+    LinearSampler = FRHI::Get()->CreateSamplerState(LinearSamplerInfo);
     if (!LinearSampler)
     {
         return false;
@@ -209,7 +209,7 @@ bool FTextureFactory::CreateResources()
     CubeMapFilterSamplerInfo.AddressW = ESamplerMode::Wrap;
     CubeMapFilterSamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    CubeMapFilterSampler = RHICreateSamplerState(CubeMapFilterSamplerInfo);
+    CubeMapFilterSampler = FRHI::Get()->CreateSamplerState(CubeMapFilterSamplerInfo);
     if (!CubeMapFilterSampler)
     {
         return false;
@@ -235,7 +235,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     InitalData.InitMipData(Pixels, RowPitch, RowPitch * Height);
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMiplevels, 1, ETextureUsageFlags::ShaderResource);
-    FRHITextureRef Texture = RHICreateTexture(TextureInfo, EResourceAccess::PixelShaderResource, &InitalData);
+    FRHITextureRef Texture = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         DEBUG_BREAK();
@@ -266,7 +266,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         FRHITextureInfo TextureInfo = Dest->GetInfo();
         TextureInfo.UsageFlags |= ETextureUsageFlags::UnorderedAccess;
 
-        StagingTexture = RHICreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
+        StagingTexture = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
         if (!StagingTexture)
         {
             return false;
@@ -284,7 +284,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
     // Create UAV for the staging-texture
     FRHITextureUAVInfo UAVInfo(StagingTexture.Get(), StagingTexture->GetFormat(), 0, 0, 1);
 
-    FRHIUnorderedAccessViewRef StagingTextureUAV = RHICreateUnorderedAccessView(UAVInfo);
+    FRHIUnorderedAccessViewRef StagingTextureUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
     if (!StagingTextureUAV)
     {
         return false;
@@ -382,7 +382,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         FRHITextureInfo TextureInfo = Texture->GetInfo();
         TextureInfo.UsageFlags |= ETextureUsageFlags::UnorderedAccess;
 
-        StagingTexture = RHICreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
+        StagingTexture = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
         if (!StagingTexture)
         {
             return false;
@@ -418,7 +418,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     {
         SRVInfo.FirstMipLevel = MipLevel;
 
-        FRHIShaderResourceView* ShaderResourceView = RHICreateShaderResourceView(SRVInfo);
+        FRHIShaderResourceView* ShaderResourceView = FRHI::Get()->CreateShaderResourceView(SRVInfo);
         ShaderResourceViews.Emplace(ShaderResourceView);
     }
 
@@ -437,7 +437,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     {
         UAVInfo.MipLevel = MipLevel;
 
-        FRHIUnorderedAccessView* UnorderedAccessView = RHICreateUnorderedAccessView(UAVInfo);
+        FRHIUnorderedAccessView* UnorderedAccessView = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
         UnorderedAccessViews.Emplace(UnorderedAccessView);
     }
 
@@ -589,7 +589,7 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
     for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
         FRHITextureUAVInfo UAVInfo = FRHITextureUAVInfo(DstCubeMap, DstCubeMap->GetFormat(), MipLevel, 0, 1);
-        FRHIUnorderedAccessViewRef UAV = RHICreateUnorderedAccessView(UAVInfo);
+        FRHIUnorderedAccessViewRef UAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
         if (UAV)
         {
             SpecularIrradianceMapUAVs.Emplace(UAV);
@@ -684,7 +684,7 @@ bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITex
     }
 
     FRHITextureUAVInfo UAVInfo(DstCubeMap, DstCubeMap->GetFormat(), 0, 0, 1);
-    FRHIUnorderedAccessViewRef DstCubeMapUAV = RHICreateUnorderedAccessView(UAVInfo);
+    FRHIUnorderedAccessViewRef DstCubeMapUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
     if (!DstCubeMapUAV)
     {
         DEBUG_BREAK();

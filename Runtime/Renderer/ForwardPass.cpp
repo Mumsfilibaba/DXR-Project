@@ -38,7 +38,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    VShader = RHICreateVertexShader(ShaderCode);
+    VShader = FRHI::Get()->CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         DEBUG_BREAK();
@@ -52,7 +52,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PShader = RHICreatePixelShader(ShaderCode);
+    PShader = FRHI::Get()->CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         DEBUG_BREAK();
@@ -64,7 +64,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     DepthStencilInitializer.bDepthEnable      = true;
     DepthStencilInitializer.bDepthWriteEnable = true;
 
-    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -74,7 +74,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     FRHIRasterizerStateInitializer RasterizerStateInitializer;
     RasterizerStateInitializer.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -85,7 +85,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     BlendStateInitializer.NumRenderTargets = 1;
     BlendStateInitializer.RenderTargets[0] = FRenderTargetBlendInfo(true, EBlendType::One, EBlendType::Zero);
 
-    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
         DEBUG_BREAK();
@@ -104,7 +104,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
     PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
 
-    PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
+    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
         DEBUG_BREAK();

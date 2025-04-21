@@ -262,9 +262,9 @@ void FShaderCompiler::Destroy()
 
 EShaderOutputLanguage FShaderCompiler::GetOutputLanguageBasedOnRHI()
 {
-    if (FRHI* CurrentRHI = GetRHI())
+    if (FRHI::IsInitialized())
     {
-        const ERHIType RHIType = CurrentRHI->GetType();
+        const ERHIType RHIType = FRHI::Get()->GetType();
         if (RHIType == ERHIType::Metal)
         {
             return EShaderOutputLanguage::MSL;

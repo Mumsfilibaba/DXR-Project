@@ -138,12 +138,12 @@ bool FVulkanCommandContext::Initialize()
 
 void FVulkanCommandContext::RHIBeginFrame()
 {
-    FVulkanRHI::GetRHI()->RHIBeginFrame();
+    FVulkanRHI::Get()->BeginFrame();
 }
 
 void FVulkanCommandContext::RHIEndFrame()
 {
-    FVulkanRHI::GetRHI()->RHIEndFrame();
+    FVulkanRHI::Get()->EndFrame();
 }
 
 void FVulkanCommandContext::ObtainCommandBuffer()
@@ -210,7 +210,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
         TimestampQueryAllocator.PrepareForNewCommanBuffer();
         OcclusionQueryAllocator.PrepareForNewCommanBuffer();
 
-        FVulkanRHI::GetRHI()->SubmitCommands(CommandPayload, true);
+        FVulkanRHI::Get()->SubmitCommands(CommandPayload, true);
         CommandPayload = nullptr;
     }
 
@@ -246,7 +246,7 @@ void FVulkanCommandContext::RHIStartContext()
     ContextState.ResetState();
     
     // Process submitted commands
-    FVulkanRHI::GetRHI()->ProcessPendingCommands();
+    FVulkanRHI::Get()->ProcessPendingCommands();
     
     // Retrieve a new CommandBuffer
     ObtainCommandBuffer();
@@ -572,7 +572,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
 
         // Retrieve or create a FrameBuffer
         FramebufferKey.RenderPass     = RenderPass;
-        FramebufferKey.NumArrayLayers = NumArrayLayers;
+        FramebufferKey.NumArrayLayers = static_cast<uint16>(NumArrayLayers);
         
         CHECK(Width != TNumericLimits<uint32>::Max());
         FramebufferKey.Width = static_cast<uint16>(Width);
@@ -843,7 +843,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
         BarrierBatcher.FlushBarriers();
 
         GetCommandBuffer()->CopyBuffer(Allocation.Buffer->GetVkBuffer(), VulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
-        FVulkanRHI::GetRHI()->DeferDeletion(Allocation.Buffer.Get());
+        FVulkanRHI::Get()->DeferDeletion(Allocation.Buffer.Get());
     }
 }
 
@@ -887,7 +887,7 @@ void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureR
     BarrierBatcher.FlushBarriers();
 
     GetCommandBuffer()->CopyBufferToImage(Allocation.Buffer->GetVkBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
-    FVulkanRHI::GetRHI()->DeferDeletion(Allocation.Buffer.Get());
+    FVulkanRHI::Get()->DeferDeletion(Allocation.Buffer.Get());
 }
 
 void FVulkanCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)

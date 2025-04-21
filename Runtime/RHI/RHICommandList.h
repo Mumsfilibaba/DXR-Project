@@ -453,13 +453,18 @@ class RHI_API FRHICommandListExecutor : FNonCopyable
 {
 public:
 
+    static bool Initialize();
+    static void Release();
+
+    static FORCEINLINE bool IsInitialized()
+    {
+        return Instance != nullptr;
+    }
+
     static FORCEINLINE FRHICommandListExecutor& Get()
     {
         return *Instance;
     }
-
-    static bool Initialize();
-    static void Release();
 
 public:
 

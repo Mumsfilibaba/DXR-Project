@@ -24,7 +24,7 @@ struct IRendererModule : public FModuleInterface
     virtual void Release() = 0;
 
     // Create a Renderer version of the World
-    virtual IScene* CreateScene(FWorld* InScene) = 0;
+    virtual IScene* CreateScene(FWorld* InWorld) = 0;
 
     // Destroy a Renderer Scene
     virtual void DestroyScene(IScene* Scene) = 0;

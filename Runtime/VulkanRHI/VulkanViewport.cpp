@@ -33,7 +33,7 @@ FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, const FRHIViewportInfo
 
 FVulkanViewport::~FVulkanViewport()
 {
-    FVulkanCommandContext* InCommandContext = FVulkanRHI::GetRHI()->ObtainCommandContext();
+    FVulkanCommandContext* InCommandContext = FVulkanRHI::Get()->ObtainVulkanCommandContext();
     DestroySwapChain(InCommandContext);
 }
 

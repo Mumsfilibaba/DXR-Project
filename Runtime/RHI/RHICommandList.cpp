@@ -241,7 +241,7 @@ void FRHICommandListExecutor::ReleaseRHIThread()
 
 bool FRHICommandListExecutor::Initialize()
 {
-    IRHICommandContext* Context = GetRHI()->RHIObtainCommandContext();
+    IRHICommandContext* Context = FRHI::Get()->ObtainCommandContext();
     if (!Context)
     {
         return false;
@@ -262,11 +262,15 @@ bool FRHICommandListExecutor::Initialize()
 
 void FRHICommandListExecutor::Release()
 {
-    // Release the RHI-Thread
-    Instance->ReleaseRHIThread();
+    if (Instance)
+    {
+        // Release the RHI-Thread
+        Instance->ReleaseRHIThread();
 
-    // Delete the instance
-    SAFE_DELETE(Instance);
+        // Delete the instance
+        delete Instance;
+        Instance = nullptr;
+    }
 }
 
 void FRHICommandListExecutor::Tick()
@@ -295,7 +299,7 @@ void FRHICommandListExecutor::FlushDeletedResources()
     {
         for (FRHIResource* Resource : DeletedResources)
         {
-            GetRHI()->RHIEnqueueResourceDeletion(Resource);
+            FRHI::Get()->EnqueueResourceDeletion(Resource);
         }
 
         DeletedResources.Clear();

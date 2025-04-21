@@ -30,7 +30,16 @@ int32 FRHIResource::Release() const
     if (RefCount < 1)
     {
         State = static_cast<int32>(EState::Deleted);
-        FRHICommandListExecutor::Get().EnqueueResourceDeletion(const_cast<FRHIResource*>(this));
+
+        // Delete immediately if we have not initialized the command-executor, this can happen if we fail to initialize the RHI
+        if (FRHICommandListExecutor::IsInitialized())
+        {
+            FRHICommandListExecutor::Get().EnqueueResourceDeletion(const_cast<FRHIResource*>(this));
+        }
+        else
+        {
+            delete this;
+        }
     }
 
     return RefCount;

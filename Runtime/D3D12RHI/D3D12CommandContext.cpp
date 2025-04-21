@@ -215,7 +215,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
             CommandAllocator = nullptr;
         }
 
-        FD3D12RHI::GetRHI()->SubmitCommands(CommandPayload, true);
+        FD3D12RHI::Get()->SubmitCommands(CommandPayload, true);
         CommandPayload = nullptr;
 
         // Reset the number of draw-calls for the current command-list
@@ -264,7 +264,7 @@ void FD3D12CommandContext::RHIStartContext()
     ContextState.ResetState();
 
     // Process submitted commands
-    FD3D12RHI::GetRHI()->ProcessPendingCommands();
+    FD3D12RHI::Get()->ProcessPendingCommands();
 
     // Retrieve a new CommandList
     ObtainCommandList();
@@ -331,7 +331,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
         GetCommandList()->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource.Get(), Allocation.ResourceOffset, BufferRegion.Size);
 
         // Defer deletion of the upload buffer
-        FD3D12RHI::GetRHI()->DeferDeletion(Allocation.Resource.Get());
+        FD3D12RHI::Get()->DeferDeletion(Allocation.Resource.Get());
     }
 }
 
@@ -762,7 +762,7 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
 
     GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
 
-    FD3D12RHI::GetRHI()->DeferDeletion(Allocation.Resource.Get());
+    FD3D12RHI::Get()->DeferDeletion(Allocation.Resource.Get());
 }
 
 void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo)

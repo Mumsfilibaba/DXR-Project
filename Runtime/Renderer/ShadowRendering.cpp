@@ -187,7 +187,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
 
         FGraphicsPipelineStateInstance NewPipelineStateInstance;
-        NewPipelineStateInstance.VertexShader = RHICreateVertexShader(ShaderCode);
+        NewPipelineStateInstance.VertexShader = FRHI::Get()->CreateVertexShader(ShaderCode);
 
         if (!NewPipelineStateInstance.VertexShader)
         {
@@ -204,7 +204,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
                 return nullptr;
             }
 
-            NewPipelineStateInstance.GeometryShader = RHICreateGeometryShader(ShaderCode);
+            NewPipelineStateInstance.GeometryShader = FRHI::Get()->CreateGeometryShader(ShaderCode);
             if (!NewPipelineStateInstance.GeometryShader)
             {
                 DEBUG_BREAK();
@@ -237,14 +237,14 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             };
         }
 
-        NewPipelineStateInstance.InputLayout = RHICreateVertexLayout(VertexElementList);
+        NewPipelineStateInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
         if (!NewPipelineStateInstance.InputLayout)
         {
             DEBUG_BREAK();
             return nullptr;
         }
 
-        NewPipelineStateInstance.PixelShader = RHICreatePixelShader(ShaderCode);
+        NewPipelineStateInstance.PixelShader = FRHI::Get()->CreatePixelShader(ShaderCode);
         if (!NewPipelineStateInstance.PixelShader)
         {
             DEBUG_BREAK();
@@ -256,7 +256,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = true;
 
-        NewPipelineStateInstance.DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
+        NewPipelineStateInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
         if (!NewPipelineStateInstance.DepthStencilState)
         {
             DEBUG_BREAK();
@@ -273,7 +273,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             RasterizerStateInitializer.CullMode = ECullMode::Back;
         }
 
-        NewPipelineStateInstance.RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -281,7 +281,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
 
         FRHIBlendStateInitializer BlendStateInitializer;
-        NewPipelineStateInstance.BlendState = RHICreateBlendState(BlendStateInitializer);
+        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
         if (!NewPipelineStateInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -308,7 +308,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             PSOInitializer.ShaderState.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        NewPipelineStateInstance.PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
         if (!NewPipelineStateInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -334,7 +334,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
 bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 {
     FRHIBufferInfo PerShadowMapBufferInfo(sizeof(FPerShadowMapHLSL), sizeof(FPerShadowMapHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    PerShadowMapBuffer = RHICreateBuffer(PerShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    PerShadowMapBuffer = FRHI::Get()->CreateBuffer(PerShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
 
     if (!PerShadowMapBuffer)
     {
@@ -347,7 +347,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
     }
 
     FRHIBufferInfo SinglePassShadowMapBufferInfo(sizeof(FSinglePassPointLightBufferHLSL), sizeof(FSinglePassPointLightBufferHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    SinglePassShadowMapBuffer = RHICreateBuffer(SinglePassShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    SinglePassShadowMapBuffer = FRHI::Get()->CreateBuffer(SinglePassShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
 
     if (!SinglePassShadowMapBuffer)
     {
@@ -368,7 +368,7 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
     FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(FGlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
-    Resources.PointLightShadowMaps = RHICreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
+    Resources.PointLightShadowMaps = FRHI::Get()->CreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
 
     if (Resources.PointLightShadowMaps)
     {
@@ -698,7 +698,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    CascadeGenShader = RHICreateComputeShader(ShaderCode);
+    CascadeGenShader = FRHI::Get()->CreateComputeShader(ShaderCode);
     if (!CascadeGenShader)
     {
         DEBUG_BREAK();
@@ -708,7 +708,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     FRHIComputePipelineStateInitializer CascadePSO;
     CascadePSO.Shader = CascadeGenShader.Get();
 
-    CascadeGen = RHICreateComputePipelineState(CascadePSO);
+    CascadeGen = FRHI::Get()->CreateComputePipelineState(CascadePSO);
     if (!CascadeGen)
     {
         DEBUG_BREAK();
@@ -720,7 +720,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     FRHIBufferInfo CascadeMatrixBufferInfo(sizeof(FCascadeMatricesHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatricesHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
-    Resources.CascadeMatrixBuffer = RHICreateBuffer(CascadeMatrixBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
+    Resources.CascadeMatrixBuffer = FRHI::Get()->CreateBuffer(CascadeMatrixBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
 
     if (!Resources.CascadeMatrixBuffer)
     {
@@ -733,7 +733,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     FRHIBufferSRVInfo SRVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInfo);
+    Resources.CascadeMatrixBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
 
     if (!Resources.CascadeMatrixBufferSRV)
     {
@@ -742,7 +742,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     FRHIBufferUAVInfo UAVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInfo);
+    Resources.CascadeMatrixBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
 
     if (!Resources.CascadeMatrixBufferUAV)
     {
@@ -751,7 +751,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     FRHIBufferInfo CascadeSplitsBufferInfo(sizeof(FCascadeSplitHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeSplitHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
-    Resources.CascadeSplitsBuffer = RHICreateBuffer(CascadeSplitsBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
+    Resources.CascadeSplitsBuffer = FRHI::Get()->CreateBuffer(CascadeSplitsBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
 
     if (!Resources.CascadeSplitsBuffer)
     {
@@ -764,7 +764,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     SRVInfo = FRHIBufferSRVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInfo);
+    Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
 
     if (!Resources.CascadeSplitsBufferSRV)
     {
@@ -773,7 +773,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     UAVInfo = FRHIBufferUAVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInfo);
+    Resources.CascadeSplitsBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
 
     if (!Resources.CascadeSplitsBufferUAV)
     {
@@ -893,7 +893,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         FGraphicsPipelineStateInstance NewPipelineStateInstance;
-        NewPipelineStateInstance.VertexShader = RHICreateVertexShader(ShaderCode);
+        NewPipelineStateInstance.VertexShader = FRHI::Get()->CreateVertexShader(ShaderCode);
         if (!NewPipelineStateInstance.VertexShader)
         {
             DEBUG_BREAK();
@@ -909,7 +909,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
                 return nullptr;
             }
 
-            NewPipelineStateInstance.GeometryShader = RHICreateGeometryShader(ShaderCode);
+            NewPipelineStateInstance.GeometryShader = FRHI::Get()->CreateGeometryShader(ShaderCode);
             if (!NewPipelineStateInstance.GeometryShader)
             {
                 DEBUG_BREAK();
@@ -927,7 +927,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
                 return nullptr;
             }
 
-            NewPipelineStateInstance.PixelShader = RHICreatePixelShader(ShaderCode);
+            NewPipelineStateInstance.PixelShader = FRHI::Get()->CreatePixelShader(ShaderCode);
             if (!NewPipelineStateInstance.PixelShader)
             {
                 DEBUG_BREAK();
@@ -953,7 +953,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             };
         }
 
-        NewPipelineStateInstance.InputLayout = RHICreateVertexLayout(VertexElementList);
+        NewPipelineStateInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
         if (!NewPipelineStateInstance.InputLayout)
         {
             DEBUG_BREAK();
@@ -965,7 +965,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = true;
 
-        NewPipelineStateInstance.DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
+        NewPipelineStateInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
         if (!NewPipelineStateInstance.DepthStencilState)
         {
             DEBUG_BREAK();
@@ -990,7 +990,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             RasterizerStateInitializer.CullMode = ECullMode::Back;
         }
 
-        NewPipelineStateInstance.RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -998,7 +998,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         FRHIBlendStateInitializer BlendStateInitializer;
-        NewPipelineStateInstance.BlendState = RHICreateBlendState(BlendStateInitializer);
+        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
 
         if (!NewPipelineStateInstance.BlendState)
         {
@@ -1033,7 +1033,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
 
-        NewPipelineStateInstance.PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
         if (!NewPipelineStateInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -1058,7 +1058,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
 {
     FRHIBufferInfo PerCascadeBufferInfo(sizeof(FPerCascadeHLSL), sizeof(FPerCascadeHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    PerCascadeBuffer = RHICreateBuffer(PerCascadeBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    PerCascadeBuffer = FRHI::Get()->CreateBuffer(PerCascadeBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
 
     if (!PerCascadeBuffer)
     {
@@ -1079,7 +1079,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
     FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(FGlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
-    Resources.ShadowCascades = RHICreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
+    Resources.ShadowCascades = FRHI::Get()->CreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
 
     if (Resources.ShadowCascades)
     {
@@ -1103,7 +1103,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
         SRVInfo.FirstMipLevel   = 0;
         SRVInfo.FirstArraySlice = Index;
 
-        Resources.ShadowCascadesSRVs[Index] = RHICreateShaderResourceView(SRVInfo);
+        Resources.ShadowCascadesSRVs[Index] = FRHI::Get()->CreateShaderResourceView(SRVInfo);
         if (!Resources.ShadowCascadesSRVs[Index])
         {
             DEBUG_BREAK();
@@ -1434,7 +1434,7 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
     }
 
     FRHIBufferInfo SettingsBufferInfo(sizeof(FDirectionalShadowSettingsHLSL), sizeof(FDirectionalShadowSettingsHLSL), EBufferUsageFlags::ConstantBuffer);
-    ShadowSettingsBuffer = RHICreateBuffer(SettingsBufferInfo, EResourceAccess::ConstantBuffer);
+    ShadowSettingsBuffer = FRHI::Get()->CreateBuffer(SettingsBufferInfo, EResourceAccess::ConstantBuffer);
 
     if (!ShadowSettingsBuffer)
     {
@@ -1454,7 +1454,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
 
     FRHITextureInfo ShadowMaskInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
-    Resources.DirectionalShadowMask = RHICreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
+    Resources.DirectionalShadowMask = FRHI::Get()->CreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
 
     if (Resources.DirectionalShadowMask)
     {
@@ -1466,7 +1466,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
     }
 
     FRHITextureInfo CascadeIndexBufferInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
-    Resources.CascadeIndexBuffer = RHICreateTexture(CascadeIndexBufferInfo, EResourceAccess::NonPixelShaderResource);
+    Resources.CascadeIndexBuffer = FRHI::Get()->CreateTexture(CascadeIndexBufferInfo, EResourceAccess::NonPixelShaderResource);
 
     if (Resources.CascadeIndexBuffer)
     {
@@ -1692,7 +1692,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     }
 
     FComputePipelineStateInstance PipelineStateInstance;
-    PipelineStateInstance.Shader = RHICreateComputeShader(ShaderCode);
+    PipelineStateInstance.Shader = FRHI::Get()->CreateComputeShader(ShaderCode);
 
     if (!PipelineStateInstance.Shader)
     {
@@ -1701,7 +1701,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     }
 
     FRHIComputePipelineStateInitializer MaskPSOInitializer(PipelineStateInstance.Shader.Get());
-    PipelineStateInstance.PipelineState = RHICreateComputePipelineState(MaskPSOInitializer);
+    PipelineStateInstance.PipelineState = FRHI::Get()->CreateComputePipelineState(MaskPSOInitializer);
 
     if (!PipelineStateInstance.PipelineState)
     {

@@ -232,7 +232,7 @@ bool FEngine::Init()
     SamplerInfo.MinLOD         = 0.0f;
     SamplerInfo.MipLODBias     = 0.0f;
 
-    BaseMaterialSampler = RHICreateSamplerState(SamplerInfo);
+    BaseMaterialSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
 
     // Base material
     FMaterialInfo MaterialDesc;

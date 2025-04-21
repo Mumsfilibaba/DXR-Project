@@ -36,7 +36,7 @@ void FRendererInfoWidget::Draw()
     bool bDrawRendererInfo = CVarDrawRendererInfo.GetValue();
     if (bDrawRendererInfo)
     {
-        const FString AdapterName = RHIGetAdapterName();
+        const FString AdapterName = FRHI::Get()->GetAdapterName();
 
         const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
         const ImVec2 DisplaySize      = ImGuiExtensions::GetDisplaySize();
@@ -82,7 +82,7 @@ void FRendererInfoWidget::Draw()
             ImGui::Text("%s", *AdapterName);
 
             FRHIVideoMemoryInfo LocalMemoryInfo;
-            if (GRHI->RHIQueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemoryInfo))
+            if (FRHI::Get()->QueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemoryInfo))
             {
                 ImGui::NextColumn();
 
@@ -99,7 +99,7 @@ void FRendererInfoWidget::Draw()
             }
 
             FRHIVideoMemoryInfo NonLocalMemoryInfo;
-            if (GRHI->RHIQueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemoryInfo))
+            if (FRHI::Get()->QueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemoryInfo))
             {
                 ImGui::NextColumn();
 

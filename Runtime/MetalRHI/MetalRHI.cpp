@@ -6,9 +6,16 @@ IMPLEMENT_ENGINE_MODULE(FMetalRHIModule, MetalRHI);
 
 FRHI* FMetalRHIModule::CreateRHI()
 {
-    return new FMetalRHI();
+    TUniquePtr<FMetalRHI> NewRHI = MakeUniquePtr<FMetalRHI>();
+    if (NewRHI->Initialize())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewRHI.Release();
+    }
 }
-
 
 FMetalRHI* FMetalRHI::GMetalRHI = nullptr;
 
@@ -54,7 +61,7 @@ bool FMetalRHI::Initialize()
     return true;
 }
 
-FRHITexture* FMetalRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FMetalRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     FMetalTextureRef NewTexture = new FMetalTexture(GetDeviceContext(), InTextureInfo);
     if (!NewTexture->Initialize(InInitialState, InInitialData))
@@ -67,7 +74,7 @@ FRHITexture* FMetalRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
     }
 }
 
-FRHIBuffer* FMetalRHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FMetalRHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
     FMetalBufferRef NewBuffer = new FMetalBuffer(GetDeviceContext(), InBufferInfo);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
@@ -80,7 +87,7 @@ FRHIBuffer* FMetalRHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EReso
     }
 }
 
-FRHISamplerState* FMetalRHI::RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
+FRHISamplerState* FMetalRHI::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
 {
     FMetalSamplerStateRef NewSamplerState = new FMetalSamplerState(GetDeviceContext(), InSamplerInfo);
     if (!NewSamplerState->Initialize())
@@ -93,37 +100,37 @@ FRHISamplerState* FMetalRHI::RHICreateSamplerState(const FRHISamplerStateInfo& I
     }
 }
 
-FRHIRayTracingScene* FMetalRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& Desc)
+FRHIRayTracingScene* FMetalRHI::CreateRayTracingScene(const FRHIRayTracingSceneInfo& Desc)
 {
     return new FMetalRayTracingScene(GetDeviceContext(), Desc);
 }
 
-FRHIRayTracingGeometry* FMetalRHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
+FRHIRayTracingGeometry* FMetalRHI::CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
 {
     return new FMetalRayTracingGeometry(InGeometryInfo);
 }
 
-FRHIShaderResourceView* FMetalRHI::RHICreateShaderResourceView(const FRHITextureSRVInfo& Info)
+FRHIShaderResourceView* FMetalRHI::CreateShaderResourceView(const FRHITextureSRVInfo& Info)
 {
     return new FMetalShaderResourceView(GetDeviceContext(), Info.Texture);
 }
 
-FRHIShaderResourceView* FMetalRHI::RHICreateShaderResourceView(const FRHIBufferSRVInfo& Info)
+FRHIShaderResourceView* FMetalRHI::CreateShaderResourceView(const FRHIBufferSRVInfo& Info)
 {
     return new FMetalShaderResourceView(GetDeviceContext(), Info.Buffer);
 }
 
-FRHIUnorderedAccessView* FMetalRHI::RHICreateUnorderedAccessView(const FRHITextureUAVInfo& Info)
+FRHIUnorderedAccessView* FMetalRHI::CreateUnorderedAccessView(const FRHITextureUAVInfo& Info)
 {
     return new FMetalUnorderedAccessView(GetDeviceContext(), Info.Texture);
 }
 
-FRHIUnorderedAccessView* FMetalRHI::RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& Info)
+FRHIUnorderedAccessView* FMetalRHI::CreateUnorderedAccessView(const FRHIBufferUAVInfo& Info)
 {
     return new FMetalUnorderedAccessView(GetDeviceContext(), Info.Buffer);
 }
 
-FRHIComputeShader* FMetalRHI::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
+FRHIComputeShader* FMetalRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     FMetalComputeShaderRef NewShader = new FMetalComputeShader(GetDeviceContext());
     if (!NewShader->Initialize(ShaderCode))
@@ -136,7 +143,7 @@ FRHIComputeShader* FMetalRHI::RHICreateComputeShader(const TArray<uint8>& Shader
     }
 }
 
-FRHIVertexShader* FMetalRHI::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
+FRHIVertexShader* FMetalRHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
     FMetalVertexShaderRef NewShader = new FMetalVertexShader(GetDeviceContext());
     if (!NewShader->Initialize(ShaderCode))
@@ -149,32 +156,32 @@ FRHIVertexShader* FMetalRHI::RHICreateVertexShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIHullShader* FMetalRHI::RHICreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* FMetalRHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIDomainShader* FMetalRHI::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* FMetalRHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIGeometryShader* FMetalRHI::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* FMetalRHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIMeshShader* FMetalRHI::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* FMetalRHI::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIAmplificationShader* FMetalRHI::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* FMetalRHI::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
     return nullptr;
 }
 
-FRHIPixelShader* FMetalRHI::RHICreatePixelShader(const TArray<uint8>& ShaderCode)
+FRHIPixelShader* FMetalRHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
     FMetalPixelShaderRef NewShader = new FMetalPixelShader(GetDeviceContext());
     if (!NewShader->Initialize(ShaderCode))
@@ -187,7 +194,7 @@ FRHIPixelShader* FMetalRHI::RHICreatePixelShader(const TArray<uint8>& ShaderCode
     }
 }
 
-FRHIRayGenShader* FMetalRHI::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
+FRHIRayGenShader* FMetalRHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayGenShaderRef NewShader = new FMetalRayGenShader(GetDeviceContext());
     if (!NewShader->Initialize(ShaderCode))
@@ -200,7 +207,7 @@ FRHIRayGenShader* FMetalRHI::RHICreateRayGenShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIRayAnyHitShader* FMetalRHI::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayAnyHitShader* FMetalRHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayAnyHitShaderRef NewShader = new FMetalRayAnyHitShader(GetDeviceContext());
     if (!NewShader->Initialize(ShaderCode))
@@ -213,7 +220,7 @@ FRHIRayAnyHitShader* FMetalRHI::RHICreateRayAnyHitShader(const TArray<uint8>& Sh
     }
 }
 
-FRHIRayClosestHitShader* FMetalRHI::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayClosestHitShader* FMetalRHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayClosestHitShaderRef NewShader = new FMetalRayClosestHitShader(GetDeviceContext());
     if (!NewShader->Initialize(ShaderCode))
@@ -226,7 +233,7 @@ FRHIRayClosestHitShader* FMetalRHI::RHICreateRayClosestHitShader(const TArray<ui
     }
 }
 
-FRHIRayMissShader* FMetalRHI::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
+FRHIRayMissShader* FMetalRHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
     FMetalRayMissShaderRef NewShader = new FMetalRayMissShader(GetDeviceContext());
     if (!NewShader->Initialize(ShaderCode))
@@ -239,7 +246,7 @@ FRHIRayMissShader* FMetalRHI::RHICreateRayMissShader(const TArray<uint8>& Shader
     }
 }
 
-FRHIDepthStencilState* FMetalRHI::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FMetalRHI::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
 {
     FMetalDepthStencilStateRef NewDepthStencilState = new FMetalDepthStencilState(GetDeviceContext(), InInitializer);
     if (!NewDepthStencilState->Initialize())
@@ -252,42 +259,42 @@ FRHIDepthStencilState* FMetalRHI::RHICreateDepthStencilState(const FRHIDepthSten
     }
 }
 
-FRHIRasterizerState* FMetalRHI::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FMetalRHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
 {
     return new FMetalRasterizerState(InInitializer);
 }
 
-FRHIBlendState* FMetalRHI::RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FMetalRHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
 {
     return new FMetalBlendState(InInitializer);
 }
 
-FRHIVertexLayout* FMetalRHI::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIVertexLayout* FMetalRHI::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
     return new FMetalVertexLayout(InInitializerList);
 }
 
-FRHIGraphicsPipelineState* FMetalRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FMetalRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
 {
     return new FMetalGraphicsPipelineState(GetDeviceContext(), InInitializer);
 }
 
-FRHIComputePipelineState* FMetalRHI::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Desc)
+FRHIComputePipelineState* FMetalRHI::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& Desc)
 {
     return new FMetalComputePipelineState();
 }
 
-FRHIRayTracingPipelineState* FMetalRHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Desc)
+FRHIRayTracingPipelineState* FMetalRHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Desc)
 {
     return new FMetalRayTracingPipelineState();
 }
 
-FRHIQuery* FMetalRHI::RHICreateQuery(EQueryType InQueryType)
+FRHIQuery* FMetalRHI::CreateQuery(EQueryType InQueryType)
 {
     return new FMetalQuery(InQueryType);
 }
 
-FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportInfo& ViewportInfo)
+FRHIViewport* FMetalRHI::CreateViewport(const FRHIViewportInfo& ViewportInfo)
 {
     FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(ViewportInfo.WindowHandle);
     if (!Window)
@@ -321,7 +328,7 @@ FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportInfo& ViewportInfo)
     }
 }
 
-bool FMetalRHI::RHIQueryUAVFormatSupport(EFormat Format) const
+bool FMetalRHI::QueryUAVFormatSupport(EFormat Format) const
 {
     return true;
 }

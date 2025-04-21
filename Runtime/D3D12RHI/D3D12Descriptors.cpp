@@ -244,5 +244,5 @@ void FD3D12OnlineDescriptorHeap::RecycleBlock(FD3D12OnlineDescriptorBlock* InBlo
 
 void FD3D12OnlineDescriptorHeap::FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock)
 {
-    FD3D12RHI::GetRHI()->DeferDeletion(this, InBlock);
+    FD3D12RHI::Get()->DeferDeletion(this, InBlock);
 }

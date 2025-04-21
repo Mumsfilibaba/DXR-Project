@@ -20,7 +20,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayGenShader = RHICreateRayGenShader(Code);
+    RayGenShader = FRHI::Get()->CreateRayGenShader(Code);
     if (!RayGenShader)
     {
         DEBUG_BREAK();
@@ -36,7 +36,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayClosestHitShader = RHICreateRayClosestHitShader(Code);
+    RayClosestHitShader = FRHI::Get()->CreateRayClosestHitShader(Code);
     if (!RayClosestHitShader)
     {
         DEBUG_BREAK();
@@ -52,7 +52,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayMissShader = RHICreateRayMissShader(Code);
+    RayMissShader = FRHI::Get()->CreateRayMissShader(Code);
     if (!RayMissShader)
     {
         DEBUG_BREAK();
@@ -67,7 +67,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     PSOInitializer.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
     PSOInitializer.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
 
-    Pipeline = RHICreateRayTracingPipelineState(PSOInitializer);
+    Pipeline = FRHI::Get()->CreateRayTracingPipelineState(PSOInitializer);
     if (!Pipeline)
     {
         DEBUG_BREAK();
@@ -78,7 +78,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     uint32 Height = Resources.MainViewport->GetHeight();
 
     FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
-    Resources.RTOutput = RHICreateTexture(RTOutputInfo, EResourceAccess::UnorderedAccess);
+    Resources.RTOutput = FRHI::Get()->CreateTexture(RTOutputInfo, EResourceAccess::UnorderedAccess);
     if (!Resources.RTOutput)
     {
         DEBUG_BREAK();
@@ -166,7 +166,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     if (!Resources.RTScene)
     {
         FRHIRayTracingSceneInfo SceneInfo(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
-        Resources.RTScene = RHICreateRayTracingScene(SceneInfo);
+        Resources.RTScene = FRHI::Get()->CreateRayTracingScene(SceneInfo);
     }
     else
     {

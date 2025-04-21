@@ -57,7 +57,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    SSAOShader = RHICreateComputeShader(ShaderCode);
+    SSAOShader = FRHI::Get()->CreateComputeShader(ShaderCode);
     if (!SSAOShader)
     {
         DEBUG_BREAK();
@@ -65,7 +65,8 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
 
     FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
-    PipelineState = RHICreateComputePipelineState(PSOInitializer);
+    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+
     if (!PipelineState)
     {
         DEBUG_BREAK();
@@ -88,7 +89,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    BlurHorizontalShader = RHICreateComputeShader(ShaderCode);
+    BlurHorizontalShader = FRHI::Get()->CreateComputeShader(ShaderCode);
     if (!BlurHorizontalShader)
     {
         DEBUG_BREAK();
@@ -96,7 +97,8 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
 
     PSOInitializer.Shader = BlurHorizontalShader.Get();
-    BlurHorizontalPSO = RHICreateComputePipelineState(PSOInitializer);
+    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+
     if (!BlurHorizontalPSO)
     {
         DEBUG_BREAK();
@@ -117,7 +119,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    BlurVerticalShader = RHICreateComputeShader(ShaderCode);
+    BlurVerticalShader = FRHI::Get()->CreateComputeShader(ShaderCode);
     if (!BlurVerticalShader)
     {
         DEBUG_BREAK();
@@ -126,7 +128,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 
     PSOInitializer.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = RHICreateComputePipelineState(PSOInitializer);
+    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
     if (!BlurVerticalPSO)
     {
         DEBUG_BREAK();
@@ -235,7 +237,7 @@ bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources,
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
 
     FRHITextureInfo SSAOBufferInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
-    FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferInfo, EResourceAccess::NonPixelShaderResource);
+    FrameResources.SSAOBuffer = FRHI::Get()->CreateTexture(SSAOBufferInfo, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();

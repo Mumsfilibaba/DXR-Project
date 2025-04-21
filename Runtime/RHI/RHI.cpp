@@ -146,7 +146,9 @@ static ERHIType GetRHIType()
     return RHIType;
 }
 
-bool RHIInitialize()
+FRHI* FRHI::Instance = nullptr;
+
+bool FRHI::Initialize()
 {
     // Select RHI
     ERHIType RHIType = GetRHIType();
@@ -196,13 +198,7 @@ bool RHIInitialize()
         LocalRHI = ValidationRHI;
     }
 
-    if (!LocalRHI->Initialize())
-    {
-        LOG_ERROR("[RHIInitialize] Failed to initialize RHIInterface, the application has to terminate");
-        return false;
-    }
-
-    GRHI = LocalRHI;
+    Instance = LocalRHI;
 
     // Initialize the CommandListExecutor
     if (!FRHICommandListExecutor::Initialize())
@@ -213,16 +209,15 @@ bool RHIInitialize()
     return true;
 }
 
-void RHIRelease()
+void FRHI::Release()
 {
     // The RHI-implementation might need the executor in the destructor so we flush before we delete it
-    FRHICommandListExecutor::Get().FlushDeletedResources();
-
-    if (GRHI)
+    if (FRHICommandListExecutor::IsInitialized())
     {
-        delete GRHI;
-        GRHI = nullptr;
+        FRHICommandListExecutor::Get().FlushDeletedResources();
     }
+
+    SAFE_DELETE(Instance);
 
     FRHICommandListExecutor::Release();
 }

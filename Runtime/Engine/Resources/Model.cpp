@@ -38,7 +38,8 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 
     // Create VertexBuffer
     FRHIBufferInfo VBInfo(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
+    VertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
+
     if (!VertexBuffer)
     {
         return false;
@@ -57,7 +58,8 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     }
 
     VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexPosition), sizeof(FVertexPosition), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexPositionBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexPositions.Data());
+    VertexPositionBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexPositions.Data());
+
     if (!VertexPositionBuffer)
     {
         return false;
@@ -76,7 +78,8 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     }
 
     VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexNormal), sizeof(FVertexNormal), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexNormalBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexNormals.Data());
+    VertexNormalBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexNormals.Data());
+
     if (!VertexNormalBuffer)
     {
         return false;
@@ -95,7 +98,8 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     }
 
     VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexTexCoord), sizeof(FVertexTexCoord), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexTexCoordBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
+    VertexTexCoordBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
+
     if (!VertexTexCoordBuffer)
     {
         return false;
@@ -129,7 +133,8 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     }
 
     FRHIBufferInfo IBInfo(IndexCount * GetStrideFromIndexFormat(IndexFormat), GetStrideFromIndexFormat(IndexFormat), BufferFlags | EBufferUsageFlags::IndexBuffer);
-    IndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, InitialIndicies);
+    IndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::IndexBuffer, InitialIndicies);
+
     if (!IndexBuffer)
     {
         return false;
@@ -142,7 +147,8 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
     if (bEnableRayTracing)
     {
         FRHIRayTracingGeometryInfo GeometryInfo(VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::None);
-        RTGeometry = RHICreateRayTracingGeometry(GeometryInfo);
+        RTGeometry = FRHI::Get()->CreateRayTracingGeometry(GeometryInfo);
+
         if (!RTGeometry)
         {
             return false;
@@ -153,35 +159,40 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         }
 
         FRHIBufferSRVInfo SRVInfo(VertexBuffer.Get(), 0, VertexCount);
-        VertexBufferSRV = RHICreateShaderResourceView(SRVInfo);
+        VertexBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+
         if (!VertexBufferSRV)
         {
             return false;
         }
         
         SRVInfo = FRHIBufferSRVInfo(VertexPositionBuffer.Get(), 0, VertexCount);
-        VertexPositionBufferSRV = RHICreateShaderResourceView(SRVInfo);
+        VertexPositionBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+
         if (!VertexPositionBufferSRV)
         {
             return false;
         }
         
         SRVInfo = FRHIBufferSRVInfo(VertexNormalBuffer.Get(), 0, VertexCount);
-        VertexNormalBufferSRV = RHICreateShaderResourceView(SRVInfo);
+        VertexNormalBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+
         if (!VertexNormalBufferSRV)
         {
             return false;
         }
         
         SRVInfo = FRHIBufferSRVInfo(VertexTexCoordBuffer.Get(), 0, VertexCount);
-        VertexTexCoordBufferSRV = RHICreateShaderResourceView(SRVInfo);
+        VertexTexCoordBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+
         if (!VertexTexCoordBufferSRV)
         {
             return false;
         }
 
         SRVInfo = FRHIBufferSRVInfo(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::UInt32);
-        IndexBufferSRV = RHICreateShaderResourceView(SRVInfo);
+        IndexBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+
         if (!IndexBufferSRV)
         {
             return false;

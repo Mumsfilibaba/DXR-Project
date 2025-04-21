@@ -49,7 +49,7 @@ bool FSceneViewport::InitializeRHI()
     ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
     ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
 
-    FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
+    FRHIViewportRef NewViewport = FRHI::Get()->CreateViewport(ViewportInfo);
     if (!NewViewport)
     {
         DEBUG_BREAK();

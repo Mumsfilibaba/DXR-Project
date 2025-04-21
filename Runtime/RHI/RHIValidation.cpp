@@ -36,32 +36,32 @@ bool FRHIValidation::Initialize()
     return RealRHI->Initialize();
 }
 
-void FRHIValidation::RHIBeginFrame()
+void FRHIValidation::BeginFrame()
 {
-    RealRHI->RHIBeginFrame();
+    RealRHI->BeginFrame();
 }
 
-void FRHIValidation::RHIEndFrame()
+void FRHIValidation::EndFrame()
 {
-    RealRHI->RHIEndFrame();
+    RealRHI->EndFrame();
 }
 
-FRHITexture* FRHIValidation::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    return RealRHI->RHICreateTexture(InTextureInfo, InInitialState, InInitialData);
+    return RealRHI->CreateTexture(InTextureInfo, InInitialState, InInitialData);
 }
 
-FRHIBuffer* FRHIValidation::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    return RealRHI->RHICreateBuffer(InBufferInfo, InInitialState, InInitialData);
+    return RealRHI->CreateBuffer(InBufferInfo, InInitialState, InInitialData);
 }
 
-FRHISamplerState* FRHIValidation::RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
+FRHISamplerState* FRHIValidation::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
 {
-    return RealRHI->RHICreateSamplerState(InSamplerInfo);
+    return RealRHI->CreateSamplerState(InSamplerInfo);
 }
 
-FRHIViewport* FRHIValidation::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
+FRHIViewport* FRHIValidation::CreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
     if (!InViewportInfo.WindowHandle)
     {
@@ -69,20 +69,20 @@ FRHIViewport* FRHIValidation::RHICreateViewport(const FRHIViewportInfo& InViewpo
         return nullptr;
     }
 
-    return RealRHI->RHICreateViewport(InViewportInfo);
+    return RealRHI->CreateViewport(InViewportInfo);
 }
 
-FRHIRayTracingScene* FRHIValidation::RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
+FRHIRayTracingScene* FRHIValidation::CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
 {
-    return RealRHI->RHICreateRayTracingScene(InSceneInfo);
+    return RealRHI->CreateRayTracingScene(InSceneInfo);
 }
 
-FRHIRayTracingGeometry* FRHIValidation::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
+FRHIRayTracingGeometry* FRHIValidation::CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
 {
-    return RealRHI->RHICreateRayTracingGeometry(InGeometryInfo);
+    return RealRHI->CreateRayTracingGeometry(InGeometryInfo);
 }
 
-FRHIShaderResourceView* FRHIValidation::RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
+FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
 {
     if (!InInfo.Texture)
     {
@@ -123,10 +123,10 @@ FRHIShaderResourceView* FRHIValidation::RHICreateShaderResourceView(const FRHITe
         return nullptr;
     }
 
-    return RealRHI->RHICreateShaderResourceView(InInfo);
+    return RealRHI->CreateShaderResourceView(InInfo);
 }
 
-FRHIShaderResourceView* FRHIValidation::RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
+FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
 {
     if (!InInfo.Buffer)
     {
@@ -141,10 +141,10 @@ FRHIShaderResourceView* FRHIValidation::RHICreateShaderResourceView(const FRHIBu
         return nullptr;
     }
 
-    return RealRHI->RHICreateShaderResourceView(InInfo);
+    return RealRHI->CreateShaderResourceView(InInfo);
 }
 
-FRHIUnorderedAccessView* FRHIValidation::RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
+FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
 {
     if (!InInfo.Texture)
     {
@@ -184,10 +184,10 @@ FRHIUnorderedAccessView* FRHIValidation::RHICreateUnorderedAccessView(const FRHI
         return nullptr;
     }
 
-    return RealRHI->RHICreateUnorderedAccessView(InInfo);
+    return RealRHI->CreateUnorderedAccessView(InInfo);
 }
 
-FRHIUnorderedAccessView* FRHIValidation::RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
+FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
 {
     if (!InInfo.Buffer)
     {
@@ -202,112 +202,112 @@ FRHIUnorderedAccessView* FRHIValidation::RHICreateUnorderedAccessView(const FRHI
         return nullptr;
     }
 
-    return RealRHI->RHICreateUnorderedAccessView(InInfo);
+    return RealRHI->CreateUnorderedAccessView(InInfo);
 }
 
-FRHIComputeShader* FRHIValidation::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
+FRHIComputeShader* FRHIValidation::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateComputeShader(ShaderCode);
+    return RealRHI->CreateComputeShader(ShaderCode);
 }
 
-FRHIVertexShader* FRHIValidation::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
+FRHIVertexShader* FRHIValidation::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateVertexShader(ShaderCode);
+    return RealRHI->CreateVertexShader(ShaderCode);
 }
 
-FRHIHullShader* FRHIValidation::RHICreateHullShader(const TArray<uint8>& ShaderCode)
+FRHIHullShader* FRHIValidation::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateHullShader(ShaderCode);
+    return RealRHI->CreateHullShader(ShaderCode);
 }
 
-FRHIDomainShader* FRHIValidation::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
+FRHIDomainShader* FRHIValidation::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateDomainShader(ShaderCode);
+    return RealRHI->CreateDomainShader(ShaderCode);
 }
 
-FRHIGeometryShader* FRHIValidation::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
+FRHIGeometryShader* FRHIValidation::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateGeometryShader(ShaderCode);
+    return RealRHI->CreateGeometryShader(ShaderCode);
 }
 
-FRHIMeshShader* FRHIValidation::RHICreateMeshShader(const TArray<uint8>& ShaderCode)
+FRHIMeshShader* FRHIValidation::CreateMeshShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateMeshShader(ShaderCode);
+    return RealRHI->CreateMeshShader(ShaderCode);
 }
 
-FRHIAmplificationShader* FRHIValidation::RHICreateAmplificationShader(const TArray<uint8>& ShaderCode)
+FRHIAmplificationShader* FRHIValidation::CreateAmplificationShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateAmplificationShader(ShaderCode);
+    return RealRHI->CreateAmplificationShader(ShaderCode);
 }
 
-FRHIPixelShader* FRHIValidation::RHICreatePixelShader(const TArray<uint8>& ShaderCode)
+FRHIPixelShader* FRHIValidation::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreatePixelShader(ShaderCode);
+    return RealRHI->CreatePixelShader(ShaderCode);
 }
 
-FRHIRayGenShader* FRHIValidation::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
+FRHIRayGenShader* FRHIValidation::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateRayGenShader(ShaderCode);
+    return RealRHI->CreateRayGenShader(ShaderCode);
 }
 
-FRHIRayAnyHitShader* FRHIValidation::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayAnyHitShader* FRHIValidation::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateRayAnyHitShader(ShaderCode);
+    return RealRHI->CreateRayAnyHitShader(ShaderCode);
 }
 
-FRHIRayClosestHitShader* FRHIValidation::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
+FRHIRayClosestHitShader* FRHIValidation::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateRayClosestHitShader(ShaderCode);
+    return RealRHI->CreateRayClosestHitShader(ShaderCode);
 }
 
-FRHIRayMissShader* FRHIValidation::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
+FRHIRayMissShader* FRHIValidation::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return RealRHI->RHICreateRayMissShader(ShaderCode);
+    return RealRHI->CreateRayMissShader(ShaderCode);
 }
 
-FRHIDepthStencilState* FRHIValidation::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FRHIValidation::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
 {
-    return RealRHI->RHICreateDepthStencilState(InInitializer);
+    return RealRHI->CreateDepthStencilState(InInitializer);
 }
 
-FRHIRasterizerState* FRHIValidation::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FRHIValidation::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
 {
-    return RealRHI->RHICreateRasterizerState(InInitializer);
+    return RealRHI->CreateRasterizerState(InInitializer);
 }
 
-FRHIBlendState* FRHIValidation::RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FRHIValidation::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
 {
-    return RealRHI->RHICreateBlendState(InInitializer);
+    return RealRHI->CreateBlendState(InInitializer);
 }
 
-FRHIVertexLayout* FRHIValidation::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIVertexLayout* FRHIValidation::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
-    return RealRHI->RHICreateVertexLayout(InInitializerList);
+    return RealRHI->CreateVertexLayout(InInitializerList);
 }
 
-FRHIGraphicsPipelineState* FRHIValidation::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FRHIValidation::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
 {
-    return RealRHI->RHICreateGraphicsPipelineState(InInitializer);
+    return RealRHI->CreateGraphicsPipelineState(InInitializer);
 }
 
-FRHIComputePipelineState* FRHIValidation::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FRHIValidation::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
 {
-    return RealRHI->RHICreateComputePipelineState(InInitializer);
+    return RealRHI->CreateComputePipelineState(InInitializer);
 }
 
-FRHIRayTracingPipelineState* FRHIValidation::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
+FRHIRayTracingPipelineState* FRHIValidation::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
 {
-    return RealRHI->RHICreateRayTracingPipelineState(InInitializer);
+    return RealRHI->CreateRayTracingPipelineState(InInitializer);
 }
 
-FRHIQuery* FRHIValidation::RHICreateQuery(EQueryType InQueryType)
+FRHIQuery* FRHIValidation::CreateQuery(EQueryType InQueryType)
 {
-    return RealRHI->RHICreateQuery(InQueryType);
+    return RealRHI->CreateQuery(InQueryType);
 }
 
-IRHICommandContext* FRHIValidation::RHIObtainCommandContext()
+IRHICommandContext* FRHIValidation::ObtainCommandContext()
 {
-    IRHICommandContext* RealContext = RealRHI->RHIObtainCommandContext();
+    IRHICommandContext* RealContext = RealRHI->ObtainCommandContext();
     if (!RealContext)
     {
         return nullptr;
@@ -324,7 +324,7 @@ IRHICommandContext* FRHIValidation::RHIObtainCommandContext()
     }
 }
 
-bool FRHIValidation::RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult)
+bool FRHIValidation::GetQueryResult(FRHIQuery* Query, uint64& OutResult)
 {
     if (!Query)
     {
@@ -332,52 +332,52 @@ bool FRHIValidation::RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult)
         return false;
     }
 
-    return RealRHI->RHIGetQueryResult(Query, OutResult);
+    return RealRHI->GetQueryResult(Query, OutResult);
 }
 
-void FRHIValidation::RHIEnqueueResourceDeletion(FRHIResource* Resource)
+void FRHIValidation::EnqueueResourceDeletion(FRHIResource* Resource)
 {
-    RealRHI->RHIEnqueueResourceDeletion(Resource);
+    RealRHI->EnqueueResourceDeletion(Resource);
 }
 
-void* FRHIValidation::RHIGetAdapter()
+void* FRHIValidation::GetNativeAdapter()
 {
-    return RealRHI->RHIGetAdapter();
+    return RealRHI->GetNativeAdapter();
 }
 
-void* FRHIValidation::RHIGetDevice()
+void* FRHIValidation::GetNativeDevice()
 {
-    return RealRHI->RHIGetDevice();
+    return RealRHI->GetNativeDevice();
 }
 
-void* FRHIValidation::RHIGetDirectCommandQueue()
+void* FRHIValidation::GetNativeDirectCommandQueue()
 {
-    return RealRHI->RHIGetDirectCommandQueue();
+    return RealRHI->GetNativeDirectCommandQueue();
 }
 
-void* FRHIValidation::RHIGetComputeCommandQueue()
+void* FRHIValidation::GetNativeComputeCommandQueue()
 {
-    return RealRHI->RHIGetComputeCommandQueue();
+    return RealRHI->GetNativeComputeCommandQueue();
 }
 
-void* FRHIValidation::RHIGetCopyCommandQueue()
+void* FRHIValidation::GetNativeCopyCommandQueue()
 {
-    return RealRHI->RHIGetCopyCommandQueue();
+    return RealRHI->GetNativeCopyCommandQueue();
 }
 
-bool FRHIValidation::RHIQueryUAVFormatSupport(EFormat Format) const
+bool FRHIValidation::QueryUAVFormatSupport(EFormat Format) const
 {
-    return RealRHI->RHIQueryUAVFormatSupport(Format);
+    return RealRHI->QueryUAVFormatSupport(Format);
 }
 
-bool FRHIValidation::RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const
+bool FRHIValidation::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const
 {
-    return RealRHI->RHIQueryVideoMemoryInfo(MemoryType, OutMemoryStats);
+    return RealRHI->QueryVideoMemoryInfo(MemoryType, OutMemoryStats);
 }
 
-FString FRHIValidation::RHIGetAdapterName() const
+FString FRHIValidation::GetAdapterName() const
 {
-    return RealRHI->RHIGetAdapterName();
+    return RealRHI->GetAdapterName();
 }
 
 FRHIValidationCommandContext::FRHIValidationCommandContext(IRHICommandContext* InRealContext)

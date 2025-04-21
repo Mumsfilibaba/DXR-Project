@@ -39,9 +39,10 @@ void FGPUProfiler::Tick()
     if (bEnabled && FrameTime.BeginQuery && FrameTime.EndQuery)
     {
         uint64 BeginQuery;
-        GetRHI()->RHIGetQueryResult(FrameTime.BeginQuery.Get(), BeginQuery);
+        FRHI::Get()->GetQueryResult(FrameTime.BeginQuery.Get(), BeginQuery);
+
         uint64 EndQuery;
-        GetRHI()->RHIGetQueryResult(FrameTime.EndQuery.Get(), EndQuery);
+        FRHI::Get()->GetQueryResult(FrameTime.EndQuery.Get(), EndQuery);
 
         const double DeltaTime = static_cast<double>(EndQuery - BeginQuery);
         double Duration = DeltaTime / 1000000.0; // To milliseconds
@@ -71,7 +72,7 @@ void FGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
     if (bEnabled)
     {
         if (!FrameTime.BeginQuery)
-            FrameTime.BeginQuery = RHICreateQuery(EQueryType::Timestamp);
+            FrameTime.BeginQuery = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
 
         CmdList.QueryTimestamp(FrameTime.BeginQuery.Get());
     }
@@ -82,7 +83,7 @@ void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
     if (bEnabled)
     {
         if (!FrameTime.EndQuery)
-            FrameTime.EndQuery = RHICreateQuery(EQueryType::Timestamp);
+            FrameTime.EndQuery = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
 
         CmdList.QueryTimestamp(FrameTime.EndQuery.Get());
     }
@@ -105,7 +106,7 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
             else
             {
                 FGPUProfileSample& NewSample = Samples.Add(ScopeName);
-                Query = NewSample.BeginQuery = RHICreateQuery(EQueryType::Timestamp);
+                Query = NewSample.BeginQuery = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
             }
         }
 
@@ -130,16 +131,17 @@ void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
         if (FGPUProfileSample* Entry = Samples.Find(ScopeName))
         {
             if (!Entry->EndQuery)
-                Entry->EndQuery = RHICreateQuery(EQueryType::Timestamp);
+                Entry->EndQuery = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
 
             if (Entry->EndQuery)
             {
                 CmdList.QueryTimestamp(Entry->EndQuery.Get());
 
                 uint64 BeginQuery;
-                GetRHI()->RHIGetQueryResult(Entry->BeginQuery.Get(), BeginQuery);
+                FRHI::Get()->GetQueryResult(Entry->BeginQuery.Get(), BeginQuery);
+
                 uint64 EndQuery;
-                GetRHI()->RHIGetQueryResult(Entry->EndQuery.Get(), EndQuery);
+                FRHI::Get()->GetQueryResult(Entry->EndQuery.Get(), EndQuery);
 
                 const double DeltaTime = static_cast<double>(EndQuery - BeginQuery);
                 Entry->AddSample((float)DeltaTime);

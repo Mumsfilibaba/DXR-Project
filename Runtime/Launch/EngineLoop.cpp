@@ -197,7 +197,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!RHIInitialize())
+    if (!FRHI::Initialize())
     {
         return -1;
     }
@@ -287,11 +287,16 @@ void FEngineLoop::Release()
     TRACE_FUNCTION_SCOPE();
 
     // Wait for the last RHI commands to finish
-    FRHICommandListExecutor::Get().WaitForGPU();
+    if (FRHICommandListExecutor::IsInitialized())
+    {
+        FRHICommandListExecutor::Get().WaitForGPU();
+    }
 
     // Release the renderer
-    IRendererModule* RendererModule = IRendererModule::Get();
-    RendererModule->Release();
+    if (IRendererModule* RendererModule = IRendererModule::Get())
+    {
+        RendererModule->Release();
+    }
 
     // Release the Engine (Protect against failed initialization where the global pointer was never initialized)
     if (GEngine)
@@ -312,7 +317,7 @@ void FEngineLoop::Release()
     FTextureFactory::Release();
 
     // Wait for RHI thread and shutdown RHI Layer
-    RHIRelease();
+    FRHI::Release();
 
     FShaderCompiler::Destroy();
 
