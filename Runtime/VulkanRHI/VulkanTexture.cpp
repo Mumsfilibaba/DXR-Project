@@ -290,7 +290,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     if (InInitialData)
     {
         // TODO: Support other types than texture 2D
-        InCommandContext->RHIStartContext();
+        InCommandContext->StartContext();
         
         VkImageMemoryBarrier2 ImageBarrier;
         FMemory::Memzero(&ImageBarrier);
@@ -332,20 +332,20 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
             }
             
             FTextureRegion2D TextureRegion(Width, Height);
-            InCommandContext->RHIUpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
+            InCommandContext->UpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
 
             Width  = Width / 2;
             Height = Height / 2;
         }
 
         // NOTE: Transition into InitialAccess
-        InCommandContext->RHITransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
-        InCommandContext->RHIFinishContext();
+        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        InCommandContext->FinishContext();
     }
     else
     {
         // NOTE: Transition the texture into the expected ImageLayout
-        InCommandContext->RHIStartContext();
+        InCommandContext->StartContext();
 
         VkImageMemoryBarrier2 ImageBarrier;
         FMemory::Memzero(&ImageBarrier);
@@ -367,7 +367,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
-        InCommandContext->RHIFinishContext();
+        InCommandContext->FinishContext();
     }
     
     return true;

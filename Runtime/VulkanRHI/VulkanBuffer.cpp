@@ -146,19 +146,19 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         }
         else
         {
-            InCommandContext->RHIStartContext();
+            InCommandContext->StartContext();
 
-            InCommandContext->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            InCommandContext->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             
-            InCommandContext->RHIUpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
-                InCommandContext->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+                InCommandContext->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
-            InCommandContext->RHIFinishContext();
+            InCommandContext->FinishContext();
         }
     }
     

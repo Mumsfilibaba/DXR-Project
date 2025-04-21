@@ -33,11 +33,11 @@ void FRHICommandList::Execute() noexcept
 
     // Then execute all commands on the assigned context
     IRHICommandContext& CommandContextRef = GetCommandContext();
-    CommandContextRef.RHIStartContext();
+    CommandContextRef.StartContext();
 
     ExecuteWithContext(CommandContextRef);
 
-    CommandContextRef.RHIFinishContext();
+    CommandContextRef.FinishContext();
 }
 
 void FRHICommandList::ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept
@@ -342,6 +342,6 @@ void FRHICommandListExecutor::WaitForGPU()
 
     if (DefaultCommandContext)
     {
-        DefaultCommandContext->RHIFlush();
+        DefaultCommandContext->Flush();
     }
 }

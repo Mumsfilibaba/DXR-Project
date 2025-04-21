@@ -82,7 +82,7 @@ FD3D12RHI::~FD3D12RHI()
     // Flush the default context before flushing the submission queue
     if (DirectCommandContext)
     {
-        DirectCommandContext->RHIFlush();
+        DirectCommandContext->Flush();
     }
 
     while (!PendingSubmissions.IsEmpty())
@@ -331,7 +331,7 @@ FRHIRayTracingScene* FD3D12RHI::CreateRayTracingScene(const FRHIRayTracingSceneI
     BuildInfo.NumInstances = InSceneInfo.Instances.Size();
     BuildInfo.bUpdate      = false;
 
-    DirectCommandContext->RHIStartContext();
+    DirectCommandContext->StartContext();
 
     TSharedRef<FD3D12RayTracingScene> D3D12Scene = new FD3D12RayTracingScene(GetDevice(), InSceneInfo);
     if (!D3D12Scene->Build(*DirectCommandContext, BuildInfo))
@@ -340,7 +340,7 @@ FRHIRayTracingScene* FD3D12RHI::CreateRayTracingScene(const FRHIRayTracingSceneI
         D3D12Scene.Reset();
     }
 
-    DirectCommandContext->RHIFinishContext();
+    DirectCommandContext->FinishContext();
     return D3D12Scene.ReleaseOwnership();
 }
 
@@ -354,7 +354,7 @@ FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracing
     BuildInfo.IndexFormat  = InGeometryInfo.IndexFormat;
     BuildInfo.bUpdate      = false;
 
-    DirectCommandContext->RHIStartContext();
+    DirectCommandContext->StartContext();
 
     TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InGeometryInfo);
     if (!D3D12Geometry->Build(*DirectCommandContext, BuildInfo))
@@ -363,7 +363,7 @@ FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracing
         D3D12Geometry.Reset();
     }
 
-    DirectCommandContext->RHIFinishContext();
+    DirectCommandContext->FinishContext();
     return D3D12Geometry.ReleaseOwnership();
 }
 

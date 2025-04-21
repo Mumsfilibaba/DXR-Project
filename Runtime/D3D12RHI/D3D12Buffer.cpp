@@ -91,27 +91,27 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         }
         else
         {
-            InCommandContext->RHIStartContext();
+            InCommandContext->StartContext();
 
-            InCommandContext->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
-            InCommandContext->RHIUpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
-                InCommandContext->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+                InCommandContext->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
-            InCommandContext->RHIFinishContext();
+            InCommandContext->FinishContext();
         }
     }
     else
     {
         if (InInitialAccess != EResourceAccess::Common && Info.IsDynamic())
         {
-            InCommandContext->RHIStartContext();
-            InCommandContext->RHITransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
-            InCommandContext->RHIFinishContext();
+            InCommandContext->StartContext();
+            InCommandContext->TransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
+            InCommandContext->FinishContext();
         }
     }
 

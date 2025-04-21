@@ -72,7 +72,7 @@ FVulkanRHI::~FVulkanRHI()
     // Flush the default context before flushing the submission queue
     if (GraphicsCommandContext)
     {
-        GraphicsCommandContext->RHIFlush();
+        GraphicsCommandContext->Flush();
     }
 
     while (!PendingSubmissions.IsEmpty())
@@ -348,7 +348,7 @@ FRHIRayTracingGeometry* FVulkanRHI::CreateRayTracingGeometry(const FRHIRayTracin
     BuildInfo.IndexFormat  = InGeometryInfo.IndexFormat;
     BuildInfo.bUpdate      = false;
 
-    GraphicsCommandContext->RHIStartContext();
+    GraphicsCommandContext->StartContext();
 
     FVulkanRayTracingGeometryRef NewGeometry = new FVulkanRayTracingGeometry(GetDevice(), InGeometryInfo);
     if (!NewGeometry->Build(*GraphicsCommandContext, BuildInfo))
@@ -357,7 +357,7 @@ FRHIRayTracingGeometry* FVulkanRHI::CreateRayTracingGeometry(const FRHIRayTracin
         NewGeometry.Reset();
     }
 
-    GraphicsCommandContext->RHIFinishContext();
+    GraphicsCommandContext->FinishContext();
     return NewGeometry.ReleaseOwnership();
 }
 

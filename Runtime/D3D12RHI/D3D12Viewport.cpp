@@ -154,7 +154,7 @@ bool FD3D12Viewport::Resize(FD3D12CommandContext* InCommandContext, uint32 InWid
         }
         else
         {
-            InCommandContext->RHIClearState();
+            InCommandContext->ClearState();
         }
 
         for (FD3D12TextureRef& Texture : BackBuffers)

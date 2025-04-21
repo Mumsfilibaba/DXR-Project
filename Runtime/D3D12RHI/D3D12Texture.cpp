@@ -195,8 +195,8 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     if (InitialData && bIsTexture2D)
     {
         // TODO: Support other types than texture 2D
-        InCommandContext->RHIStartContext();
-        InCommandContext->RHITransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
+        InCommandContext->StartContext();
+        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
         // Transfer all the miplevels
         uint32 Width  = Info.Extent.X;
@@ -217,21 +217,21 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
             }
 
             FTextureRegion2D TextureRegion(Width, Height);
-            InCommandContext->RHIUpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
+            InCommandContext->UpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
 
             Width  = Width / 2;
             Height = Height / 2;
         }
 
         // NOTE: Transition into InitialAccess
-        InCommandContext->RHITransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
-        InCommandContext->RHIFinishContext();
+        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        InCommandContext->FinishContext();
     }
     else if (InInitialAccess != EResourceAccess::Common)
     {
-        InCommandContext->RHIStartContext();
-        InCommandContext->RHITransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, InInitialAccess));
-        InCommandContext->RHIFinishContext();
+        InCommandContext->StartContext();
+        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, InInitialAccess));
+        InCommandContext->FinishContext();
     }
 
     return true;

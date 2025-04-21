@@ -53,7 +53,7 @@ bool FVulkanViewport::Initialize(FVulkanCommandContext* InCommandContext)
     }
     
     // We need to start the context since that locks it to this thread
-    InCommandContext->RHIStartContext();
+    InCommandContext->StartContext();
 
     if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
     {
@@ -61,8 +61,8 @@ bool FVulkanViewport::Initialize(FVulkanCommandContext* InCommandContext)
     }
     
     // Unlock the context from this thread
-    InCommandContext->RHIFinishContext();
-    InCommandContext->RHIFlush();
+    InCommandContext->FinishContext();
+    InCommandContext->Flush();
 
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
