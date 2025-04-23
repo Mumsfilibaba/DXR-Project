@@ -3,7 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Platform/PlatformThreadMisc.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
@@ -225,7 +225,7 @@ bool FSceneRenderer::Initialize()
         Resources.CurrentHeight    = Resources.DesiredHeight = Resources.MainSwapChain->GetHeight();
     }
 
-    if (!FApplicationInterface::IsInitialized())
+    if (!FApplication::IsInitialized())
     {
         DEBUG_BREAK();
         return false;

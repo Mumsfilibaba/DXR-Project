@@ -1,5 +1,5 @@
 #pragma once
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "Application/Events.h"
 #include "Application/InputHandler.h"
 #include "Application/IViewport.h"

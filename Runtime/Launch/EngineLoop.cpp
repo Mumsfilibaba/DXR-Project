@@ -9,7 +9,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/Paths.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleOutputDevice.h"
@@ -177,7 +177,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FApplicationInterface::Create())
+    if (!FApplication::Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return -1;
@@ -272,7 +272,7 @@ void FEngineLoop::Tick()
     FrameTimer.Tick();
 
     const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
-    FApplicationInterface::Get().Tick(DeltaTime);
+    FApplication::Get().Tick(DeltaTime);
 
     GEngine->Tick(DeltaTime);
 
@@ -323,7 +323,7 @@ void FEngineLoop::Release()
 
     FTaskManager::Release();
 
-    FApplicationInterface::Destroy();
+    FApplication::Destroy();
 
     FThreadManager::Release();
 

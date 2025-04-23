@@ -1,7 +1,7 @@
 #include "ImGuiPlugin.h"
 #include "ImGuiExtensions.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "Application/Input/InputMapper.h"
 
 #define IMGUI_BUTTON_UNKNOWN (-1)
@@ -295,7 +295,7 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
     
     if (!ImGuiExtensions::IsMultiViewportEnabled())
     {
-        if (TSharedRef<FGenericWindow> Window = FApplicationInterface::Get().GetPlatformApplication()->GetWindowUnderCursor())
+        if (TSharedRef<FGenericWindow> Window = FApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
         {
             FWindowShape WindowShape;
             Window->GetWindowShape(WindowShape);

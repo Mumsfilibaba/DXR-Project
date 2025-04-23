@@ -2,7 +2,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include "Engine/EngineUI/InGameConsoleWidget.h"
@@ -27,10 +27,10 @@ FInGameConsoleWidget::FInGameConsoleWidget()
         OutputDeviceManager->RegisterOutputDevice(this);
     }
 
-    if (FApplicationInterface::IsInitialized())
+    if (FApplication::IsInitialized())
     {
         InputHandler->HandleKeyEventDelegate.BindRaw(this, &FInGameConsoleWidget::HandleKeyPressedEvent);
-        FApplicationInterface::Get().RegisterInputHandler(InputHandler);
+        FApplication::Get().RegisterInputHandler(InputHandler);
     }
 
     if (IImguiPlugin::IsEnabled())
@@ -49,9 +49,9 @@ FInGameConsoleWidget::~FInGameConsoleWidget()
         OutputDeviceManager->UnregisterOutputDevice(this);
     }
 
-    if (FApplicationInterface::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        FApplicationInterface::Get().UnregisterInputHandler(InputHandler);
+        FApplication::Get().UnregisterInputHandler(InputHandler);
     }
 
     if (IImguiPlugin::IsEnabled())

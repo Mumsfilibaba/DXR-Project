@@ -14,7 +14,7 @@
 #include <Engine/World/Components/SkyboxComponent.h>
 #include <RendererCore/TextureFactory.h>
 #include <Renderer/FrameResources.h>
-#include <Application/ApplicationInterface.h>
+#include <Application/Application.h>
 
 // TODO: Custom random
 #include <random>

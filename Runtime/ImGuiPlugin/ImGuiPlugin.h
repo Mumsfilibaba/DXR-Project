@@ -2,7 +2,7 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 
 struct FImGuiEventHandler : public FInputHandler
 {

@@ -11,35 +11,35 @@
 /** 
  * @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays).
  */
-DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplicationInterface);
+DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplication);
 
 /**
- * @class FApplicationInterface
+ * @class FApplication
  * 
  * @brief Central application class that handles event routing, window management, input processing, and more.
- * FApplicationInterface extends FGenericApplicationMessageHandler to receive and process various input and windowing events.
+ * FApplication extends FGenericApplicationMessageHandler to receive and process various input and windowing events.
  * It also manages a platform-specific application (FGenericApplication) and interacts with a set of FWindowWidget objects. 
  * The class is intended to be a singleton-like interface that can be accessed throughout the engine via Get().
  */
-class APPLICATION_API FApplicationInterface : public FGenericApplicationMessageHandler , public TSharedFromThis<FApplicationInterface>
+class APPLICATION_API FApplication : public FGenericApplicationMessageHandler , public TSharedFromThis<FApplication>
 {
 public:
 
     /**
-     * @brief Creates the singleton instance of FApplicationInterface and the associated PlatformApplication.
+     * @brief Creates the singleton instance of FApplication and the associated PlatformApplication.
      * 
-     * @return True if both the FApplicationInterface and PlatformApplication instances were successfully created, otherwise false.
+     * @return True if both the FApplication and PlatformApplication instances were successfully created, otherwise false.
      */
     static bool Create();
 
     /**
-     * @brief Destroys the singleton FApplicationInterface and PlatformApplication instances.
+     * @brief Destroys the singleton FApplication and PlatformApplication instances.
      * Cleans up resources, windows, and any other data allocated in Create().
      */
     static void Destroy();
 
     /**
-     * @brief Checks if the FApplicationInterface instance has been created.
+     * @brief Checks if the FApplication instance has been created.
      * 
      * @return True if the instance is valid (i.e., the application is initialized), otherwise false.
      */
@@ -49,12 +49,12 @@ public:
     }
 
     /**
-     * @brief Retrieves a reference to the FApplicationInterface singleton. This function also checks that 
+     * @brief Retrieves a reference to the FApplication singleton. This function also checks that 
      * the instance is valid before returning a reference.
      * 
-     * @return A reference to the FApplicationInterface instance.
+     * @return A reference to the FApplication instance.
      */
-    static FORCEINLINE FApplicationInterface& Get()
+    static FORCEINLINE FApplication& Get()
     {
         CHECK(GApplicationInstance.IsValid());
         return *GApplicationInstance;
@@ -62,8 +62,8 @@ public:
     
 public:
 
-    FApplicationInterface();
-    virtual ~FApplicationInterface();
+    FApplication();
+    virtual ~FApplication();
 
 public:
 
@@ -369,5 +369,5 @@ private:
     FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
 
     static TSharedPtr<FGenericApplication>   GPlatformApplication;
-    static TSharedPtr<FApplicationInterface> GApplicationInstance;
+    static TSharedPtr<FApplication> GApplicationInstance;
 };

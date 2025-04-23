@@ -939,7 +939,7 @@ void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)
 
 void FMacApplication::OnWindowWillResize(const TSharedRef<FMacWindow>& Window)
 {
-    // This callback allows other engine systems (Mainly the FApplicationInterface) to be notifies when a
+    // This callback allows other engine systems (Mainly the FApplication) to be notifies when a
     // window is about to be resized. This can for example be when we want to wait for the GPU to finish
     // rendering before we resize the window.
     MessageHandler->OnWindowResizing(Window);

@@ -2,7 +2,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "Application/Widgets/ViewportWidget.h"
 #include "RHI/RHICommandList.h"
 #include "ImGuiPlugin/ImGuiPlugin.h"
@@ -342,12 +342,12 @@ bool FImGuiPlugin::Load()
     }
 #endif
 
-    if (FApplicationInterface::IsInitialized())
+    if (FApplication::IsInitialized())
     {
         EventHandler = MakeSharedPtr<FImGuiEventHandler>();
-        FApplicationInterface::Get().RegisterInputHandler(EventHandler);
+        FApplication::Get().RegisterInputHandler(EventHandler);
 
-        OnMonitorConfigChangedDelegateHandle = FApplicationInterface::Get().GetOnMonitorConfigChangedEvent().AddRaw(this, &FImGuiPlugin::UpdateMonitorInfo);
+        OnMonitorConfigChangedDelegateHandle = FApplication::Get().GetOnMonitorConfigChangedEvent().AddRaw(this, &FImGuiPlugin::UpdateMonitorInfo);
     }
     else
     {
@@ -360,12 +360,12 @@ bool FImGuiPlugin::Load()
 
 bool FImGuiPlugin::Unload()
 {
-    if (FApplicationInterface::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        FApplicationInterface::Get().UnregisterInputHandler(EventHandler);
+        FApplication::Get().UnregisterInputHandler(EventHandler);
         EventHandler.Reset();
 
-        FApplicationInterface::Get().GetOnMonitorConfigChangedEvent().Unbind(OnMonitorConfigChangedDelegateHandle);
+        FApplication::Get().GetOnMonitorConfigChangedEvent().Unbind(OnMonitorConfigChangedDelegateHandle);
     }
 
     // Reset the backend pointer ...
@@ -422,7 +422,7 @@ void FImGuiPlugin::Tick(float Delta)
     UIState.FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
     UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
 
-    TSharedPtr<FWindowWidget>  ForegroundWindow         = FApplicationInterface::Get().GetFocusWindow();
+    TSharedPtr<FWindowWidget>  ForegroundWindow         = FApplication::Get().GetFocusWindow();
     TSharedRef<FGenericWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
     
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
@@ -431,7 +431,7 @@ void FImGuiPlugin::Tick(float Delta)
     {
         const FIntVector2 ForegroundWindowPosition = ForegroundWindow->GetPosition();
 
-        const bool bIsTrackingMouse = FApplicationInterface::Get().IsTrackingCursor();
+        const bool bIsTrackingMouse = FApplication::Get().IsTrackingCursor();
         if (UIState.WantSetMousePos)
         {
             ImVec2 MousePos = UIState.MousePos;
@@ -442,11 +442,11 @@ void FImGuiPlugin::Tick(float Delta)
             }
 
             const FIntVector2 CursorPos = FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y));
-            FApplicationInterface::Get().SetCursorPosition(CursorPos);
+            FApplication::Get().SetCursorPosition(CursorPos);
         }
         else if (!bIsTrackingMouse)
         {
-            FIntVector2 CursorPos = FApplicationInterface::Get().GetCursorPosition();
+            FIntVector2 CursorPos = FApplication::Get().GetCursorPosition();
             if (!ImGuiExtensions::IsMultiViewportEnabled())
             {
                 CursorPos.X = CursorPos.X - ForegroundWindowPosition.X;
@@ -458,7 +458,7 @@ void FImGuiPlugin::Tick(float Delta)
     }
 
     ImGuiID MouseViewportID = 0;
-    if (TSharedPtr<FWindowWidget> WindowUnderCursor = FApplicationInterface::Get().FindWindowUnderCursor())
+    if (TSharedPtr<FWindowWidget> WindowUnderCursor = FApplication::Get().FindWindowUnderCursor())
     {
         if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor.Get()))
         {
@@ -475,7 +475,7 @@ void FImGuiPlugin::Tick(float Delta)
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if (ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor)
         {
-            FApplicationInterface::Get().SetCursor(ECursor::None);
+            FApplication::Get().SetCursor(ECursor::None);
         }
         else
         {
@@ -493,12 +493,12 @@ void FImGuiPlugin::Tick(float Delta)
             case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
 
-            FApplicationInterface::Get().SetCursor(Cursor);
+            FApplication::Get().SetCursor(Cursor);
         }
     }
 
     UIState.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
-    if (FApplicationInterface::Get().IsGamePadConnected())
+    if (FApplication::Get().IsGamePadConnected())
     {
         UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     }
@@ -562,7 +562,7 @@ void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport
         Viewport->PlatformRequestResize = true;
 
         FImGuiViewport* ViewportData = new FImGuiViewport();
-        ViewportData->Window    = FApplicationInterface::Get().FindWindowWidget(InViewport);
+        ViewportData->Window    = FApplication::Get().FindWindowWidget(InViewport);
         ViewportData->SwapChain = ViewportInterface->GetRHISwapChain();
             
         Viewport->PlatformHandle    = ViewportData->Window.Get();
@@ -587,13 +587,13 @@ void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport
         Viewport->PlatformRequestResize = false;
     }
 
-    MainWindow   = FApplicationInterface::Get().FindWindowWidget(InViewport);
+    MainWindow   = FApplication::Get().FindWindowWidget(InViewport);
     MainViewport = InViewport;
 }
 
 void FImGuiPlugin::UpdateMonitorInfo()
 {
-    FApplicationInterface::Get().GetDisplayInfo(MonitorInfos);
+    FApplication::Get().GetDisplayInfo(MonitorInfos);
 
     for (const FMonitorInfo& MonitorInfo : MonitorInfos)
     {
@@ -643,7 +643,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     ViewportData->Window = CreateWidget<FWindowWidget>(WindowInitializer);
     CHECK(ViewportData->Window != nullptr);
 
-    FApplicationInterface::Get().CreateWindow(ViewportData->Window);
+    FApplication::Get().CreateWindow(ViewportData->Window);
    
     TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     Viewport->PlatformHandle        = ViewportData->Window.Get();
@@ -686,7 +686,7 @@ void FImGuiPlugin::OnDestroyPlatformWindow(ImGuiViewport* Viewport)
     FRHICommandListExecutor::Get().WaitForCommands();
 
     // Destroy the platform window
-    FApplicationInterface::Get().DestroyWindow(ViewportData->Window);
+    FApplication::Get().DestroyWindow(ViewportData->Window);
 
     Viewport->PlatformUserData      = nullptr;
     Viewport->PlatformHandle        = nullptr;

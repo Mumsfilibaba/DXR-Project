@@ -1,7 +1,7 @@
 #include "Core/Containers/StaticString.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"

@@ -4,7 +4,7 @@
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Math/Math.h"
 #include "Core/Misc/Paths.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "Application/Widgets/WindowWidget.h"
 #include "Application/Widgets/ViewportWidget.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -103,7 +103,7 @@ bool FEngine::CreateEngineWindow()
     EngineWindow = CreateWidget<FWindowWidget>(WindowInitializer);
 
     // Initialize and show the game-window
-    FApplicationInterface::Get().CreateWindow(EngineWindow);
+    FApplication::Get().CreateWindow(EngineWindow);
     return true;
 }
 
@@ -149,7 +149,7 @@ bool FEngine::CreateSceneViewport()
     EngineViewportWidget->SetViewportInterface(SceneViewport);
 
     // Make sure we have focus on the new viewport
-    FApplicationInterface::Get().SetFocusWidget(EngineViewportWidget);
+    FApplication::Get().SetFocusWidget(EngineViewportWidget);
     return true;
 }
 
@@ -187,9 +187,9 @@ bool FEngine::Init()
 
 #if ENGINE_DEBUG_INPUT
     InputDebugInputHandler = MakeSharedPtr<FInputDebugInputHandler>();
-    if (FApplicationInterface::IsInitialized() && InputDebugInputHandler)
+    if (FApplication::IsInitialized() && InputDebugInputHandler)
     {
-        FApplicationInterface::Get().RegisterInputHandler(InputDebugInputHandler);
+        FApplication::Get().RegisterInputHandler(InputDebugInputHandler);
     }
 #endif
 
@@ -349,9 +349,9 @@ void FEngine::Release()
     }
 
 #if ENGINE_DEBUG_INPUT
-    if (FApplicationInterface::IsInitialized() && InputDebugInputHandler)
+    if (FApplication::IsInitialized() && InputDebugInputHandler)
     {
-        FApplicationInterface::Get().UnregisterInputHandler(InputDebugInputHandler);
+        FApplication::Get().UnregisterInputHandler(InputDebugInputHandler);
         InputDebugInputHandler.Reset();
     }
 #endif

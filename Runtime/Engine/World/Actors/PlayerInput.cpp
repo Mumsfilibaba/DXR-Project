@@ -1,5 +1,5 @@
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/Components/InputComponent.h"
 
@@ -37,9 +37,9 @@ static float GetAnalogDeadzone(EAnalogSourceName::Type Source)
 FPlayerInput::FPlayerInput()
     : KeyStates()
 {
-    if (FApplicationInterface::IsInitialized())
+    if (FApplication::IsInitialized())
     {
-        CursorInterface = FApplicationInterface::Get().GetCursor();
+        CursorInterface = FApplication::Get().GetCursor();
     }
 }
 

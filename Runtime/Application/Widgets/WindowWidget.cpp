@@ -1,7 +1,7 @@
 #include "WindowWidget.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Generic/GenericWindow.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 
 FWindowWidget::FWindowWidget()
     : FWidget()
@@ -250,7 +250,7 @@ void FWindowWidget::Restore()
 
 bool FWindowWidget::IsActive() const
 {
-    return FApplicationInterface::Get().GetFocusWindow().Get() == this;
+    return FApplication::Get().GetFocusWindow().Get() == this;
 }
 
 bool FWindowWidget::IsMinimized() const

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "RHI/RHIResources.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/World.h"

@@ -1,5 +1,5 @@
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Application/ApplicationInterface.h"
+#include "Application/Application.h"
 #include "Application/Widgets/ViewportWidget.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/SceneViewport.h"
@@ -36,7 +36,7 @@ bool FSceneViewport::InitializeRHI()
         ViewportWidget = Viewport.ToSharedPtr();
     }
 
-    TSharedPtr<FWindowWidget> WindowWidget = FApplicationInterface::Get().FindWindowWidget(ViewportWidget);
+    TSharedPtr<FWindowWidget> WindowWidget = FApplication::Get().FindWindowWidget(ViewportWidget);
     if (!WindowWidget)
     {
         return false;
