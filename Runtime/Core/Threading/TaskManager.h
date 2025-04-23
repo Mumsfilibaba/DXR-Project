@@ -38,10 +38,15 @@ public:
 
     static bool IsMultithreaded();
 
+    static bool FORCEINLINE IsInitialized()
+    {
+        return GTaskManager != nullptr;
+    }
+
     static FORCEINLINE FTaskManager& Get()
     {
-        CHECK(Instance != nullptr);
-        return *Instance;
+        CHECK(FTaskManager::IsInitialized());
+        return *GTaskManager;
     }
 
 public:
@@ -70,5 +75,5 @@ private:
     FCriticalSection            TaskQueueCS;
     bool                        bIsRunning;
 
-    static FTaskManager* Instance;
+    static FTaskManager* GTaskManager;
 };

@@ -33,14 +33,14 @@ void CInspectorWindow::DrawSceneInfo()
     ImGui::Separator();
 
     FWindowShape WindowShape;
-    GEngine->MainWindow->GetWindowShape( WindowShape );
+    FEngine::Get()->MainWindow->GetWindowShape( WindowShape );
 
     // Actors
     if ( ImGui::TreeNode( "Actors" ) )
     {
-        ImGui::Text( "Total Actor Count: %d", GEngine->Scene->GetActors().Size() );
+        ImGui::Text( "Total Actor Count: %d", FEngine::Get()->Scene->GetActors().Size() );
 
-        for ( FActor* Actor : GEngine->Scene->GetActors() )
+        for ( FActor* Actor : FEngine::Get()->Scene->GetActors() )
         {
             ImGui::PushID( Actor );
 
@@ -171,7 +171,7 @@ void CInspectorWindow::DrawSceneInfo()
     // Lights
     if ( ImGui::TreeNode( "Lights" ) )
     {
-        for ( CLight* CurrentLight : GEngine->Scene->GetLights() )
+        for ( CLight* CurrentLight : FEngine::Get()->Scene->GetLights() )
         {
             ImGui::PushID( CurrentLight );
 
@@ -463,8 +463,8 @@ void CInspectorWindow::DrawSceneInfo()
 
 void CInspectorWindow::Tick()
 {
-    const uint32 WindowWidth = GEngine->MainWindow->GetWidth();
-    const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+    const uint32 WindowWidth = FEngine::Get()->MainWindow->GetWidth();
+    const uint32 WindowHeight = FEngine::Get()->MainWindow->GetHeight();
     const float Width = FMath::Max( WindowWidth * 0.3f, 400.0f );
     const float Height = WindowHeight * 0.7f;
 

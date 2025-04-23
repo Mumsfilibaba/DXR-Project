@@ -81,13 +81,13 @@ public:
     /** @return Returns the true if the RHI is initialized */
     static FORCEINLINE bool IsInitialized()
     {
-        return Instance != nullptr;
+        return GRHI != nullptr;
     }
 
     /** @return Returns the current RHI Interface */
     static FORCEINLINE FRHI* Get()
     {
-        return Instance;
+        return GRHI;
     }
 
 public:
@@ -402,7 +402,7 @@ private:
     ERHIType RHIType;
 
     /** @brief Global pointer for the RHI interface */
-    static RHI_API FRHI* Instance;
+    static RHI_API FRHI* GRHI;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

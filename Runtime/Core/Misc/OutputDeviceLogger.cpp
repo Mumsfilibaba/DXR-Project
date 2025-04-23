@@ -14,8 +14,8 @@ FOutputDeviceLogger::~FOutputDeviceLogger()
 
 FOutputDeviceLogger* FOutputDeviceLogger::Get()
 {
-    static FOutputDeviceLogger Instance;
-    return &Instance;
+    static FOutputDeviceLogger StaticOutputDeviceLogger;
+    return &StaticOutputDeviceLogger;
 }
 
 void FOutputDeviceLogger::Log(const FString& Message)

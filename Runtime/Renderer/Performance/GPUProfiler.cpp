@@ -3,7 +3,7 @@
 #include "RHI/RHI.h"
 #include "Renderer/Performance/GPUProfiler.h"
 
-FGPUProfiler FGPUProfiler::Instance;
+FGPUProfiler FGPUProfiler::GGpuProfiler;
 
 FGPUProfiler::FGPUProfiler()
     : FrameTime()

@@ -45,7 +45,7 @@ public:
      */
     static bool FORCEINLINE IsInitialized()
     {
-        return GApplicationInstance.IsValid();
+        return GApplication.IsValid();
     }
 
     /**
@@ -56,8 +56,8 @@ public:
      */
     static FORCEINLINE FApplication& Get()
     {
-        CHECK(GApplicationInstance.IsValid());
-        return *GApplicationInstance;
+        CHECK(GApplication.IsValid());
+        return *GApplication;
     }
     
 public:
@@ -369,5 +369,5 @@ private:
     FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
 
     static TSharedPtr<FGenericApplication>   GPlatformApplication;
-    static TSharedPtr<FApplication> GApplicationInstance;
+    static TSharedPtr<FApplication> GApplication;
 };

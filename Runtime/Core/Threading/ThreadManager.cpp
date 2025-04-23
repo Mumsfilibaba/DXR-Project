@@ -16,10 +16,10 @@ FThreadManager::~FThreadManager()
     MainThreadHandle = nullptr;
 }
 
-static auto& GetThreadManagerInstance()
+static TOptional<FThreadManager>& GetThreadManagerInstance()
 {
-    static TOptional<FThreadManager> Instance(InPlace);
-    return Instance;
+    static TOptional<FThreadManager> StaticThreadManager(InPlace);
+    return StaticThreadManager;
 }
 
 bool FThreadManager::Initialize()

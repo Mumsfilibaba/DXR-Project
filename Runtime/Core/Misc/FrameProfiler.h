@@ -119,7 +119,8 @@ class CORE_API FFrameProfiler
 {
 public:
     static FFrameProfiler& Get();
-    
+
+public:
     void Enable();
     void Disable();
     void Tick();

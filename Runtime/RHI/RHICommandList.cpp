@@ -199,7 +199,7 @@ void FRHIThread::WaitForOutstandingTasks()
     }
 }
 
-FRHICommandListExecutor* FRHICommandListExecutor::Instance = nullptr;
+FRHICommandListExecutor* FRHICommandListExecutor::GCommandListExecutor = nullptr;
 
 FRHICommandListExecutor::FRHICommandListExecutor(IRHICommandContext* InDefaultCommandContext)
     : DeletedResources()
@@ -249,7 +249,7 @@ bool FRHICommandListExecutor::Initialize()
 
     // Create the executor
     FRHICommandListExecutor* LocalExecutor = new FRHICommandListExecutor(Context);
-    Instance = LocalExecutor;
+    GCommandListExecutor = LocalExecutor;
 
     if (!CVarEnableRHIThread.GetValue())
     {
@@ -262,14 +262,14 @@ bool FRHICommandListExecutor::Initialize()
 
 void FRHICommandListExecutor::Release()
 {
-    if (Instance)
+    if (GCommandListExecutor)
     {
         // Release the RHI-Thread
-        Instance->ReleaseRHIThread();
+        GCommandListExecutor->ReleaseRHIThread();
 
         // Delete the instance
-        delete Instance;
-        Instance = nullptr;
+        delete GCommandListExecutor;
+        GCommandListExecutor = nullptr;
     }
 }
 

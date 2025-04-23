@@ -4,8 +4,8 @@
 
 FFrameProfiler& FFrameProfiler::Get()
 {
-    static FFrameProfiler Instance;
-    return Instance;
+    static FFrameProfiler StaticFrameProfiler;
+    return StaticFrameProfiler;
 }
 
 void FFrameProfiler::Enable()

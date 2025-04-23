@@ -28,6 +28,7 @@ public:
     /** @return Returns the Logger singleton */
     static FOutputDeviceLogger* Get();
 
+public:
     /** @brief Log a simple message to all output devices */
     virtual void Log(const FString& Message) override final;
 

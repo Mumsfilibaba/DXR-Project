@@ -330,7 +330,7 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
     const auto RetrieveRHITexture = [=](const FModelCreateInfo& ModelCreateInfo, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
     {
         const FTexture2DRef Texture = ModelCreateInfo.Materials[MaterialIndex].Textures[MaterialTexture];
-        return Texture ? Texture->GetRHITexture() : GEngine->BaseTexture;
+        return Texture ? Texture->GetRHITexture() : FEngine::Get()->BaseTexture;
     };
     
     for (int32 Index = 0; Index < NumMaterials; Index++)
@@ -419,7 +419,7 @@ void FModel::AddToWorld(FWorld* World)
                         }
                         else
                         {
-                            MeshComponent->SetMaterial(GEngine->BaseMaterial, SubMeshIdx);
+                            MeshComponent->SetMaterial(FEngine::Get()->BaseMaterial, SubMeshIdx);
                         }
                     }
                 }
@@ -431,7 +431,7 @@ void FModel::AddToWorld(FWorld* World)
                     }
                     else
                     {
-                        MeshComponent->SetMaterial(GEngine->BaseMaterial);
+                        MeshComponent->SetMaterial(FEngine::Get()->BaseMaterial);
                     }
                 }
                 

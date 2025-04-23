@@ -17,7 +17,7 @@ static void DrawRenderSettings()
     ImGui::BeginChild( "RendererInfo" );
 
     FWindowShape WindowShape;
-    GEngine->MainWindow->GetWindowShape( WindowShape );
+    FEngine::Get()->MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();
     ImGui::Text( "Renderer Info" );
@@ -208,12 +208,12 @@ void CEditorMenuWidget::Tick()
         {
             if ( ImGui::MenuItem( "Toggle Fullscreen" ) )
             {
-                GEngine->MainWindow->ToggleFullscreen();
+                FEngine::Get()->MainWindow->ToggleFullscreen();
             }
 
             if ( ImGui::MenuItem( "Quit" ) )
             {
-                GEngine->Exit();
+                FEngine::Get()->Exit();
             }
 
             ImGui::EndMenu();

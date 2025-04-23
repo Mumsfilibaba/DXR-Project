@@ -32,7 +32,7 @@ public:
 
     static FORCEINLINE FTextureFactory& Get()
     {
-        return *Instance;
+        return *GTextureFactory;
     }
 
 public:
@@ -87,5 +87,5 @@ private:
     FRHIComputePipelineStateRef SpecularCubeMapFilter_PSO;
     FRHIComputeShaderRef        SpecularCubeMapFilter_CS;
 
-    static FTextureFactory* Instance;
+    static FTextureFactory* GTextureFactory;
 };

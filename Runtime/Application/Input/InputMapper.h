@@ -5,8 +5,12 @@
 class APPLICATION_API FInputMapper
 {
 public:
-    static FInputMapper& Get() { return Instance; }
+    static FInputMapper& Get()
+    {
+        return GInputMapper;
+    }
 
+public:
     void Initialize();
 
     FKey GetKeyboardKey(EKeyboardKeyName::Type Key);
@@ -22,5 +26,5 @@ private:
     FKey MouseMap[EMouseButtonName::Count];
     FKey GamepadMap[EGamepadButtonName::Count];
 
-    static FInputMapper Instance;
+    static FInputMapper GInputMapper;
 };

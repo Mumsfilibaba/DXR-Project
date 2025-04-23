@@ -12,6 +12,7 @@ public:
 
     static bool Initialize();
     static bool Release();
+
     static bool IsMainThread();
 
 public:

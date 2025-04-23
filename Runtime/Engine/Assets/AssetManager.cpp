@@ -154,7 +154,7 @@ void FAssetRegistry::UpdateRegistryFile()
     }
 }
 
-FAssetManager* FAssetManager::Instance = nullptr;
+FAssetManager* FAssetManager::GAssetManager = nullptr;
 
 FAssetManager::FAssetManager()
     : AssetRegistry(nullptr)
@@ -192,19 +192,19 @@ FAssetManager::~FAssetManager()
 
 bool FAssetManager::Initialize()
 {
-    if (!Instance)
+    if (!GAssetManager)
     {
-        Instance = new FAssetManager();
-        CHECK(Instance != nullptr);
+        GAssetManager = new FAssetManager();
+        CHECK(GAssetManager != nullptr);
         
         // Importers for textures
-        Instance->RegisterTextureImporter(MakeSharedPtr<FTextureImporterDDS>());
-        Instance->RegisterTextureImporter(MakeSharedPtr<FTextureImporterBase>());
+        GAssetManager->RegisterTextureImporter(MakeSharedPtr<FTextureImporterDDS>());
+        GAssetManager->RegisterTextureImporter(MakeSharedPtr<FTextureImporterBase>());
         
         // Importers for models
-        Instance->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
-        Instance->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
-        Instance->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
+        GAssetManager->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
+        GAssetManager->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
+        GAssetManager->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
         return true;
     }
 
@@ -213,17 +213,17 @@ bool FAssetManager::Initialize()
 
 void FAssetManager::Release()
 {
-    if (Instance)
+    if (GAssetManager)
     {
-        delete Instance;
-        Instance = nullptr;
+        delete GAssetManager;
+        GAssetManager = nullptr;
     }
 }
 
 FAssetManager& FAssetManager::Get()
 {
-    CHECK(Instance != nullptr);
-    return *Instance;
+    CHECK(GAssetManager != nullptr);
+    return *GAssetManager;
 }
 
 TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bGenerateMips)

@@ -1,6 +1,6 @@
 #include "InputMapper.h"
 
-FInputMapper FInputMapper::Instance;
+FInputMapper FInputMapper::GInputMapper;
 
 void FInputMapper::Initialize()
 {

@@ -116,7 +116,7 @@ void FTaskWorkerThread::Stop()
 }
 
 
-FTaskManager* FTaskManager::Instance = nullptr;
+FTaskManager* FTaskManager::GTaskManager = nullptr;
 
 FTaskManager::FTaskManager()
     : AvailableWorkers()
@@ -135,9 +135,9 @@ FTaskManager::~FTaskManager()
 
 bool FTaskManager::Initialize()
 {
-    if (!Instance)
+    if (!GTaskManager)
     {
-        Instance = new FTaskManager();
+        GTaskManager = new FTaskManager();
 
         int32 NumThreads = CVarNumTaskThreads.GetValue();
         if (NumThreads <= 0)
@@ -145,7 +145,7 @@ bool FTaskManager::Initialize()
             NumThreads = -1;
         }
 
-        if (Instance->CreateWorkers(NumThreads))
+        if (GTaskManager->CreateWorkers(NumThreads))
         {
             return true;
         }
@@ -156,18 +156,18 @@ bool FTaskManager::Initialize()
 
 void FTaskManager::Release()
 {
-    if (Instance)
+    if (GTaskManager)
     {
-        Instance->DestroyWorkers();
-        delete Instance;
+        GTaskManager->DestroyWorkers();
+        delete GTaskManager;
     }
 }
 
 bool FTaskManager::IsMultithreaded()
 {
-    if (Instance)
+    if (GTaskManager)
     {
-        return Instance->Workers.Size() > 0;
+        return GTaskManager->Workers.Size() > 0;
     }
 
     return false;

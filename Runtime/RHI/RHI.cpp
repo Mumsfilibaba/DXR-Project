@@ -146,7 +146,7 @@ static ERHIType GetRHIType()
     return RHIType;
 }
 
-FRHI* FRHI::Instance = nullptr;
+FRHI* FRHI::GRHI = nullptr;
 
 bool FRHI::Initialize()
 {
@@ -198,7 +198,7 @@ bool FRHI::Initialize()
         LocalRHI = ValidationRHI;
     }
 
-    Instance = LocalRHI;
+    GRHI = LocalRHI;
 
     // Initialize the CommandListExecutor
     if (!FRHICommandListExecutor::Initialize())
@@ -217,7 +217,7 @@ void FRHI::Release()
         FRHICommandListExecutor::Get().FlushDeletedResources();
     }
 
-    SAFE_DELETE(Instance);
+    SAFE_DELETE(GRHI);
 
     FRHICommandListExecutor::Release();
 }

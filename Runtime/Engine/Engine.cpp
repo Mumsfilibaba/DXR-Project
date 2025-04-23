@@ -23,13 +23,11 @@
 #include "Engine/Debug/InputDebugInputHandler.h"
 #endif
 
-ENGINE_API FEngine* GEngine = nullptr;
-
 static void ExitEngineFunc()
 {
-    if (GEngine)
+    if (FEngine::IsInitialized())
     {
-        GEngine->Exit();
+        FEngine::Get()->Exit();
     }
 }
  
@@ -37,9 +35,9 @@ static void ToggleFullScreenFunc()
 {
     DEBUG_BREAK();
 
-    //if (GEngine && GEngine->EngineWindow)
+    //if (FEngine::IsInitialized() && FEngine::Get()->EngineWindow)
     //{
-    //    EWindowMode WindowMode;// = GEngine->MainWindow->GetStyle();
+    //    EWindowMode WindowMode;// = FEngine::Get()->MainWindow->GetStyle();
     //    if (WindowMode == EWindowMode::Fullscreen)
     //    {
     //        WindowMode = EWindowMode::Windowed;
@@ -49,7 +47,7 @@ static void ToggleFullScreenFunc()
     //        WindowMode = EWindowMode::Fullscreen;
     //    }
 
-    //    GEngine->MainWindow->SetWindowMode(WindowMode);
+    //    FEngine::Get()->MainWindow->SetWindowMode(WindowMode);
     //}
 }
 
@@ -74,6 +72,36 @@ static TAutoConsoleVariable<int32> CVarViewportHeight(
     "Width of the main window",
     1080,
     EConsoleVariableFlags::Default);
+
+FEngine* FEngine::GEngine = nullptr;
+
+bool FEngine::Create()
+{
+    TUniquePtr<FEngine> LocalEngine = MakeUniquePtr<FEngine>();
+    GEngine = LocalEngine.Get();
+
+    if (!LocalEngine->Init())
+    {
+        GEngine = nullptr;
+        return false;
+    }
+    else
+    {
+        LocalEngine.Release();
+        return true;
+    }
+}
+
+void FEngine::Destroy()
+{
+    if (GEngine)
+    {
+        GEngine->Release();
+
+        delete GEngine;
+        GEngine = nullptr;
+    }
+}
 
 FEngine::FEngine()
     : EngineWindow(nullptr)
@@ -242,12 +270,12 @@ bool FEngine::Init()
     MaterialDesc.Roughness        = 1.0f;
 
     BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
-    BaseMaterial->AlbedoMap    = GEngine->BaseTexture;
-    BaseMaterial->NormalMap    = GEngine->BaseNormal;
-    BaseMaterial->RoughnessMap = GEngine->BaseTexture;
-    BaseMaterial->AOMap        = GEngine->BaseTexture;
-    BaseMaterial->MetallicMap  = GEngine->BaseTexture;
-    BaseMaterial->AlphaMask    = GEngine->BaseTexture;
+    BaseMaterial->AlbedoMap    = BaseTexture;
+    BaseMaterial->NormalMap    = BaseNormal;
+    BaseMaterial->RoughnessMap = BaseTexture;
+    BaseMaterial->AOMap        = BaseTexture;
+    BaseMaterial->MetallicMap  = BaseTexture;
+    BaseMaterial->AlphaMask    = BaseTexture;
     BaseMaterial->Initialize();
 
     // Create a new world
@@ -389,9 +417,4 @@ void FEngine::Release()
     // Reset widgets
     EngineViewportWidget.Reset();
     EngineWindow.Reset();
-}
-
-void FEngine::Exit()
-{
-    // Empty for now
 }

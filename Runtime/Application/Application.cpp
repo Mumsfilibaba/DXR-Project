@@ -186,7 +186,7 @@ struct FEventPreProcessor
 };
 
 TSharedPtr<FGenericApplication>   FApplication::GPlatformApplication = nullptr;
-TSharedPtr<FApplication> FApplication::GApplicationInstance = nullptr;
+TSharedPtr<FApplication> FApplication::GApplication = nullptr;
 
 bool FApplication::Create()
 {
@@ -200,17 +200,17 @@ bool FApplication::Create()
         return false;
     }
 
-    GApplicationInstance = MakeSharedPtr<FApplication>();
-    GPlatformApplication->SetMessageHandler(GApplicationInstance);
+    GApplication = MakeSharedPtr<FApplication>();
+    GPlatformApplication->SetMessageHandler(GApplication);
     return true;
 }
 
 void FApplication::Destroy()
 {
-    if (GApplicationInstance)
+    if (GApplication)
     {
-        GApplicationInstance->OverridePlatformApplication(nullptr);
-        GApplicationInstance.Reset();
+        GApplication->OverridePlatformApplication(nullptr);
+        GApplication.Reset();
     }
 
     if (GPlatformApplication)
@@ -1031,7 +1031,7 @@ void FApplication::OverridePlatformApplication(const TSharedPtr<FGenericApplicat
     if (InPlatformApplication)
     {
         CHECK(GPlatformApplication != InPlatformApplication);
-        InPlatformApplication->SetMessageHandler(GApplicationInstance);
+        InPlatformApplication->SetMessageHandler(GApplication);
     }
 
     GPlatformApplication = InPlatformApplication;

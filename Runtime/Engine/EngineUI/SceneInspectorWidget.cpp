@@ -63,7 +63,7 @@ void FSceneInspectorWidget::DrawSceneInfo()
     const float ColumnWidth = 200.0f;
 
     // Cache the current world
-    FWorld* CurrentWorld = GEngine->GetWorld();
+    FWorld* CurrentWorld = FEngine::Get()->GetWorld();
 
     // Camera
     if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_None))

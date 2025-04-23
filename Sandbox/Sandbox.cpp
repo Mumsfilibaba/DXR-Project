@@ -42,7 +42,7 @@ FSandbox::~FSandbox()
 bool FSandbox::Init()
 {
     // Store the Engine's world pointer 
-    FWorld* CurrentWorld = GEngine->GetWorld();
+    FWorld* CurrentWorld = FEngine::Get()->GetWorld();
 
     bool bResult = false;
 
@@ -130,10 +130,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 if (NewComponent)
                 {
                     TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-                    NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-                    NewMaterial->RoughnessMap = GEngine->BaseTexture;
-                    NewMaterial->AOMap        = GEngine->BaseTexture;
-                    NewMaterial->MetallicMap  = GEngine->BaseTexture;
+                    NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+                    NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+                    NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
+                    NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
                     NewMaterial->Initialize();
                     NewMaterial->SetName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
@@ -203,11 +203,11 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 {
                     NewComponent->Initialize(NewActor, MakeShared<FMaterial>(MaterialInfo), SphereMesh);
 
-                    NewComponent->Material->AlbedoMap = GEngine->BaseTexture;
-                    NewComponent->Material->NormalMap = GEngine->BaseNormal;
-                    NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-                    NewComponent->Material->AOMap = GEngine->BaseTexture;
-                    NewComponent->Material->MetallicMap = GEngine->BaseTexture;
+                    NewComponent->Material->AlbedoMap = FEngine::Get()->BaseTexture;
+                    NewComponent->Material->NormalMap = FEngine::Get()->BaseNormal;
+                    NewComponent->Material->RoughnessMap = FEngine::Get()->BaseTexture;
+                    NewComponent->Material->AOMap = FEngine::Get()->BaseTexture;
+                    NewComponent->Material->MetallicMap = FEngine::Get()->BaseTexture;
                     NewComponent->Material->Initialize();
 
                     NewActor->AddComponent(NewComponent);
@@ -281,10 +281,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-            NewMaterial->RoughnessMap = GEngine->BaseTexture;
-            NewMaterial->AOMap        = GEngine->BaseTexture;
-            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
+            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("PlaneMaterial");
@@ -317,10 +317,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-            NewMaterial->RoughnessMap = GEngine->BaseTexture;
-            NewMaterial->AOMap        = GEngine->BaseTexture;
-            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
+            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("ConeMaterial");
@@ -354,10 +354,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-            NewMaterial->RoughnessMap = GEngine->BaseTexture;
-            NewMaterial->AOMap        = GEngine->BaseTexture;
-            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
+            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("TorusMaterial");
@@ -392,10 +392,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-            NewMaterial->RoughnessMap = GEngine->BaseTexture;
-            NewMaterial->AOMap        = GEngine->BaseTexture;
-            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
+            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("TeapotMaterial");
@@ -429,10 +429,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         if (NewComponent)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-            NewMaterial->RoughnessMap = GEngine->BaseTexture;
-            NewMaterial->AOMap        = GEngine->BaseTexture;
-            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
+            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("PyramidMaterial");
@@ -467,7 +467,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         StreetLightMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
         StreetLightMaterial->NormalMap    = NormalMap->GetRHITexture();
         StreetLightMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
-        StreetLightMaterial->AOMap        = GEngine->BaseTexture;
+        StreetLightMaterial->AOMap        = FEngine::Get()->BaseTexture;
         StreetLightMaterial->MetallicMap  = MetallicMap->GetRHITexture();
 
         StreetLightMaterial->Initialize();
@@ -504,10 +504,10 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
     TSharedPtr<FMaterial> CylinderMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-    CylinderMaterial->AlbedoMap    = GEngine->BaseTexture;
-    CylinderMaterial->RoughnessMap = GEngine->BaseTexture;
-    CylinderMaterial->AOMap        = GEngine->BaseTexture;
-    CylinderMaterial->MetallicMap  = GEngine->BaseTexture;
+    CylinderMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+    CylinderMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+    CylinderMaterial->AOMap        = FEngine::Get()->BaseTexture;
+    CylinderMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
     CylinderMaterial->Initialize();
     CylinderMaterial->SetName("CylinderMaterial");
@@ -962,10 +962,10 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
     TSharedPtr<FMaterial> BasicMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-    BasicMaterial->AlbedoMap    = GEngine->BaseTexture;
-    BasicMaterial->RoughnessMap = GEngine->BaseTexture;
-    BasicMaterial->AOMap        = GEngine->BaseTexture;
-    BasicMaterial->MetallicMap  = GEngine->BaseTexture;
+    BasicMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
+    BasicMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
+    BasicMaterial->AOMap        = FEngine::Get()->BaseTexture;
+    BasicMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
 
     BasicMaterial->Initialize();
     BasicMaterial->SetName("Basic-Material");

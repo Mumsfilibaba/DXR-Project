@@ -75,10 +75,12 @@ class RENDERER_API FGPUProfiler
 {
 public:
 
-    static FGPUProfiler& Get()
+    static FORCEINLINE FGPUProfiler& Get()
     {
-        return Instance;
+        return GGpuProfiler;
     }
+
+public:
 
     /** @brief Releases all query objects */
     void Release();
@@ -123,7 +125,7 @@ private:
     FSpinLock            SamplesLock;
     bool                 bEnabled;
 
-    static FGPUProfiler Instance;
+    static FGPUProfiler GGpuProfiler;
 };
 
 struct FGPUScopedTrace

@@ -212,7 +212,7 @@ private:
     int32  References;
 };
 
-FShaderCompiler* FShaderCompiler::Instance = nullptr;
+FShaderCompiler* FShaderCompiler::GShaderCompiler = nullptr;
 
 FShaderCompiler::FShaderCompiler(const FString& InAssetPath)
     : DXCLib(nullptr)
@@ -238,13 +238,13 @@ FShaderCompiler::~FShaderCompiler()
 
 bool FShaderCompiler::Create(const FString& InAssetPath)
 {
-    CHECK(Instance == nullptr);
+    CHECK(GShaderCompiler == nullptr);
 
-    Instance = new FShaderCompiler(InAssetPath);
-    if (!Instance->Initialize())
+    GShaderCompiler = new FShaderCompiler(InAssetPath);
+    if (!GShaderCompiler->Initialize())
     {
-        delete Instance;
-        Instance = nullptr;
+        delete GShaderCompiler;
+        GShaderCompiler = nullptr;
         return false;
     }
 
@@ -253,10 +253,10 @@ bool FShaderCompiler::Create(const FString& InAssetPath)
 
 void FShaderCompiler::Destroy()
 {
-    if (Instance)
+    if (GShaderCompiler)
     {
-        delete Instance;
-        Instance = nullptr;
+        delete GShaderCompiler;
+        GShaderCompiler = nullptr;
     }
 }
 

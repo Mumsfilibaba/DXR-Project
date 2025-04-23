@@ -225,8 +225,7 @@ int32 FEngineLoop::Init()
 
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
-    GEngine = new FEngine();
-    if (!GEngine->Init())
+    if (!FEngine::Create())
     {
         LOG_ERROR("Failed to initialize engine");
         return -1;
@@ -256,7 +255,7 @@ int32 FEngineLoop::Init()
         }
     }
 
-    if (!GEngine->Start())
+    if (!FEngine::Get()->Start())
     {
         return -1;
     }
@@ -274,7 +273,7 @@ void FEngineLoop::Tick()
     const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
     FApplication::Get().Tick(DeltaTime);
 
-    GEngine->Tick(DeltaTime);
+    FEngine::Get()->Tick(DeltaTime);
 
     FFrameProfiler::Get().Tick();
 
@@ -298,14 +297,8 @@ void FEngineLoop::Release()
         RendererModule->Release();
     }
 
-    // Release the Engine (Protect against failed initialization where the global pointer was never initialized)
-    if (GEngine)
-    {
-        GEngine->Release();
-
-        delete GEngine;
-        GEngine = nullptr;
-    }
+    // Destroy the Engine
+    FEngine::Destroy();
 
     // Unload ModuleManager
     if (IImguiPlugin::IsEnabled())

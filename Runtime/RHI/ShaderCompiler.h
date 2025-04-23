@@ -47,16 +47,16 @@ struct FShaderCompileInfo;
 class RHI_API FShaderCompiler
 {
 public:
+    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
+
     static bool Create(const FString& InAssetPath);
     static void Destroy();
 
     static FORCEINLINE FShaderCompiler& Get()
     {
-        CHECK(Instance != nullptr);
-        return *Instance;
+        CHECK(GShaderCompiler != nullptr);
+        return *GShaderCompiler;
     }
-
-    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
 
 public:
     bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
@@ -78,7 +78,7 @@ private:
     DxcCreateInstanceProc DxcCreateInstanceFunc;
     FString               AssetPath;
 
-    static FShaderCompiler* Instance;
+    static FShaderCompiler* GShaderCompiler;
 };
 
 struct FShaderCompileInfo

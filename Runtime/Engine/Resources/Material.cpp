@@ -31,7 +31,7 @@ void FMaterial::Initialize()
         MaterialBuffer->SetDebugName("MaterialBuffer");
     }
 
-    Sampler = GEngine->BaseMaterialSampler;
+    Sampler = FEngine::Get()->BaseMaterialSampler;
 }
 
 void FMaterial::BuildBuffer(FRHICommandList& CommandList)

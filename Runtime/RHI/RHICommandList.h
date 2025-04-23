@@ -458,12 +458,12 @@ public:
 
     static FORCEINLINE bool IsInitialized()
     {
-        return Instance != nullptr;
+        return GCommandListExecutor != nullptr;
     }
 
     static FORCEINLINE FRHICommandListExecutor& Get()
     {
-        return *Instance;
+        return *GCommandListExecutor;
     }
 
 public:
@@ -501,5 +501,5 @@ private:
     IRHICommandContext*   DefaultCommandContext;
     FRHIThread*           RHIThread;
 
-    static FRHICommandListExecutor* Instance;
+    static FRHICommandListExecutor* GCommandListExecutor;
 };

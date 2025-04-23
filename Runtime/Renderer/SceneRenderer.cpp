@@ -211,7 +211,7 @@ FSceneRenderer::~FSceneRenderer()
 
 bool FSceneRenderer::Initialize()
 {
-    TSharedPtr<FSceneViewport> SceneViewport = GEngine->GetSceneViewport();
+    TSharedPtr<FSceneViewport> SceneViewport = FEngine::Get()->GetSceneViewport();
     if (!SceneViewport)
     {
         DEBUG_BREAK();
@@ -475,7 +475,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     FrameCounter.NextFrame();
 
     // Check if we need to resize
-    TSharedPtr<FWindowWidget> EngineWindow = GEngine->GetEngineWindow();
+    TSharedPtr<FWindowWidget> EngineWindow = FEngine::Get()->GetEngineWindow();
     
     const FIntVector2 CurrentSize = EngineWindow->GetSize();
     Resources.DesiredWidth  = CurrentSize.X;
