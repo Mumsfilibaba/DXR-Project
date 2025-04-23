@@ -1,4 +1,4 @@
-#include "MetalViewport.h"
+#include "MetalSwapChain.h"
 #include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformEvent.h"
 
@@ -24,8 +24,8 @@
 @end
 
 
-FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInfo& ViewportInfo)
-    : FRHIViewport(ViewportInfo)
+FMetalSwapChain::FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainInfo& SwapChainInfo)
+    : FRHISwapChain(SwapChainInfo)
     , FMetalDeviceChild(InDeviceContext)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
@@ -34,7 +34,7 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
 {
 }
 
-FMetalViewport::~FMetalViewport()
+FMetalSwapChain::~FMetalSwapChain()
 {
     // The view is a UI object and needs to be released on the main-thread
     FMacThreadManager::Get().MainThreadDispatch(^
@@ -44,7 +44,7 @@ FMetalViewport::~FMetalViewport()
     }, NSDefaultRunLoopMode, true);
 }
 
-bool FMetalViewport::Initialize()
+bool FMetalSwapChain::Initialize()
 {
     if (!Info.WindowHandle)
     {
@@ -106,11 +106,11 @@ bool FMetalViewport::Initialize()
 
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), Info.Width, Info.Height, 1, 1, Flags);
     BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferInfo);
-    BackBuffer->SetViewport(this);
+    BackBuffer->SetSwapChain(this);
     return true;
 }
 
-bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
+bool FMetalSwapChain::Resize(uint32 InWidth, uint32 InHeight)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -132,7 +132,7 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
     return true;
 }
 
-bool FMetalViewport::Present(bool bVerticalSync)
+bool FMetalSwapChain::Present(bool bVerticalSync)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -153,7 +153,7 @@ bool FMetalViewport::Present(bool bVerticalSync)
     return true;
 }
 
-id<CAMetalDrawable> FMetalViewport::GetDrawable()
+id<CAMetalDrawable> FMetalSwapChain::GetDrawable()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -172,7 +172,7 @@ id<CAMetalDrawable> FMetalViewport::GetDrawable()
     return Drawable;
 }
 
-id<MTLTexture> FMetalViewport::GetDrawableTexture()
+id<MTLTexture> FMetalSwapChain::GetDrawableTexture()
 {
     SCOPED_AUTORELEASE_POOL();
     

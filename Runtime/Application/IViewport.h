@@ -2,9 +2,9 @@
 #include "Application/Events.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHISwapChain.h"
 
 class FViewportWidget;
-class FRHIViewport;
 
 /**
  * @brief Interface for handling viewport-related events and interactions.
@@ -137,11 +137,11 @@ struct IViewport
     virtual FEventResponse OnFocusGained() = 0;
 
     /**
-     * @brief Retrieves the RHI viewport associated with this instance.
+     * @brief Retrieves the RHI swap-chain associated with this instance.
      * 
-     * @return A shared reference to the RHI viewport.
+     * @return A shared reference to the RHI swap-chain.
      */
-    virtual TSharedRef<FRHIViewport> GetViewportRHI() const = 0;
+    virtual FRHISwapChainRef GetRHISwapChain() const = 0;
 
     /**
      * @brief Sets the viewport widget associated with this instance.

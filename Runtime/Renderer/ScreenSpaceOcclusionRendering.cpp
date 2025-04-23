@@ -40,8 +40,8 @@ FScreenSpaceOcclusionPass::~FScreenSpaceOcclusionPass()
 
 bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 {
-    const uint32 Width  = FrameResources.MainViewport->GetWidth();
-    const uint32 Height = FrameResources.MainViewport->GetHeight();
+    const uint32 Width  = FrameResources.MainSwapChain->GetWidth();
+    const uint32 Height = FrameResources.MainSwapChain->GetHeight();
 
     if (!CreateResources(FrameResources, Width, Height))
     {

@@ -8,7 +8,7 @@
 
 #include <tiny_obj_loader.h>
 
-bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags Flags, FModelCreateInfo& OutModelInfo)
+bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags /* Flags */, FModelCreateInfo& OutModelInfo)
 {
     // Load Scene File
     std::string                      Warning;

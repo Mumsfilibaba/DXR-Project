@@ -267,8 +267,8 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         FImGuiViewport* MainViewportData = reinterpret_cast<FImGuiViewport*>(MainViewport->RendererUserData);
         CHECK(MainViewportData != nullptr);
 
-        FRHIViewportRef RHIViewport = MainViewportData->Viewport;
-        CHECK(RHIViewport != nullptr);
+        FRHISwapChainRef RHISwapChain = MainViewportData->SwapChain;
+        CHECK(RHISwapChain != nullptr);
 
         // Render
         ImGui::Render();
@@ -276,8 +276,8 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         ImDrawData* DrawData = ImGui::GetDrawData();
         PrepareDrawData(CommandList, DrawData);
 
-        // Render to the main Viewport
-        FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHIViewport->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
+        // Render to the main SwapChain
+        FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHISwapChain->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
         CommandList.BeginRenderPass(RenderPassDesc);
         RenderDrawData(CommandList, DrawData);
         CommandList.EndRenderPass();
@@ -304,7 +304,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
 
 void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
 {
-    FRHITexture* BackBuffer = ViewportData.Viewport->GetBackBuffer();
+    FRHITexture* BackBuffer = ViewportData.SwapChain->GetBackBuffer();
     CommandList.TransitionTexture(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
 
     PrepareDrawData(CommandList, DrawData);
@@ -571,17 +571,17 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
 
-    FRHIViewportInfo ViewportInfo;
-    ViewportInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
-    ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
-    ViewportInfo.Width        = static_cast<uint16>(Viewport->Size.x);
-    ViewportInfo.Height       = static_cast<uint16>(Viewport->Size.y);
+    FRHISwapChainInfo SwapChainInfo;
+    SwapChainInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
+    SwapChainInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
+    SwapChainInfo.Width        = static_cast<uint16>(Viewport->Size.x);
+    SwapChainInfo.Height       = static_cast<uint16>(Viewport->Size.y);
         
-    ViewportData->Viewport = FRHI::Get()->CreateViewport(ViewportInfo);
-    if (ViewportData->Viewport)
+    ViewportData->SwapChain = FRHI::Get()->CreateSwapChain(SwapChainInfo);
+    if (ViewportData->SwapChain)
     {
-        ViewportData->Width  = ViewportInfo.Width;
-        ViewportData->Height = ViewportInfo.Height;
+        ViewportData->Width  = SwapChainInfo.Width;
+        ViewportData->Height = SwapChainInfo.Height;
         Viewport->RendererUserData = Viewport->PlatformUserData;
     }
 }
@@ -611,8 +611,8 @@ void FImGuiRenderer::OnRenderWindow(ImGuiViewport* Viewport, void* CommandList)
         ViewportData->Width  = static_cast<uint16>(ViewportSize.x);
         ViewportData->Height = static_cast<uint16>(ViewportSize.y);
 
-        FRHIViewport* RHIViewport = ViewportData->Viewport.Get();
-        RHICommandList->ResizeViewport(RHIViewport, ViewportData->Width, ViewportData->Height);
+        FRHISwapChain* RHISwapChain = ViewportData->SwapChain.Get();
+        RHICommandList->ResizeSwapChain(RHISwapChain, ViewportData->Width, ViewportData->Height);
     }
     
     const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
@@ -633,5 +633,5 @@ void FImGuiRenderer::OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
         bEnableVsync = CVarVSyncEnabled->GetBool();
     }
 
-    RHICommandList->PresentViewport(ViewportData->Viewport.Get(), bEnableVsync);
+    RHICommandList->PresentSwapChain(ViewportData->SwapChain.Get(), bEnableVsync);
 }

@@ -1,5 +1,5 @@
 #include "MetalTexture.h"
-#include "MetalViewport.h"
+#include "MetalSwapChain.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -7,7 +7,7 @@ FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITex
     : FRHITexture(InTextureInfo)
     , FMetalDeviceChild(InDeviceContext)
     , Texture(nil)
-    , Viewport(nullptr)
+    , SwapChain(nullptr)
     , ShaderResourceView(nullptr)
 {
 }
@@ -163,9 +163,9 @@ FString FMetalTexture::GetDebugName() const
 id<MTLTexture> FMetalTexture::GetMTLTexture() const
 {
     // Need to get the texture from the viewport
-    if (Viewport)
+    if (SwapChain)
     {   
-        return Viewport->GetDrawableTexture();
+        return SwapChain->GetDrawableTexture();
     }
     else
     {

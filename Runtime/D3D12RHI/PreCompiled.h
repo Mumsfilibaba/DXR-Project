@@ -24,5 +24,5 @@
 #include "D3D12RHI/D3D12Shader.h"
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12Query.h"
-#include "D3D12RHI/D3D12Viewport.h"
+#include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/DynamicD3D12.h"

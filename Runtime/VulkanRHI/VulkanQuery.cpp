@@ -104,7 +104,7 @@ void FVulkanQueryPool::ResolveQueries()
             return;
         }
 
-        for (int32 Index = 0; Index < NumUsedQueries; Index++)
+        for (uint32 Index = 0; Index < NumUsedQueries; Index++)
         {
             FVulkanTimingQuery& TimingQuery = QueryData[Index];
             if (TimingQuery.Availability)
@@ -126,7 +126,7 @@ void FVulkanQueryPool::ResolveQueries()
             return;
         }
 
-        for (int32 Index = 0; Index < NumUsedQueries; Index++)
+        for (uint32 Index = 0; Index < NumUsedQueries; Index++)
         {
             FVulkanOcclusionQuery& OcclusionQuery = QueryData[Index];
             if (OcclusionQuery.Availability)

@@ -966,40 +966,40 @@ DECLARE_RHICOMMAND(FRHICommandEndExternalCapture)
     }
 };
 
-DECLARE_RHICOMMAND(FRHICommandPresentViewport)
+DECLARE_RHICOMMAND(FRHICommandPresentSwapChain)
 {
-    FORCEINLINE FRHICommandPresentViewport(FRHIViewport* InViewport, bool bInVerticalSync)
-        : Viewport(InViewport)
+    FORCEINLINE FRHICommandPresentSwapChain(FRHISwapChain* InSwapChain, bool bInVerticalSync)
+        : SwapChain(InSwapChain)
         , bVerticalSync(bInVerticalSync)
     {
-        CHECK(Viewport != nullptr);
+        CHECK(InSwapChain != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.PresentViewport(Viewport, bVerticalSync);
+        CommandContext.PresentSwapChain(SwapChain, bVerticalSync);
     }
 
-    FRHIViewport* Viewport;
-    bool          bVerticalSync;
+    FRHISwapChain* SwapChain;
+    bool           bVerticalSync;
 };
 
-DECLARE_RHICOMMAND(FRHICommandResizeViewport)
+DECLARE_RHICOMMAND(FRHICommandResizeSwapChain)
 {
-    FORCEINLINE FRHICommandResizeViewport(FRHIViewport* InViewport, uint32 InWidth, uint32 InHeight)
-        : Viewport(InViewport)
+    FORCEINLINE FRHICommandResizeSwapChain(FRHISwapChain* InSwapChain, uint32 InWidth, uint32 InHeight)
+        : SwapChain(SwapChain)
         , Width(InWidth)
         , Height(InHeight)
     {
-        CHECK(Viewport != nullptr);
+        CHECK(SwapChain != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ResizeViewport(Viewport, Width, Height);
+        CommandContext.ResizeSwapChain(SwapChain, Width, Height);
     }
 
-    FRHIViewport* Viewport;
-    uint32        Width;
-    uint32        Height;
+    FRHISwapChain* SwapChain;
+    uint32         Width;
+    uint32         Height;
 };

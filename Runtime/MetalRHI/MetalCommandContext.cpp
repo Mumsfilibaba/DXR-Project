@@ -2,7 +2,7 @@
 #include "MetalDeviceContext.h"
 #include "MetalBuffer.h"
 #include "MetalTexture.h"
-#include "MetalViewport.h"
+#include "MetalSwapChain.h"
 #include "MetalPipelineState.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
@@ -514,16 +514,16 @@ void FMetalCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTra
 {
 }
 
-void FMetalCommandContext::PresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
+void FMetalCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
-    FMetalViewport* MetalViewport = static_cast<FMetalViewport*>(Viewport);
-    MetalViewport->Present(bVerticalSync);
+    FMetalSwapChain* MetalSwapChain = static_cast<FMetalSwapChain*>(SwapChain);
+    MetalSwapChain->Present(bVerticalSync);
 }
 
-void FMetalCommandContext::ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
+void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
 {
-    FMetalViewport* MetalViewport = static_cast<FMetalViewport*>(Viewport);
-    MetalViewport->Resize(Width, Height);
+    FMetalSwapChain* MetalSwapChain = static_cast<FMetalSwapChain*>(SwapChain);
+    MetalSwapChain->Resize(Width, Height);
 }
 
 void FMetalCommandContext::ClearState()

@@ -1,5 +1,5 @@
 #include "D3D12RHI/D3D12Texture.h"
-#include "D3D12RHI/D3D12Viewport.h"
+#include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12RHI.h"
 
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
@@ -538,15 +538,15 @@ FString FD3D12Texture::GetDebugName() const
     return "";
 }
 
-FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureInfo& InTextureInfo)
+FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo)
     : FD3D12Texture(InDevice, InTextureInfo)
-    , Viewport(InViewport)
+    , SwapChain(InSwapChain)
 {
 }
 
 FD3D12BackBufferTexture::~FD3D12BackBufferTexture()
 {
-    Viewport = nullptr;
+    SwapChain = nullptr;
 }
 
 void FD3D12BackBufferTexture::Resize(uint32 InWidth, uint32 InHeight)
@@ -557,5 +557,5 @@ void FD3D12BackBufferTexture::Resize(uint32 InWidth, uint32 InHeight)
 
 FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture() const
 {
-    return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;
+    return SwapChain ? SwapChain->GetCurrentBackBuffer() : nullptr;
 }

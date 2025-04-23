@@ -3,7 +3,7 @@
 #include "MetalTexture.h"
 #include "MetalViews.h"
 #include "MetalSamplerState.h"
-#include "MetalViewport.h"
+#include "MetalSwapChain.h"
 #include "MetalShader.h"
 #include "MetalCommandContext.h"
 #include "MetalQuery.h"
@@ -43,7 +43,7 @@ public:
     virtual FRHITexture* CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final;
     virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final;
-    virtual FRHIViewport* CreateViewport(const FRHIViewportInfo& InViewportInfo) override final;
+    virtual FRHISwapChain* CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo) override final;
     virtual FRHIQuery* CreateQuery(EQueryType InQueryType) override final;
     virtual FRHIRayTracingScene* CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final;
     virtual FRHIRayTracingGeometry* CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final;

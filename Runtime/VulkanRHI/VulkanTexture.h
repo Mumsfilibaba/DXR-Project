@@ -4,10 +4,10 @@
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanMemory.h"
 
-class FVulkanViewport;
+class FVulkanSwapChain;
 class FVulkanCommandContext;
 
-typedef TSharedRef<FVulkanViewport>                FVulkanViewportRef;
+typedef TSharedRef<FVulkanSwapChain>                FVulkanSwapChainRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
@@ -92,22 +92,22 @@ protected:
 class FVulkanBackBufferTexture : public FVulkanTexture
 {
 public:
-    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureInfo& InTextureInfo);
+    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanBackBufferTexture();
 
     void ResizeBackBuffer(int32 InWidth, int32 InHeight);
     FVulkanTexture* GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext);
     
-    FVulkanViewport* GetViewport() const
+    FVulkanSwapChain* GetSwapChain() const
     {
-        return Viewport;
+        return SwapChain;
     }
     
-    void SetViewport(FVulkanViewport* InViewport)
+    void SetSwapChain(FVulkanSwapChain* InSwapChain)
     {
-        Viewport = InViewport;
+        SwapChain = InSwapChain;
     }
 
 private:
-    FVulkanViewport* Viewport;
+    FVulkanSwapChain* SwapChain;
 };

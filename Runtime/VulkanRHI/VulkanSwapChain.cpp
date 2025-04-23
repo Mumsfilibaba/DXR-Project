@@ -1,268 +1,362 @@
+#include "Core/Misc/ConsoleManager.h"
 #include "VulkanRHI/VulkanSwapChain.h"
+#include "VulkanRHI/VulkanCommandBuffer.h"
 
-static constexpr bool GVulkanReportSwapChainAquireImageNonSuccessResult = true;
+static TAutoConsoleVariable<int32> CVarBackbufferCount(
+    "VulkanRHI.BackbufferCount",
+    "The preferred number of backbuffers for the SwapChain",
+    NUM_BACK_BUFFERS,
+    EConsoleVariableFlags::Default);
 
-FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
-    : FVulkanDeviceChild(InDevice)
-    , PresentResult(VK_SUCCESS)
-    , SwapChain(VK_NULL_HANDLE)
-    , Extent{ 0, 0 }
-    , BufferIndex(0)
-    , BufferCount(0)
-    , Format{ VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR }
+static TAutoConsoleVariable<bool> CVarEnableVSync(
+    "VulkanRHI.EnableVSync",
+    "Enable V-Sync for SwapChains (Already created viewports does not change mode at the moment)",
+    true,
+    EConsoleVariableFlags::Default);
+
+// Recreate the SwapChain when it's reported to be suboptimal when acquiring next image
+static constexpr bool GVulkanRecreateSuboptimalSwapChainOnAquire = true;
+
+FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainInfo& InSwapChainInfo)
+    : FRHISwapChain(InSwapChainInfo)
+    , FVulkanDeviceChild(InDevice)
+    , WindowHandle(InSwapChainInfo.WindowHandle)
+    , Surface(nullptr)
+    , SwapChainHandle(nullptr)
+    , BackBuffer(nullptr)
+    , BackBuffers()
+    , ImageSemaphores()
+    , RenderSemaphores()
+    , BackBufferIndex(VULKAN_INVALID_BACK_BUFFER_INDEX)
 {
 }
 
 FVulkanSwapChain::~FVulkanSwapChain()
 {
-    if (VULKAN_CHECK_HANDLE(SwapChain))
-    {
-        vkDestroySwapchainKHR(GetDevice()->GetVkDevice(), SwapChain, nullptr);
-        SwapChain = VK_NULL_HANDLE;
-    }
+    FVulkanCommandContext* InCommandContext = FVulkanRHI::Get()->ObtainVulkanCommandContext();
+    DestroySwapChain(InCommandContext);
 }
 
-bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
+bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
 {
-    FVulkanSurface* Surface = CreateInfo.Surface;
-    CHECK(Surface != nullptr);
- 
-    VkSurfaceCapabilitiesKHR Capabilities;
-    if (!Surface->GetCapabilities(Capabilities))
+    if (!InCommandContext)
     {
+        VULKAN_ERROR("CommandContext cannot be nullptr");
         return false;
     }
+    
+    Surface = new FVulkanSurface(GetDevice(), InCommandContext->GetCommandQueue(), WindowHandle);
+    if (!Surface->Initialize())
+    {
+        VULKAN_ERROR("Failed to create Surface");
+        return false;
+    }
+    
+    // We need to start the context since that locks it to this thread
+    InCommandContext->StartContext();
 
-    TArray<VkSurfaceFormatKHR> SupportedFormats;
-    if (!Surface->GetSupportedFormats(SupportedFormats))
+    if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
     {
         return false;
     }
     
-    if (SupportedFormats.IsEmpty())
+    // Unlock the context from this thread
+    InCommandContext->FinishContext();
+    InCommandContext->Flush();
+
+    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
+
+    if (!BackBuffer)
     {
-        VULKAN_ERROR("No supported surface-formats");
+        VULKAN_ERROR("Failed to create BackBuffer");
         return false;
     }
 
-    TArray<VkPresentModeKHR> SupportedPresentModes;
-    if (!Surface->GetSupportedPresentModes(SupportedPresentModes))
+    return true;
+}
+
+bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
+{
+    FVulkanSwapChainCreateInfo SwapChainCreateInfo;
+    SwapChainCreateInfo.ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    SwapChainCreateInfo.PreviousSwapChain = SwapChainHandle.Get();
+    SwapChainCreateInfo.Surface           = Surface.Get();
+    SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
+    SwapChainCreateInfo.Extent.width      = InWidth;
+    SwapChainCreateInfo.Extent.height     = InHeight;
+    SwapChainCreateInfo.Format            = GetColorFormat();
+    SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
+
+    if (InWidth == 0 || InHeight == 0)
     {
+        VULKAN_ERROR("SwapChain Width or Height of zero is not supported");
         return false;
     }
-    
-    if (SupportedPresentModes.IsEmpty())
-    {
-        VULKAN_ERROR("No supported present-modes");
-        return false;
-    }
 
-    // This lambda tries to match the format that we want with one that is available
-    const auto MatchFormat = [&](VkSurfaceFormatKHR DesiredFormat) -> VkSurfaceFormatKHR
-    {
-        VkSurfaceFormatKHR SelectedFormat = { VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
-        for (const VkSurfaceFormatKHR& SurfaceFormat : SupportedFormats)
-        {
-            if (SurfaceFormat.format == DesiredFormat.format && SurfaceFormat.colorSpace == DesiredFormat.colorSpace)
-            {
-                SelectedFormat = SurfaceFormat;
-                break;
-            }
-            else if (SurfaceFormat.format == DesiredFormat.format)
-            {
-                SelectedFormat = SurfaceFormat;
-            }
-        }
-        
-        return SelectedFormat;
-    };
-
-    // The format we want to use for the swapchain
-    const VkSurfaceFormatKHR DesiredFormat = { ConvertFormat(CreateInfo.Format), CreateInfo.ColorSpace };
-    
-    // See if the exact format is available
-    VkSurfaceFormatKHR SelectedFormat = MatchFormat(DesiredFormat);
-
-    // Here we need to see if we failed to find any format
-    if (SelectedFormat.format == VK_FORMAT_UNDEFINED)
-    {
-        VULKAN_ERROR("Failed to find desired format");
-        return false;
-    }
-    else
-    {
-        VULKAN_INFO("Selected format '%s' for SwapChain", ToString(SelectedFormat.format));
-    }
-
-    // TODO: Investigate Vulkan V-sync
-    const auto MatchPresentMode = [&](const VkPresentModeKHR& InPresentMode)
-    {
-        for (const VkPresentModeKHR& PresentMode : SupportedPresentModes)
-        {
-            if (PresentMode == InPresentMode)
-            {
-                return true;
-            }
-        }
-        
-        return false;
-    };
-    
-    VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    if (CreateInfo.bVerticalSync)
-    {
-        if (MatchPresentMode(VK_PRESENT_MODE_MAILBOX_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-        }
-        else if (MatchPresentMode(VK_PRESENT_MODE_FIFO_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-        }
-        else if (MatchPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
-        }
-        else
-        {
-            VULKAN_WARNING("No VSync PresentMode is supported");
-            SelectedPresentMode = SupportedPresentModes[0];
-        }
-    }
-    else
-    {
-        if (MatchPresentMode(VK_PRESENT_MODE_IMMEDIATE_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-        }
-        else
-        {
-            VULKAN_WARNING("No Immediate PresentMode is supported");
-            SelectedPresentMode = SupportedPresentModes[0];
-        }
-    }
-
-    VULKAN_INFO("Selected presentmode '%s' for SwapChain", ToString(SelectedPresentMode));
-
-    // Determine the size of the SwapChain
-    VkExtent2D CurrentExtent;
-    if (Capabilities.currentExtent.width != UINT32_MAX || Capabilities.currentExtent.height != UINT32_MAX || CreateInfo.Extent.width == 0 || CreateInfo.Extent.height == 0)
-    {
-        CurrentExtent = Capabilities.currentExtent;
-    }
-    else
-    {
-        CurrentExtent.width  = FMath::Clamp(CreateInfo.Extent.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
-        CurrentExtent.height = FMath::Clamp(CreateInfo.Extent.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
-    }
-
-    CurrentExtent.width  = FMath::Max(CurrentExtent.width , 1u);
-    CurrentExtent.height = FMath::Max(CurrentExtent.height, 1u);
-    VULKAN_INFO("SwapChain - CurrentExtent: w=%d h=%d, MinExtent: w=%d h=%d, MaxExtent: w=%d h=%d", Capabilities.currentExtent.width, Capabilities.currentExtent.height, Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height);
-
-    // Get the number of swapchain image that we can have based on the BackBuffer CVar
-    const uint32 SupportedBufferCount = Capabilities.maxImageCount == 0 ? CreateInfo.BufferCount : FMath::Clamp<uint32>(CreateInfo.BufferCount, Capabilities.minImageCount, Capabilities.maxImageCount);
-    if (SupportedBufferCount != CreateInfo.BufferCount)
-    {
-        VULKAN_INFO("Number of buffers(=%d) is not supported. MinBuffers=%d MaxBuffers=%d", CreateInfo.BufferCount, Capabilities.minImageCount, Capabilities.maxImageCount);
-    }
-
-    VULKAN_INFO("Number of buffers in SwapChain=%d", SupportedBufferCount);
-
-    VkSwapchainCreateInfoKHR SwapChainCreateInfo;
-    FMemory::Memzero(&SwapChainCreateInfo);
-
-    SwapChainCreateInfo.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    SwapChainCreateInfo.pNext                 = nullptr;
-    SwapChainCreateInfo.surface               = Surface->GetVkSurface();
-    SwapChainCreateInfo.oldSwapchain          = CreateInfo.PreviousSwapChain ? CreateInfo.PreviousSwapChain->GetVkSwapChain() : VK_NULL_HANDLE;
-    SwapChainCreateInfo.minImageCount         = SupportedBufferCount;
-    SwapChainCreateInfo.imageFormat           = SelectedFormat.format;
-    SwapChainCreateInfo.imageColorSpace       = SelectedFormat.colorSpace;
-    SwapChainCreateInfo.imageExtent           = CurrentExtent;
-    SwapChainCreateInfo.imageArrayLayers      = 1;
-    SwapChainCreateInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
-    SwapChainCreateInfo.queueFamilyIndexCount = 0;
-    SwapChainCreateInfo.pQueueFamilyIndices   = nullptr;
-    SwapChainCreateInfo.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    SwapChainCreateInfo.preTransform          = Capabilities.currentTransform;
-    SwapChainCreateInfo.compositeAlpha        = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    SwapChainCreateInfo.presentMode           = SelectedPresentMode;
-    SwapChainCreateInfo.clipped               = VK_TRUE;
-
-    VkResult Result = vkCreateSwapchainKHR(GetDevice()->GetVkDevice(), &SwapChainCreateInfo, nullptr, &SwapChain);
-    if (VULKAN_FAILED(Result))
+    // NOTE: Create a temporary SwapChain, this is done in order to keep the old swapchain alive in case we recreate the swapchain
+    FVulkanSwapChainHandleRef NewSwapChainHandle = new FVulkanSwapChainHandle(GetDevice());
+    if (!NewSwapChainHandle->Initialize(SwapChainCreateInfo))
     {
         VULKAN_ERROR("Failed to create SwapChain");
         return false;
     }
-
-    Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, nullptr);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to retrieve the number of images in SwapChain");
-        return false;
-    }
-
-    Extent = CurrentExtent;
-    Format = SelectedFormat;
-    return true;
-}
-
-bool FVulkanSwapChain::GetSwapChainImages(VkImage* OutImages)
-{
-    VkResult Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, OutImages);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to retrieve the images of the SwapChain");
-        return false;
-    }
-
-    return true;
-}
-
-VkResult FVulkanSwapChain::Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore)
-{
-    VkPresentInfoKHR PresentInfo;
-    FMemory::Memzero(&PresentInfo);
-
-    PresentInfo.sType          = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    PresentInfo.pNext          = nullptr;
-    PresentInfo.swapchainCount = 1;
-    PresentInfo.pSwapchains    = &SwapChain;
-    PresentInfo.pResults       = &PresentResult;
-    PresentInfo.pImageIndices  = &BufferIndex;
-
-    // If there is a signal semaphore then the queue has not yet been submitted since we retrieved the image and we should not wait for this semaphore
-    VkSemaphore WaitSemaphoreHandle = VK_NULL_HANDLE;
-    if (WaitSemaphore)
-    {
-        WaitSemaphoreHandle = WaitSemaphore->GetVkSemaphore();
-
-        PresentInfo.waitSemaphoreCount = 1;
-        PresentInfo.pWaitSemaphores    = &WaitSemaphoreHandle;
-    }
     else
     {
-        PresentInfo.waitSemaphoreCount = 0;
-        PresentInfo.pWaitSemaphores    = nullptr;
+        SwapChainHandle = NewSwapChainHandle;
     }
 
-    return vkQueuePresentKHR(Queue.GetVkQueue(), &PresentInfo);
+    // Update the description if the requested image size was not supported
+    VkExtent2D SwapChainExtent = SwapChainHandle->GetExtent();
+    if (InWidth != SwapChainExtent.width || InHeight != SwapChainExtent.height)
+    {
+        VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Info.Width, Info.Height, SwapChainExtent.width, SwapChainExtent.height);
+        
+        // Update the size of the viewport to the actual swapchain size
+        Info.Width  = static_cast<uint16>(SwapChainExtent.width);
+        Info.Height = static_cast<uint16>(SwapChainExtent.height);
+
+        if (BackBuffer)
+        {
+            BackBuffer->ResizeBackBuffer(Info.Width, Info.Height);
+        }
+    }
+
+    // Initialize semaphores and BackBuffers
+    const uint32 BufferCount = SwapChainHandle->GetBufferCount();
+    if (BufferCount != static_cast<uint32>(BackBuffers.Size()))
+    {
+        ImageSemaphores.Resize(BufferCount);
+        RenderSemaphores.Resize(BufferCount);
+        BackBuffers.Resize(BufferCount);
+
+        // Setup the info for each backbuffer, and ensure that we create the info with the actual image-size
+        const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
+        FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
+        
+        // Create a FVulkanTexture for each backbuffer
+        for (uint32 Index = 0; Index < BufferCount; ++Index)
+        {
+            FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
+            if (NewImageSemaphore->Initialize())
+            {
+                NewImageSemaphore->SetDebugName("ImageSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
+                ImageSemaphores[Index] = NewImageSemaphore;
+            }
+            else
+            {
+                return false;
+            }
+
+            FVulkanSemaphoreRef NewRenderSemaphore = new FVulkanSemaphore(GetDevice());
+            if (NewRenderSemaphore->Initialize())
+            {
+                NewRenderSemaphore->SetDebugName("RenderSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
+                RenderSemaphores[Index] = NewRenderSemaphore;
+            }
+            else
+            {
+                return false;
+            }
+
+            if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferInfo))
+            {
+                BackBuffers[Index] = NewTexture;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        
+        // Set a valid semaphore index
+        SemaphoreIndex = 0;
+    }
+
+    // Retrieve the images
+    TArray<VkImage> SwapChainImages(SwapChainHandle->GetBufferCount());
+    SwapChainHandle->GetSwapChainImages(SwapChainImages.Data());
+
+    // Ensure we are recording
+    CHECK(InCommandContext->IsRecording());
+    CHECK(!InCommandContext->NeedsCommandBuffer());
+    
+    int32 Index = 0;
+    for (VkImage Image : SwapChainImages)
+    {
+        VkImageMemoryBarrier2 ImageBarrier;
+        FMemory::Memzero(&ImageBarrier);
+
+        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+        ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.image                           = Image;
+        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+        ImageBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageBarrier.subresourceRange.baseArrayLayer = 0;
+        ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        ImageBarrier.subresourceRange.baseMipLevel   = 0;
+        ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+        InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        BackBuffers[Index++]->SetVkImage(Image);
+    }
+
+    InCommandContext->SplitCommandBuffer(false, false);
+    return true;
 }
 
-VkResult FVulkanSwapChain::AquireNextImage(FVulkanSemaphore* AquireSemaphore)
+void FVulkanSwapChain::DestroySwapChain(FVulkanCommandContext* InCommandContext)
 {
-    VkSemaphore CurrentImageSemaphore = AquireSemaphore ? AquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
-    
-    VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, CurrentImageSemaphore, VK_NULL_HANDLE, &BufferIndex);
-    if (GVulkanReportSwapChainAquireImageNonSuccessResult)
+    // Ensure that all work is completed
+    InCommandContext->GetCommandQueue().WaitForCompletion();
+
+    // Destroy the swapchain
+    SwapChainHandle.Reset();
+}
+
+bool FVulkanSwapChain::Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
+{
+    if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
     {
-        if (Result != VK_SUCCESS)
+        CHECK(!InCommandContext->IsInsideRenderPass());
+        CHECK(InCommandContext->IsRecording());
+
+        // Ensure that all work is completed, if this function is called from
+        // a RHICommandList the we do this "manually" since the context is already
+        // started and we need to ensure that there is a valid CommandBuffer
+        InCommandContext->SplitCommandBuffer(false, true);
+        VULKAN_INFO("FVulkanSwapChain::Resize w=%d h=%d", InWidth, InHeight);
+
+        if (!CreateSwapChain(InCommandContext, InWidth, InHeight))
         {
-            LOG_WARNING("vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+            VULKAN_WARNING("FVulkanSwapChain::Resize FAILED");
+            return false;
+        }
+
+        Info.Width  = static_cast<uint16>(InWidth);
+        Info.Height = static_cast<uint16>(InHeight);
+        BackBuffer->ResizeBackBuffer(Info.Width, Info.Height);
+    }
+
+    return true;
+}
+
+bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync)
+{
+    // TODO: Recreate SwapChain based on V-Sync
+    UNREFERENCED_VARIABLE(bVerticalSync);
+   
+    VkResult Result = VK_SUCCESS;
+    if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
+    {
+        Result = AquireNextImage(InCommandContext);
+        if (Result == VK_SUBOPTIMAL_KHR)
+        {
+            LOG_WARNING("FVulkanSwapChain::Present [AquireNextImage] SwapChain is Suboptimal");
+        }
+        
+        if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+        {
+            LOG_WARNING("FVulkanSwapChain::Present [AquireNextImage] SwapChain is OutOfDate");
+            return false;
+        }
+    }
+
+    FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
+    Result = SwapChainHandle->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
+    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
+    {
+        if (Result == VK_SUBOPTIMAL_KHR)
+        {
+            VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is Suboptimal");
+        }
+        else
+        {
+            VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is OutOfDate");
+        }
+        
+        InCommandContext->SplitCommandBuffer(false, true);
+
+        if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
+        {
+            LOG_WARNING("FVulkanSwapChain::Present CreateSwapChain Failed");
+            return false;
+        }
+    }
+
+    AdvanceSemaphoreIndex();
+    BackBufferIndex = VULKAN_INVALID_BACK_BUFFER_INDEX;
+    return true;
+}
+
+void FVulkanSwapChain::SetDebugName(const FString& InName)
+{
+    // Name the swapchain object
+    if (SwapChainHandle)
+    {
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, SwapChainHandle->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
+        BackBuffer->SetDebugName("BackBuffer Proxy");
+
+        // Name all the images
+        FString ImageName;
+        for (uint32 Index = 0; FVulkanTextureRef Texture : BackBuffers)
+        {
+            ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", Index);
+            Texture->SetDebugName(ImageName);
+        }
+    }
+}
+
+FVulkanTexture* FVulkanSwapChain::GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext)
+{
+    if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
+    {
+        VkResult Result = AquireNextImage(InCommandContext);
+        if (GVulkanRecreateSuboptimalSwapChainOnAquire)
+        {
+            if (Result == VK_SUBOPTIMAL_KHR)
+            {
+                VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is Suboptimal");
+            }
+        }
+        
+        if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+        {
+            VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is OutOfDate");
+            return nullptr;
         }
     }
     
+    return BackBuffers[BackBufferIndex].Get();
+}
+
+FRHITexture* FVulkanSwapChain::GetBackBuffer() const
+{
+    return BackBuffer.Get();
+}
+
+VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandContext)
+{
+    FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
+    FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
+
+    VkResult Result = SwapChainHandle->AquireNextImage(ImageSemaphore.Get());
+    if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+    {
+        VULKAN_ERROR("Failed to aquire SwapChain image");
+        return Result;
+    }
+
+    InCommandContext->GetCommandQueue().AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    InCommandContext->GetCommandQueue().AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
+
+    // Update the BackBuffer index
+    BackBufferIndex = SwapChainHandle->GetBufferIndex();
     return Result;
 }

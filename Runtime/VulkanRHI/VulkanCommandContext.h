@@ -106,8 +106,8 @@ public:
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final;
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
     virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
-    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final;
-    virtual void ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) override final;
+    virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
+    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final;
     virtual void InsertMarker(const FStringView& Message) override final;
     
     virtual void ClearState() override final;

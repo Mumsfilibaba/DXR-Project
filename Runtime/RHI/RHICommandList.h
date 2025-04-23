@@ -17,7 +17,7 @@ struct FRHIDepthStencilView;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
 class FRHIShader;
-class FRHIViewport;
+class FRHISwapChain;
 
 #define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
 
@@ -379,14 +379,14 @@ public:
         EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
     }
 
-    FORCEINLINE void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) noexcept
+    FORCEINLINE void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) noexcept
     {
-        EmplaceCommand<FRHICommandPresentViewport>(Viewport, bVerticalSync);
+        EmplaceCommand<FRHICommandPresentSwapChain>(SwapChain, bVerticalSync);
     }
 
-    FORCEINLINE void ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) noexcept
+    FORCEINLINE void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) noexcept
     {
-        EmplaceCommand<FRHICommandResizeViewport>(Viewport, Width, Height);
+        EmplaceCommand<FRHICommandResizeSwapChain>(SwapChain, Width, Height);
     }
 
     FORCEINLINE void InsertMarker(const FStringView& Marker) noexcept

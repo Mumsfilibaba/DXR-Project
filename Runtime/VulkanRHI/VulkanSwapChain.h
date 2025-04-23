@@ -1,48 +1,75 @@
 #pragma once
-#include "Core/Misc/Debug.h"
-#include "VulkanRHI/VulkanDeviceChild.h"
-#include "VulkanRHI/VulkanSurface.h"
-#include "VulkanRHI/VulkanQueue.h"
+#include "Core/Containers/Array.h"
+#include "Core/Containers/ArrayView.h"
+#include "Core/Containers/SharedRef.h"
+#include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanSemaphore.h"
+#include "VulkanRHI/VulkanSurface.h"
+#include "VulkanRHI/VulkanSwapChainHandle.h"
 
-#define NUM_BACK_BUFFERS (3)
+#define VULKAN_INVALID_BACK_BUFFER_INDEX (-1)
 
 typedef TSharedRef<class FVulkanSwapChain> FVulkanSwapChainRef;
 
-struct FVulkanSwapChainCreateInfo
-{
-    FVulkanSwapChain* PreviousSwapChain = nullptr;
-    FVulkanSurface*   Surface           = nullptr;
-    VkExtent2D        Extent            = { 0, 0 };
-    EFormat           Format            = EFormat::B8G8R8A8_Unorm;
-    VkColorSpaceKHR   ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    uint32            BufferCount       = 2;
-    bool              bVerticalSync     = true;
-};
+class FVulkanCommandContext;
 
-class FVulkanSwapChain : public FVulkanDeviceChild, public FVulkanRefCounted
+class FVulkanSwapChain final : public FRHISwapChain, public FVulkanDeviceChild
 {
 public:
-    FVulkanSwapChain(FVulkanDevice* InDevice);
-    ~FVulkanSwapChain();
+    FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainInfo& InSwapChainInfo);
+    virtual ~FVulkanSwapChain();
 
-    bool Initialize(const FVulkanSwapChainCreateInfo& CreateInfo);
-    VkResult Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore);
-    VkResult AquireNextImage(FVulkanSemaphore* AquireSemaphore);
-    bool GetSwapChainImages(VkImage* OutImages);
-    
-    VkResult GetPresentResult() const { return PresentResult; }
-    VkSwapchainKHR GetVkSwapChain() const { return SwapChain; }
-    VkExtent2D GetExtent() const { return Extent; }
-    VkSurfaceFormatKHR GetVkSurfaceFormat() const { return Format; }
-    uint32 GetBufferCount() const { return BufferCount; }
-    uint32 GetBufferIndex() const { return BufferIndex; }
+    virtual FRHITexture* GetBackBuffer() const override final;
+
+    bool Initialize(FVulkanCommandContext* InCommandContext);
+    bool Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
+    bool Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync);
+    FVulkanTexture* GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext);
+
+    void SetDebugName(const FString& InName);
+
+    FVulkanTexture* GetBackBufferFromIndex(uint32 Index) const
+    {
+        CHECK(BackBuffers.IsValidIndex(Index));
+        return BackBuffers[Index].Get();
+    }
+
+    uint32 GetNumBackBuffers() const
+    {
+        return BackBuffers.Size();
+    }
+
+    FVulkanSwapChainHandle* GetSwapChainHandle() const
+    {
+        return SwapChainHandle.Get();
+    }
+
+    FVulkanSurface* GetSurface() const
+    {
+        return Surface.Get();
+    }
 
 private:
-    VkResult           PresentResult;
-    VkSwapchainKHR     SwapChain;
-    VkExtent2D         Extent;
-    uint32             BufferIndex;
-    uint32             BufferCount;
-    VkSurfaceFormatKHR Format;
+    bool CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
+    void DestroySwapChain(FVulkanCommandContext* InCommandContext);
+    VkResult AquireNextImage(FVulkanCommandContext* InCommandContext);
+
+    void AdvanceSemaphoreIndex()
+    {
+        SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
+    }
+
+    typedef TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> FVulkanSemaphoreArray;
+
+    void*                       WindowHandle;
+    FVulkanSurfaceRef           Surface;
+    FVulkanSwapChainHandleRef   SwapChainHandle;
+    FVulkanBackBufferTextureRef BackBuffer;
+    TArray<FVulkanTextureRef>   BackBuffers;
+    FVulkanSemaphoreArray       ImageSemaphores;
+    FVulkanSemaphoreArray       RenderSemaphores;
+    int32                       SemaphoreIndex;
+    int32                       BackBufferIndex;
 };
+

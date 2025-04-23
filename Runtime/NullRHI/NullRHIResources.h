@@ -95,11 +95,11 @@ struct FNullRHISamplerState : public FRHISamplerState
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
-class FNullRHIViewport : public FRHIViewport
+class FNullRHISwapChain : public FRHISwapChain
 {
 public:
-    FNullRHIViewport(const FRHIViewportInfo& InViewportInfo)
-        : FRHIViewport(InViewportInfo)
+    FNullRHISwapChain(const FRHISwapChainInfo& InSwapChainInfo)
+        : FRHISwapChain(InSwapChainInfo)
         , BackBuffer(nullptr)
     { 
         FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(Info.ColorFormat, Info.Width, Info.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);

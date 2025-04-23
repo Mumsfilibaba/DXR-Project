@@ -8,7 +8,7 @@
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanSamplerState.h"
-#include "VulkanRHI/VulkanViewport.h"
+#include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanDeviceLimits.h"
 #include "VulkanRHI/VulkanRayTracing.h"
 #include "VulkanRHI/Platform/PlatformVulkan.h"
@@ -311,18 +311,18 @@ FRHISamplerState* FVulkanRHI::CreateSamplerState(const FRHISamplerStateInfo& InS
     return Result.ReleaseOwnership();
 }
 
-FRHIViewport* FVulkanRHI::CreateViewport(const FRHIViewportInfo& InViewportInfo)
+FRHISwapChain* FVulkanRHI::CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo)
 {
-    CHECK(InViewportInfo.WindowHandle != nullptr);
+    CHECK(InSwapChainInfo.WindowHandle != nullptr);
 
-    FVulkanViewportRef NewViewport = new FVulkanViewport(Device, InViewportInfo);
-    if (!NewViewport->Initialize(GraphicsCommandContext))
+    FVulkanSwapChainRef NewSwapChain = new FVulkanSwapChain(Device, InSwapChainInfo);
+    if (!NewSwapChain->Initialize(GraphicsCommandContext))
     {
         return nullptr;
     }
     else
     {
-        return NewViewport.ReleaseOwnership();
+        return NewSwapChain.ReleaseOwnership();
     }
 }
 
@@ -646,7 +646,7 @@ bool FVulkanRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemo
     OutMemoryStats.MemoryBudget = 0;
 
     const VkPhysicalDeviceMemoryProperties& memoryProperties = MemoryProperties2.memoryProperties;
-    for (int32 Index = 0; Index < memoryProperties.memoryHeapCount; Index++)
+    for (uint32 Index = 0; Index < memoryProperties.memoryHeapCount; Index++)
     {
         if (MemoryType == EVideoMemoryType::Local)
         {

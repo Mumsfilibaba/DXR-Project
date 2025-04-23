@@ -294,16 +294,16 @@ FRHIQuery* FMetalRHI::CreateQuery(EQueryType InQueryType)
     return new FMetalQuery(InQueryType);
 }
 
-FRHIViewport* FMetalRHI::CreateViewport(const FRHIViewportInfo& ViewportInfo)
+FRHISwapChain* FMetalRHI::CreateSwapChain(const FRHISwapChainInfo& SwapChainInfo)
 {
-    FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(ViewportInfo.WindowHandle);
+    FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(SwapChainInfo.WindowHandle);
     if (!Window)
     {
         return nullptr;
     }
 
-    FRHIViewportInfo NewViewportInfo(ViewportInfo);
-    if (ViewportInfo.Width == 0 || ViewportInfo.Height == 0)
+    FRHISwapChainInfo NewViewportInfo(SwapChainInfo);
+    if (SwapChainInfo.Width == 0 || SwapChainInfo.Height == 0)
     {
         __block NSRect Frame;
         __block NSRect ContentRect;
@@ -317,14 +317,14 @@ FRHIViewport* FMetalRHI::CreateViewport(const FRHIViewportInfo& ViewportInfo)
         NewViewportInfo.Height = ContentRect.size.height;
     }
     
-    FMetalViewportRef NewViewport = new FMetalViewport(GetDeviceContext(), NewViewportInfo);
-    if (!NewViewport->Initialize())
+    FMetalSwapChainRef NewSwapChain = new FMetalSwapChain(GetDeviceContext(), NewViewportInfo);
+    if (!NewSwapChain->Initialize())
     {
         return nullptr;
     }
     else
     {
-        return NewViewport.ReleaseOwnership();
+        return NewSwapChain.ReleaseOwnership();
     }
 }
 

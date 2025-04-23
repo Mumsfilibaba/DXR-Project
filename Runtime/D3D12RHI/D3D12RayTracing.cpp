@@ -510,12 +510,12 @@ FD3D12ShaderBindingTableBuilder::FD3D12ShaderBindingTableBuilder(FD3D12Device* I
 }
 
 void FD3D12ShaderBindingTableBuilder::PopulateEntry(
-    FD3D12RayTracingPipelineState* PipelineState,
-    FD3D12RootSignature* RootSignature,
-    FD3D12OnlineDescriptorHeap* ResourceHeap,
-    FD3D12OnlineDescriptorHeap* SamplerHeap,
-    FD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
-    const FRayTracingShaderResources& Resources)
+    FD3D12RayTracingPipelineState* /* PipelineState */,
+    FD3D12RootSignature* /* RootSignature */,
+    FD3D12OnlineDescriptorHeap* /* ResourceHeap */,
+    FD3D12OnlineDescriptorHeap* /* SamplerHeap */,
+    FD3D12ShaderBindingTableEntry& /* OutShaderBindingEntry */,
+    const FRayTracingShaderResources& /* Resources */)
 {
 #if 0
     CHECK(PipelineState != nullptr);

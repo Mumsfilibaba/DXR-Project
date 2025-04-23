@@ -414,9 +414,9 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     TArray<FRHIShaderResourceViewRef> ShaderResourceViews;
     ShaderResourceViews.Reserve(NumDispatches);
 
-    for (int32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel += MipLevelsPerDispatch)
+    for (uint32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel += MipLevelsPerDispatch)
     {
-        SRVInfo.FirstMipLevel = MipLevel;
+        SRVInfo.FirstMipLevel = static_cast<uint8>(MipLevel);
 
         FRHIShaderResourceView* ShaderResourceView = FRHI::Get()->CreateShaderResourceView(SRVInfo);
         ShaderResourceViews.Emplace(ShaderResourceView);
@@ -435,7 +435,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
 
     for (uint32 MipLevel = 1; MipLevel < NumMipLevels; MipLevel++)
     {
-        UAVInfo.MipLevel = MipLevel;
+        UAVInfo.MipLevel = static_cast<uint8>(MipLevel);
 
         FRHIUnorderedAccessView* UnorderedAccessView = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
         UnorderedAccessViews.Emplace(UnorderedAccessView);
@@ -497,7 +497,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         const uint32 FirstMipLevelThisBatch = DispatchIndex * MipLevelsPerDispatch;
 
         // Bind all the UAVs that needs processing this batch
-        for (int32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
+        for (uint32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
         {
             const uint32 CurrentMipLevel = FirstMipLevelThisBatch + MipIndex;
             CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess, CurrentMipLevel + 1));
@@ -505,7 +505,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         }
 
         // Bind null UAVs for all other bindings
-        for (int32 MipIndex = NumMipLevelsThisBatch; MipIndex < MipLevelsPerDispatch; MipIndex++)
+        for (uint32 MipIndex = NumMipLevelsThisBatch; MipIndex < MipLevelsPerDispatch; MipIndex++)
         {
             CommandList.SetUnorderedAccessView(ComputeShader.Get(), nullptr, MipIndex);
         }
@@ -517,14 +517,14 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         CommandList.Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
         // Transition all resources back
-        for (int32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
+        for (uint32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
         {
             const uint32 CurrentMipLevel = FirstMipLevelThisBatch + MipIndex;
             CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 1));
         }
 
         // Bind null UAVs for all other bindings
-        for (int32 MipIndex = NumMipLevelsThisBatch; MipIndex < MipLevelsPerDispatch; MipIndex++)
+        for (uint32 MipIndex = NumMipLevelsThisBatch; MipIndex < MipLevelsPerDispatch; MipIndex++)
         {
             CommandList.SetUnorderedAccessView(ComputeShader.Get(), nullptr, MipIndex);
         }

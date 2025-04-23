@@ -3,7 +3,7 @@
 #include "D3D12RHI/D3D12Resource.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 
-class FD3D12Viewport;
+class FD3D12SwapChain;
 class FD3D12CommandContext;
 
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
@@ -79,7 +79,7 @@ protected:
 class FD3D12BackBufferTexture : public FD3D12Texture
 {
 public:
-    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureInfo& InTextureInfo);
+    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12BackBufferTexture();
 
 public:
@@ -95,18 +95,18 @@ public:
     void Resize(uint32 InWidth, uint32 InHeight);
     FD3D12Texture* GetCurrentBackBufferTexture() const;
 
-    FD3D12Viewport* GetViewport() const
+    FD3D12SwapChain* GetSwapChain() const
     { 
-        return Viewport;
+        return SwapChain;
     }
 
-    void SetViewport(FD3D12Viewport* InViewport)
+    void SetSwapChain(FD3D12SwapChain* InSwapChain)
     {
-        Viewport = InViewport;
+        SwapChain = InSwapChain;
     }
 
 private:
-    FD3D12Viewport* Viewport;
+    FD3D12SwapChain* SwapChain;
 };
 
 FORCEINLINE FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)

@@ -10,14 +10,14 @@ public:
     ~FSceneViewport();
 
     /**
-     * @brief Creates the RHIViewport for this SceneViewport
+     * @brief Creates the RHISwapChain for this SceneViewport
      * 
-     * @return Returns true if the creation of the RHIViewport was successful
+     * @return Returns true if the creation of the RHISwapChain was successful
      */
     bool InitializeRHI();
 
     /**
-     * @brief Releases the RHIViewport
+     * @brief Releases the RHISwapChain
      */
     void ReleaseRHI();
 
@@ -58,9 +58,9 @@ public:
 
     virtual FEventResponse OnFocusGained() override;
 
-    virtual TSharedRef<FRHIViewport> GetViewportRHI() const override
+    virtual FRHISwapChainRef GetRHISwapChain() const override
     {
-        return RHIViewport;
+        return RHISwapChain;
     }
 
     virtual void SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewport) override
@@ -95,7 +95,7 @@ public:
     }
 
 private:
-    TWeakPtr<FViewportWidget> Viewport;
-    TSharedRef<FRHIViewport>  RHIViewport;
     FWorld*                   World;
+    TWeakPtr<FViewportWidget> Viewport;
+    FRHISwapChainRef          RHISwapChain;
 };

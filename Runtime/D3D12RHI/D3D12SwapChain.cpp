@@ -1,15 +1,15 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "D3D12RHI/D3D12RHI.h"
-#include "D3D12RHI/D3D12Viewport.h"
+#include "D3D12RHI/D3D12SwapChain.h"
 
-FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHIViewportInfo& InViewportInfo)
+FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainInfo& InSwapChainInfo)
     : FD3D12DeviceChild(InDevice)
-    , FRHIViewport(InViewportInfo)
+    , FRHISwapChain(InSwapChainInfo)
     , SwapChain(nullptr)
     , CommandContext(InCommandContext)
     , BackBufferProxy(nullptr)
     , BackBuffers()
-    , Hwnd(reinterpret_cast<HWND>(InViewportInfo.WindowHandle))
+    , Hwnd(reinterpret_cast<HWND>(InSwapChainInfo.WindowHandle))
     , SwapChainWaitableObject(0)
     , Flags(0)
     , NumBackBuffers(0)
@@ -17,7 +17,7 @@ FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InC
 {
 }
 
-FD3D12Viewport::~FD3D12Viewport()
+FD3D12SwapChain::~FD3D12SwapChain()
 {
     BOOL FullscreenState;
 
@@ -35,10 +35,10 @@ FD3D12Viewport::~FD3D12Viewport()
         CloseHandle(SwapChainWaitableObject);
     }
 
-    BackBufferProxy->SetViewport(nullptr);
+    BackBufferProxy->SetSwapChain(nullptr);
 }
 
-bool FD3D12Viewport::Initialize(FD3D12CommandContext* InCommandContext)
+bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 {
     // Ensure that the CommandContext used is the same that we created the viewport with.
     // The limitation is really just that we use the same ID3D12CommandQueue that we used for 
@@ -67,13 +67,13 @@ bool FD3D12Viewport::Initialize(FD3D12CommandContext* InCommandContext)
 
     if (!Info.Width)
     {
-        D3D12_ERROR("Viewport width of zero is not supported");
+        D3D12_ERROR("SwapChain width of zero is not supported");
         return false;
     }
 
     if (!Info.Height)
     {
-        D3D12_ERROR("Viewport height of zero is not supported");
+        D3D12_ERROR("SwapChain height of zero is not supported");
         return false;
     }
 
@@ -114,7 +114,7 @@ bool FD3D12Viewport::Initialize(FD3D12CommandContext* InCommandContext)
         Result = DXGISwapChain1.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            D3D12_ERROR("[FD3D12Viewport]: FAILED to retrieve IDXGISwapChain3");
+            D3D12_ERROR("[FD3D12SwapChain]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
 
@@ -129,7 +129,7 @@ bool FD3D12Viewport::Initialize(FD3D12CommandContext* InCommandContext)
     }
     else
     {
-        D3D12_ERROR("[FD3D12Viewport]: FAILED to create SwapChain");
+        D3D12_ERROR("[FD3D12SwapChain]: FAILED to create SwapChain");
         return false;
     }
 
@@ -140,11 +140,11 @@ bool FD3D12Viewport::Initialize(FD3D12CommandContext* InCommandContext)
         return false;
     }
 
-    D3D12_INFO("[FD3D12Viewport]: Created SwapChain");
+    D3D12_INFO("[FD3D12SwapChain]: Created SwapChain");
     return true;
 }
 
-bool FD3D12Viewport::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
+bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
     if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
     {
@@ -170,7 +170,7 @@ bool FD3D12Viewport::Resize(FD3D12CommandContext* InCommandContext, uint32 InWid
         }
         else
         {
-            D3D12_WARNING("[FD3D12Viewport]: Resize FAILED");
+            D3D12_WARNING("[FD3D12SwapChain]: Resize FAILED");
             return false;
         }
 
@@ -179,14 +179,14 @@ bool FD3D12Viewport::Resize(FD3D12CommandContext* InCommandContext, uint32 InWid
             return false;
         }
 
-        D3D12_INFO("[FD3D12Viewport]: Resized %u x %u", Info.Width, Info.Height);
+        D3D12_INFO("[FD3D12SwapChain]: Resized %u x %u", Info.Width, Info.Height);
     }
 
     // NOTE: Not considered an error to try to resize when the size is the same, maybe it should?
     return true;
 }
 
-bool FD3D12Viewport::Present(bool bVerticalSync)
+bool FD3D12SwapChain::Present(bool bVerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -225,7 +225,7 @@ bool FD3D12Viewport::Present(bool bVerticalSync)
     }
 }
 
-bool FD3D12Viewport::RetriveBackBuffers()
+bool FD3D12SwapChain::RetriveBackBuffers()
 {
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
@@ -252,7 +252,7 @@ bool FD3D12Viewport::RetriveBackBuffers()
         HRESULT Result = SwapChain->GetBuffer(Index, IID_PPV_ARGS(&BackBufferResource));
         if (FAILED(Result))
         {
-            D3D12_INFO("[FD3D12Viewport]: GetBuffer(%u) Failed", Index);
+            D3D12_INFO("[FD3D12SwapChain]: GetBuffer(%u) Failed", Index);
             return false;
         }
 

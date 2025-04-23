@@ -1,11 +1,11 @@
 #pragma once
 #include "RHIResource.h"
 
-struct FRHIViewportInfo
+struct FRHISwapChainInfo
 {
-    constexpr FRHIViewportInfo() noexcept = default;
+    constexpr FRHISwapChainInfo() noexcept = default;
 
-    constexpr FRHIViewportInfo(void* InWindowHandle, EFormat InColorFormat, uint16 InWidth, uint16 InHeight) noexcept
+    constexpr FRHISwapChainInfo(void* InWindowHandle, EFormat InColorFormat, uint16 InWidth, uint16 InHeight) noexcept
         : WindowHandle(InWindowHandle)
         , ColorFormat(InColorFormat)
         , Width(InWidth)
@@ -13,7 +13,7 @@ struct FRHIViewportInfo
     {
     }
 
-    constexpr bool operator==(const FRHIViewportInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHISwapChainInfo& Other) const noexcept = default;
 
     void*   WindowHandle = nullptr;
     EFormat ColorFormat  = EFormat::Unknown;
@@ -21,16 +21,16 @@ struct FRHIViewportInfo
     uint16  Height       = 0;
 };
 
-class FRHIViewport : public FRHIResource
+class FRHISwapChain : public FRHIResource
 {
 protected:
-    explicit FRHIViewport(const FRHIViewportInfo& InViewportInfo)
+    explicit FRHISwapChain(const FRHISwapChainInfo& InSwapChainInfo)
         : FRHIResource()
-        , Info(InViewportInfo)
+        , Info(InSwapChainInfo)
     {
     }
 
-    virtual ~FRHIViewport() = default;
+    virtual ~FRHISwapChain() = default;
 
 public:
     virtual FRHITexture* GetBackBuffer() const { return nullptr; };
@@ -50,11 +50,11 @@ public:
         return Info.Height;
     }
 
-    const FRHIViewportInfo& GetInfo() const
+    const FRHISwapChainInfo& GetInfo() const
     {
         return Info;
     }
 
 protected:
-    FRHIViewportInfo Info;
+    FRHISwapChainInfo Info;
 };

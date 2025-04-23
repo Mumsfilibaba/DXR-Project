@@ -14,7 +14,7 @@
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/DynamicD3D12.h"
-#include "D3D12RHI/D3D12Viewport.h"
+#include "D3D12RHI/D3D12SwapChain.h"
 
 #include <pix.h>
 
@@ -884,7 +884,7 @@ void FD3D12CommandContext::BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTr
     D3D12RayTracingGeometry->Build(*this, BuildInfo);
 }
 
-void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)
+void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTracingScene */, FRHIRayTracingPipelineState* /* PipelineState */, const FRayTracingShaderResources* /* GlobalResource */, const FRayTracingShaderResources* /* RayGenLocalResources */, const FRayTracingShaderResources* /* MissLocalResources */, const FRayTracingShaderResources* /* HitGroupResources */, uint32 /* NumHitGroupResources */)
 {
 #if 0
     FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
@@ -1010,7 +1010,7 @@ void FD3D12CommandContext::TransitionTexture(FRHITexture* Texture, const FRHITex
             CHECK(TextureTransition.MipLevel < NumMipLevels);
 
             // Make one transition for each ArraySlice
-            for (int32 ArraySlice = 0; ArraySlice < NumArraySlices; ArraySlice++)
+            for (uint32 ArraySlice = 0; ArraySlice < NumArraySlices; ArraySlice++)
             {
                 const uint32 SubresourceIndex = D3D12CalculateSubresource(TextureTransition.MipLevel, ArraySlice, 0, NumMipLevels, NumArraySlices);
                 CHECK(SubresourceIndex < D3D12Resource->GetNumSubresources());
@@ -1022,7 +1022,7 @@ void FD3D12CommandContext::TransitionTexture(FRHITexture* Texture, const FRHITex
             CHECK(TextureTransition.ArraySlice < NumArraySlices);
 
             // Make one transition for each MipLevel
-            for (int32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel++)
+            for (uint32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel++)
             {
                 const uint32 SubresourceIndex = D3D12CalculateSubresource(MipLevel, TextureTransition.ArraySlice, 0, NumMipLevels, NumArraySlices);
                 CHECK(SubresourceIndex < D3D12Resource->GetNumSubresources());
@@ -1146,22 +1146,22 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
     CommandList->GetGraphicsCommandList4()->DispatchRays(&RayDispatchDesc);
 }
 
-void FD3D12CommandContext::PresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
+void FD3D12CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
     // Ensure that commands are submitted
     FinishCommandList(true);
 
-    FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
-    D3D12Viewport->Present(bVerticalSync);
+    FD3D12SwapChain* D3D12SwapChain = static_cast<FD3D12SwapChain*>(SwapChain);
+    D3D12SwapChain->Present(bVerticalSync);
 
     // Start recording again
     ObtainCommandList();
 }
 
-void FD3D12CommandContext::ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
+void FD3D12CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
 {
-    FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
-    D3D12Viewport->Resize(this, Width, Height);
+    FD3D12SwapChain* D3D12SwapChain = static_cast<FD3D12SwapChain*>(SwapChain);
+    D3D12SwapChain->Resize(this, Width, Height);
 }
 
 void FD3D12CommandContext::ClearState()

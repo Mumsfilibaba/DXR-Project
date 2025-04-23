@@ -32,7 +32,7 @@ typedef TSharedRef<class FRHITexture>                 FRHITextureRef;
 typedef TSharedRef<FRHIShaderResourceView>            FRHIShaderResourceViewRef;
 typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef;
 typedef TSharedRef<class FRHISamplerState>            FRHISamplerStateRef;
-typedef TSharedRef<class FRHIViewport>                FRHIViewportRef;
+typedef TSharedRef<class FRHISwapChain>               FRHISwapChainRef;
 typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;

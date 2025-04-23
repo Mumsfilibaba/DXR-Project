@@ -1,7 +1,7 @@
 #include "Core/Templates/NumericLimits.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanTexture.h"
-#include "VulkanRHI/VulkanViewport.h"
+#include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 
 uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
@@ -514,15 +514,15 @@ FString FVulkanTexture::GetDebugName() const
 }
 
 
-FVulkanBackBufferTexture::FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureInfo& InTextureInfo)
+FVulkanBackBufferTexture::FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo)
     : FVulkanTexture(InDevice, InTextureInfo)
-    , Viewport(InViewport)
+    , SwapChain(InSwapChain)
 {
 }
 
 FVulkanBackBufferTexture::~FVulkanBackBufferTexture()
 {
-    Viewport = nullptr;
+    SwapChain = nullptr;
 }
 
 void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
@@ -530,10 +530,10 @@ void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
     Info.Extent.X = InWidth;
     Info.Extent.Y = InHeight;
     
-    const uint32 NumBackBuffers = Viewport->GetNumBackBuffers();
+    const uint32 NumBackBuffers = SwapChain->GetNumBackBuffers();
     for (uint32 Index = 0; Index < NumBackBuffers; Index++)
     {
-        FVulkanTexture* BackBuffer = Viewport->GetBackBufferFromIndex(Index);
+        FVulkanTexture* BackBuffer = SwapChain->GetBackBufferFromIndex(Index);
         BackBuffer->Resize(InWidth, InHeight);
         BackBuffer->DestroyImageViews();
     }
@@ -541,5 +541,5 @@ void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
 
 FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext)
 {
-    return Viewport ? Viewport->GetCurrentBackBuffer(InCommandContext) : nullptr;
+    return SwapChain ? SwapChain->GetCurrentBackBuffer(InCommandContext) : nullptr;
 }

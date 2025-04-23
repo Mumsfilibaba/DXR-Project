@@ -11,7 +11,7 @@ class FRHICommandList;
 struct FImGuiViewport
 {
     FImGuiViewport()
-        : Viewport(nullptr)
+        : SwapChain(nullptr)
         , Window(nullptr)
         , VertexBuffer(nullptr)
         , IndexBuffer(nullptr)
@@ -22,7 +22,7 @@ struct FImGuiViewport
     {
     }
 
-    FRHIViewportRef           Viewport;
+    FRHISwapChainRef          SwapChain;
     TSharedPtr<FWindowWidget> Window;
     FRHIBufferRef             VertexBuffer;
     FRHIBufferRef             IndexBuffer;

@@ -2,7 +2,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanTexture.h"
-#include "VulkanRHI/VulkanViewport.h"
+#include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanDevice.h"
 
@@ -1288,20 +1288,20 @@ void FVulkanCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTr
     UNREFERENCED_VARIABLE(InDepth);
 }
 
-void FVulkanCommandContext::PresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
+void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
     FinishCommandBuffer(false);
 
-    FVulkanViewport* VulkanViewport = static_cast<FVulkanViewport*>(Viewport);
-    VulkanViewport->Present(this, bVerticalSync);
+    FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(SwapChain);
+    VulkanSwapChain->Present(this, bVerticalSync);
 
     ObtainCommandBuffer();
 }
 
-void FVulkanCommandContext::ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
+void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
 {
-    FVulkanViewport* VulkanViewport = static_cast<FVulkanViewport*>(Viewport);
-    VulkanViewport->Resize(this, Width, Height);
+    FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(SwapChain);
+    VulkanSwapChain->Resize(this, Width, Height);
 }
 
 void FVulkanCommandContext::ClearState()

@@ -9,16 +9,16 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalViewport> FMetalViewportRef;
+typedef TSharedRef<class FMetalSwapChain> FMetalSwapChainRef;
 
 @interface FMetalWindowView : FCocoaWindowView
 @end
 
-class FMetalViewport : public FRHIViewport, public FMetalDeviceChild
+class FMetalSwapChain : public FRHISwapChain, public FMetalDeviceChild
 {
 public:
-    FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInfo& ViewportInfo);
-    ~FMetalViewport();
+    FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainInfo& SwapChainInfo);
+    ~FMetalSwapChain();
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 

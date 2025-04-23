@@ -391,8 +391,8 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
 {
     // Cache the DeviceProperties
     const VkPhysicalDeviceProperties& DeviceProperties = GetDevice()->GetPhysicalDevice()->GetProperties();
-    BufferImageGranularity   = DeviceProperties.limits.bufferImageGranularity;
-    MaxMemoryAllocationCount = DeviceProperties.limits.maxMemoryAllocationCount;
+    BufferImageGranularity   = static_cast<uint32>(DeviceProperties.limits.bufferImageGranularity);
+    MaxMemoryAllocationCount = static_cast<uint32>(DeviceProperties.limits.maxMemoryAllocationCount);
 
     // Calculate the HeapSize in bytes
     HeapSize = CVarMemoryHeapSize.GetValue() * 1024 * 1024;

@@ -562,8 +562,8 @@ void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport
         Viewport->PlatformRequestResize = true;
 
         FImGuiViewport* ViewportData = new FImGuiViewport();
-        ViewportData->Window   = FApplicationInterface::Get().FindWindowWidget(InViewport);
-        ViewportData->Viewport = ViewportInterface->GetViewportRHI();
+        ViewportData->Window    = FApplicationInterface::Get().FindWindowWidget(InViewport);
+        ViewportData->SwapChain = ViewportInterface->GetRHISwapChain();
             
         Viewport->PlatformHandle    = ViewportData->Window.Get();
         Viewport->PlatformHandleRaw = ViewportData->Window->GetPlatformWindow()->GetPlatformHandle();

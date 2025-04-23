@@ -2,7 +2,7 @@
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
 
-class FRHIViewport;
+class FRHISwapChain;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
 class FRHIQuery;
@@ -360,19 +360,19 @@ struct IRHICommandContext
     virtual void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
     /**
-     * @brief Presents the viewport, swapping the back buffer to the screen.
-     * @param Viewport The viewport to present.
+     * @brief Presents the swap-chain, swapping the back buffer to the screen.
+     * @param SwapChain The swap-chain to present.
      * @param bVerticalSync Whether to use vertical synchronization.
      */
-    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
+    virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) = 0;
 
     /**
-     * @brief Resizes the specified viewport.
-     * @param Viewport The viewport to resize.
-     * @param Width New width of the viewport.
-     * @param Height New height of the viewport.
+     * @brief Resizes the specified swap-chain.
+     * @param SwapChain The swap-chain to resize.
+     * @param Width New width of the swap-chain.
+     * @param Height New height of the swap-chain.
      */
-    virtual void ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) = 0;
+    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) = 0;
 
     /**
      * @brief Clears the state of the context, clearing all bound references currently bound

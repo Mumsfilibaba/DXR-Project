@@ -43,9 +43,9 @@ public:
         return new FNullRHISamplerState(InSamplerInfo);
     }
 
-    virtual class FRHIViewport* CreateViewport(const FRHIViewportInfo& InViewportInfo) override final
+    virtual class FRHISwapChain* CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo) override final
     {
-        return new FNullRHIViewport(InViewportInfo);
+        return new FNullRHISwapChain(InSwapChainInfo);
     }
 
     virtual FRHIRayTracingScene* CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final

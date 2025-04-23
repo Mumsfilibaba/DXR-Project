@@ -128,10 +128,10 @@ public:
 
     /**
      * @brief Creates a new viewport.
-     * @param InViewportInfo Structure containing the information for the viewport.
+     * @param InSwapChainInfo Structure containing the information for the viewport.
      * @return The newly created viewport.
      */
-    virtual FRHIViewport* CreateViewport(const FRHIViewportInfo& InViewportInfo) = 0;
+    virtual FRHISwapChain* CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo) = 0;
 
     /**
      * @brief Creates a new ray tracing scene.

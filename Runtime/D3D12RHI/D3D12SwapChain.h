@@ -9,13 +9,13 @@
 
 class FD3D12CommandContext;
 
-typedef TSharedRef<class FD3D12Viewport> FD3D12ViewportRef;
+typedef TSharedRef<class FD3D12SwapChain> FD3D12SwapChainRef;
 
-class FD3D12Viewport : public FRHIViewport, public FD3D12DeviceChild
+class FD3D12SwapChain : public FRHISwapChain, public FD3D12DeviceChild
 {
 public:
-    FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHIViewportInfo& InViewportInfo);
-    virtual ~FD3D12Viewport();
+    FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainInfo& InSwapChainInfo);
+    virtual ~FD3D12SwapChain();
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBufferProxy.Get(); }
 

@@ -219,10 +219,10 @@ bool FSceneRenderer::Initialize()
     }
     else
     {
-        Resources.MainViewport     = SceneViewport->GetViewportRHI();
-        Resources.BackBufferFormat = Resources.MainViewport->GetColorFormat();
-        Resources.CurrentWidth     = Resources.DesiredWidth  = Resources.MainViewport->GetWidth();
-        Resources.CurrentHeight    = Resources.DesiredHeight = Resources.MainViewport->GetHeight();
+        Resources.MainSwapChain     = SceneViewport->GetRHISwapChain();
+        Resources.BackBufferFormat = Resources.MainSwapChain->GetColorFormat();
+        Resources.CurrentWidth     = Resources.DesiredWidth  = Resources.MainSwapChain->GetWidth();
+        Resources.CurrentHeight    = Resources.DesiredHeight = Resources.MainSwapChain->GetHeight();
     }
 
     if (!FApplicationInterface::IsInitialized())
@@ -460,7 +460,7 @@ bool FSceneRenderer::InitializeRenderPasses()
 
 void FSceneRenderer::Tick(FScene* Scene)
 {
-    Resources.BackBuffer = Resources.MainViewport->GetBackBuffer();
+    Resources.BackBuffer = Resources.MainSwapChain->GetBackBuffer();
 
     FRHICommandListExecutor::Get().Tick();
 
@@ -883,7 +883,7 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
 
-    CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
+    CommandList.PresentSwapChain(Resources.MainSwapChain.Get(), CVarVSyncEnabled.GetValue());
     CommandList.EndFrame();
 
     CommandList.FlushDeletedResources();
@@ -911,11 +911,11 @@ void FSceneRenderer::Tick(FScene* Scene)
 
 void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 {
-    // Check if we resized and update the Viewport-size on the RHIThread
-    FRHIViewport* Viewport = Resources.MainViewport.Get();
+    // Check if we resized and update the SwapChain-size on the RHIThread
+    FRHISwapChain* SwapChain = Resources.MainSwapChain.Get();
     if ((Resources.CurrentWidth != InWidth || Resources.CurrentHeight != InHeight) && InWidth > 0 && InHeight > 0)
     {
-        CommandList.ResizeViewport(Viewport, InWidth, InHeight);
+        CommandList.ResizeSwapChain(SwapChain, InWidth, InHeight);
         LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, InWidth, InHeight);
 
         if (!DepthPrePass->CreateResources(Resources, InWidth, InHeight))
@@ -972,8 +972,8 @@ bool FSceneRenderer::InitShadingImage()
         return true;
     }
 
-    const uint32 Width  = Resources.MainViewport->GetWidth() / FRHIDeviceInfo::ShadingRateImageTileSize;
-    const uint32 Height = Resources.MainViewport->GetHeight() / FRHIDeviceInfo::ShadingRateImageTileSize;
+    const uint32 Width  = Resources.MainSwapChain->GetWidth() / FRHIDeviceInfo::ShadingRateImageTileSize;
+    const uint32 Height = Resources.MainSwapChain->GetHeight() / FRHIDeviceInfo::ShadingRateImageTileSize;
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
     ShadingImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);

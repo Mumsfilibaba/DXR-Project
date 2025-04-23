@@ -16,7 +16,7 @@ FSceneView::~FSceneView()
 void FSceneView::PrepareView(uint32 MaxMeshes)
 {
     // Prepare the array for a certain amount of meshes
-    if (MaxMeshes > 0 && StaticMeshes.Capacity() < MaxMeshes)
+    if (MaxMeshes > 0 && static_cast<uint32>(StaticMeshes.Capacity()) < MaxMeshes)
     {
         StaticMeshes.Reserve(MaxMeshes);
     }

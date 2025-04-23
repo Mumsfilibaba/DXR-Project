@@ -6,7 +6,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalViewport;
+class FMetalSwapChain;
 
 typedef TSharedRef<class FMetalTexture> FMetalTextureRef;
 
@@ -41,9 +41,9 @@ public:
         Texture = [InTexture retain];
     }
 
-    void SetViewport(FMetalViewport* InViewport)
+    void SetSwapChain(FMetalSwapChain* InSwapChain)
     {
-        Viewport = InViewport;
+        SwapChain = InSwapChain;
     }
 
     FMetalShaderResourceView* GetMetalShaderResourceView() const
@@ -53,7 +53,7 @@ public:
 
 protected:
     id<MTLTexture>  Texture;
-    FMetalViewport* Viewport;
+    FMetalSwapChain* SwapChain;
 
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };

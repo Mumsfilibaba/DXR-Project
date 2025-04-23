@@ -61,15 +61,15 @@ FRHISamplerState* FRHIValidation::CreateSamplerState(const FRHISamplerStateInfo&
     return RealRHI->CreateSamplerState(InSamplerInfo);
 }
 
-FRHIViewport* FRHIValidation::CreateViewport(const FRHIViewportInfo& InViewportInfo)
+FRHISwapChain* FRHIValidation::CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo)
 {
-    if (!InViewportInfo.WindowHandle)
+    if (!InSwapChainInfo.WindowHandle)
     {
         RHI_VALIDATION_ERROR("Trying to create a viewport with an invalid WindowHandle");
         return nullptr;
     }
 
-    return RealRHI->CreateViewport(InViewportInfo);
+    return RealRHI->CreateSwapChain(InSwapChainInfo);
 }
 
 FRHIRayTracingScene* FRHIValidation::CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
@@ -930,26 +930,26 @@ void FRHIValidationCommandContext::DispatchRays(FRHIRayTracingScene* Scene, FRHI
     RealContext->DispatchRays(Scene, PipelineState, Width, Height, Depth);
 }
 
-void FRHIValidationCommandContext::PresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
+void FRHIValidationCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
-    if (!Viewport)
+    if (!SwapChain)
     {
-        RHI_VALIDATION_ERROR("Invalid to call PresentViewport when Viewport is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call PresentSwapChain when SwapChain is nullptr");
         return;
     }
 
-    RealContext->PresentViewport(Viewport, bVerticalSync);
+    RealContext->PresentSwapChain(SwapChain, bVerticalSync);
 }
 
-void FRHIValidationCommandContext::ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
+void FRHIValidationCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
 {
-    if (!Viewport)
+    if (!SwapChain)
     {
-        RHI_VALIDATION_ERROR("Invalid to call ResizeViewport when Viewport is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call ResizeSwapChain when SwapChain is nullptr");
         return;
     }
 
-    RealContext->ResizeViewport(Viewport, Width, Height);
+    RealContext->ResizeSwapChain(SwapChain, Width, Height);
 }
 
 void FRHIValidationCommandContext::ClearState()

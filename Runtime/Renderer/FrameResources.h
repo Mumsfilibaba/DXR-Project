@@ -272,7 +272,7 @@ struct FFrameResources
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
     // BackBuffer
-    FRHIViewportRef MainViewport;
+    FRHISwapChainRef MainSwapChain;
     EFormat         BackBufferFormat;
     uint32          DesiredWidth;
     uint32          DesiredHeight;

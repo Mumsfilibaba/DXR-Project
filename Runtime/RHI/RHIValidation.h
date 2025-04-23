@@ -19,7 +19,7 @@ public:
     virtual FRHITexture* CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final;
     virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final;
-    virtual FRHIViewport* CreateViewport(const FRHIViewportInfo& InViewportInfo) override final;
+    virtual FRHISwapChain* CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo) override final;
     virtual FRHIRayTracingScene* CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final;
     virtual FRHIRayTracingGeometry* CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final;
     virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHITextureSRVInfo& InInfo) override final;
@@ -133,8 +133,8 @@ public:
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
     virtual void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) override final;
 
-    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final;
-    virtual void ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) override final;
+    virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
+    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final;
 
     virtual void ClearState() override final;
     virtual void Flush() override final;

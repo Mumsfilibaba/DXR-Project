@@ -57,12 +57,12 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final { }
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final { }
     virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final { }
-    virtual void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final { }
+    virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final { }
 
-    virtual void ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) override final 
+    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final 
     {
-        FNullRHIViewport* NullViewport = static_cast<FNullRHIViewport*>(Viewport);
-        NullViewport->Resize(Width, Height);
+        FNullRHISwapChain* NullSwapChain = static_cast<FNullRHISwapChain*>(SwapChain);
+        NullSwapChain->Resize(Width, Height);
     }
 
     virtual void ClearState() override final { }

@@ -13,7 +13,7 @@
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12SamplerState.h"
-#include "D3D12RHI/D3D12Viewport.h"
+#include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/DynamicD3D12.h"
@@ -831,18 +831,18 @@ FRHIQuery* FD3D12RHI::CreateQuery(EQueryType InQueryType)
     return new FD3D12Query(GetDevice(), InQueryType);
 }
 
-FRHIViewport* FD3D12RHI::CreateViewport(const FRHIViewportInfo& InViewportInfo)
+FRHISwapChain* FD3D12RHI::CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo)
 {
-    CHECK(InViewportInfo.WindowHandle != nullptr);
+    CHECK(InSwapChainInfo.WindowHandle != nullptr);
 
-    FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectCommandContext, InViewportInfo);
-    if (!Viewport->Initialize(DirectCommandContext))
+    FD3D12SwapChainRef NewSwapChain = new FD3D12SwapChain(GetDevice(), DirectCommandContext, InSwapChainInfo);
+    if (!NewSwapChain->Initialize(DirectCommandContext))
     {
         return nullptr;
     }
     else
     {
-        return Viewport.ReleaseOwnership();
+        return NewSwapChain.ReleaseOwnership();
     }
 }
 

@@ -29,6 +29,6 @@
 #include "VulkanRHI/VulkanSemaphore.h"
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanSurface.h"
-#include "VulkanRHI/VulkanSwapChain.h"
+#include "VulkanRHI/VulkanSwapChainHandle.h"
 #include "VulkanRHI/VulkanTexture.h"
-#include "VulkanRHI/VulkanViewport.h"
+#include "VulkanRHI/VulkanSwapChain.h"

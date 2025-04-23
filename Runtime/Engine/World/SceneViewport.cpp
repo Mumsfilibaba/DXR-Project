@@ -10,14 +10,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     : IViewport()
     , Viewport(InViewport)
-    , RHIViewport(nullptr)
+    , RHISwapChain(nullptr)
     , World(nullptr)
 {
 }
 
 FSceneViewport::~FSceneViewport()
 {
-    CHECK(RHIViewport == nullptr);
+    CHECK(RHISwapChain == nullptr);
 
     Viewport = nullptr;
     World    = nullptr;
@@ -43,21 +43,21 @@ bool FSceneViewport::InitializeRHI()
     }
 
     const FIntVector2 WindowSize = WindowWidget->GetSize();
-    FRHIViewportInfo ViewportInfo;
-    ViewportInfo.Width        = static_cast<uint16>(WindowSize.X);
-    ViewportInfo.Height       = static_cast<uint16>(WindowSize.Y);
-    ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
-    ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
+    FRHISwapChainInfo SwapChainInfo;
+    SwapChainInfo.Width        = static_cast<uint16>(WindowSize.X);
+    SwapChainInfo.Height       = static_cast<uint16>(WindowSize.Y);
+    SwapChainInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
+    SwapChainInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
 
-    FRHIViewportRef NewViewport = FRHI::Get()->CreateViewport(ViewportInfo);
-    if (!NewViewport)
+    FRHISwapChainRef NewSwapChain = FRHI::Get()->CreateSwapChain(SwapChainInfo);
+    if (!NewSwapChain)
     {
         DEBUG_BREAK();
         return false;
     }
     else
     {
-        RHIViewport = NewViewport;
+        RHISwapChain = NewSwapChain;
     }
 
     return true;
@@ -65,8 +65,8 @@ bool FSceneViewport::InitializeRHI()
 
 void FSceneViewport::ReleaseRHI()
 {
-    CHECK(RHIViewport->GetRefCount() == 1);
-    RHIViewport.Reset();
+    CHECK(RHISwapChain->GetRefCount() == 1);
+    RHISwapChain.Reset();
 }
 
 void FSceneViewport::Tick()
