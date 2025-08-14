@@ -13,9 +13,10 @@ imgui.ini
 .vscode/
 
 # Ignore all compiled files
-Build/
-ThirdParty/bin/
-ThirdParty/bin-int/
+/Build/
+/ThirdParty/Build/
+/ThirdParty/bin/
+/ThirdParty/bin-int/
 
 #VS Packages
 packages/
