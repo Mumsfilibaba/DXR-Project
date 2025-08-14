@@ -6,7 +6,7 @@ project ( projectname )
 
 	--TODO: Pre-Compiled Headers
 
-	-- All targets except the dependencies
+	-- All targets except the thirdparties
 	targetdir 	( "%{wks.location}/Build/bin/"     .. outputdir )
 	objdir 		( "%{wks.location}/Build/bin-int/" .. outputdir )	
 
@@ -18,7 +18,7 @@ project ( projectname )
 
 	sysincludedirs
 	{
-		"%{wks.location}/Dependencies/imgui",
+		"%{wks.location}/ThirdParty/imgui",
 	}
 	
 	forceincludes  

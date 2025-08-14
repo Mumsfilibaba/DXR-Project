@@ -56,8 +56,8 @@ function target_build_rules(name, workspace)
 
     -- @brief - Inject module into the current module (i.e., put the files into the executable)
     local function inject_launch_module(rule)
-        for index = 1, #rule.module_dependencies do
-            local current_module_name = rule.module_dependencies[index]
+        for index = 1, #rule.module_thirdparties do
+            local current_module_name = rule.module_thirdparties[index]
             if current_module_name == "Launch" then
                 if is_module("Launch") then
                     local launch_module = get_module("Launch")
@@ -67,7 +67,7 @@ function target_build_rules(name, workspace)
                     rule.add_exclude_files(launch_module.exclude_files)
                     rule.add_defines(launch_module.defines)
                 else
-                    log_error("Found the Launch Module among dependencies, but it has not been initialized")
+                    log_error("Found the Launch Module among thirdparties, but it has not been initialized")
                 end
                 break
             end
@@ -106,7 +106,7 @@ function target_build_rules(name, workspace)
                 self.kind               = "WindowedApp"
                 self.runtime_linking    = false
                 self.is_dynamic         = false
-                self.embed_dependencies = true
+                self.embed_thirdparties = true
 
                 -- Defines
                 self.add_defines({ module_api_name })
@@ -133,7 +133,7 @@ function target_build_rules(name, workspace)
                 
                 local executable = build_rules(self.name .. "Standalone")
                 executable.kind               = "WindowedApp"
-                executable.embed_dependencies = true
+                executable.embed_thirdparties = true
 
                 -- Setup the workspace
                 executable.workspace = self.workspace
@@ -141,7 +141,7 @@ function target_build_rules(name, workspace)
                 -- Link the module
                 executable.add_link_libraries({ self.name })
                 executable.add_extra_embed_names({ self.name })
-                executable.add_module_dependencies(self.module_dependencies)
+                executable.add_module_thirdparties(self.module_thirdparties)
                 
                 if is_platform_mac() then
                     executable.add_frameworks({ "AppKit" })
@@ -153,7 +153,7 @@ function target_build_rules(name, workspace)
                 -- Overwrite all exclude files
                 executable.exclude_files = {}
         
-                -- Includes can be included in a dependency header and therefore necessary in this module as well
+                -- Includes can be included in a thirdparty header and therefore necessary in this module as well
                 executable.add_include_dirs(self.include_dirs)
                 executable.add_external_include_dirs(self.external_include_dirs)
 

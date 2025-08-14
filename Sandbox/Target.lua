@@ -5,7 +5,7 @@ include "../BuildScripts/Scripts/build_workspace.lua"
 local workspace = workspace_rules("DXR-Engine Sandbox")
 
 local sandbox = target_build_rules("Sandbox", workspace)
-sandbox.add_module_dependencies
+sandbox.add_module_thirdparties
 {
     "Core",
     "CoreApplication",
@@ -20,12 +20,12 @@ sandbox.add_module_dependencies
 }
 
 if is_platform_mac() then
-    sandbox.add_module_dependencies
+    sandbox.add_module_thirdparties
     { 
         "MetalRHI"
     }
 elseif is_platform_windows() then
-    sandbox.add_module_dependencies
+    sandbox.add_module_thirdparties
     { 
         "D3D12RHI"
     }

@@ -51,7 +51,7 @@ local vulkan_rhi = module_build_rules('VulkanRHI')
 vulkan_rhi.runtime_linking         = true
 vulkan_rhi.use_precompiled_headers = true
 
-vulkan_rhi.add_module_dependencies
+vulkan_rhi.add_module_thirdparties
 {
     'Core',
     'CoreApplication',
@@ -68,7 +68,7 @@ end
 vulkan_rhi.add_external_include_dirs
 {
     vulkan_include,
-    create_external_dependency_path("SPIRV-Cross"),
+    create_external_thirdparty_path("SPIRV-Cross"),
 }
 
 vulkan_rhi.add_library_paths

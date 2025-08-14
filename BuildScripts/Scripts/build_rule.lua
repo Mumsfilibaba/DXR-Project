@@ -122,18 +122,18 @@ function build_rules(name)
         frameworks = {},
 
         -- @brief - Should the libraries be embedded into the executable (this only applies to macOS at the moment)
-        embed_dependencies = false,
+        embed_thirdparties = false,
 
         -- @brief - Extra names to embed (this only applies to macOS at the moment)
         extra_embed_names = {},
 
         -- @brief - Engine modules that this module depends on
-        module_dependencies = {},
+        module_thirdparties = {},
 
         -- @brief - Extra libraries to link
         link_libraries = {},
 
-        -- @brief - A list of dependencies that a module depends on; ensures that the IDE builds all the projects
+        -- @brief - A list of thirdparties that a module depends on; ensures that the IDE builds all the projects
         link_modules = {},
 
         -- @brief - A list of link options (ignored on platforms other than Windows)
@@ -171,8 +171,8 @@ function build_rules(name)
         add_unique_elements(in_defines, self.defines)
     end
 
-    function self.add_module_dependencies(in_module_dependencies)
-        add_unique_elements(in_module_dependencies, self.module_dependencies)
+    function self.add_module_thirdparties(in_module_thirdparties)
+        add_unique_elements(in_module_thirdparties, self.module_thirdparties)
     end
 
     function self.add_extra_embed_names(in_extra_embed_names)
@@ -294,7 +294,7 @@ function build_rules(name)
             log_info("    Project location '%s'", self.project_file_path)
             location(self.project_file_path)
 
-            -- Setup all targets except the dependencies
+            -- Setup all targets except the thirdparties
             local full_object_folder_path = join_path(join_path(self.build_folder_path, "bin"), self.output_path)
             log_info("    Target location '%s'", full_object_folder_path)
             targetdir(full_object_folder_path)
@@ -363,7 +363,7 @@ function build_rules(name)
 
             log_info("\n--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.name, #self.frameworks)
             if #self.frameworks > 0 then
-                print_table("    Using framework dependency '%s'", self.frameworks)
+                print_table("    Using framework thirdparty '%s'", self.frameworks)
             end
 
             log_info("\n--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.name, #self.link_libraries)
@@ -381,14 +381,14 @@ function build_rules(name)
                 print_table("    Link options '%s'", self.link_options)
             end
 
-            log_info("\n--- Module dependencies for module '%s' (Num ModuleDependencies=%d) ---", self.name, #self.module_dependencies)
-            if #self.module_dependencies > 0 then
-                print_table("    Using module dependency '%s'", self.module_dependencies)
+            log_info("\n--- Module thirdparties for module '%s' (Num ModuleThirdParties=%d) ---", self.name, #self.module_thirdparties)
+            if #self.module_thirdparties > 0 then
+                print_table("    Using module thirdparty '%s'", self.module_thirdparties)
             end
 
-            log_info("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.name, #self.module_dependencies)
-            if #self.module_dependencies > 0 then
-                print_table("    Embed Module '%s'", self.module_dependencies)
+            log_info("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.name, #self.module_thirdparties)
+            if #self.module_thirdparties > 0 then
+                print_table("    Embed Module '%s'", self.module_thirdparties)
             end
 
             -- Setup force includes
@@ -446,27 +446,27 @@ function build_rules(name)
                 end
             end
 
-            -- Ignore linking and dependencies when kind is set to 'None'
+            -- Ignore linking and thirdparties when kind is set to 'None'
             if self.kind == "None" then
                 log_warning("Ignoring LinkLibraries due to the kind being set to 'None'")
                 log_warning("Ignoring LinkModules due to the kind being set to 'None'")
                 log_warning("Ignoring LinkOptions due to the kind being set to 'None'")
-                log_warning("Ignoring Dependencies due to the kind being set to 'None'")
+                log_warning("Ignoring ThirdParty due to the kind being set to 'None'")
             else
                 -- Link libraries (external libraries, etc.)
                 links(self.link_libraries)
                 links(self.link_modules)
                 linkoptions(self.link_options)
 
-                -- Setup dependencies
-                dependson(self.module_dependencies)
+                -- Setup thirdparties
+                dependson(self.module_thirdparties)
             end
 
             -- Setup embedded frameworks, etc.
             filter { "action:xcode4" }
-                if self.embed_dependencies then
+                if self.embed_thirdparties then
                     -- Embed modules and extra embed names
-                    embed(self.module_dependencies)
+                    embed(self.module_thirdparties)
                     embed(self.extra_embed_names)
                 end
             filter {}
@@ -486,12 +486,12 @@ function build_rules(name)
                 }
             filter {}
 
-            -- Copy dynamic libraries from dependencies folder
+            -- Copy dynamic libraries from thirdparties folder
             if is_platform_windows() then
-                local dxil_dll_cmd = "copy " .. create_external_dependency_path("DXC/bin/dxil.dll") .. " " .. full_object_folder_path
+                local dxil_dll_cmd = "copy " .. create_external_thirdparty_path("DXC/bin/dxil.dll") .. " " .. full_object_folder_path
                 log_highlight("dxil.dll Cmd %s", dxil_dll_cmd)
                 
-                local dxcompiler_dll_cmd = "copy " .. create_external_dependency_path("DXC/bin/dxcompiler.dll") .. " " .. full_object_folder_path
+                local dxcompiler_dll_cmd = "copy " .. create_external_thirdparty_path("DXC/bin/dxcompiler.dll") .. " " .. full_object_folder_path
                 log_highlight("dxcompiler.dll Cmd %s", dxcompiler_dll_cmd)
                 
                 local agility_sdk_folder = join_path(full_object_folder_path, "D3D12")
@@ -499,28 +499,28 @@ function build_rules(name)
                 -- Ensure the folder exists before copying files
                 local create_agility_folder_cmd = "if not exist \"" .. agility_sdk_folder .. "\" mkdir \"" .. agility_sdk_folder .. "\""
                 
-                local d3d12core_dll_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll") .. " " .. agility_sdk_folder
+                local d3d12core_dll_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll") .. " " .. agility_sdk_folder
                 log_highlight("d3d12core.dll Cmd %s", d3d12core_dll_cmd)
                 
-                local d3d12core_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb") .. " " .. agility_sdk_folder
+                local d3d12core_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb") .. " " .. agility_sdk_folder
                 log_highlight("d3d12core.pdb Cmd %s", d3d12core_pdb_cmd)
                 
-                local d3d12SDKLayers_dll_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll") .. " " .. agility_sdk_folder
+                local d3d12SDKLayers_dll_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll") .. " " .. agility_sdk_folder
                 log_highlight("d3d12SDKLayers.dll Cmd %s", d3d12SDKLayers_dll_cmd)
                 
-                local d3d12SDKLayers_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb") .. " " .. agility_sdk_folder
+                local d3d12SDKLayers_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb") .. " " .. agility_sdk_folder
                 log_highlight("d3d12SDKLayers.pdb Cmd %s", d3d12SDKLayers_pdb_cmd)
                 
-                local d3dconfig_exe_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe") .. " " .. agility_sdk_folder
+                local d3dconfig_exe_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe") .. " " .. agility_sdk_folder
                 log_highlight("d3dconfig.exe Cmd %s", d3dconfig_exe_cmd)
                 
-                local d3dconfig_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb") .. " " .. agility_sdk_folder
+                local d3dconfig_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb") .. " " .. agility_sdk_folder
                 log_highlight("d3dconfig.pdb Cmd %s", d3dconfig_pdb_cmd)
                 
-                local directsr_exe_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll") .. " " .. agility_sdk_folder
+                local directsr_exe_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll") .. " " .. agility_sdk_folder
                 log_highlight("DirectSR.dll Cmd %s", directsr_exe_cmd)
                 
-                local directsr_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb") .. " " .. agility_sdk_folder
+                local directsr_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb") .. " " .. agility_sdk_folder
                 log_highlight("DirectSR.pdb Cmd %s", directsr_pdb_cmd)
                 
                 postbuildcommands
@@ -538,7 +538,7 @@ function build_rules(name)
                     directsr_pdb_cmd,
                 }
             elseif is_platform_mac() then
-                local libdxcompiler_dll_cmd = "cp " .. create_external_dependency_path("DXC/bin/libdxcompiler.dylib") .. " " .. full_object_folder_path
+                local libdxcompiler_dll_cmd = "cp " .. create_external_thirdparty_path("DXC/bin/libdxcompiler.dylib") .. " " .. full_object_folder_path
                 log_highlight("libdxcompiler.dylib Cmd %s", libdxcompiler_dll_cmd)
 
                 postbuildcommands
@@ -558,17 +558,17 @@ function build_rules(name)
             return
         end
 
-        -- Ensure dependencies are included
-        for index = 1, #self.module_dependencies do
-            log_highlight("\n--- Including dependency for project '%s' ---", self.name)
+        -- Ensure thirdparties are included
+        for index = 1, #self.module_thirdparties do
+            log_highlight("\n--- Including thirdparty for project '%s' ---", self.name)
 
-            local current_module_name = self.module_dependencies[index]
+            local current_module_name = self.module_thirdparties[index]
             if is_module(current_module_name) then
                 log_highlight_warning("-Dependency '%s' is already included", current_module_name)
             else
-                local dependency_path = join_path(join_path(runtime_folder_path, current_module_name), "Module.lua")
-                log_info("-Including Dependency '%s' Path='%s'", current_module_name, dependency_path)
-                include(dependency_path)
+                local thirdparty_path = join_path(join_path(runtime_folder_path, current_module_name), "Module.lua")
+                log_info("-Including Dependency '%s' Path='%s'", current_module_name, thirdparty_path)
+                include(thirdparty_path)
 
                 -- Generate module, but check so that it exists since some platforms do not create certain modules (D3D12RHI, MetalRHI, etc.)
                 if is_module(current_module_name) then
@@ -592,9 +592,9 @@ function build_rules(name)
         -- Add framework extension
         self.add_framework_extension()
 
-        -- Solve dependencies
-        for index = 1, #self.module_dependencies do
-            local current_module_name = self.module_dependencies[index]
+        -- Solve thirdparties
+        for index = 1, #self.module_thirdparties do
+            local current_module_name = self.module_thirdparties[index]
             local current_module      = get_module(current_module_name)
 
             if current_module then
@@ -614,13 +614,13 @@ function build_rules(name)
                     self.add_defines { module_api_name }
                 end
 
-                -- TODO: This should probably be separated into public/private dependencies since public should always be pushed up
-                -- We always want to add the frameworks and modules as a dependency
+                -- TODO: This should probably be separated into public/private thirdparties since public should always be pushed up
+                -- We always want to add the frameworks and modules as a thirdparty
                 self.add_link_libraries(current_module.link_libraries)
                 self.add_frameworks(current_module.frameworks)
-                self.add_module_dependencies(current_module.module_dependencies)
+                self.add_module_thirdparties(current_module.module_thirdparties)
 
-                -- System includes can be included in a dependency header and therefore necessary in this module as well
+                -- System includes can be included in a thirdparty header and therefore necessary in this module as well
                 self.add_include_dirs(current_module.include_dirs)
                 self.add_external_include_dirs(current_module.external_include_dirs)
                 self.add_library_paths(current_module.library_paths)

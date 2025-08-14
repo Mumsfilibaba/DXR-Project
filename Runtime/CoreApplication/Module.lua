@@ -5,7 +5,7 @@ include "../../BuildScripts/Scripts/build_module.lua"
 local core_application_module = module_build_rules("CoreApplication")
 core_application_module.use_precompiled_headers = true
 
-core_application_module.add_module_dependencies{ "Core" }
+core_application_module.add_module_thirdparties{ "Core" }
 
 if is_platform_mac() then
     core_application_module.add_frameworks

@@ -7,12 +7,12 @@ rhi_module.use_precompiled_headers = true
 
 rhi_module.add_external_include_dirs
 {
-    create_external_dependency_path("DXC/include"),
-    create_external_dependency_path("SPIRV-Cross"),
-    create_external_dependency_path("glslang"),
+    create_external_thirdparty_path("DXC/include"),
+    create_external_thirdparty_path("SPIRV-Cross"),
+    create_external_thirdparty_path("glslang"),
 }
 
-rhi_module.add_module_dependencies
+rhi_module.add_module_thirdparties
 {
     "Core",
     "CoreApplication",

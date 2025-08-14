@@ -9,10 +9,10 @@ if is_platform_windows() then
 
     d3d12rhi.add_include_dirs
     {
-        create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/include")
+        create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/include")
     }
 
-    d3d12rhi.add_module_dependencies
+    d3d12rhi.add_module_thirdparties
     {
         "Core",
         "CoreApplication",

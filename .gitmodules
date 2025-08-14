@@ -1,18 +1,18 @@
-[submodule "Dependencies/imgui"]
-	path = Dependencies/imgui
+[submodule "ThirdParty/imgui"]
+	path = ThirdParty/imgui
 	url = https://github.com/Mumsfilibaba/imgui
-[submodule "Dependencies/tinyobjloader"]
-	path = Dependencies/tinyobjloader
+[submodule "ThirdParty/tinyobjloader"]
+	path = ThirdParty/tinyobjloader
 	url = https://github.com/tinyobjloader/tinyobjloader
-[submodule "Dependencies/OpenFBX"]
-	path = Dependencies/OpenFBX
+[submodule "ThirdParty/OpenFBX"]
+	path = ThirdParty/OpenFBX
 	url = https://github.com/Mumsfilibaba/OpenFBX
-[submodule "Dependencies/SPIRV-Cross"]
-	path = Dependencies/SPIRV-Cross
+[submodule "ThirdParty/SPIRV-Cross"]
+	path = ThirdParty/SPIRV-Cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross
-[submodule "Dependencies/tinyddsloader"]
-	path = Dependencies/tinyddsloader
+[submodule "ThirdParty/tinyddsloader"]
+	path = ThirdParty/tinyddsloader
 	url = https://github.com/Mumsfilibaba/tinyddsloader
-[submodule "Dependencies/glslang"]
-	path = Dependencies/glslang
+[submodule "ThirdParty/glslang"]
+	path = ThirdParty/glslang
 	url = https://github.com/KhronosGroup/glslang

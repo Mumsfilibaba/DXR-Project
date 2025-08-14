@@ -138,16 +138,16 @@ function get_solutions_folder_path()
     return g_solutions_folder_path
 end
 
--- Retrieve the path to the Dependencies folder containing external dependency projects
-local g_external_dependencies_folder_path = join_path(g_engine_path, "Dependencies")
+-- Retrieve the path to the ThirdParty folder containing external thirdparty projects
+local g_external_thirdparty_folder_path = join_path(g_engine_path, "ThirdParty")
 
-function get_external_dependencies_folder_path()
-    return g_external_dependencies_folder_path
+function get_external_thirdparty_folder_path()
+    return g_external_thirdparty_folder_path
 end
 
--- Make path relative to the dependency folder
-function create_external_dependency_path(dependency_path)
-    return join_path(get_external_dependencies_folder_path(), dependency_path)
+-- Make path relative to the thirdparty folder
+function create_external_thirdparty_path(thirdparty_path)
+    return join_path(get_external_thirdparty_folder_path(), thirdparty_path)
 end
 
 -- Deep copy a table

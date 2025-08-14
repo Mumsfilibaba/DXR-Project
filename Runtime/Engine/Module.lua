@@ -7,14 +7,14 @@ engine_module.use_precompiled_headers = true
 
 engine_module.add_external_include_dirs
 {
-    create_external_dependency_path("imgui"),
-    create_external_dependency_path("stb_image"),
-    create_external_dependency_path("tinyobjloader"),
-    create_external_dependency_path("tinyddsloader"),
-    create_external_dependency_path("OpenFBX/src"),
+    create_external_thirdparty_path("imgui"),
+    create_external_thirdparty_path("stb_image"),
+    create_external_thirdparty_path("tinyobjloader"),
+    create_external_thirdparty_path("tinyddsloader"),
+    create_external_thirdparty_path("OpenFBX/src"),
 }
 
-engine_module.add_module_dependencies
+engine_module.add_module_thirdparties
 {
     "Core",
     "CoreApplication",

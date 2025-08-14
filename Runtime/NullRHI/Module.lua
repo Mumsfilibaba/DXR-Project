@@ -5,7 +5,7 @@ include "../../BuildScripts/Scripts/build_module.lua"
 local null_rhi_module = module_build_rules("NullRHI")
 null_rhi_module.runtime_linking = true
 
-null_rhi_module.add_module_dependencies
+null_rhi_module.add_module_thirdparties
 {
     "Core",
     "RHI",

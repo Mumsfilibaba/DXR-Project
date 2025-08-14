@@ -1,7 +1,7 @@
 git submodule init
 git submodule update
 
-cd ../Dependencies/imgui
+cd ../ThirdParty/imgui
 git checkout docking
 git pull origin docking
 git status

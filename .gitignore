@@ -14,8 +14,8 @@ imgui.ini
 
 # Ignore all compiled files
 Build/
-Dependencies/bin/
-Dependencies/bin-int/
+ThirdParty/bin/
+ThirdParty/bin-int/
 
 #VS Packages
 packages/

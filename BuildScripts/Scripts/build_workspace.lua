@@ -34,7 +34,7 @@ function glslang_generate_build_time_headers()
     log_info("            Generating BuildTime Headers for 'glslang'")
 
     -- NOTE: This requires Python to be installed
-    local glslang_path       = join_path(get_engine_path(), "Dependencies/glslang")
+    local glslang_path       = join_path(get_engine_path(), "ThirdParty/glslang")
     local script_path        = join_path(glslang_path, "build_info.py")
     local template_file_path = join_path(glslang_path, "build_info.h.tmpl")
     local output_file_dir    = join_path(glslang_path, "glslang/include/glslang")
@@ -148,7 +148,7 @@ function workspace_rules(workspace_name)
         start_project_name = "",
     }
 
-    -- @brief - Output path for dependencies (ImGui, etc.)
+    -- @brief - Output path for thirdparties (ImGui, etc.)
     function self.get_output_path()
         return "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
     end
@@ -181,15 +181,15 @@ function workspace_rules(workspace_name)
         return solutions_folder_path
     end
 
-    -- @brief - Retrieve the path to the dependencies folder containing external dependency projects
-    local external_dependencies_folder_path = join_path(self.get_engine_path(), "Dependencies")
-    function self.get_external_dependencies_folder_path()
-        return external_dependencies_folder_path
+    -- @brief - Retrieve the path to the thirdparties folder containing external thirdparty projects
+    local external_thirdparty_folder_path = join_path(self.get_engine_path(), "ThirdParty")
+    function self.get_external_thirdparty_folder_path()
+        return external_thirdparty_folder_path
     end
 
-    -- @brief - Create a path relative to dependency folder
-    function self.create_external_dependency_path(path)
-        return join_path(self.get_external_dependencies_folder_path(), path)
+    -- @brief - Create a path relative to thirdparty folder
+    function self.create_external_thirdparty_path(path)
+        return join_path(self.get_external_thirdparty_folder_path(), path)
     end
 
     -- @brief - Retrieve a target added to the workspace
@@ -217,17 +217,17 @@ function workspace_rules(workspace_name)
         table.insert(self.project_rules, rule)
     end
 
-    -- TODO: Better way of handling these dependencies
-    -- Inject dependency projects into the workspace
-    function self.generate_dependency_projects()
+    -- TODO: Better way of handling these thirdparties
+    -- Inject thirdparty projects into the workspace
+    function self.generate_thirdparty_projects()
         local solution_location = self.get_solutions_folder_path()
 
-        group "Dependencies"
-            log_info("\n--- External Dependencies ---")
+        group "ThirdParty"
+            log_info("\n--- External ThirdParty ---")
             
             -- ImGui
             project "ImGui"
-                log_info("    Generating dependency ImGui")
+                log_info("    Generating thirdparty ImGui")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -249,25 +249,25 @@ function workspace_rules(workspace_name)
                     buildoptions { "/Zc:__cplusplus" }
                 filter {}
 
-                location(join_path(solution_location, "Dependencies/ImGui"))
+                location(join_path(solution_location, "ThirdParty/ImGui"))
 
                 -- Locations
-                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/ImGui/" .. self.get_output_path()))
-                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/ImGui/" .. self.get_output_path()))
+                targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/ImGui/" .. self.get_output_path()))
+                objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/ImGui/" .. self.get_output_path()))
 
                 -- Files
                 files {
-                    self.create_external_dependency_path("imgui/imconfig.h"),
-                    self.create_external_dependency_path("imgui/imgui.h"),
-                    self.create_external_dependency_path("imgui/imgui.cpp"),
-                    self.create_external_dependency_path("imgui/imgui_demo.cpp"),
-                    self.create_external_dependency_path("imgui/imgui_draw.cpp"),
-                    self.create_external_dependency_path("imgui/imgui_internal.h"),
-                    self.create_external_dependency_path("imgui/imgui_tables.cpp"),
-                    self.create_external_dependency_path("imgui/imgui_widgets.cpp"),
-                    self.create_external_dependency_path("imgui/imstb_rectpack.h"),
-                    self.create_external_dependency_path("imgui/imstb_textedit.h"),
-                    self.create_external_dependency_path("imgui/imstb_truetype.h"),
+                    self.create_external_thirdparty_path("imgui/imconfig.h"),
+                    self.create_external_thirdparty_path("imgui/imgui.h"),
+                    self.create_external_thirdparty_path("imgui/imgui.cpp"),
+                    self.create_external_thirdparty_path("imgui/imgui_demo.cpp"),
+                    self.create_external_thirdparty_path("imgui/imgui_draw.cpp"),
+                    self.create_external_thirdparty_path("imgui/imgui_internal.h"),
+                    self.create_external_thirdparty_path("imgui/imgui_tables.cpp"),
+                    self.create_external_thirdparty_path("imgui/imgui_widgets.cpp"),
+                    self.create_external_thirdparty_path("imgui/imstb_rectpack.h"),
+                    self.create_external_thirdparty_path("imgui/imstb_textedit.h"),
+                    self.create_external_thirdparty_path("imgui/imstb_truetype.h"),
                 }
                 
                 -- Configurations
@@ -285,7 +285,7 @@ function workspace_rules(workspace_name)
             
             -- tinyobjloader
             project "tinyobjloader"
-                log_info("    Generating dependency tinyobjloader")
+                log_info("    Generating thirdparty tinyobjloader")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -307,16 +307,16 @@ function workspace_rules(workspace_name)
                     buildoptions { "/Zc:__cplusplus" }
                 filter {}
 
-                location(join_path(solution_location, "Dependencies/tinyobjloader"))
+                location(join_path(solution_location, "ThirdParty/tinyobjloader"))
 
                 -- Locations
-                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/tinyobjloader/" .. self.get_output_path()))
-                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/tinyobjloader/" .. self.get_output_path()))
+                targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/tinyobjloader/" .. self.get_output_path()))
+                objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/tinyobjloader/" .. self.get_output_path()))
 
                 -- Files
                 files {
-                    self.create_external_dependency_path("tinyobjloader/tiny_obj_loader.h"),
-                    self.create_external_dependency_path("tinyobjloader/tiny_obj_loader.cc"),
+                    self.create_external_thirdparty_path("tinyobjloader/tiny_obj_loader.h"),
+                    self.create_external_thirdparty_path("tinyobjloader/tiny_obj_loader.cc"),
                 }
 
                 -- Configurations
@@ -334,7 +334,7 @@ function workspace_rules(workspace_name)
             
             -- OpenFBX
             project "OpenFBX"
-                log_info("    Generating dependency OpenFBX")
+                log_info("    Generating thirdparty OpenFBX")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -356,18 +356,18 @@ function workspace_rules(workspace_name)
                     buildoptions { "/Zc:__cplusplus" }
                 filter {}
 
-                location(join_path(solution_location, "Dependencies/OpenFBX"))
+                location(join_path(solution_location, "ThirdParty/OpenFBX"))
             
                 -- Locations
-                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/OpenFBX/" .. self.get_output_path()))
-                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/OpenFBX/" .. self.get_output_path()))
+                targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/OpenFBX/" .. self.get_output_path()))
+                objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/OpenFBX/" .. self.get_output_path()))
 
                 -- Files
                 files {
-                    self.create_external_dependency_path("OpenFBX/src/ofbx.h"),
-                    self.create_external_dependency_path("OpenFBX/src/ofbx.cpp"),
-                    self.create_external_dependency_path("OpenFBX/src/libdeflate.h"),
-                    self.create_external_dependency_path("OpenFBX/src/libdeflate.c"),
+                    self.create_external_thirdparty_path("OpenFBX/src/ofbx.h"),
+                    self.create_external_thirdparty_path("OpenFBX/src/ofbx.cpp"),
+                    self.create_external_thirdparty_path("OpenFBX/src/libdeflate.h"),
+                    self.create_external_thirdparty_path("OpenFBX/src/libdeflate.c"),
                 }
 
                 -- Configurations 
@@ -385,7 +385,7 @@ function workspace_rules(workspace_name)
 
             -- SPIRV-Cross
             project "SPIRV-Cross"
-                log_info("    Generating dependency SPIRV-Cross")
+                log_info("    Generating thirdparty SPIRV-Cross")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -407,44 +407,44 @@ function workspace_rules(workspace_name)
                     buildoptions { "/Zc:__cplusplus" }
                 filter {}
 
-                location(join_path(solution_location, "Dependencies/SPIRV-Cross"))
+                location(join_path(solution_location, "ThirdParty/SPIRV-Cross"))
             
                 -- Locations
-                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/SPIRV-Cross/" .. self.get_output_path()))
-                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/SPIRV-Cross/" .. self.get_output_path()))
+                targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/SPIRV-Cross/" .. self.get_output_path()))
+                objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/SPIRV-Cross/" .. self.get_output_path()))
 
                 -- Files
                 files {
-                    self.create_external_dependency_path("SPIRV-Cross/GLSL.std.450.h"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv.h"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_c.h"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/GLSL.std.450.h"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv.h"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_c.h"),
 
-                    self.create_external_dependency_path("SPIRV-Cross/spirv.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cfg.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_common.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cpp.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_containers.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_error_handling.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_parsed_ir.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_util.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_glsl.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_hlsl.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_msl.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_parser.hpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_reflect.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cfg.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_common.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cpp.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_containers.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_error_handling.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_parsed_ir.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_util.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_glsl.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_hlsl.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_msl.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_parser.hpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_reflect.hpp"),
 
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cfg.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cpp.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_c.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_parsed_ir.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_util.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_glsl.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_hlsl.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_msl.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_parser.cpp"),
-                    self.create_external_dependency_path("SPIRV-Cross/spirv_reflect.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cfg.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cpp.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_c.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_parsed_ir.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_cross_util.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_glsl.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_hlsl.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_msl.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_parser.cpp"),
+                    self.create_external_thirdparty_path("SPIRV-Cross/spirv_reflect.cpp"),
                 }
 
                 -- Defines 
@@ -468,7 +468,7 @@ function workspace_rules(workspace_name)
                 filter {}
             
             -- glslang group
-            group "Dependencies/glslang"
+            group "ThirdParty/glslang"
                 log_info("\n    --- Generating glslang projects ---")
 
                 -- Include directories for build-time generated include files
@@ -476,7 +476,7 @@ function workspace_rules(workspace_name)
 
                 -- GenericCodeGen
                 project "GenericCodeGen"
-                    log_info("        Generating dependency GenericCodeGen")
+                    log_info("        Generating thirdparty GenericCodeGen")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -498,16 +498,16 @@ function workspace_rules(workspace_name)
                         buildoptions { "/Zc:__cplusplus" }
                     filter {}
 
-                    location(join_path(solution_location, "Dependencies/glslang/GenericCodeGen/"))
+                    location(join_path(solution_location, "ThirdParty/glslang/GenericCodeGen/"))
                 
                     -- Locations
-                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/GenericCodeGen/" .. self.get_output_path()))
-                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/GenericCodeGen/" .. self.get_output_path()))
+                    targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/glslang/GenericCodeGen/" .. self.get_output_path()))
+                    objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/glslang/GenericCodeGen/" .. self.get_output_path()))
 
                     -- Files
                     files {
-                        self.create_external_dependency_path("glslang/glslang/GenericCodeGen/CodeGen.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/GenericCodeGen/Link.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/GenericCodeGen/CodeGen.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/GenericCodeGen/Link.cpp"),
                     }
 
                     glslang_set_platform_properties()
@@ -527,7 +527,7 @@ function workspace_rules(workspace_name)
 
                 -- OSDependent
                 project "OSDependent"
-                    log_info("        Generating dependency OSDependent")
+                    log_info("        Generating thirdparty OSDependent")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -549,24 +549,24 @@ function workspace_rules(workspace_name)
                         buildoptions { "/Zc:__cplusplus" }
                     filter {}
 
-                    location(join_path(solution_location, "Dependencies/glslang/OSDependent/"))
+                    location(join_path(solution_location, "ThirdParty/glslang/OSDependent/"))
                 
                     -- Locations
-                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/OSDependent/" .. self.get_output_path()))
-                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/OSDependent/" .. self.get_output_path()))
+                    targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/glslang/OSDependent/" .. self.get_output_path()))
+                    objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/glslang/OSDependent/" .. self.get_output_path()))
 
                     -- Files
                     files {
-                        self.create_external_dependency_path("glslang/glslang/OSDependent/osinclude.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/OSDependent/osinclude.h"),
                     }
 
                     filter "system:windows"
                         files {
-                            self.create_external_dependency_path("glslang/glslang/OSDependent/Windows/ossource.cpp"),
+                            self.create_external_thirdparty_path("glslang/glslang/OSDependent/Windows/ossource.cpp"),
                         }
                     filter "system:macosx"
                         files {
-                            self.create_external_dependency_path("glslang/glslang/OSDependent/Unix/ossource.cpp"),
+                            self.create_external_thirdparty_path("glslang/glslang/OSDependent/Unix/ossource.cpp"),
                         }
                     filter {}
 
@@ -587,7 +587,7 @@ function workspace_rules(workspace_name)
 
                 -- MachineIndependent
                 project "MachineIndependent"
-                    log_info("        Generating dependency MachineIndependent")
+                    log_info("        Generating thirdparty MachineIndependent")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -609,74 +609,74 @@ function workspace_rules(workspace_name)
                         buildoptions { "/Zc:__cplusplus" }
                     filter {}
 
-                    location(join_path(solution_location, "Dependencies/glslang/MachineIndependent/"))
+                    location(join_path(solution_location, "ThirdParty/glslang/MachineIndependent/"))
                 
                     -- Locations
-                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/MachineIndependent/" .. self.get_output_path()))
-                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/MachineIndependent/" .. self.get_output_path()))
+                    targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/glslang/MachineIndependent/" .. self.get_output_path()))
+                    objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/glslang/MachineIndependent/" .. self.get_output_path()))
 
                     -- Include Directories
                     includedirs {
-                        self.create_external_dependency_path("glslang/glslang/include")
+                        self.create_external_thirdparty_path("glslang/glslang/include")
                     }
 
                     -- Files
                     files {
                         -- Cpp files
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/glslang.y"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/glslang.y"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
 
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/attribute.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Constant.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/InfoSink.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Initialize.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/intermOut.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/iomapper.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Intermediate.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/limits.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/linkValidate.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/parseConst.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ParseHelper.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/reflection.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/RemoveTree.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Scan.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ShaderLang.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/SymbolTable.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Versions.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/attribute.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Constant.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/InfoSink.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Initialize.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/intermOut.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/iomapper.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Intermediate.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/limits.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/linkValidate.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/parseConst.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/ParseHelper.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/reflection.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/RemoveTree.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Scan.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/ShaderLang.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/SymbolTable.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Versions.cpp"),
 
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
 
                         -- Header Files
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/gl_types.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/gl_types.h"),
 
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/attribute.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Initialize.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/iomapper.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/LiveTraverser.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/localintermediate.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ParseHelper.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/parseVersions.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/reflection.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/RemoveTree.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Scan.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ScanContext.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/span.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/SymbolTable.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Versions.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/attribute.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Initialize.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/iomapper.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/LiveTraverser.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/localintermediate.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/ParseHelper.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/parseVersions.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/reflection.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/RemoveTree.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Scan.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/ScanContext.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/span.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/SymbolTable.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/Versions.h"),
 
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
-                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
                     }
 
                     glslang_set_platform_properties()
@@ -703,7 +703,7 @@ function workspace_rules(workspace_name)
 
                 -- glslang
                 project "glslang"
-                    log_info("        Generating dependency glslang")
+                    log_info("        Generating thirdparty glslang")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -725,38 +725,38 @@ function workspace_rules(workspace_name)
                         buildoptions { "/Zc:__cplusplus" }
                     filter {}
 
-                    location(join_path(solution_location, "Dependencies/glslang/glslang/"))
+                    location(join_path(solution_location, "ThirdParty/glslang/glslang/"))
                 
                     -- Locations
-                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/glslang/" .. self.get_output_path()))
-                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/glslang/" .. self.get_output_path()))
+                    targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/glslang/glslang/" .. self.get_output_path()))
+                    objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/glslang/glslang/" .. self.get_output_path()))
 
                     -- Include Directories
                     includedirs {
-                        self.create_external_dependency_path("glslang")
+                        self.create_external_thirdparty_path("glslang")
                     }
 
                     -- Files
                     files {
                         -- Cpp
-                        self.create_external_dependency_path("glslang/glslang/CInterface/glslang_c_interface.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/CInterface/glslang_c_interface.cpp"),
 
                         -- Header
-                        self.create_external_dependency_path("glslang/glslang/Public/ShaderLang.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/arrays.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/BaseTypes.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/Common.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/ConstantUnion.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/glslang_c_interface.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/glslang_c_shader_types.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/InfoSink.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/InitializeGlobals.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/intermediate.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/PoolAlloc.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/ResourceLimits.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/ShHandle.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/SpirvIntrinsics.h"),
-                        self.create_external_dependency_path("glslang/glslang/Include/Types.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Public/ShaderLang.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/arrays.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/BaseTypes.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/Common.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/ConstantUnion.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/glslang_c_interface.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/glslang_c_shader_types.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/InfoSink.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/InitializeGlobals.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/intermediate.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/PoolAlloc.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/ResourceLimits.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/ShHandle.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/SpirvIntrinsics.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Include/Types.h"),
                     }
 
                     -- Links
@@ -782,7 +782,7 @@ function workspace_rules(workspace_name)
 
                 -- ResourceLimits
                 project "glslang-default-resource-limits"
-                    log_info("        Generating dependency glslang-default-resource-limits")
+                    log_info("        Generating thirdparty glslang-default-resource-limits")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -804,26 +804,26 @@ function workspace_rules(workspace_name)
                         buildoptions { "/Zc:__cplusplus" }
                     filter {}
 
-                    location(join_path(solution_location, "Dependencies/glslang/glslang-default-resource-limits/"))
+                    location(join_path(solution_location, "ThirdParty/glslang/glslang-default-resource-limits/"))
                 
                     -- Locations
-                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/glslang-default-resource-limits/" .. self.get_output_path()))
-                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/glslang-default-resource-limits/" .. self.get_output_path()))
+                    targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/glslang/glslang-default-resource-limits/" .. self.get_output_path()))
+                    objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/glslang/glslang-default-resource-limits/" .. self.get_output_path()))
 
                     -- Include Directories
                     includedirs {
-                        self.create_external_dependency_path("glslang")
+                        self.create_external_thirdparty_path("glslang")
                     }
                     
                     -- Files
                     files {
                         -- Cpp
-                        self.create_external_dependency_path("glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
-                        self.create_external_dependency_path("glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
+                        self.create_external_thirdparty_path("glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
 
                         -- Header
-                        self.create_external_dependency_path("glslang/glslang/Public/ResourceLimits.h"),
-                        self.create_external_dependency_path("glslang/glslang/Public/resource_limits_c.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Public/ResourceLimits.h"),
+                        self.create_external_thirdparty_path("glslang/glslang/Public/resource_limits_c.h"),
                     }
 
                     glslang_set_platform_properties()
@@ -843,7 +843,7 @@ function workspace_rules(workspace_name)
 
                 -- SPIRV
                 project "SPIRV"
-                    log_info("        Generating dependency SPIRV")
+                    log_info("        Generating thirdparty SPIRV")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -865,50 +865,50 @@ function workspace_rules(workspace_name)
                         buildoptions { "/Zc:__cplusplus" }
                     filter {}
 
-                    location(join_path(solution_location, "Dependencies/glslang/SPIRV/"))
+                    location(join_path(solution_location, "ThirdParty/glslang/SPIRV/"))
                 
                     -- Locations
-                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/SPIRV/" .. self.get_output_path()))
-                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/SPIRV/" .. self.get_output_path()))
+                    targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/glslang/SPIRV/" .. self.get_output_path()))
+                    objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/glslang/SPIRV/" .. self.get_output_path()))
 
                     -- Include Directories
                     includedirs {
-                        self.create_external_dependency_path("glslang"),
-                        self.create_external_dependency_path("glslang/glslang/include"),
+                        self.create_external_thirdparty_path("glslang"),
+                        self.create_external_thirdparty_path("glslang/glslang/include"),
                     }
 
                     -- Files
                     files {
                         -- Cpp
-                        self.create_external_dependency_path("glslang/SPIRV/GlslangToSpv.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/InReadableOrder.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/Logger.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/SpvBuilder.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/SpvPostProcess.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/doc.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/SpvTools.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/disassemble.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/CInterface/spirv_c_interface.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GlslangToSpv.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/InReadableOrder.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/Logger.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/SpvBuilder.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/SpvPostProcess.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/doc.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/SpvTools.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/disassemble.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/CInterface/spirv_c_interface.cpp"),
 
                         -- Headers
-                        self.create_external_dependency_path("glslang/SPIRV/bitutils.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/spirv.hpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/GLSL.std.450.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.EXT.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.KHR.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/GlslangToSpv.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/hex_float.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/Logger.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/SpvBuilder.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/spvIR.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/doc.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/SpvTools.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/disassemble.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.AMD.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.NV.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.ARM.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/NonSemanticDebugPrintf.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/bitutils.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/spirv.hpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GLSL.std.450.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GLSL.ext.EXT.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GLSL.ext.KHR.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GlslangToSpv.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/hex_float.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/Logger.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/SpvBuilder.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/spvIR.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/doc.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/SpvTools.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/disassemble.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GLSL.ext.AMD.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GLSL.ext.NV.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/GLSL.ext.ARM.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/NonSemanticDebugPrintf.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
                     }
 
                     -- Links
@@ -933,7 +933,7 @@ function workspace_rules(workspace_name)
 
                 -- SPVRemapper
                 project "SPVRemapper"
-                    log_info("        Generating dependency SPVRemapper")
+                    log_info("        Generating thirdparty SPVRemapper")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -955,18 +955,18 @@ function workspace_rules(workspace_name)
                         buildoptions { "/Zc:__cplusplus" }
                     filter {}
                     
-                    location(join_path(solution_location, "Dependencies/glslang/SPVRemapper/"))
+                    location(join_path(solution_location, "ThirdParty/glslang/SPVRemapper/"))
                 
                     -- Locations
-                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/SPVRemapper/" .. self.get_output_path()))
-                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/SPVRemapper/" .. self.get_output_path()))
+                    targetdir(self.create_external_thirdparty_path("Build/bin/ThirdParty/glslang/SPVRemapper/" .. self.get_output_path()))
+                    objdir(self.create_external_thirdparty_path("Build/bin-int/ThirdParty/glslang/SPVRemapper/" .. self.get_output_path()))
 
                     -- Files
                     files {
-                        self.create_external_dependency_path("glslang/SPIRV/SPVRemapper.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/doc.cpp"),
-                        self.create_external_dependency_path("glslang/SPIRV/SPVRemapper.h"),
-                        self.create_external_dependency_path("glslang/SPIRV/doc.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/SPVRemapper.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/doc.cpp"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/SPVRemapper.h"),
+                        self.create_external_thirdparty_path("glslang/SPIRV/doc.h"),
                     }
 
                     glslang_set_platform_properties()
@@ -983,7 +983,7 @@ function workspace_rules(workspace_name)
                         runtime("Release")
                         optimize("Full")
                     filter {}
-            group "Dependencies"
+            group "ThirdParty"
         group ""
     end
 
@@ -1080,8 +1080,8 @@ function workspace_rules(workspace_name)
         log_info("    StartProject = '%s'", self.start_project_name)
         startproject(self.start_project_name)
 
-        -- Generate projects for all dependencies
-        self.generate_dependency_projects()
+        -- Generate projects for all thirdparties
+        self.generate_thirdparty_projects()
 
         -- Generate project files for all the rules that have been added
         log_info("\n--- Generating module and target project files ---")

@@ -7,10 +7,10 @@ renderer_module.use_precompiled_headers = true
 
 renderer_module.add_external_include_dirs
 {
-    create_external_dependency_path("imgui"),
+    create_external_thirdparty_path("imgui"),
 }
 
-renderer_module.add_module_dependencies
+renderer_module.add_module_thirdparties
 {
     "Core",
     "CoreApplication",

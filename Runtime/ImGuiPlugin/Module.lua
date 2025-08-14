@@ -6,10 +6,10 @@ local imgui_plugin_module = module_build_rules("ImGuiPlugin")
 
 imgui_plugin_module.add_external_include_dirs
 {
-    create_external_dependency_path("imgui"),
+    create_external_thirdparty_path("imgui"),
 }
 
-imgui_plugin_module.add_module_dependencies
+imgui_plugin_module.add_module_thirdparties
 {
     "Core",
     "CoreApplication",

@@ -14,7 +14,7 @@ if is_platform_windows() then
     }
 end
 
-launch_module.add_module_dependencies
+launch_module.add_module_thirdparties
 {
     "Core",
     "CoreApplication",
