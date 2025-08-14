@@ -136,14 +136,12 @@ private:
             FMemory::Free(PreviousChunk);
         }
 
-        TopPage = LastPage;
-
-        // Reset the stack pointers since the current top-page is assumed to be in use (In most cases however, it is nullptr)
-        StackStart = nullptr;
+        TopPage    = LastPage;
+        StackStart = nullptr; // Reset the stack pointers since the current top-page is assumed to be in use (In most cases however, it is nullptr)
         StackEnd   = StackStart;
     }
 
-    FMemoryHeader* TopPage{nullptr};
-    uint8*         StackStart{nullptr};
-    uint8*         StackEnd{nullptr};
+    FMemoryHeader* TopPage    = nullptr;
+    uint8*         StackStart = nullptr;
+    uint8*         StackEnd   = nullptr;
 };

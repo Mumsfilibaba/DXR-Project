@@ -5,7 +5,7 @@
 #include "../Random.hlsli"
 #include "../PoissonDisk.hlsli"
 
-#define POINT_LIGHT_SAMPLES 4
+#define POINT_LIGHT_SAMPLES 8
 #define NUM_OFFSET_SAMPLES 20
 
 static const float3 SampleOffsetDirections[NUM_OFFSET_SAMPLES] =
@@ -55,7 +55,7 @@ float PointLightShadowFactor(in TextureCubeArray<float> ShadowMap, float Index, 
     Depth       = (Depth - ShadowBias);
     
     float Shadow = 0.0;
-    const float DiskRadius = (0.4f + (Depth)) / Light.FarPlane;
+    const float DiskRadius = (0.2f + (Depth)) / Light.FarPlane;
     
     [unroll]
     for (int i = 0; i < POINT_LIGHT_SAMPLES; i++)

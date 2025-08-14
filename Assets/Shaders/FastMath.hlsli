@@ -32,9 +32,9 @@ float FastSin(float X)
     // Constants for the polynomial approximation.
     // B and C are coefficients that shape the linear and quadratic components,
     // while P is a correction factor that reduces the overall error.
-    const float B =  4.0 / PI;     // Linear coefficient: scales the input.
-    const float C = -4.0 / PI_2;   // Quadratic coefficient: adds curvature based on |X|.
-    const float P =  0.225;        // Correction factor: refines the approximation.
+    const float B =  4.0 / PI;   // Linear coefficient: scales the input.
+    const float C = -4.0 / PI_2; // Quadratic coefficient: adds curvature based on |X|.
+    const float P =  0.225;      // Correction factor: refines the approximation.
     
     // Initial polynomial approximation combining a linear term and a quadratic term.
     // B * X produces a linear ramp, and C * X * abs(X) introduces a parabolic shape.
@@ -55,6 +55,5 @@ float FastCos(float X)
    // 3. abs(... - 2.0) - 1.0: Shapes the wrapped linear function into an approximate cosine curve.
    return abs(abs(X) / PI_2 % 4.0 - 2.0) - 1.0;
 }
-
 
 #endif

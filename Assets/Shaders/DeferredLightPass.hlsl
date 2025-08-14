@@ -405,7 +405,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         }
 
         [branch]
-        if (ShadowFactor > 0.001)
+        if (ShadowFactor > 0.0)
         {
             float3 L = LightPosRad.Position - PositionWS;
             float  DistanceSqrd = dot(L, L);
@@ -414,7 +414,6 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
             float3 IncidentRadiance = Light.Color * Attenuation;
             IncidentRadiance = DirectRadiance(F0, NormalWS, ViewWS, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
-
             L0 += IncidentRadiance * ShadowFactor;
         }
     }
@@ -503,7 +502,6 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         float3 Diffuse  = DiffuseSample * GBufferAlbedo * Kd;
         float3 Ambient  = (Diffuse + Specular) * GBufferAO;
         FinalColor = Ambient + L0;
-        // FinalColor = SpecularSample;
     }
 
 #if DRAW_TILE_OCCUPANCY

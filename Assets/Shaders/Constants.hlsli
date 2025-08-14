@@ -14,6 +14,7 @@
 #define EPSILON (0.0001)
 #define RAY_OFFSET (0.02)
 
+#define FLT_MIN (0.00000001)
 #define FLT32_MAX (3.402823466e+38)
 #define FLT32_MIN (1.175494351e-38)        
 

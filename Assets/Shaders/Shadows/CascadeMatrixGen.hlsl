@@ -132,9 +132,15 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
     // We use a specific extent in the z-direction, this is in order to prevent that some
     // objects are not visibe in the shadow-map and that are "behind" the camera.
-    float LightNearPlane      = GenerationInfo.LightNearPlane;      // 0.0;             
-    float LightFarPlane       = GenerationInfo.LightFarPlane;       // CascadeExtents.z;
-    float LightPositionOffset = GenerationInfo.LightPositionOffset; // MinExtents.z;    
+#if 1
+    float LightNearPlane      = GenerationInfo.LightNearPlane;
+    float LightFarPlane       = GenerationInfo.LightFarPlane;
+    float LightPositionOffset = GenerationInfo.LightPositionOffset;
+#else
+    float LightNearPlane      = 0.0;
+    float LightFarPlane       = CascadeExtents.z;
+    float LightPositionOffset = -MinExtents.z;
+#endif
 
     // Setup Shadow-View
     float3 LightDirection = normalize(GenerationInfo.LightDirection);

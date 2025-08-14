@@ -27,6 +27,9 @@ class FRHISwapChain;
     #define INSERT_DEBUG_CMDLIST_MARKER(CommandList, MarkerString)
 #endif
 
+class FRHICommandList;
+class FRHIImmediateCommandList;
+
 class RHI_API FRHICommandList : FNonCopyable
 {
 public:
@@ -63,14 +66,14 @@ public:
     {
         FRHICommand* NewCommand = reinterpret_cast<FRHICommand*>(Allocate(Size, Alignment));
         *CommandPointer = NewCommand;
-        CommandPointer  = &NewCommand->NextCommand;
+        CommandPointer = &NewCommand->NextCommand;
         ++NumCommands;
         return NewCommand;
     }
 
     FORCEINLINE CHAR_T* AllocateString(const CHAR_T* String) noexcept
     {
-        int32  Length    = FCString::Strlen(String);
+        const int32 Length = FCString::Strlen(String);
         CHAR_T* NewString = reinterpret_cast<CHAR_T*>(Allocate(sizeof(CHAR_T) * Length, alignof(CHAR_T)));
         return FCString::Strcpy(NewString, String);
     }
@@ -412,7 +415,7 @@ public:
 
 private:
     FMemoryStack        Memory;
-    FRHICommand**       CommandPointer; // NOTE: Pointer to FirstCommand to avoid branching
+    FRHICommand**       CommandPointer;
     FRHICommand*        FirstCommand;
     IRHICommandContext* CommandContext;
     FGenericEvent*      FinishedEvent;

@@ -987,7 +987,7 @@ DECLARE_RHICOMMAND(FRHICommandPresentSwapChain)
 DECLARE_RHICOMMAND(FRHICommandResizeSwapChain)
 {
     FORCEINLINE FRHICommandResizeSwapChain(FRHISwapChain* InSwapChain, uint32 InWidth, uint32 InHeight)
-        : SwapChain(SwapChain)
+        : SwapChain(InSwapChain)
         , Width(InWidth)
         , Height(InHeight)
     {
