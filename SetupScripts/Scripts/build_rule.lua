@@ -210,8 +210,6 @@ function build_rules(name)
     function self.make_file_names_relative_to_path(file_array)
         for index = 1, #file_array do
             local current_file = file_array[index]
-            log_info(" -make_file_names_relative_to_path %s", current_file)
-
             if not path.isabsolute(file_array[index]) then
                 file_array[index] = join_path(self.get_path(), file_array[index])
             end
@@ -576,7 +574,7 @@ function build_rules(name)
                     current_module.workspace = self.workspace
                     current_module.generate()
                 else
-                    log_warning("Failed to properly create module '%s'", current_module_name)
+                    log_warning("Could not find '%s', perhaps it does not exist, or it may not be supported on the current setup or platform. Check the logs for more information.", current_module_name)
                 end
             end
         end

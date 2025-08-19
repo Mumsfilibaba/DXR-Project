@@ -133,13 +133,6 @@ bool FEngineLoop::LoadCoreModules()
         return false;
     }
 
-    FModuleInterface* ProjectModule = FModuleManager::Get().LoadModule("Project");
-    if (!ProjectModule)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
     return true;
 }
 

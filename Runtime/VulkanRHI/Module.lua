@@ -2,12 +2,68 @@ include '../../SetupScripts/Scripts/build_module.lua'
 
 -- Vulkan Helpers
 
+-- Assume that we have the Vulkan SDK installed (For macOS)
+local _g_vulkan_installed = true
+
+local function _exists_dir(p)  
+    return p and p ~= '' and os.isdir(p)  
+end
+
+local function _exists_file(p) 
+    return p and p ~= '' and os.isfile(p)
+end
+
 function find_vulkan_include_path()
-    -- Vulkan is installed to the local folder on macOS (latest installed version), so we can just return this global path
+    -- macOS: verify a complete SDK under /usr/local
     if is_platform_mac() then
-        return '/usr/local'
+        local root        = '/usr/local'
+        local inc_dir     = join_path(root, 'include', 'vulkan')
+        local lib_dir     = join_path(root, 'lib')
+        local bin_dir     = join_path(root, 'bin')
+        local header_h    = join_path(inc_dir, 'vulkan.h')
+
+        -- Typical libs/tools shipped by LunarG SDK on macOS
+        local lib_candidates = {
+            join_path(lib_dir, 'libvulkan.1.dylib'),
+            join_path(lib_dir, 'libvulkan.dylib'),
+            join_path(lib_dir, 'libMoltenVK.dylib'),
+        }
+        local tool_candidates = {
+            join_path(bin_dir, 'vulkaninfo'),
+            join_path(bin_dir, 'glslc'),
+        }
+
+        local have_lib = false
+        for _, f in ipairs(lib_candidates) do
+            if _exists_file(f) then have_lib = true; break end
+        end
+
+        local have_tool = false
+        for _, f in ipairs(tool_candidates) do
+            if _exists_file(f) then have_tool = true; break end
+        end
+
+        if not _exists_dir(inc_dir) or not _exists_file(header_h) then
+            log_error("[ERROR]: Vulkan headers not found under %s (expected %s)", root, header_h)
+            _g_vulkan_installed = false
+            return ''
+        end
+        if not _exists_dir(lib_dir) or not have_lib then
+            log_error("[ERROR]: Vulkan libraries not found under %s (looked for libvulkan*/MoltenVK)", lib_dir)
+            _g_vulkan_installed = false
+            return ''
+        end
+        if not _exists_dir(bin_dir) or not have_tool then
+            log_error("[ERROR]: Vulkan tools not found under %s (looked for vulkaninfo/glslc)", bin_dir)
+            _g_vulkan_installed = false
+            return ''
+        end
+
+        log_highlight("Detected Vulkan SDK at %s (headers/libs/tools present)", root)
+        return root
     end
 
+    -- Windows/Linux: check common environment variables
     local vulkan_environment_vars = {
         'VK_SDK_PATH',
         'VULKAN_SDK',
@@ -24,6 +80,7 @@ function find_vulkan_include_path()
     end
 
     log_error("[ERROR]: Failed to find Vulkan SDK path")
+    _g_vulkan_installed = false
     return ''
 end
 
@@ -31,6 +88,12 @@ local _g_vulkan_include_path = create_os_path(find_vulkan_include_path())
 
 function get_vulkan_include_path()
     return _g_vulkan_include_path
+end
+
+-- If the SDK wasn't found, skip the rest of this script.
+if not _g_vulkan_installed or (_g_vulkan_include_path == nil or _g_vulkan_include_path == '') then
+    log_warning("[VulkanRHI] Vulkan SDK not found. Skipping VulkanRHI build rules.")
+    return
 end
 
 -- VulkanRHI Module
