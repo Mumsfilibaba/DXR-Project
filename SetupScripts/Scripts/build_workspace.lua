@@ -617,7 +617,8 @@ function workspace_rules(workspace_name)
 
                     -- Include Directories
                     includedirs {
-                        self.create_external_thirdparty_path("glslang/glslang/include")
+                        self.create_external_thirdparty_path("glslang"),
+                        self.create_external_thirdparty_path("glslang/glslang/include"),
                     }
 
                     -- Files
