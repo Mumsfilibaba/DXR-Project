@@ -1,4 +1,4 @@
-include "../../BuildScripts/Scripts/build_module.lua"
+include "../../SetupScripts/Scripts/build_module.lua"
 
 -- MetalRHI Module
 
