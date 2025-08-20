@@ -17,140 +17,141 @@ newoption
 }
 
 -- Global variables
-local g_is_monolithic
-local g_modules = {}
+local gIsMonolithic
+local gModules = {}
 
 -- Check if the module should be built monolithically
-function global_is_monolithic()
-    if g_is_monolithic == nil then
-        g_is_monolithic = (_OPTIONS["monolithic"] ~= nil)
+function GlobalIsMonolithic()
+    if gIsMonolithic == nil then
+        gIsMonolithic = (_OPTIONS["monolithic"] ~= nil)
     end
-    return g_is_monolithic
+    return gIsMonolithic
 end
 
 -- Check if the current platform is Windows
-function is_platform_windows()
+function IsPlatformWindows()
     return _OPTIONS["platform"] == "Win32"
 end
 
 -- Check if the current platform is macOS
-function is_platform_mac()
+function IsPlatformMac()
     return _OPTIONS["platform"] == "macOS"
 end
 
 -- Check the action being used
-function build_with_xcode()
+function BuildWithXcode()
     return _ACTION == "xcode4"
 end
 
-local vs_actions =
+-- Visual Studio actions (global-style table)
+local gVsActions =
 {
     vs2022 = true, vs2019 = true, vs2017 = true, vs2015 = true,
     vs2013 = true, vs2012 = true, vs2010 = true, vs2008 = true, vs2005 = true
 }
 
-function build_with_visual_studio()
-    return vs_actions[_ACTION] == true
+function BuildWithVisualStudio()
+    return gVsActions[_ACTION] == true
 end
 
 -- Verify language version
-local valid_language_versions =
+local gValidLanguageVersions =
 {
     ["c++98"] = true, ["c++11"] = true, ["c++14"] = true,
     ["c++17"] = true, ["c++20"] = true, ["c++latest"] = true
 }
 
-function verify_language_version(language_version)
-    return valid_language_versions[language_version] == true
+function VerifyLanguageVersion(LanguageVersion)
+    return gValidLanguageVersions[LanguageVersion] == true
 end
 
 -- Helper for printing all strings in a table and ending with endline
-function print_table(format_str, tbl)
-    if tbl == nil then 
+function PrintTable(FormatStr, Tbl)
+    if Tbl == nil then 
         return 
     end
-    for _, value in ipairs(tbl) do
-        log_info(format_str, value)
+    for _, value in ipairs(Tbl) do
+        LogInfo(FormatStr, value)
     end
 end
 
 -- Helper to append multiple unique elements to a table
-function add_unique_elements(elements, tbl)
-    if tbl == nil or elements == nil then 
+function AddUniqueElements(Elements, Tbl)
+    if Tbl == nil or Elements == nil then 
         return 
     end
 
     local element_set = {}
-    for _, v in ipairs(tbl) do
+    for _, v in ipairs(Tbl) do
         element_set[v] = true
     end
-    for _, v in ipairs(elements) do
+    for _, v in ipairs(Elements) do
         if not element_set[v] then
-            table.insert(tbl, v)
+            table.insert(Tbl, v)
             element_set[v] = true
         end
     end
 end
 
 -- Module management functions
-function get_module(module_name)
-    return g_modules[module_name]
+function GetModule(ModuleName)
+    return gModules[ModuleName]
 end
 
-function is_module(module_name)
-    return g_modules[module_name] ~= nil
+function IsModule(ModuleName)
+    return gModules[ModuleName] ~= nil
 end
 
-function add_module(module_name, module)
-    g_modules[module_name] = module
+function AddModule(ModuleName, Module)
+    gModules[ModuleName] = Module
 end
 
 -- Path handling
-local g_path_separator = is_platform_windows() and '\\' or '/'
+local gPathSeparator = IsPlatformWindows() and '\\' or '/'
 
-function create_os_path(in_path)
-    return path.translate(in_path, g_path_separator)
+function CreateOsPath(InPath)
+    return path.translate(InPath, gPathSeparator)
 end
 
 -- Main paths
-local g_engine_path = create_os_path(path.getabsolute("../../", _PREMAKE_DIR))
+local gEnginePath = CreateOsPath(path.getabsolute("../../", _PREMAKE_DIR))
 
-function get_engine_path()
-    return g_engine_path
+function GetEnginePath()
+    return gEnginePath
 end
 
 -- Join two paths
-function join_path(path_a, path_b)
-    return create_os_path(path.join(path_a, path_b))
+function JoinPath(PathA, PathB)
+    return CreateOsPath(path.join(PathA, PathB))
 end
 
 -- Retrieve the path to the Runtime folder containing all the engine modules
-local g_runtime_folder_path = join_path(g_engine_path, "Runtime")
+local gRuntimeFolderPath = JoinPath(gEnginePath, "Runtime")
 
-function get_runtime_folder_path()
-    return g_runtime_folder_path
+function GetRuntimeFolderPath()
+    return gRuntimeFolderPath
 end
 
 -- Retrieve the path to the Solutions folder containing solution and project files
-local g_solutions_folder_path = join_path(g_engine_path, "Solutions")
+local gSolutionsFolderPath = JoinPath(gEnginePath, "Solutions")
 
-function get_solutions_folder_path()
-    return g_solutions_folder_path
+function GetSolutionsFolderPath()
+    return gSolutionsFolderPath
 end
 
 -- Retrieve the path to the ThirdParty folder containing external thirdparty projects
-local g_external_thirdparty_folder_path = join_path(g_engine_path, "ThirdParty")
+local gExternalThirdpartyFolderPath = JoinPath(gEnginePath, "ThirdParty")
 
-function get_external_thirdparty_folder_path()
-    return g_external_thirdparty_folder_path
+function GetExternalThirdpartyFolderPath()
+    return gExternalThirdpartyFolderPath
 end
 
 -- Make path relative to the thirdparty folder
-function create_external_thirdparty_path(thirdparty_path)
-    return join_path(get_external_thirdparty_folder_path(), thirdparty_path)
+function CreateExternalThirdpartyPath(ThirdpartyPath)
+    return JoinPath(GetExternalThirdpartyFolderPath(), ThirdpartyPath)
 end
 
 -- Deep copy a table
-function copy(source)
-    return table.deepcopy(source)
+function Copy(Source)
+    return table.deepcopy(Source)
 end

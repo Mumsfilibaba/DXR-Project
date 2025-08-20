@@ -2,19 +2,19 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- Engine Module
 
-local engine_module = module_build_rules("Engine")
-engine_module.use_precompiled_headers = true
+local EngineModule = ModuleBuildRules("Engine")
+EngineModule.bUsePrecompiledHeaders = true
 
-engine_module.add_external_include_dirs
+EngineModule.AddExternalIncludeDirs
 {
-    create_external_thirdparty_path("imgui"),
-    create_external_thirdparty_path("stb_image"),
-    create_external_thirdparty_path("tinyobjloader"),
-    create_external_thirdparty_path("tinyddsloader"),
-    create_external_thirdparty_path("OpenFBX/src"),
+    CreateExternalThirdpartyPath("imgui"),
+    CreateExternalThirdpartyPath("stb_image"),
+    CreateExternalThirdpartyPath("tinyobjloader"),
+    CreateExternalThirdpartyPath("tinyddsloader"),
+    CreateExternalThirdpartyPath("OpenFBX/src"),
 }
 
-engine_module.add_module_thirdparties
+EngineModule.AddModuleThirdparties
 {
     "Core",
     "CoreApplication",
@@ -24,7 +24,7 @@ engine_module.add_module_thirdparties
     "ImGuiPlugin",
 }
 
-engine_module.add_link_libraries
+EngineModule.AddLinkLibraries
 {
     "ImGui",
     "tinyobjloader",

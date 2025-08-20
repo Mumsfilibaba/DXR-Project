@@ -2,15 +2,15 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- Renderer Module
 
-local renderer_module = module_build_rules("Renderer")
-renderer_module.use_precompiled_headers = true
+local RendererModule = ModuleBuildRules("Renderer")
+RendererModule.bUsePrecompiledHeaders = true
 
-renderer_module.add_external_include_dirs
+RendererModule.AddExternalIncludeDirs
 {
-    create_external_thirdparty_path("imgui"),
+    CreateExternalThirdpartyPath("imgui"),
 }
 
-renderer_module.add_module_thirdparties
+RendererModule.AddModuleThirdparties
 {
     "Core",
     "CoreApplication",
@@ -21,7 +21,7 @@ renderer_module.add_module_thirdparties
     "ImGuiPlugin",
 }
 
-renderer_module.add_link_libraries
+RendererModule.AddLinkLibraries
 {
     "ImGui",
 }

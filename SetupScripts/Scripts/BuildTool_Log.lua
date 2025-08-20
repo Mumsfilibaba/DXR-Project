@@ -1,30 +1,30 @@
 -- Helper function to handle colored logging with optional prefixes
-local function log_with_color(color, prefix, format_str, ...)
-    term.pushColor(color)
-    if prefix then
-        print(prefix .. string.format(format_str, ...))
+local function LogWithColor(Color, Prefix, FormatStr, ...)
+    term.pushColor(Color)
+    if Prefix then
+        print(Prefix .. string.format(FormatStr, ...))
     else
-        print(string.format(format_str, ...))
+        print(string.format(FormatStr, ...))
     end
     term.popColor()
 end
 
-function log_info(format_str, ...)
-    print(string.format(format_str, ...))
+function LogInfo(FormatStr, ...)
+    print(string.format(FormatStr, ...))
 end
 
-function log_highlight(format_str, ...)
-    log_with_color(term.green, nil, format_str, ...)
+function LogHighlight(FormatStr, ...)
+    LogWithColor(term.green, nil, FormatStr, ...)
 end
 
-function log_highlight_warning(format_str, ...)
-    log_with_color(term.yellow, nil, format_str, ...)
+function LogHighlightWarning(FormatStr, ...)
+    LogWithColor(term.yellow, nil, FormatStr, ...)
 end
 
-function log_warning(format_str, ...)
-    log_with_color(term.yellow, "Warning: ", format_str, ...)
+function LogWarning(FormatStr, ...)
+    LogWithColor(term.yellow, "Warning: ", FormatStr, ...)
 end
 
-function log_error(format_str, ...)
-    log_with_color(term.red, "Error: ", format_str, ...)
+function LogError(FormatStr, ...)
+    LogWithColor(term.red, "Error: ", FormatStr, ...)
 end

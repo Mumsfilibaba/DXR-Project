@@ -1,73 +1,73 @@
 include "BuildTool_Rule.lua"
 
 -- Module build rules
-function module_build_rules(name)
-    log_highlight("Creating Module '%s'", name)
+function ModuleBuildRules(Name)
+    LogHighlight("Creating Module '%s'", Name)
 
     -- Initialize parent class
-    local self = build_rules(name)
+    local self = BuildRules(Name)
     if self == nil then
-        log_error("Failed to create BuildRule")
+        LogError("Failed to create BuildRule")
         return nil
     end
 
     -- Ensure that module does not already exist
-    if is_module(name) then
-        log_warning("Module is already created")
-        return get_module(name)
+    if IsModule(Name) then
+        LogWarning("Module is already created")
+        return GetModule(Name)
     end
 
     -- Determines if the module should be dynamic; overridden by monolithic build
-    self.is_dynamic = true
+    self.bIsDynamic = true
 
-    -- Determines if linking should be performed at runtime (ignored if is_dynamic is false)
+    -- Determines if linking should be performed at runtime (ignored if bIsDynamic is false)
     -- Set to true to enable hot-reloading
-    self.runtime_linking = false
+    self.bRuntimeLinking = false
 
     -- Generate the module
-    local base_generate = self.generate
-    function self.generate()
-        if self.workspace == nil then
-            log_error("Workspace cannot be nil when generating Module")
+    local BaseGenerate = self.Generate
+    function self.Generate()
+        if self.Workspace == nil then
+            LogError("Workspace cannot be nil when generating Module")
             return
         end
 
-        log_info("\n--- Generating Module '%s' ---", self.name)
+        LogInfo("\n--- Generating Module '%s' ---", self.Name)
 
         -- Handle monolithic build
-        self.is_monolithic = global_is_monolithic()
-        if self.is_monolithic then
-            log_info("    Build is monolithic")
+        self.bIsMonolithic = GlobalIsMonolithic()
+        if self.bIsMonolithic then
+            LogInfo("    Build is monolithic")
 
-            self.is_dynamic      = false
-            self.runtime_linking = false
+            self.bIsDynamic      = false
+            self.bRuntimeLinking = false
         else
-            log_info("    Build is NOT monolithic")
+            LogInfo("    Build is NOT monolithic")
         end
 
         -- Dynamic or static
-        local module_api_name = self.name:upper() .. "_API"
-        if self.is_dynamic then
-            self.kind = "SharedLib"
+        local ModuleApiName = self.Name:upper() .. "_API"
+        if self.bIsDynamic then
+            self.Kind = "SharedLib"
 
             -- Add define to control the module implementation (for export/import)
-            module_api_name = module_api_name .. "=MODULE_EXPORT"
+            ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
         else
-            self.kind = "StaticLib"
+            self.Kind = "StaticLib"
 
             -- When a module is not dynamic we treat it as monolithic
-            self.add_defines({ "MONOLITHIC_BUILD=(1)" })
+            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
         end
 
         -- Always add module name as a define
-        self.add_defines({ 'MODULE_NAME="' .. self.name .. '"' })
-        self.add_defines({ module_api_name })
+        self.AddDefines({ 'MODULE_NAME="' .. self.Name .. '"' })
+        self.AddDefines({ ModuleApiName })
 
         -- Generate the project
-        base_generate()
+        BaseGenerate()
     end
 
     -- Add module to global list
-    add_module(self.name, self)
+    AddModule(self.Name, self)
     return self
 end

@@ -3,144 +3,143 @@ include '../../SetupScripts/Scripts/BuildTool_Module.lua'
 -- Vulkan Helpers
 
 -- Assume that we have the Vulkan SDK installed (For macOS)
-local _g_vulkan_installed = true
+local gVulkanInstalled = true
 
-local function _exists_dir(p)  
-    return p and p ~= '' and os.isdir(p)  
+local function ExistsDir(p)
+    return p and p ~= '' and os.isdir(p)
 end
 
-local function _exists_file(p) 
+local function ExistsFile(p)
     return p and p ~= '' and os.isfile(p)
 end
 
-function find_vulkan_include_path()
+function FindVulkanIncludePath()
     -- macOS: verify a complete SDK under /usr/local
-    if is_platform_mac() then
-        local root     = '/usr/local'
-        local inc_dir  = join_path(root, 'include', 'vulkan')
-        local lib_dir  = join_path(root, 'lib')
-        local bin_dir  = join_path(root, 'bin')
-        local header_h = join_path(inc_dir, 'vulkan.h')
+    if IsPlatformMac() then
+        local Root     = '/usr/local'
+        local IncDir   = JoinPath(Root, 'include', 'vulkan')
+        local LibDir   = JoinPath(Root, 'lib')
+        local BinDir   = JoinPath(Root, 'bin')
+        local HeaderH  = JoinPath(IncDir, 'vulkan.h')
 
         -- Typical libs/tools shipped by LunarG SDK on macOS
-        local lib_candidates = {
-            join_path(lib_dir, 'libvulkan.1.dylib'),
-            join_path(lib_dir, 'libvulkan.dylib'),
-            join_path(lib_dir, 'libMoltenVK.dylib'),
+        local LibCandidates = {
+            JoinPath(LibDir, 'libvulkan.1.dylib'),
+            JoinPath(LibDir, 'libvulkan.dylib'),
+            JoinPath(LibDir, 'libMoltenVK.dylib'),
         }
-        local tool_candidates = {
-            join_path(bin_dir, 'vulkaninfo'),
-            join_path(bin_dir, 'glslc'),
+        local ToolCandidates = {
+            JoinPath(BinDir, 'vulkaninfo'),
+            JoinPath(BinDir, 'glslc'),
         }
 
-        local have_lib = false
-        for _, f in ipairs(lib_candidates) do
-            if _exists_file(f) then have_lib = true; break end
+        local HaveLib = false
+        for _, f in ipairs(LibCandidates) do
+            if ExistsFile(f) then HaveLib = true; break end
         end
 
-        local have_tool = false
-        for _, f in ipairs(tool_candidates) do
-            if _exists_file(f) then have_tool = true; break end
+        local HaveTool = false
+        for _, f in ipairs(ToolCandidates) do
+            if ExistsFile(f) then HaveTool = true; break end
         end
 
-        if not _exists_dir(inc_dir) or not _exists_file(header_h) then
-            log_error("[ERROR]: Vulkan headers not found under %s (expected %s)", root, header_h)
-            _g_vulkan_installed = false
+        if not ExistsDir(IncDir) or not ExistsFile(HeaderH) then
+            LogError("[ERROR]: Vulkan headers not found under %s (expected %s)", Root, HeaderH)
+            gVulkanInstalled = false
             return ''
         end
-        if not _exists_dir(lib_dir) or not have_lib then
-            log_error("[ERROR]: Vulkan libraries not found under %s (looked for libvulkan*/MoltenVK)", lib_dir)
-            _g_vulkan_installed = false
+        if not ExistsDir(LibDir) or not HaveLib then
+            LogError("[ERROR]: Vulkan libraries not found under %s (looked for libvulkan*/MoltenVK)", LibDir)
+            gVulkanInstalled = false
             return ''
         end
-        if not _exists_dir(bin_dir) or not have_tool then
-            log_error("[ERROR]: Vulkan tools not found under %s (looked for vulkaninfo/glslc)", bin_dir)
-            _g_vulkan_installed = false
+        if not ExistsDir(BinDir) or not HaveTool then
+            LogError("[ERROR]: Vulkan tools not found under %s (looked for vulkaninfo/glslc)", BinDir)
+            gVulkanInstalled = false
             return ''
         end
 
-        log_highlight("Detected Vulkan SDK at %s (headers/libs/tools present)", root)
-        return root
+        LogHighlight("Detected Vulkan SDK at %s (headers/libs/tools present)", Root)
+        return Root
     else
-        
         -- Windows/Linux: check common environment variables
-        local vulkan_environment_vars = {
+        local VulkanEnvironmentVars = {
             'VK_SDK_PATH',
             'VULKAN_SDK',
         }
         
-        for _, environment_var in ipairs(vulkan_environment_vars) do
-            local path = os.getenv(environment_var)
-            if path ~= nil then
-                log_highlight("Found '%s'='%s'", environment_var, path)
-                return path
+        for _, EnvVar in ipairs(VulkanEnvironmentVars) do
+            local PathVal = os.getenv(EnvVar)
+            if PathVal ~= nil then
+                LogHighlight("Found '%s'='%s'", EnvVar, PathVal)
+                return PathVal
             else
-                log_warning("[WARNING]: Could not find the environment variable '%s'", environment_var)
+                LogWarning("[WARNING]: Could not find the environment variable '%s'", EnvVar)
             end
         end
         
-        log_error("[ERROR]: Failed to find Vulkan SDK path")
-        _g_vulkan_installed = false
+        LogError("[ERROR]: Failed to find Vulkan SDK path")
+        gVulkanInstalled = false
         return ''
     end
 end
 
-local _g_vulkan_include_path = create_os_path(find_vulkan_include_path())
+local gVulkanIncludePath = CreateOsPath(FindVulkanIncludePath())
 
-function get_vulkan_include_path()
-    return _g_vulkan_include_path
+function GetVulkanIncludePath()
+    return gVulkanIncludePath
 end
 
 -- If the SDK wasn't found, skip the rest of this script.
-if not _g_vulkan_installed or (_g_vulkan_include_path == nil or _g_vulkan_include_path == '') then
-    log_warning("[VulkanRHI] Vulkan SDK not found. Skipping VulkanRHI build rules.")
+if not gVulkanInstalled or (gVulkanIncludePath == nil or gVulkanIncludePath == '') then
+    LogWarning("[VulkanRHI] Vulkan SDK not found. Skipping VulkanRHI build rules.")
     return
 end
 
 -- VulkanRHI Module
 
-local vulkan_path = get_vulkan_include_path()
-log_highlight('VulkanPath=%s', vulkan_path)
+local VulkanPath = GetVulkanIncludePath()
+LogHighlight('VulkanPath=%s', VulkanPath)
 
-local vulkan_binaries = join_path(vulkan_path, 'bin')
-log_highlight('Vulkan bin path=%s', vulkan_binaries)
+local VulkanBinaries = JoinPath(VulkanPath, 'bin')
+LogHighlight('Vulkan bin path=%s', VulkanBinaries)
 
-local vulkan_libraries = join_path(vulkan_path, 'lib')
-log_highlight('Vulkan lib path=%s', vulkan_libraries)
+local VulkanLibraries = JoinPath(VulkanPath, 'lib')
+LogHighlight('Vulkan lib path=%s', VulkanLibraries)
 
-local vulkan_include = join_path(vulkan_path, 'include')
-log_highlight('Vulkan include path=%s', vulkan_include)
+local VulkanInclude = JoinPath(VulkanPath, 'include')
+LogHighlight('Vulkan include path=%s', VulkanInclude)
 
-local vulkan_rhi = module_build_rules('VulkanRHI')
-vulkan_rhi.runtime_linking         = true
-vulkan_rhi.use_precompiled_headers = true
+local VulkanRHI = ModuleBuildRules('VulkanRHI')
+VulkanRHI.bRuntimeLinking         = true
+VulkanRHI.bUsePrecompiledHeaders  = true
 
-vulkan_rhi.add_module_thirdparties
+VulkanRHI.AddModuleThirdparties
 {
     'Core',
     'CoreApplication',
     'RHI',
 }
 
-if is_platform_mac() then
-    vulkan_rhi.add_frameworks
+if IsPlatformMac() then
+    VulkanRHI.AddFrameworks
     {
         'QuartzCore',
     }
 end
 
-vulkan_rhi.add_external_include_dirs
+VulkanRHI.AddExternalIncludeDirs
 {
-    vulkan_include,
-    create_external_thirdparty_path("SPIRV-Cross"),
+    VulkanInclude,
+    CreateExternalThirdpartyPath("SPIRV-Cross"),
 }
 
-vulkan_rhi.add_library_paths
+VulkanRHI.AddLibraryPaths
 {
-    vulkan_libraries,
+    VulkanLibraries,
 }
 
-vulkan_rhi.add_link_libraries
+VulkanRHI.AddLinkLibraries
 {
     "SPIRV-Cross",
 }

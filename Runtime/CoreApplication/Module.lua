@@ -2,19 +2,19 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- CoreApplication Module
 
-local core_application_module = module_build_rules("CoreApplication")
-core_application_module.use_precompiled_headers = true
+local CoreApplicationModule = ModuleBuildRules("CoreApplication")
+CoreApplicationModule.bUsePrecompiledHeaders = true
 
-core_application_module.add_module_thirdparties{ "Core" }
+CoreApplicationModule.AddModuleThirdparties({ "Core" })
 
-if is_platform_mac() then
-    core_application_module.add_frameworks
+if IsPlatformMac() then
+    CoreApplicationModule.AddFrameworks
     {
         "Cocoa",
         "AppKit",
         "IOKit",
         "GameController",
     }
-elseif is_platform_windows() then
-    core_application_module.add_link_libraries{ "Shcore.lib" }
+elseif IsPlatformWindows() then
+    CoreApplicationModule.AddLinkLibraries({ "Shcore.lib" })
 end

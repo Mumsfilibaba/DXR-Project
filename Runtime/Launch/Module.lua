@@ -2,11 +2,11 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- Launch Module
 
-local launch_module = module_build_rules("Launch")
-launch_module.is_dynamic = false
+local LaunchModule = ModuleBuildRules("Launch")
+LaunchModule.bIsDynamic = false
 
-if is_platform_windows() then
-    launch_module.add_defines
+if IsPlatformWindows() then
+    LaunchModule.AddDefines
     { 
         "D3D12_AGILITY_SDK_EXPORTS=(1)",
         "D3D12_AGILITY_SDK_VERSION=(716)",
@@ -14,7 +14,7 @@ if is_platform_windows() then
     }
 end
 
-launch_module.add_module_thirdparties
+LaunchModule.AddModuleThirdparties
 {
     "Core",
     "CoreApplication",

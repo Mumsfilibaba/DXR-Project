@@ -2,14 +2,14 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- ImGuiPlugin Module
 
-local imgui_plugin_module = module_build_rules("ImGuiPlugin")
+local ImGuiPluginModule = ModuleBuildRules("ImGuiPlugin")
 
-imgui_plugin_module.add_external_include_dirs
+ImGuiPluginModule.AddExternalIncludeDirs
 {
-    create_external_thirdparty_path("imgui"),
+    CreateExternalThirdpartyPath("imgui"),
 }
 
-imgui_plugin_module.add_module_thirdparties
+ImGuiPluginModule.AddModuleThirdparties
 {
     "Core",
     "CoreApplication",
@@ -18,7 +18,7 @@ imgui_plugin_module.add_module_thirdparties
     "RendererCore",
 }
 
-imgui_plugin_module.add_link_libraries
+ImGuiPluginModule.AddLinkLibraries
 {
     "ImGui",
 }

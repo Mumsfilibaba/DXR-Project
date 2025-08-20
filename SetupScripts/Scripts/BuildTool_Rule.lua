@@ -1,103 +1,103 @@
 include "BuildTool_Common.lua"
 
 -- Build rules for a project
-function build_rules(name)
+function BuildRules(Name)
 
     -- Needs to have a valid module name
-    if name == nil then
-        log_error("BuildRule failed due to invalid name")
+    if Name == nil then
+        LogError("BuildRule failed due to invalid name")
         return nil
     end
 
-    log_highlight("Creating BuildRule '%s'", name)
+    LogHighlight("Creating BuildRule '%s'", Name)
 
     -- Folder path for engine modules
-    local runtime_folder_path = get_runtime_folder_path()
+    local RuntimeFolderPath = GetRuntimeFolderPath()
 
     -- Initialize public members
-    local self = 
+    local self =
     {
         -- @brief - Name. Must be the name of the folder as well or specify the location
-        name = name,
+        Name = Name,
 
         -- @brief - Location for IDE project files
-        project_file_path = "",
+        ProjectFilePath = "",
 
         -- @brief - Location for generated files from the build
-        build_folder_path = "",
+        BuildFolderPath = "",
 
         -- @brief - Location for the build (inside the build folder specified inside the build-folder)
-        output_path = "",
+        OutputPath = "",
 
         -- @brief - The workspace that this rule is currently a part of
-        workspace = {},
+        Workspace = {},
 
         -- @brief - Should use precompiled headers. Should be named Precompiled.h and Precompiled.cpp
-        use_precompiled_headers = false,
+        bUsePrecompiledHeaders = false,
 
         -- @brief - Set to true if C++ files (.cpp) should be compiled as Objective-C++ (.mm), making compilation for all files native to the iOS and Mac platform
-        compile_cpp_as_objective_cpp = true,
+        bCompileCppAsObjectiveCpp = true,
 
         -- @brief - Enable runtime type information
-        enable_runtime_type_info = false,
+        bEnableRuntimeTypeInfo = false,
 
         -- @brief - Enable Edit and Continue in Visual Studio
-        enable_edit_and_continue = false,
+        bEnableEditAndContinue = false,
 
         -- @brief - Enable C++ intrinsics
-        enable_intrinsics = true,
+        bEnableIntrinsics = true,
 
         -- @brief - Architecture to compile for
-        architecture = "x86_64",
+        Architecture = "x86_64",
 
         -- @brief - Warning level to compile with
-        warnings = "extra",
+        Warnings = "extra",
 
         -- @brief - How to handle C++ exceptions
-        exception_handling = "Off",
+        ExceptionHandling = "Off",
 
         -- @brief - Floating point settings
-        floating_point = "Fast",
+        FloatingPoint = "Fast",
 
         -- @brief - Enable vector extensions
-        vector_extensions = "AVX2",
+        VectorExtensions = "AVX2",
 
         -- @brief - Language to compile
-        language = "C++",
+        Language = "C++",
 
         -- @brief - Language version to compile
-        cpp_version = "C++20",
+        CppVersion = "C++20",
 
         -- @brief - Version of system SDK
-        system_version = "latest",
+        SystemVersion = "latest",
 
         -- @brief - ASCII or Unicode
-        character_set = "Ascii",
+        CharacterSet = "Ascii",
 
         -- @brief - Premake flags
-        flags =
+        Flags =
         {
             "MultiProcessorCompile",
             "NoIncrementalLink",
         },
 
         -- @brief - The kind of project to generate (SharedLib, StaticLib, WindowedApp, ConsoleApp, etc.)
-        kind = "SharedLib",
+        Kind = "SharedLib",
 
         -- @brief - Include directories, e.g., #include <ThirdParty.h> or #include "ThirdParty.h"
-        include_dirs = {},
+        IncludeDirs = {},
 
         -- @brief - External includes, e.g., #include <ThirdParty.h>
-        external_include_dirs = {},
+        ExternalIncludeDirs = {},
 
         -- @brief - Force include these files
-        force_includes = {},
+        ForceIncludes = {},
 
         -- @brief - Paths to search library files in
-        library_paths = {},
+        LibraryPaths = {},
 
         -- @brief - Files to compile into the module
-        files = 
+        Files =
         {
             "**.h",
             "**.hpp",
@@ -109,166 +109,166 @@ function build_rules(name)
         },
 
         -- @brief - Files to exclude
-        exclude_files = 
+        ExcludeFiles =
         {
             "**.hlsl",
             "**.hlsli"
         },
 
         -- @brief - Defines
-        defines = {},
+        Defines = {},
 
         -- @brief - Frameworks, only on macOS for now; should only list the names, not .framework
-        frameworks = {},
+        Frameworks = {},
 
         -- @brief - Should the libraries be embedded into the executable (this only applies to macOS at the moment)
-        embed_thirdparties = false,
+        bEmbedThirdparties = false,
 
         -- @brief - Extra names to embed (this only applies to macOS at the moment)
-        extra_embed_names = {},
+        ExtraEmbedNames = {},
 
         -- @brief - Engine modules that this module depends on
-        module_thirdparties = {},
+        ModuleThirdparties = {},
 
         -- @brief - Extra libraries to link
-        link_libraries = {},
+        LinkLibraries = {},
 
         -- @brief - A list of thirdparties that a module depends on; ensures that the IDE builds all the projects
-        link_modules = {},
+        LinkModules = {},
 
         -- @brief - A list of link options (ignored on platforms other than Windows)
-        link_options = {}
+        LinkOptions = {}
     }
 
     -- Helper function for retrieving path
-    local build_rule_path = join_path(runtime_folder_path, self.name)
-    function self.get_path()
-        return build_rule_path
+    local BuildRulePath = JoinPath(RuntimeFolderPath, self.Name)
+    function self.GetPath()
+        return BuildRulePath
     end
 
     -- Helper functions for adding elements
-    function self.add_flags(in_flags)
-        add_unique_elements(in_flags, self.flags)
+    function self.AddFlags(InFlags)
+        AddUniqueElements(InFlags, self.Flags)
     end
 
-    function self.add_include_dirs(in_include_dirs)
-        add_unique_elements(in_include_dirs, self.include_dirs)
+    function self.AddIncludeDirs(InIncludeDirs)
+        AddUniqueElements(InIncludeDirs, self.IncludeDirs)
     end
 
-    function self.add_external_include_dirs(in_external_include_dirs)
-        add_unique_elements(in_external_include_dirs, self.external_include_dirs)
+    function self.AddExternalIncludeDirs(InExternalIncludeDirs)
+        AddUniqueElements(InExternalIncludeDirs, self.ExternalIncludeDirs)
     end
 
-    function self.add_files(in_files)
-        add_unique_elements(in_files, self.files)
+    function self.AddFiles(InFiles)
+        AddUniqueElements(InFiles, self.Files)
     end
 
-    function self.add_exclude_files(in_exclude_files)
-        add_unique_elements(in_exclude_files, self.exclude_files)
+    function self.AddExcludeFiles(InExcludeFiles)
+        AddUniqueElements(InExcludeFiles, self.ExcludeFiles)
     end
 
-    function self.add_defines(in_defines)
-        add_unique_elements(in_defines, self.defines)
+    function self.AddDefines(InDefines)
+        AddUniqueElements(InDefines, self.Defines)
     end
 
-    function self.add_module_thirdparties(in_module_thirdparties)
-        add_unique_elements(in_module_thirdparties, self.module_thirdparties)
+    function self.AddModuleThirdparties(InModuleThirdparties)
+        AddUniqueElements(InModuleThirdparties, self.ModuleThirdparties)
     end
 
-    function self.add_extra_embed_names(in_extra_embed_names)
-        add_unique_elements(in_extra_embed_names, self.extra_embed_names)
+    function self.AddExtraEmbedNames(InExtraEmbedNames)
+        AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames)
     end
 
-    function self.add_link_libraries(in_libraries)
-        add_unique_elements(in_libraries, self.link_libraries)
+    function self.AddLinkLibraries(InLibraries)
+        AddUniqueElements(InLibraries, self.LinkLibraries)
     end
 
-    function self.add_frameworks(in_frameworks)
-        add_unique_elements(in_frameworks, self.frameworks)
+    function self.AddFrameworks(InFrameworks)
+        AddUniqueElements(InFrameworks, self.Frameworks)
     end
 
-    function self.add_force_includes(in_force_includes)
-        add_unique_elements(in_force_includes, self.force_includes)
+    function self.AddForceIncludes(InForceIncludes)
+        AddUniqueElements(InForceIncludes, self.ForceIncludes)
     end
 
-    function self.add_library_paths(in_library_paths)
-        add_unique_elements(in_library_paths, self.library_paths)
+    function self.AddLibraryPaths(InLibraryPaths)
+        AddUniqueElements(InLibraryPaths, self.LibraryPaths)
     end
 
-    function self.add_link_options(in_options)
-        add_unique_elements(in_options, self.link_options)
+    function self.AddLinkOptions(InOptions)
+        AddUniqueElements(InOptions, self.LinkOptions)
     end
 
     -- Helper for adding the .framework extension to frameworks
-    function self.add_framework_extension()
-        for index = 1, #self.frameworks do
-            self.frameworks[index] = self.frameworks[index] .. ".framework"
+    function self.AddFrameworkExtension()
+        for Index = 1, #self.Frameworks do
+            self.Frameworks[Index] = self.Frameworks[Index] .. ".framework"
         end
     end
 
     -- Makes all files relative to runtime folder
-    function self.make_file_names_relative_to_path(file_array)
-        for index = 1, #file_array do
-            local current_file = file_array[index]
-            if not path.isabsolute(file_array[index]) then
-                file_array[index] = join_path(self.get_path(), file_array[index])
+    function self.MakeFileNamesRelativeToPath(FileArray)
+        for Index = 1, #FileArray do
+            local CurrentFile = FileArray[Index]
+            if not path.isabsolute(FileArray[Index]) then
+                FileArray[Index] = JoinPath(self.GetPath(), FileArray[Index])
             end
         end
     end
 
     -- Project generation
-    function self.generate_project()
-        project(self.name)
-            log_highlight("\n--- Generating project files for Project '%s' ---", self.name)
+    function self.GenerateProject()
+        project(self.Name)
+            LogHighlight("\n--- Generating project files for Project '%s' ---", self.Name)
 
-            architecture(self.architecture)
-            warnings(self.warnings)
-            exceptionhandling(self.exception_handling)
+            architecture(self.Architecture)
+            warnings(self.Warnings)
+            exceptionhandling(self.ExceptionHandling)
 
             -- Build type
-            kind(self.kind)
+            kind(self.Kind)
 
             -- Setup runtime type information
-            if self.enable_runtime_type_info then
+            if self.bEnableRuntimeTypeInfo then
                 rtti("On")
             else
                 rtti("Off")
             end
 
-            floatingpoint(self.floating_point)
-            vectorextensions(self.vector_extensions)
+            floatingpoint(self.FloatingPoint)
+            vectorextensions(self.VectorExtensions)
 
             -- Setup Edit and Continue
-            if self.enable_edit_and_continue then
+            if self.bEnableEditAndContinue then
                 editandcontinue("On")
             else
                 editandcontinue("Off")
             end
 
             -- Setup intrinsics
-            if self.enable_intrinsics then
+            if self.bEnableIntrinsics then
                 intrinsics("On")
             else
                 intrinsics("Off")
             end
 
             -- Setup language
-            local current_language = self.language:upper()
-            if current_language ~= "C++" then
-                log_error("Invalid language '%s'", self.language)
+            local CurrentLanguage = self.Language:upper()
+            if CurrentLanguage ~= "C++" then
+                LogError("Invalid language '%s'", self.Language)
                 return nil
             end
 
-            language(self.language)
+            language(self.Language)
 
             -- Setup version
-            local current_language_version = self.cpp_version:lower()
-            if not verify_language_version(current_language_version) then
-                log_error("Invalid language version '%s'", self.cpp_version)
+            local CurrentLanguageVersion = self.CppVersion:lower()
+            if not VerifyLanguageVersion(CurrentLanguageVersion) then
+                LogError("Invalid language version '%s'", self.CppVersion)
                 return nil
             end
 
-            cppdialect(self.cpp_version)
+            cppdialect(self.CppVersion)
 
             -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
             filter "action:vs*"
@@ -276,143 +276,143 @@ function build_rules(name)
             filter {}
 
             -- Setup system version
-            systemversion(self.system_version)
+            systemversion(self.SystemVersion)
 
             -- Setup character set
-            local current_character_set = self.character_set:lower()
-            if current_character_set ~= "ascii" and current_character_set ~= "unicode" then
-                log_error("Invalid character set '%s'", self.character_set)
+            local CurrentCharacterSet = self.CharacterSet:lower()
+            if CurrentCharacterSet ~= "ascii" and CurrentCharacterSet ~= "unicode" then
+                LogError("Invalid character set '%s'", self.CharacterSet)
                 return nil
             end
 
-            characterset(self.character_set)
+            characterset(self.CharacterSet)
 
             -- Setup location
-            self.project_file_path = create_os_path(self.project_file_path)
-            log_info("    Project location '%s'", self.project_file_path)
-            location(self.project_file_path)
+            self.ProjectFilePath = CreateOsPath(self.ProjectFilePath)
+            LogInfo("    Project location '%s'", self.ProjectFilePath)
+            location(self.ProjectFilePath)
 
             -- Setup all targets except the thirdparties
-            local full_object_folder_path = join_path(join_path(self.build_folder_path, "bin"), self.output_path)
-            log_info("    Target location '%s'", full_object_folder_path)
-            targetdir(full_object_folder_path)
+            local FullObjectFolderPath = JoinPath(JoinPath(self.BuildFolderPath, "bin"), self.OutputPath)
+            LogInfo("    Target location '%s'", FullObjectFolderPath)
+            targetdir(FullObjectFolderPath)
 
-            local full_intermediate_folder_path = join_path(join_path(self.build_folder_path, "bin-int"), self.output_path)
-            log_info("    Object files location '%s'", full_intermediate_folder_path)
-            objdir(full_intermediate_folder_path)
+            local FullIntermediateFolderPath = JoinPath(JoinPath(self.BuildFolderPath, "bin-int"), self.OutputPath)
+            LogInfo("    Object files location '%s'", FullIntermediateFolderPath)
+            objdir(FullIntermediateFolderPath)
 
             -- Setup precompiled headers
-            if self.use_precompiled_headers then
-                if build_with_visual_studio() then
+            if self.bUsePrecompiledHeaders then
+                if BuildWithVisualStudio() then
                     -- Specify the full path for everything to work properly on Windows
-                    local pch_source_path = join_path(self.get_path(), "PreCompiled.cpp")
-                    log_highlight("    PreCompiled source path '%s'", pch_source_path)
+                    local PchSourcePath = JoinPath(self.GetPath(), "PreCompiled.cpp")
+                    LogHighlight("    PreCompiled source path '%s'", PchSourcePath)
 
                     -- Use the Unix path (this is probably an internal Premake thing)
-                    local unix_pch_source_path = path.translate(pch_source_path, '/')
+                    local UnixPchSourcePath = path.translate(PchSourcePath, '/')
                     pchheader("PreCompiled.h")
-                    pchsource(unix_pch_source_path)
+                    pchsource(UnixPchSourcePath)
                 else
                     -- Specify the full path for everything to work properly on non-Windows
-                    local pch_path = join_path(self.get_path(), "PreCompiled.h")
-                    pchheader(pch_path)
+                    local PchPath = JoinPath(self.GetPath(), "PreCompiled.h")
+                    pchheader(PchPath)
                 end
 
-                log_info("    Project is using PreCompiled Headers")
+                LogInfo("    Project is using PreCompiled Headers")
             else
-                log_info("    Project does NOT use PreCompiled Headers")
+                LogInfo("    Project does NOT use PreCompiled Headers")
             end
 
             -- Debug logging
-            log_info("\n--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.name, #self.force_includes)
-            if #self.force_includes > 0 then
-                print_table("    Using ForceInclude '%s'", self.force_includes)
+            LogInfo("\n--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
+            if #self.ForceIncludes > 0 then
+                PrintTable("    Using ForceInclude '%s'", self.ForceIncludes)
             end
 
-            log_info("\n--- Defines for module '%s' (Num Defines=%d) ---", self.name, #self.defines)
-            if #self.defines > 0 then
-                print_table("    Using define '%s'", self.defines)
+            LogInfo("\n--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
+            if #self.Defines > 0 then
+                PrintTable("    Using define '%s'", self.Defines)
             end
 
-            log_info("\n--- Includes for module '%s' (Num Includes=%d) ---", self.name, #self.include_dirs)
-            if #self.include_dirs > 0 then
-                print_table("    Using Includes '%s'", self.include_dirs)
+            LogInfo("\n--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
+            if #self.IncludeDirs > 0 then
+                PrintTable("    Using Includes '%s'", self.IncludeDirs)
             end
 
-            log_info("\n--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.name, #self.external_include_dirs)
-            if #self.external_include_dirs > 0 then
-                print_table("    Using ExternalInclude '%s'", self.external_include_dirs)
+            LogInfo("\n--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
+            if #self.ExternalIncludeDirs > 0 then
+                PrintTable("    Using ExternalInclude '%s'", self.ExternalIncludeDirs)
             end
 
-            log_info("\n--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.name, #self.library_paths)
-            if #self.library_paths > 0 then
-                print_table("    Using LibraryPath '%s'", self.library_paths)
+            LogInfo("\n--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
+            if #self.LibraryPaths > 0 then
+                PrintTable("    Using LibraryPath '%s'", self.LibraryPaths)
             end
 
-            log_info("\n--- Files for module '%s' (Num Files=%d) ---", self.name, #self.files)
-            if #self.files > 0 then
-                print_table("    Including file '%s'", self.files)
+            LogInfo("\n--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
+            if #self.Files > 0 then
+                PrintTable("    Including file '%s'", self.Files)
             end
 
-            log_info("\n--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.name, #self.exclude_files)
-            if #self.exclude_files > 0 then
-                print_table("    Excluding file '%s'", self.exclude_files)
+            LogInfo("\n--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
+            if #self.ExcludeFiles > 0 then
+                PrintTable("    Excluding file '%s'", self.ExcludeFiles)
             end
 
-            log_info("\n--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.name, #self.frameworks)
-            if #self.frameworks > 0 then
-                print_table("    Using framework thirdparty '%s'", self.frameworks)
+            LogInfo("\n--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
+            if #self.Frameworks > 0 then
+                PrintTable("    Using framework thirdparty '%s'", self.Frameworks)
             end
 
-            log_info("\n--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.name, #self.link_libraries)
-            if #self.link_libraries > 0 then
-                print_table("    Linking library '%s'", self.link_libraries)
+            LogInfo("\n--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
+            if #self.LinkLibraries > 0 then
+                PrintTable("    Linking library '%s'", self.LinkLibraries)
             end
 
-            log_info("\n--- Link modules for module '%s' (Num LinkModules=%d) ---", self.name, #self.link_modules)
-            if #self.link_modules > 0 then
-                print_table("    Linking module '%s'", self.link_modules)
+            LogInfo("\n--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
+            if #self.LinkModules > 0 then
+                PrintTable("    Linking module '%s'", self.LinkModules)
             end
 
-            log_info("\n--- Link options for module '%s' (Num LinkOptions=%d) ---", self.name, #self.link_options)
-            if #self.link_options > 0 then
-                print_table("    Link options '%s'", self.link_options)
+            LogInfo("\n--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
+            if #self.LinkOptions > 0 then
+                PrintTable("    Link options '%s'", self.LinkOptions)
             end
 
-            log_info("\n--- Module thirdparties for module '%s' (Num ModuleThirdParties=%d) ---", self.name, #self.module_thirdparties)
-            if #self.module_thirdparties > 0 then
-                print_table("    Using module thirdparty '%s'", self.module_thirdparties)
+            LogInfo("\n--- Module thirdparties for module '%s' (Num ModuleThirdParties=%d) ---", self.Name, #self.ModuleThirdparties)
+            if #self.ModuleThirdparties > 0 then
+                PrintTable("    Using module thirdparty '%s'", self.ModuleThirdparties)
             end
 
-            log_info("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.name, #self.module_thirdparties)
-            if #self.module_thirdparties > 0 then
-                print_table("    Embed Module '%s'", self.module_thirdparties)
+            LogInfo("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.ModuleThirdparties)
+            if #self.ModuleThirdparties > 0 then
+                PrintTable("    Embed Module '%s'", self.ModuleThirdparties)
             end
 
             -- Setup force includes
-            forceincludes(self.force_includes)
+            forceincludes(self.ForceIncludes)
 
-            defines(self.defines)
+            defines(self.Defines)
 
-            includedirs(self.include_dirs)
-            externalincludedirs(self.external_include_dirs)
+            includedirs(self.IncludeDirs)
+            externalincludedirs(self.ExternalIncludeDirs)
 
-            libdirs(self.library_paths)
+            libdirs(self.LibraryPaths)
 
-            files(self.files)
+            files(self.Files)
 
             -- Setup exclude OS-specific files
-            if is_platform_windows() then
+            if IsPlatformWindows() then
                 filter { "files:**/Mac/**.cpp" }
                     flags { "ExcludeFromBuild" }
                 filter {}
-            elseif is_platform_mac() then
+            elseif IsPlatformMac() then
                 filter { "files:**/Windows/**.cpp" }
                     flags { "ExcludeFromBuild" }
                 filter {}
 
                 -- On macOS, compile all .cpp files as Objective-C++ to avoid pre-processor checks
-                if self.compile_cpp_as_objective_cpp then
+                if self.bCompileCppAsObjectiveCpp then
                     filter { "files:**.cpp" }
                         compileas("Objective-C++")
                     filter {}
@@ -420,60 +420,60 @@ function build_rules(name)
             end
 
             -- In Visual Studio, show .natvis files
-            if build_with_visual_studio() then
+            if BuildWithVisualStudio() then
                 vpaths { ["Natvis"] = "**.natvis" }
 
-                local natvis_path = join_path(self.get_path(), "**.natvis")
-                log_highlight("NatvisPath='%s'", natvis_path)
+                local NatvisPath = JoinPath(self.GetPath(), "**.natvis")
+                LogHighlight("NatvisPath='%s'", NatvisPath)
 
                 files {
-                    natvis_path
+                    NatvisPath
                 }
             end
 
             -- Remove files
-            removefiles(self.exclude_files)
+            removefiles(self.ExcludeFiles)
 
             -- Setup linking
-            if is_platform_mac() then
-                -- Ignore linking when kind is set to 'None'
-                if self.kind == "None" then
-                    log_warning("Ignoring Frameworks due to the kind being set to 'None'")
+            if IsPlatformMac() then
+                -- Ignore linking when Kind is set to 'None'
+                if self.Kind == "None" then
+                    LogWarning("Ignoring Frameworks due to the kind being set to 'None'")
                 else
-                    links(self.frameworks)
+                    links(self.Frameworks)
                 end
             end
 
-            -- Ignore linking and thirdparties when kind is set to 'None'
-            if self.kind == "None" then
-                log_warning("Ignoring LinkLibraries due to the kind being set to 'None'")
-                log_warning("Ignoring LinkModules due to the kind being set to 'None'")
-                log_warning("Ignoring LinkOptions due to the kind being set to 'None'")
-                log_warning("Ignoring ThirdParty due to the kind being set to 'None'")
+            -- Ignore linking and thirdparties when Kind is set to 'None'
+            if self.Kind == "None" then
+                LogWarning("Ignoring LinkLibraries due to the kind being set to 'None'")
+                LogWarning("Ignoring LinkModules due to the kind being set to 'None'")
+                LogWarning("Ignoring LinkOptions due to the kind being set to 'None'")
+                LogWarning("Ignoring ThirdParty due to the kind being set to 'None'")
             else
                 -- Link libraries (external libraries, etc.)
-                links(self.link_libraries)
-                links(self.link_modules)
-                linkoptions(self.link_options)
+                links(self.LinkLibraries)
+                links(self.LinkModules)
+                linkoptions(self.LinkOptions)
 
                 -- Setup thirdparties
-                dependson(self.module_thirdparties)
+                dependson(self.ModuleThirdparties)
             end
 
             -- Setup embedded frameworks, etc.
             filter { "action:xcode4" }
-                if self.embed_thirdparties then
+                if self.bEmbedThirdparties then
                     -- Embed modules and extra embed names
-                    embed(self.module_thirdparties)
-                    embed(self.extra_embed_names)
+                    embed(self.ModuleThirdparties)
+                    embed(self.ExtraEmbedNames)
                 end
             filter {}
 
             -- Xcode build settings
             filter { "action:xcode4" }
-                xcodebuildsettings 
+                xcodebuildsettings
                 {
-                    ["PRODUCT_BUNDLE_IDENTIFIER"]  = "com.DXREngine." .. self.name,
+                    ["PRODUCT_BUNDLE_IDENTIFIER"]  = "com.DXREngine." .. self.Name,
                     ["CODE_SIGN_STYLE"]            = "Automatic",
                     ["ARCHS"]                      = "x86_64",
                     ["ONLY_ACTIVE_ARCH"]           = "YES",
@@ -485,170 +485,168 @@ function build_rules(name)
             filter {}
 
             -- Copy dynamic libraries from thirdparties folder
-            if is_platform_windows() then
-                local dxil_dll_cmd = "copy " .. create_external_thirdparty_path("DXC/bin/dxil.dll") .. " " .. full_object_folder_path
-                log_highlight("dxil.dll Cmd %s", dxil_dll_cmd)
-                
-                local dxcompiler_dll_cmd = "copy " .. create_external_thirdparty_path("DXC/bin/dxcompiler.dll") .. " " .. full_object_folder_path
-                log_highlight("dxcompiler.dll Cmd %s", dxcompiler_dll_cmd)
-                
-                local agility_sdk_folder = join_path(full_object_folder_path, "D3D12")
-                
+            if IsPlatformWindows() then
+                local DxilDllCmd = "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxil.dll") .. " " .. FullObjectFolderPath
+                LogHighlight("dxil.dll Cmd %s", DxilDllCmd)
+
+                local DxcompilerDllCmd = "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxcompiler.dll") .. " " .. FullObjectFolderPath
+                LogHighlight("dxcompiler.dll Cmd %s", DxcompilerDllCmd)
+
+                local AgilitySdkFolder = JoinPath(FullObjectFolderPath, "D3D12")
+
                 -- Ensure the folder exists before copying files
-                local create_agility_folder_cmd = "if not exist \"" .. agility_sdk_folder .. "\" mkdir \"" .. agility_sdk_folder .. "\""
-                
-                local d3d12core_dll_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll") .. " " .. agility_sdk_folder
-                log_highlight("d3d12core.dll Cmd %s", d3d12core_dll_cmd)
-                
-                local d3d12core_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb") .. " " .. agility_sdk_folder
-                log_highlight("d3d12core.pdb Cmd %s", d3d12core_pdb_cmd)
-                
-                local d3d12SDKLayers_dll_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll") .. " " .. agility_sdk_folder
-                log_highlight("d3d12SDKLayers.dll Cmd %s", d3d12SDKLayers_dll_cmd)
-                
-                local d3d12SDKLayers_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb") .. " " .. agility_sdk_folder
-                log_highlight("d3d12SDKLayers.pdb Cmd %s", d3d12SDKLayers_pdb_cmd)
-                
-                local d3dconfig_exe_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe") .. " " .. agility_sdk_folder
-                log_highlight("d3dconfig.exe Cmd %s", d3dconfig_exe_cmd)
-                
-                local d3dconfig_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb") .. " " .. agility_sdk_folder
-                log_highlight("d3dconfig.pdb Cmd %s", d3dconfig_pdb_cmd)
-                
-                local directsr_exe_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll") .. " " .. agility_sdk_folder
-                log_highlight("DirectSR.dll Cmd %s", directsr_exe_cmd)
-                
-                local directsr_pdb_cmd = "copy " .. create_external_thirdparty_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb") .. " " .. agility_sdk_folder
-                log_highlight("DirectSR.pdb Cmd %s", directsr_pdb_cmd)
-                
-                postbuildcommands
-                {
-                    create_agility_folder_cmd, -- Ensure folder exists before copying
-                    dxil_dll_cmd,
-                    dxcompiler_dll_cmd,
-                    d3d12core_dll_cmd,
-                    d3d12core_pdb_cmd,
-                    d3d12SDKLayers_dll_cmd,
-                    d3d12SDKLayers_pdb_cmd,
-                    d3dconfig_exe_cmd,
-                    d3dconfig_pdb_cmd,
-                    directsr_exe_cmd,
-                    directsr_pdb_cmd,
-                }
-            elseif is_platform_mac() then
-                local libdxcompiler_dll_cmd = "cp " .. create_external_thirdparty_path("DXC/bin/libdxcompiler.dylib") .. " " .. full_object_folder_path
-                log_highlight("libdxcompiler.dylib Cmd %s", libdxcompiler_dll_cmd)
+                local CreateAgilityFolderCmd = "if not exist \"" .. AgilitySdkFolder .. "\" mkdir \"" .. AgilitySdkFolder .. "\""
+
+                local D3d12coreDllCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll") .. " " .. AgilitySdkFolder
+                LogHighlight("d3d12core.dll Cmd %s", D3d12coreDllCmd)
+
+                local D3d12corePdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb") .. " " .. AgilitySdkFolder
+                LogHighlight("d3d12core.pdb Cmd %s", D3d12corePdbCmd)
+
+                local D3d12SDKLayersDllCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll") .. " " .. AgilitySdkFolder
+                LogHighlight("d3d12SDKLayers.dll Cmd %s", D3d12SDKLayersDllCmd)
+
+                local D3d12SDKLayersPdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb") .. " " .. AgilitySdkFolder
+                LogHighlight("d3d12SDKLayers.pdb Cmd %s", D3d12SDKLayersPdbCmd)
+
+                local D3dconfigExeCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe") .. " " .. AgilitySdkFolder
+                LogHighlight("d3dconfig.exe Cmd %s", D3dconfigExeCmd)
+
+                local D3dconfigPdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb") .. " " .. AgilitySdkFolder
+                LogHighlight("d3dconfig.pdb Cmd %s", D3dconfigPdbCmd)
+
+                local DirectSrExeCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll") .. " " .. AgilitySdkFolder
+                LogHighlight("DirectSR.dll Cmd %s", DirectSrExeCmd)
+
+                local DirectSrPdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb") .. " " .. AgilitySdkFolder
+                LogHighlight("DirectSR.pdb Cmd %s", DirectSrPdbCmd)
 
                 postbuildcommands
                 {
-                    libdxcompiler_dll_cmd
+                    CreateAgilityFolderCmd, -- Ensure folder exists before copying
+                    DxilDllCmd,
+                    DxcompilerDllCmd,
+                    D3d12coreDllCmd,
+                    D3d12corePdbCmd,
+                    D3d12SDKLayersDllCmd,
+                    D3d12SDKLayersPdbCmd,
+                    D3dconfigExeCmd,
+                    D3dconfigPdbCmd,
+                    DirectSrExeCmd,
+                    DirectSrPdbCmd,
+                }
+            elseif IsPlatformMac() then
+                local LibDxcompilerDllCmd = "cp " .. CreateExternalThirdpartyPath("DXC/bin/libdxcompiler.dylib") .. " " .. FullObjectFolderPath
+                LogHighlight("libdxcompiler.dylib Cmd %s", LibDxcompilerDllCmd)
+
+                postbuildcommands
+                {
+                    LibDxcompilerDllCmd
                 }
             end
         project "*"
 
-        log_highlight("\n--- Finished generating project files for Project '%s' ---", self.name)
+        LogHighlight("\n--- Finished generating project files for Project '%s' ---", self.Name)
     end
 
     -- Base generate (generates project files)
-    function self.generate()
-        if self.workspace == nil then
-            log_error("Workspace cannot be nil when generating Rule")
+    function self.Generate()
+        if self.Workspace == nil then
+            LogError("Workspace cannot be nil when generating Rule")
             return
         end
 
         -- Ensure thirdparties are included
-        for index = 1, #self.module_thirdparties do
-            log_highlight("\n--- Including thirdparty for project '%s' ---", self.name)
+        for Index = 1, #self.ModuleThirdparties do
+            LogHighlight("\n--- Including thirdparty for project '%s' ---", self.Name)
 
-            local current_module_name = self.module_thirdparties[index]
-            if is_module(current_module_name) then
-                log_highlight_warning("-Dependency '%s' is already included", current_module_name)
+            local CurrentModuleName = self.ModuleThirdparties[Index]
+            if IsModule(CurrentModuleName) then
+                LogHighlightWarning("-Dependency '%s' is already included", CurrentModuleName)
             else
-                local thirdparty_path = join_path(join_path(runtime_folder_path, current_module_name), "Module.lua")
-                log_info("-Including Dependency '%s' Path='%s'", current_module_name, thirdparty_path)
-                include(thirdparty_path)
+                local ThirdpartyPath = JoinPath(JoinPath(RuntimeFolderPath, CurrentModuleName), "Module.lua")
+                LogInfo("-Including Dependency '%s' Path='%s'", CurrentModuleName, ThirdpartyPath)
+                include(ThirdpartyPath)
 
                 -- Generate module, but check so that it exists since some platforms do not create certain modules (D3D12RHI, MetalRHI, etc.)
-                if is_module(current_module_name) then
-                    local current_module = get_module(current_module_name)
-                    current_module.workspace = self.workspace
-                    current_module.generate()
+                if IsModule(CurrentModuleName) then
+                    local CurrentModule = GetModule(CurrentModuleName)
+                    CurrentModule.Workspace = self.Workspace
+                    CurrentModule.Generate()
                 else
-                    log_warning("Could not find '%s', perhaps it does not exist, or it may not be supported on the current setup or platform. Check the logs for more information.", current_module_name)
+                    LogWarning("Could not find '%s', perhaps it does not exist, or it may not be supported on the current setup or platform. Check the logs for more information.", CurrentModuleName)
                 end
             end
         end
 
         -- Setup folder paths
-        self.build_folder_path = self.workspace.get_build_folder_path()
-        self.output_path       = self.workspace.get_output_path()
-        self.project_file_path = self.workspace.get_solutions_folder_path()
+        self.BuildFolderPath = self.Workspace.GetBuildFolderPath()
+        self.OutputPath      = self.Workspace.GetOutputPath()
+        self.ProjectFilePath = self.Workspace.GetSolutionsFolderPath()
 
         -- Ensure that the runtime folder is added to the include folders
-        self.add_external_include_dirs { runtime_folder_path }
+        self.AddExternalIncludeDirs { RuntimeFolderPath }
 
         -- Add framework extension
-        self.add_framework_extension()
+        self.AddFrameworkExtension()
 
         -- Solve thirdparties
-        for index = 1, #self.module_thirdparties do
-            local current_module_name = self.module_thirdparties[index]
-            local current_module      = get_module(current_module_name)
+        for Index = 1, #self.ModuleThirdparties do
+            local CurrentModuleName = self.ModuleThirdparties[Index]
+            local CurrentModule     = GetModule(CurrentModuleName)
 
-            if current_module then
-                if not current_module.runtime_linking then
-                    table.insert(self.link_modules, current_module_name)
+            if CurrentModule then
+                if not CurrentModule.bRuntimeLinking then
+                    table.insert(self.LinkModules, CurrentModuleName)
                 end
 
                 -- Add define for importing a dynamic module's exported functions and classes
-                if current_module.is_dynamic then
-                    local module_api_name = current_module.name:upper() .. "_API"
+                if CurrentModule.bIsDynamic then
+                    local ModuleApiName = CurrentModule.Name:upper() .. "_API"
 
                     -- This should be linked at compile time
-                    if not current_module.runtime_linking then
-                        module_api_name = module_api_name .. "=MODULE_IMPORT"
+                    if not CurrentModule.bRuntimeLinking then
+                        ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
                     end
 
-                    self.add_defines { module_api_name }
+                    self.AddDefines { ModuleApiName }
                 end
 
-                -- TODO: This should probably be separated into public/private thirdparties since public should always be pushed up
-                -- We always want to add the frameworks and modules as a thirdparty
-                self.add_link_libraries(current_module.link_libraries)
-                self.add_frameworks(current_module.frameworks)
-                self.add_module_thirdparties(current_module.module_thirdparties)
+                -- Propagate third-party and include/link info
+                self.AddLinkLibraries(CurrentModule.LinkLibraries)
+                self.AddFrameworks(CurrentModule.Frameworks)
+                self.AddModuleThirdparties(CurrentModule.ModuleThirdparties)
 
-                -- System includes can be included in a thirdparty header and therefore necessary in this module as well
-                self.add_include_dirs(current_module.include_dirs)
-                self.add_external_include_dirs(current_module.external_include_dirs)
-                self.add_library_paths(current_module.library_paths)
+                self.AddIncludeDirs(CurrentModule.IncludeDirs)
+                self.AddExternalIncludeDirs(CurrentModule.ExternalIncludeDirs)
+                self.AddLibraryPaths(CurrentModule.LibraryPaths)
             else
-                log_error("Module '%s' has not been included", current_module_name)
+                LogError("Module '%s' has not been included", CurrentModuleName)
             end
         end
 
         -- Add link options
-        if build_with_visual_studio() then
+        if BuildWithVisualStudio() then
             -- TODO: We only want this for monolithic builds
-            for index = 1, #self.link_modules do
-                local current_module_name = self.link_modules[index]
-                if current_module_name ~= "Launch" then
-                    self.add_link_options { "/INCLUDE:LinkModule_" .. current_module_name }
+            for Index = 1, #self.LinkModules do
+                local CurrentModuleName = self.LinkModules[Index]
+                if CurrentModuleName ~= "Launch" then
+                    self.AddLinkOptions { "/INCLUDE:LinkModule_" .. CurrentModuleName }
                 end
             end
         end
 
         -- Setup precompiled headers
-        if self.use_precompiled_headers then
-            self.add_force_includes { "PreCompiled.h" }
+        if self.bUsePrecompiledHeaders then
+            self.AddForceIncludes { "PreCompiled.h" }
         end
 
         -- Make files relative before printing
-        self.make_file_names_relative_to_path(self.files)
-        self.make_file_names_relative_to_path(self.exclude_files)
+        self.MakeFileNamesRelativeToPath(self.Files)
+        self.MakeFileNamesRelativeToPath(self.ExcludeFiles)
 
         -- Add this rule to the workspace
-        self.workspace.add_rule(self)
+        self.Workspace.AddRule(self)
     end
 
     return self

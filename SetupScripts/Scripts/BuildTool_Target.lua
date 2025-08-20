@@ -1,7 +1,7 @@
 include "BuildTool_Module.lua"
 
 -- Target types
-ETargetType = 
+ETargetType =
 {
     Client      = 1,
     WindowedApp = 2,
@@ -9,165 +9,165 @@ ETargetType =
 }
 
 -- Target build rules
-function target_build_rules(name, workspace)
+function TargetBuildRules(Name, Workspace)
     -- Needs to have a valid module name
-    if name == nil then
-        log_error("BuildRule failed due to invalid name")
+    if Name == nil then
+        LogError("BuildRule failed due to invalid name")
         return nil
     end
     
     -- Needs to have a valid workspace
-    if workspace == nil then
-        log_error("Workspace cannot be nil")
+    if Workspace == nil then
+        LogError("Workspace cannot be nil")
         return nil
     end
 
-    log_highlight("Creating Target '%s'", name)
+    LogHighlight("Creating Target '%s'", Name)
 
     -- Initialize parent class
-    local self = build_rules(name)
+    local self = BuildRules(Name)
     if self == nil then
-        log_error("Failed to create BuildRule")
+        LogError("Failed to create BuildRule")
         return nil
     end
 
-    self.workspace = workspace
+    self.Workspace = Workspace
 
     -- Ensure that target does not already exist
-    if self.workspace.is_target(name) then
-        log_error("Target is already created")
+    if self.Workspace.IsTarget(Name) then
+        LogError("Target is already created")
         return nil
     end
 
     -- Folder path for engine modules
-    local runtime_folder_path = get_runtime_folder_path()
+    local RuntimeFolderPath = GetRuntimeFolderPath()
 
-    -- @brief - The type of target; decides if there should be a Standalone and DLL or if the application should be a ConsoleApp
-    self.target_type = ETargetType.Client
+    -- The type of target; decides if there should be a Standalone and DLL or if the app should be a ConsoleApp
+    self.TargetType = ETargetType.Client
     
-    -- @brief - Whether or not the build should be forced monolithic
-    self.is_monolithic = global_is_monolithic()
+    -- Whether or not the build should be forced monolithic
+    self.bIsMonolithic = GlobalIsMonolithic()
 
-    -- @brief - Helper function for retrieving path
-    local path_to_target = join_path(self.workspace.get_engine_path(), self.name)
-    function self.get_path()
-        return path_to_target
+    -- Helper function for retrieving path
+    local PathToTarget = JoinPath(self.Workspace.GetEnginePath(), self.Name)
+    function self.GetPath()
+        return PathToTarget
     end
 
-    -- @brief - Inject module into the current module (i.e., put the files into the executable)
-    local function inject_launch_module(rule)
-        for index = 1, #rule.module_thirdparties do
-            local current_module_name = rule.module_thirdparties[index]
-            if current_module_name == "Launch" then
-                if is_module("Launch") then
-                    local launch_module = get_module("Launch")
-                    launch_module.kind = "None"
+    -- Inject module into the current module (i.e., put the files into the executable)
+    local function InjectLaunchModule(Rule)
+        for Index = 1, #Rule.ModuleThirdparties do
+            local CurrentModuleName = Rule.ModuleThirdparties[Index]
+            if CurrentModuleName == "Launch" then
+                if IsModule("Launch") then
+                    local LaunchModule = GetModule("Launch")
+                    LaunchModule.Kind = "None"
 
-                    rule.add_files(launch_module.files)
-                    rule.add_exclude_files(launch_module.exclude_files)
-                    rule.add_defines(launch_module.defines)
+                    Rule.AddFiles(LaunchModule.Files)
+                    Rule.AddExcludeFiles(LaunchModule.ExcludeFiles)
+                    Rule.AddDefines(LaunchModule.Defines)
                 else
-                    log_error("Found the Launch Module among thirdparties, but it has not been initialized")
+                    LogError("Found the Launch Module among thirdparties, but it has not been initialized")
                 end
                 break
             end
         end
     end
 
-    -- @brief - Generate target
-    local base_generate = self.generate
-    function self.generate()
-        if self.workspace == nil then
-            log_error("Workspace cannot be nil when generating Target")
+    -- Generate target
+    local BaseGenerate = self.Generate
+    function self.Generate()
+        if self.Workspace == nil then
+            LogError("Workspace cannot be nil when generating Target")
             return
         end
 
-        log_info("\n--- Generating Target '%s' ---", self.name)
+        LogInfo("\n--- Generating Target '%s' ---", self.Name)
   
-        if self.is_monolithic then
-            log_info("    Target '%s' is monolithic", self.name)
+        if self.bIsMonolithic then
+            LogInfo("    Target '%s' is monolithic", self.Name)
         else
-            log_info("    Target '%s' is NOT monolithic", self.name)
+            LogInfo("    Target '%s' is NOT monolithic", self.Name)
         end
         
         -- Generate the project based on type
-        if self.target_type == ETargetType.Client then
-            log_info("    TargetType=Client")
+        if self.TargetType == ETargetType.Client then
+            LogInfo("    TargetType=Client")
 
             -- Always add module name as a define
-            self.add_defines({ 'MODULE_NAME="' .. self.name .. '"' })
+            self.AddDefines({ 'MODULE_NAME="' .. self.Name .. '"' })
 
-            local upper_case_name = self.name:upper()
-            local module_api_name = upper_case_name .. "_API"
+            local UpperCaseName = self.Name:upper()
+            local ModuleApiName = UpperCaseName .. "_API"
 
-            -- In a monolithic build, the client should be linked statically 
-            -- TODO: Should this be created as a module instead? 
-            if self.is_monolithic then                
-                self.kind               = "WindowedApp"
-                self.runtime_linking    = false
-                self.is_dynamic         = false
-                self.embed_thirdparties = true
+            -- In a monolithic build, the client is linked statically
+            -- TODO: Should this be created as a module instead?
+            if self.bIsMonolithic then
+                self.Kind               = "WindowedApp"
+                self.bRuntimeLinking    = false
+                self.bIsDynamic         = false
+                self.bEmbedThirdparties = true
 
                 -- Defines
-                self.add_defines({ module_api_name })
+                self.AddDefines({ ModuleApiName })
 
                 -- Generate the project
-                log_info("\n--- Generating project for target '%s' ---", self.name)
-                base_generate()
-                inject_launch_module(self)
-                log_info("\n--- Finished generating project for target '%s' ---", self.name)
+                LogInfo("\n--- Generating project for target '%s' ---", self.Name)
+                BaseGenerate()
+                InjectLaunchModule(self)
+                LogInfo("\n--- Finished generating project for target '%s' ---", self.Name)
             else
-                self.kind            = "SharedLib"
-                self.runtime_linking = true
-                self.is_dynamic      = true
+                self.Kind            = "SharedLib"
+                self.bRuntimeLinking = true
+                self.bIsDynamic      = true
                 
-                self.add_defines({ module_api_name .. "=MODULE_EXPORT" })
+                self.AddDefines({ ModuleApiName .. "=MODULE_EXPORT" })
                 
                 -- Generate the project
-                log_info("\n--- Generating project for target '%s' ---", self.name)
-                base_generate()
-                log_info("\n--- Finished generating project for target '%s' ---", self.name)
+                LogInfo("\n--- Generating project for target '%s' ---", self.Name)
+                BaseGenerate()
+                LogInfo("\n--- Finished generating project for target '%s' ---", self.Name)
                 
                 -- Standalone executable
-                log_info("\n--- Generating Standalone client executable project for target '%s' ---", self.name)
+                LogInfo("\n--- Generating Standalone client executable project for target '%s' ---", self.Name)
                 
-                local executable = build_rules(self.name .. "Standalone")
-                executable.kind               = "WindowedApp"
-                executable.embed_thirdparties = true
+                local Executable = BuildRules(self.Name .. "Standalone")
+                Executable.Kind               = "WindowedApp"
+                Executable.bEmbedThirdparties = true
 
                 -- Setup the workspace
-                executable.workspace = self.workspace
+                Executable.Workspace = self.Workspace
 
                 -- Link the module
-                executable.add_link_libraries({ self.name })
-                executable.add_extra_embed_names({ self.name })
-                executable.add_module_thirdparties(self.module_thirdparties)
+                Executable.AddLinkLibraries({ self.Name })
+                Executable.AddExtraEmbedNames({ self.Name })
+                Executable.AddModuleThirdparties(self.ModuleThirdparties)
                 
-                if is_platform_mac() then
-                    executable.add_frameworks({ "AppKit" })
+                if IsPlatformMac() then
+                    Executable.AddFrameworks({ "AppKit" })
                 end
 
                 -- Setup Defines
-                executable.add_defines({ module_api_name })
+                Executable.AddDefines({ ModuleApiName })
 
                 -- Overwrite all exclude files
-                executable.exclude_files = {}
+                Executable.ExcludeFiles = {}
         
                 -- Includes can be included in a thirdparty header and therefore necessary in this module as well
-                executable.add_include_dirs(self.include_dirs)
-                executable.add_external_include_dirs(self.external_include_dirs)
+                Executable.AddIncludeDirs(self.IncludeDirs)
+                Executable.AddExternalIncludeDirs(self.ExternalIncludeDirs)
 
                 -- Generate Standalone executable
-                executable.generate()
-                inject_launch_module(executable)
+                Executable.Generate()
+                InjectLaunchModule(Executable)
 
-                log_info("\n--- Finished generating standalone client executable project for target '%s' ---", self.name)
+                LogInfo("\n--- Finished generating standalone client executable project for target '%s' ---", self.Name)
             end
-        elseif self.target_type == ETargetType.WindowedApp then
-            log_error("    TargetType=WindowedApp is not implemented yet")
+        elseif self.TargetType == ETargetType.WindowedApp then
+            LogError("    TargetType=WindowedApp is not implemented yet")
             -- TODO: Handle this case properly
-        elseif self.target_type == ETargetType.ConsoleApp then
-            log_error("    TargetType=ConsoleApp is not implemented yet")
+        elseif self.TargetType == ETargetType.ConsoleApp then
+            LogError("    TargetType=ConsoleApp is not implemented yet")
             -- TODO: Handle this case properly
         end
     end

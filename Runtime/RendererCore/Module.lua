@@ -2,9 +2,9 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- RendererCore Module
 
-local renderer_core_module = module_build_rules("RendererCore")
+local RendererCoreModule = ModuleBuildRules("RendererCore")
 
-renderer_core_module.add_module_thirdparties
+RendererCoreModule.AddModuleThirdparties
 {
     "Core",
     "RHI",

@@ -2,23 +2,23 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- RHI Module
 
-local rhi_module = module_build_rules("RHI")
-rhi_module.use_precompiled_headers = true
+local RhiModule = ModuleBuildRules("RHI")
+RhiModule.bUsePrecompiledHeaders = true
 
-rhi_module.add_external_include_dirs
+RhiModule.AddExternalIncludeDirs
 {
-    create_external_thirdparty_path("DXC/include"),
-    create_external_thirdparty_path("SPIRV-Cross"),
-    create_external_thirdparty_path("glslang"),
+    CreateExternalThirdpartyPath("DXC/include"),
+    CreateExternalThirdpartyPath("SPIRV-Cross"),
+    CreateExternalThirdpartyPath("glslang"),
 }
 
-rhi_module.add_module_thirdparties
+RhiModule.AddModuleThirdparties
 {
     "Core",
     "CoreApplication",
 }
 
-rhi_module.add_link_libraries
+RhiModule.AddLinkLibraries
 {
     "SPIRV",
     "MachineIndependent",

@@ -2,10 +2,10 @@ include "../SetupScripts/Scripts/BuildTool_Workspace.lua"
 
 -- Sandbox Project
 
-local workspace = workspace_rules("DXR-Engine Sandbox")
+local Workspace = WorkspaceRules("DXR-Engine Sandbox")
 
-local sandbox = target_build_rules("Sandbox", workspace)
-sandbox.add_module_thirdparties
+local Sandbox = TargetBuildRules("Sandbox", Workspace)
+Sandbox.AddModuleThirdparties
 {
     "Core",
     "CoreApplication",
@@ -19,17 +19,17 @@ sandbox.add_module_thirdparties
     "RendererCore",
 }
 
-if is_platform_mac() then
-    sandbox.add_module_thirdparties
+if IsPlatformMac() then
+    Sandbox.AddModuleThirdparties
     { 
         "MetalRHI"
     }
-elseif is_platform_windows() then
-    sandbox.add_module_thirdparties
+elseif IsPlatformWindows() then
+    Sandbox.AddModuleThirdparties
     { 
         "D3D12RHI"
     }
 end
 
-workspace.add_target(sandbox)
-workspace.generate()
+Workspace.AddTarget(Sandbox)
+Workspace.Generate()
