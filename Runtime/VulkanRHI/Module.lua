@@ -1,4 +1,4 @@
-include '../../SetupScripts/Scripts/build_module.lua'
+include '../../SetupScripts/Scripts/BuildTool_Module.lua'
 
 -- Vulkan Helpers
 
@@ -16,11 +16,11 @@ end
 function find_vulkan_include_path()
     -- macOS: verify a complete SDK under /usr/local
     if is_platform_mac() then
-        local root        = '/usr/local'
-        local inc_dir     = join_path(root, 'include', 'vulkan')
-        local lib_dir     = join_path(root, 'lib')
-        local bin_dir     = join_path(root, 'bin')
-        local header_h    = join_path(inc_dir, 'vulkan.h')
+        local root     = '/usr/local'
+        local inc_dir  = join_path(root, 'include', 'vulkan')
+        local lib_dir  = join_path(root, 'lib')
+        local bin_dir  = join_path(root, 'bin')
+        local header_h = join_path(inc_dir, 'vulkan.h')
 
         -- Typical libs/tools shipped by LunarG SDK on macOS
         local lib_candidates = {
@@ -61,27 +61,28 @@ function find_vulkan_include_path()
 
         log_highlight("Detected Vulkan SDK at %s (headers/libs/tools present)", root)
         return root
-    end
-
-    -- Windows/Linux: check common environment variables
-    local vulkan_environment_vars = {
-        'VK_SDK_PATH',
-        'VULKAN_SDK',
-    }
-
-    for _, environment_var in ipairs(vulkan_environment_vars) do
-        local path = os.getenv(environment_var)
-        if path ~= nil then
-            log_highlight("Found '%s'='%s'", environment_var, path)
-            return path
-        else
-            log_warning("[WARNING]: Could not find the environment variable '%s'", environment_var)
+    else
+        
+        -- Windows/Linux: check common environment variables
+        local vulkan_environment_vars = {
+            'VK_SDK_PATH',
+            'VULKAN_SDK',
+        }
+        
+        for _, environment_var in ipairs(vulkan_environment_vars) do
+            local path = os.getenv(environment_var)
+            if path ~= nil then
+                log_highlight("Found '%s'='%s'", environment_var, path)
+                return path
+            else
+                log_warning("[WARNING]: Could not find the environment variable '%s'", environment_var)
+            end
         end
+        
+        log_error("[ERROR]: Failed to find Vulkan SDK path")
+        _g_vulkan_installed = false
+        return ''
     end
-
-    log_error("[ERROR]: Failed to find Vulkan SDK path")
-    _g_vulkan_installed = false
-    return ''
 end
 
 local _g_vulkan_include_path = create_os_path(find_vulkan_include_path())

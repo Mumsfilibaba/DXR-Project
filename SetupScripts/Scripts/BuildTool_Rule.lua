@@ -1,4 +1,4 @@
-include "build_common.lua"
+include "BuildTool_Common.lua"
 
 -- Build rules for a project
 function build_rules(name)

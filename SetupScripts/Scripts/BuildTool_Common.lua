@@ -1,4 +1,4 @@
-include "build_log.lua"
+include "BuildTool_Log.lua"
 
 -- Custom options
 newoption

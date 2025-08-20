@@ -1,4 +1,4 @@
-include "../../SetupScripts/Scripts/build_module.lua"
+include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 -- RendererCore Module
 

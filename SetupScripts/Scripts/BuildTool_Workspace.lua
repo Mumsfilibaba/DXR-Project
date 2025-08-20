@@ -1,5 +1,5 @@
-include "build_module.lua"
-include "build_target.lua"
+include "BuildTool_Module.lua"
+include "BuildTool_Target.lua"
 
 -- Function to deduce software version
 function glslang_deduce_software_version(directory)

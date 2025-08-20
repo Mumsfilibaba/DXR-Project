@@ -1,5 +1,5 @@
 -- Common
-include "SetupScripts/Scripts/Build_Workspace.lua"
+include "SetupScripts/Scripts/BuildTool_Workspace.lua"
 
 -- Project
 include "Sandbox/Target.lua"

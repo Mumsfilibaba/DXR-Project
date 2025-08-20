@@ -1,4 +1,4 @@
-include "build_rule.lua"
+include "BuildTool_Rule.lua"
 
 -- Module build rules
 function module_build_rules(name)

@@ -1,4 +1,4 @@
-include "../SetupScripts/Scripts/build_workspace.lua"
+include "../SetupScripts/Scripts/BuildTool_Workspace.lua"
 
 -- Sandbox Project
 

@@ -1,4 +1,4 @@
-include "build_module.lua"
+include "BuildTool_Module.lua"
 
 -- Target types
 ETargetType = 
