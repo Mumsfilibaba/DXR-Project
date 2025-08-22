@@ -1,24 +1,21 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- ImGuiPlugin Module
 
 local ImGuiPluginModule = ModuleBuildRules("ImGuiPlugin")
 
-ImGuiPluginModule.AddExternalIncludeDirs
-{
+ImGuiPluginModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("imgui"),
-}
+})
 
-ImGuiPluginModule.AddModules
-{
+ImGuiPluginModule.AddModules({
     "Core",
     "CoreApplication",
     "Application",
     "RHI",
     "RendererCore",
-}
+})
 
-ImGuiPluginModule.AddLinkLibraries
-{
+ImGuiPluginModule.AddLinkLibraries({
     "ImGui",
-}
+})

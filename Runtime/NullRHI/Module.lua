@@ -1,12 +1,11 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- NullRHI Module
 
 local NullRHIModule = ModuleBuildRules("NullRHI")
 NullRHIModule.bRuntimeLinking = true
 
-NullRHIModule.AddModules
-({
+NullRHIModule.AddModules({
     "Core",
     "RHI",
 })

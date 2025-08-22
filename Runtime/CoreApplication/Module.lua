@@ -1,4 +1,4 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- CoreApplication Module
 
@@ -8,8 +8,7 @@ CoreApplicationModule.bUsePrecompiledHeaders = true
 CoreApplicationModule.AddModules({ "Core" })
 
 if IsPlatformMac() then
-    CoreApplicationModule.AddFrameworks
-    ({
+    CoreApplicationModule.AddFrameworks({
         "Cocoa",
         "AppKit",
         "IOKit",

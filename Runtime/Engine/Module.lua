@@ -1,12 +1,11 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- Engine Module
 
 local EngineModule = ModuleBuildRules("Engine")
 EngineModule.bUsePrecompiledHeaders = true
 
-EngineModule.AddExternalIncludeDirs
-({
+EngineModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("imgui"),
     CreateExternalThirdpartyPath("stb_image"),
     CreateExternalThirdpartyPath("tinyobjloader"),
@@ -14,8 +13,7 @@ EngineModule.AddExternalIncludeDirs
     CreateExternalThirdpartyPath("OpenFBX/src"),
 })
 
-EngineModule.AddModules
-({
+EngineModule.AddModules({
     "Core",
     "CoreApplication",
     "Application",
@@ -24,8 +22,7 @@ EngineModule.AddModules
     "ImGuiPlugin",
 })
 
-EngineModule.AddLinkLibraries
-({
+EngineModule.AddLinkLibraries({
     "ImGui",
     "tinyobjloader",
     "OpenFBX",

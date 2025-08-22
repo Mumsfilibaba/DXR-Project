@@ -1,25 +1,22 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- RHI Module
 
 local RhiModule = ModuleBuildRules("RHI")
 RhiModule.bUsePrecompiledHeaders = true
 
-RhiModule.AddExternalIncludeDirs
-({
+RhiModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("DXC/include"),
     CreateExternalThirdpartyPath("SPIRV-Cross"),
     CreateExternalThirdpartyPath("glslang"),
 })
 
-RhiModule.AddModules
-({
+RhiModule.AddModules({
     "Core",
     "CoreApplication",
 })
 
-RhiModule.AddLinkLibraries
-({
+RhiModule.AddLinkLibraries({
     "SPIRV",
     "MachineIndependent",
     "SPVRemapper",

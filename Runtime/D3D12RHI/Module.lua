@@ -1,4 +1,4 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- D3D12RHI Module
 
@@ -7,13 +7,11 @@ if IsPlatformWindows() then
     D3D12RHI.bRuntimeLinking = true
     D3D12RHI.bUsePrecompiledHeaders = true
 
-    D3D12RHI.AddIncludeDirs
-    ({
+    D3D12RHI.AddIncludeDirs({
         CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/include")
     })
 
-    D3D12RHI.AddModules
-    ({
+    D3D12RHI.AddModules({
         "Core",
         "CoreApplication",
         "RHI",

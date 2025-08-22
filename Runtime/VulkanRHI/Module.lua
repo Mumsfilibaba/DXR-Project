@@ -1,4 +1,4 @@
-include '../../SetupScripts/Scripts/BuildTool_Module.lua'
+include "BuildTool_Module.lua"
 
 -- Vulkan Helpers
 
@@ -16,11 +16,11 @@ end
 function FindVulkanIncludePath()
     -- macOS: verify a complete SDK under /usr/local
     if IsPlatformMac() then
-        local Root     = '/usr/local'
-        local IncDir   = JoinPath(Root, 'include', 'vulkan')
-        local LibDir   = JoinPath(Root, 'lib')
-        local BinDir   = JoinPath(Root, 'bin')
-        local HeaderH  = JoinPath(IncDir, 'vulkan.h')
+        local Root    = '/usr/local'
+        local IncDir  = JoinPath(Root, 'include', 'vulkan')
+        local LibDir  = JoinPath(Root, 'lib')
+        local BinDir  = JoinPath(Root, 'bin')
+        local HeaderH = JoinPath(IncDir, 'vulkan.h')
 
         -- Typical libs/tools shipped by LunarG SDK on macOS
         local LibCandidates = {
@@ -114,32 +114,27 @@ local VulkanRHI = ModuleBuildRules('VulkanRHI')
 VulkanRHI.bRuntimeLinking         = true
 VulkanRHI.bUsePrecompiledHeaders  = true
 
-VulkanRHI.AddModules
-({
+VulkanRHI.AddModules({
     'Core',
     'CoreApplication',
     'RHI',
 })
 
 if IsPlatformMac() then
-    VulkanRHI.AddFrameworks
-    ({
+    VulkanRHI.AddFrameworks({
         'QuartzCore',
     })
 end
 
-VulkanRHI.AddExternalIncludeDirs
-({
+VulkanRHI.AddExternalIncludeDirs({
     VulkanInclude,
     CreateExternalThirdpartyPath("SPIRV-Cross"),
 })
 
-VulkanRHI.AddLibraryPaths
-({
+VulkanRHI.AddLibraryPaths({
     VulkanLibraries,
 })
 
-VulkanRHI.AddLinkLibraries
-({
+VulkanRHI.AddLinkLibraries({
     "SPIRV-Cross",
 })

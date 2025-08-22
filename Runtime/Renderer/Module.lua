@@ -1,17 +1,15 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- Renderer Module
 
 local RendererModule = ModuleBuildRules("Renderer")
 RendererModule.bUsePrecompiledHeaders = true
 
-RendererModule.AddExternalIncludeDirs
-({
+RendererModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("imgui"),
 })
 
-RendererModule.AddModules
-({
+RendererModule.AddModules({
     "Core",
     "CoreApplication",
     "Application",
@@ -21,7 +19,6 @@ RendererModule.AddModules
     "ImGuiPlugin",
 })
 
-RendererModule.AddLinkLibraries
-({
+RendererModule.AddLinkLibraries({
     "ImGui",
 })

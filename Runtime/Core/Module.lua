@@ -1,4 +1,4 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- Core Module
 
@@ -6,13 +6,11 @@ local CoreModule = ModuleBuildRules("Core")
 CoreModule.bUsePrecompiledHeaders = true
 
 if IsPlatformMac() then
-    CoreModule.AddFrameworks
-    ({
+    CoreModule.AddFrameworks({
         "AppKit",
     })
 elseif IsPlatformWindows() then
-    CoreModule.AddLinkLibraries
-    ({
+    CoreModule.AddLinkLibraries({
         "Dbghelp.lib",
         "shlwapi.lib",
     })

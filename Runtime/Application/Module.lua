@@ -1,12 +1,11 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- Application Module
 
 local ApplicationModule = ModuleBuildRules("Application")
 ApplicationModule.bUsePrecompiledHeaders = true
 
-ApplicationModule.AddModules
-({
+ApplicationModule.AddModules({
     "Core",
     "CoreApplication",
     "RHI",

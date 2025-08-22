@@ -1,4 +1,4 @@
-include "../../SetupScripts/Scripts/BuildTool_Module.lua"
+include "BuildTool_Module.lua"
 
 -- MetalRHI Module
 
@@ -6,15 +6,13 @@ if IsPlatformMac() then
     local MetalRHI = ModuleBuildRules("MetalRHI")
     MetalRHI.bRuntimeLinking = true
     
-    MetalRHI.AddModules
-    ({
+    MetalRHI.AddModules({
         "Core",
         "CoreApplication",
         "RHI",
     })
 
-    MetalRHI.AddFrameworks
-    ({
+    MetalRHI.AddFrameworks({
         "Metal",
         "QuartzCore",
     })
