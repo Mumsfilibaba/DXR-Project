@@ -5,12 +5,12 @@ include "BuildTool_Module.lua"
 -- Assume that we have the Vulkan SDK installed (For macOS)
 local gVulkanInstalled = true
 
-local function ExistsDir(p)
-    return p and p ~= '' and os.isdir(p)
+local function ExistsDir(Path)
+    return Path and Path ~= '' and os.isdir(Path)
 end
 
-local function ExistsFile(p)
-    return p and p ~= '' and os.isfile(p)
+local function ExistsFile(Path)
+    return Path and Path ~= '' and os.isfile(Path)
 end
 
 function FindVulkanIncludePath()
