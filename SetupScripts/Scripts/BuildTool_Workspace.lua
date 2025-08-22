@@ -1114,23 +1114,23 @@ function WorkspaceRules(WorkspaceName)
         LogInfo("    RuntimeFolderPath = '%s'", self.GetRuntimeFolderPath())
         
         -- Check if the command line overrides monolithic builds
-        if GlobalIsMonolithic() then
-            self.AddDefines { "MONOLITHIC_BUILD=(1)" }
+        if IsBuildMonolithic() then
+            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
         end
 
         -- IDE Defines
         if BuildWithVisualStudio() then 
-            self.AddDefines { "IDE_VISUAL_STUDIO" }
-            self.AddDefines { "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING" }
-            self.AddDefines { "_CRT_SECURE_NO_WARNINGS" }
+            self.AddDefines({ "IDE_VISUAL_STUDIO" })
+            self.AddDefines({ "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING" })
+            self.AddDefines({ "_CRT_SECURE_NO_WARNINGS" })
         end
 
         -- OS Defines
         if IsPlatformWindows() then
-            self.AddDefines { "PLATFORM_WINDOWS=(1)" }
+            self.AddDefines({ "PLATFORM_WINDOWS=(1)" })
         end
         if IsPlatformMac() then
-            self.AddDefines { "PLATFORM_MACOS=(1)" }
+            self.AddDefines({ "PLATFORM_MACOS=(1)" })
         end
 
         -- Setup startup project

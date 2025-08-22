@@ -21,7 +21,7 @@ local gIsMonolithic
 local gModules = {}
 
 -- Check if the module should be built monolithically
-function GlobalIsMonolithic()
+function IsBuildMonolithic()
     if gIsMonolithic == nil then
         gIsMonolithic = (_OPTIONS["monolithic"] ~= nil)
     end

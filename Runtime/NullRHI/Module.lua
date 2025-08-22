@@ -5,8 +5,8 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 local NullRHIModule = ModuleBuildRules("NullRHI")
 NullRHIModule.bRuntimeLinking = true
 
-NullRHIModule.AddModuleThirdparties
-{
+NullRHIModule.AddModules
+({
     "Core",
     "RHI",
-}
+})

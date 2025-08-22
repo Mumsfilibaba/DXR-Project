@@ -4,8 +4,8 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 
 local RendererCoreModule = ModuleBuildRules("RendererCore")
 
-RendererCoreModule.AddModuleThirdparties
-{
+RendererCoreModule.AddModules
+({
     "Core",
     "RHI",
-}
+})

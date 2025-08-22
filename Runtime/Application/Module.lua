@@ -5,9 +5,9 @@ include "../../SetupScripts/Scripts/BuildTool_Module.lua"
 local ApplicationModule = ModuleBuildRules("Application")
 ApplicationModule.bUsePrecompiledHeaders = true
 
-ApplicationModule.AddModuleThirdparties
-{
+ApplicationModule.AddModules
+({
     "Core",
     "CoreApplication",
     "RHI",
-}
+})

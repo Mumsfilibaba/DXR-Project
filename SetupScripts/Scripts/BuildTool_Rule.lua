@@ -128,7 +128,7 @@ function BuildRules(Name)
         ExtraEmbedNames = {},
 
         -- @brief - Engine modules that this module depends on
-        ModuleThirdparties = {},
+        Modules = {},
 
         -- @brief - Extra libraries to link
         LinkLibraries = {},
@@ -171,8 +171,8 @@ function BuildRules(Name)
         AddUniqueElements(InDefines, self.Defines)
     end
 
-    function self.AddModuleThirdparties(InModuleThirdparties)
-        AddUniqueElements(InModuleThirdparties, self.ModuleThirdparties)
+    function self.AddModules(InModules)
+        AddUniqueElements(InModules, self.Modules)
     end
 
     function self.AddExtraEmbedNames(InExtraEmbedNames)
@@ -379,14 +379,14 @@ function BuildRules(Name)
                 PrintTable("    Link options '%s'", self.LinkOptions)
             end
 
-            LogInfo("\n--- Module thirdparties for module '%s' (Num ModuleThirdParties=%d) ---", self.Name, #self.ModuleThirdparties)
-            if #self.ModuleThirdparties > 0 then
-                PrintTable("    Using module thirdparty '%s'", self.ModuleThirdparties)
+            LogInfo("\n--- Module thirdparties for module '%s' (Num ModuleThirdParties=%d) ---", self.Name, #self.Modules)
+            if #self.Modules > 0 then
+                PrintTable("    Using module thirdparty '%s'", self.Modules)
             end
 
-            LogInfo("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.ModuleThirdparties)
-            if #self.ModuleThirdparties > 0 then
-                PrintTable("    Embed Module '%s'", self.ModuleThirdparties)
+            LogInfo("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
+            if #self.Modules > 0 then
+                PrintTable("    Embed Module '%s'", self.Modules)
             end
 
             -- Setup force includes
@@ -457,14 +457,14 @@ function BuildRules(Name)
                 linkoptions(self.LinkOptions)
 
                 -- Setup thirdparties
-                dependson(self.ModuleThirdparties)
+                dependson(self.Modules)
             end
 
             -- Setup embedded frameworks, etc.
             filter { "action:xcode4" }
                 if self.bEmbedThirdparties then
                     -- Embed modules and extra embed names
-                    embed(self.ModuleThirdparties)
+                    embed(self.Modules)
                     embed(self.ExtraEmbedNames)
                 end
             filter {}
@@ -557,10 +557,10 @@ function BuildRules(Name)
         end
 
         -- Ensure thirdparties are included
-        for Index = 1, #self.ModuleThirdparties do
+        for Index = 1, #self.Modules do
             LogHighlight("\n--- Including thirdparty for project '%s' ---", self.Name)
 
-            local CurrentModuleName = self.ModuleThirdparties[Index]
+            local CurrentModuleName = self.Modules[Index]
             if IsModule(CurrentModuleName) then
                 LogHighlightWarning("-Dependency '%s' is already included", CurrentModuleName)
             else
@@ -591,8 +591,8 @@ function BuildRules(Name)
         self.AddFrameworkExtension()
 
         -- Solve thirdparties
-        for Index = 1, #self.ModuleThirdparties do
-            local CurrentModuleName = self.ModuleThirdparties[Index]
+        for Index = 1, #self.Modules do
+            local CurrentModuleName = self.Modules[Index]
             local CurrentModule     = GetModule(CurrentModuleName)
 
             if CurrentModule then
@@ -615,7 +615,7 @@ function BuildRules(Name)
                 -- Propagate third-party and include/link info
                 self.AddLinkLibraries(CurrentModule.LinkLibraries)
                 self.AddFrameworks(CurrentModule.Frameworks)
-                self.AddModuleThirdparties(CurrentModule.ModuleThirdparties)
+                self.AddModules(CurrentModule.Modules)
 
                 self.AddIncludeDirs(CurrentModule.IncludeDirs)
                 self.AddExternalIncludeDirs(CurrentModule.ExternalIncludeDirs)

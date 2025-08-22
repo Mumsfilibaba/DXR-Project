@@ -9,7 +9,7 @@ ImGuiPluginModule.AddExternalIncludeDirs
     CreateExternalThirdpartyPath("imgui"),
 }
 
-ImGuiPluginModule.AddModuleThirdparties
+ImGuiPluginModule.AddModules
 {
     "Core",
     "CoreApplication",

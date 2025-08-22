@@ -6,16 +6,16 @@ if IsPlatformMac() then
     local MetalRHI = ModuleBuildRules("MetalRHI")
     MetalRHI.bRuntimeLinking = true
     
-    MetalRHI.AddModuleThirdparties
-    {
+    MetalRHI.AddModules
+    ({
         "Core",
         "CoreApplication",
         "RHI",
-    }
+    })
 
     MetalRHI.AddFrameworks
-    {
+    ({
         "Metal",
         "QuartzCore",
-    }
+    })
 end

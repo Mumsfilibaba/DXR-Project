@@ -114,32 +114,32 @@ local VulkanRHI = ModuleBuildRules('VulkanRHI')
 VulkanRHI.bRuntimeLinking         = true
 VulkanRHI.bUsePrecompiledHeaders  = true
 
-VulkanRHI.AddModuleThirdparties
-{
+VulkanRHI.AddModules
+({
     'Core',
     'CoreApplication',
     'RHI',
-}
+})
 
 if IsPlatformMac() then
     VulkanRHI.AddFrameworks
-    {
+    ({
         'QuartzCore',
-    }
+    })
 end
 
 VulkanRHI.AddExternalIncludeDirs
-{
+({
     VulkanInclude,
     CreateExternalThirdpartyPath("SPIRV-Cross"),
-}
+})
 
 VulkanRHI.AddLibraryPaths
-{
+({
     VulkanLibraries,
-}
+})
 
 VulkanRHI.AddLinkLibraries
-{
+({
     "SPIRV-Cross",
-}
+})

@@ -8,14 +8,14 @@ if IsPlatformWindows() then
     D3D12RHI.bUsePrecompiledHeaders = true
 
     D3D12RHI.AddIncludeDirs
-    {
+    ({
         CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/include")
-    }
+    })
 
-    D3D12RHI.AddModuleThirdparties
-    {
+    D3D12RHI.AddModules
+    ({
         "Core",
         "CoreApplication",
         "RHI",
-    }
+    })
 end

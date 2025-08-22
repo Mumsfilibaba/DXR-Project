@@ -46,7 +46,7 @@ function TargetBuildRules(Name, Workspace)
     self.TargetType = ETargetType.Client
     
     -- Whether or not the build should be forced monolithic
-    self.bIsMonolithic = GlobalIsMonolithic()
+    self.bIsMonolithic = IsBuildMonolithic()
 
     -- Helper function for retrieving path
     local PathToTarget = JoinPath(self.Workspace.GetEnginePath(), self.Name)
@@ -56,8 +56,8 @@ function TargetBuildRules(Name, Workspace)
 
     -- Inject module into the current module (i.e., put the files into the executable)
     local function InjectLaunchModule(Rule)
-        for Index = 1, #Rule.ModuleThirdparties do
-            local CurrentModuleName = Rule.ModuleThirdparties[Index]
+        for Index = 1, #Rule.Modules do
+            local CurrentModuleName = Rule.Modules[Index]
             if CurrentModuleName == "Launch" then
                 if IsModule("Launch") then
                     local LaunchModule = GetModule("Launch")
@@ -141,7 +141,7 @@ function TargetBuildRules(Name, Workspace)
                 -- Link the module
                 Executable.AddLinkLibraries({ self.Name })
                 Executable.AddExtraEmbedNames({ self.Name })
-                Executable.AddModuleThirdparties(self.ModuleThirdparties)
+                Executable.AddModules(self.Modules)
                 
                 if IsPlatformMac() then
                     Executable.AddFrameworks({ "AppKit" })

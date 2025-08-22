@@ -35,7 +35,7 @@ function ModuleBuildRules(Name)
         LogInfo("\n--- Generating Module '%s' ---", self.Name)
 
         -- Handle monolithic build
-        self.bIsMonolithic = GlobalIsMonolithic()
+        self.bIsMonolithic = IsBuildMonolithic()
         if self.bIsMonolithic then
             LogInfo("    Build is monolithic")
 
