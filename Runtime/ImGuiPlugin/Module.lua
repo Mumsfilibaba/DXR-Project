@@ -5,7 +5,7 @@ include "BuildTool_Module.lua"
 local ImGuiPluginModule = ModuleBuildRules("ImGuiPlugin")
 
 ImGuiPluginModule.AddExternalIncludeDirs({
-    CreateExternalThirdpartyPath("imgui"),
+    CreateExternalThirdpartyPath("ImGui/imgui"),
 })
 
 ImGuiPluginModule.AddModules({

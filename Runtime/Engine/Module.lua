@@ -6,7 +6,7 @@ local EngineModule = ModuleBuildRules("Engine")
 EngineModule.bUsePrecompiledHeaders = true
 
 EngineModule.AddExternalIncludeDirs({
-    CreateExternalThirdpartyPath("imgui"),
+    CreateExternalThirdpartyPath("ImGui/imgui"),
     CreateExternalThirdpartyPath("stb_image"),
     CreateExternalThirdpartyPath("tinyobjloader"),
     CreateExternalThirdpartyPath("tinyddsloader"),

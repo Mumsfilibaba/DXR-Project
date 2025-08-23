@@ -227,17 +227,17 @@ function WorkspaceRules(WorkspaceName)
 
                 -- Files
                 files({
-                    CreateExternalThirdpartyPath("imgui/imconfig.h"),
-                    CreateExternalThirdpartyPath("imgui/imgui.h"),
-                    CreateExternalThirdpartyPath("imgui/imgui.cpp"),
-                    CreateExternalThirdpartyPath("imgui/imgui_demo.cpp"),
-                    CreateExternalThirdpartyPath("imgui/imgui_draw.cpp"),
-                    CreateExternalThirdpartyPath("imgui/imgui_internal.h"),
-                    CreateExternalThirdpartyPath("imgui/imgui_tables.cpp"),
-                    CreateExternalThirdpartyPath("imgui/imgui_widgets.cpp"),
-                    CreateExternalThirdpartyPath("imgui/imstb_rectpack.h"),
-                    CreateExternalThirdpartyPath("imgui/imstb_textedit.h"),
-                    CreateExternalThirdpartyPath("imgui/imstb_truetype.h"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imconfig.h"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imgui.h"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imgui.cpp"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_demo.cpp"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_draw.cpp"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_internal.h"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_tables.cpp"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_widgets.cpp"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imstb_rectpack.h"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imstb_textedit.h"),
+                    CreateExternalThirdpartyPath("ImGui/imgui/imstb_truetype.h"),
                 })
                 
                 -- Configurations

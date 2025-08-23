@@ -6,7 +6,7 @@ local RendererModule = ModuleBuildRules("Renderer")
 RendererModule.bUsePrecompiledHeaders = true
 
 RendererModule.AddExternalIncludeDirs({
-    CreateExternalThirdpartyPath("imgui"),
+    CreateExternalThirdpartyPath("ImGui/imgui"),
 })
 
 RendererModule.AddModules({
