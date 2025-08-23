@@ -153,43 +153,9 @@ function WorkspaceRules(WorkspaceName)
         return "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
     end
 
-    -- Retrieve the path of the engine
-    function self.GetEnginePath()
-        return self.EnginePath
-    end
-
     -- Retrieve the current target name
     function self.GetCurrentTargetName()
         return self.TargetName
-    end
-
-    -- Retrieve the path of the engine 'Runtime' folder
-    local RuntimeFolderPath = JoinPath(self.GetEnginePath(), "Runtime")
-    function self.GetRuntimeFolderPath()
-        return RuntimeFolderPath
-    end
-
-    -- Retrieve the path of the engine 'Build' folder
-    local BuildFolderPath = JoinPath(self.GetEnginePath(), "Build")
-    function self.GetBuildFolderPath()
-        return BuildFolderPath
-    end
-
-    -- Retrieve the path of the engine 'Solutions' folder
-    local SolutionsFolderPath = JoinPath(self.GetEnginePath(), "Solutions")
-    function self.GetSolutionsFolderPath()
-        return SolutionsFolderPath
-    end
-
-    -- Retrieve the path to the thirdparties folder containing external thirdparty projects
-    local ExternalThirdpartyFolderPath = JoinPath(self.GetEnginePath(), "ThirdParty")
-    function self.GetExternalThirdpartyFolderPath()
-        return ExternalThirdpartyFolderPath
-    end
-
-    -- Create a path relative to thirdparty folder
-    function self.CreateExternalThirdpartyPath(Path)
-        return JoinPath(self.GetExternalThirdpartyFolderPath(), Path)
     end
 
     -- Retrieve a target added to the workspace
@@ -219,7 +185,7 @@ function WorkspaceRules(WorkspaceName)
 
     -- Inject thirdparty projects into the workspace
     function self.GenerateThirdpartyProjects()
-        local SolutionLocation = self.GetSolutionsFolderPath()
+        local SolutionLocation = GetSolutionsFolderPath()
 
         group "ThirdParty"
             LogInfo("\n--- External ThirdParty ---")
@@ -251,22 +217,22 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/ImGui"))
 
                 -- Locations
-                targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/ImGui/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/ImGui/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/ImGui/" .. self.GetOutputPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/ImGui/" .. self.GetOutputPath()))
 
                 -- Files
                 files {
-                    self.CreateExternalThirdpartyPath("imgui/imconfig.h"),
-                    self.CreateExternalThirdpartyPath("imgui/imgui.h"),
-                    self.CreateExternalThirdpartyPath("imgui/imgui.cpp"),
-                    self.CreateExternalThirdpartyPath("imgui/imgui_demo.cpp"),
-                    self.CreateExternalThirdpartyPath("imgui/imgui_draw.cpp"),
-                    self.CreateExternalThirdpartyPath("imgui/imgui_internal.h"),
-                    self.CreateExternalThirdpartyPath("imgui/imgui_tables.cpp"),
-                    self.CreateExternalThirdpartyPath("imgui/imgui_widgets.cpp"),
-                    self.CreateExternalThirdpartyPath("imgui/imstb_rectpack.h"),
-                    self.CreateExternalThirdpartyPath("imgui/imstb_textedit.h"),
-                    self.CreateExternalThirdpartyPath("imgui/imstb_truetype.h"),
+                    CreateExternalThirdpartyPath("imgui/imconfig.h"),
+                    CreateExternalThirdpartyPath("imgui/imgui.h"),
+                    CreateExternalThirdpartyPath("imgui/imgui.cpp"),
+                    CreateExternalThirdpartyPath("imgui/imgui_demo.cpp"),
+                    CreateExternalThirdpartyPath("imgui/imgui_draw.cpp"),
+                    CreateExternalThirdpartyPath("imgui/imgui_internal.h"),
+                    CreateExternalThirdpartyPath("imgui/imgui_tables.cpp"),
+                    CreateExternalThirdpartyPath("imgui/imgui_widgets.cpp"),
+                    CreateExternalThirdpartyPath("imgui/imstb_rectpack.h"),
+                    CreateExternalThirdpartyPath("imgui/imstb_textedit.h"),
+                    CreateExternalThirdpartyPath("imgui/imstb_truetype.h"),
                 }
                 
                 -- Configurations
@@ -309,13 +275,13 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/tinyobjloader"))
 
                 -- Locations
-                targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/tinyobjloader/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/tinyobjloader/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/tinyobjloader/" .. self.GetOutputPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/tinyobjloader/" .. self.GetOutputPath()))
 
                 -- Files
                 files {
-                    self.CreateExternalThirdpartyPath("tinyobjloader/tiny_obj_loader.h"),
-                    self.CreateExternalThirdpartyPath("tinyobjloader/tiny_obj_loader.cc"),
+                    CreateExternalThirdpartyPath("tinyobjloader/tiny_obj_loader.h"),
+                    CreateExternalThirdpartyPath("tinyobjloader/tiny_obj_loader.cc"),
                 }
 
                 -- Configurations
@@ -358,15 +324,15 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/OpenFBX"))
             
                 -- Locations
-                targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/OpenFBX/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/OpenFBX/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/OpenFBX/" .. self.GetOutputPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/OpenFBX/" .. self.GetOutputPath()))
 
                 -- Files
                 files {
-                    self.CreateExternalThirdpartyPath("OpenFBX/src/ofbx.h"),
-                    self.CreateExternalThirdpartyPath("OpenFBX/src/ofbx.cpp"),
-                    self.CreateExternalThirdpartyPath("OpenFBX/src/libdeflate.h"),
-                    self.CreateExternalThirdpartyPath("OpenFBX/src/libdeflate.c"),
+                    CreateExternalThirdpartyPath("OpenFBX/src/ofbx.h"),
+                    CreateExternalThirdpartyPath("OpenFBX/src/ofbx.cpp"),
+                    CreateExternalThirdpartyPath("OpenFBX/src/libdeflate.h"),
+                    CreateExternalThirdpartyPath("OpenFBX/src/libdeflate.c"),
                 }
 
                 -- Configurations 
@@ -409,41 +375,41 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/SPIRV-Cross"))
             
                 -- Locations
-                targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/SPIRV-Cross/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/SPIRV-Cross/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/SPIRV-Cross/" .. self.GetOutputPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/SPIRV-Cross/" .. self.GetOutputPath()))
 
                 -- Files
                 files {
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/GLSL.std.450.h"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv.h"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_c.h"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/GLSL.std.450.h"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv.h"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_c.h"),
 
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cfg.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_common.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cpp.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_containers.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_error_handling.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_parsed_ir.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_util.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_glsl.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_hlsl.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_msl.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_parser.hpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_reflect.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cfg.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_common.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cpp.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_containers.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_error_handling.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_parsed_ir.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_util.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_glsl.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_hlsl.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_msl.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_parser.hpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_reflect.hpp"),
 
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cfg.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cpp.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_c.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_parsed_ir.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_util.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_glsl.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_hlsl.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_msl.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_parser.cpp"),
-                    self.CreateExternalThirdpartyPath("SPIRV-Cross/spirv_reflect.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cfg.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cpp.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_c.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_parsed_ir.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_util.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_glsl.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_hlsl.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_msl.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_parser.cpp"),
+                    CreateExternalThirdpartyPath("SPIRV-Cross/spirv_reflect.cpp"),
                 }
 
                 -- Defines 
@@ -500,13 +466,13 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/GenericCodeGen/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/GenericCodeGen/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/GenericCodeGen/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/GenericCodeGen/" .. self.GetOutputPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/GenericCodeGen/" .. self.GetOutputPath()))
 
                     -- Files
                     files {
-                        self.CreateExternalThirdpartyPath("glslang/glslang/GenericCodeGen/CodeGen.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/GenericCodeGen/Link.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/GenericCodeGen/CodeGen.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/GenericCodeGen/Link.cpp"),
                     }
 
                     GlslangSetPlatformProperties()
@@ -551,21 +517,21 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/OSDependent/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/OSDependent/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/OSDependent/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/OSDependent/" .. self.GetOutputPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/OSDependent/" .. self.GetOutputPath()))
 
                     -- Files
                     files {
-                        self.CreateExternalThirdpartyPath("glslang/glslang/OSDependent/osinclude.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/OSDependent/osinclude.h"),
                     }
 
                     filter "system:windows"
                         files {
-                            self.CreateExternalThirdpartyPath("glslang/glslang/OSDependent/Windows/ossource.cpp"),
+                            CreateExternalThirdpartyPath("glslang/glslang/OSDependent/Windows/ossource.cpp"),
                         }
                     filter "system:macosx"
                         files {
-                            self.CreateExternalThirdpartyPath("glslang/glslang/OSDependent/Unix/ossource.cpp"),
+                            CreateExternalThirdpartyPath("glslang/glslang/OSDependent/Unix/ossource.cpp"),
                         }
                     filter {}
 
@@ -611,72 +577,72 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/MachineIndependent/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/MachineIndependent/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/MachineIndependent/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/MachineIndependent/" .. self.GetOutputPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/MachineIndependent/" .. self.GetOutputPath()))
 
                     -- Include Directories
                     includedirs {
-                        self.CreateExternalThirdpartyPath("glslang"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/include"),
+                        CreateExternalThirdpartyPath("glslang"),
+                        CreateExternalThirdpartyPath("glslang/glslang/include"),
                     }
 
                     -- Files
                     files {
                         -- Cpp files
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang.y"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang.y"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
 
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/attribute.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Constant.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/InfoSink.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Initialize.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/intermOut.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/iomapper.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Intermediate.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/limits.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/linkValidate.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/parseConst.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ParseHelper.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/reflection.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/RemoveTree.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Scan.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ShaderLang.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/SymbolTable.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Versions.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/attribute.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Constant.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/InfoSink.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Initialize.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/intermOut.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/iomapper.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Intermediate.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/limits.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/linkValidate.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/parseConst.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ParseHelper.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/reflection.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/RemoveTree.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Scan.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ShaderLang.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/SymbolTable.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Versions.cpp"),
 
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
 
                         -- Header Files
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/gl_types.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/gl_types.h"),
 
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/attribute.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Initialize.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/iomapper.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/LiveTraverser.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/localintermediate.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ParseHelper.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/parseVersions.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/reflection.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/RemoveTree.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Scan.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ScanContext.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/span.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/SymbolTable.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Versions.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/attribute.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Initialize.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/iomapper.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/LiveTraverser.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/localintermediate.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ParseHelper.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/parseVersions.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/reflection.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/RemoveTree.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Scan.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/ScanContext.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/span.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/SymbolTable.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/Versions.h"),
 
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
                     }
 
                     GlslangSetPlatformProperties()
@@ -728,35 +694,35 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/glslang/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang/" .. self.GetOutputPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang/" .. self.GetOutputPath()))
 
                     -- Include Directories
                     includedirs {
-                        self.CreateExternalThirdpartyPath("glslang")
+                        CreateExternalThirdpartyPath("glslang")
                     }
 
                     -- Files
                     files {
                         -- Cpp
-                        self.CreateExternalThirdpartyPath("glslang/glslang/CInterface/glslang_c_interface.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/CInterface/glslang_c_interface.cpp"),
 
                         -- Header
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Public/ShaderLang.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/arrays.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/BaseTypes.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/Common.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/ConstantUnion.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/glslang_c_interface.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/glslang_c_shader_types.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/InfoSink.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/InitializeGlobals.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/intermediate.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/PoolAlloc.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/ResourceLimits.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/ShHandle.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/SpirvIntrinsics.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Include/Types.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Public/ShaderLang.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/arrays.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/BaseTypes.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/Common.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/ConstantUnion.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/glslang_c_interface.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/glslang_c_shader_types.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/InfoSink.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/InitializeGlobals.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/intermediate.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/PoolAlloc.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/ResourceLimits.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/ShHandle.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/SpirvIntrinsics.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Include/Types.h"),
                     }
 
                     -- Links
@@ -807,23 +773,23 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/glslang-default-resource-limits/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
 
                     -- Include Directories
                     includedirs {
-                        self.CreateExternalThirdpartyPath("glslang")
+                        CreateExternalThirdpartyPath("glslang")
                     }
                     
                     -- Files
                     files {
                         -- Cpp
-                        self.CreateExternalThirdpartyPath("glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
+                        CreateExternalThirdpartyPath("glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
 
                         -- Header
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Public/ResourceLimits.h"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/Public/resource_limits_c.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Public/ResourceLimits.h"),
+                        CreateExternalThirdpartyPath("glslang/glslang/Public/resource_limits_c.h"),
                     }
 
                     GlslangSetPlatformProperties()
@@ -868,47 +834,47 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/SPIRV/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPIRV/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPIRV/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPIRV/" .. self.GetOutputPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPIRV/" .. self.GetOutputPath()))
 
                     -- Include Directories
                     includedirs {
-                        self.CreateExternalThirdpartyPath("glslang"),
-                        self.CreateExternalThirdpartyPath("glslang/glslang/include"),
+                        CreateExternalThirdpartyPath("glslang"),
+                        CreateExternalThirdpartyPath("glslang/glslang/include"),
                     }
 
                     -- Files
                     files {
                         -- Cpp
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GlslangToSpv.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/InReadableOrder.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/Logger.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/SpvBuilder.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/SpvPostProcess.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/doc.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/SpvTools.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/disassemble.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/CInterface/spirv_c_interface.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GlslangToSpv.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/InReadableOrder.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/Logger.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/SpvBuilder.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/SpvPostProcess.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/doc.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/SpvTools.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/disassemble.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/CInterface/spirv_c_interface.cpp"),
 
                         -- Headers
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/bitutils.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/spirv.hpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.std.450.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.EXT.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.KHR.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GlslangToSpv.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/hex_float.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/Logger.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/SpvBuilder.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/spvIR.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/doc.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/SpvTools.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/disassemble.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.AMD.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.NV.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.ARM.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/NonSemanticDebugPrintf.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/bitutils.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/spirv.hpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.std.450.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.EXT.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.KHR.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GlslangToSpv.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/hex_float.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/Logger.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/SpvBuilder.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/spvIR.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/doc.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/SpvTools.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/disassemble.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.AMD.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.NV.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.ARM.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/NonSemanticDebugPrintf.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
                     }
 
                     -- Links
@@ -958,15 +924,15 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/SPVRemapper/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPVRemapper/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPVRemapper/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPVRemapper/" .. self.GetOutputPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPVRemapper/" .. self.GetOutputPath()))
 
                     -- Files
                     files {
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/SPVRemapper.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/doc.cpp"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/SPVRemapper.h"),
-                        self.CreateExternalThirdpartyPath("glslang/SPIRV/doc.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/SPVRemapper.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/doc.cpp"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/SPVRemapper.h"),
+                        CreateExternalThirdpartyPath("glslang/SPIRV/doc.h"),
                     }
 
                     GlslangSetPlatformProperties()
@@ -995,7 +961,7 @@ function WorkspaceRules(WorkspaceName)
         workspace(self.Name)
 
         -- Set location of the generated solution file
-        local SolutionLocation = self.GetSolutionsFolderPath()
+        local SolutionLocation = GetSolutionsFolderPath()
         location(SolutionLocation)
 
         LogInfo("    Generated solution location '%s'", SolutionLocation)
@@ -1012,7 +978,7 @@ function WorkspaceRules(WorkspaceName)
         }
 
         -- Includes
-        local RuntimeFolderPathLocal = self.GetRuntimeFolderPath()
+        local RuntimeFolderPathLocal = GetRuntimeFolderPath()
         includedirs { RuntimeFolderPathLocal }
 
         -- Workspace defines
@@ -1106,12 +1072,12 @@ function WorkspaceRules(WorkspaceName)
         end
 
         -- Define the workspace location; we do this with a Unix path since the engine (C++ side) expects this currently
-        local UnixEnginePath = path.translate(self.GetEnginePath(), "/")
+        local UnixEnginePath = path.translate(GetEnginePath(), "/")
         local EngineLocation = 'ENGINE_LOCATION="' .. UnixEnginePath .. '"'
         self.AddDefines { EngineLocation }
         
-        LogInfo("    Engine Path ='%s'", self.GetEnginePath())
-        LogInfo("    RuntimeFolderPath = '%s'", self.GetRuntimeFolderPath())
+        LogInfo("    Engine Path ='%s'", GetEnginePath())
+        LogInfo("    RuntimeFolderPath = '%s'", GetRuntimeFolderPath())
         
         -- Check if the command line overrides monolithic builds
         if IsBuildMonolithic() then

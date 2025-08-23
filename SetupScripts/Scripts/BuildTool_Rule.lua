@@ -24,7 +24,7 @@ function BuildRules(Name)
         ProjectFilePath = "",
 
         -- @brief - Location for generated files from the build
-        BuildFolderPath = "",
+        BuildFolderPath = GetBuildFolderPath(),
 
         -- @brief - Location for the build (inside the build folder specified inside the build-folder)
         OutputPath = "",
@@ -137,7 +137,10 @@ function BuildRules(Name)
         LinkModules = {},
 
         -- @brief - A list of link options (ignored on platforms other than Windows)
-        LinkOptions = {}
+        LinkOptions = {},
+
+        -- @brief - A list of commands that should be executed when the module has been built
+        PostBuildCommands = {},
     }
 
     -- Helper function for retrieving path
@@ -199,6 +202,10 @@ function BuildRules(Name)
         AddUniqueElements(InOptions, self.LinkOptions)
     end
 
+    function self.AddPostBuildCommands(InPostBuildCommands)
+        AddUniqueElements(InPostBuildCommands, self.PostBuildCommands)
+    end
+
     -- Helper for adding the .framework extension to frameworks
     function self.AddFrameworkExtension()
         for Index = 1, #self.Frameworks do
@@ -214,6 +221,16 @@ function BuildRules(Name)
                 FileArray[Index] = JoinPath(self.GetPath(), FileArray[Index])
             end
         end
+    end
+
+    -- Helper for retrieving the target folder-path
+    function self.GetTargetFolderPath()
+        return JoinPath(JoinPath(self.BuildFolderPath, "bin"), self.OutputPath)
+    end
+
+    -- Helper for retrieving the object-files folder-path
+    function self.GetObjectFilesFolderPath()
+        return JoinPath(JoinPath(self.BuildFolderPath, "bin"), self.OutputPath)
     end
 
     -- Project generation
@@ -293,11 +310,11 @@ function BuildRules(Name)
             location(self.ProjectFilePath)
 
             -- Setup all targets except the thirdparties
-            local FullObjectFolderPath = JoinPath(JoinPath(self.BuildFolderPath, "bin"), self.OutputPath)
+            local FullObjectFolderPath = self.GetTargetFolderPath()
             LogInfo("    Target location '%s'", FullObjectFolderPath)
             targetdir(FullObjectFolderPath)
 
-            local FullIntermediateFolderPath = JoinPath(JoinPath(self.BuildFolderPath, "bin-int"), self.OutputPath)
+            local FullIntermediateFolderPath = self.GetObjectFilesFolderPath()
             LogInfo("    Object files location '%s'", FullIntermediateFolderPath)
             objdir(FullIntermediateFolderPath)
 
@@ -324,82 +341,96 @@ function BuildRules(Name)
             end
 
             -- Debug logging
-            LogInfo("\n--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
-            if #self.ForceIncludes > 0 then
-                PrintTable("    Using ForceInclude '%s'", self.ForceIncludes)
-            end
+            if _G.gSettings and _G.gSettings.bEnableDebugLogging then
+                LogInfo("\n--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
+                if #self.ForceIncludes > 0 then
+                    PrintTable("    Using ForceInclude '%s'", self.ForceIncludes)
+                end
 
-            LogInfo("\n--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
-            if #self.Defines > 0 then
-                PrintTable("    Using define '%s'", self.Defines)
-            end
+                LogInfo("\n--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
+                if #self.Defines > 0 then
+                    PrintTable("    Using define '%s'", self.Defines)
+                end
 
-            LogInfo("\n--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
-            if #self.IncludeDirs > 0 then
-                PrintTable("    Using Includes '%s'", self.IncludeDirs)
-            end
+                LogInfo("\n--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
+                if #self.IncludeDirs > 0 then
+                    PrintTable("    Using Includes '%s'", self.IncludeDirs)
+                end
 
-            LogInfo("\n--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
-            if #self.ExternalIncludeDirs > 0 then
-                PrintTable("    Using ExternalInclude '%s'", self.ExternalIncludeDirs)
-            end
+                LogInfo("\n--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
+                if #self.ExternalIncludeDirs > 0 then
+                    PrintTable("    Using ExternalInclude '%s'", self.ExternalIncludeDirs)
+                end
 
-            LogInfo("\n--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
-            if #self.LibraryPaths > 0 then
-                PrintTable("    Using LibraryPath '%s'", self.LibraryPaths)
-            end
+                LogInfo("\n--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
+                if #self.LibraryPaths > 0 then
+                    PrintTable("    Using LibraryPath '%s'", self.LibraryPaths)
+                end
 
-            LogInfo("\n--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
-            if #self.Files > 0 then
-                PrintTable("    Including file '%s'", self.Files)
-            end
+                LogInfo("\n--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
+                if #self.Files > 0 then
+                    PrintTable("    Including file '%s'", self.Files)
+                end
 
-            LogInfo("\n--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
-            if #self.ExcludeFiles > 0 then
-                PrintTable("    Excluding file '%s'", self.ExcludeFiles)
-            end
+                LogInfo("\n--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
+                if #self.ExcludeFiles > 0 then
+                    PrintTable("    Excluding file '%s'", self.ExcludeFiles)
+                end
 
-            LogInfo("\n--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
-            if #self.Frameworks > 0 then
-                PrintTable("    Using framework thirdparty '%s'", self.Frameworks)
-            end
+                LogInfo("\n--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
+                if #self.Frameworks > 0 then
+                    PrintTable("    Using framework thirdparty '%s'", self.Frameworks)
+                end
 
-            LogInfo("\n--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
-            if #self.LinkLibraries > 0 then
-                PrintTable("    Linking library '%s'", self.LinkLibraries)
-            end
+                LogInfo("\n--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
+                if #self.LinkLibraries > 0 then
+                    PrintTable("    Linking library '%s'", self.LinkLibraries)
+                end
 
-            LogInfo("\n--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
-            if #self.LinkModules > 0 then
-                PrintTable("    Linking module '%s'", self.LinkModules)
-            end
+                LogInfo("\n--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
+                if #self.LinkModules > 0 then
+                    PrintTable("    Linking module '%s'", self.LinkModules)
+                end
 
-            LogInfo("\n--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
-            if #self.LinkOptions > 0 then
-                PrintTable("    Link options '%s'", self.LinkOptions)
-            end
+                LogInfo("\n--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
+                if #self.LinkOptions > 0 then
+                    PrintTable("    Link options '%s'", self.LinkOptions)
+                end
 
-            LogInfo("\n--- Module thirdparties for module '%s' (Num ModuleThirdParties=%d) ---", self.Name, #self.Modules)
-            if #self.Modules > 0 then
-                PrintTable("    Using module thirdparty '%s'", self.Modules)
-            end
+                LogInfo("\n--- Modules used by module '%s' (Num Modules=%d) ---", self.Name, #self.Modules)
+                if #self.Modules > 0 then
+                    PrintTable("    Using module '%s'", self.Modules)
+                end
 
-            LogInfo("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
-            if #self.Modules > 0 then
-                PrintTable("    Embed Module '%s'", self.Modules)
+                LogInfo("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
+                if #self.Modules > 0 then
+                    PrintTable("    Embed Module '%s'", self.Modules)
+                end
+
+                LogInfo("\n--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
+                if #self.PostBuildCommands > 0 then
+                    PrintTable("    Post-Build-Command '%s'", self.PostBuildCommands)
+                end
             end
 
             -- Setup force includes
             forceincludes(self.ForceIncludes)
 
-            defines(self.Defines)
-
+            -- Setup include dirs
             includedirs(self.IncludeDirs)
             externalincludedirs(self.ExternalIncludeDirs)
 
+            -- Setup defines
+            defines(self.Defines)
+
+            -- Setup library paths
             libdirs(self.LibraryPaths)
 
+            -- Setup files
             files(self.Files)
+
+            -- Setup post build-commands
+            postbuildcommands(self.PostBuildCommands)
 
             -- Setup exclude OS-specific files
             if IsPlatformWindows() then
@@ -470,6 +501,7 @@ function BuildRules(Name)
             filter {}
 
             -- Xcode build settings
+            -- TODO: Look into this, and see if this is something we need to be able to customize
             filter { "action:xcode4" }
                 xcodebuildsettings
                 {
@@ -483,67 +515,6 @@ function BuildRules(Name)
                     ["GCC_ENABLE_AVX2_EXTENSIONS"] = "YES",
                 }
             filter {}
-
-            -- Copy dynamic libraries from thirdparties folder
-            if IsPlatformWindows() then
-                local DxilDllCmd = "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxil.dll") .. " " .. FullObjectFolderPath
-                LogHighlight("dxil.dll Cmd %s", DxilDllCmd)
-
-                local DxcompilerDllCmd = "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxcompiler.dll") .. " " .. FullObjectFolderPath
-                LogHighlight("dxcompiler.dll Cmd %s", DxcompilerDllCmd)
-
-                local AgilitySdkFolder = JoinPath(FullObjectFolderPath, "D3D12")
-
-                -- Ensure the folder exists before copying files
-                local CreateAgilityFolderCmd = "if not exist \"" .. AgilitySdkFolder .. "\" mkdir \"" .. AgilitySdkFolder .. "\""
-
-                local D3d12coreDllCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll") .. " " .. AgilitySdkFolder
-                LogHighlight("d3d12core.dll Cmd %s", D3d12coreDllCmd)
-
-                local D3d12corePdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb") .. " " .. AgilitySdkFolder
-                LogHighlight("d3d12core.pdb Cmd %s", D3d12corePdbCmd)
-
-                local D3d12SDKLayersDllCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll") .. " " .. AgilitySdkFolder
-                LogHighlight("d3d12SDKLayers.dll Cmd %s", D3d12SDKLayersDllCmd)
-
-                local D3d12SDKLayersPdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb") .. " " .. AgilitySdkFolder
-                LogHighlight("d3d12SDKLayers.pdb Cmd %s", D3d12SDKLayersPdbCmd)
-
-                local D3dconfigExeCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe") .. " " .. AgilitySdkFolder
-                LogHighlight("d3dconfig.exe Cmd %s", D3dconfigExeCmd)
-
-                local D3dconfigPdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb") .. " " .. AgilitySdkFolder
-                LogHighlight("d3dconfig.pdb Cmd %s", D3dconfigPdbCmd)
-
-                local DirectSrExeCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll") .. " " .. AgilitySdkFolder
-                LogHighlight("DirectSR.dll Cmd %s", DirectSrExeCmd)
-
-                local DirectSrPdbCmd = "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb") .. " " .. AgilitySdkFolder
-                LogHighlight("DirectSR.pdb Cmd %s", DirectSrPdbCmd)
-
-                postbuildcommands
-                {
-                    CreateAgilityFolderCmd, -- Ensure folder exists before copying
-                    DxilDllCmd,
-                    DxcompilerDllCmd,
-                    D3d12coreDllCmd,
-                    D3d12corePdbCmd,
-                    D3d12SDKLayersDllCmd,
-                    D3d12SDKLayersPdbCmd,
-                    D3dconfigExeCmd,
-                    D3dconfigPdbCmd,
-                    DirectSrExeCmd,
-                    DirectSrPdbCmd,
-                }
-            elseif IsPlatformMac() then
-                local LibDxcompilerDllCmd = "cp " .. CreateExternalThirdpartyPath("DXC/bin/libdxcompiler.dylib") .. " " .. FullObjectFolderPath
-                LogHighlight("libdxcompiler.dylib Cmd %s", LibDxcompilerDllCmd)
-
-                postbuildcommands
-                {
-                    LibDxcompilerDllCmd
-                }
-            end
         project "*"
 
         LogHighlight("\n--- Finished generating project files for Project '%s' ---", self.Name)
@@ -580,9 +551,9 @@ function BuildRules(Name)
         end
 
         -- Setup folder paths
-        self.BuildFolderPath = self.Workspace.GetBuildFolderPath()
+        self.BuildFolderPath = GetBuildFolderPath()
         self.OutputPath      = self.Workspace.GetOutputPath()
-        self.ProjectFilePath = self.Workspace.GetSolutionsFolderPath()
+        self.ProjectFilePath = GetSolutionsFolderPath()
 
         -- Ensure that the runtime folder is added to the include folders
         self.AddExternalIncludeDirs { RuntimeFolderPath }

@@ -24,3 +24,15 @@ RhiModule.AddLinkLibraries({
     "glslang",
     "SPIRV-Cross",
 })
+
+-- Copy dynamic libraries from thirdparties folder
+if IsPlatformWindows() then
+    RhiModule.AddPostBuildCommands({
+        "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxil.dll") .. " " .. RhiModule.GetTargetFolderPath(),
+        "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxcompiler.dll") .. " " .. RhiModule.GetTargetFolderPath(),
+    })
+elseif IsPlatformMac() then
+    RhiModule.AddPostBuildCommands({
+        "cp " .. CreateExternalThirdpartyPath("DXC/bin/libdxcompiler.dylib") .. " " .. RhiModule.GetTargetFolderPath(),
+    })
+end

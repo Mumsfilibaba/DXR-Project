@@ -49,7 +49,7 @@ function TargetBuildRules(Name, Workspace)
     self.bIsMonolithic = IsBuildMonolithic()
 
     -- Helper function for retrieving path
-    local PathToTarget = JoinPath(self.Workspace.GetEnginePath(), self.Name)
+    local PathToTarget = JoinPath(GetEnginePath(), self.Name)
     function self.GetPath()
         return PathToTarget
     end

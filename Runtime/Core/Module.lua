@@ -27,7 +27,7 @@ function CoreModule.Generate()
     local TargetName = CoreModule.Workspace.GetCurrentTargetName()
     CoreModule.AddDefines({ 'PROJECT_NAME="' .. TargetName .. '"' })
 
-    local UnixProjectPath = path.translate(JoinPath(CoreModule.Workspace.GetEnginePath(), TargetName), "/")
+    local UnixProjectPath = path.translate(JoinPath(GetEnginePath(), TargetName), "/")
     local ProjectLocation = 'PROJECT_LOCATION="' .. UnixProjectPath .. '"'
     CoreModule.AddDefines({ ProjectLocation })
 

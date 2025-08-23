@@ -16,6 +16,15 @@ newoption
     default     = "Win32"
 }
 
+-- Global settings
+if type(gSettings) ~= "table" then
+    gSettings = {}
+end
+
+if gSettings.bEnableDebugLogging == nil then
+    gSettings.bEnableDebugLogging = false
+end
+
 -- Global variables
 local gIsMonolithic
 local gModules = {}
@@ -25,6 +34,7 @@ function IsBuildMonolithic()
     if gIsMonolithic == nil then
         gIsMonolithic = (_OPTIONS["monolithic"] ~= nil)
     end
+
     return gIsMonolithic
 end
 
@@ -70,6 +80,7 @@ function PrintTable(FormatStr, Tbl)
     if Tbl == nil then 
         return 
     end
+
     for _, value in ipairs(Tbl) do
         LogInfo(FormatStr, value)
     end
@@ -130,6 +141,12 @@ local gRuntimeFolderPath = JoinPath(gEnginePath, "Runtime")
 
 function GetRuntimeFolderPath()
     return gRuntimeFolderPath
+end
+
+-- Retrieve the path of the engine 'Build' folder
+local gBuildFolderPath = JoinPath(gEnginePath, "Build")
+function GetBuildFolderPath()
+    return gBuildFolderPath
 end
 
 -- Retrieve the path to the Solutions folder containing solution and project files
