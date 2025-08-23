@@ -236,7 +236,7 @@ function BuildRules(Name)
     -- Project generation
     function self.GenerateProject()
         project(self.Name)
-            LogHighlight("\n--- Generating project files for Project '%s' ---", self.Name)
+            LogHighlight("\n--- Generating Project '%s' ---", self.Name)
 
             architecture(self.Architecture)
             warnings(self.Warnings)
@@ -552,8 +552,8 @@ function BuildRules(Name)
 
         -- Setup folder paths
         self.BuildFolderPath = GetBuildFolderPath()
-        self.OutputPath      = self.Workspace.GetOutputPath()
         self.ProjectFilePath = GetSolutionsFolderPath()
+        self.OutputPath      = self.Workspace.GetOutputPath()
 
         -- Ensure that the runtime folder is added to the include folders
         self.AddExternalIncludeDirs { RuntimeFolderPath }

@@ -207,11 +207,16 @@ function WorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                flags({
+                    "MultiProcessorCompile",
+                    "NoIncrementalLink"
+                })
                 
                 -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                 filter "action:vs*"
-                    buildoptions { "/Zc:__cplusplus" }
+                    buildoptions({
+                        "/Zc:__cplusplus"
+                    })
                 filter {}
 
                 location(JoinPath(SolutionLocation, "ThirdParty/ImGui"))
@@ -221,7 +226,7 @@ function WorkspaceRules(WorkspaceName)
                 objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/ImGui/" .. self.GetOutputPath()))
 
                 -- Files
-                files {
+                files({
                     CreateExternalThirdpartyPath("imgui/imconfig.h"),
                     CreateExternalThirdpartyPath("imgui/imgui.h"),
                     CreateExternalThirdpartyPath("imgui/imgui.cpp"),
@@ -233,7 +238,7 @@ function WorkspaceRules(WorkspaceName)
                     CreateExternalThirdpartyPath("imgui/imstb_rectpack.h"),
                     CreateExternalThirdpartyPath("imgui/imstb_textedit.h"),
                     CreateExternalThirdpartyPath("imgui/imstb_truetype.h"),
-                }
+                })
                 
                 -- Configurations
                 filter "configurations:Debug or Release"
