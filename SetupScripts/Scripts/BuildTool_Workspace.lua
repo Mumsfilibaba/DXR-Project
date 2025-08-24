@@ -126,6 +126,7 @@ function WorkspaceRules(WorkspaceName)
 
     -- Initialize this object
     local self = {
+        
         -- Name of the workspace being generated
         Name = WorkspaceName,
         
@@ -147,11 +148,6 @@ function WorkspaceRules(WorkspaceName)
         -- Name of the project that should be set as startup project
         StartProjectName = "",
     }
-
-    -- Output path for thirdparties (ImGui, etc.)
-    function self.GetOutputPath()
-        return "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
-    end
 
     -- Retrieve the current target name
     function self.GetCurrentTargetName()
@@ -222,8 +218,8 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/ImGui"))
 
                 -- Locations
-                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/ImGui/" .. self.GetOutputPath()))
-                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/ImGui/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/ImGui/" .. GetOutputConfigPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/ImGui/" .. GetOutputConfigPath()))
 
                 -- Files
                 files({
@@ -280,8 +276,8 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/tinyobjloader"))
 
                 -- Locations
-                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/tinyobjloader/" .. self.GetOutputPath()))
-                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/tinyobjloader/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/tinyobjloader/" .. GetOutputConfigPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/tinyobjloader/" .. GetOutputConfigPath()))
 
                 -- Files
                 files {
@@ -329,8 +325,8 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/OpenFBX"))
             
                 -- Locations
-                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/OpenFBX/" .. self.GetOutputPath()))
-                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/OpenFBX/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/OpenFBX/" .. GetOutputConfigPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/OpenFBX/" .. GetOutputConfigPath()))
 
                 -- Files
                 files {
@@ -380,8 +376,8 @@ function WorkspaceRules(WorkspaceName)
                 location(JoinPath(SolutionLocation, "ThirdParty/SPIRV-Cross"))
             
                 -- Locations
-                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/SPIRV-Cross/" .. self.GetOutputPath()))
-                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/SPIRV-Cross/" .. self.GetOutputPath()))
+                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/SPIRV-Cross/" .. GetOutputConfigPath()))
+                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/SPIRV-Cross/" .. GetOutputConfigPath()))
 
                 -- Files
                 files {
@@ -471,8 +467,8 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/GenericCodeGen/"))
                 
                     -- Locations
-                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/GenericCodeGen/" .. self.GetOutputPath()))
-                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/GenericCodeGen/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/GenericCodeGen/" .. GetOutputConfigPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/GenericCodeGen/" .. GetOutputConfigPath()))
 
                     -- Files
                     files {
@@ -522,8 +518,8 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/OSDependent/"))
                 
                     -- Locations
-                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/OSDependent/" .. self.GetOutputPath()))
-                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/OSDependent/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/OSDependent/" .. GetOutputConfigPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/OSDependent/" .. GetOutputConfigPath()))
 
                     -- Files
                     files {
@@ -582,8 +578,8 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/MachineIndependent/"))
                 
                     -- Locations
-                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/MachineIndependent/" .. self.GetOutputPath()))
-                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/MachineIndependent/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/MachineIndependent/" .. GetOutputConfigPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/MachineIndependent/" .. GetOutputConfigPath()))
 
                     -- Include Directories
                     includedirs {
@@ -699,8 +695,8 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/glslang/"))
                 
                     -- Locations
-                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang/" .. self.GetOutputPath()))
-                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang/" .. GetOutputConfigPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang/" .. GetOutputConfigPath()))
 
                     -- Include Directories
                     includedirs {
@@ -778,8 +774,8 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/glslang-default-resource-limits/"))
                 
                     -- Locations
-                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
-                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/glslang-default-resource-limits/" .. GetOutputConfigPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang-default-resource-limits/" .. GetOutputConfigPath()))
 
                     -- Include Directories
                     includedirs {
@@ -839,8 +835,8 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/SPIRV/"))
                 
                     -- Locations
-                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPIRV/" .. self.GetOutputPath()))
-                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPIRV/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPIRV/" .. GetOutputConfigPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPIRV/" .. GetOutputConfigPath()))
 
                     -- Include Directories
                     includedirs {
@@ -929,8 +925,8 @@ function WorkspaceRules(WorkspaceName)
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/SPVRemapper/"))
                 
                     -- Locations
-                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPVRemapper/" .. self.GetOutputPath()))
-                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPVRemapper/" .. self.GetOutputPath()))
+                    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/glslang/SPVRemapper/" .. GetOutputConfigPath()))
+                    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPVRemapper/" .. GetOutputConfigPath()))
 
                     -- Files
                     files {
@@ -1064,7 +1060,7 @@ function WorkspaceRules(WorkspaceName)
     -- Generate workspace
     function self.Generate()
         LogInfo("\n--- Generating Workspace '%s' ---", self.Name)
-        LogInfo("OutputPath = '%s'", self.GetOutputPath())
+        LogInfo("OutputPath = '%s'", GetOutputConfigPath())
 
         if self.TargetRules == nil then
             LogError("TargetRules cannot be nil")

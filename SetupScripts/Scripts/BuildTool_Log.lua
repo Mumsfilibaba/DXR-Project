@@ -1,30 +1,39 @@
 -- Helper function to handle colored logging with optional prefixes
-local function LogWithColor(Color, Prefix, FormatStr, ...)
+local function LogWithColor(Color, Prefix, FmtStr, ...)
     term.pushColor(Color)
-    if Prefix then
-        print(Prefix .. string.format(FormatStr, ...))
+    
+    local Message
+    if select("#", ...) > 0 then
+        Message = string.format(FmtStr, ...)
     else
-        print(string.format(FormatStr, ...))
+        Message = tostring(FmtStr)  -- don't run format; safe for %{cfg.*}
     end
+
+    if Prefix then
+        print(Prefix .. Message)
+    else
+        print(Message)
+    end
+
     term.popColor()
 end
 
-function LogInfo(FormatStr, ...)
-    print(string.format(FormatStr, ...))
+function LogInfo(FmtStr, ...)
+    print(string.format(FmtStr, ...))
 end
 
-function LogHighlight(FormatStr, ...)
-    LogWithColor(term.green, nil, FormatStr, ...)
+function LogHighlight(FmtStr, ...)
+    LogWithColor(term.green, nil, FmtStr, ...)
 end
 
-function LogHighlightWarning(FormatStr, ...)
-    LogWithColor(term.yellow, nil, FormatStr, ...)
+function LogHighlightWarning(FmtStr, ...)
+    LogWithColor(term.yellow, nil, FmtStr, ...)
 end
 
-function LogWarning(FormatStr, ...)
-    LogWithColor(term.yellow, "Warning: ", FormatStr, ...)
+function LogWarning(FmtStr, ...)
+    LogWithColor(term.yellow, "Warning: ", FmtStr, ...)
 end
 
-function LogError(FormatStr, ...)
-    LogWithColor(term.red, "Error: ", FormatStr, ...)
+function LogError(FmtStr, ...)
+    LogWithColor(term.red, "Error: ", FmtStr, ...)
 end

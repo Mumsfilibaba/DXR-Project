@@ -19,7 +19,6 @@ if IsPlatformWindows() then
 
     -- Copy dynamic libraries from thirdparties folder
     local AgilitySdkFolder = JoinPath(D3D12RHI.GetTargetFolderPath(), "D3D12")
-    LogHighlight("AgilitySdkFolder: " .. AgilitySdkFolder)
 
     D3D12RHI.AddPostBuildCommands({
         "if not exist \"" .. AgilitySdkFolder .. "\" mkdir \"" .. AgilitySdkFolder .. "\"", -- Ensure folder exists before copying

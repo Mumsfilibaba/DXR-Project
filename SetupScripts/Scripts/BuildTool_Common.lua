@@ -145,6 +145,7 @@ end
 
 -- Retrieve the path of the engine 'Build' folder
 local gBuildFolderPath = JoinPath(gEnginePath, "Build")
+
 function GetBuildFolderPath()
     return gBuildFolderPath
 end
@@ -161,6 +162,13 @@ local gExternalThirdpartyFolderPath = JoinPath(gEnginePath, "ThirdParty")
 
 function GetExternalThirdpartyFolderPath()
     return gExternalThirdpartyFolderPath
+end
+
+-- Output path for the binaries inside the buildfolder
+local gOutputConfigPath = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
+
+function GetOutputConfigPath()
+    return gOutputConfigPath
 end
 
 -- Make path relative to the thirdparty folder

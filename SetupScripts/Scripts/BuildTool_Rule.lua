@@ -225,12 +225,12 @@ function BuildRules(Name)
 
     -- Helper for retrieving the target folder-path
     function self.GetTargetFolderPath()
-        return JoinPath(JoinPath(self.BuildFolderPath, "bin"), self.OutputPath)
+        return JoinPath(JoinPath(self.BuildFolderPath, "bin"), GetOutputConfigPath())
     end
 
     -- Helper for retrieving the object-files folder-path
     function self.GetObjectFilesFolderPath()
-        return JoinPath(JoinPath(self.BuildFolderPath, "bin"), self.OutputPath)
+        return JoinPath(JoinPath(self.BuildFolderPath, "bin-int"), GetOutputConfigPath())
     end
 
     -- Project generation
@@ -553,7 +553,7 @@ function BuildRules(Name)
         -- Setup folder paths
         self.BuildFolderPath = GetBuildFolderPath()
         self.ProjectFilePath = GetSolutionsFolderPath()
-        self.OutputPath      = self.Workspace.GetOutputPath()
+        self.OutputPath      = GetOutputConfigPath()
 
         -- Ensure that the runtime folder is added to the include folders
         self.AddExternalIncludeDirs { RuntimeFolderPath }
