@@ -11,7 +11,8 @@
 #include "RHI/RHIResources.h"
 #include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
-#include <imgui.h>
+
+#include <imgui/imgui.h>
 
 struct FVertexConstantBuffer
 {

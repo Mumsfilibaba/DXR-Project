@@ -6,8 +6,8 @@ function ModuleBuildRules(Name)
 
     -- Initialize parent class
     local self = BuildRules(Name)
-    if self == nil then
-        LogError("Failed to create BuildRule")
+    if not self then
+        LogError("Parent function BuildRules failed")
         return nil
     end
 
@@ -24,10 +24,14 @@ function ModuleBuildRules(Name)
     -- Set to true to enable hot-reloading
     self.bRuntimeLinking = false
 
+    -- Set this to true if this is a library and not a module. Then this module is simply built
+    -- as a library, either static or dynamic depending on bIsDynamic.
+    self.bIsLibrary = false
+
     -- Generate the module
     local BaseGenerate = self.Generate
     function self.Generate()
-        if self.Workspace == nil then
+        if not self.Workspace then
             LogError("Workspace cannot be nil when generating Module")
             return
         end
@@ -35,33 +39,33 @@ function ModuleBuildRules(Name)
         LogInfo("\n--- Generating Module '%s' ---", self.Name)
 
         -- Handle monolithic build
-        self.bIsMonolithic = IsBuildMonolithic()
-        if self.bIsMonolithic then
-            LogInfo("    Build is monolithic")
-
+        if IsBuildMonolithic() and (not self.bIsLibrary) then
             self.bIsDynamic      = false
             self.bRuntimeLinking = false
+            
+            LogInfo("    Build is monolithic")
         else
             LogInfo("    Build is NOT monolithic")
         end
 
         -- Dynamic or static
-        local ModuleApiName = self.Name:upper() .. "_API"
-        if self.bIsDynamic then
-            self.Kind = "SharedLib"
-
-            -- Add define to control the module implementation (for export/import)
-            ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
+        if self.bIsLibrary then
+            self.Kind = self.bIsDynamic and "SharedLib" or "StaticLib"
         else
-            self.Kind = "StaticLib"
+            local ModuleApiName = self.Name:upper() .. "_API"
+            if self.bIsDynamic then
+                -- Add define to control the module implementation (for export/import)
+                ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
 
-            -- When a module is not dynamic we treat it as monolithic
-            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
+                self.Kind = "SharedLib"
+            else
+                self.Kind = "StaticLib"
+            end
+
+            -- Always add module name and API as defines
+            self.AddDefines({ 'MODULE_NAME="' .. self.Name .. '"' })
+            self.AddDefines({ ModuleApiName })
         end
-
-        -- Always add module name as a define
-        self.AddDefines({ 'MODULE_NAME="' .. self.Name .. '"' })
-        self.AddDefines({ ModuleApiName })
 
         -- Generate the project
         BaseGenerate()

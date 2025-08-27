@@ -6,7 +6,6 @@ local EngineModule = ModuleBuildRules("Engine")
 EngineModule.bUsePrecompiledHeaders = true
 
 EngineModule.AddExternalIncludeDirs({
-    CreateExternalThirdpartyPath("ImGui/imgui"),
     CreateExternalThirdpartyPath("stb_image"),
     CreateExternalThirdpartyPath("tinyobjloader"),
     CreateExternalThirdpartyPath("tinyddsloader"),
@@ -19,11 +18,11 @@ EngineModule.AddModules({
     "Application",
     "RHI",
     "RendererCore",
+    "ImGui",
     "ImGuiPlugin",
 })
 
 EngineModule.AddLinkLibraries({
-    "ImGui",
     "tinyobjloader",
     "OpenFBX",
 })

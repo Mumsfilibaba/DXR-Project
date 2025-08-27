@@ -17,88 +17,68 @@ function BuildRules(Name)
     -- Initialize public members
     local self =
     {
-        -- @brief - Name. Must be the name of the folder as well or specify the location
+        -- Name - Must be the name of the folder as well or specify the location
         Name = Name,
 
-        -- @brief - Location for IDE project files
+        -- Group - (Private) solution subfolder; can be set by path-resolution code
+        Group = "",
+
+        -- Location for IDE project files
         ProjectFilePath = "",
 
-        -- @brief - Location for generated files from the build
-        BuildFolderPath = GetBuildFolderPath(),
-
-        -- @brief - Location for the build (inside the build folder specified inside the build-folder)
+        -- Location for the build (inside the build folder)
         OutputPath = "",
 
-        -- @brief - The workspace that this rule is currently a part of
+        -- The workspace this rule is part of
         Workspace = {},
 
-        -- @brief - Should use precompiled headers. Should be named Precompiled.h and Precompiled.cpp
+        -- Should use precompiled headers (PreCompiled.h / PreCompiled.cpp)
         bUsePrecompiledHeaders = false,
 
-        -- @brief - Set to true if C++ files (.cpp) should be compiled as Objective-C++ (.mm), making compilation for all files native to the iOS and Mac platform
+        -- Compile .cpp as Objective-C++ on macOS
         bCompileCppAsObjectiveCpp = true,
 
-        -- @brief - Enable runtime type information
+        -- RTTI
         bEnableRuntimeTypeInfo = false,
 
-        -- @brief - Enable Edit and Continue in Visual Studio
+        -- Edit and Continue (VS)
         bEnableEditAndContinue = false,
 
-        -- @brief - Enable C++ intrinsics
+        -- C++ intrinsics
         bEnableIntrinsics = true,
 
-        -- @brief - Architecture to compile for
-        Architecture = "x86_64",
+        -- Optimize during debug builds
+        bOptimizeDebugBuild = false,
 
-        -- @brief - Warning level to compile with
-        Warnings = "extra",
+        -- Disable warnings (Useful for third-party libraries where we do not control the code)
+        bSilenceWarnings = false,
 
-        -- @brief - How to handle C++ exceptions
+        -- Toolchain / build settings
         ExceptionHandling = "Off",
-
-        -- @brief - Floating point settings
         FloatingPoint = "Fast",
-
-        -- @brief - Enable vector extensions
         VectorExtensions = "AVX2",
-
-        -- @brief - Language to compile
         Language = "C++",
-
-        -- @brief - Language version to compile
         CppVersion = "C++20",
-
-        -- @brief - Version of system SDK
         SystemVersion = "latest",
-
-        -- @brief - ASCII or Unicode
         CharacterSet = "Ascii",
 
-        -- @brief - Premake flags
-        Flags =
-        {
+        Flags = {
             "MultiProcessorCompile",
             "NoIncrementalLink",
         },
 
-        -- @brief - The kind of project to generate (SharedLib, StaticLib, WindowedApp, ConsoleApp, etc.)
+        -- Kind (SharedLib, StaticLib, WindowedApp, ConsoleApp, etc.)
         Kind = "SharedLib",
 
-        -- @brief - Include directories, e.g., #include <ThirdParty.h> or #include "ThirdParty.h"
+        -- Include / link state
         IncludeDirs = {},
-
-        -- @brief - External includes, e.g., #include <ThirdParty.h>
         ExternalIncludeDirs = {},
-
-        -- @brief - Force include these files
         ForceIncludes = {},
-
-        -- @brief - Paths to search library files in
         LibraryPaths = {},
+        Defines = {},
+        Frameworks = {},
 
-        -- @brief - Files to compile into the module
-        Files =
-        {
+        Files = {
             "**.h",
             "**.hpp",
             "**.inl",
@@ -108,208 +88,205 @@ function BuildRules(Name)
             "**.hlsli"
         },
 
-        -- @brief - Files to exclude
-        ExcludeFiles =
-        {
+        ExcludeFiles = {
             "**.hlsl",
             "**.hlsli"
         },
 
-        -- @brief - Defines
-        Defines = {},
-
-        -- @brief - Frameworks, only on macOS for now; should only list the names, not .framework
-        Frameworks = {},
-
-        -- @brief - Should the libraries be embedded into the executable (this only applies to macOS at the moment)
+        -- macOS embedding
         bEmbedThirdparties = false,
-
-        -- @brief - Extra names to embed (this only applies to macOS at the moment)
         ExtraEmbedNames = {},
 
-        -- @brief - Engine modules that this module depends on
+        -- Dependencies (module names)
         Modules = {},
 
-        -- @brief - Extra libraries to link
+        -- External libs / modules for linker
         LinkLibraries = {},
-
-        -- @brief - A list of thirdparties that a module depends on; ensures that the IDE builds all the projects
         LinkModules = {},
 
-        -- @brief - A list of link options (ignored on platforms other than Windows)
+        -- Linker options (mostly Windows)
         LinkOptions = {},
 
-        -- @brief - A list of commands that should be executed when the module has been built
+        -- Post-build steps (strings)
         PostBuildCommands = {},
     }
 
-    -- Helper function for retrieving path
+    -- Backing storage for the module's *source* path (defaults to Runtime/<Name>)
     local BuildRulePath = JoinPath(RuntimeFolderPath, self.Name)
+
+    -- Accessors / mutators for path & group (so ThirdParty modules can override)
     function self.GetPath()
         return BuildRulePath
     end
-
-    -- Helper functions for adding elements
-    function self.AddFlags(InFlags)
-        AddUniqueElements(InFlags, self.Flags)
+    function self.SetPath(NewPath)
+        BuildRulePath = CreateOsPath(NewPath)
+    end
+    function self.SetGroup(NewGroup)
+        self.Group = NewGroup or ""
     end
 
-    function self.AddIncludeDirs(InIncludeDirs)
-        AddUniqueElements(InIncludeDirs, self.IncludeDirs)
+    -- Adders
+    function self.AddFlags(InFlags) AddUniqueElements(InFlags, self.Flags) end
+    function self.AddIncludeDirs(x) AddUniqueElements(x, self.IncludeDirs) end
+    function self.AddExternalIncludeDirs(x) AddUniqueElements(x, self.ExternalIncludeDirs) end
+    function self.AddFiles(x) AddUniqueElements(x, self.Files) end
+    function self.AddExcludeFiles(x) AddUniqueElements(x, self.ExcludeFiles) end
+    function self.AddDefines(x) AddUniqueElements(x, self.Defines) end
+    function self.AddModules(x) AddUniqueElements(x, self.Modules) end
+    function self.AddExtraEmbedNames(x) AddUniqueElements(x, self.ExtraEmbedNames) end
+    function self.AddLinkLibraries(x) AddUniqueElements(x, self.LinkLibraries) end
+    function self.AddFrameworks(x) AddUniqueElements(x, self.Frameworks) end
+    function self.AddForceIncludes(x) AddUniqueElements(x, self.ForceIncludes) end
+    function self.AddLibraryPaths(x) AddUniqueElements(x, self.LibraryPaths) end
+    function self.AddLinkOptions(x) AddUniqueElements(x, self.LinkOptions) end
+    function self.AddPostBuildCommands(x) AddUniqueElements(x, self.PostBuildCommands) end
+
+    -- Helper for adding the .framework extension to frameworks (idempotent)
+    local function EndsWith(str, suffix)
+        return suffix ~= "" and str:sub(-#suffix) == suffix
     end
 
-    function self.AddExternalIncludeDirs(InExternalIncludeDirs)
-        AddUniqueElements(InExternalIncludeDirs, self.ExternalIncludeDirs)
-    end
-
-    function self.AddFiles(InFiles)
-        AddUniqueElements(InFiles, self.Files)
-    end
-
-    function self.AddExcludeFiles(InExcludeFiles)
-        AddUniqueElements(InExcludeFiles, self.ExcludeFiles)
-    end
-
-    function self.AddDefines(InDefines)
-        AddUniqueElements(InDefines, self.Defines)
-    end
-
-    function self.AddModules(InModules)
-        AddUniqueElements(InModules, self.Modules)
-    end
-
-    function self.AddExtraEmbedNames(InExtraEmbedNames)
-        AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames)
-    end
-
-    function self.AddLinkLibraries(InLibraries)
-        AddUniqueElements(InLibraries, self.LinkLibraries)
-    end
-
-    function self.AddFrameworks(InFrameworks)
-        AddUniqueElements(InFrameworks, self.Frameworks)
-    end
-
-    function self.AddForceIncludes(InForceIncludes)
-        AddUniqueElements(InForceIncludes, self.ForceIncludes)
-    end
-
-    function self.AddLibraryPaths(InLibraryPaths)
-        AddUniqueElements(InLibraryPaths, self.LibraryPaths)
-    end
-
-    function self.AddLinkOptions(InOptions)
-        AddUniqueElements(InOptions, self.LinkOptions)
-    end
-
-    function self.AddPostBuildCommands(InPostBuildCommands)
-        AddUniqueElements(InPostBuildCommands, self.PostBuildCommands)
-    end
-
-    -- Helper for adding the .framework extension to frameworks
     function self.AddFrameworkExtension()
-        for Index = 1, #self.Frameworks do
-            self.Frameworks[Index] = self.Frameworks[Index] .. ".framework"
-        end
-    end
-
-    -- Makes all files relative to runtime folder
-    function self.MakeFileNamesRelativeToPath(FileArray)
-        for Index = 1, #FileArray do
-            local CurrentFile = FileArray[Index]
-            if not path.isabsolute(FileArray[Index]) then
-                FileArray[Index] = JoinPath(self.GetPath(), FileArray[Index])
+        for i = 1, #self.Frameworks do
+            local FrameworkName = self.Frameworks[i]
+            if not EndsWith(FrameworkName, ".framework") then
+                self.Frameworks[i] = FrameworkName .. ".framework"
             end
         end
     end
 
-    -- Helper for retrieving the target folder-path
-    function self.GetTargetFolderPath()
-        return JoinPath(JoinPath(self.BuildFolderPath, "bin"), GetOutputConfigPath())
+    -- Makes all files relative to the module's source path
+    function self.MakeFileNamesRelativeToPath(FileArray)
+        for i = 1, #FileArray do
+            local CurrentFile = FileArray[i]
+            if not path.isabsolute(CurrentFile) then
+                FileArray[i] = JoinPath(self.GetPath(), CurrentFile)
+            end
+        end
     end
 
-    -- Helper for retrieving the object-files folder-path
+    -- Target / object directories
+    function self.GetTargetFolderPath()
+        local BasePath = JoinPath(JoinPath(GetBuildFolderPath(), "bin"), GetOutputConfigPath())
+        return (type(self.OutputPath) == "string" and self.OutputPath ~= "") and JoinPath(BasePath, self.OutputPath) or BasePath
+    end
+
     function self.GetObjectFilesFolderPath()
-        return JoinPath(JoinPath(self.BuildFolderPath, "bin-int"), GetOutputConfigPath())
+        local BasePath   = JoinPath(JoinPath(GetBuildFolderPath(), "bin-int"), GetOutputConfigPath())
+        local OutputPath = (type(self.OutputPath) == "string" and self.OutputPath ~= "") and JoinPath(BasePath, self.OutputPath) or BasePath  
+        -- Need to add project name to make it unique per project (VS limitation)
+        return JoinPath(OutputPath, "%{prj.name}")
     end
 
     -- Project generation
     function self.GenerateProject()
+
+        -- Clear any inherited filter up front (defensive)
+        filter {}
+
+        -- Early-exit helper to clean Premake state
+        local function AbortGenerateProject(...)
+            if select('#', ...) > 0 then
+                LogError(...)
+            end
+
+            filter {}
+            project "*"
+            group ""
+            return nil
+        end
+
+        -- Always set a group explicitly to avoid state leaking between projects
+        local GroupName = (type(self.Group) == "string" and self.Group ~= "") and self.Group or ""
+        group(GroupName)
+
+        -- Setting up project
         project(self.Name)
             LogHighlight("\n--- Generating Project '%s' ---", self.Name)
 
-            architecture(self.Architecture)
-            warnings(self.Warnings)
+            -- Add settings based on configuration
+            if self.bOptimizeDebugBuild then
+                filter "configurations:Debug"
+                    optimize("Full")
+                filter {}
+            else
+                filter "configurations:Debug"
+                    optimize("Off")
+                filter {}
+            end
+
+            filter "configurations:Release"
+                optimize("Full")
+            filter {}
+
+            filter "configurations:Production"
+                optimize("Full")
+            filter {}
+
+            -- Setup warning handles
+            if self.bSilenceWarnings then
+                warnings("Off")
+            else
+                warnings("Extra")
+            end
+
+            -- Handle exception settings
             exceptionhandling(self.ExceptionHandling)
 
             -- Build type
             kind(self.Kind)
 
-            -- Setup runtime type information
-            if self.bEnableRuntimeTypeInfo then
-                rtti("On")
-            else
-                rtti("Off")
-            end
-
+            -- RTTI
+            rtti(self.bEnableRuntimeTypeInfo and "On" or "Off")
             floatingpoint(self.FloatingPoint)
             vectorextensions(self.VectorExtensions)
 
-            -- Setup Edit and Continue
-            if self.bEnableEditAndContinue then
-                editandcontinue("On")
-            else
-                editandcontinue("Off")
-            end
+            -- Edit and Continue
+            editandcontinue(self.bEnableEditAndContinue and "On" or "Off")
 
-            -- Setup intrinsics
-            if self.bEnableIntrinsics then
-                intrinsics("On")
-            else
-                intrinsics("Off")
-            end
+            -- Intrinsics
+            intrinsics(self.bEnableIntrinsics and "On" or "Off")
 
-            -- Setup language
-            local CurrentLanguage = self.Language:upper()
+            -- Language
+            local CurrentLanguage = (self.Language or ""):upper()
             if CurrentLanguage ~= "C++" then
-                LogError("Invalid language '%s'", self.Language)
-                return nil
+                return AbortGenerateProject("Invalid language '%s'", tostring(self.Language))
+            else
+                language(self.Language)
             end
 
-            language(self.Language)
-
-            -- Setup version
-            local CurrentLanguageVersion = self.CppVersion:lower()
+            -- Version
+            local CurrentLanguageVersion = (self.CppVersion or ""):lower()
             if not VerifyLanguageVersion(CurrentLanguageVersion) then
-                LogError("Invalid language version '%s'", self.CppVersion)
-                return nil
+                return AbortGenerateProject("Invalid language version '%s'", tostring(self.CppVersion))
+            else
+                cppdialect(self.CppVersion)
             end
 
-            cppdialect(self.CppVersion)
-
-            -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
-            filter "action:vs*"
-                buildoptions { "/Zc:__cplusplus" }
+            -- /Zc:__cplusplus for VS
+            filter { "action:vs*" }
+                buildoptions({
+                    "/Zc:__cplusplus"
+                })
             filter {}
 
-            -- Setup system version
+            -- System SDK
             systemversion(self.SystemVersion)
 
-            -- Setup character set
-            local CurrentCharacterSet = self.CharacterSet:lower()
+            -- Charset
+            local CurrentCharacterSet = (self.CharacterSet or ""):lower()
             if CurrentCharacterSet ~= "ascii" and CurrentCharacterSet ~= "unicode" then
-                LogError("Invalid character set '%s'", self.CharacterSet)
-                return nil
+                return AbortGenerateProject("Invalid character set '%s'", tostring(self.CharacterSet))
+            else
+                characterset(self.CharacterSet)
             end
 
-            characterset(self.CharacterSet)
-
-            -- Setup location
+            -- Location
             self.ProjectFilePath = CreateOsPath(self.ProjectFilePath)
             LogInfo("    Project location '%s'", self.ProjectFilePath)
             location(self.ProjectFilePath)
 
-            -- Setup all targets except the thirdparties
+            -- Output dirs
             local FullObjectFolderPath = self.GetTargetFolderPath()
             LogInfo("    Target location '%s'", FullObjectFolderPath)
             targetdir(FullObjectFolderPath)
@@ -318,23 +295,19 @@ function BuildRules(Name)
             LogInfo("    Object files location '%s'", FullIntermediateFolderPath)
             objdir(FullIntermediateFolderPath)
 
-            -- Setup precompiled headers
+            -- PCH
             if self.bUsePrecompiledHeaders then
                 if BuildWithVisualStudio() then
-                    -- Specify the full path for everything to work properly on Windows
                     local PchSourcePath = JoinPath(self.GetPath(), "PreCompiled.cpp")
                     LogHighlight("    PreCompiled source path '%s'", PchSourcePath)
-
-                    -- Use the Unix path (this is probably an internal Premake thing)
+                    
                     local UnixPchSourcePath = path.translate(PchSourcePath, '/')
                     pchheader("PreCompiled.h")
                     pchsource(UnixPchSourcePath)
                 else
-                    -- Specify the full path for everything to work properly on non-Windows
                     local PchPath = JoinPath(self.GetPath(), "PreCompiled.h")
                     pchheader(PchPath)
                 end
-
                 LogInfo("    Project is using PreCompiled Headers")
             else
                 LogInfo("    Project does NOT use PreCompiled Headers")
@@ -343,12 +316,12 @@ function BuildRules(Name)
             -- Debug logging
             if _G.gSettings and _G.gSettings.bEnableDebugLogging then
                 LogInfo("\n--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
-                if #self.ForceIncludes > 0 then
-                    PrintTable("    Using ForceInclude '%s'", self.ForceIncludes)
+                if #self.ForceIncludes > 0 then 
+                    PrintTable("    Using ForceInclude '%s'", self.ForceIncludes) 
                 end
 
                 LogInfo("\n--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
-                if #self.Defines > 0 then
+                if #self.Defines > 0 then 
                     PrintTable("    Using define '%s'", self.Defines)
                 end
 
@@ -413,36 +386,29 @@ function BuildRules(Name)
                 end
             end
 
-            -- Setup force includes
+            -- Force includes / include dirs / defines / libs / files / postbuild
             forceincludes(self.ForceIncludes)
-
-            -- Setup include dirs
             includedirs(self.IncludeDirs)
             externalincludedirs(self.ExternalIncludeDirs)
-
-            -- Setup defines
             defines(self.Defines)
-
-            -- Setup library paths
             libdirs(self.LibraryPaths)
-
-            -- Setup files
             files(self.Files)
-
-            -- Setup post build-commands
             postbuildcommands(self.PostBuildCommands)
 
-            -- Setup exclude OS-specific files
+            -- Exclude OS-specific files
             if IsPlatformWindows() then
                 filter { "files:**/Mac/**.cpp" }
-                    flags { "ExcludeFromBuild" }
+                    flags({
+                        "ExcludeFromBuild"
+                    })
                 filter {}
             elseif IsPlatformMac() then
                 filter { "files:**/Windows/**.cpp" }
-                    flags { "ExcludeFromBuild" }
+                    flags({
+                        "ExcludeFromBuild"
+                    })
                 filter {}
 
-                -- On macOS, compile all .cpp files as Objective-C++ to avoid pre-processor checks
                 if self.bCompileCppAsObjectiveCpp then
                     filter { "files:**.cpp" }
                         compileas("Objective-C++")
@@ -450,24 +416,25 @@ function BuildRules(Name)
                 end
             end
 
-            -- In Visual Studio, show .natvis files
+            -- VS natvis
             if BuildWithVisualStudio() then
-                vpaths { ["Natvis"] = "**.natvis" }
-
                 local NatvisPath = JoinPath(self.GetPath(), "**.natvis")
                 LogHighlight("NatvisPath='%s'", NatvisPath)
 
-                files {
+                vpaths({
+                    ["Natvis"] = "**.natvis"
+                })
+                
+                files({
                     NatvisPath
-                }
+                })
             end
 
             -- Remove files
             removefiles(self.ExcludeFiles)
 
-            -- Setup linking
+            -- macOS frameworks
             if IsPlatformMac() then
-                -- Ignore linking when Kind is set to 'None'
                 if self.Kind == "None" then
                     LogWarning("Ignoring Frameworks due to the kind being set to 'None'")
                 else
@@ -475,33 +442,28 @@ function BuildRules(Name)
                 end
             end
 
-            -- Ignore linking and thirdparties when Kind is set to 'None'
+            -- Link / depend
             if self.Kind == "None" then
                 LogWarning("Ignoring LinkLibraries due to the kind being set to 'None'")
                 LogWarning("Ignoring LinkModules due to the kind being set to 'None'")
                 LogWarning("Ignoring LinkOptions due to the kind being set to 'None'")
-                LogWarning("Ignoring ThirdParty due to the kind being set to 'None'")
+                LogWarning("Ignoring Module due to the kind being set to 'None'")
             else
-                -- Link libraries (external libraries, etc.)
                 links(self.LinkLibraries)
                 links(self.LinkModules)
                 linkoptions(self.LinkOptions)
-
-                -- Setup thirdparties
                 dependson(self.Modules)
             end
 
-            -- Setup embedded frameworks, etc.
+            -- Xcode embedding
             filter { "action:xcode4" }
                 if self.bEmbedThirdparties then
-                    -- Embed modules and extra embed names
                     embed(self.Modules)
                     embed(self.ExtraEmbedNames)
                 end
             filter {}
 
-            -- Xcode build settings
-            -- TODO: Look into this, and see if this is something we need to be able to customize
+            -- Xcode specific settings
             filter { "action:xcode4" }
                 xcodebuildsettings
                 {
@@ -515,7 +477,12 @@ function BuildRules(Name)
                     ["GCC_ENABLE_AVX2_EXTENSIONS"] = "YES",
                 }
             filter {}
+
+        -- End project
         project "*"
+
+        -- Reset group
+        group("")
 
         LogHighlight("\n--- Finished generating project files for Project '%s' ---", self.Name)
     end
@@ -523,45 +490,103 @@ function BuildRules(Name)
     -- Base generate (generates project files)
     function self.Generate()
         if self.Workspace == nil then
-            LogError("Workspace cannot be nil when generating Rule")
+            LogError("Workspace cannot be nil when generating rule")
             return
         end
 
-        -- Ensure thirdparties are included
+        -- Ensure modules are included
         for Index = 1, #self.Modules do
-            LogHighlight("\n--- Including thirdparty for project '%s' ---", self.Name)
+            LogHighlight("\n--- Including module-dependency for module '%s' ---", self.Name)
 
             local CurrentModuleName = self.Modules[Index]
             if IsModule(CurrentModuleName) then
-                LogHighlightWarning("-Dependency '%s' is already included", CurrentModuleName)
+                LogHighlightWarning("- Dependency '%s' is already included", CurrentModuleName)
             else
-                local ThirdpartyPath = JoinPath(JoinPath(RuntimeFolderPath, CurrentModuleName), "Module.lua")
-                LogInfo("-Including Dependency '%s' Path='%s'", CurrentModuleName, ThirdpartyPath)
-                include(ThirdpartyPath)
+                local function TryIncludeModuleAndGenerate(BaseDir)
+                    local ModuleDir = JoinPath(BaseDir, CurrentModuleName)
+                    local ModuleLua = JoinPath(ModuleDir, "Module.lua")
+                    
+                    if os.isdir(ModuleDir) and os.isfile(ModuleLua) then
+                        LogInfo("- Including Dependency '%s' Path='%s'", CurrentModuleName, ModuleLua)
+                        include(ModuleLua)
 
-                -- Generate module, but check so that it exists since some platforms do not create certain modules (D3D12RHI, MetalRHI, etc.)
-                if IsModule(CurrentModuleName) then
-                    local CurrentModule = GetModule(CurrentModuleName)
-                    CurrentModule.Workspace = self.Workspace
-                    CurrentModule.Generate()
-                else
-                    LogWarning("Could not find '%s', perhaps it does not exist, or it may not be supported on the current setup or platform. Check the logs for more information.", CurrentModuleName)
+                        -- Some modules may choose not to register on certain platforms
+                        if IsModule(CurrentModuleName) then
+                            local CurrentModule = GetModule(CurrentModuleName)
+                            CurrentModule.Workspace = self.Workspace
+                            CurrentModule.Generate()
+                        else
+                            LogHighlightWarning("Found '%s' at '%s', but it did not get registered (it may be unsupported on this platform).", CurrentModuleName, ModuleLua)
+                        end
+
+                        return true
+                    end
+
+                    return false
+                end
+
+                -- 1) Try Runtime/<ModuleName>
+                local Included = TryIncludeModuleAndGenerate(RuntimeFolderPath)
+
+                -- 2) Try ThirdParty/<ModuleName>
+                if not Included then
+                    Included = TryIncludeModuleAndGenerate(GetExternalThirdpartyFolderPath())
+                end
+
+                -- 3) Give up if not found
+                if not Included then
+                    LogError("Module '%s' not found. Searched:\n  %s\n  %s", CurrentModuleName, 
+                        JoinPath(RuntimeFolderPath, CurrentModuleName), JoinPath(GetExternalThirdpartyFolderPath(), CurrentModuleName))
                 end
             end
         end
 
         -- Setup folder paths
-        self.BuildFolderPath = GetBuildFolderPath()
         self.ProjectFilePath = GetSolutionsFolderPath()
-        self.OutputPath      = GetOutputConfigPath()
 
-        -- Ensure that the runtime folder is added to the include folders
-        self.AddExternalIncludeDirs { RuntimeFolderPath }
+        -- Add include root based on module location
+        local function HasModuleAt(Dir)
+            if not os.isdir(Dir) then
+                return false
+            end
+
+            local ModuleLua = JoinPath(Dir, "Module.lua")
+            return os.isfile(ModuleLua)
+        end
+
+        -- <EngineRoot>/Runtime/<ModuleName>
+        local RuntimeModuleDir = JoinPath(RuntimeFolderPath, self.Name)
+        -- <EngineRoot>/ThirdParty
+        local ThirdPartyRootPath = GetExternalThirdpartyFolderPath()
+        -- <EngineRoot>/ThirdParty/<ModuleName>
+        local ThirdPartyModuleDir = JoinPath(ThirdPartyRootPath, self.Name)
+
+        if HasModuleAt(RuntimeModuleDir) then
+            -- Engine modules: allow #include "Core/..."
+            self.AddExternalIncludeDirs({
+                RuntimeFolderPath
+            })
+        elseif HasModuleAt(ThirdPartyModuleDir) then
+            -- Third-party modules: allow #include <imgui/imgui.h>
+            self.AddExternalIncludeDirs({
+                ThirdPartyModuleDir
+            })
+
+            -- Keep ThirdParty folder organized
+            self.Group = "ThirdParty"
+            self.OutputPath = "ThirdParty"
+        else
+            LogWarning(
+                "Could not locate module '%s' under Runtime or ThirdParty when setting include roots. " ..
+                "Searched:\n  %s\n  %s",
+                self.Name, RuntimeModuleDir, ThirdPartyModuleDir
+            )
+        end
 
         -- Add framework extension
         self.AddFrameworkExtension()
 
-        -- Solve thirdparties
+        -- Solve modules (propagate include/link info)
         for Index = 1, #self.Modules do
             local CurrentModuleName = self.Modules[Index]
             local CurrentModule     = GetModule(CurrentModuleName)
@@ -571,52 +596,66 @@ function BuildRules(Name)
                     table.insert(self.LinkModules, CurrentModuleName)
                 end
 
-                -- Add define for importing a dynamic module's exported functions and classes
+                -- Import macro when linking a dynamic module at compile time
                 if CurrentModule.bIsDynamic then
                     local ModuleApiName = CurrentModule.Name:upper() .. "_API"
-
-                    -- This should be linked at compile time
                     if not CurrentModule.bRuntimeLinking then
                         ModuleApiName = ModuleApiName .. "=MODULE_IMPORT"
                     end
 
-                    self.AddDefines { ModuleApiName }
+                    self.AddDefines({
+                        ModuleApiName
+                    })
                 end
 
-                -- Propagate third-party and include/link info
+                self.AddLibraryPaths(CurrentModule.LibraryPaths)
                 self.AddLinkLibraries(CurrentModule.LinkLibraries)
                 self.AddFrameworks(CurrentModule.Frameworks)
                 self.AddModules(CurrentModule.Modules)
-
                 self.AddIncludeDirs(CurrentModule.IncludeDirs)
                 self.AddExternalIncludeDirs(CurrentModule.ExternalIncludeDirs)
-                self.AddLibraryPaths(CurrentModule.LibraryPaths)
             else
                 LogError("Module '%s' has not been included", CurrentModuleName)
             end
         end
 
-        -- Add link options
-        if BuildWithVisualStudio() then
-            -- TODO: We only want this for monolithic builds
-            for Index = 1, #self.LinkModules do
-                local CurrentModuleName = self.LinkModules[Index]
-                if CurrentModuleName ~= "Launch" then
-                    self.AddLinkOptions { "/INCLUDE:LinkModule_" .. CurrentModuleName }
+        -- Add link options MSVC
+        if BuildWithVisualStudio() and IsBuildMonolithic() then
+            for i = 1, #self.LinkModules do
+                local ModuleName = self.LinkModules[i]
+                if ModuleName ~= "Launch" then
+                    self.AddLinkOptions({
+                        "/INCLUDE:LinkModule_" .. ModuleName
+                    })
                 end
             end
         end
 
-        -- Setup precompiled headers
+        -- macOS / Xcode (ld64)
+        if IsPlatformMac() and IsBuildMonolithic() then
+            for i = 1, #self.LinkModules do
+                local ModuleName = self.LinkModules[i]
+                if ModuleName ~= "Launch" then
+                    -- Leading underscore required for Mach-O symbol names
+                    self.AddLinkOptions({
+                        "-Wl,-u,_LinkModule_" .. ModuleName
+                    })
+                end
+            end
+        end
+
+        -- PCH force-include
         if self.bUsePrecompiledHeaders then
-            self.AddForceIncludes { "PreCompiled.h" }
+            self.AddForceIncludes({
+                "PreCompiled.h"
+            })
         end
 
         -- Make files relative before printing
         self.MakeFileNamesRelativeToPath(self.Files)
         self.MakeFileNamesRelativeToPath(self.ExcludeFiles)
 
-        -- Add this rule to the workspace
+        -- Register with workspace
         self.Workspace.AddRule(self)
     end
 

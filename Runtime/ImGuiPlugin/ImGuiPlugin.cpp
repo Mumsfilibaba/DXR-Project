@@ -9,7 +9,7 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
-#include <imgui_internal.h>
+#include <imgui/imgui_internal.h>
 
 IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
 

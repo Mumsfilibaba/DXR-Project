@@ -2,7 +2,8 @@
 #include "Core/Containers/SharedPtr.h"
 #include "RHI/RHIShader.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-#include <imgui.h>
+
+#include <imgui/imgui.h>
 
 struct ImDrawData;
 class FWindowWidget;

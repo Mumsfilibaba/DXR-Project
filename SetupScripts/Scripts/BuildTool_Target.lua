@@ -45,9 +45,6 @@ function TargetBuildRules(Name, Workspace)
     -- The type of target; decides if there should be a Standalone and DLL or if the app should be a ConsoleApp
     self.TargetType = ETargetType.Client
     
-    -- Whether or not the build should be forced monolithic
-    self.bIsMonolithic = IsBuildMonolithic()
-
     -- Helper function for retrieving path
     local PathToTarget = JoinPath(GetEnginePath(), self.Name)
     function self.GetPath()
@@ -84,7 +81,7 @@ function TargetBuildRules(Name, Workspace)
 
         LogInfo("\n--- Generating Target '%s' ---", self.Name)
   
-        if self.bIsMonolithic then
+        if IsBuildMonolithic() then
             LogInfo("    Target '%s' is monolithic", self.Name)
         else
             LogInfo("    Target '%s' is NOT monolithic", self.Name)
@@ -102,10 +99,10 @@ function TargetBuildRules(Name, Workspace)
 
             -- In a monolithic build, the client is linked statically
             -- TODO: Should this be created as a module instead?
-            if self.bIsMonolithic then
-                self.Kind               = "WindowedApp"
-                self.bRuntimeLinking    = false
-                self.bIsDynamic         = false
+            if IsBuildMonolithic() then
+                self.Kind = "WindowedApp"
+                self.bRuntimeLinking = false
+                self.bIsDynamic = false
                 self.bEmbedThirdparties = true
 
                 -- Defines
@@ -117,11 +114,13 @@ function TargetBuildRules(Name, Workspace)
                 InjectLaunchModule(self)
                 LogInfo("\n--- Finished generating project for target '%s' ---", self.Name)
             else
-                self.Kind            = "SharedLib"
+                self.Kind = "SharedLib"
                 self.bRuntimeLinking = true
-                self.bIsDynamic      = true
+                self.bIsDynamic = true
                 
-                self.AddDefines({ ModuleApiName .. "=MODULE_EXPORT" })
+                self.AddDefines({
+                    ModuleApiName .. "=MODULE_EXPORT"
+                })
                 
                 -- Generate the project
                 LogInfo("\n--- Generating project for target '%s' ---", self.Name)
@@ -132,23 +131,32 @@ function TargetBuildRules(Name, Workspace)
                 LogInfo("\n--- Generating Standalone client executable project for target '%s' ---", self.Name)
                 
                 local Executable = BuildRules(self.Name .. "Standalone")
-                Executable.Kind               = "WindowedApp"
+                Executable.Kind = "WindowedApp"
                 Executable.bEmbedThirdparties = true
 
                 -- Setup the workspace
                 Executable.Workspace = self.Workspace
 
                 -- Link the module
-                Executable.AddLinkLibraries({ self.Name })
-                Executable.AddExtraEmbedNames({ self.Name })
                 Executable.AddModules(self.Modules)
                 
+                Executable.AddLinkLibraries({
+                    self.Name
+                })
+                Executable.AddExtraEmbedNames({
+                    self.Name
+                })
+                
                 if IsPlatformMac() then
-                    Executable.AddFrameworks({ "AppKit" })
+                    Executable.AddFrameworks({
+                        "AppKit"
+                    })
                 end
 
                 -- Setup Defines
-                Executable.AddDefines({ ModuleApiName })
+                Executable.AddDefines({
+                    ModuleApiName
+                })
 
                 -- Overwrite all exclude files
                 Executable.ExcludeFiles = {}

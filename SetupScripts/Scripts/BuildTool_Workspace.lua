@@ -117,6 +117,7 @@ end
 
 -- Generate a workspace from an array of target rules
 function WorkspaceRules(WorkspaceName)
+    
     -- Must have a valid workspace name
     if WorkspaceName == nil then
         return nil
@@ -186,68 +187,68 @@ function WorkspaceRules(WorkspaceName)
         group "ThirdParty"
             LogInfo("\n--- External ThirdParty ---")
             
-            -- ImGui
-            project "ImGui"
-                LogInfo("    Generating thirdparty ImGui")
-
-                kind("StaticLib")
-                warnings("Off")
-                intrinsics("On")
-                editandcontinue("Off")
-                language("C++")
-                cppdialect("C++20")
-                systemversion("latest")
-                architecture("x86_64")
-                exceptionhandling("Off")
-                rtti("Off")
-                floatingpoint("Fast")
-                vectorextensions("Default")
-                characterset("Ascii")
-                flags({
-                    "MultiProcessorCompile",
-                    "NoIncrementalLink"
-                })
-                
-                -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
-                filter "action:vs*"
-                    buildoptions({
-                        "/Zc:__cplusplus"
-                    })
-                filter {}
-
-                location(JoinPath(SolutionLocation, "ThirdParty/ImGui"))
-
-                -- Locations
-                targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/ImGui/" .. GetOutputConfigPath()))
-                objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/ImGui/" .. GetOutputConfigPath()))
-
-                -- Files
-                files({
-                    CreateExternalThirdpartyPath("ImGui/imgui/imconfig.h"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imgui.h"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imgui.cpp"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_demo.cpp"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_draw.cpp"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_internal.h"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_tables.cpp"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imgui_widgets.cpp"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imstb_rectpack.h"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imstb_textedit.h"),
-                    CreateExternalThirdpartyPath("ImGui/imgui/imstb_truetype.h"),
-                })
-                
-                -- Configurations
-                filter "configurations:Debug or Release"
-                    symbols("on")
-                    runtime("Release")
-                    optimize("Full")
-                filter {}
-                
-                filter "configurations:Production"
-                    symbols("off")
-                    runtime("Release")
-                    optimize("Full")
-                filter {}
+            ---- ImGui
+            --project "ImGui"
+            --    LogInfo("    Generating thirdparty ImGui")
+--
+            --    kind("StaticLib")
+            --    warnings("Off")
+            --    intrinsics("On")
+            --    editandcontinue("Off")
+            --    language("C++")
+            --    cppdialect("C++20")
+            --    systemversion("latest")
+            --    architecture("x86_64")
+            --    exceptionhandling("Off")
+            --    rtti("Off")
+            --    floatingpoint("Fast")
+            --    vectorextensions("Default")
+            --    characterset("Ascii")
+            --    flags({
+            --        "MultiProcessorCompile",
+            --        "NoIncrementalLink"
+            --    })
+            --    
+            --    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+            --    filter "action:vs*"
+            --        buildoptions({
+            --            "/Zc:__cplusplus"
+            --        })
+            --    filter {}
+            --
+            --    location(JoinPath(SolutionLocation, "ThirdParty/ImGui"))
+            --
+            --    -- Locations
+            --    targetdir(CreateExternalThirdpartyPath("Build/bin/ThirdParty/ImGui/" .. GetOutputConfigPath()))
+            --    objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/ImGui/" .. GetOutputConfigPath()))
+            --
+            --    -- Files
+            --    files({
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imconfig.h"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imgui.h"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imgui.cpp"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imgui_demo.cpp"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imgui_draw.cpp"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imgui_internal.h"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imgui_tables.cpp"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imgui_widgets.cpp"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imstb_rectpack.h"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imstb_textedit.h"),
+            --        CreateExternalThirdpartyPath("ImGui/imgui/imstb_truetype.h"),
+            --    })
+            --    
+            --    -- Configurations
+            --    filter "configurations:Debug or Release"
+            --        symbols("on")
+            --        runtime("Release")
+            --        optimize("Full")
+            --    filter {}
+            --    
+            --    filter "configurations:Production"
+            --        symbols("off")
+            --        runtime("Release")
+            --        optimize("Full")
+            --    filter {}
             
             -- tinyobjloader
             project "tinyobjloader"
@@ -266,11 +267,16 @@ function WorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                flags({
+                    "MultiProcessorCompile",
+                    "NoIncrementalLink"
+                })
 
                 -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                 filter "action:vs*"
-                    buildoptions { "/Zc:__cplusplus" }
+                    buildoptions({
+                        "/Zc:__cplusplus"
+                    })
                 filter {}
 
                 location(JoinPath(SolutionLocation, "ThirdParty/tinyobjloader"))
@@ -280,10 +286,10 @@ function WorkspaceRules(WorkspaceName)
                 objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/tinyobjloader/" .. GetOutputConfigPath()))
 
                 -- Files
-                files {
+                files({
                     CreateExternalThirdpartyPath("tinyobjloader/tiny_obj_loader.h"),
                     CreateExternalThirdpartyPath("tinyobjloader/tiny_obj_loader.cc"),
-                }
+                })
 
                 -- Configurations
                 filter "configurations:Debug or Release"
@@ -315,11 +321,16 @@ function WorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                flags({
+                    "MultiProcessorCompile",
+                    "NoIncrementalLink"
+                })
                 
                 -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                 filter "action:vs*"
-                    buildoptions { "/Zc:__cplusplus" }
+                    buildoptions({
+                        "/Zc:__cplusplus"
+                    })
                 filter {}
 
                 location(JoinPath(SolutionLocation, "ThirdParty/OpenFBX"))
@@ -329,12 +340,12 @@ function WorkspaceRules(WorkspaceName)
                 objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/OpenFBX/" .. GetOutputConfigPath()))
 
                 -- Files
-                files {
+                files({
                     CreateExternalThirdpartyPath("OpenFBX/src/ofbx.h"),
                     CreateExternalThirdpartyPath("OpenFBX/src/ofbx.cpp"),
                     CreateExternalThirdpartyPath("OpenFBX/src/libdeflate.h"),
                     CreateExternalThirdpartyPath("OpenFBX/src/libdeflate.c"),
-                }
+                })
 
                 -- Configurations 
                 filter "configurations:Debug or Release"
@@ -366,11 +377,16 @@ function WorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                flags({
+                    "MultiProcessorCompile",
+                    "NoIncrementalLink"
+                })
                 
                 -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                 filter "action:vs*"
-                    buildoptions { "/Zc:__cplusplus" }
+                    buildoptions({
+                        "/Zc:__cplusplus"
+                    })
                 filter {}
 
                 location(JoinPath(SolutionLocation, "ThirdParty/SPIRV-Cross"))
@@ -380,7 +396,7 @@ function WorkspaceRules(WorkspaceName)
                 objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/SPIRV-Cross/" .. GetOutputConfigPath()))
 
                 -- Files
-                files {
+                files({
                     CreateExternalThirdpartyPath("SPIRV-Cross/GLSL.std.450.h"),
                     CreateExternalThirdpartyPath("SPIRV-Cross/spirv.h"),
                     CreateExternalThirdpartyPath("SPIRV-Cross/spirv_cross_c.h"),
@@ -411,14 +427,14 @@ function WorkspaceRules(WorkspaceName)
                     CreateExternalThirdpartyPath("SPIRV-Cross/spirv_msl.cpp"),
                     CreateExternalThirdpartyPath("SPIRV-Cross/spirv_parser.cpp"),
                     CreateExternalThirdpartyPath("SPIRV-Cross/spirv_reflect.cpp"),
-                }
+                })
 
                 -- Defines 
-                defines {
+                defines({
                     "SPIRV_CROSS_C_API_MSL=(1)",
                     "SPIRV_CROSS_C_API_HLSL=(1)",
                     "SPIRV_CROSS_C_API_GLSL=(1)",
-                }
+                })
 
                 -- Configurations 
                 filter "configurations:Debug or Release"
@@ -457,11 +473,16 @@ function WorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    flags({
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink"
+                    })
                     
                     -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                     filter "action:vs*"
-                        buildoptions { "/Zc:__cplusplus" }
+                        buildoptions({
+                            "/Zc:__cplusplus"
+                        })
                     filter {}
 
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/GenericCodeGen/"))
@@ -471,10 +492,10 @@ function WorkspaceRules(WorkspaceName)
                     objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/GenericCodeGen/" .. GetOutputConfigPath()))
 
                     -- Files
-                    files {
+                    files({
                         CreateExternalThirdpartyPath("glslang/glslang/GenericCodeGen/CodeGen.cpp"),
                         CreateExternalThirdpartyPath("glslang/glslang/GenericCodeGen/Link.cpp"),
-                    }
+                    })
 
                     GlslangSetPlatformProperties()
 
@@ -508,11 +529,16 @@ function WorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    flags({
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink"
+                    })
                     
                     -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                     filter "action:vs*"
-                        buildoptions { "/Zc:__cplusplus" }
+                        buildoptions({
+                            "/Zc:__cplusplus"
+                        })
                     filter {}
 
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/OSDependent/"))
@@ -522,18 +548,18 @@ function WorkspaceRules(WorkspaceName)
                     objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/OSDependent/" .. GetOutputConfigPath()))
 
                     -- Files
-                    files {
+                    files({
                         CreateExternalThirdpartyPath("glslang/glslang/OSDependent/osinclude.h"),
-                    }
+                    })
 
                     filter "system:windows"
-                        files {
+                        files({
                             CreateExternalThirdpartyPath("glslang/glslang/OSDependent/Windows/ossource.cpp"),
-                        }
+                        })
                     filter "system:macosx"
-                        files {
+                        files({
                             CreateExternalThirdpartyPath("glslang/glslang/OSDependent/Unix/ossource.cpp"),
-                        }
+                        })
                     filter {}
 
                     GlslangSetPlatformProperties()
@@ -568,11 +594,16 @@ function WorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    flags({
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink"
+                    })
                     
                     -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                     filter "action:vs*"
-                        buildoptions { "/Zc:__cplusplus" }
+                        buildoptions({
+                            "/Zc:__cplusplus"
+                        })
                     filter {}
 
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/MachineIndependent/"))
@@ -582,13 +613,13 @@ function WorkspaceRules(WorkspaceName)
                     objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/MachineIndependent/" .. GetOutputConfigPath()))
 
                     -- Include Directories
-                    includedirs {
+                    includedirs({
                         CreateExternalThirdpartyPath("glslang"),
                         CreateExternalThirdpartyPath("glslang/glslang/include"),
-                    }
+                    })
 
                     -- Files
-                    files {
+                    files({
                         -- Cpp files
                         CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang.y"),
                         CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
@@ -644,16 +675,16 @@ function WorkspaceRules(WorkspaceName)
 
                         CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
                         CreateExternalThirdpartyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
-                    }
+                    })
 
                     GlslangSetPlatformProperties()
                     GlslangGenerateBuildTimeHeaders()
 
                     -- Links
-                    links {
+                    links({
                         "OSDependent",
                         "GenericCodeGen",
-                    }
+                    })
 
                     -- Configurations 
                     filter "configurations:Debug or Release"
@@ -685,11 +716,16 @@ function WorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    flags({
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink"
+                    })
                     
                     -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                     filter "action:vs*"
-                        buildoptions { "/Zc:__cplusplus" }
+                        buildoptions({
+                            "/Zc:__cplusplus"
+                        })
                     filter {}
 
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/glslang/"))
@@ -699,12 +735,12 @@ function WorkspaceRules(WorkspaceName)
                     objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang/" .. GetOutputConfigPath()))
 
                     -- Include Directories
-                    includedirs {
+                    includedirs({
                         CreateExternalThirdpartyPath("glslang")
-                    }
+                    })
 
                     -- Files
-                    files {
+                    files({
                         -- Cpp
                         CreateExternalThirdpartyPath("glslang/glslang/CInterface/glslang_c_interface.cpp"),
 
@@ -724,13 +760,13 @@ function WorkspaceRules(WorkspaceName)
                         CreateExternalThirdpartyPath("glslang/glslang/Include/ShHandle.h"),
                         CreateExternalThirdpartyPath("glslang/glslang/Include/SpirvIntrinsics.h"),
                         CreateExternalThirdpartyPath("glslang/glslang/Include/Types.h"),
-                    }
+                    })
 
                     -- Links
-                    links {
+                    links({
                         "OSDependent",
                         "MachineIndependent",
-                    }
+                    })
 
                     GlslangSetPlatformProperties()
 
@@ -764,11 +800,16 @@ function WorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    flags({
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink"
+                    })
                     
                     -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                     filter "action:vs*"
-                        buildoptions { "/Zc:__cplusplus" }
+                        buildoptions({
+                            "/Zc:__cplusplus"
+                        })
                     filter {}
 
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/glslang-default-resource-limits/"))
@@ -778,12 +819,12 @@ function WorkspaceRules(WorkspaceName)
                     objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/glslang-default-resource-limits/" .. GetOutputConfigPath()))
 
                     -- Include Directories
-                    includedirs {
+                    includedirs({
                         CreateExternalThirdpartyPath("glslang")
-                    }
+                    })
                     
                     -- Files
-                    files {
+                    files({
                         -- Cpp
                         CreateExternalThirdpartyPath("glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
                         CreateExternalThirdpartyPath("glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
@@ -791,7 +832,7 @@ function WorkspaceRules(WorkspaceName)
                         -- Header
                         CreateExternalThirdpartyPath("glslang/glslang/Public/ResourceLimits.h"),
                         CreateExternalThirdpartyPath("glslang/glslang/Public/resource_limits_c.h"),
-                    }
+                    })
 
                     GlslangSetPlatformProperties()
 
@@ -825,11 +866,16 @@ function WorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    flags({
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink"
+                    })
                     
                     -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                     filter "action:vs*"
-                        buildoptions { "/Zc:__cplusplus" }
+                        buildoptions({
+                            "/Zc:__cplusplus"
+                        })
                     filter {}
 
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/SPIRV/"))
@@ -839,13 +885,13 @@ function WorkspaceRules(WorkspaceName)
                     objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPIRV/" .. GetOutputConfigPath()))
 
                     -- Include Directories
-                    includedirs {
+                    includedirs({
                         CreateExternalThirdpartyPath("glslang"),
                         CreateExternalThirdpartyPath("glslang/glslang/include"),
-                    }
+                    })
 
                     -- Files
-                    files {
+                    files({
                         -- Cpp
                         CreateExternalThirdpartyPath("glslang/SPIRV/GlslangToSpv.cpp"),
                         CreateExternalThirdpartyPath("glslang/SPIRV/InReadableOrder.cpp"),
@@ -876,12 +922,12 @@ function WorkspaceRules(WorkspaceName)
                         CreateExternalThirdpartyPath("glslang/SPIRV/GLSL.ext.ARM.h"),
                         CreateExternalThirdpartyPath("glslang/SPIRV/NonSemanticDebugPrintf.h"),
                         CreateExternalThirdpartyPath("glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
-                    }
+                    })
 
                     -- Links
-                    links {
+                    links({
                         "MachineIndependent",
-                    }
+                    })
 
                     GlslangSetPlatformProperties()
 
@@ -915,11 +961,16 @@ function WorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    flags({
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink"
+                    })
                     
                     -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
                     filter "action:vs*"
-                        buildoptions { "/Zc:__cplusplus" }
+                        buildoptions({
+                            "/Zc:__cplusplus"
+                        })
                     filter {}
                     
                     location(JoinPath(SolutionLocation, "ThirdParty/glslang/SPVRemapper/"))
@@ -929,12 +980,12 @@ function WorkspaceRules(WorkspaceName)
                     objdir(CreateExternalThirdpartyPath("Build/bin-int/ThirdParty/glslang/SPVRemapper/" .. GetOutputConfigPath()))
 
                     -- Files
-                    files {
+                    files({
                         CreateExternalThirdpartyPath("glslang/SPIRV/SPVRemapper.cpp"),
                         CreateExternalThirdpartyPath("glslang/SPIRV/doc.cpp"),
                         CreateExternalThirdpartyPath("glslang/SPIRV/SPVRemapper.h"),
                         CreateExternalThirdpartyPath("glslang/SPIRV/doc.h"),
-                    }
+                    })
 
                     GlslangSetPlatformProperties()
 
@@ -968,19 +1019,22 @@ function WorkspaceRules(WorkspaceName)
         LogInfo("    Generated solution location '%s'", SolutionLocation)
 
         -- Platforms
-        platforms { "x64" }
+        platforms({
+            "x64"
+        })
 
         -- Configurations
-        configurations 
-        {
+        configurations({
             "Debug",
             "Release",
             "Production",
-        }
+        })
 
         -- Includes
         local RuntimeFolderPathLocal = GetRuntimeFolderPath()
-        includedirs { RuntimeFolderPathLocal }
+        includedirs({
+            RuntimeFolderPathLocal
+        })
 
         -- Workspace defines
         LogInfo("\n--- Workspace Defines (Num Defines=%d) ---", #self.Defines)
@@ -992,55 +1046,64 @@ function WorkspaceRules(WorkspaceName)
 
         defines(self.Defines)
 
-        -- Add settings based on configuration
+        -- Per-config CRT (Debug vs Release)
         filter "configurations:Debug"
-            symbols("on")
-            runtime("Debug")
-            optimize("Off")
-            architecture("x86_64")
-            defines 
-            {
+            symbols "On"
+            runtime "Debug"
+            defines {
                 "_DEBUG",
                 "DEBUG",
-                "DEBUG_BUILD=(1)",
+                "DEBUG_BUILD=(1)"
             }
         filter {}
 
         filter "configurations:Release"
-            symbols("on")
-            runtime("Release")
-            optimize("Full")
-            architecture("x86_64")
-            defines 
-            {
+            symbols "On"
+            runtime "Release"
+            defines {
                 "NDEBUG",
-                "RELEASE_BUILD=(1)",
+                "RELEASE_BUILD=(1)"
             }
         filter {}
 
         filter "configurations:Production"
-            symbols("off")
-            runtime("Release")
-            optimize("Full")
-            architecture("x86_64")
-            defines 
-            {
+            symbols "Off"
+            runtime "Release"
+            defines {
                 "NDEBUG",
-                "PRODUCTION_BUILD=(1)",
+                "PRODUCTION_BUILD=(1)"
             }
+        filter {}
+
+        -- Architecture for all projects
+        architecture "x86_64"
+
+        -- Static vs dynamic CRT (MSVC only)
+        filter "action:vs*"
+            if IsBuildMonolithic() then
+                staticruntime "On"   -- /MT(d)
+            else
+                staticruntime "Off"  -- /MD(d)
+            end
         filter {}
 
         -- Architecture defines
         filter "architecture:x86"
-            defines { "ARCHITECTURE_X86=(1)" }
+            defines({
+                "ARCHITECTURE_X86=(1)"
+            })
         filter {}
 
         filter "architecture:x86_x64"
-            defines { "PLATFORM_ARCHITECTURE_X86_X64=(1)" }
+            defines({
+                "PLATFORM_ARCHITECTURE_X86_X64=(1)"
+            })
         filter {}
 
         filter "architecture:ARM"
-            defines { "PLATFORM_ARCHITECTURE_ARM=(1)" }
+            defines({
+                "PLATFORM_ARCHITECTURE_ARM=(1)"
+            })
         filter {}
 
         -- Startup project name
@@ -1075,34 +1138,44 @@ function WorkspaceRules(WorkspaceName)
         -- Define the workspace location; we do this with a Unix path since the engine (C++ side) expects this currently
         local UnixEnginePath = path.translate(GetEnginePath(), "/")
         local EngineLocation = 'ENGINE_LOCATION="' .. UnixEnginePath .. '"'
-        self.AddDefines { EngineLocation }
+        self.AddDefines({
+            EngineLocation
+        })
         
         LogInfo("    Engine Path ='%s'", GetEnginePath())
         LogInfo("    RuntimeFolderPath = '%s'", GetRuntimeFolderPath())
         
         -- Check if the command line overrides monolithic builds
         if IsBuildMonolithic() then
-            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
+            self.AddDefines({
+                "MONOLITHIC_BUILD=(1)"
+            })
         end
 
         -- IDE Defines
         if BuildWithVisualStudio() then 
-            self.AddDefines({ "IDE_VISUAL_STUDIO" })
-            self.AddDefines({ "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING" })
-            self.AddDefines({ "_CRT_SECURE_NO_WARNINGS" })
+            self.AddDefines({
+                "IDE_VISUAL_STUDIO",
+                "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING",
+                "_CRT_SECURE_NO_WARNINGS",
+            })
         end
 
         -- OS Defines
         if IsPlatformWindows() then
-            self.AddDefines({ "PLATFORM_WINDOWS=(1)" })
+            self.AddDefines({
+                "PLATFORM_WINDOWS=(1)"
+            })
         end
         if IsPlatformMac() then
-            self.AddDefines({ "PLATFORM_MACOS=(1)" })
+            self.AddDefines({
+                "PLATFORM_MACOS=(1)"
+            })
         end
 
         -- Setup startup project
         local StartProjectTarget = self.TargetRules[1]
-        if (StartProjectTarget.TargetType == ETargetType.Client) and (not StartProjectTarget.bIsMonolithic) then
+        if (StartProjectTarget.TargetType == ETargetType.Client) and (not IsBuildMonolithic()) then
             self.StartProjectName = StartProjectTarget.Name .. "Standalone"
         else
             self.StartProjectName = StartProjectTarget.Name
@@ -1112,6 +1185,7 @@ function WorkspaceRules(WorkspaceName)
         LogInfo("\n--- Generating Targets (NumTargets=%d) ---", #self.TargetRules)
         for _, CurrentTarget in ipairs(self.TargetRules) do
             self.TargetName = CurrentTarget.Name
+
             CurrentTarget.Workspace = self
             CurrentTarget.Generate()
         end
