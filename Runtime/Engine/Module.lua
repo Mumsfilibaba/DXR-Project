@@ -9,7 +9,6 @@ EngineModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("stb_image"),
     CreateExternalThirdpartyPath("tinyobjloader"),
     CreateExternalThirdpartyPath("tinyddsloader"),
-    CreateExternalThirdpartyPath("OpenFBX/src"),
 })
 
 EngineModule.AddModules({
@@ -20,9 +19,9 @@ EngineModule.AddModules({
     "RendererCore",
     "ImGui",
     "ImGuiPlugin",
+    "OpenFBX",
 })
 
 EngineModule.AddLinkLibraries({
     "tinyobjloader",
-    "OpenFBX",
 })
