@@ -7,7 +7,6 @@ EngineModule.bUsePrecompiledHeaders = true
 
 EngineModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("stb_image"),
-    CreateExternalThirdpartyPath("tinyobjloader"),
     CreateExternalThirdpartyPath("tinyddsloader"),
 })
 
@@ -20,8 +19,5 @@ EngineModule.AddModules({
     "ImGui",
     "ImGuiPlugin",
     "OpenFBX",
-})
-
-EngineModule.AddLinkLibraries({
     "tinyobjloader",
 })

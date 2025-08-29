@@ -2,8 +2,8 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Color.h"
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_internal.h>
+#include <imgui.h>
+#include <imgui_internal.h>
 
 struct FImGuiViewport;
 

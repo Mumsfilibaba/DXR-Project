@@ -23,6 +23,12 @@ ImGuiModule.AddFlags({
     "NoIncrementalLink",
 })
 
+-- Add the correct folder as an include dir to make includes simpler (#include <imgui.h> instead of #include <imgui/imgui.h>)
+ImGuiModule.AddExternalIncludeDirs({
+    CreateExternalThirdpartyPath("ImGui/imgui/"),
+})
+
+-- Source files
 ImGuiModule.AddFiles({
     CreateExternalThirdpartyPath("ImGui/imgui/imconfig.h"),
     CreateExternalThirdpartyPath("ImGui/imgui/imgui.h"),

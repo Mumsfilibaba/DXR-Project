@@ -2,7 +2,7 @@
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "Engine/EngineModule.h"
 
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 IMPLEMENT_ENGINE_MODULE(FEngineModule, Engine);
 

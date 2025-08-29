@@ -24,10 +24,12 @@ OpenFBXModule.AddFlags({
     "NoIncrementalLink",
 })
 
+-- Add the correct folder as an include dir to make includes simpler (#include <ofbx.h> instead of #include <OpenFBX/src/ofbx.h>)
 OpenFBXModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("OpenFBX/OpenFBX/src"),
 })
 
+-- Source files
 OpenFBXModule.AddFiles({
     CreateExternalThirdpartyPath("OpenFBX/OpenFBX/src/ofbx.h"),
     CreateExternalThirdpartyPath("OpenFBX/OpenFBX/src/ofbx.cpp"),

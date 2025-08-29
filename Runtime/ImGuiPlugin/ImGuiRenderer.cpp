@@ -12,7 +12,7 @@
 #include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
 
-#include <imgui/imgui.h>
+#include <imgui.h>
 
 struct FVertexConstantBuffer
 {

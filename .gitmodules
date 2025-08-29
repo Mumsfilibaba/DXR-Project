@@ -1,7 +1,3 @@
-[submodule "ThirdParty/tinyobjloader"]
-	path = ThirdParty/tinyobjloader
-	url = https://github.com/tinyobjloader/tinyobjloader
-	branch = release
 [submodule "ThirdParty/tinyddsloader"]
 	path = ThirdParty/tinyddsloader
 	url = https://github.com/Mumsfilibaba/tinyddsloader
@@ -19,3 +15,7 @@
 	path = ThirdParty/SPIRV-Cross/SPIRV-Cross
 	url = https://github.com/Mumsfilibaba/SPIRV-Cross
 	branch = main
+[submodule "ThirdParty/tinyobjloader/tinyobjloader"]
+	path = ThirdParty/tinyobjloader/tinyobjloader
+	url = https://github.com/Mumsfilibaba/tinyobjloader
+	branch = release

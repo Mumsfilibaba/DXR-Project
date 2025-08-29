@@ -562,12 +562,12 @@ function BuildRules(Name)
         local ThirdPartyModuleDir = JoinPath(ThirdPartyRootPath, self.Name)
 
         if HasModuleAt(RuntimeModuleDir) then
-            -- Engine modules: allow #include "Core/..."
+            -- Engine modules: allow #include "<ModuleName>/..."
             self.AddExternalIncludeDirs({
                 RuntimeFolderPath
             })
         elseif HasModuleAt(ThirdPartyModuleDir) then
-            -- Third-party modules: allow #include <imgui/imgui.h>
+            -- Third-party modules: allow #include <<ModuleName>/*.h>
             self.AddExternalIncludeDirs({
                 ThirdPartyModuleDir
             })
