@@ -2,9 +2,6 @@
 	path = ThirdParty/tinyobjloader
 	url = https://github.com/tinyobjloader/tinyobjloader
 	branch = release
-[submodule "ThirdParty/SPIRV-Cross"]
-	path = ThirdParty/SPIRV-Cross
-	url = https://github.com/KhronosGroup/SPIRV-Cross
 [submodule "ThirdParty/tinyddsloader"]
 	path = ThirdParty/tinyddsloader
 	url = https://github.com/Mumsfilibaba/tinyddsloader
@@ -18,3 +15,7 @@
 [submodule "ThirdParty/OpenFBX/OpenFBX"]
 	path = ThirdParty/OpenFBX/OpenFBX
 	url = https://github.com/Mumsfilibaba/OpenFBX
+[submodule "ThirdParty/SPIRV-Cross/SPIRV-Cross"]
+	path = ThirdParty/SPIRV-Cross/SPIRV-Cross
+	url = https://github.com/Mumsfilibaba/SPIRV-Cross
+	branch = main

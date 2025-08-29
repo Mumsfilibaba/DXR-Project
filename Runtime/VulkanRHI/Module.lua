@@ -96,8 +96,6 @@ if not gVulkanInstalled or (gVulkanIncludePath == nil or gVulkanIncludePath == '
     return
 end
 
--- VulkanRHI Module
-
 local VulkanPath = GetVulkanIncludePath()
 LogHighlight('VulkanPath=%s', VulkanPath)
 
@@ -110,6 +108,7 @@ LogHighlight('Vulkan lib path=%s', VulkanLibraries)
 local VulkanInclude = JoinPath(VulkanPath, 'include')
 LogHighlight('Vulkan include path=%s', VulkanInclude)
 
+-- VulkanRHI Module
 local VulkanRHI = ModuleBuildRules('VulkanRHI')
 VulkanRHI.bRuntimeLinking         = true
 VulkanRHI.bUsePrecompiledHeaders  = true
@@ -118,6 +117,7 @@ VulkanRHI.AddModules({
     'Core',
     'CoreApplication',
     'RHI',
+    "SPIRV-Cross",
 })
 
 if IsPlatformMac() then
@@ -128,13 +128,8 @@ end
 
 VulkanRHI.AddExternalIncludeDirs({
     VulkanInclude,
-    CreateExternalThirdpartyPath("SPIRV-Cross"),
 })
 
 VulkanRHI.AddLibraryPaths({
     VulkanLibraries,
-})
-
-VulkanRHI.AddLinkLibraries({
-    "SPIRV-Cross",
 })

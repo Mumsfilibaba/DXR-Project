@@ -7,13 +7,13 @@ RhiModule.bUsePrecompiledHeaders = true
 
 RhiModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("DXC/include"),
-    CreateExternalThirdpartyPath("SPIRV-Cross"),
     CreateExternalThirdpartyPath("glslang"),
 })
 
 RhiModule.AddModules({
     "Core",
     "CoreApplication",
+    "SPIRV-Cross",
 })
 
 RhiModule.AddLinkLibraries({
@@ -22,7 +22,6 @@ RhiModule.AddLinkLibraries({
     "SPVRemapper",
     "glslang-default-resource-limits",
     "glslang",
-    "SPIRV-Cross",
 })
 
 -- Copy dynamic libraries from thirdparties folder
