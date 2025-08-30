@@ -18,6 +18,9 @@ SpirvCross.CppVersion             = "C++20"
 SpirvCross.SystemVersion          = "latest"
 SpirvCross.CharacterSet           = "Ascii"
 
+-- SpirvCross.Group      = "ThirdParty"
+-- SpirvCross.OutputPath = "ThirdParty"
+
 SpirvCross.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",
@@ -36,7 +39,7 @@ SpirvCross.AddDefines({
 })
 
 -- Source files
-SpirvCross.AddFiles({
+SpirvCross.SetFiles({
     -- C interface
     CreateExternalThirdpartyPath("SPIRV-Cross/SPIRV-Cross/GLSL.std.450.h"),
     CreateExternalThirdpartyPath("SPIRV-Cross/SPIRV-Cross/spirv.h"),

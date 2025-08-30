@@ -76,11 +76,11 @@
 
 // x86/x64 Architecture
 #if defined(_M_X64) || defined(__amd64__) || defined(__x86_64__)
-    #ifndef PLATFORM_ARCHITECTURE_X86_X64
-        #define PLATFORM_ARCHITECTURE_X86_X64 (1)
+    #ifndef PLATFORM_ARCHITECTURE_X86_64
+        #define PLATFORM_ARCHITECTURE_X86_64 (1)
     #endif
 #else
-    #define PLATFORM_ARCHITECTURE_X86_X64 (0)
+    #define PLATFORM_ARCHITECTURE_X86_64 (0)
 #endif
 
 // ARM64 Architecture
@@ -102,14 +102,14 @@
 #endif
 
 // Determine if 64-bit architecture
-#if PLATFORM_ARCHITECTURE_X86_X64 || PLATFORM_ARCHITECTURE_ARM64
+#if PLATFORM_ARCHITECTURE_X86_64 || PLATFORM_ARCHITECTURE_ARM64
     #define PLATFORM_64BIT (1)
 #else
     #define PLATFORM_64BIT (0)
 #endif
 
 // Check for SSE intrinsics support
-#if PLATFORM_ARCHITECTURE_X86_X64
+#if PLATFORM_ARCHITECTURE_X86_64
     // SSE
     #if defined(__SSE__)
         #ifndef PLATFORM_SUPPORT_SSE_INTRIN

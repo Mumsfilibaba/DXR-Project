@@ -12,8 +12,8 @@ newoption
     trigger     = "platform",
     value       = "CurrentPlatform",
     description = "Specify the platform to use",
-    allowed     = { { "Win32" }, { "macOS" } },
-    default     = "Win32"
+    allowed     = { { "Windows" }, { "macOS" } },
+    default     = "Windows"
 }
 
 -- Global settings
@@ -25,9 +25,8 @@ if gSettings.bEnableDebugLogging == nil then
     gSettings.bEnableDebugLogging = false
 end
 
--- Global variables
-local gIsMonolithic
-local gModules = {}
+-- Monolithic Build Management
+local gIsMonolithic = false
 
 -- Check if the module should be built monolithically
 function IsBuildMonolithic()
@@ -40,7 +39,7 @@ end
 
 -- Check if the current platform is Windows
 function IsPlatformWindows()
-    return _OPTIONS["platform"] == "Win32"
+    return _OPTIONS["platform"] == "Windows"
 end
 
 -- Check if the current platform is macOS
@@ -105,6 +104,8 @@ function AddUniqueElements(Elements, Tbl)
 end
 
 -- Module management functions
+local gModules = {}
+
 function GetModule(ModuleName)
     return gModules[ModuleName]
 end
@@ -179,4 +180,107 @@ end
 -- Deep copy a table
 function Copy(Source)
     return table.deepcopy(Source)
+end
+
+-- Module indexing (scan without executing Module.lua)
+local gModuleIndex = {}
+local gModuleIndexScanned = false
+local gModuleSearchRoots = {}
+
+function AddModuleSearchRoot(RootPath)
+    if type(RootPath) ~= "string" or RootPath == "" then
+        LogError("AddModuleSearchRoot: invalid root")
+        return
+    end
+
+    local NormalizedRootPath = CreateOsPath(RootPath)
+    for ExistingIndex, ExistingRoot in ipairs(gModuleSearchRoots) do
+        if string.lower(ExistingRoot) == string.lower(NormalizedRootPath) then
+            return -- avoid duplicates
+        end
+    end
+
+    table.insert(gModuleSearchRoots, NormalizedRootPath)
+end
+
+local function IsPathPrefix(ChildPath, ParentPath)
+    local ChildPathLower  = string.lower(CreateOsPath(ChildPath))
+    local ParentPathLower = string.lower(CreateOsPath(ParentPath))
+
+    if #ChildPathLower < #ParentPathLower then
+        return false
+    end
+    if ChildPathLower:sub(1, #ParentPathLower) ~= ParentPathLower then
+        return false
+    end
+    -- exact match or next char is a separator
+    if #ChildPathLower == #ParentPathLower then
+        return true
+    end
+    local NextCharAfterPrefix = ChildPathLower:sub(#ParentPathLower + 1, #ParentPathLower + 1)
+    return (NextCharAfterPrefix == '\\' or NextCharAfterPrefix == '/')
+end
+
+local function IndexModuleFile(ScriptFilePath)
+    local FileHandle = io.open(ScriptFilePath, "r")
+    if not FileHandle then
+        return
+    end
+
+    local SourceCode = FileHandle:read("*a")
+    FileHandle:close()
+
+    -- Find all ModuleBuildRules("Name") occurrences.
+    -- Name allows letters, digits, '_', '-', '+', '.'
+    for ModuleName in SourceCode:gmatch("ModuleBuildRules%s*%(%s*[%\"']([%w_%-%+%.]+)[%\"']%s*%)") do
+        local ScriptDirectory = path.getdirectory(ScriptFilePath)
+        local RootLabel = "ThirdParty"
+        if IsPathPrefix(ScriptDirectory, GetRuntimeFolderPath()) then
+            RootLabel = "Runtime"
+        end
+
+        gModuleIndex[ModuleName] = {
+            ScriptPath = ScriptFilePath,
+            ScriptDir  = ScriptDirectory,
+            Root       = RootLabel
+        }
+
+        if _G.gSettings and _G.gSettings.bEnableDebugLogging then
+            LogInfo("Indexed module '%s' at '%s' (Root=%s)", ModuleName, ScriptFilePath, RootLabel)
+        end
+    end
+end
+
+local function ScanRoot(RootDirectory)
+    local SearchPattern = CreateOsPath(path.join(RootDirectory, "**/Module.lua"))
+    local MatchedFiles  = os.matchfiles(SearchPattern)
+
+    for FileIndex, ScriptFilePath in ipairs(MatchedFiles) do
+        LogHighlight("Found module-file '%s'", ScriptFilePath)
+        IndexModuleFile(ScriptFilePath)
+    end
+end
+
+function SearchForModuleFiles()
+    if gModuleIndexScanned then
+        return
+    end
+
+    for RootIndex, RootDirectory in ipairs(gModuleSearchRoots) do
+        if os.isdir(RootDirectory) then
+            LogHighlight("Scanning directory '%s'", RootDirectory)
+            ScanRoot(RootDirectory)
+        end
+    end
+
+    gModuleIndexScanned = true
+end
+
+function GetIndexedModuleInfo(ModuleName)
+    return gModuleIndex[ModuleName]
+end
+
+function InvalidateModuleIndex()
+    gModuleIndex = {}
+    gModuleIndexScanned = false
 end

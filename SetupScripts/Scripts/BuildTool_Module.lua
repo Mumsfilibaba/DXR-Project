@@ -2,6 +2,13 @@ include "BuildTool_Rule.lua"
 
 -- Module build rules
 function ModuleBuildRules(Name)
+    
+    -- Ensure that module does not already exist
+    if IsModule(Name) then
+        LogHighlightWarning("Module '%s' is already created. Returning existing instance", Name)
+        return GetModule(Name)
+    end
+    
     LogHighlight("Creating Module '%s'", Name)
 
     -- Initialize parent class
@@ -9,12 +16,6 @@ function ModuleBuildRules(Name)
     if not self then
         LogError("Parent function BuildRules failed")
         return nil
-    end
-
-    -- Ensure that module does not already exist
-    if IsModule(Name) then
-        LogWarning("Module is already created")
-        return GetModule(Name)
     end
 
     -- Determines if the module should be dynamic; overridden by monolithic build
@@ -43,9 +44,9 @@ function ModuleBuildRules(Name)
             self.bIsDynamic      = false
             self.bRuntimeLinking = false
             
-            LogInfo("    Build is monolithic")
+            LogInfo("Build is monolithic")
         else
-            LogInfo("    Build is NOT monolithic")
+            LogInfo("Build is NOT monolithic")
         end
 
         -- Dynamic or static
@@ -63,12 +64,16 @@ function ModuleBuildRules(Name)
             end
 
             -- Always add module name and API as defines
-            self.AddDefines({ 'MODULE_NAME="' .. self.Name .. '"' })
-            self.AddDefines({ ModuleApiName })
+            self.AddDefines({
+                'MODULE_NAME="' .. self.Name .. '"',
+                ModuleApiName
+            })
         end
 
         -- Generate the project
         BaseGenerate()
+
+        LogInfo("--- Finished Generating Module '%s' ---", self.Name)
     end
 
     -- Add module to global list

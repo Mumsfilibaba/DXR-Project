@@ -3,7 +3,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericThreadMisc.h"
 
-#if PLATFORM_ARCHITECTURE_X86_X64
+#if PLATFORM_ARCHITECTURE_X86_64
     #include <immintrin.h>
 #endif
 
@@ -35,7 +35,7 @@ struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
 
     static FORCEINLINE void Pause() 
     {
-    #if PLATFORM_ARCHITECTURE_X86_X64
+    #if PLATFORM_ARCHITECTURE_X86_64
         _mm_pause();
     #endif
     }

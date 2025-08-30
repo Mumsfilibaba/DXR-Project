@@ -22,6 +22,12 @@ function TargetBuildRules(Name, Workspace)
         return nil
     end
 
+    -- Ensure that target does not already exist
+    if Workspace.IsTarget(Name) then
+        LogError("Target is already created")
+        return nil
+    end
+
     LogHighlight("Creating Target '%s'", Name)
 
     -- Initialize parent class
@@ -32,12 +38,6 @@ function TargetBuildRules(Name, Workspace)
     end
 
     self.Workspace = Workspace
-
-    -- Ensure that target does not already exist
-    if self.Workspace.IsTarget(Name) then
-        LogError("Target is already created")
-        return nil
-    end
 
     -- Folder path for engine modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
@@ -66,6 +66,7 @@ function TargetBuildRules(Name, Workspace)
                 else
                     LogError("Found the Launch Module among thirdparties, but it has not been initialized")
                 end
+
                 break
             end
         end
@@ -82,14 +83,14 @@ function TargetBuildRules(Name, Workspace)
         LogInfo("\n--- Generating Target '%s' ---", self.Name)
   
         if IsBuildMonolithic() then
-            LogInfo("    Target '%s' is monolithic", self.Name)
+            LogInfo("Target '%s' is monolithic", self.Name)
         else
-            LogInfo("    Target '%s' is NOT monolithic", self.Name)
+            LogInfo("Target '%s' is NOT monolithic", self.Name)
         end
         
         -- Generate the project based on type
         if self.TargetType == ETargetType.Client then
-            LogInfo("    TargetType=Client")
+            LogInfo("TargetType=Client")
 
             -- Always add module name as a define
             self.AddDefines({ 'MODULE_NAME="' .. self.Name .. '"' })
@@ -172,10 +173,10 @@ function TargetBuildRules(Name, Workspace)
                 LogInfo("\n--- Finished generating standalone client executable project for target '%s' ---", self.Name)
             end
         elseif self.TargetType == ETargetType.WindowedApp then
-            LogError("    TargetType=WindowedApp is not implemented yet")
+            LogError("TargetType=WindowedApp is not implemented yet")
             -- TODO: Handle this case properly
         elseif self.TargetType == ETargetType.ConsoleApp then
-            LogError("    TargetType=ConsoleApp is not implemented yet")
+            LogError("TargetType=ConsoleApp is not implemented yet")
             -- TODO: Handle this case properly
         end
     end

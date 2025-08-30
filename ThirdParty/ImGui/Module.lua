@@ -18,6 +18,9 @@ ImGuiModule.CppVersion             = "C++20"
 ImGuiModule.SystemVersion          = "latest"
 ImGuiModule.CharacterSet           = "Ascii"
 
+-- ImGuiModule.Group      = "ThirdParty"
+-- ImGuiModule.OutputPath = "ThirdParty"
+
 ImGuiModule.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",
@@ -29,7 +32,7 @@ ImGuiModule.AddExternalIncludeDirs({
 })
 
 -- Source files
-ImGuiModule.AddFiles({
+ImGuiModule.SetFiles({
     CreateExternalThirdpartyPath("ImGui/imgui/imconfig.h"),
     CreateExternalThirdpartyPath("ImGui/imgui/imgui.h"),
     CreateExternalThirdpartyPath("ImGui/imgui/imgui.cpp"),

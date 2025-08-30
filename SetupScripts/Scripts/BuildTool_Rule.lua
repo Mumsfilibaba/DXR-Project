@@ -30,7 +30,7 @@ function BuildRules(Name)
         OutputPath = "",
 
         -- The workspace this rule is part of
-        Workspace = {},
+        Workspace = nil,
 
         -- Should use precompiled headers (PreCompiled.h / PreCompiled.cpp)
         bUsePrecompiledHeaders = false,
@@ -109,6 +109,9 @@ function BuildRules(Name)
 
         -- Post-build steps (strings)
         PostBuildCommands = {},
+
+        -- Is this rule generated yet? (rules should only be generated once)
+        bIsGenerated = false
     }
 
     -- Backing storage for the module's *source* path (defaults to Runtime/<Name>)
@@ -125,21 +128,26 @@ function BuildRules(Name)
         self.Group = NewGroup or ""
     end
 
+    function self.IsGenerated()
+        return self.bIsGenerated
+    end
+
     -- Adders
     function self.AddFlags(InFlags) AddUniqueElements(InFlags, self.Flags) end
-    function self.AddIncludeDirs(x) AddUniqueElements(x, self.IncludeDirs) end
-    function self.AddExternalIncludeDirs(x) AddUniqueElements(x, self.ExternalIncludeDirs) end
-    function self.AddFiles(x) AddUniqueElements(x, self.Files) end
-    function self.AddExcludeFiles(x) AddUniqueElements(x, self.ExcludeFiles) end
-    function self.AddDefines(x) AddUniqueElements(x, self.Defines) end
-    function self.AddModules(x) AddUniqueElements(x, self.Modules) end
-    function self.AddExtraEmbedNames(x) AddUniqueElements(x, self.ExtraEmbedNames) end
-    function self.AddLinkLibraries(x) AddUniqueElements(x, self.LinkLibraries) end
-    function self.AddFrameworks(x) AddUniqueElements(x, self.Frameworks) end
-    function self.AddForceIncludes(x) AddUniqueElements(x, self.ForceIncludes) end
-    function self.AddLibraryPaths(x) AddUniqueElements(x, self.LibraryPaths) end
-    function self.AddLinkOptions(x) AddUniqueElements(x, self.LinkOptions) end
-    function self.AddPostBuildCommands(x) AddUniqueElements(x, self.PostBuildCommands) end
+    function self.AddIncludeDirs(InIncludeDirs) AddUniqueElements(InIncludeDirs, self.IncludeDirs) end
+    function self.AddExternalIncludeDirs(InExternalIncludeDirs) AddUniqueElements(InExternalIncludeDirs, self.ExternalIncludeDirs) end
+    function self.AddFiles(InFiles) AddUniqueElements(InFiles, self.Files) end
+    function self.SetFiles(InFiles) self.Files = InFiles end
+    function self.AddExcludeFiles(InExcludeFiles) AddUniqueElements(InExcludeFiles, self.ExcludeFiles) end
+    function self.AddDefines(InDefines) AddUniqueElements(InDefines, self.Defines) end
+    function self.AddModules(InModules) AddUniqueElements(InModules, self.Modules) end
+    function self.AddExtraEmbedNames(InExtraEmbedNames) AddUniqueElements(InExtraEmbedNames, self.ExtraEmbedNames) end
+    function self.AddLinkLibraries(InLinkLibraries) AddUniqueElements(InLinkLibraries, self.LinkLibraries) end
+    function self.AddFrameworks(InFrameworks) AddUniqueElements(InFrameworks, self.Frameworks) end
+    function self.AddForceIncludes(InForceIncludes) AddUniqueElements(InForceIncludes, self.ForceIncludes) end
+    function self.AddLibraryPaths(InLibraryPaths) AddUniqueElements(InLibraryPaths, self.LibraryPaths) end
+    function self.AddLinkOptions(InLinkOptions) AddUniqueElements(InLinkOptions, self.LinkOptions) end
+    function self.AddPostBuildCommands(InPostBuildCommands) AddUniqueElements(InPostBuildCommands, self.PostBuildCommands) end
 
     -- Helper for adding the .framework extension to frameworks (idempotent)
     local function EndsWith(str, suffix)
@@ -199,6 +207,8 @@ function BuildRules(Name)
         -- Always set a group explicitly to avoid state leaking between projects
         local GroupName = (type(self.Group) == "string" and self.Group ~= "") and self.Group or ""
         group(GroupName)
+
+        LogHighlight("\nProject '%s' is using group/filter '%s'", self.Name, GroupName)
 
         -- Setting up project
         project(self.Name)
@@ -283,23 +293,23 @@ function BuildRules(Name)
 
             -- Location
             self.ProjectFilePath = CreateOsPath(self.ProjectFilePath)
-            LogInfo("    Project location '%s'", self.ProjectFilePath)
+            LogInfo("Project location '%s'", self.ProjectFilePath)
             location(self.ProjectFilePath)
 
             -- Output dirs
             local FullObjectFolderPath = self.GetTargetFolderPath()
-            LogInfo("    Target location '%s'", FullObjectFolderPath)
+            LogInfo("Target location '%s'", FullObjectFolderPath)
             targetdir(FullObjectFolderPath)
 
             local FullIntermediateFolderPath = self.GetObjectFilesFolderPath()
-            LogInfo("    Object files location '%s'", FullIntermediateFolderPath)
+            LogInfo("Object files location '%s'", FullIntermediateFolderPath)
             objdir(FullIntermediateFolderPath)
 
             -- PCH
             if self.bUsePrecompiledHeaders then
                 if BuildWithVisualStudio() then
                     local PchSourcePath = JoinPath(self.GetPath(), "PreCompiled.cpp")
-                    LogHighlight("    PreCompiled source path '%s'", PchSourcePath)
+                    LogHighlight("PreCompiled source path '%s'", PchSourcePath)
                     
                     local UnixPchSourcePath = path.translate(PchSourcePath, '/')
                     pchheader("PreCompiled.h")
@@ -308,81 +318,81 @@ function BuildRules(Name)
                     local PchPath = JoinPath(self.GetPath(), "PreCompiled.h")
                     pchheader(PchPath)
                 end
-                LogInfo("    Project is using PreCompiled Headers")
+                LogInfo("Project is using PreCompiled Headers")
             else
-                LogInfo("    Project does NOT use PreCompiled Headers")
+                LogInfo("Project does NOT use PreCompiled Headers")
             end
 
             -- Debug logging
             if _G.gSettings and _G.gSettings.bEnableDebugLogging then
                 LogInfo("\n--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
                 if #self.ForceIncludes > 0 then 
-                    PrintTable("    Using ForceInclude '%s'", self.ForceIncludes) 
+                    PrintTable("  Using ForceInclude '%s'", self.ForceIncludes) 
                 end
 
                 LogInfo("\n--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
                 if #self.Defines > 0 then 
-                    PrintTable("    Using define '%s'", self.Defines)
+                    PrintTable("  Using define '%s'", self.Defines)
                 end
 
                 LogInfo("\n--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
                 if #self.IncludeDirs > 0 then
-                    PrintTable("    Using Includes '%s'", self.IncludeDirs)
+                    PrintTable("  Using Includes '%s'", self.IncludeDirs)
                 end
 
                 LogInfo("\n--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
                 if #self.ExternalIncludeDirs > 0 then
-                    PrintTable("    Using ExternalInclude '%s'", self.ExternalIncludeDirs)
+                    PrintTable("  Using ExternalInclude '%s'", self.ExternalIncludeDirs)
                 end
 
                 LogInfo("\n--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
                 if #self.LibraryPaths > 0 then
-                    PrintTable("    Using LibraryPath '%s'", self.LibraryPaths)
+                    PrintTable("  Using LibraryPath '%s'", self.LibraryPaths)
                 end
 
                 LogInfo("\n--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
                 if #self.Files > 0 then
-                    PrintTable("    Including file '%s'", self.Files)
+                    PrintTable("  Including file '%s'", self.Files)
                 end
 
                 LogInfo("\n--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
                 if #self.ExcludeFiles > 0 then
-                    PrintTable("    Excluding file '%s'", self.ExcludeFiles)
+                    PrintTable("  Excluding file '%s'", self.ExcludeFiles)
                 end
 
                 LogInfo("\n--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
                 if #self.Frameworks > 0 then
-                    PrintTable("    Using framework thirdparty '%s'", self.Frameworks)
+                    PrintTable("  Using framework thirdparty '%s'", self.Frameworks)
                 end
 
                 LogInfo("\n--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
                 if #self.LinkLibraries > 0 then
-                    PrintTable("    Linking library '%s'", self.LinkLibraries)
+                    PrintTable("  Linking library '%s'", self.LinkLibraries)
                 end
 
                 LogInfo("\n--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
                 if #self.LinkModules > 0 then
-                    PrintTable("    Linking module '%s'", self.LinkModules)
+                    PrintTable("  Linking module '%s'", self.LinkModules)
                 end
 
                 LogInfo("\n--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
                 if #self.LinkOptions > 0 then
-                    PrintTable("    Link options '%s'", self.LinkOptions)
+                    PrintTable("  Link options '%s'", self.LinkOptions)
                 end
 
                 LogInfo("\n--- Modules used by module '%s' (Num Modules=%d) ---", self.Name, #self.Modules)
                 if #self.Modules > 0 then
-                    PrintTable("    Using module '%s'", self.Modules)
+                    PrintTable("  Using module '%s'", self.Modules)
                 end
 
                 LogInfo("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
                 if #self.Modules > 0 then
-                    PrintTable("    Embed Module '%s'", self.Modules)
+                    PrintTable("  Embed Module '%s'", self.Modules)
                 end
 
                 LogInfo("\n--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
                 if #self.PostBuildCommands > 0 then
-                    PrintTable("    Post-Build-Command '%s'", self.PostBuildCommands)
+                    PrintTable("  Post-Build-Command '%s'", self.PostBuildCommands)
                 end
             end
 
@@ -489,99 +499,96 @@ function BuildRules(Name)
 
     -- Base generate (generates project files)
     function self.Generate()
+
+        -- Protect against not having a workspace set
         if self.Workspace == nil then
             LogError("Workspace cannot be nil when generating rule")
             return
         end
 
-        -- Ensure modules are included
-        for Index = 1, #self.Modules do
-            LogHighlight("\n--- Including module-dependency for module '%s' ---", self.Name)
+        -- Protect against being generated twice
+        if self.IsGenerated() then
+            LogHighlightWarning("Rule '%s' has already been generated", self.Name)
+            return
+        end
 
-            local CurrentModuleName = self.Modules[Index]
-            if IsModule(CurrentModuleName) then
-                LogHighlightWarning("- Dependency '%s' is already included", CurrentModuleName)
+        local function GenerateModuleFromIndex(ModuleRule, ModuleInfo)
+            -- Source path for the rule (affects file globs, natvis, etc.)
+            if type(ModuleRule.SetPath) == "function" then
+                ModuleRule.SetPath(ModuleInfo.ScriptDir)
+            end
+
+            -- Include roots + grouping/output
+            if ModuleInfo.Root == "Runtime" then
+                ModuleRule.AddExternalIncludeDirs({
+                    GetRuntimeFolderPath()
+                })
             else
-                local function TryIncludeModuleAndGenerate(BaseDir)
-                    local ModuleDir = JoinPath(BaseDir, CurrentModuleName)
-                    local ModuleLua = JoinPath(ModuleDir, "Module.lua")
-                    
-                    if os.isdir(ModuleDir) and os.isfile(ModuleLua) then
-                        LogInfo("- Including Dependency '%s' Path='%s'", CurrentModuleName, ModuleLua)
-                        include(ModuleLua)
+                -- TODO: We might need to take another look at this if we add other folders than ThirdParty
+                -- Other folders: include the module's actual folder so consumers can do something like '#include <ModuleName/...>'
+                ModuleRule.AddExternalIncludeDirs({
+                    ModuleInfo.ScriptDir
+                })
 
-                        -- Some modules may choose not to register on certain platforms
-                        if IsModule(CurrentModuleName) then
-                            local CurrentModule = GetModule(CurrentModuleName)
-                            CurrentModule.Workspace = self.Workspace
-                            CurrentModule.Generate()
+                -- Fix grouping (only if not already set)
+                local RelativePath = CreateOsPath(path.getrelative(GetExternalThirdpartyFolderPath(), ModuleInfo.ScriptDir))
+                if (not ModuleRule.Group) or ModuleRule.Group == "" then
+                    ModuleRule.SetGroup("ThirdParty/" .. (RelativePath:gsub("\\", "/")))
+                end
+
+                -- Fix output (only if not already set)
+                if (not ModuleRule.OutputPath) or ModuleRule.OutputPath == "" then
+                    ModuleRule.OutputPath = JoinPath("ThirdParty", RelativePath)
+                end
+            end
+
+            ModuleRule.Workspace = self.Workspace
+            ModuleRule.Generate()
+        end
+
+        for Index = 1, #self.Modules do
+            local CurrentModuleName = self.Modules[Index]
+            LogHighlight("\nChecking module-dependency '%s' for module '%s'", CurrentModuleName, self.Name)
+
+            local ModuleInfo = GetIndexedModuleInfo(CurrentModuleName)
+            if ModuleInfo and os.isfile(ModuleInfo.ScriptPath) then
+                if IsModule(CurrentModuleName) then
+
+                    -- If it was only created (by a multi-module file) but not yet generated, do it now.
+                    local ExistingRule = GetModule(CurrentModuleName)
+                    if not ExistingRule then
+                        LogError("Error: module '%s' reported as included, but GetModule() returned nil.", CurrentModuleName)
+                    else
+                        if not ExistingRule.IsGenerated() then
+                            LogInfo("Module '%s' was created earlier but not generated. Generating now...", CurrentModuleName)
+                            GenerateModuleFromIndex(ExistingRule, ModuleInfo)
                         else
-                            LogHighlightWarning("Found '%s' at '%s', but it did not get registered (it may be unsupported on this platform).", CurrentModuleName, ModuleLua)
+                            LogHighlightWarning("Module '%s' is already included in workspace '%s'", CurrentModuleName, ExistingRule.Workspace.Name)
                         end
-
-                        return true
                     end
+                else
+                
+                    -- Include the script if it is not included yet
+                    LogInfo("Including script '%s' to include module '%s'", ModuleInfo.ScriptPath, CurrentModuleName)
+                    include(ModuleInfo.ScriptPath)
 
-                    return false
+                    -- Some scripts may choose to not register a module for multiple reasons so check if we actually created a module
+                    if IsModule(CurrentModuleName) then
+                        local CurrentModule = GetModule(CurrentModuleName)
+                        LogInfo("Module '%s' was created in script '%s'. Generating now...", CurrentModule.Name, ModuleInfo.ScriptPath)
+
+                        GenerateModuleFromIndex(CurrentModule, ModuleInfo)
+                    else
+                        LogHighlightWarning("Found '%s' at '%s', but it did not register (it may be unsupported on this platform).", CurrentModuleName, ModuleInfo.ScriptPath)
+                    end
                 end
-
-                -- 1) Try Runtime/<ModuleName>
-                local Included = TryIncludeModuleAndGenerate(RuntimeFolderPath)
-
-                -- 2) Try ThirdParty/<ModuleName>
-                if not Included then
-                    Included = TryIncludeModuleAndGenerate(GetExternalThirdpartyFolderPath())
-                end
-
-                -- 3) Give up if not found
-                if not Included then
-                    LogError("Module '%s' not found. Searched:\n  %s\n  %s", CurrentModuleName, 
-                        JoinPath(RuntimeFolderPath, CurrentModuleName), JoinPath(GetExternalThirdpartyFolderPath(), CurrentModuleName))
-                end
+            else
+                LogError("Module '%s' not found in indexed roots. Ensure it lives under 'Runtime' or 'ThirdParty'.", CurrentModuleName)
             end
         end
 
         -- Setup folder paths
         self.ProjectFilePath = GetSolutionsFolderPath()
-
-        -- Add include root based on module location
-        local function HasModuleAt(Dir)
-            if not os.isdir(Dir) then
-                return false
-            end
-
-            local ModuleLua = JoinPath(Dir, "Module.lua")
-            return os.isfile(ModuleLua)
-        end
-
-        -- <EngineRoot>/Runtime/<ModuleName>
-        local RuntimeModuleDir = JoinPath(RuntimeFolderPath, self.Name)
-        -- <EngineRoot>/ThirdParty
-        local ThirdPartyRootPath = GetExternalThirdpartyFolderPath()
-        -- <EngineRoot>/ThirdParty/<ModuleName>
-        local ThirdPartyModuleDir = JoinPath(ThirdPartyRootPath, self.Name)
-
-        if HasModuleAt(RuntimeModuleDir) then
-            -- Engine modules: allow #include "<ModuleName>/..."
-            self.AddExternalIncludeDirs({
-                RuntimeFolderPath
-            })
-        elseif HasModuleAt(ThirdPartyModuleDir) then
-            -- Third-party modules: allow #include <<ModuleName>/*.h>
-            self.AddExternalIncludeDirs({
-                ThirdPartyModuleDir
-            })
-
-            -- Keep ThirdParty folder organized
-            self.Group = "ThirdParty"
-            self.OutputPath = "ThirdParty"
-        else
-            LogWarning(
-                "Could not locate module '%s' under Runtime or ThirdParty when setting include roots. " ..
-                "Searched:\n  %s\n  %s",
-                self.Name, RuntimeModuleDir, ThirdPartyModuleDir
-            )
-        end
 
         -- Add framework extension
         self.AddFrameworkExtension()
@@ -631,7 +638,7 @@ function BuildRules(Name)
             end
         end
 
-        -- macOS / Xcode (ld64)
+        -- macOS / Xcode
         if IsPlatformMac() and IsBuildMonolithic() then
             for i = 1, #self.LinkModules do
                 local ModuleName = self.LinkModules[i]
@@ -657,6 +664,9 @@ function BuildRules(Name)
 
         -- Register with workspace
         self.Workspace.AddRule(self)
+
+        -- Set that this rule has been generated and does not need to be generated again
+        self.bIsGenerated = true
     end
 
     return self

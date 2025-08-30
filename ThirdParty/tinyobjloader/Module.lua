@@ -18,6 +18,9 @@ TinyObj.CppVersion             = "C++20"
 TinyObj.SystemVersion          = "latest"
 TinyObj.CharacterSet           = "Ascii"
 
+-- TinyObj.Group      = "ThirdParty"
+-- TinyObj.OutputPath = "ThirdParty"
+
 TinyObj.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",
@@ -29,7 +32,7 @@ TinyObj.AddExternalIncludeDirs({
 })
 
 -- Sources
-TinyObj.AddFiles({
+TinyObj.SetFiles({
     CreateExternalThirdpartyPath("tinyobjloader/tinyobjloader/tiny_obj_loader.h"),
     CreateExternalThirdpartyPath("tinyobjloader/tinyobjloader/tiny_obj_loader.cc"),
 })

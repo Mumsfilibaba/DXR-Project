@@ -24,7 +24,7 @@
 #endif
 
 #ifndef VECTORCALL
-    #if PLATFORM_ARCHITECTURE_X86_X64
+    #if PLATFORM_ARCHITECTURE_X86_64
         #define VECTORCALL __vectorcall
     #else
         #define VECTORCALL

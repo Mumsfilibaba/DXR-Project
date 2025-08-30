@@ -1,9 +1,6 @@
 [submodule "ThirdParty/tinyddsloader"]
 	path = ThirdParty/tinyddsloader
 	url = https://github.com/Mumsfilibaba/tinyddsloader
-[submodule "ThirdParty/glslang"]
-	path = ThirdParty/glslang
-	url = https://github.com/KhronosGroup/glslang
 [submodule "ThirdParty/ImGui/imgui"]
 	path = ThirdParty/ImGui/imgui
 	url = https://github.com/Mumsfilibaba/imgui
@@ -19,3 +16,6 @@
 	path = ThirdParty/tinyobjloader/tinyobjloader
 	url = https://github.com/Mumsfilibaba/tinyobjloader
 	branch = release
+[submodule "ThirdParty/glslang/glslang"]
+	path = ThirdParty/glslang/glslang
+	url = https://github.com/Mumsfilibaba/glslang
