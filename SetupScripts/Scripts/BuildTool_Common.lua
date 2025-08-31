@@ -24,10 +24,6 @@ if type(gSettings) ~= "table" then
     gSettings = {}
 end
 
-if gSettings.bEnableDebugLogging == nil then
-    gSettings.bEnableDebugLogging = false
-end
-
 -- Monolithic Build Management
 local gIsMonolithic = false
 

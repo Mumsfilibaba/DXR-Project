@@ -7,8 +7,5 @@ premake.path = premake.path .. ";" .. ScriptsDir
 -- Common
 include "BuildTool.lua"
 
--- Setting up settings
-gSettings.bEnableDebugLogging = true
-
 -- Project
 include "Sandbox/Target.lua"

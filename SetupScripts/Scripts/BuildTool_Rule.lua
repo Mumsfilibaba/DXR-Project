@@ -329,76 +329,74 @@ function BuildRules(Name)
             end
 
             -- Debug logging
-            if _G.gSettings and _G.gSettings.bEnableDebugLogging then
-                LogInfo("--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
-                if #self.ForceIncludes > 0 then 
-                    PrintTable("  Using ForceInclude '%s'", self.ForceIncludes) 
-                end
+            LogInfo("--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
+            if #self.ForceIncludes > 0 then 
+                PrintTable("  Using ForceInclude '%s'", self.ForceIncludes) 
+            end
 
-                LogInfo("--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
-                if #self.Defines > 0 then 
-                    PrintTable("  Using define '%s'", self.Defines)
-                end
+            LogInfo("--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
+            if #self.Defines > 0 then 
+                PrintTable("  Using define '%s'", self.Defines)
+            end
 
-                LogInfo("--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
-                if #self.IncludeDirs > 0 then
-                    PrintTable("  Using Includes '%s'", self.IncludeDirs)
-                end
+            LogInfo("--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
+            if #self.IncludeDirs > 0 then
+                PrintTable("  Using Includes '%s'", self.IncludeDirs)
+            end
 
-                LogInfo("--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
-                if #self.ExternalIncludeDirs > 0 then
-                    PrintTable("  Using ExternalInclude '%s'", self.ExternalIncludeDirs)
-                end
+            LogInfo("--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
+            if #self.ExternalIncludeDirs > 0 then
+                PrintTable("  Using ExternalInclude '%s'", self.ExternalIncludeDirs)
+            end
 
-                LogInfo("--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
-                if #self.LibraryPaths > 0 then
-                    PrintTable("  Using LibraryPath '%s'", self.LibraryPaths)
-                end
+            LogInfo("--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
+            if #self.LibraryPaths > 0 then
+                PrintTable("  Using LibraryPath '%s'", self.LibraryPaths)
+            end
 
-                LogInfo("--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
-                if #self.Files > 0 then
-                    PrintTable("  Including file '%s'", self.Files)
-                end
+            LogInfo("--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
+            if #self.Files > 0 then
+                PrintTable("  Including file '%s'", self.Files)
+            end
 
-                LogInfo("--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
-                if #self.ExcludeFiles > 0 then
-                    PrintTable("  Excluding file '%s'", self.ExcludeFiles)
-                end
+            LogInfo("--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
+            if #self.ExcludeFiles > 0 then
+                PrintTable("  Excluding file '%s'", self.ExcludeFiles)
+            end
 
-                LogInfo("--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
-                if #self.Frameworks > 0 then
-                    PrintTable("  Using framework thirdparty '%s'", self.Frameworks)
-                end
+            LogInfo("--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
+            if #self.Frameworks > 0 then
+                PrintTable("  Using framework thirdparty '%s'", self.Frameworks)
+            end
 
-                LogInfo("--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
-                if #self.LinkLibraries > 0 then
-                    PrintTable("  Linking library '%s'", self.LinkLibraries)
-                end
+            LogInfo("--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
+            if #self.LinkLibraries > 0 then
+                PrintTable("  Linking library '%s'", self.LinkLibraries)
+            end
 
-                LogInfo("--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
-                if #self.LinkModules > 0 then
-                    PrintTable("  Linking module '%s'", self.LinkModules)
-                end
+            LogInfo("--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
+            if #self.LinkModules > 0 then
+                PrintTable("  Linking module '%s'", self.LinkModules)
+            end
 
-                LogInfo("--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
-                if #self.LinkOptions > 0 then
-                    PrintTable("  Link options '%s'", self.LinkOptions)
-                end
+            LogInfo("--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
+            if #self.LinkOptions > 0 then
+                PrintTable("  Link options '%s'", self.LinkOptions)
+            end
 
-                LogInfo("--- Modules used by module '%s' (Num Modules=%d) ---", self.Name, #self.Modules)
-                if #self.Modules > 0 then
-                    PrintTable("  Using module '%s'", self.Modules)
-                end
+            LogInfo("--- Modules used by module '%s' (Num Modules=%d) ---", self.Name, #self.Modules)
+            if #self.Modules > 0 then
+                PrintTable("  Using module '%s'", self.Modules)
+            end
 
-                LogInfo("--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
-                if #self.Modules > 0 then
-                    PrintTable("  Embed Module '%s'", self.Modules)
-                end
+            LogInfo("--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
+            if #self.Modules > 0 then
+                PrintTable("  Embed Module '%s'", self.Modules)
+            end
 
-                LogInfo("--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
-                if #self.PostBuildCommands > 0 then
-                    PrintTable("  Post-Build-Command '%s'", self.PostBuildCommands)
-                end
+            LogInfo("--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
+            if #self.PostBuildCommands > 0 then
+                PrintTable("  Post-Build-Command '%s'", self.PostBuildCommands)
             end
 
             -- Force includes / include dirs / defines / libs / files / postbuild
