@@ -23,11 +23,11 @@ function BuildRules(Name)
         -- Group - (Private) solution subfolder; can be set by path-resolution code
         Group = "",
 
-        -- Location for IDE project files
-        ProjectFilePath = "",
+        -- Location for project files, this overrides the default behavior
+        ProjectFilePathOverride = "",
 
-        -- Location for the build (inside the build folder)
-        OutputPath = "",
+        -- Location for the build, this overrides the default behavior
+        OutputPathOverride = "",
 
         -- The workspace this rule is part of
         Workspace = nil,
@@ -125,7 +125,7 @@ function BuildRules(Name)
         BuildRulePath = CreateOsPath(NewPath)
     end
     function self.SetGroup(NewGroup)
-        self.Group = NewGroup or ""
+        self.Group = NewGroup
     end
 
     function self.IsGenerated()
@@ -173,17 +173,24 @@ function BuildRules(Name)
         end
     end
 
-    -- Target / object directories
-    function self.GetTargetFolderPath()
-        local BasePath = JoinPath(JoinPath(GetBuildFolderPath(), "bin"), GetOutputConfigPath())
-        return (type(self.OutputPath) == "string" and self.OutputPath ~= "") and JoinPath(BasePath, self.OutputPath) or BasePath
+    -- Solution directory
+    function self.GetProjectFolderPath()
+        local BasePath = CreateOsPath(GetSolutionsFolderPath())
+        return (type(self.ProjectFilePathOverride) == "string" and self.ProjectFilePathOverride ~= "") and JoinPath(BasePath, self.ProjectFilePathOverride) or BasePath
     end
 
+    -- Target directory
+    function self.GetTargetFolderPath()
+        local BasePath = JoinPath(JoinPath(GetBuildFolderPath(), "bin"), GetOutputConfigPath())
+        return (type(self.OutputPathOverride) == "string" and self.OutputPathOverride ~= "") and JoinPath(BasePath, self.OutputPathOverride) or BasePath
+    end
+
+    -- Object files directory
     function self.GetObjectFilesFolderPath()
-        local BasePath   = JoinPath(JoinPath(GetBuildFolderPath(), "bin-int"), GetOutputConfigPath())
-        local OutputPath = (type(self.OutputPath) == "string" and self.OutputPath ~= "") and JoinPath(BasePath, self.OutputPath) or BasePath  
+        local BasePath = JoinPath(JoinPath(GetBuildFolderPath(), "bin-int"), GetOutputConfigPath())
+        local OutputPathOverride = (type(self.OutputPathOverride) == "string" and self.OutputPathOverride ~= "") and JoinPath(BasePath, self.OutputPathOverride) or BasePath  
         -- Need to add project name to make it unique per project (VS limitation)
-        return JoinPath(OutputPath, "%{prj.name}")
+        return JoinPath(OutputPathOverride, "%{prj.name}")
     end
 
     -- Project generation
@@ -204,6 +211,8 @@ function BuildRules(Name)
             return nil
         end
 
+        LogHighlight("\n--- Generating Project '%s' ---", self.Name)
+
         -- Always set a group explicitly to avoid state leaking between projects
         local GroupName = (type(self.Group) == "string" and self.Group ~= "") and self.Group or ""
         group(GroupName)
@@ -212,7 +221,6 @@ function BuildRules(Name)
 
         -- Setting up project
         project(self.Name)
-            LogHighlight("\n--- Generating Project '%s' ---", self.Name)
 
             -- Add settings based on configuration
             if self.bOptimizeDebugBuild then
@@ -292,9 +300,9 @@ function BuildRules(Name)
             end
 
             -- Location
-            self.ProjectFilePath = CreateOsPath(self.ProjectFilePath)
-            LogInfo("Project location '%s'", self.ProjectFilePath)
-            location(self.ProjectFilePath)
+            local FullProjectFolderPath = self.GetProjectFolderPath()
+            LogInfo("Project location '%s'", FullProjectFolderPath)
+            location(FullProjectFolderPath)
 
             -- Output dirs
             local FullObjectFolderPath = self.GetTargetFolderPath()
@@ -536,9 +544,14 @@ function BuildRules(Name)
                     ModuleRule.SetGroup("ThirdParty/" .. (RelativePath:gsub("\\", "/")))
                 end
 
-                -- Fix output (only if not already set)
-                if (not ModuleRule.OutputPath) or ModuleRule.OutputPath == "" then
-                    ModuleRule.OutputPath = JoinPath("ThirdParty", RelativePath)
+                -- Fix output-path (only if not already set)
+                if (not ModuleRule.OutputPathOverride) or ModuleRule.OutputPathOverride == "" then
+                    ModuleRule.OutputPathOverride = JoinPath("ThirdParty", RelativePath)
+                end
+
+                -- Fix project-path (only if not already set)
+                if (not ModuleRule.ProjectFilePathOverride) or ModuleRule.ProjectFilePathOverride == "" then
+                    ModuleRule.ProjectFilePathOverride = JoinPath("ThirdParty", RelativePath)
                 end
             end
 
@@ -586,9 +599,6 @@ function BuildRules(Name)
                 LogError("Module '%s' not found in indexed roots. Ensure it lives under 'Runtime' or 'ThirdParty'.", CurrentModuleName)
             end
         end
-
-        -- Setup folder paths
-        self.ProjectFilePath = GetSolutionsFolderPath()
 
         -- Add framework extension
         self.AddFrameworkExtension()

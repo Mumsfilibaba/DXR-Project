@@ -18,9 +18,6 @@ TinyObj.CppVersion             = "C++20"
 TinyObj.SystemVersion          = "latest"
 TinyObj.CharacterSet           = "Ascii"
 
--- TinyObj.Group      = "ThirdParty"
--- TinyObj.OutputPath = "ThirdParty"
-
 TinyObj.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",

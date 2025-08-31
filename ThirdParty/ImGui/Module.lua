@@ -18,9 +18,6 @@ ImGuiModule.CppVersion             = "C++20"
 ImGuiModule.SystemVersion          = "latest"
 ImGuiModule.CharacterSet           = "Ascii"
 
--- ImGuiModule.Group      = "ThirdParty"
--- ImGuiModule.OutputPath = "ThirdParty"
-
 ImGuiModule.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",

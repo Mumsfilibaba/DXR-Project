@@ -47,9 +47,9 @@ function WorkspaceRules(WorkspaceName)
             return nil 
         end
 
-        for _, t in ipairs(self.TargetRules) do
-            if t and t.Name == TargetName then
-                return t
+        for _, Target in ipairs(self.TargetRules) do
+            if Target and Target.Name == TargetName then
+                return Target
             end
         end
 
@@ -88,7 +88,7 @@ function WorkspaceRules(WorkspaceName)
 
     -- Generate the actual solution files
     function self.GenerateSolutionFiles()
-        
+
         -- Log the start of the generation
         LogInfo("\n--- Generating Solution Files for Workspace '%s' ---", self.Name)
 
@@ -203,6 +203,9 @@ function WorkspaceRules(WorkspaceName)
     -- Generate workspace
     function self.Generate()
 
+        -- TODO: Create a seperate lua file and run this initialize code in there. 
+        -- For example BuildTool.lua.
+        
         -- Default roots for Module.lua files: Runtime and ThirdParty
         AddModuleSearchRoot(GetRuntimeFolderPath())
         AddModuleSearchRoot(GetExternalThirdpartyFolderPath())

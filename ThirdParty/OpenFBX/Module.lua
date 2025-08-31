@@ -19,9 +19,6 @@ OpenFBXModule.CppVersion             = "C++20"
 OpenFBXModule.SystemVersion          = "latest"
 OpenFBXModule.CharacterSet           = "Ascii"
 
--- OpenFBXModule.Group      = "ThirdParty"
--- OpenFBXModule.OutputPath = "ThirdParty"
-
 OpenFBXModule.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",

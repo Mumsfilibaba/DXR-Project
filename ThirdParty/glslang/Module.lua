@@ -116,8 +116,6 @@ local function CommonSetup(Module)
     Module.CppVersion             = "C++20"
     Module.SystemVersion          = "latest"
     Module.CharacterSet           = "Ascii"
-    -- Module.Group                  = "ThirdParty/glslang"
-    -- Module.OutputPath             = "ThirdParty/glslang/" .. Module.Name
 
     Module.AddFlags({
         "MultiProcessorCompile",

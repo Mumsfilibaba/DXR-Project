@@ -18,9 +18,6 @@ SpirvCross.CppVersion             = "C++20"
 SpirvCross.SystemVersion          = "latest"
 SpirvCross.CharacterSet           = "Ascii"
 
--- SpirvCross.Group      = "ThirdParty"
--- SpirvCross.OutputPath = "ThirdParty"
-
 SpirvCross.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",
