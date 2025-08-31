@@ -6,7 +6,7 @@ local function LogWithColor(Color, Prefix, FmtStr, ...)
     if select("#", ...) > 0 then
         Message = string.format(FmtStr, ...)
     else
-        Message = tostring(FmtStr)  -- don't run format; safe for %{cfg.*}
+        Message = tostring(FmtStr) -- don't run format; safe for %{cfg.*}
     end
 
     if Prefix then
