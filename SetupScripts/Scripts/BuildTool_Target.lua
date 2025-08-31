@@ -3,9 +3,9 @@ include "BuildTool.lua"
 -- Target types
 ETargetType =
 {
-    Client      = 1,
-    WindowedApp = 2,
-    ConsoleApp  = 3,
+    Game    = 1, -- Standalone game (Uses main inside launch)
+    Editor  = 2, -- Editor with the game (Uses main inside launch)
+    Program = 3, -- Standalone application (Uses main inside of the application itself)
 }
 
 -- Target build rules
@@ -36,7 +36,7 @@ function TargetBuildRules(Name)
     local RuntimeFolderPath = GetRuntimeFolderPath()
 
     -- The type of target. Decides if there should be a Standalone and DLL or if the app should be a ConsoleApp.
-    self.TargetType = ETargetType.Client
+    self.TargetType = ETargetType.Game
     
     -- Helper function for retrieving path
     local PathToTarget = JoinPath(GetEnginePath(), self.Name)
@@ -77,8 +77,8 @@ function TargetBuildRules(Name)
         end
         
         -- Generate the project based on type
-        if self.TargetType == ETargetType.Client then
-            LogInfo("TargetType=Client")
+        if self.TargetType == ETargetType.Game then
+            LogInfo("TargetType=Game")
 
             -- Always add module name as a define
             self.AddDefines({
@@ -161,11 +161,11 @@ function TargetBuildRules(Name)
 
                 LogInfo("--- Finished generating standalone client executable project for target '%s' ---", self.Name)
             end
-        elseif self.TargetType == ETargetType.WindowedApp then
-            LogError("TargetType=WindowedApp is not implemented yet")
+        elseif self.TargetType == ETargetType.Editor then
+            LogError("TargetType=Editor is not implemented yet")
             -- TODO: Handle this case properly
-        elseif self.TargetType == ETargetType.ConsoleApp then
-            LogError("TargetType=ConsoleApp is not implemented yet")
+        elseif self.TargetType == ETargetType.Program then
+            LogError("TargetType=Program is not implemented yet")
             -- TODO: Handle this case properly
         end
     end

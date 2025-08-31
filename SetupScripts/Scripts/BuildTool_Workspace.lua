@@ -248,7 +248,7 @@ function GenerateWorkspace()
 
     -- Setup startup project
     local StartProjectTarget = gTargetRules[1]
-    if (StartProjectTarget.TargetType == ETargetType.Client) and (not IsBuildMonolithic()) then
+    if (StartProjectTarget.TargetType == ETargetType.Game) and (not IsBuildMonolithic()) then
         gStartProjectName = StartProjectTarget.Name .. "Standalone"
     else
         gStartProjectName = StartProjectTarget.Name
