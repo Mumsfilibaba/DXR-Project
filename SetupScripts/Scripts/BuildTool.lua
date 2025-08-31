@@ -1,0 +1,13 @@
+include "BuildTool_Common.lua"
+include "BuildTool_Log.lua"
+include "BuildTool_Module.lua"
+include "BuildTool_Rule.lua"
+include "BuildTool_Target.lua"
+include "BuildTool_Workspace.lua"
+
+-- Default roots for Module.lua files: Runtime and ThirdParty
+AddModuleSearchRoot(GetRuntimeFolderPath())
+AddModuleSearchRoot(GetExternalThirdpartyFolderPath())
+
+-- Search through all of the folders for Module.lua and index them
+SearchForModuleFiles();

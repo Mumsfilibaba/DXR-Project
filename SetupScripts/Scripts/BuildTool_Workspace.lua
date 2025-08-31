@@ -1,4 +1,4 @@
-include "BuildTool_Module.lua"
+include "BuildTool.lua"
 include "BuildTool_Target.lua"
 
 -- Generate a workspace from an array of target rules
@@ -203,16 +203,7 @@ function WorkspaceRules(WorkspaceName)
     -- Generate workspace
     function self.Generate()
 
-        -- TODO: Create a seperate lua file and run this initialize code in there. 
-        -- For example BuildTool.lua.
-        
-        -- Default roots for Module.lua files: Runtime and ThirdParty
-        AddModuleSearchRoot(GetRuntimeFolderPath())
-        AddModuleSearchRoot(GetExternalThirdpartyFolderPath())
-
-        -- Search through all of the folders for Module.lua and index them
-        SearchForModuleFiles();
-
+        -- Logging
         LogInfo("\n--- Generating Workspace '%s' ---", self.Name)
         LogInfo("ConfigurationPath = '%s'", GetOutputConfigPath())
 

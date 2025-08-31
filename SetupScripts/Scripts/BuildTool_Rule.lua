@@ -254,7 +254,7 @@ function BuildRules(Name)
             -- Build type
             kind(self.Kind)
 
-            -- RTTI
+            -- Run-Time Type Information
             rtti(self.bEnableRuntimeTypeInfo and "On" or "Off")
             floatingpoint(self.FloatingPoint)
             vectorextensions(self.VectorExtensions)

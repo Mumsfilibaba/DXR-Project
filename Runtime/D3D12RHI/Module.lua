@@ -1,4 +1,4 @@
-include "BuildTool_Module.lua"
+include "BuildTool.lua"
 
 -- D3D12RHI Module
 

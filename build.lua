@@ -5,7 +5,7 @@ local ScriptsDir = path.join(_MAIN_SCRIPT_DIR, "SetupScripts/Scripts")
 premake.path = premake.path .. ";" .. ScriptsDir
 
 -- Common
-include "BuildTool_Workspace.lua"
+include "BuildTool.lua"
 
 -- Setting up settings
 gSettings.bEnableDebugLogging = true

@@ -1,42 +1,42 @@
-include "BuildTool_Module.lua"
+include "BuildTool.lua"
 
 -- ThirdParty SPIRV-Cross Module
-local SpirvCross = ModuleBuildRules("SPIRV-Cross")
-SpirvCross.bIsLibrary             = true
-SpirvCross.bIsDynamic             = false
-SpirvCross.bUsePrecompiledHeaders = false
-SpirvCross.bEnableRuntimeTypeInfo = false
-SpirvCross.bEnableEditAndContinue = false
-SpirvCross.bEnableIntrinsics      = true
-SpirvCross.bOptimizeDebugBuild    = true
-SpirvCross.bSilenceWarnings       = true
-SpirvCross.ExceptionHandling      = "On"
-SpirvCross.FloatingPoint          = "Fast"
-SpirvCross.VectorExtensions       = "Default"
-SpirvCross.Language               = "C++"
-SpirvCross.CppVersion             = "C++20"
-SpirvCross.SystemVersion          = "latest"
-SpirvCross.CharacterSet           = "Ascii"
+local SpirvCrossModule = ModuleBuildRules("SPIRV-Cross")
+SpirvCrossModule.bIsLibrary             = true
+SpirvCrossModule.bIsDynamic             = false
+SpirvCrossModule.bUsePrecompiledHeaders = false
+SpirvCrossModule.bEnableRuntimeTypeInfo = false
+SpirvCrossModule.bEnableEditAndContinue = false
+SpirvCrossModule.bEnableIntrinsics      = true
+SpirvCrossModule.bOptimizeDebugBuild    = true
+SpirvCrossModule.bSilenceWarnings       = true
+SpirvCrossModule.ExceptionHandling      = "On"
+SpirvCrossModule.FloatingPoint          = "Fast"
+SpirvCrossModule.VectorExtensions       = "Default"
+SpirvCrossModule.Language               = "C++"
+SpirvCrossModule.CppVersion             = "C++20"
+SpirvCrossModule.SystemVersion          = "latest"
+SpirvCrossModule.CharacterSet           = "Ascii"
 
-SpirvCross.AddFlags({
+SpirvCrossModule.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",
 })
 
 -- Add the correct folder as an include dir to make includes simpler (#include <spirv_cross_c.h> instead of #include <SPIRV-Cross/spirv_cross_c.h>)
-SpirvCross.AddExternalIncludeDirs({
+SpirvCrossModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("SPIRV-Cross/SPIRV-Cross/"),
 })
 
 -- Public C API toggles used by SPIRV-Cross
-SpirvCross.AddDefines({
+SpirvCrossModule.AddDefines({
     "SPIRV_CROSS_C_API_MSL=(1)",
     "SPIRV_CROSS_C_API_HLSL=(1)",
     "SPIRV_CROSS_C_API_GLSL=(1)",
 })
 
 -- Source files
-SpirvCross.SetFiles({
+SpirvCrossModule.SetFiles({
     -- C interface
     CreateExternalThirdpartyPath("SPIRV-Cross/SPIRV-Cross/GLSL.std.450.h"),
     CreateExternalThirdpartyPath("SPIRV-Cross/SPIRV-Cross/spirv.h"),

@@ -1,4 +1,4 @@
-include "BuildTool_Module.lua"
+include "BuildTool.lua"
 
 -- ThirdParty OpenFBX Module
 local OpenFBXModule = ModuleBuildRules("OpenFBX")

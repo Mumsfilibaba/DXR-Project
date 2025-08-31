@@ -3,17 +3,20 @@ include "BuildTool_Log.lua"
 -- Custom options
 newoption
 {
-    trigger     = "monolithic",
+    trigger = "monolithic",
     description = "Links all modules as static libraries instead of DLLs"
 }
 
 newoption
 {
-    trigger     = "platform",
-    value       = "CurrentPlatform",
+    trigger = "platform",
+    value = "CurrentPlatform",
     description = "Specify the platform to use",
-    allowed     = { { "Windows" }, { "macOS" } },
-    default     = "Windows"
+    default = "Windows",
+    allowed = { 
+        { "Windows" },
+        { "macOS" }
+    },
 }
 
 -- Global settings
@@ -75,30 +78,30 @@ function VerifyLanguageVersion(LanguageVersion)
 end
 
 -- Helper for printing all strings in a table and ending with endline
-function PrintTable(FormatStr, Tbl)
-    if Tbl == nil then 
+function PrintTable(FormatStr, Table)
+    if Table == nil then 
         return 
     end
 
-    for _, value in ipairs(Tbl) do
-        LogInfo(FormatStr, value)
+    for _, Value in ipairs(Table) do
+        LogInfo(FormatStr, Value)
     end
 end
 
 -- Helper to append multiple unique elements to a table
-function AddUniqueElements(Elements, Tbl)
-    if Tbl == nil or Elements == nil then 
+function AddUniqueElements(Elements, Table)
+    if Table == nil or Elements == nil then 
         return 
     end
 
-    local element_set = {}
-    for _, v in ipairs(Tbl) do
-        element_set[v] = true
+    local ElementSet = {}
+    for _, Value in ipairs(Table) do
+        ElementSet[Value] = true
     end
-    for _, v in ipairs(Elements) do
-        if not element_set[v] then
-            table.insert(Tbl, v)
-            element_set[v] = true
+    for _, Value in ipairs(Elements) do
+        if not ElementSet[Value] then
+            table.insert(Table, Value)
+            ElementSet[Value] = true
         end
     end
 end

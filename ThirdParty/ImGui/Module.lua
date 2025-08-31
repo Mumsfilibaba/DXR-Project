@@ -1,4 +1,4 @@
-include "BuildTool_Module.lua"
+include "BuildTool.lua"
 
 -- ThirdParty ImGui Module
 local ImGuiModule = ModuleBuildRules("ImGui")

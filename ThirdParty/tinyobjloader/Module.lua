@@ -1,35 +1,35 @@
-include "BuildTool_Module.lua"
+include "BuildTool.lua"
 
 -- ThirdParty tinyobjloader Module
-local TinyObj = ModuleBuildRules("tinyobjloader")
-TinyObj.bIsLibrary             = true
-TinyObj.bIsDynamic             = false
-TinyObj.bUsePrecompiledHeaders = false
-TinyObj.bEnableRuntimeTypeInfo = false
-TinyObj.bEnableEditAndContinue = false
-TinyObj.bEnableIntrinsics      = true
-TinyObj.bOptimizeDebugBuild    = true
-TinyObj.bSilenceWarnings       = true
-TinyObj.ExceptionHandling      = "Off"
-TinyObj.FloatingPoint          = "Fast"
-TinyObj.VectorExtensions       = "Default"
-TinyObj.Language               = "C++"
-TinyObj.CppVersion             = "C++20"
-TinyObj.SystemVersion          = "latest"
-TinyObj.CharacterSet           = "Ascii"
+local TinyObjModule = ModuleBuildRules("tinyobjloader")
+TinyObjModule.bIsLibrary             = true
+TinyObjModule.bIsDynamic             = false
+TinyObjModule.bUsePrecompiledHeaders = false
+TinyObjModule.bEnableRuntimeTypeInfo = false
+TinyObjModule.bEnableEditAndContinue = false
+TinyObjModule.bEnableIntrinsics      = true
+TinyObjModule.bOptimizeDebugBuild    = true
+TinyObjModule.bSilenceWarnings       = true
+TinyObjModule.ExceptionHandling      = "Off"
+TinyObjModule.FloatingPoint          = "Fast"
+TinyObjModule.VectorExtensions       = "Default"
+TinyObjModule.Language               = "C++"
+TinyObjModule.CppVersion             = "C++20"
+TinyObjModule.SystemVersion          = "latest"
+TinyObjModule.CharacterSet           = "Ascii"
 
-TinyObj.AddFlags({
+TinyObjModule.AddFlags({
     "MultiProcessorCompile",
     "NoIncrementalLink",
 })
 
 -- Add the correct folder as an include dir to make includes simpler (#include <tiny_obj_loader.h> instead of #include <tinyobjloader/tiny_obj_loader.h>)
-TinyObj.AddExternalIncludeDirs({
+TinyObjModule.AddExternalIncludeDirs({
     CreateExternalThirdpartyPath("tinyobjloader/tinyobjloader/"),
 })
 
 -- Sources
-TinyObj.SetFiles({
+TinyObjModule.SetFiles({
     CreateExternalThirdpartyPath("tinyobjloader/tinyobjloader/tiny_obj_loader.h"),
     CreateExternalThirdpartyPath("tinyobjloader/tinyobjloader/tiny_obj_loader.cc"),
 })

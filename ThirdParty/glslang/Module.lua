@@ -1,4 +1,4 @@
-include "BuildTool_Module.lua"
+include "BuildTool.lua"
 
 -- Single root for the glslang repo (moved under ThirdParty/glslang/glslang)
 local GlslangRoot = CreateExternalThirdpartyPath("glslang/glslang")
