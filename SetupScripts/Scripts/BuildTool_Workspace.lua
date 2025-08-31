@@ -22,9 +22,6 @@ function WorkspaceRules(WorkspaceName)
 
         -- Name of the target of the workspace
         TargetName = "",
-        
-        -- Engine folder path
-        EnginePath = GetEnginePath(),
 
         -- Defines
         Defines = {},

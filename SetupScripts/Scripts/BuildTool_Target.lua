@@ -42,7 +42,7 @@ function TargetBuildRules(Name, Workspace)
     -- Folder path for engine modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
 
-    -- The type of target; decides if there should be a Standalone and DLL or if the app should be a ConsoleApp
+    -- The type of target. Decides if there should be a Standalone and DLL or if the app should be a ConsoleApp.
     self.TargetType = ETargetType.Client
     
     -- Helper function for retrieving path
