@@ -87,7 +87,7 @@ function WorkspaceRules(WorkspaceName)
     function self.GenerateSolutionFiles()
 
         -- Log the start of the generation
-        LogInfo("\n--- Generating Solution Files for Workspace '%s' ---", self.Name)
+        LogInfo("--- Generating Solution Files for Workspace '%s' ---", self.Name)
 
         -- Set the name of the workspace
         workspace(self.Name)
@@ -117,7 +117,7 @@ function WorkspaceRules(WorkspaceName)
         })
 
         -- Workspace defines
-        LogInfo("\n--- Workspace Defines (Num Defines=%d) ---", #self.Defines)
+        LogInfo("--- Workspace Defines (Num Defines=%d) ---", #self.Defines)
         if #self.Defines > 0 then
             PrintTable("  Using Define '%s'", self.Defines)
         else
@@ -191,7 +191,7 @@ function WorkspaceRules(WorkspaceName)
         startproject(self.StartProjectName)
 
         -- Generate project files for all the rules that have been added
-        LogInfo("\n--- Generating module and target project files ---")
+        LogInfo("--- Generating module and target project files ---")
         for _, CurrentRule in ipairs(self.ProjectRules) do
             CurrentRule.GenerateProject()
         end
@@ -201,7 +201,7 @@ function WorkspaceRules(WorkspaceName)
     function self.Generate()
 
         -- Logging
-        LogInfo("\n--- Generating Workspace '%s' ---", self.Name)
+        LogInfo("--- Generating Workspace '%s' ---", self.Name)
         LogInfo("ConfigurationPath = '%s'", GetOutputConfigPath())
 
         if self.TargetRules == nil then
@@ -214,15 +214,15 @@ function WorkspaceRules(WorkspaceName)
             return
         end
 
-        -- Define the workspace location; we do this with a Unix path since the engine (C++ side) expects this currently
+        -- Define the workspace location. We do this with a Unix path since the engine (C++ side) expects this currently.
         local UnixEnginePath = path.translate(GetEnginePath(), "/")
         local EngineLocation = 'ENGINE_LOCATION="' .. UnixEnginePath .. '"'
         self.AddDefines({
             EngineLocation
         })
         
-        LogInfo("Engine Path ='%s'", GetEnginePath())
-        LogInfo("RuntimeFolderPath = '%s'", GetRuntimeFolderPath())
+        LogInfo("Engine Path ='%s'", CreateOsPath(GetEnginePath()))
+        LogInfo("RuntimeFolderPath = '%s'", CreateOsPath(GetRuntimeFolderPath()))
         
         -- Check if the command line overrides monolithic builds
         if IsBuildMonolithic() then
@@ -261,7 +261,7 @@ function WorkspaceRules(WorkspaceName)
         end
         
         -- Generate projects from targets
-        LogInfo("\n--- Generating Targets (NumTargets=%d) ---", #self.TargetRules)
+        LogInfo("--- Generating Targets (NumTargets=%d) ---", #self.TargetRules)
         for _, CurrentTarget in ipairs(self.TargetRules) do
             self.TargetName = CurrentTarget.Name
 
@@ -272,7 +272,7 @@ function WorkspaceRules(WorkspaceName)
         -- Generate the actual solution files
         self.GenerateSolutionFiles()
 
-        LogInfo("\n--- Finished generating workspace ---")
+        LogInfo("--- Finished generating workspace ---")
     end
 
     return self

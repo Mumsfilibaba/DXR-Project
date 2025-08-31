@@ -211,13 +211,13 @@ function BuildRules(Name)
             return nil
         end
 
-        LogHighlight("\n--- Generating Project '%s' ---", self.Name)
+        LogHighlight("--- Generating Project '%s' ---", self.Name)
 
         -- Always set a group explicitly to avoid state leaking between projects
         local GroupName = (type(self.Group) == "string" and self.Group ~= "") and self.Group or ""
         group(GroupName)
 
-        LogHighlight("\nProject '%s' is using group/filter '%s'", self.Name, GroupName)
+        LogHighlight("Project '%s' is using group/filter '%s'", self.Name, GroupName)
 
         -- Setting up project
         project(self.Name)
@@ -333,72 +333,72 @@ function BuildRules(Name)
 
             -- Debug logging
             if _G.gSettings and _G.gSettings.bEnableDebugLogging then
-                LogInfo("\n--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
+                LogInfo("--- ForceIncludes for module '%s' (Num ForceIncludes=%d) ---", self.Name, #self.ForceIncludes)
                 if #self.ForceIncludes > 0 then 
                     PrintTable("  Using ForceInclude '%s'", self.ForceIncludes) 
                 end
 
-                LogInfo("\n--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
+                LogInfo("--- Defines for module '%s' (Num Defines=%d) ---", self.Name, #self.Defines)
                 if #self.Defines > 0 then 
                     PrintTable("  Using define '%s'", self.Defines)
                 end
 
-                LogInfo("\n--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
+                LogInfo("--- Includes for module '%s' (Num Includes=%d) ---", self.Name, #self.IncludeDirs)
                 if #self.IncludeDirs > 0 then
                     PrintTable("  Using Includes '%s'", self.IncludeDirs)
                 end
 
-                LogInfo("\n--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
+                LogInfo("--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.Name, #self.ExternalIncludeDirs)
                 if #self.ExternalIncludeDirs > 0 then
                     PrintTable("  Using ExternalInclude '%s'", self.ExternalIncludeDirs)
                 end
 
-                LogInfo("\n--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
+                LogInfo("--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.Name, #self.LibraryPaths)
                 if #self.LibraryPaths > 0 then
                     PrintTable("  Using LibraryPath '%s'", self.LibraryPaths)
                 end
 
-                LogInfo("\n--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
+                LogInfo("--- Files for module '%s' (Num Files=%d) ---", self.Name, #self.Files)
                 if #self.Files > 0 then
                     PrintTable("  Including file '%s'", self.Files)
                 end
 
-                LogInfo("\n--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
+                LogInfo("--- Exclude files for module '%s' (Num ExcludeFiles=%d) ---", self.Name, #self.ExcludeFiles)
                 if #self.ExcludeFiles > 0 then
                     PrintTable("  Excluding file '%s'", self.ExcludeFiles)
                 end
 
-                LogInfo("\n--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
+                LogInfo("--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
                 if #self.Frameworks > 0 then
                     PrintTable("  Using framework thirdparty '%s'", self.Frameworks)
                 end
 
-                LogInfo("\n--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
+                LogInfo("--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
                 if #self.LinkLibraries > 0 then
                     PrintTable("  Linking library '%s'", self.LinkLibraries)
                 end
 
-                LogInfo("\n--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
+                LogInfo("--- Link modules for module '%s' (Num LinkModules=%d) ---", self.Name, #self.LinkModules)
                 if #self.LinkModules > 0 then
                     PrintTable("  Linking module '%s'", self.LinkModules)
                 end
 
-                LogInfo("\n--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
+                LogInfo("--- Link options for module '%s' (Num LinkOptions=%d) ---", self.Name, #self.LinkOptions)
                 if #self.LinkOptions > 0 then
                     PrintTable("  Link options '%s'", self.LinkOptions)
                 end
 
-                LogInfo("\n--- Modules used by module '%s' (Num Modules=%d) ---", self.Name, #self.Modules)
+                LogInfo("--- Modules used by module '%s' (Num Modules=%d) ---", self.Name, #self.Modules)
                 if #self.Modules > 0 then
                     PrintTable("  Using module '%s'", self.Modules)
                 end
 
-                LogInfo("\n--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
+                LogInfo("--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
                 if #self.Modules > 0 then
                     PrintTable("  Embed Module '%s'", self.Modules)
                 end
 
-                LogInfo("\n--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
+                LogInfo("--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
                 if #self.PostBuildCommands > 0 then
                     PrintTable("  Post-Build-Command '%s'", self.PostBuildCommands)
                 end
@@ -485,13 +485,13 @@ function BuildRules(Name)
             filter { "action:xcode4" }
                 xcodebuildsettings
                 {
-                    ["PRODUCT_BUNDLE_IDENTIFIER"]  = "com.DXREngine." .. self.Name,
-                    ["CODE_SIGN_STYLE"]            = "Automatic",
-                    ["ARCHS"]                      = "x86_64",
-                    ["ONLY_ACTIVE_ARCH"]           = "YES",
-                    ["ENABLE_HARDENED_RUNTIME"]    = "NO",
-                    ["GENERATE_INFOPLIST_FILE"]    = "YES",
-                    ["LD_RUNPATH_SEARCH_PATHS"]    = "/usr/local/lib/ $(INSTALL_PATH) @executable_path/../Frameworks",
+                    ["PRODUCT_BUNDLE_IDENTIFIER"] = "com.DXREngine." .. self.Name,
+                    ["CODE_SIGN_STYLE"] = "Automatic",
+                    ["ARCHS"] = "x86_64",
+                    ["ONLY_ACTIVE_ARCH"] = "YES",
+                    ["ENABLE_HARDENED_RUNTIME"] = "NO",
+                    ["GENERATE_INFOPLIST_FILE"] = "YES",
+                    ["LD_RUNPATH_SEARCH_PATHS"] = "/usr/local/lib/ $(INSTALL_PATH) @executable_path/../Frameworks",
                     ["GCC_ENABLE_AVX2_EXTENSIONS"] = "YES",
                 }
             filter {}
@@ -502,7 +502,7 @@ function BuildRules(Name)
         -- Reset group
         group("")
 
-        LogHighlight("\n--- Finished generating project files for Project '%s' ---", self.Name)
+        LogHighlight("--- Finished generating project files for Project '%s' ---", self.Name)
     end
 
     -- Base generate (generates project files)
@@ -535,7 +535,7 @@ function BuildRules(Name)
                 -- TODO: We might need to take another look at this if we add other folders than ThirdParty
                 -- Other folders: include the module's actual folder so consumers can do something like '#include <ModuleName/...>'
                 ModuleRule.AddExternalIncludeDirs({
-                    ModuleInfo.ScriptDir
+                    CreateOsPath(ModuleInfo.ScriptDir)
                 })
 
                 -- Fix grouping (only if not already set)
@@ -561,7 +561,7 @@ function BuildRules(Name)
 
         for Index = 1, #self.Modules do
             local CurrentModuleName = self.Modules[Index]
-            LogHighlight("\nChecking module-dependency '%s' for module '%s'", CurrentModuleName, self.Name)
+            LogHighlight("Checking module-dependency '%s' for module '%s'", CurrentModuleName, self.Name)
 
             local ModuleInfo = GetIndexedModuleInfo(CurrentModuleName)
             if ModuleInfo and os.isfile(ModuleInfo.ScriptPath) then
@@ -582,17 +582,17 @@ function BuildRules(Name)
                 else
                 
                     -- Include the script if it is not included yet
-                    LogInfo("Including script '%s' to include module '%s'", ModuleInfo.ScriptPath, CurrentModuleName)
+                    LogInfo("Including script '%s' to include module '%s'", CreateOsPath(ModuleInfo.ScriptPath), CurrentModuleName)
                     include(ModuleInfo.ScriptPath)
 
                     -- Some scripts may choose to not register a module for multiple reasons so check if we actually created a module
                     if IsModule(CurrentModuleName) then
                         local CurrentModule = GetModule(CurrentModuleName)
-                        LogInfo("Module '%s' was created in script '%s'. Generating now...", CurrentModule.Name, ModuleInfo.ScriptPath)
+                        LogInfo("Module '%s' was created in script '%s'. Generating now...", CurrentModule.Name, CreateOsPath(ModuleInfo.ScriptPath))
 
                         GenerateModuleFromIndex(CurrentModule, ModuleInfo)
                     else
-                        LogHighlightWarning("Found '%s' at '%s', but it did not register (it may be unsupported on this platform).", CurrentModuleName, ModuleInfo.ScriptPath)
+                        LogHighlightWarning("Found '%s' at '%s', but it did not register (it may be unsupported on this platform).", CurrentModuleName, CreateOsPath(ModuleInfo.ScriptPath))
                     end
                 end
             else

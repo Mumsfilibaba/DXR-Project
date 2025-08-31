@@ -37,7 +37,7 @@ function ModuleBuildRules(Name)
             return
         end
 
-        LogInfo("\n--- Generating Module '%s' ---", self.Name)
+        LogInfo("--- Generating Module '%s' ---", self.Name)
 
         -- Handle monolithic build
         if IsBuildMonolithic() and (not self.bIsLibrary) then

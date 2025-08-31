@@ -10,6 +10,7 @@ ETargetType =
 
 -- Target build rules
 function TargetBuildRules(Name, Workspace)
+
     -- Needs to have a valid module name
     if Name == nil then
         LogError("BuildRule failed due to invalid name")
@@ -80,7 +81,7 @@ function TargetBuildRules(Name, Workspace)
             return
         end
 
-        LogInfo("\n--- Generating Target '%s' ---", self.Name)
+        LogInfo("--- Generating Target '%s' ---", self.Name)
   
         if IsBuildMonolithic() then
             LogInfo("Target '%s' is monolithic", self.Name)
@@ -93,7 +94,9 @@ function TargetBuildRules(Name, Workspace)
             LogInfo("TargetType=Client")
 
             -- Always add module name as a define
-            self.AddDefines({ 'MODULE_NAME="' .. self.Name .. '"' })
+            self.AddDefines({
+                'MODULE_NAME="' .. self.Name .. '"'
+            })
 
             local UpperCaseName = self.Name:upper()
             local ModuleApiName = UpperCaseName .. "_API"
@@ -107,13 +110,15 @@ function TargetBuildRules(Name, Workspace)
                 self.bEmbedThirdparties = true
 
                 -- Defines
-                self.AddDefines({ ModuleApiName })
+                self.AddDefines({
+                    ModuleApiName
+                })
 
                 -- Generate the project
-                LogInfo("\n--- Generating project for target '%s' ---", self.Name)
+                LogInfo("--- Generating project for target '%s' ---", self.Name)
                 BaseGenerate()
                 InjectLaunchModule(self)
-                LogInfo("\n--- Finished generating project for target '%s' ---", self.Name)
+                LogInfo("--- Finished generating project for target '%s' ---", self.Name)
             else
                 self.Kind = "SharedLib"
                 self.bRuntimeLinking = true
@@ -124,12 +129,12 @@ function TargetBuildRules(Name, Workspace)
                 })
                 
                 -- Generate the project
-                LogInfo("\n--- Generating project for target '%s' ---", self.Name)
+                LogInfo("--- Generating project for target '%s' ---", self.Name)
                 BaseGenerate()
-                LogInfo("\n--- Finished generating project for target '%s' ---", self.Name)
+                LogInfo("--- Finished generating project for target '%s' ---", self.Name)
                 
                 -- Standalone executable
-                LogInfo("\n--- Generating Standalone client executable project for target '%s' ---", self.Name)
+                LogInfo("--- Generating Standalone client executable project for target '%s' ---", self.Name)
                 
                 local Executable = BuildRules(self.Name .. "Standalone")
                 Executable.Kind = "WindowedApp"
@@ -170,7 +175,7 @@ function TargetBuildRules(Name, Workspace)
                 Executable.Generate()
                 InjectLaunchModule(Executable)
 
-                LogInfo("\n--- Finished generating standalone client executable project for target '%s' ---", self.Name)
+                LogInfo("--- Finished generating standalone client executable project for target '%s' ---", self.Name)
             end
         elseif self.TargetType == ETargetType.WindowedApp then
             LogError("TargetType=WindowedApp is not implemented yet")

@@ -199,7 +199,7 @@ function AddModuleSearchRoot(RootPath)
     local NormalizedRootPath = CreateOsPath(RootPath)
     for ExistingIndex, ExistingRoot in ipairs(gModuleSearchRoots) do
         if string.lower(ExistingRoot) == string.lower(NormalizedRootPath) then
-            return -- avoid duplicates
+            return
         end
     end
 
@@ -244,13 +244,11 @@ local function IndexModuleFile(ScriptFilePath)
 
         gModuleIndex[ModuleName] = {
             ScriptPath = ScriptFilePath,
-            ScriptDir  = ScriptDirectory,
-            Root       = RootLabel
+            ScriptDir = ScriptDirectory,
+            Root = RootLabel
         }
 
-        if _G.gSettings and _G.gSettings.bEnableDebugLogging then
-            LogInfo("Indexed module '%s' at '%s' (Root=%s)", ModuleName, ScriptFilePath, RootLabel)
-        end
+        LogInfo("Indexed module '%s' at '%s' (Root=%s)", ModuleName, CreateOsPath(ScriptFilePath), RootLabel)
     end
 end
 
@@ -259,7 +257,7 @@ local function ScanRoot(RootDirectory)
     local MatchedFiles  = os.matchfiles(SearchPattern)
 
     for FileIndex, ScriptFilePath in ipairs(MatchedFiles) do
-        LogHighlight("Found module-file '%s'", ScriptFilePath)
+        LogHighlight("Found module-file '%s'", CreateOsPath(ScriptFilePath))
         IndexModuleFile(ScriptFilePath)
     end
 end
@@ -271,7 +269,7 @@ function SearchForModuleFiles()
 
     for RootIndex, RootDirectory in ipairs(gModuleSearchRoots) do
         if os.isdir(RootDirectory) then
-            LogHighlight("Scanning directory '%s'", RootDirectory)
+            LogHighlight("Scanning directory '%s'", CreateOsPath(RootDirectory))
             ScanRoot(RootDirectory)
         end
     end
