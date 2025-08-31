@@ -19,17 +19,16 @@ end
 -- Add project name to the core module
 local BaseGenerate = CoreModule.Generate
 function CoreModule.Generate()
-    if CoreModule.Workspace == nil then
-        LogError("Workspace cannot be nil when generating Rule")
-        return
-    end
-
-    local TargetName = CoreModule.Workspace.GetCurrentTargetName()
-    CoreModule.AddDefines({ 'PROJECT_NAME="' .. TargetName .. '"' })
+    local TargetName = GetCurrentTargetName()
+    CoreModule.AddDefines({
+        'PROJECT_NAME="' .. TargetName .. '"'
+    })
 
     local UnixProjectPath = path.translate(JoinPath(GetEnginePath(), TargetName), "/")
     local ProjectLocation = 'PROJECT_LOCATION="' .. UnixProjectPath .. '"'
-    CoreModule.AddDefines({ ProjectLocation })
+    CoreModule.AddDefines({
+        ProjectLocation
+    })
 
     BaseGenerate()
 end

@@ -1,12 +1,11 @@
 include "../SetupScripts/Scripts/BuildTool.lua"
 
+SetWorkspaceName("DXR-Engine Sandbox")
+
 -- Sandbox Project
+local Sandbox = TargetBuildRules("Sandbox")
 
-local Workspace = WorkspaceRules("DXR-Engine Sandbox")
-
-local Sandbox = TargetBuildRules("Sandbox", Workspace)
-Sandbox.AddModules
-({
+Sandbox.AddModules({
     "Core",
     "CoreApplication",
     "Launch",
@@ -20,16 +19,14 @@ Sandbox.AddModules
 })
 
 if IsPlatformMac() then
-    Sandbox.AddModules
-    ({ 
+    Sandbox.AddModules({ 
         "MetalRHI"
     })
 elseif IsPlatformWindows() then
-    Sandbox.AddModules
-    ({ 
+    Sandbox.AddModules({ 
         "D3D12RHI"
     })
 end
 
-Workspace.AddTarget(Sandbox)
-Workspace.Generate()
+AddTarget(Sandbox)
+GenerateWorkspace()

@@ -9,22 +9,16 @@ ETargetType =
 }
 
 -- Target build rules
-function TargetBuildRules(Name, Workspace)
+function TargetBuildRules(Name)
 
     -- Needs to have a valid module name
     if Name == nil then
         LogError("BuildRule failed due to invalid name")
         return nil
     end
-    
-    -- Needs to have a valid workspace
-    if Workspace == nil then
-        LogError("Workspace cannot be nil")
-        return nil
-    end
 
     -- Ensure that target does not already exist
-    if Workspace.IsTarget(Name) then
+    if IsTarget(Name) then
         LogError("Target is already created")
         return nil
     end
@@ -37,8 +31,6 @@ function TargetBuildRules(Name, Workspace)
         LogError("Failed to create BuildRule")
         return nil
     end
-
-    self.Workspace = Workspace
 
     -- Folder path for engine modules
     local RuntimeFolderPath = GetRuntimeFolderPath()
@@ -76,11 +68,6 @@ function TargetBuildRules(Name, Workspace)
     -- Generate target
     local BaseGenerate = self.Generate
     function self.Generate()
-        if self.Workspace == nil then
-            LogError("Workspace cannot be nil when generating Target")
-            return
-        end
-
         LogInfo("--- Generating Target '%s' ---", self.Name)
   
         if IsBuildMonolithic() then
@@ -139,9 +126,6 @@ function TargetBuildRules(Name, Workspace)
                 local Executable = BuildRules(self.Name .. "Standalone")
                 Executable.Kind = "WindowedApp"
                 Executable.bEmbedThirdparties = true
-
-                -- Setup the workspace
-                Executable.Workspace = self.Workspace
 
                 -- Link the module
                 Executable.AddModules(self.Modules)

@@ -29,9 +29,6 @@ function BuildRules(Name)
         -- Location for the build, this overrides the default behavior
         OutputPathOverride = "",
 
-        -- The workspace this rule is part of
-        Workspace = nil,
-
         -- Should use precompiled headers (PreCompiled.h / PreCompiled.cpp)
         bUsePrecompiledHeaders = false,
 
@@ -508,12 +505,6 @@ function BuildRules(Name)
     -- Base generate (generates project files)
     function self.Generate()
 
-        -- Protect against not having a workspace set
-        if self.Workspace == nil then
-            LogError("Workspace cannot be nil when generating rule")
-            return
-        end
-
         -- Protect against being generated twice
         if self.IsGenerated() then
             LogHighlightWarning("Rule '%s' has already been generated", self.Name)
@@ -555,7 +546,6 @@ function BuildRules(Name)
                 end
             end
 
-            ModuleRule.Workspace = self.Workspace
             ModuleRule.Generate()
         end
 
@@ -576,7 +566,7 @@ function BuildRules(Name)
                             LogInfo("Module '%s' was created earlier but not generated. Generating now...", CurrentModuleName)
                             GenerateModuleFromIndex(ExistingRule, ModuleInfo)
                         else
-                            LogHighlightWarning("Module '%s' is already included in workspace '%s'", CurrentModuleName, ExistingRule.Workspace.Name)
+                            LogHighlightWarning("Module '%s' is already included in workspace '%s'", CurrentModuleName, GetWorkspaceName())
                         end
                     end
                 else
@@ -671,12 +661,12 @@ function BuildRules(Name)
         -- Make files relative before printing
         self.MakeFileNamesRelativeToPath(self.Files)
         self.MakeFileNamesRelativeToPath(self.ExcludeFiles)
-
-        -- Register with workspace
-        self.Workspace.AddRule(self)
-
+        
         -- Set that this rule has been generated and does not need to be generated again
         self.bIsGenerated = true
+
+        -- Register with workspace
+        AddProjectRule(self)
     end
 
     return self

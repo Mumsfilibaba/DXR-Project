@@ -32,11 +32,6 @@ function ModuleBuildRules(Name)
     -- Generate the module
     local BaseGenerate = self.Generate
     function self.Generate()
-        if not self.Workspace then
-            LogError("Workspace cannot be nil when generating Module")
-            return
-        end
-
         LogInfo("--- Generating Module '%s' ---", self.Name)
 
         -- Handle monolithic build
