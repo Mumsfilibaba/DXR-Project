@@ -181,7 +181,37 @@ function Copy(Source)
     return table.deepcopy(Source)
 end
 
--- Module indexing (scan without executing Module.lua)
+-- Shared local helpers
+local function NormalizePath(Path)
+    Path = CreateOsPath(Path or "")
+    Path = Path:gsub("[/\\]+$", "") -- remove trailing slash(es)
+    return Path:lower()
+end
+
+local function PathIsUnder(ChildPath, ParentPath)
+    local NormChild  = NormalizePath(ChildPath)
+    local NormParent = NormalizePath(ParentPath)
+    if NormChild == NormParent then
+        return true
+    end
+
+    return NormChild:sub(1, #NormParent + 1) == (NormParent .. "\\")
+        or NormChild:sub(1, #NormParent + 1) == (NormParent .. "/")
+end
+
+local function StripLuaComments(Source)
+    -- block comments --[[ ... ]] and line comments -- ...
+    return Source
+        :gsub("%-%-%[%[.-%]%]", "")
+        :gsub("%-%-.-\n", "\n")
+end
+
+local function ResolveAbsolutePath(InputPath)
+    -- Resolve relative to the current working directory (Premake)
+    return path.isabsolute(InputPath) and InputPath or path.getabsolute(InputPath)
+end
+
+-- Module indexing (scans for Module.lua files without executing)
 local gModuleIndex = {}
 local gModuleIndexScanned = false
 local gModuleSearchRoots = {}
@@ -192,81 +222,93 @@ function AddModuleSearchRoot(RootPath)
         return
     end
 
-    local NormalizedRootPath = CreateOsPath(RootPath)
+    -- Resolve relative -> absolute, then build a normalized key for comparison
+    local AbsolutePath = ResolveAbsolutePath(RootPath)
+    local NewKey       = NormalizePath(AbsolutePath)
+
+    -- Dedupe using normalized keys (case/sep-insensitive)
     for ExistingIndex, ExistingRoot in ipairs(gModuleSearchRoots) do
-        if string.lower(ExistingRoot) == string.lower(NormalizedRootPath) then
+        if NormalizePath(ExistingRoot) == NewKey then
             return
         end
     end
 
-    table.insert(gModuleSearchRoots, NormalizedRootPath)
+    -- Store a cleaned absolute path but keep original casing (helpful on macOS)
+    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
+    table.insert(gModuleSearchRoots, StoredPath)
+
+    -- new root -> enable (re)scan
+    gModuleIndexScanned = false
+
+    LogInfo("AddModuleSearchRoot: added '%s' (from '%s')", StoredPath, RootPath)
 end
 
-local function IsPathPrefix(ChildPath, ParentPath)
-    local ChildPathLower  = string.lower(CreateOsPath(ChildPath))
-    local ParentPathLower = string.lower(CreateOsPath(ParentPath))
-
-    if #ChildPathLower < #ParentPathLower then
-        return false
-    end
-    if ChildPathLower:sub(1, #ParentPathLower) ~= ParentPathLower then
-        return false
-    end
-    -- exact match or next char is a separator
-    if #ChildPathLower == #ParentPathLower then
-        return true
-    end
-    local NextCharAfterPrefix = ChildPathLower:sub(#ParentPathLower + 1, #ParentPathLower + 1)
-    return (NextCharAfterPrefix == '\\' or NextCharAfterPrefix == '/')
-end
-
-local function IndexModuleFile(ScriptFilePath)
-    local FileHandle = io.open(ScriptFilePath, "r")
-    if not FileHandle then
+local function IndexModuleFile(ScriptFilePath, SearchRootDir)
+    local File = io.open(ScriptFilePath, "r")
+    if not File then
         return
     end
 
-    local SourceCode = FileHandle:read("*a")
-    FileHandle:close()
+    local Source = StripLuaComments(File:read("*a"))
+    File:close()
 
-    -- Find all ModuleBuildRules("Name") occurrences.
-    -- Name allows letters, digits, '_', '-', '+', '.'
-    for ModuleName in SourceCode:gmatch("ModuleBuildRules%s*%(%s*[%\"']([%w_%-%+%.]+)[%\"']%s*%)") do
-        local ScriptDirectory = path.getdirectory(ScriptFilePath)
-        local RootLabel = "ThirdParty"
-        if IsPathPrefix(ScriptDirectory, GetRuntimeFolderPath()) then
-            RootLabel = "Runtime"
+    local ScriptDir = path.getdirectory(ScriptFilePath)
+    local RootLabel = path.getname(CreateOsPath(SearchRootDir))
+
+    if not PathIsUnder(ScriptDir, SearchRootDir) then
+        LogHighlightWarning("Module file '%s' not under declared search root '%s' (labeling as '%s').", CreateOsPath(ScriptFilePath), CreateOsPath(SearchRootDir), RootLabel)
+    end
+
+    -- Enforce matching quotes via %1, same as target version
+    for _, ModuleName in Source:gmatch("ModuleBuildRules%s*%(%s*([\"'])([%w_%-%+%.]+)%1%s*%)") do
+        local Previous = gModuleIndex[ModuleName]
+        if Previous and Previous.ScriptPath ~= ScriptFilePath then
+            LogHighlightWarning("Module '%s' defined in multiple files:\n  %s\n  %s\nUsing first one.", ModuleName, CreateOsPath(Previous.ScriptPath), CreateOsPath(ScriptFilePath))
+        else
+            gModuleIndex[ModuleName] = {
+                ScriptPath = ScriptFilePath,
+                ScriptDir  = ScriptDir,
+                Root       = RootLabel
+            }
+
+            LogInfo("Indexed module '%s' at '%s' (Root=%s)", ModuleName, CreateOsPath(ScriptFilePath), RootLabel)
         end
-
-        gModuleIndex[ModuleName] = {
-            ScriptPath = ScriptFilePath,
-            ScriptDir = ScriptDirectory,
-            Root = RootLabel
-        }
-
-        LogInfo("Indexed module '%s' at '%s' (Root=%s)", ModuleName, CreateOsPath(ScriptFilePath), RootLabel)
     end
 end
 
-local function ScanRoot(RootDirectory)
-    local SearchPattern = CreateOsPath(path.join(RootDirectory, "**/Module.lua"))
-    local MatchedFiles  = os.matchfiles(SearchPattern)
+local function ScanModuleRoot(RootDirectory)
+    local Base = path.translate(RootDirectory, '/')
 
-    for FileIndex, ScriptFilePath in ipairs(MatchedFiles) do
-        LogHighlight("Found module-file '%s'", CreateOsPath(ScriptFilePath))
-        IndexModuleFile(ScriptFilePath)
+    local Patterns = {
+        Base .. "/Module.lua",
+        Base .. "/**/Module.lua",
+    }
+
+    local Seen = {}
+    for _, Pattern in ipairs(Patterns) do
+        local Files = os.matchfiles(Pattern)
+        for _, ScriptPath in ipairs(Files) do
+            local Key = string.lower(path.translate(ScriptPath, '/'))
+            if not Seen[Key] then
+                Seen[Key] = true
+                LogHighlight("Found module-file '%s'", CreateOsPath(ScriptPath))
+                IndexModuleFile(ScriptPath, RootDirectory)
+            end
+        end
     end
 end
 
-function SearchForModuleFiles()
+local function SearchForModuleFiles()
     if gModuleIndexScanned then
         return
     end
 
+    table.sort(gModuleSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
+
     for RootIndex, RootDirectory in ipairs(gModuleSearchRoots) do
         if os.isdir(RootDirectory) then
             LogHighlight("Scanning directory '%s'", CreateOsPath(RootDirectory))
-            ScanRoot(RootDirectory)
+            ScanModuleRoot(RootDirectory)
         end
     end
 
@@ -280,4 +322,127 @@ end
 function InvalidateModuleIndex()
     gModuleIndex = {}
     gModuleIndexScanned = false
+end
+
+-- Target indexing (scans for Target.lua files without executing)
+local gTargetIndex = {}
+local gTargetIndexScanned = false
+local gTargetSearchRoots = {}
+
+function AddTargetSearchRoot(RootPath)
+    if type(RootPath) ~= "string" or RootPath == "" then
+        LogError("AddTargetSearchRoot: invalid root")
+        return
+    end
+
+    -- Resolve relative -> absolute, then build a normalized key for comparison
+    local AbsolutePath = ResolveAbsolutePath(RootPath)
+    local NewKey       = NormalizePath(AbsolutePath)
+
+    -- Dedupe using normalized keys (case/sep-insensitive)
+    for ExistingIndex, ExistingRoot in ipairs(gTargetSearchRoots) do
+        if NormalizePath(ExistingRoot) == NewKey then
+            return
+        end
+    end
+
+    -- Store a cleaned absolute path but keep original casing (helpful on macOS)
+    local StoredPath = CreateOsPath(AbsolutePath):gsub("[/\\]+$", "")
+    table.insert(gTargetSearchRoots, StoredPath)
+
+    -- new root -> enable (re)scan
+    gTargetIndexScanned = false
+
+    LogInfo("AddTargetSearchRoot: added '%s' (from '%s')", StoredPath, RootPath)
+end
+
+local function IndexTargetFile(ScriptFilePath, SearchRootDir)
+    local File = io.open(ScriptFilePath, "r")
+    if not File then
+        return
+    end
+
+    local Source = StripLuaComments(File:read("*a"))
+    File:close()
+
+    local ScriptDir = path.getdirectory(ScriptFilePath)
+    local RootLabel = path.getname(CreateOsPath(SearchRootDir))
+
+    if not PathIsUnder(ScriptDir, SearchRootDir) then
+        LogHighlightWarning("Target file '%s' not under declared search root '%s' (labeling as '%s').", CreateOsPath(ScriptFilePath), CreateOsPath(SearchRootDir), RootLabel )
+    end
+
+    -- Enforce matching quotes via %1
+    for _, TargetName in Source:gmatch("TargetBuildRules%s*%(%s*([\"'])([%w_%-%+%.]+)%1%s*%)") do
+        local Previous = gTargetIndex[TargetName]
+        if Previous and Previous.ScriptPath ~= ScriptFilePath then
+            LogHighlightWarning("Target '%s' defined in multiple files:\n  %s\n  %s\nUsing first one.", TargetName, CreateOsPath(Previous.ScriptPath), CreateOsPath(ScriptFilePath))
+        else
+            gTargetIndex[TargetName] = {
+                ScriptPath = ScriptFilePath,
+                ScriptDir = ScriptDir,
+                Root = RootLabel
+            }
+
+            LogInfo("Indexed target '%s' at '%s' (Root=%s)", TargetName, CreateOsPath(ScriptFilePath), RootLabel)
+        end
+    end
+end
+
+local function ScanTargetRoot(RootDirectory)
+    local Base = path.translate(RootDirectory, '/')
+
+    local Patterns = {
+        Base .. "/Target.lua",
+        Base .. "/**/Target.lua",
+    }
+
+    local Seen = {}
+    for PatternIndex, Pattern in ipairs(Patterns) do
+        local Files = os.matchfiles(Pattern)
+        for FileIndex, ScriptPath in ipairs(Files) do
+            local Key = string.lower(path.translate(ScriptPath, '/'))
+            if not Seen[Key] then
+                Seen[Key] = true
+                LogHighlight("Found target-file '%s'", CreateOsPath(ScriptPath))
+                IndexTargetFile(ScriptPath, RootDirectory)
+            end
+        end
+    end
+end
+
+local function SearchForTargetFiles()
+    if gTargetIndexScanned then
+        return
+    end
+
+    table.sort(gTargetSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
+
+    for RootIndex, RootDir in ipairs(gTargetSearchRoots) do
+        if os.isdir(RootDir) then
+            LogHighlight("Scanning directory '%s' for targets", CreateOsPath(RootDir))
+            ScanTargetRoot(RootDir)
+        end
+    end
+
+    gTargetIndexScanned = true
+end
+
+function GetIndexedTargetInfo(TargetName)
+    return gTargetIndex[TargetName]
+end
+
+function InvalidateTargetIndex()
+    gTargetIndex = {}
+    gTargetIndexScanned = false
+end
+
+-- Function that ensures that we search for both module and target files
+function SearchForBuildFiles()
+
+    -- Start by searching for target files ..
+    SearchForTargetFiles()
+
+    -- .. then search for module files
+    SearchForModuleFiles()
 end

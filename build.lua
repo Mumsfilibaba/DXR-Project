@@ -7,5 +7,11 @@ premake.path = premake.path .. ";" .. ScriptsDir
 -- Common
 include "BuildTool.lua"
 
+-- Add project folder
+AddTargetSearchRoot("Sandbox")
+
+-- Search for targets
+SearchForBuildFiles()
+
 -- Project
 include "Sandbox/Target.lua"
