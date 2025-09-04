@@ -7,4 +7,4 @@ include "BuildTool_Workspace.lua"
 
 -- Default roots for Module.lua files: Runtime and ThirdParty
 AddModuleSearchRoot(GetRuntimeFolderPath())
-AddModuleSearchRoot(GetExternalThirdpartyFolderPath())
+AddModuleSearchRoot(GetExternalThirdPartyFolderPath())

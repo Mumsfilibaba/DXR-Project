@@ -12,13 +12,13 @@ ETargetType =
 function TargetBuildRules(Name)
 
     -- Needs to have a valid module name
-    if Name == nil then
-        LogError("BuildRule failed due to invalid name")
+    if type(Name) ~= "string" or Name == "" then
+        LogError("TargetBuildRules failed due to invalid name")
         return nil
     end
 
     -- Ensure that target does not already exist
-    if IsTarget(Name) then
+    if IsTargetRule(Name) then
         LogError("Target is already created")
         return nil
     end
@@ -32,9 +32,6 @@ function TargetBuildRules(Name)
         return nil
     end
 
-    -- Folder path for engine modules
-    local RuntimeFolderPath = GetRuntimeFolderPath()
-
     -- The type of target. Decides if there should be a Standalone and DLL or if the app should be a ConsoleApp.
     self.TargetType = ETargetType.Game
     
@@ -46,20 +43,22 @@ function TargetBuildRules(Name)
 
     -- Inject module into the current module (i.e., put the files into the executable)
     local function InjectLaunchModule(Rule)
-        for Index = 1, #Rule.Modules do
-            local CurrentModuleName = Rule.Modules[Index]
-            if CurrentModuleName == "Launch" then
-                if IsModule("Launch") then
-                    local LaunchModule = GetModule("Launch")
-                    LaunchModule.Kind = "None"
+        for i = 1, #Rule.Modules do
+            local DepName = Rule.Modules[i]
+            if DepName == "Launch" then
+                if IsModuleRule("Launch") then
+                    local Launch = GetModuleRule("Launch")
+                    Launch.Kind = "None"  -- prevent a separate build target
 
-                    Rule.AddFiles(LaunchModule.Files)
-                    Rule.AddExcludeFiles(LaunchModule.ExcludeFiles)
-                    Rule.AddDefines(LaunchModule.Defines)
+                    Rule.AddFiles(Launch.Files)
+                    Rule.AddExcludeFiles(Launch.ExcludeFiles)
+                    Rule.AddDefines(Launch.Defines)
+                    Rule.AddIncludeDirs(Launch.IncludeDirs)
+                    Rule.AddExternalIncludeDirs(Launch.ExternalIncludeDirs)
+                    Rule.AddForceIncludes(Launch.ForceIncludes)
                 else
-                    LogError("Found the Launch Module among thirdparties, but it has not been initialized")
+                    LogError("Found the Launch Module among dependencies, but it has not been initialized")
                 end
-
                 break
             end
         end
@@ -68,6 +67,11 @@ function TargetBuildRules(Name)
     -- Generate target
     local BaseGenerate = self.Generate
     function self.Generate()
+        if self.IsGenerated and self.IsGenerated() then
+            LogHighlightWarning("Target '%s' already generated. Skipping ..", self.Name)
+            return
+        end
+
         LogInfo("--- Generating Target '%s' ---", self.Name)
   
         if IsBuildMonolithic() then
@@ -170,5 +174,7 @@ function TargetBuildRules(Name)
         end
     end
 
+    -- Add target to global list
+    AddTargetRule(self.Name, self)
     return self
 end

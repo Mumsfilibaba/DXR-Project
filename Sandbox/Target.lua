@@ -1,6 +1,4 @@
-include "../SetupScripts/Scripts/BuildTool.lua"
-
-SetWorkspaceName("DXR-Engine Sandbox")
+include "BuildTool.lua"
 
 -- Sandbox Project
 local Sandbox = TargetBuildRules("Sandbox")
@@ -27,6 +25,3 @@ elseif IsPlatformWindows() then
         "D3D12RHI"
     })
 end
-
-AddTarget(Sandbox)
-GenerateWorkspace()

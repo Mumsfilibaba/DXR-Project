@@ -19,31 +19,93 @@ newoption
     },
 }
 
+local function NormalizePlatform(PlatformName)
+    if not PlatformName then
+        return nil
+    end
+
+    PlatformName = tostring(PlatformName):lower()
+    if PlatformName == "windows" then
+        return "Windows"
+    end
+    if PlatformName == "macos" or PlatformName == "macosx" or PlatformName == "osx" then
+        return "macOS"
+    end
+
+    return PlatformName
+end
+
+local function GuessPlatformFromAction()
+    if _ACTION == "xcode4" then 
+        return "macOS"
+    end
+    if _ACTION and _ACTION:match("^vs") then
+        return "Windows"
+    end
+
+    return nil
+end
+
+local function GuessPlatformFromHost()
+    
+    -- "windows", "macosx", "linux", ...
+    local Host = os.host()
+    if Host == "windows" then
+        return "Windows"
+    end
+    
+    if Host == "macosx" then
+        return "macOS"
+    end
+
+    return nil
+end
+
+-- Initialize default if missing or unrecognized
+do
+    local Explicit = NormalizePlatform(_OPTIONS["platform"])
+    if not Explicit then
+        _OPTIONS["platform"] = GuessPlatformFromHost() or GuessPlatformFromAction() or "Windows"
+        LogHighlight("No --platform specified. Defaulting to '%s'.", _OPTIONS["platform"])
+    else
+        _OPTIONS["platform"] = Explicit
+    end
+
+    -- sanity check against your allowed set
+    local Allowed = {
+        Windows = true,
+        ["macOS"] = true
+    }
+
+    if not Allowed[_OPTIONS["platform"]] then
+        LogWarning("Unsupported --platform '%s'. Falling back to 'Windows'.", tostring(_OPTIONS["platform"]))
+        _OPTIONS["platform"] = "Windows"
+    end
+end
+
+-- Use this everywhere else:
+function IsPlatformWindows()
+    return _OPTIONS["platform"] == "Windows"
+end
+
+function IsPlatformMac()
+    return _OPTIONS["platform"] == "macOS"
+end
+
 -- Global settings
 if type(gSettings) ~= "table" then
     gSettings = {}
 end
 
 -- Monolithic Build Management
-local gIsMonolithic = false
+local gIsMonolithic = nil
 
--- Check if the module should be built monolithically
 function IsBuildMonolithic()
     if gIsMonolithic == nil then
         gIsMonolithic = (_OPTIONS["monolithic"] ~= nil)
     end
 
     return gIsMonolithic
-end
-
--- Check if the current platform is Windows
-function IsPlatformWindows()
-    return _OPTIONS["platform"] == "Windows"
-end
-
--- Check if the current platform is macOS
-function IsPlatformMac()
-    return _OPTIONS["platform"] == "macOS"
 end
 
 -- Check the action being used
@@ -103,18 +165,33 @@ function AddUniqueElements(Elements, Table)
 end
 
 -- Module management functions
-local gModules = {}
+local gModuleRules = {}
 
-function GetModule(ModuleName)
-    return gModules[ModuleName]
+function GetModuleRule(ModuleName)
+    return gModuleRules[ModuleName]
 end
 
-function IsModule(ModuleName)
-    return gModules[ModuleName] ~= nil
+function IsModuleRule(ModuleName)
+    return gModuleRules[ModuleName] ~= nil
 end
 
-function AddModule(ModuleName, Module)
-    gModules[ModuleName] = Module
+function AddModuleRule(ModuleName, ModuleRule)
+    gModuleRules[ModuleName] = ModuleRule
+end
+
+-- Target management functions
+local gTargetRules = {}
+
+function GetTargetRule(TargetName)
+    return gTargetRules[TargetName]
+end
+
+function IsTargetRule(TargetName)
+    return gTargetRules[TargetName] ~= nil
+end
+
+function AddTargetRule(TargetName, TargetRule)
+    gTargetRules[TargetName] = TargetRule
 end
 
 -- Path handling
@@ -158,10 +235,10 @@ function GetSolutionsFolderPath()
 end
 
 -- Retrieve the path to the ThirdParty folder containing external thirdparty projects
-local gExternalThirdpartyFolderPath = JoinPath(gEnginePath, "ThirdParty")
+local gExternalThirdPartyFolderPath = JoinPath(gEnginePath, "ThirdParty")
 
-function GetExternalThirdpartyFolderPath()
-    return gExternalThirdpartyFolderPath
+function GetExternalThirdPartyFolderPath()
+    return gExternalThirdPartyFolderPath
 end
 
 -- Output path for the binaries inside the buildfolder
@@ -173,7 +250,7 @@ end
 
 -- Make path relative to the thirdparty folder
 function CreateExternalThirdpartyPath(ThirdpartyPath)
-    return JoinPath(GetExternalThirdpartyFolderPath(), ThirdpartyPath)
+    return JoinPath(GetExternalThirdPartyFolderPath(), ThirdpartyPath)
 end
 
 -- Deep copy a table
@@ -200,10 +277,10 @@ local function PathIsUnder(ChildPath, ParentPath)
 end
 
 local function StripLuaComments(Source)
-    -- block comments --[[ ... ]] and line comments -- ...
     return Source
-        :gsub("%-%-%[%[.-%]%]", "")
-        :gsub("%-%-.-\n", "\n")
+        :gsub("%-%-%[%[.-%]%]", "")  -- block
+        :gsub("%-%-.-\n", "\n")      -- line to EOL
+        :gsub("%-%-.*$", "")         -- line at EOF (no trailing \n)
 end
 
 local function ResolveAbsolutePath(InputPath)
@@ -229,6 +306,7 @@ function AddModuleSearchRoot(RootPath)
     -- Dedupe using normalized keys (case/sep-insensitive)
     for ExistingIndex, ExistingRoot in ipairs(gModuleSearchRoots) do
         if NormalizePath(ExistingRoot) == NewKey then
+            LogHighlightWarning("AddModuleSearchRoot: '%s' already present. Skipping ..", StoredPath)
             return
         end
     end
@@ -303,6 +381,8 @@ local function SearchForModuleFiles()
         return
     end
 
+    InvalidateModuleIndex()
+
     table.sort(gModuleSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
 
     for RootIndex, RootDirectory in ipairs(gModuleSearchRoots) do
@@ -342,6 +422,7 @@ function AddTargetSearchRoot(RootPath)
     -- Dedupe using normalized keys (case/sep-insensitive)
     for ExistingIndex, ExistingRoot in ipairs(gTargetSearchRoots) do
         if NormalizePath(ExistingRoot) == NewKey then
+            LogHighlightWarning("AddTargetSearchRoot: '%s' already present. Skipping ..", StoredPath)
             return
         end
     end
@@ -415,6 +496,8 @@ local function SearchForTargetFiles()
     if gTargetIndexScanned then
         return
     end
+
+    InvalidateTargetIndex()
 
     table.sort(gTargetSearchRoots, function(ValA, ValB) return ValA:lower() < ValB:lower() end)
 

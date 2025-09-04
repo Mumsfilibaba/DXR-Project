@@ -1,39 +1,53 @@
--- Helper function to handle colored logging with optional prefixes
-local function LogWithColor(Color, Prefix, FmtStr, ...)
-    term.pushColor(Color)
+-- Helper to safely format without breaking on stray '%' or Premake tokens
+local function FormatLog(FmtStr, ...)
+    if select("#", ...) > 0 and type(FmtStr) == "string" then
+        return string.format(FmtStr, ...)
+    end
     
-    local Message
-    if select("#", ...) > 0 then
-        Message = string.format(FmtStr, ...)
-    else
-        Message = tostring(FmtStr) -- don't run format; safe for %{cfg.*}
-    end
+    return tostring(FmtStr)
+end
 
-    if Prefix then
-        print(Prefix .. Message)
+local function WriteLine(Stream, Text)
+    if Stream and Stream.write then
+        Stream:write(Text .. "\n")
     else
-        print(Message)
+        print(Text)
     end
+end
 
-    term.popColor()
+-- Color logger that writes to a specific stream (stdout/stderr)
+local function LogWithColorToStream(Stream, Color, Prefix, FmtStr, ...)
+    local Message  = FormatLog(FmtStr, ...)
+    local UseColor = (term and term.pushColor and term.popColor and Color)
+
+    if UseColor then
+        term.pushColor(Color)
+    end
+    
+    local Line = Prefix and (Prefix .. Message) or Message
+    WriteLine(Stream or io.stdout, Line)
+    
+    if UseColor then
+        term.popColor()
+    end
 end
 
 function LogInfo(FmtStr, ...)
-    print(string.format(FmtStr, ...))
+    WriteLine(io.stdout, FormatLog(FmtStr, ...))
 end
 
 function LogHighlight(FmtStr, ...)
-    LogWithColor(term.green, nil, FmtStr, ...)
+    LogWithColorToStream(io.stdout, term and term.green, nil, FmtStr, ...)
 end
 
 function LogHighlightWarning(FmtStr, ...)
-    LogWithColor(term.yellow, nil, FmtStr, ...)
+    LogWithColorToStream(io.stdout, term and term.yellow, nil, FmtStr, ...)
 end
 
 function LogWarning(FmtStr, ...)
-    LogWithColor(term.yellow, "Warning: ", FmtStr, ...)
+    LogWithColorToStream(io.stderr, term and term.yellow, "Warning: ", FmtStr, ...)
 end
 
 function LogError(FmtStr, ...)
-    LogWithColor(term.red, "Error: ", FmtStr, ...)
+    LogWithColorToStream(io.stderr, term and term.red, "Error: ", FmtStr, ...)
 end

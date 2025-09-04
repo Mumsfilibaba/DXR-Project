@@ -35,12 +35,18 @@ function FindVulkanIncludePath()
 
         local HaveLib = false
         for _, f in ipairs(LibCandidates) do
-            if ExistsFile(f) then HaveLib = true; break end
+            if ExistsFile(f) then 
+                HaveLib = true
+                break
+            end
         end
 
         local HaveTool = false
         for _, f in ipairs(ToolCandidates) do
-            if ExistsFile(f) then HaveTool = true; break end
+            if ExistsFile(f) then 
+                HaveTool = true
+                break
+            end
         end
 
         if not ExistsDir(IncDir) or not ExistsFile(HeaderH) then

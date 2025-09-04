@@ -20,7 +20,7 @@ function BuildRules(Name)
         -- Name - Must be the name of the folder as well or specify the location
         Name = Name,
 
-        -- Group - (Private) solution subfolder; can be set by path-resolution code
+        -- Group - (Private) solution subfolder
         Group = "",
 
         -- Location for project files, this overrides the default behavior
@@ -251,6 +251,9 @@ function BuildRules(Name)
             -- Build type
             kind(self.Kind)
 
+            -- Add flags
+            flags(self.Flags)
+
             -- Run-Time Type Information
             rtti(self.bEnableRuntimeTypeInfo and "On" or "Off")
             floatingpoint(self.FloatingPoint)
@@ -288,12 +291,25 @@ function BuildRules(Name)
             -- System SDK
             systemversion(self.SystemVersion)
 
-            -- Charset
-            local CurrentCharacterSet = (self.CharacterSet or ""):lower()
-            if CurrentCharacterSet ~= "ascii" and CurrentCharacterSet ~= "unicode" then
+            -- CharacterSet
+            local function MapCharacterSet(InCharacterSet)
+                local CharacterSetLower = (InCharacterSet or ""):lower()
+                if CharacterSetLower == "ascii" or CharacterSetLower == "mbcs" then
+                    return "MBCS"
+                end
+
+                if CharacterSetLower == "unicode" then
+                    return "Unicode"
+                end
+
+                return CharacterSetLower
+            end
+
+            local CurrentCharacterSet = MapCharacterSet(self.CharacterSet)
+            if CurrentCharacterSet ~= "MBCS" and CurrentCharacterSet ~= "Unicode" then
                 return AbortGenerateProject("Invalid character set '%s'", tostring(self.CharacterSet))
             else
-                characterset(self.CharacterSet)
+                characterset(CurrentCharacterSet)
             end
 
             -- Location
@@ -366,7 +382,7 @@ function BuildRules(Name)
 
             LogInfo("--- Frameworks for module '%s' (Num Frameworks=%d) ---", self.Name, #self.Frameworks)
             if #self.Frameworks > 0 then
-                PrintTable("  Using framework thirdparty '%s'", self.Frameworks)
+                PrintTable("  Using framework '%s'", self.Frameworks)
             end
 
             LogInfo("--- LinkLibraries for module '%s' (Num LinkLibraries=%d) ---", self.Name, #self.LinkLibraries)
@@ -389,9 +405,9 @@ function BuildRules(Name)
                 PrintTable("  Using module '%s'", self.Modules)
             end
 
-            LogInfo("--- Embedded modules for module '%s' (Num Embedded Modules=%d) ---", self.Name, #self.Modules)
-            if #self.Modules > 0 then
-                PrintTable("  Embed Module '%s'", self.Modules)
+            LogInfo("--- Embedded names for module '%s' (Num=%d) ---", self.Name, #self.ExtraEmbedNames)
+            if #self.ExtraEmbedNames > 0 then
+                PrintTable("  Embed '%s'", self.ExtraEmbedNames)
             end
 
             LogInfo("--- Post-Build-Commands '%s' (Num Post-Build-Commands=%d) ---", self.Name, #self.PostBuildCommands)
@@ -503,9 +519,8 @@ function BuildRules(Name)
     -- Base generate (generates project files)
     function self.Generate()
 
-        -- Protect against being generated twice
         if self.IsGenerated() then
-            LogHighlightWarning("Rule '%s' has already been generated", self.Name)
+            LogHighlightWarning("Rule '%s' already generated. Skipping ..", self.Name)
             return
         end
 
@@ -528,7 +543,7 @@ function BuildRules(Name)
                 })
 
                 -- Fix grouping (only if not already set)
-                local RelativePath = CreateOsPath(path.getrelative(GetExternalThirdpartyFolderPath(), ModuleInfo.ScriptDir))
+                local RelativePath = CreateOsPath(path.getrelative(GetExternalThirdPartyFolderPath(), ModuleInfo.ScriptDir))
                 if (not ModuleRule.Group) or ModuleRule.Group == "" then
                     ModuleRule.SetGroup("ThirdParty/" .. (RelativePath:gsub("\\", "/")))
                 end
@@ -553,12 +568,12 @@ function BuildRules(Name)
 
             local ModuleInfo = GetIndexedModuleInfo(CurrentModuleName)
             if ModuleInfo and os.isfile(ModuleInfo.ScriptPath) then
-                if IsModule(CurrentModuleName) then
+                if IsModuleRule(CurrentModuleName) then
 
                     -- If it was only created (by a multi-module file) but not yet generated, do it now.
-                    local ExistingRule = GetModule(CurrentModuleName)
+                    local ExistingRule = GetModuleRule(CurrentModuleName)
                     if not ExistingRule then
-                        LogError("Error: module '%s' reported as included, but GetModule() returned nil.", CurrentModuleName)
+                        LogError("Error: module '%s' reported as included, but GetModuleRule() returned nil.", CurrentModuleName)
                     else
                         if not ExistingRule.IsGenerated() then
                             LogInfo("Module '%s' was created earlier but not generated. Generating now...", CurrentModuleName)
@@ -574,8 +589,8 @@ function BuildRules(Name)
                     include(ModuleInfo.ScriptPath)
 
                     -- Some scripts may choose to not register a module for multiple reasons so check if we actually created a module
-                    if IsModule(CurrentModuleName) then
-                        local CurrentModule = GetModule(CurrentModuleName)
+                    if IsModuleRule(CurrentModuleName) then
+                        local CurrentModule = GetModuleRule(CurrentModuleName)
                         LogInfo("Module '%s' was created in script '%s'. Generating now...", CurrentModule.Name, CreateOsPath(ModuleInfo.ScriptPath))
 
                         GenerateModuleFromIndex(CurrentModule, ModuleInfo)
@@ -594,7 +609,7 @@ function BuildRules(Name)
         -- Solve modules (propagate include/link info)
         for Index = 1, #self.Modules do
             local CurrentModuleName = self.Modules[Index]
-            local CurrentModule     = GetModule(CurrentModuleName)
+            local CurrentModule     = GetModuleRule(CurrentModuleName)
 
             if CurrentModule then
                 if not CurrentModule.bRuntimeLinking then

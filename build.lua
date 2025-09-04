@@ -13,5 +13,11 @@ AddTargetSearchRoot("Sandbox")
 -- Search for targets
 SearchForBuildFiles()
 
--- Project
-include "Sandbox/Target.lua"
+-- Set the name of the workspace
+SetWorkspaceName("DXR-Engine Sandbox")
+
+-- Add the sandbox target to the workspace
+AddTarget("Sandbox")
+
+-- Generate the workspace
+GenerateWorkspace()

@@ -4,9 +4,9 @@ include "BuildTool_Rule.lua"
 function ModuleBuildRules(Name)
     
     -- Ensure that module does not already exist
-    if IsModule(Name) then
+    if IsModuleRule(Name) then
         LogHighlightWarning("Module '%s' is already created. Returning existing instance", Name)
-        return GetModule(Name)
+        return GetModuleRule(Name)
     end
     
     LogHighlight("Creating Module '%s'", Name)
@@ -18,11 +18,11 @@ function ModuleBuildRules(Name)
         return nil
     end
 
-    -- Determines if the module should be dynamic; overridden by monolithic build
+    -- Determines if the module should be dynamic. Overridden by monolithic build.
     self.bIsDynamic = true
 
     -- Determines if linking should be performed at runtime (ignored if bIsDynamic is false)
-    -- Set to true to enable hot-reloading
+    -- Set to true to enable hot-reloading.
     self.bRuntimeLinking = false
 
     -- Set this to true if this is a library and not a module. Then this module is simply built
@@ -32,6 +32,11 @@ function ModuleBuildRules(Name)
     -- Generate the module
     local BaseGenerate = self.Generate
     function self.Generate()
+        if self.IsGenerated and self.IsGenerated() then
+            LogHighlightWarning("Module '%s' already generated. Skipping ..", self.Name)
+            return
+        end
+
         LogInfo("--- Generating Module '%s' ---", self.Name)
 
         -- Handle monolithic build
@@ -72,6 +77,6 @@ function ModuleBuildRules(Name)
     end
 
     -- Add module to global list
-    AddModule(self.Name, self)
+    AddModuleRule(self.Name, self)
     return self
 end

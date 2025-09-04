@@ -44,7 +44,8 @@ local function GlslangGenerateBuildTimeHeaders()
         return
     end
 
-    local Template = Tmpl:read("*a"); Tmpl:close()
+    local Template = Tmpl:read("*a")
+    Tmpl:close()
 
     local Ver = GlslangDeduceSoftwareVersion(GlslangRoot)
     if not Ver then
@@ -76,11 +77,11 @@ local function GlslangGenerateBuildTimeHeaders()
             local ExistingText = Existing:read("*a")
             Existing:close()
             if ExistingText == Output then
-                LogInfo("'build_info.h' unchanged; skipping")
+                LogInfo("'build_info.h' unchanged. Skipping ..")
                 return
             end
         else
-            LogInfo("'build_info.h' does not exist yet, creating file...")
+            LogInfo("'build_info.h' does not exist yet, creating file ..")
         end
     end
 
@@ -93,7 +94,7 @@ local function GlslangGenerateBuildTimeHeaders()
     Out:write(Output)
     Out:close()
     
-    LogInfo("... finished creating 'build_info.h'")
+    LogInfo(".. finished creating 'build_info.h'")
 end
 
 -- Generate build-time header now (safe to call every run)
