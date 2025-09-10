@@ -55,7 +55,7 @@
     #define WIN11_BUILD_22621 (1)
 #endif
 
-#if !PRODUCTION_BUILD
+#if !RELEASE_BUILD
     #define D3D12_ERROR(...) \
         do \
         { \

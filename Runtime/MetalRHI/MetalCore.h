@@ -7,7 +7,7 @@
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
 
-#if !PRODUCTION_BUILD
+#if !RELEASE_BUILD
     #define METAL_ERROR(...)                      \
         do                                        \
         {                                         \

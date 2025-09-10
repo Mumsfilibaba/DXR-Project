@@ -88,6 +88,46 @@ end
 -- Name of the project that should be set as startup project
 local gStartProjectName = ""
 
+-- The different types of targets that exists within the workspace, used to create different configurations
+local gUsedTargetTypes    = {}
+local gUsedTargetTypesSet = {}
+
+local gValidTargetTypes = {
+    [ETargetType.Game]    = true,
+    [ETargetType.Editor]  = true,
+    [ETargetType.Program] = true,
+}
+
+local function AddTargetType(TargetType)
+    if not gValidTargetTypes[TargetType] then
+        return false
+    end
+
+    if gUsedTargetTypesSet[TargetType] then
+        return false
+    end
+
+    gUsedTargetTypesSet[TargetType] = true
+    table.insert(gUsedTargetTypes, TargetType)
+    return true
+end
+
+local function HasTargetType(TargetType)
+    return gUsedTargetTypesSet[TargetType] == true
+end
+
+local function GetUsedTargetTypes()
+    return gUsedTargetTypes
+end
+
+local function ClearUsedTargetTypes()
+    gUsedTargetTypes    = {}
+    gUsedTargetTypesSet = {}
+end
+
+-- Configurations for this workspace
+local gConfigurations = { }
+
 -- Solution generation
 function GenerateSolutionFiles()
 
@@ -109,11 +149,7 @@ function GenerateSolutionFiles()
     })
 
     -- Configurations
-    configurations({
-        "Debug",
-        "Release",
-        "Production",
-    })
+    configurations(gConfigurations)
 
     -- Includes
     local RuntimeFolderPathLocal = GetRuntimeFolderPath()
@@ -131,8 +167,8 @@ function GenerateSolutionFiles()
 
     defines(gGlobalDefines)
 
-    -- Per-config CRT (Debug vs Release)
-    filter "configurations:Debug"
+    -- Define config settings
+    filter { "configurations:*Debug*" }
         symbols "On"
         runtime "Debug"
         defines {
@@ -142,21 +178,23 @@ function GenerateSolutionFiles()
         }
     filter {}
 
-    filter "configurations:Release"
+    -- Development-like configs
+    filter { "configurations:*Development*" }
         symbols "On"
         runtime "Release"
         defines {
             "NDEBUG",
-            "RELEASE_BUILD=(1)"
+            "DEVELOPMENT_BUILD=(1)"
         }
     filter {}
 
-    filter "configurations:Production"
+    -- Release-like configs
+    filter { "configurations:*Release*" }
         symbols "Off"
         runtime "Release"
-        defines {
+        defines { 
             "NDEBUG",
-            "PRODUCTION_BUILD=(1)"
+            "RELEASE_BUILD=(1)"
         }
     filter {}
 
@@ -278,42 +316,76 @@ function GenerateWorkspace()
         })
     end
 
-    -- Execute targets (include their scripts)
-    for Index = 1, #gTargets do
-        local CurrentTargetName = gTargets[Index]
+    -- Include the target scripts and collect the type of targets we will have in the workspace
+    for i = 1, #gTargets do
+        local CurrentTargetName = gTargets[i]
+        
         local TargetInfo = GetIndexedTargetInfo and GetIndexedTargetInfo(CurrentTargetName) or nil
-
         if TargetInfo and os.isfile(TargetInfo.ScriptPath) then
             local ExistingRule = GetTargetRule and GetTargetRule(CurrentTargetName) or nil
             if ExistingRule then
-                if not ExistingRule.IsGenerated or not ExistingRule.IsGenerated() then
-                    LogInfo("Target '%s' was created earlier but not generated. Generating now...", CurrentTargetName)
-                    gCurrentTargetName = CurrentTargetName
-                    ExistingRule.Generate()
-                else
-                    LogHighlightWarning("Target '%s' is already included in workspace '%s'", CurrentTargetName, GetWorkspaceName())
-                end
+                AddTargetType(ExistingRule.TargetType)
             else
                 LogInfo("Including script '%s' to include target '%s'", CreateOsPath(TargetInfo.ScriptPath), CurrentTargetName)
-
-                local Prev = gCurrentTargetName
-                gCurrentTargetName = CurrentTargetName
                 include(TargetInfo.ScriptPath)
-                gCurrentTargetName = Prev
 
                 local CreatedRule = GetTargetRule and GetTargetRule(CurrentTargetName) or nil
                 if CreatedRule then
-                    LogInfo("Target '%s' was created in script '%s'. Generating now...", CreatedRule.Name or CurrentTargetName, CreateOsPath(TargetInfo.ScriptPath))
-                    if not CreatedRule.IsGenerated or not CreatedRule.IsGenerated() then
-                        gCurrentTargetName = CurrentTargetName
-                        CreatedRule.Generate()
-                    end
+                    LogInfo("Target '%s' was created in script '%s'", CreatedRule.Name or CurrentTargetName, CreateOsPath(TargetInfo.ScriptPath))
+                    AddTargetType(CreatedRule.TargetType)
                 else
-                    LogHighlightWarning("Found target '%s' at '%s', but it did not register (it may be unsupported on this platform).", CurrentTargetName, CreateOsPath(TargetInfo.ScriptPath))
+                    LogHighlightWarning("Found target '%s' at '%s', but it did not register.", CurrentTargetName, CreateOsPath(TargetInfo.ScriptPath))
                 end
             end
         else
             LogError("Target '%s' not found in indexed roots. Ensure it lives under a configured search root.", CurrentTargetName)
+        end
+    end
+
+    -- Create all configurations that we need
+    for i = 1, #gUsedTargetTypes do
+        local CurrentTargetType = gUsedTargetTypes[i]
+        if CurrentTargetType == ETargetType.Game then
+            LogHighlight("Need configuration for ETargetType.Game")
+
+            table.insert(gConfigurations, "Debug")
+            table.insert(gConfigurations, "Development")
+            table.insert(gConfigurations, "Release")
+            table.insert(gConfigurations, "Debug Monolithic")
+            table.insert(gConfigurations, "Development Monolithic")
+            table.insert(gConfigurations, "Release Monolithic") 
+        elseif CurrentTargetType == ETargetType.Editor then
+            LogHighlight("Need configuration for ETargetType.Editor")
+
+            table.insert(gConfigurations, "Debug Editor")
+            table.insert(gConfigurations, "Development Editor")
+            table.insert(gConfigurations, "Release Editor")
+        elseif CurrentTargetType == ETargetType.Program then
+            LogHighlight("Need configuration for ETargetType.Program")
+            -- TODO
+        end
+    end
+
+    for i = 1, #gConfigurations do
+        local ConfigName = gConfigurations[i]
+        LogHighlight("  Use config '%s'", ConfigName)
+    end
+
+    -- Execute targets (include their scripts)
+    for i = 1, #gTargets do
+        local CurrentTargetName = gTargets[i]
+
+        local CurrentTargetRule = GetTargetRule and GetTargetRule(CurrentTargetName) or nil
+        if CurrentTargetRule then
+            if not CurrentTargetRule.IsGenerated or not CurrentTargetRule.IsGenerated() then
+                LogInfo("Generating Target '%s'.", CurrentTargetName)
+                gCurrentTargetName = CurrentTargetName
+                CurrentTargetRule.Generate()
+            else
+                LogHighlightWarning("Target '%s' is already generated in workspace '%s'", CurrentTargetName, GetWorkspaceName())
+            end
+        else
+            LogError("Target '%s' does not exist. Check under a valid search root and that it gets created in the script.", CurrentTargetName)
         end
     end
 

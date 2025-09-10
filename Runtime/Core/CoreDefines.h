@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef ENABLE_ASSERTS
-    #if !defined(PRODUCTION_BUILD)
+    #if !defined(RELEASE_BUILD)
         #define ENABLE_ASSERTS (1)
     #else
         #define ENABLE_ASSERTS (0)

@@ -58,7 +58,7 @@ workspace "EngineTests"
         defines
         {
             "NDEBUG",
-            "RELEASE_BUILD",
+            "DEVELOPMENT_BUILD",
         }
     filter {}
 

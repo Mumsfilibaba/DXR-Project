@@ -19,16 +19,15 @@ if IsPlatformWindows() then
 
     -- Copy dynamic libraries from thirdparties folder
     local AgilitySdkFolder = JoinPath(D3D12RHI.GetTargetFolderPath(), "D3D12")
-
     D3D12RHI.AddPostBuildCommands({
-        "if not exist \"" .. AgilitySdkFolder .. "\" mkdir \"" .. AgilitySdkFolder .. "\"", -- Ensure folder exists before copying
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll") .. " " .. AgilitySdkFolder,
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb") .. " " .. AgilitySdkFolder,
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll") .. " " .. AgilitySdkFolder,
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb") .. " " .. AgilitySdkFolder,
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe") .. " " .. AgilitySdkFolder,
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb") .. " " .. AgilitySdkFolder,
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll") .. " " .. AgilitySdkFolder,
-        "copy " .. CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb") .. " " .. AgilitySdkFolder,
+        ('if not exist "%s" mkdir "%s"'):format(AgilitySdkFolder, AgilitySdkFolder), -- Ensure folder exists before copying
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll"), AgilitySdkFolder),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb"), AgilitySdkFolder),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll"), AgilitySdkFolder),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb"), AgilitySdkFolder),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe"), AgilitySdkFolder),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb"), AgilitySdkFolder),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll"), AgilitySdkFolder),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb"), AgilitySdkFolder),
     })
 end

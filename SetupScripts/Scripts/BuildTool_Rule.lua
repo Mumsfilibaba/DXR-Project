@@ -221,20 +221,20 @@ function BuildRules(Name)
 
             -- Add settings based on configuration
             if self.bOptimizeDebugBuild then
-                filter "configurations:Debug"
+                filter "configurations:*Debug*"
                     optimize("Full")
                 filter {}
             else
-                filter "configurations:Debug"
+                filter "configurations:*Debug*"
                     optimize("Off")
                 filter {}
             end
 
-            filter "configurations:Release"
+            filter "configurations:*Release*"
                 optimize("Full")
             filter {}
 
-            filter "configurations:Production"
+            filter "configurations:*Production*"
                 optimize("Full")
             filter {}
 

@@ -48,7 +48,7 @@
 #endif
 
 #ifndef DEBUG_BREAK
-    #if !defined(PRODUCTION_BUILD)
+    #if !defined(RELEASE_BUILD)
         #define DEBUG_BREAK() __debugbreak()
     #else
         #define DEBUG_BREAK() ((void)0)

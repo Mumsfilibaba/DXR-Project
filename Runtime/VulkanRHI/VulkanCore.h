@@ -20,7 +20,7 @@
     #error Vulkan version must be 1.2 or above
 #endif
 
-#if !PRODUCTION_BUILD
+#if !RELEASE_BUILD
 #define VULKAN_ERROR(...) \
     do \
     { \

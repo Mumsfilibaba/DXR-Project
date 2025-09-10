@@ -21,13 +21,14 @@ RhiModule.AddModules({
 })
 
 -- Copy dynamic libraries from thirdparties folder
+local Dest = RhiModule.GetTargetFolderPath()
 if IsPlatformWindows() then
     RhiModule.AddPostBuildCommands({
-        "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxil.dll") .. " " .. RhiModule.GetTargetFolderPath(),
-        "copy " .. CreateExternalThirdpartyPath("DXC/bin/dxcompiler.dll") .. " " .. RhiModule.GetTargetFolderPath(),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("DXC/bin/dxil.dll"), Dest),
+        ('copy /Y "%s" "%s"\\'):format(CreateExternalThirdpartyPath("DXC/bin/dxcompiler.dll"), Dest),
     })
 elseif IsPlatformMac() then
     RhiModule.AddPostBuildCommands({
-        "cp " .. CreateExternalThirdpartyPath("DXC/bin/libdxcompiler.dylib") .. " " .. RhiModule.GetTargetFolderPath(),
+        ('cp -f "%s" "%s"'):format(CreateExternalThirdpartyPath("DXC/bin/libdxcompiler.dylib"), Dest),
     })
 end
