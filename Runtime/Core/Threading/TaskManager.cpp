@@ -1,5 +1,5 @@
-#include "TaskManager.h"
-#include "AsyncTask.h"
+#include "Core/Threading/TaskManager.h"
+#include "Core/Threading/AsyncTask.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"

@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Templates/TypeTraits/BooleanTraits.h"
-
 #include <initializer_list>
 
 template<typename T>

@@ -1,7 +1,6 @@
-#include "Memory.h"
-#include "Malloc.h"
+#include "Core/Memory/Memory.h"
+#include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformStackTrace.h"
-
 #include <cstdlib>
 #include <cstring>
 

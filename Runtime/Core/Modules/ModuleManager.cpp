@@ -1,5 +1,5 @@
-#include "ModuleManager.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Modules/ModuleManager.h"
 
 static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
     "Core.ModuleManagerBreakOnError",

@@ -1,5 +1,5 @@
 #pragma once
-#include "DelegateBase.h"
+#include "Core/Delegates/DelegateBase.h"
 #include "Core/Containers/Array.h"
 
 class FMulticastDelegateBase

@@ -2,8 +2,8 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include <execinfo.h>
-#include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach.h>
+#include <CoreFoundation/CoreFoundation.h>
 
 #define LOAD_FUNCTION(Function, LibraryHandle) \
     do \

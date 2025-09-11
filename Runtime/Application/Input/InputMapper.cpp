@@ -1,11 +1,13 @@
-#include "InputMapper.h"
+#include "Application/Input/InputMapper.h"
+#include "Core/Templates/Utility/UnderlyingTypeValue.h"
 
 FInputMapper FInputMapper::GInputMapper;
 
 void FInputMapper::Initialize()
 {
     // Init the KeyboardKey map
-    static_assert(UnderlyingTypeValue(EKeyboardKeyName::Unknown) == UnderlyingTypeValue(EKeyName::Unknown) && UnderlyingTypeValue(EKeyboardKeyName::Last) == UnderlyingTypeValue(EKeyName::Menu), "EKeyboardKeyName::Type has changed values, update mapping");
+    static_assert(UnderlyingTypeValue(EKeyboardKeyName::Unknown) == UnderlyingTypeValue(EKeyName::Unknown) && 
+        UnderlyingTypeValue(EKeyboardKeyName::Last) == UnderlyingTypeValue(EKeyName::Menu), "EKeyboardKeyName::Type has changed values, update mapping");
 
     for (int32 Index = EKeyboardKeyName::Unknown; Index <= EKeyboardKeyName::Last; Index++)
     {

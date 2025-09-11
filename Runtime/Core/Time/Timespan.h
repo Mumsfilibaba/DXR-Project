@@ -1,6 +1,6 @@
 #pragma once
-#include "TimeUtilities.h"
 #include "Core/Core.h"
+#include "Core/Time/TimeUtilities.h"
 
 class FTimespan
 {

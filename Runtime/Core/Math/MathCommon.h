@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/NumericLimits.h"
-
 #include <algorithm>
 #include <cmath>
 

@@ -1,7 +1,7 @@
-#include "WindowWidget.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Generic/GenericWindow.h"
 #include "Application/Application.h"
+#include "Application/Widgets/WindowWidget.h"
 
 FWindowWidget::FWindowWidget()
     : FWidget()

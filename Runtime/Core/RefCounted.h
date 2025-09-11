@@ -1,5 +1,5 @@
 #pragma once
-#include "IRefCounted.h"
+#include "Core/IRefCounted.h"
 #include "Core/Threading/Atomic.h"
 
 class CORE_API FRefCounted : public IRefCounted
@@ -20,4 +20,3 @@ public:
 private:
     mutable FAtomicInt32 NumRefs;
 };
-

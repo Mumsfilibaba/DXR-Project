@@ -1,6 +1,5 @@
-#include "CommandLine.h"
-#include "Parse.h"
-
+#include "Core/Misc/CommandLine.h"
+#include "Core/Misc/Parse.h"
 #include "Core/Templates/CString.h"
 
 CHAR FCommandLine::CommandLine[FCommandLine::MaxCommandLineLength]         = { 0 };

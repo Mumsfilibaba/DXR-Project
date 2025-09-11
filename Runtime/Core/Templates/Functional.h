@@ -1,6 +1,6 @@
 #pragma once
-#include "Utility.h"
-#include "TypeTraits.h"
+#include "Core/Templates/Utility.h"
+#include "Core/Templates/TypeTraits.h"
 
 template<typename FuncType, typename... ArgTypes>
 struct TIsInvokable;

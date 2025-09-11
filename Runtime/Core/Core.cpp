@@ -1,4 +1,4 @@
-#include "Core.h"
-#include "Modules/ModuleManager.h"
+#include "Core/Core.h"
+#include "Core/Modules/ModuleManager.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Core);

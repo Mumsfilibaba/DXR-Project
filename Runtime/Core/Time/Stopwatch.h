@@ -1,5 +1,5 @@
 #pragma once
-#include "Timespan.h"
+#include "Core/Time/Timespan.h"
 
 class CORE_API FStopwatch
 {

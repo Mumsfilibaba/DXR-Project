@@ -3,12 +3,12 @@
 #include "Core/Templates/TypeTraits.h"
 
 #if PLATFORM_WINDOWS
-#include <Unknwn.h>
+    #include <Unknwn.h>
 #endif
 
 // NOTE: This is defined inside WinAdapter.h which is a part of DXC
 #ifdef LLVM_SUPPORT_WIN_ADAPTER_H
-#define WINDOWS_PRIMITIVES_SUPPORTED 1
+    #define WINDOWS_PRIMITIVES_SUPPORTED 1
 #endif
 
 template<typename InComInterfaceType>

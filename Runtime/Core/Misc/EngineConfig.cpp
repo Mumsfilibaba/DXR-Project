@@ -1,7 +1,7 @@
-#include "EngineConfig.h"
-#include "Parse.h"
-#include "OutputDeviceLogger.h"
-#include "ConsoleManager.h"
+#include "Core/Misc/EngineConfig.h"
+#include "Core/Misc/Parse.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 

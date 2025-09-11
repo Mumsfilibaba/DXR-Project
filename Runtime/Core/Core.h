@@ -1,4 +1,4 @@
 #pragma once
-#include "CoreDefines.h"
-#include "CoreTypes.h"
-#include "CoreGlobals.h"
+#include "Core/CoreDefines.h"
+#include "Core/CoreTypes.h"
+#include "Core/CoreGlobals.h"

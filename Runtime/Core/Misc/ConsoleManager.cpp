@@ -1,10 +1,10 @@
-#include "ConsoleManager.h"
-#include "EngineConfig.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
 
-static FAutoConsoleCommand CCmdHistory(
+static FAutoConsoleCommand CmdClearHistory(
     "ClearHistory",
     "Clears the history of the Console",
     FConsoleCommandDelegate::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
@@ -21,7 +21,6 @@ static TAutoConsoleVariable<FString> CVarEcho(
             OutputDevice->Log(ELogSeverity::Info, InVariable->GetString());
         }
     }));
-
 
 class FConsoleCommand  : public IConsoleCommand
 {

@@ -1,7 +1,7 @@
 #pragma once
-#include "TypeTraits.h"
-#include "Functional.h"
-#include "Utility.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Functional.h"
+#include "Core/Templates/Utility.h"
 
 template<typename T>
 class TReferenceWrapper

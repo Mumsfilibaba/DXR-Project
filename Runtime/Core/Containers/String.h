@@ -4,7 +4,6 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/TypeHash.h"
 #include "Core/Templates/ArrayContainerHelper.h"
-
 #if defined(__OBJC__)
     #include <Foundation/Foundation.h>
 #endif

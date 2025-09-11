@@ -1,4 +1,4 @@
-#include "CoreDelegates.h"
+#include "Core/Misc/CoreDelegates.h"
 
 namespace CoreDelegates
 {

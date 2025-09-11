@@ -1,5 +1,5 @@
-#include "FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 FFrameProfiler& FFrameProfiler::Get()

@@ -1,4 +1,4 @@
 #pragma once
-#include "Stopwatch.h"
-#include "Timespan.h"
-#include "TimeUtilities.h"
+#include "Core/Time/Stopwatch.h"
+#include "Core/Time/Timespan.h"
+#include "Core/Time/TimeUtilities.h"

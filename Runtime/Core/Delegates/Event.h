@@ -1,5 +1,5 @@
 #pragma once
-#include "MulticastDelegate.h"
+#include "Core/Delegates/MulticastDelegate.h"
 
 #define DECLARE_EVENT(NewEvent, OwnerType, ...) \
     class NewEvent : public TEvent<__VA_ARGS__> \

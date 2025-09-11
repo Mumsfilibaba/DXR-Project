@@ -337,7 +337,6 @@ constexpr const CHAR* ToString(EKeyName::Type KeyName)
         case EKeyName::GamepadStart:         return "GamepadStart";
         case EKeyName::GamepadBack:          return "GamepadBack";
 
-        default:
-            return "Unknown";
+        default: return "Unknown";
     }
 }

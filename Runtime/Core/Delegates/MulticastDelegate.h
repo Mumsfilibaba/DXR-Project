@@ -1,6 +1,6 @@
 #pragma once
-#include "Delegate.h"
-#include "MulticastDelegateBase.h"
+#include "Core/Delegates/Delegate.h"
+#include "Core/Delegates/MulticastDelegateBase.h"
 
 #define DECLARE_MULTICAST_DELEGATE(DelegateName, ...) \
     class DelegateName \

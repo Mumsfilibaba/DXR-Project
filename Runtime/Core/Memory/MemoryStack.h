@@ -1,12 +1,12 @@
 #pragma once
-#include "Memory.h"
 #include "Core/Core.h"
 #include "Core/Math/Math.h"
+#include "Core/Memory/Memory.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
 // Currently each page is 64Kb
-#define MEMORY_STACK_PAGE_SIZE   int32(64 * 1024)
+#define MEMORY_STACK_PAGE_SIZE int32(64 * 1024)
 #define MEMORY_STACK_ZERO_MEMORY (1)
 
 class CORE_API FMemoryStack : FNonCopyable

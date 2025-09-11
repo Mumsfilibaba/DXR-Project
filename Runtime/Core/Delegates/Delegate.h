@@ -1,5 +1,5 @@
 #pragma once
-#include "DelegateBase.h"
+#include "Core/Delegates/DelegateBase.h"
 #include "Core/Templates/TypeTraits.h"
 
 #define DECLARE_DELEGATE(DelegateName, ...) \
@@ -257,11 +257,11 @@ private:
 
     FORCEINLINE DelegateInstance* GetDelegateInstance() noexcept
     {
-        return reinterpret_cast<DelegateInstance*>(GetDelegate());
+        return reinterpret_cast<DelegateInstance*>(Super::GetDelegate());
     }
 
     FORCEINLINE const DelegateInstance* GetDelegateInstance() const noexcept
     {
-        return reinterpret_cast<const DelegateInstance*>(GetDelegate());
+        return reinterpret_cast<const DelegateInstance*>(Super::GetDelegate());
     }
 };

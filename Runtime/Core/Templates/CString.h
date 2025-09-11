@@ -1,6 +1,6 @@
 #pragma once
-#include "TypeTraits.h"
-#include "ObjectHandling.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/ObjectHandling.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformString.h"
 

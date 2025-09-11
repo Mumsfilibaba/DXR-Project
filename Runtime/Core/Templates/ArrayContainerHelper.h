@@ -1,5 +1,5 @@
 #pragma once
-#include "TypeTraits.h"
+#include "Core/Templates/TypeTraits.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

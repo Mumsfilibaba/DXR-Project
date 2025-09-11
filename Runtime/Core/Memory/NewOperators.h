@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Memory/Malloc.h"
-
 #include <new>
 
 #define IMPLEMENT_NEW_AND_DELETE_OPERATORS() \
