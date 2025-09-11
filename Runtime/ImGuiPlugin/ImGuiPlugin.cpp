@@ -13,12 +13,6 @@
 
 IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
 
-static TAutoConsoleVariable<bool> CVarImGuiEnableMultiViewports(
-    "ImGui.EnableMultiViewports",
-    "Enable multiple Viewports in ImGui",
-    false,
-    EConsoleVariableFlags::Default);
-
 static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
     "ImGui.UseWindowDPIScale",
     "Scale ImGui elements with the Window DPI scale",
@@ -110,143 +104,136 @@ bool FImGuiPlugin::Load()
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
-
-    if (CVarImGuiEnableMultiViewports.GetValue())
-    {
-        // We have support for multiple Viewports, but we may not always want to utilize it
-        PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
-        PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
-    }
-
+   
     // Register platform interface (will be coupled with a renderer interface)
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    if (CVarImGuiEnableMultiViewports.GetValue())
-    {
-        if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
-        {
-            Viewport->PlatformHandle        = nullptr;
-            Viewport->PlatformHandleRaw     = nullptr;
-            Viewport->PlatformWindowCreated = false;
-            Viewport->PlatformRequestMove   = false;
-            Viewport->PlatformRequestResize = false;
-            Viewport->PlatformUserData      = nullptr;
-            Viewport->RendererUserData      = nullptr;
-        }
-
-        PlatformState.Platform_CreateWindow = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnCreatePlatformWindow(Viewport);
-        };
-        
-        PlatformState.Platform_DestroyWindow = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnDestroyPlatformWindow(Viewport);
-        };
-
-        PlatformState.Platform_ShowWindow = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnShowPlatformWindow(Viewport);
-        };
-
-        PlatformState.Platform_SetWindowPos = [](ImGuiViewport* Viewport, ImVec2 Position)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnSetPlatformWindowPosition(Viewport, Position);
-        };
-
-        PlatformState.Platform_GetWindowPos = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            return GImGuiPlugin->OnGetPlatformWindowPosition(Viewport);
-        };
-
-        PlatformState.Platform_SetWindowSize = [](ImGuiViewport* Viewport, ImVec2 Size)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnSetPlatformWindowSize(Viewport, Size);
-        };
-
-        PlatformState.Platform_GetWindowSize = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            return GImGuiPlugin->OnGetPlatformWindowSize(Viewport);
-        };
-
-        PlatformState.Platform_SetWindowFocus = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnSetPlatformWindowFocus(Viewport);
-        };
-
-        PlatformState.Platform_GetWindowFocus = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            return GImGuiPlugin->OnGetPlatformWindowFocus(Viewport);
-        };
-
-        PlatformState.Platform_GetWindowMinimized = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            return GImGuiPlugin->OnGetPlatformWindowMinimized(Viewport);
-        };
-
-        PlatformState.Platform_SetWindowTitle = [](ImGuiViewport* Viewport, const CHAR* Title)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnSetPlatformWindowTitle(Viewport, Title);
-        };
-
-        PlatformState.Platform_SetWindowAlpha = [](ImGuiViewport* Viewport, float Alpha)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnSetPlatformWindowAlpha(Viewport, Alpha);
-        };
-
-        PlatformState.Platform_UpdateWindow = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnUpdatePlatformWindow(Viewport);
-        };
-
-        PlatformState.Platform_GetWindowDpiScale = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            return GImGuiPlugin->OnGetPlatformWindowDpiScale(Viewport);
-        };
-
-        PlatformState.Platform_OnChangedViewport = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiPlugin != nullptr);
-            GImGuiPlugin->OnPlatformChangedViewport(Viewport);
-        };
-    }
-    else
-    {
-        PlatformState.Platform_CreateWindow       = nullptr;
-        PlatformState.Platform_DestroyWindow      = nullptr;
-        PlatformState.Platform_ShowWindow         = nullptr;
-        PlatformState.Platform_SetWindowPos       = nullptr;
-        PlatformState.Platform_GetWindowPos       = nullptr;
-        PlatformState.Platform_SetWindowSize      = nullptr;
-        PlatformState.Platform_GetWindowSize      = nullptr;
-        PlatformState.Platform_SetWindowFocus     = nullptr;
-        PlatformState.Platform_GetWindowFocus     = nullptr;
-        PlatformState.Platform_GetWindowMinimized = nullptr;
-        PlatformState.Platform_SetWindowTitle     = nullptr;
-        PlatformState.Platform_SetWindowAlpha     = nullptr;
-        PlatformState.Platform_UpdateWindow       = nullptr;
-        PlatformState.Platform_GetWindowDpiScale  = nullptr;
-        PlatformState.Platform_OnChangedViewport  = nullptr;
-    }
-
+    
+#ifdef EDITOR_BUILD
+    // We have support for multiple Viewports, but we may not always want to utilize it
+    PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
+    PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
+	
+    // Configure viewports and docking in editor builds
     PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    if (ImGuiExtensions::IsMultiViewportEnabled())
+	PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
-        PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        Viewport->PlatformHandle        = nullptr;
+        Viewport->PlatformHandleRaw     = nullptr;
+        Viewport->PlatformWindowCreated = false;
+        Viewport->PlatformRequestMove   = false;
+        Viewport->PlatformRequestResize = false;
+        Viewport->PlatformUserData      = nullptr;
+        Viewport->RendererUserData      = nullptr;
     }
+
+    PlatformState.Platform_CreateWindow = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnCreatePlatformWindow(Viewport);
+    };
+    
+    PlatformState.Platform_DestroyWindow = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnDestroyPlatformWindow(Viewport);
+    };
+
+    PlatformState.Platform_ShowWindow = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnShowPlatformWindow(Viewport);
+    };
+
+    PlatformState.Platform_SetWindowPos = [](ImGuiViewport* Viewport, ImVec2 Position)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnSetPlatformWindowPosition(Viewport, Position);
+    };
+
+    PlatformState.Platform_GetWindowPos = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        return GImGuiPlugin->OnGetPlatformWindowPosition(Viewport);
+    };
+
+    PlatformState.Platform_SetWindowSize = [](ImGuiViewport* Viewport, ImVec2 Size)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnSetPlatformWindowSize(Viewport, Size);
+    };
+
+    PlatformState.Platform_GetWindowSize = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        return GImGuiPlugin->OnGetPlatformWindowSize(Viewport);
+    };
+
+    PlatformState.Platform_SetWindowFocus = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnSetPlatformWindowFocus(Viewport);
+    };
+
+    PlatformState.Platform_GetWindowFocus = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        return GImGuiPlugin->OnGetPlatformWindowFocus(Viewport);
+    };
+
+    PlatformState.Platform_GetWindowMinimized = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        return GImGuiPlugin->OnGetPlatformWindowMinimized(Viewport);
+    };
+
+    PlatformState.Platform_SetWindowTitle = [](ImGuiViewport* Viewport, const CHAR* Title)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnSetPlatformWindowTitle(Viewport, Title);
+    };
+
+    PlatformState.Platform_SetWindowAlpha = [](ImGuiViewport* Viewport, float Alpha)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnSetPlatformWindowAlpha(Viewport, Alpha);
+    };
+
+    PlatformState.Platform_UpdateWindow = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnUpdatePlatformWindow(Viewport);
+    };
+
+    PlatformState.Platform_GetWindowDpiScale = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        return GImGuiPlugin->OnGetPlatformWindowDpiScale(Viewport);
+    };
+
+    PlatformState.Platform_OnChangedViewport = [](ImGuiViewport* Viewport)
+    {
+        CHECK(GImGuiPlugin != nullptr);
+        GImGuiPlugin->OnPlatformChangedViewport(Viewport);
+    };
+#else
+    PlatformState.Platform_CreateWindow       = nullptr;
+    PlatformState.Platform_DestroyWindow      = nullptr;
+    PlatformState.Platform_ShowWindow         = nullptr;
+    PlatformState.Platform_SetWindowPos       = nullptr;
+    PlatformState.Platform_GetWindowPos       = nullptr;
+    PlatformState.Platform_SetWindowSize      = nullptr;
+    PlatformState.Platform_GetWindowSize      = nullptr;
+    PlatformState.Platform_SetWindowFocus     = nullptr;
+    PlatformState.Platform_GetWindowFocus     = nullptr;
+    PlatformState.Platform_GetWindowMinimized = nullptr;
+    PlatformState.Platform_SetWindowTitle     = nullptr;
+    PlatformState.Platform_SetWindowAlpha     = nullptr;
+    PlatformState.Platform_UpdateWindow       = nullptr;
+    PlatformState.Platform_GetWindowDpiScale  = nullptr;
+    PlatformState.Platform_OnChangedViewport  = nullptr;
+#endif
 
     // Update monitor info
     UpdateMonitorInfo();
@@ -335,7 +322,7 @@ bool FImGuiPlugin::Load()
     Style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.33f, 0.33f, 0.33f, 1.00f);
     Style.Colors[ImGuiCol_DockingPreview]     = ImVec4(0.85f, 0.85f, 0.85f, 0.28f);
 
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    if (PluginImGuiIO->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         Style.WindowRounding = 0.0f;
         Style.Colors[ImGuiCol_WindowBg].w = 1.0f;
@@ -416,11 +403,10 @@ void FImGuiPlugin::Tick(float Delta)
     TSharedRef<FGenericWindow> PlatformWindow = MainWindow->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
 
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.DeltaTime               = Delta / 1000.0f;
-    UIState.DisplaySize             = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
-    UIState.FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
-    UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
+    PluginImGuiIO->DeltaTime               = Delta / 1000.0f;
+    PluginImGuiIO->DisplaySize             = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
+    PluginImGuiIO->FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
+    PluginImGuiIO->DisplayFramebufferScale = ImVec2(PluginImGuiIO->FontGlobalScale, PluginImGuiIO->FontGlobalScale);
 
     TSharedPtr<FWindowWidget>  ForegroundWindow         = FApplication::Get().GetFocusWindow();
     TSharedRef<FGenericWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
@@ -432,14 +418,13 @@ void FImGuiPlugin::Tick(float Delta)
         const FIntVector2 ForegroundWindowPosition = ForegroundWindow->GetPosition();
 
         const bool bIsTrackingMouse = FApplication::Get().IsTrackingCursor();
-        if (UIState.WantSetMousePos)
+        if (PluginImGuiIO->WantSetMousePos)
         {
-            ImVec2 MousePos = UIState.MousePos;
-            if (!ImGuiExtensions::IsMultiViewportEnabled())
-            {
-                MousePos.x = MousePos.x - ForegroundWindowPosition.X;
-                MousePos.y = MousePos.y - ForegroundWindowPosition.Y;
-            }
+            ImVec2 MousePos = PluginImGuiIO->MousePos;
+        #ifndef EDITOR_BUILD
+            MousePos.x = MousePos.x - ForegroundWindowPosition.X;
+            MousePos.y = MousePos.y - ForegroundWindowPosition.Y;
+        #endif
 
             const FIntVector2 CursorPos = FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y));
             FApplication::Get().SetCursorPosition(CursorPos);
@@ -447,13 +432,12 @@ void FImGuiPlugin::Tick(float Delta)
         else if (!bIsTrackingMouse)
         {
             FIntVector2 CursorPos = FApplication::Get().GetCursorPosition();
-            if (!ImGuiExtensions::IsMultiViewportEnabled())
-            {
-                CursorPos.X = CursorPos.X - ForegroundWindowPosition.X;
-                CursorPos.Y = CursorPos.Y - ForegroundWindowPosition.Y;
-            }
+        #ifndef EDITOR_BUILD
+            CursorPos.X = CursorPos.X - ForegroundWindowPosition.X;
+            CursorPos.Y = CursorPos.Y - ForegroundWindowPosition.Y;
+        #endif
 
-            UIState.AddMousePosEvent(static_cast<float>(CursorPos.X), static_cast<float>(CursorPos.Y));
+            PluginImGuiIO->AddMousePosEvent(static_cast<float>(CursorPos.X), static_cast<float>(CursorPos.Y));
         }
     }
 
@@ -466,14 +450,14 @@ void FImGuiPlugin::Tick(float Delta)
         }
     }
 
-    UIState.AddMouseViewportEvent(MouseViewportID);
+    PluginImGuiIO->AddMouseViewportEvent(MouseViewportID);
 
     // Update the cursor type
-    const bool bNoMouseCursorChange = (UIState.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) != ImGuiConfigFlags_None;
+    const bool bNoMouseCursorChange = (PluginImGuiIO->ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) != ImGuiConfigFlags_None;
     if (!bNoMouseCursorChange)
     {
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
-        if (ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor)
+        if (ImguiCursor == ImGuiMouseCursor_None || PluginImGuiIO->MouseDrawCursor)
         {
             FApplication::Get().SetCursor(ECursor::None);
         }
@@ -497,10 +481,10 @@ void FImGuiPlugin::Tick(float Delta)
         }
     }
 
-    UIState.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
+    PluginImGuiIO->BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
     if (FApplication::Get().IsGamePadConnected())
     {
-        UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+        PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasGamepad;
     }
 
     // Draw all ImGui widgets

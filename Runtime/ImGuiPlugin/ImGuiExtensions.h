@@ -131,12 +131,6 @@ namespace ImGuiExtensions
         return ImGui::ColorEdit3(Label, OutColor.RGBA, Flags);
     }
 
-    FORCEINLINE bool IsMultiViewportEnabled()
-    {
-        ImGuiIO& IOState = ImGui::GetIO();
-        return (IOState.BackendFlags & ImGuiBackendFlags_PlatformHasViewports) == ImGuiBackendFlags_PlatformHasViewports;
-    }
-
     FORCEINLINE FImGuiViewport* GetMainViewportData()
     {
         if (ImGuiViewport* Viewport = ImGui::GetMainViewport())

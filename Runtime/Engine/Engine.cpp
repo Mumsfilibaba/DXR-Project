@@ -8,12 +8,13 @@
 #include "Application/Widgets/WindowWidget.h"
 #include "Application/Widgets/ViewportWidget.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "Engine/Engine.h"
+#if EDITOR_BUILD
+#include "Engine/EditorEngine.h"
+#else
+#include "Engine/RuntimeEngine.h"
+#endif
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/EngineUI/InGameConsoleWidget.h"
-#include "Engine/EngineUI/FrameProfilerWidget.h"
-#include "Engine/EngineUI/SceneInspectorWidget.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -73,11 +74,20 @@ static TAutoConsoleVariable<int32> CVarViewportHeight(
     1080,
     EConsoleVariableFlags::Default);
 
+
 FEngine* FEngine::GEngine = nullptr;
 
 bool FEngine::Create()
 {
-    TUniquePtr<FEngine> LocalEngine = MakeUniquePtr<FEngine>();
+    TUniquePtr<FEngine> LocalEngine;
+    
+#if EDITOR_BUILD
+    LocalEngine = MakeUniquePtr<FEditorEngine>();
+#else
+    LocalEngine = MakeUniquePtr<FRuntimeEngine>();
+#endif
+
+    // Set the global engine pointer since it is used inside functions called by FEngine::Init
     GEngine = LocalEngine.Get();
 
     if (!LocalEngine->Init())
@@ -87,7 +97,7 @@ bool FEngine::Create()
     }
     else
     {
-        LocalEngine.Release();
+        GEngine = LocalEngine.Release();
         return true;
     }
 }
@@ -107,9 +117,6 @@ FEngine::FEngine()
     : EngineWindow(nullptr)
     , EngineViewportWidget(nullptr)
     , SceneViewport(nullptr)
-    , ConsoleWidget(nullptr)
-    , ProfilerWidget(nullptr)
-    , InspectorWidget(nullptr)
     , World(nullptr)
     , GameModule(nullptr)
 {
@@ -316,10 +323,6 @@ bool FEngine::Init()
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().SetMainViewport(EngineViewportWidget);
-
-        ProfilerWidget  = MakeSharedPtr<FFrameProfilerWidget>();
-        ConsoleWidget   = MakeSharedPtr<FInGameConsoleWidget>();
-        InspectorWidget = MakeSharedPtr<FSceneInspectorWidget>();
     }
 
     return true;
@@ -369,10 +372,6 @@ void FEngine::Release()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ProfilerWidget.Reset();
-        ConsoleWidget.Reset();
-        InspectorWidget.Reset();
-
         IImguiPlugin::Get().SetMainViewport(nullptr);
     }
 

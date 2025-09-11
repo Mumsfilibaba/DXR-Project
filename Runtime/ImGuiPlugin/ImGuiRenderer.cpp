@@ -45,46 +45,43 @@ FImGuiRenderer::~FImGuiRenderer()
 bool FImGuiRenderer::InitializeRHI()
 {
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    if (ImGuiExtensions::IsMultiViewportEnabled())
+#ifdef EDITOR_BUILD
+    PlatformState.Renderer_CreateWindow = [](ImGuiViewport* Viewport)
     {
-        PlatformState.Renderer_CreateWindow = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiRenderer != nullptr);
-            GImGuiRenderer->OnCreateWindow(Viewport);
-        };
+        CHECK(GImGuiRenderer != nullptr);
+        GImGuiRenderer->OnCreateWindow(Viewport);
+    };
 
-        PlatformState.Renderer_DestroyWindow = [](ImGuiViewport* Viewport)
-        {
-            CHECK(GImGuiRenderer != nullptr);
-            GImGuiRenderer->OnDestroyWindow(Viewport);
-        };
-
-        PlatformState.Renderer_SetWindowSize = [](ImGuiViewport* Viewport, ImVec2 Size)
-        {
-            CHECK(GImGuiRenderer != nullptr);
-            GImGuiRenderer->OnSetWindowSize(Viewport, Size);
-        };
-
-        PlatformState.Renderer_RenderWindow = [](ImGuiViewport* Viewport, void* CommandList)
-        {
-            CHECK(GImGuiRenderer != nullptr);
-            GImGuiRenderer->OnRenderWindow(Viewport, CommandList);
-        };
-
-        PlatformState.Renderer_SwapBuffers = [](ImGuiViewport* Viewport, void* CommandList)
-        {
-            CHECK(GImGuiRenderer != nullptr);
-            GImGuiRenderer->OnSwapBuffers(Viewport, CommandList);
-        };
-    }
-    else
+    PlatformState.Renderer_DestroyWindow = [](ImGuiViewport* Viewport)
     {
-        PlatformState.Renderer_CreateWindow  = nullptr;
-        PlatformState.Renderer_DestroyWindow = nullptr;
-        PlatformState.Renderer_SetWindowSize = nullptr;
-        PlatformState.Renderer_RenderWindow  = nullptr;
-        PlatformState.Renderer_SwapBuffers   = nullptr;
-    }
+        CHECK(GImGuiRenderer != nullptr);
+        GImGuiRenderer->OnDestroyWindow(Viewport);
+    };
+
+    PlatformState.Renderer_SetWindowSize = [](ImGuiViewport* Viewport, ImVec2 Size)
+    {
+        CHECK(GImGuiRenderer != nullptr);
+        GImGuiRenderer->OnSetWindowSize(Viewport, Size);
+    };
+
+    PlatformState.Renderer_RenderWindow = [](ImGuiViewport* Viewport, void* CommandList)
+    {
+        CHECK(GImGuiRenderer != nullptr);
+        GImGuiRenderer->OnRenderWindow(Viewport, CommandList);
+    };
+
+    PlatformState.Renderer_SwapBuffers = [](ImGuiViewport* Viewport, void* CommandList)
+    {
+        CHECK(GImGuiRenderer != nullptr);
+        GImGuiRenderer->OnSwapBuffers(Viewport, CommandList);
+    };
+#else
+    PlatformState.Renderer_CreateWindow  = nullptr;
+    PlatformState.Renderer_DestroyWindow = nullptr;
+    PlatformState.Renderer_SetWindowSize = nullptr;
+    PlatformState.Renderer_RenderWindow  = nullptr;
+    PlatformState.Renderer_SwapBuffers   = nullptr;
+#endif
 
     // Build texture atlas
     uint8* Pixels = nullptr;
@@ -280,7 +277,9 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         // Render to the main SwapChain
         FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHISwapChain->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
         CommandList.BeginRenderPass(RenderPassDesc);
+        
         RenderDrawData(CommandList, DrawData);
+
         CommandList.EndRenderPass();
 
         ImGuiIO& IOState = ImGui::GetIO();
@@ -583,6 +582,7 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     {
         ViewportData->Width  = SwapChainInfo.Width;
         ViewportData->Height = SwapChainInfo.Height;
+        
         Viewport->RendererUserData = Viewport->PlatformUserData;
     }
 }

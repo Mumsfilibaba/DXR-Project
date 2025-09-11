@@ -108,7 +108,6 @@ void FRHICommandList::FlushDeletedResources() noexcept
     });
 }
 
-
 FRHIThread::FRHIThread()
     : Thread(nullptr)
     , bIsRunning(false)
@@ -228,15 +227,12 @@ bool FRHICommandListExecutor::InitializeRHIThread()
 
 void FRHICommandListExecutor::ReleaseRHIThread()
 {
-    if (CVarEnableRHIThread.GetValue())
-    {
-        if (RHIThread)
-        {
-            RHIThread->Stop();
-            delete RHIThread;
-            RHIThread = nullptr;
-        }
-    }
+	if (RHIThread)
+	{
+		RHIThread->Stop();
+		delete RHIThread;
+		RHIThread = nullptr;
+	}
 }
 
 bool FRHICommandListExecutor::Initialize()
@@ -251,13 +247,15 @@ bool FRHICommandListExecutor::Initialize()
     FRHICommandListExecutor* LocalExecutor = new FRHICommandListExecutor(Context);
     GCommandListExecutor = LocalExecutor;
 
-    if (!CVarEnableRHIThread.GetValue())
+    // Initialize the RHI-Thread
+    if (CVarEnableRHIThread.GetValue())
+    {
+        return LocalExecutor->InitializeRHIThread();
+    }
+    else
     {
         return true;
     }
-
-    // Initialize the RHI-Thread
-    return LocalExecutor->InitializeRHIThread();
 }
 
 void FRHICommandListExecutor::Release()
@@ -310,7 +308,7 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 {
     if (CommandList.HasCommands())
     {
-        if (CVarEnableRHIThread.GetValue())
+        if (RHIThread)
         {
             FRHICommandList* NewCommandList = new FRHICommandList();
             NewCommandList->ExchangeState(CommandList);
@@ -330,7 +328,10 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 
 void FRHICommandListExecutor::WaitForCommands()
 {
-    RHIThread->WaitForOutstandingTasks();
+    if (RHIThread)
+    {
+        RHIThread->WaitForOutstandingTasks();
+    }
 }
 
 void FRHICommandListExecutor::WaitForGPU()

@@ -293,22 +293,21 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     FIntVector2 CursorPos = CursorEvent.GetCursorPos();
     
-    if (!ImGuiExtensions::IsMultiViewportEnabled())
+#ifndef EDITOR_BUILD
+    if (TSharedRef<FGenericWindow> Window = FApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
     {
-        if (TSharedRef<FGenericWindow> Window = FApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
-        {
-            FWindowShape WindowShape;
-            Window->GetWindowShape(WindowShape);
+        FWindowShape WindowShape;
+        Window->GetWindowShape(WindowShape);
 
-            CursorPos.X = CursorPos.X - WindowShape.Position.X;
-            CursorPos.Y = CursorPos.Y - WindowShape.Position.Y;
-        }
-        else
-        {
-            CursorPos.X = -TNumericLimits<int32>::Max();
-            CursorPos.Y = -TNumericLimits<int32>::Max();
-        }
+        CursorPos.X = CursorPos.X - WindowShape.Position.X;
+        CursorPos.Y = CursorPos.Y - WindowShape.Position.Y;
     }
+    else
+    {
+        CursorPos.X = -TNumericLimits<int32>::Max();
+        CursorPos.Y = -TNumericLimits<int32>::Max();
+    }
+#endif
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddMousePosEvent(static_cast<float>(CursorPos.X), static_cast<float>(CursorPos.Y));

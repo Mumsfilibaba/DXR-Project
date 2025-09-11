@@ -167,7 +167,7 @@ function GenerateSolutionFiles()
 
     defines(gGlobalDefines)
 
-    -- Define config settings
+    -- Debug configs
     filter { "configurations:*Debug*" }
         symbols "On"
         runtime "Debug"
@@ -178,7 +178,7 @@ function GenerateSolutionFiles()
         }
     filter {}
 
-    -- Development-like configs
+    -- Development configs
     filter { "configurations:*Development*" }
         symbols "On"
         runtime "Release"
@@ -188,13 +188,20 @@ function GenerateSolutionFiles()
         }
     filter {}
 
-    -- Release-like configs
+    -- Release configs
     filter { "configurations:*Release*" }
         symbols "Off"
         runtime "Release"
         defines { 
             "NDEBUG",
             "RELEASE_BUILD=(1)"
+        }
+    filter {}
+
+    -- Editor configs
+    filter { "configurations:*Editor*" }
+        defines { 
+            "EDITOR_BUILD=(1)",
         }
     filter {}
 

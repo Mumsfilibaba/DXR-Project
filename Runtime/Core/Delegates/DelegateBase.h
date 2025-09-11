@@ -1,5 +1,5 @@
 #pragma once
-#include "DelegateInstance.h"
+#include "Core/Delegates/DelegateInstance.h"
 #include "Core/Containers/Allocators.h"
 
 class FDelegateBase
@@ -72,7 +72,7 @@ public:
      */
     FORCEINLINE bool IsBound() const
     {
-        return (Size > 0);
+        return Size > 0;
     }
 
     /**
