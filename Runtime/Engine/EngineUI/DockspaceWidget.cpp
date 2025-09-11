@@ -84,21 +84,14 @@ inline void BuildDockingLayout(const FLayoutIds& Ids)
 inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 {
 	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
-
-	// Host window covers the viewport work area (under menu bar), no decoration
 	ImGui::SetNextWindowPos(MainViewport->WorkPos);
 	ImGui::SetNextWindowSize(MainViewport->WorkSize);
 	ImGui::SetNextWindowViewport(MainViewport->ID);
 
-	ImGuiWindowFlags HostFlags = 
-		ImGuiWindowFlags_NoDocking | 
-		ImGuiWindowFlags_NoTitleBar |
-		ImGuiWindowFlags_NoCollapse | 
-		ImGuiWindowFlags_NoResize |
-		ImGuiWindowFlags_NoMove | 
-		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoNavFocus | 
-		ImGuiWindowFlags_MenuBar;
+	const ImGuiWindowFlags HostFlags = 
+		ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | 
+		ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_MenuBar | 
+		ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -106,31 +99,22 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 	bool bIsOpen = ImGui::Begin("##DockspaceHost", bOpen, HostFlags);
 	ImGui::PopStyleVar(2);
 
-	// Menu bar (top)
+	// -------------------- Menu bar --------------------
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("New Level", "Ctrl+N")) 
-			{
-			}
+			ImGui::MenuItem("New Level", "Ctrl+N");
+			ImGui::MenuItem("Open...", "Ctrl+O");
 
-			if (ImGui::MenuItem("Open...", "Ctrl+O"))
-			{
-			}
+			ImGui::Separator();
 
+			ImGui::MenuItem("Save All", "Ctrl+Shift+S");
+			
 			ImGui::Separator();
 			
-			if (ImGui::MenuItem("Save All", "Ctrl+Shift+S"))
-			{
-			}
-
-			ImGui::Separator();
-
-			if (ImGui::MenuItem("Exit")) 
-			{
-			}
-
+			ImGui::MenuItem("Exit");
+			
 			ImGui::EndMenu();
 		}
 
@@ -138,7 +122,7 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 		{
 			ImGui::MenuItem("Undo", "Ctrl+Z");
 			ImGui::MenuItem("Redo", "Ctrl+Y");
-
+			
 			ImGui::Separator();
 			
 			ImGui::MenuItem("Project Settings...");
@@ -151,9 +135,8 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 		{
 			if (ImGui::MenuItem("Reset Layout"))
 			{
-				// Force a rebuild next frame by nuking the dock node
 				ImGuiID DockspaceId = ImGui::GetID("Dockspace");
-				ImGui::DockBuilderRemoveNode(DockspaceId);
+				ImGui::DockBuilderRemoveNode(DockspaceId); // rebuild next frame
 			}
 
 			ImGui::Separator();
@@ -174,64 +157,88 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 			ImGui::MenuItem("About...");
 			ImGui::EndMenu();
 		}
-		
+
 		ImGui::EndMenuBar();
 	}
 
-	// Toolbar strip under the menu bar
+	// -------------------- Toolbar --------------------
 	{
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 6));
-
 		ImGui::BeginChild("##Toolbar", ImVec2(0, 36), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-		
+
 		if (ImGui::Button("Play"))
 		{
+			// TODO
 		}
 
 		ImGui::SameLine();
 		
-		if (ImGui::Button("Simulate")) 
+		if (ImGui::Button("Simulate"))
 		{
+			// TODO
 		}
-
+		
 		ImGui::SameLine();
 		
 		if (ImGui::Button("Build"))
 		{
+			// TODO
 		}
-
+		
 		ImGui::SameLine();
 		
 		if (ImGui::Button("Content"))
 		{
+			// TODO
 		}
 
 		ImGui::SameLine();
-		
+
 		ImGui::Dummy(ImVec2(16, 0));
 		
 		ImGui::SameLine();
 		
 		ImGui::TextUnformatted("|  Platform: Windows  |  Config: Development  |  RHI: D3D12");
-		
+
 		ImGui::EndChild();
 		
 		ImGui::PopStyleVar();
 	}
 
-	// Dockspace
-	ImGuiID DockspaceId = ImGui::GetID("Dockspace");
-	ImGuiDockNodeFlags DockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoWindowMenuButton;
-	ImGui::DockSpace(DockspaceId, ImVec2(0, 0), DockFlags);
+	// -------------------- Dockspace --------------------
+	const float StatusBarHeight = 22.0f;
 
-	// Build default layout once (if missing)
+	const ImVec2 DockspaceAreaSize = ImVec2(0, -StatusBarHeight); // take all remaining height except status bar
+	ImGui::BeginChild("##DockspaceArea", DockspaceAreaSize, false, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+	ImGuiID DockspaceId = ImGui::GetID("Dockspace");
+	const ImGuiDockNodeFlags DockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoWindowMenuButton;
+	ImGui::DockSpace(DockspaceId, ImVec2(0, 0), DockFlags);
+	
+	ImGui::EndChild();
+
+	// Build default layout once
 	ImGuiDockNode* DockNode = ImGui::DockBuilderGetNode(DockspaceId);
-	if (!DockNode || (DockNode->IsRootNode() && DockNode->IsSplitNode() == false && DockNode->Windows.Size == 0))
+	if (!DockNode || (DockNode->IsRootNode() && !DockNode->IsSplitNode() && DockNode->Windows.Size == 0))
 	{
 		FLayoutIds Ids{};
 		Ids.Dockspace = DockspaceId;
 		BuildDockingLayout(Ids);
 	}
+
+	// -------------------- Status bar --------------------
+	ImGui::Separator();
+
+	ImGui::BeginChild("##StatusBar", ImVec2(0, StatusBarHeight), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+	ImGui::TextUnformatted("Ready");
+	
+	ImGui::SameLine();
+
+	ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 200.0f);
+	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
+	ImGui::EndChild();
 
 	if (OutIds)
 	{
@@ -243,22 +250,7 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 
 inline void EndDockspace()
 {
-	// Optional: status bar
-	ImGui::Separator();
-
-	ImGui::BeginChild("##StatusBar", ImVec2(0, 22), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-	
-	ImGui::TextUnformatted("Ready");
-	
-	ImGui::SameLine();
-	
-	ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - 200.0f);
-	
-	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-	
-	ImGui::EndChild();
-
-	ImGui::End(); // host
+	ImGui::End();
 }
 
 static bool gShowContentBrowser = true;
