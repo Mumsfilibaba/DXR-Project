@@ -7,8 +7,10 @@ public:
     FRuntimeEngine();
     virtual ~FRuntimeEngine();
 
-    virtual bool Init() override;
-	virtual void Release() override;
+    virtual bool Init() override final;
+	virtual void Release() override final;
+
+	virtual void RenderFrame() override final;
 
 private:
 	TSharedPtr<class FInGameConsoleWidget>  ConsoleWidget;

@@ -19,9 +19,19 @@ public:
     FDockspaceWidget();
     ~FDockspaceWidget();
 
+	void EditorStyle();
+	void BuildDockingLayout(const FLayoutIds& Ids);
+	bool BeginDockspace(bool& bOutOpen, FLayoutIds& OutIds);
+	void EndDockspace();
+	void DrawEngineWindows();
     void Draw();
+	void SetViewportImage(FRHITextureRef InViewportImage);
+
+	FIntVector2 GetViewportSize() const;
 
 private:
     FDelegateHandle ImGuiDelegateHandle;
 	FLayoutIds      LayoutIds;
+	FIntVector2     CachedViewportSize;
+	FImGuiTexture   ViewportImage;
 };

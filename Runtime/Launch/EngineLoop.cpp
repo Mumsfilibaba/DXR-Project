@@ -268,10 +268,16 @@ void FEngineLoop::Tick()
 
     FEngine::Get()->Tick(DeltaTime);
 
-    FFrameProfiler::Get().Tick();
-
+    // Rendering
     IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->BeginFrame();
     RendererModule->Tick();
+
+    FEngine::Get()->RenderFrame();
+
+    RendererModule->EndFrame();
+
+    FFrameProfiler::Get().Tick();
 }
 
 void FEngineLoop::Release()

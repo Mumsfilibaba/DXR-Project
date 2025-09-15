@@ -1,12 +1,45 @@
 #include "Engine/EngineUI/DockspaceWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 
-inline void EditorStyle()
+static bool GShowContentBrowser = true;
+static bool GShowOutputLog      = true;
+static bool GShowConsole        = true;
+static bool GShowOutliner       = true;
+static bool GShowDetails        = true;
+static bool GShowViewport       = true;
+static bool GShowPlaceActors    = false;
+
+static const float GStatusBarHeight = 22.0f;
+
+FDockspaceWidget::FDockspaceWidget()
+	: ImGuiDelegateHandle()
+	, LayoutIds()
+	, CachedViewportSize(0, 0)
+{
+	if (IImguiPlugin::IsEnabled())
+	{
+		ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FDockspaceWidget::Draw));
+		CHECK(ImGuiDelegateHandle.IsValid());
+
+		EditorStyle();
+	}
+}
+
+FDockspaceWidget::~FDockspaceWidget()
+{
+	if (IImguiPlugin::IsEnabled())
+	{
+		IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+	}
+}
+
+void FDockspaceWidget::EditorStyle()
 {
     ImGuiStyle& Style = ImGui::GetStyle();
-    Style.WindowRounding = 6.0f;
+    Style.WindowRounding       = 6.0f;
     Style.FrameRounding        = 4.0f;
     Style.GrabRounding         = 4.0f;
     Style.TabRounding          = 4.0f;
@@ -41,7 +74,7 @@ inline void EditorStyle()
     Style.Colors[ImGuiCol_Separator]          = ImVec4(0.25f, 0.25f, 0.28f, 1.00f);
 }
 
-inline void BuildDockingLayout(const FLayoutIds& Ids)
+void FDockspaceWidget::BuildDockingLayout(const FLayoutIds& Ids)
 {
 	// Remove previous layout if any, and build afresh
 	ImGui::DockBuilderRemoveNode(Ids.Dockspace);
@@ -81,7 +114,7 @@ inline void BuildDockingLayout(const FLayoutIds& Ids)
 	ImGui::DockBuilderFinish(Ids.Dockspace);
 }
 
-inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
+bool FDockspaceWidget::BeginDockspace(bool& bOutOpen, FLayoutIds& OutIds)
 {
 	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(MainViewport->WorkPos);
@@ -96,7 +129,7 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-	bool bIsOpen = ImGui::Begin("##DockspaceHost", bOpen, HostFlags);
+	bool bIsOpen = ImGui::Begin("##DockspaceHost", &bOutOpen, HostFlags);
 	ImGui::PopStyleVar(2);
 
 	// -------------------- Menu bar --------------------
@@ -206,9 +239,7 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 	}
 
 	// -------------------- Dockspace --------------------
-	const float StatusBarHeight = 22.0f;
-
-	const ImVec2 DockspaceAreaSize = ImVec2(0, -StatusBarHeight); // take all remaining height except status bar
+	const ImVec2 DockspaceAreaSize = ImVec2(0, -GStatusBarHeight); // take all remaining height except status bar
 	ImGui::BeginChild("##DockspaceArea", DockspaceAreaSize, false, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 	ImGuiID DockspaceId = ImGui::GetID("Dockspace");
@@ -229,7 +260,7 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 	// -------------------- Status bar --------------------
 	ImGui::Separator();
 
-	ImGui::BeginChild("##StatusBar", ImVec2(0, StatusBarHeight), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+	ImGui::BeginChild("##StatusBar", ImVec2(0, GStatusBarHeight), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 
 	ImGui::TextUnformatted("Ready");
 	
@@ -240,45 +271,32 @@ inline bool BeginDockspace(bool* bOpen, FLayoutIds* OutIds)
 
 	ImGui::EndChild();
 
-	if (OutIds)
-	{
-		OutIds->Dockspace = DockspaceId;
-	}
-
+	OutIds.Dockspace = DockspaceId;
 	return bIsOpen;
 }
 
-inline void EndDockspace()
+void FDockspaceWidget::EndDockspace()
 {
 	ImGui::End();
 }
 
-static bool gShowContentBrowser = true;
-static bool gShowOutputLog      = true;
-static bool gShowConsole        = true;
-static bool gShowOutliner       = true;
-static bool gShowDetails        = true;
-static bool gShowViewport       = true;
-static bool gShowPlaceActors    = false;
-
-inline void DrawEngineWindows()
+void FDockspaceWidget::DrawEngineWindows()
 {
-	if (gShowViewport)
+	if (GShowViewport)
 	{
-		if (ImGui::Begin("Viewport", &gShowViewport, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+		if (ImGui::Begin("Viewport", &GShowViewport, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
 		{
-			ImVec2 Size = ImGui::GetContentRegionAvail();
-			ImGui::Dummy(ImVec2(Size.x * 0.5f, Size.y * 0.5f));
-
-			ImGui::TextDisabled("Viewport goes here (size: %.0f x %.0f)", Size.x, Size.y);
+			const ImVec2 Size = ImGui::GetContentRegionAvail();
+			CachedViewportSize = FIntVector2(int32(Size.x), int32(Size.y));
+			ImGui::Image(&ViewportImage, Size);
 		}
 
 		ImGui::End();
 	}
 
-	if (gShowOutliner)
+	if (GShowOutliner)
 	{
-		if (ImGui::Begin("World Outliner", &gShowOutliner))
+		if (ImGui::Begin("World Outliner", &GShowOutliner))
 		{
 			ImGui::TextDisabled("Actors");
 			
@@ -286,9 +304,9 @@ inline void DrawEngineWindows()
 			
 			if (ImGui::TreeNode("PersistentLevel"))
 			{
-				ImGui::Selectable("SM_Crate_01");
-				ImGui::Selectable("BP_Light_01");
-				ImGui::Selectable("BP_PlayerStart");
+				ImGui::Selectable("Crate_01");
+				ImGui::Selectable("Light_01");
+				ImGui::Selectable("PlayerStart");
 				ImGui::TreePop();
 			}
 		}
@@ -296,15 +314,15 @@ inline void DrawEngineWindows()
 		ImGui::End();
 	}
 
-	if (gShowDetails)
+	if (GShowDetails)
 	{
-		if (ImGui::Begin("Details", &gShowDetails))
+		if (ImGui::Begin("Details", &GShowDetails))
 		{
 			ImGui::TextDisabled("Details Panel");
 			
 			ImGui::Separator();
 			
-			ImGui::TextUnformatted("Name: SM_Crate_01");
+			ImGui::TextUnformatted("Name: Crate_01");
 
 			float Location[3] = { 0,0,0 };
 			ImGui::InputFloat3("Location", Location);
@@ -317,15 +335,15 @@ inline void DrawEngineWindows()
 			
 			ImGui::SeparatorText("Materials");
 			
-			ImGui::TextUnformatted("M_Wood_Oak");
+			ImGui::TextUnformatted("Wood_Oak");
 		}
 
 		ImGui::End();
 	}
 
-	if (gShowContentBrowser)
+	if (GShowContentBrowser)
 	{
-		if (ImGui::Begin("Content Browser", &gShowContentBrowser))
+		if (ImGui::Begin("Content Browser", &GShowContentBrowser))
 		{
 			ImGui::TextDisabled("Content");
 			
@@ -335,17 +353,17 @@ inline void DrawEngineWindows()
 			
 			ImGui::Separator();
 
-			ImGui::Selectable("SM_Crate_01.uasset", false);
-			ImGui::Selectable("BP_Door.uasset", false);
-			ImGui::Selectable("TX_Wood_D.uasset", false);
+			ImGui::Selectable("Crate_01.asset", false);
+			ImGui::Selectable("Door.asset", false);
+			ImGui::Selectable("Wood.asset", false);
 		}
 
 		ImGui::End();
 	}
 
-	if (gShowOutputLog)
+	if (GShowOutputLog)
 	{
-		if (ImGui::Begin("Output Log", &gShowOutputLog))
+		if (ImGui::Begin("Output Log", &GShowOutputLog))
 		{
 			ImGui::TextDisabled("[LogTemp] Editor started...");
 			ImGui::TextDisabled("[LogBuild] Build succeeded.");
@@ -355,9 +373,9 @@ inline void DrawEngineWindows()
 		ImGui::End();
 	}
 
-	if (gShowConsole)
+	if (GShowConsole)
 	{
-		if (ImGui::Begin("Console", &gShowConsole))
+		if (ImGui::Begin("Console", &GShowConsole))
 		{
 			static char Cmd[256]{};
 			
@@ -378,9 +396,9 @@ inline void DrawEngineWindows()
 		ImGui::End();
 	}
 
-	if (gShowPlaceActors)
+	if (GShowPlaceActors)
 	{
-		if (ImGui::Begin("Place Actors", &gShowPlaceActors))
+		if (ImGui::Begin("Place Actors", &GShowPlaceActors))
 		{
 			ImGui::TextDisabled("Place Actors");
 			
@@ -396,34 +414,40 @@ inline void DrawEngineWindows()
 	}
 }
 
-
-FDockspaceWidget::FDockspaceWidget()
-    : ImGuiDelegateHandle()
-	, LayoutIds()
-{
-    if (IImguiPlugin::IsEnabled())
-    {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FDockspaceWidget::Draw));
-        CHECK(ImGuiDelegateHandle.IsValid());
-
-        EditorStyle();
-    }
-}
-
-FDockspaceWidget::~FDockspaceWidget()
-{
-    if (IImguiPlugin::IsEnabled())
-    {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
-    }
-}
-
 void FDockspaceWidget::Draw()
 {
 	bool bOpen = true;
-	BeginDockspace(&bOpen, &LayoutIds);
+	BeginDockspace(bOpen, LayoutIds);
 
 	DrawEngineWindows();
 	
 	EndDockspace();
+}
+
+void FDockspaceWidget::SetViewportImage(FRHITextureRef InViewportImage)
+{
+	if (InViewportImage)
+	{
+		ViewportImage.Texture        = InViewportImage;
+		ViewportImage.View           = MakeSharedRef<FRHIShaderResourceView>(InViewportImage->GetShaderResourceView());
+		ViewportImage.ResourceState  = EResourceAccess::RenderTarget;
+		ViewportImage.bSamplerLinear = false;
+		ViewportImage.bAllowBlending = false;
+	}
+}
+
+FIntVector2 FDockspaceWidget::GetViewportSize() const
+{
+	if (CachedViewportSize.X > 0 && CachedViewportSize.Y > 0)
+	{
+		return CachedViewportSize;
+	}
+
+	if (ImGuiWindow* ViewportWindow = ImGui::FindWindowByName("Viewport"))
+	{
+		const ImVec2 Size = ViewportWindow->ContentRegionRect.GetSize();
+		return FIntVector2(int32(Size.x), int32(Size.y));
+	}
+
+	return FIntVector2(1920, 1820);
 }

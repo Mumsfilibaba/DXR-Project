@@ -36,7 +36,6 @@ FFrameResources::FFrameResources()
     : DirectionalLightDataDirty(true)
     , CascadeSplitLambda(0.0f)
     , CascadeGenerationDataDirty(true)
-    , BackBuffer(nullptr)
 {
 }
 
@@ -387,8 +386,6 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
 void FFrameResources::Release()
 {
-    BackBuffer = nullptr;
-
     CameraBuffer.Reset();
     TransformBuffer.Reset();
 

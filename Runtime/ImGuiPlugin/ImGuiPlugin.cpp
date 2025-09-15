@@ -8,7 +8,6 @@
 #include "ImGuiPlugin/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-
 #include <imgui_internal.h>
 
 IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
@@ -19,6 +18,7 @@ static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
     false,
     EConsoleVariableFlags::Default);
 
+#ifndef RELEASE_BUILD
 static TAutoConsoleVariable<bool> CVarImGuiShowDemoWindow(
     "ImGui.ShowDemoWindow",
     "Show the ImGui Demo Window",
@@ -30,6 +30,7 @@ static TAutoConsoleVariable<bool> CVarImGuiEnableImGuiDelegates(
     "Enables drawing of registered ImGui delegates",
     true,
     EConsoleVariableFlags::Default);
+#endif
 
 static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags Flags)
 {
@@ -493,6 +494,7 @@ void FImGuiPlugin::Tick(float Delta)
 
         ImGui::NewFrame();
 
+    #ifndef RELEASE_BUILD
         bool bShowDemoWindow = CVarImGuiShowDemoWindow.GetValue();
         if (bShowDemoWindow)
         {
@@ -502,6 +504,7 @@ void FImGuiPlugin::Tick(float Delta)
 
         const bool bEnableImGuiDelegates = CVarImGuiEnableImGuiDelegates.GetValue();
         if (bEnableImGuiDelegates)
+    #endif
         {
             DrawDelegates.Broadcast();
         }

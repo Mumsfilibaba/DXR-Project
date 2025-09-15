@@ -38,6 +38,7 @@ public:
 
     virtual bool Start();
     virtual void Tick(float DeltaTime);
+    virtual void RenderFrame();
 
     virtual void Exit() { }
 

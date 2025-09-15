@@ -198,7 +198,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
 
 bool FDepthPrePass::Initialize(FFrameResources& FrameResources)
 {
-    return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
+    return CreateResources(FrameResources, FrameResources.CurrentRenderWidth, FrameResources.CurrentRenderHeight);
 }
 
 bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
@@ -238,8 +238,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
     CommandList.BeginRenderPass(RenderPass);
 
-    const float RenderWidth  = float(FrameResources.CurrentWidth);
-    const float RenderHeight = float(FrameResources.CurrentHeight);
+    const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
+    const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 
     FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
@@ -507,7 +507,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
 
 bool FDeferredBasePass::Initialize(FFrameResources& FrameResources)
 {
-    return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
+    return CreateResources(FrameResources, FrameResources.CurrentRenderWidth, FrameResources.CurrentRenderHeight);
 }
 
 bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
@@ -581,8 +581,8 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
     GPU_TRACE_SCOPE(CommandList, "Deferred BasePass");
 
-    const float RenderWidth  = float(FrameResources.CurrentWidth);
-    const float RenderHeight = float(FrameResources.CurrentHeight);
+    const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
+    const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 
     const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
 
@@ -730,7 +730,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    if (!CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight))
+    if (!CreateResources(FrameResources, FrameResources.CurrentRenderWidth, FrameResources.CurrentRenderHeight))
     {
         return false;
     }
@@ -1045,8 +1045,8 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         int32 Padding0;
     } LightPassSettings;
 
-    const int32 RenderWidth  = FrameResources.CurrentWidth;
-    const int32 RenderHeight = FrameResources.CurrentHeight;
+    const int32 RenderWidth  = FrameResources.CurrentRenderWidth;
+    const int32 RenderHeight = FrameResources.CurrentRenderHeight;
 
     LightPassSettings.NumSkyLightMips             = 0;
     LightPassSettings.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
@@ -1169,7 +1169,7 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         ReduceDepthPSO->SetDebugName("DepthReduction PipelineState");
     }
 
-    if (!CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight))
+    if (!CreateResources(FrameResources, FrameResources.CurrentRenderWidth, FrameResources.CurrentRenderHeight))
     {
         return false;
     }

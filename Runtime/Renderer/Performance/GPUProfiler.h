@@ -91,9 +91,6 @@ public:
      /** @brief Disables the collection of samples (Pause) */
     void Disable();
 
-     /** @brief Updates the profiler, should be called once per frame */
-    void Tick();
-
      /** @brief Resets all the samples */
     void Reset();
 
@@ -119,6 +116,7 @@ public:
 
 private:
     FGPUProfiler();
+    ~FGPUProfiler();
 
     FGPUProfileSample    FrameTime;
     GPUProfileSamplesMap Samples;

@@ -1409,7 +1409,7 @@ FShadowMaskRenderPass::~FShadowMaskRenderPass()
 
 bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
 {
-    if (!CreateResources(Resources, Resources.CurrentWidth, Resources.CurrentHeight))
+    if (!CreateResources(Resources, Resources.CurrentRenderWidth, Resources.CurrentRenderHeight))
     {
         return false;
     }

@@ -30,7 +30,7 @@ public:
     virtual ~FTonemapPass();
 
     bool Initialize(const FFrameResources& FrameResources);
-    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
+    void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
 
 private:
     FRHIGraphicsPipelineStateRef TonemapPSO;
@@ -44,7 +44,7 @@ public:
     virtual ~FFXAAPass();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
+    void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
 
 private:
     FRHIGraphicsPipelineStateRef FXAAPSO;

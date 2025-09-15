@@ -74,8 +74,8 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    uint32 Width  = Resources.MainSwapChain->GetWidth();
-    uint32 Height = Resources.MainSwapChain->GetHeight();
+	const uint32 Width  = Resources.CurrentRenderWidth;
+	const uint32 Height = Resources.CurrentRenderHeight;
 
     FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
     Resources.RTOutput = FRHI::Get()->CreateTexture(RTOutputInfo, EResourceAccess::UnorderedAccess);
@@ -220,9 +220,6 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     CommandList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
 
-    GetRenderer()->AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
-        Resources.RTOutput,
-        EResourceAccess::UnorderedAccess,
-        EResourceAccess::UnorderedAccess);
+    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
+        Resources.RTOutput, EResourceAccess::UnorderedAccess);
 }

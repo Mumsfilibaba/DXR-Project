@@ -3,6 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/PostProcessing.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "RendererCore/RenderSettings.h"
 
 static TAutoConsoleVariable<bool> CVarFXAADebug(
     "Renderer.Debug.FXAADebug",
@@ -106,7 +107,7 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = TonemapShader.Get();
     PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.BackBufferFormat;
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
     PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
     PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
 
@@ -120,9 +121,9 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
     return true;
 }
 
-void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* /* Scene */)
+void FTonemapPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources)
 {
-    // Function to return a enum from the tonemapping cvar
+    // Function to return a enum from the tonemap cvar
     const auto GetTonemappingFunctionCVar = []()
     {
         const int32 Function = CVarTonemappingFunction.GetValue();
@@ -142,8 +143,8 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     TRACE_SCOPE("Tonemapping and BackBuffer-Blit");
 
-    const float RenderWidth  = static_cast<float>(FrameResources.BackBuffer->GetWidth());
-    const float RenderHeight = static_cast<float>(FrameResources.BackBuffer->GetHeight());
+    const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
+    const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
 
     FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
@@ -153,7 +154,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(FrameResources.BackBuffer, EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Load);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     CommandList.BeginRenderPass(RenderPass);
@@ -269,7 +270,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = FXAAShader.Get();
     PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.BackBufferFormat;
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
     PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
     PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
 
@@ -328,7 +329,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* /* Scene */)
+void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin FXAA");
 
@@ -342,8 +343,8 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& Fra
         float Height;
     } Settings;
 
-    Settings.Width  = static_cast<float>(FrameResources.CurrentWidth);
-    Settings.Height = static_cast<float>(FrameResources.CurrentHeight);
+    Settings.Width  = static_cast<float>(FrameResources.CurrentRenderWidth);
+    Settings.Height = static_cast<float>(FrameResources.CurrentRenderHeight);
 
     FViewportRegion ViewportRegion(Settings.Width, Settings.Height, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
@@ -353,7 +354,7 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& Fra
 
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(FrameResources.BackBuffer, EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     CommandList.BeginRenderPass(RenderPass);

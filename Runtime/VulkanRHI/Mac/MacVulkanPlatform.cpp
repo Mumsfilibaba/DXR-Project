@@ -3,7 +3,6 @@
 #include "CoreApplication/Mac/CocoaWindow.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/Mac/MacVulkanPlatform.h"
-
 #include <QuartzCore/QuartzCore.h>
 
 #if VK_KHR_surface

@@ -15,13 +15,14 @@
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/DynamicD3D12.h"
 #include "D3D12RHI/D3D12SwapChain.h"
-
 #include <pix.h>
 
 static TAutoConsoleVariable<int32> CVarMaxDrawCallsPerCommandList(
     "D3D12RHI.MaxDrawCallsPerCommandList",
     "Number of draw-calls allowed before submitting the current CommandList to the GPU",
     10000);
+
+static constexpr const bool GDebugResourceBarriers = false;
 
 FResourceBarrierBatcher::FResourceBarrierBatcher(FD3D12CommandContext& InContext)
     : Context(InContext)
@@ -31,6 +32,32 @@ FResourceBarrierBatcher::FResourceBarrierBatcher(FD3D12CommandContext& InContext
 
 FResourceBarrierBatcher::~FResourceBarrierBatcher()
 {
+}
+
+void FResourceBarrierBatcher::AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex)
+{
+	CHECK(InResource != nullptr);
+
+    if constexpr (GDebugResourceBarriers)
+    {
+        const FString DebugName = InResource->GetDebugName();
+        LOG_INFO("AddTransitionBarrier Resource=%s SubresourceIndex=%u BeforeState=%s AfterState=%s", *DebugName, SubresourceIndex, ToString(BeforeState), ToString(AfterState));
+    }
+
+	AddTransitionBarrier(InResource->GetD3D12Resource(), BeforeState, AfterState, SubresourceIndex);
+}
+
+void FResourceBarrierBatcher::AddUnorderedAccessBarrier(FD3D12Resource* InResource)
+{
+	CHECK(InResource != nullptr);
+
+	if constexpr (GDebugResourceBarriers)
+	{
+		const FString DebugName = InResource->GetDebugName();
+		LOG_INFO("AddUnorderedAccessBarrier Resource=%s", *DebugName);
+	}
+
+	AddUnorderedAccessBarrier(InResource->GetD3D12Resource());
 }
 
 void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex)
@@ -61,6 +88,11 @@ void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D
                 else
                 {
                     Iterator->Transition.StateAfter = AfterState;
+                }
+
+                if constexpr (GDebugResourceBarriers)
+                {
+                    LOG_INFO("AddTransitionBarrier: Skipping barrier. SubresourceIndex=%u BeforeState=%s AfterState=%s", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
                 }
 
                 return;
@@ -107,8 +139,14 @@ void FResourceBarrierBatcher::FlushBarriers()
 {
     if (HasPendingBarriers())
     {
-        Context.GetCommandList()->ResourceBarrier(Barriers.Size(), Barriers.Data());
+        const uint32 NumBarriers = Barriers.Size();
+        Context.GetCommandList()->ResourceBarrier(NumBarriers, Barriers.Data());
         Barriers.Clear();
+
+		if constexpr (GDebugResourceBarriers)
+		{
+			LOG_INFO("FlushBarriers NumBarriers=%u", NumBarriers);
+		}
     }
 }
 

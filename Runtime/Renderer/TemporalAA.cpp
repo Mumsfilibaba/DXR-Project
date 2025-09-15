@@ -24,8 +24,8 @@ FTemporalAA::~FTemporalAA()
 
 bool FTemporalAA::Initialize(FFrameResources& FrameResources)
 {
-    const uint32 Width  = FrameResources.MainSwapChain->GetWidth();
-    const uint32 Height = FrameResources.MainSwapChain->GetHeight();
+    const uint32 Width  = FrameResources.CurrentRenderWidth;
+    const uint32 Height = FrameResources.CurrentRenderHeight;
 
     if (!CreateResources(FrameResources, Width, Height))
     {
@@ -108,17 +108,11 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 
     CommandList.TransitionTexture(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
 
-    GetRenderer()->AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[0]->GetShaderResourceView()),
-        TAAHistoryBuffers[0],
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
+    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[0]->GetShaderResourceView()),
+        TAAHistoryBuffers[0], EResourceAccess::NonPixelShaderResource);
 
-    GetRenderer()->AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[1]->GetShaderResourceView()),
-        TAAHistoryBuffers[1],
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
+    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[1]->GetShaderResourceView()),
+        TAAHistoryBuffers[1], EResourceAccess::NonPixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End TemporalAA");
 }

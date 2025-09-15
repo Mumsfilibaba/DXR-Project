@@ -2,6 +2,7 @@
 #include "Engine/EngineUI/InGameConsoleWidget.h"
 #include "Engine/EngineUI/FrameProfilerWidget.h"
 #include "Engine/EngineUI/SceneInspectorWidget.h"
+#include "RendererCore/Interfaces/IRendererModule.h"
 
 FRuntimeEngine::FRuntimeEngine()
     : FEngine()
@@ -42,4 +43,20 @@ void FRuntimeEngine::Release()
 	}
 
 	FEngine::Release();
+}
+
+void FRuntimeEngine::RenderFrame()
+{
+	TRACE_FUNCTION_SCOPE();
+
+	// Render directly to the BackBuffer
+	FSceneRenderView RenderView;
+	RenderView.Scene        = GetWorld()->GetSceneInterface();
+	RenderView.RenderTarget = GetSceneViewport()->GetRHISwapChain()->GetBackBuffer();
+
+	IRendererModule* RendererModule = IRendererModule::Get();
+	RendererModule->RenderSceneView(RenderView);
+
+	// Render the rest
+	FEngine::RenderFrame();
 }

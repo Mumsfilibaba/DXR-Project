@@ -16,21 +16,11 @@ public:
     FResourceBarrierBatcher(FD3D12CommandContext& InContext);
     ~FResourceBarrierBatcher();
 
+    void AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    void AddUnorderedAccessBarrier(FD3D12Resource* InResource);
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
     void FlushBarriers();
-
-    FORCEINLINE void AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
-    {
-        CHECK(InResource != nullptr);
-        AddTransitionBarrier(InResource->GetD3D12Resource(), BeforeState, AfterState, SubresourceIndex);
-    }
-
-    FORCEINLINE void AddUnorderedAccessBarrier(FD3D12Resource* InResource)
-    {
-        CHECK(InResource != nullptr);
-        AddUnorderedAccessBarrier(InResource->GetD3D12Resource());
-    }
 
     bool HasPendingBarriers() const 
     {

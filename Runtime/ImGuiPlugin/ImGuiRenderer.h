@@ -2,7 +2,6 @@
 #include "Core/Containers/SharedPtr.h"
 #include "RHI/RHIShader.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-
 #include <imgui.h>
 
 struct ImDrawData;
@@ -55,8 +54,11 @@ private:
     void PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData);
-    
-    TArray<FImGuiTexture*>       RenderedImages;
+
+    void PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture);
+    void ResetTexturesShaderResourceUsage(FRHICommandList& CommandList);
+
+    TArray<const FImGuiTexture*> RenderedTextures;
     FRHITextureRef               FontTexture;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;

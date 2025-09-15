@@ -16,29 +16,29 @@ struct FImGuiTexture
 {
     FImGuiTexture() = default;
 
-    FImGuiTexture(const FRHITextureRef& InImage, EResourceAccess InBefore, EResourceAccess InAfter)
+    FImGuiTexture(const FRHITextureRef& InImage, EResourceAccess InResourceState)
         : View(MakeSharedRef<FRHIShaderResourceView>(InImage ? InImage->GetShaderResourceView() : nullptr))
         , Texture(InImage)
-        , BeforeState(InBefore)
-        , AfterState(InAfter)
+        , ResourceState(InResourceState)
+        , bAllowBlending(false)
+        , bSamplerLinear(false)
     {
     }
 
-    FImGuiTexture(const FRHIShaderResourceViewRef& InImageView, const FRHITextureRef& InImage, EResourceAccess InBefore, EResourceAccess InAfter)
+    FImGuiTexture(const FRHIShaderResourceViewRef& InImageView, const FRHITextureRef& InImage, EResourceAccess InResourceState)
         : View(InImageView)
         , Texture(InImage)
-        , BeforeState(InBefore)
-        , AfterState(InAfter)
+        , ResourceState(InResourceState)
+		, bAllowBlending(false)
+		, bSamplerLinear(false)
     {
     }
 
     FRHITextureRef            Texture;
     FRHIShaderResourceViewRef View;
-    EResourceAccess           BeforeState;
-    EResourceAccess           AfterState;
-
-    bool bAllowBlending = false;
-    bool bSamplerLinear = false;
+    EResourceAccess           ResourceState;
+    bool                      bAllowBlending;
+    bool                      bSamplerLinear;
 };
 
 struct IImguiPlugin : public FModuleInterface
@@ -68,6 +68,6 @@ struct IImguiPlugin : public FModuleInterface
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) = 0;
 
-    virtual ImGuiIO*      GetImGuiIO()      const = 0;
+    virtual ImGuiIO* GetImGuiIO() const = 0;
     virtual ImGuiContext* GetImGuiContext() const = 0;
 };

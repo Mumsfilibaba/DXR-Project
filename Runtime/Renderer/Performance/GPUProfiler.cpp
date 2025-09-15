@@ -12,6 +12,10 @@ FGPUProfiler::FGPUProfiler()
 {
 }
 
+FGPUProfiler::~FGPUProfiler()
+{
+}
+
 void FGPUProfiler::Release()
 {
     FrameTime.BeginQuery.Reset();
@@ -32,22 +36,6 @@ void FGPUProfiler::Enable()
 void FGPUProfiler::Disable()
 {
     bEnabled = false;
-}
-
-void FGPUProfiler::Tick()
-{
-    if (bEnabled && FrameTime.BeginQuery && FrameTime.EndQuery)
-    {
-        uint64 BeginQuery;
-        FRHI::Get()->GetQueryResult(FrameTime.BeginQuery.Get(), BeginQuery);
-
-        uint64 EndQuery;
-        FRHI::Get()->GetQueryResult(FrameTime.EndQuery.Get(), EndQuery);
-
-        const double DeltaTime = static_cast<double>(EndQuery - BeginQuery);
-        double Duration = DeltaTime / 1000000.0; // To milliseconds
-        FrameTime.AddSample((float)Duration);
-    }
 }
 
 void FGPUProfiler::Reset()
@@ -71,8 +59,23 @@ void FGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
 {
     if (bEnabled)
     {
+		if (FrameTime.BeginQuery && FrameTime.EndQuery)
+		{
+			uint64 BeginQuery;
+			FRHI::Get()->GetQueryResult(FrameTime.BeginQuery.Get(), BeginQuery);
+
+			uint64 EndQuery;
+			FRHI::Get()->GetQueryResult(FrameTime.EndQuery.Get(), EndQuery);
+
+			const double DeltaTime = static_cast<double>(EndQuery - BeginQuery);
+			double Duration = DeltaTime / 1000000.0; // To milliseconds
+			FrameTime.AddSample((float)Duration);
+		}
+
         if (!FrameTime.BeginQuery)
+        {
             FrameTime.BeginQuery = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
+        }
 
         CmdList.QueryTimestamp(FrameTime.BeginQuery.Get());
     }
@@ -83,7 +86,9 @@ void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
     if (bEnabled)
     {
         if (!FrameTime.EndQuery)
+        {
             FrameTime.EndQuery = FRHI::Get()->CreateQuery(EQueryType::Timestamp);
+        }
 
         CmdList.QueryTimestamp(FrameTime.EndQuery.Get());
     }

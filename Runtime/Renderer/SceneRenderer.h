@@ -110,13 +110,24 @@ public:
     bool Initialize();
     bool InitializeRenderPasses();
     
+    void BeginFrame();
+    
     void Tick(FScene* Scene);
+    
+    void RenderSceneView(const FSceneRenderView& SceneRenderView);
+    void RenderUI();
+
+    void EndFrame();
+
+    void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight);
+    void PrepareSwapChain(FRHISwapChainRef SwapChain);
+    void PresentSwapChain(FRHISwapChainRef SwapChain);
 
     void ResizeResources(uint32 InWidth, uint32 InHeight);
 
-    void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+    void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess ResourceState)
     {
-        TextureDebugger->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
+        TextureDebugger->AddTextureForDebugging(ImageView, Image, ResourceState);
     }
 
     TSharedPtr<FTextureDebugWidget> GetTextureDebugger() const
@@ -126,12 +137,12 @@ public:
 
     uint32 GetRenderWidth() const
     {
-        return Resources.CurrentWidth;
+        return Resources.CurrentRenderWidth;
     }
     
     uint32 GetRenderHeight() const
     {
-        return Resources.CurrentHeight;
+        return Resources.CurrentRenderHeight;
     }
     
     const FFrameCounterState& GetFrameCounter() const
@@ -165,7 +176,6 @@ private:
     FTonemapPass*               TonemapPass;
     FLightProbeRenderer*        LightProbeRenderer;
     FDebugRenderer*             DebugRenderer;
-
     FRayTracer                  RayTracer;
 
     // RHI
@@ -176,6 +186,10 @@ private:
     FRHITextureRef              ShadingImage;
     FRHIComputePipelineStateRef ShadingRatePipeline;
     FRHIComputeShaderRef        ShadingRateShader;
+
+    // SwapChains that should be presented at the end of the frame
+    TArray<FRHISwapChainRef> SwapChainsToPrepare;
+    TArray<FRHISwapChainRef> SwapChainsToPresent;
 
     // Widgets
     TSharedPtr<FTextureDebugWidget>     TextureDebugger;

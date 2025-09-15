@@ -11,7 +11,7 @@
 #include "RHI/RHIResources.h"
 #include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
-
+#include "RendererCore/RenderSettings.h"
 #include <imgui.h>
 
 struct FVertexConstantBuffer
@@ -22,7 +22,7 @@ struct FVertexConstantBuffer
 FImGuiRenderer* GImGuiRenderer = nullptr;
 
 FImGuiRenderer::FImGuiRenderer()
-    : RenderedImages()
+    : RenderedTextures()
     , FontTexture(nullptr)
     , PipelineState(nullptr)
     , PipelineStateNoBlending(nullptr)
@@ -289,16 +289,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
             ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CommandList));
         }
 
-        for (FImGuiTexture* Image : RenderedImages)
-        {
-            CHECK(Image != nullptr);
-            if (Image->AfterState != EResourceAccess::PixelShaderResource)
-            {
-                CommandList.TransitionTexture(Image->Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, Image->AfterState));
-            }
-        }
-
-        RenderedImages.Clear();
+        ResetTexturesShaderResourceUsage(CommandList);
     }
 }
 
@@ -434,16 +425,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                 if (TextureID)
                 {
                     // TODO: Change this so that the same code can be used for font texture and images
-                    FImGuiTexture* DrawableTexture = reinterpret_cast<FImGuiTexture*>(TextureID);
-                    RenderedImages.Emplace(DrawableTexture);
-
-                    if (DrawableTexture->BeforeState != EResourceAccess::PixelShaderResource)
-                    {
-                        CommandList.TransitionTexture(DrawableTexture->Texture.Get(), FRHITextureTransition::Make(DrawableTexture->BeforeState, EResourceAccess::PixelShaderResource));
-                        
-                        // TODO: Another way to do this? Maybe breaks somewhere?
-                        DrawableTexture->BeforeState = EResourceAccess::PixelShaderResource;
-                    }
+                    const FImGuiTexture* DrawableTexture = reinterpret_cast<const FImGuiTexture*>(TextureID);
+                    PrepareTextureForShaderResourceUsage(CommandList, DrawableTexture);
 
                     if (!DrawableTexture->bAllowBlending)
                     {
@@ -563,6 +546,43 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
     CommandList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }
 
+void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture)
+{
+    if (!InTexture)
+    {
+        return;
+    }
+
+    // A texture can be used multiple times with ImGui, and we only want to perform a transition once
+    for (const FImGuiTexture* CurrentTexture : RenderedTextures)
+    {
+        if (CurrentTexture->Texture == InTexture->Texture)
+        {
+            return;
+        }
+    }
+
+	if (InTexture->ResourceState != EResourceAccess::PixelShaderResource)
+	{
+		CommandList.TransitionTexture(InTexture->Texture.Get(), FRHITextureTransition::Make(InTexture->ResourceState, EResourceAccess::PixelShaderResource));
+	}
+
+	RenderedTextures.Emplace(InTexture);
+}
+
+void FImGuiRenderer::ResetTexturesShaderResourceUsage(FRHICommandList& CommandList)
+{
+	for (const FImGuiTexture* CurrentTexture : RenderedTextures)
+	{
+		if (CurrentTexture->ResourceState != EResourceAccess::PixelShaderResource)
+		{
+			CommandList.TransitionTexture(CurrentTexture->Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, CurrentTexture->ResourceState));
+		}
+	}
+
+	RenderedTextures.Clear();
+}
+
 void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
@@ -573,7 +593,7 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
 
     FRHISwapChainInfo SwapChainInfo;
     SwapChainInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
-    SwapChainInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
+    SwapChainInfo.ColorFormat  = RenderSettings::GetBackBufferFormat();
     SwapChainInfo.Width        = static_cast<uint16>(Viewport->Size.x);
     SwapChainInfo.Height       = static_cast<uint16>(Viewport->Size.y);
         
@@ -607,10 +627,10 @@ void FImGuiRenderer::OnRenderWindow(ImGuiViewport* Viewport, void* CommandList)
     CHECK(ViewportData != nullptr);
 
     const ImVec2 ViewportSize = Viewport->Size;
-    if (static_cast<uint16>(ViewportSize.x) != ViewportData->Width || static_cast<uint16>(ViewportSize.y) != ViewportData->Height)
+    if (uint16(ViewportSize.x) != ViewportData->Width || uint16(ViewportSize.y) != ViewportData->Height)
     {
-        ViewportData->Width  = static_cast<uint16>(ViewportSize.x);
-        ViewportData->Height = static_cast<uint16>(ViewportSize.y);
+        ViewportData->Width  = uint16(ViewportSize.x);
+        ViewportData->Height = uint16(ViewportSize.y);
 
         FRHISwapChain* RHISwapChain = ViewportData->SwapChain.Get();
         RHICommandList->ResizeSwapChain(RHISwapChain, ViewportData->Width, ViewportData->Height);

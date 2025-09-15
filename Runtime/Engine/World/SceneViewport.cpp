@@ -4,6 +4,7 @@
 #include "Engine/World/Actors/PlayerInput.h"
 #include "Engine/World/SceneViewport.h"
 #include "RHI/RHI.h"
+#include "RendererCore/RenderSettings.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -47,7 +48,7 @@ bool FSceneViewport::InitializeRHI()
     SwapChainInfo.Width        = static_cast<uint16>(WindowSize.X);
     SwapChainInfo.Height       = static_cast<uint16>(WindowSize.Y);
     SwapChainInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
-    SwapChainInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
+    SwapChainInfo.ColorFormat  = RenderSettings::GetBackBufferFormat();
 
     FRHISwapChainRef NewSwapChain = FRHI::Get()->CreateSwapChain(SwapChainInfo);
     if (!NewSwapChain)

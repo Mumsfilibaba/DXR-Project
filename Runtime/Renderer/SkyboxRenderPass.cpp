@@ -211,8 +211,8 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
 
     TRACE_SCOPE("Render Skybox");
 
-    const float RenderWidth  = float(FrameResources.CurrentWidth);
-    const float RenderHeight = float(FrameResources.CurrentHeight);
+    const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
+    const float RenderHeight = float(FrameResources.CurrentRenderHeight);
 
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;

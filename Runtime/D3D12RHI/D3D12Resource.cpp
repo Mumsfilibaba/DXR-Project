@@ -106,12 +106,18 @@ FString FD3D12Resource::GetDebugName() const
 {
     if (Resource)
     {
-        UINT NameLength;
-        
+        UINT NameLength = 0;
         HRESULT Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
+        if (Result == DXGI_ERROR_NOT_FOUND)
+        {
+            // We have not called SetPrivateData on this resource, so just return an empty string
+            return "";
+        }
+
         if (FAILED(Result))
         {
             D3D12_ERROR("Failed to get size of resource name");
+            return "";
         }
 
         FString NewName;
@@ -121,6 +127,7 @@ FString FD3D12Resource::GetDebugName() const
         if (FAILED(Result))
         {
             D3D12_ERROR("Failed to get resource name");
+            return "";
         }
 
         return NewName;

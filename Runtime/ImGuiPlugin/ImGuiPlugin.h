@@ -45,8 +45,15 @@ public:
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) override final;
 
-    virtual ImGuiIO*      GetImGuiIO()      const override final { return PluginImGuiIO; }
-    virtual ImGuiContext* GetImGuiContext() const override final { return PluginImGuiContext; }
+    virtual ImGuiIO* GetImGuiIO() const override final
+    {
+        return PluginImGuiIO;
+    }
+
+    virtual ImGuiContext* GetImGuiContext() const override final
+    {
+        return PluginImGuiContext;
+    }
 
     void UpdateMonitorInfo();
 
@@ -67,13 +74,12 @@ public:
     void OnPlatformChangedViewport(ImGuiViewport* Viewport);
 
 private:
-
     ImGuiIO*                       PluginImGuiIO;
     ImGuiContext*                  PluginImGuiContext;
     TSharedPtr<FImGuiRenderer>     Renderer;
     TSharedPtr<FImGuiEventHandler> EventHandler;
     TSharedPtr<FWindowWidget>      MainWindow;
-    TSharedPtr<FViewportWidget>          MainViewport;
+    TSharedPtr<FViewportWidget>    MainViewport;
     TArray<FMonitorInfo>           MonitorInfos;
     FImGuiDrawMulticastDelegate    DrawDelegates;
     FDelegateHandle                OnMonitorConfigChangedDelegateHandle;

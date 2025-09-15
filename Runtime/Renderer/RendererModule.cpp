@@ -54,34 +54,81 @@ bool FRendererModule::Initialize()
     }
 }
 
+void FRendererModule::Release()
+{
+	// Release GPU profiler
+	FGPUProfiler::Get().Release();
+
+	if (Renderer)
+	{
+		delete Renderer;
+		Renderer = nullptr;
+	}
+}
+
+void FRendererModule::BeginFrame()
+{
+	if (Renderer)
+	{
+		Renderer->BeginFrame();
+	}
+}
+
 void FRendererModule::Tick()
 {
-    // Tick GPU-Profiler
-    FGPUProfiler::Get().Tick();
-
     for (FScene* Scene : Scenes)
     {
-        // Performs frustum culling and updates visible primitives
+        // Performs frustum culling for all the cameras and updates visible primitives
         Scene->Tick();
-
-        // Render the scene
-        Renderer->Tick(Scene);
-
-        // TODO: Break for now since we always output to the BackBuffer
-        break;
     }
 }
 
-void FRendererModule::Release()
+void FRendererModule::EndFrame()
 {
-    // Release GPU profiler
-    FGPUProfiler::Get().Release();
+	if (Renderer)
+	{
+        Renderer->EndFrame();
+	}
+}
 
+void FRendererModule::RenderSceneView(const FSceneRenderView& SceneRenderView)
+{
     if (Renderer)
     {
-        delete Renderer;
-        Renderer = nullptr;
+        Renderer->RenderSceneView(SceneRenderView);
     }
+}
+
+void FRendererModule::RenderUI()
+{
+	if (Renderer)
+	{
+		Renderer->RenderUI();
+	}
+}
+
+void FRendererModule::PrepareSwapChain(FRHISwapChainRef SwapChain)
+{
+	if (Renderer)
+	{
+		Renderer->PrepareSwapChain(SwapChain);
+	}
+}
+
+void FRendererModule::PresentSwapChain(FRHISwapChainRef SwapChain)
+{
+	if (Renderer)
+	{
+		Renderer->PresentSwapChain(SwapChain);
+	}
+}
+
+void FRendererModule::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height)
+{
+	if (Renderer)
+	{
+		Renderer->ResizeSwapChain(SwapChain, Width, Height);
+	}
 }
 
 IScene* FRendererModule::CreateScene(FWorld* World)

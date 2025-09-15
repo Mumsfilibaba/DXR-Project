@@ -17,6 +17,7 @@
 #include "Engine/Resources/Material.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
+#include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
@@ -183,6 +184,10 @@ bool FEngine::CreateSceneViewport()
 
     EngineViewportWidget->SetViewportInterface(SceneViewport);
 
+    // Communicate the render resolution to the renderer
+    FRHISwapChainRef SwapChain = SceneViewport->GetRHISwapChain();
+    RenderSettings::ChangeRenderResolution(SwapChain->GetWidth(), SwapChain->GetHeight());
+
     // Make sure we have focus on the new viewport
     FApplication::Get().SetFocusWidget(EngineViewportWidget);
     return true;
@@ -298,6 +303,7 @@ bool FEngine::Init()
     // Load Game-Module
     const FString GameModuleName = FPaths::GetProjectModuleName();
     GameModule = FModuleManager::Get().LoadModule<FGameModule>(*GameModuleName);
+
     if (!GameModule)
     {
         LOG_ERROR("Failed to load Game-module, the application may not behave as intended");
@@ -346,26 +352,35 @@ void FEngine::Tick(float DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    // At this point in the frame, we can update the scene-viewport so that the camera is prepared for this frame
     if (SceneViewport)
     {
         SceneViewport->Tick();
     }
 
-    // Update the game-module
     GameModule->Tick(DeltaTime);
 
-    // Update the world, update all the actors and components
     if (World)
     {
         World->Tick(DeltaTime);
     }
 
-    // Update the ImGui-plugin
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().Tick(DeltaTime);
     }
+
+    // Prepare the swapchain
+    IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->PrepareSwapChain(SceneViewport->GetRHISwapChain());
+}
+
+void FEngine::RenderFrame()
+{
+    TRACE_FUNCTION_SCOPE();
+
+	IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->RenderUI();
+    RendererModule->PresentSwapChain(SceneViewport->GetRHISwapChain());
 }
 
 void FEngine::Release()

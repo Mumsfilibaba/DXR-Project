@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"
@@ -131,10 +132,8 @@ void FTextureDebugWidget::Draw()
                     ImVec4 BgCol   = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
                     ImVec4 TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-                    {
-                        const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
-                        ImGui::SetCursorPosX((ContentRegion.x - Size.x) * 0.5f);
-                    }
+					const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
+					ImGui::SetCursorPosX((ContentRegion.x - Size.x) * 0.5f);
 
                     if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
                     {
@@ -161,7 +160,22 @@ void FTextureDebugWidget::Draw()
     }
 }
 
-void FTextureDebugWidget::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FTextureDebugWidget::AddTextureForDebugging(const FRHIShaderResourceViewRef& TextureView, const FRHITextureRef& Texture, EResourceAccess ResourceState)
 {
-    DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
+    if (!TextureView || !Texture)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    for (const FImGuiTexture& CurrImage : DebugTextures)
+    {
+        if (CurrImage.Texture == Texture && CurrImage.ResourceState != ResourceState)
+        {
+            LOG_ERROR("TextureDebugger require all texture views to be added with the same resource state");
+            return;
+        }
+    }
+
+    DebugTextures.Emplace(TextureView, Texture, ResourceState);
 }

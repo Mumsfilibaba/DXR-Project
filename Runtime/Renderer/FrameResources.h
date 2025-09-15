@@ -154,18 +154,18 @@ MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
 
 struct FGlobalTextureFormats
 {
-    static const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    static const EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
-    static const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
-    static const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
-    static const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    static const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
-    static const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
-    static const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    static const EFormat VelocityFormat     = EFormat::R16G16_Float;
-    static const EFormat ShadowMaskFormat   = EFormat::R32_Float;
-    static const EFormat ShadowMapFormat    = EFormat::D32_Float;
-    static const EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
+    static constexpr EFormat DepthBufferFormat  = EFormat::D32_Float;
+    static constexpr EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
+    static constexpr EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
+    static constexpr EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
+    static constexpr EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
+    static constexpr EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
+    static constexpr EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
+    static constexpr EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
+    static constexpr EFormat VelocityFormat     = EFormat::R16G16_Float;
+    static constexpr EFormat ShadowMaskFormat   = EFormat::R32_Float;
+    static constexpr EFormat ShadowMapFormat    = EFormat::D32_Float;
+    static constexpr EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
 };
 
 struct FFrameResources
@@ -191,14 +191,11 @@ struct FFrameResources
     // Global VertexInput
     FRHIVertexLayoutRef MeshInputLayout;
 
-    // Main Window
-    FRHITexture* BackBuffer;
-
-    // GlobalBuffers
+    // Global Buffers
     FRHIBufferRef CameraBuffer;
     FRHIBufferRef TransformBuffer;
 
-    // Samplers
+    // Global Samplers
     FRHISamplerStateRef PointLightShadowSampler;
     FRHISamplerStateRef ShadowSamplerPoint;
     FRHISamplerStateRef ShadowSamplerPointCmp;
@@ -272,11 +269,7 @@ struct FFrameResources
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
     // BackBuffer
-    FRHISwapChainRef MainSwapChain;
-    EFormat         BackBufferFormat;
-    uint32          DesiredWidth;
-    uint32          DesiredHeight;
-    uint32          CurrentWidth;
-    uint32          CurrentHeight;
+	uint32 CurrentRenderWidth;
+	uint32 CurrentRenderHeight;
 };
 
