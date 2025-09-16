@@ -361,7 +361,9 @@ VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandConte
 	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])
 	{
         ImageFences[SemaphoreIndex] = nullptr;
+
         Fence->Wait();
+        Fence->Release();
 	}
 
     VkResult Result = SwapChainHandle->AquireNextImage(ImageSemaphore.Get());
@@ -373,7 +375,12 @@ VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandConte
 
     InCommandContext->GetCommandQueue().AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     InCommandContext->GetCommandQueue().AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
-    ImageFences[SemaphoreIndex] = InCommandContext->GetSubmissionFence();
+
+    if (FVulkanFence* Fence = InCommandContext->GetSubmissionFence())
+    {
+        ImageFences[SemaphoreIndex] = Fence;
+        Fence->AddRef();
+    }
 
     // Update the BackBuffer index
     BackBufferIndex = SwapChainHandle->GetBufferIndex();

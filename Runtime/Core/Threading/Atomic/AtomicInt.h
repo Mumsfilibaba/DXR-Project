@@ -284,14 +284,14 @@ public:
     }
 
 private:
-    mutable volatile SignedType Value{0};
+    mutable volatile SignedType Value;
 };
 
 // Typedefs for signed integer types
-using FAtomicInt8   = TAtomicInt<int8>;
-using FAtomicInt16  = TAtomicInt<int16>;
-using FAtomicInt32  = TAtomicInt<int32>;
-using FAtomicInt64  = TAtomicInt<int64>;
+using FAtomicInt8  = TAtomicInt<int8>;
+using FAtomicInt16 = TAtomicInt<int16>;
+using FAtomicInt32 = TAtomicInt<int32>;
+using FAtomicInt64 = TAtomicInt<int64>;
 
 // Typedefs for unsigned integer types
 using FAtomicUInt8  = TAtomicInt<uint8>;

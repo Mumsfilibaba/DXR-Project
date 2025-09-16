@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/Atomic.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanLoader.h"
 
@@ -11,48 +12,20 @@ public:
     ~FVulkanFence();
 
     bool Initialize(bool bSignaled);
-
-    bool IsSignaled() const 
-    {
-        VkResult Result = vkGetFenceStatus(GetDevice()->GetVkDevice(), Fence);
-        if (Result == VK_ERROR_DEVICE_LOST)
-        {
-            VULKAN_ERROR("Device Lost");
-            return false;
-        }
-
-        return Result == VK_SUCCESS;
-    }
-
-    bool Wait(uint64 TimeOut = UINT64_MAX) const
-    {
-        VkResult Result = vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("vkWaitForFences Failed");
-            return false;
-        }
-
-        return true;
-    }
-
-    bool Reset()
-    {
-        VkResult Result = vkResetFences(GetDevice()->GetVkDevice(), 1, &Fence);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("vkResetFences Failed");
-            return false;
-        }
-
-        return true;
-    }
+    bool IsSignaled() const;
+    bool Wait(uint64 TimeOut = UINT64_MAX) const;
+	bool Reset();
     
+    bool IsReferenced() const;
+    int64 AddRef() const;
+    int64 Release() const;
+
     VkFence GetVkFence() const
     {
         return Fence;
     }
-    
+
 private:
     VkFence Fence;
+    mutable FAtomicInt64 References;
 };

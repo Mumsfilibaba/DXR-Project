@@ -23,37 +23,62 @@ FVulkanFenceManager::~FVulkanFenceManager()
 
 FVulkanFence* FVulkanFenceManager::ObtainFence()
 {
-    SCOPED_LOCK(FencesCS);
-
     FVulkanFence* Fence = nullptr;
-    if (AvailableFences.Dequeue(Fence))
+    if (FindAvailableFence(&Fence))
     {
         // Reset the fence to not be signaled before we return it
         Fence->Reset();
-        return Fence;
+    }
+    else
+    {
+		FVulkanFence* NewFence = new FVulkanFence(GetDevice());
+		if (!NewFence->Initialize(false))
+		{
+			DEBUG_BREAK();
+			delete NewFence;
+			return nullptr;
+		}
+        else
+        {
+            SCOPED_LOCK(FencesCS);
+		    Fences.Add(NewFence);
+            Fence = NewFence;
+        }
     }
     
-    FVulkanFence* NewFence = new FVulkanFence(GetDevice());
-    if (!NewFence->Initialize(false))
-    {
-        DEBUG_BREAK();
-        delete NewFence;
-        return nullptr;
-    }
-
-    Fences.Add(NewFence);
-    return NewFence;
+    Fence->AddRef();
+    return Fence;
 }
 
 void FVulkanFenceManager::RecycleFence(FVulkanFence* InFence)
 {
     if (InFence)
     {
-        SCOPED_LOCK(FencesCS);
-        AvailableFences.Enqueue(InFence);
+        SCOPED_LOCK(AvailableFencesCS);
+
+        InFence->Release();
+        AvailableFences.Add(InFence);
     }
     else
     {
-        LOG_WARNING("Trying to Recycle an invalid Fence");
+        VULKAN_WARNING("Trying to Recycle an invalid Fence");
     }
+}
+
+bool FVulkanFenceManager::FindAvailableFence(FVulkanFence** OutAvailableFence)
+{
+    SCOPED_LOCK(AvailableFencesCS);
+
+    for (int32 i = 0; i < AvailableFences.Size(); ++i)
+    {
+        FVulkanFence* CurrentFence = AvailableFences[i];
+        if (!CurrentFence->IsReferenced())
+        {
+            *OutAvailableFence = CurrentFence;
+            AvailableFences.RemoveAt(i);
+            return true;
+        }
+    }
+
+    return false;
 }

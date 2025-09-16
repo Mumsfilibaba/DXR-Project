@@ -17,7 +17,10 @@ public:
     void RecycleFence(FVulkanFence* InFence);
 
 private:
-    TQueue<FVulkanFence*> AvailableFences;
+    bool FindAvailableFence(FVulkanFence** OutAvailableFence);
+
+    TArray<FVulkanFence*> AvailableFences;
+    FCriticalSection AvailableFencesCS;
     TArray<FVulkanFence*> Fences;
-    FCriticalSection      FencesCS;
+    FCriticalSection FencesCS;
 };
