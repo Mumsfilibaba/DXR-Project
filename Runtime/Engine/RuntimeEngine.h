@@ -9,7 +9,6 @@ public:
 
     virtual bool Init() override final;
 	virtual void Release() override final;
-
 	virtual void RenderFrame() override final;
 
 private:

@@ -47,7 +47,11 @@ void FEditorEngine::Tick(float DeltaTime)
 {
 	FEngine::Tick(DeltaTime);
 
-	CreateViewportRenderTarget();
+	const FIntVector2 Size = DockspaceWidget->GetViewportSize();
+	if (ViewportImageSize != Size)
+	{
+		CreateViewportRenderTarget();
+	}
 }
 
 void FEditorEngine::RenderFrame()
@@ -69,6 +73,7 @@ void FEditorEngine::RenderFrame()
 bool FEditorEngine::CreateViewportRenderTarget()
 {
 	const FIntVector2 Size = DockspaceWidget->GetViewportSize();
+
 	FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(RenderSettings::GetBackBufferFormat(), Size.X, Size.Y, 1, 1,
 		ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource);
 
@@ -81,6 +86,8 @@ bool FEditorEngine::CreateViewportRenderTarget()
 		DockspaceWidget->SetViewportImage(ViewportImage);
 
 		RenderSettings::ChangeRenderResolution(Size.X, Size.Y);
+
+		ViewportImageSize = Size;
 		return true;
 	}
 	else

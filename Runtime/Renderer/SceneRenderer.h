@@ -101,6 +101,22 @@ private:
     uint32       FrameIndex;
 };
 
+struct FSwapChainResizeInfo
+{
+    FSwapChainResizeInfo() = default;
+
+    FSwapChainResizeInfo(FRHISwapChainRef InSwapChain, uint32 InWidth, uint32 InHeight)
+        : SwapChain(InSwapChain)
+        , Width(InWidth)
+        , Height(InHeight)
+    {
+    }
+
+    FRHISwapChainRef SwapChain = nullptr;
+    uint32 Width  = 0;
+    uint32 Height = 0;
+};
+
 class FSceneRenderer
 {
 public:
@@ -188,8 +204,9 @@ private:
     FRHIComputeShaderRef        ShadingRateShader;
 
     // SwapChains that should be presented at the end of the frame
-    TArray<FRHISwapChainRef> SwapChainsToPrepare;
-    TArray<FRHISwapChainRef> SwapChainsToPresent;
+    TArray<FRHISwapChainRef>     SwapChainsToPrepare;
+    TArray<FRHISwapChainRef>     SwapChainsToPresent;
+    TArray<FSwapChainResizeInfo> SwapChainsToResize;
 
     // Widgets
     TSharedPtr<FTextureDebugWidget>     TextureDebugger;

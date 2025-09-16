@@ -459,7 +459,17 @@ void FSceneRenderer::BeginFrame()
 	INSERT_DEBUG_CMDLIST_MARKER(CommandList, "-------- Begin Frame --------");
 
 	CommandList.BeginFrame();
-	CommandList.BeginExternalCapture();
+	
+    {
+        TRACE_SCOPE("Resize SwapChains");
+
+        for (const FSwapChainResizeInfo& ResizeInfo : SwapChainsToResize)
+        {
+		    CommandList.ResizeSwapChain(ResizeInfo.SwapChain.Get(), ResizeInfo.Width, ResizeInfo.Height);
+        }
+    }    
+    
+    CommandList.BeginExternalCapture();
 
 	// Begin capture GPU FrameTime
 	FGPUProfiler::Get().BeginGPUFrame(CommandList);
@@ -895,7 +905,7 @@ void FSceneRenderer::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth,
 {
     if (SwapChain)
     {
-        CommandList.ResizeSwapChain(SwapChain.Get(), InWidth, InHeight);
+        SwapChainsToResize.Emplace(SwapChain, InWidth, InHeight);
     }
 }
 

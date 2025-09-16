@@ -203,9 +203,16 @@ void FEngine::OnEngineWindowMoved(const FIntVector2& /* NewScreenPosition */)
     // LOG_INFO("Window Moved x=%d y=%d", NewScreenPosition.x, NewScreenPosition.y);
 }
 
-void FEngine::OnEngineWindowResized(const FIntVector2& /* NewScreenSize */)
+void FEngine::OnEngineWindowResized(const FIntVector2& NewScreenSize)
 {
     // LOG_INFO("Window Resized x=%d y=%d", NewScreenSize.x, NewScreenSize.y);
+
+    IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->ResizeSwapChain(SceneViewport->GetRHISwapChain(), NewScreenSize.X, NewScreenSize.Y);
+
+#ifndef EDITOR_BUILD
+    RenderSettings::ChangeRenderResolution(NewScreenSize.X, NewScreenSize.Y);
+#endif
 }
 
 bool FEngine::Init()

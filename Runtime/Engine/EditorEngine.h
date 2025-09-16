@@ -18,4 +18,5 @@ private:
 
 	TSharedPtr<class FDockspaceWidget> DockspaceWidget;
     FRHITextureRef                     ViewportImage;
+    FIntVector2                        ViewportImageSize;
 };
