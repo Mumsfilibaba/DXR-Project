@@ -2,7 +2,7 @@
 
 #define NUM_THREADS 16
 
-RWTexture2D<float2> IntegrationMap : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float2> IntegrationMap : register(u0);
 
 float2 IntegrateBRDF(float NdotV, float Roughness)
 { 

@@ -7,12 +7,12 @@
 #define FLT_EPS (0.00000001)
 #define HDR_CORRECTION (1)
 
-RWTexture2D<float4> FinalTarget : register(u0);
-RWTexture2D<float4> Output      : register(u1);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> FinalTarget : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> Output : register(u1);
 
-Texture2D<float>  DepthBuffer    : register(t0);
+Texture2D<float> DepthBuffer : register(t0);
 Texture2D<float2> VelocityBuffer : register(t1);
-Texture2D<float3> HistoryBuffer  : register(t2);
+Texture2D<float3> HistoryBuffer : register(t2);
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 

@@ -840,6 +840,12 @@ void FRHIValidationCommandContext::TransitionTexture(FRHITexture* Texture, const
         return;
     }
 
+	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+	{
+		RHI_VALIDATION_ERROR("Invalid to call TransitionTexture when inside a render-pass");
+		return;
+	}
+
     RealContext->TransitionTexture(Texture, TextureTransition);
 }
 
@@ -850,6 +856,12 @@ void FRHIValidationCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourc
         RHI_VALIDATION_ERROR("Invalid to call TransitionBuffer when Buffer is nullptr");
         return;
     }
+
+	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+	{
+		RHI_VALIDATION_ERROR("Invalid to call TransitionBuffer when inside a render-pass");
+		return;
+	}
 
     RealContext->TransitionBuffer(Buffer, BeforeState, AfterState);
 }
@@ -862,6 +874,12 @@ void FRHIValidationCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Te
         return;
     }
 
+	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+	{
+		RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessTextureBarrier when inside a render-pass");
+		return;
+	}
+
     RealContext->UnorderedAccessTextureBarrier(Texture);
 }
 
@@ -872,6 +890,12 @@ void FRHIValidationCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buff
         RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBufferBarrier when Buffer is nullptr");
         return;
     }
+
+	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+	{
+		RHI_VALIDATION_ERROR("Invalid to call UnorderedAccessBufferBarrier when inside a render-pass");
+		return;
+	}
 
     RealContext->UnorderedAccessBufferBarrier(Buffer);
 }

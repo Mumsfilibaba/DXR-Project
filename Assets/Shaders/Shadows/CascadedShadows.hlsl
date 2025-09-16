@@ -58,10 +58,8 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     // MaterialBuffer
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
-
     // Sampler
     SamplerState MaterialSampler : register(s0);
-
     // Material Textures
     #if ENABLE_ALPHA_MASK
         #if ENABLE_PACKED_MATERIAL_TEXTURE
@@ -83,12 +81,10 @@ struct FVSInput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
-
 // For view-instancing
 #if ENABLE_CASCADE_VIEW_INSTANCING
     uint ViewID : SV_ViewID;
 #endif
-
 // For vertex-shader instancing
 #if ENABLE_CASCADE_VS_INSTANCING
     uint InstanceID : SV_InstanceID;
@@ -100,14 +96,12 @@ struct FVSCascadeOutput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
-
 // For geometry-shader instancing we output the worldposition to GS otherwise we want to output final position directly
 #if ENABLE_CASCADE_GS_INSTANCING
     float4 WorldPosition : POSITION0;
 #else
     float4 Position : SV_Position;
 #endif
-
 // For vertex-shader instancing, we write directly what layer we want to write to
 #if ENABLE_CASCADE_VS_INSTANCING || ENABLE_VIEW_INSTANCING_WORK_AROUND
     uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;

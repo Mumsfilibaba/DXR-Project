@@ -148,6 +148,11 @@ public:
         return *CommandPayload;
     }
 
+    FVulkanFence* GetSubmissionFence() const
+    {
+        return CommandPayload ? CommandPayload->Fence : nullptr;
+    }
+
     bool IsRecording() const { return ContextPhase >= ECommandContextPhase::Recording; }
     bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
     

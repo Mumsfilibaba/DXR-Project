@@ -149,12 +149,14 @@ bool FVulkanRHI::Initialize()
     AdapterCreateInfo.OptionalExtensionNames = FPlatformVulkan::GetOptionalDeviceExtentions();
     
     // Enable required features (These are necessary to run)
-    AdapterCreateInfo.RequiredFeatures.samplerAnisotropy         = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.imageCubeArray            = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.depthBiasClamp            = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures12.hostQueryReset          = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.samplerAnisotropy                    = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.shaderImageGatherExtended            = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.imageCubeArray                       = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.depthBiasClamp                       = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures11.shaderDrawParameters               = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures12.hostQueryReset                     = VK_TRUE;
 
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(AdapterCreateInfo))

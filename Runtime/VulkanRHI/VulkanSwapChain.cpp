@@ -15,7 +15,8 @@ static TAutoConsoleVariable<bool> CVarEnableVSync(
     EConsoleVariableFlags::Default);
 
 // Recreate the SwapChain when it's reported to be suboptimal when acquiring next image
-static constexpr bool GVulkanRecreateSuboptimalSwapChainOnAquire = true;
+static constexpr const bool GVulkanRecreateSuboptimalSwapChainOnAquire = true;
+static constexpr const bool GVulkanLogSempahoreIndex = false;
 
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainInfo& InSwapChainInfo)
     : FRHISwapChain(InSwapChainInfo)
@@ -66,7 +67,6 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
 
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
-
     if (!BackBuffer)
     {
         VULKAN_ERROR("Failed to create BackBuffer");
@@ -125,23 +125,24 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     // Initialize semaphores and BackBuffers
     const uint32 BufferCount = SwapChainHandle->GetBufferCount();
     if (BufferCount != static_cast<uint32>(BackBuffers.Size()))
-    {
+	{
+		ImageFences.Resize(BufferCount);
         ImageSemaphores.Resize(BufferCount);
         RenderSemaphores.Resize(BufferCount);
         BackBuffers.Resize(BufferCount);
 
-        // Setup the info for each backbuffer, and ensure that we create the info with the actual image-size
+        // Setup the info for each back-buffer, and ensure that we create the info with the actual image-size
         const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
         FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
         
-        // Create a FVulkanTexture for each backbuffer
-        for (uint32 Index = 0; Index < BufferCount; ++Index)
+        // Create a FVulkanTexture for each back-buffer
+        for (uint32 i = 0; i < BufferCount; ++i)
         {
             FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
             if (NewImageSemaphore->Initialize())
             {
-                NewImageSemaphore->SetDebugName("ImageSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
-                ImageSemaphores[Index] = NewImageSemaphore;
+                NewImageSemaphore->SetDebugName("ImageSemaphore[" + TTypeToString<int32>::ToString(i) + "]");
+                ImageSemaphores[i] = NewImageSemaphore;
             }
             else
             {
@@ -151,8 +152,8 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
             FVulkanSemaphoreRef NewRenderSemaphore = new FVulkanSemaphore(GetDevice());
             if (NewRenderSemaphore->Initialize())
             {
-                NewRenderSemaphore->SetDebugName("RenderSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
-                RenderSemaphores[Index] = NewRenderSemaphore;
+                NewRenderSemaphore->SetDebugName("RenderSemaphore[" + TTypeToString<int32>::ToString(i) + "]");
+                RenderSemaphores[i] = NewRenderSemaphore;
             }
             else
             {
@@ -161,12 +162,14 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
 
             if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferInfo))
             {
-                BackBuffers[Index] = NewTexture;
+                BackBuffers[i] = NewTexture;
             }
             else
             {
                 return false;
             }
+
+            ImageFences[i] = nullptr;
         }
         
         // Set a valid semaphore index
@@ -227,9 +230,8 @@ bool FVulkanSwapChain::Resize(FVulkanCommandContext* InCommandContext, uint32 In
         CHECK(!InCommandContext->IsInsideRenderPass());
         CHECK(InCommandContext->IsRecording());
 
-        // Ensure that all work is completed, if this function is called from
-        // a RHICommandList the we do this "manually" since the context is already
-        // started and we need to ensure that there is a valid CommandBuffer
+        // Ensure that all work is completed. If this function is called from a RHICommandList the we do 
+        // this "manually" since the context is already started and we need to ensure that there is a valid CommandBuffer
         InCommandContext->SplitCommandBuffer(false, true);
         VULKAN_INFO("FVulkanSwapChain::Resize w=%d h=%d", InWidth, InHeight);
 
@@ -269,6 +271,11 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     }
 
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
+	if constexpr (GVulkanLogSempahoreIndex)
+	{
+		LOG_INFO("FVulkanSwapChain::Present SemaphoreIndex=%d", SemaphoreIndex);
+	}
+
     Result = SwapChainHandle->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
     {
@@ -305,9 +312,9 @@ void FVulkanSwapChain::SetDebugName(const FString& InName)
 
         // Name all the images
         FString ImageName;
-        for (uint32 Index = 0; FVulkanTextureRef Texture : BackBuffers)
+        for (uint32 TextureIndex = 0; FVulkanTextureRef Texture : BackBuffers)
         {
-            ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", Index);
+            ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", TextureIndex);
             Texture->SetDebugName(ImageName);
         }
     }
@@ -318,7 +325,7 @@ FVulkanTexture* FVulkanSwapChain::GetCurrentBackBuffer(FVulkanCommandContext* In
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
         VkResult Result = AquireNextImage(InCommandContext);
-        if (GVulkanRecreateSuboptimalSwapChainOnAquire)
+        if constexpr (GVulkanRecreateSuboptimalSwapChainOnAquire)
         {
             if (Result == VK_SUBOPTIMAL_KHR)
             {
@@ -346,6 +353,17 @@ VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandConte
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
 
+    if constexpr (GVulkanLogSempahoreIndex)
+    {
+        LOG_INFO("FVulkanSwapChain::AquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
+    }
+
+	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])
+	{
+        ImageFences[SemaphoreIndex] = nullptr;
+        Fence->Wait();
+	}
+
     VkResult Result = SwapChainHandle->AquireNextImage(ImageSemaphore.Get());
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
@@ -355,6 +373,7 @@ VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandConte
 
     InCommandContext->GetCommandQueue().AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     InCommandContext->GetCommandQueue().AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
+    ImageFences[SemaphoreIndex] = InCommandContext->GetSubmissionFence();
 
     // Update the BackBuffer index
     BackBufferIndex = SwapChainHandle->GetBufferIndex();

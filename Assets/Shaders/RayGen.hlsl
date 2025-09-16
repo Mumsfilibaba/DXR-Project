@@ -5,15 +5,15 @@
 // Global RootSignature
 RaytracingAccelerationStructure Scene : register(t0);
 
-TextureCube<float4> Skybox        : register(t1);
-Texture2D<float4>   GBufferNormal : register(t2);
-Texture2D<float4>   GBufferDepth  : register(t3);
+TextureCube<float4> Skybox : register(t1);
+Texture2D<float4> GBufferNormal : register(t2);
+Texture2D<float4> GBufferDepth  : register(t3);
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
 SamplerState GBufferSampler : register(s0);
 
-RWTexture2D<float4> OutTexture : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> OutTexture : register(u0);
 
 [shader("raygeneration")]
 void RayGen()

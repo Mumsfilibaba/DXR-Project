@@ -54,7 +54,7 @@ private:
     void PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData);
-
+    void PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData);
     void PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture);
     void ResetTexturesShaderResourceUsage(FRHICommandList& CommandList);
 

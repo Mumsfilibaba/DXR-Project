@@ -404,7 +404,7 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     for (uint32 Index = 0; Index < MemoryProperties.memoryHeapCount; Index++)
     {
         const VkMemoryHeap& MemoryHeap = MemoryProperties.memoryHeaps[Index];
-        VULKAN_INFO("    MemoryHeap[%u] Size = %.2f MB", Index, static_cast<float>(MemoryHeap.size) / (1024.0f * 1024.0f));
+        LOG_INFO("    MemoryHeap[%u] Size = %.2f MB", Index, static_cast<float>(MemoryHeap.size) / (1024.0f * 1024.0f));
     }
 }
 

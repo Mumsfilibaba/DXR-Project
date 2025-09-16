@@ -6,11 +6,11 @@
 
 #define NUM_THREADS (NUM_SHADOW_CASCADES)
 
-ConstantBuffer<FCamera>                CameraBuffer   : register(b0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
 ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b1);
 
 RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
-RWStructuredBuffer<FCascadeSplit>    SplitBuffer  : register(u1);
+RWStructuredBuffer<FCascadeSplit> SplitBuffer : register(u1);
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
 

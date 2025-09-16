@@ -229,13 +229,17 @@ FVulkanCommandPayload::~FVulkanCommandPayload()
     CHECK(Fence == nullptr);
 }
 
+void FVulkanCommandPayload::AquireFence()
+{
+	FVulkanFenceManager& FenceManager = Device->GetFenceManager();
+	Fence = FenceManager.ObtainFence();
+	CHECK(Fence != nullptr);
+}
+
 void FVulkanCommandPayload::Submit()
 {
     CHECK(CommandBuffers.IsEmpty() == false);
-    FVulkanFenceManager& FenceManager = Device->GetFenceManager();
-    Fence = FenceManager.ObtainFence();
     CHECK(Fence != nullptr);
-
     Queue.ExecuteCommandBuffer(CommandBuffers.Data(), CommandBuffers.Size(), Fence);
 }
 

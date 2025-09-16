@@ -111,6 +111,10 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
             return L"6_6";
         case EShaderModel::SM_6_7:
             return L"6_7";
+		case EShaderModel::SM_6_8:
+			return L"6_8";
+		case EShaderModel::SM_6_9:
+			return L"6_9";
         default:
             return L"0_0";
     }
@@ -344,8 +348,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     HRESULT hr = DxcCreateInstanceFunc(CLSID_DxcUtils, IID_PPV_ARGS(&Utils));
     if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to create Utils");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create Utils");
         return false;
     }
 
@@ -353,8 +356,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     hr = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
     if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to create Compiler");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create Compiler");
         return false;
     }
 
@@ -362,8 +364,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     hr = Utils->CreateDefaultIncludeHandler(&IncludeHandler);
     if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to create IncludeHandler");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create IncludeHandler");
         return false;
     }
 
@@ -478,8 +479,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     TComPtr<IDxcCompilerArgs> PreProcessorArguments = BuildArguments(FilePath, CompileInfo.EntryPoint, CompileInfo);
     if (!PreProcessorArguments)
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to create pre-process compiler arguments");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create pre-process compiler arguments");
         return false;
     }
     else
@@ -503,7 +503,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     hr = Compiler->Compile(&SourceBuffer, PreProcessorArguments->GetArguments(), static_cast<uint32>(PreProcessorArguments->GetCount()), IncludeHandler.Get(), IID_PPV_ARGS(&PreprocessResult));
     if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to preprocess shader");
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to preprocess shader");
         DEBUG_BREAK();
         return false;
     }
@@ -512,8 +512,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     HRESULT PreProcessResult;
     if (FAILED(PreprocessResult->GetStatus(&PreProcessResult)))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve pre-process result. Unknown Error.");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to retrieve pre-process result. Unknown Error.");
         return false;
     }
 
@@ -526,14 +525,13 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
         if (PrintBlob && PrintBlob->GetBufferSize() > 0)
         {
-            LOG_ERROR("[FShaderCompiler]: FAILED to pre-process with error: %s", reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()));
+            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to pre-process with error: %s", reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()));
         }
         else
         {
-            LOG_ERROR("[FShaderCompiler]: FAILED to pre-process with. Unknown ERROR.");
+            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to pre-process with. Unknown ERROR.");
         }
 
-        DEBUG_BREAK();
         return false;
     }
 
@@ -541,8 +539,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     hr = PreprocessResult->GetOutput(DXC_OUT_HLSL, IID_PPV_ARGS(&PreprocessedBlob), nullptr);
     if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve pre-processed shader");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to retrieve pre-processed shader");
         return false;
     }
 
@@ -557,6 +554,8 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         // When not using HLSL, we want to emit SPIR-V
         CompileArgs.Emplace(L"-spirv");
         CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
+        CompileArgs.Emplace(L"-fspv-reduce-load-size");
+        // CompileArgs.Emplace(L"-fspv-use-unknown-image-format");        
 
         // NOTE: Change the entrypoint to be 'main', since this is always the entrypoint when we need to compile the
         // SPIRV into GLSL, and back to SPIRV. This happens when we change any bindings for resources.
@@ -564,8 +563,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         {
             if (!PatchHLSLForSpirv(CompileInfo.EntryPoint, Source))
             {
-                LOG_ERROR("[FShaderCompiler]: Failed to patch HLSL for the SPIR-V backend");
-                DEBUG_BREAK();
+                LOG_ERROR_CRITICAL("[FShaderCompiler]: Failed to patch HLSL for the SPIR-V backend");
                 return false;
             }
         }
@@ -575,8 +573,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     TComPtr<IDxcCompilerArgs> CompileArguments = BuildArguments(FilePath, EntryPoint, CompileInfo);
     if (!CompileArguments)
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to create compiler arguments");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to create compiler arguments");
         return false;
     }
 
@@ -589,8 +586,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), IncludeHandler.Get(), IID_PPV_ARGS(&Result));
     if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to Compile");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to Compile");
         return false;
     }
 
@@ -598,8 +594,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     HRESULT CompilationResult;
     if (FAILED(Result->GetStatus(&CompilationResult)))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
         return false;
     }
 
@@ -612,14 +607,13 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
         if (PrintBlob && PrintBlob->GetBufferSize() > 0)
         {
-            LOG_ERROR("[FShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()));
+            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()));
         }
         else
         {
-            LOG_ERROR("[FShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+            LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to compile with. Unknown ERROR.");
         }
 
-        DEBUG_BREAK();
         return false;
     }
 
@@ -645,8 +639,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     hr = Result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&CompiledBlob), nullptr);
     if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve compiled shader");
-        DEBUG_BREAK();
+        LOG_ERROR_CRITICAL("[FShaderCompiler]: FAILED to retrieve compiled shader");
         return false;
     }
 
@@ -693,7 +686,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     if (OutByteCode.IsEmpty())
     {
         LOG_WARNING("[FShaderCompiler]: Resulting bytecode is empty");
-        DEBUG_BREAK();
     }
 
     // If verbose logging is turned off, atleast log that we successfully compiled the shader

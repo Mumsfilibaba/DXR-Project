@@ -7,10 +7,10 @@
 #define REVERSED_DEPTH 0
 
 // Handles first reduction
-Texture2D<float>  DepthBuffer : register(t0);
+Texture2D<float> DepthBuffer : register(t0);
 Texture2D<float2> InputMinMax : register(t0);
 
-RWTexture2D<float2> OutputMinMax : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float2> OutputMinMax : register(u0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
     float4x4 CamProjection;

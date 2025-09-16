@@ -200,7 +200,6 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVInfo& I
         return false;
     }
     
-    const VkFormat VulkanFormat = ConvertFormat(InInfo.Format);
     VkImageViewType VulkanImageType;
     switch(VulkanTexture->GetDimension())
     {
@@ -249,8 +248,11 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVInfo& I
         LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u);
     }
 
+    // NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture
+    const VkFormat VulkanFormat = VulkanTexture->GetVkFormat();
     const VkImage Image = VulkanTexture->GetVkImage();
     const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+
     if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InInfo.FirstMipLevel, InInfo.NumMips))
     {
         const FString TextureDebugName = VulkanTexture->GetDebugName();
@@ -320,8 +322,7 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVInfo& 
         VULKAN_ERROR("Cannot create a view of a typeless format");
         return false;
     }
-    
-    const VkFormat VulkanFormat = ConvertFormat(InInfo.Format);
+
     VkImageViewType VulkanImageType;
     switch(VulkanTexture->GetDimension())
     {
@@ -362,8 +363,11 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVInfo& 
         LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u);
     }
 
-    const VkImage Image = VulkanTexture->GetVkImage();
-    const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+	// NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture
+	const VkFormat VulkanFormat = VulkanTexture->GetVkFormat();
+	const VkImage Image = VulkanTexture->GetVkImage();
+	const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+
     if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InInfo.MipLevel, 1u))
     {
         const FString TextureDebugName = VulkanTexture->GetDebugName();

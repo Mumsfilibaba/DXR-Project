@@ -36,10 +36,10 @@
 #endif
 
 // G-Buffer
-Texture2D<float4> AlbedoTex       : register(t0);
-Texture2D<float4> NormalBuffer    : register(t1);
-Texture2D<float4> MaterialTex     : register(t2);
-Texture2D<float>  DepthStencilTex : register(t3);
+Texture2D<float4> AlbedoTex : register(t0);
+Texture2D<float4> NormalBuffer : register(t1);
+Texture2D<float4> MaterialTex : register(t2);
+Texture2D<float> DepthStencilTex : register(t3);
 
 // Reflections
 Texture2D<float4> DXRReflection : register(t4);
@@ -48,11 +48,11 @@ Texture2D<float4> DXRReflection : register(t4);
 Texture2D<float2> IntegrationLUT : register(t5);
 
 // SkyLight
-TextureCube<float4> SkyLightDiffuseCubeMap  : register(t6);
+TextureCube<float4> SkyLightDiffuseCubeMap : register(t6);
 TextureCube<float4> SkyLightSpecularCubeMap : register(t7);
 
 // Light-Probe
-TextureCube<float4> ProbeDiffuseCubeMap  : register(t8);
+TextureCube<float4> ProbeDiffuseCubeMap : register(t8);
 TextureCube<float4> ProbeSpecularCubeMap : register(t9);
 
 // Shadow Cascade
@@ -70,9 +70,9 @@ Texture2D<uint> CascadeIndexBuffer : register(t13);
 #endif
 
 // Samplers
-SamplerState LUTSampler         : register(s0);
+SamplerState LUTSampler : register(s0);
 SamplerState EnvironmentSampler : register(s1);
-SamplerState GBufferSampler     : register(s2);
+SamplerState GBufferSampler : register(s2);
 
 // Point-Lights
 SamplerComparisonState ShadowMapSampler0 : register(s3);
@@ -114,10 +114,10 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 }
 
 ConstantBuffer<FDirectionalLight> DirectionalLightBuffer : register(b5);
-ConstantBuffer<FLightProbeInfo>   LightProbeInfoBuffer   : register(b6);
+ConstantBuffer<FLightProbeInfo> LightProbeInfoBuffer     : register(b6);
 
 // Scene Output
-RWTexture2D<float4> Output : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> Output : register(u0);
 
 // SpecularEnvironment
 

@@ -15,20 +15,19 @@
 #endif
 
 // FXAA Settings
-#define FXAA_EDGE_THRESHOLD     (1.0 / 8.0)
+#define FXAA_EDGE_THRESHOLD (1.0 / 8.0)
 #define FXAA_EDGE_THRESHOLD_MIN (1.0 / 24.0)
-#define FXAA_SUBPIX_TRIM        (1.0 / 4.0)
-#define FXAA_SUBPIX_CAP         (3.0 / 4.0)
-#define FXAA_SUBPIX_TRIM_SCALE  (1.0 / (1.0 - FXAA_SUBPIX_TRIM))
-#define FXAA_SEARCH_THRESHOLD   (1.0 / 4.0)
-#define FXAA_SEARCH_STEPS       24
+#define FXAA_SUBPIX_TRIM (1.0 / 4.0)
+#define FXAA_SUBPIX_CAP (3.0 / 4.0)
+#define FXAA_SUBPIX_TRIM_SCALE (1.0 / (1.0 - FXAA_SUBPIX_TRIM))
+#define FXAA_SEARCH_THRESHOLD (1.0 / 4.0)
+#define FXAA_SEARCH_STEPS 24
 
 SHADER_CONSTANT_BLOCK_BEGIN
     float2 TextureSize;
 SHADER_CONSTANT_BLOCK_END
 
 Texture2D FinalImage : register(t0);
-
 SamplerState Sampler : register(s0);
 
 float4 FXAASample(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord)

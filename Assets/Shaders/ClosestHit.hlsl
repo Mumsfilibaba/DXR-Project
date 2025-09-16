@@ -9,14 +9,14 @@ RaytracingAccelerationStructure Scene : register(t0);
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
-TextureCube<float4> Skybox                : register(t1);
-Texture2D<float4>   MaterialTextures[128] : register(t4);
+TextureCube<float4> Skybox : register(t1);
+Texture2D<float4> MaterialTextures[128] : register(t4);
 
 SamplerState TextureSampler : register(s1);
 
 // Local RootSignature
-StructuredBuffer<FVertex> Vertices  : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-ByteAddressBuffer        InIndices : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+StructuredBuffer<FVertex> Vertices : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
+ByteAddressBuffer InIndices : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
 //ConstantBuffer<Material> MaterialBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 

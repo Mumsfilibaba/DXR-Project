@@ -1,6 +1,5 @@
 #ifndef PBR_HELPERS_HLSLI
 #define PBR_HELPERS_HLSLI
-
 #include "Constants.hlsli"
 #include "Helpers.hlsli"
 #include "Halton.hlsli"

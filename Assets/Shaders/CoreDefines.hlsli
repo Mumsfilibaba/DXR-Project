@@ -19,4 +19,11 @@
         }; \
         ConstantBuffer<FShaderBlockConstants> Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
 #endif
+
+#if SHADER_LANG == SHADER_LANG_SPIRV
+    #define TEXTURE_FORMAT_UNKNOWN [[vk::image_format("unknown")]] 
+#else
+    #define TEXTURE_FORMAT_UNKNOWN
+#endif
+
 #endif

@@ -9,10 +9,10 @@ SHADER_CONSTANT_BLOCK_BEGIN
     uint  CurrentFaceResolution;
 SHADER_CONSTANT_BLOCK_END
 
-TextureCube<float4> EnvironmentMap     : register(t0);
-SamplerState        EnvironmentSampler : register(s0);
+TextureCube<float4> EnvironmentMap : register(t0);
+SamplerState EnvironmentSampler : register(s0);
 
-RWTexture2DArray<float4> SpecularIrradianceMap : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<float4> SpecularIrradianceMap : register(u0);
 
 // Transform from dispatch ID to cubemap face direction
 static const float3x3 RotateUV[6] =

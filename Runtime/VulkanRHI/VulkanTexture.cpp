@@ -144,6 +144,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
     // NOTE: We store the format so that we have easy access to it later
     ImageCreateInfo.format = Format = ConvertFormat(Info.Format);
+
     if (IsTypelessFormat(Info.Format))
     {
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
@@ -313,9 +314,10 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
         InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
 
-        // Transfer all the miplevels
+        // Transfer all the mip-levels
         uint32 Width  = Info.Extent.X;
         uint32 Height = Info.Extent.Y;
+
         for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
         {
             // TODO: This does not feel optimal

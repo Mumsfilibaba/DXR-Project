@@ -76,7 +76,7 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     bool bHasAllFeatures = true;
     for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures10; ++FeatureIndex)
     {
-        if (RequiredFeatures[FeatureIndex]  == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
+        if (RequiredFeatures[FeatureIndex] == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
         {
             VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceFeatures[%d]", AdapterProperties.deviceName, FeatureIndex);
             bHasAllFeatures = false;
@@ -98,7 +98,7 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     bHasAllFeatures = true;
     for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures11; ++FeatureIndex)
     {
-        if (RequiredFeatures[FeatureIndex]  == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
+        if (RequiredFeatures[FeatureIndex] == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
         {
             VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceVulkan11Features[%d]", AdapterProperties.deviceName, FeatureIndex);
             bHasAllFeatures = false;
@@ -120,7 +120,7 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     bHasAllFeatures = true;
     for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures12; ++FeatureIndex)
     {
-        if (RequiredFeatures[FeatureIndex]  == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
+        if (RequiredFeatures[FeatureIndex] == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
         {
             VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceVulkan12Features[%d]", AdapterProperties.deviceName, FeatureIndex);
             bHasAllFeatures = false;
@@ -208,7 +208,6 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
         {
             VkPhysicalDeviceProperties AdapterProperties;
             vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
-            
             LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
         }
     }

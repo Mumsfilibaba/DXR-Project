@@ -50,9 +50,9 @@ ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
 #if ENABLE_NORMAL_MAPPING
     Texture2D<float3> NormalTex : register(t1);
 #endif
-    Texture2D<float>  RoughnessTex : register(t2);
-    Texture2D<float>  MetallicTex  : register(t3);
-    Texture2D<float>  AOTex        : register(t4);
+    Texture2D<float> RoughnessTex : register(t2);
+    Texture2D<float> MetallicTex : register(t3);
+    Texture2D<float> AOTex : register(t4);
 #if ENABLE_ALPHA_MASK
     Texture2D<float> AlphaMaskTex : register(t5);
 #endif

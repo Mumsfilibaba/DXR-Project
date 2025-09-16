@@ -46,28 +46,28 @@ SHADER_CONSTANT_BLOCK_END
 ConstantBuffer<FMaterial> MaterialBuffer : register(b6);
 
 // Per Frame Samplers
-SamplerState MaterialSampler   : register(s0);
-SamplerState LUTSampler        : register(s1);
+SamplerState MaterialSampler : register(s0);
+SamplerState LUTSampler : register(s1);
 SamplerState IrradianceSampler : register(s2);
 
 SamplerComparisonState ShadowMapSampler0 : register(s3);
 SamplerComparisonState ShadowMapSampler1 : register(s4);
 
 // Per Frame Textures
-TextureCube<float4>     IrradianceMap         : register(t0);
-TextureCube<float4>     SpecularIrradianceMap : register(t1);
-Texture2D<float4>       IntegrationLUT        : register(t2);
-Texture2D<float>        DirLightShadowMaps    : register(t3);
-TextureCubeArray<float> PointLightShadowMaps  : register(t4);
+TextureCube<float4> IrradianceMap : register(t0);
+TextureCube<float4> SpecularIrradianceMap : register(t1);
+Texture2D<float4> IntegrationLUT : register(t2);
+Texture2D<float> DirLightShadowMaps : register(t3);
+TextureCubeArray<float> PointLightShadowMaps : register(t4);
 
 // Per Object Textures
-Texture2D<float4> AlbedoTex   : register(t5);
-Texture2D<float4> NormalTex   : register(t6);
+Texture2D<float4> AlbedoTex : register(t5);
+Texture2D<float4> NormalTex : register(t6);
 Texture2D<float> RoughnessTex : register(t7);
-Texture2D<float> HeightMap    : register(t8);
-Texture2D<float> MetallicTex  : register(t9);
-Texture2D<float> AOTex        : register(t10);
-Texture2D<float> AlphaTex     : register(t11);
+Texture2D<float> HeightMap : register(t8);
+Texture2D<float> MetallicTex : register(t9);
+Texture2D<float> AOTex : register(t10);
+Texture2D<float> AlphaTex : register(t11);
 
 struct FVSInput
 {

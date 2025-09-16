@@ -180,6 +180,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     if (!CommandPayload)
     {
         CommandPayload = new FVulkanCommandPayload(GetDevice(), Queue);
+        CommandPayload->AquireFence();
     }
 }
 
@@ -207,8 +208,8 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
             CommandPool = nullptr;
         }
 
-        TimestampQueryAllocator.PrepareForNewCommanBuffer();
-        OcclusionQueryAllocator.PrepareForNewCommanBuffer();
+        TimestampQueryAllocator.PrepareForNewCommandBuffer();
+        OcclusionQueryAllocator.PrepareForNewCommandBuffer();
 
         FVulkanRHI::Get()->SubmitCommands(CommandPayload, true);
         CommandPayload = nullptr;

@@ -1,6 +1,5 @@
 #ifndef HELPERS_HLSLI
 #define HELPERS_HLSLI
-
 #include "Constants.hlsli"
 #include "DepthHelpers.hlsli"
 

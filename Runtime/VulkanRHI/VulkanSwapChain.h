@@ -60,6 +60,7 @@ private:
         SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
     }
 
+    typedef TArray<FVulkanFence*, TInlineArrayAllocator<FVulkanFence*, NUM_BACK_BUFFERS>> FVulkanFenceArray;
     typedef TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> FVulkanSemaphoreArray;
 
     void*                       WindowHandle;
@@ -67,6 +68,7 @@ private:
     FVulkanSwapChainHandleRef   SwapChainHandle;
     FVulkanBackBufferTextureRef BackBuffer;
     TArray<FVulkanTextureRef>   BackBuffers;
+    FVulkanFenceArray           ImageFences;
     FVulkanSemaphoreArray       ImageSemaphores;
     FVulkanSemaphoreArray       RenderSemaphores;
     int32                       SemaphoreIndex;

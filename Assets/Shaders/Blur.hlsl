@@ -1,7 +1,7 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-RWTexture2D<min16float> Texture : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<min16float> Texture : register(u0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
     int2 ScreenSize;

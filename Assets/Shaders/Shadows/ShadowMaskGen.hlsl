@@ -77,11 +77,11 @@
 
 // Camera and Light
 #if SHADER_LANG == SHADER_LANG_MSL
-ConstantBuffer<FCamera>           CameraBuffer : register(b2);
-ConstantBuffer<FDirectionalLight> LightBuffer  : register(b3);
+ConstantBuffer<FCamera> CameraBuffer : register(b2);
+ConstantBuffer<FDirectionalLight> LightBuffer : register(b3);
 #else
-ConstantBuffer<FCamera>           CameraBuffer : register(b0);
-ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
+ConstantBuffer<FDirectionalLight> LightBuffer : register(b1);
 #endif
 
 struct FDirectionalShadowSettings
@@ -96,23 +96,23 @@ ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
 
 // Shadow information
 StructuredBuffer<FCascadeMatrices> ShadowMatricesBuffer : register(t0);
-StructuredBuffer<FCascadeSplit>    ShadowSplitsBuffer   : register(t1);
+StructuredBuffer<FCascadeSplit> ShadowSplitsBuffer : register(t1);
 
 // G-Buffer
-Texture2D<float>  DepthBuffer  : register(t2);
+Texture2D<float> DepthBuffer : register(t2);
 Texture2D<float3> NormalBuffer : register(t3);
 
 // Shadow Cascades
 Texture2DArray<float> ShadowCascades : register(t4);
 
 // Output
-RWTexture2D<float> Output : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float> Output : register(u0);
 #if ENABLE_DEBUG
-RWTexture2D<uint> CascadeIndexTex : register(u1);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint> CascadeIndexTex : register(u1);
 #endif
 
 // Samplers
-SamplerComparisonState ShadowSamplerPointCmp  : register(s0);
+SamplerComparisonState ShadowSamplerPointCmp : register(s0);
 SamplerComparisonState ShadowSamplerLinearCmp : register(s1);
 
 SamplerState ShadowSamplerPoint : register(s2);

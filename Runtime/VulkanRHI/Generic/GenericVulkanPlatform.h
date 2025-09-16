@@ -47,6 +47,18 @@ struct FGenericVulkanPlatform
         #if VK_KHR_maintenance5
             VK_KHR_MAINTENANCE_5_EXTENSION_NAME,
         #endif
+        #if VK_KHR_maintenance6
+            VK_KHR_MAINTENANCE_6_EXTENSION_NAME,
+        #endif
+		#if VK_KHR_maintenance7
+            VK_KHR_MAINTENANCE_7_EXTENSION_NAME,
+		#endif
+		#if VK_KHR_maintenance8
+			VK_KHR_MAINTENANCE_8_EXTENSION_NAME,
+		#endif
+		#if VK_KHR_maintenance9
+			VK_KHR_MAINTENANCE_9_EXTENSION_NAME,
+		#endif
         #if VK_KHR_buffer_device_address
             VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
         #endif
@@ -97,6 +109,9 @@ struct FGenericVulkanPlatform
         #endif
         #if VK_KHR_multiview
             VK_KHR_MULTIVIEW_EXTENSION_NAME,
+        #endif
+        #if VK_KHR_dynamic_rendering
+            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
         #endif
         #if VK_EXT_descriptor_indexing
             VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,

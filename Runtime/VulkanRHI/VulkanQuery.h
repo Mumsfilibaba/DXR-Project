@@ -112,7 +112,7 @@ public:
     ~FVulkanQueryAllocator();
 
     FVulkanQueryAllocation Allocate(uint64* InResults);
-    void PrepareForNewCommanBuffer();
+    void PrepareForNewCommandBuffer();
 
 private:
     FVulkanCommandContext&   Context; 

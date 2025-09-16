@@ -181,7 +181,7 @@ FVulkanQueryAllocation FVulkanQueryAllocator::Allocate(uint64* InResults)
     return QueryAllocation;
 }
 
-void FVulkanQueryAllocator::PrepareForNewCommanBuffer()
+void FVulkanQueryAllocator::PrepareForNewCommandBuffer()
 {
     if (QueryPool)
     {

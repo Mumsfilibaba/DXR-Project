@@ -18,15 +18,15 @@
 
 // Output
 #if CONFIG_CUBE_MAP
-    RWTexture2DArray<float4> OutputMip1 : register(u0);
-    RWTexture2DArray<float4> OutputMip2 : register(u1);
-    RWTexture2DArray<float4> OutputMip3 : register(u2);
-    RWTexture2DArray<float4> OutputMip4 : register(u3);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<float4> OutputMip1 : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<float4> OutputMip2 : register(u1);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<float4> OutputMip3 : register(u2);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<float4> OutputMip4 : register(u3);
 #else
-    RWTexture2D<float4> OutputMip1 : register(u0);
-    RWTexture2D<float4> OutputMip2 : register(u1);
-    RWTexture2D<float4> OutputMip3 : register(u2);
-    RWTexture2D<float4> OutputMip4 : register(u3);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> OutputMip1 : register(u0);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> OutputMip2 : register(u1);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> OutputMip3 : register(u2);
+    TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> OutputMip4 : register(u3);
 #endif
 
 // Linear sampler

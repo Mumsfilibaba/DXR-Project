@@ -7,11 +7,11 @@
 #define ENABLE_FRAME_INDEX 0
 
 Texture2D<float3> GBufferNormals : register(t0);
-Texture2D<float>  GBufferDepth   : register(t1);
+Texture2D<float> GBufferDepth : register(t1);
 
 SamplerState GBufferSampler : register(s0);
 
-RWTexture2D<float> Output : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float> Output : register(u0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
     // 0-16

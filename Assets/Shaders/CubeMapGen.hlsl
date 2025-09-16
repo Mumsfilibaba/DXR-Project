@@ -9,8 +9,8 @@ SHADER_CONSTANT_BLOCK_END
 
 SamplerState LinearSampler : register(s0);
 
-Texture2D<float4>             Source  : register(t0);
-RWTexture2DArray<min16float4> OutCube : register(u0);
+Texture2D<float4> Source : register(t0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<min16float4> OutCube : register(u0);
 
 static const float2 INV_ATAN = float2(0.1591f, 0.3183f);
 

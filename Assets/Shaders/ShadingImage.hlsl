@@ -1,7 +1,7 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-RWTexture2D<uint> Output : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint> Output : register(u0);
 
 [numthreads(1, 1, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)

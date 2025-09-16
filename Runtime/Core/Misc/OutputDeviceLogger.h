@@ -3,6 +3,13 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/IOutputDevice.h"
 
+#define LOG_ERROR_CRITICAL(...) \
+    do \
+    { \
+        FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, FString::CreateFormatted(__VA_ARGS__)); \
+        DEBUG_BREAK(); \
+    } while (false)
+
 #define LOG_ERROR(...) \
     do \
     { \

@@ -273,6 +273,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         
         ImDrawData* DrawData = ImGui::GetDrawData();
         PrepareDrawData(CommandList, DrawData);
+        PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
         // Render to the main SwapChain
         FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHISwapChain->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
@@ -361,9 +362,9 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
 
     uint64 VertexOffset = 0;
     uint64 IndexOffset  = 0;
-    for (int32 Index = 0; Index < DrawData->CmdListsCount; ++Index)
+    for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
     {
-        const ImDrawList* DrawCmdList = DrawData->CmdLists[Index];
+        const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
         CommandList.UpdateBuffer(ViewportData->VertexBuffer.Get(), FBufferRegion(VertexOffset * sizeof(ImDrawVert), DrawCmdList->VtxBuffer.Size * sizeof(ImDrawVert)), DrawCmdList->VtxBuffer.Data);
         CommandList.UpdateBuffer(ViewportData->IndexBuffer.Get(), FBufferRegion(IndexOffset * sizeof(ImDrawIdx), DrawCmdList->IdxBuffer.Size * sizeof(ImDrawIdx)), DrawCmdList->IdxBuffer.Data);
         
@@ -397,12 +398,12 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
     ImVec2 ClipOffset = DrawData->DisplayPos;
     ImVec2 ClipScale  = DrawData->FramebufferScale;
     
-    for (int32 Index = 0; Index < DrawData->CmdListsCount; ++Index)
+    for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
     {
         // TODO: This should probably be handled differently
         bool bResetRenderState = false;
 
-        const ImDrawList* DrawCmdList = DrawData->CmdLists[Index];
+        const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
         for (int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; ++CmdIndex)
         {
             const ImDrawCmd* DrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
@@ -426,8 +427,6 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                 {
                     // TODO: Change this so that the same code can be used for font texture and images
                     const FImGuiTexture* DrawableTexture = reinterpret_cast<const FImGuiTexture*>(TextureID);
-                    PrepareTextureForShaderResourceUsage(CommandList, DrawableTexture);
-
                     if (!DrawableTexture->bAllowBlending)
                     {
                         CommandList.SetGraphicsPipelineState(PipelineStateNoBlending.Get());
@@ -546,21 +545,38 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
     CommandList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }
 
+void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData)
+{
+	for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
+	{
+		const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
+		for (int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; ++CmdIndex)
+		{
+			const ImDrawCmd* DrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
+			if (const ImTextureID TextureID = DrawCommand->GetTexID())
+			{
+				const FImGuiTexture* DrawableTexture = reinterpret_cast<const FImGuiTexture*>(TextureID);
+				PrepareTextureForShaderResourceUsage(CommandList, DrawableTexture);
+			}
+		}
+	}
+}
+
 void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture)
 {
-    if (!InTexture)
-    {
-        return;
-    }
+	if (!InTexture)
+	{
+		return;
+	}
 
-    // A texture can be used multiple times with ImGui, and we only want to perform a transition once
-    for (const FImGuiTexture* CurrentTexture : RenderedTextures)
-    {
-        if (CurrentTexture->Texture == InTexture->Texture)
-        {
-            return;
-        }
-    }
+	// A texture can be used multiple times with ImGui, and we only want to perform a transition once
+	for (const FImGuiTexture* CurrentTexture : RenderedTextures)
+	{
+		if (CurrentTexture->Texture == InTexture->Texture)
+		{
+			return;
+		}
+	}
 
 	if (InTexture->ResourceState != EResourceAccess::PixelShaderResource)
 	{
