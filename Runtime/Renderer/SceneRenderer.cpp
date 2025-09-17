@@ -460,6 +460,7 @@ void FSceneRenderer::BeginFrame()
 
 	CommandList.BeginFrame();
 	
+    // Resize SwapChains before doing anything else
     {
         TRACE_SCOPE("Resize SwapChains");
 
@@ -467,6 +468,8 @@ void FSceneRenderer::BeginFrame()
         {
 		    CommandList.ResizeSwapChain(ResizeInfo.SwapChain.Get(), ResizeInfo.Width, ResizeInfo.Height);
         }
+
+        SwapChainsToResize.Clear();
     }    
     
     CommandList.BeginExternalCapture();
@@ -474,6 +477,7 @@ void FSceneRenderer::BeginFrame()
 	// Begin capture GPU FrameTime
 	FGPUProfiler::Get().BeginGPUFrame(CommandList);
 
+    // Prepare SwapChains by transition the back-buffers to the correct resource state
 	{
 		TRACE_SCOPE("Prepare SwapChains");
 
