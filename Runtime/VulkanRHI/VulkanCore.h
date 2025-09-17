@@ -1267,9 +1267,9 @@ constexpr const CHAR* ToString(VkResult Result)
     }
 }
 
-constexpr const CHAR* GetVkErrorString(VkResult result)
+constexpr const CHAR* GetVkErrorString(VkResult Result)
 {
-    switch (result)
+    switch (Result)
     {
     case VK_SUCCESS:
         return "Command successfully completed";

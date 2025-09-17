@@ -273,7 +273,7 @@ FRHIShaderResourceView* FMesh::GetVertexBufferSRV(EVertexStream VertexStream) co
 
 void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
 {
-    constexpr float Inf = TNumericLimits<float>::Infinity();
+    constexpr const float Inf = TNumericLimits<float>::Infinity();
 
     FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
     FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);
@@ -327,7 +327,7 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
     const int32 NumMaterials = CreateInfo.Materials.Size();
     Materials.Reserve(NumMaterials);
     
-    const auto RetrieveRHITexture = [=](const FModelCreateInfo& ModelCreateInfo, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
+    const auto GetRHITexture = [=](const FModelCreateInfo& ModelCreateInfo, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
     {
         const FTexture2DRef Texture = ModelCreateInfo.Materials[MaterialIndex].Textures[MaterialTexture];
         return Texture ? Texture->GetRHITexture() : FEngine::Get()->BaseTexture;
@@ -348,12 +348,12 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
         }
 
         TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(MaterialInfo);
-        Material->AlbedoMap    = RetrieveRHITexture(CreateInfo, EMaterialTexture::Diffuse, Index);
-        Material->AOMap        = RetrieveRHITexture(CreateInfo, EMaterialTexture::AmbientOcclusion, Index);
-        Material->SpecularMap  = RetrieveRHITexture(CreateInfo, EMaterialTexture::Specular, Index);
-        Material->MetallicMap  = RetrieveRHITexture(CreateInfo, EMaterialTexture::Metallic, Index);
-        Material->RoughnessMap = RetrieveRHITexture(CreateInfo, EMaterialTexture::Roughness, Index);
-        Material->AlphaMask    = RetrieveRHITexture(CreateInfo, EMaterialTexture::AlphaMask, Index);
+        Material->AlbedoMap    = GetRHITexture(CreateInfo, EMaterialTexture::Diffuse, Index);
+        Material->AOMap        = GetRHITexture(CreateInfo, EMaterialTexture::AmbientOcclusion, Index);
+        Material->SpecularMap  = GetRHITexture(CreateInfo, EMaterialTexture::Specular, Index);
+        Material->MetallicMap  = GetRHITexture(CreateInfo, EMaterialTexture::Metallic, Index);
+        Material->RoughnessMap = GetRHITexture(CreateInfo, EMaterialTexture::Roughness, Index);
+        Material->AlphaMask    = GetRHITexture(CreateInfo, EMaterialTexture::AlphaMask, Index);
 
         if (CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal])
         {
