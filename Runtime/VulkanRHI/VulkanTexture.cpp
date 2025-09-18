@@ -543,10 +543,5 @@ void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
 
 FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext)
 {
-    if (!SwapChain)
-    {
-        return nullptr;
-    }
-
     return SwapChain ? SwapChain->GetCurrentBackBuffer(InCommandContext) : nullptr;
 }
