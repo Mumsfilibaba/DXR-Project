@@ -14,8 +14,6 @@ static TAutoConsoleVariable<bool> CVarEnableVSync(
     true,
     EConsoleVariableFlags::Default);
 
-// Recreate the SwapChain when it's reported to be suboptimal when acquiring next image
-static constexpr const bool GVulkanRecreateSuboptimalSwapChainOnAquire = true;
 static constexpr const bool GVulkanLogSempahoreIndex = false;
 
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainInfo& InSwapChainInfo)
@@ -23,7 +21,7 @@ FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainI
     , FVulkanDeviceChild(InDevice)
     , WindowHandle(InSwapChainInfo.WindowHandle)
     , Surface(nullptr)
-    , SwapChainHandle(nullptr)
+    , SwapChainResource(nullptr)
     , BackBuffer(nullptr)
     , BackBuffers()
     , ImageSemaphores()
@@ -76,38 +74,105 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
     return true;
 }
 
+bool FVulkanSwapChain::RecreateSurface(FVulkanCommandContext* InCommandContext)
+{
+	Surface = new FVulkanSurface(GetDevice(), InCommandContext->GetCommandQueue(), WindowHandle);
+	if (!Surface->Initialize())
+	{
+		VULKAN_WARNING("RecreateSurface: failed to initialize surface");
+		return false;
+	}
+
+	return true;
+}
+
+bool FVulkanSwapChain::ValidateSurfaceAndSize(FVulkanCommandContext* InCommandContext, uint32& OutWidth, uint32& OutHeight)
+{
+	VkSurfaceCapabilitiesKHR Capabilities = { };
+
+	ESurfaceStatus SurfaceStatus = Surface->GetCapabilities(Capabilities);
+	if (SurfaceStatus == ESurfaceStatus::SurfaceLost)
+	{
+		VULKAN_INFO("FVulkanSwapChain::ValidateSurfaceAndSize Surface lost. Attempting one recreation.");
+        if (!RecreateSurface(InCommandContext))
+        {
+			return false;
+        }
+
+		SurfaceStatus = Surface->GetCapabilities(Capabilities);
+		if (SurfaceStatus != ESurfaceStatus::Ok)
+		{
+			VULKAN_WARNING("FVulkanSwapChain::ValidateSurfaceAndSize Capabilities still not OK after surface recreation (status=%s)", ToString(SurfaceStatus));
+			return false;
+		}
+	}
+	else if (SurfaceStatus != ESurfaceStatus::Ok)
+	{
+		// ZeroSized or Error, don't proceed right now.
+		return false;
+	}
+
+	if (!IsUndefinedExtent(Capabilities))
+	{
+		OutWidth  = FMath::Max<uint32>(1u, Capabilities.currentExtent.width);
+		OutHeight = FMath::Max<uint32>(1u, Capabilities.currentExtent.height);
+	}
+	else
+	{
+		// Caller provided size must be non-zero
+		OutWidth  = OutWidth ? OutWidth : Info.Width;
+		OutHeight = OutHeight ? OutHeight : Info.Height;
+
+        if (OutWidth == 0 || OutHeight == 0)
+        {
+            // Minimized or no drawable size
+			return false; 
+        }
+	}
+
+	return true;
+}
+
 bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
-    FVulkanSwapChainCreateInfo SwapChainCreateInfo;
-    SwapChainCreateInfo.ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    SwapChainCreateInfo.PreviousSwapChain = SwapChainHandle.Get();
-    SwapChainCreateInfo.Surface           = Surface.Get();
-    SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
-    SwapChainCreateInfo.Extent.width      = InWidth;
-    SwapChainCreateInfo.Extent.height     = InHeight;
-    SwapChainCreateInfo.Format            = GetColorFormat();
-    SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
+	if (InWidth == 0 || InHeight == 0)
+	{
+		VULKAN_INFO("SwapChain Width or Height of zero is not supported (w=%u h=%u).", InWidth, InHeight);
+		return false;
+	}
 
-    if (InWidth == 0 || InHeight == 0)
-    {
-        VULKAN_ERROR("SwapChain Width or Height of zero is not supported");
-        return false;
-    }
+	uint32 CreateWidth  = InWidth;
+	uint32 CreateHeight = InHeight;
+	if (!ValidateSurfaceAndSize(InCommandContext, CreateWidth, CreateHeight))
+	{
+		VULKAN_WARNING("Surface not ready or zero-sized.");
+		return false;
+	}
 
-    // NOTE: Create a temporary SwapChain, this is done in order to keep the old swapchain alive in case we recreate the swapchain
-    FVulkanSwapChainHandleRef NewSwapChainHandle = new FVulkanSwapChainHandle(GetDevice());
-    if (!NewSwapChainHandle->Initialize(SwapChainCreateInfo))
-    {
+	FVulkanSwapChainCreateInfo SwapChainCreateInfo;
+	SwapChainCreateInfo.ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+	SwapChainCreateInfo.Surface           = Surface.Get();
+	SwapChainCreateInfo.PreviousSwapChain = SwapChainResource.Get();
+	SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
+	SwapChainCreateInfo.Extent.width      = CreateWidth;
+	SwapChainCreateInfo.Extent.height     = CreateHeight;
+	SwapChainCreateInfo.Format            = GetColorFormat();
+	SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
+
+	// NOTE: Create a temporary SwapChain, keeping old alive until success
+    FVulkanSwapChainResourceRef NewSwapChainResource = new FVulkanSwapChainResource(GetDevice());
+	if (!NewSwapChainResource->Initialize(SwapChainCreateInfo))
+	{
         VULKAN_ERROR("Failed to create SwapChain");
-        return false;
-    }
-    else
-    {
-        SwapChainHandle = NewSwapChainHandle;
-    }
+		return false;
+	}
+	else
+	{
+		SwapChainResource = NewSwapChainResource;
+	}
 
     // Update the description if the requested image size was not supported
-    VkExtent2D SwapChainExtent = SwapChainHandle->GetExtent();
+    VkExtent2D SwapChainExtent = SwapChainResource->GetExtent();
     if (InWidth != SwapChainExtent.width || InHeight != SwapChainExtent.height)
     {
         VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Info.Width, Info.Height, SwapChainExtent.width, SwapChainExtent.height);
@@ -123,7 +188,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     }
 
     // Initialize semaphores and BackBuffers
-    const uint32 BufferCount = SwapChainHandle->GetBufferCount();
+    const uint32 BufferCount = SwapChainResource->GetBufferCount();
     if (BufferCount != static_cast<uint32>(BackBuffers.Size()))
 	{
 		ImageFences.Resize(BufferCount);
@@ -138,6 +203,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
         // Create a FVulkanTexture for each back-buffer
         for (uint32 i = 0; i < BufferCount; ++i)
         {
+            // Create semaphores
             FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
             if (NewImageSemaphore->Initialize())
             {
@@ -160,6 +226,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
                 return false;
             }
 
+            // Create image texture-wrapper
             if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferInfo))
             {
                 BackBuffers[i] = NewTexture;
@@ -169,16 +236,22 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
                 return false;
             }
 
+            // Reset fence for this image
             ImageFences[i] = nullptr;
         }
-        
-        // Set a valid semaphore index
-        SemaphoreIndex = 0;
     }
+	else
+	{
+		// Buffer count unchanged. However, make sure we drop any stale per-image fences.
+        for (uint32 i = 0; i < BufferCount; ++i)
+        {
+			ImageFences[i] = nullptr;
+        }
+	}
 
     // Retrieve the images
-    TArray<VkImage> SwapChainImages(SwapChainHandle->GetBufferCount());
-    SwapChainHandle->GetSwapChainImages(SwapChainImages.Data());
+    TArray<VkImage> SwapChainImages(SwapChainResource->GetBufferCount());
+    SwapChainResource->GetSwapChainImages(SwapChainImages.Data());
 
     // Ensure we are recording
     CHECK(InCommandContext->IsRecording());
@@ -211,6 +284,10 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     }
 
     InCommandContext->SplitCommandBuffer(false, false);
+
+	// Reset indices
+	SemaphoreIndex  = 0;
+	BackBufferIndex = VULKAN_INVALID_BACK_BUFFER_INDEX;
     return true;
 }
 
@@ -220,7 +297,10 @@ void FVulkanSwapChain::DestroySwapChain(FVulkanCommandContext* InCommandContext)
     InCommandContext->GetCommandQueue().WaitForCompletion();
 
     // Destroy the swapchain
-    SwapChainHandle.Reset();
+    SwapChainResource.Reset();
+
+	BackBufferIndex = VULKAN_INVALID_BACK_BUFFER_INDEX;
+	SemaphoreIndex  = 0;
 }
 
 bool FVulkanSwapChain::Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
@@ -254,48 +334,61 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     // TODO: Recreate SwapChain based on V-Sync
     UNREFERENCED_VARIABLE(bVerticalSync);
    
+	// If we don't have a drawable size, don't try to acquire/present
+    if (Info.Width == 0 || Info.Height == 0 || !SwapChainResource)
+    {
+		return false;
+    }
+
     VkResult Result = VK_SUCCESS;
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
-        Result = AquireNextImage(InCommandContext);
-        if (Result == VK_SUBOPTIMAL_KHR)
+        Result = AcquireNextImage(InCommandContext);
+        if (Result != VK_SUCCESS)
         {
-            LOG_WARNING("FVulkanSwapChain::Present [AquireNextImage] SwapChain is Suboptimal");
-        }
-        
-        if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
-        {
-            LOG_WARNING("FVulkanSwapChain::Present [AquireNextImage] SwapChain is OutOfDate");
-            return false;
+            VULKAN_INFO("FVulkanSwapChain::Present [AquireNextImage] SwapChain is %s", Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" : "OutOfDate");
+
+            if (Result != VK_SUBOPTIMAL_KHR)
+            {
+			    // Try to recreate with current size (Recreate surface if needed)
+			    InCommandContext->SplitCommandBuffer(false, true);
+
+                if (!CreateSwapChain(InCommandContext, Info.Width, Info.Height))
+                {
+				    return false;
+                }
+
+                // Try once more next frame
+			    return true;
+            }
         }
     }
 
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 	if constexpr (GVulkanLogSempahoreIndex)
 	{
-		LOG_INFO("FVulkanSwapChain::Present SemaphoreIndex=%d", SemaphoreIndex);
+		VULKAN_INFO("FVulkanSwapChain::Present SemaphoreIndex=%d", SemaphoreIndex);
 	}
 
-    Result = SwapChainHandle->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
-    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
+    Result = SwapChainResource->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
+    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
-        if (Result == VK_SUBOPTIMAL_KHR)
-        {
-            VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is Suboptimal");
-        }
-        else
-        {
-            VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is OutOfDate");
-        }
-        
+		VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is %s", (Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" :
+				(Result == VK_ERROR_SURFACE_LOST_KHR ? "SurfaceLost" : "OutOfDate")));
+
         InCommandContext->SplitCommandBuffer(false, true);
 
         if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
         {
-            LOG_WARNING("FVulkanSwapChain::Present CreateSwapChain Failed");
+            VULKAN_WARNING("FVulkanSwapChain::Present CreateSwapChain Failed");
             return false;
         }
     }
+	else if (Result != VK_SUCCESS)
+	{
+		VULKAN_ERROR("FVulkanSwapChain::Present vkQueuePresentKHR failed with %s.", ToString(Result));
+		return false;
+	}
 
     AdvanceSemaphoreIndex();
     BackBufferIndex = VULKAN_INVALID_BACK_BUFFER_INDEX;
@@ -305,37 +398,47 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
 void FVulkanSwapChain::SetDebugName(const FString& InName)
 {
     // Name the swapchain object
-    if (SwapChainHandle)
+    if (SwapChainResource)
     {
-        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, SwapChainHandle->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, SwapChainResource->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
         BackBuffer->SetDebugName("BackBuffer Proxy");
 
         // Name all the images
-        FString ImageName;
-        for (uint32 TextureIndex = 0; FVulkanTextureRef Texture : BackBuffers)
+        for (uint32 i = 0; i < BackBuffers.Size(); ++i)
         {
-            ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", TextureIndex);
-            Texture->SetDebugName(ImageName);
+            const FString ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", i);
+            BackBuffers[i]->SetDebugName(ImageName);
         }
     }
 }
 
 FVulkanTexture* FVulkanSwapChain::GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext)
 {
+    if (!SwapChainResource || Info.Width == 0 || Info.Height == 0)
+    {
+        VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is Invalid");
+		return nullptr;
+    }
+
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
-        VkResult Result = AquireNextImage(InCommandContext);
-        if constexpr (GVulkanRecreateSuboptimalSwapChainOnAquire)
-        {
-            if (Result == VK_SUBOPTIMAL_KHR)
-            {
-                VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is Suboptimal");
-            }
-        }
+        VkResult Result = AcquireNextImage(InCommandContext);
+		if (Result == VK_SUBOPTIMAL_KHR)
+		{
+			VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is Suboptimal");
+		}
         
         if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
         {
             VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is OutOfDate");
+			InCommandContext->SplitCommandBuffer(false, true);
+
+			if (!CreateSwapChain(InCommandContext, Info.Width, Info.Height))
+			{
+                VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain recreation failed");
+				return nullptr;
+			}
+
             return nullptr;
         }
     }
@@ -348,14 +451,14 @@ FRHITexture* FVulkanSwapChain::GetBackBuffer() const
     return BackBuffer.Get();
 }
 
-VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandContext)
+VkResult FVulkanSwapChain::AcquireNextImage(FVulkanCommandContext* InCommandContext)
 {
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
 
     if constexpr (GVulkanLogSempahoreIndex)
     {
-        LOG_INFO("FVulkanSwapChain::AquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
+        VULKAN_INFO("FVulkanSwapChain::AquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
     }
 
 	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])
@@ -366,7 +469,7 @@ VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandConte
         Fence->Release();
 	}
 
-    VkResult Result = SwapChainHandle->AquireNextImage(ImageSemaphore.Get());
+    VkResult Result = SwapChainResource->AcquireNextImage(ImageSemaphore.Get());
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
         VULKAN_ERROR("Failed to aquire SwapChain image");
@@ -383,6 +486,6 @@ VkResult FVulkanSwapChain::AquireNextImage(FVulkanCommandContext* InCommandConte
     }
 
     // Update the BackBuffer index
-    BackBufferIndex = SwapChainHandle->GetBufferIndex();
+    BackBufferIndex = SwapChainResource->GetBufferIndex();
     return Result;
 }

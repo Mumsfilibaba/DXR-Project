@@ -75,18 +75,18 @@ public:
     }
 
 protected:
-    VkImage                       Image;
-    VkImageType                   ImageType;
-    VkFormat                      Format;
-    FVulkanMemoryAllocation       MemoryAllocation;
-    VkImageCreateInfo             CreateInfo;
+    FString                 DebugName;
+    VkImage                 Image;
+    VkImageType             ImageType;
+    VkFormat                Format;
+    FVulkanMemoryAllocation MemoryAllocation;
+    VkImageCreateInfo       CreateInfo;
+
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
 
     TArray<FVulkanResourceView*>  ImageViews;
     TMap<FVulkanHashableImageView, FVulkanResourceView*> ImageViewMap;
-
-    FString DebugName;
 };
 
 class FVulkanBackBufferTexture : public FVulkanTexture

@@ -15,7 +15,7 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanComma
 
 FVulkanCommandBuffer::~FVulkanCommandBuffer()
 {
-    CommandBuffer = FCommandBuffer();
+    CommandBuffer = VulkanInternal::FCommandBuffer();
 }
 
 bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)

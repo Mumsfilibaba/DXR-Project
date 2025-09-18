@@ -6,7 +6,7 @@
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanSemaphore.h"
 #include "VulkanRHI/VulkanSurface.h"
-#include "VulkanRHI/VulkanSwapChainHandle.h"
+#include "VulkanRHI/VulkanSwapChainResource.h"
 
 #define VULKAN_INVALID_BACK_BUFFER_INDEX (-1)
 
@@ -40,9 +40,9 @@ public:
         return BackBuffers.Size();
     }
 
-    FVulkanSwapChainHandle* GetSwapChainHandle() const
+    FVulkanSwapChainResource* GetSwapChainHandle() const
     {
-        return SwapChainHandle.Get();
+        return SwapChainResource.Get();
     }
 
     FVulkanSurface* GetSurface() const
@@ -51,9 +51,11 @@ public:
     }
 
 private:
+	bool RecreateSurface(FVulkanCommandContext* InCommandContext);
+	bool ValidateSurfaceAndSize(FVulkanCommandContext* InCommandContext, uint32& OutW, uint32& OutH);
     bool CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
     void DestroySwapChain(FVulkanCommandContext* InCommandContext);
-    VkResult AquireNextImage(FVulkanCommandContext* InCommandContext);
+    VkResult AcquireNextImage(FVulkanCommandContext* InCommandContext);
 
     void AdvanceSemaphoreIndex()
     {
@@ -65,7 +67,7 @@ private:
 
     void*                       WindowHandle;
     FVulkanSurfaceRef           Surface;
-    FVulkanSwapChainHandleRef   SwapChainHandle;
+    FVulkanSwapChainResourceRef SwapChainResource;
     FVulkanBackBufferTextureRef BackBuffer;
     TArray<FVulkanTextureRef>   BackBuffers;
     FVulkanFenceArray           ImageFences;

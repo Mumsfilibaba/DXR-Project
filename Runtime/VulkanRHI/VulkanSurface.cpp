@@ -33,6 +33,7 @@ bool FVulkanSurface::Initialize()
     }
 
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
+
     VkBool32 PresentSupport = false;
     Result = vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice->GetVkPhysicalDevice(), Queue.GetQueueFamilyIndex(), Surface, &PresentSupport);
     if (VULKAN_FAILED(Result))
@@ -50,98 +51,188 @@ bool FVulkanSurface::Initialize()
     return true;
 }
 
-bool FVulkanSurface::GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupportedFormats) const
+ESurfaceStatus FVulkanSurface::GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupportedFormats) const
 {
-    FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
+	OutSupportedFormats.Reset();
 
-    uint32 FormatCount = 0;
-    VkResult Result = vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &FormatCount, nullptr);
+    if (Surface == VK_NULL_HANDLE)
+    {
+		return ESurfaceStatus::SurfaceLost;
+    }
+
+	FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
+
+	uint32 FormatCount = 0;
+	VkResult Result = vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &FormatCount, nullptr);
     if (Result == VK_ERROR_SURFACE_LOST_KHR)
     {
-        return false;
+		return ESurfaceStatus::SurfaceLost;
     }
 
-    if (VULKAN_FAILED(Result))
+	if (VULKAN_FAILED(Result)) 
     {
-        VULKAN_ERROR("Failed to retrieve supported surface formats");
-        return false;
-    }
+		VULKAN_ERROR("FVulkanSurface::GetSupportedFormats vkGetPhysicalDeviceSurfaceFormatsKHR failed: %s", GetVkErrorString(Result));
+		return ESurfaceStatus::Error;
+	}
 
-    OutSupportedFormats.Resize(FormatCount);
-    if (OutSupportedFormats.IsEmpty())
+	if (FormatCount == 0)
     {
-        VULKAN_ERROR("Surface does not support any formats");
-        return false;
-    }
+		VULKAN_ERROR("FVulkanSurface::GetSupportedFormats Surface reported zero supported formats");
+		return ESurfaceStatus::Error;
+	}
 
-    Result = vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &FormatCount, OutSupportedFormats.Data());
-    if (Result == VK_ERROR_SURFACE_LOST_KHR)
-    {
-        return false;
-    }
+	for (int32 Attempt = 0; Attempt < 3; ++Attempt)
+	{
+		OutSupportedFormats.Resize(FormatCount);
 
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to retrieve supported surface formats");
-        return false;
-    }
+		Result = vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &FormatCount, OutSupportedFormats.Data());
+		if (Result == VK_SUCCESS) 
+        {
+			// Spec allows formatCount to shrink. Honor returned count.
+            if (uint32(OutSupportedFormats.Size()) != FormatCount)
+            {
+				OutSupportedFormats.Resize(FormatCount);
+            }
 
-    return true;
+			return ESurfaceStatus::Ok;
+		}
+
+		if (Result == VK_INCOMPLETE) 
+        {
+			// List grew; ask again with the new count. First query the new required count.
+			Result = vkGetPhysicalDeviceSurfaceFormatsKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &FormatCount, nullptr);
+            if (Result == VK_ERROR_SURFACE_LOST_KHR)
+            {
+				return ESurfaceStatus::SurfaceLost;
+            }
+
+			if (VULKAN_FAILED(Result)) 
+            {
+				VULKAN_ERROR("FVulkanSurface::GetSupportedFormats vkGetPhysicalDeviceSurfaceFormatsKHR failed: %s", GetVkErrorString(Result));
+				return ESurfaceStatus::Error;
+			}
+
+            // Retry with bigger buffer
+			continue; 
+		}
+
+        if (Result == VK_ERROR_SURFACE_LOST_KHR)
+        {
+			return ESurfaceStatus::SurfaceLost;
+        }
+
+		VULKAN_ERROR("FVulkanSurface::GetSupportedFormats vkGetPhysicalDeviceSurfaceFormatsKHR failed: %s", GetVkErrorString(Result));
+		return ESurfaceStatus::Error;
+	}
+
+	VULKAN_ERROR("FVulkanSurface::GetSupportedFormats Surface formats changed repeatedly (VK_INCOMPLETE) beyond retry budget");
+	return ESurfaceStatus::Error;
 }
 
-bool FVulkanSurface::GetSupportedPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const
+ESurfaceStatus FVulkanSurface::GetSupportedPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const
 {
-    FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
+	OutPresentModes.Reset();
 
-    uint32 PresentModeCount = 0;
-    VkResult Result = vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &PresentModeCount, nullptr);
-    if (Result == VK_ERROR_SURFACE_LOST_KHR)
-    {
-        return false;
-    }
-    
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to retrieve supported surface presentation modes");
-        return false;
-    }
+	if (Surface == VK_NULL_HANDLE)
+	{
+		return ESurfaceStatus::SurfaceLost;
+	}
 
-    OutPresentModes.Resize(PresentModeCount);
-    if (OutPresentModes.IsEmpty())
-    {
-        VULKAN_ERROR("Surface does not support any present-mode");
-        return false;
-    }
+	FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
-    Result = vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &PresentModeCount, OutPresentModes.Data());
-    if (Result == VK_ERROR_SURFACE_LOST_KHR)
-    {
-        return false;
-    }
+	uint32 PresentModeCount = 0;
+	VkResult Result = vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &PresentModeCount, nullptr);
+	if (Result == VK_ERROR_SURFACE_LOST_KHR)
+	{
+		return ESurfaceStatus::SurfaceLost;
+	}
 
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to retrieve supported surface presentation modes");
-        return false;
-    }
+	if (VULKAN_FAILED(Result)) 
+	{
+		VULKAN_ERROR("FVulkanSurface::GetSupportedPresentModes vkGetPhysicalDeviceSurfacePresentModesKHR failed: %s", GetVkErrorString(Result));
+		return ESurfaceStatus::Error;
+	}
 
-    return true;
+	if (PresentModeCount == 0) 
+	{
+		VULKAN_ERROR("FVulkanSurface::GetSupportedPresentModes Surface reported zero present modes");
+		return ESurfaceStatus::Error;
+	}
+
+	for (int32 Attempt = 0; Attempt < 3; ++Attempt)
+	{
+		OutPresentModes.Resize(PresentModeCount);
+
+		Result = vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &PresentModeCount, OutPresentModes.Data());
+		if (Result == VK_SUCCESS) 
+		{
+			if (uint32(OutPresentModes.Size()) != PresentModeCount)
+			{
+				OutPresentModes.Resize(PresentModeCount);
+			}
+
+			return ESurfaceStatus::Ok;
+		}
+
+		if (Result == VK_INCOMPLETE) 
+		{
+			// List grew. Re-query count and retry.
+			Result = vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &PresentModeCount, nullptr);
+			if (Result == VK_ERROR_SURFACE_LOST_KHR)
+			{
+				return ESurfaceStatus::SurfaceLost;
+			}
+			
+			if (VULKAN_FAILED(Result)) 
+			{
+				VULKAN_ERROR("FVulkanSurface::GetSupportedPresentModes vkGetPhysicalDeviceSurfacePresentModesKHR failed: %s", GetVkErrorString(Result));
+				return ESurfaceStatus::Error;
+			}
+
+			continue;
+		}
+
+		if (Result == VK_ERROR_SURFACE_LOST_KHR)
+		{
+			return ESurfaceStatus::SurfaceLost;
+		}
+
+		VULKAN_ERROR("FVulkanSurface::GetSupportedPresentModes vkGetPhysicalDeviceSurfacePresentModesKHR failed: %s", GetVkErrorString(Result));
+		return ESurfaceStatus::Error;
+	}
+
+	VULKAN_ERROR("FVulkanSurface::GetSupportedPresentModes Present modes changed repeatedly (VK_INCOMPLETE) beyond retry budget");
+	return ESurfaceStatus::Error;
 }
 
-bool FVulkanSurface::GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) const
+
+ESurfaceStatus FVulkanSurface::GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) const
 {
-    FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
-    VkResult Result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &OutCapabilities);
-    if (Result == VK_ERROR_SURFACE_LOST_KHR)
+    if (Surface == VK_NULL_HANDLE)
     {
-        return false;
+		return ESurfaceStatus::SurfaceLost;
     }
 
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to get surface capabilities");
-        return false;
-    }
+	FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
-    return true;
+	VkResult Result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &OutCapabilities);
+	if (Result == VK_SUCCESS)
+	{
+		// Guard against minimized/zero drawable
+		if (IsExtentZero(OutCapabilities.currentExtent) || IsExtentZero(OutCapabilities.minImageExtent))
+		{
+			return ESurfaceStatus::ZeroSized;
+		}
+
+		return ESurfaceStatus::Ok;
+	}
+
+	if (Result == VK_ERROR_SURFACE_LOST_KHR)
+	{
+		return ESurfaceStatus::SurfaceLost;
+	}
+
+	// Unexpected errors
+	VULKAN_WARNING("FVulkanSurface::GetCapabilities vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed: %s", GetVkErrorString(Result));
+	return ESurfaceStatus::Error;
 }
