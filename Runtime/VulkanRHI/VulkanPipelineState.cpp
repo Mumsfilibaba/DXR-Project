@@ -221,7 +221,7 @@ FVulkanPipeline::~FVulkanPipeline()
 
 void FVulkanPipeline::SetDebugName(const FString& InName)
 {
-    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, Pipeline, VK_OBJECT_TYPE_PIPELINE);
+    VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, Pipeline, VK_OBJECT_TYPE_PIPELINE);
     DebugName = InName;
 }
 

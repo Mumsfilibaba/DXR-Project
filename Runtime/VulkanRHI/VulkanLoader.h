@@ -204,7 +204,6 @@ VULKAN_FUNCTION_DECLARATION(QueuePresentKHR);
 VULKAN_FUNCTION_DECLARATION(GetSwapchainImagesKHR);
 #endif
 
-
 VULKAN_FUNCTION_DECLARATION(CmdClearColorImage);
 VULKAN_FUNCTION_DECLARATION(CmdClearDepthStencilImage);
 VULKAN_FUNCTION_DECLARATION(CmdResolveImage);
@@ -240,9 +239,12 @@ VULKAN_FUNCTION_DECLARATION(CmdBuildAccelerationStructuresKHR);
 VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier2KHR);
 #endif
 
-bool LoadDeviceFunctions(FVulkanDevice* Device);
+struct VulkanLoader
+{
+    static bool LoadDeviceFunctions(FVulkanDevice* Device);
+};
 
-class FVulkanDebugUtilsEXT
+class VulkanDebugUtilsEXT
 {
 public:
     static bool Initialize(FVulkanInstance* Instance);
@@ -280,7 +282,7 @@ private:
     static bool bIsEnabled;
 };
 
-class FVulkanDedicatedAllocationKHR
+class VulkanDedicatedAllocationKHR
 {
 public:
     static void Initialize(FVulkanDevice* Device);
@@ -294,7 +296,7 @@ private:
     static bool bIsEnabled;
 };
 
-class FVulkanBufferDeviceAddressKHR
+class VulkanBufferDeviceAddressKHR
 {
 public:
     static void Initialize(FVulkanDevice* Device);
@@ -308,7 +310,7 @@ private:
     static bool bIsEnabled;
 };
 
-class FVulkanRobustness2EXT
+class VulkanRobustness2EXT
 {
 public:
     static void Initialize(FVulkanDevice* Device);

@@ -1357,7 +1357,7 @@ void FVulkanCommandContext::Flush()
 void FVulkanCommandContext::InsertMarker(const FStringView& Message)
 {
 #if VK_EXT_debug_utils
-    if (FVulkanDebugUtilsEXT::IsEnabled())
+    if (VulkanDebugUtilsEXT::IsEnabled())
     {
         VkDebugUtilsLabelEXT DebugUtilsLabel = { };
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;

@@ -18,6 +18,12 @@ struct FVulkanDeferredObject
         VulkanResource = 2,
     };
 
+    FVulkanDeferredObject(const FVulkanDeferredObject&) = delete;
+    FVulkanDeferredObject& operator=(const FVulkanDeferredObject&) = delete;
+
+    FVulkanDeferredObject(FVulkanDeferredObject&&) = default;
+    FVulkanDeferredObject& operator=(FVulkanDeferredObject&&) = default;
+
     FVulkanDeferredObject(FRHIResource* InResource)
         : Type(EType::RHIResource)
         , RHIResource(InResource)
@@ -36,7 +42,7 @@ struct FVulkanDeferredObject
     EType Type;
     union
     {
-        FRHIResource*      RHIResource;
+        FRHIResource* RHIResource;
         FVulkanRefCounted* VulkanResource;
     };
 };

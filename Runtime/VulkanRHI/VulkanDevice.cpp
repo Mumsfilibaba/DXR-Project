@@ -1039,7 +1039,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     }
 
     // If null-descriptors are supported then we can return here, since we have no DefaultResources to upload
-    if (FVulkanRobustness2EXT::SupportsNullDescriptors())
+    if (VulkanRobustness2EXT::SupportsNullDescriptors())
     {
         return true;
     }
@@ -1138,7 +1138,7 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     else
     {
         const FString DebugName = FString::CreateFormatted("Sampler %d", SamplerMap.Size());
-        FVulkanDebugUtilsEXT::SetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
+        VulkanDebugUtilsEXT::SetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 
     SamplerMap.Add(HashableCreateInfo, OutSampler);
@@ -1188,7 +1188,7 @@ uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 {
     // We only need to actually create these resources if we don't support null-descriptors
-    if (!FVulkanRobustness2EXT::SupportsNullDescriptors())
+    if (!VulkanRobustness2EXT::SupportsNullDescriptors())
     {
         if (!InitializeBuffersAndImages(Device))
         {
@@ -1224,7 +1224,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     }
     else
     {
-        FVulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullSampler", NullSampler, VK_OBJECT_TYPE_SAMPLER);
+        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullSampler", NullSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 
     return true;
@@ -1260,7 +1260,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     }
     else
     {
-        FVulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullBuffer", NullBuffer, VK_OBJECT_TYPE_BUFFER);
+        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullBuffer", NullBuffer, VK_OBJECT_TYPE_BUFFER);
     }
 
     // Allocate memory based on the buffer
@@ -1299,7 +1299,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     }
     else
     {
-        FVulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImage", NullImage, VK_OBJECT_TYPE_IMAGE);
+        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImage", NullImage, VK_OBJECT_TYPE_IMAGE);
     }
 
     if (!MemoryManager.AllocateImageMemory(NullImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, false, NullImageMemory))
@@ -1335,7 +1335,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     }
     else
     {
-        FVulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
     }
 
     return true;

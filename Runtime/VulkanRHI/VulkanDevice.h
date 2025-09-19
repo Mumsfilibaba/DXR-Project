@@ -91,6 +91,7 @@ public:
     ~FVulkanPhysicalDevice();
 
     bool Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc);
+
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
     VkFormatProperties GetFormatProperties(VkFormat Format) const;
     
@@ -272,13 +273,8 @@ public:
     FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter);
     ~FVulkanDevice();
 
-    // Initialize the device, query device properties and load functions that require a device
     bool Initialize(const FVulkanDeviceCreateInfo& DeviceDesc);
-
-    // Initialize systems that needs an initialized device, but is a part of the device object
     bool PostLoaderInitalize();
-
-    // Initialize default resources that are just for null bindings
     bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);
 
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
@@ -340,10 +336,10 @@ private:
     FVulkanQueryPoolManager*      OcclusionQueryPoolManager;
     FVulkanDefaultResources       DefaultResources;
 
-    TSet<FString>                        ExtensionNames;
-    TSet<FString>                        LayerNames;
+    TSet<FString> ExtensionNames;
+    TSet<FString> LayerNames;
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
 
     TMap<FVulkanHashableSamplerCreateInfo, VkSampler> SamplerMap;
-    FCriticalSection                                  SamplerMapCS;
+    FCriticalSection SamplerMapCS;
 };

@@ -127,7 +127,7 @@ bool FVulkanRHI::Initialize()
         InstanceDesc.RequiredLayerNames.Add("VK_LAYER_KHRONOS_validation");
     }
     
-    // We always want to add debug utils in order to make markers work
+    // We always want to add debug utils in order to make markers work, even without the debug-layer
 #if VK_EXT_debug_utils
     InstanceDesc.RequiredExtensionNames.Add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
@@ -204,7 +204,7 @@ bool FVulkanRHI::Initialize()
     }
     
     // Load functions that requires a device here (Order is important)
-    if (!LoadDeviceFunctions(Device))
+    if (!VulkanLoader::LoadDeviceFunctions(Device))
     {
         return false;
     }

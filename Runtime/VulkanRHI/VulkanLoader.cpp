@@ -269,7 +269,7 @@ VULKAN_FUNCTION_DEFINITION(CmdBuildAccelerationStructuresKHR);
 VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier2KHR);
 #endif
 
-bool LoadDeviceFunctions(FVulkanDevice* Device)
+bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
 {
     if (!Device)
     {
@@ -361,8 +361,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateAccelerationStructureKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyAccelerationStructureKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetAccelerationStructureBuildSizesKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetAccelerationStructureDeviceAddressKHR);
-        
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetAccelerationStructureDeviceAddressKHR);    
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBuildAccelerationStructuresKHR);
     }
 #endif
@@ -435,20 +434,15 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginQuery);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndQuery);
 
-    // Initialize DedicatedAllocation extension helper
-    FVulkanDedicatedAllocationKHR::Initialize(Device);
-
-    // Initialize BufferDeviceAddress extension helper
-    FVulkanBufferDeviceAddressKHR::Initialize(Device);
-
-    // Initialize Dedicated Allocation extension helper
-    FVulkanRobustness2EXT::Initialize(Device);
+    VulkanDedicatedAllocationKHR::Initialize(Device);
+    VulkanBufferDeviceAddressKHR::Initialize(Device);
+    VulkanRobustness2EXT::Initialize(Device);
     return true;
 }
 
-bool FVulkanDebugUtilsEXT::bIsEnabled = false;
+bool VulkanDebugUtilsEXT::bIsEnabled = false;
 
-bool FVulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
+bool VulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
 {
     if (!Instance)
     {
@@ -460,10 +454,11 @@ bool FVulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
     if (Instance->IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
     {
         VkInstance InstanceHandle = Instance->GetVkInstance();
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdInsertDebugUtilsLabelEXT);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, SetDebugUtilsObjectNameEXT);
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateDebugUtilsMessengerEXT);
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDebugUtilsMessengerEXT);
+
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdInsertDebugUtilsLabelEXT);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, SetDebugUtilsObjectNameEXT);
         bIsEnabled = true;
     }
 #endif
@@ -471,9 +466,9 @@ bool FVulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
     return true;
 }
 
-bool FVulkanDedicatedAllocationKHR::bIsEnabled = false;
+bool VulkanDedicatedAllocationKHR::bIsEnabled = false;
 
-void FVulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
+void VulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
 {
     if (!Device)
     {
@@ -488,9 +483,9 @@ void FVulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
     }
 }
 
-bool FVulkanBufferDeviceAddressKHR::bIsEnabled = false;
+bool VulkanBufferDeviceAddressKHR::bIsEnabled = false;
 
-void FVulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
+void VulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
 {
     if (!Device)
     {
@@ -505,10 +500,10 @@ void FVulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
     }
 }
 
-bool FVulkanRobustness2EXT::bIsEnabled               = false;
-bool FVulkanRobustness2EXT::bSupportsNullDescriptors = false;
+bool VulkanRobustness2EXT::bIsEnabled               = false;
+bool VulkanRobustness2EXT::bSupportsNullDescriptors = false;
 
-void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
+void VulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
 {
     if (!Device)
     {

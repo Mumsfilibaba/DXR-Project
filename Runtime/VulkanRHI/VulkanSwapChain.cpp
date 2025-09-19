@@ -400,7 +400,7 @@ void FVulkanSwapChain::SetDebugName(const FString& InName)
     // Name the swapchain object
     if (SwapChainResource)
     {
-        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, SwapChainResource->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
+        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, SwapChainResource->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
         BackBuffer->SetDebugName("BackBuffer Proxy");
 
         // Name all the images

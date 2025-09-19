@@ -137,7 +137,7 @@ void FVulkanPipelineLayout::SetDebugName(const CHAR* InName)
 {
     if (InName)
     {
-        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName, LayoutHandle, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
+        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName, LayoutHandle, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
         DebugName = InName;
     }
 }

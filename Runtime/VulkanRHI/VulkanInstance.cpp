@@ -288,13 +288,13 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyInstance);
 
     // Initialize DebugUtils extension helper
-    if (!FVulkanDebugUtilsEXT::Initialize(this))
+    if (!VulkanDebugUtilsEXT::Initialize(this))
     {
         return false;
     }
     
 #if VK_EXT_debug_utils
-    if (FVulkanDebugUtilsEXT::IsEnabled() && bEnableDebugLayer)
+    if (VulkanDebugUtilsEXT::IsEnabled() && bEnableDebugLayer)
     {
         Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &DebugMessenger);
         if (VULKAN_FAILED(Result))
