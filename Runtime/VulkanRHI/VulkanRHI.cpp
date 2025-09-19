@@ -251,7 +251,7 @@ void FVulkanRHI::BeginFrame()
     {
         VkPhysicalDeviceProperties Properties;
         vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
-        FVulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
+        VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
     }
 }
 

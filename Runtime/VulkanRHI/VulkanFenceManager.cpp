@@ -10,7 +10,8 @@ FVulkanFenceManager::FVulkanFenceManager(FVulkanDevice* InDevice)
 
 FVulkanFenceManager::~FVulkanFenceManager()
 {
-    SCOPED_LOCK(FencesCS);
+	SCOPED_LOCK(FencesCS);
+	SCOPED_LOCK(AvailableFencesCS);
 
     for (FVulkanFence* Fence : Fences)
     {

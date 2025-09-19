@@ -269,7 +269,7 @@ public:
 
         return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
     #else
-        return VK_ERROR_UKNOWN;
+        return VK_ERROR_UNKNOWN;
     #endif
     }
 

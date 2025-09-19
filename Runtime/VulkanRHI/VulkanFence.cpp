@@ -52,6 +52,12 @@ bool FVulkanFence::IsSignaled() const
 bool FVulkanFence::Wait(uint64 TimeOut) const
 {
 	VkResult Result = vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut);
+	if (Result == VK_TIMEOUT)
+	{
+		// This is valid when the caller asked for a bounded wait.
+		return false; 
+	}
+	
 	if (VULKAN_FAILED(Result))
 	{
 		VULKAN_ERROR_CRITICAL("vkWaitForFences Failed");

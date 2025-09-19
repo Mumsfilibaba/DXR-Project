@@ -110,7 +110,7 @@ void FVulkanQueryPool::ResolveQueries()
             if (TimingQuery.Availability)
             {
                 uint64* Results = QueryAllocations[Index].Results;
-                *Results = static_cast<uint64>(static_cast<double>(TimingQuery.Timestamp) * static_cast<double>(FVulkanDeviceLimits::TimestampPeriod));
+                *Results = static_cast<uint64>(static_cast<double>(TimingQuery.Timestamp) * static_cast<double>(VulkanDeviceLimits::TimestampPeriod));
             }
         }
     }

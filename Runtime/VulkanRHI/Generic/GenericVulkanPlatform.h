@@ -32,6 +32,9 @@ struct FGenericVulkanPlatform
         #if VK_KHR_get_memory_requirements2
             VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
         #endif
+        #if VK_KHR_buffer_device_address
+            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+        #endif
         #if VK_KHR_maintenance1
             VK_KHR_MAINTENANCE1_EXTENSION_NAME,
         #endif
@@ -59,9 +62,6 @@ struct FGenericVulkanPlatform
 		#if VK_KHR_maintenance9
 			VK_KHR_MAINTENANCE_9_EXTENSION_NAME,
 		#endif
-        #if VK_KHR_buffer_device_address
-            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
-        #endif
         #if VK_KHR_deferred_host_operations
             VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
         #endif
