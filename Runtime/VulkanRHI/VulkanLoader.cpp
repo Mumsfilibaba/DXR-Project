@@ -500,7 +500,7 @@ void VulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
     }
 }
 
-bool VulkanRobustness2EXT::bIsEnabled               = false;
+bool VulkanRobustness2EXT::bIsEnabled = false;
 bool VulkanRobustness2EXT::bSupportsNullDescriptors = false;
 
 void VulkanRobustness2EXT::Initialize(FVulkanDevice* Device)

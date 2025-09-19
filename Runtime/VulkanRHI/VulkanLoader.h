@@ -329,4 +329,3 @@ private:
     static bool bIsEnabled;
     static bool bSupportsNullDescriptors;
 };
-
