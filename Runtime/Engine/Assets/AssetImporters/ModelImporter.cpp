@@ -48,7 +48,7 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
         return false;
     }
 
-    const uint64 DataCRC = FCRC32::Generate(InputStream.PeekData(), DataSize);
+    const uint64 DataCRC = CRC32::Generate(InputStream.PeekData(), DataSize);
     if (FileHeader.DataCRC != DataCRC)
     {
         return false;
@@ -307,7 +307,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
         FMemory::Memzero(&FileHeader, sizeof(ModelFormat::FFileHeader));
 
         FMemory::Memcpy(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic));
-        FileHeader.DataCRC      = FCRC32::Generate(OutputStream.Data(), OutputStream.Size());
+        FileHeader.DataCRC      = CRC32::Generate(OutputStream.Data(), OutputStream.Size());
         FileHeader.DataSize     = OutputStream.Size();
         FileHeader.VersionMajor = MODEL_FORMAT_VERSION_MAJOR;
         FileHeader.VersionMinor = MODEL_FORMAT_VERSION_MINOR;

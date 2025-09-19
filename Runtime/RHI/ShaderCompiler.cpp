@@ -853,7 +853,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
                 Defines += Define.Value;
             }
             
-            const uint32 DefineCRC = FCRC32::Generate(Defines.Data(), Defines.SizeInBytes());
+            const uint32 DefineCRC = CRC32::Generate(Defines.Data(), Defines.SizeInBytes());
             Filename = Filename + "_" + TTypeToString<uint32>::ToString(DefineCRC) + ".glsl";
         }
         else

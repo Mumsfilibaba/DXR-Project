@@ -15,7 +15,7 @@ struct FVulkanDescriptorSetLayoutInfo
 
     uint64 GenerateHash()
     {
-        Hash = FCRC32::Generate(Bindings.Data(), Bindings.SizeInBytes());
+        Hash = CRC32::Generate(Bindings.Data(), Bindings.SizeInBytes());
         return Hash;
     }
     
@@ -55,7 +55,7 @@ struct FVulkanDescriptorRemappingInfo
 
     uint64 GenerateHash()
     {
-        Hash = FCRC32::Generate(RemappingInfo.Data(), RemappingInfo.SizeInBytes());
+        Hash = CRC32::Generate(RemappingInfo.Data(), RemappingInfo.SizeInBytes());
         return Hash;
     }
 

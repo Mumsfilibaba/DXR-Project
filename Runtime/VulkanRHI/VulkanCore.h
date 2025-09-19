@@ -409,7 +409,7 @@ constexpr VkBool32 IsAnisotropySampler(ESamplerFilter SamplerFilter)
     switch (SamplerFilter)
     {
         case ESamplerFilter::Anistrotopic:
-        case ESamplerFilter::Comparison_Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return VK_TRUE;
             
         default:
@@ -417,7 +417,7 @@ constexpr VkBool32 IsAnisotropySampler(ESamplerFilter SamplerFilter)
     }
 }
 
-constexpr VkBool32 IsComparissonSampler(ESamplerFilter SamplerFilter)
+constexpr VkBool32 IsComparisonSampler(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -429,7 +429,7 @@ constexpr VkBool32 IsComparissonSampler(ESamplerFilter SamplerFilter)
         case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
         case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
         case ESamplerFilter::Comparison_MinMagMipLinear:
-        case ESamplerFilter::Comparison_Anistrotopic:
+        case ESamplerFilter::Comparison_Anisotropic:
             return VK_TRUE;
             
         default:

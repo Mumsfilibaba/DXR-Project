@@ -265,7 +265,7 @@ struct FD3D12HashableViewInstanceDesc
     uint64 GenerateHash() const
     {
         uint64 Hash = ViewInstanceCount;
-        HashCombine(Hash, FCRC32::Generate(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * ViewInstanceCount));
+        HashCombine(Hash, CRC32::Generate(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * ViewInstanceCount));
         HashCombine(Hash, Flags);
         return Hash;
     }

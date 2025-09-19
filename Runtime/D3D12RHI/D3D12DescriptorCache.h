@@ -208,7 +208,7 @@ struct FD3D12UniqueSamplerTable
 
     friend uint64 GetHashForType(const FD3D12UniqueSamplerTable& Table)
     {
-        return FCRC32::Generate(Table.UniqueIDs, sizeof(Table.UniqueIDs));
+        return CRC32::Generate(Table.UniqueIDs, sizeof(Table.UniqueIDs));
     }
 
     uint16 UniqueIDs[D3D12_DEFAULT_SAMPLER_STATE_COUNT];

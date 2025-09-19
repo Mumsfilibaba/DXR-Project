@@ -28,7 +28,7 @@ bool FVulkanSamplerState::Initialize()
     SamplerCreateInfo.mipLodBias              = Info.MipLODBias;
     SamplerCreateInfo.anisotropyEnable        = IsAnisotropySampler(Info.Filter);
     SamplerCreateInfo.maxAnisotropy           = Info.MaxAnisotropy;
-    SamplerCreateInfo.compareEnable           = IsComparissonSampler(Info.Filter);
+    SamplerCreateInfo.compareEnable           = IsComparisonSampler(Info.Filter);
     SamplerCreateInfo.compareOp               = ConvertComparisonFunc(Info.ComparisonFunc);
     SamplerCreateInfo.minLod                  = Info.MinLOD;
     SamplerCreateInfo.maxLod                  = Info.MaxLOD;

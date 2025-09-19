@@ -245,7 +245,7 @@ struct FVulkanHashableSamplerCreateInfo
 
     friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)
     {
-        return FCRC32::Generate(&Value, sizeof(Value));
+        return CRC32::Generate(&Value, sizeof(Value));
     }
 
     VkSamplerCreateFlags Flags;

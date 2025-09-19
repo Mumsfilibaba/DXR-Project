@@ -1,8 +1,8 @@
 #include "Core/Misc/CRC.h"
 
-struct FCRC32Table
+struct CRC32Table
 {
-    constexpr FCRC32Table()
+    constexpr CRC32Table()
     {
         constexpr uint32 Polynomial = 0xEDB88320;
         for (uint32 Index = 0; Index < 256; Index++)
@@ -27,9 +27,9 @@ struct FCRC32Table
     uint32 Table[4][256];
 };
 
-uint32 FCRC32::Generate(const void* Source, uint64 SourceSize)
+uint32 CRC32::Generate(const void* Source, uint64 SourceSize)
 {
-    static constexpr FCRC32Table CRCTable;
+    static constexpr CRC32Table CRCTable;
     
     uint32 Result = 0xFFFFFFFF;
 

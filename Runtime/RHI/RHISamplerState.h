@@ -44,7 +44,7 @@ enum class ESamplerFilter : uint8
     Comparison_MinLinear_MagPoint_MipLinear = 15,
     Comparison_MinMagLinear_MipPoint        = 16,
     Comparison_MinMagMipLinear              = 17,
-    Comparison_Anistrotopic                 = 18,
+    Comparison_Anisotropic                  = 18,
 };
 
 NODISCARD constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
@@ -68,7 +68,7 @@ NODISCARD constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
         case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return "Comparison_MinLinear_MagPoint_MipLinear";
         case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
         case ESamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
-        case ESamplerFilter::Comparison_Anistrotopic:                 return "Comparison_Anistrotopic";
+        case ESamplerFilter::Comparison_Anisotropic:                  return "Comparison_Anisotropic";
         default:                                                      return "Unknown";
     }
 }

@@ -734,7 +734,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
         FMemory::Memzero(&DataHeader, sizeof(FVulkanPipelineDataHeader));
 
         FMemory::Memcpy(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic));
-        DataHeader.DataCRC  = FCRC32::Generate(PipelineCacheData.Get(), PipelineCacheSize);
+        DataHeader.DataCRC  = CRC32::Generate(PipelineCacheData.Get(), PipelineCacheSize);
         DataHeader.DataSize = PipelineCacheSize;
 
         int32 BytesWritten = CacheFile->Write(reinterpret_cast<const uint8*>(&DataHeader), sizeof(FVulkanPipelineDataHeader));
@@ -811,7 +811,7 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     }
 
     // Validate the CRC
-    const uint32 DataCRC = FCRC32::Generate(PipelineCacheData.Get(), DataHeader.DataSize);
+    const uint32 DataCRC = CRC32::Generate(PipelineCacheData.Get(), DataHeader.DataSize);
     if (DataCRC != DataHeader.DataCRC)
     {
         VULKAN_WARNING("PipelineCacheData is invalid");

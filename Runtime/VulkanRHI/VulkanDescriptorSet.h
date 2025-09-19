@@ -29,7 +29,7 @@ struct FVulkanDescriptorSetKey
     uint64 GenerateHash()
     {
         Hash = reinterpret_cast<uint64>(SetLayout);
-        HashCombine(Hash, FCRC32::Generate(Resources.Data(), Resources.SizeInBytes()));
+        HashCombine(Hash, CRC32::Generate(Resources.Data(), Resources.SizeInBytes()));
         return Hash;
     }
 
@@ -38,7 +38,8 @@ struct FVulkanDescriptorSetKey
         if (SetLayout != Other.SetLayout)
             return false;
         
-        return Resources.Size() == Other.Resources.Size() ? FMemory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
+        return Resources.Size() == Other.Resources.Size() ? 
+            FMemory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
     }
 
     bool operator!=(const FVulkanDescriptorSetKey& Other) const
@@ -51,9 +52,9 @@ struct FVulkanDescriptorSetKey
         return Value.Hash;
     }
     
-    TArray<FBinding>      Resources;
+    TArray<FBinding> Resources;
     VkDescriptorSetLayout SetLayout;
-    uint64                Hash;
+    uint64 Hash;
 };
 
 struct FVulkanDescriptorPoolInfo
@@ -82,13 +83,17 @@ struct FVulkanDescriptorPoolInfo
     uint64 GenerateHash()
     {
         Hash = reinterpret_cast<uint64>(DescriptorSetLayout);
-        HashCombine(Hash, FCRC32::Generate(DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()));
+        HashCombine(Hash, CRC32::Generate(DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()));
         return Hash;
     }
 
     bool operator==(const FVulkanDescriptorPoolInfo& Other) const
     {
-        return (DescriptorSizes.Size() == Other.DescriptorSizes.Size()) ? FMemory::Memcmp(DescriptorSizes.Data(), Other.DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()) == 0 : false;
+        if (DescriptorSetLayout != Other.DescriptorSetLayout)
+            return false;
+
+        return DescriptorSizes.Size() == Other.DescriptorSizes.Size() ? 
+            FMemory::Memcmp(DescriptorSizes.Data(), Other.DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()) == 0 : false;
     }
 
     bool operator!=(const FVulkanDescriptorPoolInfo& Other) const
@@ -101,7 +106,7 @@ struct FVulkanDescriptorPoolInfo
         return Value.Hash;
     }
 
-    VkDescriptorSetLayout   DescriptorSetLayout;
+    VkDescriptorSetLayout DescriptorSetLayout;
     TArray<FDescriptorSize> DescriptorSizes;
     uint64 Hash;
 };
@@ -127,14 +132,16 @@ public:
         FMemory::Memzero(DescriptorSetKey.Resources.Data(), DescriptorSetKey.Resources.SizeInBytes());
         DescriptorSetKey.SetLayout = SetLayout;
 
-        UpdateHash();
-
         // Initialize all the types
         for (int32 Index = 0; Index < NumDescriptorWrites; Index++)
         {
             DescriptorSetKey.Resources[Index].Type = DescriptorWrites[Index].descriptorType;
         }
+
+        bKeyIsDirty = true;
+        UpdateHash();
     }
+
     
     void WriteSampledImage(int32 Binding, VkImageView ImageView, VkImageLayout ImageLayout)
     {

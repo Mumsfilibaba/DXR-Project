@@ -352,7 +352,7 @@ bool FD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64
     }
     else
     {
-        Hash = FCRC32::Generate(BlobWithRootSignature, BlobLengthInBytes);
+        Hash = CRC32::Generate(BlobWithRootSignature, BlobLengthInBytes);
         return true;
     }
 }

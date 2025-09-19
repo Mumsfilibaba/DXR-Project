@@ -78,7 +78,7 @@ FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInit
     Desc.FrontFace        = ConvertStencilState(InInitializer.FrontFace);
     Desc.BackFace         = ConvertStencilState(InInitializer.BackFace);
 
-    Hash = FCRC32::Generate(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
+    Hash = CRC32::Generate(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
 }
 
 FD3D12DepthStencilState::~FD3D12DepthStencilState()
@@ -104,7 +104,7 @@ FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitialize
     Desc.MultisampleEnable     = InInitializer.bMultisampleEnable;
     Desc.ConservativeRaster    = InInitializer.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
-    Hash = FCRC32::Generate(&Desc, sizeof(D3D12_RASTERIZER_DESC));
+    Hash = CRC32::Generate(&Desc, sizeof(D3D12_RASTERIZER_DESC));
 }
 
 FD3D12RasterizerState::~FD3D12RasterizerState()
@@ -136,7 +136,7 @@ FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInitializer& InInitialize
         Desc.RenderTarget[Index].LogicOpEnable         = InInitializer.bLogicOpEnable;
     }
 
-    Hash = FCRC32::Generate(&Desc, sizeof(D3D12_BLEND_DESC));
+    Hash = CRC32::Generate(&Desc, sizeof(D3D12_BLEND_DESC));
 }
 
 FD3D12BlendState::~FD3D12BlendState()
@@ -463,7 +463,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         PipelineKey.PSHash = PixelShader    ? PixelShader->GetHash()    : FD3D12ShaderHash();
 
         // Generate a PipelineLibrary name
-        const uint64 Hash = FCRC32::Generate(&PipelineKey, sizeof(FD3D12GraphicsPipelineKey));
+        const uint64 Hash = CRC32::Generate(&PipelineKey, sizeof(FD3D12GraphicsPipelineKey));
         constexpr uint64 BufferLength = 128;
         WIDECHAR Buffer[BufferLength] = { 0 };
         FPlatformString::Snprintf(Buffer, BufferLength, L"GraphicsPSO[%llu]", Hash);
@@ -548,7 +548,7 @@ bool FD3D12ComputePipelineState::Initialize()
         PipelineKey.RootSignatureHash = RootSignature->GetHash();
 
         // Generate a PipelineLibrary name
-        const uint64 Hash = FCRC32::Generate(&PipelineKey, sizeof(FD3D12ComputePipelineKey));
+        const uint64 Hash = CRC32::Generate(&PipelineKey, sizeof(FD3D12ComputePipelineKey));
         constexpr uint64 BufferLength = 64;
         WIDECHAR Buffer[BufferLength] = { 0 };
         FPlatformString::Snprintf(Buffer, BufferLength, L"ComputePSO[%llu]", Hash);
@@ -1125,7 +1125,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         FD3D12PipelineDiskHeader Header;
         FMemory::Memcpy(Header.Magic, "D3D12PSO", sizeof(Header.Magic));
 
-        Header.DataCRC  = FCRC32::Generate(PipelineCacheData.Get(), PipelineCacheSize);
+        Header.DataCRC  = CRC32::Generate(PipelineCacheData.Get(), PipelineCacheSize);
         Header.DataSize = PipelineCacheSize;
 
         int32 BytesWritten = CacheFile->Write(reinterpret_cast<const uint8*>(&Header), sizeof(FD3D12PipelineDiskHeader));
@@ -1196,7 +1196,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
         return false;
     }
     
-    const uint32 DataCRC = FCRC32::Generate(PipelineData, PipelineDataSize);
+    const uint32 DataCRC = CRC32::Generate(PipelineData, PipelineDataSize);
     if (DataCRC != Header.DataCRC)
     {
         D3D12_WARNING("PipelineCacheData is invalid");

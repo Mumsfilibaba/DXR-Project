@@ -632,7 +632,7 @@ NODISCARD constexpr D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilt
         case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear: return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
         case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
         case ESamplerFilter::Comparison_MinMagMipLinear:              return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
-        case ESamplerFilter::Comparison_Anistrotopic:                 return D3D12_FILTER_COMPARISON_ANISOTROPIC;
+        case ESamplerFilter::Comparison_Anisotropic:                  return D3D12_FILTER_COMPARISON_ANISOTROPIC;
     }
 
     return D3D12_FILTER();
