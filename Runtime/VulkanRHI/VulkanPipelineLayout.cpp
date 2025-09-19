@@ -113,7 +113,7 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     VkResult Result = vkCreatePipelineLayout(GetDevice()->GetVkDevice(), &PipelineLayoutCreateInfo, nullptr, &LayoutHandle);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create PipelineLayout");
+        VULKAN_ERROR_CRITICAL("Failed to create PipelineLayout");
         return false;
     }
     else
@@ -326,7 +326,7 @@ VkDescriptorSetLayout FVulkanPipelineLayoutManager::FindOrCreateSetLayouts(const
     VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &NewSetLayout);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create DescriptorSetLayout");
+        VULKAN_ERROR_CRITICAL("Failed to create DescriptorSetLayout");
         return VK_NULL_HANDLE;
     }
     else

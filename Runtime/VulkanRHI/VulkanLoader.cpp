@@ -63,7 +63,7 @@ bool LoadInstanceFunctions(FVulkanInstance* Instance)
 {
     if (!Instance)
     {
-        VULKAN_ERROR("Instance cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Instance cannot be nullptr");
         return false;
     }
 
@@ -273,7 +273,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
 {
     if (!Device)
     {
-        VULKAN_ERROR("Device cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Device cannot be nullptr");
         return false;
     }
 
@@ -452,7 +452,7 @@ bool FVulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
 {
     if (!Instance)
     {
-        VULKAN_ERROR("Instance cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Instance cannot be nullptr");
         return false;
     }
 
@@ -477,7 +477,7 @@ void FVulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
 {
     if (!Device)
     {
-        VULKAN_ERROR("Device cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Device cannot be nullptr");
         return;
     }
 
@@ -494,7 +494,7 @@ void FVulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
 {
     if (!Device)
     {
-        VULKAN_ERROR("Device cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Device cannot be nullptr");
         return;
     }
 
@@ -512,7 +512,7 @@ void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
 {
     if (!Device)
     {
-        VULKAN_ERROR("Device cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Device cannot be nullptr");
         return;
     }
 

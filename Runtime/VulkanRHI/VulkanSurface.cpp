@@ -28,7 +28,7 @@ bool FVulkanSurface::Initialize()
     VkResult Result = FPlatformVulkan::CreateSurface(Instance->GetVkInstance(), WindowHandle, &Surface);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Platform Surface");
+        VULKAN_ERROR_CRITICAL("Failed to create Platform Surface");
         return false;
     }
 

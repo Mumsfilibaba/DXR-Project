@@ -40,14 +40,14 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
 {
     if (!InCommandContext)
     {
-        VULKAN_ERROR("CommandContext cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("CommandContext cannot be nullptr");
         return false;
     }
     
     Surface = new FVulkanSurface(GetDevice(), InCommandContext->GetCommandQueue(), WindowHandle);
     if (!Surface->Initialize())
     {
-        VULKAN_ERROR("Failed to create Surface");
+        VULKAN_ERROR_CRITICAL("Failed to create Surface");
         return false;
     }
     
@@ -67,7 +67,7 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
     BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
     if (!BackBuffer)
     {
-        VULKAN_ERROR("Failed to create BackBuffer");
+        VULKAN_ERROR_CRITICAL("Failed to create BackBuffer");
         return false;
     }
 
@@ -163,7 +163,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     FVulkanSwapChainResourceRef NewSwapChainResource = new FVulkanSwapChainResource(GetDevice());
 	if (!NewSwapChainResource->Initialize(SwapChainCreateInfo))
 	{
-        VULKAN_ERROR("Failed to create SwapChain");
+        VULKAN_ERROR_CRITICAL("Failed to create SwapChain");
 		return false;
 	}
 	else
@@ -386,7 +386,7 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     }
 	else if (Result != VK_SUCCESS)
 	{
-		VULKAN_ERROR("FVulkanSwapChain::Present vkQueuePresentKHR failed with %s.", ToString(Result));
+		VULKAN_ERROR_CRITICAL("FVulkanSwapChain::Present vkQueuePresentKHR failed with %s.", ToString(Result));
 		return false;
 	}
 

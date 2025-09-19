@@ -23,7 +23,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
 {
     if (!Layout)
     {
-        VULKAN_ERROR("PipelineLayout cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("PipelineLayout cannot be nullptr");
         return;
     }
 
@@ -81,7 +81,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 }
                 default:
                 {
-                    VULKAN_ERROR("Unhandled DescriptorType");
+                    VULKAN_ERROR_CRITICAL("Unhandled DescriptorType");
                     break;
                 }
             };
@@ -141,7 +141,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 }
                 default:
                 {
-                    VULKAN_ERROR("Unhandled DescriptorType");
+                    VULKAN_ERROR_CRITICAL("Unhandled DescriptorType");
                     break;
                 }
             };
@@ -187,7 +187,7 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceView* ShaderResourceVie
             }
             default:
             {
-                VULKAN_ERROR("Invalid ShaderResourveView, probably uninitialized resource");
+                VULKAN_ERROR_CRITICAL("Invalid ShaderResourveView, probably uninitialized resource");
                 break;
             }
         };
@@ -221,7 +221,7 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
             }
             default:
             {
-                VULKAN_ERROR("Invalid ShaderResourveView, probably uninitialized resource");
+                VULKAN_ERROR_CRITICAL("Invalid ShaderResourveView, probably uninitialized resource");
                 break;
             }
         };
@@ -300,7 +300,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets()
         FVulkanDescriptorSetCache& DescriptorSetCache = GetDevice()->GetDescriptorSetCache();
         if (!DescriptorSetCache.FindOrCreateDescriptorSet(DescriptorPoolInfo, DSBuilder, DescriptorSetHandles[Index]))
         {
-            VULKAN_ERROR("Failed to find or create DescriptorSet");
+            VULKAN_ERROR_CRITICAL("Failed to find or create DescriptorSet");
             return;
         }
     }
@@ -359,7 +359,7 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
         }
         default:
         {
-            VULKAN_ERROR("Unhandled DescriptorType");
+            VULKAN_ERROR_CRITICAL("Unhandled DescriptorType");
             break;
         }
     }
@@ -409,7 +409,7 @@ bool FVulkanDescriptorPool::Initialize(const FVulkanDescriptorPoolInfo& PoolInfo
     VkResult Result = vkCreateDescriptorPool(GetDevice()->GetVkDevice(), &DescriptorPoolCreateInfo, nullptr, &DescriptorPool);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create DescriptorPool");
+        VULKAN_ERROR_CRITICAL("Failed to create DescriptorPool");
         return false;
     }
     else
@@ -435,7 +435,7 @@ bool FVulkanDescriptorPool::AllocateDescriptorSet(const VkDescriptorSetAllocateI
     
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to allocate descriptorset");
+        VULKAN_ERROR_CRITICAL("Failed to allocate descriptorset");
         return false;
     }
     else

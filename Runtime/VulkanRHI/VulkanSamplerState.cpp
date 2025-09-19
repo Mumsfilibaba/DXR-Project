@@ -37,7 +37,7 @@ bool FVulkanSamplerState::Initialize()
 
     if (!GetDevice()->FindOrCreateSampler(SamplerCreateInfo, Sampler))
     {
-        VULKAN_ERROR("Failed to create sampler");
+        VULKAN_ERROR_CRITICAL("Failed to create sampler");
         return false;
     }
     else

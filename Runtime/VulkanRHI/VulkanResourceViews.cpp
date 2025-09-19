@@ -56,12 +56,12 @@ bool FVulkanResourceView::InitializeAsImageView(VkImage InImage, VkFormat InForm
 {
     if (!VULKAN_CHECK_HANDLE(InImage))
     {
-        VULKAN_ERROR("Image cannot be a NULL_HANDLE");
+        VULKAN_ERROR_CRITICAL("Image cannot be a NULL_HANDLE");
         return false;
     }
     if (InFormat == VK_FORMAT_UNDEFINED)
     {
-        VULKAN_ERROR("Format cannot be a undefined");
+        VULKAN_ERROR_CRITICAL("Format cannot be a undefined");
         return false;
     }
 
@@ -86,7 +86,7 @@ bool FVulkanResourceView::InitializeAsImageView(VkImage InImage, VkFormat InForm
     VkResult Result = vkCreateImageView(GetDevice()->GetVkDevice(), &ImageViewCreateInfo, nullptr, &ImageViewInfo.ImageView);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkCreateImageView failed");
+        VULKAN_ERROR_CRITICAL("vkCreateImageView failed");
         return false;
     }
 
@@ -106,7 +106,7 @@ bool FVulkanResourceView::InitializeAsStructuredBufferView(VkBuffer InBuffer, Vk
 {
     if (!VULKAN_CHECK_HANDLE(InBuffer))
     {
-        VULKAN_ERROR("Buffer cannot be NULL");
+        VULKAN_ERROR_CRITICAL("Buffer cannot be NULL");
         return false;
     }
 
@@ -121,12 +121,12 @@ bool FVulkanResourceView::InitializeAsTypedBufferView(VkBuffer InBuffer, VkForma
 {
     if (!VULKAN_CHECK_HANDLE(InBuffer))
     {
-        VULKAN_ERROR("Image cannot be a NULL_HANDLE");
+        VULKAN_ERROR_CRITICAL("Image cannot be a NULL_HANDLE");
         return false;
     }
     if (InFormat == VK_FORMAT_UNDEFINED)
     {
-        VULKAN_ERROR("Format cannot be a undefined");
+        VULKAN_ERROR_CRITICAL("Format cannot be a undefined");
         return false;
     }
 
@@ -142,7 +142,7 @@ bool FVulkanResourceView::InitializeAsTypedBufferView(VkBuffer InBuffer, VkForma
     VkResult Result = vkCreateBufferView(GetDevice()->GetVkDevice(), &BufferViewCreateInfo, nullptr, &TypedBufferInfo.BufferView);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkCreateBufferView failed");
+        VULKAN_ERROR_CRITICAL("vkCreateBufferView failed");
         return false;
     }
 
@@ -155,7 +155,7 @@ bool FVulkanResourceView::InitializeAsAccelerationStructureView(VkAccelerationSt
 {
     if (!VULKAN_CHECK_HANDLE(InAccelerationStructure))
     {
-        VULKAN_ERROR("AccelerationStructure cannot be NULL");
+        VULKAN_ERROR_CRITICAL("AccelerationStructure cannot be NULL");
         return false;
     }
 
@@ -190,13 +190,13 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVInfo& I
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
     if (!VulkanTexture)
     {
-        VULKAN_ERROR("Texture cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
         return false;
     }
 
     if (IsTypelessFormat(InInfo.Format))
     {
-        VULKAN_ERROR("Cannot create a view of a typeless format");
+        VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
         return false;
     }
     
@@ -274,7 +274,7 @@ bool FVulkanShaderResourceView::InitializeBufferSRV(const FRHIBufferSRVInfo& InI
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
     if (!VulkanBuffer)
     {
-        VULKAN_ERROR("Buffer cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
         return false;
     }
 
@@ -313,13 +313,13 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVInfo& 
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
     if (!VulkanTexture)
     {
-        VULKAN_ERROR("Texture cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
         return false;
     }
 
     if (IsTypelessFormat(InInfo.Format))
     {
-        VULKAN_ERROR("Cannot create a view of a typeless format");
+        VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
         return false;
     }
 
@@ -389,7 +389,7 @@ bool FVulkanUnorderedAccessView::InitializeBufferUAV(const FRHIBufferUAVInfo& In
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
     if (!VulkanBuffer)
     {
-        VULKAN_ERROR("Buffer cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
         return false;
     }
 

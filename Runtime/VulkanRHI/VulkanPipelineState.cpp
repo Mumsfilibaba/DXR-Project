@@ -245,7 +245,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
     else
     {
-        VULKAN_ERROR("VertexShader cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("VertexShader cannot be nullptr");
         return false;
     }
 
@@ -306,7 +306,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
     else
     {
-        VULKAN_ERROR("Failed to create ShaderModule");
+        VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
         return false;
     }
     
@@ -320,7 +320,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         }
         else
         {
-            VULKAN_ERROR("Failed to create ShaderModule");
+            VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
             return false;
         }
     }
@@ -334,7 +334,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         }
         else
         {
-            VULKAN_ERROR("Failed to create ShaderModule");
+            VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
             return false;
         }
     }
@@ -348,7 +348,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         }
         else
         {
-            VULKAN_ERROR("Failed to create ShaderModule");
+            VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
             return false;
         }
     }
@@ -362,7 +362,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         }
         else
         {
-            VULKAN_ERROR("Failed to create ShaderModule");
+            VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
             return false;
         }
     }
@@ -404,7 +404,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
     else
     {
-        VULKAN_ERROR("RasterizerState cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("RasterizerState cannot be nullptr");
         return false;
     }
 
@@ -428,7 +428,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
     else
     {
-        VULKAN_ERROR("DepthStencilState cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("DepthStencilState cannot be nullptr");
         return false;
     }
 
@@ -440,7 +440,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
     else
     {
-        VULKAN_ERROR("BlendState cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("BlendState cannot be nullptr");
         return false;
     }
 
@@ -521,7 +521,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     VkResult Result = vkCreateGraphicsPipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create GraphicsPipeline");
+        VULKAN_ERROR_CRITICAL("Failed to create GraphicsPipeline");
         return false;
     }
     else
@@ -545,7 +545,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     FVulkanComputeShader* VulkanComputeShader = static_cast<FVulkanComputeShader*>(Initializer.Shader);
     if (!VulkanComputeShader)
     {
-        VULKAN_ERROR("Compute Shader cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("Compute Shader cannot be nullptr");
         return false;
     }
 
@@ -575,7 +575,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     }
     else
     {
-        VULKAN_ERROR("Failed to create ShaderModule");
+        VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
         return false;
     }
 
@@ -600,7 +600,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     VkResult Result = vkCreateComputePipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create ComputePipeline");
+        VULKAN_ERROR_CRITICAL("Failed to create ComputePipeline");
         return false;
     }
     else
@@ -647,7 +647,7 @@ bool FVulkanPipelineStateManager::Initialize()
     VkResult Result = vkCreatePipelineCache(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &PipelineCache);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Vulkan PipelineCache");
+        VULKAN_ERROR_CRITICAL("Failed to create Vulkan PipelineCache");
         return false;
     }
     else
@@ -718,7 +718,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
         VkResult Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &PipelineCacheSize, nullptr);
         if (VULKAN_FAILED(Result))
         {
-            VULKAN_ERROR("Failed to retrieve size of PipelineCache");
+            VULKAN_ERROR_CRITICAL("Failed to retrieve size of PipelineCache");
             return false;
         }
         
@@ -726,7 +726,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
         Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &PipelineCacheSize, PipelineCacheData.Get());
         if (VULKAN_FAILED(Result))
         {
-            VULKAN_ERROR("Failed to serielize PipelineCache");
+            VULKAN_ERROR_CRITICAL("Failed to serielize PipelineCache");
             return false;
         }
 
@@ -740,14 +740,14 @@ bool FVulkanPipelineStateManager::SaveCacheData()
         int32 BytesWritten = CacheFile->Write(reinterpret_cast<const uint8*>(&DataHeader), sizeof(FVulkanPipelineDataHeader));
         if (BytesWritten != sizeof(FVulkanPipelineDataHeader))
         {
-            VULKAN_ERROR("Failed to write PipelineDataHeader to disk");
+            VULKAN_ERROR_CRITICAL("Failed to write PipelineDataHeader to disk");
             return false;
         }
 
         BytesWritten = CacheFile->Write(PipelineCacheData.Get(), static_cast<uint32>(PipelineCacheSize));
         if (BytesWritten != static_cast<int32>(PipelineCacheSize))
         {
-            VULKAN_ERROR("Failed to write PipelineCache to disk");
+            VULKAN_ERROR_CRITICAL("Failed to write PipelineCache to disk");
             return false;
         }
         else
@@ -854,7 +854,7 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     VkResult Result = vkCreatePipelineCache(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &PipelineCache);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Vulkan PipelineCache");
+        VULKAN_ERROR_CRITICAL("Failed to create Vulkan PipelineCache");
         return false;
     }
     else

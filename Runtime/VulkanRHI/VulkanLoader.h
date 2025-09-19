@@ -13,7 +13,7 @@
         vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FunctionName)); \
         if (!vk##FunctionName) \
         { \
-            VULKAN_ERROR("Failed to load vk"#FunctionName); \
+            VULKAN_ERROR_CRITICAL("Failed to load vk"#FunctionName); \
             return false; \
         } \
     } while(false)
@@ -24,7 +24,7 @@
         vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetInstanceProcAddr(Instance, "vk"#FunctionName)); \
         if (!vk##FunctionName) \
         { \
-            VULKAN_ERROR("Failed to load vk"#FunctionName); \
+            VULKAN_ERROR_CRITICAL("Failed to load vk"#FunctionName); \
             return false; \
         } \
     } while(false)

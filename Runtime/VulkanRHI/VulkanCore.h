@@ -21,51 +21,65 @@
 #endif
 
 #if !RELEASE_BUILD
-#define VULKAN_ERROR(...) \
-    do \
-    { \
-        LOG_ERROR("[VulkanRHI] " __VA_ARGS__); \
-        DEBUG_BREAK(); \
-    } while (false)
-
-#define VULKAN_ERROR_COND(bCondition, ...) \
-    do \
-    { \
-        if (!(bCondition)) \
+    #define VULKAN_ERROR_CRITICAL(...) \
+        do \
         { \
-            VULKAN_ERROR(__VA_ARGS__); \
-        } \
-    } while (false)
+            LOG_ERROR_CRITICAL("[VulkanRHI] " __VA_ARGS__); \
+        } while (false)
 
-#define VULKAN_WARNING(...) \
-    do \
-    { \
-        LOG_WARNING("[VulkanRHI] " __VA_ARGS__); \
-    } while (false)
-
-#define VULKAN_WARNING_COND(bCondition, ...) \
-    do \
-    { \
-        if (!(bCondition)) \
+    #define VULKAN_ERROR(...) \
+        do \
         { \
-            VULKAN_WARNING(__VA_ARGS__); \
-        } \
-    } while (false)
+            LOG_ERROR("[VulkanRHI] " __VA_ARGS__); \
+        } while (false)
 
-#define VULKAN_INFO(...) \
-    do \
-    { \
-        LOG_INFO("[VulkanRHI] " __VA_ARGS__); \
-    } while (false)
+    #define VULKAN_ERROR_COND(bCondition, ...) \
+        do \
+        { \
+            if (!(bCondition)) \
+            { \
+                VULKAN_ERROR(__VA_ARGS__); \
+            } \
+        } while (false)
 
+    #define VULKAN_WARNING(...) \
+        do \
+        { \
+            LOG_WARNING("[VulkanRHI] " __VA_ARGS__); \
+        } while (false)
+
+    #define VULKAN_WARNING_COND(bCondition, ...) \
+        do \
+        { \
+            if (!(bCondition)) \
+            { \
+                VULKAN_WARNING(__VA_ARGS__); \
+            } \
+        } while (false)
+
+    #define VULKAN_INFO(...) \
+        do \
+        { \
+            LOG_INFO("[VulkanRHI] " __VA_ARGS__); \
+        } while (false)
 #else
-    #define VULKAN_ERROR_COND(bCondition, ...) do { (void)(bCondition); } while(false)
-    #define VULKAN_ERROR(...) do { (void)(0); } while(false)
+    #define VULKAN_ERROR_CRITICAL(...) \
+        do { } while(false)
 
-    #define VULKAN_WARNING_COND(bCondition, ...) do { (void)(bCondition); } while(false)
-    #define VULKAN_WARNING(...) do { (void)(0); } while(false)
+    #define VULKAN_ERROR_COND(bCondition, ...) \
+        do { UNREFERENCED_VARIABLE(bCondition); } while(false)
 
-    #define VULKAN_INFO(...) do { (void)(0); } while(false)
+    #define VULKAN_ERROR(...) \
+        do { } while(false)
+
+    #define VULKAN_WARNING_COND(bCondition, ...) \
+        do { UNREFERENCED_VARIABLE(bCondition); } while(false)
+
+    #define VULKAN_WARNING(...) \
+        do { } while(false)
+
+    #define VULKAN_INFO(...) \
+        do { } while(false)
 #endif
 
 #ifndef VULKAN_SUCCEEDED

@@ -30,7 +30,7 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
     VkResult Result = CommandBuffer.AllocateCommandBuffer(GetDevice()->GetVkDevice(), &CommandBufferAllocateInfo);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to allocate CommandBuffer");
+        VULKAN_ERROR_CRITICAL("Failed to allocate CommandBuffer");
         return false;
     }
     else
@@ -44,7 +44,7 @@ bool FVulkanCommandBuffer::Reset()
     VkResult Result = CommandBuffer.ResetCommandBuffer(0);
 	if (VULKAN_FAILED(Result))
 	{
-		VULKAN_ERROR("Failed to reset CommandBuffer");
+		VULKAN_ERROR_CRITICAL("Failed to reset CommandBuffer");
 		return false;
 	}
 	else
@@ -62,7 +62,7 @@ bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
     VkResult Result = CommandBuffer.BeginCommandBuffer(&BeginInfo);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkBeginCommandBuffer Failed");
+        VULKAN_ERROR_CRITICAL("vkBeginCommandBuffer Failed");
         return false;
     }
 
@@ -75,7 +75,7 @@ bool FVulkanCommandBuffer::End()
     VkResult Result = CommandBuffer.EndCommandBuffer();
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkEndCommandBuffer Failed");
+        VULKAN_ERROR_CRITICAL("vkEndCommandBuffer Failed");
         return false;
     }
 
@@ -116,7 +116,7 @@ bool FVulkanCommandPool::Initialize(VkCommandPoolCreateFlags InFlags)
     VkResult Result = vkCreateCommandPool(GetDevice()->GetVkDevice(), &CommandPoolCreateInfo, nullptr, &CommandPool);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create CommandPool");
+        VULKAN_ERROR_CRITICAL("Failed to create CommandPool");
         return false;
     }
     else
@@ -131,7 +131,7 @@ bool FVulkanCommandPool::Reset(VkCommandPoolResetFlags InFlags)
 	VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, InFlags);
 	if (VULKAN_FAILED(Result))
 	{
-		VULKAN_ERROR("vkResetCommandPool Failed");
+		VULKAN_ERROR_CRITICAL("vkResetCommandPool Failed");
 		return false;
 	}
 

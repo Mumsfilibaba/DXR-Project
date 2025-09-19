@@ -180,7 +180,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     Result = vkEnumeratePhysicalDevices(Instance->GetVkInstance(), &AdapterCount, nullptr);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve AdapterCount");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve AdapterCount");
         return false;
     }
 
@@ -188,13 +188,13 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     Result = vkEnumeratePhysicalDevices(Instance->GetVkInstance(), &AdapterCount, Adapters.Data());
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve available Adapters");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve available Adapters");
         return false;
     }
 
     if (AdapterCount < 1)
     {
-        VULKAN_ERROR("No Adapters available");
+        VULKAN_ERROR_CRITICAL("No Adapters available");
         return false;
     }
 
@@ -309,7 +309,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
         if (AcceptedAdapers.IsEmpty())
         {
             // ... we failed to find a suitable adapter
-            VULKAN_ERROR("Failed to find a suitable PhysicalDevice");
+            VULKAN_ERROR_CRITICAL("Failed to find a suitable PhysicalDevice");
             return false;
         }
         else
@@ -626,7 +626,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 {
     if (!PhysicalDevice)
     {
-        VULKAN_ERROR("PhysicalDevice is not initalized correctly");
+        VULKAN_ERROR_CRITICAL("PhysicalDevice is not initalized correctly");
         return false;
     }
 
@@ -639,7 +639,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     Result = vkEnumerateDeviceExtensionProperties(PhysicalDevice->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, nullptr);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve the device extension count");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve the device extension count");
         return false;
     }
 
@@ -647,7 +647,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     Result = vkEnumerateDeviceExtensionProperties(PhysicalDevice->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, AvailableDeviceExtensions.Data());
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve the device extensions");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve the device extensions");
         return false;
     }
 
@@ -681,7 +681,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 
         if (!EnabledExtensionNames.ContainsWithPredicate(CompareExtension))
         {
-            VULKAN_ERROR("Instance layer '%s' could not be enabled", ExtensionName);
+            VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", ExtensionName);
             return false;
         }
     }
@@ -703,7 +703,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     QueueIndicies = FVulkanPhysicalDevice::GetQueueFamilyIndices(PhysicalDevice->GetVkPhysicalDevice());
     if (!QueueIndicies)
     {
-        VULKAN_ERROR("Failed to query queue indices");
+        VULKAN_ERROR_CRITICAL("Failed to query queue indices");
         return false;
     }
 
@@ -893,13 +893,13 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
         }
         else
         {
-            VULKAN_ERROR("VK_KHR_synchronization2 is not available");
+            VULKAN_ERROR_CRITICAL("VK_KHR_synchronization2 is not available");
             return false;
         }
     }
     else
     {
-        VULKAN_ERROR("VK_KHR_synchronization2 is not available");
+        VULKAN_ERROR_CRITICAL("VK_KHR_synchronization2 is not available");
         return false;
     }
 #endif
@@ -907,7 +907,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Device");
+        VULKAN_ERROR_CRITICAL("Failed to create Device");
         return false;
     }
     else
@@ -1034,7 +1034,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     // Create the resources
     if (!DefaultResources.Initialize(*this))
     {
-        VULKAN_ERROR("Failed to create DefaultResources");
+        VULKAN_ERROR_CRITICAL("Failed to create DefaultResources");
         return false;
     }
 
@@ -1132,7 +1132,7 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     if (VULKAN_FAILED(Result))
     {
         OutSampler = VK_NULL_HANDLE;
-        VULKAN_ERROR("Failed to create sampler");
+        VULKAN_ERROR_CRITICAL("Failed to create sampler");
         return false;
     }
     else
@@ -1180,7 +1180,7 @@ uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const
     }
     else
     {
-        VULKAN_ERROR("Invalid CommandQueueType");
+        VULKAN_ERROR_CRITICAL("Invalid CommandQueueType");
         return (~0U);
     }
 }
@@ -1219,7 +1219,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 
     if (!Device.FindOrCreateSampler(SamplerCreateInfo, NullSampler))
     {
-        VULKAN_ERROR("vkCreateSampler failed");
+        VULKAN_ERROR_CRITICAL("vkCreateSampler failed");
         return false;
     }
     else
@@ -1255,7 +1255,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     VkResult Result = vkCreateBuffer(Device.GetVkDevice(), &BufferCreateInfo, nullptr, &NullBuffer);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Buffer");
+        VULKAN_ERROR_CRITICAL("Failed to create Buffer");
         return false;
     }
     else
@@ -1267,7 +1267,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
     if (!MemoryManager.AllocateBufferMemory(NullBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, false, NullBufferMemory))
     {
-        VULKAN_ERROR("Failed to allocate buffer memory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
         return false;
     }
 
@@ -1294,7 +1294,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &NullImage);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create image");
+        VULKAN_ERROR_CRITICAL("Failed to create image");
         return false;
     }
     else
@@ -1304,7 +1304,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
 
     if (!MemoryManager.AllocateImageMemory(NullImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, false, NullImageMemory))
     {
-        VULKAN_ERROR("Failed to allocate ImageMemory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
         return false;
     }
 
@@ -1330,7 +1330,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     Result = vkCreateImageView(Device.GetVkDevice(), &ImageViewCreateInfo, nullptr, &NullImageView);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkCreateImageView failed");
+        VULKAN_ERROR_CRITICAL("vkCreateImageView failed");
         return false;
     }
     else

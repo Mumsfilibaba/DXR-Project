@@ -109,7 +109,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &GeometryBuffer);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Buffer");
+        VULKAN_ERROR_CRITICAL("Failed to create Buffer");
         return false;
     }
 
@@ -119,7 +119,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (!MemoryManager.AllocateBufferMemory(GeometryBuffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, GeometryMemory))
     {
-        VULKAN_ERROR("Failed to allocate buffer memory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
         return false;
     }
 
@@ -137,7 +137,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     Result = vkCreateAccelerationStructureKHR(GetDevice()->GetVkDevice(), &AccelerationStructureCreateInfo, nullptr, &Geometry);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create AccelerationStructure");
+        VULKAN_ERROR_CRITICAL("Failed to create AccelerationStructure");
         return false;
     }
 
@@ -150,13 +150,13 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &ScratchBuffer);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Buffer");
+        VULKAN_ERROR_CRITICAL("Failed to create Buffer");
         return false;
     }
 
     if (!MemoryManager.AllocateBufferMemory(ScratchBuffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, ScratchMemory))
     {
-        VULKAN_ERROR("Failed to allocate scratch-buffer memory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate scratch-buffer memory");
         return false;
     }
 
@@ -183,7 +183,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     GeometryDeviceAddress = vkGetAccelerationStructureDeviceAddressKHR(GetDevice()->GetVkDevice(), &AccelerationDeviceAddressInfo);
     if (GeometryDeviceAddress == 0)
     {
-        VULKAN_ERROR("GetAccelerationStructureDeviceAddress returned an invalid DeviceAddress");
+        VULKAN_ERROR_CRITICAL("GetAccelerationStructureDeviceAddress returned an invalid DeviceAddress");
         return false;
     }
 

@@ -49,7 +49,7 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create UploadBuffer");
+        VULKAN_ERROR_CRITICAL("Failed to create UploadBuffer");
         return false;
     }
     
@@ -59,14 +59,14 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, MemoryAllocation))
     {
-        VULKAN_ERROR("Failed to allocate BufferMemory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate BufferMemory");
         return false;
     }
 
     void* BufferData = MemoryManager.Map(MemoryAllocation);
     if (!BufferData)
     {
-        VULKAN_ERROR("Failed to map BufferMemory");
+        VULKAN_ERROR_CRITICAL("Failed to map BufferMemory");
         return false;
     }
     else
@@ -91,7 +91,6 @@ FVulkanUploadHeapAllocator::~FVulkanUploadHeapAllocator()
     TScopedLock Lock(CriticalSection);
 
     Buffer.Reset();
-
     BufferSize = 0;
     CurrentOffset = 0;
 }
@@ -118,7 +117,7 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
             FVulkanUploadBufferRef NewBuffer = new FVulkanUploadBuffer(GetDevice());
             if (!NewBuffer->Initialize(MaxUploadSize))
             {
-                VULKAN_ERROR("Failed to create staging-buffer");
+                VULKAN_ERROR_CRITICAL("Failed to create staging-buffer");
                 return Allocation;
             }
             else
@@ -144,7 +143,7 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
         FVulkanUploadBufferRef NewBuffer = new FVulkanUploadBuffer(GetDevice());
         if (!NewBuffer->Initialize(Size))
         {
-            VULKAN_ERROR("Failed to create staging-buffer");
+            VULKAN_ERROR_CRITICAL("Failed to create staging-buffer");
             return Allocation;
         }
 

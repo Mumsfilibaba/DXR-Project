@@ -68,7 +68,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Key.NumSamples);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
     {
-        VULKAN_ERROR("Invalid SampleCount");
+        VULKAN_ERROR_CRITICAL("Invalid SampleCount");
         return VK_NULL_HANDLE;
     }
 
@@ -176,7 +176,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     VkResult Result = vkCreateRenderPass(GetDevice()->GetVkDevice(), &RenderPassCreateInfo, nullptr, &RenderPass);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create renderpass");
+        VULKAN_ERROR_CRITICAL("Failed to create renderpass");
         return VK_NULL_HANDLE;
     }
     else
@@ -213,7 +213,7 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
     VkResult Result = vkCreateFramebuffer(GetDevice()->GetVkDevice(), &FramebufferCreateInfo, nullptr, &Framebuffer);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Framebuffer");
+        VULKAN_ERROR_CRITICAL("Failed to create Framebuffer");
         return VK_NULL_HANDLE;
     }
     else

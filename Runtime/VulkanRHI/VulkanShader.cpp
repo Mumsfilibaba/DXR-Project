@@ -42,7 +42,7 @@ bool FVulkanShader::Initialize(const TArray<uint8>& InCode)
 {
     if (InCode.Size() % sizeof(uint32) != 0)
     {
-        VULKAN_ERROR("SPIR-V code is not aligned properly, ensure that the code is valid SPIR-V");
+        VULKAN_ERROR_CRITICAL("SPIR-V code is not aligned properly, ensure that the code is valid SPIR-V");
         return false;
     }
 
@@ -86,13 +86,13 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
     FSpirvArray PatchedCode;
     if (!PatchShaderBindings(PatchedCode, DescriptorSetIndex))
     {
-        VULKAN_ERROR("Failed to get resource bindings");
+        VULKAN_ERROR_CRITICAL("Failed to get resource bindings");
         return nullptr;
     }
     
     if (PatchedCode.IsEmpty())
     {
-        VULKAN_ERROR("Patched code is empty");
+        VULKAN_ERROR_CRITICAL("Patched code is empty");
         return nullptr;
     }
 
@@ -107,7 +107,7 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
     VkResult Result = vkCreateShaderModule(GetDevice()->GetVkDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create ShaderModule");
+        VULKAN_ERROR_CRITICAL("Failed to create ShaderModule");
         return nullptr;
     }
     else
@@ -124,7 +124,7 @@ bool FVulkanShader::PatchShaderBindings(FSpirvArray& OutSpirv, uint32 Descriptor
 {
     if (SpirvCode.IsEmpty())
     {
-        VULKAN_ERROR("No SPIR-V code supplied");
+        VULKAN_ERROR_CRITICAL("No SPIR-V code supplied");
         return false;
     }
  
@@ -144,7 +144,7 @@ bool FVulkanShader::InitializeShaderLayout()
 {
     if (SpirvCode.IsEmpty())
     {
-        VULKAN_ERROR("No SPIR-V code supplied");
+        VULKAN_ERROR_CRITICAL("No SPIR-V code supplied");
         return false;
     }
  
@@ -152,7 +152,7 @@ bool FVulkanShader::InitializeShaderLayout()
     spvc_result Result = spvc_context_create(&Context);
     if (Result != SPVC_SUCCESS)
     {
-        VULKAN_ERROR("Failed to create SpvcContext");
+        VULKAN_ERROR_CRITICAL("Failed to create SpvcContext");
         return false;
     }
 
@@ -166,7 +166,7 @@ bool FVulkanShader::InitializeShaderLayout()
     Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(SpirvCode.Data()), SpirvCode.Size(), &ParsedCode);
     if (Result != SPVC_SUCCESS)
     {
-        VULKAN_ERROR("Failed to parse Spirv");
+        VULKAN_ERROR_CRITICAL("Failed to parse Spirv");
         return false;
     }
 
@@ -174,7 +174,7 @@ bool FVulkanShader::InitializeShaderLayout()
     Result = spvc_context_create_compiler(Context, SPVC_BACKEND_GLSL, ParsedCode, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &Compiler);
     if (Result != SPVC_SUCCESS)
     {
-        VULKAN_ERROR("Failed to create SPIR-V compiler");
+        VULKAN_ERROR_CRITICAL("Failed to create SPIR-V compiler");
         return false;
     }
 
@@ -182,7 +182,7 @@ bool FVulkanShader::InitializeShaderLayout()
     Result = spvc_compiler_create_shader_resources(Compiler, &ShaderResources);
     if (Result != SPVC_SUCCESS)
     {
-        VULKAN_ERROR("Failed to create shader resources");
+        VULKAN_ERROR_CRITICAL("Failed to create shader resources");
         return false;
     }
 

@@ -28,7 +28,7 @@ bool FVulkanFence::Initialize(bool bSignaled)
     VkResult Result = vkCreateFence(GetDevice()->GetVkDevice(), &FenceCreateInfo, nullptr, &Fence);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Fence");
+        VULKAN_ERROR_CRITICAL("Failed to create Fence");
         return false;
     }
     else
@@ -42,7 +42,7 @@ bool FVulkanFence::IsSignaled() const
 	VkResult Result = vkGetFenceStatus(GetDevice()->GetVkDevice(), Fence);
 	if (Result == VK_ERROR_DEVICE_LOST)
 	{
-		VULKAN_ERROR("Device Lost");
+		VULKAN_ERROR_CRITICAL("Device Lost");
 		return false;
 	}
 
@@ -54,7 +54,7 @@ bool FVulkanFence::Wait(uint64 TimeOut) const
 	VkResult Result = vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut);
 	if (VULKAN_FAILED(Result))
 	{
-		VULKAN_ERROR("vkWaitForFences Failed");
+		VULKAN_ERROR_CRITICAL("vkWaitForFences Failed");
 		return false;
 	}
 
@@ -66,7 +66,7 @@ bool FVulkanFence::Reset()
 	VkResult Result = vkResetFences(GetDevice()->GetVkDevice(), 1, &Fence);
 	if (VULKAN_FAILED(Result))
 	{
-		VULKAN_ERROR("vkResetFences Failed");
+		VULKAN_ERROR_CRITICAL("vkResetFences Failed");
 		return false;
 	}
 

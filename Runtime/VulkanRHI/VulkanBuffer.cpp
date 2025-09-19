@@ -104,7 +104,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Buffer");
+        VULKAN_ERROR_CRITICAL("Failed to create Buffer");
         return false;
     }
     
@@ -125,7 +125,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedBufferAllocations, MemoryAllocation))
     {
-        VULKAN_ERROR("Failed to allocate buffer memory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
         return false;
     }
     
@@ -137,7 +137,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
             void* BufferData = MemoryManager.Map(MemoryAllocation);
             if (!BufferData)
             {
-                VULKAN_ERROR("Failed to map buffer memory");
+                VULKAN_ERROR_CRITICAL("Failed to map buffer memory");
                 return false;
             }
 

@@ -144,7 +144,7 @@ bool FVulkanCommandContext::Initialize()
 {
     if (!ContextState.Initialize())
     {
-        VULKAN_ERROR("Failed to initialize ContextState");
+        VULKAN_ERROR_CRITICAL("Failed to initialize ContextState");
         return false;
     }
 
@@ -170,7 +170,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         CommandPool = Queue.ObtainCommandPool();
         if (!CommandPool)
         {
-            VULKAN_ERROR("Failed to Obtain CommandPool");
+            VULKAN_ERROR_CRITICAL("Failed to Obtain CommandPool");
             return;
         }
     }
@@ -181,7 +181,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         CommandBuffer = CommandPool->GetOrCreateBuffer();
         if (!CommandBuffer)
         {
-            VULKAN_ERROR("Failed to Obtain CommandBuffer");
+            VULKAN_ERROR_CRITICAL("Failed to Obtain CommandBuffer");
             return;
         }
 
@@ -189,7 +189,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         const VkCommandBufferUsageFlags Flags = GVulkanAllowResetCommandBuffers ? 0 : VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         if (!CommandBuffer->Begin(Flags))
         {
-            VULKAN_ERROR("Failed to Begin CommandBuffer");
+            VULKAN_ERROR_CRITICAL("Failed to Begin CommandBuffer");
         }
     }
 
@@ -212,7 +212,7 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
     {
         if (!CommandBuffer->End())
         {
-            VULKAN_ERROR("Failed to End CommandBuffer");
+            VULKAN_ERROR_CRITICAL("Failed to End CommandBuffer");
         }
 
         CommandPayload->AddCommandBuffer(CommandBuffer);
@@ -291,7 +291,7 @@ void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
     FVulkanQueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&VulkanQuery->Result);
     if (!QueryAllocation.IsValid())
     {
-        VULKAN_ERROR("Failed to allocate Query");
+        VULKAN_ERROR_CRITICAL("Failed to allocate Query");
         return;
     }
 
@@ -307,7 +307,7 @@ void FVulkanCommandContext::EndQuery(FRHIQuery* Query)
 
     if (!VulkanQuery->QueryAllocation.IsValid())
     {
-        VULKAN_ERROR("No valid QueryAllocation, ensure that RHIBeginQuery was called correctly");
+        VULKAN_ERROR_CRITICAL("No valid QueryAllocation, ensure that RHIBeginQuery was called correctly");
         return;
     }
 
@@ -323,7 +323,7 @@ void FVulkanCommandContext::QueryTimestamp(FRHIQuery* Query)
     FVulkanQueryAllocation QueryAllocation = TimestampQueryAllocator.Allocate(&VulkanQuery->Result);
     if (!QueryAllocation.IsValid())
     {
-        VULKAN_ERROR("Failed to allocate Query");
+        VULKAN_ERROR_CRITICAL("Failed to allocate Query");
         return;
     }
 
@@ -818,7 +818,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
         VkResult Result = vkMapMemory(NativeDevice, DeviceMemory, 0, VK_WHOLE_SIZE, 0, reinterpret_cast<void**>(&BufferData));
         if (VULKAN_FAILED(Result) || !BufferData)
         {
-            VULKAN_ERROR("Failed to map buffer memory");
+            VULKAN_ERROR_CRITICAL("Failed to map buffer memory");
             return;
         }
 
@@ -837,7 +837,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
         Result = vkFlushMappedMemoryRanges(NativeDevice, 1, &MappedMemoryRange);
         if (VULKAN_FAILED(Result))
         {
-            VULKAN_ERROR("Failed to flush buffer memory");
+            VULKAN_ERROR_CRITICAL("Failed to flush buffer memory");
             return;
         }
         

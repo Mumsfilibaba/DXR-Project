@@ -134,7 +134,7 @@ bool FVulkanRHI::Initialize()
 
     if (!Instance.Initialize(InstanceDesc))
     {
-        VULKAN_ERROR("Failed to initialize VulkanInstance");
+        VULKAN_ERROR_CRITICAL("Failed to initialize VulkanInstance");
         return false;
     }
     
@@ -161,7 +161,7 @@ bool FVulkanRHI::Initialize()
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(AdapterCreateInfo))
     {
-        VULKAN_ERROR("Failed to initialize VulkanPhyscicalDevice");
+        VULKAN_ERROR_CRITICAL("Failed to initialize VulkanPhyscicalDevice");
         return false;
     }
 
@@ -199,7 +199,7 @@ bool FVulkanRHI::Initialize()
     Device = new FVulkanDevice(GetInstance(), GetPhysicalDevice());
     if (!Device->Initialize(DeviceCreateInfo))
     {
-        VULKAN_ERROR("Failed to initialize VulkanDevice");
+        VULKAN_ERROR_CRITICAL("Failed to initialize VulkanDevice");
         return false;
     }
     
@@ -212,7 +212,7 @@ bool FVulkanRHI::Initialize()
     // Initialize parts of the device that require device functions to be present
     if (!Device->PostLoaderInitalize())
     {
-        VULKAN_ERROR("Failed to PostLoaderInitalize failed to VulkanDevice");
+        VULKAN_ERROR_CRITICAL("Failed to PostLoaderInitalize failed to VulkanDevice");
         return false;
     }
 
@@ -220,7 +220,7 @@ bool FVulkanRHI::Initialize()
     GraphicsQueue = new FVulkanQueue(Device, EVulkanCommandQueueType::Graphics);
     if (!GraphicsQueue->Initialize())
     {
-        VULKAN_ERROR("Failed to initialize VulkanQueue [Graphics]");
+        VULKAN_ERROR_CRITICAL("Failed to initialize VulkanQueue [Graphics]");
         return false;
     }
     else
@@ -232,7 +232,7 @@ bool FVulkanRHI::Initialize()
     GraphicsCommandContext = new FVulkanCommandContext(Device, *GraphicsQueue);
     if (!GraphicsCommandContext->Initialize())
     {
-        VULKAN_ERROR("Failed to initialize VulkanCommandContext");
+        VULKAN_ERROR_CRITICAL("Failed to initialize VulkanCommandContext");
         return false;
     }
 
@@ -704,7 +704,7 @@ FString FVulkanRHI::GetAdapterName() const
 {
     if (!PhysicalDevice)
     {
-        VULKAN_ERROR("PhysicalDevice is not initialized properly");
+        VULKAN_ERROR_CRITICAL("PhysicalDevice is not initialized properly");
         return FString();
     }
 

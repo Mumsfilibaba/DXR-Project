@@ -123,7 +123,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Info.NumSamples);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
     {
-        VULKAN_ERROR("Invalid SampleCount");
+        VULKAN_ERROR_CRITICAL("Invalid SampleCount");
         return false;
     }
 
@@ -191,7 +191,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create image");
+        VULKAN_ERROR_CRITICAL("Failed to create image");
         return false;
     }
     else
@@ -206,7 +206,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, GVulkanForceDedicatedImageAllocations, MemoryAllocation))
     {
-        VULKAN_ERROR("Failed to allocate ImageMemory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
         return false;
     }
 
@@ -251,7 +251,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         }
         else
         {
-            VULKAN_ERROR("Unsupported resource dimension");
+            VULKAN_ERROR_CRITICAL("Unsupported resource dimension");
             return false;
         }
 

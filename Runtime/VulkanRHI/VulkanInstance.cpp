@@ -56,14 +56,14 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     DriverHandle = FPlatformVulkan::LoadVulkanLibrary();
     if (!DriverHandle)
     {
-        VULKAN_ERROR("Failed to load Vulkan library");
+        VULKAN_ERROR_CRITICAL("Failed to load Vulkan library");
         return false;
     }
 
     vkGetInstanceProcAddr = FPlatformLibrary::LoadSymbol<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr", DriverHandle);
     if (!vkGetInstanceProcAddr)
     {
-        VULKAN_ERROR("Failed to load vkGetInstanceProcAddr");
+        VULKAN_ERROR_CRITICAL("Failed to load vkGetInstanceProcAddr");
         return false;
     }
 
@@ -78,7 +78,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve Instance LayerProperties Count");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve Instance LayerProperties Count");
         return false;
     }
 
@@ -86,7 +86,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve Instance LayerProperties");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve Instance LayerProperties");
         return false;
     }
 
@@ -95,7 +95,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve Instance ExtensionProperties Count");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve Instance ExtensionProperties Count");
         return false;
     }
 
@@ -103,7 +103,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to retrieve Instance ExtensionProperties");
+        VULKAN_ERROR_CRITICAL("Failed to retrieve Instance ExtensionProperties");
         return false;
     }
 
@@ -162,7 +162,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
         
         if (!EnabledLayerNames.ContainsWithPredicate(CompareLayer))
         {
-            VULKAN_ERROR("Instance layer '%s' could not be enabled", LayerName);
+            VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", LayerName);
             return false;
         }
     }
@@ -192,7 +192,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
         
         if (!EnabledExtensionNames.ContainsWithPredicate(CompareExtension))
         {
-            VULKAN_ERROR("Instance layer '%s' could not be enabled", ExtensionName);
+            VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", ExtensionName);
             return false;
         }
     }
@@ -278,7 +278,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Instance");
+        VULKAN_ERROR_CRITICAL("Failed to create Instance");
         return false;
     }
 
@@ -299,7 +299,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
         Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &DebugMessenger);
         if (VULKAN_FAILED(Result))
         {
-            VULKAN_ERROR("Failed to create DebugMessenger");
+            VULKAN_ERROR_CRITICAL("Failed to create DebugMessenger");
             return false;
         }
     }

@@ -28,7 +28,7 @@ bool FVulkanSemaphore::Initialize()
     VkResult Result = vkCreateSemaphore(GetDevice()->GetVkDevice(), &SemaphoreCreateInfo, nullptr, &Semaphore);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to create Semaphore");
+        VULKAN_ERROR_CRITICAL("Failed to create Semaphore");
         return false;
     }
 

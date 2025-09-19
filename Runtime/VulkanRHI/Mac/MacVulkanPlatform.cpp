@@ -21,7 +21,7 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
         MetalLayer = [CAMetalLayer layer];
         if (!MetalLayer)
         {
-            VULKAN_ERROR("Failed to create CAMetalLayer");
+            VULKAN_ERROR_CRITICAL("Failed to create CAMetalLayer");
             bResult = false;
             return;
         }

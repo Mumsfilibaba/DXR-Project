@@ -144,7 +144,7 @@ bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuff
     VkResult Result = vkQueueSubmit(Queue, 1, &SubmitInfo, SignalFence);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkQueueSubmit failed");
+        VULKAN_ERROR_CRITICAL("vkQueueSubmit failed");
         return false;
     }
 
@@ -202,7 +202,7 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
     VkResult Result = vkQueueSubmit(Queue, 1, &SubmitInfo, VK_NULL_HANDLE);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkQueueSubmit failed");
+        VULKAN_ERROR_CRITICAL("vkQueueSubmit failed");
         return false;
     }
 

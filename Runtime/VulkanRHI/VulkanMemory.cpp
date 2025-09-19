@@ -69,7 +69,7 @@ bool FVulkanMemoryHeap::Initialize(uint64 InSizeInBytes)
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (!MemoryManager.AllocateMemoryDedicated(DeviceMemory, AllocationFlags, InSizeInBytes, MemoryIndex))
     {
-        VULKAN_ERROR("Failed to allocate memory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate memory");
         return false;
     }
     else
@@ -463,7 +463,7 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, PropertyFlags);
     if (MemoryTypeIndex == TNumericLimits<int32>::Max())
     {
-        VULKAN_ERROR("Did not find any suitable memory type");
+        VULKAN_ERROR_CRITICAL("Did not find any suitable memory type");
         return false;
     }
 
@@ -514,7 +514,7 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
 
     if (!bResult)
     {
-        VULKAN_ERROR("Failed to allocte BufferMemory");
+        VULKAN_ERROR_CRITICAL("Failed to allocte BufferMemory");
         return false;
     }
 
@@ -522,7 +522,7 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
     VkResult Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), Buffer, OutAllocation.Memory, OutAllocation.Offset);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to bind BufferMemory");
+        VULKAN_ERROR_CRITICAL("Failed to bind BufferMemory");
         return false;
     }
 
@@ -541,7 +541,7 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
             OutAllocation.DeviceAddress = vkGetBufferDeviceAddressKHR(GetDevice()->GetVkDevice(), &DeviceAdressInfo);
             if (OutAllocation.DeviceAddress == 0)
             {
-                VULKAN_ERROR("vkGetBufferDeviceAddressKHR returned nullptr");
+                VULKAN_ERROR_CRITICAL("vkGetBufferDeviceAddressKHR returned nullptr");
                 return false;
             }
         }
@@ -597,7 +597,7 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, PropertyFlags);
     if (MemoryTypeIndex == TNumericLimits<int32>::Max())
     {
-        VULKAN_ERROR("No suitable memory type");
+        VULKAN_ERROR_CRITICAL("No suitable memory type");
         return false;
     }
 
@@ -648,7 +648,7 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
 
     if (!bResult)
     {
-        VULKAN_ERROR("Failed to allocte ImageMemory");
+        VULKAN_ERROR_CRITICAL("Failed to allocte ImageMemory");
         return false;
     }
 
@@ -656,7 +656,7 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
     VkResult Result = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, OutAllocation.Memory, OutAllocation.Offset);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("Failed to bind ImageMemory");
+        VULKAN_ERROR_CRITICAL("Failed to bind ImageMemory");
         return false;
     }
 
@@ -668,7 +668,7 @@ bool FVulkanMemoryManager::AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemo
     VkResult Result = vkAllocateMemory(GetDevice()->GetVkDevice(), &AllocateInfo, nullptr, &OutDeviceMemory);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR("vkAllocateMemory failed");
+        VULKAN_ERROR_CRITICAL("vkAllocateMemory failed");
         return false;
     }
     else

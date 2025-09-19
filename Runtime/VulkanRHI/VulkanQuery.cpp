@@ -48,7 +48,7 @@ bool FVulkanQueryPool::Initialize()
     VkResult result = vkCreateQueryPool(GetDevice()->GetVkDevice(), &QueryPoolCreateInfo, nullptr, &QueryPool);
     if (VULKAN_FAILED(result))
     {
-        VULKAN_ERROR("Failed to create QueryPool");
+        VULKAN_ERROR_CRITICAL("Failed to create QueryPool");
         return false;
     }
 
@@ -100,7 +100,7 @@ void FVulkanQueryPool::ResolveQueries()
         VkResult result = vkGetQueryPoolResults(GetDevice()->GetVkDevice(), QueryPool, 0, NumUsedQueries, QueryData.SizeInBytes(), QueryData.Data(), sizeof(FVulkanTimingQuery), Flags);
         if (!(result == VK_SUCCESS || result == VK_NOT_READY))
         {
-            VULKAN_ERROR("Failed to retrieve QueryPool results");
+            VULKAN_ERROR_CRITICAL("Failed to retrieve QueryPool results");
             return;
         }
 
@@ -122,7 +122,7 @@ void FVulkanQueryPool::ResolveQueries()
         VkResult result = vkGetQueryPoolResults(GetDevice()->GetVkDevice(), QueryPool, 0, NumUsedQueries, QueryData.SizeInBytes(), QueryData.Data(), sizeof(FVulkanOcclusionQuery), Flags);
         if (!(result == VK_SUCCESS || result == VK_NOT_READY))
         {
-            VULKAN_ERROR("Failed to retrieve QueryPool results");
+            VULKAN_ERROR_CRITICAL("Failed to retrieve QueryPool results");
             return;
         }
 
