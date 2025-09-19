@@ -7,7 +7,7 @@
 class FVulkanSwapChain;
 class FVulkanCommandContext;
 
-typedef TSharedRef<FVulkanSwapChain>                FVulkanSwapChainRef;
+typedef TSharedRef<FVulkanSwapChain>               FVulkanSwapChainRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 

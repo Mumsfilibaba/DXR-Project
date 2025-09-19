@@ -113,7 +113,7 @@ public:
         OutNumViewports = GraphicsState.NumViewports;
     }
 
-    FORCEINLINE void GetViewports(VkRect2D* ScissorRects, uint32& OutNumScissorRects) const
+    FORCEINLINE void GetScissorRects(VkRect2D* ScissorRects, uint32& OutNumScissorRects) const
     {
         if (ScissorRects)
         {

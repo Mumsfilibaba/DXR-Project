@@ -35,6 +35,11 @@ namespace VulkanInternal
             return vkAllocateCommandBuffers(Device, AllocateInfo, &CommandBuffer);
         }
 
+		FORCEINLINE VkResult ResetCommandBuffer(VkCommandBufferResetFlags Flags)
+		{
+			return vkResetCommandBuffer(CommandBuffer, Flags);
+		}
+
         FORCEINLINE VkResult BeginCommandBuffer(const VkCommandBufferBeginInfo* BeginInfo)
         {
             return vkBeginCommandBuffer(CommandBuffer, BeginInfo);
@@ -235,6 +240,7 @@ public:
     ~FVulkanCommandBuffer();
 
     bool Initialize(VkCommandBufferLevel InLevel);
+    bool Reset();
     bool Begin(VkCommandBufferUsageFlags Flags = 0);
     bool End();
 
@@ -278,23 +284,12 @@ public:
     FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
     ~FVulkanCommandPool();
 
-    bool Initialize();
+    bool Initialize(VkCommandPoolCreateFlags InFlags);
+    bool Reset(VkCommandPoolResetFlags Flags);
     void DestroyBuffers();
 
-    FVulkanCommandBuffer* CreateBuffer();
+    FVulkanCommandBuffer* GetOrCreateBuffer();
     void RecycleBuffer(FVulkanCommandBuffer* InCommandBuffer);
-    
-    bool Reset(VkCommandPoolResetFlags Flags = 0)
-    {
-        VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, Flags);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("vkResetCommandPool Failed");
-            return false;
-        }
-
-        return true;
-    }
     
     VkCommandPool GetVkCommandPool() const
     {
@@ -302,8 +297,15 @@ public:
     }
     
 private:
+    bool AllowCommandBufferReset() const
+    {
+        return (Flags & VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT) == VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    }
+
     VkCommandPool                 CommandPool;
     EVulkanCommandQueueType       Type;
+    VkCommandPoolCreateFlags      Flags;
     TQueue<FVulkanCommandBuffer*> AvailableCommandBuffers;
+    TArray<FVulkanCommandBuffer*> RecycledCommandBuffers;
     TArray<FVulkanCommandBuffer*> CommandBuffers;
 };

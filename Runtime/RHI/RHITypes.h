@@ -818,6 +818,7 @@ struct FClearValue
 struct FBufferRegion
 {
     constexpr FBufferRegion() noexcept = default;
+
     constexpr FBufferRegion(uint64 InOffset, uint64 InSize) noexcept
         : Offset(InOffset)
         , Size(InSize)
@@ -870,17 +871,17 @@ struct FTextureCopyInfo
 {
     bool operator==(const FTextureCopyInfo& Other) const noexcept = default;
 
-    FIntVector3 DstPosition    = { };
-    uint32      DstArraySlice  = 0;
-    uint32      DstMipSlice    = 0;
+    FIntVector3 DstPosition;
+    uint32 DstArraySlice = 0;
+    uint32 DstMipSlice = 0;
 
-    FIntVector3 SrcPosition    = { };
-    uint32      SrcArraySlice  = 0;
-    uint32      SrcMipSlice    = 0;
+    FIntVector3 SrcPosition;
+    uint32 SrcArraySlice = 0;
+    uint32 SrcMipSlice = 0;
 
-    FIntVector3 Size           = { };
-    uint32      NumArraySlices = 0;
-    uint32      NumMipLevels   = 0;
+    FIntVector3 Size;
+    uint32 NumArraySlices = 0;
+    uint32 NumMipLevels = 0;
 };
 
 struct FViewportRegion
@@ -940,9 +941,9 @@ struct FRayTracingSceneBuildInfo
 
     constexpr bool operator==(const FRayTracingSceneBuildInfo& Other) const noexcept = default;
 
-    const FRHIRayTracingGeometryInstance* Instances    = nullptr;
-    uint32                                NumInstances = 0;
-    bool                                  bUpdate      = false;
+    const FRHIRayTracingGeometryInstance* Instances = nullptr;
+    uint32 NumInstances = 0;
+    bool   bUpdate      = false;
 };
 
 struct FRayTracingGeometryBuildInfo
@@ -971,14 +972,13 @@ struct FRayTracingGeometryBuildInfo
 
 struct FRHITextureTransition
 {
-    NODISCARD
-    static constexpr FRHITextureTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    NODISCARD static constexpr FRHITextureTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
     {
         return FRHITextureTransition{ BeforeState, AfterState, RHI_ALL_MIP_LEVELS, RHI_ALL_ARRAY_SLICES };
     }
 
-    NODISCARD
-    static constexpr FRHITextureTransition MakePartial(EResourceAccess BeforeState, EResourceAccess AfterState, uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
+    NODISCARD static constexpr FRHITextureTransition MakePartial(EResourceAccess BeforeState, EResourceAccess AfterState,
+        uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
     {
         return FRHITextureTransition{ BeforeState, AfterState, MipLevel, ArraySlice };
     }
@@ -993,8 +993,7 @@ struct FRHITextureTransition
 
 struct FRHIBufferTransition
 {
-    NODISCARD
-    static constexpr FRHIBufferTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    NODISCARD static constexpr FRHIBufferTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
     {
         return FRHIBufferTransition{ BeforeState, AfterState };
     }

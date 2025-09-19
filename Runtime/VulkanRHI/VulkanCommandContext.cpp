@@ -52,34 +52,48 @@ void FBarrierBatcher::AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, 
 
 void FBarrierBatcher::AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2& InBarrier)
 {
-    CHECK(InBarrier.sType == VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2);
-    CHECK(InBarrier.srcQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
-    CHECK(InBarrier.dstQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
+	CHECK(InBarrier.sType == VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2);
+	CHECK(InBarrier.srcQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
+	CHECK(InBarrier.dstQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
 
-    for (FBatch& Batch : Batches)
-    {
-        if (Batch.DependencyFlags == DependencyFlags)
-        {
-            // If we already transition this image to another layout, then we just modify the new-layout to avoid multiple barriers
-            for (VkImageMemoryBarrier2& Barrier : Batch.ImageMemoryBarriers)
-            {
-                // TODO: When we start to perform queue family ownership changes this will probably have to be looked at again
-                if (Barrier.image == InBarrier.image && FMemory::Memcmp(&Barrier, &InBarrier, sizeof(VkImageMemoryBarrier2)) == 0)
-                {
-                    Barrier.newLayout     = InBarrier.newLayout;
-                    Barrier.dstAccessMask = InBarrier.dstAccessMask;
-                    return;
-                }
-            }
+	for (FBatch& Batch : Batches)
+	{
+		if (Batch.DependencyFlags == DependencyFlags)
+		{
+			// Coalesce with existing barrier if same image + subresource range
+			for (VkImageMemoryBarrier2& Barrier : Batch.ImageMemoryBarriers)
+			{
+				if (Barrier.image == InBarrier.image)
+				{
+					const VkImageSubresourceRange& RangeA = Barrier.subresourceRange;
+					const VkImageSubresourceRange& RangeB = InBarrier.subresourceRange;
 
-            // ... otherwise we add the barrier
-            Batch.ImageMemoryBarriers.Add(InBarrier);
-            return;
-        }
-    }
+					const bool bSameRange = (RangeA.aspectMask == RangeB.aspectMask && RangeA.baseMipLevel == RangeB.baseMipLevel && 
+                        RangeA.levelCount == RangeB.levelCount && RangeA.baseArrayLayer == RangeB.baseArrayLayer && RangeA.layerCount == RangeB.layerCount);
 
-    FBatch& Batch = Batches.Emplace(DependencyFlags);
-    Batch.ImageMemoryBarriers.Add(InBarrier);
+					if (bSameRange)
+					{
+						// Keep original oldLayout, advance to the latest newLayout.
+						Barrier.newLayout = InBarrier.newLayout;
+
+						// Be conservative. Union access + stage masks.
+						Barrier.srcAccessMask |= InBarrier.srcAccessMask;
+						Barrier.dstAccessMask |= InBarrier.dstAccessMask;
+						Barrier.srcStageMask  |= InBarrier.srcStageMask;
+						Barrier.dstStageMask  |= InBarrier.dstStageMask;
+						return;
+					}
+				}
+			}
+
+			// ...otherwise add a new barrier
+			Batch.ImageMemoryBarriers.Add(InBarrier);
+			return;
+		}
+	}
+
+	FBatch& Batch = Batches.Emplace(DependencyFlags);
+	Batch.ImageMemoryBarriers.Add(InBarrier);
 }
 
 void FBarrierBatcher::FlushBarriers()
@@ -97,6 +111,7 @@ void FBarrierBatcher::FlushBarriers()
         DependencyInfo.imageMemoryBarrierCount  = Batch.ImageMemoryBarriers.Size();
         DependencyInfo.pBufferMemoryBarriers    = Batch.BufferMemoryBarriers.Data();
         DependencyInfo.bufferMemoryBarrierCount = Batch.BufferMemoryBarriers.Size();
+        DependencyInfo.dependencyFlags          = Batch.DependencyFlags;
 
         CHECK(!Context.IsInsideRenderPass());
         Context.GetCommandBuffer()->PipelineBarrier2(&DependencyInfo);
@@ -163,7 +178,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     // At this point we cannot have a valid CommandBuffer
     if (!CommandBuffer)
     {
-        CommandBuffer = CommandPool->CreateBuffer();
+        CommandBuffer = CommandPool->GetOrCreateBuffer();
         if (!CommandBuffer)
         {
             VULKAN_ERROR("Failed to Obtain CommandBuffer");
@@ -171,7 +186,8 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         }
 
         // Begin to record to this CommandBuffer
-        if (!CommandBuffer->Begin())
+        const VkCommandBufferUsageFlags Flags = GVulkanAllowResetCommandBuffers ? 0 : VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        if (!CommandBuffer->Begin(Flags))
         {
             VULKAN_ERROR("Failed to Begin CommandBuffer");
         }
@@ -365,8 +381,8 @@ void FVulkanCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Re
         ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstAccessMask       = ConvertResourceStateToAccessFlags(EResourceAccess::RenderTarget);
         ImageBarrier.srcAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-        ImageBarrier.srcStageMask        = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-        ImageBarrier.dstStageMask        = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        ImageBarrier.srcStageMask        = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        ImageBarrier.dstStageMask        = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
 
         BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
     }
@@ -592,9 +608,7 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
     BarrierBatcher.FlushBarriers();
 
     // Begin the RenderPass
-    VkRenderPassBeginInfo RenderPassBeginInfo;
-    FMemory::Memzero(&RenderPassBeginInfo);
-
+    VkRenderPassBeginInfo RenderPassBeginInfo = { };
     RenderPassBeginInfo.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass               = RenderPass;
     RenderPassBeginInfo.framebuffer              = FrameBuffer;
@@ -869,7 +883,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     const uint32 NumRows  = FVulkanTextureHelper::CalculateTextureNumRows(Format, TextureRegion.Height);
     for (uint64 y = 0; y < NumRows; y++)
     {
-        FMemory::Memcpy(Allocation.Memory, Source, SrcRowPitch);
+        FMemory::Memcpy(Allocation.Memory, Source, RowPitch);
         Source            += SrcRowPitch;
         Allocation.Memory += RowPitch;
     }
@@ -1123,19 +1137,19 @@ void FVulkanCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITe
         if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)
         {
             ImageBarrier.subresourceRange.baseMipLevel = 0;
-            ImageBarrier.subresourceRange.levelCount   = VK_REMAINING_MIP_LEVELS;
+            ImageBarrier.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
         }
         else
         {
             ImageBarrier.subresourceRange.baseMipLevel = TextureTransition.MipLevel;
-            ImageBarrier.subresourceRange.levelCount   = 1;
+            ImageBarrier.subresourceRange.levelCount = 1;
         }
 
         // Handle array-slices
         if (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES)
         {
             ImageBarrier.subresourceRange.baseArrayLayer = 0;
-            ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+            ImageBarrier.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
         }
         else
         {
@@ -1144,16 +1158,16 @@ void FVulkanCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITe
             if (IsTextureCube(VulkanTexture->GetDimension()))
             {
                 BaseArrayLayer = TextureTransition.ArraySlice * RHI_NUM_CUBE_FACES;
-                LayerCount     = RHI_NUM_CUBE_FACES;
+                LayerCount = RHI_NUM_CUBE_FACES;
             }
             else
             {
                 BaseArrayLayer = TextureTransition.ArraySlice;
-                LayerCount     = 1u;
+                LayerCount = 1u;
             }
 
-            ImageBarrier.subresourceRange.baseArrayLayer = TextureTransition.ArraySlice;
-            ImageBarrier.subresourceRange.layerCount     = 1;
+			ImageBarrier.subresourceRange.baseArrayLayer = BaseArrayLayer;
+			ImageBarrier.subresourceRange.layerCount = LayerCount;
         }
 
         CHECK(!IsInsideRenderPass());
@@ -1345,9 +1359,7 @@ void FVulkanCommandContext::InsertMarker(const FStringView& Message)
 #if VK_EXT_debug_utils
     if (FVulkanDebugUtilsEXT::IsEnabled())
     {
-        VkDebugUtilsLabelEXT DebugUtilsLabel;
-        FMemory::Memzero(&DebugUtilsLabel);
-        
+        VkDebugUtilsLabelEXT DebugUtilsLabel = { };
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
         DebugUtilsLabel.pLabelName = Message.Data();
         DebugUtilsLabel.color[0]   = 0.0f;

@@ -52,19 +52,21 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
         FVulkanCommandPool* CommandPool;
         if (AvailableCommandPools.Dequeue(CommandPool))
         {
-            CommandPool->Reset();
+            CommandPool->Reset(0);
             return CommandPool;
         }
     }
-    
+
     FVulkanCommandPool* CommandPool = new FVulkanCommandPool(GetDevice(), QueueType);
-    if (!CommandPool->Initialize())
+
+    const VkCommandPoolCreateFlags Flags = GVulkanAllowResetCommandBuffers ? VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT : 0;
+    if (!CommandPool->Initialize(Flags))
     {
         DEBUG_BREAK();
         delete CommandPool;
         return nullptr;
     }
-
+        
     CommandPools.Add(CommandPool);
     return CommandPool;
 }

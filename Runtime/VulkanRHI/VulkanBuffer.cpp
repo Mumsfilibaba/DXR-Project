@@ -108,6 +108,9 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         return false;
     }
     
+	// NOTE: We might need to call:
+    //   vkInvalidateMappedMemoryRanges before reading (host <- device)
+    //   vkFlushMappedMemoryRanges after writing(device <- host), if you ever write.
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (Info.IsDynamic())
     {
@@ -115,7 +118,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     }
     else if (Info.IsReadBack())
     {
-        MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
     
     // Allocate memory based on the buffer

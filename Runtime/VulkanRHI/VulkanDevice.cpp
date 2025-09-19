@@ -16,6 +16,7 @@ VULKANRHI_API bool GVulkanForceDedicatedImageAllocations  = GVulkanForceDedicate
 VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations = GVulkanForceDedicatedAllocations || false;
 VULKANRHI_API bool GVulkanAllowNullDescriptors            = true;
 VULKANRHI_API bool GVulkanAllowGeometryShaders            = false;
+VULKANRHI_API bool GVulkanAllowResetCommandBuffers        = false;
 
 VULKANRHI_API bool GVulkanSupportsDepthClip                 = false;
 VULKANRHI_API bool GVulkanSupportsConservativeRasterization = false;

@@ -20,9 +20,7 @@ FVulkanCommandBuffer::~FVulkanCommandBuffer()
 
 bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
 {
-    VkCommandBufferAllocateInfo CommandBufferAllocateInfo;
-    FMemory::Memzero(&CommandBufferAllocateInfo);
-
+    VkCommandBufferAllocateInfo CommandBufferAllocateInfo = { };
     CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     CommandBufferAllocateInfo.pNext              = nullptr;
     CommandBufferAllocateInfo.commandPool        = OwnerPool->GetVkCommandPool();
@@ -41,11 +39,23 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
     }
 }
 
+bool FVulkanCommandBuffer::Reset()
+{
+    VkResult Result = CommandBuffer.ResetCommandBuffer(0);
+	if (VULKAN_FAILED(Result))
+	{
+		VULKAN_ERROR("Failed to reset CommandBuffer");
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
 bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
 {
-    VkCommandBufferBeginInfo BeginInfo;
-    FMemory::Memzero(&BeginInfo);
-
+    VkCommandBufferBeginInfo BeginInfo = { };
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     BeginInfo.flags = Flags;
 
@@ -69,7 +79,7 @@ bool FVulkanCommandBuffer::End()
         return false;
     }
 
-    NumCommands  = 0;
+    NumCommands = 0;
     bIsRecording = false;
     return true;
 }
@@ -78,6 +88,7 @@ FVulkanCommandPool::FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQu
     : FVulkanDeviceChild(InDevice)
     , CommandPool(VK_NULL_HANDLE)
     , Type(InType)
+    , Flags(0)
     , CommandBuffers()
     , AvailableCommandBuffers()
 {
@@ -94,14 +105,12 @@ FVulkanCommandPool::~FVulkanCommandPool()
     }
 }
 
-bool FVulkanCommandPool::Initialize()
+bool FVulkanCommandPool::Initialize(VkCommandPoolCreateFlags InFlags)
 {
-    VkCommandPoolCreateInfo CommandPoolCreateInfo;
-    FMemory::Memzero(&CommandPoolCreateInfo);
-
+    VkCommandPoolCreateInfo CommandPoolCreateInfo = { };
     CommandPoolCreateInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     CommandPoolCreateInfo.pNext            = nullptr;
-    CommandPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    CommandPoolCreateInfo.flags            = InFlags;
     CommandPoolCreateInfo.queueFamilyIndex = GetDevice()->GetQueueIndexFromType(Type);
 
     VkResult Result = vkCreateCommandPool(GetDevice()->GetVkDevice(), &CommandPoolCreateInfo, nullptr, &CommandPool);
@@ -112,8 +121,31 @@ bool FVulkanCommandPool::Initialize()
     }
     else
     {
+        Flags = InFlags;
         return true;
     }
+}
+
+bool FVulkanCommandPool::Reset(VkCommandPoolResetFlags InFlags)
+{
+	VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, InFlags);
+	if (VULKAN_FAILED(Result))
+	{
+		VULKAN_ERROR("vkResetCommandPool Failed");
+		return false;
+	}
+
+    if (!AllowCommandBufferReset())
+    {
+		for (FVulkanCommandBuffer* CommandBuffer : RecycledCommandBuffers)
+		{
+            AvailableCommandBuffers.Enqueue(CommandBuffer);
+		}
+
+        RecycledCommandBuffers.Clear();
+    }
+
+	return true;
 }
 
 void FVulkanCommandPool::DestroyBuffers()
@@ -123,11 +155,12 @@ void FVulkanCommandPool::DestroyBuffers()
         delete CommandBuffer;
     }
 
-    CommandBuffers.Clear();
     AvailableCommandBuffers.Clear();
+    CommandBuffers.Clear();
+    RecycledCommandBuffers.Clear();
 }
 
-FVulkanCommandBuffer* FVulkanCommandPool::CreateBuffer()
+FVulkanCommandBuffer* FVulkanCommandPool::GetOrCreateBuffer()
 {
     FVulkanCommandBuffer* CommandBuffer = nullptr;
     if (AvailableCommandBuffers.IsEmpty())
@@ -145,10 +178,15 @@ FVulkanCommandBuffer* FVulkanCommandPool::CreateBuffer()
     }
     else
     {
-        AvailableCommandBuffers.Dequeue(CommandBuffer);
+		AvailableCommandBuffers.Dequeue(CommandBuffer);
+        CHECK(CommandBuffer != nullptr);
+        
+        if (AllowCommandBufferReset())
+        {
+            CommandBuffer->Reset();
+        }
     }
     
-    CHECK(CommandBuffer != nullptr);
     return CommandBuffer;
 }
 
@@ -156,6 +194,13 @@ void FVulkanCommandPool::RecycleBuffer(FVulkanCommandBuffer* InCommandBuffer)
 {
     if (InCommandBuffer)
     {
-        AvailableCommandBuffers.Enqueue(InCommandBuffer);
+        if (AllowCommandBufferReset())
+        {
+            AvailableCommandBuffers.Enqueue(InCommandBuffer);
+        }
+        else
+        {
+            RecycledCommandBuffers.Add(InCommandBuffer);
+        }
     }
 }

@@ -217,6 +217,7 @@ VULKAN_FUNCTION_DEFINITION(CreateFramebuffer);
 VULKAN_FUNCTION_DEFINITION(DestroyFramebuffer);
 
 VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
+VULKAN_FUNCTION_DEFINITION(ResetCommandBuffer);
 VULKAN_FUNCTION_DEFINITION(FreeCommandBuffers);
 
 VULKAN_FUNCTION_DEFINITION(BeginCommandBuffer);
@@ -381,6 +382,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImageView);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AllocateCommandBuffers);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, ResetCommandBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FreeCommandBuffers);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BeginCommandBuffer);

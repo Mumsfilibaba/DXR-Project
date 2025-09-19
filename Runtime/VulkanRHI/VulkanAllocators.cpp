@@ -12,6 +12,7 @@ FVulkanUploadBuffer::FVulkanUploadBuffer(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , Buffer(VK_NULL_HANDLE)
     , MemoryAllocation()
+	, MappedMemory(nullptr)
 {
 }
 
@@ -52,7 +53,7 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
         return false;
     }
     
-    const VkMemoryAllocateFlags AllocateFlags    = 0;
+    const VkMemoryAllocateFlags AllocateFlags = 0;
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
@@ -63,18 +64,16 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
     }
 
     void* BufferData = MemoryManager.Map(MemoryAllocation);
-    if (VULKAN_FAILED(Result))
+    if (!BufferData)
     {
         VULKAN_ERROR("Failed to map BufferMemory");
         return false;
     }
-
-    if (!BufferData)
+    else
     {
-        return false;
+        MappedMemory = reinterpret_cast<uint8*>(BufferData);
     }
 
-    MappedMemory = reinterpret_cast<uint8*>(BufferData);
     return true;
 }
 
@@ -106,7 +105,7 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
 
     // Maximum size for a upload buffer
     const uint64 MaxUploadSize = static_cast<uint64>(CVarMaxStagingAllocationSize.GetValue()) * 1024 * 1024;
-    if (Size < MaxUploadSize)
+    if (Size <= MaxUploadSize)
     {
         // Lock the buffer and all variable within
         TScopedLock Lock(CriticalSection);
