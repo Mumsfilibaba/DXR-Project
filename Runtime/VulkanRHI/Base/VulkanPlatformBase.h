@@ -5,9 +5,9 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FGenericVulkanPlatform
+struct VulkanPlatformBase
 {
-    static FORCEINLINE TArray<const CHAR*> GetOptionalInstanceExtentions()
+    static FORCEINLINE TArray<const CHAR*> GetOptionalInstanceExtensions()
     {
         return
         {
@@ -23,7 +23,7 @@ struct FGenericVulkanPlatform
         };
     }
     
-    static FORCEINLINE TArray<const CHAR*> GetOptionalDeviceExtentions()
+    static FORCEINLINE TArray<const CHAR*> GetOptionalDeviceExtensions()
     {
         return
         {

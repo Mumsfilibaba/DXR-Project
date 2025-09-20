@@ -1,10 +1,9 @@
 #pragma once
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Windows/WindowsApplication.h"
-#include "VulkanRHI/VulkanCore.h"
-#include "VulkanRHI/Generic/GenericVulkanPlatform.h"
+#include "VulkanRHI/Base/VulkanPlatformBase.h"
 
-struct FWindowsVulkanPlatform : public FGenericVulkanPlatform
+struct VulkanPlatformWindows : public VulkanPlatformBase
 {
     static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions()
     { 

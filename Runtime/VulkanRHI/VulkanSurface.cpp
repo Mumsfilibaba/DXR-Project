@@ -1,7 +1,7 @@
 #include "VulkanRHI/VulkanSurface.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanInstance.h"
-#include "VulkanRHI/Platform/PlatformVulkan.h"
+#include "VulkanRHI/Platform/VulkanPlatform.h"
 
 FVulkanSurface::FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue& InQueue, void* InWindowHandle)
     : FVulkanDeviceChild(InDevice)
@@ -25,7 +25,7 @@ bool FVulkanSurface::Initialize()
 {
     FVulkanInstance* Instance = GetDevice()->GetInstance();
     
-    VkResult Result = FPlatformVulkan::CreateSurface(Instance->GetVkInstance(), WindowHandle, &Surface);
+    VkResult Result = VulkanPlatform::CreateSurface(Instance->GetVkInstance(), WindowHandle, &Surface);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR_CRITICAL("Failed to create Platform Surface");

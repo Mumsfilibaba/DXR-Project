@@ -1,9 +1,9 @@
 #pragma once
 #include "CoreApplication/Mac/MacWindow.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
-#include "VulkanRHI/Generic/GenericVulkanPlatform.h"
+#include "VulkanRHI/Base/VulkanPlatformBase.h"
 
-struct FMacVulkanPlatform : public FGenericVulkanPlatform
+struct VulkanPlatformMac : public VulkanPlatformBase
 {
     static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions()
     { 

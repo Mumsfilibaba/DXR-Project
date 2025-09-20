@@ -203,10 +203,7 @@ public:
     bool Initialize(const FVulkanPipelineLayoutInfo& LayoutInfo);
     void SetDebugName(const CHAR* InName);
 
-    // Retrieve the DescriptorSetIndex and BindingIndex for a certain resource
     bool GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding);
-
-    // Retrieve the DescriptorSetIndex for this particular shader-stage
     bool GetDescriptorSetIndex(EShaderVisibility ShaderStage, uint32& OutDescriptorSetIndex);
 
     VkPipelineLayout GetVkPipelineLayout() const
@@ -251,10 +248,7 @@ public:
     FVulkanPipelineLayoutManager(FVulkanDevice* InDevice);
     ~FVulkanPipelineLayoutManager();
 
-    // Find a PipelineLayout that matches the layout info or create a new one
     FVulkanPipelineLayout* FindOrCreateLayout(const FVulkanPipelineLayoutInfo& LayoutInfo);
-    
-    // Find a DescriptorSetLayout that matches the layout info or create a new one
     VkDescriptorSetLayout FindOrCreateSetLayouts(const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo);
 
 private:

@@ -12,9 +12,10 @@ public:
     FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateInfo& InSamplerInfo);
     virtual ~FVulkanSamplerState();
 
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-    
     bool Initialize();
+    
+    // FRHISamplerState Interface
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
     
     VkSampler GetVkSampler() const
     {

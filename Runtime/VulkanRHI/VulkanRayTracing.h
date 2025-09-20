@@ -11,18 +11,15 @@ class FVulkanRayTracingGeometry : public FRHIRayTracingGeometry, public FVulkanD
 public:
     FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo);
     ~FVulkanRayTracingGeometry();
-
-public:
-
+    
+    bool Build(FVulkanCommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo);
+    
     // FRHIRayTracingGeometry Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(Geometry); }
     virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
-
-public:
-    bool Build(FVulkanCommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo);
 
     VkAccelerationStructureKHR GetVkAccelerationStructure() const
     {

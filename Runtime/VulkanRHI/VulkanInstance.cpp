@@ -2,7 +2,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "VulkanRHI/VulkanInstance.h"
 #include "VulkanRHI/VulkanLoader.h"
-#include "VulkanRHI/Platform/PlatformVulkan.h"
+#include "VulkanRHI/Platform/VulkanPlatform.h"
 
 static TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
     "VulkanRHI.VerboseLogging",
@@ -53,7 +53,7 @@ FVulkanInstance::~FVulkanInstance()
 
 bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
 {
-    DriverHandle = FPlatformVulkan::LoadVulkanLibrary();
+    DriverHandle = VulkanPlatform::LoadVulkanLibrary();
     if (!DriverHandle)
     {
         VULKAN_ERROR_CRITICAL("Failed to load Vulkan library");

@@ -53,8 +53,6 @@ public:
     FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
     ~FVulkanCommandContext();
 
-public:
-
     // IRHICommandContext Interface
     virtual void BeginFrame() override final;
     virtual void EndFrame() override final;
@@ -121,7 +119,6 @@ public:
         return reinterpret_cast<void*>(&CommandBuffer);
     }
 
-public:
     bool Initialize();
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool);

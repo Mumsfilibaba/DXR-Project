@@ -122,11 +122,11 @@ public:
     }
 
 protected:
-    // Pipeline Object is owned by this class
-    VkPipeline             Pipeline;
+    FString    DebugName;
+    VkPipeline Pipeline;
+
     // Layout is NOT owned by this class and should not be deleted when the FVulkanPipeline is destroyed
     FVulkanPipelineLayout* PipelineLayout;
-    FString                DebugName;
 };
 
 class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline
@@ -137,8 +137,6 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
     
-public:
-
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }
 
@@ -147,7 +145,6 @@ public:
         FVulkanPipeline::SetDebugName(InName);
     }
 
-public:
     FORCEINLINE const FViewInstancingInfo& GetViewInstancingInfo() const
     {
         return ViewInstancingInfo;
@@ -164,8 +161,6 @@ public:
     virtual ~FVulkanComputePipelineState();
     
     bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
-
-public:
 
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }

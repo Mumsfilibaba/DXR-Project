@@ -6,7 +6,7 @@
 #include <QuartzCore/QuartzCore.h>
 
 #if VK_KHR_surface
-VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHandle, VkSurfaceKHR* OutSurface)
+VkResult VulkanPlatformMac::CreateSurface(VkInstance Instance, void* WindowHandle, VkSurfaceKHR* OutSurface)
 {
     SCOPED_AUTORELEASE_POOL();
     

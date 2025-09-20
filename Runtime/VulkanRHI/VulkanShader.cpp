@@ -48,6 +48,7 @@ bool FVulkanShader::Initialize(const TArray<uint8>& InCode)
 
     const int32 CodeSize = InCode.Size() / sizeof(uint32);
     SpirvCode = FSpirvArray(reinterpret_cast<const uint32*>(InCode.Data()), CodeSize);
+    
     if (!InitializeShaderLayout())
     {
         return false;

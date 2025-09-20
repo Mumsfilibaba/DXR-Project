@@ -11,7 +11,7 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanDeviceLimits.h"
 #include "VulkanRHI/VulkanRayTracing.h"
-#include "VulkanRHI/Platform/PlatformVulkan.h"
+#include "VulkanRHI/Platform/VulkanPlatform.h"
 
 IMPLEMENT_ENGINE_MODULE(FVulkanRHIModule, VulkanRHI);
 
@@ -111,9 +111,9 @@ FVulkanRHI::~FVulkanRHI()
 bool FVulkanRHI::Initialize()
 {
     FVulkanInstanceCreateInfo InstanceDesc;
-    InstanceDesc.RequiredExtensionNames = FPlatformVulkan::GetRequiredInstanceExtensions();
-    InstanceDesc.RequiredLayerNames     = FPlatformVulkan::GetRequiredInstanceLayers();
-    InstanceDesc.OptionalExtensionNames = FPlatformVulkan::GetOptionalInstanceExtentions();
+    InstanceDesc.RequiredExtensionNames = VulkanPlatform::GetRequiredInstanceExtensions();
+    InstanceDesc.RequiredLayerNames     = VulkanPlatform::GetRequiredInstanceLayers();
+    InstanceDesc.OptionalExtensionNames = VulkanPlatform::GetOptionalInstanceExtensions();
     
     bool bEnableDebugLayer = false;
     if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
@@ -145,8 +145,8 @@ bool FVulkanRHI::Initialize()
     }
 
     FVulkanPhysicalDeviceCreateInfo AdapterCreateInfo;
-    AdapterCreateInfo.RequiredExtensionNames = FPlatformVulkan::GetRequiredDeviceExtensions();
-    AdapterCreateInfo.OptionalExtensionNames = FPlatformVulkan::GetOptionalDeviceExtentions();
+    AdapterCreateInfo.RequiredExtensionNames = VulkanPlatform::GetRequiredDeviceExtensions();
+    AdapterCreateInfo.OptionalExtensionNames = VulkanPlatform::GetOptionalDeviceExtensions();
     
     // Enable required features (These are necessary to run)
     AdapterCreateInfo.RequiredFeatures.samplerAnisotropy                    = VK_TRUE;
