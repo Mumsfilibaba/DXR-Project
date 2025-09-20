@@ -16,9 +16,9 @@ FD3D12Fence::~FD3D12Fence()
     }
 }
 
-bool FD3D12Fence::Initialize(uint64 InitalValue)
+bool FD3D12Fence::Initialize(uint64 InitialValue)
 {
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12Fence]: FAILED to create Fence");
@@ -53,6 +53,7 @@ bool FD3D12Fence::WaitForValue(uint64 Value)
 FD3D12FenceManager::FD3D12FenceManager(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , Fence(nullptr)
+    , LastCompletedValue(0)
     , CurrentValue(0)
     , LastSignaledValue(0)
 {
@@ -124,7 +125,7 @@ void FD3D12FenceManager::WaitForFence(uint64 InFenceValue)
     CHECK(InFenceValue <= LastSignaledValue);
 
     uint64 CompletedFenceValue = GetCompletedValue();
-    if (InFenceValue >= CompletedFenceValue)
+    if (InFenceValue > CompletedFenceValue)
     {
         Fence->WaitForValue(InFenceValue);
         CompletedFenceValue = GetCompletedValue();

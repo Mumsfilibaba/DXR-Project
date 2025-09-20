@@ -10,7 +10,7 @@ public:
     FD3D12Fence(FD3D12Device* InDevice);
     ~FD3D12Fence();
 
-    bool Initialize(uint64 InitalValue);
+    bool Initialize(uint64 InitialValue);
     bool WaitForValue(uint64 Value);
 
     uint64 GetCompletedValue() const
