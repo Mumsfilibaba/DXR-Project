@@ -6,15 +6,12 @@
 #include "VulkanRHI/VulkanRefCounted.h"
 
 typedef TSharedRef<class FVulkanShader>              FVulkanShaderRef;
-
 typedef TSharedRef<class FVulkanVertexShader>        FVulkanVertexShaderRef;
 typedef TSharedRef<class FVulkanHullShader>          FVulkanHullShaderRef;
 typedef TSharedRef<class FVulkanDomainShader>        FVulkanDomainShaderRef;
 typedef TSharedRef<class FVulkanGeometryShader>      FVulkanGeometryShaderRef;
 typedef TSharedRef<class FVulkanPixelShader>         FVulkanPixelShaderRef;
-
 typedef TSharedRef<class FVulkanComputeShader>       FVulkanComputeShaderRef;
-
 typedef TSharedRef<class FVulkanRayTracingShader>    FVulkanRayTracingShaderRef;
 typedef TSharedRef<class FVulkanRayGenShader>        FVulkanRayGenShaderRef;
 typedef TSharedRef<class FVulkanRayAnyHitShader>     FVulkanRayAnyHitShaderRef;
@@ -65,10 +62,10 @@ enum EBindingType : uint8
 
 inline const CHAR* ToString(EBindingType Binding)
 {
-    static constexpr const char* BindingTypeStrings[]
+    static constexpr const char* const BindingTypeStrings[]
     {
-        "SampledImage",
         "UniformBuffer",
+        "SampledImage",
         "StorageImage",
         "StorageBufferRead",
         "StorageBufferReadWrite",
@@ -99,7 +96,7 @@ inline VkDescriptorType GetDescriptorTypeFromBindingType(EBindingType BindingTyp
         // Samplers
         VK_DESCRIPTOR_TYPE_SAMPLER,
         // SRV (Buffer)
-        VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+        VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,
         // UAV (Buffer)
         VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
     };

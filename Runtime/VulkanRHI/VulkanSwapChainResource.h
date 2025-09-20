@@ -38,7 +38,7 @@ public:
 
     bool Initialize(const FVulkanSwapChainCreateInfo& CreateInfo);
     VkResult Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore);
-    VkResult AcquireNextImage(FVulkanSemaphore* AquireSemaphore);
+    VkResult AcquireNextImage(FVulkanSemaphore* AcquireSemaphore);
     bool GetSwapChainImages(VkImage* OutImages);
     
     VkResult GetPresentResult() const { return PresentResult; }

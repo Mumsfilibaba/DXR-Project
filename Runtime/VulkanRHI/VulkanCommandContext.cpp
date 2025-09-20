@@ -196,7 +196,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     if (!CommandPayload)
     {
         CommandPayload = new FVulkanCommandPayload(GetDevice(), Queue);
-        CommandPayload->AquireFence();
+        CommandPayload->AcquireFence();
     }
 }
 

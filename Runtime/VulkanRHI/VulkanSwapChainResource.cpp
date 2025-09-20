@@ -1,6 +1,6 @@
 #include "VulkanRHI/VulkanSwapChainResource.h"
 
-static constexpr bool GVulkanReportSwapChainAquireImageNonSuccessResult = true;
+static constexpr bool GVulkanReportSwapChainAcquireImageNonSuccessResult = true;
 
 FVulkanSwapChainResource::FVulkanSwapChainResource(FVulkanDevice* InDevice)
 	: FVulkanDeviceChild(InDevice)
@@ -304,14 +304,14 @@ VkResult FVulkanSwapChainResource::Present(FVulkanQueue& Queue, FVulkanSemaphore
 	return vkQueuePresentKHR(Queue.GetVkQueue(), &PresentInfo);
 }
 
-VkResult FVulkanSwapChainResource::AcquireNextImage(FVulkanSemaphore* AquireSemaphore)
+VkResult FVulkanSwapChainResource::AcquireNextImage(FVulkanSemaphore* AcquireSemaphore)
 {
-	VkSemaphore Semaphore = AquireSemaphore ? AquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
+	VkSemaphore Semaphore = AcquireSemaphore ? AcquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
 
 	VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, Semaphore, VK_NULL_HANDLE, &BufferIndex);
-	if (GVulkanReportSwapChainAquireImageNonSuccessResult && Result != VK_SUCCESS)
+	if (GVulkanReportSwapChainAcquireImageNonSuccessResult && Result != VK_SUCCESS)
 	{
-		VULKAN_WARNING("FVulkanSwapChainResource::AquireNextImage vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+		VULKAN_WARNING("FVulkanSwapChainResource::AcquireNextImage vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
 	}
 
 	// Caller should treat OUT_OF_DATE -> recreate now, and SUBOPTIMAL -> recreate soon/skip frame.

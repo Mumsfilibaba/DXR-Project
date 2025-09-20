@@ -104,6 +104,7 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
     ShaderModuleCreateInfo.codeSize = PatchedCode.SizeInBytes();
 
     VkShaderModule ShaderModule = VK_NULL_HANDLE;
+
     VkResult Result = vkCreateShaderModule(GetDevice()->GetVkDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule);
     if (VULKAN_FAILED(Result))
     {
@@ -113,6 +114,13 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
     else
     {
         TScopedLock Lock(ShaderModulesCS);
+
+		if (TSharedRef<FVulkanShaderModule>* Existing = ShaderModules.Find(DescriptorSetIndex))
+		{
+		    // Another thread won the race; destroy the newly created VkShaderModule and reuse the existing shared ref.
+			vkDestroyShaderModule(GetDevice()->GetVkDevice(), ShaderModule, nullptr);
+		    return *Existing;
+		}
 
         TSharedRef<FVulkanShaderModule> NewShaderModule = new FVulkanShaderModule(GetDevice(), ShaderModule);
         ShaderModules.Add(DescriptorSetIndex, NewShaderModule);
@@ -167,6 +175,7 @@ bool FVulkanShader::InitializeShaderLayout()
     if (Result != SPVC_SUCCESS)
     {
         VULKAN_ERROR_CRITICAL("Failed to parse Spirv");
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -175,6 +184,7 @@ bool FVulkanShader::InitializeShaderLayout()
     if (Result != SPVC_SUCCESS)
     {
         VULKAN_ERROR_CRITICAL("Failed to create SPIR-V compiler");
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -183,6 +193,7 @@ bool FVulkanShader::InitializeShaderLayout()
     if (Result != SPVC_SUCCESS)
     {
         VULKAN_ERROR_CRITICAL("Failed to create shader resources");
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -197,17 +208,21 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSampledImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = BindingType_SampledImage;
-            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType  = BindingType_SampledImage;
+            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding, &BindingOffset))
+            {
                 BindingOffset = UINT32_MAX;
+            }
             
             uint32 DescriptorSetOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, SampledImages[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
+            {
                 DescriptorSetOffset = UINT32_MAX;
+            }
 
             // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, SampledImages[Index].base_type_id);
@@ -218,6 +233,7 @@ bool FVulkanShader::InitializeShaderLayout()
     }
     else
     {
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -229,17 +245,21 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSamplers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = BindingType_Sampler;
-            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType  = BindingType_Sampler;
+            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding, &BindingOffset))
+            {
                 BindingOffset = UINT32_MAX;
+            }
             
             uint32 DescriptorSetOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, Samplers[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
+            {
                 DescriptorSetOffset = UINT32_MAX;
+            }
 
             // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, Samplers[Index].base_type_id);
@@ -250,6 +270,7 @@ bool FVulkanShader::InitializeShaderLayout()
     }
     else
     {
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -261,17 +282,21 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = BindingType_StorageImage;
-            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType  = BindingType_StorageImage;
+            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding, &BindingOffset))
+            {
                 BindingOffset = UINT32_MAX;
+            }
             
             uint32 DescriptorSetOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, StorageImages[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
+            {
                 DescriptorSetOffset = UINT32_MAX;
+            }
             
             // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, StorageImages[Index].base_type_id);
@@ -282,6 +307,7 @@ bool FVulkanShader::InitializeShaderLayout()
     }
     else
     {
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -293,17 +319,21 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumUniformBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType          = BindingType_UniformBuffer;
-            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType  = BindingType_UniformBuffer;
+            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding, &BindingOffset))
+            {
                 BindingOffset = UINT32_MAX;
+            }
             
             uint32 DescriptorSetOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
+            {
                 DescriptorSetOffset = UINT32_MAX;
+            }
 
             // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, UniformBuffers[Index].base_type_id);
@@ -314,6 +344,7 @@ bool FVulkanShader::InitializeShaderLayout()
     }
     else
     {
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -325,18 +356,23 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding, &BindingOffset))
+            {
                 BindingOffset = UINT32_MAX;
+            }
             
             uint32 DescriptorSetOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
+            {
                 DescriptorSetOffset = UINT32_MAX;
+            }
 
-            FString BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
+            const FString BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
+
             const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
             if (bIsUAV)
             {
@@ -356,6 +392,7 @@ bool FVulkanShader::InitializeShaderLayout()
     }
     else
     {
+        spvc_context_destroy(Context);
         return false;
     }
 
@@ -376,6 +413,7 @@ bool FVulkanShader::InitializeShaderLayout()
             else
             {
                 DEBUG_BREAK();
+                spvc_context_destroy(Context);
                 return false;
             }
         }
@@ -395,6 +433,7 @@ bool FVulkanShader::InitializeShaderLayout()
     }
     else
     {
+        spvc_context_destroy(Context);
         return false;
     }
     
@@ -407,9 +446,10 @@ bool FVulkanShader::InitializeShaderLayout()
         
         // Since all the bindings will be the same no matter what DescriptorSetIndex, only change the BindingIndex
         FVulkanShaderInfo::FResourceBinding& Binding = ShaderInfo.ResourceBindings[Index];
-        SpirvCode[Offsets.BindingOffset]       = Binding.BindingIndex;
+        SpirvCode[Offsets.BindingOffset] = Binding.BindingIndex;
         SpirvCode[Offsets.DescriptorSetOffset] = 0;
     }
     
+    spvc_context_destroy(Context);
     return true;
 }

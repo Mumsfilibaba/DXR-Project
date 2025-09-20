@@ -74,7 +74,7 @@ struct FVulkanCommandPayload
     FVulkanCommandPayload(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
     ~FVulkanCommandPayload();
 
-    void AquireFence();
+    void AcquireFence();
     void Submit();
     void Finish();
 

@@ -231,7 +231,7 @@ FVulkanCommandPayload::~FVulkanCommandPayload()
     CHECK(Fence == nullptr);
 }
 
-void FVulkanCommandPayload::AquireFence()
+void FVulkanCommandPayload::AcquireFence()
 {
 	FVulkanFenceManager& FenceManager = Device->GetFenceManager();
 	Fence = FenceManager.ObtainFence();

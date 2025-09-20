@@ -14,7 +14,7 @@ static TAutoConsoleVariable<bool> CVarEnableVSync(
     true,
     EConsoleVariableFlags::Default);
 
-static constexpr const bool GVulkanLogSempahoreIndex = false;
+static constexpr const bool GVulkanLogSemaphoreIndex = false;
 
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainInfo& InSwapChainInfo)
     : FRHISwapChain(InSwapChainInfo)
@@ -346,7 +346,7 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
         Result = AcquireNextImage(InCommandContext);
         if (Result != VK_SUCCESS)
         {
-            VULKAN_INFO("FVulkanSwapChain::Present [AquireNextImage] SwapChain is %s", Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" : "OutOfDate");
+            VULKAN_INFO("FVulkanSwapChain::Present [AcquireNextImage] SwapChain is %s", Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" : "OutOfDate");
 
             if (Result != VK_SUBOPTIMAL_KHR)
             {
@@ -365,7 +365,7 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     }
 
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
-	if constexpr (GVulkanLogSempahoreIndex)
+	if constexpr (GVulkanLogSemaphoreIndex)
 	{
 		VULKAN_INFO("FVulkanSwapChain::Present SemaphoreIndex=%d", SemaphoreIndex);
 	}
@@ -456,9 +456,9 @@ VkResult FVulkanSwapChain::AcquireNextImage(FVulkanCommandContext* InCommandCont
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
 
-    if constexpr (GVulkanLogSempahoreIndex)
+    if constexpr (GVulkanLogSemaphoreIndex)
     {
-        VULKAN_INFO("FVulkanSwapChain::AquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
+        VULKAN_INFO("FVulkanSwapChain::AcquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
     }
 
 	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])
