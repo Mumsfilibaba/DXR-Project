@@ -7,12 +7,14 @@ static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageF
     switch(ShaderStage)
     {
     case VK_SHADER_STAGE_VERTEX_BIT:                  return ShaderVisibility_Vertex;
-    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:    return ShaderVisibility_Domain;
-    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return ShaderVisibility_Hull;
+    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:    return ShaderVisibility_Hull;
+    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return ShaderVisibility_Domain;
     case VK_SHADER_STAGE_GEOMETRY_BIT:                return ShaderVisibility_Geometry;
     case VK_SHADER_STAGE_FRAGMENT_BIT:                return ShaderVisibility_Pixel;
-    case VK_SHADER_STAGE_COMPUTE_BIT:
-    default: return ShaderVisibility_Compute;
+    case VK_SHADER_STAGE_COMPUTE_BIT:                 return ShaderVisibility_Compute;
+    
+    default:
+        return ShaderVisibility_Compute;
     }
 }
 

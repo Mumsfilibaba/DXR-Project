@@ -458,7 +458,7 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, 
         return;
     }
     
-    DescriptorState->SetUniform(UniformBuffer, DescriptorSetIndex, BindingIndex);
+    DescriptorState->SetUniformBuffer(UniformBuffer, DescriptorSetIndex, BindingIndex);
 }
 
 void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)

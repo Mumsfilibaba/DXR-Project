@@ -34,6 +34,22 @@ bool FVulkanSamplerState::Initialize()
     SamplerCreateInfo.maxLod                  = Info.MaxLOD;
     SamplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
     SamplerCreateInfo.unnormalizedCoordinates = false;
+	
+    // If anisotropy isn't enabled, force 1.0f. If it is, clamp to at least 1.0f.
+	if (!SamplerCreateInfo.anisotropyEnable)
+	{
+	    SamplerCreateInfo.maxAnisotropy = 1.0f;
+	}
+	else
+	{
+	    SamplerCreateInfo.maxAnisotropy = FMath::Max(1.0f, SamplerCreateInfo.maxAnisotropy);
+	}
+	
+    // Ensure LOD range is sane
+    if (SamplerCreateInfo.maxLod < SamplerCreateInfo.minLod)
+    {
+        FMath::Swap(SamplerCreateInfo.minLod, SamplerCreateInfo.maxLod);
+    }
 
     if (!GetDevice()->FindOrCreateSampler(SamplerCreateInfo, Sampler))
     {

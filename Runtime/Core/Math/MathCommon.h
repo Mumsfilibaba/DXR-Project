@@ -21,7 +21,9 @@ public:
 
     static constexpr float FloatCompareEpsilon = 0.0005f;
 
-public: // Standard Math
+public:
+    
+    // Standard Math
 
     template<typename T>
     static FORCEINLINE T Sqrt(T Value) requires(TIsFloatingPoint<T>::Value)
@@ -131,7 +133,9 @@ public: // Standard Math
         return std::isinf(Value);
     }
 
-public: // Alignment
+public:
+    
+    // Alignment
 
     template<typename T>
     static FORCEINLINE constexpr T DivideByMultiple(T Value, uint32 Alignment) requires(TIsInteger<T>::Value)
@@ -211,7 +215,9 @@ public: // Alignment
         return Candidate;
     }
 
-public: // Interpolation
+public: 
+    
+    // Interpolation
 
     template<typename T>
     static FORCEINLINE constexpr T Lerp(T First, T Second, T Factor) requires(TIsFloatingPoint<T>::Value)
@@ -228,7 +234,9 @@ public: // Interpolation
         return (A * T * T * T) + (B * T * T) + (C * T) + D;
     }
 
-public: // Min, Max, Clamp, ...
+public: 
+    
+    // Min, Max, Clamp, ...
 
     template<typename T>
     static FORCEINLINE constexpr T Min(T First, T Second) requires(TIsArithmetic<T>::Value)
@@ -254,7 +262,22 @@ public: // Min, Max, Clamp, ...
         return Clamp(Value, T(0.0), T(1.0));
     }
 
-public: // Conversions
+	template<typename T>
+	static FORCEINLINE void Swap(T& ValueA, T& ValueB) noexcept
+	{
+        if (AddressOf(ValueA) == AddressOf(ValueB))
+        {
+            return;
+        }
+
+		T Temp = Move(ValueA);
+		ValueA = Move(ValueB);
+		ValueB = Move(Temp);
+	}
+
+public:
+    
+    // Conversions
 
     template<typename T>
     static FORCEINLINE constexpr T DegreesToRadians(T Value) requires(TIsFloatingPoint<T>::Value)
@@ -268,7 +291,9 @@ public: // Conversions
         return Value * static_cast<T>(180.0 / PI);
     }
 
-public: // Other
+public:
+    
+    // Other
 
     template<const uint64 NumBits>
     static FORCEINLINE constexpr uint64 MaxNum()

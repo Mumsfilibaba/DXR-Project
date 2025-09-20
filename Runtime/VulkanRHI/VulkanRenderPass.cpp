@@ -148,17 +148,19 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     if (GVulkanSupportsMultiviews && Key.ViewInstancingInfo.bEnableViewInstancing)
     {
         constexpr uint32 MaxArraySlices = 32;
-
-        ViewMask        = 0;
+        ViewMask = 0;
         CorrelationMask = 0;
 
         // Limit to the number of bits in a uint32
         const uint32 NumViews = FMath::Min<uint32>(Key.ViewInstancingInfo.NumArraySlices, MaxArraySlices);
         for (uint32 Index = 0; Index < NumViews; Index++)
         {
-            const uint32 BitIndex = FMath::Min<uint32>(Key.ViewInstancingInfo.StartRenderTargetArrayIndex + Index, 32);
-            ViewMask |= 1 << BitIndex;
-        }
+		    const uint32 BitIndex = Key.ViewInstancingInfo.StartRenderTargetArrayIndex + Index;
+		    CHECK(BitIndex < 32);
+		    ViewMask |= (1u << BitIndex);
+	    }
+
+        CorrelationMask = ViewMask;
 
         FMemory::Memzero(&MultiviewCreateInfo);
         MultiviewCreateInfo.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;

@@ -232,20 +232,20 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
     }
 }
 
-void FVulkanDescriptorState::SetUniform(FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex)
+void FVulkanDescriptorState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
-    CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
+	CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
 
-    if (UniformBuffer)
-    {
-        const VkDeviceSize Range = FMath::AlignUp<VkDeviceSize>(UniformBuffer->GetSize(), UniformBuffer->GetRequiredAlignment());
-        FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
-        DSBuilder.WriteUniformBuffer(BindingIndex, UniformBuffer->GetVkBuffer(), 0, Range);
-    }
-    else
-    {
-        ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
-    }
+	if (UniformBuffer)
+	{
+		const VkDeviceSize Range = UniformBuffer->GetSize();
+		FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
+		DSBuilder.WriteUniformBuffer(BindingIndex, UniformBuffer->GetVkBuffer(), 0, Range);
+	}
+	else
+	{
+		ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
+	}
 }
 
 void FVulkanDescriptorState::SetSampler(FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex)

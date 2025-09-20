@@ -59,9 +59,10 @@ bool FVulkanResourceView::InitializeAsImageView(VkImage InImage, VkFormat InForm
         VULKAN_ERROR_CRITICAL("Image cannot be a NULL_HANDLE");
         return false;
     }
+    
     if (InFormat == VK_FORMAT_UNDEFINED)
     {
-        VULKAN_ERROR_CRITICAL("Format cannot be a undefined");
+        VULKAN_ERROR_CRITICAL("Format cannot be undefined");
         return false;
     }
 
@@ -126,7 +127,7 @@ bool FVulkanResourceView::InitializeAsTypedBufferView(VkBuffer InBuffer, VkForma
     }
     if (InFormat == VK_FORMAT_UNDEFINED)
     {
-        VULKAN_ERROR_CRITICAL("Format cannot be a undefined");
+        VULKAN_ERROR_CRITICAL("Format cannot be undefined");
         return false;
     }
 
@@ -136,7 +137,7 @@ bool FVulkanResourceView::InitializeAsTypedBufferView(VkBuffer InBuffer, VkForma
     BufferViewCreateInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
     BufferViewCreateInfo.buffer = InBuffer;
     BufferViewCreateInfo.format = InFormat;
-    BufferViewCreateInfo.range  = InRange;
+    BufferViewCreateInfo.range  = (InRange == 0) ? VK_WHOLE_SIZE : InRange;
     BufferViewCreateInfo.offset = InOffset;
 
     VkResult Result = vkCreateBufferView(GetDevice()->GetVkDevice(), &BufferViewCreateInfo, nullptr, &TypedBufferInfo.BufferView);

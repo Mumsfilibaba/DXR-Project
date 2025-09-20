@@ -141,7 +141,6 @@ public:
         bKeyIsDirty = true;
         UpdateHash();
     }
-
     
     void WriteSampledImage(int32 Binding, VkImageView ImageView, VkImageLayout ImageLayout)
     {
@@ -275,31 +274,19 @@ public:
     FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanPipelineLayout* InLayout, const FVulkanDefaultResources& InDefaultResources);
     ~FVulkanDescriptorState() = default;
 
-    // Binds a ShaderResourceView to a binding, mapping from register to binding needs to be done here
     void SetSRV(class FVulkanShaderResourceView* ShaderResourceView, uint32 DescriptorSetIndex, uint32 BindingIndex);
-
-    // Binds a UnorderedAccessView to a binding, mapping from register to binding needs to be done here
     void SetUAV(class FVulkanUnorderedAccessView* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex);
-
-    // Binds a UniformBuffer to a binding, mapping from register to binding needs to be done here
-    void SetUniform(class FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex);
-
-    // Binds a SamplerState to a binding, mapping from register to binding needs to be done here  
+    void SetUniformBuffer(class FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex);
     void SetSampler(class FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex);
 
-    // This function creates or retrieves handles for all DescriptorSets
     void UpdateDescriptorSets();
-    
-    // Resets the state and puts default resources into all bindings
     void Reset();
 
-    // This function binds all DescriptorSets to the graphics-pipeline
     inline void BindGraphicsDescriptorSets(class FVulkanCommandBuffer& CommandBuffer)
     {
         BindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
     }
 
-    // This function binds all DescriptorSets to the compute-pipeline
     inline void BindComputeDescriptorSets(class FVulkanCommandBuffer& CommandBuffer)
     {
         BindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
