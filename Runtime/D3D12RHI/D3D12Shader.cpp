@@ -36,7 +36,6 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     return false;
 }
 
-
 FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InShaderVisibility)
     : FD3D12DeviceChild(InDevice)
     , ByteCode()

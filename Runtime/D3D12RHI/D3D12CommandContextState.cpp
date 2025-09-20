@@ -54,7 +54,7 @@ void FD3D12CommandContextState::BindGraphicsStates()
     {
 		if (GraphicsState.bBindShadingRateImage)
 		{
-			ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetD3D12Resource()->GetD3D12Resource() : nullptr;
+			ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
             Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
 			GraphicsState.bBindShadingRateImage = false;
 		}
@@ -586,7 +586,7 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     D3D12_VERTEX_BUFFER_VIEW CurrentVBV;
     if (VertexBuffer)
     {
-        FD3D12Resource* Resource = VertexBuffer->GetD3D12Resource();
+        FD3D12Resource* Resource = VertexBuffer->GetResource();
         CurrentVBV.BufferLocation = Resource->GetGPUVirtualAddress();
         CurrentVBV.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetSize());
         CurrentVBV.StrideInBytes  = VertexBuffer->GetStride();
@@ -609,7 +609,7 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
     D3D12_INDEX_BUFFER_VIEW NewIndexBuffer;
     if (IndexBuffer)
     {
-        FD3D12Resource* Resource = IndexBuffer->GetD3D12Resource();
+        FD3D12Resource* Resource = IndexBuffer->GetResource();
         NewIndexBuffer.BufferLocation = Resource->GetGPUVirtualAddress();
         NewIndexBuffer.Format         = IndexFormat;
         NewIndexBuffer.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetSize());

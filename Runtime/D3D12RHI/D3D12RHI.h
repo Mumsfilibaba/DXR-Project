@@ -33,8 +33,6 @@ public:
 
     bool Initialize();
 
-public:
-
     // FRHI Interface
     virtual void BeginFrame() override final { }
     virtual void EndFrame() override final { }
@@ -84,7 +82,6 @@ public:
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
 
-public:
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)
     {

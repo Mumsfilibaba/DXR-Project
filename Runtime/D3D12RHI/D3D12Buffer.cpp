@@ -73,7 +73,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     {
         if (Info.IsDynamic())
         {
-            FD3D12Resource* D3D12Resource = GetD3D12Resource();
+            FD3D12Resource* D3D12Resource = GetResource();
 
             void* BufferData = D3D12Resource->MapRange(0, nullptr);
             if (!BufferData)

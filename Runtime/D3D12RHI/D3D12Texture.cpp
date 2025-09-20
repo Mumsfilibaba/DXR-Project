@@ -2,6 +2,27 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12RHI.h"
 
+FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
+{
+	if (Texture)
+	{
+		FD3D12Texture* D3D12Texture = nullptr;
+		if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
+		{
+			FD3D12BackBufferTexture* BackBuffer = static_cast<FD3D12BackBufferTexture*>(Texture);
+			D3D12Texture = BackBuffer->GetCurrentBackBufferTexture();
+		}
+		else
+		{
+			D3D12Texture = static_cast<FD3D12Texture*>(Texture);
+		}
+
+		return D3D12Texture;
+	}
+
+	return nullptr;
+}
+
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
     , FD3D12DeviceChild(InDevice)
@@ -153,7 +174,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
             return false;
         }
 
-        if (!DefaultSRV->CreateView(GetD3D12Resource(), ViewDesc))
+        if (!DefaultSRV->CreateView(GetResource(), ViewDesc))
         {
             return false;
         }
@@ -182,7 +203,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
                 return false;
             }
 
-            if (!DefaultUAV->CreateView(nullptr, GetD3D12Resource(), ViewDesc))
+            if (!DefaultUAV->CreateView(nullptr, GetResource(), ViewDesc))
             {
                 return false;
             }
@@ -239,7 +260,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
 
 FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView)
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (!D3D12Resource)
     {
         D3D12_WARNING("Texture does not have a valid D3D12Resource");
@@ -377,7 +398,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
 
 FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView)
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (!D3D12Resource)
     {
         D3D12_WARNING("Texture does not have a valid D3D12Resource");

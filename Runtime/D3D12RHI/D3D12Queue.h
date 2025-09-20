@@ -15,6 +15,7 @@ public:
     ~FD3D12Queue();
 
     bool Initialize();
+
     FD3D12CommandList* ObtainCommandList(FD3D12CommandAllocator* CommandAllocator, ID3D12PipelineState* InitialPipelineState);
     void RecycleCommandList(FD3D12CommandList* InCommandList);
     FD3D12FenceSyncPoint ExecuteCommandList(FD3D12CommandList* InCommandList, bool bWaitForCompletion);

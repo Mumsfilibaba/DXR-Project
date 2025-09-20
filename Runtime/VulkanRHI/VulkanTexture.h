@@ -21,8 +21,8 @@ struct VulkanTextureHelper
 class FVulkanTexture : public FRHITexture, public FVulkanDeviceChild
 {
 public:
-    static FVulkanTexture* ResourceCast(FRHITexture* Texture);
-    static FVulkanTexture* ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
+    static FVulkanTexture* Cast(FRHITexture* Texture);
+    static FVulkanTexture* Cast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
 
 public:
     FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
@@ -36,7 +36,6 @@ public:
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 

@@ -365,7 +365,7 @@ FRHIRayTracingGeometry* FVulkanRHI::CreateRayTracingGeometry(const FRHIRayTracin
 
 FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.Texture);
     CHECK(VulkanTexture != nullptr);
 
     FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanTexture);
@@ -381,7 +381,7 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHITextureSR
 
 FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.Buffer);
     CHECK(VulkanBuffer != nullptr);
 
     FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanBuffer);
@@ -397,7 +397,7 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIBufferSRV
 
 FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.Texture);
     CHECK(VulkanTexture != nullptr);
 
     FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanTexture);
@@ -413,7 +413,7 @@ FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHITexture
 
 FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.Buffer);
     CHECK(VulkanBuffer != nullptr);
 
     FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanBuffer);

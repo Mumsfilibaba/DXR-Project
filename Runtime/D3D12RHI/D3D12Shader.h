@@ -131,11 +131,8 @@ public:
     {
     }
 
-public: 
-
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12Shader*>(this); }
 };
 
@@ -148,11 +145,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12Shader*>(this); }
 };
 
@@ -165,11 +159,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12Shader*>(this); }
 };
 
@@ -182,11 +173,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12Shader*>(this); }
 };
 
@@ -199,11 +187,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12Shader*>(this); }
 };
 
@@ -235,11 +220,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -252,11 +234,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -269,11 +248,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -286,11 +262,8 @@ public:
     {
     }
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -306,11 +279,8 @@ public:
 
     bool Initialize();
 
-public: 
-
-    // FRHIShader Interface
+	// FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
-
     virtual void* GetRHIBaseInterface() { return static_cast<FD3D12Shader*>(this); }
 
 protected:

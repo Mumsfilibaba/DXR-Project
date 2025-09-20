@@ -12,33 +12,29 @@ typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild
 {
 public:
+    static FD3D12Texture* Cast(FRHITexture* Texture);
+
+public:
     FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12Texture();
 
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-public:
-
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetD3D12Resource()); }
-
+    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetResource()); }
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
-
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
-
-public:
 
     FD3D12RenderTargetView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
     FD3D12DepthStencilView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
     void DestroyRenderTargetViews();
     void DestroyDepthStencilViews();
 
-    FD3D12Resource* GetD3D12Resource() const 
+    FD3D12Resource* GetResource() const 
     { 
         return Resource.Get(); 
     }
@@ -82,16 +78,13 @@ public:
     FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12BackBufferTexture();
 
-public:
-
     // FRHITexture Interface
     virtual void* GetRHINativeHandle() const override final
     {
         FD3D12Texture* CurrentBackBuffer = GetCurrentBackBufferTexture();
-        return CurrentBackBuffer ? reinterpret_cast<void*>(CurrentBackBuffer->GetD3D12Resource()) : nullptr;
+        return CurrentBackBuffer ? reinterpret_cast<void*>(CurrentBackBuffer->GetResource()) : nullptr;
     }
 
-public:
     void Resize(uint32 InWidth, uint32 InHeight);
     FD3D12Texture* GetCurrentBackBufferTexture() const;
 
@@ -108,30 +101,3 @@ public:
 private:
     FD3D12SwapChain* SwapChain;
 };
-
-FORCEINLINE FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
-{
-    if (Texture)
-    {
-        FD3D12Texture* D3D12Texture = nullptr;
-        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
-        {
-            FD3D12BackBufferTexture* BackBuffer = static_cast<FD3D12BackBufferTexture*>(Texture);
-            D3D12Texture = BackBuffer->GetCurrentBackBufferTexture();
-        }
-        else
-        {
-            D3D12Texture = static_cast<FD3D12Texture*>(Texture);
-        }
-
-        return D3D12Texture;
-    }
-
-    return nullptr;
-}
-
-FORCEINLINE FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
-{
-    FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
-    return D3D12Texture ? D3D12Texture->GetD3D12Resource() : nullptr;
-}

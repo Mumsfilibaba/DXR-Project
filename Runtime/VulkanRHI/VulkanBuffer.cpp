@@ -5,11 +5,6 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 
-FVulkanBuffer* FVulkanBuffer::ResourceCast(FRHIBuffer* Buffer)
-{
-    return static_cast<FVulkanBuffer*>(Buffer);
-}
-
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
     , FVulkanDeviceChild(InDevice)

@@ -16,14 +16,14 @@ protected:
     }
 
 public:
-    int32 AddRef()
+    int32 AddRef() const
     {
         CHECK(StrongReferences.Load() > 0);
         ++StrongReferences;
         return StrongReferences.Load();
     }
 
-    int32 Release()
+    int32 Release() const
     {
         const int32 RefCount = --StrongReferences;
         CHECK(RefCount >= 0);

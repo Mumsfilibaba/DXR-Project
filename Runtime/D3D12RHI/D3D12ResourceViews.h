@@ -26,7 +26,7 @@ public:
         return Descriptor.Handle;
     }
 
-    const FD3D12Resource* GetD3D12Resource() const 
+    const FD3D12Resource* GetViewResource() const 
     { 
         return Resource.Get(); 
     }
@@ -87,7 +87,7 @@ public:
         return Desc;
     }
 
-    const FD3D12Resource* GetD3D12CounterResource() const
+    const FD3D12Resource* GetCounterResource() const
     { 
         return CounterResource.Get(); 
     }

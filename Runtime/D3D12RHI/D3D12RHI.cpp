@@ -369,7 +369,7 @@ FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracing
 
 FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
 {
-    FD3D12Texture* D3D12Texture = GetD3D12Texture(InInfo.Texture);
+    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.Texture);
     CHECK(D3D12Texture != nullptr);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
@@ -443,7 +443,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHITextureSRV
         return nullptr;
     }
 
-    FD3D12Resource* D3D12Resource = D3D12Texture->GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = D3D12Texture->GetResource();
     CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(D3D12Resource, Desc))
@@ -458,7 +458,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHITextureSRV
 
 FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
 {
-    FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InInfo.Buffer);
+    FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.Buffer);
     CHECK(D3D12Buffer != nullptr);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
@@ -488,7 +488,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIBufferSRVI
         return nullptr;
     }
 
-    FD3D12Resource* D3D12Resource = D3D12Buffer->GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = D3D12Buffer->GetResource();
     CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(D3D12Resource, Desc))
@@ -503,7 +503,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIBufferSRVI
 
 FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
 {
-    FD3D12Texture* D3D12Texture = GetD3D12Texture(InInfo.Texture);
+    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.Texture);
     CHECK(D3D12Texture != nullptr);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
@@ -562,10 +562,7 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHITextureU
         return nullptr;
     }
 
-    FD3D12Resource* D3D12Resource = GetD3D12Resource(InInfo.Texture);
-    CHECK(D3D12Resource != nullptr);
-
-    if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))
+    if (D3D12View->CreateView(nullptr, D3D12Texture->GetResource(), Desc))
     {
         return D3D12View.ReleaseOwnership();
     }
@@ -577,7 +574,7 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHITextureU
 
 FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
 {
-    FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InInfo.Buffer);
+    FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.Buffer);
     CHECK(D3D12Buffer != nullptr);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
@@ -606,7 +603,7 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIBufferUA
         return nullptr;
     }
 
-    FD3D12Resource* D3D12Resource = D3D12Buffer->GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = D3D12Buffer->GetResource();
     CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))

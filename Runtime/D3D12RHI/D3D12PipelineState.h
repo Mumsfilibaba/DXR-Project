@@ -303,8 +303,6 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
-public:
-
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
 
@@ -313,7 +311,6 @@ public:
         FD3D12PipelineState::SetDebugName(InName);
     }
 
-public:
     D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
     {
         return PrimitiveTopology;
@@ -363,8 +360,6 @@ public:
 
     bool Initialize();
 
-public:
-
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
 
@@ -373,7 +368,6 @@ public:
         FD3D12PipelineState::SetDebugName(InName);
     }
 
-public:
     FORCEINLINE FD3D12ComputeShader* GetComputeShader() const
     {
         return Shader.Get();
@@ -396,8 +390,6 @@ public:
 
     bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
-public:
-
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12StateObject()); }
 
@@ -407,7 +399,6 @@ public:
         StateObject->SetName(*WideName);
     }
 
-public:
     void* GetShaderIdentifer(const FString& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetD3D12StateObject() const 

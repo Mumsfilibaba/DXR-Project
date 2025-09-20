@@ -28,7 +28,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     FMemory::Memzero(&GeometryDesc);
 
     GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
-    GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
+    GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetResource()->GetGPUVirtualAddress();
     GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetStride();
     GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
     GeometryDesc.Triangles.VertexCount                = BuildInfo.NumVertices;
@@ -37,7 +37,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     if (IndexBuffer)
     {
         GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(BuildInfo.IndexFormat);
-        GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
+        GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetResource()->GetGPUVirtualAddress();
         GeometryDesc.Triangles.IndexCount  = BuildInfo.NumIndices;
     }
 
@@ -140,7 +140,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
 
 void FD3D12RayTracingGeometry::SetDebugName(const FString& InName)
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
     {
         D3D12Resource->SetDebugName(InName);
@@ -149,7 +149,7 @@ void FD3D12RayTracingGeometry::SetDebugName(const FString& InName)
 
 FString FD3D12RayTracingGeometry::GetDebugName() const
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
     {
         return D3D12Resource->GetDebugName();
@@ -485,7 +485,7 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12RayTracingScene::GetMissShaderT
 
 void FD3D12RayTracingScene::SetDebugName(const FString& InName)
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
     {
         D3D12Resource->SetDebugName(InName);
@@ -494,7 +494,7 @@ void FD3D12RayTracingScene::SetDebugName(const FString& InName)
 
 FString FD3D12RayTracingScene::GetDebugName() const
 {
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
     {
         return D3D12Resource->GetDebugName();

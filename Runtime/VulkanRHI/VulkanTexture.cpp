@@ -49,7 +49,7 @@ uint64 VulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 W
     }
 }
 
-FVulkanTexture* FVulkanTexture::ResourceCast(FRHITexture* Texture)
+FVulkanTexture* FVulkanTexture::Cast(FRHITexture* Texture)
 {
     FVulkanTexture* VulkanTexture = nullptr;
     if (Texture)
@@ -67,7 +67,7 @@ FVulkanTexture* FVulkanTexture::ResourceCast(FRHITexture* Texture)
     return VulkanTexture;
 }
 
-FVulkanTexture* FVulkanTexture::ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture)
+FVulkanTexture* FVulkanTexture::Cast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture)
 {
     FVulkanTexture* VulkanTexture = nullptr;
     if (Texture)
