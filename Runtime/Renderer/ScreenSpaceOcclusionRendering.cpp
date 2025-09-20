@@ -192,8 +192,8 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, NumConstants);
 
     constexpr uint32 ThreadCount = 16;
-    const uint32 DispatchWidth   = FMath::DivideByMultiple<uint32>(Width, ThreadCount);
-    const uint32 DispatchHeight  = FMath::DivideByMultiple<uint32>(Height, ThreadCount);
+    const uint32 DispatchWidth   = Math::DivideByMultiple<uint32>(Width, ThreadCount);
+    const uint32 DispatchHeight  = Math::DivideByMultiple<uint32>(Height, ThreadCount);
 
     // Actual SSAO tracing
     {

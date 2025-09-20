@@ -42,13 +42,13 @@ bool FVulkanSamplerState::Initialize()
 	}
 	else
 	{
-	    SamplerCreateInfo.maxAnisotropy = FMath::Max(1.0f, SamplerCreateInfo.maxAnisotropy);
+	    SamplerCreateInfo.maxAnisotropy = Math::Max(1.0f, SamplerCreateInfo.maxAnisotropy);
 	}
 	
     // Ensure LOD range is sane
     if (SamplerCreateInfo.maxLod < SamplerCreateInfo.minLod)
     {
-        FMath::Swap(SamplerCreateInfo.minLod, SamplerCreateInfo.maxLod);
+        Math::Swap(SamplerCreateInfo.minLod, SamplerCreateInfo.maxLod);
     }
 
     if (!GetDevice()->FindOrCreateSampler(SamplerCreateInfo, Sampler))

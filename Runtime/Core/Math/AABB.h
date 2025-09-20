@@ -18,8 +18,8 @@ public:
      * @param InPointB Second point.
      */
     FORCEINLINE FAABB(const FVector3& InPointA, const FVector3& InPointB)
-        : Min(FVector3(FMath::Min(InPointA.X, InPointB.X), FMath::Min(InPointA.Y, InPointB.Y), FMath::Min(InPointA.Z, InPointB.Z)))
-        , Max(FVector3(FMath::Max(InPointA.X, InPointB.X), FMath::Max(InPointA.Y, InPointB.Y), FMath::Max(InPointA.Z, InPointB.Z)))
+        : Min(FVector3(Math::Min(InPointA.X, InPointB.X), Math::Min(InPointA.Y, InPointB.Y), Math::Min(InPointA.Z, InPointB.Z)))
+        , Max(FVector3(Math::Max(InPointA.X, InPointB.X), Math::Max(InPointA.Y, InPointB.Y), Math::Max(InPointA.Z, InPointB.Z)))
     {
     }
 
@@ -116,13 +116,13 @@ public:
      */
     FORCEINLINE void ExpandToInclude(const FAABB& Other)
     {
-        Min.X = FMath::Min(Min.X, Other.Min.X);
-        Min.Y = FMath::Min(Min.Y, Other.Min.Y);
-        Min.Z = FMath::Min(Min.Z, Other.Min.Z);
+        Min.X = Math::Min(Min.X, Other.Min.X);
+        Min.Y = Math::Min(Min.Y, Other.Min.Y);
+        Min.Z = Math::Min(Min.Z, Other.Min.Z);
 
-        Max.X = FMath::Max(Max.X, Other.Max.X);
-        Max.Y = FMath::Max(Max.Y, Other.Max.Y);
-        Max.Z = FMath::Max(Max.Z, Other.Max.Z);
+        Max.X = Math::Max(Max.X, Other.Max.X);
+        Max.Y = Math::Max(Max.Y, Other.Max.Y);
+        Max.Z = Math::Max(Max.Z, Other.Max.Z);
     }
 
     /**
@@ -131,13 +131,13 @@ public:
      */
     FORCEINLINE void Encapsulate(const FVector3& Point)
     {
-        Min.X = FMath::Min(Min.X, Point.X);
-        Min.Y = FMath::Min(Min.Y, Point.Y);
-        Min.Z = FMath::Min(Min.Z, Point.Z);
+        Min.X = Math::Min(Min.X, Point.X);
+        Min.Y = Math::Min(Min.Y, Point.Y);
+        Min.Z = Math::Min(Min.Z, Point.Z);
 
-        Max.X = FMath::Max(Max.X, Point.X);
-        Max.Y = FMath::Max(Max.Y, Point.Y);
-        Max.Z = FMath::Max(Max.Z, Point.Z);
+        Max.X = Math::Max(Max.X, Point.X);
+        Max.Y = Math::Max(Max.Y, Point.Y);
+        Max.Z = Math::Max(Max.Z, Point.Z);
     }
 
 public:

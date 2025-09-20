@@ -130,7 +130,7 @@ void FMeshCreateInfo::CalculateTangents()
         FVector2 DeltaUV2 = Vertices[Index2].TexCoord - Vertices[Index0].TexCoord;
 
         const float Denom    = DeltaUV1.X * DeltaUV2.Y - DeltaUV2.X * DeltaUV1.Y;
-        const float RcpDenom = FMath::Abs<float>(Denom) > 0.0f ? 1.0f / Denom : 0.0f;
+        const float RcpDenom = Math::Abs<float>(Denom) > 0.0f ? 1.0f / Denom : 0.0f;
 
         FVector3 Tangent;
         Tangent.X = RcpDenom * (DeltaUV2.Y * Edge1.X - DeltaUV1.Y * Edge2.X);
@@ -186,7 +186,7 @@ void FMeshCreateInfo::ValidateTangents()
             FVector3 TriangleNormal = Edge1.CrossProduct(Edge2).GetNormalized();
 
             // Select an arbitrary vector not parallel to the normal.
-            FVector3 Arbitrary = (FMath::Abs<float>(TriangleNormal.X) < 0.9f) ? FVector3(1.0f, 0.0f, 0.0f) : FVector3(0.0f, 1.0f, 0.0f);
+            FVector3 Arbitrary = (Math::Abs<float>(TriangleNormal.X) < 0.9f) ? FVector3(1.0f, 0.0f, 0.0f) : FVector3(0.0f, 1.0f, 0.0f);
 
             // Compute a tangent vector perpendicular to the normal.
             FVector3 TriangleTangent = TriangleNormal.CrossProduct(Arbitrary).GetNormalized();
@@ -500,7 +500,7 @@ FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) no
     FMeshCreateInfo SphereInfo;
     SphereInfo.Vertices.Resize(12);
 
-    const float t = (1.0f + FMath::Sqrt(5.0f)) / 2.0f;
+    const float t = (1.0f + Math::Sqrt(5.0f)) / 2.0f;
     SphereInfo.Vertices[0].Position  = FVector3(-1.0f,  t   ,  0.0f);
     SphereInfo.Vertices[1].Position  = FVector3( 1.0f,  t   ,  0.0f);
     SphereInfo.Vertices[2].Position  = FVector3(-1.0f, -t   ,  0.0f);
@@ -556,8 +556,8 @@ FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) no
         SphereInfo.Vertices[i].Position = Position * Radius;
 
         // Calculate UVs
-        SphereInfo.Vertices[i].TexCoord.Y = (FMath::Asin(SphereInfo.Vertices[i].Position.Y) / FMath::PI_Float) + 0.5f;
-        SphereInfo.Vertices[i].TexCoord.X = (FMath::Atan2(SphereInfo.Vertices[i].Position.Z, SphereInfo.Vertices[i].Position.X) + FMath::PI_Float) / (2.0f * FMath::PI_Float);
+        SphereInfo.Vertices[i].TexCoord.Y = (Math::Asin(SphereInfo.Vertices[i].Position.Y) / Math::PI_Float) + 0.5f;
+        SphereInfo.Vertices[i].TexCoord.X = (Math::Atan2(SphereInfo.Vertices[i].Position.Z, SphereInfo.Vertices[i].Position.X) + Math::PI_Float) / (2.0f * Math::PI_Float);
     }
 
     SphereInfo.Indices.Shrink();
@@ -586,7 +586,7 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     MeshCreateInfo.Indices.Resize(NumIndices);
 
     // Angle between each side segment
-    const float Angle = (2.0f * FMath::PI_Float) / static_cast<float>(Sides);
+    const float Angle = (2.0f * Math::PI_Float) / static_cast<float>(Sides);
     
     // Create the center vertex for the base cap
     MeshCreateInfo.Vertices[0].Position = FVector3(0.0f, 0.0f, 0.0f);
@@ -598,8 +598,8 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     for (uint32 i = 0; i < Sides; ++i)
     {
         // Calculate the position of the current vertex on the base circle
-        const float x = Radius * FMath::Cos<float>(Angle * i);
-        const float z = Radius * FMath::Sin<float>(Angle * i);
+        const float x = Radius * Math::Cos<float>(Angle * i);
+        const float z = Radius * Math::Sin<float>(Angle * i);
         const FVector3 BasePosition(x, 0.0f, z);
 
         // Base vertex
@@ -664,27 +664,27 @@ FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, ui
     MeshCreateInfo.Indices.Resize(NumIndices);
 
     // Step angles for each segment
-    const float RingStep = 2.0f * FMath::PI_Float / static_cast<float>(RingSegments);
-    const float TubeStep = 2.0f * FMath::PI_Float / static_cast<float>(TubeSegments);
+    const float RingStep = 2.0f * Math::PI_Float / static_cast<float>(RingSegments);
+    const float TubeStep = 2.0f * Math::PI_Float / static_cast<float>(TubeSegments);
 
     // Create vertices
     uint32 VertexIndex = 0;
     for (uint32 i = 0; i < RingSegments; ++i)
     {
         const float RingAngle = i * RingStep;
-        const FVector3 RingCenter = FVector3(RingRadius * FMath::Cos<float>(RingAngle), 0.0f, RingRadius * FMath::Sin<float>(RingAngle));
+        const FVector3 RingCenter = FVector3(RingRadius * Math::Cos<float>(RingAngle), 0.0f, RingRadius * Math::Sin<float>(RingAngle));
         for (uint32 j = 0; j < TubeSegments; ++j)
         {
             const float TubeAngle = j * TubeStep;
-            const float CosTube   = FMath::Cos<float>(TubeAngle);
-            const float SinTube   = FMath::Sin<float>(TubeAngle);
+            const float CosTube   = Math::Cos<float>(TubeAngle);
+            const float SinTube   = Math::Sin<float>(TubeAngle);
 
             // Position of the vertex
-            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * FMath::Cos<float>(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * FMath::Sin<float>(RingAngle));
+            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * Math::Cos<float>(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * Math::Sin<float>(RingAngle));
             MeshCreateInfo.Vertices[VertexIndex].Position = Position;
 
             // Normal vector
-            FVector3 Normal = FVector3(CosTube * FMath::Cos<float>(RingAngle), SinTube, CosTube * FMath::Sin<float>(RingAngle));
+            FVector3 Normal = FVector3(CosTube * Math::Cos<float>(RingAngle), SinTube, CosTube * Math::Sin<float>(RingAngle));
             Normal.Normalize();
             
             MeshCreateInfo.Vertices[VertexIndex].Normal = Normal;
@@ -1124,7 +1124,7 @@ FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float H
     const float HalfHeight = Height / 2.0f;
 
     // Angle increment per side
-    const float DeltaAngle = 2.0f * FMath::PI_Float / static_cast<float>(Sides);
+    const float DeltaAngle = 2.0f * Math::PI_Float / static_cast<float>(Sides);
 
     // Generate top cap vertices
     FVertex TopCenterVertex;

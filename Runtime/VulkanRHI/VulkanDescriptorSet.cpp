@@ -386,7 +386,7 @@ FVulkanDescriptorPool::~FVulkanDescriptorPool()
 
 bool FVulkanDescriptorPool::Initialize(const FVulkanDescriptorPoolInfo& PoolInfo)
 {
-    const uint32 MaxDescriptorSetsPerPool = FMath::Max<int32>(CVarVulkanMaxDescriptorSetsPerPool.GetValue(), 1);
+    const uint32 MaxDescriptorSetsPerPool = Math::Max<int32>(CVarVulkanMaxDescriptorSetsPerPool.GetValue(), 1);
 
     TArray<VkDescriptorPoolSize> PoolSizes;
     for (const FVulkanDescriptorPoolInfo::FDescriptorSize& Size : PoolInfo.DescriptorSizes)

@@ -20,7 +20,7 @@ struct FTextureFactoryHelpers
 {
     static FORCEINLINE uint32 TextureSizeToMiplevels(uint32 TextureSize)
     {
-        return FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(TextureSize))), 1u);
+        return Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(TextureSize))), 1u);
     }
 };
 

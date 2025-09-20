@@ -114,8 +114,8 @@ bool FVulkanSwapChain::ValidateSurfaceAndSize(FVulkanCommandContext* InCommandCo
 
 	if (!IsUndefinedExtent(Capabilities))
 	{
-		OutWidth  = FMath::Max<uint32>(1u, Capabilities.currentExtent.width);
-		OutHeight = FMath::Max<uint32>(1u, Capabilities.currentExtent.height);
+		OutWidth  = Math::Max<uint32>(1u, Capabilities.currentExtent.width);
+		OutHeight = Math::Max<uint32>(1u, Capabilities.currentExtent.height);
 	}
 	else
 	{

@@ -254,7 +254,7 @@ public:
      */
     static FORCEINLINE FInt16Vector2 Min(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
-        return FInt16Vector2(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y));
+        return FInt16Vector2(Math::Min(LHS.X, RHS.X), Math::Min(LHS.Y, RHS.Y));
     }
 
     /**
@@ -265,7 +265,7 @@ public:
      */
     static FORCEINLINE FInt16Vector2 Max(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
-        return FInt16Vector2(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y));
+        return FInt16Vector2(Math::Max(LHS.X, RHS.X), Math::Max(LHS.Y, RHS.Y));
     }
 
     /**
@@ -277,7 +277,7 @@ public:
      */
     static FORCEINLINE FInt16Vector2 Clamp(const FInt16Vector2& Value, const FInt16Vector2& Min, const FInt16Vector2& Max) noexcept
     {
-        return FInt16Vector2(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y));
+        return FInt16Vector2(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y));
     }
 
 public:
@@ -623,7 +623,7 @@ public:
      */
     static FORCEINLINE FIntVector2 Min(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
-        return FIntVector2(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y));
+        return FIntVector2(Math::Min(LHS.X, RHS.X), Math::Min(LHS.Y, RHS.Y));
     }
 
     /**
@@ -634,7 +634,7 @@ public:
      */
     static FORCEINLINE FIntVector2 Max(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
-        return FIntVector2(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y));
+        return FIntVector2(Math::Max(LHS.X, RHS.X), Math::Max(LHS.Y, RHS.Y));
     }
 
     /**
@@ -646,7 +646,7 @@ public:
      */
     static FORCEINLINE FIntVector2 Clamp(const FIntVector2& Value, const FIntVector2& Min, const FIntVector2& Max) noexcept
     {
-        return FIntVector2(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y));
+        return FIntVector2(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y));
     }
 
 public:

@@ -762,7 +762,7 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     GetDevice()->GetD3D12Device()->GetCopyableFootprints(&Desc, MipLevel, 1, 0, &PlacedSubresourceFootprint, &NumRows, &RowPitch, &RequiredSize);
 
     const uint64 Alignment   = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
-    const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, Alignment);
+    const uint64 AlignedSize = Math::AlignUp<uint64>(RequiredSize, Alignment);
 
     FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(AlignedSize, Alignment);
     CHECK(Allocation.Memory   != nullptr);
@@ -870,11 +870,11 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
 
             D3D12_BOX SourceBox;
             SourceBox.left   = InCopyDesc.SrcPosition.X >> MipLevel;
-            SourceBox.right  = FMath::Max((InCopyDesc.SrcPosition.X + InCopyDesc.Size.X) >> MipLevel, 1);
+            SourceBox.right  = Math::Max((InCopyDesc.SrcPosition.X + InCopyDesc.Size.X) >> MipLevel, 1);
             SourceBox.top    = InCopyDesc.SrcPosition.Y >> MipLevel;
-            SourceBox.bottom = FMath::Max((InCopyDesc.SrcPosition.Y + InCopyDesc.Size.Y) >> MipLevel, 1);
+            SourceBox.bottom = Math::Max((InCopyDesc.SrcPosition.Y + InCopyDesc.Size.Y) >> MipLevel, 1);
             SourceBox.front  = InCopyDesc.SrcPosition.Z >> MipLevel;
-            SourceBox.back   = FMath::Max((InCopyDesc.SrcPosition.Z + InCopyDesc.Size.Z) >> MipLevel, 1);
+            SourceBox.back   = Math::Max((InCopyDesc.SrcPosition.Z + InCopyDesc.Size.Z) >> MipLevel, 1);
 
             // Destination
             D3D12_TEXTURE_COPY_LOCATION DestLocation;

@@ -58,16 +58,16 @@ struct FR10G10B10A2
         FVector3 Vector(InR, InG, InB);
         Vector.Normalize();
 
-        Vector.X = FMath::Clamp(Vector.X, 0.0f, 1.0f);
-        Vector.Y = FMath::Clamp(Vector.Y, 0.0f, 1.0f);
-        Vector.Z = FMath::Clamp(Vector.Z, 0.0f, 1.0f);
+        Vector.X = Math::Clamp(Vector.X, 0.0f, 1.0f);
+        Vector.Y = Math::Clamp(Vector.Y, 0.0f, 1.0f);
+        Vector.Z = Math::Clamp(Vector.Z, 0.0f, 1.0f);
 
-        const float ClampedA = FMath::Clamp(InA, 0.0f, 1.0f);
+        const float ClampedA = Math::Clamp(InA, 0.0f, 1.0f);
 
-        R = static_cast<uint32>(FMath::RoundToInt(Vector.X * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
-        G = static_cast<uint32>(FMath::RoundToInt(Vector.Y * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
-        B = static_cast<uint32>(FMath::RoundToInt(Vector.Z * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
-        A = static_cast<uint32>(FMath::RoundToInt(ClampedA * static_cast<float>(FR10G10B10A2_ALPHA_MASK)));
+        R = static_cast<uint32>(Math::RoundToInt(Vector.X * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
+        G = static_cast<uint32>(Math::RoundToInt(Vector.Y * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
+        B = static_cast<uint32>(Math::RoundToInt(Vector.Z * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
+        A = static_cast<uint32>(Math::RoundToInt(ClampedA * static_cast<float>(FR10G10B10A2_ALPHA_MASK)));
     }
 
     /**

@@ -671,8 +671,8 @@ bool FD3D12Device::Initialize()
     } 
 
     // Create DescriptorHeaps
-    const uint32 NumOnlineResourceDescriptors = FMath::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
-    const uint32 ResourceDescriptorBlockSize  = FMath::Min<uint32>(CVarResourceOnlineDescriptorBlockSize.GetValue(), NumOnlineResourceDescriptors);
+    const uint32 NumOnlineResourceDescriptors = Math::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
+    const uint32 ResourceDescriptorBlockSize  = Math::Min<uint32>(CVarResourceOnlineDescriptorBlockSize.GetValue(), NumOnlineResourceDescriptors);
 
     GlobalResourceHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     if (!GlobalResourceHeap->Initialize(NumOnlineResourceDescriptors, ResourceDescriptorBlockSize))
@@ -681,8 +681,8 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    const uint32 NumOnlineSamplerDescriptors = FMath::Min<uint32>(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxSamplerDescriptorHeapSize);
-    const uint32 SamplerDescriptorBlockSize  = FMath::Min<uint32>(CVarSamplerOnlineDescriptorBlockSize.GetValue(), NumOnlineSamplerDescriptors);
+    const uint32 NumOnlineSamplerDescriptors = Math::Min<uint32>(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxSamplerDescriptorHeapSize);
+    const uint32 SamplerDescriptorBlockSize  = Math::Min<uint32>(CVarSamplerOnlineDescriptorBlockSize.GetValue(), NumOnlineSamplerDescriptors);
 
     GlobalSamplerHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
     if (!GlobalSamplerHeap->Initialize(NumOnlineSamplerDescriptors, SamplerDescriptorBlockSize))

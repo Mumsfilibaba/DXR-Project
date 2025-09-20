@@ -167,16 +167,16 @@ public:
     FORCEINLINE FColor ToColor() const
     {
         // Clamp each component between 0.0f and 1.0f
-        const float ClampedR = FMath::Clamp(R, 0.0f, 1.0f);
-        const float ClampedG = FMath::Clamp(G, 0.0f, 1.0f);
-        const float ClampedB = FMath::Clamp(B, 0.0f, 1.0f);
-        const float ClampedA = FMath::Clamp(A, 0.0f, 1.0f);
+        const float ClampedR = Math::Clamp(R, 0.0f, 1.0f);
+        const float ClampedG = Math::Clamp(G, 0.0f, 1.0f);
+        const float ClampedB = Math::Clamp(B, 0.0f, 1.0f);
+        const float ClampedA = Math::Clamp(A, 0.0f, 1.0f);
 
         // Scale to [0, 255] and round to nearest integer
-        uint8 IntR = static_cast<uint8>(FMath::RoundToInt(ClampedR * 255.0f));
-        uint8 IntG = static_cast<uint8>(FMath::RoundToInt(ClampedG * 255.0f));
-        uint8 IntB = static_cast<uint8>(FMath::RoundToInt(ClampedB * 255.0f));
-        uint8 IntA = static_cast<uint8>(FMath::RoundToInt(ClampedA * 255.0f));
+        uint8 IntR = static_cast<uint8>(Math::RoundToInt(ClampedR * 255.0f));
+        uint8 IntG = static_cast<uint8>(Math::RoundToInt(ClampedG * 255.0f));
+        uint8 IntB = static_cast<uint8>(Math::RoundToInt(ClampedB * 255.0f));
+        uint8 IntA = static_cast<uint8>(Math::RoundToInt(ClampedA * 255.0f));
 
         return FColor(IntR, IntG, IntB, IntA);
     }
@@ -553,7 +553,7 @@ public:
     FORCEINLINE bool operator==(const FFloatColor& RHS) const
     {
         constexpr float Epsilon = 1e-6f;
-        return (FMath::Abs(R - RHS.R) <= Epsilon) && (FMath::Abs(G - RHS.G) <= Epsilon) && (FMath::Abs(B - RHS.B) <= Epsilon) && (FMath::Abs(A - RHS.A) <= Epsilon);
+        return (Math::Abs(R - RHS.R) <= Epsilon) && (Math::Abs(G - RHS.G) <= Epsilon) && (Math::Abs(B - RHS.B) <= Epsilon) && (Math::Abs(A - RHS.A) <= Epsilon);
     }
 
     /** @brief Inequality operator */

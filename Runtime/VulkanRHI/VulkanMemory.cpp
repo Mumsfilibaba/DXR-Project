@@ -111,7 +111,7 @@ bool FVulkanMemoryHeap::Allocate(FVulkanMemoryAllocation& OutAllocation, VkDevic
             continue;
         }
 
-        PaddedOffset = FMath::AlignUp(Iterator->Offset, Alignment);
+        PaddedOffset = Math::AlignUp(Iterator->Offset, Alignment);
         if (PageGranularity > 1)
         {
             FVulkanMemoryBlock* Next     = Iterator->Next;
@@ -121,7 +121,7 @@ bool FVulkanMemoryHeap::Allocate(FVulkanMemoryAllocation& OutAllocation, VkDevic
             {
                 if (IsAliasing(Previous->Offset, Previous->TotalSizeInBytes, PaddedOffset, PageGranularity))
                 {
-                    PaddedOffset = FMath::AlignUp(PaddedOffset, PageGranularity);
+                    PaddedOffset = Math::AlignUp(PaddedOffset, PageGranularity);
                 }
             }
 
@@ -712,7 +712,7 @@ bool FVulkanMemoryManager::AllocateMemoryFromHeap(FVulkanMemoryAllocation& OutAl
     SCOPED_LOCK(ManagerCS);
 
     // Check if this size will be possible with this allocator
-    VkDeviceSize AlignedSize = FMath::AlignUp(SizeInBytes, Alignment);
+    VkDeviceSize AlignedSize = Math::AlignUp(SizeInBytes, Alignment);
     if (AlignedSize >= HeapSize)
     {
         OutAllocation.Reset();

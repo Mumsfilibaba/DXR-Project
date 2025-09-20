@@ -819,8 +819,8 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     CommandList.SetUnorderedAccessView(BRDFShader.Get(), StagingUAV, 0);
 
     constexpr uint32 ThreadCount = 16;
-    constexpr uint32 DispatchWidth  = FMath::DivideByMultiple(LUTSize, ThreadCount);
-    constexpr uint32 DispatchHeight = FMath::DivideByMultiple(LUTSize, ThreadCount);
+    constexpr uint32 DispatchWidth  = Math::DivideByMultiple(LUTSize, ThreadCount);
+    constexpr uint32 DispatchHeight = Math::DivideByMultiple(LUTSize, ThreadCount);
     CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
     CommandList.UnorderedAccessTextureBarrier(StagingTexture.Get());
@@ -1085,8 +1085,8 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.Set32BitShaderConstants(LightPassShader, &LightPassSettings, NumConstants);
 
     constexpr uint32 NumThreads = 16;
-    const uint32 WorkGroupWidth  = FMath::DivideByMultiple<uint32>(LightPassSettings.ScreenWidth, NumThreads);
-    const uint32 WorkGroupHeight = FMath::DivideByMultiple<uint32>(LightPassSettings.ScreenHeight, NumThreads);
+    const uint32 WorkGroupWidth  = Math::DivideByMultiple<uint32>(LightPassSettings.ScreenWidth, NumThreads);
+    const uint32 WorkGroupHeight = Math::DivideByMultiple<uint32>(LightPassSettings.ScreenHeight, NumThreads);
     CommandList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
@@ -1185,8 +1185,8 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
     }
 
     constexpr uint32 Alignment = 16;
-    const uint32 ReducedWidth  = FMath::DivideByMultiple(Width, Alignment);
-    const uint32 ReducedHeight = FMath::DivideByMultiple(Height, Alignment);
+    const uint32 ReducedWidth  = Math::DivideByMultiple(Width, Alignment);
+    const uint32 ReducedHeight = Math::DivideByMultiple(Height, Alignment);
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, Usage);
@@ -1252,8 +1252,8 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
     CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0);
 
-    ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
-    ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
+    ThreadsX = Math::DivideByMultiple(ThreadsX, 16);
+    ThreadsY = Math::DivideByMultiple(ThreadsY, 16);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
@@ -1262,8 +1262,8 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
     CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
-    ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
-    ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
+    ThreadsX = Math::DivideByMultiple(ThreadsX, 16);
+    ThreadsY = Math::DivideByMultiple(ThreadsY, 16);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));

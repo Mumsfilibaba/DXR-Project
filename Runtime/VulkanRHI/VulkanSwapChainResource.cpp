@@ -166,22 +166,22 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 			return false;
 		}
 
-		CurrentExtent.width  = FMath::Clamp(CreateInfo.Extent.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
-		CurrentExtent.height = FMath::Clamp(CreateInfo.Extent.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+		CurrentExtent.width  = Math::Clamp(CreateInfo.Extent.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+		CurrentExtent.height = Math::Clamp(CreateInfo.Extent.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
 	}
 
-	CurrentExtent.width  = FMath::Max(CurrentExtent.width, 1u);
-	CurrentExtent.height = FMath::Max(CurrentExtent.height, 1u);
+	CurrentExtent.width  = Math::Max(CurrentExtent.width, 1u);
+	CurrentExtent.height = Math::Max(CurrentExtent.height, 1u);
 
 	VULKAN_INFO("SwapChain Extent: current=(%u,%u) min=(%u,%u) max=(%u,%u) chosen=(%u,%u)", Capabilities.currentExtent.width, Capabilities.currentExtent.height,
 		Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height, 
 		CurrentExtent.width, CurrentExtent.height);
 
 	// Image count (respect min/max)
-	uint32 DesiredCount = FMath::Max<uint32>(CreateInfo.BufferCount, Capabilities.minImageCount);
+	uint32 DesiredCount = Math::Max<uint32>(CreateInfo.BufferCount, Capabilities.minImageCount);
     if (Capabilities.maxImageCount > 0)
     {
-		DesiredCount = FMath::Min(DesiredCount, Capabilities.maxImageCount);
+		DesiredCount = Math::Min(DesiredCount, Capabilities.maxImageCount);
     }
 
 	if (DesiredCount != CreateInfo.BufferCount)

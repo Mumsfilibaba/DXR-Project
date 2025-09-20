@@ -501,10 +501,10 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
             const FRHIRenderTargetView& RenderTargetView = BeginRenderPassInfo.RenderTargets[Index];
             if (FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, RenderTargetView.Texture))
             {
-                Width          = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
-                Height         = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
-                NumArrayLayers = FMath::Max<uint32>(RenderTargetView.NumArraySlices, NumArrayLayers);
-                NumSamples     = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+                Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
+                Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+                NumArrayLayers = Math::Max<uint32>(RenderTargetView.NumArraySlices, NumArrayLayers);
+                NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
 
                 RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
                 RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
@@ -536,10 +536,10 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
         const FRHIDepthStencilView& DepthStencilView = BeginRenderPassInfo.DepthStencilView;
         if (FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, DepthStencilView.Texture))
         {
-            Width          = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
-            Height         = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
-            NumArrayLayers = FMath::Max<uint32>(DepthStencilView.NumArraySlices, NumArrayLayers);
-            NumSamples     = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+            Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
+            Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+            NumArrayLayers = Math::Max<uint32>(DepthStencilView.NumArraySlices, NumArrayLayers);
+            NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
             
             RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
             RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
@@ -812,7 +812,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
         
         // Align the size
         // TODO: Setup offset and size
-        // const VkDeviceSize AlignedSize = FMath::AlignUp<VkDeviceSize>(BufferRegion.Size, 0x100);
+        // const VkDeviceSize AlignedSize = Math::AlignUp<VkDeviceSize>(BufferRegion.Size, 0x100);
 
         // Map buffer memory
         VkResult Result = vkMapMemory(NativeDevice, DeviceMemory, 0, VK_WHOLE_SIZE, 0, reinterpret_cast<void**>(&BufferData));
@@ -978,9 +978,9 @@ void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
         VkImageCopy& ImageCopy = ImageCopies[MipLevel];
         FMemory::Memzero(&ImageCopy, sizeof(ImageCopy));
     
-        ImageCopy.extent.width                  = FMath::Max<uint32>(TextureInfo.Extent.X >> MipLevel, 1u);
-        ImageCopy.extent.height                 = FMath::Max<uint32>(TextureInfo.Extent.Y >> MipLevel, 1u);
-        ImageCopy.extent.depth                  = FMath::Max<uint32>(TextureInfo.Extent.Z >> MipLevel, 1u);
+        ImageCopy.extent.width                  = Math::Max<uint32>(TextureInfo.Extent.X >> MipLevel, 1u);
+        ImageCopy.extent.height                 = Math::Max<uint32>(TextureInfo.Extent.Y >> MipLevel, 1u);
+        ImageCopy.extent.depth                  = Math::Max<uint32>(TextureInfo.Extent.Z >> MipLevel, 1u);
         ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
         ImageCopy.srcSubresource.mipLevel       = MipLevel;
         ImageCopy.srcSubresource.baseArrayLayer = 0;
@@ -1034,12 +1034,12 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
     if (IsTextureCube(DstVulkanTexture->GetDimension()))
     {
         DstBaseArrayLayer = CopyDesc.DstArraySlice * RHI_NUM_CUBE_FACES;
-        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
+        NumArrayLayers    = Math::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
     }
     else
     {
         DstBaseArrayLayer = CopyDesc.DstArraySlice;
-        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
+        NumArrayLayers    = Math::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
     }
 
     // Flush barriers
@@ -1072,9 +1072,9 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
             CopyInfo.dstSubresource.layerCount     = 1;
             
             // Size of this mip-slice
-            CopyInfo.extent.width  = FMath::Max(CopyDesc.Size.X >> MipLevel, 1);
-            CopyInfo.extent.height = FMath::Max(CopyDesc.Size.Y >> MipLevel, 1);
-            CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.Z >> MipLevel, 1);
+            CopyInfo.extent.width  = Math::Max(CopyDesc.Size.X >> MipLevel, 1);
+            CopyInfo.extent.height = Math::Max(CopyDesc.Size.Y >> MipLevel, 1);
+            CopyInfo.extent.depth  = Math::Max(CopyDesc.Size.Z >> MipLevel, 1);
         }
         
         GetCommandBuffer()->CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CopyDesc.NumMipLevels, ImageCopy);

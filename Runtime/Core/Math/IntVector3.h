@@ -267,7 +267,7 @@ public:
      */
     static FORCEINLINE FInt16Vector3 Min(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
-        return FInt16Vector3(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z));
+        return FInt16Vector3(Math::Min(LHS.X, RHS.X), Math::Min(LHS.Y, RHS.Y), Math::Min(LHS.Z, RHS.Z));
     }
 
     /**
@@ -278,7 +278,7 @@ public:
      */
     static FORCEINLINE FInt16Vector3 Max(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
-        return FInt16Vector3(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z));
+        return FInt16Vector3(Math::Max(LHS.X, RHS.X), Math::Max(LHS.Y, RHS.Y), Math::Max(LHS.Z, RHS.Z));
     }
 
     /**
@@ -290,7 +290,7 @@ public:
      */
     static FORCEINLINE FInt16Vector3 Clamp(const FInt16Vector3& Value, const FInt16Vector3& Min, const FInt16Vector3& Max) noexcept
     {
-        return FInt16Vector3(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z));
+        return FInt16Vector3(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y), Math::Clamp(Value.Z, Min.Z, Max.Z));
     }
 
 public:
@@ -651,7 +651,7 @@ public:
      */
     static FORCEINLINE FIntVector3 Min(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
     {
-        return FIntVector3(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z));
+        return FIntVector3(Math::Min(LHS.X, RHS.X), Math::Min(LHS.Y, RHS.Y), Math::Min(LHS.Z, RHS.Z));
     }
 
     /**
@@ -662,7 +662,7 @@ public:
      */
     static FORCEINLINE FIntVector3 Max(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
     {
-        return FIntVector3(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z));
+        return FIntVector3(Math::Max(LHS.X, RHS.X), Math::Max(LHS.Y, RHS.Y), Math::Max(LHS.Z, RHS.Z));
     }
 
     /**
@@ -674,7 +674,7 @@ public:
      */
     static FORCEINLINE FIntVector3 Clamp(const FIntVector3& Value, const FIntVector3& Min, const FIntVector3& Max) noexcept
     {
-        return FIntVector3(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z));
+        return FIntVector3(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y), Math::Clamp(Value.Z, Min.Z, Max.Z));
     }
 
 public:

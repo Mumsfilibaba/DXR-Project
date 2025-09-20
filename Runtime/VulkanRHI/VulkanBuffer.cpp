@@ -73,7 +73,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         }
     #endif
 
-        RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
     if (Info.IsIndexBuffer())
     {
@@ -85,21 +85,21 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         }
     #endif
 
-        RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
     if (Info.IsConstantBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
     }
     if (Info.IsUnorderedAccess() || Info.IsShaderResource())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-        RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
     
     // Setup the proper size
-    BufferCreateInfo.size = FMath::AlignUp(BufferCreateInfo.size, RequiredAlignment);
+    BufferCreateInfo.size = Math::AlignUp(BufferCreateInfo.size, RequiredAlignment);
 
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     if (VULKAN_FAILED(Result))

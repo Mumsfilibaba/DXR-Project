@@ -104,7 +104,7 @@ struct FVulkanPipelineLayoutInfo
         if (ShaderInfo.NumPushConstants)
         {
             ConstantsInfo.StageFlags  |= ShaderStage;
-            ConstantsInfo.NumConstants = FMath::Max<uint32>(ConstantsInfo.NumConstants, ShaderInfo.NumPushConstants);
+            ConstantsInfo.NumConstants = Math::Max<uint32>(ConstantsInfo.NumConstants, ShaderInfo.NumPushConstants);
         }
     }
     

@@ -54,7 +54,7 @@ public:
     {
         Reset();
 
-        NumValues = FMath::Min<SizeType>(NumValues, NUM_BITS);
+        NumValues = Math::Min<SizeType>(NumValues, NUM_BITS);
         for (SizeType Index = 0; Index < NumValues; ++Index)
         {
             Integers[Index] = InValues[Index];

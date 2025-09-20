@@ -122,8 +122,8 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     FRHITextureInfo CompressedTexInfo = SourceInfo;
     CompressedTexInfo.Format       = EFormat::R32G32B32A32_Uint;
     CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccess;
-    CompressedTexInfo.Extent.X     = FMath::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
-    CompressedTexInfo.Extent.Y     = FMath::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.X     = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.Y     = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
     CompressedTexInfo.NumMipLevels = 1;
 
     FRHITextureRef CompressedTex = FRHI::Get()->CreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
@@ -164,8 +164,8 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     const FVector2 TexSize = FVector2(static_cast<float>(SourceInfo.Extent.X), static_cast<float>(SourceInfo.Extent.Y));
 
     FCompressionBufferHLSL Buffer;
-    Buffer.TextureSizeInBlocks[0] = FMath::AlignUp(CompressedTexInfo.Extent.X, BC_BLOCK_SIZE);
-    Buffer.TextureSizeInBlocks[1] = FMath::AlignUp(CompressedTexInfo.Extent.Y, BC_BLOCK_SIZE);
+    Buffer.TextureSizeInBlocks[0] = Math::AlignUp(CompressedTexInfo.Extent.X, BC_BLOCK_SIZE);
+    Buffer.TextureSizeInBlocks[1] = Math::AlignUp(CompressedTexInfo.Extent.Y, BC_BLOCK_SIZE);
     Buffer.TextureSizeRcp         = FVector2(1.0f) / TexSize;
 
     constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
@@ -173,8 +173,8 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     
     CommandList.TransitionTexture(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
 
-    const uint32 ThreadGroupsX = FMath::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);
-    const uint32 ThreadGroupsY = FMath::DivideByMultiple(CompressedTexInfo.Extent.Y, CS_NUM_THREADS);
+    const uint32 ThreadGroupsX = Math::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);
+    const uint32 ThreadGroupsY = Math::DivideByMultiple(CompressedTexInfo.Extent.Y, CS_NUM_THREADS);
     CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
     CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
 
@@ -226,15 +226,15 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     FRHITextureInfo CompressedTexInfo = SourceInfo;
     CompressedTexInfo.Format       = EFormat::R32G32B32A32_Uint;
     CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccess;
-    CompressedTexInfo.Extent.X     = FMath::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
-    CompressedTexInfo.Extent.Y     = FMath::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.X     = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.Y     = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
 
     // When calculating NumMips we skip 3 miplevels since those are too small for the 
     // compressed texture since they are smaller than the compressed block-size.
     constexpr uint32 NumMipsSkipped = 3;
 
     // Calculate the amount of compressed miplevels
-    CompressedTexInfo.NumMipLevels = FMath::Max<int32>(static_cast<int32>(SourceInfo.NumMipLevels) - NumMipsSkipped, 1);
+    CompressedTexInfo.NumMipLevels = Math::Max<int32>(static_cast<int32>(SourceInfo.NumMipLevels) - NumMipsSkipped, 1);
 
     FRHITextureRef CompressedTex = FRHI::Get()->CreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
     if (!CompressedTex)
@@ -329,8 +329,8 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
         CommandList.SetUnorderedAccessView(BC6HCompressionCubeShader.Get(), CompressedTexUAV.Get(), 0);
 
         FCompressionBufferHLSL Buffer;
-        Buffer.TextureSizeInBlocks[0] = FMath::AlignUp(CurrentFaceSizeInBlocks, BC_BLOCK_SIZE);
-        Buffer.TextureSizeInBlocks[1] = FMath::AlignUp(CurrentFaceSizeInBlocks, BC_BLOCK_SIZE);
+        Buffer.TextureSizeInBlocks[0] = Math::AlignUp(CurrentFaceSizeInBlocks, BC_BLOCK_SIZE);
+        Buffer.TextureSizeInBlocks[1] = Math::AlignUp(CurrentFaceSizeInBlocks, BC_BLOCK_SIZE);
 
         const float CurrentFaceSizeRcp = 1.0f / static_cast<float>(CurrentFaceSize);
         Buffer.TextureSizeRcp = FVector2(CurrentFaceSizeRcp);
@@ -339,8 +339,8 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
         CommandList.Set32BitShaderConstants(BC6HCompressionCubeShader.Get(), &Buffer, NumConstants);
 
         constexpr uint32 NumArraySlices = 6;
-        const uint32 ThreadsX = FMath::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);
-        const uint32 ThreadsY = FMath::DivideByMultiple(CompressedTexInfo.Extent.Y, CS_NUM_THREADS);
+        const uint32 ThreadsX = Math::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);
+        const uint32 ThreadsY = Math::DivideByMultiple(CompressedTexInfo.Extent.Y, CS_NUM_THREADS);
         CommandList.Dispatch(ThreadsX, ThreadsY, NumArraySlices);
 
         CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());

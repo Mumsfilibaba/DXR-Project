@@ -364,7 +364,7 @@ public:
         {
             for (int32 Col = 0; Col < 4; ++Col)
             {
-                if (FMath::IsNaN(M[Row][Col]))
+                if (Math::IsNaN(M[Row][Col]))
                 {
                     return true;
                 }
@@ -384,7 +384,7 @@ public:
         {
             for (int32 Col = 0; Col < 4; ++Col)
             {
-                if (FMath::IsInfinity(M[Row][Col]))
+                if (Math::IsInfinity(M[Row][Col]))
                 {
                     return true;
                 }
@@ -400,17 +400,17 @@ public:
      * @param Epsilon Threshold for comparison
      * @return True if equal within Epsilon, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix4& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
-        Epsilon = FMath::Abs(Epsilon);
+        Epsilon = Math::Abs(Epsilon);
 
         for (int32 Row = 0; Row < 4; ++Row)
         {
             for (int32 Col = 0; Col < 4; ++Col)
             {
                 const float Diff = M[Row][Col] - Other.M[Row][Col];
-                if (FMath::Abs(Diff) > Epsilon)
+                if (Math::Abs(Diff) > Epsilon)
                 {
                     return false;
                 }
@@ -419,7 +419,7 @@ public:
 
         return true;
     #else
-        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(FMath::Abs(Epsilon));
+        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(Math::Abs(Epsilon));
 
         for (int32 Row = 0; Row < 4; ++Row)
         {
@@ -1272,12 +1272,12 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
-        const float SinP = FMath::Sin(Pitch);
-        const float CosP = FMath::Cos(Pitch);
-        const float SinY = FMath::Sin(Yaw);
-        const float CosY = FMath::Cos(Yaw);
-        const float SinR = FMath::Sin(Roll);
-        const float CosR = FMath::Cos(Roll);
+        const float SinP = Math::Sin(Pitch);
+        const float CosP = Math::Cos(Pitch);
+        const float SinY = Math::Sin(Yaw);
+        const float CosY = Math::Cos(Yaw);
+        const float SinR = Math::Sin(Roll);
+        const float CosR = Math::Cos(Roll);
 
         const float SinRSinP = SinR * SinP;
         const float CosRSinP = CosR * SinP;
@@ -1306,8 +1306,8 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationX(float x) noexcept
     {
-        const float SinX = FMath::Sin(x);
-        const float CosX = FMath::Cos(x);
+        const float SinX = Math::Sin(x);
+        const float CosX = Math::Cos(x);
 
         return FMatrix4(
             1.0f,  0.0f, 0.0f, 0.0f,
@@ -1323,8 +1323,8 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationY(float y) noexcept
     {
-        const float SinY = FMath::Sin(y);
-        const float CosY = FMath::Cos(y);
+        const float SinY = Math::Sin(y);
+        const float CosY = Math::Cos(y);
 
         return FMatrix4(
             CosY, 0.0f, -SinY, 0.0f,
@@ -1340,8 +1340,8 @@ public:
      */
     static FORCEINLINE FMatrix4 RotationZ(float z) noexcept
     {
-        const float SinZ = FMath::Sin(z);
-        const float CosZ = FMath::Cos(z);
+        const float SinZ = Math::Sin(z);
+        const float CosZ = Math::Cos(z);
 
         return FMatrix4(
              CosZ, SinZ, 0.0f, 0.0f,
@@ -1400,12 +1400,12 @@ public:
      */
     static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
-        if ((Fov < FMath::OneDegree_Float) || (Fov > (FMath::PI_Float - FMath::OneDegree_Float)))
+        if ((Fov < Math::OneDegree_Float) || (Fov > (Math::PI_Float - Math::OneDegree_Float)))
         {
             return FMatrix4();
         }
 
-        const float ScaleY = 1.0f / FMath::Tan(Fov * 0.5f);
+        const float ScaleY = 1.0f / Math::Tan(Fov * 0.5f);
         const float ScaleX = ScaleY / AspectRatio;
         const float Range  = FarZ / (FarZ - NearZ);
 

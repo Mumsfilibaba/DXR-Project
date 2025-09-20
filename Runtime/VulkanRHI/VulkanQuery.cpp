@@ -75,7 +75,7 @@ FVulkanQueryAllocation FVulkanQueryPool::Allocate(uint64* InResults)
 void FVulkanQueryPool::Reset()
 {
     // Reset query handle
-    const uint32 NumUsedQueries = FMath::Min<int32>(CurrentQueryIndex, NumQueries);
+    const uint32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
     vkResetQueryPool(GetDevice()->GetVkDevice(), QueryPool, 0, NumUsedQueries);
 
     // Reset the query index
@@ -89,7 +89,7 @@ void FVulkanQueryPool::ResolveQueries()
         return;
     }
 
-    const uint32 NumUsedQueries = FMath::Min<int32>(CurrentQueryIndex, NumQueries);
+    const uint32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
     const VkQueryResultFlags Flags = VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT;
 
     if (QueryType == EQueryType::Timestamp)

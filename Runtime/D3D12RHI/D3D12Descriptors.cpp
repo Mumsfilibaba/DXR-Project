@@ -141,7 +141,7 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
 
     Desc.Type           = Type;
     Desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    Desc.NumDescriptors = FMath::Min(CVarNumOfflineDescriptors.GetValue(), D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT);
+    Desc.NumDescriptors = Math::Min(CVarNumOfflineDescriptors.GetValue(), D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT);
     Desc.NodeMask       = GetDevice()->GetNodeMask();
 
     TComPtr<ID3D12DescriptorHeap> NewHeap;

@@ -75,30 +75,30 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     }
     
     // Camera Rotation
-    if (FMath::Abs(RightThumbX.Value) > Deadzone)
+    if (Math::Abs(RightThumbX.Value) > Deadzone)
     {
-        Camera->Rotate(0.0f, FMath::DegreesToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
+        Camera->Rotate(0.0f, Math::DegreesToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Right))
     {
-        Camera->Rotate(0.0f, FMath::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f);
+        Camera->Rotate(0.0f, Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Left))
     {
-        Camera->Rotate(0.0f, FMath::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f);
+        Camera->Rotate(0.0f, Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f);
     }
 
-    if (FMath::Abs(RightThumbY.Value) > Deadzone)
+    if (Math::Abs(RightThumbY.Value) > Deadzone)
     {
-        Camera->Rotate(FMath::DegreesToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->Rotate(Math::DegreesToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Up))
     {
-        Camera->Rotate(FMath::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->Rotate(Math::DegreesToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Down))
     {
-        Camera->Rotate(FMath::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
+        Camera->Rotate(Math::DegreesToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
 
     // Camera Movement
@@ -112,7 +112,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     const FAxisState LeftThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::LeftThumbY);
 
     FVector3 CameraAcceleration;
-    if (FMath::Abs(LeftThumbY.Value) > Deadzone)
+    if (Math::Abs(LeftThumbY.Value) > Deadzone)
     {
         CameraAcceleration.Z = Acceleration * LeftThumbY.Value;
     }
@@ -125,7 +125,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
         CameraAcceleration.Z = -Acceleration;
     }
 
-    if (FMath::Abs(LeftThumbX.Value) > Deadzone)
+    if (Math::Abs(LeftThumbX.Value) > Deadzone)
     {
         CameraAcceleration.X = Acceleration * -LeftThumbX.Value;
     }

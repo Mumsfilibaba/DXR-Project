@@ -596,7 +596,7 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     if (FMemory::Memcmp(&CurrentVBV, &GraphicsState.VBCache.VertexBuffers[VertexBufferSlot], sizeof(D3D12_VERTEX_BUFFER_VIEW)) != 0)
     {
         FMemory::Memcpy(&GraphicsState.VBCache.VertexBuffers[VertexBufferSlot], &CurrentVBV, sizeof(D3D12_VERTEX_BUFFER_VIEW));
-        GraphicsState.VBCache.NumVertexBuffers = FMath::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
+        GraphicsState.VBCache.NumVertexBuffers = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
         GraphicsState.bBindVertexBuffers = true;
     }
 }
@@ -629,7 +629,7 @@ void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceView* ShaderResourceV
     if (SRVCache[ResourceIndex] != ShaderResourceView)
     {
         SRVCache[ResourceIndex] = ShaderResourceView;
-        CommonState.ShaderResourceViewCache.NumViews[ShaderStage] = FMath::Max<uint8>(CommonState.ShaderResourceViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
+        CommonState.ShaderResourceViewCache.NumViews[ShaderStage] = Math::Max<uint8>(CommonState.ShaderResourceViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.ShaderResourceViewCache.bDirty[ShaderStage] = true;
     }
 }
@@ -640,7 +640,7 @@ void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessView* UnorderedAcces
     if (UAVCache[ResourceIndex] != UnorderedAccessView)
     {
         UAVCache[ResourceIndex] = UnorderedAccessView;
-        CommonState.UnorderedAccessViewCache.NumViews[ShaderStage] = FMath::Max<uint8>(CommonState.UnorderedAccessViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
+        CommonState.UnorderedAccessViewCache.NumViews[ShaderStage] = Math::Max<uint8>(CommonState.UnorderedAccessViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.UnorderedAccessViewCache.bDirty[ShaderStage] = true;
     }
 }
@@ -651,7 +651,7 @@ void FD3D12CommandContextState::SetCBV(FD3D12ConstantBufferView* ConstantBufferV
     if (CBVCache[ResourceIndex] != ConstantBufferView)
     {
         CBVCache[ResourceIndex] = ConstantBufferView;
-        CommonState.ConstantBufferCache.NumBuffers[ShaderStage] = FMath::Max<uint8>(CommonState.ConstantBufferCache.NumBuffers[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
+        CommonState.ConstantBufferCache.NumBuffers[ShaderStage] = Math::Max<uint8>(CommonState.ConstantBufferCache.NumBuffers[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.ConstantBufferCache.bDirty[ShaderStage] = true;
     }
 }
@@ -662,7 +662,7 @@ void FD3D12CommandContextState::SetSampler(FD3D12SamplerState* SamplerState, ESh
     if (SamplerCache[SamplerIndex] != SamplerState)
     {
         SamplerCache[SamplerIndex] = SamplerState;
-        CommonState.SamplerStateCache.NumSamplers[ShaderStage] = FMath::Max<uint8>(CommonState.SamplerStateCache.NumSamplers[ShaderStage], static_cast<uint8>(SamplerIndex) + 1);
+        CommonState.SamplerStateCache.NumSamplers[ShaderStage] = Math::Max<uint8>(CommonState.SamplerStateCache.NumSamplers[ShaderStage], static_cast<uint8>(SamplerIndex) + 1);
         CommonState.SamplerStateCache.bDirty[ShaderStage] = true;
     }
 }

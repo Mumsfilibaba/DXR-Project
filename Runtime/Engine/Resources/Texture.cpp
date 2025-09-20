@@ -41,7 +41,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     uint32 NumMipsRHI = NumMips;
     if (bGenerateMips)
     {
-        NumMipsRHI = FTextureFactoryHelpers::TextureSizeToMiplevels(FMath::Max(Width, Height));
+        NumMipsRHI = FTextureFactoryHelpers::TextureSizeToMiplevels(Math::Max(Width, Height));
     }
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResource);

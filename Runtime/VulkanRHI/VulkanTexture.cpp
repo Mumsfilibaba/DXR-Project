@@ -12,7 +12,7 @@ uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Wi
         const uint32 BlockSize = GetVkFormatBlockSize(Format);
         CHECK(BlockSize != 0);
         
-        Width = FMath::Max<uint32>(1, (Width + 3) / 4);
+        Width = Math::Max<uint32>(1, (Width + 3) / 4);
         return Width * BlockSize;
     }
     else
@@ -26,7 +26,7 @@ uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Wi
 uint32 FVulkanTextureHelper::CalculateTextureNumRows(VkFormat Format, uint32 Height)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
-    return bIsBlockCompressed ? FMath::AlignUp<uint32>(1, (Height + 3) / 4) : Height;
+    return bIsBlockCompressed ? Math::AlignUp<uint32>(1, (Height + 3) / 4) : Height;
 }
 
 uint64 FVulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
@@ -37,8 +37,8 @@ uint64 FVulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 
         const uint32 BlockSize = GetVkFormatBlockSize(Format);
         CHECK(BlockSize != 0);
         
-        Width  = FMath::Max<uint32>(1, (Width + 3) / 4);
-        Height = FMath::Max<uint32>(1, (Height + 3) / 4);
+        Width  = Math::Max<uint32>(1, (Width + 3) / 4);
+        Height = Math::Max<uint32>(1, (Height + 3) / 4);
         return Width * Height * BlockSize;
     }
     else

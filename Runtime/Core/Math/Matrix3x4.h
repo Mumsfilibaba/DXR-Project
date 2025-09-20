@@ -58,7 +58,7 @@ public:
         {
             for (int32 Col = 0; Col < 4; ++Col)
             {
-                if (FMath::IsNaN(M[Row][Col]))
+                if (Math::IsNaN(M[Row][Col]))
                 {
                     return true;
                 }
@@ -78,7 +78,7 @@ public:
         {
             for (int32 Col = 0; Col < 4; ++Col)
             {
-                if (FMath::IsInfinity(M[Row][Col]))
+                if (Math::IsInfinity(M[Row][Col]))
                 {
                     return true;
                 }
@@ -94,16 +94,16 @@ public:
      * @param Epsilon Threshold for comparison
      * @return True if equal within Epsilon, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix3x4& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix3x4& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
     {
-        Epsilon = FMath::Abs(Epsilon);
+        Epsilon = Math::Abs(Epsilon);
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
             for (int32 Col = 0; Col < 4; ++Col)
             {
                 float Diff = M[Row][Col] - Other.M[Row][Col];
-                if (FMath::Abs(Diff) > Epsilon)
+                if (Math::Abs(Diff) > Epsilon)
                 {
                     return false;
                 }

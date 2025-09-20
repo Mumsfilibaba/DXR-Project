@@ -107,7 +107,7 @@ void FD3D12QueryHeap::ResolveQueries(FD3D12CommandList& CommandList)
         QueryType = D3D12_QUERY_TYPE_OCCLUSION;
     }
 
-    const uint32 NumUsedQueries = FMath::Min<int32>(CurrentQueryIndex, NumQueries);
+    const uint32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
     CommandList->ResolveQueryData(QueryHeap.Get(), QueryType, 0, NumUsedQueries, ReadResource->GetD3D12Resource(), 0);
 }
 
@@ -120,7 +120,7 @@ void FD3D12QueryHeap::ReadBackResults(FD3D12Queue& Queue)
         return;
     }
 
-    const int32 NumUsedQueries = FMath::Min<int32>(CurrentQueryIndex, NumQueries);
+    const int32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
     if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
     {
         const uint64 Frequency = Queue.GetFrequency();

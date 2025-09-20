@@ -47,7 +47,7 @@ void FRendererInfoWidget::Draw()
         const float WindowHeight = DisplaySize.y;
         const float Scale        = FrameBufferScale.x;
         const float ColumnWidth  = 160.0f * Scale;
-	    const float Width        = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
+	    const float Width        = Math::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
 	    const float Height       = WindowHeight * 0.25f;
 
         ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);

@@ -725,9 +725,9 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
             FAABB BoundingBox(LightProbe->BoxMin, LightProbe->BoxMax);
 
             FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
-            Scale.X = FMath::Max<float>(Scale.X, 0.005f);
-            Scale.Y = FMath::Max<float>(Scale.Y, 0.005f);
-            Scale.Z = FMath::Max<float>(Scale.Z, 0.005f);
+            Scale.X = Math::Max<float>(Scale.X, 0.005f);
+            Scale.Y = Math::Max<float>(Scale.Y, 0.005f);
+            Scale.Z = Math::Max<float>(Scale.Z, 0.005f);
 
             FVector3 Position          = BoundingBox.GetCenter();
             FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);

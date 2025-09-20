@@ -379,7 +379,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
             {
                 const uint32 Index = Shader->GetShaderVisibility();
                 RootSignatureLayout.ResourceCounts[Index] = Shader->GetResourceCount();
-                Num32BitConstants = FMath::Max<uint8>(RootSignatureLayout.ResourceCounts[Index].Num32BitConstants, Num32BitConstants);
+                Num32BitConstants = Math::Max<uint8>(RootSignatureLayout.ResourceCounts[Index].Num32BitConstants, Num32BitConstants);
                 RootSignatureLayout.ResourceCounts[Index].Num32BitConstants = 0;
             }
 
@@ -414,7 +414,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
 
     if (Initializer.ViewInstancingInfo.bEnableViewInstancing)
     {
-        ViewInstanceDesc.ViewInstanceCount = FMath::Min<uint32>(Initializer.ViewInstancingInfo.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Initializer.ViewInstancingInfo.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             // NOTE: This does not work on NVIDIA for some reason, only way to work around this is by using the SV_RenderTargetArrayIndex

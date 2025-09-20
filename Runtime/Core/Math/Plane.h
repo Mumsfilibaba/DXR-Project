@@ -60,18 +60,18 @@ public:
     /**
      * @brief Compares this plane with another plane within a specified threshold.
      * @param Other The plane to compare against.
-     * @param Epsilon The threshold for comparison. Defaults to FMath::FloatCompareEpsilon.
+     * @param Epsilon The threshold for comparison. Defaults to Math::FloatCompareEpsilon.
      * @return True if planes are approximately equal, false otherwise.
      */
-    FORCEINLINE bool IsEqual(const FPlane& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FPlane& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
-        Epsilon = FMath::Abs(Epsilon);
+        Epsilon = Math::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 4; ++Index)
         {
             float Diff = reinterpret_cast<const float*>(this)[Index] - reinterpret_cast<const float*>(&Other)[Index];
-            if (FMath::Abs(Diff) > Epsilon)
+            if (Math::Abs(Diff) > Epsilon)
             {
                 return false;
             }
@@ -97,7 +97,7 @@ public:
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
-            if (FMath::IsNaN(XYZW[Index]))
+            if (Math::IsNaN(XYZW[Index]))
             {
                 return true;
             }
@@ -114,7 +114,7 @@ public:
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
-            if (FMath::IsInfinity(XYZW[Index]))
+            if (Math::IsInfinity(XYZW[Index]))
             {
                 return true;
             }

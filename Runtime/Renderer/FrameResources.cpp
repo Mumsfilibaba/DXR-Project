@@ -28,8 +28,8 @@ static TAutoConsoleVariable<int32> CVarEnvironmentSpecularIrradianceProbeSize(
 
 static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
 {
-    const int32 Result = FMath::Clamp(NewSize, MinSize, MaxSize);
-    return FMath::ClosestPowerOfTwo(Result);
+    const int32 Result = Math::Clamp(NewSize, MinSize, MaxSize);
+    return Math::ClosestPowerOfTwo(Result);
 }
 
 FFrameResources::FFrameResources()
@@ -193,7 +193,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CascadeGenerationData.LightDirection      = DirectionalLightData.Direction;
         CascadeGenerationData.ShadowMatrix        = DirectionalLightData.ShadowMatrix;
         CascadeGenerationData.CascadeResolution   = static_cast<float>(CascadeSize);
-        CascadeGenerationData.MaxCascadeIndex     = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
+        CascadeGenerationData.MaxCascadeIndex     = Math::Max(NUM_SHADOW_CASCADES - 1, 0);
 
         if (IConsoleVariable* CVarCSMTightFrustum = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
         {

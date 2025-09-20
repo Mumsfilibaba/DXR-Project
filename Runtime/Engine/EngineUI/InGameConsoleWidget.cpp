@@ -142,12 +142,12 @@ void FInGameConsoleWidget::DrawConsole()
                 // First find the maximum length of each column for the selectable
                 Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
                 {
-                    VariableNameWidth = FMath::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
+                    VariableNameWidth = Math::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
 
                     if (IConsoleVariable* Variable = Candidate.First->AsVariable())
                     {
                         const FString Value = Variable->GetString();
-                        VariableValueWidth = FMath::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
+                        VariableValueWidth = Math::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
                     }
                 });
 
@@ -181,16 +181,16 @@ void FInGameConsoleWidget::DrawConsole()
 
                     // Value
                     const float PostFixTextLength = 
-                        FMath::Max(ImGui::CalcTextSize("Bool").x,
-                        FMath::Max(ImGui::CalcTextSize("Int").x,
-                        FMath::Max(ImGui::CalcTextSize("Float").x,
+                        Math::Max(ImGui::CalcTextSize("Bool").x,
+                        Math::Max(ImGui::CalcTextSize("Int").x,
+                        Math::Max(ImGui::CalcTextSize("Float").x,
                                    ImGui::CalcTextSize("String").x)));
 
                     const float SetByTextLength =
-                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
-                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
-                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
-                        FMath::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
+                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
+                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
+                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
+                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
                                    ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
 
                     IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();

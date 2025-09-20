@@ -137,7 +137,7 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
     constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1;
         
     // Clamp the repeat delay (TODO: Add support for clamping inside of CVars)
-    const int32 RepeatDelay = FMath::Clamp(CVarGameControllerButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
+    const int32 RepeatDelay = Math::Clamp(CVarGameControllerButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
         
     // Store the current states
     bool bCurrentStates[EGamepadButtonName::Count];

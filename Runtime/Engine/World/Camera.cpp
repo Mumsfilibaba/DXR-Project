@@ -36,7 +36,7 @@ void FCamera::Rotate(float Pitch, float Yaw, float Roll)
     Rotation.Y += Yaw;
     Rotation.Z += Roll;
 
-    Rotation.X = FMath::Clamp(FMath::FMod(Rotation.X, FMath::TwoPI_Float), FMath::DegreesToRadians(-89.0f), FMath::DegreesToRadians(89.0f));
+    Rotation.X = Math::Clamp(Math::FMod(Rotation.X, Math::TwoPI_Float), Math::DegreesToRadians(-89.0f), Math::DegreesToRadians(89.0f));
 
     UpdateDirectionVectors();
 }
@@ -53,7 +53,7 @@ void FCamera::SetPosition(float x, float y, float z)
 
 void FCamera::SetRotation(float Pitch, float Yaw, float Roll)
 {
-    Rotation.X = FMath::Clamp(FMath::FMod(Pitch, FMath::TwoPI_Float), FMath::DegreesToRadians(-89.0f), FMath::DegreesToRadians(89.0f));
+    Rotation.X = Math::Clamp(Math::FMod(Pitch, Math::TwoPI_Float), Math::DegreesToRadians(-89.0f), Math::DegreesToRadians(89.0f));
     Rotation.Y = Yaw;
     Rotation.Z = Roll;
 
@@ -77,7 +77,7 @@ void FCamera::UpdateDirectionVectors()
 void FCamera::UpdateProjectionMatrix(float InViewportWidth, float InViewportHeight)
 {
     // Convert the field-of-view into radians instead of degrees
-    const float FieldOfViewRadians = FMath::DegreesToRadians(FieldOfView);
+    const float FieldOfViewRadians = Math::DegreesToRadians(FieldOfView);
 
     // Create the matrix
     Projection        = FMatrix4::PerspectiveProjection(FieldOfViewRadians, InViewportWidth, InViewportHeight, NearPlane, FarPlane);

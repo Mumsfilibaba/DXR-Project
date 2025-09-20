@@ -4,7 +4,7 @@ int32 FGenericPlatformStackTrace::CaptureStackTrace(uint64* StackTrace, int32 Ma
 {
     uint64 StaticStackTrace[MAX_STACK_DEPTH];
     
-    MaxDepth = FMath::Min<int32>(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
+    MaxDepth = Math::Min<int32>(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
     
     const int32 Depth = FPlatformStackTrace::CaptureStackTrace(StaticStackTrace, MaxDepth);
 
@@ -32,7 +32,7 @@ TArray<FStackTraceEntry> FGenericPlatformStackTrace::GetStack(int32 MaxDepth, in
     FMemory::Memzero(StackTrace);
 
     // Ensure that static buffer does not overflow
-    MaxDepth = FMath::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
+    MaxDepth = Math::Min(MAX_STACK_DEPTH, MaxDepth + IgnoreCount);
 
     const int32 Depth = CaptureStackTrace(StackTrace, MaxDepth);
     for (int32 CurrentDepth = IgnoreCount; CurrentDepth < Depth; CurrentDepth++)

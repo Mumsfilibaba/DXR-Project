@@ -72,13 +72,13 @@ void FTextureDebugWidget::Draw()
                     float ImageHeight = 0.0f;
                     if (TexWidth > TexHeight)
                     {
-                        ImageWidth  = FMath::Max(MinImageSize, FMath::Min(TexWidth, float(Width)));
-                        ImageHeight = FMath::Max(MinImageSize, ImageWidth * AspectRatio);
+                        ImageWidth  = Math::Max(MinImageSize, Math::Min(TexWidth, float(Width)));
+                        ImageHeight = Math::Max(MinImageSize, ImageWidth * AspectRatio);
                     }
                     else
                     {
-                        ImageHeight = FMath::Max(MinImageSize, FMath::Min(TexHeight, float(Height)));
-                        ImageWidth  = FMath::Max(MinImageSize, ImageHeight * InvAspectRatio);
+                        ImageHeight = Math::Max(MinImageSize, Math::Min(TexHeight, float(Height)));
+                        ImageWidth  = Math::Max(MinImageSize, ImageHeight * InvAspectRatio);
                     }
 
                     {

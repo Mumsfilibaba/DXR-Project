@@ -174,7 +174,7 @@ void FPlayerInput::OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisVal
     const float DeadZone = GetAnalogDeadzone(AxisSource);
 
     FAxisState& AxisState = AxisStates[Index];
-    AxisState.Value = FMath::Abs(AxisValue) > DeadZone ? AxisValue : 0.0f;
+    AxisState.Value = Math::Abs(AxisValue) > DeadZone ? AxisValue : 0.0f;
     AxisState.NumTicksSinceUpdate = 0;
 }
 

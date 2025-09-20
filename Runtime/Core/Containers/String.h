@@ -313,7 +313,7 @@ public:
             Position = 0;
         }
         
-        const SizeType CopySize = FMath::Min(BufferSize, CurrentLength - Position);
+        const SizeType CopySize = Math::Min(BufferSize, CurrentLength - Position);
         FCStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
     }
 
@@ -577,7 +577,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType Compare(const CharType* InString, SizeType InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
-        const SizeType MinLength = FMath::Min(Length(), InLength);
+        const SizeType MinLength = Math::Min(Length(), InLength);
         if (CaseType == EStringCaseType::NoCase)
         {
             return static_cast<SizeType>(FCStringType::Strnicmp(CharData.Data(), InString, MinLength));
@@ -662,7 +662,7 @@ public:
         SizeType Index = 0;
         if (Position != InvalidIndex && CurrentLength > 0)
         {
-            Index += FMath::Clamp(Position, 0, CurrentLength - 1);
+            Index += Math::Clamp(Position, 0, CurrentLength - 1);
         }
 
         const CharType* RESTRICT Result = FCStringType::Strstr(CharData.Data() + Index, InString);
@@ -705,7 +705,7 @@ public:
         const CharType* RESTRICT Current = CharData.Data();
         if (Position != InvalidIndex && CurrentLength > 0)
         {
-            Current += FMath::Clamp(Position, 0, CurrentLength - 1);
+            Current += Math::Clamp(Position, 0, CurrentLength - 1);
         }
 
         for (const CharType* RESTRICT End = CharData.Data() + CurrentLength; Current != End; ++Current)
@@ -737,7 +737,7 @@ public:
         const CharType* RESTRICT Current = CharData.Data();
         if (Position != InvalidIndex && CurrentLength > 0)
         {
-            Current += FMath::Clamp(Position, 0, CurrentLength - 1);
+            Current += Math::Clamp(Position, 0, CurrentLength - 1);
         }
 
         for (const CharType *RESTRICT End = CharData.Data() + CurrentLength; Current != End; ++Current)

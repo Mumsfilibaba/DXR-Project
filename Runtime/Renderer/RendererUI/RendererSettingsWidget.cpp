@@ -41,8 +41,8 @@ void FRendererSettingsWidget::Draw()
 
     const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
 
-    const float Width  = FMath::Clamp<float>(Size.x * 0.45f, 128.0f, 864.0);
-    const float Height = FMath::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
+    const float Width  = Math::Clamp<float>(Size.x * 0.45f, 128.0f, 864.0);
+    const float Height = Math::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
 
     ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
@@ -448,7 +448,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
 
         constexpr uint32 ItemSize = ARRAY_COUNT(Items);
 
-        int32 FilterMode = FMath::Clamp<int32>(CVarFilterMode->GetInt(), 0, 1);
+        int32 FilterMode = Math::Clamp<int32>(CVarFilterMode->GetInt(), 0, 1);
         if (ImGui::Combo("##FilterMode", &FilterMode, Items, ItemSize))
         {
             CVarFilterMode->SetAsInt(FilterMode, EConsoleVariableFlags::SetByCode);
@@ -472,7 +472,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
 
         constexpr uint32 ItemSize = ARRAY_COUNT(Items);
 
-        int32 FilterFunction = FMath::Clamp<int32>(CVarFilterFunction->GetInt(), 0, 2);
+        int32 FilterFunction = Math::Clamp<int32>(CVarFilterFunction->GetInt(), 0, 2);
         if (ImGui::Combo("##FilterFunction", &FilterFunction, Items, ItemSize))
         {
             CVarFilterFunction->SetAsInt(FilterFunction, EConsoleVariableFlags::SetByCode);
@@ -487,7 +487,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::Text("Filter size");
         ImGui::NextColumn();
 
-        int32 FilterSize = FMath::Clamp<int32>(CVarFilterSize->GetInt(), 16, 1024);
+        int32 FilterSize = Math::Clamp<int32>(CVarFilterSize->GetInt(), 16, 1024);
         if (ImGui::SliderInt("##FilterSize", &FilterSize, 16, 1024, "%d"))
         {
             CVarFilterSize->SetAsInt(FilterSize, EConsoleVariableFlags::SetByCode);
@@ -502,7 +502,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::Text("Max filter-size");
         ImGui::NextColumn();
 
-        int32 MaxFilterSize = FMath::Clamp<int32>(CVarMaxFilterSize->GetInt(), 256, 1024);
+        int32 MaxFilterSize = Math::Clamp<int32>(CVarMaxFilterSize->GetInt(), 256, 1024);
         if (ImGui::SliderInt("##MaxFilterSize", &MaxFilterSize, 256, 1024, "%d"))
         {
             CVarMaxFilterSize->SetAsInt(MaxFilterSize, EConsoleVariableFlags::SetByCode);
@@ -781,7 +781,7 @@ void FRendererSettingsWidget::DrawSSAOSettings()
         ImGui::Text("Kernel-size");
         ImGui::NextColumn();
 
-        int32 KernelSize = FMath::Clamp<int32>(CVarKernelSize->GetInt(), 1, 128);
+        int32 KernelSize = Math::Clamp<int32>(CVarKernelSize->GetInt(), 1, 128);
         if (ImGui::SliderInt("##KernelSize", &KernelSize, 1, 128, "%d"))
         {
             CVarKernelSize->SetAsInt(KernelSize, EConsoleVariableFlags::SetByCode);
@@ -1025,7 +1025,7 @@ void FRendererSettingsWidget::DrawTonemappingSettings()
 
         constexpr int32 ItemCount = ARRAY_COUNT(Items);
 
-        int32 ItemIndex = FMath::Clamp<int32>(CVarTonemappingFunction->GetInt(), 0, 3);
+        int32 ItemIndex = Math::Clamp<int32>(CVarTonemappingFunction->GetInt(), 0, 3);
         if (ImGui::Combo("##PointLightShadowMapSize", &ItemIndex, Items, ItemCount))
         {
             CVarTonemappingFunction->SetAsInt(ItemIndex, EConsoleVariableFlags::SetByCode);

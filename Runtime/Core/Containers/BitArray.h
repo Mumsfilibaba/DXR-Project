@@ -349,7 +349,7 @@ public:
      */
     FORCEINLINE void BitwiseAnd(const TBitArray& Other)
     {
-        const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
+        const SizeType Count = Math::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
         {
             InIntegerType& Element = GetInteger(Index);
@@ -363,7 +363,7 @@ public:
      */
     FORCEINLINE void BitwiseOr(const TBitArray& Other)
     {
-        const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
+        const SizeType Count = Math::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
         {
             InIntegerType& Element = GetInteger(Index);
@@ -377,7 +377,7 @@ public:
      */
     FORCEINLINE void BitwiseXor(const TBitArray& Other)
     {
-        const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
+        const SizeType Count = Math::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
         {
             InIntegerType& Element = GetInteger(Index);

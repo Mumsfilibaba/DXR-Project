@@ -279,7 +279,7 @@ public:
      */
     static FORCEINLINE FInt16Vector4 Min(const FInt16Vector4& LHS, const FInt16Vector4& RHS) noexcept
     {
-        return FInt16Vector4(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z), FMath::Min(LHS.W, RHS.W));
+        return FInt16Vector4(Math::Min(LHS.X, RHS.X), Math::Min(LHS.Y, RHS.Y), Math::Min(LHS.Z, RHS.Z), Math::Min(LHS.W, RHS.W));
     }
 
     /**
@@ -290,7 +290,7 @@ public:
      */
     static FORCEINLINE FInt16Vector4 Max(const FInt16Vector4& LHS, const FInt16Vector4& RHS) noexcept
     {
-        return FInt16Vector4(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z), FMath::Max(LHS.W, RHS.W));
+        return FInt16Vector4(Math::Max(LHS.X, RHS.X), Math::Max(LHS.Y, RHS.Y), Math::Max(LHS.Z, RHS.Z), Math::Max(LHS.W, RHS.W));
     }
 
     /**
@@ -302,7 +302,7 @@ public:
      */
     static FORCEINLINE FInt16Vector4 Clamp(const FInt16Vector4& Value, const FInt16Vector4& Min, const FInt16Vector4& Max) noexcept
     {
-        return FInt16Vector4(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z), FMath::Clamp(Value.W, Min.W, Max.W));
+        return FInt16Vector4(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y), Math::Clamp(Value.Z, Min.Z, Max.Z), Math::Clamp(Value.W, Min.W, Max.W));
     }
 
 public:
@@ -813,7 +813,7 @@ public:
         FIntVector4 Result;
 
     #if !USE_INT_VECTOR_MATH
-        Result = FIntVector4(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z), FMath::Min(LHS.W, RHS.W));
+        Result = FIntVector4(Math::Min(LHS.X, RHS.X), Math::Min(LHS.Y, RHS.Y), Math::Min(LHS.Z, RHS.Z), Math::Min(LHS.W, RHS.W));
     #else
         FInt128 LHS_128    = FVectorMath::VectorLoadInt(LHS.XYZW);
         FInt128 RHS_128    = FVectorMath::VectorLoadInt(RHS.XYZW);
@@ -835,7 +835,7 @@ public:
         FIntVector4 Result;
 
     #if !USE_INT_VECTOR_MATH
-        Result = FIntVector4(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z), FMath::Max(LHS.W, RHS.W));
+        Result = FIntVector4(Math::Max(LHS.X, RHS.X), Math::Max(LHS.Y, RHS.Y), Math::Max(LHS.Z, RHS.Z), Math::Max(LHS.W, RHS.W));
     #else
         FInt128 LHS_128    = FVectorMath::VectorLoadInt(LHS.XYZW);
         FInt128 RHS_128    = FVectorMath::VectorLoadInt(RHS.XYZW);
@@ -858,7 +858,7 @@ public:
         FIntVector4 Result;
 
     #if !USE_INT_VECTOR_MATH
-        Result = FIntVector4(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z), FMath::Clamp(Value.W, Min.W, Max.W));
+        Result = FIntVector4(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y), Math::Clamp(Value.Z, Min.Z, Max.Z), Math::Clamp(Value.W, Min.W, Max.W));
     #else
         FInt128 Value_128  = FVectorMath::VectorLoadInt(Value.XYZW);
         FInt128 Min_128    = FVectorMath::VectorLoadInt(Min.XYZW);

@@ -167,7 +167,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FSceneRenderView&
 
     FTonemapInfoHLSL TonemapInfo;
     TonemapInfo.TonemappingType   = GetTonemappingFunctionCVar();
-    TonemapInfo.ReinhardIntensity = FMath::Clamp<float>(CVarTonemappingReinhardIntensity.GetValue(), 0.1f, 10.0f);
+    TonemapInfo.ReinhardIntensity = Math::Clamp<float>(CVarTonemappingReinhardIntensity.GetValue(), 0.1f, 10.0f);
     TonemapInfo.Padding0          = 0.0f;
     TonemapInfo.Padding1          = 0.0f;
 

@@ -147,8 +147,8 @@ void FGPUProfilerWidget::DrawWindow()
     const ImVec2 Size     = ImGuiExtensions::GetMainViewportSize();
     const ImVec2 Position = ImGuiExtensions::GetMainViewportPos();
 
-    const float Width  = FMath::Clamp<float>(Size.x * 0.6f, 384.0f, 1152.0f);
-    const float Height = FMath::Clamp<float>(Size.y * 0.5f, 320.0f, 960.0f);
+    const float Width  = Math::Clamp<float>(Size.x * 0.6f, 384.0f, 1152.0f);
+    const float Height = Math::Clamp<float>(Size.y * 0.5f, 320.0f, 960.0f);
 
     ImGui::SetNextWindowPos(ImVec2(Size.x * 0.5f, Size.y * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);

@@ -436,7 +436,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     FShadowPerObjectHLSL ShadowPerObjectBuffer;
 
     // Clamp the number of shadow-casting point-lights
-    const int32 NumPointLights = FMath::Min<int32>(Scene->PointLights.Size(), Resources.MaxPointLightShadows);
+    const int32 NumPointLights = Math::Min<int32>(Scene->PointLights.Size(), Resources.MaxPointLightShadows);
 
     constexpr bool bIsSinglePass = RenderPassType == ECubeMapRenderPassType::SinglePass || RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass;
     if constexpr (bIsSinglePass)
@@ -1492,8 +1492,8 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     FDirectionalShadowSettingsHLSL ShadowSettings;
     FMemory::Memzero(&ShadowSettings);
 
-    ShadowSettings.FilterSize    = FMath::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
-    ShadowSettings.MaxFilterSize = FMath::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
+    ShadowSettings.FilterSize    = Math::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
+    ShadowSettings.MaxFilterSize = Math::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
     ShadowSettings.ShadowMapSize = Resources.ShadowCascades->GetWidth();
     ShadowSettings.FrameIndex    = GetRenderer()->GetFrameCounter().GetFrameIndex();
 
@@ -1542,8 +1542,8 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.SetSamplerState(PipelineStateInstance.Shader.Get(), Resources.ShadowSamplerPoint.Get(), 2);
 
     constexpr uint32 NumThreads = 16;
-    const uint32 ThreadsX = FMath::DivideByMultiple(Resources.DirectionalShadowMask->GetWidth(), NumThreads);
-    const uint32 ThreadsY = FMath::DivideByMultiple(Resources.DirectionalShadowMask->GetHeight(), NumThreads);
+    const uint32 ThreadsX = Math::DivideByMultiple(Resources.DirectionalShadowMask->GetWidth(), NumThreads);
+    const uint32 ThreadsY = Math::DivideByMultiple(Resources.DirectionalShadowMask->GetHeight(), NumThreads);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTexture(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
@@ -1720,8 +1720,8 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
 
 void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination)
 {
-    OutCombination.FilterMode                   = static_cast<ECSMFilterMode>(FMath::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, 1));
-    OutCombination.FilterFunction               = static_cast<ECSMFilterFunction>(FMath::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 2));
+    OutCombination.FilterMode                   = static_cast<ECSMFilterMode>(Math::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, 1));
+    OutCombination.FilterFunction               = static_cast<ECSMFilterFunction>(Math::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 2));
     OutCombination.bDebugMode                   = CVarCSMDebugCascades.GetValue();
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();

@@ -200,7 +200,7 @@ bool FImGuiEventHandler::OnAnalogGamepadChange(const FAnalogGamepadEvent& Analog
     const ImGuiKey GamepadButton = GetImGuiGamepadAnalogSource(AnalogEvent.GetAnalogSource(), bIsNegative);
     if (GamepadButton != ImGuiKey_None)
     {
-        const float Normalized = FMath::Abs<float>(AnalogEvent.GetAnalogSource());
+        const float Normalized = Math::Abs<float>(AnalogEvent.GetAnalogSource());
         
         ImGuiIO& UIState = ImGui::GetIO();
         UIState.AddKeyAnalogEvent(GamepadButton, Normalized > 0.10f, Normalized);

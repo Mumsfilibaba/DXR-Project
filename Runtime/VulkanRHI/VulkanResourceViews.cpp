@@ -241,12 +241,12 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVInfo& I
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
         BaseArrayLayer = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
-        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
+        LayerCount     = Math::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
     }
     else
     {
         BaseArrayLayer = InInfo.FirstArraySlice;
-        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u);
+        LayerCount     = Math::Max<uint16>(InInfo.NumSlices, 1u);
     }
 
     // NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture
@@ -356,12 +356,12 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVInfo& 
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
         BaseArrayLayer = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
-        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
+        LayerCount     = Math::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
     }
     else
     {
         BaseArrayLayer = InInfo.FirstArraySlice;
-        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u);
+        LayerCount     = Math::Max<uint16>(InInfo.NumSlices, 1u);
     }
 
 	// NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture

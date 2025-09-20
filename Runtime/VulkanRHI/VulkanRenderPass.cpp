@@ -152,7 +152,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         CorrelationMask = 0;
 
         // Limit to the number of bits in a uint32
-        const uint32 NumViews = FMath::Min<uint32>(Key.ViewInstancingInfo.NumArraySlices, MaxArraySlices);
+        const uint32 NumViews = Math::Min<uint32>(Key.ViewInstancingInfo.NumArraySlices, MaxArraySlices);
         for (uint32 Index = 0; Index < NumViews; Index++)
         {
 		    const uint32 BitIndex = Key.ViewInstancingInfo.StartRenderTargetArrayIndex + Index;

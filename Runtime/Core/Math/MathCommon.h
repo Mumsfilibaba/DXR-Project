@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-struct FMath
+struct Math
 {
 public:
     static constexpr double PI        = 3.1415926535898;

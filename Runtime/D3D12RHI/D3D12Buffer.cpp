@@ -16,7 +16,7 @@ FD3D12Buffer::~FD3D12Buffer()
 bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
     const uint64 Alignment   = GetBufferAlignment(Info.UsageFlags);
-    const uint64 AlignedSize = FMath::AlignUp(Info.Size, Alignment);
+    const uint64 AlignedSize = Math::AlignUp(Info.Size, Alignment);
 
     D3D12_RESOURCE_DESC ResourceDesc;
     FMemory::Memzero(&ResourceDesc);

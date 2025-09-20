@@ -28,7 +28,7 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
     FD3D12UploadAllocation Allocation;
 
     // Make sure the size is properly aligned
-    Size = FMath::AlignUp<uint64>(Size, Alignment);
+    Size = Math::AlignUp<uint64>(Size, Alignment);
 
     // Maximum size for a upload buffer
     const uint64 MaxUploadSize = static_cast<uint64>(CVarMaxStagingAllocationSize.GetValue()) * 1024 * 1024;
@@ -37,7 +37,7 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
         // Lock the buffer and all variable within
         SCOPED_LOCK(CriticalSection);
 
-        uint64 Offset    = FMath::AlignUp<uint64>(CurrentOffset, Alignment);
+        uint64 Offset    = Math::AlignUp<uint64>(CurrentOffset, Alignment);
         uint64 NewOffset = Offset + Size;
         if (NewOffset >= BufferSize)
         {

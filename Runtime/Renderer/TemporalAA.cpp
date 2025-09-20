@@ -102,8 +102,8 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     CommandList.SetSamplerState(TemporalAAShader.Get(), LinearSampler.Get(), 0);
 
     constexpr uint32 NumThreads = 16;
-    const uint32 ThreadsX = FMath::DivideByMultiple(CurrentBuffer->GetWidth(), NumThreads);
-    const uint32 ThreadsY = FMath::DivideByMultiple(CurrentBuffer->GetHeight(), NumThreads);
+    const uint32 ThreadsX = Math::DivideByMultiple(CurrentBuffer->GetWidth(), NumThreads);
+    const uint32 ThreadsY = Math::DivideByMultiple(CurrentBuffer->GetHeight(), NumThreads);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTexture(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));

@@ -224,7 +224,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 
     const bool bGenerateMips = IsEnumFlagSet(Flags, ETextureFactoryFlags::GenerateMips);
 
-    const uint32 NumMiplevels = bGenerateMips ? FTextureFactoryHelpers::TextureSizeToMiplevels(FMath::Max<uint32>(Width, Height)) : 1u;
+    const uint32 NumMiplevels = bGenerateMips ? FTextureFactoryHelpers::TextureSizeToMiplevels(Math::Max<uint32>(Width, Height)) : 1u;
     CHECK(NumMiplevels != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
@@ -314,8 +314,8 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         CommandList.SetSamplerState(PanoramCS.Get(), LinearSampler.Get(), 0);
 
         constexpr uint32 LocalWorkGroupCount = 16;
-        const uint32 ThreadsX = FMath::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
-        const uint32 ThreadsY = FMath::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsX = Math::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsY = Math::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
         CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
         CommandList.TransitionTexture(Source, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
@@ -400,7 +400,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     // Calculate how many compute-dispatches that we need
     constexpr uint32 MipLevelsPerDispatch = 4;
     const uint32 NumMipLevels  = StagingTexture->GetNumMipLevels();
-    const uint32 NumDispatches = FMath::AlignUp<uint32>(NumMipLevels, MipLevelsPerDispatch) / MipLevelsPerDispatch;
+    const uint32 NumDispatches = Math::AlignUp<uint32>(NumMipLevels, MipLevelsPerDispatch) / MipLevelsPerDispatch;
 
     // Create a SRV for source mips
     FRHITextureSRVInfo SRVInfo;
@@ -484,7 +484,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     {
         ShaderConstantData.TexelSize = FVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
 
-        const uint32 NumMipLevelsThisBatch = FMath::Min<uint32>(MipLevelsPerDispatch, RemainingMiplevels);
+        const uint32 NumMipLevelsThisBatch = Math::Min<uint32>(MipLevelsPerDispatch, RemainingMiplevels);
         ShaderConstantData.NumMipLevels = NumMipLevelsThisBatch;
 
         constexpr uint32 NumConstants = sizeof(FGenMipsConstants) / sizeof(uint32);
@@ -512,8 +512,8 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
 
         // Dispatch work
         constexpr uint32 ThreadCount = 8;
-        const uint32 ThreadsX = FMath::DivideByMultiple(DstWidth, ThreadCount);
-        const uint32 ThreadsY = FMath::DivideByMultiple(DstHeight, ThreadCount);
+        const uint32 ThreadsX = Math::DivideByMultiple(DstWidth, ThreadCount);
+        const uint32 ThreadsY = Math::DivideByMultiple(DstHeight, ThreadCount);
         CommandList.Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
         // Transition all resources back
@@ -610,7 +610,7 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
     CommandList.SetSamplerState(SpecularCubeMapFilter_CS.Get(), CubeMapFilterSampler.Get(), 0);
 
     const uint32 SpecularCubeMapSize = DstCubeMap->GetWidth();
-    const uint32 NumMiplevels        = FMath::Clamp<uint32>(DstCubeMap->GetNumMipLevels(), 1, NumMipLevels);
+    const uint32 NumMiplevels        = Math::Clamp<uint32>(DstCubeMap->GetNumMipLevels(), 1, NumMipLevels);
     const uint32 SkyboxWidth         = SrcCubeMap->GetWidth();
     const float  RoughnessDelta      = 1.0f / (NumMiplevels - 1);
 
@@ -638,13 +638,13 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
         constexpr uint32 NumThreads = 16;
         constexpr uint32 ThreadsZ   = 6;
 
-        const uint32 ThreadWidth  = FMath::DivideByMultiple(CurrentWidth, NumThreads);
-        const uint32 ThreadHeight = FMath::DivideByMultiple(CurrentWidth, NumThreads);
+        const uint32 ThreadWidth  = Math::DivideByMultiple(CurrentWidth, NumThreads);
+        const uint32 ThreadHeight = Math::DivideByMultiple(CurrentWidth, NumThreads);
         CommandList.Dispatch(ThreadWidth, ThreadHeight, ThreadsZ);
 
         CommandList.UnorderedAccessTextureBarrier(DstCubeMap);
 
-        CurrentWidth = FMath::Max<uint32>(CurrentWidth / 2, 1U);
+        CurrentWidth = Math::Max<uint32>(CurrentWidth / 2, 1U);
         Roughness += RoughnessDelta;
     }
 
@@ -705,8 +705,8 @@ bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITex
 
     const uint32 DiffuseCubeMapSize = static_cast<uint32>(DstCubeMap->GetWidth());
 
-    const uint32 ThreadWidth  = FMath::DivideByMultiple(DiffuseCubeMapSize, NumThreads);
-    const uint32 ThreadHeight = FMath::DivideByMultiple(DiffuseCubeMapSize, NumThreads);
+    const uint32 ThreadWidth  = Math::DivideByMultiple(DiffuseCubeMapSize, NumThreads);
+    const uint32 ThreadHeight = Math::DivideByMultiple(DiffuseCubeMapSize, NumThreads);
     CommandList.Dispatch(ThreadWidth, ThreadHeight, ThreadsZ);
 
     CommandList.UnorderedAccessTextureBarrier(DstCubeMap);

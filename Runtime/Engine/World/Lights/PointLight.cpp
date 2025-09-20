@@ -27,7 +27,7 @@ void FPointLight::SetShadowNearPlane(float InShadowNearPlane)
 {
     if (InShadowNearPlane > 0.0f)
     {
-        if (FMath::Abs(ShadowFarPlane - InShadowNearPlane) >= 0.1f)
+        if (Math::Abs(ShadowFarPlane - InShadowNearPlane) >= 0.1f)
         {
             ShadowNearPlane = InShadowNearPlane;
             CalculateMatrices();
@@ -39,7 +39,7 @@ void FPointLight::SetShadowFarPlane(float InShadowFarPlane)
 {
     if (InShadowFarPlane > 0.0f)
     {
-        if (FMath::Abs(InShadowFarPlane - ShadowNearPlane) >= 0.1f)
+        if (Math::Abs(InShadowFarPlane - ShadowNearPlane) >= 0.1f)
         {
             ShadowFarPlane = InShadowFarPlane;
             CalculateMatrices();
@@ -76,7 +76,7 @@ void FPointLight::CalculateMatrices()
 
     for (uint32 Face = 0; Face < 6; ++Face)
     {
-        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(FMath::HalfPI_Float, 1.0f, ShadowNearPlane, ShadowFarPlane);
+        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(Math::HalfPI_Float, 1.0f, ShadowNearPlane, ShadowFarPlane);
         const FMatrix4 LightView       = FMatrix4::LookTo(Position, Directions[Face], UpVectors[Face]);
 
         ViewMatrices[Face]     = LightView;

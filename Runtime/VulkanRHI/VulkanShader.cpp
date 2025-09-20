@@ -371,7 +371,7 @@ bool FVulkanShader::InitializeShaderLayout()
             spvc_type type = spvc_compiler_get_type_handle(Compiler, PushConstants[Index].base_type_id);
             if (spvc_compiler_get_declared_struct_size(Compiler, type, &StructSize) == SPVC_SUCCESS)
             {
-                NumPushBytes = FMath::Max(NumPushBytes, StructSize);
+                NumPushBytes = Math::Max(NumPushBytes, StructSize);
             }
             else
             {
@@ -386,11 +386,11 @@ bool FVulkanShader::InitializeShaderLayout()
                 
         //size_t NumPushBytes = RangeOffset + Range;
         CHECK(NumPushBytes <= MaxBytes);
-        NumPushBytes = FMath::AlignUp(NumPushBytes, Alignment);
+        NumPushBytes = Math::AlignUp(NumPushBytes, Alignment);
         CHECK(NumPushBytes <= MaxBytes);
 
         // After we have aligned the bytes we convert into Num32BitConstants, i.e number of uint32's
-        ShaderInfo.NumPushConstants = FMath::AlignUp<uint32>(static_cast<uint32>(NumPushBytes), sizeof(uint32)) / sizeof(uint32);
+        ShaderInfo.NumPushConstants = Math::AlignUp<uint32>(static_cast<uint32>(NumPushBytes), sizeof(uint32)) / sizeof(uint32);
         CHECK(ShaderInfo.NumPushConstants <= VULKAN_MAX_NUM_PUSH_CONSTANTS);
     }
     else

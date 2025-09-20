@@ -315,7 +315,7 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
     {
         GraphicsState.VBCache.VertexBuffers[VertexBufferSlot]       = Buffer;
         GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot] = Offset;
-        GraphicsState.VBCache.NumVertexBuffers = FMath::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
+        GraphicsState.VBCache.NumVertexBuffers = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
         GraphicsState.bBindVertexBuffers       = true;
     }
 }

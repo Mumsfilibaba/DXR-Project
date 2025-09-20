@@ -188,7 +188,7 @@ void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> 
         CurrentVertexOffsets[Index] = 0;
     }
     
-    CurrentVertexBufferRange = NSMakeRange(FMath::Min<uint64>(BufferSlot, CurrentVertexBufferRange.location), FMath::Max<uint64>(InVertexBuffers.Size(), CurrentVertexBufferRange.length));
+    CurrentVertexBufferRange = NSMakeRange(Math::Min<uint64>(BufferSlot, CurrentVertexBufferRange.location), Math::Max<uint64>(InVertexBuffers.Size(), CurrentVertexBufferRange.length));
 }
 
 void FMetalCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
@@ -301,8 +301,8 @@ void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     }
 
     /*CurrentSamplerStates[Visibility] = NSMakeRange(
-        FMath::Min<uint32>(ParameterIndex, CurrentSamplerStateRange[Visibility].location),
-        FMath::Max<uint32>(InSamplerStates.Size(), CurrentSamplerStateRange[Visibility].length));*/
+        Math::Min<uint32>(ParameterIndex, CurrentSamplerStateRange[Visibility].location),
+        Math::Max<uint32>(InSamplerStates.Size(), CurrentSamplerStateRange[Visibility].length));*/
 }
 
 void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SourceData)

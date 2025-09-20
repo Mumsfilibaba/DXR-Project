@@ -57,7 +57,7 @@ void FSceneLightProbe::FilterStaticCubeMaps()
 
     // Create specular cube-map
     constexpr uint32 SpecularCubeMapSize = 512;
-    const uint32 SpecularIrradianceMiplevels = FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
+    const uint32 SpecularIrradianceMiplevels = Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
 
     const ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
     FRHITextureInfo SpecularCubeMapInfo = FRHITextureInfo::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1, TextureFlags);
@@ -97,7 +97,7 @@ void FSceneLightProbe::FilterStaticCubeMaps()
     constexpr uint32 NumMipsSkipped = 3;
 
     // Calculate the amount of compressed miplevels
-    const int32 NumSpecularMipLevels = FMath::Max<int32>(static_cast<int32>(SpecularIrradianceMiplevels) - NumMipsSkipped, 1);
+    const int32 NumSpecularMipLevels = Math::Max<int32>(static_cast<int32>(SpecularIrradianceMiplevels) - NumMipsSkipped, 1);
 
     bool bResult = FTextureFactory::Get().FilterSpecularCubeMap(CommandList, SourceCubeMap.Get(), TempSpecularCubeMap.Get(), NumSpecularMipLevels);
     if (!bResult)

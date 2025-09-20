@@ -88,7 +88,7 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
     const XINPUT_GAMEPAD& Gamepad = State.Gamepad;
 
     constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1; // 127
-    const int32 RepeatDelay    = FMath::Clamp(CVarXInputButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
+    const int32 RepeatDelay    = Math::Clamp(CVarXInputButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
     const int32 GamepadButtons = static_cast<int32>(Gamepad.wButtons);
 
     auto IsButtonDown = [GamepadButtons](int32 ButtonMask) -> bool
@@ -172,7 +172,7 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
     {
         // Always send an update if the value changed; some code chooses to skip if within deadzone
         bool bValueChanged    = (OldValue != NewValue);
-        bool bOutsideDeadZone = (FMath::Abs(NewValue) > DeadZone);
+        bool bOutsideDeadZone = (Math::Abs(NewValue) > DeadZone);
 
         if (bValueChanged || bOutsideDeadZone)
         {

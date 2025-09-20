@@ -78,7 +78,7 @@ public:
         const float LengthSqrd = GetLengthSquared();
         if (LengthSqrd != 0.0f)
         {
-            const float RcpLength = 1.0f / FMath::Sqrt(LengthSqrd);
+            const float RcpLength = 1.0f / Math::Sqrt(LengthSqrd);
             X *= RcpLength;
             Y *= RcpLength;
             Z *= RcpLength;
@@ -145,8 +145,8 @@ public:
             return 0.0f;
         }
 
-        float CosTheta = FMath::Clamp(Dot / Lengths, -1.0f, 1.0f);
-        return FMath::Acos(CosTheta);
+        float CosTheta = Math::Clamp(Dot / Lengths, -1.0f, 1.0f);
+        return Math::Acos(CosTheta);
     }
 
     /**
@@ -165,15 +165,15 @@ public:
      * @param Epsilon The threshold for comparison.
      * @return True if vectors are approximately equal, false otherwise.
      */
-    inline bool IsEqual(const FVector4& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
+    inline bool IsEqual(const FVector4& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
-        Epsilon = FMath::Abs(Epsilon);
+        Epsilon = Math::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 4; ++Index)
         {
             float Diff = XYZW[Index] - Other.XYZW[Index];
-            if (FMath::Abs(Diff) > Epsilon)
+            if (Math::Abs(Diff) > Epsilon)
             {
                 return false;
             }
@@ -197,8 +197,8 @@ public:
      */
     FORCEINLINE bool IsUnitVector() const noexcept
     {
-        const float LengthDiff = FMath::Abs(1.0f - GetLengthSquared());
-        return LengthDiff < FMath::FloatCompareEpsilon;
+        const float LengthDiff = Math::Abs(1.0f - GetLengthSquared());
+        return LengthDiff < Math::FloatCompareEpsilon;
     }
 
     /**
@@ -209,7 +209,7 @@ public:
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
-            if (FMath::IsNaN(XYZW[Index]))
+            if (Math::IsNaN(XYZW[Index]))
             {
                 return true;
             }
@@ -226,7 +226,7 @@ public:
     {
         for (int32 Index = 0; Index < 4; ++Index)
         {
-            if (FMath::IsInfinity(XYZW[Index]))
+            if (Math::IsInfinity(XYZW[Index]))
             {
                 return true;
             }
@@ -242,7 +242,7 @@ public:
     FORCEINLINE float GetLength() const noexcept
     {
         const float LengthSqrd = GetLengthSquared();
-        return FMath::Sqrt(LengthSqrd);
+        return Math::Sqrt(LengthSqrd);
     }
 
     /**
@@ -344,7 +344,7 @@ public:
         FVector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(FMath::Min(ValueA.X, ValueB.X), FMath::Min(ValueA.Y, ValueB.Y), FMath::Min(ValueA.Z, ValueB.Z), FMath::Min(ValueA.W, ValueB.W));
+        Result = FVector4(Math::Min(ValueA.X, ValueB.X), Math::Min(ValueA.Y, ValueB.Y), Math::Min(ValueA.Z, ValueB.Z), Math::Min(ValueA.W, ValueB.W));
     #else
         FFloat128 VectorA    = FVectorMath::VectorLoad(ValueA.XYZW);
         FFloat128 VectorB    = FVectorMath::VectorLoad(ValueB.XYZW);
@@ -366,7 +366,7 @@ public:
         FVector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(FMath::Max(First.X, Second.X), FMath::Max(First.Y, Second.Y), FMath::Max(First.Z, Second.Z), FMath::Max(First.W, Second.W));
+        Result = FVector4(Math::Max(First.X, Second.X), Math::Max(First.Y, Second.Y), Math::Max(First.Z, Second.Z), Math::Max(First.W, Second.W));
     #else
         FFloat128 VectorA    = FVectorMath::VectorLoad(First.XYZW);
         FFloat128 VectorB    = FVectorMath::VectorLoad(Second.XYZW);
@@ -416,7 +416,7 @@ public:
         FVector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z), FMath::Clamp(Value.W, Min.W, Max.W));
+        Result = FVector4(Math::Clamp(Value.X, Min.X, Max.X), Math::Clamp(Value.Y, Min.Y, Max.Y), Math::Clamp(Value.Z, Min.Z, Max.Z), Math::Clamp(Value.W, Min.W, Max.W));
     #else
         FFloat128 Value_128 = FVectorMath::VectorLoad(Value.XYZW);
         FFloat128 Min_128   = FVectorMath::VectorLoad(Min.XYZW);
@@ -439,7 +439,7 @@ public:
         FVector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(FMath::Saturate(Value.X), FMath::Saturate(Value.Y), FMath::Saturate(Value.Z), FMath::Saturate(Value.W));
+        Result = FVector4(Math::Saturate(Value.X), Math::Saturate(Value.Y), Math::Saturate(Value.Z), Math::Saturate(Value.W));
     #else
         FFloat128 Value_128 = FVectorMath::VectorLoad(Value.XYZW);
         FFloat128 Zeros_128 = FVectorMath::VectorZero();
@@ -459,7 +459,7 @@ public:
      */
     static FORCEINLINE FVector4 RadiansToDegrees(const FVector4& Radians) noexcept
     {
-        return FVector4(FMath::RadiansToDegrees(Radians.X), FMath::RadiansToDegrees(Radians.Y), FMath::RadiansToDegrees(Radians.Z), FMath::RadiansToDegrees(Radians.W));
+        return FVector4(Math::RadiansToDegrees(Radians.X), Math::RadiansToDegrees(Radians.Y), Math::RadiansToDegrees(Radians.Z), Math::RadiansToDegrees(Radians.W));
     }
 
     /**
@@ -469,7 +469,7 @@ public:
      */
     static FORCEINLINE FVector4 DegreesToRadians(const FVector4& Degrees) noexcept
     {
-        return FVector4(FMath::DegreesToRadians(Degrees.X), FMath::DegreesToRadians(Degrees.Y), FMath::DegreesToRadians(Degrees.Z), FMath::DegreesToRadians(Degrees.W));
+        return FVector4(Math::DegreesToRadians(Degrees.X), Math::DegreesToRadians(Degrees.Y), Math::DegreesToRadians(Degrees.Z), Math::DegreesToRadians(Degrees.W));
     }
 
 public:

@@ -728,11 +728,11 @@ void FMacApplication::ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredE
             ScrollDeltaY *= 0.1;
         }
         
-        if (FMath::Abs(ScrollDeltaX) > 0.0f)
+        if (Math::Abs(ScrollDeltaX) > 0.0f)
         {
             MessageHandler->OnMouseScrolled(ScrollDeltaX, false);
         }
-        if (FMath::Abs(ScrollDeltaY) > 0.0f)
+        if (Math::Abs(ScrollDeltaY) > 0.0f)
         {
             MessageHandler->OnMouseScrolled(ScrollDeltaY, true);
         }
@@ -1048,7 +1048,7 @@ uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
     CGFloat ScreenDPI = (ScreenWidthDPI + ScreenHeightDPI) / 2.0;
 
     // Round and convert to uint32_t
-    const uint32 RoundedDPI = static_cast<uint32>(FMath::RoundToInt(ScreenDPI));
+    const uint32 RoundedDPI = static_cast<uint32>(Math::RoundToInt(ScreenDPI));
     return RoundedDPI;
 }
 

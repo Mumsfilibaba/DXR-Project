@@ -41,8 +41,8 @@ void FSceneInspectorWidget::Draw()
 
     const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
 
-    const float Width  = FMath::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
-    const float Height = FMath::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
+    const float Width  = Math::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
+    const float Height = Math::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
 
     ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
@@ -273,7 +273,7 @@ void FSceneInspectorWidget::DrawSceneInfo()
                     ImGui::Text("Rotation theta (degrees)");
                     ImGui::NextColumn();
 
-                    float RotationTheta = FMath::RadiansToDegrees(Rotation.X);
+                    float RotationTheta = Math::RadiansToDegrees(Rotation.X);
                     if (ImGui::SliderFloat("##RotationTheta", &RotationTheta, -90.0f, 90.0f, "%.2f"))
                     {
                         bSetRotation = true;
@@ -283,7 +283,7 @@ void FSceneInspectorWidget::DrawSceneInfo()
                     ImGui::Text("Rotation phi (degrees)");
                     ImGui::NextColumn();
 
-                    float RotationPhi = FMath::RadiansToDegrees(Rotation.Y);
+                    float RotationPhi = Math::RadiansToDegrees(Rotation.Y);
                     if (ImGui::SliderFloat("##RotationPhi", &RotationPhi, 0.0f, 360.0f, "%.2f"))
                     {
                         bSetRotation = true;
@@ -291,8 +291,8 @@ void FSceneInspectorWidget::DrawSceneInfo()
 
                     if (bSetRotation)
                     {
-                        Rotation.X = FMath::DegreesToRadians(RotationTheta);
-                        Rotation.Y = FMath::DegreesToRadians(RotationPhi);
+                        Rotation.X = Math::DegreesToRadians(RotationTheta);
+                        Rotation.Y = Math::DegreesToRadians(RotationPhi);
                         CurrentDirectionalLight->SetRotation(Rotation);
                     }
 

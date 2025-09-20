@@ -20,10 +20,10 @@ struct FGPUProfileSample
     {
         Samples[CurrentSample] = NewSample;
 
-        Min = FMath::Min(NewSample, Min);
-        Max = FMath::Max(NewSample, Max);
+        Min = Math::Min(NewSample, Min);
+        Max = Math::Max(NewSample, Max);
 
-        SampleCount = FMath::Min<int32>(Samples.Size(), SampleCount + 1);
+        SampleCount = Math::Min<int32>(Samples.Size(), SampleCount + 1);
 
         CurrentSample++;
         if (CurrentSample >= int32(Samples.Size()))

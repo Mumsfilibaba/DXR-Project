@@ -30,7 +30,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     }
     
     const uint64 Alignment   = Info.IsConstantBuffer() ? kConstantBufferAlignment : kBufferAlignment;
-    const uint64 AlignedSize = FMath::AlignUp(Info.Size, Alignment);
+    const uint64 AlignedSize = Math::AlignUp(Info.Size, Alignment);
     
     id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
     CHECK(Device != nil);

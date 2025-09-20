@@ -155,7 +155,7 @@ public:
         {
             for (int32 Col = 0; Col < 3; ++Col)
             {
-                if (FMath::IsNaN(M[Row][Col]))
+                if (Math::IsNaN(M[Row][Col]))
                 {
                     return true;
                 }
@@ -175,7 +175,7 @@ public:
         {
             for (int32 Col = 0; Col < 3; ++Col)
             {
-                if (FMath::IsInfinity(M[Row][Col]))
+                if (Math::IsInfinity(M[Row][Col]))
                 {
                     return true;
                 }
@@ -191,16 +191,16 @@ public:
      * @param Epsilon Threshold for comparison
      * @return True if equal within Epsilon, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix3& Other, float Epsilon = FMath::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix3& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
     {
-        Epsilon = FMath::Abs(Epsilon);
+        Epsilon = Math::Abs(Epsilon);
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
             for (int32 Col = 0; Col < 3; ++Col)
             {
                 float Diff = M[Row][Col] - Other.M[Row][Col];
-                if (FMath::Abs(Diff) > Epsilon)
+                if (Math::Abs(Diff) > Epsilon)
                 {
                     return false;
                 }
@@ -566,12 +566,12 @@ public:
      */
     static FORCEINLINE FMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
-        const float SinP = FMath::Sin(Pitch);
-        const float SinY = FMath::Sin(Yaw);
-        const float SinR = FMath::Sin(Roll);
-        const float CosP = FMath::Cos(Pitch);
-        const float CosY = FMath::Cos(Yaw);
-        const float CosR = FMath::Cos(Roll);
+        const float SinP = Math::Sin(Pitch);
+        const float SinY = Math::Sin(Yaw);
+        const float SinR = Math::Sin(Roll);
+        const float CosP = Math::Cos(Pitch);
+        const float CosY = Math::Cos(Yaw);
+        const float CosR = Math::Cos(Roll);
 
         const float SinRSinP = SinR * SinP;
         const float CosRSinP = CosR * SinP;
@@ -589,8 +589,8 @@ public:
      */
     static FORCEINLINE FMatrix3 RotationX(float AxisX) noexcept
     {
-        const float SinX = FMath::Sin(AxisX);
-        const float CosX = FMath::Cos(AxisX);
+        const float SinX = Math::Sin(AxisX);
+        const float CosX = Math::Cos(AxisX);
 
         return FMatrix3(
             1.0f,  0.0f, 0.0f,
@@ -605,8 +605,8 @@ public:
      */
     static FORCEINLINE FMatrix3 RotationY(float AxisY) noexcept
     {
-        const float SinY = FMath::Sin(AxisY);
-        const float CosY = FMath::Cos(AxisY);
+        const float SinY = Math::Sin(AxisY);
+        const float CosY = Math::Cos(AxisY);
 
         return FMatrix3(
             CosY, 0.0f, -SinY,
@@ -621,8 +621,8 @@ public:
      */
     static FORCEINLINE FMatrix3 RotationZ(float AxisZ) noexcept
     {
-        const float SinZ = FMath::Sin(AxisZ);
-        const float CosZ = FMath::Cos(AxisZ);
+        const float SinZ = Math::Sin(AxisZ);
+        const float CosZ = Math::Cos(AxisZ);
 
         return FMatrix3(
              CosZ, SinZ, 0.0f,
