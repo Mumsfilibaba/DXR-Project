@@ -25,8 +25,8 @@ static TAutoConsoleVariable<int32> CVarMaxDrawCallsPerCommandList(
 static constexpr const bool GDebugResourceBarriers = false;
 
 FResourceBarrierBatcher::FResourceBarrierBatcher(FD3D12CommandContext& InContext)
-    : Context(InContext)
-    , Barriers()
+	: Context(InContext)
+	, Barriers()
 {
 }
 
@@ -38,11 +38,11 @@ void FResourceBarrierBatcher::AddTransitionBarrier(FD3D12Resource* InResource, D
 {
 	CHECK(InResource != nullptr);
 
-    if constexpr (GDebugResourceBarriers)
-    {
-        const FString DebugName = InResource->GetDebugName();
-        LOG_INFO("AddTransitionBarrier Resource=%s SubresourceIndex=%u BeforeState=%s AfterState=%s", *DebugName, SubresourceIndex, ToString(BeforeState), ToString(AfterState));
-    }
+	if constexpr (GDebugResourceBarriers)
+	{
+		const FString DebugName = InResource->GetDebugName();
+		D3D12_INFO("AddTransitionBarrier Resource=%s Subresource=%u Before=%s After=%s", *DebugName, SubresourceIndex, ToString(BeforeState), ToString(AfterState));
+	}
 
 	AddTransitionBarrier(InResource->GetD3D12Resource(), BeforeState, AfterState, SubresourceIndex);
 }
@@ -54,7 +54,7 @@ void FResourceBarrierBatcher::AddUnorderedAccessBarrier(FD3D12Resource* InResour
 	if constexpr (GDebugResourceBarriers)
 	{
 		const FString DebugName = InResource->GetDebugName();
-		LOG_INFO("AddUnorderedAccessBarrier Resource=%s", *DebugName);
+        D3D12_INFO("AddUnorderedAccessBarrier Resource=%s", *DebugName);
 	}
 
 	AddUnorderedAccessBarrier(InResource->GetD3D12Resource());
@@ -62,96 +62,135 @@ void FResourceBarrierBatcher::AddUnorderedAccessBarrier(FD3D12Resource* InResour
 
 void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex)
 {
-    CHECK(Resource != nullptr);
+	CHECK(Resource != nullptr);
 
-    if (BeforeState == AfterState)
-    {
-        return;
-    }
+	if (BeforeState == AfterState)
+	{
+		// No-op transition
+		return;
+	}
 
-    // Make sure we are not already have transition for this resource
-    for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType Iterator = Barriers.Iterator(); !Iterator.IsEnd(); Iterator++)
-    {
-        if (Iterator->Type != D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+	// Try to coalesce with an existing transition for the same (sub)resource.
+	for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.Iterator(); !It.IsEnd(); ++It)
+	{
+        if (It->Type != D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
         {
-            continue;
+			continue;
         }
 
-        if (Iterator->Transition.Subresource == SubresourceIndex)
+		const D3D12_RESOURCE_BARRIER& Existing = *It;
+        if (Existing.Transition.pResource != Resource)
         {
-            if (Iterator->Transition.pResource == Resource)
-            {
-                if (Iterator->Transition.StateBefore == AfterState)
-                {
-                    Barriers.RemoveAt(Iterator.GetIndex());
-                }
-                else
-                {
-                    Iterator->Transition.StateAfter = AfterState;
-                }
-
-                if constexpr (GDebugResourceBarriers)
-                {
-                    LOG_INFO("AddTransitionBarrier: Skipping barrier. SubresourceIndex=%u BeforeState=%s AfterState=%s", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
-                }
-
-                return;
-            }
+			continue;
         }
-    }
 
-    // Add new resource barrier
-	D3D12_RESOURCE_BARRIER ResourceBarrier;
-	FMemory::Memzero(&ResourceBarrier, sizeof(ResourceBarrier));
+		// We only coalesce when subresources match exactly (or both are ALL_SUBRESOURCES).
+        const bool bSameSubresource = (Existing.Transition.Subresource == SubresourceIndex);
+		const bool bBothAllSubresources = (Existing.Transition.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES) && (SubresourceIndex == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+        if (!(bSameSubresource || bBothAllSubresources))
+        {
+			continue;
+        }
 
-    ResourceBarrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    ResourceBarrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    ResourceBarrier.Transition.pResource   = Resource;
-    ResourceBarrier.Transition.StateAfter  = AfterState;
-    ResourceBarrier.Transition.StateBefore = BeforeState;
-    ResourceBarrier.Transition.Subresource = SubresourceIndex;
-    Barriers.Emplace(ResourceBarrier);
+		// Case 1: Redundant barrier (A->B then A->B again) => ignore new barrier
+		D3D12_RESOURCE_TRANSITION_BARRIER& ExistingTransitionBarrier = It->Transition;
+		if (ExistingTransitionBarrier.StateBefore == BeforeState && ExistingTransitionBarrier.StateAfter == AfterState)
+		{
+			if constexpr (GDebugResourceBarriers)
+			{
+                LOG_INFO("  Redundant barrier A->B kept (SubresourceIndex=%u, %s->%s)", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
+			}
+
+			return;
+		}
+
+		// Case 2: Extend barrier (A->B then B->C) => A->C
+		if (ExistingTransitionBarrier.StateAfter == BeforeState)
+		{
+			ExistingTransitionBarrier.StateAfter = AfterState;
+			if constexpr (GDebugResourceBarriers)
+			{
+                LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter), SubresourceIndex);
+			}
+
+			// If we changed state to the same before- and after-state, remove it
+			if (ExistingTransitionBarrier.StateBefore == ExistingTransitionBarrier.StateAfter)
+			{
+				if constexpr (GDebugResourceBarriers)
+				{
+                    LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter));
+				}
+
+				Barriers.RemoveAt(It.GetIndex());
+			}
+
+			return;
+		}
+
+		// Case 3: Cancel barrier (A->B then B->A) => remove
+		if (ExistingTransitionBarrier.StateBefore == AfterState)
+		{
+			if constexpr (GDebugResourceBarriers)
+			{
+                LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
+			}
+
+			Barriers.RemoveAt(It.GetIndex());
+			return;
+		}
+	}
+
+	// Otherwise: Different, non-chainable states -> cannot coalesce. Add a new barrier.
+	D3D12_RESOURCE_BARRIER Barrier;
+	FMemory::Memzero(&Barrier);
+
+	Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	Barrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	Barrier.Transition.pResource   = Resource;
+	Barrier.Transition.StateBefore = BeforeState;
+	Barrier.Transition.StateAfter  = AfterState;
+	Barrier.Transition.Subresource = SubresourceIndex;
+	Barriers.Emplace(Barrier);
 }
 
 void FResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
 {
-    CHECK(Resource != nullptr);
+	CHECK(Resource != nullptr);
 
-    // Make sure we are not already have UAV barrier for this resource
-    for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType Iterator = Barriers.Iterator(); !Iterator.IsEnd(); Iterator++)
-    {
-        if (Iterator->Type == D3D12_RESOURCE_BARRIER_TYPE_UAV)
-        {
-            if (Iterator->UAV.pResource == Resource)
-            {
-                Barriers.RemoveAt(Iterator.GetIndex());
-                return;
-            }
-        }
-    }
+	for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType It = Barriers.Iterator(); !It.IsEnd(); ++It)
+	{
+		if (It->Type == D3D12_RESOURCE_BARRIER_TYPE_UAV && It->UAV.pResource == Resource)
+		{
+			// Barrier is already present, nothing to add.
+			return;
+		}
+	}
 
-    D3D12_RESOURCE_BARRIER ResourceBarrier;
-    FMemory::Memzero(&ResourceBarrier, sizeof(ResourceBarrier));
+	D3D12_RESOURCE_BARRIER Barrier;
+	FMemory::Memzero(&Barrier);
 
-    ResourceBarrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    ResourceBarrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    ResourceBarrier.UAV.pResource = Resource;
-    Barriers.Emplace(ResourceBarrier);
+	Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+	Barrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	Barrier.UAV.pResource = Resource;
+	Barriers.Emplace(Barrier);
 }
 
 void FResourceBarrierBatcher::FlushBarriers()
 {
-    if (HasPendingBarriers())
+    if (!HasPendingBarriers())
     {
-        const uint32 NumBarriers = Barriers.Size();
-        Context.GetCommandList()->ResourceBarrier(NumBarriers, Barriers.Data());
-        Barriers.Clear();
-
-		if constexpr (GDebugResourceBarriers)
-		{
-			LOG_INFO("FlushBarriers NumBarriers=%u", NumBarriers);
-		}
+		return;
     }
+
+	const uint32 NumBarriers = Barriers.Size();
+	Context.GetCommandList()->ResourceBarrier(NumBarriers, Barriers.Data());
+
+	if constexpr (GDebugResourceBarriers)
+	{
+		D3D12_INFO("FlushBarriers NumBarriers=%u", NumBarriers);
+	}
+
+	Barriers.Clear();
 }
 
 FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
@@ -359,6 +398,12 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     else
     {
         FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(BufferRegion.Size, 1);
+		if (!Allocation.Resource || !Allocation.Memory)
+		{
+			D3D12_ERROR_CRITICAL("Upload allocation failed");
+		    return;
+		}
+
         FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
 
         GetCommandList()->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource.Get(), Allocation.ResourceOffset, BufferRegion.Size);
