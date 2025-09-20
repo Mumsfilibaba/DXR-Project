@@ -13,6 +13,7 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Fence.h"
+#include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12RayTracing.h"
 #include "D3D12RHI/D3D12RefCounted.h"
@@ -25,4 +26,3 @@
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12SwapChain.h"
-#include "D3D12RHI/DynamicD3D12.h"

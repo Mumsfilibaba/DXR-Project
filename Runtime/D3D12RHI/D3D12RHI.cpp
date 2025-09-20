@@ -16,7 +16,7 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Query.h"
-#include "D3D12RHI/DynamicD3D12.h"
+#include "D3D12RHI/D3D12Loader.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D12RHIModule, D3D12RHI);
 
@@ -108,7 +108,7 @@ FD3D12RHI::~FD3D12RHI()
     SAFE_DELETE(Device);
     SAFE_DELETE(Adapter);
 
-    FDynamicD3D12::Release();
+    D3D12Loader::Release();
 
     if (GD3D12RHI == this)
     {
@@ -121,7 +121,7 @@ bool FD3D12RHI::Initialize()
     const bool bEnablePIX = CVarEnablePix.GetValue();
 
     // Load Library and Function-Pointers etc.
-    const bool bResult = FDynamicD3D12::Initialize(bEnablePIX);
+    const bool bResult = D3D12Loader::Initialize(bEnablePIX);
     if (!bResult)
     {
         return false;

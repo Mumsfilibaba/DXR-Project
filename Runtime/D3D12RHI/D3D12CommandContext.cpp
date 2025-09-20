@@ -13,7 +13,7 @@
 #include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12CommandContext.h"
-#include "D3D12RHI/DynamicD3D12.h"
+#include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include <pix.h>
 
@@ -1240,10 +1240,10 @@ void FD3D12CommandContext::Flush()
 
 void FD3D12CommandContext::InsertMarker(const FStringView& Message)
 {
-    if (FDynamicD3D12::SetMarkerOnCommandList)
+    if (D3D12Functions::SetMarkerOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
-        FDynamicD3D12::SetMarkerOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Message);
+        D3D12Functions::SetMarkerOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Message);
     }
 }
 
