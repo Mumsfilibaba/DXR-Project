@@ -135,16 +135,13 @@ struct VulkanPlatformBase
             VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,
         #endif
         #if VK_EXT_pipeline_creation_cache_control
-            VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME
+            VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME,
         #endif
         #if VK_NV_ray_tracing_invocation_reorder
             VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
         #endif
         #if VK_EXT_swapchain_maintenance1
             VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME,
-        #endif
-        #if VK_EXT_memory_budget
-            VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
         #endif
         };
     }
@@ -177,7 +174,10 @@ struct VulkanPlatformBase
     static FORCEINLINE void* LoadVulkanLibrary() { return nullptr; }
 
 #if VK_KHR_surface
-    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* InWindowHandle, VkSurfaceKHR* OutSurface) { return VK_ERROR_UNKNOWN; }
+    static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* InWindowHandle, VkSurfaceKHR* OutSurface)
+    {
+        return VK_ERROR_UNKNOWN;
+    }
 #endif
 };
 

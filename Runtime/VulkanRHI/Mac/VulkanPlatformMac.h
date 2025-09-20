@@ -22,8 +22,8 @@ struct VulkanPlatformMac : public VulkanPlatformBase
             VK_MVK_MACOS_SURFACE_EXTENSION_NAME,
         #endif
 
-        // NOTE: This extension is required since we want to use MoltekVK, otherwise no devices will be reported to exist
-        // since MoltenVK does only support a subset of the Vulkan standard.
+        // NOTE: This extension is required when using MoltenVK, otherwise no devices will be reported
+        // since MoltenVK only supports a subset of the Vulkan standard.
         #if VK_KHR_portability_enumeration 
             VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME,
         #endif
