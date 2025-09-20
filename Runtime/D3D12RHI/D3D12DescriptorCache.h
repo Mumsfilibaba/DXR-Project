@@ -11,7 +11,7 @@
 #if DEBUG_BUILD
     #define D3D12_BREAK_ON_HASH_COLLISION (1)
 #else
-    #define D3D12_BREAK_ON_HASH_COLLISION (1)
+    #define D3D12_BREAK_ON_HASH_COLLISION (0)
 #endif
 
 class FD3D12CommandContext;
@@ -79,9 +79,9 @@ struct FD3D12ResourceCache
 
     void DirtyState(uint32 StartStage, uint32 EndStage)
     {
-        CHECK(EndStage < ShaderVisibility_Count);
+        CHECK(StartStage <= EndStage && EndStage < ShaderVisibility_Count);
 
-        for (uint32 Index = StartStage; Index < ShaderVisibility_Count; Index++)
+        for (uint32 Index = StartStage; Index < EndStage; Index++)
         {
             bDirty[Index] = true;
         }
@@ -89,7 +89,7 @@ struct FD3D12ResourceCache
 
     void DirtyStateAll()
     {
-        for (uint32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        for (uint32 Index = ShaderVisibility_All; Index < ShaderVisibility_Count; Index++)
         {
             bDirty[Index] = true;
         }
@@ -107,7 +107,7 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyStateAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -130,7 +130,7 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyStateAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -153,7 +153,7 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyStateAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -223,7 +223,7 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyStateAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -310,7 +310,7 @@ struct FD3D12DescriptorHandleCache
 
     void Clear(uint32 StartStage, uint32 EndStage)
     {
-        CHECK(EndStage < ShaderVisibility_Count);
+        CHECK(StartStage < EndStage && EndStage < ShaderVisibility_Count);
 
         for (uint32 Index = StartStage; Index < EndStage; Index++)
         {
@@ -333,6 +333,7 @@ public:
     ~FD3D12LocalDescriptorHeap() = default;
 
     bool Initialize();
+
     uint32 AllocateHandles(uint32 NumHandles);
     bool Realloc();
     bool HasSpace(uint32 NumHandles) const;

@@ -203,6 +203,10 @@ FD3D12Adapter::FD3D12Adapter()
 {
 }
 
+FD3D12Adapter::~FD3D12Adapter()
+{
+}
+
 bool FD3D12Adapter::Initialize()
 {
     if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
@@ -299,8 +303,14 @@ bool FD3D12Adapter::Initialize()
         }
     }
 
-    // Create Factory
-    if (FAILED(D3D12Functions::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
+	// Create Factory
+	uint32 FactoryFlags = 0;
+	if (bEnableDebugLayer)
+	{
+        FactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+	}
+
+	if (FAILED(D3D12Functions::CreateDXGIFactory2(FactoryFlags, IID_PPV_ARGS(&Factory))))
     {
         D3D12_ERROR_CRITICAL("[FD3D12Adapter]: FAILED to create factory");
         return false;

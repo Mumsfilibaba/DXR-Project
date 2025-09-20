@@ -19,7 +19,7 @@ public:
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int32 Index) const { return FD3D12_CPU_DESCRIPTOR_HANDLE(StartHandleCPU, Index, HandleIncrementSize); }
     D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int32 Index) const { return FD3D12_GPU_DESCRIPTOR_HANDLE(StartHandleGPU, Index, HandleIncrementSize); }
-    uint32 GetNumDescriptors()      const { return NumDescriptors; }
+    uint32 GetNumDescriptors() const { return NumDescriptors; }
     uint32 GetHandleIncrementSize() const { return HandleIncrementSize; }
 
     ID3D12DescriptorHeap* GetD3D12Heap() const
@@ -91,12 +91,13 @@ public:
     ~FD3D12OfflineDescriptorHeap() = default;
 
     bool Initialize();
+
     FD3D12OfflineDescriptor Allocate();
     void Free(FD3D12OfflineDescriptor& Descriptor);
 
-    uint32 GetNumDescriptors() const
+    uint32 GetNumTotalDescriptors() const
     {
-        return NumDescriptors;
+        return NumTotalDescriptors;
     }
 
     uint32 GetDescriptorSize() const
@@ -112,10 +113,6 @@ public:
 private:
     bool AllocateHeap();
     
-    D3D12_DESCRIPTOR_HEAP_TYPE const Type;
-    uint32                           DescriptorSize;
-    uint32                           NumDescriptors;
-
     struct FOfflineHeap
     {
         FOfflineHeap(const FD3D12DescriptorHeapRef& InHeap, uint32 InNumDescriptors)
@@ -127,12 +124,15 @@ private:
             FreeList.Emplace(Start, End);
         }
 
-        FD3D12DescriptorHeapRef       Heap;
+        FD3D12DescriptorHeapRef Heap;
         TArray<FD3D12DescriptorRange> FreeList;
     };
 
+    D3D12_DESCRIPTOR_HEAP_TYPE const Type;
+    uint32 DescriptorSize;
+    uint32 NumTotalDescriptors;
     TArray<FOfflineHeap> Heaps;
-    FCriticalSection     HeapsCS;
+    FCriticalSection HeapsCS;
 };
 
 struct FD3D12OnlineDescriptorBlock
@@ -162,7 +162,7 @@ public:
     bool Initialize(uint32 InDescriptorCount, uint32 BlockSize);
     FD3D12OnlineDescriptorBlock* AllocateBlock();
     void RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock);
-    void FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);
+    void RecycleBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);
 
     FD3D12DescriptorHeap* GetHeap() const
     { 

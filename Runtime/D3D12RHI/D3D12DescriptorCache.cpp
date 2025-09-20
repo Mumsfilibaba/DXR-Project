@@ -43,7 +43,7 @@ bool FD3D12LocalDescriptorHeap::Realloc()
     FD3D12OnlineDescriptorHeap& GlobalHeap = bIsSamplerHeap ? GetDevice()->GetGlobalSamplerHeap() : GetDevice()->GetGlobalResourceHeap();
     if (Block)
     {
-        GlobalHeap.FreeBlockDeferred(Block);
+        GlobalHeap.RecycleBlockDeferred(Block);
         Block = nullptr;
         Heap.Reset();
     }
@@ -74,7 +74,7 @@ bool FD3D12LocalDescriptorHeap::HasSpace(uint32 NumHandles) const
     }
 
     const uint32 NewOffset = CurrentHandle + NumHandles;
-    if (NewOffset >= Block->NumDescriptors)
+	if (NewOffset >= Block->NumDescriptors)
     {
         return false;
     }
@@ -232,8 +232,8 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
             {
                 if (i != j)
                 {
-                    auto Handle0 = ConstantBufferCache.Handles[i];
-                    auto Handle1 = ConstantBufferCache.Handles[j];
+                    D3D12_GPU_DESCRIPTOR_HANDLE Handle0 = ConstantBufferCache.Handles[i];
+                    D3D12_GPU_DESCRIPTOR_HANDLE Handle1 = ConstantBufferCache.Handles[j];
                     if (Handle0.ptr == Handle1.ptr)
                     {
                         if (Handle0.ptr != 0)
@@ -289,7 +289,7 @@ void FD3D12DescriptorCache::SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12
             }
         }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle     = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
+        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
         ShaderResourceViewCache.Handles[ShaderStage] = ResourceHeap.GetGPUHandle(DescriptorHandleOffset);
         DescriptorHandleOffset += NumSRVs;
         
@@ -349,7 +349,7 @@ void FD3D12DescriptorCache::SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D1
             }
         }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle      = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
+        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
         UnorderedAccessViewCache.Handles[ShaderStage] = ResourceHeap.GetGPUHandle(DescriptorHandleOffset);
         DescriptorHandleOffset += NumUAVs;
 
@@ -425,7 +425,7 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
                 }
             }
 
-            D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle    = SamplerHeap.GetCPUHandle(DescriptorHandleOffset);
+            D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle = SamplerHeap.GetCPUHandle(DescriptorHandleOffset);
             D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleGPU = SamplerHeap.GetGPUHandle(DescriptorHandleOffset);
             DescriptorHandleOffset += NumSamplers;
 
