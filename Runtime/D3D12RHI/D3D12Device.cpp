@@ -302,14 +302,14 @@ bool FD3D12Adapter::Initialize()
     // Create Factory
     if (FAILED(D3D12Functions::CreateDXGIFactory2(0, IID_PPV_ARGS(&Factory))))
     {
-        D3D12_ERROR("[FD3D12Adapter]: FAILED to create factory");
+        D3D12_ERROR_CRITICAL("[FD3D12Adapter]: FAILED to create factory");
         return false;
     }
     else
     {
         if (FAILED(Factory.GetAs(&Factory5)))
         {
-            D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve IDXGIFactory5");
+            D3D12_ERROR_CRITICAL("[FD3D12Adapter]: FAILED to retrieve IDXGIFactory5");
             return false;
         }
         else
@@ -395,7 +395,7 @@ bool FD3D12Adapter::Initialize()
         HRESULT Result = Factory.GetAs<IDXGIFactory6>(Factory6.GetAddressOf());
         if (FAILED(Result))
         {
-            D3D12_ERROR("[FD3D12Adapter]: Failed to Query IDXGIFactory6");
+            D3D12_ERROR_CRITICAL("[FD3D12Adapter]: Failed to Query IDXGIFactory6");
             return false;
         }
 

@@ -37,7 +37,7 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
 {
     if (!Descriptor)
     {
-        D3D12_ERROR("[FD3D12ConstantBufferView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12ConstantBufferView] Invalid Descriptor");
         return false;
     }
 
@@ -59,7 +59,7 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
 {
     if (!Descriptor)
     {
-        D3D12_ERROR("[FD3D12ShaderResourceView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderResourceView] Invalid Descriptor");
         return false;
     }
 
@@ -90,7 +90,7 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
 {
     if (!Descriptor)
     {
-        D3D12_ERROR("[FD3D12UnorderedAccessView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12UnorderedAccessView] Invalid Descriptor");
         return false;
     }
 
@@ -126,7 +126,7 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
 {
     if (!Descriptor)
     {
-        D3D12_ERROR("[FD3D12RenderTargetView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12RenderTargetView] Invalid Descriptor");
         return false;
     }
 
@@ -155,7 +155,7 @@ bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_
 {
     if (!Descriptor)
     {
-        D3D12_ERROR("[FD3D12DepthStencilView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12DepthStencilView] Invalid Descriptor");
         return false;
     }
 

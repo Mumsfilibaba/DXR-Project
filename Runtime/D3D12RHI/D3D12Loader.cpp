@@ -22,7 +22,7 @@ do \
     D3D12Functions::Function = FPlatformLibrary::LoadSymbol<decltype(D3D12Functions::Function)>(#Function, LibraryHandle); \
     if (!D3D12Functions::Function) \
     { \
-        D3D12_ERROR("Failed to load '%s'", #Function); \
+        D3D12_ERROR_CRITICAL("Failed to load '%s'", #Function); \
         return false; \
     } \
 } while(false)

@@ -49,7 +49,7 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateQueryHeap(&QueryHeapDesc, IID_PPV_ARGS(&NewQueryHeap));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12Query]: FAILED to create Query Heap");
+        D3D12_ERROR_CRITICAL("[FD3D12Query]: FAILED to create Query Heap");
         return false;
     }
 
@@ -71,7 +71,7 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
     FD3D12ResourceRef NewResource = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);
     if (!NewResource->Initialize(D3D12_RESOURCE_STATE_COPY_DEST, nullptr))
     {
-        D3D12_ERROR("Failed to create Query Readback resource");
+        D3D12_ERROR_CRITICAL("Failed to create Query Readback resource");
         return false;
     }
 
@@ -116,7 +116,7 @@ void FD3D12QueryHeap::ReadBackResults(FD3D12Queue& Queue)
     void* Data = ReadResource->MapRange(0, nullptr);
     if (!Data)
     {
-        D3D12_ERROR("Failed to read query results");
+        D3D12_ERROR_CRITICAL("Failed to read query results");
         return;
     }
 

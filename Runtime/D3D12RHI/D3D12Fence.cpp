@@ -21,14 +21,14 @@ bool FD3D12Fence::Initialize(uint64 InitalValue)
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12Fence]: FAILED to create Fence");
+        D3D12_ERROR_CRITICAL("[FD3D12Fence]: FAILED to create Fence");
         return false;
     }
 
     Event = ::CreateEventA(nullptr, FALSE, FALSE, nullptr);
     if (Event == 0)
     {
-        D3D12_ERROR("[FD3D12Fence]: FAILED to create Event for Fence");
+        D3D12_ERROR_CRITICAL("[FD3D12Fence]: FAILED to create Event for Fence");
         return false;
     }
 
@@ -40,7 +40,7 @@ bool FD3D12Fence::WaitForValue(uint64 Value)
     HRESULT Result = Fence->SetEventOnCompletion(Value, Event);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12Fence]: SetEventOnCompletion Failed");
+        D3D12_ERROR_CRITICAL("[FD3D12Fence]: SetEventOnCompletion Failed");
         return false;
     }
     else
@@ -86,7 +86,7 @@ uint64 FD3D12FenceManager::SignalGPU(ED3D12CommandQueueType QueueType)
     HRESULT hResult = CommandQueue->Signal(Fence->GetD3D12Fence(), CurrentValue);
     if (FAILED(hResult))
     {
-        D3D12_ERROR("[FD3D12FenceManager]: Failed to signal Fence on the GPU");
+        D3D12_ERROR_CRITICAL("[FD3D12FenceManager]: Failed to signal Fence on the GPU");
     }
 
     LastSignaledValue = CurrentValue;
@@ -109,7 +109,7 @@ void FD3D12FenceManager::WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenc
     HRESULT hResult = CommandQueue->Wait(Fence->GetD3D12Fence(), InFenceValue);
     if (FAILED(hResult))
     {
-        D3D12_ERROR("[FD3D12FenceManager]: Failed to wait for Fence on the GPU");
+        D3D12_ERROR_CRITICAL("[FD3D12FenceManager]: Failed to wait for Fence on the GPU");
     }
 }
 

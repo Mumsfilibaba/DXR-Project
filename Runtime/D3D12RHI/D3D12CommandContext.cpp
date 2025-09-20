@@ -176,7 +176,7 @@ bool FD3D12CommandContext::Initialize()
 {
     if (!ContextState.Initialize())
     {
-        D3D12_ERROR("Failed to initialize ContextState");
+        D3D12_ERROR_CRITICAL("Failed to initialize ContextState");
         return false;
     }
 
@@ -195,7 +195,7 @@ void FD3D12CommandContext::ObtainCommandList()
         CommandAllocator = CommandAllocatorManager->ObtainAllocator();
         if (!CommandAllocator)
         {
-            D3D12_ERROR("Failed to Obtain CommandAllocator");
+            D3D12_ERROR_CRITICAL("Failed to Obtain CommandAllocator");
         }
     }
 
@@ -207,7 +207,7 @@ void FD3D12CommandContext::ObtainCommandList()
         CommandList = Queue->ObtainCommandList(CommandAllocator, nullptr);
         if (!CommandList)
         {
-            D3D12_ERROR("Failed to initialize CommandList");
+            D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
         }
     }
 
@@ -239,7 +239,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
 
         if (!CommandList->Close())
         {
-            D3D12_ERROR("Failed to close CommandList");
+            D3D12_ERROR_CRITICAL("Failed to close CommandList");
             return;
         }
 
@@ -381,7 +381,7 @@ void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
     FD3D12QueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&D3D12Query->Result);
     if (!QueryAllocation.IsValid())
     {
-        D3D12_ERROR("Failed to allocate Query");
+        D3D12_ERROR_CRITICAL("Failed to allocate Query");
         return;
     }
 
@@ -398,7 +398,7 @@ void FD3D12CommandContext::EndQuery(FRHIQuery* Query)
     FD3D12QueryAllocation QueryAllocation = D3D12Query->QueryAllocation;
     if (!QueryAllocation.IsValid())
     {
-        D3D12_ERROR("Failed to allocate Query");
+        D3D12_ERROR_CRITICAL("Failed to allocate Query");
         return;
     }
 
@@ -414,7 +414,7 @@ void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
     FD3D12QueryAllocation QueryAllocation = TimingQueryAllocator.Allocate(&D3D12Query->Result);
     if (!QueryAllocation.IsValid())
     {
-        D3D12_ERROR("Failed to allocate Query");
+        D3D12_ERROR_CRITICAL("Failed to allocate Query");
         return;
     }
 
@@ -977,7 +977,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTrac
     // TODO: Fix this
     // if (!D3D12Scene->BuildBindingTable(*this, D3D12PipelineState, ResourceHeap, SamplerHeap, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources))
     {
-        D3D12_ERROR("[FD3D12CommandContext]: FAILED to Build Shader Binding Table");
+        D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: FAILED to Build Shader Binding Table");
     }
 
     if (GlobalResource)

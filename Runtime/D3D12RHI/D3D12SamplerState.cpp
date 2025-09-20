@@ -23,7 +23,7 @@ bool FD3D12SamplerState::CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
     Descriptor = OfflineHeap.Allocate();
     if (!Descriptor)
     {
-        D3D12_ERROR("Failed to allocate DescriptorHandle for SamplerState");
+        D3D12_ERROR_CRITICAL("Failed to allocate DescriptorHandle for SamplerState");
         return false;
     }
 

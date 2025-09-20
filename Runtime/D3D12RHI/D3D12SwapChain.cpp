@@ -67,13 +67,13 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 
     if (!Info.Width)
     {
-        D3D12_ERROR("SwapChain width of zero is not supported");
+        D3D12_ERROR_CRITICAL("SwapChain width of zero is not supported");
         return false;
     }
 
     if (!Info.Height)
     {
-        D3D12_ERROR("SwapChain height of zero is not supported");
+        D3D12_ERROR_CRITICAL("SwapChain height of zero is not supported");
         return false;
     }
 
@@ -114,7 +114,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
         Result = DXGISwapChain1.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            D3D12_ERROR("[FD3D12SwapChain]: FAILED to retrieve IDXGISwapChain3");
+            D3D12_ERROR_CRITICAL("[FD3D12SwapChain]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
 
@@ -129,7 +129,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
     }
     else
     {
-        D3D12_ERROR("[FD3D12SwapChain]: FAILED to create SwapChain");
+        D3D12_ERROR_CRITICAL("[FD3D12SwapChain]: FAILED to create SwapChain");
         return false;
     }
 

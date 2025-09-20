@@ -56,13 +56,18 @@
 #endif
 
 #if !RELEASE_BUILD
+    #define D3D12_ERROR_CRITICAL(...) \
+        do \
+        { \
+            LOG_ERROR_CRITICAL("[D3D12RHI] " __VA_ARGS__); \
+        } while (false)
+
     #define D3D12_ERROR(...) \
         do \
         { \
-            LOG_ERROR("[D3D12RHI] "__VA_ARGS__); \
-            DEBUG_BREAK(); \
+            LOG_ERROR("[D3D12RHI] " __VA_ARGS__); \
         } while (false)
-    
+
     #define D3D12_ERROR_COND(bCondition, ...) \
         do \
         { \
@@ -71,11 +76,11 @@
                 D3D12_ERROR(__VA_ARGS__); \
             } \
         } while (false)
-    
+
     #define D3D12_WARNING(...) \
         do \
         { \
-            LOG_WARNING("[D3D12RHI] "__VA_ARGS__); \
+            LOG_WARNING("[D3D12RHI] " __VA_ARGS__); \
         } while (false)
 
     #define D3D12_WARNING_COND(bCondition, ...) \
@@ -90,17 +95,28 @@
     #define D3D12_INFO(...) \
         do \
         { \
-            LOG_INFO("[D3D12RHI] "__VA_ARGS__); \
+            LOG_INFO("[D3D12RHI] " __VA_ARGS__); \
         } while (false)
 #else
-    #define D3D12_ERROR_COND(bCondition, ...) do { (void)(bCondition); } while(false)
-    #define D3D12_ERROR(...)  do { (void)(0); } while(false)
+    #define D3D12_ERROR_CRITICAL(...) \
+        do { } while(false)
 
-    #define D3D12_WARNING_COND(bCondition, ...) do { (void)(bCondition); } while(false)
-    #define D3D12_WARNING(...) do { (void)(0); } while(false)
+    #define D3D12_ERROR_COND(bCondition, ...) \
+        do { UNREFERENCED_VARIABLE(bCondition); } while(false)
 
-    #define D3D12_INFO(...) do { (void)(0); } while(false)
+    #define D3D12_ERROR(...) \
+        do { } while(false)
+
+    #define D3D12_WARNING_COND(bCondition, ...) \
+        do { UNREFERENCED_VARIABLE(bCondition); } while(false)
+
+    #define D3D12_WARNING(...) \
+        do { } while(false)
+
+    #define D3D12_INFO(...) \
+        do { } while(false)
 #endif
+
 
 void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
 

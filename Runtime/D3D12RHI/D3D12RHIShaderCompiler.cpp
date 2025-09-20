@@ -185,7 +185,7 @@ bool FD3D12ShaderCompiler::CompileFromFile(const FString& FilePath, const FStrin
     HRESULT Result = DxLibrary->CreateBlobFromFile(*WideFilePath, nullptr, &SourceBlob);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create Source Data");
         return false;
     }
 
@@ -200,7 +200,7 @@ bool FD3D12ShaderCompiler::CompileShader(const FString& ShaderSource, const FStr
     HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(*ShaderSource, sizeof(CHAR) * static_cast<uint32>(ShaderSource.Size()), CP_UTF8, &SourceBlob);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create Source Data");
         return false;
     }
 
@@ -225,7 +225,7 @@ bool FD3D12ShaderCompiler::HasRootSignature(FD3D12Shader* Shader)
     HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create IDxcContainerReflection");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create IDxcContainerReflection");
         return false;
     }
 
@@ -233,7 +233,7 @@ bool FD3D12ShaderCompiler::HasRootSignature(FD3D12Shader* Shader)
     Result = Reflection->Load(ShaderBlob.Get());
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: Reflection were not able to load shader");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: Reflection were not able to load shader");
         return false;
     }
 
@@ -259,42 +259,42 @@ bool FD3D12ShaderCompiler::Initialize()
     DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbol<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
     if (!DxcCreateInstanceFunc)
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
         return false;
     }
 
     HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create DxCompiler");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxCompiler");
         return false;
     }
 
     Result = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create DxLibrary");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxLibrary");
         return false;
     }
 
     Result = DxLibrary->CreateIncludeHandler(&DxIncludeHandler);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create DxIncludeHandler");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxIncludeHandler");
         return false;
     }
 
     Result = DxcCreateInstanceFunc(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create DxLinker");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxLinker");
         return false;
     }
 
     Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&DxReflection));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create DxReflection");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxReflection");
         return false;
     }
 
@@ -348,7 +348,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWS
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
         return false;
     }
 
@@ -387,7 +387,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWS
     TComPtr<IDxcBlob> CompiledBlob;
     if (FAILED(Result->GetResult(&CompiledBlob)))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to retrieve result");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to retrieve result");
         return false;
     }
 
@@ -421,14 +421,14 @@ bool FD3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& Shader
     Result = DxReflection->FindFirstPartKind(DFCC_DXIL, &PartIndex);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: Shader does not contain valid DXIL part");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: Shader does not contain valid DXIL part");
         return false;
     }
 
     Result = DxReflection->GetPartReflection(PartIndex, iid, ppvObject);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to get DXIL object");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to get DXIL object");
         return false;
     }
 
@@ -449,7 +449,7 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
     HRESULT Result = LibaryReflection->GetDesc(&LibDesc);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to validate ray tracing shader");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to validate ray tracing shader");
         return false;
     }
 
@@ -464,7 +464,7 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
     Result = Function->GetDesc(&FuncDesc);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to validate ray tracing shader");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to validate ray tracing shader");
         return false;
     }
 
@@ -478,7 +478,7 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
     auto result = FuncName.Find(Buffer);
     if (result == FString::InvalidIndex)
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, *FuncName);
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, *FuncName);
         return false;
     }
 

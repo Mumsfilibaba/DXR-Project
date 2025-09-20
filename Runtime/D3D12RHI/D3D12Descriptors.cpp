@@ -148,7 +148,7 @@ bool FD3D12OfflineDescriptorHeap::AllocateHeap()
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&NewHeap));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12OfflineDescriptorHeap]: FAILED to Create DescriptorHeap");
+        D3D12_ERROR_CRITICAL("[FD3D12OfflineDescriptorHeap]: FAILED to Create DescriptorHeap");
         return false;
     }
     else
@@ -191,7 +191,7 @@ bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InB
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&NewHeap));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12OnlineDescriptorHeap]: FAILED to Create DescriptorHeap");
+        D3D12_ERROR_CRITICAL("[FD3D12OnlineDescriptorHeap]: FAILED to Create DescriptorHeap");
         return false;
     }
     else

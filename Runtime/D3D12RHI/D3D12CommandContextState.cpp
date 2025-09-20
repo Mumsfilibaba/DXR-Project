@@ -14,7 +14,7 @@ bool FD3D12CommandContextState::Initialize()
 {
     if (!CommonState.DescriptorCache.Initialize())
     {
-        D3D12_ERROR("Failed to initialize DescriptorCache");
+        D3D12_ERROR_CRITICAL("Failed to initialize DescriptorCache");
         return false;
     }
 

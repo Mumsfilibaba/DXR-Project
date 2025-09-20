@@ -32,7 +32,7 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
 
     // Maximum size for a upload buffer
     const uint64 MaxUploadSize = static_cast<uint64>(CVarMaxStagingAllocationSize.GetValue()) * 1024 * 1024;
-    if (Size < MaxUploadSize)
+    if (Size <= MaxUploadSize)
     {
         // Lock the buffer and all variable within
         SCOPED_LOCK(CriticalSection);
@@ -73,7 +73,7 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
             }
             else
             {
-                D3D12_ERROR("[FD3D12UploadHeapAllocator] Failed to create UploadBuffer");
+                D3D12_ERROR_CRITICAL("[FD3D12UploadHeapAllocator] Failed to create UploadBuffer");
                 return Allocation;
             }
 
@@ -117,7 +117,7 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
         HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&NewResource));
         if (FAILED(Result))
         {
-            D3D12_ERROR("[FD3D12UploadHeapAllocator] Failed to create UploadBuffer");
+            D3D12_ERROR_CRITICAL("[FD3D12UploadHeapAllocator] Failed to create UploadBuffer");
             return Allocation;
         }
         

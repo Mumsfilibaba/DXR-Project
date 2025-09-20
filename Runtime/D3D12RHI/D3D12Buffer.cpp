@@ -160,14 +160,14 @@ bool FD3D12Buffer::CreateCBV()
     {
         if (!View->AllocateHandle())
         {
-            D3D12_ERROR("Failed to allocate ConstantBuffer Descriptor");
+            D3D12_ERROR_CRITICAL("Failed to allocate ConstantBuffer Descriptor");
             return false;
         }
     }
 
     if (!View->CreateView(Resource.Get(), ViewDesc))
     {
-        D3D12_ERROR("Failed to Create ConstantBufferView");
+        D3D12_ERROR_CRITICAL("Failed to Create ConstantBufferView");
         return false;
     }
 

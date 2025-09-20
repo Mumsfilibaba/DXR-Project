@@ -205,7 +205,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         }
         else
         {
-            D3D12_ERROR("VertexShader cannot be nullptr");
+            D3D12_ERROR_CRITICAL("VertexShader cannot be nullptr");
             return false;
         }
     }
@@ -317,7 +317,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     }
     else
     {
-        D3D12_ERROR("RasterizerState cannot be nullptr");
+        D3D12_ERROR_CRITICAL("RasterizerState cannot be nullptr");
         return false;
     }
 
@@ -330,7 +330,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     }
     else
     {
-        D3D12_ERROR("DepthStencilState cannot be nullptr");
+        D3D12_ERROR_CRITICAL("DepthStencilState cannot be nullptr");
         return false;
     }
 
@@ -343,7 +343,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     }
     else
     {
-        D3D12_ERROR("BlendState cannot be nullptr");
+        D3D12_ERROR_CRITICAL("BlendState cannot be nullptr");
         return false;
     }
 
@@ -480,7 +480,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12GraphicsPipelineState]: FAILED to Create GraphicsPipelineState");
+        D3D12_ERROR_CRITICAL("[D3D12GraphicsPipelineState]: FAILED to Create GraphicsPipelineState");
         return false;
     }
 
@@ -564,7 +564,7 @@ bool FD3D12ComputePipelineState::Initialize()
     HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12ComputePipelineState]: FAILED to Create ComputePipelineState");
+        D3D12_ERROR_CRITICAL("[D3D12ComputePipelineState]: FAILED to Create ComputePipelineState");
         return false;
     }
 
@@ -945,7 +945,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     Result = TempStateObject->QueryInterface(IID_PPV_ARGS(&TempStateObjectProperties));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[D3D12RayTracingPipelineState] Failed to retrieve ID3D12StateObjectProperties");
+        D3D12_ERROR_CRITICAL("[D3D12RayTracingPipelineState] Failed to retrieve ID3D12StateObjectProperties");
         return false;
     }
 
@@ -1038,7 +1038,7 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
         hResult = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStream, IID_PPV_ARGS(&OutPipelineState));
         if (FAILED(hResult))
         {
-            D3D12_ERROR("Failed to create GraphicsPipelineState");
+            D3D12_ERROR_CRITICAL("Failed to create GraphicsPipelineState");
             return false;
         }
 
@@ -1069,7 +1069,7 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
         hResult = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStream, IID_PPV_ARGS(&OutPipelineState));
         if (FAILED(hResult))
         {
-            D3D12_ERROR("Failed to create ComputePipelineState");
+            D3D12_ERROR_CRITICAL("Failed to create ComputePipelineState");
             return false;
         }
 

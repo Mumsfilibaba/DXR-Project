@@ -20,7 +20,7 @@ bool FD3D12CommandAllocator::Initialize()
     }
     else
     {
-        D3D12_ERROR("[FD3D12CommandAllocator]: FAILED to create CommandAllocator");
+        D3D12_ERROR_CRITICAL("[FD3D12CommandAllocator]: FAILED to create CommandAllocator");
         return false;
     }
 }
@@ -149,7 +149,7 @@ bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAl
     }
     else
     {
-        D3D12_ERROR("[FD3D12CommandList]: FAILED to create CommandList");
+        D3D12_ERROR_CRITICAL("[FD3D12CommandList]: FAILED to create CommandList");
         return false;
     }
 }

@@ -43,7 +43,7 @@ bool FD3D12Queue::Initialize()
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandQueue(&Desc, IID_PPV_ARGS(&NewCommandQueue));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12Device]: Failed to create CommandQueue '%s'", ToString(QueueType));
+        D3D12_ERROR_CRITICAL("[FD3D12Device]: Failed to create CommandQueue '%s'", ToString(QueueType));
         return false;
     }
 

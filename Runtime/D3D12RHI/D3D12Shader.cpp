@@ -78,7 +78,7 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
 
         if (!IsLegalRegisterSpace(ShaderBindDesc))
         {
-            D3D12_ERROR("Shader Parameter '%s' has register space '%u' specified, which is invalid.", ShaderBindDesc.Name, ShaderBindDesc.Space);
+            D3D12_ERROR_CRITICAL("Shader Parameter '%s' has register space '%u' specified, which is invalid.", ShaderBindDesc.Name, ShaderBindDesc.Space);
             return false;
         }
 
@@ -177,7 +177,7 @@ bool FD3D12Shader::GetShaderReflection(FD3D12Shader* Shader)
 
     if (!GetShaderResourceBindings(Reflection.Get(), Shader, ShaderDesc.BoundResources))
     {
-        D3D12_ERROR("[D3D12BaseShader]: Error when analysing shader parameters");
+        D3D12_ERROR_CRITICAL("[D3D12BaseShader]: Error when analysing shader parameters");
         return false;
     }
 
@@ -224,7 +224,7 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
 
     if (!GetShaderResourceBindings(Function, Shader, FuncDesc.BoundResources))
     {
-        D3D12_ERROR("[FD3D12RayTracingShader]: Error when analysing shader parameters");
+        D3D12_ERROR_CRITICAL("[FD3D12RayTracingShader]: Error when analysing shader parameters");
         return false;
     }
 
@@ -263,7 +263,7 @@ bool FD3D12ComputeShader::Initialize()
 
     if (!GetShaderResourceBindings(Reflection.Get(), this, ShaderDesc.BoundResources))
     {
-        D3D12_ERROR("[D3D12BaseComputeShader]: Error when analysing shader parameters");
+        D3D12_ERROR_CRITICAL("[D3D12BaseComputeShader]: Error when analysing shader parameters");
         return false;
     }
 

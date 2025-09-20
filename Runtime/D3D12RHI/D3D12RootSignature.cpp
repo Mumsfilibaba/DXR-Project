@@ -292,7 +292,7 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     HRESULT Result = D3D12Functions::D3D12CreateRootSignatureDeserializer(BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&Deserializer));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
+        D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Retrieve Root Signature Desc");
         return false;
     }
 
@@ -311,7 +311,7 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     Result = GetDevice()->GetD3D12Device()->CreateRootSignature(1, Blob->GetBufferPointer(), Blob->GetBufferSize(), IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Create RootSignature");
+        D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Create RootSignature");
         return false;
     }
 
@@ -347,7 +347,7 @@ bool FD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateRootSignature(1, BlobWithRootSignature, BlobLengthInBytes, IID_PPV_ARGS(&RootSignature));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Create RootSignature");
+        D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Create RootSignature");
         return false;
     }
     else
@@ -364,7 +364,7 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
     HRESULT Result = D3D12Functions::D3D12SerializeRootSignature(&Desc, D3D_ROOT_SIGNATURE_VERSION_1, OutBlob, &ErrorBlob);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const CHAR*>(ErrorBlob->GetBufferPointer()));
+        D3D12_ERROR_CRITICAL("[FD3D12RootSignature]: FAILED to Serialize RootSignature. Error=%s", reinterpret_cast<const CHAR*>(ErrorBlob->GetBufferPointer()));
         return false;
     }
 
