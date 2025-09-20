@@ -11,7 +11,7 @@ typedef TSharedRef<FVulkanSwapChain>               FVulkanSwapChainRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
-struct FVulkanTextureHelper
+struct VulkanTextureHelper
 {
     static uint32 CalculateTextureRowPitch(VkFormat Format, uint32 Width);
     static uint32 CalculateTextureNumRows(VkFormat Format, uint32 Height);
@@ -25,27 +25,20 @@ public:
     static FVulkanTexture* ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
 
 public:
-
     FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanTexture();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-public:
-
     // FRHITexture Interface
     virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetVkImage()); }
-
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
-
-public:
 
     FVulkanResourceView* GetOrCreateImageView(const FVulkanHashableImageView& RenderTargetView);
     void DestroyImageViews();
@@ -64,7 +57,7 @@ public:
 
     VkFormat GetVkFormat() const
     {
-        return Format;
+        return CreateInfo.format;
     }
     
     // TODO: Solve in a cleaner way and remove this function
@@ -77,15 +70,13 @@ public:
 protected:
     FString                 DebugName;
     VkImage                 Image;
-    VkImageType             ImageType;
-    VkFormat                Format;
     FVulkanMemoryAllocation MemoryAllocation;
     VkImageCreateInfo       CreateInfo;
 
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
 
-    TArray<FVulkanResourceView*>  ImageViews;
+    TArray<FVulkanResourceView*> ImageViews;
     TMap<FVulkanHashableImageView, FVulkanResourceView*> ImageViewMap;
 };
 

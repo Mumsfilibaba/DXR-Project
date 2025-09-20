@@ -868,7 +868,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     CHECK(VulkanTexture != nullptr);
 
     const VkFormat Format = VulkanTexture->GetVkFormat();
-    const uint64 RequiredSize = FVulkanTextureHelper::CalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
+    const uint64 RequiredSize = VulkanTextureHelper::CalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
     
     // TODO: Check if there exists a Vulkan macro for this
     const uint64 Alignment = 256;
@@ -879,8 +879,8 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     CHECK(Source != nullptr);
     
-    const uint32 RowPitch = FVulkanTextureHelper::CalculateTextureRowPitch(Format, TextureRegion.Width);
-    const uint32 NumRows  = FVulkanTextureHelper::CalculateTextureNumRows(Format, TextureRegion.Height);
+    const uint32 RowPitch = VulkanTextureHelper::CalculateTextureRowPitch(Format, TextureRegion.Width);
+    const uint32 NumRows  = VulkanTextureHelper::CalculateTextureNumRows(Format, TextureRegion.Height);
     for (uint64 y = 0; y < NumRows; y++)
     {
         FMemory::Memcpy(Allocation.Memory, Source, RowPitch);

@@ -15,17 +15,12 @@ public:
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
-public:
-
     // FRHIBuffer Interface
     virtual void* GetRHINativeHandle() const { return reinterpret_cast<void*>(GetVkBuffer()); }
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-    
+
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
-
-public:
 
     VkBuffer GetVkBuffer() const
     {

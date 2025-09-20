@@ -87,7 +87,11 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 		return Selected;
 	};
 
-	const VkSurfaceFormatKHR DesiredFormat = { ConvertFormat(CreateInfo.Format), CreateInfo.ColorSpace };
+	const VkSurfaceFormatKHR DesiredFormat =
+	{ 
+		ConvertFormat(CreateInfo.Format),
+		CreateInfo.ColorSpace
+	};
 	
 	VkSurfaceFormatKHR SelectedFormat = MatchFormat(DesiredFormat);
 	if (SelectedFormat.format == VK_FORMAT_UNDEFINED)
@@ -204,7 +208,7 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 		VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR : Capabilities.currentTransform;
 
 	// Composite alpha
-	const auto PickCompositeAlpha = [](VkCompositeAlphaFlagsKHR Supported) -> VkCompositeAlphaFlagBitsKHR
+	const VkCompositeAlphaFlagBitsKHR CompositeAlpha = [](VkCompositeAlphaFlagsKHR Supported) -> VkCompositeAlphaFlagBitsKHR
 	{
 		const VkCompositeAlphaFlagBitsKHR Preferences[] =
 		{
@@ -223,9 +227,18 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 		}
 
 		return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	};
+	}(Capabilities.supportedCompositeAlpha);
 
-	const VkCompositeAlphaFlagBitsKHR CompositeAlpha = PickCompositeAlpha(Capabilities.supportedCompositeAlpha);
+	// Ensure that all the image usage flags are supported
+	const VkImageUsageFlags SupportedUsage = Capabilities.supportedUsageFlags;
+	const VkImageUsageFlags RequestedUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	
+	const VkImageUsageFlags FinalUsage = RequestedUsage & SupportedUsage;
+	if (FinalUsage != RequestedUsage)
+	{
+		VULKAN_ERROR_CRITICAL("Surface does not support the requested ImageUsage flags");
+		return false;
+	}
 
 	// Create swapchain
 	VkSwapchainCreateInfoKHR SwapChainCreateInfo = { };
@@ -238,7 +251,7 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 	SwapChainCreateInfo.imageColorSpace       = SelectedFormat.colorSpace;
 	SwapChainCreateInfo.imageExtent           = CurrentExtent;
 	SwapChainCreateInfo.imageArrayLayers      = 1;
-	SwapChainCreateInfo.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	SwapChainCreateInfo.imageUsage            = FinalUsage;
 	SwapChainCreateInfo.imageSharingMode      = bSameFamily ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
 	SwapChainCreateInfo.queueFamilyIndexCount = bSameFamily ? 0u : 2u;
 	SwapChainCreateInfo.pQueueFamilyIndices   = bSameFamily ? nullptr : QueueFamilyIndices;
@@ -312,6 +325,12 @@ VkResult FVulkanSwapChainResource::AcquireNextImage(FVulkanSemaphore* AcquireSem
 	if (GVulkanReportSwapChainAcquireImageNonSuccessResult && Result != VK_SUCCESS)
 	{
 		VULKAN_WARNING("FVulkanSwapChainResource::AcquireNextImage vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+	}
+	
+	// BufferIndex is only valid on SUCCESS/SUBOPTIMAL
+	if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+	{
+		BufferIndex = 0;
 	}
 
 	// Caller should treat OUT_OF_DATE -> recreate now, and SUBOPTIMAL -> recreate soon/skip frame.

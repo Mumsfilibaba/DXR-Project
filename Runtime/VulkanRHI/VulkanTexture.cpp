@@ -4,7 +4,7 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 
-uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
+uint32 VulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
     if (bIsBlockCompressed)
@@ -23,13 +23,13 @@ uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Wi
     }
 }
 
-uint32 FVulkanTextureHelper::CalculateTextureNumRows(VkFormat Format, uint32 Height)
+uint32 VulkanTextureHelper::CalculateTextureNumRows(VkFormat Format, uint32 Height)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
-    return bIsBlockCompressed ? Math::AlignUp<uint32>(1, (Height + 3) / 4) : Height;
+    return bIsBlockCompressed ? Math::Max<uint32>(1, (Height + 3) / 4) : Height;
 }
 
-uint64 FVulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
+uint64 VulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
     if (bIsBlockCompressed)
@@ -89,13 +89,14 @@ FVulkanTexture* FVulkanTexture::ResourceCast(FVulkanCommandContext* InCommandCon
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
     , FVulkanDeviceChild(InDevice)
+    , DebugName()
     , Image(VK_NULL_HANDLE)
-    , Format(VK_FORMAT_UNDEFINED)
     , MemoryAllocation()
+    , CreateInfo{}
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
     , ImageViews()
-    , DebugName()
+    , ImageViewMap()
 {
 }
 
@@ -132,6 +133,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageCreateInfo.imageType             = ConvertTextureDimension(Info.Dimension);
+    ImageCreateInfo.format                = ConvertFormat(Info.Format);
     ImageCreateInfo.extent.width          = Info.Extent.X;
     ImageCreateInfo.extent.height         = Info.Extent.Y;
     ImageCreateInfo.mipLevels             = Info.NumMipLevels;
@@ -141,9 +143,6 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     ImageCreateInfo.samples               = SampleCount;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
-
-    // NOTE: We store the format so that we have easy access to it later
-    ImageCreateInfo.format = Format = ConvertFormat(Info.Format);
 
     if (IsTypelessFormat(Info.Format))
     {
@@ -302,10 +301,10 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = Image;
-        ImageBarrier.srcAccessMask                   = VK_ACCESS_NONE;
-        ImageBarrier.dstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
-        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+		ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+		ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+		ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
@@ -336,8 +335,8 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
             FTextureRegion2D TextureRegion(Width, Height);
             InCommandContext->UpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
 
-            Width  = Width / 2;
-            Height = Height / 2;
+			Width  = Math::Max(1u, Width >> 1);
+			Height = Math::Max(1u, Height >> 1);
         }
 
         // NOTE: Transition into InitialAccess
@@ -358,10 +357,10 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = Image;
-        ImageBarrier.srcAccessMask                   = VK_ACCESS_NONE;
-        ImageBarrier.dstAccessMask                   = VK_ACCESS_NONE;
-        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+		ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+		ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE;
+		ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+		ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
@@ -493,11 +492,10 @@ void FVulkanTexture::SetVkImage(VkImage InImage)
     DestroyImageViews();
     Image = InImage;
 
-    // NOTE: Use the format in the description to set the native format if it is not set yet
-    // this should only happen for BackBuffers
-    if (Format == VK_FORMAT_UNDEFINED)
+    // NOTE: Use the format in the description to set the native format if it is not set yet this should only happen for BackBuffers
+    if (CreateInfo.format == VK_FORMAT_UNDEFINED)
     {
-        Format = ConvertFormat(Info.Format);
+        CreateInfo.format = ConvertFormat(Info.Format);
     }
 }
 

@@ -543,26 +543,16 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , TimingQueryPoolManager(nullptr)
     , OcclusionQueryPoolManager(nullptr)
 {
-    // Release DescriptorSetCache
     DescriptorSetCache = new FVulkanDescriptorSetCache(this);
-    
-    // Release all QueryPools
     TimingQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Timestamp);
     OcclusionQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Occlusion);
-
-    // Release all PipelineLayoutManager
     PipelineLayoutManager = new FVulkanPipelineLayoutManager(this);
-
-    // Create RenderPassCache
     RenderPassCache = new FVulkanRenderPassCache(this);
 
     // Ensure that the upload allocator is released before we destroy the device
     UploadHeap = new FVulkanUploadHeapAllocator(this);
 
-    // Release all Fences
     FenceManager = new FVulkanFenceManager(this);
-    
-    // Release all heaps (Which will check for memory leaks)
     MemoryManager = new FVulkanMemoryManager(this);
 }
 
@@ -593,26 +583,16 @@ FVulkanDevice::~FVulkanDevice()
         delete PipelineStateManager;
     }
     
-    // Release DescriptorSetCache
     SAFE_DELETE(DescriptorSetCache);
-    
-    // Release all QueryPools
     SAFE_DELETE(TimingQueryPoolManager);
     SAFE_DELETE(OcclusionQueryPoolManager);
-
-    // Release all PipelineLayoutManager
     SAFE_DELETE(PipelineLayoutManager);
-
-    // Ensure that all RenderPasses and FrameBuffers are destroyed
     SAFE_DELETE(RenderPassCache);
 
     // Ensure that the upload allocator is released before we destroy the device
     SAFE_DELETE(UploadHeap);
 
-    // Release all Fences
     SAFE_DELETE(FenceManager);
-    
-    // Release all heaps (Which will check for memory leaks)
     SAFE_DELETE(MemoryManager);
     
     // Destroy the device here
@@ -654,16 +634,16 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     TArray<const CHAR*> EnabledExtensionNames;
     for (const VkExtensionProperties& ExtensionProperty : AvailableDeviceExtensions)
     {
-        const auto CompareExtension = [=](const CHAR* Other) -> bool
-        {
-            return FCString::Strcmp(ExtensionProperty.extensionName, Other) == 0;
-        };
-
         // Filter out some extensions based on CVars etc. (If an extension is available but we want to disable it for debugging or similar)
         if (!FilterExtensions(ExtensionProperty))
         {
             continue;
         }
+
+        const auto CompareExtension = [=](const CHAR* Other) -> bool
+        {
+            return FCString::Strcmp(ExtensionProperty.extensionName, Other) == 0;
+        };
 
         if (DeviceDesc.RequiredExtensionNames.ContainsWithPredicate(CompareExtension) || DeviceDesc.OptionalExtensionNames.ContainsWithPredicate(CompareExtension))
         {
@@ -775,11 +755,13 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     {
         DeviceFeaturesVulkan12.bufferDeviceAddress = VK_TRUE;
     }
+
     // Enable 'timelineSemaphore' if available
     if (AvailableDeviceFeaturesVulkan12.timelineSemaphore)
     {
         DeviceFeaturesVulkan12.timelineSemaphore = VK_TRUE;
     }
+    
     // Enable 'descriptorIndexing' if available
     if (AvailableDeviceFeaturesVulkan12.descriptorIndexing)
     {
