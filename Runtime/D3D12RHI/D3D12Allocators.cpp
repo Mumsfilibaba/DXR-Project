@@ -17,10 +17,16 @@ FD3D12UploadHeapAllocator::FD3D12UploadHeapAllocator(FD3D12Device* InDevice)
 
 FD3D12UploadHeapAllocator::~FD3D12UploadHeapAllocator()
 {
+	if (Resource && MappedMemory)
+	{
+	    Resource->Unmap(0, nullptr);
+		MappedMemory = nullptr;
+    }
+	
+    Resource.Reset();
+
     BufferSize    = 0;
     CurrentOffset = 0;
-    MappedMemory  = nullptr;
-    Resource      = nullptr;
 }
 
 FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 Alignment)
@@ -39,9 +45,10 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
 
         uint64 Offset    = Math::AlignUp<uint64>(CurrentOffset, Alignment);
         uint64 NewOffset = Offset + Size;
+
+        // Allocate a new resource
         if (NewOffset >= BufferSize)
         {
-            // Allocate a new 
             D3D12_HEAP_PROPERTIES HeapProperties;
             FMemory::Memzero(&HeapProperties);
 
@@ -65,29 +72,45 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
 
             TComPtr<ID3D12Resource> NewResource;
             HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&NewResource));
-            if (SUCCEEDED(Result))
-            {
-                Resource = NewResource;
-                Resource->SetName(L"FD3D12UploadHeapAllocator Buffer");
-                Resource->Map(0, nullptr, reinterpret_cast<void**>(&MappedMemory));
-            }
-            else
+            if (FAILED(Result))
             {
                 D3D12_ERROR_CRITICAL("[FD3D12UploadHeapAllocator] Failed to create UploadBuffer");
                 return Allocation;
             }
+            else
+            {
+                NewResource->SetName(L"FD3D12UploadHeapAllocator Buffer");
+            }
 
+			uint8* NewMappedMemory = nullptr;
+			Result = NewResource->Map(0, nullptr, reinterpret_cast<void**>(&NewMappedMemory));
+			if (FAILED(Result) || !NewMappedMemory)
+			{
+				D3D12_ERROR_CRITICAL("[FD3D12UploadHeapAllocator] Failed to map UploadBuffer");
+				return Allocation;
+			}
+
+            // Unmap the previous resource
+			if (Resource && MappedMemory)
+			{
+				Resource->Unmap(0, nullptr);
+			}
+
+            // Update all of the variables
             CHECK(Size <= MaxUploadSize);
 
-            BufferSize = MaxUploadSize;
-            Offset     = 0;
-            NewOffset  = Offset + Size;
+            BufferSize   = MaxUploadSize;
+            Offset       = 0;
+            NewOffset    = Offset + Size;
+			Resource     = NewResource;
+			MappedMemory = NewMappedMemory;
         }
 
         Allocation.Resource       = Resource;
         Allocation.ResourceOffset = Offset;
         Allocation.Memory         = MappedMemory + Offset;
-        CurrentOffset             = NewOffset;
+
+        CurrentOffset = NewOffset;
     }
     else
     {
@@ -120,12 +143,22 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
             D3D12_ERROR_CRITICAL("[FD3D12UploadHeapAllocator] Failed to create UploadBuffer");
             return Allocation;
         }
+		else
+		{
+			NewResource->SetName(L"FD3D12UploadHeapAllocator Buffer");
+		}
         
-        NewResource->SetName(L"FD3D12UploadHeapAllocator Buffer");
-        NewResource->Map(0, nullptr, reinterpret_cast<void**>(&Allocation.Memory));
+        uint8* NewMappedMemory = nullptr;
+		Result = NewResource->Map(0, nullptr, reinterpret_cast<void**>(&NewMappedMemory));
+		if (FAILED(Result) || !NewMappedMemory)
+		{
+			D3D12_ERROR_CRITICAL("[FD3D12UploadHeapAllocator] Failed to map UploadBuffer");
+			return Allocation;
+		}
 
-        Allocation.Resource       = NewResource;
         Allocation.ResourceOffset = 0;
+        Allocation.Memory         = NewMappedMemory;
+        Allocation.Resource       = NewResource;
     }
 
     return Allocation;

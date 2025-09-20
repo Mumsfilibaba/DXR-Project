@@ -101,7 +101,9 @@ void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D
     }
 
     // Add new resource barrier
-    D3D12_RESOURCE_BARRIER ResourceBarrier;
+	D3D12_RESOURCE_BARRIER ResourceBarrier;
+	FMemory::Memzero(&ResourceBarrier, sizeof(ResourceBarrier));
+
     ResourceBarrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
     ResourceBarrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     ResourceBarrier.Transition.pResource   = Resource;
@@ -129,6 +131,8 @@ void FResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource
     }
 
     D3D12_RESOURCE_BARRIER ResourceBarrier;
+    FMemory::Memzero(&ResourceBarrier, sizeof(ResourceBarrier));
+
     ResourceBarrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     ResourceBarrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     ResourceBarrier.UAV.pResource = Resource;
@@ -340,35 +344,25 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     D3D12_HEAP_TYPE HeapType = Resource->GetHeapType();
     if (HeapType == D3D12_HEAP_TYPE_UPLOAD)
     {
-        const D3D12_RANGE BufferRange = 
-        { 
-            BufferRegion.Offset,
-            BufferRegion.Offset + BufferRegion.Size
-        };
-
-        // Map buffer memory
-        uint8* BufferData = reinterpret_cast<uint8*>(Resource->MapRange(0, &BufferRange));
+        uint8* BufferData = reinterpret_cast<uint8*>(Resource->MapRange(0, nullptr));
         if (!BufferData)
         {
             D3D12_ERROR("Failed to map buffer data");
             return;
         }
 
-        // Copy over relevant data
         FMemory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
 
-        // Unmap buffer memory
-        Resource->UnmapRange(0, &BufferRange);
+        const D3D12_RANGE WrittenRange = { BufferRegion.Offset, BufferRegion.Offset + BufferRegion.Size };
+        Resource->UnmapRange(0, &WrittenRange);
     }
     else
     {
         FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(BufferRegion.Size, 1);
         FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
 
-        // Copy on the GPU
         GetCommandList()->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource.Get(), Allocation.ResourceOffset, BufferRegion.Size);
 
-        // Defer deletion of the upload buffer
         FD3D12RHI::Get()->DeferDeletion(Allocation.Resource.Get());
     }
 }

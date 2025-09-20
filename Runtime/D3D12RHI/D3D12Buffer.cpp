@@ -75,7 +75,6 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         {
             FD3D12Resource* D3D12Resource = GetD3D12Resource();
 
-            // Map buffer memory
             void* BufferData = D3D12Resource->MapRange(0, nullptr);
             if (!BufferData)
             {
@@ -83,10 +82,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
                 return false;
             }
 
-            // Copy over relevant data
             FMemory::Memcpy(BufferData, InInitialData, Info.Size);
-
-            // Unmap buffer memory
             D3D12Resource->UnmapRange(0, nullptr);
         }
         else
@@ -153,8 +149,8 @@ bool FD3D12Buffer::CreateCBV()
     D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
     FMemory::Memzero(&ViewDesc);
 
+	ViewDesc.SizeInBytes = Math::AlignUp<uint32>(static_cast<uint32>(Resource->GetSize()), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     ViewDesc.BufferLocation = Resource->GetGPUVirtualAddress();
-    ViewDesc.SizeInBytes    = static_cast<uint32>(Resource->GetSize());
 
     if (FD3D12_CPU_DESCRIPTOR_HANDLE(0) == View->GetOfflineHandle())
     {

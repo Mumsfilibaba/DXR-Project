@@ -11,6 +11,7 @@ public:
     ~FD3D12CommandContextState() = default;
 
     bool Initialize();
+
     void BindGraphicsStates();
     void BindComputeState();
     void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
@@ -92,7 +93,7 @@ public:
         OutNumViewports = GraphicsState.NumViewports;
     }
 
-    FORCEINLINE void GetViewports(D3D12_RECT* ScissorRects, uint32& OutNumScissorRects) const
+    FORCEINLINE void GetScissorRects(D3D12_RECT* ScissorRects, uint32& OutNumScissorRects) const
     {
         if (ScissorRects)
         {

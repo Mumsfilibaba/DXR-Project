@@ -50,32 +50,35 @@ void FD3D12CommandContextState::BindGraphicsStates()
         GraphicsState.bBindRenderTargets = false;
     }
 
-    if (GraphicsState.bBindShadingRateImage)
+    if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
     {
-        ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetD3D12Resource()->GetD3D12Resource() : nullptr;
-        Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
-        GraphicsState.bBindShadingRateImage = false;
-    }
+		if (GraphicsState.bBindShadingRateImage)
+		{
+			ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetD3D12Resource()->GetD3D12Resource() : nullptr;
+            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
+			GraphicsState.bBindShadingRateImage = false;
+		}
 
-    if (GraphicsState.bBindShadingRate)
-    {
-        D3D12_SHADING_RATE_COMBINER Combiners[] =
-        {
-            D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-            D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-        };
+		if (GraphicsState.bBindShadingRate)
+		{
+			D3D12_SHADING_RATE_COMBINER Combiners[] =
+			{
+				D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+				D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+			};
 
-        Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
-        GraphicsState.bBindShadingRate = false;
+            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
+			GraphicsState.bBindShadingRate = false;
+		}
     }
 
     BindResources(RootSignture, ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
     BindSamplers(RootSignture, ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
 
-    if (ComputeState.bBindShaderConstants)
+    if (GraphicsState.bBindShaderConstants)
     {
         BindShaderConstants(RootSignture, ShaderVisibility_Pixel);
-        ComputeState.bBindShaderConstants = false;
+        GraphicsState.bBindShaderConstants = false;
     }
 
     if (GraphicsState.bBindVertexBuffers)
