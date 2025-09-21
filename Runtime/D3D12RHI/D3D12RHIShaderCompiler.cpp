@@ -3,8 +3,7 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "D3D12RHI/D3D12RHIShaderCompiler.h"
-
-DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
+#include "D3D12RHI/D3D12Loader.h"
 
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
@@ -76,7 +75,6 @@ static LPCWSTR GetShaderModelText(EShaderModel Model)
 
     return L"0_0";
 }
-
 
 class FExistingBlob : public IDxcBlob
 {
@@ -156,7 +154,6 @@ FD3D12ShaderCompiler::FD3D12ShaderCompiler()
     , DxLibrary(nullptr)
     , DxLinker(nullptr)
     , DxIncludeHandler(nullptr)
-    , DxCompilerDLL(0)
 {
     GD3D12ShaderCompiler = this;
 }
@@ -170,8 +167,6 @@ FD3D12ShaderCompiler::~FD3D12ShaderCompiler()
     DxLinker.Reset();
     DxIncludeHandler.Reset();
     DxReflection.Reset();
-
-    ::FreeLibrary(DxCompilerDLL);
 }
 
 bool FD3D12ShaderCompiler::CompileFromFile(const FString& FilePath, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
@@ -222,7 +217,7 @@ bool FD3D12ShaderCompiler::GetLibraryReflection(FD3D12Shader* Shader, ID3D12Libr
 bool FD3D12ShaderCompiler::HasRootSignature(FD3D12Shader* Shader)
 {
     TComPtr<IDxcContainerReflection> Reflection;
-    HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
+    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create IDxcContainerReflection");
@@ -249,28 +244,14 @@ bool FD3D12ShaderCompiler::HasRootSignature(FD3D12Shader* Shader)
 
 bool FD3D12ShaderCompiler::Initialize()
 {
-    DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
-    if (!DxCompilerDLL)
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to load dxcompiler.dll");
-        return false;
-    }
-
-    DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbol<DxcCreateInstanceProc>("DxcCreateInstance", DxCompilerDLL);
-    if (!DxcCreateInstanceFunc)
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to load DxcCreateInstance");
-        return false;
-    }
-
-    HRESULT Result = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
+    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&DxCompiler));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxCompiler");
         return false;
     }
 
-    Result = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
+    Result = D3D12Functions::DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&DxLibrary));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxLibrary");
@@ -284,14 +265,14 @@ bool FD3D12ShaderCompiler::Initialize()
         return false;
     }
 
-    Result = DxcCreateInstanceFunc(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
+    Result = D3D12Functions::DxcCreateInstance(CLSID_DxcLinker, IID_PPV_ARGS(&DxLinker));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxLinker");
         return false;
     }
 
-    Result = DxcCreateInstanceFunc(CLSID_DxcContainerReflection, IID_PPV_ARGS(&DxReflection));
+    Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&DxReflection));
     if (FAILED(Result))
     {
         D3D12_ERROR_CRITICAL("[FD3D12ShaderCompiler]: FAILED to create DxReflection");

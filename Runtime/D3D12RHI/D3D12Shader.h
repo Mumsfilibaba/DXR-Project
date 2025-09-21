@@ -3,7 +3,6 @@
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Constants.h"
-
 #include <d3d12shader.h>
 
 enum EShaderVisibility : int32

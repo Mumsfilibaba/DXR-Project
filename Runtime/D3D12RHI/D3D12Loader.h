@@ -1,4 +1,5 @@
 #pragma once
+#include "RHI/ShaderCompilerInclude.h"
 #include "D3D12RHI/D3D12Constants.h"
 #if WIN10_BUILD_17134
     #include <dxgi1_6.h>
@@ -17,9 +18,10 @@ public:
     static void Release();
 
 private:
-    static void* DXGILib;
-    static void* D3D12Lib;
-    static void* PIXLib;
+    static void* DXGILibrary;
+    static void* D3D12Library;
+    static void* PIXLibrary;
+    static void* DXCLibrary;
 };
 
 struct D3D12Functions
@@ -35,4 +37,6 @@ struct D3D12Functions
     static PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializer;
     
     static PFN_SetMarkerOnCommandList SetMarkerOnCommandList;
+
+    static DxcCreateInstanceProc DxcCreateInstance;
 };
