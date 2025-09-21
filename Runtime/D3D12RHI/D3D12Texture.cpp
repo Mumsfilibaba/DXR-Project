@@ -157,7 +157,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         }
         else if (Info.IsTexture3D())
         {
-            ViewDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
+            ViewDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
             ViewDesc.Texture3D.MipLevels           = Info.NumMipLevels;
             ViewDesc.Texture3D.MostDetailedMip     = 0;
             ViewDesc.Texture3D.ResourceMinLODClamp = 0.0f;
@@ -219,8 +219,8 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         InCommandContext->StartContext();
         InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
-        // Transfer all the miplevels
-        uint32 Width  = Info.Extent.X;
+        // Transfer all mip levels
+        uint32 Width = Info.Extent.X;
         uint32 Height = Info.Extent.Y;
         for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
         {
@@ -230,7 +230,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
                 break;
             }
 
-            // If there is no data for this miplevel we break
+            // If there is no data for this mip level we break
             void* Data = InitialData->GetMipData(Index);
             if (!Data)
             {
@@ -240,8 +240,8 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
             FTextureRegion2D TextureRegion(Width, Height);
             InCommandContext->UpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
 
-            Width  = Width / 2;
-            Height = Height / 2;
+			Width = Math::Max(1u, Width >> 1);
+			Height = Math::Max(1u, Height >> 1);
         }
 
         // NOTE: Transition into InitialAccess

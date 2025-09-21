@@ -618,8 +618,8 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIBufferUA
 
 FRHIComputeShader* FD3D12RHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12ComputeShader> NewShader = new FD3D12ComputeShader(GetDevice(), ShaderCode);
-    if (!NewShader->Initialize())
+    TSharedRef<FD3D12ComputeShader> NewShader = new FD3D12ComputeShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
     }
@@ -631,8 +631,8 @@ FRHIComputeShader* FD3D12RHI::CreateComputeShader(const TArray<uint8>& ShaderCod
 
 FRHIVertexShader* FD3D12RHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12VertexShader> NewShader = new FD3D12VertexShader(GetDevice(), ShaderCode);
-    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12VertexShader> NewShader = new FD3D12VertexShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
     }
@@ -644,8 +644,8 @@ FRHIVertexShader* FD3D12RHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 
 FRHIHullShader* FD3D12RHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12HullShader> NewShader = new FD3D12HullShader(GetDevice(), ShaderCode);
-    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12HullShader> NewShader = new FD3D12HullShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
     }
@@ -657,8 +657,8 @@ FRHIHullShader* FD3D12RHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 
 FRHIDomainShader* FD3D12RHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12DomainShader> NewShader = new FD3D12DomainShader(GetDevice(), ShaderCode);
-    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12DomainShader> NewShader = new FD3D12DomainShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
     }
@@ -670,8 +670,8 @@ FRHIDomainShader* FD3D12RHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 
 FRHIGeometryShader* FD3D12RHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12GeometryShader> NewShader = new FD3D12GeometryShader(GetDevice(), ShaderCode);
-    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12GeometryShader> NewShader = new FD3D12GeometryShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
     }
@@ -697,8 +697,8 @@ FRHIAmplificationShader* FD3D12RHI::CreateAmplificationShader(const TArray<uint8
 
 FRHIPixelShader* FD3D12RHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12PixelShader> NewShader = new FD3D12PixelShader(GetDevice(), ShaderCode);
-    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12PixelShader> NewShader = new FD3D12PixelShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
     }
@@ -710,8 +710,8 @@ FRHIPixelShader* FD3D12RHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 
 FRHIRayGenShader* FD3D12RHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayGenShader> NewShader = new FD3D12RayGenShader(GetDevice(), ShaderCode);
-    if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12RayGenShader> NewShader = new FD3D12RayGenShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
         return nullptr;
@@ -724,8 +724,8 @@ FRHIRayGenShader* FD3D12RHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 
 FRHIRayAnyHitShader* FD3D12RHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayAnyHitShader> NewShader = new FD3D12RayAnyHitShader(GetDevice(), ShaderCode);
-    if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12RayAnyHitShader> NewShader = new FD3D12RayAnyHitShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
         return nullptr;
@@ -738,8 +738,8 @@ FRHIRayAnyHitShader* FD3D12RHI::CreateRayAnyHitShader(const TArray<uint8>& Shade
 
 FRHIRayClosestHitShader* FD3D12RHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayClosestHitShader> NewShader = new FD3D12RayClosestHitShader(GetDevice(), ShaderCode);
-    if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
+	TSharedRef<FD3D12RayClosestHitShader> NewShader = new FD3D12RayClosestHitShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
         return nullptr;
@@ -752,8 +752,8 @@ FRHIRayClosestHitShader* FD3D12RHI::CreateRayClosestHitShader(const TArray<uint8
 
 FRHIRayMissShader* FD3D12RHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayMissShader> NewShader = new FD3D12RayMissShader(GetDevice(), ShaderCode);
-    if (!FD3D12RayTracingShader::GetRayTracingShaderReflection(NewShader.Get()))
+    TSharedRef<FD3D12RayMissShader> NewShader = new FD3D12RayMissShader(GetDevice());
+    if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
         return nullptr;

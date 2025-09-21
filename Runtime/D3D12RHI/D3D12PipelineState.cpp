@@ -772,7 +772,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
         FD3D12RootSignatureLayout RayGenLocalResourceCounts;
         RayGenLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         RayGenLocalResourceCounts.bAllowInputAssembler                 = false;
-        RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12RayGen->GetRTLocalResourceCount();
+        RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12RayGen->GetLocalRayTracingResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(RayGenLocalResourceCounts));
         if (!HitLocalRootSignature)
@@ -841,7 +841,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
         FD3D12RootSignatureLayout AnyHitLocalResourceCounts;
         AnyHitLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         AnyHitLocalResourceCounts.bAllowInputAssembler                 = false;
-        AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12AnyHit->GetRTLocalResourceCount();
+        AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12AnyHit->GetLocalRayTracingResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(AnyHitLocalResourceCounts));
         if (!HitLocalRootSignature)
@@ -864,7 +864,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
         FD3D12RootSignatureLayout ClosestHitLocalResourceCounts;
         ClosestHitLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         ClosestHitLocalResourceCounts.bAllowInputAssembler                 = false;
-        ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12ClosestHit->GetRTLocalResourceCount();
+        ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12ClosestHit->GetLocalRayTracingResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
         if (!HitLocalRootSignature)
@@ -887,7 +887,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
         FD3D12RootSignatureLayout MissLocalResourceCounts;
         MissLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
         MissLocalResourceCounts.bAllowInputAssembler                 = false;
-        MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12MissShader->GetRTLocalResourceCount();
+        MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12MissShader->GetLocalRayTracingResourceCount();
 
         MissLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(MissLocalResourceCounts));
         if (!MissLocalRootSignature)
@@ -955,9 +955,9 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     return true;
 }
 
-void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportName)
+void* FD3D12RayTracingPipelineState::GetShaderIdentifier(const FString& ExportName)
 {
-    if (FD3D12RayTracingShaderIdentifer* MapItem = ShaderIdentifers.Find(ExportName))
+    if (FD3D12RayTracingShaderIdentifier* MapItem = ShaderIdentifiers.Find(ExportName))
     {
         return MapItem->ShaderIdentifier;
     }
@@ -971,10 +971,10 @@ void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportNam
             return nullptr;
         }
 
-        FD3D12RayTracingShaderIdentifer Identifier;
+        FD3D12RayTracingShaderIdentifier Identifier;
         FMemory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-        FD3D12RayTracingShaderIdentifer& NewIdentifier = ShaderIdentifers.Add(ExportName, Identifier);
+        FD3D12RayTracingShaderIdentifier& NewIdentifier = ShaderIdentifiers.Add(ExportName, Identifier);
         return NewIdentifier.ShaderIdentifier;
     }
 }

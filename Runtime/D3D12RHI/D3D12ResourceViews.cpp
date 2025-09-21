@@ -4,7 +4,7 @@
 
 FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
     : FD3D12DeviceChild(InDevice)
-    , Resource(nullptr)
+    , ViewResource(nullptr)
     , OfflineHeap(InOfflineHeap)
     , Descriptor()
 {
@@ -23,7 +23,11 @@ bool FD3D12View::AllocateHandle()
 
 void FD3D12View::InvalidateAndFreeHandle()
 {
-    OfflineHeap.Free(Descriptor);
+	if (Descriptor)
+	{
+	    OfflineHeap.Free(Descriptor);
+        Descriptor = {};
+    }
 }
 
 FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
@@ -41,8 +45,9 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
         return false;
     }
 
-    Resource = MakeSharedRef<FD3D12Resource>(InResource);
+    ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
+
     GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, GetOfflineHandle());
     return true;
 }
@@ -63,14 +68,14 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
         return false;
     }
 
-    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
+    ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
 
     ID3D12Resource* NativeResource = nullptr;
-    if (FD3D12View::Resource)
+    if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0);
-        NativeResource = FD3D12View::Resource->GetD3D12Resource();
+        NativeResource = ViewResource->GetD3D12Resource();
     }
 
     GetDevice()->GetD3D12Device()->CreateShaderResourceView(NativeResource, &Desc, GetOfflineHandle());
@@ -94,9 +99,9 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
         return false;
     }
 
-    Desc            = InDesc;
+    ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
     CounterResource = InCounterResource;
-    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
+    Desc = InDesc;
 
     ID3D12Resource* NativeCounterResource = nullptr;
     if (CounterResource)
@@ -105,10 +110,10 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
     }
 
     ID3D12Resource* NativeResource = nullptr;
-    if (FD3D12View::Resource)
+    if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0);
-        NativeResource = FD3D12View::Resource->GetD3D12Resource();
+        NativeResource = ViewResource->GetD3D12Resource();
     }
 
     GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, GetOfflineHandle());
@@ -130,14 +135,14 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
         return false;
     }
 
+    ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
-    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
 
     ID3D12Resource* NativeResource = nullptr;
-    if (FD3D12View::Resource)
+    if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0);
-        NativeResource = FD3D12View::Resource->GetD3D12Resource();
+        NativeResource = ViewResource->GetD3D12Resource();
     }
 
     GetDevice()->GetD3D12Device()->CreateRenderTargetView(NativeResource, &Desc, GetOfflineHandle());
@@ -159,14 +164,14 @@ bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_
         return false;
     }
 
+    ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
-    FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
     
     ID3D12Resource* NativeResource = nullptr;
-    if (FD3D12View::Resource)
+    if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0);
-        NativeResource = FD3D12View::Resource->GetD3D12Resource();
+        NativeResource = ViewResource->GetD3D12Resource();
     }
 
     GetDevice()->GetD3D12Device()->CreateDepthStencilView(NativeResource, &Desc, GetOfflineHandle());

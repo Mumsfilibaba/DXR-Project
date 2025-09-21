@@ -377,7 +377,7 @@ private:
     TSharedRef<FD3D12ComputeShader> Shader;
 };
 
-struct FD3D12RayTracingShaderIdentifer
+struct FD3D12RayTracingShaderIdentifier
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
@@ -399,7 +399,7 @@ public:
         StateObject->SetName(*WideName);
     }
 
-    void* GetShaderIdentifer(const FString& ExportName);
+    void* GetShaderIdentifier(const FString& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetD3D12StateObject() const 
     {
@@ -424,7 +424,7 @@ private:
     FD3D12RootSignatureRef                         RayGenLocalRootSignature;
     FD3D12RootSignatureRef                         MissLocalRootSignature;
     FD3D12RootSignatureRef                         HitLocalRootSignature;
-    TMap<FString, FD3D12RayTracingShaderIdentifer> ShaderIdentifers;
+    TMap<FString, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
 };
 
 struct FD3D12PipelineDiskHeader

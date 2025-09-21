@@ -157,6 +157,7 @@ public:
     ~FVulkanShader();
 
     bool Initialize(const TArray<uint8>& InCode);
+
     TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
     bool PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex);
 
@@ -342,7 +343,6 @@ public:
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&SpirvCode); }
     virtual void* GetRHIBaseInterface() { return static_cast<FVulkanShader*>(this); }
 };
-
 
 FORCEINLINE FVulkanShader* GetVulkanShader(FRHIShader* Shader)
 {

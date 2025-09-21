@@ -29,7 +29,7 @@ public:
     }
 
 private:
-    bool RetriveBackBuffers();
+    bool RetrieveBackBuffers();
 
     TComPtr<IDXGISwapChain3>   SwapChain;
     FD3D12CommandContext*      CommandContext;

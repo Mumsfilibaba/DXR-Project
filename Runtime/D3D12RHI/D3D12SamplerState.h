@@ -19,36 +19,36 @@ public:
     };
 
     FD3D12SamplerStateIdentifier()
-        : Identifer(InvalidIdentifier)
+        : Identifier(InvalidIdentifier)
     {
     }
 
     FD3D12SamplerStateIdentifier(EGenerate Type)
-        : Identifer(GenerateIdentifier())
+        : Identifier(GenerateIdentifier())
     {
     }
 
     operator bool() const
     {
-        return Identifer != InvalidIdentifier;
+        return Identifier != InvalidIdentifier;
     }
 
     uint16 operator*() const
     {
-        return Identifer;
+        return Identifier;
     }
 
     bool operator==(const FD3D12SamplerStateIdentifier& Other) const
     {
-        return Identifer == Other.Identifer;
+        return Identifier == Other.Identifier;
     }
 
     bool operator!=(const FD3D12SamplerStateIdentifier& Other) const
     {
-        return Identifer != Other.Identifer;
+        return Identifier != Other.Identifier;
     }
 
-    uint16 Identifer;
+    uint16 Identifier;
 
 private:
     static uint16 GenerateIdentifier()

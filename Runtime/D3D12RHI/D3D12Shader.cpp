@@ -36,41 +36,58 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     return false;
 }
 
-FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InShaderVisibility)
+FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility)
     : FD3D12DeviceChild(InDevice)
     , ByteCode()
     , ShaderVisibility(InShaderVisibility)
 {
-    // Copy ByteCode
-    ByteCode.BytecodeLength  = InCode.SizeInBytes();
-    ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
-    FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
-
-    // The beginning of the DXIL has the following layout
-    //   * Bytes 0-3 are always set to the string "DXCB"
-    //   * Bytes 4-19 are a checksum
-    const uint8* CodeData = InCode.Data() + 4;
-    ByteCodeHash = *reinterpret_cast<const FD3D12ShaderHash*>(CodeData);
 }
 
 FD3D12Shader::~FD3D12Shader()
 {
     FMemory::Free(ByteCode.pShaderBytecode);
+
     ByteCode.pShaderBytecode = nullptr;
     ByteCode.BytecodeLength  = 0;
 }
 
-template<typename TD3D12ReflectionInterface>
-bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, FD3D12Shader* Shader, uint32 NumBoundResources)
+bool FD3D12Shader::Initialize(const TArray<uint8>& InCode)
 {
-    FShaderResourceCount ResourceCount;
-    FShaderResourceCount RTLocalResourceCount;
+	// Allocate byte-code
+	ByteCode.BytecodeLength  = InCode.SizeInBytes();
+	ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
 
-    D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
-    for (uint32 Index = 0; Index < NumBoundResources; Index++)
+	// Copy byte-code
+	FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
+
+	// The beginning of the DXIL container has the following layout
+	//   - Bytes 0–3 are always set to the string "DXBC"
+	//   - Bytes 4–19 are a 16-byte checksum
+	if (ByteCode.BytecodeLength >= 20)
+	{
+		const uint8* CodeData = InCode.Data() + 4;
+		ByteCodeHash = *reinterpret_cast<const FD3D12ShaderHash*>(CodeData);
+        return true;
+	}
+	else
+	{
+		ByteCodeHash = FD3D12ShaderHash();
+        return false;
+	}
+}
+
+template<typename TD3D12ReflectionInterface>
+bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, uint32 NumBoundResources)
+{
+    FShaderResourceCount NewResourceCount;
+    FShaderResourceCount NewLocalRayTracingResourceCount;
+
+    for (uint32 i = 0; i < NumBoundResources; i++)
     {
+        D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
         FMemory::Memzero(&ShaderBindDesc);
-        if (FAILED(Reflection->GetResourceBindingDesc(Index, &ShaderBindDesc)))
+        
+        if (FAILED(Reflection->GetResourceBindingDesc(i, &ShaderBindDesc)))
         {
             continue;
         }
@@ -98,23 +115,23 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
             if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
             {
                 // NOTE: For now only one binding per shader can be used for constants
-                const uint8 Num32BitConstants = static_cast<uint8>(SizeInBytes / 4);
-                if (ShaderBindDesc.BindCount > 1 || Num32BitConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT || ResourceCount.Num32BitConstants != 0)
+                const uint8 Num32BitConstants = static_cast<uint8>(SizeInBytes) / static_cast<uint8>(sizeof(uint32));
+                if (ShaderBindDesc.BindCount > 1 || Num32BitConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT || NewResourceCount.Num32BitConstants != 0)
                 {
                     return false;
                 }
 
-                ResourceCount.Num32BitConstants = Num32BitConstants;
+                NewResourceCount.Num32BitConstants = Num32BitConstants;
             }
             else
             {
                 if (ShaderBindDesc.Space == 0)
                 {
-                    ResourceCount.Ranges.NumCBVs = Math::Max<uint8>(ResourceCount.Ranges.NumCBVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                    NewResourceCount.Ranges.NumCBVs = Math::Max<uint8>(NewResourceCount.Ranges.NumCBVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
                 }
                 else
                 {
-                    RTLocalResourceCount.Ranges.NumCBVs = Math::Max<uint8>(RTLocalResourceCount.Ranges.NumCBVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                    NewLocalRayTracingResourceCount.Ranges.NumCBVs = Math::Max<uint8>(NewLocalRayTracingResourceCount.Ranges.NumCBVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
                 }
             }
         }
@@ -122,132 +139,85 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         {
             if (ShaderBindDesc.Space == 0)
             {
-                ResourceCount.Ranges.NumSamplers = Math::Max<uint8>(ResourceCount.Ranges.NumSamplers, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                NewResourceCount.Ranges.NumSamplers = Math::Max<uint8>(NewResourceCount.Ranges.NumSamplers, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumSamplers = Math::Max<uint8>(RTLocalResourceCount.Ranges.NumSamplers, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                NewLocalRayTracingResourceCount.Ranges.NumSamplers = Math::Max<uint8>(NewLocalRayTracingResourceCount.Ranges.NumSamplers, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
             if (ShaderBindDesc.Space == 0)
             {
-                ResourceCount.Ranges.NumSRVs = Math::Max<uint8>(ResourceCount.Ranges.NumSRVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                NewResourceCount.Ranges.NumSRVs = Math::Max<uint8>(NewResourceCount.Ranges.NumSRVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumSRVs = Math::Max<uint8>(RTLocalResourceCount.Ranges.NumSRVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                NewLocalRayTracingResourceCount.Ranges.NumSRVs = Math::Max<uint8>(NewLocalRayTracingResourceCount.Ranges.NumSRVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
         {
             if (ShaderBindDesc.Space == 0)
             {
-                ResourceCount.Ranges.NumUAVs = Math::Max<uint8>(ResourceCount.Ranges.NumUAVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                NewResourceCount.Ranges.NumUAVs = Math::Max<uint8>(NewResourceCount.Ranges.NumUAVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumUAVs = Math::Max<uint8>(RTLocalResourceCount.Ranges.NumUAVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
+                NewLocalRayTracingResourceCount.Ranges.NumUAVs = Math::Max<uint8>(NewLocalRayTracingResourceCount.Ranges.NumUAVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
         }
     }
 
-    Shader->ResourceCount        = ResourceCount;
-    Shader->RTLocalResourceCount = RTLocalResourceCount;
+    ResourceCount = NewResourceCount;
+    LocalRayTracingResourceCount = NewLocalRayTracingResourceCount;
     return true;
 }
 
-bool FD3D12Shader::GetShaderReflection(FD3D12Shader* Shader)
+bool FD3D12GraphicsShader::Initialize(const TArray<uint8>& InCode)
 {
-    CHECK(Shader != nullptr);
+	if (!FD3D12Shader::Initialize(InCode))
+	{
+		return false;
+	}
 
-    TComPtr<ID3D12ShaderReflection> Reflection;
-    if (!GD3D12ShaderCompiler->GetReflection(Shader, &Reflection))
-    {
-        return false;
-    }
+	TComPtr<ID3D12ShaderReflection> Reflection;
+	if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))
+	{
+		return false;
+	}
 
-    D3D12_SHADER_DESC ShaderDesc;
-    if (FAILED(Reflection->GetDesc(&ShaderDesc)))
-    {
-        return false;
-    }
+	D3D12_SHADER_DESC ShaderDesc;
+	FMemory::Memzero(&ShaderDesc);
 
-    if (!GetShaderResourceBindings(Reflection.Get(), Shader, ShaderDesc.BoundResources))
-    {
-        D3D12_ERROR_CRITICAL("[D3D12BaseShader]: Error when analysing shader parameters");
-        return false;
-    }
+	HRESULT Result = Reflection->GetDesc(&ShaderDesc);
+	if (FAILED(Result))
+	{
+		return false;
+	}
 
-    if (GD3D12ShaderCompiler->HasRootSignature(Shader))
-    {
-        Shader->bContainsRootSignature = true;
-    }
+	if (!GetShaderResourceBindings(Reflection.Get(), ShaderDesc.BoundResources))
+	{
+		D3D12_ERROR_CRITICAL("[D3D12BaseShader]: Error when analysing shader parameters");
+		return false;
+	}
 
-    return true;
+	if (GD3D12ShaderCompiler->HasRootSignature(this))
+	{
+		bContainsRootSignature = true;
+	}
+
+	return true;
 }
 
-bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShader* Shader)
+bool FD3D12ComputeShader::Initialize(const TArray<uint8>& InCode)
 {
-    CHECK(Shader != nullptr);
-
-    TComPtr<ID3D12LibraryReflection> Reflection;
-    if (!GD3D12ShaderCompiler->GetLibraryReflection(Shader, &Reflection))
+    if (!FD3D12Shader::Initialize(InCode))
     {
         return false;
     }
 
-    D3D12_LIBRARY_DESC LibDesc;
-    FMemory::Memzero(&LibDesc);
-
-    HRESULT Result = Reflection->GetDesc(&LibDesc);
-    if (FAILED(Result))
-    {
-        return false;
-    }
-
-    CHECK(LibDesc.FunctionCount > 0);
-
-    // Make sure that the first shader is the one we wanted
-    ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
-
-    D3D12_FUNCTION_DESC FuncDesc;
-    FMemory::Memzero(&FuncDesc);
-
-    Function->GetDesc(&FuncDesc);
-    if (FAILED(Result))
-    {
-        return false;
-    }
-
-    if (!GetShaderResourceBindings(Function, Shader, FuncDesc.BoundResources))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12RayTracingShader]: Error when analysing shader parameters");
-        return false;
-    }
-
-    // HACK: Since the Nvidia driver can't handle these names, we have to change the names :(
-    const FString Identifier = FuncDesc.Name;
-
-    auto NameStart = Identifier.FindLastCharWithPredicate([](CHAR Char) -> bool 
-    { 
-        return (Char == '\x1') || (Char == '?');
-    });
-
-    if (NameStart != FString::InvalidIndex)
-    {
-        NameStart++;
-    }
-
-    const int32 NameEnd = Identifier.Find("@");
-    Shader->Identifier = Identifier.SubString(NameStart, NameEnd - NameStart);
-    return true;
-}
-
-
-bool FD3D12ComputeShader::Initialize()
-{
     TComPtr<ID3D12ShaderReflection> Reflection;
     if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))
     {
@@ -255,12 +225,15 @@ bool FD3D12ComputeShader::Initialize()
     }
 
     D3D12_SHADER_DESC ShaderDesc;
-    if (FAILED(Reflection->GetDesc(&ShaderDesc)))
+	FMemory::Memzero(&ShaderDesc);
+
+    HRESULT Result = Reflection->GetDesc(&ShaderDesc);
+    if (FAILED(Result))
     {
         return false;
     }
 
-    if (!GetShaderResourceBindings(Reflection.Get(), this, ShaderDesc.BoundResources))
+    if (!GetShaderResourceBindings(Reflection.Get(), ShaderDesc.BoundResources))
     {
         D3D12_ERROR_CRITICAL("[D3D12BaseComputeShader]: Error when analysing shader parameters");
         return false;
@@ -274,6 +247,69 @@ bool FD3D12ComputeShader::Initialize()
     return true;
 }
 
+bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
+{
+	if (!FD3D12Shader::Initialize(InCode))
+	{
+		return false;
+	}
+
+	TComPtr<ID3D12LibraryReflection> Reflection;
+	if (!GD3D12ShaderCompiler->GetLibraryReflection(this, &Reflection))
+	{
+		return false;
+	}
+
+	D3D12_LIBRARY_DESC LibraryDesc;
+	FMemory::Memzero(&LibraryDesc);
+
+	HRESULT Result = Reflection->GetDesc(&LibraryDesc);
+	if (FAILED(Result))
+	{
+		return false;
+	}
+
+	if (LibraryDesc.FunctionCount > 0)
+	{
+        D3D12_ERROR("[FD3D12RayTracingShader]: No functions in shader-library");
+		return false;
+	}
+
+	// Make sure that the first shader is the one we wanted
+	ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
+
+	D3D12_FUNCTION_DESC FunctionDesc;
+	FMemory::Memzero(&FunctionDesc);
+
+	Function->GetDesc(&FunctionDesc);
+	if (FAILED(Result))
+	{
+		return false;
+	}
+
+	if (!GetShaderResourceBindings(Function, FunctionDesc.BoundResources))
+	{
+		D3D12_ERROR_CRITICAL("[FD3D12RayTracingShader]: Error when analysing shader parameters");
+		return false;
+	}
+
+	// HACK: Since the NVIDIA driver can't handle these names, we have to change the names :(
+	const FString FuncIdentifier = FunctionDesc.Name;
+
+	int32 NameStart = FuncIdentifier.FindLastCharWithPredicate([](CHAR Char) -> bool
+	{
+		return (Char == '\x1') || (Char == '?');
+	});
+
+	if (NameStart != FString::InvalidIndex)
+	{
+		NameStart++;
+	}
+
+	const int32 NameEnd = FuncIdentifier.Find("@");
+	Identifier = FuncIdentifier.SubString(NameStart, NameEnd - NameStart);
+	return true;
+}
 
 void FShaderResourceCount::Combine(const FShaderResourceCount& Other)
 {

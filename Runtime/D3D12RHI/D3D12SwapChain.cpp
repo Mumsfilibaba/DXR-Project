@@ -19,15 +19,17 @@ FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* I
 
 FD3D12SwapChain::~FD3D12SwapChain()
 {
-    BOOL FullscreenState;
-
-    HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
-    if (SUCCEEDED(Result))
+	BOOL FullscreenState;
+    if (SwapChain)
     {
-        if (FullscreenState)
-        {
-            SwapChain->SetFullscreenState(FALSE, nullptr);
-        }
+		HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
+		if (SUCCEEDED(Result))
+		{
+			if (FullscreenState)
+			{
+				SwapChain->SetFullscreenState(FALSE, nullptr);
+			}
+		}
     }
 
     if (SwapChainWaitableObject)
@@ -35,14 +37,17 @@ FD3D12SwapChain::~FD3D12SwapChain()
         CloseHandle(SwapChainWaitableObject);
     }
 
-    BackBufferProxy->SetSwapChain(nullptr);
+	if (BackBufferProxy)
+	{
+	    BackBufferProxy->SetSwapChain(nullptr);
+	}
 }
 
 bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 {
     // Ensure that the CommandContext used is the same that we created the viewport with.
     // The limitation is really just that we use the same ID3D12CommandQueue that we used for 
-    // creation since the presention is queued up on the commandqueue.
+    // creation since the presentation is queued up on the command-queue.
     CHECK(CommandContext == InCommandContext);
 
     // Save the flags
@@ -135,7 +140,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 
     Factory->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
 
-    if (!RetriveBackBuffers())
+    if (!RetrieveBackBuffers())
     {
         return false;
     }
@@ -146,7 +151,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 
 bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
-    if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
+    if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0u && InHeight > 0u)
     {
         if (InCommandContext->IsRecording())
         {
@@ -174,7 +179,7 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
             return false;
         }
 
-        if (!RetriveBackBuffers())
+        if (!RetrieveBackBuffers())
         {
             return false;
         }
@@ -210,8 +215,8 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
 
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
-            Result = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, true);
-            if (FAILED(Result))
+			const DWORD WaitResult = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, TRUE);
+			if (WaitResult != WAIT_OBJECT_0)
             {
                 return false;
             }
@@ -225,7 +230,7 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
     }
 }
 
-bool FD3D12SwapChain::RetriveBackBuffers()
+bool FD3D12SwapChain::RetrieveBackBuffers()
 {
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))

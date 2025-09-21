@@ -401,11 +401,11 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
         {
             if (FD3D12SamplerState* SamplerState = SamplerStates[Index])
             {
-                UniqueTable.UniqueIDs[Index] = SamplerState->GetUniqueID().Identifer;
+                UniqueTable.UniqueIDs[Index] = SamplerState->GetUniqueID().Identifier;
             }
             else
             {
-                UniqueTable.UniqueIDs[Index] = DefaultDescriptors.DefaultSampler->GetUniqueID().Identifer;
+                UniqueTable.UniqueIDs[Index] = DefaultDescriptors.DefaultSampler->GetUniqueID().Identifier;
             }
         }
 

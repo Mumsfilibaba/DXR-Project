@@ -25,15 +25,15 @@ public:
 
     int32 Release() const
     {
-        const int32 RefCount = --StrongReferences;
-        CHECK(RefCount >= 0);
+        const int32 NewRefCount = --StrongReferences;
+        CHECK(NewRefCount >= 0);
 
-        if (RefCount < 1)
+        if (NewRefCount < 1)
         {
             delete this;
         }
 
-        return RefCount;
+        return NewRefCount;
     }
 
     int32 GetRefCount() const

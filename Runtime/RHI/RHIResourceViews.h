@@ -228,7 +228,7 @@ public:
         return Resource;
     }
 
-protected:
+private:
     FRHIResource* Resource;
 };
 

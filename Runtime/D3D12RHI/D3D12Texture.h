@@ -59,6 +59,8 @@ public:
         Resource = InResource; 
         RenderTargetViews.Clear();
         DepthStencilViews.Clear();
+		RenderTargetViewMap.Clear();
+		DepthStencilViewMap.Clear();
     }
 
 protected:

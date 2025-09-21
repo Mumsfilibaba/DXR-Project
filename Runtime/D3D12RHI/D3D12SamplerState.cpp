@@ -15,7 +15,11 @@ FD3D12SamplerState::FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDesc
 
 FD3D12SamplerState::~FD3D12SamplerState()
 {
-    OfflineHeap.Free(Descriptor);
+	if (Descriptor)
+	{
+	    OfflineHeap.Free(Descriptor);
+        Descriptor = {};
+    }
 }
 
 bool FD3D12SamplerState::CreateSampler(const D3D12_SAMPLER_DESC& InDesc)

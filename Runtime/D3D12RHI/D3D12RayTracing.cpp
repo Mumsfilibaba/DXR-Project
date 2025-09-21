@@ -523,7 +523,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
     CHECK(ResourceHeap  != nullptr);
     CHECK(SamplerHeap   != nullptr);
 
-    FMemory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, PipelineState->GetShaderIdentifer(Resources.Identifier), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+    FMemory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, PipelineState->GetShaderIdentifier(Resources.Identifier), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
     if (!Resources.ConstantBuffers.IsEmpty())
     {

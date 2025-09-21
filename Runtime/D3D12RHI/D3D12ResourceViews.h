@@ -28,11 +28,11 @@ public:
 
     const FD3D12Resource* GetViewResource() const 
     { 
-        return Resource.Get(); 
+        return ViewResource.Get(); 
     }
 
 protected:
-    FD3D12ResourceRef            Resource;
+    FD3D12ResourceRef            ViewResource;
     FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
 };

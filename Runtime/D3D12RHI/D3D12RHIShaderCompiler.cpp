@@ -35,24 +35,33 @@ static LPCWSTR GetShaderStageText(EShaderStage Stage)
     switch (Stage)
     {
     // Compute
-    case EShaderStage::Compute:       return L"cs";
+    case EShaderStage::Compute:
+        return L"cs";
 
     // Graphics
-    case EShaderStage::Vertex:        return L"vs";
-    case EShaderStage::Hull:          return L"hs";
-    case EShaderStage::Domain:        return L"ds";
-    case EShaderStage::Geometry:      return L"gs";
-    case EShaderStage::Pixel:         return L"ps";
+    case EShaderStage::Vertex:
+        return L"vs";
+    case EShaderStage::Hull:
+        return L"hs";
+    case EShaderStage::Domain:
+        return L"ds";
+    case EShaderStage::Geometry:
+        return L"gs";
+    case EShaderStage::Pixel:
+        return L"ps";
 
     // New Graphics Pipeline
-    case EShaderStage::Mesh:          return L"ms";
-    case EShaderStage::Amplification: return L"as";
+    case EShaderStage::Mesh:
+        return L"ms";
+    case EShaderStage::Amplification:
+        return L"as";
 
-     // Ray tracing
+    // Ray tracing
     case EShaderStage::RayGen:
     case EShaderStage::RayAnyHit:
     case EShaderStage::RayClosestHit:
-    case EShaderStage::RayMiss:       return L"lib";
+    case EShaderStage::RayMiss:
+        return L"lib";
     }
 
     return L"xxx";
@@ -93,28 +102,28 @@ public:
         FMemory::Free(Data);
     }
 
-    virtual LPVOID GetBufferPointer(void) override
+    virtual LPVOID GetBufferPointer() override final
     {
         return Data;
     }
 
-    virtual SIZE_T GetBufferSize(void) override
+    virtual SIZE_T GetBufferSize() override final
     {
         return SizeInBytes;
     }
 
-    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject)
+    virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
     {
         if (!ppvObject)
         {
             return E_INVALIDARG;
         }
 
-        *ppvObject = NULL;
+        *ppvObject = nullptr;
 
-        if (Riid == IID_IUnknown || Riid == IID_ID3DBlob)
+        if (Riid == IID_IUnknown || Riid == IID_ID3DBlob || Riid == __uuidof(IDxcBlob))
         {
-            *ppvObject = (LPVOID)this;
+            *ppvObject = reinterpret_cast<LPVOID>(this);
             AddRef();
             return NOERROR;
         }
@@ -122,13 +131,13 @@ public:
         return E_NOINTERFACE;
     }
 
-    virtual ULONG AddRef()
+    virtual ULONG AddRef() override final
     {
         _InterlockedIncrement(&References);
         return References;
     }
 
-    virtual ULONG Release()
+    virtual ULONG Release() override final
     {
         ULONG NumRefs = _InterlockedDecrement(&References);
         if (NumRefs == 0)
@@ -142,10 +151,8 @@ public:
 private:
     LPVOID Data;
     SIZE_T SizeInBytes;
-
-    ULONG References;
+    ULONG  References;
 };
-
 
 FD3D12ShaderCompiler* GD3D12ShaderCompiler = nullptr;
 
@@ -354,7 +361,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWS
         return false;
     }
 
-    FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(FStringWide(FilePath)) : "";
+    const FString AsciiFilePath = (FilePath != nullptr) ? WideToChar(FStringWide(FilePath)) : "";
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
