@@ -101,9 +101,7 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         if (ShaderBindDesc.Type == D3D_SIT_CBUFFER)
         {
             uint32 SizeInBytes = 0;
-
-            ID3D12ShaderReflectionConstantBuffer* BufferVar = Reflection->GetConstantBufferByName(ShaderBindDesc.Name);
-            if (BufferVar)
+            if (ID3D12ShaderReflectionConstantBuffer* BufferVar = Reflection->GetConstantBufferByName(ShaderBindDesc.Name))
             {
                 D3D12_SHADER_BUFFER_DESC BufferDesc;
                 if (SUCCEEDED(BufferVar->GetDesc(&BufferDesc)))
