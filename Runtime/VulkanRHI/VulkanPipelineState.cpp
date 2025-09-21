@@ -14,6 +14,10 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
 
 FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
     : FRHIVertexLayout()
+	, InitializerList(InInitializerList)
+    , VertexInputBindingDescriptions()
+    , VertexInputAttributeDescriptions()
+    , CreateInfo{}
 {
     // Create a binding for each input-slot
     for (const FVertexElement& Element : InInitializerList)

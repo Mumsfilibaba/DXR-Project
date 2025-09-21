@@ -11,6 +11,7 @@ public:
     ~FD3D12Fence();
 
     bool Initialize(uint64 InitialValue);
+
     bool WaitForValue(uint64 Value);
 
     uint64 GetCompletedValue() const
@@ -66,6 +67,7 @@ public:
     ~FD3D12FenceManager() = default;
 
     bool Initialize();
+
     void Release();
     uint64 SignalGPU(ED3D12CommandQueueType QueueType);
     void WaitGPU(ED3D12CommandQueueType QueueType);

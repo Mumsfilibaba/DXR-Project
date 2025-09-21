@@ -13,9 +13,10 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
 
 FD3D12VertexLayout::FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
     : FRHIVertexLayout()
+    , InitializerList(InInitializerList)
+    , Desc()
     , SemanticNames()
     , ElementDesc()
-    , Desc()
     , Hash(0)
 {
     const int32 NumElements = InInitializerList.Size();

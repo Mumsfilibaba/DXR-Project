@@ -43,11 +43,10 @@ bool FD3D12Fence::WaitForValue(uint64 Value)
         D3D12_ERROR_CRITICAL("[FD3D12Fence]: SetEventOnCompletion Failed");
         return false;
     }
-    else
-    {
-        WaitForSingleObject(Event, INFINITE);
-        return true;
-    }
+
+    // NOTE: Check if the object was signaled, could also have timed out
+    DWORD WaitResult = ::WaitForSingleObject(Event, INFINITE);
+    return WaitResult == WAIT_OBJECT_0;
 }
 
 FD3D12FenceManager::FD3D12FenceManager(FD3D12Device* InDevice)
