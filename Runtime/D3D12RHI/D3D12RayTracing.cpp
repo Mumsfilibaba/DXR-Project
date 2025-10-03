@@ -29,7 +29,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
 
     GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
     GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetResource()->GetGPUVirtualAddress();
-    GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetStride();
+    GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetInfo().Stride;
     GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
     GeometryDesc.Triangles.VertexCount                = BuildInfo.NumVertices;
     GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;

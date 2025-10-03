@@ -14,7 +14,6 @@
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12SamplerState.h"
 #include "D3D12RHI/D3D12SwapChain.h"
-#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Loader.h"
 
@@ -139,13 +138,6 @@ bool FD3D12RHI::Initialize()
         return false;
     }
 
-    // Initialize shader compiler
-    GD3D12ShaderCompiler = new FD3D12ShaderCompiler();
-    if (!GD3D12ShaderCompiler->Initialize())
-    {
-        return false;
-    }
-
     // Initialize context
     DirectCommandContext = new FD3D12CommandContext(GetDevice(), ED3D12CommandQueueType::Direct);
     if (!(DirectCommandContext && DirectCommandContext->Initialize()))
@@ -163,11 +155,11 @@ bool FD3D12RHI::Initialize()
         {
             if (Features.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation)
             {
-                FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = true;
+                RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = true;
             }
             else
             {
-                FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = false;
+                RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = false;
             }
         }
     }
@@ -177,21 +169,21 @@ bool FD3D12RHI::Initialize()
     {
         if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
         {
-            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1_1;
+            RHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1_1;
         }
         else if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_0)
         {
-            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1;
+            RHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1;
         }
 
-        FRHIDeviceInfo::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+        RHIDeviceInfo::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
     }
     else
     {
-        FRHIDeviceInfo::RayTracingTier = ERayTracingTier::NotSupported;
+        RHIDeviceInfo::RayTracingTier = ERayTracingTier::NotSupported;
     }
 
-    FRHIDeviceInfo::SupportsRayTracing = FRHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
+    RHIDeviceInfo::SupportsRayTracing = RHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
 
     // View-Instancing Support
     {
@@ -203,14 +195,14 @@ bool FD3D12RHI::Initialize()
         {
             if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
             {
-                FRHIDeviceInfo::SupportsViewInstancing = true;
-                FRHIDeviceInfo::MaxViewInstanceCount   = D3D12_MAX_VIEW_INSTANCE_COUNT;
+                RHIDeviceInfo::SupportsViewInstancing = true;
+                RHIDeviceInfo::MaxViewInstanceCount   = D3D12_MAX_VIEW_INSTANCE_COUNT;
             }
         }
         else
         {
-            FRHIDeviceInfo::SupportsViewInstancing = false;
-            FRHIDeviceInfo::MaxViewInstanceCount   = 0;
+            RHIDeviceInfo::SupportsViewInstancing = false;
+            RHIDeviceInfo::MaxViewInstanceCount   = 0;
         }
     }
 
@@ -219,23 +211,23 @@ bool FD3D12RHI::Initialize()
     {
         case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
         {
-            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::NotSupported;
+            RHIDeviceInfo::ShadingRateTier = EShadingRateTier::NotSupported;
             break;
         }
         case D3D12_VARIABLE_SHADING_RATE_TIER_1:
         {
-            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier1;
+            RHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier1;
             break;
         }
         case D3D12_VARIABLE_SHADING_RATE_TIER_2:
         {
-            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier2;
+            RHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier2;
             break;
         }
     }
 
-    FRHIDeviceInfo::SupportsVRS = FRHIDeviceInfo::ShadingRateTier != EShadingRateTier::NotSupported;
-    if (FRHIDeviceInfo::SupportsVRS)
+    RHIDeviceInfo::SupportsVRS = RHIDeviceInfo::ShadingRateTier != EShadingRateTier::NotSupported;
+    if (RHIDeviceInfo::SupportsVRS)
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
         FMemory::Memzero(&Features6);
@@ -243,16 +235,16 @@ bool FD3D12RHI::Initialize()
         HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
         {
-            FRHIDeviceInfo::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+            RHIDeviceInfo::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
         }
     }
     else
     {
-        FRHIDeviceInfo::ShadingRateImageTileSize = 0;
+        RHIDeviceInfo::ShadingRateImageTileSize = 0;
     }
 
     // GeometryShaders Support
-    FRHIDeviceInfo::SupportsGeometryShaders = true;
+    RHIDeviceInfo::SupportsGeometryShaders = true;
     return true;
 }
 
@@ -473,7 +465,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIBufferSRVI
     {
         Desc.Format                     = DXGI_FORMAT_UNKNOWN;
         Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-        Desc.Buffer.StructureByteStride = InInfo.Buffer->GetStride();
+        Desc.Buffer.StructureByteStride = InInfo.Buffer->GetInfo().Stride;
     }
     else
     {
@@ -588,7 +580,7 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIBufferUA
     {
         Desc.Format                     = DXGI_FORMAT_UNKNOWN;
         Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
-        Desc.Buffer.StructureByteStride = InInfo.Buffer->GetStride();
+        Desc.Buffer.StructureByteStride = InInfo.Buffer->GetInfo().Stride;
     }
     else
     {
@@ -764,9 +756,9 @@ FRHIRayMissShader* FD3D12RHI::CreateRayMissShader(const TArray<uint8>& ShaderCod
     }
 }
 
-FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
 {
-    return new FD3D12DepthStencilState(InInitializer);
+    return new FD3D12DepthStencilState(InInfo);
 }
 
 FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)

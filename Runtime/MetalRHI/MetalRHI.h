@@ -1,16 +1,16 @@
 #pragma once
-#include "MetalBuffer.h"
-#include "MetalTexture.h"
-#include "MetalViews.h"
-#include "MetalSamplerState.h"
-#include "MetalSwapChain.h"
-#include "MetalShader.h"
-#include "MetalCommandContext.h"
-#include "MetalQuery.h"
-#include "MetalPipelineState.h"
-#include "MetalRayTracing.h"
-#include "MetalDeviceContext.h"
 #include "RHI/RHI.h"
+#include "MetalRHI/MetalBuffer.h"
+#include "MetalRHI/MetalTexture.h"
+#include "MetalRHI/MetalViews.h"
+#include "MetalRHI/MetalSamplerState.h"
+#include "MetalRHI/MetalSwapChain.h"
+#include "MetalRHI/MetalShader.h"
+#include "MetalRHI/MetalCommandContext.h"
+#include "MetalRHI/MetalQuery.h"
+#include "MetalRHI/MetalPipelineState.h"
+#include "MetalRHI/MetalRayTracing.h"
+#include "MetalRHI/MetalDeviceContext.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -63,7 +63,7 @@ public:
     virtual FRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final;
+    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) override final;
     virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final;
     virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final;
     virtual FRHIVertexLayout* CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final;

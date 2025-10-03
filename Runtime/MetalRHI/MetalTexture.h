@@ -1,8 +1,8 @@
 #pragma once
-#include "MetalViews.h"
-#include "MetalDeviceChild.h"
-#include "MetalRefCounted.h"
 #include "RHI/RHIResources.h"
+#include "MetalRHI/MetalViews.h"
+#include "MetalRHI/MetalDeviceChild.h"
+#include "MetalRHI/MetalRefCounted.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -18,21 +18,15 @@ public:
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-public:
-
     // FRHITexture Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
-
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
-public:
     id<MTLTexture> GetMTLTexture() const;
 
     void SetDrawableTexture(id<MTLTexture> InTexture) 
@@ -54,7 +48,6 @@ public:
 protected:
     id<MTLTexture>  Texture;
     FMetalSwapChain* SwapChain;
-
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };
 

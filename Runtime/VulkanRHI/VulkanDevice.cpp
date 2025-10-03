@@ -926,17 +926,17 @@ bool FVulkanDevice::PostLoaderInitalize()
         // Check if RayQueries are supported, then the Tier is kind of like Tier 1.1 (Inline RayTracing in DXR)
         if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
         {
-            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1_1;
+            RHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1_1;
         }
         else
         {
-            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1;
+            RHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1;
         }
 
-        FRHIDeviceInfo::RayTracingMaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
+        RHIDeviceInfo::RayTracingMaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
     }
 
-    FRHIDeviceInfo::SupportsRayTracing = FRHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
+    RHIDeviceInfo::SupportsRayTracing = RHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
 
     // Variable Rate Shading Support
     if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
@@ -954,17 +954,17 @@ bool FVulkanDevice::PostLoaderInitalize()
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
         // TODO: Finish this part
-        FRHIDeviceInfo::ShadingRateImageTileSize = 0;
-        FRHIDeviceInfo::ShadingRateTier          = EShadingRateTier::NotSupported;
+        RHIDeviceInfo::ShadingRateImageTileSize = 0;
+        RHIDeviceInfo::ShadingRateTier          = EShadingRateTier::NotSupported;
     }
 
-    FRHIDeviceInfo::SupportsVRS = FRHIDeviceInfo::ShadingRateTier != EShadingRateTier::NotSupported;
+    RHIDeviceInfo::SupportsVRS = RHIDeviceInfo::ShadingRateTier != EShadingRateTier::NotSupported;
 
     // GeometryShader Support 
     const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
     if (GVulkanAllowGeometryShaders && PhysicalDeviceFeatures.geometryShader)
     {
-        FRHIDeviceInfo::SupportsGeometryShaders = true;
+        RHIDeviceInfo::SupportsGeometryShaders = true;
     }
 
     // View Instancing Support
@@ -982,31 +982,31 @@ bool FVulkanDevice::PostLoaderInitalize()
         DevicePropertiesHelper.AddNext(MultiviewProperties);
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
-        FRHIDeviceInfo::MaxViewInstanceCount   = MultiviewProperties.maxMultiviewViewCount;
-        FRHIDeviceInfo::SupportsViewInstancing = true;
+        RHIDeviceInfo::MaxViewInstanceCount   = MultiviewProperties.maxMultiviewViewCount;
+        RHIDeviceInfo::SupportsViewInstancing = true;
     }
 
     // Draw-Indirect Support
     const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
     if (PhysicalDeviceFeatures.multiDrawIndirect)
     {
-        FRHIDeviceInfo::SupportMultiDrawIndirect = true;
-        FRHIDeviceInfo::MaxDrawIndirectCount     = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
+        RHIDeviceInfo::SupportMultiDrawIndirect = true;
+        RHIDeviceInfo::MaxDrawIndirectCount     = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
     }
     
     // ShaderOutputLayer support
     const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
     if (PhysicalDeviceFeatures12.shaderOutputLayer)
     {
-        FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = true;
+        RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = true;
     }
     else
     {
-        FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = false;
+        RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = false;
     }
     
     //  Draw Indirect is always supported
-    FRHIDeviceInfo::SupportDrawIndirect = true;
+    RHIDeviceInfo::SupportDrawIndirect = true;
     return true;
 }
 

@@ -69,7 +69,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     AccelerationStructureGeometry.geometry.triangles.sType        = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
     AccelerationStructureGeometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
     AccelerationStructureGeometry.geometry.triangles.maxVertex    = Math::Max<uint32>(BuildInfo.NumVertices - 1, 1);
-    AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetStride();
+    AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetInfo().Stride;
     AccelerationStructureGeometry.geometry.triangles.vertexData   = VertexData;
     AccelerationStructureGeometry.geometry.triangles.indexType    = ConvertIndexFormat(BuildInfo.IndexFormat);
     AccelerationStructureGeometry.geometry.triangles.indexData    = IndexData;

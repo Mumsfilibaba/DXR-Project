@@ -2,7 +2,7 @@
 #include "Core/Containers/String.h"
 #include "RHI/RHIResource.h"
 
-enum class EBufferUsageFlags : uint16
+enum class EBufferFlags : uint16
 {
     None = 0,
 
@@ -10,43 +10,34 @@ enum class EBufferUsageFlags : uint16
     Dynamic  = FLAG(2), // Dynamic Memory (D3D12 UploadHeap)
     ReadBack = FLAG(3), // Read-Back from GPU
 
-    ConstantBuffer  = FLAG(4), // Can be used as ConstantBuffer
-    UnorderedAccess = FLAG(5), // Can be used in UnorderedAccessViews
-    ShaderResource  = FLAG(6), // Can be used in ShaderResourceViews
-    VertexBuffer    = FLAG(7), // Can be used as VertexBuffer
-    IndexBuffer     = FLAG(8), // Can be used as IndexBuffer
+    ConstantBuffer        = FLAG(4), // Can be used as ConstantBuffer
+    UnorderedAccessBuffer = FLAG(5), // Can be used in UnorderedAccessViews
+    ShaderResourceBuffer  = FLAG(6), // Can be used in ShaderResourceViews
+    VertexBuffer          = FLAG(7), // Can be used as VertexBuffer
+    IndexBuffer           = FLAG(8), // Can be used as IndexBuffer
 
-    RWBuffer = UnorderedAccess | ShaderResource
+    RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer
 };
 
-ENUM_CLASS_OPERATORS(EBufferUsageFlags);
+ENUM_CLASS_OPERATORS(EBufferFlags);
 
 struct FRHIBufferInfo
 {
-    constexpr FRHIBufferInfo() noexcept = default;
-
-    constexpr FRHIBufferInfo(uint64 InSize, uint32 InStride, EBufferUsageFlags InUsageFlags) noexcept
-        : Size(InSize)
-        , Stride(InStride)
-        , UsageFlags(InUsageFlags)
-    {
-    }
-
-    NODISCARD constexpr bool IsDefault()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Default); }
-    NODISCARD constexpr bool IsDynamic()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
-    NODISCARD constexpr bool IsReadBack() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ReadBack); }
+    NODISCARD constexpr bool IsDefault() const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
+    NODISCARD constexpr bool IsDynamic() const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
+    NODISCARD constexpr bool IsReadBack() const { return IsEnumFlagSet(Flags, EBufferFlags::ReadBack); }
     
-    NODISCARD constexpr bool IsConstantBuffer()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ConstantBuffer); }
-    NODISCARD constexpr bool IsShaderResource()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ShaderResource); }
-    NODISCARD constexpr bool IsVertexBuffer()    const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
-    NODISCARD constexpr bool IsIndexBuffer()     const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
-    NODISCARD constexpr bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
+    NODISCARD constexpr bool IsConstantBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer); }
+    NODISCARD constexpr bool IsShaderResourceBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer); }
+    NODISCARD constexpr bool IsVertexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::VertexBuffer); }
+    NODISCARD constexpr bool IsIndexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
+    NODISCARD constexpr bool IsUnorderedAccessBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::UnorderedAccessBuffer); }
 
     constexpr bool operator==(const FRHIBufferInfo& Other) const noexcept = default;
 
-    uint64            Size       = 0;
-    uint32            Stride     = 0;
-    EBufferUsageFlags UsageFlags = EBufferUsageFlags::None;
+    EBufferFlags Flags = EBufferFlags::None;
+    uint32 Stride = 0;
+    uint64 Size   = 0;
 };
 
 class FRHIBuffer : public FRHIResource
@@ -59,31 +50,11 @@ protected:
     }
 
 public:
+    virtual void* GetRHINativeHandle() const = 0;
+    virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
 
-    // Returns the native handle for this resource
-    virtual void* GetRHINativeHandle() const { return nullptr; }
-
-    // Returns a BindlessHandle if this buffer was created with a ConstantBuffer flag
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
-
-    virtual void SetDebugName(const FString& InName) { }
-    virtual FString GetDebugName() const { return ""; }
-
-public:
-    uint64 GetSize() const
-    {
-        return Info.Size;
-    }
-
-    uint32 GetStride() const
-    {
-        return Info.Stride;
-    }
-
-    EBufferUsageFlags GetFlags() const
-    {
-        return Info.UsageFlags;
-    }
+    virtual void SetDebugName(const FString& InName) = 0;
+    virtual FString GetDebugName() const = 0;
 
     const FRHIBufferInfo& GetInfo() const
     {

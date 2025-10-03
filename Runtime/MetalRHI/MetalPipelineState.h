@@ -1,8 +1,8 @@
 #pragma once
-#include "MetalDeviceContext.h"
-#include "MetalShader.h"
-#include "MetalRefCounted.h"
 #include "RHI/RHIResources.h"
+#include "MetalRHI/MetalDeviceContext.h"
+#include "MetalRHI/MetalShader.h"
+#include "MetalRHI/MetalRefCounted.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -36,14 +36,14 @@ private:
 class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalDeviceChild
 {
 public:
-    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& InInitializer);
+    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FMetalDepthStencilState();
 
     bool Initialize();
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
     {
-        return Initializer;
+        return Info;
     }
     
     id<MTLDepthStencilState> GetMTLDepthStencilState() const 
@@ -52,8 +52,8 @@ public:
     }
     
 private:
-    id<MTLDepthStencilState>         DepthStencilState;
-    FRHIDepthStencilStateInitializer Initializer;
+    id<MTLDepthStencilState>  DepthStencilState;
+    FRHIDepthStencilStateInfo Info;
 };
 
 class FMetalRasterizerState : public FRHIRasterizerState

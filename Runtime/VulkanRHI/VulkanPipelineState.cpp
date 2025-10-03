@@ -82,25 +82,25 @@ FVulkanVertexLayout::~FVulkanVertexLayout()
 {
 }
 
-FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
     : FRHIDepthStencilState()
-    , Initializer(InInitializer)
+    , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
     
     CreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    CreateInfo.depthTestEnable       = InInitializer.bDepthEnable;
-    CreateInfo.depthWriteEnable      = InInitializer.bDepthWriteEnable;
-    CreateInfo.depthCompareOp        = ConvertComparisonFunc(InInitializer.DepthFunc);
+    CreateInfo.depthTestEnable       = InInfo.bDepthEnable;
+    CreateInfo.depthWriteEnable      = InInfo.bDepthWriteEnable;
+    CreateInfo.depthCompareOp        = ConvertComparisonFunc(InInfo.DepthFunc);
     CreateInfo.depthBoundsTestEnable = VK_FALSE;
-    CreateInfo.stencilTestEnable     = InInitializer.bStencilEnable;
-    CreateInfo.front                 = ConvertStencilState(InInitializer.FrontFace);
-    CreateInfo.back                  = ConvertStencilState(InInitializer.BackFace);
+    CreateInfo.stencilTestEnable     = InInfo.bStencilEnable;
+    CreateInfo.front                 = ConvertStencilState(InInfo.FrontFace);
+    CreateInfo.back                  = ConvertStencilState(InInfo.BackFace);
     CreateInfo.minDepthBounds        = 0.0f;
     CreateInfo.maxDepthBounds        = 1.0f;
     
-    CreateInfo.front.compareMask = CreateInfo.back.compareMask = InInitializer.StencilReadMask;
-    CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInitializer.StencilWriteMask;
+    CreateInfo.front.compareMask = CreateInfo.back.compareMask = InInfo.StencilReadMask;
+    CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInfo.StencilWriteMask;
 }
 
 FVulkanDepthStencilState::~FVulkanDepthStencilState()

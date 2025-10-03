@@ -52,12 +52,12 @@ private:
 class FD3D12DepthStencilState : public FRHIDepthStencilState
 {
 public:
-    FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
+    FD3D12DepthStencilState(const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FD3D12DepthStencilState();
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
@@ -71,9 +71,9 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateInitializer Initializer;
-    D3D12_DEPTH_STENCIL_DESC         Desc;
-    uint64                           Hash;
+    FRHIDepthStencilStateInfo Info;
+    D3D12_DEPTH_STENCIL_DESC  Desc;
+    uint64 Hash;
 };
 
 class FD3D12RasterizerState : public FRHIRasterizerState

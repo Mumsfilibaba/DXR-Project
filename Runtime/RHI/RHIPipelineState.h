@@ -30,66 +30,35 @@ NODISCARD constexpr const CHAR* ToString(EStencilOp StencilOp)
         case EStencilOp::Invert:  return "Invert";
         case EStencilOp::Incr:    return "Incr";
         case EStencilOp::Decr:    return "Decr";
-        default:                  return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
-struct FStencilState
+struct FRHIDepthStencilStateInfo
 {
-    constexpr FStencilState() noexcept = default;
-
-    constexpr FStencilState(EStencilOp InStencilFailOp, EStencilOp InStencilDepthFailOp, EStencilOp InStencilPassOp, EComparisonFunc InStencilFunc) noexcept
-        : StencilFailOp(InStencilFailOp)
-        , StencilDepthFailOp(InStencilDepthFailOp)
-        , StencilDepthPassOp(InStencilPassOp)
-        , StencilFunc(InStencilFunc)
+    struct FStencilState
     {
-    }
+        constexpr bool operator==(const FStencilState& Other) const noexcept = default;
 
-    constexpr bool operator==(const FStencilState& Other) const noexcept = default;
+        NODISCARD friend uint64 GetHashForType(const FStencilState& Value)
+        {
+            uint64 Hash = UnderlyingTypeValue(Value.StencilFailOp);
+            HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthFailOp));
+            HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthPassOp));
+            HashCombine(Hash, UnderlyingTypeValue(Value.StencilFunc));
+            return Hash;
+        }
 
-    NODISCARD friend uint64 GetHashForType(const FStencilState& Value)
-    {
-        uint64 Hash = UnderlyingTypeValue(Value.StencilFailOp);
-        HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthFailOp));
-        HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthPassOp));
-        HashCombine(Hash, UnderlyingTypeValue(Value.StencilFunc));
-        return Hash;
-    }
+        EStencilOp StencilFailOp      = EStencilOp::Keep;
+        EStencilOp StencilDepthFailOp = EStencilOp::Keep;
+        EStencilOp StencilDepthPassOp = EStencilOp::Keep;
+        EComparisonFunc StencilFunc   = EComparisonFunc::Always;
+    };
 
-    EStencilOp      StencilFailOp      = EStencilOp::Keep;
-    EStencilOp      StencilDepthFailOp = EStencilOp::Keep;
-    EStencilOp      StencilDepthPassOp = EStencilOp::Keep;
-    EComparisonFunc StencilFunc        = EComparisonFunc::Always;
-};
+    constexpr bool operator==(const FRHIDepthStencilStateInfo& Other) const noexcept = default;
 
-struct FRHIDepthStencilStateInitializer
-{
-    constexpr FRHIDepthStencilStateInitializer() noexcept = default;
-
-    constexpr FRHIDepthStencilStateInitializer(
-        EComparisonFunc      InDepthFunc,
-        bool                 bInDepthEnable,
-        bool                 bInDepthWriteEnable = true,
-        bool                 bInStencilEnable    = false,
-        uint32               InStencilReadMask   = RHI_DEFAULT_STENCIl_MASK,
-        uint32               InStencilWriteMask  = RHI_DEFAULT_STENCIl_MASK,
-        const FStencilState& InFrontFace         = FStencilState(),
-        const FStencilState& InBackFace          = FStencilState()) noexcept
-        : DepthFunc(InDepthFunc)
-        , bDepthWriteEnable(bInDepthWriteEnable)
-        , bDepthEnable(bInDepthEnable)
-        , StencilReadMask(InStencilReadMask)
-        , StencilWriteMask(InStencilWriteMask)
-        , bStencilEnable(bInStencilEnable)
-        , FrontFace(InFrontFace)
-        , BackFace(InBackFace)
-    {
-    }
-
-    constexpr bool operator==(const FRHIDepthStencilStateInitializer& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHIDepthStencilStateInitializer& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIDepthStencilStateInfo& Value)
     {
         uint64 Hash = static_cast<uint64>(Value.bDepthWriteEnable);
         HashCombine(Hash, UnderlyingTypeValue(Value.DepthFunc));
@@ -119,7 +88,7 @@ protected:
     virtual ~FRHIDepthStencilState() = default;
 
 public:
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const = 0;
+    virtual FRHIDepthStencilStateInfo GetInitializer() const = 0;
 };
 
 enum class ECullMode : uint8
@@ -160,19 +129,9 @@ struct FRHIRasterizerStateInitializer
 {
     constexpr FRHIRasterizerStateInitializer() noexcept = default;
 
-    constexpr FRHIRasterizerStateInitializer(
-        EFillMode InFillMode,
-        ECullMode InCullMode,
-        bool      bInFrontCounterClockwise    = false,
-        float     InDepthBias                 = 0.0f,
-        float     InDepthBiasClamp            = 0.0f,
-        float     InSlopeScaledDepthBias      = 0.0f,
-        bool      bInDepthClipEnable          = true,
-        bool      bInMultisampleEnable        = false,
-        bool      bInAntialiasedLineEnable    = false,
-        uint32    InForcedSampleCount         = 1,
-        bool      bInEnableConservativeRaster = false,
-        bool      bInEnableDepthBias          = true) noexcept
+    constexpr FRHIRasterizerStateInitializer(EFillMode InFillMode, ECullMode InCullMode, bool bInFrontCounterClockwise = false, float InDepthBias = 0.0f,
+        float InDepthBiasClamp = 0.0f, float InSlopeScaledDepthBias = 0.0f, bool bInDepthClipEnable = true, bool bInMultisampleEnable = false,
+        bool bInAntialiasedLineEnable = false, uint32 InForcedSampleCount = 1, bool bInEnableConservativeRaster = false, bool bInEnableDepthBias = true) noexcept
         : FillMode(InFillMode)
         , CullMode(InCullMode)
         , bFrontCounterClockwise(bInFrontCounterClockwise)
@@ -358,14 +317,8 @@ struct FRenderTargetBlendInfo
 {
     constexpr FRenderTargetBlendInfo() noexcept = default;
 
-    constexpr FRenderTargetBlendInfo(
-        bool             bInBlendEnable,
-        EBlendType       InSrcBlend,
-        EBlendType       InDstBlend,
-        EBlendOp         InBlendOp        = EBlendOp::Add,
-        EBlendType       InSrcBlendAlpha  = EBlendType::One,
-        EBlendType       InDstBlendAlpha  = EBlendType::Zero,
-        EBlendOp         InBlendOpAlpha   = EBlendOp::Add,
+    constexpr FRenderTargetBlendInfo(bool bInBlendEnable, EBlendType InSrcBlend, EBlendType InDstBlend, EBlendOp InBlendOp = EBlendOp::Add,
+        EBlendType InSrcBlendAlpha = EBlendType::One, EBlendType InDstBlendAlpha = EBlendType::Zero, EBlendOp InBlendOpAlpha = EBlendOp::Add,
         EColorWriteFlags InColorWriteMask = EColorWriteFlags::All) noexcept
         : SrcBlend(InSrcBlend)
         , DstBlend(InDstBlend)
@@ -423,7 +376,9 @@ struct FRHIBlendStateInitializer
     {
         uint64 Hash = 0;
         for (uint32 Index = 0; Index < Value.NumRenderTargets; ++Index)
+        {
             HashCombine(Hash, GetHashForType(Value.RenderTargets[Index]));
+        }
 
         HashCombine(Hash, UnderlyingTypeValue(Value.LogicOp));
         HashCombine(Hash, Value.bLogicOpEnable);
@@ -433,11 +388,11 @@ struct FRHIBlendStateInitializer
     }
 
     FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS];
-    uint8                  NumRenderTargets;
-    ELogicOp               LogicOp;
+    uint8    NumRenderTargets;
+    ELogicOp LogicOp;
 
-    bool bLogicOpEnable          : 1;
-    bool bAlphaToCoverageEnable  : 1;
+    bool bLogicOpEnable : 1;
+    bool bAlphaToCoverageEnable : 1;
     bool bIndependentBlendEnable : 1;
 };
 
@@ -482,16 +437,8 @@ struct FVertexElement
     {
     }
 
-    FVertexElement(
-        const FString&    InSemantic,
-        uint32            InSemanticIndex,
-        EFormat           InFormat,
-        uint16            InVertexStride,
-        uint32            InInputSlot,
-        uint32            InByteOffset,
-        uint32            InShaderElementIndex,
-        EVertexInputClass InInputClass,
-        uint32            InInstanceStepRate) noexcept
+    FVertexElement(const FString& InSemantic, uint32 InSemanticIndex, EFormat InFormat, uint16 InVertexStride, uint32 InInputSlot, uint32 InByteOffset,
+        uint32 InShaderElementIndex, EVertexInputClass InInputClass, uint32 InInstanceStepRate) noexcept
         : Semantic(InSemantic)
         , SemanticIndex(InSemanticIndex)
         , Format(InFormat)
@@ -553,8 +500,6 @@ protected:
     virtual ~FRHIPipelineState() = default;
 
 public:
-
-    // Returns the native handle for this resource
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
     virtual void SetDebugName(const FString& InName) { }
@@ -573,7 +518,9 @@ struct FGraphicsPipelineFormats
     bool operator==(const FGraphicsPipelineFormats& Other) const
     {
         if (DepthStencilFormat == Other.DepthStencilFormat && NumRenderTargets == Other.NumRenderTargets)
+        {
             return FMemory::Memcmp(RenderTargetFormats, Other.RenderTargetFormats, sizeof(RenderTargetFormats)) == 0;
+        }
             
         return false;
     }
@@ -592,12 +539,8 @@ struct FGraphicsPipelineShaders
 {
     constexpr FGraphicsPipelineShaders() noexcept = default;
 
-    constexpr FGraphicsPipelineShaders(
-        FRHIVertexShader*   InVertexShader,
-        FRHIHullShader*     InHullShader,
-        FRHIDomainShader*   InDomainShader,
-        FRHIGeometryShader* InGeometryShader,
-        FRHIPixelShader*    InPixelShader) noexcept
+    constexpr FGraphicsPipelineShaders(FRHIVertexShader* InVertexShader, FRHIHullShader* InHullShader, FRHIDomainShader* InDomainShader, 
+        FRHIGeometryShader* InGeometryShader, FRHIPixelShader* InPixelShader) noexcept
         : VertexShader(InVertexShader)
         , HullShader(InHullShader)
         , DomainShader(InDomainShader)
@@ -628,25 +571,16 @@ struct FViewInstancingInfo
 
     uint8 NumArraySlices;
     uint8 StartRenderTargetArrayIndex : 7;
-    uint8 bEnableViewInstancing       : 1;
+    uint8 bEnableViewInstancing : 1;
 };
 
 struct FRHIGraphicsPipelineStateInitializer
 {
     FRHIGraphicsPipelineStateInitializer() noexcept = default;
 
-    FRHIGraphicsPipelineStateInitializer(
-        FRHIVertexLayout*               InVertexInputLayout,
-        FRHIDepthStencilState*          InDepthStencilState,
-        FRHIRasterizerState*            InRasterizerState,
-        FRHIBlendState*                 InBlendState,
-        const FGraphicsPipelineShaders& InShaderState,
-        const FGraphicsPipelineFormats& InPipelineFormats,
-        EPrimitiveTopology              InPrimitiveTopology       = EPrimitiveTopology::TriangleList,
-        uint32                          InSampleCount             = 1,
-        uint32                          InSampleQuality           = 0,
-        uint32                          InSampleMask              = RHI_DEFAULT_SAMPLE_MASK,
-        bool                            bInPrimitiveRestartEnable = false) noexcept
+    FRHIGraphicsPipelineStateInitializer(FRHIVertexLayout* InVertexInputLayout, FRHIDepthStencilState* InDepthStencilState, FRHIRasterizerState* InRasterizerState,
+        FRHIBlendState* InBlendState, const FGraphicsPipelineShaders& InShaderState, const FGraphicsPipelineFormats& InPipelineFormats, EPrimitiveTopology InPrimitiveTopology = EPrimitiveTopology::TriangleList,
+        uint32 InSampleCount = 1, uint32 InSampleQuality = 0, uint32 InSampleMask = RHI_DEFAULT_SAMPLE_MASK, bool bInPrimitiveRestartEnable = false) noexcept
         : VertexInputLayout(InVertexInputLayout)
         , DepthStencilState(InDepthStencilState)
         , RasterizerState(InRasterizerState)
@@ -738,14 +672,9 @@ struct FRHIRayTracingPipelineStateInitializer
 {
     FRHIRayTracingPipelineStateInitializer() noexcept  = default;
 
-    FRHIRayTracingPipelineStateInitializer(
-        const TArrayView<FRHIRayGenShader*>&          InRayGenShaders,
-        const TArrayView<FRHIRayCallableShader*>&     InCallableShaders,
-        const TArrayView<FRHIRayTracingHitGroupInfo>& InHitGroups,
-        const TArrayView<FRHIRayMissShader*>&         InMissShaders,
-        uint32 InMaxAttributeSizeInBytes,
-        uint32 InMaxPayloadSizeInBytes,
-        uint32 InMaxRecursionDepth) noexcept
+    FRHIRayTracingPipelineStateInitializer(const TArrayView<FRHIRayGenShader*>& InRayGenShaders, const TArrayView<FRHIRayCallableShader*>& InCallableShaders,
+        const TArrayView<FRHIRayTracingHitGroupInfo>& InHitGroups, const TArrayView<FRHIRayMissShader*>& InMissShaders, uint32 InMaxAttributeSizeInBytes,
+        uint32 InMaxPayloadSizeInBytes, uint32 InMaxRecursionDepth) noexcept
         : RayGenShaders(InRayGenShaders)
         , CallableShaders(InCallableShaders)
         , MissShaders(InMissShaders)

@@ -249,7 +249,8 @@ constexpr VkAccessFlags2 ConvertResourceStateToAccessFlags(EResourceAccess Resou
         case EResourceAccess::UnorderedAccess:        return VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
         case EResourceAccess::ConstantBuffer:         return VK_ACCESS_2_UNIFORM_READ_BIT;
         case EResourceAccess::GenericRead:            return VK_ACCESS_2_MEMORY_READ_BIT;
-        default:                                      return VK_ACCESS_2_NONE;
+        
+        default: return VK_ACCESS_2_NONE;
     }
 }
 
@@ -274,7 +275,8 @@ constexpr VkImageLayout ConvertResourceStateToImageLayout(EResourceAccess Resour
         case EResourceAccess::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
         case EResourceAccess::ConstantBuffer:         return VK_IMAGE_LAYOUT_UNDEFINED;
         case EResourceAccess::GenericRead:            return VK_IMAGE_LAYOUT_UNDEFINED;
-        default:                                      return VK_IMAGE_LAYOUT_UNDEFINED;
+        
+        default: return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }
 
@@ -284,6 +286,7 @@ constexpr VkQueryType ConvertQueryType(EQueryType QueryType)
     {
         case EQueryType::Timestamp: return VK_QUERY_TYPE_TIMESTAMP;
         case EQueryType::Occlusion: return VK_QUERY_TYPE_OCCLUSION;
+
         default: return VK_QUERY_TYPE_MAX_ENUM; // NOTE Return invalid value
     }
 }
@@ -295,8 +298,12 @@ constexpr VkImageType ConvertTextureDimension(ETextureDimension TextureDimension
         case ETextureDimension::Texture2D:
         case ETextureDimension::Texture2DArray:
         case ETextureDimension::TextureCube:
-        case ETextureDimension::TextureCubeArray: return VK_IMAGE_TYPE_2D;
-        case ETextureDimension::Texture3D:        return VK_IMAGE_TYPE_3D;
+        case ETextureDimension::TextureCubeArray:
+            return VK_IMAGE_TYPE_2D;
+        
+        case ETextureDimension::Texture3D:
+            return VK_IMAGE_TYPE_3D;
+
         default: return VK_IMAGE_TYPE_MAX_ENUM; // NOTE Return invalid value
     }
 }
@@ -400,7 +407,8 @@ constexpr VkSamplerAddressMode ConvertSamplerMode(ESamplerMode SamplerMode)
         case ESamplerMode::Clamp:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         case ESamplerMode::Border:     return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         case ESamplerMode::MirrorOnce: return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
-        default:                       return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        
+        default: return VK_SAMPLER_ADDRESS_MODE_REPEAT;
     }
 }
 
@@ -449,7 +457,8 @@ constexpr VkCompareOp ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
     case EComparisonFunc::NotEqual:     return VK_COMPARE_OP_NOT_EQUAL;
     case EComparisonFunc::GreaterEqual: return VK_COMPARE_OP_GREATER_OR_EQUAL;
     case EComparisonFunc::Always:       return VK_COMPARE_OP_ALWAYS;
-    default:                            return VK_COMPARE_OP_NEVER;
+    
+    default: return VK_COMPARE_OP_NEVER;
     }
 }
 
@@ -470,7 +479,7 @@ constexpr VkStencilOp ConvertStencilOp(EStencilOp StencilOp)
     return VkStencilOp(-1);
 }
 
-inline VkStencilOpState ConvertStencilState(const FStencilState& StencilState)
+inline VkStencilOpState ConvertStencilState(const FRHIDepthStencilStateInfo::FStencilState& StencilState)
 {
     return
     {
@@ -490,7 +499,8 @@ constexpr VkCullModeFlagBits ConvertCullMode(ECullMode CullMode)
     {
         case ECullMode::Back:  return VK_CULL_MODE_BACK_BIT;
         case ECullMode::Front: return VK_CULL_MODE_FRONT_BIT;
-        default:               return VkCullModeFlagBits(0);
+        
+        default: return VkCullModeFlagBits(0);
     }
 }
 
@@ -604,6 +614,7 @@ constexpr VkPrimitiveTopology ConvertPrimitiveTopology(EPrimitiveTopology Primit
         case EPrimitiveTopology::PointList:     return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
         case EPrimitiveTopology::TriangleList:  return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         case EPrimitiveTopology::TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        
         default: return VkPrimitiveTopology(-1);
     }
 }
@@ -619,6 +630,7 @@ constexpr VkSampleCountFlagBits ConvertSampleCount(uint32 NumSamples)
         case 16: return VK_SAMPLE_COUNT_16_BIT;
         case 32: return VK_SAMPLE_COUNT_32_BIT;
         case 64: return VK_SAMPLE_COUNT_64_BIT;
+       
         default: return VkSampleCountFlagBits(0);
     }
 }
@@ -652,6 +664,7 @@ constexpr VkIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
     {
         case EIndexFormat::uint16: return VK_INDEX_TYPE_UINT16;
         case EIndexFormat::uint32: return VK_INDEX_TYPE_UINT32;
+
         default: return VkIndexType(-1);
     }
 }
@@ -665,10 +678,10 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R32G32B32A32_Uint:     return VK_FORMAT_R32G32B32A32_UINT;
         case EFormat::R32G32B32A32_Sint:     return VK_FORMAT_R32G32B32A32_SINT;
 
-        case EFormat::R32G32B32_Typeless:    return VK_FORMAT_R32G32B32_SFLOAT;
-        case EFormat::R32G32B32_Float:       return VK_FORMAT_R32G32B32_SFLOAT;
-        case EFormat::R32G32B32_Uint:        return VK_FORMAT_R32G32B32_UINT;
-        case EFormat::R32G32B32_Sint:        return VK_FORMAT_R32G32B32_SINT;
+		case EFormat::R32G32B32_Typeless: return VK_FORMAT_R32G32B32_SFLOAT;
+		case EFormat::R32G32B32_Float:    return VK_FORMAT_R32G32B32_SFLOAT;
+		case EFormat::R32G32B32_Uint:     return VK_FORMAT_R32G32B32_UINT;
+		case EFormat::R32G32B32_Sint:     return VK_FORMAT_R32G32B32_SINT;
 
         case EFormat::R16G16B16A16_Typeless: return VK_FORMAT_R16G16B16A16_SFLOAT;
         case EFormat::R16G16B16A16_Float:    return VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -677,91 +690,91 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R16G16B16A16_Snorm:    return VK_FORMAT_R16G16B16A16_SNORM;
         case EFormat::R16G16B16A16_Sint:     return VK_FORMAT_R16G16B16A16_SINT;
 
-        case EFormat::R32G32_Typeless:       return VK_FORMAT_R32G32_SFLOAT;
-        case EFormat::R32G32_Float:          return VK_FORMAT_R32G32_SFLOAT;
-        case EFormat::R32G32_Uint:           return VK_FORMAT_R32G32_UINT;
-        case EFormat::R32G32_Sint:           return VK_FORMAT_R32G32_SINT;
+		case EFormat::R32G32_Typeless: return VK_FORMAT_R32G32_SFLOAT;
+		case EFormat::R32G32_Float:    return VK_FORMAT_R32G32_SFLOAT;
+		case EFormat::R32G32_Uint:     return VK_FORMAT_R32G32_UINT;
+		case EFormat::R32G32_Sint:     return VK_FORMAT_R32G32_SINT;
 
-        case EFormat::R10G10B10A2_Typeless:  return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
-        case EFormat::R10G10B10A2_Unorm:     return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
-        case EFormat::R10G10B10A2_Uint:      return VK_FORMAT_A2B10G10R10_UINT_PACK32;
+        case EFormat::R10G10B10A2_Typeless: return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
+        case EFormat::R10G10B10A2_Unorm:    return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
+        case EFormat::R10G10B10A2_Uint:     return VK_FORMAT_A2B10G10R10_UINT_PACK32;
 
-        case EFormat::R11G11B10_Float:       return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
+        case EFormat::R11G11B10_Float: return VK_FORMAT_B10G11R11_UFLOAT_PACK32;
 
-        case EFormat::R8G8B8A8_Typeless:     return VK_FORMAT_R8G8B8A8_UNORM;
-        case EFormat::R8G8B8A8_Unorm:        return VK_FORMAT_R8G8B8A8_UNORM;
-        case EFormat::R8G8B8A8_Unorm_SRGB:   return VK_FORMAT_R8G8B8A8_SRGB;
-        case EFormat::R8G8B8A8_Uint:         return VK_FORMAT_R8G8B8A8_UINT;
-        case EFormat::R8G8B8A8_Snorm:        return VK_FORMAT_R8G8B8A8_SNORM;
-        case EFormat::R8G8B8A8_Sint:         return VK_FORMAT_R8G8B8A8_SINT;
+        case EFormat::R8G8B8A8_Typeless:   return VK_FORMAT_R8G8B8A8_UNORM;
+        case EFormat::R8G8B8A8_Unorm:      return VK_FORMAT_R8G8B8A8_UNORM;
+        case EFormat::R8G8B8A8_Unorm_SRGB: return VK_FORMAT_R8G8B8A8_SRGB;
+        case EFormat::R8G8B8A8_Uint:       return VK_FORMAT_R8G8B8A8_UINT;
+        case EFormat::R8G8B8A8_Snorm:      return VK_FORMAT_R8G8B8A8_SNORM;
+        case EFormat::R8G8B8A8_Sint:       return VK_FORMAT_R8G8B8A8_SINT;
             
-        case EFormat::B8G8R8A8_Typeless:     return VK_FORMAT_B8G8R8A8_UNORM;
-        case EFormat::B8G8R8A8_Unorm:        return VK_FORMAT_B8G8R8A8_UNORM;
-        case EFormat::B8G8R8A8_Unorm_SRGB:   return VK_FORMAT_B8G8R8A8_SRGB;
-        case EFormat::B8G8R8A8_Uint:         return VK_FORMAT_B8G8R8A8_UINT;
-        case EFormat::B8G8R8A8_Snorm:        return VK_FORMAT_B8G8R8A8_SNORM;
-        case EFormat::B8G8R8A8_Sint:         return VK_FORMAT_B8G8R8A8_SINT;
+        case EFormat::B8G8R8A8_Typeless:   return VK_FORMAT_B8G8R8A8_UNORM;
+        case EFormat::B8G8R8A8_Unorm:      return VK_FORMAT_B8G8R8A8_UNORM;
+        case EFormat::B8G8R8A8_Unorm_SRGB: return VK_FORMAT_B8G8R8A8_SRGB;
+        case EFormat::B8G8R8A8_Uint:       return VK_FORMAT_B8G8R8A8_UINT;
+        case EFormat::B8G8R8A8_Snorm:      return VK_FORMAT_B8G8R8A8_SNORM;
+        case EFormat::B8G8R8A8_Sint:       return VK_FORMAT_B8G8R8A8_SINT;
 
-        case EFormat::R16G16_Typeless:       return VK_FORMAT_R16G16_SFLOAT;
-        case EFormat::R16G16_Float:          return VK_FORMAT_R16G16_SFLOAT;
-        case EFormat::R16G16_Unorm:          return VK_FORMAT_R16G16_UNORM;
-        case EFormat::R16G16_Uint:           return VK_FORMAT_R16G16_UINT;
-        case EFormat::R16G16_Snorm:          return VK_FORMAT_R16G16_SNORM;
-        case EFormat::R16G16_Sint:           return VK_FORMAT_R16G16_SINT;
+        case EFormat::R16G16_Typeless: return VK_FORMAT_R16G16_SFLOAT;
+        case EFormat::R16G16_Float:    return VK_FORMAT_R16G16_SFLOAT;
+        case EFormat::R16G16_Unorm:    return VK_FORMAT_R16G16_UNORM;
+        case EFormat::R16G16_Uint:     return VK_FORMAT_R16G16_UINT;
+        case EFormat::R16G16_Snorm:    return VK_FORMAT_R16G16_SNORM;
+        case EFormat::R16G16_Sint:     return VK_FORMAT_R16G16_SINT;
 
-        case EFormat::R32_Typeless:          return VK_FORMAT_D32_SFLOAT;
-        case EFormat::D32_Float:             return VK_FORMAT_D32_SFLOAT;
-        case EFormat::R32_Float:             return VK_FORMAT_R32_SFLOAT;
-        case EFormat::R32_Uint:              return VK_FORMAT_R32_UINT;
-        case EFormat::R32_Sint:              return VK_FORMAT_R32_SINT;
+		case EFormat::R32_Typeless: return VK_FORMAT_D32_SFLOAT;
+		case EFormat::D32_Float:    return VK_FORMAT_D32_SFLOAT;
+		case EFormat::R32_Float:    return VK_FORMAT_R32_SFLOAT;
+		case EFormat::R32_Uint:     return VK_FORMAT_R32_UINT;
+		case EFormat::R32_Sint:     return VK_FORMAT_R32_SINT;
 
-        case EFormat::R24G8_Typeless:        return VK_FORMAT_D24_UNORM_S8_UINT;
+        case EFormat::R24G8_Typeless: return VK_FORMAT_D24_UNORM_S8_UINT;
 
         case EFormat::D24_Unorm_S8_Uint:     return VK_FORMAT_D24_UNORM_S8_UINT;
         case EFormat::R24_Unorm_X8_Typeless: return VK_FORMAT_X8_D24_UNORM_PACK32;
         case EFormat::X24_Typeless_G8_Uint:  return VK_FORMAT_UNDEFINED;
 
-        case EFormat::R8G8_Typeless:         return VK_FORMAT_R8G8_UNORM;
-        case EFormat::R8G8_Unorm:            return VK_FORMAT_R8G8_UNORM;
-        case EFormat::R8G8_Uint:             return VK_FORMAT_R8G8_UINT;
-        case EFormat::R8G8_Snorm:            return VK_FORMAT_R8G8_SNORM;
-        case EFormat::R8G8_Sint:             return VK_FORMAT_R8G8_SINT;
+		case EFormat::R8G8_Typeless: return VK_FORMAT_R8G8_UNORM;
+		case EFormat::R8G8_Unorm:    return VK_FORMAT_R8G8_UNORM;
+		case EFormat::R8G8_Uint:     return VK_FORMAT_R8G8_UINT;
+		case EFormat::R8G8_Snorm:    return VK_FORMAT_R8G8_SNORM;
+		case EFormat::R8G8_Sint:     return VK_FORMAT_R8G8_SINT;
 
-        case EFormat::R16_Typeless:          return VK_FORMAT_R16_SFLOAT;
-        case EFormat::R16_Float:             return VK_FORMAT_R16_SFLOAT;
-        case EFormat::D16_Unorm:             return VK_FORMAT_D16_UNORM;
-        case EFormat::R16_Unorm:             return VK_FORMAT_R16_UNORM;
-        case EFormat::R16_Uint:              return VK_FORMAT_R16_UINT;
-        case EFormat::R16_Snorm:             return VK_FORMAT_R16_SNORM;
-        case EFormat::R16_Sint:              return VK_FORMAT_R16_SINT;
+        case EFormat::R16_Typeless: return VK_FORMAT_R16_SFLOAT;
+        case EFormat::R16_Float:    return VK_FORMAT_R16_SFLOAT;
+        case EFormat::D16_Unorm:    return VK_FORMAT_D16_UNORM;
+        case EFormat::R16_Unorm:    return VK_FORMAT_R16_UNORM;
+        case EFormat::R16_Uint:     return VK_FORMAT_R16_UINT;
+        case EFormat::R16_Snorm:    return VK_FORMAT_R16_SNORM;
+        case EFormat::R16_Sint:     return VK_FORMAT_R16_SINT;
 
-        case EFormat::R8_Typeless:           return VK_FORMAT_R8_UNORM;
-        case EFormat::R8_Unorm:              return VK_FORMAT_R8_UNORM;
-        case EFormat::R8_Uint:               return VK_FORMAT_R8_UINT;
-        case EFormat::R8_Snorm:              return VK_FORMAT_R8_SNORM;
-        case EFormat::R8_Sint:               return VK_FORMAT_R8_SINT;
+        case EFormat::R8_Typeless: return VK_FORMAT_R8_UNORM;
+        case EFormat::R8_Unorm:    return VK_FORMAT_R8_UNORM;
+        case EFormat::R8_Uint:     return VK_FORMAT_R8_UINT;
+        case EFormat::R8_Snorm:    return VK_FORMAT_R8_SNORM;
+        case EFormat::R8_Sint:     return VK_FORMAT_R8_SINT;
 
-        case EFormat::BC1_Typeless:          return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
-        case EFormat::BC1_UNorm:             return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
-        case EFormat::BC1_UNorm_SRGB:        return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
-        case EFormat::BC2_Typeless:          return VK_FORMAT_BC2_UNORM_BLOCK;
-        case EFormat::BC2_UNorm:             return VK_FORMAT_BC2_UNORM_BLOCK;
-        case EFormat::BC2_UNorm_SRGB:        return VK_FORMAT_BC2_SRGB_BLOCK;
-        case EFormat::BC3_Typeless:          return VK_FORMAT_BC3_UNORM_BLOCK;
-        case EFormat::BC3_UNorm:             return VK_FORMAT_BC3_UNORM_BLOCK;
-        case EFormat::BC3_UNorm_SRGB:        return VK_FORMAT_BC3_SRGB_BLOCK;
-        case EFormat::BC4_Typeless:          return VK_FORMAT_BC4_UNORM_BLOCK;
-        case EFormat::BC4_UNorm:             return VK_FORMAT_BC4_UNORM_BLOCK;
-        case EFormat::BC4_SNorm:             return VK_FORMAT_BC4_SNORM_BLOCK;
-        case EFormat::BC5_Typeless:          return VK_FORMAT_BC5_UNORM_BLOCK;
-        case EFormat::BC5_UNorm:             return VK_FORMAT_BC5_UNORM_BLOCK;
-        case EFormat::BC5_SNorm:             return VK_FORMAT_BC5_SNORM_BLOCK;
-        case EFormat::BC6H_Typeless:         return VK_FORMAT_BC6H_UFLOAT_BLOCK;
-        case EFormat::BC6H_UF16:             return VK_FORMAT_BC6H_UFLOAT_BLOCK;
-        case EFormat::BC6H_SF16:             return VK_FORMAT_BC6H_SFLOAT_BLOCK;
-        case EFormat::BC7_Typeless:          return VK_FORMAT_BC7_UNORM_BLOCK;
-        case EFormat::BC7_UNorm:             return VK_FORMAT_BC7_UNORM_BLOCK;
-        case EFormat::BC7_UNorm_SRGB:        return VK_FORMAT_BC7_SRGB_BLOCK;
+		case EFormat::BC1_Typeless:   return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+		case EFormat::BC1_UNorm:      return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+		case EFormat::BC1_UNorm_SRGB: return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
+		case EFormat::BC2_Typeless:   return VK_FORMAT_BC2_UNORM_BLOCK;
+		case EFormat::BC2_UNorm:      return VK_FORMAT_BC2_UNORM_BLOCK;
+		case EFormat::BC2_UNorm_SRGB: return VK_FORMAT_BC2_SRGB_BLOCK;
+		case EFormat::BC3_Typeless:   return VK_FORMAT_BC3_UNORM_BLOCK;
+		case EFormat::BC3_UNorm:      return VK_FORMAT_BC3_UNORM_BLOCK;
+		case EFormat::BC3_UNorm_SRGB: return VK_FORMAT_BC3_SRGB_BLOCK;
+		case EFormat::BC4_Typeless:   return VK_FORMAT_BC4_UNORM_BLOCK;
+		case EFormat::BC4_UNorm:      return VK_FORMAT_BC4_UNORM_BLOCK;
+		case EFormat::BC4_SNorm:      return VK_FORMAT_BC4_SNORM_BLOCK;
+		case EFormat::BC5_Typeless:   return VK_FORMAT_BC5_UNORM_BLOCK;
+		case EFormat::BC5_UNorm:      return VK_FORMAT_BC5_UNORM_BLOCK;
+		case EFormat::BC5_SNorm:      return VK_FORMAT_BC5_SNORM_BLOCK;
+		case EFormat::BC6H_Typeless:  return VK_FORMAT_BC6H_UFLOAT_BLOCK;
+		case EFormat::BC6H_UF16:      return VK_FORMAT_BC6H_UFLOAT_BLOCK;
+		case EFormat::BC6H_SF16:      return VK_FORMAT_BC6H_SFLOAT_BLOCK;
+		case EFormat::BC7_Typeless:   return VK_FORMAT_BC7_UNORM_BLOCK;
+		case EFormat::BC7_UNorm:      return VK_FORMAT_BC7_UNORM_BLOCK;
+		case EFormat::BC7_UNorm_SRGB: return VK_FORMAT_BC7_SRGB_BLOCK;
 
         default: return VK_FORMAT_UNDEFINED;
     }
@@ -1216,8 +1229,9 @@ constexpr const CHAR* ToString(VkFormat Format)
     case VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG:                  return "VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG";
     case VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG:                  return "VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG";
     case VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG:                  return "VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG";
+    
     case VK_FORMAT_UNDEFINED:
-    default:                                                    return "VK_FORMAT_UNDEFINED";
+    default: return "VK_FORMAT_UNDEFINED";
     }
 }
 
@@ -1231,7 +1245,8 @@ constexpr const CHAR* ToString(VkPresentModeKHR PresentMode)
     case VK_PRESENT_MODE_FIFO_RELAXED_KHR:              return "VK_PRESENT_MODE_FIFO_RELAXED_KHR";
     case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR:     return "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR";
     case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR: return "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR";
-    default:                                            return "Unknown VkPresentModeKHR";
+    
+    default: return "Unknown VkPresentModeKHR";
     }
 }
 
@@ -1287,78 +1302,115 @@ constexpr const CHAR* GetVkErrorString(VkResult Result)
     {
     case VK_SUCCESS:
         return "Command successfully completed";
+
     case VK_NOT_READY:
         return "A fence or query has not yet completed";
+
     case VK_TIMEOUT:
         return "A wait operation has not completed in the specified time";
+
     case VK_EVENT_SET:
         return "An event is signaled";
+
     case VK_EVENT_RESET:
         return "An event is unsignaled";
+
     case VK_INCOMPLETE:
         return "A return array was too small for the result";
+
     case VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT:
         return "A requested pipeline creation would have required compilation, but the application requested compilation to not be performed.";
+
     case VK_ERROR_OUT_OF_HOST_MEMORY:
         return "A host memory allocation has failed.";
+
     case VK_ERROR_OUT_OF_DEVICE_MEMORY:
         return "A device memory allocation has failed.";
+
     case VK_ERROR_INITIALIZATION_FAILED:
         return "Initialization of an object could not be completed for implementation-specific reasons.";
+
     case VK_ERROR_DEVICE_LOST:
         return "The logical or physical device has been lost.";
+
     case VK_ERROR_MEMORY_MAP_FAILED:
         return "Mapping of a memory object has failed.";
+
     case VK_ERROR_LAYER_NOT_PRESENT:
         return "A requested layer is not present or could not be loaded.";
+
     case VK_ERROR_EXTENSION_NOT_PRESENT:
         return "A requested extension is not supported.";
+
     case VK_ERROR_FEATURE_NOT_PRESENT:
         return "A requested feature is not supported.";
+
     case VK_ERROR_INCOMPATIBLE_DRIVER:
         return "The requested version of Vulkan is not supported by the driver or is otherwise incompatible for implementation-specific reasons.";
+
     case VK_ERROR_TOO_MANY_OBJECTS:
         return "Too many objects of the type have already been created.";
+
     case VK_ERROR_FORMAT_NOT_SUPPORTED:
         return "A requested format is not supported on this device.";
+
     case VK_ERROR_FRAGMENTED_POOL:
         return "A descriptor pool creation has failed due to fragmentation.";
+
     case VK_ERROR_OUT_OF_POOL_MEMORY:
         return "A pool memory allocation has failed. ";
+
     case VK_ERROR_INVALID_EXTERNAL_HANDLE:
         return "VK_ERROR_INVALID_EXTERNAL_HANDLE";
+
     case VK_ERROR_SURFACE_LOST_KHR:
         return "VK_ERROR_SURFACE_LOST_KHR";
+
     case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
         return "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
+
     case VK_SUBOPTIMAL_KHR:
         return "A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully.";
+
     case VK_ERROR_OUT_OF_DATE_KHR:
         return "A surface has changed in such a way that it is no longer compatible with the swapchain, and further presentation requests using the swapchain will fail. Applications must query the new surface properties and recreate their swapchain if they wish to continue presenting to the surface.";
+
     case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
         return "The display used by a swapchain does not use the same presentable image layout, or is incompatible in a way that prevents sharing an image.";
+
     case VK_ERROR_VALIDATION_FAILED_EXT:
         return "VK_ERROR_VALIDATION_FAILED_EXT";
+
     case VK_ERROR_INVALID_SHADER_NV:
         return "One or more shaders failed to compile or link.";
+
     case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
         return "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
+
     case VK_ERROR_FRAGMENTATION:
         return "A descriptor pool creation has failed due to fragmentation.";
+
     case VK_ERROR_NOT_PERMITTED_EXT:
         return "VK_ERROR_NOT_PERMITTED_EXT";
+
     case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
         return "A buffer creation failed because the requested address is not available.";
+
     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
         return "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent reasons, outside of the applications control.";
+
     case VK_THREAD_IDLE_KHR:
         return "A deferred operation is not complete but there is currently no work for this thread to do at the time of this call.";
+
     case VK_THREAD_DONE_KHR:
         return "A deferred operation is not complete but there is no work remaining to assign to additional threads.";
+
     case VK_OPERATION_DEFERRED_KHR:
         return "A deferred operation was requested and at least some of the work was deferred.";
+
     case VK_OPERATION_NOT_DEFERRED_KHR:
         return "A deferred operation was requested and no operations were deferred.";
+
     case VK_ERROR_UNKNOWN:
     default:
         return "An unknown error has occurred; either the application has provided invalid input, or an implementation failure has occurred.";
@@ -1385,6 +1437,7 @@ constexpr const CHAR* ToString(VkDescriptorType DescriptorType)
     case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV:  return "VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV";
     case VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM:     return "VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM";
     case VK_DESCRIPTOR_TYPE_MUTABLE_EXT:                return "VK_DESCRIPTOR_TYPE_MUTABLE_EXT";
-    default:                                            return "Unknown VkDescriptorType";
+    
+    default: return "Unknown VkDescriptorType";
     }
 }

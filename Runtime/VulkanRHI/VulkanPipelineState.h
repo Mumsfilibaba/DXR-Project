@@ -36,12 +36,12 @@ private:
 class FVulkanDepthStencilState : public FRHIDepthStencilState
 {
 public:
-    FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
+    FVulkanDepthStencilState(const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FVulkanDepthStencilState();
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const VkPipelineDepthStencilStateCreateInfo& GetVkCreateInfo() const
@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateInitializer      Initializer;
+    FRHIDepthStencilStateInfo Info;
     VkPipelineDepthStencilStateCreateInfo CreateInfo;
 };
 

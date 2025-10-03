@@ -47,20 +47,20 @@ inline const CHAR* ToString(EShaderVisibility ShaderVisibility)
     return ShaderVisibilityStrings[ShaderVisibility];
 }
 
-enum EBindingType : uint8
+enum EVulkanBindingType : uint8
 {
-    BindingType_UniformBuffer = 0,
-    BindingType_SampledImage,
-    BindingType_StorageImage,
-    BindingType_StorageBufferRead,
-    BindingType_StorageBufferReadWrite,
-    BindingType_Sampler,
-    BindingType_TexelBufferRead,
-    BindingType_TexelBufferReadWrite,
-    BindingType_Count = BindingType_TexelBufferReadWrite + 1,
+    VulkanBindingType_UniformBuffer = 0,
+    VulkanBindingType_SampledImage,
+    VulkanBindingType_StorageImage,
+    VulkanBindingType_StorageBufferRead,
+    VulkanBindingType_StorageBufferReadWrite,
+    VulkanBindingType_Sampler,
+    VulkanBindingType_TexelBufferRead,
+    VulkanBindingType_TexelBufferReadWrite,
+    VulkanBindingType_Count = VulkanBindingType_TexelBufferReadWrite + 1,
 };
 
-inline const CHAR* ToString(EBindingType Binding)
+inline const CHAR* ToString(EVulkanBindingType Binding)
 {
     static constexpr const char* const BindingTypeStrings[]
     {
@@ -74,11 +74,11 @@ inline const CHAR* ToString(EBindingType Binding)
         "TexelBufferReadWrite",
     };
     
-    static_assert(ARRAY_COUNT(BindingTypeStrings) == BindingType_Count, "BindingTypeStrings is out of date");
-    return Binding < BindingType_Count ? BindingTypeStrings[Binding] : "Unknown BindingType";
+    static_assert(ARRAY_COUNT(BindingTypeStrings) == VulkanBindingType_Count, "BindingTypeStrings is out of date");
+    return Binding < VulkanBindingType_Count ? BindingTypeStrings[Binding] : "Unknown BindingType";
 }
 
-inline VkDescriptorType GetDescriptorTypeFromBindingType(EBindingType BindingType)
+inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType BindingType)
 {
     // DescriptorType Lookup-table
     static constexpr VkDescriptorType DescriptorTypes[] =
@@ -101,7 +101,7 @@ inline VkDescriptorType GetDescriptorTypeFromBindingType(EBindingType BindingTyp
         VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
     };
 
-    static_assert(ARRAY_COUNT(DescriptorTypes) == BindingType_Count, "The DescriptorTypes array is out of date");
+    static_assert(ARRAY_COUNT(DescriptorTypes) == VulkanBindingType_Count, "The DescriptorTypes array is out of date");
     return DescriptorTypes[BindingType];
 }
 
@@ -110,20 +110,20 @@ struct FVulkanShaderInfo
     struct FBindingOffsets
     {
         uint32 DescriptorSetOffset = UINT32_MAX;
-        uint32 BindingOffset       = UINT32_MAX;
+        uint32 BindingOffset = UINT32_MAX;
     };
     
     struct FResourceBinding
     {
-        EBindingType BindingType;
-        uint8        BindingIndex;
-        uint8        OriginalBindingIndex;
-        FString      DebugName;
+        EVulkanBindingType BindingType;
+        uint8 BindingIndex;
+        uint8 OriginalBindingIndex;
+        FString DebugName;
     };
     
-    TArray<FBindingOffsets>  BindingOffsets;
+    TArray<FBindingOffsets> BindingOffsets;
     TArray<FResourceBinding> ResourceBindings;
-    uint32                   NumPushConstants;
+    uint32 NumPushConstants;
 };
 
 class FVulkanShaderModule : public FVulkanRefCounted

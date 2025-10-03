@@ -121,7 +121,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     // Create temporary compressed texture
     FRHITextureInfo CompressedTexInfo = SourceInfo;
     CompressedTexInfo.Format       = EFormat::R32G32B32A32_Uint;
-    CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccess;
+    CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccessTexture;
     CompressedTexInfo.Extent.X     = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
     CompressedTexInfo.Extent.Y     = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
     CompressedTexInfo.NumMipLevels = 1;
@@ -140,7 +140,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     // Create the actual compressed texture
     FRHITextureInfo OutputInfo = CompressedTexInfo;
     OutputInfo.Format     = EFormat::BC6H_UF16;
-    OutputInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
+    OutputInfo.UsageFlags = ETextureUsageFlags::ShaderResourceTexture;
     OutputInfo.Extent     = SourceInfo.Extent;
 
     OutTexture = FRHI::Get()->CreateTexture(OutputInfo, EResourceAccess::CopyDest);
@@ -225,7 +225,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     // Create temporary compressed texture
     FRHITextureInfo CompressedTexInfo = SourceInfo;
     CompressedTexInfo.Format       = EFormat::R32G32B32A32_Uint;
-    CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccess;
+    CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccessTexture;
     CompressedTexInfo.Extent.X     = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
     CompressedTexInfo.Extent.Y     = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
 
@@ -297,7 +297,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     // Create the actual compressed texture
     FRHITextureInfo OutputInfo = CompressedTexInfo;
     OutputInfo.Format       = EFormat::BC6H_UF16;
-    OutputInfo.UsageFlags   = ETextureUsageFlags::ShaderResource;
+    OutputInfo.UsageFlags   = ETextureUsageFlags::ShaderResourceTexture;
     OutputInfo.Extent       = SourceInfo.Extent;
     OutputInfo.NumMipLevels = CompressedTexInfo.NumMipLevels;
 

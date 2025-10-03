@@ -91,17 +91,8 @@ struct FRHISamplerStateInfo
     {
     }
 
-    FRHISamplerStateInfo(
-        ESamplerMode       InAddressU,
-        ESamplerMode       InAddressV,
-        ESamplerMode       InAddressW,
-        ESamplerFilter     InFilter,
-        EComparisonFunc    InComparisonFunc,
-        float              InMipLODBias,
-        uint8              InMaxAnisotropy,
-        float              InMinLOD,
-        float              InMaxLOD,
-        const FFloatColor& InBorderColor) noexcept
+    FRHISamplerStateInfo(ESamplerMode InAddressU, ESamplerMode InAddressV, ESamplerMode InAddressW, ESamplerFilter InFilter, EComparisonFunc InComparisonFunc,
+        float InMipLODBias, uint8 InMaxAnisotropy, float InMinLOD, float InMaxLOD, const FFloatColor& InBorderColor) noexcept
         : AddressU(InAddressU)
         , AddressV(InAddressV)
         , AddressW(InAddressW)

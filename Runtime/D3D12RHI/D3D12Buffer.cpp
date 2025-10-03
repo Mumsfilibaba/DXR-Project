@@ -15,14 +15,14 @@ FD3D12Buffer::~FD3D12Buffer()
 
 bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
-    const uint64 Alignment   = GetBufferAlignment(Info.UsageFlags);
+    const uint64 Alignment   = GetBufferAlignment(Info.Flags);
     const uint64 AlignedSize = Math::AlignUp(Info.Size, Alignment);
 
     D3D12_RESOURCE_DESC ResourceDesc;
     FMemory::Memzero(&ResourceDesc);
 
     ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    ResourceDesc.Flags              = ConvertBufferFlags(Info.UsageFlags);
+    ResourceDesc.Flags              = ConvertBufferFlags(Info.Flags);
     ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
     ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     ResourceDesc.Width              = AlignedSize;

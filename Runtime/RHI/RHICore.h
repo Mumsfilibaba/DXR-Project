@@ -15,40 +15,44 @@
 enum class ERayTracingTier : uint8
 {
     NotSupported = 0,
-    Tier1        = 1,
-    Tier1_1      = 2,
+
+    Tier1   = 1,
+    Tier1_1 = 2,
 };
 
-NODISCARD constexpr const CHAR* ToString(ERayTracingTier Tier)
+NODISCARD constexpr const CHAR* ToString(ERayTracingTier RayTracingTier)
 {
-    switch (Tier)
+    switch (RayTracingTier)
     {
         case ERayTracingTier::NotSupported: return "NotSupported";
         case ERayTracingTier::Tier1:        return "Tier1";
         case ERayTracingTier::Tier1_1:      return "Tier1_1";
-        default:                            return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
 enum class EShadingRateTier : uint8
 {
     NotSupported = 0,
-    Tier1        = 1,
-    Tier2        = 2,
+
+    Tier1 = 1,
+    Tier2 = 2,
 };
 
-NODISCARD constexpr const CHAR* ToString(EShadingRateTier Tier)
+NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
 {
-    switch (Tier)
+    switch (ShadingRateTier)
     {
         case EShadingRateTier::NotSupported: return "NotSupported";
         case EShadingRateTier::Tier1:        return "Tier1";
         case EShadingRateTier::Tier2:        return "Tier2";
-        default:                             return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
-struct FRHIDeviceInfo
+struct RHIDeviceInfo
 {
     // Geometry Shading Support
     static RHI_API bool SupportsGeometryShaders;
@@ -57,21 +61,28 @@ struct FRHIDeviceInfo
     static RHI_API bool SupportRenderTargetArrayIndexFromVertexShader;
 
     // View-Instancing
-    static RHI_API bool   SupportsViewInstancing;
+    static RHI_API bool SupportsViewInstancing;
     static RHI_API uint32 MaxViewInstanceCount;
 
     // Hardware RayTracing
-    static RHI_API bool            SupportsRayTracing;
+    static RHI_API bool SupportsRayTracing;
     static RHI_API ERayTracingTier RayTracingTier;
-    static RHI_API uint32          RayTracingMaxRecursionDepth;
+    static RHI_API uint32 RayTracingMaxRecursionDepth;
 
     // Hardware Variable Rate Shading
-    static RHI_API bool             SupportsVRS;
+    static RHI_API bool SupportsVRS;
     static RHI_API EShadingRateTier ShadingRateTier;
-    static RHI_API uint32           ShadingRateImageTileSize;
+    static RHI_API uint32 ShadingRateImageTileSize;
 
     // Draw-Indirect
-    static RHI_API bool   SupportDrawIndirect;
-    static RHI_API bool   SupportMultiDrawIndirect;
+    static RHI_API bool SupportDrawIndirect;
+    static RHI_API bool SupportMultiDrawIndirect;
     static RHI_API uint32 MaxDrawIndirectCount;
+};
+
+struct RHIStatistics
+{
+    static RHI_API FAtomicUInt64 NumDrawCalls;
+    static RHI_API FAtomicUInt64 NumDispatchCalls;
+    static RHI_API FAtomicUInt64 NumCommands;
 };

@@ -63,7 +63,11 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
 
     // VertexBuffer
-    FRHIBufferInfo VBInfo(SkyboxVertices.SizeInBytes(), SkyboxVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
+    FRHIBufferInfo VBInfo;
+    VBInfo.Size   = SkyboxVertices.SizeInBytes();
+    VBInfo.Stride = SkyboxVertices.Stride();
+    VBInfo.Flags  = EBufferFlags::Default | EBufferFlags::VertexBuffer;
+
     SkyboxVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
@@ -75,7 +79,11 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
 
     // IndexBuffers
-    FRHIBufferInfo IBInfo(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
+    FRHIBufferInfo IBInfo;
+    IBInfo.Stride = GetStrideFromIndexFormat(SkyboxIndexFormat);
+    IBInfo.Size   = SkyboxIndexCount * IBInfo.Stride;
+    IBInfo.Flags  = EBufferFlags::Default | EBufferFlags::IndexBuffer;
+
     SkyboxIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
         reinterpret_cast<void*>(SkyboxIndicies16.Data()) :
         reinterpret_cast<void*>(SkyboxIndicies32.Data()));
@@ -166,7 +174,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+    FRHIDepthStencilStateInfo DepthStencilStateInitializer;
     DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
     DepthStencilStateInitializer.bDepthEnable      = true;
     DepthStencilStateInitializer.bDepthWriteEnable = false;

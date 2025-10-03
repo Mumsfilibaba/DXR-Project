@@ -804,7 +804,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Dst);
     CHECK(VulkanBuffer != nullptr);
 
-    if (IsEnumFlagSet(VulkanBuffer->GetFlags(), EBufferUsageFlags::Dynamic))
+    if (VulkanBuffer->GetInfo().IsDynamic())
     {
         VkDevice       NativeDevice = GetDevice()->GetVkDevice();
         VkDeviceMemory DeviceMemory = VulkanBuffer->GetVkDeviceMemory();

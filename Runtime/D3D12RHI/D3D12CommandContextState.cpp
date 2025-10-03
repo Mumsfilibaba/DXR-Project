@@ -588,8 +588,8 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     {
         FD3D12Resource* Resource = VertexBuffer->GetResource();
         CurrentVBV.BufferLocation = Resource->GetGPUVirtualAddress();
-        CurrentVBV.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetSize());
-        CurrentVBV.StrideInBytes  = VertexBuffer->GetStride();
+        CurrentVBV.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetInfo().Size);
+        CurrentVBV.StrideInBytes  = VertexBuffer->GetInfo().Stride;
     }
     else
     {
@@ -612,7 +612,7 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
         FD3D12Resource* Resource = IndexBuffer->GetResource();
         NewIndexBuffer.BufferLocation = Resource->GetGPUVirtualAddress();
         NewIndexBuffer.Format         = IndexFormat;
-        NewIndexBuffer.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetSize());
+        NewIndexBuffer.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetInfo().Size);
     }
     else
     {

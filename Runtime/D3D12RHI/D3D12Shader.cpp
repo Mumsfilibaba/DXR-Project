@@ -1,7 +1,9 @@
 #include "Core/Misc/CRC.h"
+#include "Core/Threading/Atomic.h"
 #include "D3D12RHI/D3D12Shader.h"
-#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12RootSignature.h"
+#include "D3D12RHI/D3D12Loader.h"
+#include "RHI/ShaderCompiler.h"
 
 static bool IsShaderResourceView(D3D_SHADER_INPUT_TYPE Type)
 {
@@ -36,10 +38,102 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
     return false;
 }
 
+
+#ifndef MAKEFOURCC
+#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
+#endif
+
+enum DxilFourCC
+{
+	DFCC_Container               = MAKEFOURCC('D', 'X', 'B', 'C'),
+	DFCC_ResourceDef             = MAKEFOURCC('R', 'D', 'E', 'F'),
+	DFCC_InputSignature          = MAKEFOURCC('I', 'S', 'G', '1'),
+	DFCC_OutputSignature         = MAKEFOURCC('O', 'S', 'G', '1'),
+	DFCC_PatchConstantSignature  = MAKEFOURCC('P', 'S', 'G', '1'),
+	DFCC_ShaderStatistics        = MAKEFOURCC('S', 'T', 'A', 'T'),
+	DFCC_ShaderDebugInfoDXIL     = MAKEFOURCC('I', 'L', 'D', 'B'),
+	DFCC_ShaderDebugName         = MAKEFOURCC('I', 'L', 'D', 'N'),
+	DFCC_FeatureInfo             = MAKEFOURCC('S', 'F', 'I', '0'),
+	DFCC_PrivateData             = MAKEFOURCC('P', 'R', 'I', 'V'),
+	DFCC_RootSignature           = MAKEFOURCC('R', 'T', 'S', '0'),
+	DFCC_DXIL                    = MAKEFOURCC('D', 'X', 'I', 'L'),
+	DFCC_PipelineStateValidation = MAKEFOURCC('P', 'S', 'V', '0'),
+	DFCC_RuntimeData             = MAKEFOURCC('R', 'D', 'A', 'T'),
+	DFCC_ShaderHash              = MAKEFOURCC('H', 'A', 'S', 'H'),
+};
+
+#undef MAKEFOURCC
+
+class FExistingBlob : public IDxcBlob
+{
+public:
+	FExistingBlob(LPVOID InData, SIZE_T InSizeInBytes)
+		: SizeInBytes(InSizeInBytes)
+		, Data(nullptr)
+		, References(1)
+	{
+		Data = FMemory::Malloc(SizeInBytes);
+		FMemory::Memcpy(Data, InData, SizeInBytes);
+	}
+
+	~FExistingBlob()
+	{
+		FMemory::Free(Data);
+	}
+
+	virtual LPVOID GetBufferPointer() override final { return Data; }
+	virtual SIZE_T GetBufferSize() override final { return SizeInBytes; }
+
+	virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
+	{
+		if (!ppvObject)
+		{
+			return E_INVALIDARG;
+		}
+
+		*ppvObject = nullptr;
+
+		if (Riid == __uuidof(IUnknown) || Riid == __uuidof(ID3DBlob) || Riid == __uuidof(IDxcBlob))
+		{
+			*ppvObject = reinterpret_cast<LPVOID>(this);
+			AddRef();
+			return NOERROR;
+		}
+
+		return E_NOINTERFACE;
+	}
+
+	virtual ULONG AddRef() override final
+	{
+		const uint32 NewRefCount = ++References;
+		return static_cast<ULONG>(NewRefCount);
+	}
+
+	virtual ULONG Release() override final
+	{
+		const uint32 NewRefCount = --References;
+		if (NewRefCount == 0)
+		{
+			delete this;
+		}
+
+		return static_cast<ULONG>(NewRefCount);
+	}
+
+private:
+	SIZE_T SizeInBytes;
+	LPVOID Data;
+	FAtomicUInt32 References;
+};
+
 FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility)
     : FD3D12DeviceChild(InDevice)
     , ByteCode()
+    , ByteCodeHash()
     , ShaderVisibility(InShaderVisibility)
+    , ResourceCount()
+    , LocalRayTracingResourceCount()
+    , bContainsRootSignature(false)
 {
 }
 
@@ -61,8 +155,8 @@ bool FD3D12Shader::Initialize(const TArray<uint8>& InCode)
 	FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
 
 	// The beginning of the DXIL container has the following layout
-	//   - Bytes 0–3 are always set to the string "DXBC"
-	//   - Bytes 4–19 are a 16-byte checksum
+	//   - Bytes 0-3 are always set to the string "DXBC"
+	//   - Bytes 4-19 are a 16-byte checksum
 	if (ByteCode.BytecodeLength >= 20)
 	{
 		const uint8* CodeData = InCode.Data() + 4;
@@ -74,6 +168,68 @@ bool FD3D12Shader::Initialize(const TArray<uint8>& InCode)
 		ByteCodeHash = FD3D12ShaderHash();
         return false;
 	}
+}
+
+bool FD3D12Shader::IsRootSignatureInShaderBlob(const TComPtr<IDxcBlob>& ShaderBlob)
+{
+    TComPtr<IDxcContainerReflection> Reflection;
+    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&Reflection));
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Shader]: FAILED to create IDxcContainerReflection");
+        return false;
+    }
+
+    Result = Reflection->Load(ShaderBlob.Get());
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Shader]: Reflection were not able to load shader");
+        return false;
+    }
+
+    uint32 PartIndex;
+    Result = Reflection->FindFirstPartKind(DFCC_RootSignature, &PartIndex);
+    if (FAILED(Result))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FD3D12Shader::GetReflectionInterface(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject)
+{
+    TComPtr<IDxcContainerReflection> ReflectionInterface;
+    HRESULT Result = D3D12Functions::DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&ReflectionInterface));
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Shader]: FAILED to create ReflectionInterface");
+        return false;
+    }
+
+    Result = ReflectionInterface->Load(ShaderBlob.Get());
+    if (FAILED(Result))
+    {
+        D3D12_ERROR("[FD3D12Shader]: FAILED to get reflection of shader");
+        return false;
+    }
+
+    uint32 PartIndex;
+    Result = ReflectionInterface->FindFirstPartKind(DFCC_DXIL, &PartIndex);
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Shader]: Shader does not contain valid DXIL part");
+        return false;
+    }
+
+    Result = ReflectionInterface->GetPartReflection(PartIndex, iid, ppvObject);
+    if (FAILED(Result))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Shader]: FAILED to get DXIL object");
+        return false;
+    }
+
+    return true;
 }
 
 template<typename TD3D12ReflectionInterface>
@@ -180,14 +336,16 @@ bool FD3D12GraphicsShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
+    TComPtr<IDxcBlob> ShaderBlob = new FExistingBlob((LPVOID)ByteCode.pShaderBytecode, static_cast<uint64>(ByteCode.BytecodeLength));
+
 	TComPtr<ID3D12ShaderReflection> Reflection;
-	if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))
+	if (!GetReflectionInterface(ShaderBlob, IID_PPV_ARGS(&Reflection)))
 	{
 		return false;
 	}
 
 	D3D12_SHADER_DESC ShaderDesc;
-	FMemory::Memzero(&ShaderDesc);
+    FMemory::Memzero(&ShaderDesc);
 
 	HRESULT Result = Reflection->GetDesc(&ShaderDesc);
 	if (FAILED(Result))
@@ -201,7 +359,7 @@ bool FD3D12GraphicsShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
-	if (GD3D12ShaderCompiler->HasRootSignature(this))
+	if (IsRootSignatureInShaderBlob(ShaderBlob))
 	{
 		bContainsRootSignature = true;
 	}
@@ -216,8 +374,10 @@ bool FD3D12ComputeShader::Initialize(const TArray<uint8>& InCode)
         return false;
     }
 
+    TComPtr<IDxcBlob> ShaderBlob = new FExistingBlob((LPVOID)ByteCode.pShaderBytecode, static_cast<uint64>(ByteCode.BytecodeLength));
+
     TComPtr<ID3D12ShaderReflection> Reflection;
-    if (!GD3D12ShaderCompiler->GetReflection(this, &Reflection))
+	if (!GetReflectionInterface(ShaderBlob, IID_PPV_ARGS(&Reflection)))
     {
         return false;
     }
@@ -237,7 +397,7 @@ bool FD3D12ComputeShader::Initialize(const TArray<uint8>& InCode)
         return false;
     }
 
-    if (GD3D12ShaderCompiler->HasRootSignature(this))
+    if (IsRootSignatureInShaderBlob(ShaderBlob))
     {
         bContainsRootSignature = true;
     }
@@ -252,8 +412,10 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
+    TComPtr<IDxcBlob> ShaderBlob = new FExistingBlob((LPVOID)ByteCode.pShaderBytecode, static_cast<uint64>(ByteCode.BytecodeLength));
+
 	TComPtr<ID3D12LibraryReflection> Reflection;
-	if (!GD3D12ShaderCompiler->GetLibraryReflection(this, &Reflection))
+	if (!GetReflectionInterface(ShaderBlob, IID_PPV_ARGS(&Reflection)))
 	{
 		return false;
 	}

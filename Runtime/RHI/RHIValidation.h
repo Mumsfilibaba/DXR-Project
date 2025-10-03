@@ -10,7 +10,6 @@ public:
     FRHIValidation(FRHI* InRealRHI);
     ~FRHIValidation();
 
-public:
     virtual bool Initialize();
 
     virtual void BeginFrame();
@@ -38,7 +37,7 @@ public:
     virtual FRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final;
+    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) override final;
     virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final;
     virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final;
     virtual FRHIVertexLayout* CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final;
@@ -74,7 +73,6 @@ public:
     FRHIValidationCommandContext(IRHICommandContext* InRealContext);
     ~FRHIValidationCommandContext();
 
-public:
     virtual void BeginFrame() override final;
     virtual void EndFrame() override final;
 

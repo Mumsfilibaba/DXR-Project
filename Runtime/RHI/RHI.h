@@ -17,10 +17,11 @@ struct FRHIRayTracingGeometryInfo;
 enum class ERHIType : uint32
 {
     Unknown = 0,
-    Null    = 1,
-    D3D12   = 2,
-    Vulkan  = 3,
-    Metal   = 4,
+
+    Null   = 1,
+    D3D12  = 2,
+    Vulkan = 3,
+    Metal  = 4,
 };
 
 NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
@@ -31,7 +32,8 @@ NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
         case ERHIType::D3D12:  return "D3D12";
         case ERHIType::Vulkan: return "Vulkan";
         case ERHIType::Metal:  return "Metal";
-        default:               return "Unknown";
+
+        default: return "Unknown";
     }
 }
 
@@ -54,8 +56,6 @@ enum class EVideoMemoryType
 
 struct FRHIVideoMemoryInfo
 {
-    constexpr FRHIVideoMemoryInfo() noexcept = default;
-
     constexpr bool operator==(const FRHIVideoMemoryInfo& Other) const noexcept = default;
 
     /** @brief Type of memory that is queried */
@@ -264,7 +264,7 @@ public:
      * @param InInitializer Information about the depth-stencil state.
      * @return The newly created depth-stencil state.
      */
-    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) = 0;
+    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new rasterizer state.

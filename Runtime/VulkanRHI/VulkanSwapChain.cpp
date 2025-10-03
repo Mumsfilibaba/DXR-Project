@@ -404,7 +404,7 @@ void FVulkanSwapChain::SetDebugName(const FString& InName)
         BackBuffer->SetDebugName("BackBuffer Proxy");
 
         // Name all the images
-        for (uint32 i = 0; i < BackBuffers.Size(); ++i)
+        for (int32 i = 0; i < BackBuffers.Size(); ++i)
         {
             const FString ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", i);
             BackBuffers[i]->SetDebugName(ImageName);

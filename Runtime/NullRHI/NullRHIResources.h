@@ -4,16 +4,36 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FNullRHIBuffer : public FRHIBuffer
+class FNullRHIBuffer : public FRHIBuffer
 {
+public:
     FNullRHIBuffer(const FRHIBufferInfo& InBufferInfo)
         : FRHIBuffer(InBufferInfo)
     {
     }
 
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final
+    {
+        return nullptr;
+    }
 
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    virtual void SetDebugName(const FString& InDebugName) override final
+    {
+        DebugName = InDebugName;
+    }
+    
+    virtual FString GetDebugName() const override final
+    {
+        return DebugName;
+    }
+
+private:
+    FString DebugName;
 };
 
 struct FNullRHIShaderResourceView : public FRHIShaderResourceView
@@ -43,10 +63,8 @@ public:
     }
 
     virtual void* GetRHINativeHandle() const override final { return nullptr; }
-
     virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
@@ -63,7 +81,6 @@ struct FNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
     }
 
     virtual void* GetRHINativeHandle() const override final { return nullptr; }
-    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 };
 
 class FNullRHIRayTracingScene : public FRHIRayTracingScene
@@ -76,8 +93,6 @@ public:
     }
 
     virtual void* GetRHINativeHandle() const override final { return nullptr; }
-    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
-
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
@@ -148,19 +163,19 @@ private:
 class FNullRHIDepthStencilState : public FRHIDepthStencilState
 {
 public:
-    FNullRHIDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+    FNullRHIDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
         : FRHIDepthStencilState()
-        , Initializer(InInitializer)
+        , Info(InInfo)
     {
     }
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
     {
-        return Initializer;
+        return Info;
     }
 
 private:
-    FRHIDepthStencilStateInitializer Initializer;
+    FRHIDepthStencilStateInfo Info;
 };
 
 class FNullRHIRasterizerState : public FRHIRasterizerState

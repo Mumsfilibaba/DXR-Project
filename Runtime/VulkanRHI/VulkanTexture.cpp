@@ -178,11 +178,11 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
     }
-    if (Info.IsShaderResource())
+    if (Info.IsShaderResourceTexture())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
     }
-    if (Info.IsUnorderedAccess())
+    if (Info.IsUnorderedAccessTexture())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
@@ -267,7 +267,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     const bool bIsTexture2D = Info.IsTexture2D();
     if (bIsTexture2D)
     {
-        if (Info.IsUnorderedAccess())
+        if (Info.IsUnorderedAccessTexture())
         {
             FRHITextureUAVInfo ViewInfo;
             ViewInfo.Texture         = this;

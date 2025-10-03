@@ -142,7 +142,7 @@ public:
         return Materials[Index];
     }
 
-    int32 GetNumMeshes()    const { return Meshes.Size(); }
+    int32 GetNumMeshes() const { return Meshes.Size(); }
     int32 GetNumMaterials() const { return Materials.Size(); }
 
     const FAABB& GetAABB() const

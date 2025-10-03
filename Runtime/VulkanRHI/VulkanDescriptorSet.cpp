@@ -238,7 +238,7 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, uint
 
 	if (UniformBuffer)
 	{
-		const VkDeviceSize Range = UniformBuffer->GetSize();
+		const VkDeviceSize Range = UniformBuffer->GetInfo().Size;
 		FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
 		DSBuilder.WriteUniformBuffer(BindingIndex, UniformBuffer->GetVkBuffer(), 0, Range);
 	}

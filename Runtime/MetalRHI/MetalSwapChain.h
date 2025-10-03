@@ -1,11 +1,11 @@
 #pragma once
-#include "MetalDeviceContext.h"
-#include "MetalTexture.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Mac/MacEvent.h"
 #include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
+#include "MetalRHI/MetalTexture.h"
+#include "MetalRHI/MetalDeviceContext.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

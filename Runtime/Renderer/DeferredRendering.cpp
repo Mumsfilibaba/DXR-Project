@@ -100,7 +100,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             }
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = true;
@@ -208,7 +208,7 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
     const FClearValue DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
@@ -433,12 +433,12 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             return;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilInitializer;
-        DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-        DepthStencilInitializer.bDepthEnable      = true;
-        DepthStencilInitializer.bDepthWriteEnable = false;
+        FRHIDepthStencilStateInfo DepthStencilInfo;
+        DepthStencilInfo.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilInfo.bDepthEnable      = true;
+        DepthStencilInfo.bDepthWriteEnable = false;
 
-        NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
+        NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
         if (!NewPipelineInstance.DepthStencilState)
         {
             DEBUG_BREAK();
@@ -517,7 +517,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::AlbedoFormat, Width, Height, 1, 1, Usage);
 
     // Albedo
@@ -746,7 +746,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHITextureInfo LUTInfo = FRHITextureInfo::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccess);
+    FRHITextureInfo LUTInfo = FRHITextureInfo::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
     FRHITextureRef StagingTexture = FRHI::Get()->CreateTexture(LUTInfo, EResourceAccess::Common);
 
     if (!StagingTexture)
@@ -759,7 +759,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         StagingTexture->SetDebugName("Staging IntegrationLUT");
     }
 
-    LUTInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
+    LUTInfo.UsageFlags = ETextureUsageFlags::ShaderResourceTexture;
 
     FrameResources.IntegrationLUT = FRHI::Get()->CreateTexture(LUTInfo, EResourceAccess::Common);
     if (!FrameResources.IntegrationLUT)
@@ -930,7 +930,7 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo FinalTargetInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage);
     FrameResources.FinalTarget = FRHI::Get()->CreateTexture(FinalTargetInfo, EResourceAccess::PixelShaderResource);
     if (FrameResources.FinalTarget)
@@ -1188,7 +1188,7 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
     const uint32 ReducedWidth  = Math::DivideByMultiple(Width, Alignment);
     const uint32 ReducedHeight = Math::DivideByMultiple(Height, Alignment);
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, Usage);
     for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
     {

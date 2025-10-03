@@ -10,7 +10,6 @@
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12RayTracing.h"
-#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Loader.h"

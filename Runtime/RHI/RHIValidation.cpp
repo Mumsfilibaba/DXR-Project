@@ -91,9 +91,9 @@ FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHITextu
     }
 
     const FRHITextureInfo& TextureInfo = InInfo.Texture->GetInfo();
-    if (!TextureInfo.IsShaderResource())
+    if (!TextureInfo.IsShaderResourceTexture())
     {
-        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::ShaderResource to used with a ShaderResourceView");
+        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::ShaderResourceTexture to used with a ShaderResourceView");
         return nullptr;
     }
 
@@ -135,9 +135,9 @@ FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHIBuffe
     }
 
     const FRHIBufferInfo& BufferInfo = InInfo.Buffer->GetInfo();
-    if (!BufferInfo.IsShaderResource())
+    if (!BufferInfo.IsShaderResourceBuffer())
     {
-        RHI_VALIDATION_ERROR("Buffer must have a the EBufferUsageFlags::ShaderResource to used with a ShaderResourceView");
+        RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::ShaderResourceBuffer to used with a ShaderResourceView");
         return nullptr;
     }
 
@@ -153,9 +153,9 @@ FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHITex
     }
 
     const FRHITextureInfo& TextureInfo = InInfo.Texture->GetInfo();
-    if (!TextureInfo.IsUnorderedAccess())
+    if (!TextureInfo.IsUnorderedAccessTexture())
     {
-        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::UnorderedAccess to used with a UnorderedAccessView");
+        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::UnorderedAccessTexture to used with a UnorderedAccessView");
         return nullptr;
     }
 
@@ -196,9 +196,9 @@ FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIBuf
     }
 
     const FRHIBufferInfo& BufferInfo = InInfo.Buffer->GetInfo();
-    if (!BufferInfo.IsUnorderedAccess())
+    if (!BufferInfo.IsUnorderedAccessBuffer())
     {
-        RHI_VALIDATION_ERROR("Buffer must have a the EBufferUsageFlags::UnorderedAccess to used with a UnorderedAccessView");
+        RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::UnorderedAccessBuffer to used with a UnorderedAccessView");
         return nullptr;
     }
 
@@ -265,9 +265,9 @@ FRHIRayMissShader* FRHIValidation::CreateRayMissShader(const TArray<uint8>& Shad
     return RealRHI->CreateRayMissShader(ShaderCode);
 }
 
-FRHIDepthStencilState* FRHIValidation::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FRHIValidation::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
 {
-    return RealRHI->CreateDepthStencilState(InInitializer);
+    return RealRHI->CreateDepthStencilState(InInfo);
 }
 
 FRHIRasterizerState* FRHIValidation::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)

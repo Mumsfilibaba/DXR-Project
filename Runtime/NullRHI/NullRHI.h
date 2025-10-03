@@ -138,9 +138,9 @@ public:
         return new TNullRHIShader<FRHIRayMissShader>();
     }
 
-    virtual class FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final
+    virtual class FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) override final
     {
-        return new FNullRHIDepthStencilState(InInitializer);
+        return new FNullRHIDepthStencilState(InInfo);
     }
 
     virtual class FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final

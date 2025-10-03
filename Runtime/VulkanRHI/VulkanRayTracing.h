@@ -16,7 +16,6 @@ public:
     
     // FRHIRayTracingGeometry Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(Geometry); }
-    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;

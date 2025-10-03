@@ -44,3 +44,8 @@ int32 FRHIResource::Release() const
 
     return RefCount;
 }
+
+int32 FRHIResource::GetRefCount() const
+{
+    return StrongReferences.Load();
+}

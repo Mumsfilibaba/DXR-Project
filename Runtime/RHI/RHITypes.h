@@ -635,7 +635,7 @@ struct FRHIDescriptorHandle
     };
 
     constexpr FRHIDescriptorHandle() noexcept
-        : Data(0)
+        : Handle(0)
     {
     }
 
@@ -652,23 +652,23 @@ struct FRHIDescriptorHandle
 
     constexpr bool operator==(const FRHIDescriptorHandle& Other) const noexcept
     {
-        return Data == Other.Data;
+        return Handle == Other.Handle;
     }
 
     constexpr bool operator!=(const FRHIDescriptorHandle& Other) const noexcept
     {
-        return Data != Other.Data;
+        return Handle != Other.Handle;
     }
 
     union
     {
         struct
         {
-            uint32          Index : 24;
-            EDescriptorType Type  : 8;
+            uint32 Index : 24;
+            EDescriptorType Type : 8;
         };
 
-        uint32 Data;
+        uint32 Handle;
     };
 };
 
@@ -740,7 +740,7 @@ struct FClearValue
         }
     }
 
-    NODISCARD bool IsColorValue()        const noexcept { return Type == EType::Color; }
+    NODISCARD bool IsColorValue() const noexcept { return Type == EType::Color; }
     NODISCARD bool IsDepthStencilValue() const noexcept { return Type == EType::DepthStencil; }
 
     NODISCARD FFloatColor& AsColor() noexcept 

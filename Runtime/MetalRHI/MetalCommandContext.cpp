@@ -1,9 +1,9 @@
-#include "MetalCommandContext.h"
-#include "MetalDeviceContext.h"
-#include "MetalBuffer.h"
-#include "MetalTexture.h"
-#include "MetalSwapChain.h"
-#include "MetalPipelineState.h"
+#include "MetalRHI/MetalCommandContext.h"
+#include "MetalRHI/MetalDeviceContext.h"
+#include "MetalRHI/MetalBuffer.h"
+#include "MetalRHI/MetalTexture.h"
+#include "MetalRHI/MetalSwapChain.h"
+#include "MetalRHI/MetalPipelineState.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

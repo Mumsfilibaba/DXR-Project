@@ -1,6 +1,6 @@
 #pragma once
-#include "MetalDeviceChild.h"
 #include "RHI/RHIResources.h"
+#include "MetalRHI/MetalRHI/MetalDeviceChild.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

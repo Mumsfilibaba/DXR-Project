@@ -59,12 +59,12 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilInitializer;
-    DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-    DepthStencilInitializer.bDepthEnable      = true;
-    DepthStencilInitializer.bDepthWriteEnable = true;
+    FRHIDepthStencilStateInfo DepthStencilInfo;
+    DepthStencilInfo.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilInfo.bDepthEnable      = true;
+    DepthStencilInfo.bDepthWriteEnable = true;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();

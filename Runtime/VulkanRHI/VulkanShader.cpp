@@ -209,7 +209,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSampledImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_SampledImage;
+            Binding.BindingType  = VulkanBindingType_SampledImage;
             Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
             
@@ -246,7 +246,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSamplers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_Sampler;
+            Binding.BindingType  = VulkanBindingType_Sampler;
             Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding));
             
@@ -283,7 +283,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_StorageImage;
+            Binding.BindingType  = VulkanBindingType_StorageImage;
             Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
             
@@ -320,7 +320,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumUniformBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_UniformBuffer;
+            Binding.BindingType  = VulkanBindingType_UniformBuffer;
             Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding));
             
@@ -377,11 +377,11 @@ bool FVulkanShader::InitializeShaderLayout()
             const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
             if (bIsUAV)
             {
-                Binding.BindingType = BindingType_StorageBufferReadWrite;
+                Binding.BindingType = VulkanBindingType_StorageBufferReadWrite;
             }
             else
             {
-                Binding.BindingType = BindingType_StorageBufferRead;
+                Binding.BindingType = VulkanBindingType_StorageBufferRead;
             }
 
             // Set debug-name

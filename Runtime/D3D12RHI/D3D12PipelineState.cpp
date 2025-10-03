@@ -3,7 +3,6 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Misc/Paths.h"
 #include "D3D12RHI/D3D12PipelineState.h"
-#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Device.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
@@ -63,21 +62,21 @@ FD3D12VertexLayout::~FD3D12VertexLayout()
 {
 }
 
-FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
     : FRHIDepthStencilState()
-    , Initializer(InInitializer)
+    , Info(InInfo)
     , Hash(0)
 {
     FMemory::Memzero(&Desc);
 
-    Desc.DepthFunc        = ConvertComparisonFunc(InInitializer.DepthFunc);
-    Desc.DepthEnable      = InInitializer.bDepthEnable;
-    Desc.DepthWriteMask   = InInitializer.bDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    Desc.StencilEnable    = InInitializer.bStencilEnable;
-    Desc.StencilReadMask  = static_cast<uint8>(InInitializer.StencilReadMask);
-    Desc.StencilWriteMask = static_cast<uint8>(InInitializer.StencilWriteMask);
-    Desc.FrontFace        = ConvertStencilState(InInitializer.FrontFace);
-    Desc.BackFace         = ConvertStencilState(InInitializer.BackFace);
+    Desc.DepthFunc        = ConvertComparisonFunc(InInfo.DepthFunc);
+    Desc.DepthEnable      = InInfo.bDepthEnable;
+    Desc.DepthWriteMask   = InInfo.bDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    Desc.StencilEnable    = InInfo.bStencilEnable;
+    Desc.StencilReadMask  = static_cast<uint8>(InInfo.StencilReadMask);
+    Desc.StencilWriteMask = static_cast<uint8>(InInfo.StencilWriteMask);
+    Desc.FrontFace        = ConvertStencilState(InInfo.FrontFace);
+    Desc.BackFace         = ConvertStencilState(InInfo.BackFace);
 
     Hash = CRC32::Generate(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
 }

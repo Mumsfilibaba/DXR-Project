@@ -186,7 +186,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     const bool bIsTexture2D = Info.IsTexture2D();
     if (bIsTexture2D)
     {
-        if (Info.IsUnorderedAccess())
+        if (Info.IsUnorderedAccessTexture())
         {
             D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc;
             FMemory::Memzero(&ViewDesc);

@@ -234,7 +234,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     FTextureResourceData InitalData;
     InitalData.InitMipData(Pixels, RowPitch, RowPitch * Height);
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMiplevels, 1, ETextureUsageFlags::ShaderResource);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMiplevels, 1, ETextureUsageFlags::ShaderResourceTexture);
     FRHITextureRef Texture = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
@@ -253,18 +253,18 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* Dest, ETextureFactoryFlags Flags)
 {
     CHECK(IsTextureCube(Dest->GetDimension()));
-    CHECK(IsEnumFlagSet(Source->GetFlags(), ETextureUsageFlags::ShaderResource));
-    CHECK(IsEnumFlagSet(Dest->GetFlags(), ETextureUsageFlags::ShaderResource));
+    CHECK(IsEnumFlagSet(Source->GetFlags(), ETextureUsageFlags::ShaderResourceTexture));
+    CHECK(IsEnumFlagSet(Dest->GetFlags(), ETextureUsageFlags::ShaderResourceTexture));
 
     const bool bGenerateMips   = IsEnumFlagSet(Flags, ETextureFactoryFlags::GenerateMips);
-    const bool bDestSupportUAV = IsEnumFlagSet(Dest->GetFlags(), ETextureUsageFlags::UnorderedAccess);
+    const bool bDestSupportUAV = IsEnumFlagSet(Dest->GetFlags(), ETextureUsageFlags::UnorderedAccessTexture);
 
     // If the destination does not support UAVs, create a staging texture that does
     FRHITextureRef StagingTexture;
     if (!bDestSupportUAV)
     {
         FRHITextureInfo TextureInfo = Dest->GetInfo();
-        TextureInfo.UsageFlags |= ETextureUsageFlags::UnorderedAccess;
+        TextureInfo.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
 
         StagingTexture = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
         if (!StagingTexture)
@@ -363,7 +363,7 @@ bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture)
 
 bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture)
 {
-    CHECK(IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::ShaderResource));
+    CHECK(IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::ShaderResourceTexture));
 
     if (Texture->GetNumMipLevels() < 2)
     {
@@ -373,14 +373,14 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
 
     // Determine if we need a staging resource
     const bool bIsTextureCube  = IsTextureCube(Texture->GetDimension());
-    const bool bDestSupportUAV = IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::UnorderedAccess);
+    const bool bDestSupportUAV = IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::UnorderedAccessTexture);
 
     // If the destination does not support UAVs, create a staging texture that does
     FRHITextureRef StagingTexture;
     if (!bDestSupportUAV)
     {
         FRHITextureInfo TextureInfo = Texture->GetInfo();
-        TextureInfo.UsageFlags |= ETextureUsageFlags::UnorderedAccess;
+        TextureInfo.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
 
         StagingTexture = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
         if (!StagingTexture)

@@ -1,5 +1,5 @@
-#include "MetalTexture.h"
-#include "MetalSwapChain.h"
+#include "MetalRHI/MetalTexture.h"
+#include "MetalRHI/MetalSwapChain.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

@@ -219,7 +219,11 @@ bool FSceneRenderer::Initialize()
         RenderSettings::OnDidChangeRenderResolution(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight);
     }
 
-    FRHIBufferInfo CBInfo(sizeof(FCameraHLSL), sizeof(FCameraHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    FRHIBufferInfo CBInfo;
+    CBInfo.Size   = sizeof(FCameraHLSL);
+    CBInfo.Stride = sizeof(FCameraHLSL);
+    CBInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+
     Resources.CameraBuffer = FRHI::Get()->CreateBuffer(CBInfo, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
@@ -325,7 +329,7 @@ bool FSceneRenderer::Initialize()
         return false;
     }
 
-    if (false/*FRHIDeviceInfo::SupportsRayTracing*/)
+    if (false/*RHIDeviceInfo::SupportsRayTracing*/)
     {
         if (!RayTracer.Initialize(Resources))
         {
@@ -642,7 +646,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 	}
 
 	// RayTracing PrePass
-	if (false /*FRHIDeviceInfo::SupportsRayTracing*/)
+	if (false /*RHIDeviceInfo::SupportsRayTracing*/)
 	{
 		GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
 		RayTracer.PreRender(CommandList, Resources, CurrentScene);
@@ -986,15 +990,15 @@ void FSceneRenderer::PresentSwapChain(FRHISwapChainRef SwapChain)
 
 bool FSceneRenderer::InitShadingImage()
 {
-    if (FRHIDeviceInfo::ShadingRateTier != EShadingRateTier::Tier2 || FRHIDeviceInfo::ShadingRateImageTileSize == 0)
+    if (RHIDeviceInfo::ShadingRateTier != EShadingRateTier::Tier2 || RHIDeviceInfo::ShadingRateImageTileSize == 0)
     {
         return true;
     }
 
-    const uint32 Width  = Resources.CurrentRenderWidth / FRHIDeviceInfo::ShadingRateImageTileSize;
-    const uint32 Height = Resources.CurrentRenderHeight / FRHIDeviceInfo::ShadingRateImageTileSize;
+    const uint32 Width  = Resources.CurrentRenderWidth / RHIDeviceInfo::ShadingRateImageTileSize;
+    const uint32 Height = Resources.CurrentRenderHeight / RHIDeviceInfo::ShadingRateImageTileSize;
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
     ShadingImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);
 
     if (!ShadingImage)

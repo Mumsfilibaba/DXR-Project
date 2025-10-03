@@ -1,9 +1,23 @@
 #pragma once
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
+#include "RHI/ShaderCompilerInclude.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Constants.h"
 #include <d3d12shader.h>
+
+typedef TSharedRef<class FD3D12Shader>              FD3D12ShaderRef;
+typedef TSharedRef<class FD3D12VertexShader>        FD3D12VertexShaderRef;
+typedef TSharedRef<class FD3D12HullShader>          FD3D12HullShaderRef;
+typedef TSharedRef<class FD3D12DomainShader>        FD3D12DomainShaderRef;
+typedef TSharedRef<class FD3D12GeometryShader>      FD3D12GeometryShaderRef;
+typedef TSharedRef<class FD3D12PixelShader>         FD3D12PixelShaderRef;
+typedef TSharedRef<class FD3D12ComputeShader>       FD3D12ComputeShaderRef;
+typedef TSharedRef<class FD3D12RayTracingShader>    FD3D12RayTracingShaderRef;
+typedef TSharedRef<class FD3D12RayGenShader>        FD3D12RayGenShaderRef;
+typedef TSharedRef<class FD3D12RayAnyHitShader>     FD3D12RayAnyHitShaderRef;
+typedef TSharedRef<class FD3D12RayClosestHitShader> FD3D12RayClosestHitShaderRef;
+typedef TSharedRef<class FD3D12RayMissShader>       FD3D12RayMissShaderRef;
 
 enum EShaderVisibility : int32
 {
@@ -62,13 +76,6 @@ struct FD3D12ShaderHash
     // Hash retrieved from the shader ByteCode
     uint64 Hash[2] = { 0, 0 };
 
-    friend uint64 GetHashForType(const FD3D12ShaderHash& Value)
-    {
-        uint64 Hash = Value.Hash[0];
-        HashCombine(Hash, Value.Hash[1]);
-        return Hash;
-    }
-
     bool operator==(const FD3D12ShaderHash& Other) const
     {
         return Hash[0] == Other.Hash[0] && Hash[1] == Other.Hash[1];
@@ -78,6 +85,36 @@ struct FD3D12ShaderHash
     {
         return Hash[0] != Other.Hash[0] || Hash[1] != Other.Hash[1];
     }
+
+    friend uint64 GetHashForType(const FD3D12ShaderHash& Value)
+    {
+        uint64 Hash = Value.Hash[0];
+        HashCombine(Hash, Value.Hash[1]);
+        return Hash;
+    }
+};
+
+enum ED3D12BindingType : uint8
+{
+    D3D12BindingType_ConstantBuffer = 0,
+    D3D12BindingType_SRV,
+    D3D12BindingType_UAV,
+    D3D12BindingType_Sampler,
+    D3D12BindingType_Count = D3D12BindingType_Sampler + 1,
+};
+
+struct FD3D12ShaderInfo
+{   
+    struct FResourceBinding
+    {
+        FString DebugName;
+        ED3D12BindingType BindingType;
+        uint8 BindingIndex;
+        uint8 OriginalBindingIndex;
+    };
+    
+    TArray<FResourceBinding> ResourceBindings;
+    uint32 NumPushConstants;
 };
 
 class FD3D12Shader : public FD3D12DeviceChild
@@ -111,6 +148,9 @@ public:
     }
 
 protected:
+    bool IsRootSignatureInShaderBlob(const TComPtr<IDxcBlob>& ShaderBlob);
+    bool GetReflectionInterface(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject);
+
     template<typename TD3D12ReflectionInterface>
     bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, uint32 NumBoundResources);
 
@@ -119,7 +159,7 @@ protected:
     EShaderVisibility     ShaderVisibility;
     FShaderResourceCount  ResourceCount;
     FShaderResourceCount  LocalRayTracingResourceCount;
-    bool                  bContainsRootSignature = false;
+    bool                  bContainsRootSignature;
 };
 
 class FD3D12GraphicsShader : public FD3D12Shader

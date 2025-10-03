@@ -146,7 +146,7 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilStateInfo;
+    FRHIDepthStencilStateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable      = false;
     DepthStencilStateInfo.bDepthWriteEnable = false;
 
@@ -324,7 +324,11 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     if (!ViewportData->VertexBuffer || DrawData->TotalVtxCount > ViewportData->VertexCount)
     {
         const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
-        FRHIBufferInfo VBInfo(sizeof(ImDrawVert) * NewVertexCount, sizeof(ImDrawVert), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+
+        FRHIBufferInfo VBInfo;
+        VBInfo.Stride = sizeof(ImDrawVert);
+        VBInfo.Size   = VBInfo.Stride * NewVertexCount;
+        VBInfo.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
         TSharedRef<FRHIBuffer> NewVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
@@ -342,7 +346,11 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     if (!ViewportData->IndexBuffer || DrawData->TotalIdxCount > ViewportData->IndexCount)
     {
         const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
-        FRHIBufferInfo IBInfo(sizeof(ImDrawIdx) * NewIndexCount, sizeof(ImDrawIdx), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+
+        FRHIBufferInfo IBInfo;
+        IBInfo.Stride = sizeof(ImDrawIdx);
+        IBInfo.Size   = IBInfo.Stride * NewIndexCount;
+        IBInfo.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
         TSharedRef<FRHIBuffer> NewIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)
@@ -362,6 +370,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
 
     uint64 VertexOffset = 0;
     uint64 IndexOffset  = 0;
+
     for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
     {
         const ImDrawList* DrawCmdList = DrawData->CmdLists[i];

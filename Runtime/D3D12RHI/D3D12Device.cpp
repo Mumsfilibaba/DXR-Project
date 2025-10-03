@@ -6,7 +6,6 @@
 #include "Core/Containers/String.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "D3D12RHI/D3D12Device.h"
-#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12PipelineState.h"

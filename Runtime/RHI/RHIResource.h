@@ -14,23 +14,16 @@ class RHI_API FRHIResource : public IRefCounted
     };
 
 public:
-    FRHIResource();
-    virtual ~FRHIResource();
-
     FRHIResource(const FRHIResource&) = delete;
     FRHIResource& operator=(const FRHIResource&) = delete;
 
-public:
+    FRHIResource();
+    virtual ~FRHIResource();
 
     // IRefCounted Interface
     virtual int32 AddRef() const override;
-
     virtual int32 Release() const override;
-
-    virtual int32 GetRefCount() const override
-    {
-        return StrongReferences.Load();
-    }
+    virtual int32 GetRefCount() const override;
 
 private:
     mutable FAtomicInt32 StrongReferences;

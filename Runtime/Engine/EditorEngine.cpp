@@ -75,7 +75,7 @@ bool FEditorEngine::CreateViewportRenderTarget()
 	const FIntVector2 Size = DockspaceWidget->GetViewportSize();
 
 	FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(RenderSettings::GetBackBufferFormat(), Size.X, Size.Y, 1, 1,
-		ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource);
+		ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture);
 
 	FRHITextureRef NewViewportImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::RenderTarget);
 	if (NewViewportImage)

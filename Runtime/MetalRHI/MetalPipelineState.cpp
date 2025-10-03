@@ -1,4 +1,4 @@
-#include "MetalPipelineState.h"
+#include "MetalRHI/MetalPipelineState.h"
 
 FMetalVertexLayout::FMetalVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
     : FRHIVertexLayout()
@@ -22,11 +22,11 @@ FMetalVertexLayout::~FMetalVertexLayout()
 {
 }
 
-FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& InInitializer)
+FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInfo& InInfo)
     : FRHIDepthStencilState()
     , FMetalDeviceChild(DeviceContext)
     , DepthStencilState(nullptr)
-    , Initializer(InInitializer)
+    , Info(InInitializer)
 {
 }
 
@@ -40,26 +40,26 @@ bool FMetalDepthStencilState::Initialize()
     SCOPED_AUTORELEASE_POOL();
     
     MTLDepthStencilDescriptor* Descriptor = [[MTLDepthStencilDescriptor new] autorelease];
-    Descriptor.depthWriteEnabled    = Initializer.bDepthEnable;
-    Descriptor.depthCompareFunction = ConvertCompareFunction(Initializer.DepthFunc);
+    Descriptor.depthWriteEnabled    = Info.bDepthEnable;
+    Descriptor.depthCompareFunction = ConvertCompareFunction(Info.DepthFunc);
     
-    if (Initializer.bStencilEnable)
+    if (Info.bStencilEnable)
     {
         Descriptor.backFaceStencil                            = [[MTLStencilDescriptor new] autorelease];
-        Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(Initializer.BackFace.StencilFunc);
-        Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(Initializer.BackFace.StencilFailOp);
-        Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(Initializer.BackFace.StencilDepthFailOp);
-        Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(Initializer.BackFace.StencilDepthPassOp);
-        Descriptor.backFaceStencil.readMask                   = Initializer.StencilReadMask;
-        Descriptor.backFaceStencil.writeMask                  = Initializer.StencilWriteMask;
+        Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(Info.BackFace.StencilFunc);
+        Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(Info.BackFace.StencilFailOp);
+        Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(Info.BackFace.StencilDepthFailOp);
+        Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(Info.BackFace.StencilDepthPassOp);
+        Descriptor.backFaceStencil.readMask                   = Info.StencilReadMask;
+        Descriptor.backFaceStencil.writeMask                  = Info.StencilWriteMask;
         
         Descriptor.frontFaceStencil                           = [[MTLStencilDescriptor new] autorelease];
-        Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(Initializer.FrontFace.StencilFunc);
-        Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(Initializer.FrontFace.StencilFailOp);
-        Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(Initializer.FrontFace.StencilDepthFailOp);
-        Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(Initializer.FrontFace.StencilDepthPassOp);
-        Descriptor.frontFaceStencil.readMask                  = Initializer.StencilReadMask;
-        Descriptor.frontFaceStencil.writeMask                 = Initializer.StencilWriteMask;
+        Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(Info.FrontFace.StencilFunc);
+        Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(Info.FrontFace.StencilFailOp);
+        Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(Info.FrontFace.StencilDepthFailOp);
+        Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(Info.FrontFace.StencilDepthPassOp);
+        Descriptor.frontFaceStencil.readMask                  = Info.StencilReadMask;
+        Descriptor.frontFaceStencil.writeMask                 = Info.StencilWriteMask;
     }
     else
     {

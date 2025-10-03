@@ -571,9 +571,9 @@ FRHIRayMissShader* FVulkanRHI::CreateRayMissShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIDepthStencilState* FVulkanRHI::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FVulkanRHI::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
 {
-    return new FVulkanDepthStencilState(InInitializer);
+    return new FVulkanDepthStencilState(InInfo);
 }
 
 FRHIRasterizerState* FVulkanRHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)

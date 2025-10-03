@@ -73,7 +73,11 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
     FMeshCreateInfo SphereMesh = FMeshFactory::CreateSphere(2, 0.35f);
 
     // VertexBuffer
-    FRHIBufferInfo VBInfo(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+    FRHIBufferInfo VBInfo;
+    VBInfo.Stride = sizeof(FVertex);
+    VBInfo.Size   = SphereMesh.Vertices.SizeInBytes();
+    VBInfo.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+
     SphereVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::Common, SphereMesh.Vertices.Data());
 
     if (!SphereVertexBuffer)
@@ -90,7 +94,11 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
     TArray<uint16> SphereMeshSmallIndicies = SphereMesh.GetSmallIndices();
     SphereIndexCount = SphereMeshSmallIndicies.Size();
 
-    FRHIBufferInfo IBInfo(SphereMeshSmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+    FRHIBufferInfo IBInfo;
+    IBInfo.Stride = sizeof(uint16);
+    IBInfo.Size   = SphereMeshSmallIndicies.SizeInBytes();
+    IBInfo.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+
     SphereIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::Common, SphereMeshSmallIndicies.Data());
     if (!SphereIndexBuffer)
     {
@@ -114,7 +122,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         FVector3(-0.5f,  0.5f, -0.5f)
     };
 
-    VBInfo = FRHIBufferInfo(AABBVertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+    VBInfo.Stride = sizeof(FVector3);
+    VBInfo.Size   = AABBVertices.SizeInBytes();
+    VBInfo.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+
     AABBVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::Common, AABBVertices.Data());
 
     if (!AABBVertexBuffer)
@@ -144,7 +155,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         2, 7,
     };
 
-    IBInfo = FRHIBufferInfo(AABBWireframeIndices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+    IBInfo.Stride = sizeof(uint16);
+    IBInfo.Size   = AABBWireframeIndices.SizeInBytes();
+    IBInfo.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+
     AABBIndexBuffer_Wireframe = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::Common, AABBWireframeIndices.Data());
 
     if (!AABBIndexBuffer_Wireframe)
@@ -175,7 +189,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         0, 5, 4, 0, 4, 1
     };
 
-    IBInfo = FRHIBufferInfo(AABBSolidIndices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+	IBInfo.Stride = sizeof(uint16);
+	IBInfo.Size   = AABBSolidIndices.SizeInBytes();
+	IBInfo.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+
     AABBIndexBuffer_Solid = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::Common, AABBSolidIndices.Data());
 
     if (!AABBIndexBuffer_Solid)
@@ -239,21 +256,21 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilInitializer;
-        DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-        DepthStencilInitializer.bDepthEnable      = false;
-        DepthStencilInitializer.bDepthWriteEnable = false;
+        FRHIDepthStencilStateInfo DepthStencilInfo;
+        DepthStencilInfo.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilInfo.bDepthEnable      = false;
+        DepthStencilInfo.bDepthWriteEnable = false;
 
-        FRHIDepthStencilStateRef DepthStencilState_NoDepth = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
+        FRHIDepthStencilStateRef DepthStencilState_NoDepth = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
         if (!DepthStencilState_NoDepth)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        DepthStencilInitializer.bDepthEnable = true;
+        DepthStencilInfo.bDepthEnable = true;
 
-        FRHIDepthStencilStateRef DepthStencilState_Depth = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
+        FRHIDepthStencilStateRef DepthStencilState_Depth = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
         if (!DepthStencilState_Depth)
         {
             DEBUG_BREAK();
@@ -352,7 +369,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = false;
@@ -455,7 +472,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = false;
@@ -554,7 +571,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = false;

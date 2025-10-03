@@ -1,4 +1,4 @@
-#include "MetalRHI.h"
+#include "MetalRHI/MetalRHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -246,7 +246,7 @@ FRHIRayMissShader* FMetalRHI::CreateRayMissShader(const TArray<uint8>& ShaderCod
     }
 }
 
-FRHIDepthStencilState* FMetalRHI::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FMetalRHI::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
 {
     FMetalDepthStencilStateRef NewDepthStencilState = new FMetalDepthStencilState(GetDeviceContext(), InInitializer);
     if (!NewDepthStencilState->Initialize())

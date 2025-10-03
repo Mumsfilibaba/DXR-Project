@@ -14,7 +14,7 @@ NODISCARD constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
     switch (BufferSRVFormat)
     {
         case EBufferSRVFormat::UInt32: return "UInt32";
-        default:                       return "Unknown";
+        default: return "Unknown";
     }
 }
 
@@ -29,10 +29,10 @@ NODISCARD constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
     switch (BufferSRVFormat)
     {
         case EBufferUAVFormat::UInt32: return "UInt32";
-        default:                       return "Unknown";
+        default: return "Unknown";
     }
 }
-
+ 
 enum class EAttachmentLoadAction : uint8
 {
     DontCare = 0, // Don't care
@@ -47,7 +47,7 @@ NODISCARD constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
         case EAttachmentLoadAction::DontCare: return "DontCare";
         case EAttachmentLoadAction::Load:     return "Load";
         case EAttachmentLoadAction::Clear:    return "Clear";
-        default:                              return "Unknown";
+        default: return "Unknown";
     }
 }
 
@@ -63,7 +63,7 @@ NODISCARD constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
     {
         case EAttachmentStoreAction::DontCare: return "DontCare";
         case EAttachmentStoreAction::Store:    return "Store";
-        default:                               return "Unknown";
+        default: return "Unknown";
     }
 }
 
@@ -71,14 +71,8 @@ struct FRHITextureSRVInfo
 {
     constexpr FRHITextureSRVInfo() noexcept = default;
 
-    constexpr FRHITextureSRVInfo(
-        FRHITexture* InTexture,
-        float        InMinLODClamp,
-        EFormat      InFormat,
-        uint8        InFirstMipLevel,
-        uint8        InNumMips,
-        uint16       InFirstArraySlice,
-        uint16       InNumSlices) noexcept
+    constexpr FRHITextureSRVInfo(FRHITexture* InTexture, float InMinLODClamp, EFormat InFormat, uint8 InFirstMipLevel, uint8 InNumMips,
+        uint16 InFirstArraySlice, uint16 InNumSlices) noexcept
         : Texture(InTexture)
         , MinLODClamp(InMinLODClamp)
         , Format(InFormat)
@@ -269,11 +263,8 @@ struct FRHIRenderTargetView
 {
     FRHIRenderTargetView() noexcept = default;
 
-    FRHIRenderTargetView(
-        FRHITexture*           InTexture,
-        EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
-        const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
+    FRHIRenderTargetView(FRHITexture* InTexture, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FFloatColor& InClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(0)
@@ -285,14 +276,8 @@ struct FRHIRenderTargetView
     {
     }
 
-    FRHIRenderTargetView(
-        FRHITexture*           InTexture,
-        EFormat                InFormat,
-        uint32                 InArrayIndex,
-        uint32                 InMipLevel,
-        EAttachmentLoadAction  InLoadAction,
-        EAttachmentStoreAction InStoreAction,
-        const FFloatColor&     InClearValue) noexcept
+    FRHIRenderTargetView(FRHITexture* InTexture, EFormat InFormat, uint32 InArrayIndex, uint32 InMipLevel, EAttachmentLoadAction InLoadAction,
+        EAttachmentStoreAction InStoreAction, const FFloatColor& InClearValue) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -320,11 +305,8 @@ struct FRHIDepthStencilView
 {
     FRHIDepthStencilView() noexcept = default;
 
-    explicit FRHIDepthStencilView(
-        FRHITexture*              InTexture,
-        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
+    explicit FRHIDepthStencilView(FRHITexture* InTexture, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& InClearValue = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(0)
@@ -336,13 +318,8 @@ struct FRHIDepthStencilView
     {
     }
 
-    FRHIDepthStencilView(
-        FRHITexture*              InTexture,
-        uint16                    InArrayIndex,
-        uint8                     InMipLevel,
-        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
+    FRHIDepthStencilView(FRHITexture* InTexture, uint16 InArrayIndex, uint8 InMipLevel, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& InClearValue = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -354,14 +331,8 @@ struct FRHIDepthStencilView
     {
     }
 
-    FRHIDepthStencilView(
-        FRHITexture*              InTexture,
-        uint16                    InArrayIndex,
-        uint8                     InMipLevel,
-        EFormat                   InFormat,
-        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
+    FRHIDepthStencilView(FRHITexture* InTexture, uint16 InArrayIndex, uint8 InMipLevel, EFormat InFormat, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -401,7 +372,8 @@ struct FRHIBeginRenderPassInfo
     {
     }
 
-    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilView InDepthStencilView, FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1) noexcept
+    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilView InDepthStencilView,
+        FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1) noexcept
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
         , RenderTargets(InRenderTargets)

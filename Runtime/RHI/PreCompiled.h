@@ -11,12 +11,10 @@
 #include "RHI/RHIResourceViews.h"
 #include "RHI/RHISamplerState.h"
 #include "RHI/RHIShader.h"
-#include "RHI/RHIStats.h"
 #include "RHI/RHITexture.h"
 #include "RHI/RHITypes.h"
 #include "RHI/RHIValidation.h"
 #include "RHI/RHISwapChain.h"
-
 // TODO: Move to it's own module
 #include "RHI/ShaderCompiler.h"
 #include "RHI/ShaderCompilerInclude.h"

@@ -29,15 +29,19 @@ FMesh::~FMesh()
 
 bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 {
-    const bool bEnableRayTracing = false; //FRHIDeviceInfo::SupportsRayTracing ;
+    const bool bEnableRayTracing = false; //RHIDeviceInfo::SupportsRayTracing ;
 
     VertexCount = CreateInfo.Vertices.Size();
     IndexCount  = CreateInfo.Indices.Size();
 
-    const EBufferUsageFlags BufferFlags = bEnableRayTracing ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
+    const EBufferFlags BufferFlags = bEnableRayTracing ? EBufferFlags::ShaderResourceBuffer | EBufferFlags::Default : EBufferFlags::Default;
 
     // Create VertexBuffer
-    FRHIBufferInfo VBInfo(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    FRHIBufferInfo VBInfo;
+    VBInfo.Stride = sizeof(FVertex);
+    VBInfo.Size   = VertexCount * VBInfo.Stride;
+    VBInfo.Flags  = BufferFlags | EBufferFlags::VertexBuffer;
+
     VertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
 
     if (!VertexBuffer)
@@ -57,7 +61,9 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         VertexPositions[Index] = Vertex.Position;
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexPosition), sizeof(FVertexPosition), BufferFlags | EBufferUsageFlags::VertexBuffer);
+	VBInfo.Stride = sizeof(FVertexPosition);
+	VBInfo.Size   = VertexCount * VBInfo.Stride;
+
     VertexPositionBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexPositions.Data());
 
     if (!VertexPositionBuffer)
@@ -77,7 +83,9 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         VertexNormals[Index] = FVertexNormal(Vertex.Normal, Vertex.Tangent);
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexNormal), sizeof(FVertexNormal), BufferFlags | EBufferUsageFlags::VertexBuffer);
+	VBInfo.Stride = sizeof(FVertexNormal);
+	VBInfo.Size   = VertexCount * VBInfo.Stride;
+
     VertexNormalBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexNormals.Data());
 
     if (!VertexNormalBuffer)
@@ -97,7 +105,9 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         VertexTexCoords[Index] = Vertex.TexCoord;
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexTexCoord), sizeof(FVertexTexCoord), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    VBInfo.Stride = sizeof(FVertexTexCoord);
+    VBInfo.Size   = VertexCount * VBInfo.Stride;
+
     VertexTexCoordBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
 
     if (!VertexTexCoordBuffer)
@@ -132,7 +142,11 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         InitialIndicies = CreateInfo.Indices.Data();
     }
 
-    FRHIBufferInfo IBInfo(IndexCount * GetStrideFromIndexFormat(IndexFormat), GetStrideFromIndexFormat(IndexFormat), BufferFlags | EBufferUsageFlags::IndexBuffer);
+	FRHIBufferInfo IBInfo;
+    IBInfo.Stride = GetStrideFromIndexFormat(IndexFormat);
+    IBInfo.Size   = IndexCount * IBInfo.Stride;
+    IBInfo.Flags  = BufferFlags | EBufferFlags::IndexBuffer;
+
     IndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::IndexBuffer, InitialIndicies);
 
     if (!IndexBuffer)
@@ -273,7 +287,7 @@ FRHIShaderResourceView* FMesh::GetVertexBufferSRV(EVertexStream VertexStream) co
 
 void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
 {
-    constexpr const float Inf = TNumericLimits<float>::Infinity();
+    static constexpr const float Inf = TNumericLimits<float>::Infinity();
 
     FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
     FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);

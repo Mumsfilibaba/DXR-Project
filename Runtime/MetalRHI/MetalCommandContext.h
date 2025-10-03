@@ -1,12 +1,10 @@
 #pragma once
-#include "MetalPipelineState.h"
-#include "MetalBuffer.h"
-#include "MetalViews.h"
-#include "MetalSamplerState.h"
-
-#include "RHI/IRHICommandContext.h"
-
 #include "Core/Containers/SharedRef.h"
+#include "RHI/IRHICommandContext.h"
+#include "MetalRHI/MetalPipelineState.h"
+#include "MetalRHI/MetalBuffer.h"
+#include "MetalRHI/MetalViews.h"
+#include "MetalRHI/MetalSamplerState.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

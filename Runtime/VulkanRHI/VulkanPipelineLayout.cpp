@@ -222,18 +222,18 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& RemappingInfo = StageMappingInfo.RemappingInfo[BindingIndex];
             switch(RemappingInfo.BindingType)
             {
-            case BindingType_UniformBuffer:
+            case VulkanBindingType_UniformBuffer:
                 StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
-            case BindingType_Sampler:
+            case VulkanBindingType_Sampler:
                 StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
-            case BindingType_SampledImage:
-            case BindingType_StorageBufferRead:
+            case VulkanBindingType_SampledImage:
+            case VulkanBindingType_StorageBufferRead:
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
-            case BindingType_StorageImage:
-            case BindingType_StorageBufferReadWrite:
+            case VulkanBindingType_StorageImage:
+            case VulkanBindingType_StorageBufferReadWrite:
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             default:

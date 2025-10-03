@@ -284,7 +284,7 @@ bool FVulkanShaderResourceView::InitializeBufferSRV(const FRHIBufferSRVInfo& InI
     VkDeviceSize Stride = 0;
     if (InInfo.Format == EBufferSRVFormat::None)
     {
-        Stride = VulkanBuffer->GetStride();
+        Stride = VulkanBuffer->GetInfo().Stride;
     }
     else if (InInfo.Format == EBufferSRVFormat::UInt32)
     {
@@ -399,7 +399,7 @@ bool FVulkanUnorderedAccessView::InitializeBufferUAV(const FRHIBufferUAVInfo& In
     VkDeviceSize Stride = 0;
     if (InInfo.Format == EBufferUAVFormat::None)
     {
-        Stride = VulkanBuffer->GetStride();
+        Stride = VulkanBuffer->GetInfo().Stride;
     }
     else if (InInfo.Format == EBufferUAVFormat::UInt32)
     {
