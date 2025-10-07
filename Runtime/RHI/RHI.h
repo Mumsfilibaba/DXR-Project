@@ -261,17 +261,17 @@ public:
 
     /**
      * @brief Creates a new depth-stencil state.
-     * @param InInitializer Information about the depth-stencil state.
+     * @param InInfo Information about the depth-stencil state.
      * @return The newly created depth-stencil state.
      */
     virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new rasterizer state.
-     * @param InInitializer Information about the rasterizer state.
+     * @param InInfo Information about the rasterizer state.
      * @return The newly created rasterizer state.
      */
-    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) = 0;
+    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new blend state.

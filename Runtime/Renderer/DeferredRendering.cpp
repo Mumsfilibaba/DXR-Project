@@ -112,17 +112,17 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             return;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInitializer.CullMode = ECullMode::None;
+            RasterizerStateInfo.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInitializer.CullMode = ECullMode::Back;
+            RasterizerStateInfo.CullMode = ECullMode::Back;
         }
 
-        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!NewPipelineInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -445,17 +445,17 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             return;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInitializer.CullMode = ECullMode::None;
+            RasterizerStateInfo.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInitializer.CullMode = ECullMode::Back;
+            RasterizerStateInfo.CullMode = ECullMode::Back;
         }
 
-        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!NewPipelineInstance.RasterizerState)
         {
             DEBUG_BREAK();

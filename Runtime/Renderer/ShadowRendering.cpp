@@ -263,17 +263,17 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInitializer.CullMode = ECullMode::None;
+            RasterizerStateInfo.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInitializer.CullMode = ECullMode::Back;
+            RasterizerStateInfo.CullMode = ECullMode::Back;
         }
 
-        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -984,25 +984,25 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             return nullptr;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        RasterizerStateInitializer.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
+        RasterizerStateInfo.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
 
         // TODO: Revisit depth-bias
-        RasterizerStateInitializer.bEnableDepthBias     = true;
-        RasterizerStateInitializer.DepthBias            = 1.0f;
-        RasterizerStateInitializer.DepthBiasClamp       = 0.05f;
-        RasterizerStateInitializer.SlopeScaledDepthBias = 1.0f;
+        RasterizerStateInfo.bEnableDepthBias     = true;
+        RasterizerStateInfo.DepthBias            = 1.0f;
+        RasterizerStateInfo.DepthBiasClamp       = 0.05f;
+        RasterizerStateInfo.SlopeScaledDepthBias = 1.0f;
 
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInitializer.CullMode = ECullMode::None;
+            RasterizerStateInfo.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInitializer.CullMode = ECullMode::Back;
+            RasterizerStateInfo.CullMode = ECullMode::Back;
         }
 
-        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();

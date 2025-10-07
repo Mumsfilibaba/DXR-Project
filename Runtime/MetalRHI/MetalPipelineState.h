@@ -41,7 +41,7 @@ public:
 
     bool Initialize();
 
-    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInfo() const override final
     {
         return Info;
     }
@@ -59,18 +59,18 @@ private:
 class FMetalRasterizerState : public FRHIRasterizerState
 {
 public:
-    FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
+    FMetalRasterizerState(const FRHIRasterizerStateInfo& InInfo);
     virtual ~FMetalRasterizerState();
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    virtual FRHIRasterizerStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     MTLTriangleFillMode FillMode;
     MTLWinding          FrontFaceWinding;
 
-    const FRHIRasterizerStateInitializer Initializer;
+    const FRHIRasterizerStateInfo Info;
 };
 
 class FMetalBlendState : public FRHIBlendState

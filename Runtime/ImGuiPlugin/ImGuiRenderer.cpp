@@ -157,11 +157,11 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerStateInitializer;
-    RasterizerStateInitializer.CullMode               = ECullMode::None;
-    RasterizerStateInitializer.bAntialiasedLineEnable = true;
+    FRHIRasterizerStateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode               = ECullMode::None;
+    RasterizerStateInfo.bAntialiasedLineEnable = true;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         DEBUG_BREAK();

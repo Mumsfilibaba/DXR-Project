@@ -85,24 +85,24 @@ FD3D12DepthStencilState::~FD3D12DepthStencilState()
 {
 }
 
-FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInfo& Info)
     : FRHIRasterizerState()
-    , Initializer(InInitializer)
+    , Info(Info)
     , Hash(0)
 {
     FMemory::Memzero(&Desc);
 
-    Desc.AntialiasedLineEnable = InInitializer.bAntialiasedLineEnable;
-    Desc.CullMode              = ConvertCullMode(InInitializer.CullMode);
-    Desc.DepthBias             = static_cast<int32>(InInitializer.DepthBias);
-    Desc.DepthBiasClamp        = InInitializer.DepthBiasClamp;
-    Desc.DepthClipEnable       = InInitializer.bDepthClipEnable;
-    Desc.SlopeScaledDepthBias  = InInitializer.SlopeScaledDepthBias;
-    Desc.FillMode              = ConvertFillMode(InInitializer.FillMode);
-    Desc.ForcedSampleCount     = InInitializer.ForcedSampleCount;
-    Desc.FrontCounterClockwise = InInitializer.bFrontCounterClockwise;
-    Desc.MultisampleEnable     = InInitializer.bMultisampleEnable;
-    Desc.ConservativeRaster    = InInitializer.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    Desc.AntialiasedLineEnable = Info.bAntialiasedLineEnable;
+    Desc.CullMode              = ConvertCullMode(Info.CullMode);
+    Desc.DepthBias             = static_cast<int32>(Info.DepthBias);
+    Desc.DepthBiasClamp        = Info.DepthBiasClamp;
+    Desc.DepthClipEnable       = Info.bDepthClipEnable;
+    Desc.SlopeScaledDepthBias  = Info.SlopeScaledDepthBias;
+    Desc.FillMode              = ConvertFillMode(Info.FillMode);
+    Desc.ForcedSampleCount     = Info.ForcedSampleCount;
+    Desc.FrontCounterClockwise = Info.bFrontCounterClockwise;
+    Desc.MultisampleEnable     = Info.bMultisampleEnable;
+    Desc.ConservativeRaster    = Info.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     Hash = CRC32::Generate(&Desc, sizeof(D3D12_RASTERIZER_DESC));
 }

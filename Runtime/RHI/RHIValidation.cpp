@@ -270,9 +270,9 @@ FRHIDepthStencilState* FRHIValidation::CreateDepthStencilState(const FRHIDepthSt
     return RealRHI->CreateDepthStencilState(InInfo);
 }
 
-FRHIRasterizerState* FRHIValidation::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FRHIValidation::CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo)
 {
-    return RealRHI->CreateRasterizerState(InInitializer);
+    return RealRHI->CreateRasterizerState(InInfo);
 }
 
 FRHIBlendState* FRHIValidation::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)

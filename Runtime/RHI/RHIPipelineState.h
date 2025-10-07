@@ -88,7 +88,7 @@ protected:
     virtual ~FRHIDepthStencilState() = default;
 
 public:
-    virtual FRHIDepthStencilStateInfo GetInitializer() const = 0;
+    virtual FRHIDepthStencilStateInfo GetInfo() const = 0;
 };
 
 enum class ECullMode : uint8
@@ -105,7 +105,8 @@ NODISCARD constexpr const CHAR* ToString(ECullMode CullMode)
         case ECullMode::None:  return "None";
         case ECullMode::Front: return "Front";
         case ECullMode::Back:  return "Back";
-        default:               return "Unknown";
+
+        default: return "Unknown";
     }
 }
 
@@ -121,35 +122,16 @@ NODISCARD constexpr const CHAR* ToString(EFillMode FillMode)
     {
         case EFillMode::WireFrame: return "WireFrame";
         case EFillMode::Solid:     return "Solid";
-        default:                   return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
-struct FRHIRasterizerStateInitializer
+struct FRHIRasterizerStateInfo
 {
-    constexpr FRHIRasterizerStateInitializer() noexcept = default;
+    constexpr bool operator==(const FRHIRasterizerStateInfo& Other) const noexcept = default;
 
-    constexpr FRHIRasterizerStateInitializer(EFillMode InFillMode, ECullMode InCullMode, bool bInFrontCounterClockwise = false, float InDepthBias = 0.0f,
-        float InDepthBiasClamp = 0.0f, float InSlopeScaledDepthBias = 0.0f, bool bInDepthClipEnable = true, bool bInMultisampleEnable = false,
-        bool bInAntialiasedLineEnable = false, uint32 InForcedSampleCount = 1, bool bInEnableConservativeRaster = false, bool bInEnableDepthBias = true) noexcept
-        : FillMode(InFillMode)
-        , CullMode(InCullMode)
-        , bFrontCounterClockwise(bInFrontCounterClockwise)
-        , bDepthClipEnable(bInDepthClipEnable)
-        , bMultisampleEnable(bInMultisampleEnable)
-        , bAntialiasedLineEnable(bInAntialiasedLineEnable)
-        , bEnableConservativeRaster(bInEnableConservativeRaster)
-        , bEnableDepthBias(bInEnableDepthBias)
-        , ForcedSampleCount(InForcedSampleCount)
-        , DepthBias(InDepthBias)
-        , DepthBiasClamp(InDepthBiasClamp)
-        , SlopeScaledDepthBias(InSlopeScaledDepthBias)
-    {
-    }
-
-    constexpr bool operator==(const FRHIRasterizerStateInitializer& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHIRasterizerStateInitializer& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIRasterizerStateInfo& Value)
     {
         uint64 Hash = UnderlyingTypeValue(Value.FillMode);
         HashCombine(Hash, UnderlyingTypeValue(Value.CullMode));
@@ -186,7 +168,7 @@ protected:
     virtual ~FRHIRasterizerState() = default;
 
 public:
-    virtual FRHIRasterizerStateInitializer GetInitializer() const = 0;
+    virtual FRHIRasterizerStateInfo GetInfo() const = 0;
 };
 
 enum class EBlendType : uint8
@@ -231,7 +213,8 @@ NODISCARD constexpr const CHAR* ToString(EBlendType  Blend)
         case EBlendType::InvSrc1Color:   return "InvSrc1Color";
         case EBlendType::Src1Alpha:      return "Src1Alpha";
         case EBlendType::InvSrc1Alpha:   return "InvSrc1Alpha";
-        default:                          return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
@@ -253,7 +236,8 @@ NODISCARD constexpr const CHAR* ToString(EBlendOp BlendOp)
         case EBlendOp::RevSubtract: return "RevSubtract";
         case EBlendOp::Min:         return "Min";
         case EBlendOp::Max:         return "Max";
-        default:                    return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
@@ -297,7 +281,8 @@ NODISCARD constexpr const CHAR* ToString(ELogicOp LogicOp)
         case ELogicOp::AndInverted:  return "AndInverted";
         case ELogicOp::OrReverse:    return "OrReverse";
         case ELogicOp::OrInverted:   return "OrInverted";
-        default:                     return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 

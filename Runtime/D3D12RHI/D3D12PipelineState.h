@@ -55,7 +55,7 @@ public:
     FD3D12DepthStencilState(const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FD3D12DepthStencilState();
 
-    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInfo() const override final
     {
         return Info;
     }
@@ -79,12 +79,12 @@ private:
 class FD3D12RasterizerState : public FRHIRasterizerState
 {
 public:
-    FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
+    FD3D12RasterizerState(const FRHIRasterizerStateInfo& InInfo);
     virtual ~FD3D12RasterizerState();
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    virtual FRHIRasterizerStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
@@ -98,9 +98,9 @@ public:
     }
 
 private:
-    FRHIRasterizerStateInitializer Initializer;
-    D3D12_RASTERIZER_DESC          Desc;
-    uint64                         Hash;
+    FRHIRasterizerStateInfo Info;
+    D3D12_RASTERIZER_DESC   Desc;
+    uint64 Hash;
 };
 
 class FD3D12BlendState : public FRHIBlendState

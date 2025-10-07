@@ -79,7 +79,7 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateInfo RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
@@ -242,7 +242,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateInfo RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);

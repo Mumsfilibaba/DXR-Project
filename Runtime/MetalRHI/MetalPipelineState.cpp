@@ -80,11 +80,11 @@ bool FMetalDepthStencilState::Initialize()
     return true;
 }
 
-FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInfo& InInfo)
     : FRHIRasterizerState()
-    , FillMode(ConvertFillMode(InInitializer.FillMode))
-    , FrontFaceWinding(InInitializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
-    , Initializer(InInitializer)
+    , FillMode(ConvertFillMode(InInfo.FillMode))
+    , FrontFaceWinding(InInfo.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
+    , Info(InInfo)
 {
 }
 

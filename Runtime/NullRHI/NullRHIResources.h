@@ -169,7 +169,7 @@ public:
     {
     }
 
-    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInfo() const override final
     {
         return Info;
     }
@@ -181,19 +181,19 @@ private:
 class FNullRHIRasterizerState : public FRHIRasterizerState
 {
 public:
-    FNullRHIRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+    FNullRHIRasterizerState(const FRHIRasterizerStateInfo& InInfo)
         : FRHIRasterizerState()
-        , Initializer(InInitializer)
+        , Info(InInfo)
     {
     }
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    virtual FRHIRasterizerStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
 private:
-    FRHIRasterizerStateInitializer Initializer;
+    FRHIRasterizerStateInfo Info;
 };
 
 struct FNullRHIBlendState : public FRHIBlendState

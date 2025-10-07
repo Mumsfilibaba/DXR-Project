@@ -107,10 +107,10 @@ FVulkanDepthStencilState::~FVulkanDepthStencilState()
 {
 }
 
-FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer)
+FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInfo& InInfo)
     : FRHIRasterizerState()
     , FVulkanDeviceChild(InDevice)
-    , Initializer(InInitializer)
+    , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
     
@@ -119,13 +119,13 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     CreateInfo.rasterizerDiscardEnable = VK_FALSE;
-    CreateInfo.polygonMode             = ConvertFillMode(InInitializer.FillMode);
-    CreateInfo.cullMode                = ConvertCullMode(InInitializer.CullMode);
-    CreateInfo.frontFace               = InInitializer.bFrontCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
-    CreateInfo.depthBiasEnable         = InInitializer.bEnableDepthBias ? VK_TRUE : VK_FALSE;
-    CreateInfo.depthBiasConstantFactor = InInitializer.DepthBias;
-    CreateInfo.depthBiasClamp          = InInitializer.DepthBiasClamp;
-    CreateInfo.depthBiasSlopeFactor    = InInitializer.SlopeScaledDepthBias;
+    CreateInfo.polygonMode             = ConvertFillMode(InInfo.FillMode);
+    CreateInfo.cullMode                = ConvertCullMode(InInfo.CullMode);
+    CreateInfo.frontFace               = InInfo.bFrontCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
+    CreateInfo.depthBiasEnable         = InInfo.bEnableDepthBias ? VK_TRUE : VK_FALSE;
+    CreateInfo.depthBiasConstantFactor = InInfo.DepthBias;
+    CreateInfo.depthBiasClamp          = InInfo.DepthBiasClamp;
+    CreateInfo.depthBiasSlopeFactor    = InInfo.SlopeScaledDepthBias;
     CreateInfo.lineWidth               = 1.0f;
 
     // NOTE: we are forced to disable this since there are not really any equivalent in D3D12
@@ -137,7 +137,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
 #if VK_EXT_depth_clip_enable
     FMemory::Memzero(&DepthClipStateCreateInfo);
     DepthClipStateCreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
-    DepthClipStateCreateInfo.depthClipEnable = InInitializer.bDepthClipEnable ? VK_TRUE : VK_FALSE;
+    DepthClipStateCreateInfo.depthClipEnable = InInfo.bDepthClipEnable ? VK_TRUE : VK_FALSE;
     
     if (GVulkanSupportsDepthClip)
     {
@@ -152,7 +152,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     FMemory::Memzero(&ConservativeStateCreateInfo);
     ConservativeStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
     
-    if (InInitializer.bEnableConservativeRaster)
+    if (InInfo.bEnableConservativeRaster)
     {
         ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT;
     }

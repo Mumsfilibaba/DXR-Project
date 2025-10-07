@@ -259,7 +259,7 @@ FRHIDepthStencilState* FMetalRHI::CreateDepthStencilState(const FRHIDepthStencil
     }
 }
 
-FRHIRasterizerState* FMetalRHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FMetalRHI::CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo)
 {
     return new FMetalRasterizerState(InInitializer);
 }

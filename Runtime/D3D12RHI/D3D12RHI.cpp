@@ -761,9 +761,9 @@ FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencil
     return new FD3D12DepthStencilState(InInfo);
 }
 
-FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo)
 {
-    return new FD3D12RasterizerState(InInitializer);
+    return new FD3D12RasterizerState(InInfo);
 }
 
 FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)

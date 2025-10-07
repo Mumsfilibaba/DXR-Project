@@ -277,10 +277,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        RasterizerStateInitializer.CullMode = ECullMode::None;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
+        RasterizerStateInfo.CullMode = ECullMode::None;
 
-        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             DEBUG_BREAK();
@@ -381,10 +381,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        RasterizerStateInitializer.CullMode = ECullMode::None;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
+        RasterizerStateInfo.CullMode = ECullMode::None;
 
-        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             DEBUG_BREAK();
@@ -484,10 +484,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        RasterizerStateInitializer.CullMode = ECullMode::None;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
+        RasterizerStateInfo.CullMode = ECullMode::None;
 
-        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             DEBUG_BREAK();
@@ -583,10 +583,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        RasterizerStateInitializer.CullMode = ECullMode::Back;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
+        RasterizerStateInfo.CullMode = ECullMode::Back;
 
-        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!RasterizerState)
         {
             DEBUG_BREAK();

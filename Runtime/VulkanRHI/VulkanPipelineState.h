@@ -39,7 +39,7 @@ public:
     FVulkanDepthStencilState(const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FVulkanDepthStencilState();
 
-    virtual FRHIDepthStencilStateInfo GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInfo() const override final
     {
         return Info;
     }
@@ -57,12 +57,12 @@ private:
 class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceChild
 {
 public:
-    FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer);
+    FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInfo& InInfo);
     virtual ~FVulkanRasterizerState();
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    virtual FRHIRasterizerStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const VkPipelineRasterizationStateCreateInfo& GetVkCreateInfo() const
@@ -71,7 +71,7 @@ public:
     }
     
 private:
-    FRHIRasterizerStateInitializer         Initializer;
+    FRHIRasterizerStateInfo Info;
     VkPipelineRasterizationStateCreateInfo CreateInfo;
 #if VK_EXT_depth_clip_enable
     VkPipelineRasterizationDepthClipStateCreateInfoEXT DepthClipStateCreateInfo;
