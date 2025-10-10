@@ -129,8 +129,8 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             return;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateInfo BlendStateInfo;
+        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!NewPipelineInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -143,13 +143,13 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
         else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
         {
-            FRHIVertexLayoutInitializerList VertexElementList =
+            TArray<FRHIInputElementInfo> InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
                 { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -158,12 +158,12 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
         else
         {
-            FRHIVertexLayoutInitializerList VertexElementList =
+            TArray<FRHIInputElementInfo> InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -462,10 +462,10 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             return;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        BlendStateInitializer.NumRenderTargets = GBuffer_NumRenderTargets;
+        FRHIBlendStateInfo BlendStateInfo;
+        BlendStateInfo.NumRenderTargets = GBuffer_NumRenderTargets;
 
-        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!NewPipelineInstance.BlendState)
         {
             DEBUG_BREAK();

@@ -4,21 +4,26 @@
 #include "VulkanRHI/VulkanRefCounted.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
-typedef TSharedRef<class FVulkanVertexLayout>            FVulkanVertexInputLayoutRef;
+typedef TSharedRef<class FVulkanInputLayout>            FVulkanVertexInputLayoutRef;
 typedef TSharedRef<class FVulkanDepthStencilState>       FVulkanDepthStencilStateRef;
 typedef TSharedRef<class FVulkanGraphicsPipelineState>   FVulkanGraphicsPipelineStateRef;
 typedef TSharedRef<class FVulkanComputePipelineState>    FVulkanComputePipelineStateRef;
 typedef TSharedRef<class FVulkanRayTracingPipelineState> FVulkanRayTracingPipelineStateRef;
 
-class FVulkanVertexLayout : public FRHIVertexLayout
+class FVulkanInputLayout : public FRHIInputLayout
 {
 public:
-    FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList);
-    virtual ~FVulkanVertexLayout();
+    FVulkanInputLayout(const TArray<FRHIInputElementInfo>& InInputElements);
+    virtual ~FVulkanInputLayout();
 
-    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
     {
-        return InitializerList;
+        return &InputElements[Index];
+    }
+
+    virtual uint32 GetNumInputElementInfos() const override final
+    {
+        return InputElements.Size();
     }
 
     const VkPipelineVertexInputStateCreateInfo& GetVkCreateInfo() const
@@ -27,7 +32,7 @@ public:
     }
 
 private:
-    FRHIVertexLayoutInitializerList           InitializerList;
+    TArray<FRHIInputElementInfo>              InputElements;
     TArray<VkVertexInputBindingDescription>   VertexInputBindingDescriptions;
     TArray<VkVertexInputAttributeDescription> VertexInputAttributeDescriptions;
     VkPipelineVertexInputStateCreateInfo      CreateInfo;
@@ -84,12 +89,12 @@ private:
 class FVulkanBlendState : public FRHIBlendState
 {
 public:
-    FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer);
+    FVulkanBlendState(const FRHIBlendStateInfo& InInfo);
     virtual ~FVulkanBlendState();
 
-    virtual FRHIBlendStateInitializer GetInitializer() const override final
+    virtual FRHIBlendStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const VkPipelineColorBlendStateCreateInfo& GetVkCreateInfo() const
@@ -98,7 +103,7 @@ public:
     }
 
 private:
-    FRHIBlendStateInitializer           Initializer;
+    FRHIBlendStateInfo Info;
     VkPipelineColorBlendStateCreateInfo CreateInfo;
     VkPipelineColorBlendAttachmentState BlendAttachmentStates[VULKAN_MAX_RENDER_TARGET_COUNT];
 };

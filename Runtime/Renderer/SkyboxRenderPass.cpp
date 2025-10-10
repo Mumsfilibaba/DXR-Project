@@ -142,12 +142,12 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
     
     // Initialize standard input layout
-    FRHIVertexLayoutInitializerList VertexElementList =
+    TArray<FRHIInputElementInfo> InputElements =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
     };
 
-    FRHIVertexLayoutRef InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+    FRHIInputLayoutRef InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -164,10 +164,10 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer;
-    BlendStateInitializer.NumRenderTargets = 1;
+    FRHIBlendStateInfo BlendStateInfo;
+    BlendStateInfo.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         DEBUG_BREAK();

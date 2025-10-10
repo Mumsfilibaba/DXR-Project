@@ -132,14 +132,14 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIVertexLayoutInitializerList VertexElementList =
+    TArray<FRHIInputElementInfo> InputElements =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
         { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
-    FRHIVertexLayoutRef InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+    FRHIInputLayoutRef InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -168,27 +168,27 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer;
-    BlendStateInitializer.bIndependentBlendEnable        = false;
-    BlendStateInitializer.NumRenderTargets               = 1;
-    BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
-    BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
-    BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
-    BlendStateInitializer.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
-    BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
-    BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
-    BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
+    FRHIBlendStateInfo BlendStateInfo;
+    BlendStateInfo.bIndependentBlendEnable        = false;
+    BlendStateInfo.NumRenderTargets               = 1;
+    BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
+    BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
+    BlendStateInfo.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+    BlendStateInfo.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
+    BlendStateInfo.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
+    BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+    BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    BlendStateInitializer.RenderTargets[0].bBlendEnable = false;
+    BlendStateInfo.RenderTargets[0].bBlendEnable = false;
 
-    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();

@@ -148,14 +148,14 @@ public:
         return new FNullRHIRasterizerState(InInfo);
     }
 
-    virtual class FRHIBlendState* CreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final
+    virtual class FRHIBlendState* CreateBlendState(const FRHIBlendStateInfo& InInfo) override final
     {
-        return new FNullRHIBlendState(InInitializer);
+        return new FNullRHIBlendState(InInfo);
     }
 
-    virtual class FRHIVertexLayout* CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final
+    virtual class FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements) override final
     {
-        return new FNullRHIVertexLayout(InInitializerList);
+        return new FNullRHIInputLayout(InInputElements);
     }
 
     virtual class FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final

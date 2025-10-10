@@ -220,10 +220,10 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
 
         // Initialize standard input layout
-        FRHIVertexLayoutInitializerList VertexElementList;
+        TArray<FRHIInputElementInfo> InputElements;
         if (Material->SupportsPixelDiscard())
         {
-            VertexElementList =
+            InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
                 { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
@@ -231,13 +231,13 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
         else
         {
-            VertexElementList =
+            InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
         }
 
-        NewPipelineStateInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+        NewPipelineStateInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
         if (!NewPipelineStateInstance.InputLayout)
         {
             DEBUG_BREAK();
@@ -280,8 +280,8 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateInfo BlendStateInfo;
+        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!NewPipelineStateInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -948,10 +948,10 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         // Initialize standard input layout
-        FRHIVertexLayoutInitializerList VertexElementList;
+        TArray<FRHIInputElementInfo> InputElements;
         if (Material->SupportsPixelDiscard())
         {
-            VertexElementList =
+            InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
                 { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
@@ -959,13 +959,13 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
         else
         {
-            VertexElementList =
+            InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
         }
 
-        NewPipelineStateInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+        NewPipelineStateInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
         if (!NewPipelineStateInstance.InputLayout)
         {
             DEBUG_BREAK();
@@ -1009,8 +1009,8 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             return nullptr;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateInfo BlendStateInfo;
+        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
 
         if (!NewPipelineStateInstance.BlendState)
         {

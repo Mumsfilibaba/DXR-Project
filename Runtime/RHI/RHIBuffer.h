@@ -33,8 +33,6 @@ struct FRHIBufferInfo
     NODISCARD constexpr bool IsIndexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
     NODISCARD constexpr bool IsUnorderedAccessBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::UnorderedAccessBuffer); }
 
-    constexpr bool operator==(const FRHIBufferInfo& Other) const noexcept = default;
-
     EBufferFlags Flags = EBufferFlags::None;
     uint32 Stride = 0;
     uint64 Size   = 0;

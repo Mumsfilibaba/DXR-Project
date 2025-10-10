@@ -10,20 +10,20 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "PipelineCache.d3d12psocache");
 
-FD3D12VertexLayout::FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
-    : FRHIVertexLayout()
-    , InitializerList(InInitializerList)
+FD3D12InputLayout::FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+    : FRHIInputLayout()
+    , InputElements(InInputElements)
     , Desc()
     , SemanticNames()
     , ElementDesc()
     , Hash(0)
 {
-    const int32 NumElements = InInitializerList.Size();
+    const int32 NumElements = InInputElements.Size();
     ElementDesc.Reserve(NumElements);
     SemanticNames.Reserve(NumElements);
 
     uint64 CalculatedHash = 0;
-    for (const FVertexElement& Element : InInitializerList)
+    for (const FRHIInputElementInfo& Element : InInputElements)
     {
         D3D12_INPUT_ELEMENT_DESC InputElementDesc;
         FMemory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
@@ -53,12 +53,13 @@ FD3D12VertexLayout::FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& In
         ElementDesc.Emplace(InputElementDesc);
     }
 
-    Desc.NumElements        = ElementDesc.Size();
+    Desc.NumElements = ElementDesc.Size();
     Desc.pInputElementDescs = ElementDesc.Data();
-    Hash                    = CalculatedHash;
+
+    Hash = CalculatedHash;
 }
 
-FD3D12VertexLayout::~FD3D12VertexLayout()
+FD3D12InputLayout::~FD3D12InputLayout()
 {
 }
 
@@ -111,29 +112,29 @@ FD3D12RasterizerState::~FD3D12RasterizerState()
 {
 }
 
-FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer)
+FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInfo& InInfo)
     : FRHIBlendState()
-    , Initializer(InInitializer)
+    , Info(InInfo)
     , Hash(0)
 {
     FMemory::Memzero(&Desc);
 
-    const D3D12_LOGIC_OP LogicOp = ConvertLogicOp(InInitializer.LogicOp);
-    Desc.AlphaToCoverageEnable   = InInitializer.bAlphaToCoverageEnable;
-    Desc.IndependentBlendEnable  = InInitializer.bIndependentBlendEnable;
+    Desc.AlphaToCoverageEnable   = InInfo.bAlphaToCoverageEnable;
+    Desc.IndependentBlendEnable  = InInfo.bIndependentBlendEnable;
 
-    for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)
+    const D3D12_LOGIC_OP LogicOp = ConvertLogicOp(InInfo.LogicOp);
+    for (int32 Index = 0; Index < InInfo.NumRenderTargets; Index++)
     {
-        Desc.RenderTarget[Index].BlendEnable           = InInitializer.RenderTargets[Index].bBlendEnable;
-        Desc.RenderTarget[Index].BlendOp               = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOp);
-        Desc.RenderTarget[Index].BlendOpAlpha          = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
-        Desc.RenderTarget[Index].DestBlend             = ConvertBlend(InInitializer.RenderTargets[Index].DstBlend);
-        Desc.RenderTarget[Index].DestBlendAlpha        = ConvertBlend(InInitializer.RenderTargets[Index].DstBlendAlpha);
-        Desc.RenderTarget[Index].SrcBlend              = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlend);
-        Desc.RenderTarget[Index].SrcBlendAlpha         = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlendAlpha);
-        Desc.RenderTarget[Index].RenderTargetWriteMask = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
+        Desc.RenderTarget[Index].BlendEnable           = InInfo.RenderTargets[Index].bBlendEnable;
+        Desc.RenderTarget[Index].BlendOp               = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOp);
+        Desc.RenderTarget[Index].BlendOpAlpha          = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOpAlpha);
+        Desc.RenderTarget[Index].DestBlend             = ConvertBlend(InInfo.RenderTargets[Index].DstBlend);
+        Desc.RenderTarget[Index].DestBlendAlpha        = ConvertBlend(InInfo.RenderTargets[Index].DstBlendAlpha);
+        Desc.RenderTarget[Index].SrcBlend              = ConvertBlend(InInfo.RenderTargets[Index].SrcBlend);
+        Desc.RenderTarget[Index].SrcBlendAlpha         = ConvertBlend(InInfo.RenderTargets[Index].SrcBlendAlpha);
+        Desc.RenderTarget[Index].RenderTargetWriteMask = ConvertColorWriteFlags(InInfo.RenderTargets[Index].ColorWriteMask);
         Desc.RenderTarget[Index].LogicOp               = LogicOp;
-        Desc.RenderTarget[Index].LogicOpEnable         = InInitializer.bLogicOpEnable;
+        Desc.RenderTarget[Index].LogicOpEnable         = InInfo.bLogicOpEnable;
     }
 
     Hash = CRC32::Generate(&Desc, sizeof(D3D12_BLEND_DESC));
@@ -174,10 +175,10 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     FD3D12GraphicsPipelineStream PipelineStream;
 
     // InputLayout
-    FD3D12VertexLayout* D3D12InputLayoutState = static_cast<FD3D12VertexLayout*>(Initializer.VertexInputLayout);
-    if (D3D12InputLayoutState)
+    FD3D12InputLayout* D3D12InputLayout = static_cast<FD3D12InputLayout*>(Initializer.VertexInputLayout);
+    if (D3D12InputLayout)
     {
-        PipelineStream.InputLayout = D3D12InputLayoutState->GetDesc();
+        PipelineStream.InputLayout = D3D12InputLayout->GetDesc();
     }
     else
     {
@@ -371,7 +372,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         {
             FD3D12RootSignatureLayout RootSignatureLayout;
             RootSignatureLayout.Type                 = ERootSignatureType::Graphics;
-            RootSignatureLayout.bAllowInputAssembler = D3D12InputLayoutState ? true : false;
+            RootSignatureLayout.bAllowInputAssembler = D3D12InputLayout ? true : false;
 
             // NOTE: For now all constants are put in visibility_all
             uint8 Num32BitConstants = 0;
@@ -449,7 +450,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         PipelineKey.DepthBufferFormat        = PipelineStream.DepthBufferFormat;
         PipelineKey.RenderTargetInfo         = PipelineStream.RenderTargetInfo;
         PipelineKey.ViewInstancingHash       = ViewInstanceDesc.GenerateHash();
-        PipelineKey.InputLayoutHash          = D3D12InputLayoutState ? D3D12InputLayoutState->GetHash() : 0;
+        PipelineKey.InputLayoutHash          = D3D12InputLayout ? D3D12InputLayout->GetHash() : 0;
         PipelineKey.RasterizerHash           = D3D12RasterizerState->GetHash();
         PipelineKey.DepthStencilHash         = D3D12DepthStencilState->GetHash();
         PipelineKey.BlendStateHash           = D3D12BlendState->GetHash();

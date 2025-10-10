@@ -236,7 +236,7 @@ bool FSceneRenderer::Initialize()
     }
 
     // Initialize standard input layout
-    FRHIVertexLayoutInitializerList InputLayout =
+    TArray<FRHIInputElementInfo> InputElements =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0,  0, EVertexInputClass::Vertex, 0 },
         { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(FVertexNormal),   1, 0,  1, EVertexInputClass::Vertex, 0 },
@@ -244,7 +244,7 @@ bool FSceneRenderer::Initialize()
         { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 2, 0,  3, EVertexInputClass::Vertex, 0 },
     };
 
-    Resources.MeshInputLayout = FRHI::Get()->CreateVertexLayout(InputLayout);
+    Resources.MeshInputLayout = FRHI::Get()->CreateInputLayout(InputElements);
     if (!Resources.MeshInputLayout)
     {
         DEBUG_BREAK();

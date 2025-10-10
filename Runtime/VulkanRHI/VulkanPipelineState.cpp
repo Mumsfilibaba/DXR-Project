@@ -12,15 +12,15 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "PipelineCache.vkpsocache");
 
-FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
-    : FRHIVertexLayout()
-	, InitializerList(InInitializerList)
+FVulkanInputLayout::FVulkanInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+    : FRHIInputLayout()
+	, InputElements(InInputElements)
     , VertexInputBindingDescriptions()
     , VertexInputAttributeDescriptions()
     , CreateInfo{}
 {
     // Create a binding for each input-slot
-    for (const FVertexElement& Element : InInitializerList)
+    for (const FRHIInputElementInfo& Element : InInputElements)
     {
         // Search for a binding for this input slot
         bool bCreateBinding = true;
@@ -48,17 +48,17 @@ FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& 
     
     VertexInputBindingDescriptions.Shrink();
 
-    const int32 NumElements = InInitializerList.Size();
+    const int32 NumElements = InInputElements.Size();
     VertexInputAttributeDescriptions.Resize(NumElements);
 
     // Create a input-attribute for each element
     for (int32 Index = 0; Index < NumElements; Index++)
     {
         VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];
-        Attribute.format   = ConvertFormat(InInitializerList[Index].Format);
-        Attribute.binding  = InInitializerList[Index].InputSlot;
-        Attribute.location = InInitializerList[Index].ShaderElementIndex;
-        Attribute.offset   = InInitializerList[Index].ByteOffset;
+        Attribute.format   = ConvertFormat(InInputElements[Index].Format);
+        Attribute.binding  = InInputElements[Index].InputSlot;
+        Attribute.location = InInputElements[Index].ShaderElementIndex;
+        Attribute.offset   = InInputElements[Index].ByteOffset;
     }
 
     // VertexInputStateCreateInfo
@@ -78,7 +78,7 @@ FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& 
     }
 }
 
-FVulkanVertexLayout::~FVulkanVertexLayout()
+FVulkanInputLayout::~FVulkanInputLayout()
 {
 }
 
@@ -174,29 +174,29 @@ FVulkanRasterizerState::~FVulkanRasterizerState()
 {
 }
 
-FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer)
+FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInfo& InInfo)
     : FRHIBlendState()
-    , Initializer(InInitializer)
+    , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
 
     // NOTE: Blend constants are configured as dynamic state
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    CreateInfo.logicOpEnable   = InInitializer.bLogicOpEnable;
-    CreateInfo.logicOp         = ConvertLogicOp(InInitializer.LogicOp);
-    CreateInfo.attachmentCount = InInitializer.NumRenderTargets;
+    CreateInfo.logicOpEnable   = InInfo.bLogicOpEnable;
+    CreateInfo.logicOp         = ConvertLogicOp(InInfo.LogicOp);
+    CreateInfo.attachmentCount = InInfo.NumRenderTargets;
     CreateInfo.pAttachments    = BlendAttachmentStates;
 
-    for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)
+    for (int32 Index = 0; Index < InInfo.NumRenderTargets; Index++)
     {
-        BlendAttachmentStates[Index].blendEnable         = InInitializer.RenderTargets[Index].bBlendEnable ? VK_TRUE : VK_FALSE;
-        BlendAttachmentStates[Index].srcColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlend);
-        BlendAttachmentStates[Index].dstColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlend);
-        BlendAttachmentStates[Index].colorBlendOp        = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOp);
-        BlendAttachmentStates[Index].srcAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlendAlpha);
-        BlendAttachmentStates[Index].dstAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlendAlpha);
-        BlendAttachmentStates[Index].alphaBlendOp        = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
-        BlendAttachmentStates[Index].colorWriteMask      = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
+        BlendAttachmentStates[Index].blendEnable         = InInfo.RenderTargets[Index].bBlendEnable ? VK_TRUE : VK_FALSE;
+        BlendAttachmentStates[Index].srcColorBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].SrcBlend);
+        BlendAttachmentStates[Index].dstColorBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlend);
+        BlendAttachmentStates[Index].colorBlendOp        = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOp);
+        BlendAttachmentStates[Index].srcAlphaBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].SrcBlendAlpha);
+        BlendAttachmentStates[Index].dstAlphaBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlendAlpha);
+        BlendAttachmentStates[Index].alphaBlendOp        = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOpAlpha);
+        BlendAttachmentStates[Index].colorWriteMask      = ConvertColorWriteFlags(InInfo.RenderTargets[Index].ColorWriteMask);
     }
 }
 
@@ -373,7 +373,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     
     // VertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo VertexInputStateCreateInfo;
-    if (FVulkanVertexLayout* VertexInputLayout = static_cast<FVulkanVertexLayout*>(Initializer.VertexInputLayout))
+    if (FVulkanInputLayout* VertexInputLayout = static_cast<FVulkanInputLayout*>(Initializer.VertexInputLayout))
     {
         VertexInputStateCreateInfo = VertexInputLayout->GetVkCreateInfo();
     }

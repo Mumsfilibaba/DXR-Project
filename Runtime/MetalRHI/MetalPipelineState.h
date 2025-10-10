@@ -6,21 +6,26 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalVertexLayout>            FMetalVertexInputLayoutRef;
+typedef TSharedRef<class FMetalInputLayout>            FMetalVertexInputLayoutRef;
 typedef TSharedRef<class FMetalDepthStencilState>       FMetalDepthStencilStateRef;
 typedef TSharedRef<class FMetalGraphicsPipelineState>   FMetalGraphicsPipelineStateRef;
 typedef TSharedRef<class FMetalComputePipelineState>    FMetalComputePipelineStateRef;
 typedef TSharedRef<class FMetalRayTracingPipelineState> FMetalRayTracingPipelineStateRef;
 
-class FMetalVertexLayout : public FRHIVertexLayout
+class FMetalInputLayout : public FRHIInputLayout
 {
 public:
-    FMetalVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList);
-    virtual ~FMetalVertexLayout();
+    FMetalInputLayout(const TArray<FRHIInputElementInfo>& InInputElements);
+    virtual ~FMetalInputLayout();
 
-    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
     {
-        return InitializerList;
+        return &InputElements[Index];
+    }
+
+    virtual uint32 GetNumInputElementInfos() const override final
+    {
+        return InputElements.Size();
     }
 
     MTLVertexDescriptor* GetMTLVertexDescriptor() const 
@@ -29,8 +34,8 @@ public:
     }
 
 private:
-    FRHIVertexLayoutInitializerList InitializerList;
-    MTLVertexDescriptor*            VertexDescriptor;
+    TArray<FRHIInputElementInfo> InputElements;
+    MTLVertexDescriptor*         VertexDescriptor;
 };
 
 class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalDeviceChild
@@ -76,12 +81,12 @@ public:
 class FMetalBlendState : public FRHIBlendState
 {
 public:
-    FMetalBlendState(const FRHIBlendStateInitializer& InInitializer);
+    FMetalBlendState(const FRHIBlendStateInfo& InInfo);
     virtual ~FMetalBlendState();
 
-    virtual FRHIBlendStateInitializer GetInitializer() const
+    virtual FRHIBlendStateInfo GetInfo() const
     {
-        return Initializer;
+        return Info;
     }
 
     struct FBlendAttachment
@@ -98,7 +103,7 @@ public:
     };
 
     FBlendAttachment ColorAttachments[RHI_MAX_RENDER_TARGETS];
-    const FRHIBlendStateInitializer Initializer;
+    const FRHIBlendStateInfo Info;
 };
 
 struct FMetalResourceBinding
@@ -158,7 +163,7 @@ public:
         
         Descriptor.depthAttachmentPixelFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
         
-        FMetalVertexLayout* InputLayout = static_cast<FMetalVertexLayout*>(Initializer.VertexInputLayout);
+        FMetalInputLayout* InputLayout = static_cast<FMetalInputLayout*>(Initializer.VertexInputLayout);
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;

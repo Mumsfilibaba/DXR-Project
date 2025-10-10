@@ -581,14 +581,14 @@ FRHIRasterizerState* FVulkanRHI::CreateRasterizerState(const FRHIRasterizerState
     return new FVulkanRasterizerState(GetDevice(), InInfo);
 }
 
-FRHIBlendState* FVulkanRHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FVulkanRHI::CreateBlendState(const FRHIBlendStateInfo& InInfo)
 {
-    return new FVulkanBlendState(InInitializer);
+    return new FVulkanBlendState(InInfo);
 }
 
-FRHIVertexLayout* FVulkanRHI::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIInputLayout* FVulkanRHI::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
 {
-    return new FVulkanVertexLayout(InInitializerList);
+    return new FVulkanInputLayout(InInputElements);
 }
 
 FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)

@@ -189,7 +189,7 @@ struct FFrameResources
     int32 SpecularIrradianceProbeSize = 0;
 
     // Global VertexInput
-    FRHIVertexLayoutRef MeshInputLayout;
+    FRHIInputLayoutRef MeshInputLayout;
 
     // Global Buffers
     FRHIBufferRef CameraBuffer;

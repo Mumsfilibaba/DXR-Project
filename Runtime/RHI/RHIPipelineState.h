@@ -300,22 +300,6 @@ ENUM_CLASS_OPERATORS(EColorWriteFlags);
 
 struct FRenderTargetBlendInfo
 {
-    constexpr FRenderTargetBlendInfo() noexcept = default;
-
-    constexpr FRenderTargetBlendInfo(bool bInBlendEnable, EBlendType InSrcBlend, EBlendType InDstBlend, EBlendOp InBlendOp = EBlendOp::Add,
-        EBlendType InSrcBlendAlpha = EBlendType::One, EBlendType InDstBlendAlpha = EBlendType::Zero, EBlendOp InBlendOpAlpha = EBlendOp::Add,
-        EColorWriteFlags InColorWriteMask = EColorWriteFlags::All) noexcept
-        : SrcBlend(InSrcBlend)
-        , DstBlend(InDstBlend)
-        , BlendOp(InBlendOp)
-        , SrcBlendAlpha(InSrcBlendAlpha)
-        , DstBlendAlpha(InDstBlendAlpha)
-        , BlendOpAlpha(InBlendOpAlpha)
-        , bBlendEnable(bInBlendEnable)
-        , ColorWriteMask(InColorWriteMask)
-    {
-    }
-
     constexpr bool operator==(const FRenderTargetBlendInfo& Other) const noexcept = default;
 
     NODISCARD friend uint64 GetHashForType(const FRenderTargetBlendInfo& Value)
@@ -343,21 +327,11 @@ struct FRenderTargetBlendInfo
 
 static_assert(TAlignmentOf<FRenderTargetBlendInfo>::Value == sizeof(uint8), "FRenderTargetBlendInfo is assumed to aligned to a uint8");
 
-struct FRHIBlendStateInitializer
+struct FRHIBlendStateInfo
 {
-    constexpr FRHIBlendStateInitializer() noexcept
-        : RenderTargets()
-        , NumRenderTargets(0)
-        , LogicOp(ELogicOp::NoOp)
-        , bLogicOpEnable(false)
-        , bAlphaToCoverageEnable(false)
-        , bIndependentBlendEnable(false)
-    {
-    }
+    constexpr bool operator==(const FRHIBlendStateInfo& Other) const noexcept = default;
 
-    constexpr bool operator==(const FRHIBlendStateInitializer& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHIBlendStateInitializer& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIBlendStateInfo& Value)
     {
         uint64 Hash = 0;
         for (uint32 Index = 0; Index < Value.NumRenderTargets; ++Index)
@@ -373,12 +347,12 @@ struct FRHIBlendStateInitializer
     }
 
     FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS];
-    uint8    NumRenderTargets;
-    ELogicOp LogicOp;
-
-    bool bLogicOpEnable : 1;
-    bool bAlphaToCoverageEnable : 1;
-    bool bIndependentBlendEnable : 1;
+    uint8 NumRenderTargets = 0;
+    
+    ELogicOp LogicOp = ELogicOp::NoOp;
+    bool bLogicOpEnable = false;
+    bool bAlphaToCoverageEnable = false;
+    bool bIndependentBlendEnable = false;
 };
 
 class FRHIBlendState : public FRHIResource
@@ -388,7 +362,7 @@ protected:
     virtual ~FRHIBlendState() = default;
 
 public:
-    virtual FRHIBlendStateInitializer GetInitializer() const = 0;
+    virtual FRHIBlendStateInfo GetInfo() const = 0;
 };
 
 enum class EVertexInputClass : uint8
@@ -403,79 +377,50 @@ NODISCARD constexpr const CHAR* ToString(EVertexInputClass BlendOp)
     {
         case EVertexInputClass::Vertex:   return "Vertex";
         case EVertexInputClass::Instance: return "Instance";
-        default:                          return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
-struct FVertexElement
+struct FRHIInputElementInfo
 {
-    FVertexElement() noexcept
-        : Semantic("")
-        , SemanticIndex(0)
-        , Format(EFormat::Unknown)
-        , VertexStride(0)
-        , InputSlot(0)
-        , ByteOffset(0)
-        , ShaderElementIndex(0)
-        , InputClass(EVertexInputClass::Vertex)
-        , InstanceStepRate(0)
-    {
-    }
-
-    FVertexElement(const FString& InSemantic, uint32 InSemanticIndex, EFormat InFormat, uint16 InVertexStride, uint32 InInputSlot, uint32 InByteOffset,
-        uint32 InShaderElementIndex, EVertexInputClass InInputClass, uint32 InInstanceStepRate) noexcept
-        : Semantic(InSemantic)
-        , SemanticIndex(InSemanticIndex)
-        , Format(InFormat)
-        , VertexStride(InVertexStride)
-        , InputSlot(InInputSlot)
-        , ByteOffset(InByteOffset)
-        , ShaderElementIndex(InShaderElementIndex)
-        , InputClass(InInputClass)
-        , InstanceStepRate(InInstanceStepRate)
-    {
-    }
-
-    bool operator==(const FVertexElement& Other) const noexcept = default;
-
-    // Semantic in the shader to match
+    /** @brief Semantic in the shader to match */
     FString Semantic;
 
-    // Index of the semantic in the shader
-    uint32 SemanticIndex;
+    /** @brief Index of the semantic in the shader */
+    uint32 SemanticIndex = 0;
 
-    // Format of this vertex-element
-    EFormat Format;
+    /** @brief Format of this vertex-element */
+    EFormat Format = EFormat::Unknown;
 
-    // Stride for each vertex in the vertex-stream that this element is a part of
-    uint16 VertexStride;
+    /** @brief Stride for each vertex in the vertex-stream that this element is a part of */
+    uint16 VertexStride = 0;
 
-    // Index of the vertex-stream that this element is a part of
-    uint32 InputSlot;
+    /** @brief Index of the vertex-stream that this element is a part of */
+    uint32 InputSlot = 0;
 
-    // Offset within the vertex-structure that this element is a part of
-    uint32 ByteOffset;
+    /** @brief Offset within the vertex-structure that this element is a part of */
+    uint32 ByteOffset = 0;
 
-    // Index of the element in the shader that this element matching
-    uint32 ShaderElementIndex;
+    /** @brief Index of the element in the shader that this element matching */
+    uint32 ShaderElementIndex = 0;
 
-    // How often this element should be updated
-    EVertexInputClass InputClass;
+    /** @brief How often this element should be updated */
+    EVertexInputClass InputClass = EVertexInputClass::Vertex;
 
-    // How many elements to increment per instance
-    uint32 InstanceStepRate;
+    /** @brief How many elements to increment per instance */
+    uint32 InstanceStepRate = 0;
 };
 
-typedef TArray<FVertexElement> FRHIVertexLayoutInitializerList;
-
-class FRHIVertexLayout : public FRHIResource
+class FRHIInputLayout : public FRHIResource
 {
 protected:
-    FRHIVertexLayout() = default;
-    virtual ~FRHIVertexLayout() = default;
+    FRHIInputLayout() = default;
+    virtual ~FRHIInputLayout() = default;
     
 public:
-    virtual FRHIVertexLayoutInitializerList GetInitializerList() const = 0;
+    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const = 0;
+    virtual uint32 GetNumInputElementInfos() const = 0; 
 };
 
 class FRHIPipelineState : public FRHIResource
@@ -563,7 +508,7 @@ struct FRHIGraphicsPipelineStateInitializer
 {
     FRHIGraphicsPipelineStateInitializer() noexcept = default;
 
-    FRHIGraphicsPipelineStateInitializer(FRHIVertexLayout* InVertexInputLayout, FRHIDepthStencilState* InDepthStencilState, FRHIRasterizerState* InRasterizerState,
+    FRHIGraphicsPipelineStateInitializer(FRHIInputLayout* InVertexInputLayout, FRHIDepthStencilState* InDepthStencilState, FRHIRasterizerState* InRasterizerState,
         FRHIBlendState* InBlendState, const FGraphicsPipelineShaders& InShaderState, const FGraphicsPipelineFormats& InPipelineFormats, EPrimitiveTopology InPrimitiveTopology = EPrimitiveTopology::TriangleList,
         uint32 InSampleCount = 1, uint32 InSampleQuality = 0, uint32 InSampleMask = RHI_DEFAULT_SAMPLE_MASK, bool bInPrimitiveRestartEnable = false) noexcept
         : VertexInputLayout(InVertexInputLayout)
@@ -583,7 +528,7 @@ struct FRHIGraphicsPipelineStateInitializer
 
     bool operator==(const FRHIGraphicsPipelineStateInitializer& Other) const noexcept = default;
 
-    FRHIVertexLayout*      VertexInputLayout = nullptr;
+    FRHIInputLayout*      VertexInputLayout = nullptr;
     FRHIDepthStencilState* DepthStencilState = nullptr;
     FRHIRasterizerState*   RasterizerState   = nullptr;
     FRHIBlendState*        BlendState        = nullptr;

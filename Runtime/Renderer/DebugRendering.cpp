@@ -244,12 +244,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexLayoutInitializerList VertexElementList =
+        TArray<FRHIInputElementInfo> InputElements =
         {
             { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        FRHIVertexLayoutRef InputLayoutState = FRHI::Get()->CreateVertexLayout(VertexElementList);
+        FRHIInputLayoutRef InputLayoutState = FRHI::Get()->CreateInputLayout(InputElements);
         if (!InputLayoutState)
         {
             DEBUG_BREAK();
@@ -287,10 +287,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        BlendStateInitializer.NumRenderTargets = 1;
+        FRHIBlendStateInfo BlendStateInfo;
+        BlendStateInfo.NumRenderTargets = 1;
 
-        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             DEBUG_BREAK();
@@ -391,10 +391,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        BlendStateInitializer.NumRenderTargets = 1;
+        FRHIBlendStateInfo BlendStateInfo;
+        BlendStateInfo.NumRenderTargets = 1;
 
-        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             DEBUG_BREAK();
@@ -460,12 +460,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexLayoutInitializerList VertexElementList =
+        TArray<FRHIInputElementInfo> InputElements =
         {
             { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        FRHIVertexLayoutRef InputLayoutState = FRHI::Get()->CreateVertexLayout(VertexElementList);
+        FRHIInputLayoutRef InputLayoutState = FRHI::Get()->CreateInputLayout(InputElements);
         if (!InputLayoutState)
         {
             DEBUG_BREAK();
@@ -494,18 +494,18 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        BlendStateInitializer.bIndependentBlendEnable        = false;
-        BlendStateInitializer.NumRenderTargets               = 1;
-        BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
-        BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
-        BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
-        BlendStateInitializer.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
-        BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
-        BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
-        BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
+        FRHIBlendStateInfo BlendStateInfo;
+        BlendStateInfo.bIndependentBlendEnable        = false;
+        BlendStateInfo.NumRenderTargets               = 1;
+        BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
+        BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
+        BlendStateInfo.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+        BlendStateInfo.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
+        BlendStateInfo.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
+        BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+        BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             DEBUG_BREAK();
@@ -593,10 +593,10 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        BlendStateInitializer.NumRenderTargets = 1;
+        FRHIBlendStateInfo BlendStateInfo;
+        BlendStateInfo.NumRenderTargets = 1;
 
-        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!BlendState)
         {
             DEBUG_BREAK();

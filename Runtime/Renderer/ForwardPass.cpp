@@ -81,11 +81,13 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer;
-    BlendStateInitializer.NumRenderTargets = 1;
-    BlendStateInitializer.RenderTargets[0] = FRenderTargetBlendInfo(true, EBlendType::One, EBlendType::Zero);
+    FRHIBlendStateInfo BlendStateInfo;
+    BlendStateInfo.NumRenderTargets = 1;
+    BlendStateInfo.RenderTargets[0].bBlendEnable = true;
+    BlendStateInfo.RenderTargets[0].SrcBlend = EBlendType::One;
+    BlendStateInfo.RenderTargets[0].DstBlend = EBlendType::Zero;
 
-    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         DEBUG_BREAK();

@@ -275,14 +275,14 @@ FRHIRasterizerState* FRHIValidation::CreateRasterizerState(const FRHIRasterizerS
     return RealRHI->CreateRasterizerState(InInfo);
 }
 
-FRHIBlendState* FRHIValidation::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FRHIValidation::CreateBlendState(const FRHIBlendStateInfo& InInfo)
 {
-    return RealRHI->CreateBlendState(InInitializer);
+    return RealRHI->CreateBlendState(InInfo);
 }
 
-FRHIVertexLayout* FRHIValidation::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIInputLayout* FRHIValidation::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
 {
-    return RealRHI->CreateVertexLayout(InInitializerList);
+    return RealRHI->CreateInputLayout(InInputElements);
 }
 
 FRHIGraphicsPipelineState* FRHIValidation::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)

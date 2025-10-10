@@ -1,13 +1,13 @@
 #include "MetalRHI/MetalPipelineState.h"
 
-FMetalVertexLayout::FMetalVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
-    : FRHIVertexLayout()
+FMetalInputLayout::FMetalInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+    : FRHIInputLayout()
     , VertexDescriptor(nullptr)
 {
     VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
-    for (int32 Index = 0; Index < InInitializerList.Size(); ++Index)
+    for (int32 Index = 0; Index < InInputElements.Size(); ++Index)
     {
-        const auto& Element = InInitializerList[Index];
+        const auto& Element = InInputElements[Index];
         VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);
         VertexDescriptor.attributes[Index].offset      = Element.ByteOffset;
         VertexDescriptor.attributes[Index].bufferIndex = Element.InputSlot;
@@ -18,7 +18,7 @@ FMetalVertexLayout::FMetalVertexLayout(const FRHIVertexLayoutInitializerList& In
     }
 }
 
-FMetalVertexLayout::~FMetalVertexLayout()
+FMetalInputLayout::~FMetalInputLayout()
 {
 }
 
@@ -92,20 +92,20 @@ FMetalRasterizerState::~FMetalRasterizerState()
 {
 }
 
-FMetalBlendState::FMetalBlendState(const FRHIBlendStateInitializer& InInitializer)
+FMetalBlendState::FMetalBlendState(const FRHIBlendStateInfo& InInfo)
     : FRHIBlendState()
-    , Initializer(InInitializer)
+    , Info(InInfo)
 {
-    for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)
+    for (int32 Index = 0; Index < InInfo.NumRenderTargets; Index++)
     {
-        ColorAttachments[Index].bBlendingEnabled            = InInitializer.RenderTargets[Index].bBlendEnable ? YES : NO;
-        ColorAttachments[Index].SourceColorBlendFactor      = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlend);
-        ColorAttachments[Index].DestinationColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlend);
-        ColorAttachments[Index].ColorBlendOperation         = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOp);
-        ColorAttachments[Index].SourceAlphaBlendFactor      = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlendAlpha);
-        ColorAttachments[Index].DestinationAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlendAlpha);
-        ColorAttachments[Index].AlphaBlendOperation         = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
-        ColorAttachments[Index].WriteMask                   = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
+        ColorAttachments[Index].bBlendingEnabled            = InInfo.RenderTargets[Index].bBlendEnable ? YES : NO;
+        ColorAttachments[Index].SourceColorBlendFactor      = ConvertBlend(InInfo.RenderTargets[Index].SrcBlend);
+        ColorAttachments[Index].DestinationColorBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlend);
+        ColorAttachments[Index].ColorBlendOperation         = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOp);
+        ColorAttachments[Index].SourceAlphaBlendFactor      = ConvertBlend(InInfo.RenderTargets[Index].SrcBlendAlpha);
+        ColorAttachments[Index].DestinationAlphaBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlendAlpha);
+        ColorAttachments[Index].AlphaBlendOperation         = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOpAlpha);
+        ColorAttachments[Index].WriteMask                   = ConvertColorWriteFlags(InInfo.RenderTargets[Index].ColorWriteMask);
     }
 }
 

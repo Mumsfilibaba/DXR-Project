@@ -56,8 +56,6 @@ enum class EVideoMemoryType
 
 struct FRHIVideoMemoryInfo
 {
-    constexpr bool operator==(const FRHIVideoMemoryInfo& Other) const noexcept = default;
-
     /** @brief Type of memory that is queried */
     EVideoMemoryType MemoryType = EVideoMemoryType::Local;
 
@@ -275,17 +273,17 @@ public:
 
     /**
      * @brief Creates a new blend state.
-     * @param InInitializer Information about the blend state.
+     * @param InInfo Information about the blend state.
      * @return The newly created blend state.
      */
-    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInitializer& InInitializer) = 0;
+    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new vertex layout.
-     * @param InInitializerList Information about the vertex layout.
+     * @param InInputElements Array of InputElements.
      * @return The newly created vertex layout.
      */
-    virtual FRHIVertexLayout* CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) = 0;
+    virtual FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements) = 0;
 
     /**
      * @brief Creates a graphics pipeline state.

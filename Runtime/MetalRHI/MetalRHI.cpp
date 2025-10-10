@@ -264,14 +264,14 @@ FRHIRasterizerState* FMetalRHI::CreateRasterizerState(const FRHIRasterizerStateI
     return new FMetalRasterizerState(InInitializer);
 }
 
-FRHIBlendState* FMetalRHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FMetalRHI::CreateBlendState(const FRHIBlendStateInfo& InInfo)
 {
     return new FMetalBlendState(InInitializer);
 }
 
-FRHIVertexLayout* FMetalRHI::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIInputLayout* FMetalRHI::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
 {
-    return new FMetalVertexLayout(InInitializerList);
+    return new FMetalInputLayout(InInputElements);
 }
 
 FRHIGraphicsPipelineState* FMetalRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)

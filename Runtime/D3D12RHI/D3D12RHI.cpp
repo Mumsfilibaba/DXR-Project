@@ -766,14 +766,14 @@ FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateI
     return new FD3D12RasterizerState(InInfo);
 }
 
-FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateInfo& InInfo)
 {
-    return new FD3D12BlendState(InInitializer);
+    return new FD3D12BlendState(InInfo);
 }
 
-FRHIVertexLayout* FD3D12RHI::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIInputLayout* FD3D12RHI::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
 {
-    return new FD3D12VertexLayout(InInitializerList);
+    return new FD3D12InputLayout(InInputElements);
 }
 
 FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)

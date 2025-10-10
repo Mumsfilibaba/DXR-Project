@@ -6,7 +6,7 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12RefCounted.h"
 
-typedef TSharedRef<class FD3D12VertexLayout>            FD3D12VertexLayoutRef;
+typedef TSharedRef<class FD3D12InputLayout>             FD3D12InputLayoutRef;
 typedef TSharedRef<class FD3D12DepthStencilState>       FD3D12DepthStencilStateRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
 typedef TSharedRef<class FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
@@ -20,15 +20,20 @@ enum class ED3D12PipelineType
     RayTracing = 3,
 };
 
-class FD3D12VertexLayout : public FRHIVertexLayout
+class FD3D12InputLayout : public FRHIInputLayout
 {
 public:
-    FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList);
-    virtual ~FD3D12VertexLayout();
+    FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInputElements);
+    virtual ~FD3D12InputLayout();
 
-    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
     {
-        return InitializerList;
+        return &InputElements[Index];
+    }
+
+    virtual uint32 GetNumInputElementInfos() const override final
+    {
+        return InputElements.Size();
     }
 
     const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
@@ -42,7 +47,7 @@ public:
     }
 
 private:
-    FRHIVertexLayoutInitializerList  InitializerList;
+    TArray<FRHIInputElementInfo>     InputElements;
     D3D12_INPUT_LAYOUT_DESC          Desc;
     TArray<FString>                  SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
@@ -106,12 +111,12 @@ private:
 class FD3D12BlendState : public FRHIBlendState
 {
 public:
-    FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer);
+    FD3D12BlendState(const FRHIBlendStateInfo& InInfo);
     virtual ~FD3D12BlendState();
 
-    virtual FRHIBlendStateInitializer GetInitializer() const override final
+    virtual FRHIBlendStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const D3D12_BLEND_DESC& GetD3D12Desc() const
@@ -125,9 +130,9 @@ public:
     }
 
 private:
-    FRHIBlendStateInitializer Initializer;
-    D3D12_BLEND_DESC          Desc;
-    uint64                    Hash;
+    FRHIBlendStateInfo Info;
+    D3D12_BLEND_DESC   Desc;
+    uint64 Hash;
 };
 
 class FD3D12PipelineState : public FD3D12DeviceChild
