@@ -591,10 +591,10 @@ FRHIInputLayout* FVulkanRHI::CreateInputLayout(const TArray<FRHIInputElementInfo
     return new FVulkanInputLayout(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
 {
     FVulkanGraphicsPipelineStateRef NewPipeline = new FVulkanGraphicsPipelineState(GetDevice());
-    if (!NewPipeline->Initialize(InInitializer))
+    if (!NewPipeline->Initialize(InInfo))
     {
         return nullptr;
     }

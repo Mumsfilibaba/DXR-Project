@@ -74,7 +74,7 @@ public:
     void ResetState();
     void ResetStateForNewCommandBuffer();
 
-    void SetViewInstanceInfo(const FViewInstancingInfo& InViewInstancingInfo);
+    void SetViewInstanceInfo(const FRHIViewInstancingState& InViewInstancingInfo);
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState);
     void SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState);
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
@@ -137,7 +137,7 @@ private:
         FGraphicsState()
             : CurrentLayout(nullptr)
             , PipelineState(nullptr)
-            , ViewInstancingInfo()
+            , ViewInstancingState()
             , DescriptorStates()
             , CurrentDescriptorState(nullptr)
             , NumViewports(0)
@@ -152,7 +152,7 @@ private:
 
         FVulkanPipelineLayout* CurrentLayout;
         FVulkanGraphicsPipelineStateRef PipelineState;
-        FViewInstancingInfo ViewInstancingInfo;
+        FRHIViewInstancingState ViewInstancingState;
 
         TMap<FVulkanGraphicsPipelineState*, FVulkanDescriptorState*> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;

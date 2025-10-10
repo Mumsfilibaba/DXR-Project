@@ -248,8 +248,7 @@ NODISCARD constexpr const CHAR* ToString(EFormat Format)
         case EFormat::BC7_UNorm:                return "BC7_UNorm";
         case EFormat::BC7_UNorm_SRGB:           return "BC7_UNorm_SRGB";
 
-        default:
-            return "Unknown";
+        default: return "Unknown";
     }
 }
 
@@ -423,8 +422,7 @@ NODISCARD constexpr const CHAR* ToString(EIndexFormat IndexFormat)
         case EIndexFormat::uint16: return "uint16";
         case EIndexFormat::uint32: return "uint32";
         
-        default:
-            return "Unknown";
+        default: return "Unknown";
     }
 }
 
@@ -435,8 +433,7 @@ NODISCARD constexpr EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
         case 2: return EIndexFormat::uint16;
         case 4: return EIndexFormat::uint32;
 
-        default:
-            return EIndexFormat::Unknown;
+        default: return EIndexFormat::Unknown;
     }
 }
 
@@ -447,8 +444,7 @@ NODISCARD constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
         case EIndexFormat::uint16: return 2;
         case EIndexFormat::uint32: return 4;
         
-        default:
-            return 0;
+        default: return 0;
     }
 }
 
@@ -498,8 +494,7 @@ NODISCARD constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
     case EComparisonFunc::GreaterEqual: return "GreaterEqual";
     case EComparisonFunc::Always:       return "Always";
     
-    default:
-        return "Unknown";
+    default: return "Unknown";
     }
 }
 
@@ -550,8 +545,7 @@ NODISCARD constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::Present:                         return "Present";
     case EResourceAccess::GenericRead:                     return "GenericRead";
     
-    default:
-        return "Unknown";
+    default: return "Unknown";
     }
 }
 
@@ -576,8 +570,7 @@ NODISCARD constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
     case EPrimitiveTopology::TriangleList:  return "TriangleList";
     case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
     
-    default:
-        return "Unknown";
+    default: return "Unknown";
     }
 }
 
@@ -604,8 +597,7 @@ NODISCARD constexpr const CHAR* ToString(EShadingRate ShadingRate)
     case EShadingRate::VRS_4x2: return "VRS_4x2";
     case EShadingRate::VRS_4x4: return "VRS_4x4";
     
-    default:
-        return "Unknown";
+    default: return "Unknown";
     }
 }
 
@@ -627,8 +619,7 @@ NODISCARD constexpr const CHAR* ToString(EDescriptorType DescriptorType)
         case EDescriptorType::ConstantBuffer:  return "ConstantBuffer";
         case EDescriptorType::Sampler:         return "Sampler";
         
-        default:
-            return "Unknown";
+        default: return "Unknown";
     }
 }
 

@@ -195,27 +195,27 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOProperties;
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.VertexInputLayout                      = InputLayout.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.BlendState                             = BlendStateBlending.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = PShader.Get();
+    PSOInfo.InputLayout                                    = InputLayout.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.BlendState                                     = BlendStateBlending.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOProperties);
+    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!PipelineState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    PSOProperties.BlendState = BlendStateNoBlending.Get();
+    PSOInfo.BlendState = BlendStateNoBlending.Get();
 
-    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSOProperties);
+    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!PipelineStateNoBlending)
     {
         DEBUG_BREAK();

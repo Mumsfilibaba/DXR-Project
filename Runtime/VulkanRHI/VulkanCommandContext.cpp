@@ -571,10 +571,10 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
         RenderPassKey.NumSamples = NumSamples;
 
         // Setup ViewInstancing
-        if (BeginRenderPassInfo.ViewInstancingInfo.bEnableViewInstancing)
+        if (BeginRenderPassInfo.ViewInstancingState.bEnableViewInstancing)
         {
             // This view-instance information is used to create multi-view extension mask for the render-pass
-            RenderPassKey.ViewInstancingInfo = BeginRenderPassInfo.ViewInstancingInfo;
+            RenderPassKey.ViewInstancingState = BeginRenderPassInfo.ViewInstancingState;
 
             // If multi-view is enabled, then we are only allowed to use a single layer
             NumArrayLayers = 1;
@@ -622,7 +622,7 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
     ContextPhase = ECommandContextPhase::InsideRenderPass;
 
     // Set the current view-instance so that we can verify that we have the same view-instance info inside the pipeline-state and the current render-pass
-    ContextState.SetViewInstanceInfo(BeginRenderPassInfo.ViewInstancingInfo);
+    ContextState.SetViewInstanceInfo(BeginRenderPassInfo.ViewInstancingState);
 }
 
 void FVulkanCommandContext::EndRenderPass()  

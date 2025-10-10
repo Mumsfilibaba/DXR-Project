@@ -171,16 +171,16 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             }
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.VertexInputLayout                  = NewPipelineInstance.InputLayout.Get();
-        PSOInitializer.BlendState                         = NewPipelineInstance.BlendState.Get();
-        PSOInitializer.DepthStencilState                  = NewPipelineInstance.DepthStencilState.Get();
-        PSOInitializer.RasterizerState                    = NewPipelineInstance.RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader           = NewPipelineInstance.VertexShader.Get();
-        PSOInitializer.ShaderState.PixelShader            = NewPipelineInstance.PixelShader.Get();
-        PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.InputLayout                                = NewPipelineInstance.InputLayout.Get();
+        PSOInfo.BlendState                                 = NewPipelineInstance.BlendState.Get();
+        PSOInfo.DepthStencilState                          = NewPipelineInstance.DepthStencilState.Get();
+        PSOInfo.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
+        PSOInfo.VertexShader                               = NewPipelineInstance.VertexShader.Get();
+        PSOInfo.PixelShader                                = NewPipelineInstance.PixelShader.Get();
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
 
-        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!NewPipelineInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -475,21 +475,21 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         // NOTE: Always use the default InputLayout
         NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.VertexInputLayout                      = NewPipelineInstance.InputLayout.Get();
-        PSOInitializer.BlendState                             = NewPipelineInstance.BlendState.Get();
-        PSOInitializer.DepthStencilState                      = NewPipelineInstance.DepthStencilState.Get();
-        PSOInitializer.RasterizerState                        = NewPipelineInstance.RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader               = NewPipelineInstance.VertexShader.Get();
-        PSOInitializer.ShaderState.PixelShader                = NewPipelineInstance.PixelShader.Get();
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::AlbedoFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[1] = FGlobalTextureFormats::NormalFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[2] = FGlobalTextureFormats::MaterialFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[3] = FGlobalTextureFormats::VelocityFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.InputLayout                                    = NewPipelineInstance.InputLayout.Get();
+        PSOInfo.BlendState                                     = NewPipelineInstance.BlendState.Get();
+        PSOInfo.DepthStencilState                              = NewPipelineInstance.DepthStencilState.Get();
+        PSOInfo.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
+        PSOInfo.VertexShader                                   = NewPipelineInstance.VertexShader.Get();
+        PSOInfo.PixelShader                                    = NewPipelineInstance.PixelShader.Get();
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::AlbedoFormat;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[1] = FGlobalTextureFormats::NormalFormat;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[2] = FGlobalTextureFormats::MaterialFormat;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[3] = FGlobalTextureFormats::VelocityFormat;
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!NewPipelineInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -798,8 +798,8 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(BRDFShader.Get());
-    FRHIComputePipelineStateRef BRDFPipelineState = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInitializer PSOInfo(BRDFShader.Get());
+    FRHIComputePipelineStateRef BRDFPipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!BRDFPipelineState)
     {
         DEBUG_BREAK();
@@ -1156,8 +1156,8 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(ReduceDepthShader.Get());
-    ReduceDepthPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInitializer PSOInfo(ReduceDepthShader.Get());
+    ReduceDepthPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
 
     if (!ReduceDepthPSO)
     {

@@ -158,7 +158,7 @@ public:
         return new FNullRHIInputLayout(InInputElements);
     }
 
-    virtual class FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final
+    virtual class FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo) override final
     {
         return new FNullRHIGraphicsPipelineState();
     }

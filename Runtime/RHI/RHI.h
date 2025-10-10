@@ -290,7 +290,7 @@ public:
      * @param InInitializer Information about the graphics pipeline state.
      * @return The newly created pipeline state.
      */
-    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) = 0;
+    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a compute pipeline state.

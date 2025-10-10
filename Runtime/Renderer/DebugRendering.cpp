@@ -297,19 +297,19 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.BlendState                             = BlendState.Get();
-        PSOInitializer.DepthStencilState                      = DepthStencilState_NoDepth.Get();
-        PSOInitializer.VertexInputLayout                      = InputLayoutState.Get();
-        PSOInitializer.RasterizerState                        = RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader               = AABB_VS.Get();
-        PSOInitializer.ShaderState.PixelShader                = AABB_PS.Get();
-        PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::LineList;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.BlendState                                     = BlendState.Get();
+        PSOInfo.DepthStencilState                              = DepthStencilState_NoDepth.Get();
+        PSOInfo.InputLayout                                    = InputLayoutState.Get();
+        PSOInfo.RasterizerState                                = RasterizerState.Get();
+        PSOInfo.VertexShader                                   = AABB_VS.Get();
+        PSOInfo.PixelShader                                    = AABB_PS.Get();
+        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::LineList;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        AABB_NoDepth_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        AABB_NoDepth_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!AABB_NoDepth_PSO)
         {
             DEBUG_BREAK();
@@ -320,9 +320,9 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             AABB_NoDepth_PSO->SetDebugName("AABB Wireframe Debug PSO (No Depth)");
         }
 
-        PSOInitializer.DepthStencilState = DepthStencilState_Depth.Get();
+        PSOInfo.DepthStencilState = DepthStencilState_Depth.Get();
 
-        AABB_Depth_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        AABB_Depth_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!AABB_Depth_PSO)
         {
             DEBUG_BREAK();
@@ -401,19 +401,19 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.BlendState                             = BlendState.Get();
-        PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-        PSOInitializer.VertexInputLayout                      = Resources.MeshInputLayout.Get();
-        PSOInitializer.RasterizerState                        = RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader               = LightDebug_VS.Get();
-        PSOInitializer.ShaderState.PixelShader                = LightDebug_PS.Get();
-        PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.BlendState                                     = BlendState.Get();
+        PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+        PSOInfo.InputLayout                                    = Resources.MeshInputLayout.Get();
+        PSOInfo.RasterizerState                                = RasterizerState.Get();
+        PSOInfo.VertexShader                                   = LightDebug_VS.Get();
+        PSOInfo.PixelShader                                    = LightDebug_PS.Get();
+        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        LightDebug_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        LightDebug_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!LightDebug_PSO)
         {
             DEBUG_BREAK();
@@ -512,19 +512,19 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.BlendState                             = BlendState.Get();
-        PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-        PSOInitializer.VertexInputLayout                      = InputLayoutState.Get();
-        PSOInitializer.RasterizerState                        = RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader               = AABBSolid_VS.Get();
-        PSOInitializer.ShaderState.PixelShader                = AABBSolid_PS.Get();
-        PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.BlendState                                     = BlendState.Get();
+        PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+        PSOInfo.InputLayout                                    = InputLayoutState.Get();
+        PSOInfo.RasterizerState                                = RasterizerState.Get();
+        PSOInfo.VertexShader                                   = AABBSolid_VS.Get();
+        PSOInfo.PixelShader                                    = AABBSolid_PS.Get();
+        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        AABBSolid_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        AABBSolid_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!AABBSolid_PSO)
         {
             DEBUG_BREAK();
@@ -603,19 +603,19 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.BlendState                             = BlendState.Get();
-        PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-        PSOInitializer.VertexInputLayout                      = Resources.MeshInputLayout.Get();
-        PSOInitializer.RasterizerState                        = RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader               = ProbeDebug_VS.Get();
-        PSOInitializer.ShaderState.PixelShader                = ProbeDebug_PS.Get();
-        PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.BlendState                                     = BlendState.Get();
+        PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+        PSOInfo.InputLayout                                    = Resources.MeshInputLayout.Get();
+        PSOInfo.RasterizerState                                = RasterizerState.Get();
+        PSOInfo.VertexShader                                   = ProbeDebug_VS.Get();
+        PSOInfo.PixelShader                                    = ProbeDebug_PS.Get();
+        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        ProbeDebug_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        ProbeDebug_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!ProbeDebug_PSO)
         {
             DEBUG_BREAK();

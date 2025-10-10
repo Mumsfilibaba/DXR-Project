@@ -170,12 +170,12 @@ FD3D12GraphicsPipelineState::~FD3D12GraphicsPipelineState()
 {
 }
 
-bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
+bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo& Info)
 {
     FD3D12GraphicsPipelineStream PipelineStream;
 
     // InputLayout
-    FD3D12InputLayout* D3D12InputLayout = static_cast<FD3D12InputLayout*>(Initializer.VertexInputLayout);
+    FD3D12InputLayout* D3D12InputLayout = static_cast<FD3D12InputLayout*>(Info.InputLayout);
     if (D3D12InputLayout)
     {
         PipelineStream.InputLayout = D3D12InputLayout->GetDesc();
@@ -192,7 +192,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
 
     // VertexShader
     {
-        if (FD3D12VertexShader* D3D12VertexShader = static_cast<FD3D12VertexShader*>(Initializer.ShaderState.VertexShader))
+        if (FD3D12VertexShader* D3D12VertexShader = static_cast<FD3D12VertexShader*>(Info.VertexShader))
         {
             if (D3D12VertexShader->HasRootSignature())
             {
@@ -214,7 +214,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     // HullShader
     {
         D3D12_SHADER_BYTECODE& HullShaderCode = PipelineStream.HullShaderCode;
-        if (FD3D12HullShader* D3D12HullShader = static_cast<FD3D12HullShader*>(Initializer.ShaderState.HullShader))
+        if (FD3D12HullShader* D3D12HullShader = static_cast<FD3D12HullShader*>(Info.HullShader))
         {
             if (D3D12HullShader->HasRootSignature())
             {
@@ -235,7 +235,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     // DomainShader
     {
         D3D12_SHADER_BYTECODE& DomainShaderCode = PipelineStream.DomainShaderCode;
-        if (FD3D12DomainShader* D3D12DomainShader = static_cast<FD3D12DomainShader*>(Initializer.ShaderState.DomainShader))
+        if (FD3D12DomainShader* D3D12DomainShader = static_cast<FD3D12DomainShader*>(Info.DomainShader))
         {
             if (D3D12DomainShader->HasRootSignature())
             {
@@ -256,7 +256,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     // GeometryShader
     {
         D3D12_SHADER_BYTECODE& GeometryShaderCode = PipelineStream.GeometryShaderCode;
-        if (FD3D12GeometryShader* D3D12GeometryShader = static_cast<FD3D12GeometryShader*>(Initializer.ShaderState.GeometryShader))
+        if (FD3D12GeometryShader* D3D12GeometryShader = static_cast<FD3D12GeometryShader*>(Info.GeometryShader))
         {
             if (D3D12GeometryShader->HasRootSignature())
             {
@@ -277,7 +277,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     // PixelShader
     {
         D3D12_SHADER_BYTECODE& PixelShaderCode = PipelineStream.PixelShaderCode;
-        if (FD3D12PixelShader* D3D12PixelShader = static_cast<FD3D12PixelShader*>(Initializer.ShaderState.PixelShader))
+        if (FD3D12PixelShader* D3D12PixelShader = static_cast<FD3D12PixelShader*>(Info.PixelShader))
         {
             if (D3D12PixelShader->HasRootSignature())
             {
@@ -298,19 +298,19 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     // RenderTarget
     {
         D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
-        RenderTargetInfo.NumRenderTargets = Initializer.PipelineFormats.NumRenderTargets;
+        RenderTargetInfo.NumRenderTargets = Info.RasterizerOutputFormats.NumRenderTargets;
 
         for (uint32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
         {
-            RenderTargetInfo.RTFormats[Index] = ConvertFormat(Initializer.PipelineFormats.RenderTargetFormats[Index]);
+            RenderTargetInfo.RTFormats[Index] = ConvertFormat(Info.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
 
         // DepthStencil
-        PipelineStream.DepthBufferFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
+        PipelineStream.DepthBufferFormat = ConvertFormat(Info.RasterizerOutputFormats.DepthStencilFormat);
     }
 
     // RasterizerState
-    FD3D12RasterizerState* D3D12RasterizerState = static_cast<FD3D12RasterizerState*>(Initializer.RasterizerState);
+    FD3D12RasterizerState* D3D12RasterizerState = static_cast<FD3D12RasterizerState*>(Info.RasterizerState);
     if (D3D12RasterizerState)
     {
         D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
@@ -323,7 +323,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     }
 
     // DepthStencilState
-    FD3D12DepthStencilState* D3D12DepthStencilState = static_cast<FD3D12DepthStencilState*>(Initializer.DepthStencilState);
+    FD3D12DepthStencilState* D3D12DepthStencilState = static_cast<FD3D12DepthStencilState*>(Info.DepthStencilState);
     if (D3D12DepthStencilState)
     {
         D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
@@ -336,7 +336,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     }
 
     // BlendState
-    FD3D12BlendState* D3D12BlendState = static_cast<FD3D12BlendState*>(Initializer.BlendState);
+    FD3D12BlendState* D3D12BlendState = static_cast<FD3D12BlendState*>(Info.BlendState);
     if (D3D12BlendState)
     {
         D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
@@ -350,20 +350,20 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
 
     // Topology
     {
-        PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(Initializer.PrimitiveTopology);
-        PrimitiveTopology = ConvertPrimitiveTopology(Initializer.PrimitiveTopology);
+        PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(Info.PrimitiveTopology);
+        PrimitiveTopology = ConvertPrimitiveTopology(Info.PrimitiveTopology);
     }
 
     // IndexBufferStripCutValue
     {
-        PipelineStream.IndexBufferStripCutValue = Initializer.bPrimitiveRestartEnable ? D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF : D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
+        PipelineStream.IndexBufferStripCutValue = Info.bPrimitiveRestartEnable ? D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF : D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
     }
 
     // MSAA
     {
         DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
-        SamplerDesc.Count   = Initializer.SampleCount;
-        SamplerDesc.Quality = Initializer.SampleQuality;
+        SamplerDesc.Count   = Info.MultiSampleState.SampleCount;
+        SamplerDesc.Quality = Info.MultiSampleState.SampleQuality;
     }
 
     // RootSignature
@@ -413,13 +413,13 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
 
-    if (Initializer.ViewInstancingInfo.bEnableViewInstancing)
+    if (Info.ViewInstancingState.bEnableViewInstancing)
     {
-        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Initializer.ViewInstancingInfo.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Info.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             // NOTE: This does not work on NVIDIA for some reason, only way to work around this is by using the SV_RenderTargetArrayIndex
-            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Initializer.ViewInstancingInfo.StartRenderTargetArrayIndex;
+            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Info.ViewInstancingState.StartRenderTargetArrayIndex;
             ViewInstanceDesc.ViewInstanceLocations[Index].ViewportArrayIndex = 0;
         }
 

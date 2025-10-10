@@ -368,7 +368,7 @@ struct FRHIBeginRenderPassInfo
         , RenderTargets(InRenderTargets)
         , NumRenderTargets(InNumRenderTargets)
         , StaticShadingRate(EShadingRate::VRS_1x1)
-        , ViewInstancingInfo()
+        , ViewInstancingState()
     {
     }
 
@@ -379,16 +379,16 @@ struct FRHIBeginRenderPassInfo
         , RenderTargets(InRenderTargets)
         , NumRenderTargets(InNumRenderTargets)
         , StaticShadingRate(InStaticShadingRate)
-        , ViewInstancingInfo()
+        , ViewInstancingState()
     {
     }
 
     bool operator==(const FRHIBeginRenderPassInfo& Other) const noexcept = default;
 
-    FRHITexture*         ShadingRateTexture = nullptr;
-    FRHIDepthStencilView DepthStencilView   = { };
-    FRenderTargetViews   RenderTargets      = { };
-    uint32               NumRenderTargets   = 0;
-    EShadingRate         StaticShadingRate  = EShadingRate::VRS_1x1;
-    FViewInstancingInfo  ViewInstancingInfo = { };
+    FRHITexture*            ShadingRateTexture  = nullptr;
+    FRHIDepthStencilView    DepthStencilView    = { };
+    FRenderTargetViews      RenderTargets       = { };
+    uint32                  NumRenderTargets    = 0;
+    EShadingRate            StaticShadingRate   = EShadingRate::VRS_1x1;
+    FRHIViewInstancingState ViewInstancingState = { };
 };

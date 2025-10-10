@@ -140,7 +140,7 @@ public:
     FVulkanGraphicsPipelineState(FVulkanDevice* InDevice);
     virtual ~FVulkanGraphicsPipelineState();
 
-    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
     
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }
@@ -150,13 +150,13 @@ public:
         FVulkanPipeline::SetDebugName(InName);
     }
 
-    FORCEINLINE const FViewInstancingInfo& GetViewInstancingInfo() const
+    FORCEINLINE const FRHIViewInstancingState& GetViewInstancingState() const
     {
-        return ViewInstancingInfo;
+        return ViewInstancingState;
     }
     
 private:
-    FViewInstancingInfo ViewInstancingInfo;
+    FRHIViewInstancingState ViewInstancingState;
 };
 
 class FVulkanComputePipelineState : public FRHIComputePipelineState, public FVulkanPipeline

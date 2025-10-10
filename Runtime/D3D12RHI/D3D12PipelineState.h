@@ -306,7 +306,7 @@ public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12GraphicsPipelineState();
 
-    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
 
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }

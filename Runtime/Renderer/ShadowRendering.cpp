@@ -288,27 +288,27 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.BlendState                         = NewPipelineStateInstance.BlendState.Get();
-        PSOInitializer.DepthStencilState                  = NewPipelineStateInstance.DepthStencilState.Get();
-        PSOInitializer.bPrimitiveRestartEnable            = false;
-        PSOInitializer.VertexInputLayout                  = NewPipelineStateInstance.InputLayout.Get();
-        PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
-        PSOInitializer.RasterizerState                    = NewPipelineStateInstance.RasterizerState.Get();
-        PSOInitializer.SampleCount                        = 1;
-        PSOInitializer.SampleQuality                      = 0;
-        PSOInitializer.SampleMask                         = RHI_DEFAULT_SAMPLE_MASK;
-        PSOInitializer.ShaderState.VertexShader           = NewPipelineStateInstance.VertexShader.Get();
-        PSOInitializer.ShaderState.PixelShader            = NewPipelineStateInstance.PixelShader.Get();
-        PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
-        PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.BlendState                                 = NewPipelineStateInstance.BlendState.Get();
+        PSOInfo.DepthStencilState                          = NewPipelineStateInstance.DepthStencilState.Get();
+        PSOInfo.bPrimitiveRestartEnable                    = false;
+        PSOInfo.InputLayout                                = NewPipelineStateInstance.InputLayout.Get();
+        PSOInfo.PrimitiveTopology                          = EPrimitiveTopology::TriangleList;
+        PSOInfo.RasterizerState                            = NewPipelineStateInstance.RasterizerState.Get();
+        PSOInfo.MultiSampleState.SampleCount               = 1;
+        PSOInfo.MultiSampleState.SampleQuality             = 0;
+        PSOInfo.MultiSampleState.SampleMask                = RHI_DEFAULT_SAMPLE_MASK;
+        PSOInfo.VertexShader                               = NewPipelineStateInstance.VertexShader.Get();
+        PSOInfo.PixelShader                                = NewPipelineStateInstance.PixelShader.Get();
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets   = 0;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
 
         if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
-            PSOInitializer.ShaderState.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
+            PSOInfo.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!NewPipelineStateInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -1018,34 +1018,34 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             return nullptr;
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.BlendState               = NewPipelineStateInstance.BlendState.Get();
-        PSOInitializer.DepthStencilState        = NewPipelineStateInstance.DepthStencilState.Get();
-        PSOInitializer.bPrimitiveRestartEnable  = false;
-        PSOInitializer.VertexInputLayout        = NewPipelineStateInstance.InputLayout.Get();
-        PSOInitializer.PrimitiveTopology        = EPrimitiveTopology::TriangleList;
-        PSOInitializer.RasterizerState          = NewPipelineStateInstance.RasterizerState.Get();
-        PSOInitializer.SampleCount              = 1;
-        PSOInitializer.SampleQuality            = 0;
-        PSOInitializer.SampleMask               = RHI_DEFAULT_SAMPLE_MASK;
-        PSOInitializer.ShaderState.VertexShader = NewPipelineStateInstance.VertexShader.Get();
-        PSOInitializer.ShaderState.PixelShader  = NewPipelineStateInstance.PixelShader.Get();
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.BlendState                     = NewPipelineStateInstance.BlendState.Get();
+        PSOInfo.DepthStencilState              = NewPipelineStateInstance.DepthStencilState.Get();
+        PSOInfo.bPrimitiveRestartEnable        = false;
+        PSOInfo.InputLayout                    = NewPipelineStateInstance.InputLayout.Get();
+        PSOInfo.PrimitiveTopology              = EPrimitiveTopology::TriangleList;
+        PSOInfo.RasterizerState                = NewPipelineStateInstance.RasterizerState.Get();
+        PSOInfo.MultiSampleState.SampleCount   = 1;
+        PSOInfo.MultiSampleState.SampleQuality = 0;
+        PSOInfo.MultiSampleState.SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
+        PSOInfo.VertexShader                   = NewPipelineStateInstance.VertexShader.Get();
+        PSOInfo.PixelShader                    = NewPipelineStateInstance.PixelShader.Get();
 
         if (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
         {
-            PSOInitializer.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
-            PSOInitializer.ViewInstancingInfo.NumArraySlices              = NUM_SHADOW_CASCADES;
-            PSOInitializer.ViewInstancingInfo.bEnableViewInstancing       = true;
+            PSOInfo.ViewInstancingState.StartRenderTargetArrayIndex = 0;
+            PSOInfo.ViewInstancingState.NumArraySlices              = NUM_SHADOW_CASCADES;
+            PSOInfo.ViewInstancingState.bEnableViewInstancing       = true;
         }
         else if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
         {
-            PSOInitializer.ShaderState.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
+            PSOInfo.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets   = 0;
 
-        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!NewPipelineStateInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -1213,9 +1213,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         // Setup view-instancing
         if constexpr (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
         {
-            RenderPass.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
-            RenderPass.ViewInstancingInfo.NumArraySlices              = NUM_SHADOW_CASCADES;
-            RenderPass.ViewInstancingInfo.bEnableViewInstancing       = true;
+            RenderPass.ViewInstancingState.StartRenderTargetArrayIndex = 0;
+            RenderPass.ViewInstancingState.NumArraySlices              = NUM_SHADOW_CASCADES;
+            RenderPass.ViewInstancingState.bEnableViewInstancing       = true;
         }
 
         CommandList.BeginRenderPass(RenderPass);

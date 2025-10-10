@@ -776,10 +776,10 @@ FRHIInputLayout* FD3D12RHI::CreateInputLayout(const TArray<FRHIInputElementInfo>
     return new FD3D12InputLayout(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
 {
     FD3D12GraphicsPipelineStateRef NewPipelineState = new FD3D12GraphicsPipelineState(GetDevice());
-    if (!NewPipelineState->Initialize(InInitializer))
+    if (!NewPipelineState->Initialize(InInfo))
     {
         return nullptr;
     }

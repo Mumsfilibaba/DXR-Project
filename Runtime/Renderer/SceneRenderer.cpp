@@ -1027,8 +1027,8 @@ bool FSceneRenderer::InitShadingImage()
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
-    ShadingRatePipeline = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInitializer PSOInfo(ShadingRateShader.Get());
+    ShadingRatePipeline = FRHI::Get()->CreateComputePipelineState(PSOInfo);
 
     if (!ShadingRatePipeline)
     {

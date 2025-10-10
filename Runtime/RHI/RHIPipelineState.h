@@ -315,13 +315,13 @@ struct FRenderTargetBlendInfo
         return Hash;
     }
 
-    EBlendType       SrcBlend       = EBlendType::One;
-    EBlendType       DstBlend       = EBlendType::Zero;
-    EBlendOp         BlendOp        = EBlendOp::Add;
-    EBlendType       SrcBlendAlpha  = EBlendType::One;
-    EBlendType       DstBlendAlpha  = EBlendType::Zero;
-    EBlendOp         BlendOpAlpha   = EBlendOp::Add;
-    bool             bBlendEnable   = false;
+    EBlendType SrcBlend      = EBlendType::One;
+    EBlendType DstBlend      = EBlendType::Zero;
+    EBlendOp   BlendOp       = EBlendOp::Add;
+    EBlendType SrcBlendAlpha = EBlendType::One;
+    EBlendType DstBlendAlpha = EBlendType::Zero;
+    EBlendOp   BlendOpAlpha  = EBlendOp::Add;
+    bool       bBlendEnable  = false;
     EColorWriteFlags ColorWriteMask = EColorWriteFlags::All;
 };
 
@@ -350,9 +350,9 @@ struct FRHIBlendStateInfo
     uint8 NumRenderTargets = 0;
     
     ELogicOp LogicOp = ELogicOp::NoOp;
-    bool bLogicOpEnable = false;
-    bool bAlphaToCoverageEnable = false;
-    bool bIndependentBlendEnable = false;
+    bool     bLogicOpEnable = false;
+    bool     bAlphaToCoverageEnable  = false;
+    bool     bIndependentBlendEnable = false;
 };
 
 class FRHIBlendState : public FRHIResource
@@ -436,113 +436,55 @@ public:
     virtual FString GetDebugName() const { return ""; }
 };
 
-struct FGraphicsPipelineFormats
+struct FRHIGraphicsPipelineFormats
 {
-    FGraphicsPipelineFormats()
-        : RenderTargetFormats()
-        , NumRenderTargets(0)
-        , DepthStencilFormat(EFormat::Unknown)
-    {
-    }
-
-    bool operator==(const FGraphicsPipelineFormats& Other) const
-    {
-        if (DepthStencilFormat == Other.DepthStencilFormat && NumRenderTargets == Other.NumRenderTargets)
-        {
-            return FMemory::Memcmp(RenderTargetFormats, Other.RenderTargetFormats, sizeof(RenderTargetFormats)) == 0;
-        }
-            
-        return false;
-    }
-
-    bool operator!=(const FGraphicsPipelineFormats& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    EFormat RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
-    uint8   NumRenderTargets;
-    EFormat DepthStencilFormat;
+    EFormat RenderTargetFormats[RHI_MAX_RENDER_TARGETS] = { };
+    uint8   NumRenderTargets   = 0;
+    EFormat DepthStencilFormat = EFormat::Unknown;
 };
 
-struct FGraphicsPipelineShaders
+struct FRHIViewInstancingState
 {
-    constexpr FGraphicsPipelineShaders() noexcept = default;
-
-    constexpr FGraphicsPipelineShaders(FRHIVertexShader* InVertexShader, FRHIHullShader* InHullShader, FRHIDomainShader* InDomainShader, 
-        FRHIGeometryShader* InGeometryShader, FRHIPixelShader* InPixelShader) noexcept
-        : VertexShader(InVertexShader)
-        , HullShader(InHullShader)
-        , DomainShader(InDomainShader)
-        , GeometryShader(InGeometryShader)
-        , PixelShader(InPixelShader)
-    {
-    }
-
-    constexpr bool operator==(const FGraphicsPipelineShaders& Other) const noexcept = default;
-
-    FRHIVertexShader*   VertexShader   = nullptr;
-    FRHIHullShader*     HullShader     = nullptr;
-    FRHIDomainShader*   DomainShader   = nullptr;
-    FRHIGeometryShader* GeometryShader = nullptr;
-    FRHIPixelShader*    PixelShader    = nullptr;
-};
-
-struct FViewInstancingInfo
-{
-    constexpr FViewInstancingInfo()
+    constexpr FRHIViewInstancingState()
         : NumArraySlices(0)
         , StartRenderTargetArrayIndex(0)
         , bEnableViewInstancing(false)
     {
     }
 
-    constexpr bool operator==(const FViewInstancingInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHIViewInstancingState&) const noexcept = default;
 
     uint8 NumArraySlices;
     uint8 StartRenderTargetArrayIndex : 7;
     uint8 bEnableViewInstancing : 1;
 };
 
-struct FRHIGraphicsPipelineStateInitializer
+struct FRHIMultiSampleState
 {
-    FRHIGraphicsPipelineStateInitializer() noexcept = default;
-
-    FRHIGraphicsPipelineStateInitializer(FRHIInputLayout* InVertexInputLayout, FRHIDepthStencilState* InDepthStencilState, FRHIRasterizerState* InRasterizerState,
-        FRHIBlendState* InBlendState, const FGraphicsPipelineShaders& InShaderState, const FGraphicsPipelineFormats& InPipelineFormats, EPrimitiveTopology InPrimitiveTopology = EPrimitiveTopology::TriangleList,
-        uint32 InSampleCount = 1, uint32 InSampleQuality = 0, uint32 InSampleMask = RHI_DEFAULT_SAMPLE_MASK, bool bInPrimitiveRestartEnable = false) noexcept
-        : VertexInputLayout(InVertexInputLayout)
-        , DepthStencilState(InDepthStencilState)
-        , RasterizerState(InRasterizerState)
-        , BlendState(InBlendState)
-        , SampleCount(InSampleCount)
-        , SampleQuality(InSampleQuality)
-        , SampleMask(InSampleMask)
-        , PrimitiveTopology(InPrimitiveTopology)
-        , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
-        , ShaderState(InShaderState)
-        , PipelineFormats(InPipelineFormats)
-        , ViewInstancingInfo()
-    {
-    }
-
-    bool operator==(const FRHIGraphicsPipelineStateInitializer& Other) const noexcept = default;
-
-    FRHIInputLayout*      VertexInputLayout = nullptr;
-    FRHIDepthStencilState* DepthStencilState = nullptr;
-    FRHIRasterizerState*   RasterizerState   = nullptr;
-    FRHIBlendState*        BlendState        = nullptr;
-
     uint32 SampleCount   = 1;
     uint32 SampleQuality = 0;
     uint32 SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
+};
 
-    EPrimitiveTopology PrimitiveTopology       = EPrimitiveTopology::TriangleList;
-    bool               bPrimitiveRestartEnable = false;
+struct FRHIGraphicsPipelineStateInfo
+{
+    FRHIVertexShader*   VertexShader   = nullptr;
+    FRHIHullShader*     HullShader     = nullptr;
+    FRHIDomainShader*   DomainShader   = nullptr;
+    FRHIGeometryShader* GeometryShader = nullptr;
+    FRHIPixelShader*    PixelShader    = nullptr;
 
-    FGraphicsPipelineShaders ShaderState        = { };
-    FGraphicsPipelineFormats PipelineFormats    = { };
-    FViewInstancingInfo      ViewInstancingInfo = { };
+    FRHIInputLayout*       InputLayout       = nullptr;
+    FRHIDepthStencilState* DepthStencilState = nullptr;
+    FRHIRasterizerState*   RasterizerState   = nullptr;
+    FRHIBlendState*        BlendState        = nullptr;
+    
+    FRHIMultiSampleState        MultiSampleState = { };
+    FRHIGraphicsPipelineFormats RasterizerOutputFormats = { };
+    FRHIViewInstancingState     ViewInstancingState = { };
+
+    EPrimitiveTopology PrimitiveTopology = EPrimitiveTopology::TriangleList;
+    bool bPrimitiveRestartEnable = false;
 };
 
 class FRHIGraphicsPipelineState : public FRHIPipelineState

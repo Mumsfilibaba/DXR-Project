@@ -99,19 +99,19 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.VertexInputLayout                      = nullptr;
-    PSOInitializer.BlendState                             = BlendState.Get();
-    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PSOInitializer.RasterizerState                        = RasterizerState.Get();
-    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
-    PSOInitializer.ShaderState.PixelShader                = TonemapShader.Get();
-    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
-    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.InputLayout                                    = nullptr;
+    PSOInfo.BlendState                                     = BlendState.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = TonemapShader.Get();
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    TonemapPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+    TonemapPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!TonemapPSO)
     {
         DEBUG_BREAK();
@@ -262,19 +262,19 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.VertexInputLayout                      = nullptr;
-    PSOInitializer.BlendState                             = BlendState.Get();
-    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PSOInitializer.RasterizerState                        = RasterizerState.Get();
-    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
-    PSOInitializer.ShaderState.PixelShader                = FXAAShader.Get();
-    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
-    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.InputLayout                                    = nullptr;
+    PSOInfo.BlendState                                     = BlendState.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = FXAAShader.Get();
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    FXAAPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+    FXAAPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!FXAAPSO)
     {
         DEBUG_BREAK();
@@ -304,9 +304,9 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInitializer.ShaderState.PixelShader = FXAADebugShader.Get();
+    PSOInfo.PixelShader = FXAADebugShader.Get();
 
-    FXAADebugPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+    FXAADebugPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!FXAADebugPSO)
     {
         DEBUG_BREAK();

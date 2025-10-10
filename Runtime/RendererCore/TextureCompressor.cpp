@@ -42,8 +42,8 @@ bool FTextureCompressor::Initialize()
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(BC6HCompressionShader.Get());
-    BC6HCompressionPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInitializer PSOInfo(BC6HCompressionShader.Get());
+    BC6HCompressionPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
 
     if (!BC6HCompressionPSO)
     {

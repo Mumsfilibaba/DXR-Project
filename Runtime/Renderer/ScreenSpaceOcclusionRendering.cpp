@@ -64,8 +64,8 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
-    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInitializer PSOInfo(SSAOShader.Get());
+    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
 
     if (!PipelineState)
     {
@@ -96,8 +96,8 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInitializer.Shader = BlurHorizontalShader.Get();
-    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    PSOInfo.Shader = BlurHorizontalShader.Get();
+    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
 
     if (!BlurHorizontalPSO)
     {
@@ -126,9 +126,9 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInitializer.Shader = BlurVerticalShader.Get();
+    PSOInfo.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!BlurVerticalPSO)
     {
         DEBUG_BREAK();

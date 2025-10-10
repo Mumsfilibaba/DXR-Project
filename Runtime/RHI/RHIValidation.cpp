@@ -285,9 +285,9 @@ FRHIInputLayout* FRHIValidation::CreateInputLayout(const TArray<FRHIInputElement
     return RealRHI->CreateInputLayout(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FRHIValidation::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FRHIValidation::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
 {
-    return RealRHI->CreateGraphicsPipelineState(InInitializer);
+    return RealRHI->CreateGraphicsPipelineState(InInfo);
 }
 
 FRHIComputePipelineState* FRHIValidation::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)

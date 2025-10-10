@@ -121,7 +121,7 @@ struct FMetalResourceBinding
 class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalDeviceChild
 {
 public:
-    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
+    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInfo& Info)
         : FMetalDeviceChild(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)
@@ -139,31 +139,31 @@ public:
             SamplerBindings[ShaderStage].Fill(FMetalResourceBinding(0));
         }
         
-        DepthStencilState = MakeSharedRef<FMetalDepthStencilState>(Initializer.DepthStencilState);
+        DepthStencilState = MakeSharedRef<FMetalDepthStencilState>(Info.DepthStencilState);
         CHECK(DepthStencilState != nullptr);
         
-        RasterizerState = MakeSharedRef<FMetalRasterizerState>(Initializer.RasterizerState);
+        RasterizerState = MakeSharedRef<FMetalRasterizerState>(Info.RasterizerState);
         CHECK(RasterizerState != nullptr);
         
         MTLRenderPipelineDescriptor* Descriptor = [MTLRenderPipelineDescriptor new];
-        if (FMetalShader* VertexShader = GetMetalShader(Initializer.ShaderState.VertexShader))
+        if (FMetalShader* VertexShader = GetMetalShader(Info.VertexShader))
         {
             Descriptor.vertexFunction = VertexShader->GetMTLFunction();
         }
 
-        if (FMetalShader* PixelShader = GetMetalShader(Initializer.ShaderState.PixelShader))
+        if (FMetalShader* PixelShader = GetMetalShader(Info.PixelShader))
         {
             Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
         }
         
-        for (uint32 Index = 0; Index < Initializer.PipelineFormats.NumRenderTargets; ++Index)
+        for (uint32 Index = 0; Index < Info.RasterizerOutputFormats.NumRenderTargets; ++Index)
         {
-            Descriptor.colorAttachments[Index].pixelFormat = ConvertFormat(Initializer.PipelineFormats.RenderTargetFormats[Index]);
+            Descriptor.colorAttachments[Index].pixelFormat = ConvertFormat(Info.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
         
-        Descriptor.depthAttachmentPixelFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
+        Descriptor.depthAttachmentPixelFormat = ConvertFormat(Info.RasterizerOutputFormats.DepthStencilFormat);
         
-        FMetalInputLayout* InputLayout = static_cast<FMetalInputLayout*>(Initializer.VertexInputLayout);
+        FMetalInputLayout* InputLayout = static_cast<FMetalInputLayout*>(Info.InputLayout);
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;

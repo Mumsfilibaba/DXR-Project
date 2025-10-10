@@ -239,11 +239,11 @@ FVulkanGraphicsPipelineState::~FVulkanGraphicsPipelineState()
 {
 }
 
-bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
+bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo& Info)
 {
     // Gather Shaders for PipelineLayout
     FVulkanShader* Shaders[ShaderVisibility_Count];
-    if (FVulkanVertexShader* VulkanVertexShader = static_cast<FVulkanVertexShader*>(Initializer.ShaderState.VertexShader))
+    if (FVulkanVertexShader* VulkanVertexShader = static_cast<FVulkanVertexShader*>(Info.VertexShader))
     {
         Shaders[ShaderVisibility_Vertex] = VulkanVertexShader;
     }
@@ -253,10 +253,10 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         return false;
     }
 
-    Shaders[ShaderVisibility_Hull]     = static_cast<FVulkanHullShader*>(Initializer.ShaderState.HullShader);
-    Shaders[ShaderVisibility_Domain]   = static_cast<FVulkanDomainShader*>(Initializer.ShaderState.DomainShader);
-    Shaders[ShaderVisibility_Geometry] = static_cast<FVulkanGeometryShader*>(Initializer.ShaderState.GeometryShader);
-    Shaders[ShaderVisibility_Pixel]    = static_cast<FVulkanPixelShader*>(Initializer.ShaderState.PixelShader);
+    Shaders[ShaderVisibility_Hull]     = static_cast<FVulkanHullShader*>(Info.HullShader);
+    Shaders[ShaderVisibility_Domain]   = static_cast<FVulkanDomainShader*>(Info.DomainShader);
+    Shaders[ShaderVisibility_Geometry] = static_cast<FVulkanGeometryShader*>(Info.GeometryShader);
+    Shaders[ShaderVisibility_Pixel]    = static_cast<FVulkanPixelShader*>(Info.PixelShader);
     
     FVulkanPipelineLayoutInfo LayoutInfo;
     LayoutInfo.AddSetForStage(VK_SHADER_STAGE_VERTEX_BIT, Shaders[ShaderVisibility_Vertex]->GetShaderInfo());
@@ -373,9 +373,9 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     
     // VertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo VertexInputStateCreateInfo;
-    if (FVulkanInputLayout* VertexInputLayout = static_cast<FVulkanInputLayout*>(Initializer.VertexInputLayout))
+    if (FVulkanInputLayout* InputLayout = static_cast<FVulkanInputLayout*>(Info.InputLayout))
     {
-        VertexInputStateCreateInfo = VertexInputLayout->GetVkCreateInfo();
+        VertexInputStateCreateInfo = InputLayout->GetVkCreateInfo();
     }
     else
     {
@@ -388,8 +388,8 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     FMemory::Memzero(&InputAssemblyCreateInfo);
 
     InputAssemblyCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(Initializer.PrimitiveTopology);
-    InputAssemblyCreateInfo.primitiveRestartEnable = Initializer.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
+    InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(Info.PrimitiveTopology);
+    InputAssemblyCreateInfo.primitiveRestartEnable = Info.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
 
     // Viewport CreateInfo
     VkPipelineViewportStateCreateInfo ViewportStateCreateInfo;
@@ -402,7 +402,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 
     // RasterizerState CreateInfo
     VkPipelineRasterizationStateCreateInfo RasterizerStateCreateInfo;
-    if (FVulkanRasterizerState* RasterizerState = static_cast<FVulkanRasterizerState*>(Initializer.RasterizerState))
+    if (FVulkanRasterizerState* RasterizerState = static_cast<FVulkanRasterizerState*>(Info.RasterizerState))
     {
         RasterizerStateCreateInfo = RasterizerState->GetVkCreateInfo();
     }
@@ -426,7 +426,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
-    if (FVulkanDepthStencilState* DepthStencilState = static_cast<FVulkanDepthStencilState*>(Initializer.DepthStencilState))
+    if (FVulkanDepthStencilState* DepthStencilState = static_cast<FVulkanDepthStencilState*>(Info.DepthStencilState))
     {
         DepthStencilStateCreateInfo = DepthStencilState->GetVkCreateInfo();
     }
@@ -438,7 +438,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
-    if (FVulkanBlendState* BlendState = static_cast<FVulkanBlendState*>(Initializer.BlendState))
+    if (FVulkanBlendState* BlendState = static_cast<FVulkanBlendState*>(Info.BlendState))
     {
         BlendStateCreateInfo = BlendState->GetVkCreateInfo();
     }
@@ -466,23 +466,23 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     // Retrieve a compatible RenderPass
     // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
     FVulkanRenderPassKey RenderPassKey;
-    RenderPassKey.NumSamples                      = Initializer.SampleCount;
-    RenderPassKey.DepthStencilFormat              = Initializer.PipelineFormats.DepthStencilFormat;
+    RenderPassKey.NumSamples                      = Info.MultiSampleState.SampleCount;
+    RenderPassKey.DepthStencilFormat              = Info.RasterizerOutputFormats.DepthStencilFormat;
     RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
     RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
-    RenderPassKey.NumRenderTargets                = Initializer.PipelineFormats.NumRenderTargets;
+    RenderPassKey.NumRenderTargets                = Info.RasterizerOutputFormats.NumRenderTargets;
 
-    for (uint8 Index = 0; Index < Initializer.PipelineFormats.NumRenderTargets; Index++)
+    for (uint8 Index = 0; Index < Info.RasterizerOutputFormats.NumRenderTargets; Index++)
     {
         RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.RenderTargetActions[Index].StoreAction = EAttachmentStoreAction::Store;
-        RenderPassKey.RenderTargetFormats[Index] = Initializer.PipelineFormats.RenderTargetFormats[Index];
+        RenderPassKey.RenderTargetFormats[Index] = Info.RasterizerOutputFormats.RenderTargetFormats[Index];
     }
 
-    if (Initializer.ViewInstancingInfo.bEnableViewInstancing)
+    if (Info.ViewInstancingState.bEnableViewInstancing)
     {
-        RenderPassKey.ViewInstancingInfo = Initializer.ViewInstancingInfo;
-        ViewInstancingInfo = Initializer.ViewInstancingInfo;
+        RenderPassKey.ViewInstancingState = Info.ViewInstancingState;
+        ViewInstancingState = Info.ViewInstancingState;
     }
 
     VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);

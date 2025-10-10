@@ -274,7 +274,7 @@ FRHIInputLayout* FMetalRHI::CreateInputLayout(const TArray<FRHIInputElementInfo>
     return new FMetalInputLayout(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FMetalRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FMetalRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
 {
     return new FMetalGraphicsPipelineState(GetDeviceContext(), InInitializer);
 }

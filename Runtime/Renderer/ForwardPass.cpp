@@ -94,19 +94,19 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
-    PSOInitializer.ShaderState.PixelShader                = PShader.Get();
-    PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
-    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PSOInitializer.BlendState                             = BlendState.Get();
-    PSOInitializer.RasterizerState                        = RasterizerState.Get();
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
-    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
-    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = PShader.Get();
+    PSOInfo.InputLayout                                    = FrameResources.MeshInputLayout.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.BlendState                                     = BlendState.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!PipelineState)
     {
         DEBUG_BREAK();
