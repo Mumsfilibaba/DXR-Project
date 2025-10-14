@@ -544,9 +544,9 @@ FVulkanComputePipelineState::~FVulkanComputePipelineState()
 {
 }
 
-bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInitializer& Initializer)
+bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo& InInfo)
 {
-    FVulkanComputeShader* VulkanComputeShader = static_cast<FVulkanComputeShader*>(Initializer.Shader);
+    FVulkanComputeShader* VulkanComputeShader = static_cast<FVulkanComputeShader*>(InInfo.Shader);
     if (!VulkanComputeShader)
     {
         VULKAN_ERROR_CRITICAL("Compute Shader cannot be nullptr");

@@ -64,9 +64,10 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInfo(SSAOShader.Get());
-    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = SSAOShader.Get();
 
+    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!PipelineState)
     {
         DEBUG_BREAK();

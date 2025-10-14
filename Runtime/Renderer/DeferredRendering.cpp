@@ -798,7 +798,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInfo(BRDFShader.Get());
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = BRDFShader.Get();
+
     FRHIComputePipelineStateRef BRDFPipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!BRDFPipelineState)
     {
@@ -848,8 +850,10 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader.Get());
-    TiledLightPassPSO = FRHI::Get()->CreateComputePipelineState(DeferredLightPassInitializer);
+    FRHIComputePipelineStateInfo DeferredLightPassPSOInfo;
+    DeferredLightPassPSOInfo.Shader = TiledLightShader.Get();
+
+    TiledLightPassPSO = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSOInfo);
     if (!TiledLightPassPSO)
     {
         DEBUG_BREAK();
@@ -876,8 +880,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    DeferredLightPassInitializer = FRHIComputePipelineStateInitializer(TiledLightShader_TileDebug.Get());
-    TiledLightPassPSO_TileDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassInitializer);
+    DeferredLightPassPSOInfo.Shader = TiledLightShader_TileDebug.Get();
+
+    TiledLightPassPSO_TileDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSOInfo);
     if (!TiledLightPassPSO_TileDebug)
     {
         DEBUG_BREAK();
@@ -908,8 +913,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    DeferredLightPassInitializer = FRHIComputePipelineStateInitializer(TiledLightShader_CascadeDebug.Get());
-    TiledLightPassPSO_CascadeDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassInitializer);
+    DeferredLightPassPSOInfo.Shader = TiledLightShader_CascadeDebug.Get();
+
+    TiledLightPassPSO_CascadeDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSOInfo);
     if (!TiledLightPassPSO_CascadeDebug)
     {
         DEBUG_BREAK();
@@ -1128,9 +1134,10 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PipelineStateInfo(ReduceDepthInitalShader.Get());
-    ReduceDepthInitalPSO = FRHI::Get()->CreateComputePipelineState(PipelineStateInfo);
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = ReduceDepthInitalShader.Get();
 
+    ReduceDepthInitalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!ReduceDepthInitalPSO)
     {
         DEBUG_BREAK();
@@ -1156,9 +1163,9 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInfo(ReduceDepthShader.Get());
-    ReduceDepthPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    PSOInfo.Shader = ReduceDepthShader.Get();
 
+    ReduceDepthPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!ReduceDepthPSO)
     {
         DEBUG_BREAK();

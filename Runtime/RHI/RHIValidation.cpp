@@ -290,9 +290,9 @@ FRHIGraphicsPipelineState* FRHIValidation::CreateGraphicsPipelineState(const FRH
     return RealRHI->CreateGraphicsPipelineState(InInfo);
 }
 
-FRHIComputePipelineState* FRHIValidation::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FRHIValidation::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
-    return RealRHI->CreateComputePipelineState(InInitializer);
+    return RealRHI->CreateComputePipelineState(InInfo);
 }
 
 FRHIRayTracingPipelineState* FRHIValidation::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)

@@ -604,10 +604,10 @@ FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGra
     }
 }
 
-FRHIComputePipelineState* FVulkanRHI::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FVulkanRHI::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
     FVulkanComputePipelineStateRef NewPipeline = new FVulkanComputePipelineState(GetDevice());
-    if (!NewPipeline->Initialize(InInitializer))
+    if (!NewPipeline->Initialize(InInfo))
     {
         return nullptr;
     }
@@ -640,7 +640,6 @@ bool FVulkanRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemo
 
     MemoryProperties2.pNext = &MemoryBudgetProperties;
 
-    // Query memory properties
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice->GetVkPhysicalDevice(), &MemoryProperties2);
 
     OutMemoryStats.MemoryType   = MemoryType;

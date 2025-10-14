@@ -287,17 +287,17 @@ public:
 
     /**
      * @brief Creates a graphics pipeline state.
-     * @param InInitializer Information about the graphics pipeline state.
+     * @param InInfo Information about the graphics pipeline state.
      * @return The newly created pipeline state.
      */
     virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a compute pipeline state.
-     * @param InInitializer Information about the compute pipeline state.
+     * @param InInfo Information about the compute pipeline state.
      * @return The newly created pipeline state.
      */
-    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) = 0;
+    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a ray-tracing pipeline state.

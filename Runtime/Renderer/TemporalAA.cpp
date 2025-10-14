@@ -48,9 +48,10 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer TemporalAAInitializer(TemporalAAShader.Get());
-        TemporalAAPSO = FRHI::Get()->CreateComputePipelineState(TemporalAAInitializer);
+        FRHIComputePipelineStateInfo TemporalAA_PSOInfo;
+        TemporalAA_PSOInfo.Shader = TemporalAAShader.Get();
         
+        TemporalAAPSO = FRHI::Get()->CreateComputePipelineState(TemporalAA_PSOInfo);
         if (!TemporalAAPSO)
         {
             DEBUG_BREAK();

@@ -165,7 +165,7 @@ public:
     FVulkanComputePipelineState(FVulkanDevice* InDevice);
     virtual ~FVulkanComputePipelineState();
     
-    bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIComputePipelineStateInfo& InInfo);
 
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }

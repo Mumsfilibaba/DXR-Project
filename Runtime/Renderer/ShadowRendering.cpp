@@ -711,10 +711,10 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer CascadePSO;
-    CascadePSO.Shader = CascadeGenShader.Get();
+    FRHIComputePipelineStateInfo CascadeMatrixGenPSOInfo;
+    CascadeMatrixGenPSOInfo.Shader = CascadeGenShader.Get();
 
-    CascadeGen = FRHI::Get()->CreateComputePipelineState(CascadePSO);
+    CascadeGen = FRHI::Get()->CreateComputePipelineState(CascadeMatrixGenPSOInfo);
     if (!CascadeGen)
     {
         DEBUG_BREAK();
@@ -1718,9 +1718,10 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
         return false;
     }
 
-    FRHIComputePipelineStateInitializer MaskPSOInitializer(PipelineStateInstance.Shader.Get());
-    PipelineStateInstance.PipelineState = FRHI::Get()->CreateComputePipelineState(MaskPSOInitializer);
+    FRHIComputePipelineStateInfo ShadowMaskGenPSOInfo;
+    ShadowMaskGenPSOInfo.Shader = PipelineStateInstance.Shader.Get();
 
+    PipelineStateInstance.PipelineState = FRHI::Get()->CreateComputePipelineState(ShadowMaskGenPSOInfo);
     if (!PipelineStateInstance.PipelineState)
     {
         DEBUG_BREAK();

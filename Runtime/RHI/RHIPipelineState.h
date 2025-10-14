@@ -490,21 +490,12 @@ struct FRHIGraphicsPipelineStateInfo
 class FRHIGraphicsPipelineState : public FRHIPipelineState
 {
 protected:
-    FRHIGraphicsPipelineState()  = default;
-    ~FRHIGraphicsPipelineState() = default;
+    FRHIGraphicsPipelineState() = default;
+    virtual ~FRHIGraphicsPipelineState() = default;
 };
 
-struct FRHIComputePipelineStateInitializer
+struct FRHIComputePipelineStateInfo
 {
-    constexpr FRHIComputePipelineStateInitializer() noexcept = default;
-
-    constexpr FRHIComputePipelineStateInitializer(FRHIComputeShader* InShader) noexcept
-        : Shader(InShader)
-    {
-    }
-
-    constexpr bool operator==(const FRHIComputePipelineStateInitializer& Other) const noexcept = default;
-
     FRHIComputeShader* Shader = nullptr;
 };
 
@@ -535,9 +526,9 @@ struct FRHIRayTracingHitGroupInfo
 
     bool operator==(const FRHIRayTracingHitGroupInfo& Other) const noexcept = default;
 
-    FString                       Name;
-    ERayTracingHitGroupType       Type = ERayTracingHitGroupType::Unknown;
+    FString Name;
     TArray<FRHIRayTracingShader*> Shaders;
+    ERayTracingHitGroupType Type = ERayTracingHitGroupType::Unknown;
 };
 
 struct FRHIRayTracingPipelineStateInitializer

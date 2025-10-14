@@ -789,9 +789,9 @@ FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGrap
     }
 }
 
-FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
-    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInitializer.Shader));
+    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInfo.Shader));
     if (!NewPipelineState->Initialize())
     {
         return nullptr;

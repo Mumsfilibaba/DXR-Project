@@ -84,7 +84,10 @@ bool FTextureFactory::CreateResources()
     }
 
     // Create "Cube-Map from Panorama" pipeline
-    PanoramaPSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(PanoramCS.Get()));
+    FRHIComputePipelineStateInfo PanoramaPSOInfo;
+    PanoramaPSOInfo.Shader = PanoramCS.Get();
+
+    PanoramaPSO = FRHI::Get()->CreateComputePipelineState(PanoramaPSOInfo);
     if (PanoramaPSO)
     {
         PanoramaPSO->SetDebugName("Generate CubeMap RootSignature");
@@ -108,7 +111,10 @@ bool FTextureFactory::CreateResources()
     }
 
     // Create "GenerateMips Texure2D" pipeline
-    GenerateMipsTex2D_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(GenerateMipsTex2D_CS.Get()));
+	FRHIComputePipelineStateInfo GenerateMipsTex2D_PSOInfo;
+    GenerateMipsTex2D_PSOInfo.Shader = GenerateMipsTex2D_CS.Get();
+
+    GenerateMipsTex2D_PSO = FRHI::Get()->CreateComputePipelineState(GenerateMipsTex2D_PSOInfo);
     if (GenerateMipsTex2D_PSO)
     {
         GenerateMipsTex2D_PSO->SetDebugName("GenerateMips Texure2D PSO");
@@ -132,7 +138,10 @@ bool FTextureFactory::CreateResources()
     }
 
     // Create "GenerateMips TexureCube" pipeline
-    GenerateMipsTexCube_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(GenerateMipsTexCube_CS.Get()));
+	FRHIComputePipelineStateInfo GenerateMipsTexCube_PSOInfo;
+    GenerateMipsTexCube_PSOInfo.Shader = GenerateMipsTexCube_CS.Get();
+
+    GenerateMipsTexCube_PSO = FRHI::Get()->CreateComputePipelineState(GenerateMipsTexCube_PSOInfo);
     if (GenerateMipsTexCube_PSO)
     {
         GenerateMipsTexCube_PSO->SetDebugName("GenerateMips TexureCube PSO");
@@ -155,7 +164,10 @@ bool FTextureFactory::CreateResources()
         LOG_ERROR("Failed to create IrradianceGen Shader");
     }
 
-    DiffuseCubeMapFilter_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(DiffuseCubeMapFilter_CS.Get()));
+	FRHIComputePipelineStateInfo DiffuseCubeMapFilter_PSOInfo;
+    DiffuseCubeMapFilter_PSOInfo.Shader = DiffuseCubeMapFilter_CS.Get();
+
+    DiffuseCubeMapFilter_PSO = FRHI::Get()->CreateComputePipelineState(DiffuseCubeMapFilter_PSOInfo);
     if (!DiffuseCubeMapFilter_PSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -178,7 +190,10 @@ bool FTextureFactory::CreateResources()
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
     }
 
-    SpecularCubeMapFilter_PSO = FRHI::Get()->CreateComputePipelineState(FRHIComputePipelineStateInitializer(SpecularCubeMapFilter_CS.Get()));
+	FRHIComputePipelineStateInfo SpecularCubeMapFilter_PSOInfo;
+    SpecularCubeMapFilter_PSOInfo.Shader = SpecularCubeMapFilter_CS.Get();
+
+    SpecularCubeMapFilter_PSO = FRHI::Get()->CreateComputePipelineState(SpecularCubeMapFilter_PSOInfo);
     if (!SpecularCubeMapFilter_PSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");

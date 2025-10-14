@@ -163,7 +163,7 @@ public:
         return new FNullRHIGraphicsPipelineState();
     }
 
-    virtual class FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final
+    virtual class FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final
     {
         return new FNullRHIComputePipelineState();
     }

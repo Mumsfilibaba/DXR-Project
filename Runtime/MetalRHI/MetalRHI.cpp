@@ -279,7 +279,7 @@ FRHIGraphicsPipelineState* FMetalRHI::CreateGraphicsPipelineState(const FRHIGrap
     return new FMetalGraphicsPipelineState(GetDeviceContext(), InInitializer);
 }
 
-FRHIComputePipelineState* FMetalRHI::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& Desc)
+FRHIComputePipelineState* FMetalRHI::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
     return new FMetalComputePipelineState();
 }
