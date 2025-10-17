@@ -63,7 +63,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
         }
     }
 
-    FRHISamplerStateInfo SamplerInfo(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
+    FRHISamplerStateInfo SamplerInfo = FRHISamplerStateInfo::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
     LinearSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
     if (!LinearSampler)
     {

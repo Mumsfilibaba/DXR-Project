@@ -75,35 +75,25 @@ NODISCARD constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
 
 struct FRHISamplerStateInfo
 {
-    FRHISamplerStateInfo() noexcept = default;
-
-    FRHISamplerStateInfo(ESamplerMode InAddressMode, ESamplerFilter InFilter) noexcept
-        : AddressU(InAddressMode)
-        , AddressV(InAddressMode)
-        , AddressW(InAddressMode)
-        , Filter(InFilter)
-        , ComparisonFunc(EComparisonFunc::Unknown)
-        , MaxAnisotropy(0)
-        , MipLODBias(0.0f)
-        , MinLOD(0.0f)
-        , MaxLOD(TNumericLimits<float>::Max())
-        , BorderColor(0.0f, 0.0f, 0.0f, 1.0f)
+    NODISCARD static FRHISamplerStateInfo Create(ESamplerMode InSamplerMode, ESamplerFilter InFilter)
     {
+        FRHISamplerStateInfo SamplerInfo;
+        SamplerInfo.AddressU       = InSamplerMode;
+        SamplerInfo.AddressV       = InSamplerMode;
+        SamplerInfo.AddressW       = InSamplerMode;
+        SamplerInfo.Filter         = InFilter;
+        SamplerInfo.ComparisonFunc = EComparisonFunc::Unknown;
+        SamplerInfo.MaxAnisotropy  = 1;
+        SamplerInfo.MipLODBias     = 0.0f;
+        SamplerInfo.MinLOD         = TNumericLimits<float>::Lowest();
+        SamplerInfo.MaxLOD         = TNumericLimits<float>::Max();
+        SamplerInfo.BorderColor    = { };
+        return SamplerInfo;
     }
 
-    FRHISamplerStateInfo(ESamplerMode InAddressU, ESamplerMode InAddressV, ESamplerMode InAddressW, ESamplerFilter InFilter, EComparisonFunc InComparisonFunc,
-        float InMipLODBias, uint8 InMaxAnisotropy, float InMinLOD, float InMaxLOD, const FFloatColor& InBorderColor) noexcept
-        : AddressU(InAddressU)
-        , AddressV(InAddressV)
-        , AddressW(InAddressW)
-        , Filter(InFilter)
-        , ComparisonFunc(InComparisonFunc)
-        , MaxAnisotropy(InMaxAnisotropy)
-        , MipLODBias(InMipLODBias)
-        , MinLOD(InMinLOD)
-        , MaxLOD(InMaxLOD)
-        , BorderColor(InBorderColor)
+    NODISCARD constexpr bool IsComparisonSampler() const noexcept
     {
+        return Filter >= ESamplerFilter::Comparison_MinMagMipPoint && Filter <= ESamplerFilter::Comparison_Anisotropic;
     }
 
     bool operator==(const FRHISamplerStateInfo& Other) const noexcept = default;
