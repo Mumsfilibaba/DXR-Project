@@ -150,28 +150,14 @@ public:
      * @param InInfo Structure containing information about the shader resource view.
      * @return The newly created shader resource view.
      */
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHITextureSRVInfo& InInfo) = 0;
-
-    /**
-     * @brief Creates a new shader resource view for a buffer.
-     * @param InInfo Structure containing information about the shader resource view.
-     * @return The newly created shader resource view.
-     */
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) = 0;
+    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new unordered access view for a texture.
      * @param InInfo Structure containing information about the unordered access view.
      * @return The newly created unordered access view.
      */
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) = 0;
-
-    /**
-     * @brief Creates a new unordered access view for a buffer.
-     * @param InInfo Structure containing information about the unordered access view.
-     * @return The newly created unordered access view.
-     */
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) = 0;
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new compute shader.

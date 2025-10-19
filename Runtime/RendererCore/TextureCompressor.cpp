@@ -227,10 +227,10 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
 
     // Create temporary compressed texture
     FRHITextureInfo CompressedTexInfo = SourceInfo;
-    CompressedTexInfo.Format       = EFormat::R32G32B32A32_Uint;
-    CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccessTexture;
-    CompressedTexInfo.Extent.X     = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
-    CompressedTexInfo.Extent.Y     = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
+    CompressedTexInfo.Format     = EFormat::R32G32B32A32_Uint;
+    CompressedTexInfo.UsageFlags = ETextureUsageFlags::UnorderedAccessTexture;
+    CompressedTexInfo.Extent.X   = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.Y   = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
 
     // When calculating NumMips we skip 3 miplevels since those are too small for the 
     // compressed texture since they are smaller than the compressed block-size.
@@ -258,12 +258,13 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
 
     for (uint8 Index = 0; Index < CompressedTexInfo.NumMipLevels; Index++)
     {
-        FRHITextureUAVInfo CompressedTexUAVInfo;
-        CompressedTexUAVInfo.Texture         = CompressedTex.Get();
-        CompressedTexUAVInfo.Format          = EFormat::R32G32B32A32_Uint;
-        CompressedTexUAVInfo.FirstArraySlice = 0;
-        CompressedTexUAVInfo.MipLevel        = Index;
-        CompressedTexUAVInfo.NumSlices       = 1;
+        FRHIUnorderedAccessViewInfo CompressedTexUAVInfo;
+        CompressedTexUAVInfo.Type = FRHIUnorderedAccessViewInfo::EType::TextureUAV;
+        CompressedTexUAVInfo.TextureUAV.Texture         = CompressedTex.Get();
+        CompressedTexUAVInfo.TextureUAV.Format          = EFormat::R32G32B32A32_Uint;
+        CompressedTexUAVInfo.TextureUAV.FirstArraySlice = 0;
+        CompressedTexUAVInfo.TextureUAV.MipLevel        = Index;
+        CompressedTexUAVInfo.TextureUAV.NumSlices       = 1;
 
         FRHIUnorderedAccessViewRef CompressedTexUAV = FRHI::Get()->CreateUnorderedAccessView(CompressedTexUAVInfo);
         if (!CompressedTexUAV)
@@ -276,14 +277,15 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
             CompressedUAVs.Emplace(CompressedTexUAV);
         }
 
-        FRHITextureSRVInfo SRVInfo;
-        SRVInfo.Texture         = SrcCubeMap.Get();
-        SRVInfo.Format          = SrcCubeMap->GetFormat();
-        SRVInfo.FirstArraySlice = 0;
-        SRVInfo.NumSlices       = 1;
-        SRVInfo.FirstMipLevel   = Index;
-        SRVInfo.MinLODClamp     = 0;
-        SRVInfo.NumMips         = 1;
+        FRHIShaderResourceViewInfo SRVInfo;
+        SRVInfo.Type = FRHIShaderResourceViewInfo::EType::TextureSRV;
+        SRVInfo.TextureSRV.Texture         = SrcCubeMap.Get();
+        SRVInfo.TextureSRV.Format          = SrcCubeMap->GetFormat();
+        SRVInfo.TextureSRV.FirstArraySlice = 0;
+        SRVInfo.TextureSRV.NumSlices       = 1;
+        SRVInfo.TextureSRV.FirstMipLevel   = Index;
+        SRVInfo.TextureSRV.MinLODClamp     = 0;
+        SRVInfo.TextureSRV.NumMips         = 1;
 
         FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
         if (!SourceSRV)
@@ -352,24 +354,25 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
         CurrentFaceSizeInBlocks = CurrentFaceSizeInBlocks / 2;
     }
 
-    FTextureCopyInfo CopyDesc;
-    CopyDesc.DstPosition    = FIntVector3();
-    CopyDesc.DstArraySlice  = 0;
-    CopyDesc.DstMipSlice    = 0;
-    CopyDesc.SrcPosition    = FIntVector3();
-    CopyDesc.SrcArraySlice  = 0;
-    CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.Size.X         = CompressedTexInfo.Extent.X;
-    CopyDesc.Size.Y         = CompressedTexInfo.Extent.Y;
-    CopyDesc.Size.Z         = CompressedTexInfo.Extent.Z;
-    CopyDesc.NumMipLevels   = CompressedTexInfo.NumMipLevels;
-    CopyDesc.NumArraySlices = 1;
+    FTextureCopyInfo CopyInfo;
+    CopyInfo.DstPosition    = FIntVector3();
+    CopyInfo.DstArraySlice  = 0;
+    CopyInfo.DstMipSlice    = 0;
+    CopyInfo.SrcPosition    = FIntVector3();
+    CopyInfo.SrcArraySlice  = 0;
+    CopyInfo.SrcMipSlice    = 0;
+    CopyInfo.Size.X         = CompressedTexInfo.Extent.X;
+    CopyInfo.Size.Y         = CompressedTexInfo.Extent.Y;
+    CopyInfo.Size.Z         = CompressedTexInfo.Extent.Z;
+    CopyInfo.NumMipLevels   = CompressedTexInfo.NumMipLevels;
+    CopyInfo.NumArraySlices = 1;
 
     CommandList.TransitionTexture(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
 
-    CommandList.CopyTextureRegion(OutCubeMap.Get(), CompressedTex.Get(), CopyDesc);
+    CommandList.CopyTextureRegion(OutCubeMap.Get(), CompressedTex.Get(), CopyInfo);
 
     CommandList.TransitionTexture(OutCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
     CommandList.TransitionTexture(SrcCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+
     return true;
 }

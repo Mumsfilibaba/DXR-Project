@@ -363,13 +363,26 @@ FRHIRayTracingGeometry* FVulkanRHI::CreateRayTracingGeometry(const FRHIRayTracin
     return NewGeometry.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
+FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.Texture);
-    CHECK(VulkanTexture != nullptr);
+    FRHIResource* Resource = nullptr;
+    if (InInfo.IsBufferSRV())
+    {
+        Resource = InInfo.BufferSRV.Buffer;
+    }
+    else if (InInfo.IsTextureSRV())
+    {
+        Resource = InInfo.TextureSRV.Texture;
+    }
+    else
+    {
+        return nullptr;
+    }
 
-    FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanTexture);
-    if (!NewShaderResourceView->InitializeTextureSRV(InInfo))
+	CHECK(Resource != nullptr);
+
+    FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), Resource);
+    if (!NewShaderResourceView->InitializeSRV(InInfo))
     {
         return nullptr;
     }
@@ -379,45 +392,26 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHITextureSR
     }
 }
 
-FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
+FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.Buffer);
-    CHECK(VulkanBuffer != nullptr);
+	FRHIResource* Resource = nullptr;
+	if (InInfo.IsBufferUAV())
+	{
+		Resource = InInfo.BufferUAV.Buffer;
+	}
+	else if (InInfo.IsTextureUAV())
+	{
+		Resource = InInfo.TextureUAV.Texture;
+	}
+	else
+	{
+		return nullptr;
+	}
 
-    FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanBuffer);
-    if (!NewShaderResourceView->InitializeBufferSRV(InInfo))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShaderResourceView.ReleaseOwnership();
-    }
-}
+	CHECK(Resource != nullptr);
 
-FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
-{
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.Texture);
-    CHECK(VulkanTexture != nullptr);
-
-    FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanTexture);
-    if (!NewUnorderedAccessView->InitializeTextureUAV(InInfo))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewUnorderedAccessView.ReleaseOwnership();
-    }
-}
-
-FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
-{
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.Buffer);
-    CHECK(VulkanBuffer != nullptr);
-
-    FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanBuffer);
-    if (!NewUnorderedAccessView->InitializeBufferUAV(InInfo))
+    FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), Resource);
+    if (!NewUnorderedAccessView->InitializeUAV(InInfo))
     {
         return nullptr;
     }

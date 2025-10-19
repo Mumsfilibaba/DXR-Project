@@ -199,8 +199,8 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     }
 
     // NOTE: All textures are allocated as device local, maybe we want to move this into the AllocateImageMemory function
+    const VkMemoryAllocateFlags AllocateFlags = 0;
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    const VkMemoryAllocateFlags AllocateFlags    = 0;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, GVulkanForceDedicatedImageAllocations, MemoryAllocation))
@@ -210,43 +210,26 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     }
 
     {
-        FRHITextureSRVInfo ViewInfo;
-        ViewInfo.Texture = this;
-        ViewInfo.Format  = VulkanCastShaderResourceFormat(Info.Format);
+        FRHIShaderResourceViewInfo ViewInfo;
+        ViewInfo.Type               = FRHIShaderResourceViewInfo::EType::TextureSRV;
+        ViewInfo.TextureSRV.Texture = this;
+        ViewInfo.TextureSRV.Format  = VulkanCastShaderResourceFormat(Info.Format);
 
-        if (Info.IsTexture2D())
+        if (Info.IsTexture2D() || Info.IsTextureCube())
         {
-            ViewInfo.NumMips       = static_cast<uint8>(Info.NumMipLevels);
-            ViewInfo.FirstMipLevel = 0;
-            ViewInfo.MinLODClamp   = 0.0f;
+            ViewInfo.TextureSRV.FirstMipLevel   = 0;
+            ViewInfo.TextureSRV.NumMips         = static_cast<uint8>(Info.NumMipLevels);
+            ViewInfo.TextureSRV.MinLODClamp     = 0.0f;
+			ViewInfo.TextureSRV.FirstArraySlice = 0;
+			ViewInfo.TextureSRV.NumSlices       = 1;
         }
-        else if (Info.IsTexture2DArray())
+        else if (Info.IsTexture2DArray() || Info.IsTextureCubeArray() || Info.IsTexture3D())
         {
-            ViewInfo.NumMips         = static_cast<uint8>(Info.NumMipLevels);
-            ViewInfo.FirstMipLevel   = 0;
-            ViewInfo.MinLODClamp     = 0.0f;
-            ViewInfo.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
-            ViewInfo.FirstArraySlice = 0;
-        }
-        else if (Info.IsTextureCube())
-        {
-            ViewInfo.NumMips       = static_cast<uint8>(Info.NumMipLevels);
-            ViewInfo.FirstMipLevel = 0;
-            ViewInfo.MinLODClamp   = 0.0f;
-        }
-        else if (Info.IsTextureCubeArray())
-        {
-            ViewInfo.NumMips         = static_cast<uint8>(Info.NumMipLevels);
-            ViewInfo.FirstMipLevel   = 0;
-            ViewInfo.MinLODClamp     = 0.0f;
-            ViewInfo.FirstArraySlice = 0;
-            ViewInfo.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
-        }
-        else if (Info.IsTexture3D())
-        {
-            ViewInfo.NumMips       = static_cast<uint8>(Info.NumMipLevels);
-            ViewInfo.FirstMipLevel = 0;
-            ViewInfo.MinLODClamp   = 0.0f;
+            ViewInfo.TextureSRV.FirstMipLevel   = 0;
+            ViewInfo.TextureSRV.NumMips         = static_cast<uint8>(Info.NumMipLevels);
+            ViewInfo.TextureSRV.MinLODClamp     = 0.0f;
+            ViewInfo.TextureSRV.FirstArraySlice = 0;
+            ViewInfo.TextureSRV.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
         }
         else
         {
@@ -255,7 +238,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         }
 
         FVulkanShaderResourceViewRef DefaultSRV = new FVulkanShaderResourceView(GetDevice(), this);
-        if (!DefaultSRV->InitializeTextureSRV(ViewInfo))
+        if (!DefaultSRV->InitializeSRV(ViewInfo))
         {
             return false;
         }
@@ -269,15 +252,16 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     {
         if (Info.IsUnorderedAccessTexture())
         {
-            FRHITextureUAVInfo ViewInfo;
-            ViewInfo.Texture         = this;
-            ViewInfo.Format          = Info.Format;
-            ViewInfo.FirstArraySlice = 0;
-            ViewInfo.MipLevel        = 0;
-            ViewInfo.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
+            FRHIUnorderedAccessViewInfo ViewInfo;
+            ViewInfo.Type                       = FRHIUnorderedAccessViewInfo::EType::TextureUAV;
+            ViewInfo.TextureUAV.Texture         = this;
+            ViewInfo.TextureUAV.Format          = Info.Format;
+            ViewInfo.TextureUAV.FirstArraySlice = 0;
+            ViewInfo.TextureUAV.MipLevel        = 0;
+            ViewInfo.TextureUAV.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
 
             FVulkanUnorderedAccessViewRef DefaultUAV = new FVulkanUnorderedAccessView(GetDevice(), this);
-            if (!DefaultUAV->InitializeTextureUAV(ViewInfo))
+            if (!DefaultUAV->InitializeUAV(ViewInfo))
             {
                 return false;
             }

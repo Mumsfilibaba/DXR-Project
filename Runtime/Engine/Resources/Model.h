@@ -158,6 +158,6 @@ public:
 private:
     TArray<TSharedPtr<FMesh>>     Meshes;
     TArray<TSharedPtr<FMaterial>> Materials;
-    float                         UniformScale;
-    FAABB                         BoundingBox;
+    float UniformScale;
+    FAABB BoundingBox;
 };

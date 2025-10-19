@@ -40,10 +40,8 @@ public:
     virtual FRHIQuery* CreateQuery(EQueryType InQueryType) override final;
     virtual FRHIRayTracingScene* CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final;
     virtual FRHIRayTracingGeometry* CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final;
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHITextureSRVInfo& InInfo) override final;
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) override final;
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) override final;
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) override final;
+    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo) override final;
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo) override final;
     virtual FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) override final;
@@ -109,8 +107,8 @@ public:
     }
 
 private:
-    typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
     typedef TQueue<FVulkanCommandPayload*, EQueueType::MPSC>            FCommandPayloadQueue;
+    typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
 
     FVulkanInstance               Instance;
     FVulkanPhysicalDevice*        PhysicalDevice;

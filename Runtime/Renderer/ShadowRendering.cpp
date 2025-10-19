@@ -741,18 +741,16 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeMatrixBuffer->SetDebugName("Cascade Matrices Buffer");
     }
 
-    FRHIBufferSRVInfo SRVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    FRHIShaderResourceViewInfo SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeMatrixBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
-
     if (!Resources.CascadeMatrixBufferSRV)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIBufferUAVInfo UAVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    FRHIUnorderedAccessViewInfo UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeMatrixBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
-
     if (!Resources.CascadeMatrixBufferUAV)
     {
         DEBUG_BREAK();
@@ -775,18 +773,16 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeSplitsBuffer->SetDebugName("Cascade SplitBuffer");
     }
 
-    SRVInfo = FRHIBufferSRVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
-
     if (!Resources.CascadeSplitsBufferSRV)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    UAVInfo = FRHIBufferUAVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSplitsBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
-
     if (!Resources.CascadeSplitsBufferUAV)
     {
         DEBUG_BREAK();
@@ -1109,14 +1105,8 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     for (uint16 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
     {
-        FRHITextureSRVInfo SRVInfo;
-        SRVInfo.Texture         = Resources.ShadowCascades.Get();
-        SRVInfo.Format          = CastSRVFormat(Resources.ShadowCascades->GetFormat());
-        SRVInfo.NumSlices       = 1;
-        SRVInfo.NumMips         = 1;
-        SRVInfo.MinLODClamp     = 0;
-        SRVInfo.FirstMipLevel   = 0;
-        SRVInfo.FirstArraySlice = Index;
+        FRHIShaderResourceViewInfo SRVInfo = FRHIShaderResourceViewInfo::CreateTextureSRV(Resources.ShadowCascades.Get(), 
+            CastSRVFormat(Resources.ShadowCascades->GetFormat()), 0, 1, Index, 1);
 
         Resources.ShadowCascadesSRVs[Index] = FRHI::Get()->CreateShaderResourceView(SRVInfo);
         if (!Resources.ShadowCascadesSRVs[Index])

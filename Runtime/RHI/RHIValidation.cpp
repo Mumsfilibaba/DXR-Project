@@ -82,124 +82,134 @@ FRHIRayTracingGeometry* FRHIValidation::CreateRayTracingGeometry(const FRHIRayTr
     return RealRHI->CreateRayTracingGeometry(InGeometryInfo);
 }
 
-FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
+FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo)
 {
-    if (!InInfo.Texture)
+    if (InInfo.IsBufferSRV())
     {
-        RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a ShaderResourceView");
-        return nullptr;
-    }
+		if (!InInfo.BufferSRV.Buffer)
+		{
+			RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a ShaderResourceView");
+			return nullptr;
+		}
 
-    const FRHITextureInfo& TextureInfo = InInfo.Texture->GetInfo();
-    if (!TextureInfo.IsShaderResourceTexture())
-    {
-        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::ShaderResourceTexture to used with a ShaderResourceView");
-        return nullptr;
+		const FRHIBufferInfo& BufferInfo = InInfo.BufferSRV.Buffer->GetInfo();
+		if (!BufferInfo.IsShaderResourceBuffer())
+		{
+			RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::ShaderResourceBuffer to used with a ShaderResourceView");
+			return nullptr;
+		}
     }
-
-    if (InInfo.Format == EFormat::Unknown)
+    else if (InInfo.IsTextureSRV())
     {
-        RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a ShaderResourceView");
-        return nullptr;
+        if (!InInfo.TextureSRV.Texture)
+        {
+            RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a ShaderResourceView");
+            return nullptr;
+        }
+
+        const FRHITextureInfo& TextureInfo = InInfo.TextureSRV.Texture->GetInfo();
+        if (!TextureInfo.IsShaderResourceTexture())
+        {
+            RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::ShaderResourceTexture to used with a ShaderResourceView");
+            return nullptr;
+        }
+
+        if (InInfo.TextureSRV.Format == EFormat::Unknown)
+        {
+            RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a ShaderResourceView");
+            return nullptr;
+        }
+
+        if (IsTypelessFormat(InInfo.TextureSRV.Format))
+        {
+            RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a ShaderResourceView");
+            return nullptr;
+        }
+
+        const uint32 NumArraySlices = InInfo.TextureSRV.FirstArraySlice + InInfo.TextureSRV.NumSlices;
+        if (NumArraySlices > TextureInfo.NumArraySlices)
+        {
+            RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
+            return nullptr;
+        }
+
+        const uint32 NumMipLevels = InInfo.TextureSRV.FirstMipLevel + InInfo.TextureSRV.NumMips;
+        if (NumMipLevels > TextureInfo.NumMipLevels)
+        {
+            RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' MipLevels, but texture only contains '%u'", NumMipLevels, TextureInfo.NumMipLevels);
+            return nullptr;
+        }
     }
-
-    if (IsTypelessFormat(InInfo.Format))
+    else
     {
-        RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a ShaderResourceView");
-        return nullptr;
-    }
-
-    const uint32 NumArraySlices = InInfo.FirstArraySlice + InInfo.NumSlices;
-    if (NumArraySlices > TextureInfo.NumArraySlices)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
-        return nullptr;
-    }
-
-    const uint32 NumMipLevels = InInfo.FirstMipLevel + InInfo.NumMips;
-    if (NumMipLevels > TextureInfo.NumMipLevels)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' MipLevels, but texture only contains '%u'", NumMipLevels, TextureInfo.NumMipLevels);
-        return nullptr;
+		RHI_VALIDATION_ERROR("Invalid type of ShaderResourceView");
+		return nullptr;
     }
 
     return RealRHI->CreateShaderResourceView(InInfo);
 }
 
-FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
+FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
 {
-    if (!InInfo.Buffer)
+    if (InInfo.IsBufferUAV())
     {
-        RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a ShaderResourceView");
-        return nullptr;
+	    if (!InInfo.BufferUAV.Buffer)
+	    {
+		    RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a UnorderedAccessView");
+		    return nullptr;
+	    }
+
+	    const FRHIBufferInfo& BufferInfo = InInfo.BufferUAV.Buffer->GetInfo();
+	    if (!BufferInfo.IsUnorderedAccessBuffer())
+	    {
+		    RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::UnorderedAccessBuffer to used with a UnorderedAccessView");
+		    return nullptr;
+	    }
     }
-
-    const FRHIBufferInfo& BufferInfo = InInfo.Buffer->GetInfo();
-    if (!BufferInfo.IsShaderResourceBuffer())
+    else if (InInfo.IsTextureUAV())
     {
-        RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::ShaderResourceBuffer to used with a ShaderResourceView");
-        return nullptr;
+		if (!InInfo.TextureUAV.Texture)
+		{
+			RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a UnorderedAccessView");
+			return nullptr;
+		}
+
+		const FRHITextureInfo& TextureInfo = InInfo.TextureUAV.Texture->GetInfo();
+		if (!TextureInfo.IsUnorderedAccessTexture())
+		{
+			RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::UnorderedAccessTexture to used with a UnorderedAccessView");
+			return nullptr;
+		}
+
+		if (InInfo.TextureUAV.Format == EFormat::Unknown)
+		{
+			RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a UnorderedAccessView");
+			return nullptr;
+		}
+
+		if (IsTypelessFormat(InInfo.TextureUAV.Format))
+		{
+			RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a UnorderedAccessView");
+			return nullptr;
+		}
+
+		const uint32 NumArraySlices = InInfo.TextureUAV.FirstArraySlice + InInfo.TextureUAV.NumSlices;
+		if (NumArraySlices > TextureInfo.NumArraySlices)
+		{
+			RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		if (InInfo.TextureUAV.MipLevel >= TextureInfo.NumMipLevels)
+		{
+			RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView for MipLevel '%u', but texture only contains '%u'", InInfo.TextureUAV.MipLevel, TextureInfo.NumMipLevels);
+			return nullptr;
+		}
     }
-
-    return RealRHI->CreateShaderResourceView(InInfo);
-}
-
-FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
-{
-    if (!InInfo.Texture)
+    else
     {
-        RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    const FRHITextureInfo& TextureInfo = InInfo.Texture->GetInfo();
-    if (!TextureInfo.IsUnorderedAccessTexture())
-    {
-        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::UnorderedAccessTexture to used with a UnorderedAccessView");
-        return nullptr;
-    }
-
-    if (InInfo.Format == EFormat::Unknown)
-    {
-        RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    if (IsTypelessFormat(InInfo.Format))
-    {
-        RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    const uint32 NumArraySlices = InInfo.FirstArraySlice + InInfo.NumSlices;
-    if (NumArraySlices > TextureInfo.NumArraySlices)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
-        return nullptr;
-    }
-
-    if (InInfo.MipLevel >= TextureInfo.NumMipLevels)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView for MipLevel '%u', but texture only contains '%u'", InInfo.MipLevel, TextureInfo.NumMipLevels);
-        return nullptr;
-    }
-
-    return RealRHI->CreateUnorderedAccessView(InInfo);
-}
-
-FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
-{
-    if (!InInfo.Buffer)
-    {
-        RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    const FRHIBufferInfo& BufferInfo = InInfo.Buffer->GetInfo();
-    if (!BufferInfo.IsUnorderedAccessBuffer())
-    {
-        RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::UnorderedAccessBuffer to used with a UnorderedAccessView");
-        return nullptr;
+		RHI_VALIDATION_ERROR("Invalid type of UnorderedAccessView");
+		return nullptr;
     }
 
     return RealRHI->CreateUnorderedAccessView(InInfo);
