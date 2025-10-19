@@ -183,9 +183,9 @@ public:
 
 private:
     bool CreateDevice();
-    bool CreateCommandManagers();
+    bool CreateCommandQueues();
     bool CreateDefaultResources();
-    void QueryFeatureSupport();
+    void QueryDeviceFeatureSupport();
 
     FD3D12Adapter* const Adapter;
 

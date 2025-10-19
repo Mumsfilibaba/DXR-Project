@@ -300,4 +300,31 @@ public:
     {
         return (static_cast<uint64>(1) << NumBits) - 1;
     }
+
+public:
+
+    // -------- Texture / Mip helpers --------
+
+    // Returns floor(log2(x)) + 1 for x >= 1, else 0.
+    // Useful for computing mip count from a single dimension.
+    static FORCEINLINE uint32 MipCountFromDimension(uint32 Dimension)
+    {
+        if (Dimension == 0)
+        {
+            return 0;
+        }
+
+        // NOTE: We use floating-point log2 here because Math already provides it.
+        // If you prefer integer bit-twiddling, we can add CountLeadingZeros later.
+        return static_cast<uint32>(FloorToInt(Log2(static_cast<double>(Dimension)))) + 1u;
+    }
+
+    // Returns the maximum possible mip levels for an extent (w,h,d).
+    // If 'depth' is 0 (for 1D/2D), it is treated as 1.
+    static FORCEINLINE uint32 MaxMipLevelsFromExtent(uint32 Width, uint32 Height, uint32 Depth)
+    {
+        const uint32 DepthClamped = (Depth == 0u) ? 1u : Depth;
+        const uint32 LargestDim   = Max(Width, Max(Height, DepthClamped));
+        return MipCountFromDimension(LargestDim);
+    }
 };

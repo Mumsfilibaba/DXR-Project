@@ -275,6 +275,7 @@ public:
 
     bool Initialize(const FVulkanDeviceCreateInfo& DeviceDesc);
     bool PostLoaderInitalize();
+    bool InitializeDeviceFeatureSupport();
     bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);
 
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers

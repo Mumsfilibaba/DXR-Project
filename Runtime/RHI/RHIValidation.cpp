@@ -48,7 +48,248 @@ void FRHIValidation::EndFrame()
 
 FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    return RealRHI->CreateTexture(InTextureInfo, InInitialState, InInitialData);
+	// -----------------------------------------
+	// Basic sanity
+	// -----------------------------------------
+	if (InTextureInfo.Dimension == ETextureDimension::None)
+	{
+		RHI_VALIDATION_ERROR("Invalid texture dimension (None). A valid ETextureDimension must be specified.");
+		return nullptr;
+	}
+
+	if (InTextureInfo.GetWidth() == 0 || InTextureInfo.GetHeight() == 0)
+	{
+		RHI_VALIDATION_ERROR("Invalid texture extent (Width=%u, Height=%u). Both dimensions must be greater than zero.", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsTexture3D())
+	{
+		if (InTextureInfo.GetDepth() == 0)
+		{
+			RHI_VALIDATION_ERROR("Texture3D requires Depth > 0. (ExtentZ=%u).", InTextureInfo.GetDepth());
+			return nullptr;
+		}
+
+		if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("Texture3D must have NumArraySlices == 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+	}
+	else if (InTextureInfo.GetDepth() != 0)
+	{
+		RHI_VALIDATION_ERROR("Non-3D textures must have Depth == 0. (ExtentZ=%u).", InTextureInfo.GetDepth());
+		return nullptr;
+	}
+
+	// -----------------------------------------
+	// Dimension-specific rules
+	// -----------------------------------------
+	switch (InTextureInfo.Dimension)
+	{
+	case ETextureDimension::Texture2D:
+		if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("(Texture2D) NumArraySlices must be 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::Texture2DArray:
+		if (InTextureInfo.NumArraySlices == 0)
+		{
+			RHI_VALIDATION_ERROR("(Texture2DArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::TextureCube:
+		if (InTextureInfo.GetWidth() != InTextureInfo.GetHeight())
+		{
+			RHI_VALIDATION_ERROR("(TextureCube) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+			return nullptr;
+		}
+		
+        if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("(TextureCube) NumArraySlices must be 1. (NumArraySlices=%u). Use TextureCubeArray for arrays.", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::TextureCubeArray:
+		if (InTextureInfo.GetWidth() != InTextureInfo.GetHeight())
+		{
+			RHI_VALIDATION_ERROR("(TextureCubeArray) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+			return nullptr;
+		}
+
+		if (InTextureInfo.NumArraySlices == 0)
+		{
+			RHI_VALIDATION_ERROR("(TextureCubeArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::Texture3D:
+		break;
+
+	default:
+		RHI_VALIDATION_ERROR("Unsupported ETextureDimension enum value (%u).", static_cast<uint32>(InTextureInfo.Dimension));
+		return nullptr;
+	}
+
+	// -----------------------------------------
+	// Device feature support checks
+	// -----------------------------------------
+	if (InTextureInfo.IsTexture3D())
+	{
+		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxTexture3DWidth || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxTexture3DHeight ||
+			InTextureInfo.GetDepth() > RHIDeviceFeatureSupport::MaxTexture3DDepth)
+		{
+			RHI_VALIDATION_ERROR("(Texture3D) Extent (%u,%u,%u) exceeds device feature support limit (%u,%u,%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+                InTextureInfo.GetDepth(), RHIDeviceFeatureSupport::MaxTexture3DWidth, RHIDeviceFeatureSupport::MaxTexture3DHeight, RHIDeviceFeatureSupport::MaxTexture3DDepth);
+			return nullptr;
+		}
+	}
+	else if (InTextureInfo.IsTextureCube() || InTextureInfo.IsTextureCubeArray())
+	{
+		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxCubeTextureSize || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxCubeTextureSize)
+		{
+			RHI_VALIDATION_ERROR("(TextureCube) Face extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+				RHIDeviceFeatureSupport::MaxCubeTextureSize);
+			return nullptr;
+		}
+
+		if (InTextureInfo.IsTextureCubeArray())
+		{
+			const uint32 MaxCubeArraySlices = RHIDeviceFeatureSupport::MaxCubeArrayCount * RHI_NUM_CUBE_FACES;
+			if (InTextureInfo.NumArraySlices > MaxCubeArraySlices)
+			{
+				RHI_VALIDATION_ERROR("(TextureCubeArray) NumArraySlices (%u) exceeds device feature support limit (%u). (Cubes=%u)", InTextureInfo.NumArraySlices, MaxCubeArraySlices,
+                    RHIDeviceFeatureSupport::MaxCubeArrayCount);
+				return nullptr;
+			}
+		}
+	}
+	else
+	{
+		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxTexture2DSize || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxTexture2DSize)
+		{
+			RHI_VALIDATION_ERROR("(Texture2D) Extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), RHIDeviceFeatureSupport::MaxTexture2DSize);
+			return nullptr;
+		}
+
+		if (InTextureInfo.IsTexture2DArray() && InTextureInfo.NumArraySlices > RHIDeviceFeatureSupport::MaxTexture2DArrayLayers)
+		{
+			RHI_VALIDATION_ERROR("(Texture2DArray) NumArraySlices (%u) exceeds device feature support limit (%u).", InTextureInfo.NumArraySlices, RHIDeviceFeatureSupport::MaxTexture2DArrayLayers);
+			return nullptr;
+		}
+	}
+
+	// -----------------------------------------
+	// MipLevels
+	// -----------------------------------------
+	if (InTextureInfo.NumMipLevels == 0)
+	{
+		RHI_VALIDATION_ERROR("Invalid NumMipLevels (0). A texture must have at least one mip level.");
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsMultisampled())
+	{
+		if (InTextureInfo.NumMipLevels != 1)
+		{
+			RHI_VALIDATION_ERROR("Multisampled texture cannot have mip chains. (NumMipLevels=%u, Expected=1).", InTextureInfo.NumMipLevels);
+			return nullptr;
+		}
+	}
+	else
+	{
+		const uint32 MaxPossibleMipLevels = Math::MaxMipLevelsFromExtent(InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), InTextureInfo.IsTexture3D() ? InTextureInfo.GetDepth() : 1u);
+		if (InTextureInfo.NumMipLevels > MaxPossibleMipLevels)
+		{
+			RHI_VALIDATION_ERROR("NumMipLevels (%u) exceeds maximum allowed (%u) based on texture extent (%u,%u,%u).", InTextureInfo.NumMipLevels, MaxPossibleMipLevels,
+				InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), InTextureInfo.IsTexture3D() ? InTextureInfo.GetDepth() : 1u);
+			return nullptr;
+		}
+	}
+
+	// -----------------------------------------
+	// Sample count sanity
+	// -----------------------------------------
+	if (InTextureInfo.NumSamples == 0)
+	{
+		RHI_VALIDATION_ERROR("NumSamples must be >= 1. (Got 0).");
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsTexture3D() && InTextureInfo.NumSamples > 1)
+	{
+		RHI_VALIDATION_ERROR("Texture3D does not support MSAA. (NumSamples=%u, Expected=1).", InTextureInfo.NumSamples);
+		return nullptr;
+	}
+
+	// -----------------------------------------
+	// Usage flag combinations
+	// -----------------------------------------
+	const bool bIsRenderTarget = InTextureInfo.IsRenderTarget();
+	const bool bIsDepthStencil = InTextureInfo.IsDepthStencil();
+	const bool bIsUAV          = InTextureInfo.IsUnorderedAccessTexture();
+	const bool bIsPresentable  = InTextureInfo.IsPresentable();
+
+	if (bIsRenderTarget && bIsDepthStencil)
+	{
+		RHI_VALIDATION_ERROR("Texture cannot have both RenderTarget and DepthStencil usage flags set.");
+		return nullptr;
+	}
+
+	if (bIsDepthStencil && bIsUAV)
+	{
+		RHI_VALIDATION_ERROR("DepthStencil textures cannot have UnorderedAccessTexture usage flag set.");
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsMultisampled() && bIsUAV)
+	{
+		RHI_VALIDATION_ERROR("Multisampled textures cannot have UnorderedAccessTexture usage flag set.");
+		return nullptr;
+	}
+
+	if (bIsPresentable)
+	{
+		if (!InTextureInfo.IsTexture2D())
+		{
+			RHI_VALIDATION_ERROR("Presentable textures must be 2D. (Got Dimension=%u).", static_cast<uint32>(InTextureInfo.Dimension));
+			return nullptr;
+		}
+		
+        if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("Presentable texture NumArraySlices (%u) is invalid. Expected 1 for swapchain surfaces.", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+		
+        if (InTextureInfo.NumMipLevels != 1)
+		{
+			RHI_VALIDATION_ERROR("Presentable texture NumMipLevels (%u) invalid. Expected 1 for swapchain surfaces.", InTextureInfo.NumMipLevels);
+			return nullptr;
+		}
+
+		if (InTextureInfo.NumSamples != 1)
+		{
+			RHI_VALIDATION_ERROR("Presentable texture MSAA sample count (%u) invalid. Expected 1 for swapchain surfaces.", InTextureInfo.NumSamples);
+			return nullptr;
+		}
+	}
+
+	// Forward to real RHI
+	return RealRHI->CreateTexture(InTextureInfo, InInitialState, InInitialData);
 }
 
 FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)

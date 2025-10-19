@@ -907,67 +907,99 @@ bool FVulkanDevice::PostLoaderInitalize()
         return false;
     }
 
-    // Ray Tracing Support
+    // Initialize the device feature support
+    if (!InitializeDeviceFeatureSupport())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FVulkanDevice::InitializeDeviceFeatureSupport()
+{
+    // --------------------------------------------------------------------------
+    // Baseline defaults (conservative & safe so fields are always initialized)
+    // --------------------------------------------------------------------------
+    RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = false;
+    RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
+
+    RHIDeviceFeatureSupport::bSupportsViewInstancing     = false;
+    RHIDeviceFeatureSupport::MaxViewInstanceCount        = 1;
+
+    RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
+    RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
+    RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+
+    RHIDeviceFeatureSupport::bSupportsVRS                = false;
+    RHIDeviceFeatureSupport::ShadingRateTier             = EShadingRateTier::NotSupported;
+    RHIDeviceFeatureSupport::ShadingRateImageTileSize    = 0;
+
+    RHIDeviceFeatureSupport::bSupportDrawIndirect        = true;   // Vulkan core
+    RHIDeviceFeatureSupport::bSupportMultiDrawIndirect   = false;
+    RHIDeviceFeatureSupport::MaxDrawIndirectCount        = 1;
+
+    RHIDeviceFeatureSupport::MaxTexture1DSize            = 0;
+    RHIDeviceFeatureSupport::MaxTexture1DArrayLayers     = 0;
+    RHIDeviceFeatureSupport::MaxTexture2DSize            = 0;
+    RHIDeviceFeatureSupport::MaxTexture2DArrayLayers     = 0;
+    RHIDeviceFeatureSupport::MaxTexture3DWidth           = 0;
+    RHIDeviceFeatureSupport::MaxTexture3DHeight          = 0;
+    RHIDeviceFeatureSupport::MaxTexture3DDepth           = 0;
+    RHIDeviceFeatureSupport::MaxCubeTextureSize          = 0;
+    RHIDeviceFeatureSupport::MaxCubeArrayCount           = 0;
+
+    // ---------------------------------------------------------------------
+    // Pull core features/properties
+    // ---------------------------------------------------------------------
     VkPhysicalDevice PhysicalDeviceHandle = GetPhysicalDevice()->GetVkPhysicalDevice();
-    if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) && IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
-    {
-        VkPhysicalDeviceProperties2 DeviceProperties2;
-        FMemory::Memzero(&DeviceProperties2);
-        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
-        VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPipelineProperties;
-        FMemory::Memzero(&RayTracingPipelineProperties);
-        RayTracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
-
-        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
-        DevicePropertiesHelper.AddNext(RayTracingPipelineProperties);
-        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
-
-        // Check if RayQueries are supported, then the Tier is kind of like Tier 1.1 (Inline RayTracing in DXR)
-        if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
-        {
-            RHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1_1;
-        }
-        else
-        {
-            RHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1;
-        }
-
-        RHIDeviceInfo::RayTracingMaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
-    }
-
-    RHIDeviceInfo::SupportsRayTracing = RHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
-
-    // Variable Rate Shading Support
-    if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
-    {
-        VkPhysicalDeviceProperties2 DeviceProperties2;
-        FMemory::Memzero(&DeviceProperties2);
-        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-
-        VkPhysicalDeviceFragmentShadingRatePropertiesKHR FragmentShadingRateProperties;
-        FMemory::Memzero(&FragmentShadingRateProperties);
-        FragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-
-        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
-        DevicePropertiesHelper.AddNext(FragmentShadingRateProperties);
-        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
-
-        // TODO: Finish this part
-        RHIDeviceInfo::ShadingRateImageTileSize = 0;
-        RHIDeviceInfo::ShadingRateTier          = EShadingRateTier::NotSupported;
-    }
-
-    RHIDeviceInfo::SupportsVRS = RHIDeviceInfo::ShadingRateTier != EShadingRateTier::NotSupported;
-
-    // GeometryShader Support 
+    // Core features (e.g., geometry shader support)
     const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
     if (GVulkanAllowGeometryShaders && PhysicalDeviceFeatures.geometryShader)
     {
-        RHIDeviceInfo::SupportsGeometryShaders = true;
+        RHIDeviceFeatureSupport::bSupportsGeometryShaders = true;
     }
 
-    // View Instancing Support
+    // Core properties (indirect count + image/texture limits)
+    const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
+    {
+        // DrawIndirect + MultiDrawIndirect
+        if (PhysicalDeviceFeatures.multiDrawIndirect)
+        {
+            RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = true;
+            RHIDeviceFeatureSupport::MaxDrawIndirectCount = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
+        }
+        else
+        {
+            RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = false;
+            RHIDeviceFeatureSupport::MaxDrawIndirectCount = 1;
+        }
+
+        // Texture / Image limits
+        RHIDeviceFeatureSupport::MaxTexture1DSize        = PhysicalDeviceProperties.limits.maxImageDimension1D;
+        RHIDeviceFeatureSupport::MaxTexture2DSize        = PhysicalDeviceProperties.limits.maxImageDimension2D;
+        RHIDeviceFeatureSupport::MaxTexture3DWidth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
+        RHIDeviceFeatureSupport::MaxTexture3DHeight      = PhysicalDeviceProperties.limits.maxImageDimension3D;
+        RHIDeviceFeatureSupport::MaxTexture3DDepth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
+        RHIDeviceFeatureSupport::MaxCubeTextureSize      = PhysicalDeviceProperties.limits.maxImageDimensionCube;
+
+        // Array layers (shared limit for 1D/2D/cube arrays)
+        const uint32 MaxArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
+        RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = MaxArrayLayers;
+        RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = MaxArrayLayers;
+        RHIDeviceFeatureSupport::MaxCubeArrayCount       = MaxArrayLayers / RHI_NUM_CUBE_FACES; // layers/6
+    }
+
+    // ---------------------------------------------------------------------
+    // SV_RenderTargetArrayIndex from VS (shaderOutputLayer in Vulkan 1.2)
+    // ---------------------------------------------------------------------
+    const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
+    RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
+
+    // ---------------------------------------------------------------------
+    // View Instancing (multiview)
+    // ---------------------------------------------------------------------
     if (IsExtensionEnabled(VK_KHR_MULTIVIEW_EXTENSION_NAME))
     {
         VkPhysicalDeviceProperties2 DeviceProperties2;
@@ -982,31 +1014,118 @@ bool FVulkanDevice::PostLoaderInitalize()
         DevicePropertiesHelper.AddNext(MultiviewProperties);
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
-        RHIDeviceInfo::MaxViewInstanceCount   = MultiviewProperties.maxMultiviewViewCount;
-        RHIDeviceInfo::SupportsViewInstancing = true;
-    }
-
-    // Draw-Indirect Support
-    const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
-    if (PhysicalDeviceFeatures.multiDrawIndirect)
-    {
-        RHIDeviceInfo::SupportMultiDrawIndirect = true;
-        RHIDeviceInfo::MaxDrawIndirectCount     = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
-    }
-    
-    // ShaderOutputLayer support
-    const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
-    if (PhysicalDeviceFeatures12.shaderOutputLayer)
-    {
-        RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = true;
+        RHIDeviceFeatureSupport::MaxViewInstanceCount = MultiviewProperties.maxMultiviewViewCount;
+        RHIDeviceFeatureSupport::bSupportsViewInstancing = (RHIDeviceFeatureSupport::MaxViewInstanceCount > 1);
     }
     else
     {
-        RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = false;
+        RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
+        RHIDeviceFeatureSupport::MaxViewInstanceCount = 1;
     }
-    
-    //  Draw Indirect is always supported
-    RHIDeviceInfo::SupportDrawIndirect = true;
+
+    // ---------------------------------------------------------------------
+    // Ray Tracing
+    //  - Tier1_1  => only if VK_KHR_ray_query is available
+    //  - Tier1    => pipeline RT without ray query
+    //  - Supports RT if acceleration structures + (pipeline OR ray query)
+    // ---------------------------------------------------------------------
+    const bool bHasRTPipeline             = IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+    const bool bHasRayQuery               = IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+    const bool bHasAccelerationStructures = IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+
+    if (bHasAccelerationStructures && (bHasRTPipeline || bHasRayQuery))
+    {
+        RHIDeviceFeatureSupport::bSupportsRayTracing = true;
+
+        if (bHasRTPipeline)
+        {
+            // Query pipeline RT properties for recursion depth
+            VkPhysicalDeviceProperties2 DeviceProperties2;
+            FMemory::Memzero(&DeviceProperties2);
+            DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
+            VkPhysicalDeviceRayTracingPipelinePropertiesKHR RTProps;
+            FMemory::Memzero(&RTProps);
+            RTProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+
+            FVulkanStructureHelper Helper(DeviceProperties2);
+            Helper.AddNext(RTProps);
+            vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
+
+            RHIDeviceFeatureSupport::RayTracingTier = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
+            RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = RTProps.maxRayRecursionDepth;
+        }
+        else
+        {
+            // Ray Query only (inline RT). No pipeline recursion depth.
+            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1_1;
+            RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 1; // not applicable; minimal non-zero
+        }
+    }
+    else
+    {
+        RHIDeviceFeatureSupport::bSupportsRayTracing = false;
+        RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::NotSupported;
+        RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+    }
+
+    // ---------------------------------------------------------------------
+    // Variable Rate Shading (fragment shading rate)
+    //  - Tier2 if attachmentFragmentShadingRate (image-based) is supported
+    //  - Tier1 if pipeline/primitive shading rate is supported
+    // ---------------------------------------------------------------------
+    if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    {
+        // Query features
+        VkPhysicalDeviceFeatures2 Features2;
+        FMemory::Memzero(&Features2);
+        Features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+
+        VkPhysicalDeviceFragmentShadingRateFeaturesKHR FSRFeatures;
+        FMemory::Memzero(&FSRFeatures);
+        FSRFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+
+        FVulkanStructureHelper FeaturesHelper(Features2);
+        FeaturesHelper.AddNext(FSRFeatures);
+        vkGetPhysicalDeviceFeatures2(PhysicalDeviceHandle, &Features2);
+
+        // Query properties (tile size)
+        VkPhysicalDeviceProperties2 DeviceProperties2;
+        FMemory::Memzero(&DeviceProperties2);
+        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
+        VkPhysicalDeviceFragmentShadingRatePropertiesKHR FSRProps;
+        FMemory::Memzero(&FSRProps);
+        FSRProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+
+        FVulkanStructureHelper PropsHelper(DeviceProperties2);
+        PropsHelper.AddNext(FSRProps);
+        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
+
+        if (FSRFeatures.attachmentFragmentShadingRate)
+        {
+            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier2; // image-based
+        }
+        else if (FSRFeatures.pipelineFragmentShadingRate || FSRFeatures.primitiveFragmentShadingRate)
+        {
+            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier1; // per-draw / per-primitive
+        }
+        else
+        {
+            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+        }
+
+        // Store one dimension; most hardware uses square tiles (e.g., 16x16)
+        RHIDeviceFeatureSupport::ShadingRateImageTileSize = Math::Max<uint32>(1u, FSRProps.minFragmentShadingRateAttachmentTexelSize.width);
+        RHIDeviceFeatureSupport::bSupportsVRS = (RHIDeviceFeatureSupport::ShadingRateTier != EShadingRateTier::NotSupported);
+    }
+    else
+    {
+        RHIDeviceFeatureSupport::bSupportsVRS = false;
+        RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+        RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+    }
+
     return true;
 }
 

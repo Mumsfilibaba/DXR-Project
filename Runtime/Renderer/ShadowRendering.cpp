@@ -392,8 +392,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 {
     const auto GetRenderMapRenderPassType = []() -> ECubeMapRenderPassType
     {
-        const bool bUseVSInstancing = RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader && CVarPointLightsEnableSinglePassRendering.GetValue();
-        const bool bUseGSInstancing = !bUseVSInstancing && RHIDeviceInfo::SupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
+        const bool bUseVSInstancing = RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader && CVarPointLightsEnableSinglePassRendering.GetValue();
+        const bool bUseGSInstancing = !bUseVSInstancing && RHIDeviceFeatureSupport::bSupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
         if (bUseVSInstancing)
         {
             return ECubeMapRenderPassType::SinglePass;
@@ -1125,9 +1125,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     {
         constexpr uint32 MinViewInstanceCount = 4;
 
-        const bool bUseVSInstancing   = RHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader && CVarCSMEnableSinglePassRendering.GetValue();
-        const bool bUseGSInstancing   = !bUseVSInstancing && RHIDeviceInfo::SupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
-        const bool bUseViewInstancing = !bUseGSInstancing && RHIDeviceInfo::SupportsViewInstancing && RHIDeviceInfo::MaxViewInstanceCount >= MinViewInstanceCount && CVarCSMEnableViewInstancing.GetValue();
+        const bool bUseVSInstancing   = RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader && CVarCSMEnableSinglePassRendering.GetValue();
+        const bool bUseGSInstancing   = !bUseVSInstancing && RHIDeviceFeatureSupport::bSupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
+        const bool bUseViewInstancing = !bUseGSInstancing && RHIDeviceFeatureSupport::bSupportsViewInstancing && RHIDeviceFeatureSupport::MaxViewInstanceCount >= MinViewInstanceCount && CVarCSMEnableViewInstancing.GetValue();
 
         if (bUseVSInstancing)
         {

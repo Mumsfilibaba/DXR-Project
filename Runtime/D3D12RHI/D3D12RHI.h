@@ -106,6 +106,8 @@ public:
     }
 
 private:
+    bool InitializeDeviceFeatureSupport();
+    
     typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> FSamplerStateMap;
     typedef TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   FCommandPayloadQueue;
 

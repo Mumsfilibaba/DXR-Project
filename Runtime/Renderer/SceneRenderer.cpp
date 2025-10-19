@@ -329,7 +329,7 @@ bool FSceneRenderer::Initialize()
         return false;
     }
 
-    if (false/*RHIDeviceInfo::SupportsRayTracing*/)
+    if (false/*RHIDeviceFeatureSupport::bSupportsRayTracing*/)
     {
         if (!RayTracer.Initialize(Resources))
         {
@@ -646,7 +646,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 	}
 
 	// RayTracing PrePass
-	if (false /*RHIDeviceInfo::SupportsRayTracing*/)
+	if (false /*RHIDeviceFeatureSupport::bSupportsRayTracing*/)
 	{
 		GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
 		RayTracer.PreRender(CommandList, Resources, CurrentScene);
@@ -990,13 +990,13 @@ void FSceneRenderer::PresentSwapChain(FRHISwapChainRef SwapChain)
 
 bool FSceneRenderer::InitShadingImage()
 {
-    if (RHIDeviceInfo::ShadingRateTier != EShadingRateTier::Tier2 || RHIDeviceInfo::ShadingRateImageTileSize == 0)
+    if (RHIDeviceFeatureSupport::ShadingRateTier != EShadingRateTier::Tier2 || RHIDeviceFeatureSupport::ShadingRateImageTileSize == 0)
     {
         return true;
     }
 
-    const uint32 Width  = Resources.CurrentRenderWidth / RHIDeviceInfo::ShadingRateImageTileSize;
-    const uint32 Height = Resources.CurrentRenderHeight / RHIDeviceInfo::ShadingRateImageTileSize;
+    const uint32 Width  = Resources.CurrentRenderWidth / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
+    const uint32 Height = Resources.CurrentRenderHeight / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
     ShadingImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);

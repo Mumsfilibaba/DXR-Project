@@ -101,12 +101,15 @@ struct FRHITextureInfo
     NODISCARD constexpr bool IsPresentable() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
     NODISCARD constexpr bool IsMultisampled() const { return (NumSamples > 1); }
 
-    NODISCARD constexpr ETextureDimension GetDimension() const { return Dimension; }
-    NODISCARD constexpr EFormat GetFormat() const { return Format; }
+    NODISCARD constexpr ETextureDimension  GetDimension() const { return Dimension; }
+    NODISCARD constexpr EFormat            GetFormat() const { return Format; }
     NODISCARD constexpr ETextureUsageFlags GetUsageFlags() const { return UsageFlags; }
-    NODISCARD constexpr uint32 GetNumArraySlices() const { return NumArraySlices; }
-    NODISCARD constexpr uint32 GetNumMipLevels() const { return NumMipLevels; }
-    NODISCARD constexpr uint32 GetNumSamples() const { return NumSamples; }
+    NODISCARD constexpr uint32             GetNumArraySlices() const { return NumArraySlices; }
+    NODISCARD constexpr uint32             GetNumMipLevels() const { return NumMipLevels; }
+    NODISCARD constexpr uint32             GetNumSamples() const { return NumSamples; }
+    NODISCARD constexpr uint32             GetWidth() const { return Extent.X; }
+    NODISCARD constexpr uint32             GetHeight() const { return Extent.Y; }
+    NODISCARD constexpr uint32             GetDepth() const { return Extent.Z; }
     NODISCARD constexpr const FIntVector3& GetExtent() const { return Extent; }
     NODISCARD constexpr const FClearValue& GetClearValue() const { return ClearValue; }
 

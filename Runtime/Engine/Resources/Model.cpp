@@ -29,7 +29,7 @@ FMesh::~FMesh()
 
 bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 {
-    const bool bEnableRayTracing = false; //RHIDeviceInfo::SupportsRayTracing;
+    const bool bEnableRayTracing = false; //RHIDeviceFeatureSupport::bSupportsRayTracing;
 
     VertexCount = CreateInfo.Vertices.Size();
     IndexCount  = CreateInfo.Indices.Size();

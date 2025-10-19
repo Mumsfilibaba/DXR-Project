@@ -1,15 +1,39 @@
 #pragma once
 #include "Core/Core.h"
 
-#define RHI_REMAINING_MIP_LEVELS uint32(~0)
-#define RHI_REMAINING_ARRAY_SLICES uint32(~0)
-#define RHI_ALL_MIP_LEVELS uint32(~0)
-#define RHI_ALL_ARRAY_SLICES uint32(~0)
+// ============================================================
+// Resource Range Macros
+// ============================================================
+
+/** Use this value to specify "all remaining" mip levels in resource views */
+#define RHI_REMAINING_MIP_LEVELS (uint32(~0))
+
+/** Use this value to specify "all remaining" array slices in resource views */
+#define RHI_REMAINING_ARRAY_SLICES (uint32(~0))
+
+/** Alias for RHI_REMAINING_MIP_LEVELS (full mip chain) */
+#define RHI_ALL_MIP_LEVELS (uint32(~0))
+
+/** Alias for RHI_REMAINING_ARRAY_SLICES (all array layers) */
+#define RHI_ALL_ARRAY_SLICES (uint32(~0))
+
+/** Number of faces in a cube map texture */
 #define RHI_NUM_CUBE_FACES (6)
 
+// ============================================================
+// Fixed Hardware / API Binding Limits
+// ============================================================
+
+/** Maximum number of simultaneous render targets supported */
 #define RHI_MAX_RENDER_TARGETS (8)
+
+/** Maximum number of local shader bindings (e.g., root constants or local root parameters) */
 #define RHI_MAX_LOCAL_SHADER_BINDINGS (4)
+
+/** Maximum number of shader constants that can be bound directly */
 #define RHI_MAX_SHADER_CONSTANTS (32)
+
+/** Maximum number of vertex buffers that can be bound at once */
 #define RHI_MAX_VERTEX_BUFFERS (32)
 
 enum class ERayTracingTier : uint8
@@ -52,37 +76,123 @@ NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
     }
 }
 
-struct RHIDeviceInfo
+struct RHIDeviceFeatureSupport
 {
-    // Geometry Shading Support
-    static RHI_API bool SupportsGeometryShaders;
+    // ============================================================
+    // Shader / Pipeline Features
+    // ============================================================
 
-    // RenderTargetArrayIndex from vertex-shader Support
-    static RHI_API bool SupportRenderTargetArrayIndexFromVertexShader;
+    /** Whether the device supports geometry shaders */
+    static RHI_API bool bSupportsGeometryShaders;
 
-    // View-Instancing
-    static RHI_API bool SupportsViewInstancing;
+    /** Whether SV_RenderTargetArrayIndex is supported from the vertex shader stage */
+    static RHI_API bool bSupportRenderTargetArrayIndexFromVertexShader;
+
+
+    // ============================================================
+    // View Instancing
+    // ============================================================
+
+    /** Whether view instancing is supported */
+    static RHI_API bool bSupportsViewInstancing;
+
+    /** Maximum number of view instances supported */
     static RHI_API uint32 MaxViewInstanceCount;
 
-    // Hardware RayTracing
-    static RHI_API bool SupportsRayTracing;
+
+    // ============================================================
+    // Hardware Ray Tracing
+    // ============================================================
+
+    /** Whether hardware-accelerated ray tracing is supported */
+    static RHI_API bool bSupportsRayTracing;
+
+    /** Ray tracing tier support (e.g., Tier 1.0, 1.1, etc.) */
     static RHI_API ERayTracingTier RayTracingTier;
+
+    /** Maximum recursion depth supported for ray tracing pipelines */
     static RHI_API uint32 RayTracingMaxRecursionDepth;
 
-    // Hardware Variable Rate Shading
-    static RHI_API bool SupportsVRS;
+
+    // ============================================================
+    // Variable Rate Shading (VRS)
+    // ============================================================
+
+    /** Whether hardware Variable Rate Shading is supported */
+    static RHI_API bool bSupportsVRS;
+
+    /** Shading rate tier (Tier1, Tier2, etc.) */
     static RHI_API EShadingRateTier ShadingRateTier;
+
+    /** Shading rate image tile size (e.g., 16x16) */
     static RHI_API uint32 ShadingRateImageTileSize;
 
-    // Draw-Indirect
-    static RHI_API bool SupportDrawIndirect;
-    static RHI_API bool SupportMultiDrawIndirect;
+
+    // ============================================================
+    // Draw Indirect
+    // ============================================================
+
+    /** Whether indirect draw calls are supported */
+    static RHI_API bool bSupportDrawIndirect;
+
+    /** Whether multi-draw indirect (MDI) is supported */
+    static RHI_API bool bSupportMultiDrawIndirect;
+
+    /** Maximum number of draws per indirect call */
     static RHI_API uint32 MaxDrawIndirectCount;
+
+
+    // ============================================================
+    // Texture / Image Limits
+    // ============================================================
+
+    // --- 1D Textures ---
+    /** Maximum width of a 1D texture (D3D12_REQ_TEXTURE1D_U_DIMENSION / Vulkan: maxImageDimension1D) */
+    static RHI_API uint32 MaxTexture1DSize;
+
+    /** Maximum number of array layers for 1D textures */
+    static RHI_API uint32 MaxTexture1DArrayLayers;
+
+
+    // --- 2D Textures ---
+    /** Maximum width or height of a 2D texture (D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION / Vulkan: maxImageDimension2D) */
+    static RHI_API uint32 MaxTexture2DSize;
+
+    /** Maximum number of array layers for 2D textures */
+    static RHI_API uint32 MaxTexture2DArrayLayers;
+
+
+    // --- 3D Textures (Volumes) ---
+    /** Maximum 3D texture width (D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION / Vulkan: maxImageDimension3D) */
+    static RHI_API uint32 MaxTexture3DWidth;
+
+    /** Maximum 3D texture height */
+    static RHI_API uint32 MaxTexture3DHeight;
+
+    /** Maximum 3D texture depth */
+    static RHI_API uint32 MaxTexture3DDepth;
+
+
+    // --- Cube Textures ---
+    /** Maximum cube map face resolution (D3D12: same as 2D limit / Vulkan: maxImageDimensionCube) */
+    static RHI_API uint32 MaxCubeTextureSize;
+
+    /** Maximum number of cube maps in a cube texture array (arrayLayers / 6) */
+    static RHI_API uint32 MaxCubeArrayCount;
 };
 
 struct RHIStatistics
 {
+    // ============================================================
+    // Command Submission Metrics
+    // ============================================================
+
+    /** Total number of graphics draw calls submitted to the GPU */
     static RHI_API FAtomicUInt64 NumDrawCalls;
+
+    /** Total number of compute dispatch calls submitted to the GPU */
     static RHI_API FAtomicUInt64 NumDispatchCalls;
+
+    /** Total number of commands recorded to command lists/command buffers */
     static RHI_API FAtomicUInt64 NumCommands;
 };

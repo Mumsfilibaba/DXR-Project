@@ -14,16 +14,8 @@ struct NULLRHI_API FNullRHIModule final : public FRHIModule
 class NULLRHI_API FNullRHI final : public FRHI
 {
 public:
-    FNullRHI()
-        : FRHI(ERHIType::Null)
-        , CommandContext(new FNullRHICommandContext())
-    {
-    }
-
-    ~FNullRHI()
-    {
-        SAFE_DELETE(CommandContext);
-    }
+    FNullRHI();
+    ~FNullRHI();
 
     virtual void BeginFrame() override final { }
     virtual void EndFrame() override final { }
