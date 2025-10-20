@@ -123,11 +123,11 @@ bool TestMatrix4()
     }
 
     // Perspective Projection
-    float Width = 1920.0f;
+    float Width  = 1920.0f;
     float Height = 1080.0f;
-    float FOV = Math::PI_Float / 2.0f;
-    float Near = 0.01f;
-    float Far = 100.0f;
+    float FOV    = Math::Constants::PI / 2.0f;
+    float Near   = 0.01f;
+    float Far    = 100.0f;
 
     FMatrix4 Projection = FMatrix4::PerspectiveProjection(FOV, Width, Height, Near, Far);
     XMMATRIX XmProjection = XMMatrixPerspectiveFovLH(FOV, Width / Height, Near, Far);

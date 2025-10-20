@@ -2,7 +2,7 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Vector4.h"
 #include "Core/Math/Matrix3.h"
-#include "Core/Math/MathCommon.h"
+#include "Core/Math/Math.h"
 
 /** @brief 4x4 Matrix class with float components. Represents a 3D affine transformation matrix in homogeneous coordinates. */
 class VECTOR_ALIGN FMatrix4
@@ -395,22 +395,22 @@ public:
     }
 
     /**
-     * @brief Compares, within a threshold Epsilon, this matrix with another matrix
+     * @brief Compares, within a threshold Threshold, this matrix with another matrix
      * @param Other Matrix to compare against
-     * @param Epsilon Threshold for comparison
-     * @return True if equal within Epsilon, false otherwise
+     * @param Threshold Threshold for comparison
+     * @return True if equal within Threshold, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix4& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix4& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
     #if !USE_VECTOR_MATH
-        Epsilon = Math::Abs(Epsilon);
+        Threshold = Math::Abs(Threshold);
 
         for (int32 Row = 0; Row < 4; ++Row)
         {
             for (int32 Col = 0; Col < 4; ++Col)
             {
                 const float Diff = M[Row][Col] - Other.M[Row][Col];
-                if (Math::Abs(Diff) > Epsilon)
+                if (Math::Abs(Diff) > Threshold)
                 {
                     return false;
                 }
@@ -419,14 +419,14 @@ public:
 
         return true;
     #else
-        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(Math::Abs(Epsilon));
+        FFloat128 Threshold_128 = FVectorMath::VectorSet1(Math::Abs(Threshold));
 
         for (int32 Row = 0; Row < 4; ++Row)
         {
             FFloat128 Diff       = FVectorMath::VectorSub(M[Row], Other.M[Row]);
             FFloat128 Result_128 = FVectorMath::VectorAbs(Diff);
 
-            if (FVectorMath::VectorAllGreaterThan(Result_128, Epsilon_128))
+            if (FVectorMath::VectorAllGreaterThan(Result_128, Threshold_128))
             {
                 return false;
             }
@@ -1400,7 +1400,7 @@ public:
      */
     static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
-        if ((Fov < Math::OneDegree_Float) || (Fov > (Math::PI_Float - Math::OneDegree_Float)))
+        if ((Fov < Math::Constants::Deg2Rad) || (Fov > (Math::Constants::PI - Math::Constants::Deg2Rad)))
         {
             return FMatrix4();
         }

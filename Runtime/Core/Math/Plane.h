@@ -60,18 +60,18 @@ public:
     /**
      * @brief Compares this plane with another plane within a specified threshold.
      * @param Other The plane to compare against.
-     * @param Epsilon The threshold for comparison. Defaults to Math::FloatCompareEpsilon.
+     * @param Threshold The threshold for comparison. Defaults to Math::Constants::CmpThreshold.
      * @return True if planes are approximately equal, false otherwise.
      */
-    FORCEINLINE bool IsEqual(const FPlane& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FPlane& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
     #if !USE_VECTOR_MATH
-        Epsilon = Math::Abs(Epsilon);
+        Threshold = Math::Abs(Threshold);
 
         for (int32 Index = 0; Index < 4; ++Index)
         {
             float Diff = reinterpret_cast<const float*>(this)[Index] - reinterpret_cast<const float*>(&Other)[Index];
-            if (Math::Abs(Diff) > Epsilon)
+            if (Math::Abs(Diff) > Threshold)
             {
                 return false;
             }
@@ -79,13 +79,13 @@ public:
 
         return true;
     #else
-        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(Epsilon);
-        Epsilon_128 = FVectorMath::VectorAbs(Epsilon_128);
+        FFloat128 Threshold_128 = FVectorMath::VectorSet1(Threshold);
+        Threshold_128 = FVectorMath::VectorAbs(Threshold_128);
 
         FFloat128 Diff = FVectorMath::VectorSub(XYZW, Other.XYZW);
         Diff = FVectorMath::VectorAbs(Diff);
 
-        return FVectorMath::VectorAllLessThan(Diff, Epsilon_128);
+        return FVectorMath::VectorAllLessThan(Diff, Threshold_128);
     #endif
     }
 

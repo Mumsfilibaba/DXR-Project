@@ -918,9 +918,9 @@ bool FVulkanDevice::PostLoaderInitalize()
 
 bool FVulkanDevice::InitializeDeviceFeatureSupport()
 {
-    // --------------------------------------------------------------------------
-    // Baseline defaults (conservative & safe so fields are always initialized)
-    // --------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
+    // Baseline defaults
+    // ---------------------------------------------------------------------
     RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = false;
     RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
 

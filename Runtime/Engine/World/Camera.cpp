@@ -36,7 +36,7 @@ void FCamera::Rotate(float Pitch, float Yaw, float Roll)
     Rotation.Y += Yaw;
     Rotation.Z += Roll;
 
-    Rotation.X = Math::Clamp(Math::FMod(Rotation.X, Math::TwoPI_Float), Math::DegreesToRadians(-89.0f), Math::DegreesToRadians(89.0f));
+    Rotation.X = Math::Clamp(Math::FMod(Rotation.X, Math::Constants::TwoPI), Math::DegreesToRadians(-89.0f), Math::DegreesToRadians(89.0f));
 
     UpdateDirectionVectors();
 }
@@ -53,7 +53,7 @@ void FCamera::SetPosition(float x, float y, float z)
 
 void FCamera::SetRotation(float Pitch, float Yaw, float Roll)
 {
-    Rotation.X = Math::Clamp(Math::FMod(Pitch, Math::TwoPI_Float), Math::DegreesToRadians(-89.0f), Math::DegreesToRadians(89.0f));
+    Rotation.X = Math::Clamp(Math::FMod(Pitch, Math::Constants::TwoPI), Math::DegreesToRadians(-89.0f), Math::DegreesToRadians(89.0f));
     Rotation.Y = Yaw;
     Rotation.Z = Roll;
 

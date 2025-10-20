@@ -85,12 +85,12 @@ bool TestMatrix2()
     }
 
     // Multiplication
-    FMatrix2 Mat0 = FMatrix2::Rotation(Math::HalfPI_Float);
-    FMatrix2 Mat1 = FMatrix2::Rotation(Math::HalfPI_Float);
+    FMatrix2 Mat0 = FMatrix2::Rotation(Math::Constants::HalfPI);
+    FMatrix2 Mat1 = FMatrix2::Rotation(Math::Constants::HalfPI);
     FMatrix2 Mult = Mat0 * Mat1;
 
-    XMMATRIX XmMat0 = XMMatrixRotationZ(Math::HalfPI_Float);
-    XMMATRIX XmMat1 = XMMatrixRotationZ(Math::HalfPI_Float);
+    XMMATRIX XmMat0 = XMMatrixRotationZ(Math::Constants::HalfPI);
+    XMMATRIX XmMat1 = XMMatrixRotationZ(Math::Constants::HalfPI);
     XMMATRIX XmMult = XMMatrixMultiply(XmMat0, XmMat1);
 
     XMStoreFloat3x3(&Float3x3Matrix, XmMult);
@@ -224,11 +224,11 @@ bool TestMatrix2()
     }
 
     // Multiply a vector
-    FMatrix2 Rot = FMatrix2::Rotation(Math::HalfPI_Float);
+    FMatrix2 Rot = FMatrix2::Rotation(Math::Constants::HalfPI);
     FVector2 TranslatedVector = Rot * FVector2(1.0f, 2.0f);
 
     XMVECTOR XmTranslatedVector = XMVectorSet(1.0f, 2.0f, 0.0f, 0.0f);
-    XMMATRIX XmRot = XMMatrixRotationZ(Math::HalfPI_Float);
+    XMMATRIX XmRot = XMMatrixRotationZ(Math::Constants::HalfPI);
     XmTranslatedVector = XMVector3Transform(XmTranslatedVector, XmRot);
 
     XMFLOAT2 XmFloat2;

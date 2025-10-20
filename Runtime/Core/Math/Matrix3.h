@@ -186,21 +186,21 @@ public:
     }
 
     /**
-     * @brief Compares, within a threshold Epsilon, this matrix with another matrix
+     * @brief Compares, within a threshold Threshold, this matrix with another matrix
      * @param Other Matrix to compare against
-     * @param Epsilon Threshold for comparison
-     * @return True if equal within Epsilon, false otherwise
+     * @param Threshold Threshold for comparison
+     * @return True if equal within Threshold, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix3& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix3& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
-        Epsilon = Math::Abs(Epsilon);
+        Threshold = Math::Abs(Threshold);
 
         for (int32 Row = 0; Row < 3; ++Row)
         {
             for (int32 Col = 0; Col < 3; ++Col)
             {
                 float Diff = M[Row][Col] - Other.M[Row][Col];
-                if (Math::Abs(Diff) > Epsilon)
+                if (Math::Abs(Diff) > Threshold)
                 {
                     return false;
                 }

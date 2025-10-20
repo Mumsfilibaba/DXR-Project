@@ -1014,7 +1014,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     GD3D12SupportBindless               = false;
 
     // ---------------------------------------------------------------------
-    // OPTIONS (Resource Binding Tier, VP/RT index flag, etc.)
+    // Resource Binding Tier
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS Features = {};
@@ -1031,7 +1031,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // Ray Tracing (DXR) — OPTIONS5
+    // Ray Tracing (DXR)
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5 = {};
@@ -1048,7 +1048,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // Variable Rate Shading — OPTIONS6
+    // Variable Rate Shading
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6 = {};
@@ -1065,7 +1065,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // Mesh Shaders & Sampler Feedback — OPTIONS7
+    // Mesh Shaders & Sampler Feedback
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7 = {};
@@ -1085,7 +1085,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // Enhanced Barriers — OPTIONS12
+    // Enhanced Barriers
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS12 Features12 = {};
@@ -1102,7 +1102,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // GPU Upload Heaps — OPTIONS16
+    // GPU Upload Heaps
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS16 Features16 = {};
@@ -1119,7 +1119,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // Descriptor Heap sizes — OPTIONS19
+    // Descriptor Heap sizes
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS19 Features19 = {};
@@ -1139,7 +1139,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // Tight Alignment — D3D12_TIGHT_ALIGNMENT
+    // Tight Alignment
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_TIGHT_ALIGNMENT TightAlignment = {};
@@ -1156,7 +1156,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     }
 
     // ---------------------------------------------------------------------
-    // Highest Shader Model - D3D12_FEATURE_SHADER_MODEL
+    // Highest Shader Model
     // ---------------------------------------------------------------------
     {
         D3D12_FEATURE_DATA_SHADER_MODEL ShaderModel = {};

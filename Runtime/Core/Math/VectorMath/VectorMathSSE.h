@@ -1,6 +1,6 @@
 #pragma once
 #if PLATFORM_SUPPORT_SSE_INTRIN
-#include "Core/Math/MathCommon.h"
+#include "Core/Math/Math.h"
 
 #if PLATFORM_WINDOWS
     #include <xmmintrin.h> // SSE

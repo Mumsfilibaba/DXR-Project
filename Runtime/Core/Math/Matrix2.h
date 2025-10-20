@@ -179,21 +179,21 @@ public:
     }
 
     /**
-     * @brief Compares, within a threshold Epsilon, this matrix with another matrix
+     * @brief Compares, within a threshold Threshold, this matrix with another matrix
      * @param Other Matrix to compare against
-     * @param Epsilon Threshold for comparison
-     * @return True if equal within Epsilon, false otherwise
+     * @param Threshold Threshold for comparison
+     * @return True if equal within Threshold, false otherwise
      */
-    FORCEINLINE bool IsEqual(const FMatrix2& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix2& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
     #if !USE_VECTOR_MATH
-        Epsilon = Math::Abs(Epsilon);
+        Threshold = Math::Abs(Threshold);
         for (int32 Row = 0; Row < 2; ++Row)
         {
             for (int32 Col = 0; Col < 2; ++Col)
             {
                 float Diff = M[Row][Col] - Other.M[Row][Col];
-                if (Math::Abs(Diff) > Epsilon)
+                if (Math::Abs(Diff) > Threshold)
                 {
                     return false;
                 }
@@ -202,11 +202,11 @@ public:
 
         return true;
     #else
-        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(Epsilon);
-        FFloat128 VectorA     = FVectorMath::VectorAbs(Epsilon_128);
-        FFloat128 VectorB     = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
-        FFloat128 Result_128  = FVectorMath::VectorAbs(VectorB);
-        return FVectorMath::VectorAllLessThan(Result_128, Epsilon_128);
+        FFloat128 Threshold_128 = FVectorMath::VectorSet1(Threshold);
+        FFloat128 VectorA       = FVectorMath::VectorAbs(Threshold_128);
+        FFloat128 VectorB       = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
+        FFloat128 Result_128    = FVectorMath::VectorAbs(VectorB);
+        return FVectorMath::VectorAllLessThan(Result_128, Threshold_128);
     #endif
     }
 

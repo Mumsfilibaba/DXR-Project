@@ -76,7 +76,7 @@ void FPointLight::CalculateMatrices()
 
     for (uint32 Face = 0; Face < 6; ++Face)
     {
-        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(Math::HalfPI_Float, 1.0f, ShadowNearPlane, ShadowFarPlane);
+        const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(Math::Constants::HalfPI, 1.0f, ShadowNearPlane, ShadowFarPlane);
         const FMatrix4 LightView       = FMatrix4::LookTo(Position, Directions[Face], UpVectors[Face]);
 
         ViewMatrices[Face]     = LightView;

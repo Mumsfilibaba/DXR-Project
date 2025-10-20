@@ -48,9 +48,9 @@ void FRHIValidation::EndFrame()
 
 FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	// Basic sanity
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	if (InTextureInfo.Dimension == ETextureDimension::None)
 	{
 		RHI_VALIDATION_ERROR("Invalid texture dimension (None). A valid ETextureDimension must be specified.");
@@ -83,9 +83,9 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 		return nullptr;
 	}
 
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	// Dimension-specific rules
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	switch (InTextureInfo.Dimension)
 	{
 	case ETextureDimension::Texture2D:
@@ -144,9 +144,9 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 		return nullptr;
 	}
 
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	// Device feature support checks
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	if (InTextureInfo.IsTexture3D())
 	{
 		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxTexture3DWidth || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxTexture3DHeight ||
@@ -192,9 +192,9 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 		}
 	}
 
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	// MipLevels
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	if (InTextureInfo.NumMipLevels == 0)
 	{
 		RHI_VALIDATION_ERROR("Invalid NumMipLevels (0). A texture must have at least one mip level.");
@@ -220,9 +220,9 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 		}
 	}
 
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	// Sample count sanity
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	if (InTextureInfo.NumSamples == 0)
 	{
 		RHI_VALIDATION_ERROR("NumSamples must be >= 1. (Got 0).");
@@ -235,9 +235,9 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 		return nullptr;
 	}
 
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	// Usage flag combinations
-	// -----------------------------------------
+	// ------------------------------------------------------------
 	const bool bIsRenderTarget = InTextureInfo.IsRenderTarget();
 	const bool bIsDepthStencil = InTextureInfo.IsDepthStencil();
 	const bool bIsUAV          = InTextureInfo.IsUnorderedAccessTexture();
