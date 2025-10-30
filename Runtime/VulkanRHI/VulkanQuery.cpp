@@ -38,9 +38,7 @@ FVulkanQueryPool::~FVulkanQueryPool()
 
 bool FVulkanQueryPool::Initialize()
 {
-    VkQueryPoolCreateInfo QueryPoolCreateInfo;
-    FMemory::Memzero(&QueryPoolCreateInfo, sizeof(VkQueryPoolCreateInfo));
-
+    VkQueryPoolCreateInfo QueryPoolCreateInfo = {};
     QueryPoolCreateInfo.sType      = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
     QueryPoolCreateInfo.queryType  = ConvertQueryType(QueryType);
     QueryPoolCreateInfo.queryCount = NumQueries = CVarVulkanQueryPoolSize.GetValue();

@@ -18,7 +18,7 @@ public:
     FVulkanInstance();
     ~FVulkanInstance();
 
-    bool Initialize(const FVulkanInstanceCreateInfo& InstanceDesc);
+    bool Initialize(const FVulkanInstanceCreateInfo& CreateInfo);
     void Release();
 
     bool IsLayerEnabled(const FString& LayerName)
@@ -37,13 +37,11 @@ public:
     }
 
 private:
-    void*      DriverHandle;  
-    VkInstance Instance;
-
+    void*                    DriverHandle;  
+    VkInstance               Instance;
 #if VK_EXT_debug_utils
     VkDebugUtilsMessengerEXT DebugMessenger;
 #endif
-
-    TSet<FString> ExtensionNames;
-    TSet<FString> LayerNames;
+    TSet<FString>            ExtensionNames;
+    TSet<FString>            LayerNames;
 };

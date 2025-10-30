@@ -260,9 +260,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
-        VkImageMemoryBarrier2 ImageBarrier;
-        FMemory::Memzero(&ImageBarrier);
-
+        VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;

@@ -20,7 +20,8 @@ NODISCARD constexpr const CHAR* ToString(ESamplerMode SamplerMode)
         case ESamplerMode::Clamp:      return "Clamp";
         case ESamplerMode::Border:     return "Border";
         case ESamplerMode::MirrorOnce: return "MirrorOnce";
-        default:                       return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
@@ -69,7 +70,8 @@ NODISCARD constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
         case ESamplerFilter::Comparison_MinMagLinear_MipPoint:        return "Comparison_MinMagLinear_MipPoint";
         case ESamplerFilter::Comparison_MinMagMipLinear:              return "Comparison_MinMagMipLinear";
         case ESamplerFilter::Comparison_Anisotropic:                  return "Comparison_Anisotropic";
-        default:                                                      return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 

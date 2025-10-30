@@ -67,9 +67,7 @@ bool FVulkanResourceView::InitializeAsImageView(VkImage InImage, VkFormat InForm
     }
 
     // Create a new view
-    VkImageViewCreateInfo ImageViewCreateInfo;
-    FMemory::Memzero(&ImageViewCreateInfo);
-
+    VkImageViewCreateInfo ImageViewCreateInfo = {};
     ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ImageViewCreateInfo.image                           = InImage;
     ImageViewCreateInfo.format                          = InFormat;
@@ -131,9 +129,7 @@ bool FVulkanResourceView::InitializeAsTypedBufferView(VkBuffer InBuffer, VkForma
         return false;
     }
 
-    VkBufferViewCreateInfo BufferViewCreateInfo;
-    FMemory::Memzero(&BufferViewCreateInfo);
-
+    VkBufferViewCreateInfo BufferViewCreateInfo = {};
     BufferViewCreateInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
     BufferViewCreateInfo.buffer = InBuffer;
     BufferViewCreateInfo.format = InFormat;

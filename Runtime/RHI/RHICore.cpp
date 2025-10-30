@@ -1,31 +1,45 @@
 #include "RHI/RHICore.h"
 
-// ==== Feature Support (conservative, engine-safe defaults) ====
+// -------------------------------------------------------------------------------------------
+// Feature Support
+// -------------------------------------------------------------------------------------------
 
+// -------------------------------------------------------------------------------------------
 // Shader / Pipeline
+// -------------------------------------------------------------------------------------------
 RHI_API bool   RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = true;
 RHI_API bool   RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = true;
 
-// View Instancing (disabled by default)
+// -------------------------------------------------------------------------------------------
+// View Instancing
+// -------------------------------------------------------------------------------------------
 RHI_API bool   RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
 RHI_API uint32 RHIDeviceFeatureSupport::MaxViewInstanceCount    = 1;
 
-// Hardware Ray Tracing (disabled by default)
+// -------------------------------------------------------------------------------------------
+// Hardware Ray Tracing
+// -------------------------------------------------------------------------------------------
 RHI_API bool             RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
 RHI_API ERayTracingTier  RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
 RHI_API uint32           RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
 
-// Variable Rate Shading (disabled by default)
+// -------------------------------------------------------------------------------------------
+// Variable Rate Shading
+// -------------------------------------------------------------------------------------------
 RHI_API bool             RHIDeviceFeatureSupport::bSupportsVRS             = false;
 RHI_API EShadingRateTier RHIDeviceFeatureSupport::ShadingRateTier          = EShadingRateTier::NotSupported;
 RHI_API uint32           RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
 
-// Draw-Indirect (basic only by default)
+// -------------------------------------------------------------------------------------------
+// Draw Indirect
+// -------------------------------------------------------------------------------------------
 RHI_API bool   RHIDeviceFeatureSupport::bSupportDrawIndirect      = true;
 RHI_API bool   RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = false;
 RHI_API uint32 RHIDeviceFeatureSupport::MaxDrawIndirectCount      = 1;
 
-// Texture / Image limits (D3D11-class safe)
+// -------------------------------------------------------------------------------------------
+// Texture / Image Limits
+// -------------------------------------------------------------------------------------------
 RHI_API uint32 RHIDeviceFeatureSupport::MaxTexture1DSize        = 8192;
 RHI_API uint32 RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = 256;
 
@@ -39,7 +53,23 @@ RHI_API uint32 RHIDeviceFeatureSupport::MaxTexture3DDepth       = 2048;
 RHI_API uint32 RHIDeviceFeatureSupport::MaxCubeTextureSize      = 8192;
 RHI_API uint32 RHIDeviceFeatureSupport::MaxCubeArrayCount       = 256 / RHI_NUM_CUBE_FACES; // 42
 
-// ==== Statistics (atomic) ====
+// -------------------------------------------------------------------------------------------
+// Buffer / Memory Limits
+// -------------------------------------------------------------------------------------------
+RHI_API uint64 RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0);
+RHI_API uint32 RHIDeviceFeatureSupport::MaxConstantBufferSize      = 64 * 1024; // 64 KB
+RHI_API uint64 RHIDeviceFeatureSupport::MaxStorageBufferSize       = uint64(~0);
+RHI_API uint32 RHIDeviceFeatureSupport::StructuredBufferMinStride  = 4;
+RHI_API uint32 RHIDeviceFeatureSupport::StructuredBufferMaxStride  = 2048;
+RHI_API uint32 RHIDeviceFeatureSupport::RawBufferRequiredAlignment = 4;
+
+// -------------------------------------------------------------------------------------------
+// Statistics
+// -------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------
+// Command Submission Metrics
+// -------------------------------------------------------------------------------------------
 RHI_API FAtomicUInt64 RHIStatistics::NumDrawCalls     = { 0 };
 RHI_API FAtomicUInt64 RHIStatistics::NumDispatchCalls = { 0 };
 RHI_API FAtomicUInt64 RHIStatistics::NumCommands      = { 0 };

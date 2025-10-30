@@ -128,9 +128,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         return false;
     }
 
-    VkImageCreateInfo ImageCreateInfo;
-    FMemory::Memzero(&ImageCreateInfo);
-
+    VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageCreateInfo.imageType             = ConvertTextureDimension(Info.Dimension);
     ImageCreateInfo.format                = ConvertFormat(Info.Format);
@@ -186,6 +184,10 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
+	if (Info.IsShadingRateTexture())
+	{
+		ImageCreateInfo.usage |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+	}
 
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
     if (VULKAN_FAILED(Result))
@@ -276,9 +278,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         // TODO: Support other types than texture 2D
         InCommandContext->StartContext();
         
-        VkImageMemoryBarrier2 ImageBarrier;
-        FMemory::Memzero(&ImageBarrier);
-
+        VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -332,9 +332,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         // NOTE: Transition the texture into the expected ImageLayout
         InCommandContext->StartContext();
 
-        VkImageMemoryBarrier2 ImageBarrier;
-        FMemory::Memzero(&ImageBarrier);
-
+        VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
         ImageBarrier.newLayout                       = ConvertResourceStateToImageLayout(InInitialAccess);

@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
-// ============================================================
+// -------------------------------------------------------------------------------------------
 // Resource Range Macros
-// ============================================================
+// -------------------------------------------------------------------------------------------
 
 /** Use this value to specify "all remaining" mip levels in resource views */
 #define RHI_REMAINING_MIP_LEVELS (uint32(~0))
@@ -20,9 +20,9 @@
 /** Number of faces in a cube map texture */
 #define RHI_NUM_CUBE_FACES (6)
 
-// ============================================================
+// -------------------------------------------------------------------------------------------
 // Fixed Hardware / API Binding Limits
-// ============================================================
+// -------------------------------------------------------------------------------------------
 
 /** Maximum number of simultaneous render targets supported */
 #define RHI_MAX_RENDER_TARGETS (8)
@@ -78,9 +78,9 @@ NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
 
 struct RHIDeviceFeatureSupport
 {
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
     // Shader / Pipeline Features
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
 
     /** Whether the device supports geometry shaders */
     static RHI_API bool bSupportsGeometryShaders;
@@ -88,10 +88,9 @@ struct RHIDeviceFeatureSupport
     /** Whether SV_RenderTargetArrayIndex is supported from the vertex shader stage */
     static RHI_API bool bSupportRenderTargetArrayIndexFromVertexShader;
 
-
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
     // View Instancing
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
 
     /** Whether view instancing is supported */
     static RHI_API bool bSupportsViewInstancing;
@@ -99,10 +98,9 @@ struct RHIDeviceFeatureSupport
     /** Maximum number of view instances supported */
     static RHI_API uint32 MaxViewInstanceCount;
 
-
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
     // Hardware Ray Tracing
-    // ============================================================
+    // ------------------------------------------------------------
 
     /** Whether hardware-accelerated ray tracing is supported */
     static RHI_API bool bSupportsRayTracing;
@@ -113,10 +111,9 @@ struct RHIDeviceFeatureSupport
     /** Maximum recursion depth supported for ray tracing pipelines */
     static RHI_API uint32 RayTracingMaxRecursionDepth;
 
-
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
 
     /** Whether hardware Variable Rate Shading is supported */
     static RHI_API bool bSupportsVRS;
@@ -127,27 +124,26 @@ struct RHIDeviceFeatureSupport
     /** Shading rate image tile size (e.g., 16x16) */
     static RHI_API uint32 ShadingRateImageTileSize;
 
-
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
     // Draw Indirect
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
 
     /** Whether indirect draw calls are supported */
     static RHI_API bool bSupportDrawIndirect;
 
-    /** Whether multi-draw indirect (MDI) is supported */
+    /** Whether multi-draw indirect is supported */
     static RHI_API bool bSupportMultiDrawIndirect;
 
     /** Maximum number of draws per indirect call */
     static RHI_API uint32 MaxDrawIndirectCount;
 
-
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
     // Texture / Image Limits
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
 
     // --- 1D Textures ---
-    /** Maximum width of a 1D texture (D3D12_REQ_TEXTURE1D_U_DIMENSION / Vulkan: maxImageDimension1D) */
+
+    /** Maximum width of a 1D texture */
     static RHI_API uint32 MaxTexture1DSize;
 
     /** Maximum number of array layers for 1D textures */
@@ -155,15 +151,17 @@ struct RHIDeviceFeatureSupport
 
 
     // --- 2D Textures ---
-    /** Maximum width or height of a 2D texture (D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION / Vulkan: maxImageDimension2D) */
+
+    /** Maximum width or height of a 2D texture */
     static RHI_API uint32 MaxTexture2DSize;
 
     /** Maximum number of array layers for 2D textures */
     static RHI_API uint32 MaxTexture2DArrayLayers;
 
 
-    // --- 3D Textures (Volumes) ---
-    /** Maximum 3D texture width (D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION / Vulkan: maxImageDimension3D) */
+    // --- 3D Textures ---
+
+    /** Maximum 3D texture width */
     static RHI_API uint32 MaxTexture3DWidth;
 
     /** Maximum 3D texture height */
@@ -174,18 +172,49 @@ struct RHIDeviceFeatureSupport
 
 
     // --- Cube Textures ---
-    /** Maximum cube map face resolution (D3D12: same as 2D limit / Vulkan: maxImageDimensionCube) */
+
+    /** Maximum cube map face resolution */
     static RHI_API uint32 MaxCubeTextureSize;
 
     /** Maximum number of cube maps in a cube texture array (arrayLayers / 6) */
     static RHI_API uint32 MaxCubeArrayCount;
+
+    // -------------------------------------------------------------------------------------------
+    // Buffer / Memory Limits
+    // -------------------------------------------------------------------------------------------
+
+    /** Maximum buffer size in bytes */
+    static RHI_API uint64 MaxBufferSize;
+
+    // --- Constant / Uniform Buffers ---
+
+    /** Maximum size of a constant/uniform buffer binding */
+    static RHI_API uint32 MaxConstantBufferSize;
+
+    // --- Storage / Structured Buffers ---
+
+    /** Maximum size of a storage buffer binding */
+    static RHI_API uint64 MaxStorageBufferSize;
+
+    /** Minimum stride for structured buffers (bytes) */
+    static RHI_API uint32 StructuredBufferMinStride;
+
+    /** Maximum stride for structured buffers (bytes) */
+    static RHI_API uint32 StructuredBufferMaxStride;
+
+    /** Required alignment for raw/byte-address buffers (SRV/UAV) */
+    static RHI_API uint32 RawBufferRequiredAlignment;
 };
+
+// -------------------------------------------------------------------------------------------
+// Statistics (atomic)
+// -------------------------------------------------------------------------------------------
 
 struct RHIStatistics
 {
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
     // Command Submission Metrics
-    // ============================================================
+    // -------------------------------------------------------------------------------------------
 
     /** Total number of graphics draw calls submitted to the GPU */
     static RHI_API FAtomicUInt64 NumDrawCalls;

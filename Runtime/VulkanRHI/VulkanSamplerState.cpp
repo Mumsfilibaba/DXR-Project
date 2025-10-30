@@ -15,9 +15,7 @@ FVulkanSamplerState::~FVulkanSamplerState()
 
 bool FVulkanSamplerState::Initialize()
 {
-    VkSamplerCreateInfo SamplerCreateInfo;
-    FMemory::Memzero(&SamplerCreateInfo);
-
+    VkSamplerCreateInfo SamplerCreateInfo = {};
     SamplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     SamplerCreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(Info.Filter);
     SamplerCreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(Info.Filter);

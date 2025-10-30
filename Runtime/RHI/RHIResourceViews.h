@@ -14,7 +14,6 @@ NODISCARD constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
     switch (BufferSRVFormat)
     {
         case EBufferSRVFormat::UInt32: return "UInt32";
-
         default: return "Unknown";
     }
 }
@@ -30,7 +29,6 @@ NODISCARD constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
     switch (BufferSRVFormat)
     {
         case EBufferUAVFormat::UInt32: return "UInt32";
-
         default: return "Unknown";
     }
 }
@@ -432,10 +430,11 @@ struct FRHIBeginRenderPassInfo
     bool operator==(const FRHIBeginRenderPassInfo& Other) const noexcept = default;
 
     FRHIDepthStencilView DepthStencilView = { };
+
     FRenderTargetViews RenderTargets = { };
     uint32 NumRenderTargets = 0;
 
-    EShadingRate StaticShadingRate = EShadingRate::VRS_1x1;
+    EShadingRate StaticShadingRate  = EShadingRate::VRS_1x1;
     FRHITexture* ShadingRateTexture = nullptr;
     
     FRHIViewInstancingState ViewInstancingState = { };

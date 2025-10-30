@@ -10,7 +10,8 @@ enum class ETextureUsageFlags
     DepthStencil           = FLAG(2), // DepthStencilView
     UnorderedAccessTexture = FLAG(3), // UnorderedAccessView
     ShaderResourceTexture  = FLAG(4), // ShaderResourceView
-    Presentable            = FLAG(5), // Indicates that the resource is a BackBuffer resource
+    ShadingRateTexture     = FLAG(5), // Indicates that the texture is going to be used as a shading rate texture
+    Presentable            = FLAG(6), // Indicates that the texture is a BackBuffer resource
 };
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
@@ -25,6 +26,20 @@ enum class ETextureDimension
     TextureCubeArray = 4,
     Texture3D        = 5,
 };
+
+NODISCARD constexpr const CHAR* ToString(ETextureDimension TextureDimension)
+{
+	switch (TextureDimension)
+	{
+	case ETextureDimension::Texture2D:        return "Texture2D";
+	case ETextureDimension::Texture2DArray:   return "Texture2DArray";
+	case ETextureDimension::TextureCube:      return "TextureCube";
+	case ETextureDimension::TextureCubeArray: return "TextureCubeArray";
+	case ETextureDimension::Texture3D:        return "Texture3D";
+
+	default: return "Unknown";
+	}
+}
 
 NODISCARD constexpr bool IsTextureCube(ETextureDimension Dimension)
 {
@@ -99,6 +114,7 @@ struct FRHITextureInfo
     NODISCARD constexpr bool IsDepthStencil() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
 
     NODISCARD constexpr bool IsPresentable() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
+    NODISCARD constexpr bool IsShadingRateTexture() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShadingRateTexture); }
     NODISCARD constexpr bool IsMultisampled() const { return (NumSamples > 1); }
 
     NODISCARD constexpr ETextureDimension  GetDimension() const { return Dimension; }

@@ -137,6 +137,7 @@ public:
     bool AllocateMemoryFromHeap(FVulkanMemoryAllocation& OutAllocation, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, uint32 MemoryIndex);
     bool Free(FVulkanMemoryAllocation& OutAllocation);
     void FreeMemory(VkDeviceMemory& OutDeviceMemory);
+
     void* Map(const FVulkanMemoryAllocation& Allocation);
     void Unmap(const FVulkanMemoryAllocation& Allocation);
     

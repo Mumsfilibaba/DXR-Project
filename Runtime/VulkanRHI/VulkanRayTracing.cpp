@@ -54,15 +54,13 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     VertexBuffer = MakeSharedRef<FVulkanBuffer>(BuildInfo.VertexBuffer);
     IndexBuffer  = MakeSharedRef<FVulkanBuffer>(BuildInfo.IndexBuffer);
 
-    VkDeviceOrHostAddressConstKHR VertexData;
+    VkDeviceOrHostAddressConstKHR VertexData = {};
     VertexData.deviceAddress = VertexBuffer->GetDeviceAddress();
 
-    VkDeviceOrHostAddressConstKHR IndexData;
+    VkDeviceOrHostAddressConstKHR IndexData = {};
     IndexData.deviceAddress = IndexBuffer->GetDeviceAddress();
 
-    VkAccelerationStructureGeometryKHR AccelerationStructureGeometry;
-    FMemory::Memzero(&AccelerationStructureGeometry, sizeof(VkAccelerationStructureGeometryKHR));
-
+    VkAccelerationStructureGeometryKHR AccelerationStructureGeometry = {};
     AccelerationStructureGeometry.sType                           = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
     AccelerationStructureGeometry.flags                           = VK_GEOMETRY_OPAQUE_BIT_KHR;
     AccelerationStructureGeometry.geometryType                    = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
@@ -74,9 +72,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     AccelerationStructureGeometry.geometry.triangles.indexType    = ConvertIndexFormat(BuildInfo.IndexFormat);
     AccelerationStructureGeometry.geometry.triangles.indexData    = IndexData;
 
-    VkAccelerationStructureBuildGeometryInfoKHR AccelerationStructureBuildGeometryInfo;
-    FMemory::Memzero(&AccelerationStructureBuildGeometryInfo, sizeof(VkAccelerationStructureBuildGeometryInfoKHR));
-
+    VkAccelerationStructureBuildGeometryInfoKHR AccelerationStructureBuildGeometryInfo = {};
     AccelerationStructureBuildGeometryInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     AccelerationStructureBuildGeometryInfo.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
     AccelerationStructureBuildGeometryInfo.flags         = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
@@ -84,9 +80,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     AccelerationStructureBuildGeometryInfo.geometryCount = 1;
     AccelerationStructureBuildGeometryInfo.pGeometries   = &AccelerationStructureGeometry;
 
-    VkAccelerationStructureBuildSizesInfoKHR AccelerationStructureBuildSizesInfo;
-    FMemory::Memzero(&AccelerationStructureBuildSizesInfo, sizeof(VkAccelerationStructureBuildSizesInfoKHR));
-
+    VkAccelerationStructureBuildSizesInfoKHR AccelerationStructureBuildSizesInfo = {};
     AccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
     // TODO: Is there any case when this is not true?
@@ -98,9 +92,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
 
     vkGetAccelerationStructureBuildSizesKHR(GetDevice()->GetVkDevice(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &AccelerationStructureBuildGeometryInfo, &NumTriangles, &AccelerationStructureBuildSizesInfo);
 
-    VkBufferCreateInfo BufferCreateInfo;
-    FMemory::Memzero(&BufferCreateInfo, sizeof(VkBufferCreateInfo));
-
+    VkBufferCreateInfo BufferCreateInfo = {};
     BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferCreateInfo.size        = AccelerationStructureBuildSizesInfo.accelerationStructureSize;
     BufferCreateInfo.usage       = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
@@ -123,9 +115,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
         return false;
     }
 
-    VkAccelerationStructureCreateInfoKHR AccelerationStructureCreateInfo;
-    FMemory::Memzero(&AccelerationStructureCreateInfo, sizeof(VkAccelerationStructureCreateInfoKHR));
-
+    VkAccelerationStructureCreateInfoKHR AccelerationStructureCreateInfo = {};
     AccelerationStructureCreateInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
     AccelerationStructureCreateInfo.createFlags   = 0;
     AccelerationStructureCreateInfo.buffer        = GeometryBuffer;
@@ -163,9 +153,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     AccelerationStructureBuildGeometryInfo.dstAccelerationStructure  = Geometry;
     AccelerationStructureBuildGeometryInfo.scratchData.deviceAddress = ScratchMemory.DeviceAddress;
 
-    VkAccelerationStructureBuildRangeInfoKHR AccelerationStructureBuildRangeInfo;
-    FMemory::Memzero(&AccelerationStructureBuildRangeInfo, sizeof(VkAccelerationStructureBuildRangeInfoKHR));
-
+    VkAccelerationStructureBuildRangeInfoKHR AccelerationStructureBuildRangeInfo = {};
     AccelerationStructureBuildRangeInfo.primitiveCount  = NumTriangles;
     AccelerationStructureBuildRangeInfo.primitiveOffset = 0;
     AccelerationStructureBuildRangeInfo.firstVertex     = 0;
@@ -174,9 +162,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     VkAccelerationStructureBuildRangeInfoKHR* BuildRangeInfos[] = { &AccelerationStructureBuildRangeInfo };
     CmdContext.GetCommandBuffer()->BuildAccelerationStructures(1, &AccelerationStructureBuildGeometryInfo, BuildRangeInfos);
 
-    VkAccelerationStructureDeviceAddressInfoKHR AccelerationDeviceAddressInfo;
-    FMemory::Memzero(&AccelerationDeviceAddressInfo, sizeof(VkAccelerationStructureDeviceAddressInfoKHR));
-
+    VkAccelerationStructureDeviceAddressInfoKHR AccelerationDeviceAddressInfo = {};
     AccelerationDeviceAddressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
     AccelerationDeviceAddressInfo.accelerationStructure = Geometry;
 

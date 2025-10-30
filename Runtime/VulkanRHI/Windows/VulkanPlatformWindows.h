@@ -33,9 +33,6 @@ struct VulkanPlatformWindows : public VulkanPlatformBase
         #if VK_KHR_swapchain
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         #endif
-        #if VK_KHR_synchronization2
-            VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
-        #endif
         };
     }
 

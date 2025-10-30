@@ -52,6 +52,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         // Init DescriptorWrites and count the other bindings
         uint32 NumImageInfos  = 0;
         uint32 NumBufferInfos = 0;
+
         for (int32 Index = 0; Index < SetRemappingInfo.RemappingInfo.Size(); Index++)
         {
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& Binding = SetRemappingInfo.RemappingInfo[Index];
@@ -99,6 +100,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         // Setup Buffer and ImageInfos
         uint32 CurrentImageInfo  = 0;
         uint32 CurrentBufferInfo = 0;
+
         for (int32 Index = 0; Index < DSWrites.DescriptorWrites.Size(); Index++)
         {
             VkWriteDescriptorSet& WriteDescriptorSet = DSWrites.DescriptorWrites[Index];
@@ -397,9 +399,7 @@ bool FVulkanDescriptorPool::Initialize(const FVulkanDescriptorPoolInfo& PoolInfo
         PoolSizes.Add(NewPoolSize);
     }
 
-    VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo;
-    FMemory::Memzero(&DescriptorPoolCreateInfo);
-
+    VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo = {};
     DescriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     DescriptorPoolCreateInfo.maxSets       = MaxDescriptorSetsPerPool;
     DescriptorPoolCreateInfo.flags         = 0;
@@ -474,9 +474,7 @@ FVulkanDescriptorSetCache::FCachedPool::~FCachedPool()
 
 bool FVulkanDescriptorSetCache::FCachedPool::AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet)
 {
-    VkDescriptorSetAllocateInfo AllocateInfo;
-    FMemory::Memzero(&AllocateInfo, sizeof(VkDescriptorSetAllocateInfo));
-
+    VkDescriptorSetAllocateInfo AllocateInfo = {};
     AllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     AllocateInfo.pSetLayouts        = &SetLayout;
     AllocateInfo.descriptorSetCount = 1;

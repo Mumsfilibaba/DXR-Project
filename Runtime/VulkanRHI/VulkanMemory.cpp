@@ -353,9 +353,10 @@ bool FVulkanMemoryHeap::ValidateChain() const
 {
     TArray<FVulkanMemoryBlock*> TraversedBlocks;
 
-    // Traverse all the blocks and put them into an array in order
     FVulkanMemoryBlock* Iterator = Head;
     FVulkanMemoryBlock* Tail     = nullptr;
+    
+    // Traverse all the blocks and put them into an array in order
     while (Iterator != nullptr)
     {
         TraversedBlocks.Emplace(Iterator);
@@ -424,40 +425,41 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
     bool bUseDedicatedAllocation = false;
     
     // Check if the driver prefers us to use a dedicated allocation
-    VkMemoryRequirements MemoryRequirements;
+    VkMemoryRequirements MemoryRequirements = {};
     
     // VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation (Core in 1.2)
-    if (VulkanDedicatedAllocationKHR::IsEnabled())
-    {
-        VkMemoryDedicatedRequirementsKHR MemoryDedicatedRequirements;
-        FMemory::Memzero(&MemoryDedicatedRequirements);
-        MemoryDedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
-        
-        VkMemoryRequirements2KHR MemoryRequirements2;
-        FMemory::Memzero(&MemoryRequirements2);
-        MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR;
+    VkMemoryDedicatedRequirements MemoryDedicatedRequirements = {};
+    MemoryDedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
+    
+    VkMemoryRequirements2KHR MemoryRequirements2 = {};
+    MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR;
 
-        // Add the proper pNext values in the structs
-        FVulkanStructureHelper MemoryRequirements2Helper(MemoryRequirements2);
-        MemoryRequirements2Helper.AddNext(MemoryDedicatedRequirements);
+    VkBufferMemoryRequirementsInfo2 BufferMemoryRequirementsInfo = {};
+    BufferMemoryRequirementsInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2;
+    BufferMemoryRequirementsInfo.buffer = Buffer;
 
-        VkBufferMemoryRequirementsInfo2KHR BufferMemoryRequirementsInfo;
-        FMemory::Memzero(&BufferMemoryRequirementsInfo);
-        BufferMemoryRequirementsInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2_KHR;
-        BufferMemoryRequirementsInfo.buffer = Buffer;
+    // Add the proper pNext values in the structs
+    FVulkanStructChain MemoryRequirements2Chain(MemoryRequirements2);
+    MemoryRequirements2Chain.AddNext(MemoryDedicatedRequirements);
 
-        vkGetBufferMemoryRequirements2KHR(GetDevice()->GetVkDevice(), &BufferMemoryRequirementsInfo, &MemoryRequirements2);
-        MemoryRequirements      = MemoryRequirements2.memoryRequirements;
-        bUseDedicatedAllocation = MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE || MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE;
-    }
-    else
-    {
-        vkGetBufferMemoryRequirements(GetDevice()->GetVkDevice(), Buffer, &MemoryRequirements);
-    }
+    // Get memory requirements
+    vkGetBufferMemoryRequirements2(GetDevice()->GetVkDevice(), &BufferMemoryRequirementsInfo, &MemoryRequirements2);
+
+    MemoryRequirements = MemoryRequirements2.memoryRequirements;
+    bUseDedicatedAllocation = MemoryDedicatedRequirements.requiresDedicatedAllocation == VK_TRUE || 
+        MemoryDedicatedRequirements.prefersDedicatedAllocation == VK_TRUE;
 
     // After checking if we should use dedication allocation, force it on, if that is wanted
     if (bForceDedicatedAllocation)
+    {
         bUseDedicatedAllocation = true;
+    }
+
+    // Here we can override the use of dedicated allocations with a global Vulkan setting
+    if (!GVulkanAllowDedicatedAllocations)
+    {
+        bUseDedicatedAllocation = false;
+    }
 
     // Find the correct type of memory index
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, PropertyFlags);
@@ -471,33 +473,25 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
     bool bResult = false;
     if (bUseDedicatedAllocation)
     {
-        VkMemoryAllocateInfo MemoryAllocateInfo;
-        FMemory::Memzero(&MemoryAllocateInfo);
-
-        FVulkanStructureHelper MemoryAllocateInfoHelper(MemoryAllocateInfo);
+        VkMemoryAllocateInfo MemoryAllocateInfo = {};
         MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         MemoryAllocateInfo.memoryTypeIndex = MemoryTypeIndex;
         MemoryAllocateInfo.allocationSize  = MemoryRequirements.size;
         
-        VkMemoryAllocateFlagsInfo MemoryAllocateFlagsInfo;
-        FMemory::Memzero(&MemoryAllocateFlagsInfo);
-
-        MemoryAllocateInfoHelper.AddNext(MemoryAllocateFlagsInfo);
+        VkMemoryAllocateFlagsInfo MemoryAllocateFlagsInfo = {};
         MemoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
         MemoryAllocateFlagsInfo.flags = AllocateFlags;
         
         // VK_KHR_dedicated_allocation (Core in 1.1)
-        VkMemoryDedicatedAllocateInfoKHR DedicatedAllocateInfo;
-        FMemory::Memzero(&DedicatedAllocateInfo);
-        
-        DedicatedAllocateInfo.sType  = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR;
+        VkMemoryDedicatedAllocateInfo DedicatedAllocateInfo = {};
+        DedicatedAllocateInfo.sType  = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
         DedicatedAllocateInfo.buffer = Buffer;
         
-        if (VulkanDedicatedAllocationKHR::IsEnabled())
-        {
-            VULKAN_INFO("Using dedicated allocation for buffer");
-            MemoryAllocateInfoHelper.AddNext(DedicatedAllocateInfo);
-        }
+        VULKAN_INFO("Using dedicated allocation for buffer");
+        
+        FVulkanStructChain MemoryAllocateInfoChain(MemoryAllocateInfo);
+        MemoryAllocateInfoChain.AddNext(MemoryAllocateFlagsInfo);
+        MemoryAllocateInfoChain.AddNext(DedicatedAllocateInfo);
 
         // Zero all parts of the block
         OutAllocation.Reset();
@@ -530,20 +524,15 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
     if (AllocateFlags & VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT)
     {
         // VK_KHR_buffer_device_address (Core in 1.2)
-        VkBufferDeviceAddressInfo DeviceAdressInfo;
-        FMemory::Memzero(&DeviceAdressInfo);
-
+        VkBufferDeviceAddressInfo DeviceAdressInfo = {};
         DeviceAdressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
         DeviceAdressInfo.buffer = Buffer;
 
-        if (VulkanBufferDeviceAddressKHR::IsEnabled())
+        OutAllocation.DeviceAddress = vkGetBufferDeviceAddress(GetDevice()->GetVkDevice(), &DeviceAdressInfo);
+        if (OutAllocation.DeviceAddress == 0)
         {
-            OutAllocation.DeviceAddress = vkGetBufferDeviceAddressKHR(GetDevice()->GetVkDevice(), &DeviceAdressInfo);
-            if (OutAllocation.DeviceAddress == 0)
-            {
-                VULKAN_ERROR_CRITICAL("vkGetBufferDeviceAddressKHR returned nullptr");
-                return false;
-            }
+            VULKAN_ERROR_CRITICAL("vkGetBufferDeviceAddress returned nullptr");
+            return false;
         }
     }
 
@@ -556,42 +545,41 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
     bool bUseDedicatedAllocation = false;
     
     // Check if the driver prefers us to use a dedicated allocation
-    VkMemoryRequirements MemoryRequirements;
+    VkMemoryRequirements MemoryRequirements = {};
 
     // VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation (Core in 1.2)
-    if (VulkanDedicatedAllocationKHR::IsEnabled())
-    {
-        VkMemoryRequirements2KHR MemoryRequirements2;
-        FMemory::Memzero(&MemoryRequirements2);
+    VkMemoryRequirements2KHR MemoryRequirements2 = {};
+    MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR;
 
-        FVulkanStructureHelper MemoryRequirements2Helper(MemoryRequirements2);
-        MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR;
+    VkMemoryDedicatedRequirements MemoryDedicatedRequirements = {};
+    MemoryDedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
 
-        VkMemoryDedicatedRequirementsKHR MemoryDedicatedRequirements;
-        FMemory::Memzero(&MemoryDedicatedRequirements);
+    VkImageMemoryRequirementsInfo2 ImageMemoryRequirementsInfo = {};
+    ImageMemoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
+    ImageMemoryRequirementsInfo.image = Image;
 
-        // Add the proper pNext values in the structs
-        MemoryRequirements2Helper.AddNext(MemoryDedicatedRequirements);
-        MemoryDedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
-
-        VkImageMemoryRequirementsInfo2KHR ImageMemoryRequirementsInfo;
-        FMemory::Memzero(&ImageMemoryRequirementsInfo);
-        
-        ImageMemoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2_KHR;
-        ImageMemoryRequirementsInfo.image = Image;
-        
-        vkGetImageMemoryRequirements2KHR(GetDevice()->GetVkDevice(), &ImageMemoryRequirementsInfo, &MemoryRequirements2);
-        MemoryRequirements      = MemoryRequirements2.memoryRequirements;
-        bUseDedicatedAllocation = MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE || MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE;
-    }
-    else
-    {
-        vkGetImageMemoryRequirements(GetDevice()->GetVkDevice(), Image, &MemoryRequirements);
-    }
+    // Add the proper pNext values in the structs
+    FVulkanStructChain MemoryRequirements2Chain(MemoryRequirements2);
+    MemoryRequirements2Chain.AddNext(MemoryDedicatedRequirements);
+    
+    // Get memory requirements
+    vkGetImageMemoryRequirements2(GetDevice()->GetVkDevice(), &ImageMemoryRequirementsInfo, &MemoryRequirements2);
+    
+    MemoryRequirements = MemoryRequirements2.memoryRequirements;
+    bUseDedicatedAllocation = MemoryDedicatedRequirements.requiresDedicatedAllocation == VK_TRUE || 
+        MemoryDedicatedRequirements.prefersDedicatedAllocation == VK_TRUE;
 
     // After checking if we should use dedication allocation, force it on, if that is wanted
     if (bForceDedicatedAllocation)
+    {
         bUseDedicatedAllocation = true;
+    }
+
+	// Here we can override the use of dedicated allocations with a global Vulkan setting
+	if (!GVulkanAllowDedicatedAllocations)
+	{
+		bUseDedicatedAllocation = false;
+	}
 
     // Find the correct type of memory index
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, PropertyFlags);
@@ -605,33 +593,25 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
     bool bResult = false;
     if (bUseDedicatedAllocation)
     {
-        VkMemoryAllocateInfo MemoryAllocateInfo;
-        FMemory::Memzero(&MemoryAllocateInfo);
-
-        FVulkanStructureHelper MemoryAllocateInfoHelper(MemoryAllocateInfo);
+        VkMemoryAllocateInfo MemoryAllocateInfo = {};
         MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         MemoryAllocateInfo.memoryTypeIndex = MemoryTypeIndex;
         MemoryAllocateInfo.allocationSize  = MemoryRequirements.size;
         
-        VkMemoryAllocateFlagsInfo MemoryAllocateFlagsInfo;
-        FMemory::Memzero(&MemoryAllocateFlagsInfo);
-
-        MemoryAllocateInfoHelper.AddNext(MemoryAllocateFlagsInfo);
+        VkMemoryAllocateFlagsInfo MemoryAllocateFlagsInfo = {};
         MemoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
         MemoryAllocateFlagsInfo.flags = AllocateFlags;
 
         // VK_KHR_dedicated_allocation (Core in 1.1)
-        VkMemoryDedicatedAllocateInfoKHR DedicatedAllocateInfo;
-        FMemory::Memzero(&DedicatedAllocateInfo);
-
-        DedicatedAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR;
+        VkMemoryDedicatedAllocateInfo DedicatedAllocateInfo = {};
+        DedicatedAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
         DedicatedAllocateInfo.image = Image;
 
-        if (VulkanDedicatedAllocationKHR::IsEnabled())
-        {
-            VULKAN_INFO("Using dedicated allocation for Image");
-            MemoryAllocateInfoHelper.AddNext(DedicatedAllocateInfo);
-        }
+        VULKAN_INFO("Using dedicated allocation for Image");
+
+        FVulkanStructChain MemoryAllocateInfoChain(MemoryAllocateInfo);
+        MemoryAllocateInfoChain.AddNext(MemoryAllocateFlagsInfo);
+        MemoryAllocateInfoChain.AddNext(DedicatedAllocateInfo);
         
         // Zero all parts of the block
         OutAllocation.Reset();
@@ -688,20 +668,18 @@ bool FVulkanMemoryManager::AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemo
 
 bool FVulkanMemoryManager::AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemory, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint32 MemoryIndex)
 {
-    VkMemoryAllocateInfo MemoryAllocateInfo;
-    FMemory::Memzero(&MemoryAllocateInfo);
-
-    FVulkanStructureHelper MemoryAllocateInfoHelper(MemoryAllocateInfo);
+    VkMemoryAllocateInfo MemoryAllocateInfo = {};
     MemoryAllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     MemoryAllocateInfo.memoryTypeIndex = MemoryIndex;
     MemoryAllocateInfo.allocationSize  = SizeInBytes;
     
-    VkMemoryAllocateFlagsInfo MemoryAllocateFlagsInfo;
-    FMemory::Memzero(&MemoryAllocateFlagsInfo);
-
-    MemoryAllocateInfoHelper.AddNext(MemoryAllocateFlagsInfo);
+    VkMemoryAllocateFlagsInfo MemoryAllocateFlagsInfo = {};
     MemoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
     MemoryAllocateFlagsInfo.flags = AllocateFlags;
+    
+    FVulkanStructChain MemoryAllocateInfoChain(MemoryAllocateInfo);
+    MemoryAllocateInfoChain.AddNext(MemoryAllocateFlagsInfo);
+    
     return AllocateMemoryDedicated(OutDeviceMemory, MemoryAllocateInfo);
 }
 

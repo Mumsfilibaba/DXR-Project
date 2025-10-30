@@ -998,9 +998,10 @@ bool FSceneRenderer::InitShadingImage()
     const uint32 Width  = Resources.CurrentRenderWidth / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
     const uint32 Height = Resources.CurrentRenderHeight / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
-    ShadingImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, UsageFlags);
 
+    ShadingImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);
     if (!ShadingImage)
     {
         DEBUG_BREAK();

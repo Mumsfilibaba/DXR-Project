@@ -114,9 +114,6 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
 {
     FMemory::Memzero(&CreateInfo);
     
-    // Helper for checking for extensions
-    FVulkanStructureHelper CreateInfoHelper(CreateInfo);
-    
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     CreateInfo.rasterizerDiscardEnable = VK_FALSE;
     CreateInfo.polygonMode             = ConvertFillMode(InInfo.FillMode);
@@ -136,6 +133,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     // NOTE: This extension is the only way to get parity with D3D12, see the above comment for more information
 #if VK_EXT_depth_clip_enable
     FMemory::Memzero(&DepthClipStateCreateInfo);
+
     DepthClipStateCreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
     DepthClipStateCreateInfo.depthClipEnable = InInfo.bDepthClipEnable ? VK_TRUE : VK_FALSE;
     
@@ -144,29 +142,36 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
         // NOTE: Since this feature is always enabled in D3D12, for now, we do the same in Vulkan
         // since the Depth-clipping is now controlled by a separate value as in D3D12
         CreateInfo.depthClampEnable = VK_TRUE;
-        CreateInfoHelper.AddNext(DepthClipStateCreateInfo);
     }
 #endif
     
 #if VK_EXT_conservative_rasterization
-    FMemory::Memzero(&ConservativeStateCreateInfo);
-    ConservativeStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
-    
-    if (InInfo.bEnableConservativeRaster)
-    {
-        ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT;
-    }
-    else
-    {
-        ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT;
-    }
-
     if (GVulkanSupportsConservativeRasterization)
     {
+        FMemory::Memzero(&ConservativeStateCreateInfo);
+        ConservativeStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
+        
+        if (InInfo.bEnableConservativeRaster)
+        {
+            ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT;
+        }
+        else
+        {
+            ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT;
+        }
+
         const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& ConservativeRasterizationProperties = GetDevice()->GetPhysicalDevice()->GetConservativeRasterizationProperties();
         ConservativeStateCreateInfo.extraPrimitiveOverestimationSize = ConservativeRasterizationProperties.maxExtraPrimitiveOverestimationSize;
-        CreateInfoHelper.AddNext(ConservativeStateCreateInfo);
     }
+#endif
+
+    // Helper for checking for extensions
+    FVulkanStructChain CreateInfoChain(CreateInfo);
+#if VK_EXT_depth_clip_enable
+    CreateInfoChain.AddNext(DepthClipStateCreateInfo);
+#endif
+#if VK_EXT_conservative_rasterization
+    CreateInfoChain.AddNext(ConservativeStateCreateInfo);
 #endif
 }
 
@@ -295,9 +300,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     }
     
     // Gather ShaderModules
-    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo;
-    FMemory::Memzero(&ShaderStageCreateInfo);
-
+    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     ShaderStageCreateInfo.pName = "main";
     
@@ -384,18 +387,13 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     }
 
     // InputAssembly CreateInfo
-    VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo;
-    FMemory::Memzero(&InputAssemblyCreateInfo);
-
+    VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo = {};
     InputAssemblyCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(Info.PrimitiveTopology);
     InputAssemblyCreateInfo.primitiveRestartEnable = Info.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
 
     // Viewport CreateInfo
-    VkPipelineViewportStateCreateInfo ViewportStateCreateInfo;
-    FMemory::Memzero(&ViewportStateCreateInfo);
-
-    // NOTE: We use dynamic state for Viewports and Scissors
+    VkPipelineViewportStateCreateInfo ViewportStateCreateInfo = {};
     ViewportStateCreateInfo.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     ViewportStateCreateInfo.viewportCount = 1;
     ViewportStateCreateInfo.scissorCount  = 1;
@@ -413,9 +411,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     }
 
     // MultiSampling CreateInfo
-    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo;
-    FMemory::Memzero(&MultisamplingCreateInfo);
-
+    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
     MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
     MultisamplingCreateInfo.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
@@ -456,9 +452,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
         VK_DYNAMIC_STATE_BLEND_CONSTANTS,
     };
 
-    VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo;
-    FMemory::Memzero(&DynamicStateCreateInfo);
-
+    VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
@@ -492,9 +486,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     }
 
     // Create PipelineState
-    VkGraphicsPipelineCreateInfo PipelineCreateInfo;
-    FMemory::Memzero(&PipelineCreateInfo);
-
+    VkGraphicsPipelineCreateInfo PipelineCreateInfo = {};
     PipelineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     PipelineCreateInfo.stageCount          = ShaderStages.Size();
     PipelineCreateInfo.pStages             = ShaderStages.Data();
@@ -553,9 +545,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo&
         return false;
     }
 
-    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo;
-    FMemory::Memzero(&ShaderStageCreateInfo);
-
+    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
     ShaderStageCreateInfo.pName  = "main";
@@ -584,9 +574,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo&
     }
 
     // Create the ComputePipeline
-    VkComputePipelineCreateInfo PipelineCreateInfo;
-    FMemory::Memzero(&PipelineCreateInfo);
-
+    VkComputePipelineCreateInfo PipelineCreateInfo = {};
     PipelineCreateInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     PipelineCreateInfo.layout = PipelineLayout->GetVkPipelineLayout();
     PipelineCreateInfo.stage  = ShaderStageCreateInfo;
@@ -636,9 +624,7 @@ bool FVulkanPipelineStateManager::Initialize()
         return true;
     }
     
-    VkPipelineCacheCreateInfo CreateInfo;
-    FMemory::Memzero(&CreateInfo);
-    
+    VkPipelineCacheCreateInfo CreateInfo = {};
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     CreateInfo.pInitialData    = nullptr;
     CreateInfo.initialDataSize = 0;

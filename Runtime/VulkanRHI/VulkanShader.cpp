@@ -97,9 +97,7 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
         return nullptr;
     }
 
-    VkShaderModuleCreateInfo ShaderModuleCreateInfo;
-    FMemory::Memzero(&ShaderModuleCreateInfo);
-
+    VkShaderModuleCreateInfo ShaderModuleCreateInfo = {};
     ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     ShaderModuleCreateInfo.pCode    = PatchedCode.Data();
     ShaderModuleCreateInfo.codeSize = PatchedCode.SizeInBytes();

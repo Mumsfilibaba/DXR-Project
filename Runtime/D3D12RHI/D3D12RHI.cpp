@@ -156,44 +156,53 @@ bool FD3D12RHI::Initialize()
 
 bool FD3D12RHI::InitializeDeviceFeatureSupport()
 {
-	// ---------------------------------------------------------------------
-	// Baseline defaults (so every field is initialized)
-	// ---------------------------------------------------------------------
-	RHIDeviceFeatureSupport::bSupportsGeometryShaders = false;
+	// -------------------------------------------------------------------------------------------
+	// Baseline defaults
+	// -------------------------------------------------------------------------------------------
+	RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = true; // Geometry Shaders are always supported
 	RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
 
-	RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
-	RHIDeviceFeatureSupport::MaxViewInstanceCount = 1;
+	RHIDeviceFeatureSupport::bSupportsViewInstancing     = false;
+	RHIDeviceFeatureSupport::MaxViewInstanceCount        = 1;
 
-	RHIDeviceFeatureSupport::bSupportsRayTracing = false;
-	RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::NotSupported;
+	RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
+	RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
 	RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
 
-	RHIDeviceFeatureSupport::bSupportsVRS = false;
-	RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::NotSupported;
-	RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+	RHIDeviceFeatureSupport::bSupportsVRS                = false;
+	RHIDeviceFeatureSupport::ShadingRateTier             = EShadingRateTier::NotSupported;
+	RHIDeviceFeatureSupport::ShadingRateImageTileSize    = 0;
 
-	RHIDeviceFeatureSupport::bSupportDrawIndirect      = true;   // D3D12 core
-	RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = false;  // no native MDI; use ExecuteIndirect
-	RHIDeviceFeatureSupport::MaxDrawIndirectCount      = 1;
+	RHIDeviceFeatureSupport::bSupportDrawIndirect        = true;
+	RHIDeviceFeatureSupport::bSupportMultiDrawIndirect   = true;
+	RHIDeviceFeatureSupport::MaxDrawIndirectCount        = uint32(~0u);
 
-	// Texture / image limits (canonical D3D12 constants)
-	RHIDeviceFeatureSupport::MaxTexture1DSize        = D3D12_REQ_TEXTURE1D_U_DIMENSION;            // 16384
-	RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION;   // 2048
+	// -------------------------------------------------------------------------------------------
+	// Texture / image limits (canonical D3D12 defines)
+	// -------------------------------------------------------------------------------------------
+	RHIDeviceFeatureSupport::MaxTexture1DSize        = D3D12_REQ_TEXTURE1D_U_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture2DSize        = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture3DWidth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture3DHeight      = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture3DDepth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+	RHIDeviceFeatureSupport::MaxCubeTextureSize      = D3D12_REQ_TEXTURECUBE_DIMENSION;
+	RHIDeviceFeatureSupport::MaxCubeArrayCount       = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / RHI_NUM_CUBE_FACES;
 
-	RHIDeviceFeatureSupport::MaxTexture2DSize        = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;       // 16384
-	RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;   // 2048
+	// -------------------------------------------------------------------------------------------
+	// Buffer / memory limits
+	// -------------------------------------------------------------------------------------------
+	RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0ull);
+	RHIDeviceFeatureSupport::MaxConstantBufferSize      = D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16;
+	RHIDeviceFeatureSupport::MaxStorageBufferSize       = uint64(~0ull);
+	RHIDeviceFeatureSupport::StructuredBufferMinStride  = 0;
+	RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint32(~0u);
+	RHIDeviceFeatureSupport::RawBufferRequiredAlignment = D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT;
 
-	RHIDeviceFeatureSupport::MaxTexture3DWidth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;     // 2048
-	RHIDeviceFeatureSupport::MaxTexture3DHeight      = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;     // 2048
-	RHIDeviceFeatureSupport::MaxTexture3DDepth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;     // 2048
-
-	RHIDeviceFeatureSupport::MaxCubeTextureSize      = D3D12_REQ_TEXTURECUBE_DIMENSION;            // 16384
-	RHIDeviceFeatureSupport::MaxCubeArrayCount       = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / RHI_NUM_CUBE_FACES; // 2048/6
-
-	// ---------------------------------------------------------------------
-	// SV_RenderTargetArrayIndex from VS (no GS emulation required)
-	// ---------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+	// SV_RenderTargetArrayIndex from VS
+	// -------------------------------------------------------------------------------------------
 	{
 		D3D12_FEATURE_DATA_D3D12_OPTIONS Features = {};
 		if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(Features))))
@@ -202,78 +211,74 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
 		}
 	}
 
-	// ---------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// Ray Tracing (DXR)
-	// ---------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
 	{
-		RHIDeviceFeatureSupport::bSupportsRayTracing = true;
-		RHIDeviceFeatureSupport::RayTracingTier = (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1) ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
-		RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH; // 31
+		RHIDeviceFeatureSupport::bSupportsRayTracing         = true;
+		RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+
+        if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
+        {
+            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1_1;
+        }
+        else
+        {
+            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1;
+        }
 	}
 	else
 	{
-		RHIDeviceFeatureSupport::bSupportsRayTracing = false;
-		RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::NotSupported;
+		RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
 		RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+		RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
 	}
 
-	// ---------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// View Instancing
-	// ---------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+	if (GD3D12ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
 	{
-		D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3 = {};
-		if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(Features3))))
-		{
-			if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
-			{
-				RHIDeviceFeatureSupport::bSupportsViewInstancing = true;
-				RHIDeviceFeatureSupport::MaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT; // 32
-			}
-			else
-			{
-				RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
-				RHIDeviceFeatureSupport::MaxViewInstanceCount = 1;
-			}
-		}
-		else
-		{
-			RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
-			RHIDeviceFeatureSupport::MaxViewInstanceCount = 1;
-		}
+		RHIDeviceFeatureSupport::bSupportsViewInstancing = true;
+		RHIDeviceFeatureSupport::MaxViewInstanceCount    = D3D12_MAX_VIEW_INSTANCE_COUNT;
+	}
+	else
+	{
+		RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
+		RHIDeviceFeatureSupport::MaxViewInstanceCount    = 1;
 	}
 
-	// ---------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// Variable Rate Shading (VRS)
-	// ---------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	switch (GD3D12VariableRateShadingTier)
 	{
 	default:
 	case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
-		RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::NotSupported;
-		RHIDeviceFeatureSupport::bSupportsVRS = false;
+		RHIDeviceFeatureSupport::ShadingRateTier          = EShadingRateTier::NotSupported;
+		RHIDeviceFeatureSupport::bSupportsVRS             = false;
 		RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
 		break;
 
 	case D3D12_VARIABLE_SHADING_RATE_TIER_1:
 		RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier1;
-		RHIDeviceFeatureSupport::bSupportsVRS = true;
-		// Tile size query lives in OPTIONS6 — fall through to fetch below
+		RHIDeviceFeatureSupport::bSupportsVRS    = true;
 		break;
 
 	case D3D12_VARIABLE_SHADING_RATE_TIER_2:
 		RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier2;
-		RHIDeviceFeatureSupport::bSupportsVRS = true;
-		// Tile size query lives in OPTIONS6 — fall through to fetch below
+		RHIDeviceFeatureSupport::bSupportsVRS    = true;
 		break;
 	}
 
 	if (RHIDeviceFeatureSupport::bSupportsVRS)
 	{
+		// Tile size is not cached
 		D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6 = {};
 		if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(Features6))))
 		{
-			RHIDeviceFeatureSupport::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize; // usually 16
+			RHIDeviceFeatureSupport::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
 		}
 		else
 		{
@@ -281,13 +286,9 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
 		}
 	}
 
-	// ---------------------------------------------------------------------
-	// Geometry Shaders
-	// ---------------------------------------------------------------------
-	RHIDeviceFeatureSupport::bSupportsGeometryShaders = true; // D3D12-era hardware
-
 	return true;
 }
+
 
 FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {

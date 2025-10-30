@@ -48,18 +48,18 @@ void FRHIValidation::EndFrame()
 
 FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// Basic sanity
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	if (InTextureInfo.Dimension == ETextureDimension::None)
 	{
-		RHI_VALIDATION_ERROR("Invalid texture dimension (None). A valid ETextureDimension must be specified.");
+		RHI_VALIDATION_ERROR("CreateTexture: Invalid texture dimension (None). A valid ETextureDimension must be specified.");
 		return nullptr;
 	}
 
 	if (InTextureInfo.GetWidth() == 0 || InTextureInfo.GetHeight() == 0)
 	{
-		RHI_VALIDATION_ERROR("Invalid texture extent (Width=%u, Height=%u). Both dimensions must be greater than zero.", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+		RHI_VALIDATION_ERROR("CreateTexture: Invalid texture extent (Width=%u, Height=%u). Both dimensions must be greater than zero.", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
 		return nullptr;
 	}
 
@@ -67,31 +67,31 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	{
 		if (InTextureInfo.GetDepth() == 0)
 		{
-			RHI_VALIDATION_ERROR("Texture3D requires Depth > 0. (ExtentZ=%u).", InTextureInfo.GetDepth());
+			RHI_VALIDATION_ERROR("CreateTexture: Texture3D requires Depth > 0. (Depth=%u).", InTextureInfo.GetDepth());
 			return nullptr;
 		}
 
 		if (InTextureInfo.NumArraySlices != 1)
 		{
-			RHI_VALIDATION_ERROR("Texture3D must have NumArraySlices == 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			RHI_VALIDATION_ERROR("CreateTexture: Texture3D must have NumArraySlices == 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
 			return nullptr;
 		}
 	}
 	else if (InTextureInfo.GetDepth() != 0)
 	{
-		RHI_VALIDATION_ERROR("Non-3D textures must have Depth == 0. (ExtentZ=%u).", InTextureInfo.GetDepth());
+		RHI_VALIDATION_ERROR("CreateTexture: Non-3D textures must have Depth == 0. (Depth=%u).", InTextureInfo.GetDepth());
 		return nullptr;
 	}
 
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// Dimension-specific rules
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	switch (InTextureInfo.Dimension)
 	{
 	case ETextureDimension::Texture2D:
 		if (InTextureInfo.NumArraySlices != 1)
 		{
-			RHI_VALIDATION_ERROR("(Texture2D) NumArraySlices must be 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2D) NumArraySlices must be 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
 			return nullptr;
 		}
 
@@ -100,7 +100,7 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	case ETextureDimension::Texture2DArray:
 		if (InTextureInfo.NumArraySlices == 0)
 		{
-			RHI_VALIDATION_ERROR("(Texture2DArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2DArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
 			return nullptr;
 		}
 
@@ -109,13 +109,13 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	case ETextureDimension::TextureCube:
 		if (InTextureInfo.GetWidth() != InTextureInfo.GetHeight())
 		{
-			RHI_VALIDATION_ERROR("(TextureCube) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCube) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
 			return nullptr;
 		}
 		
         if (InTextureInfo.NumArraySlices != 1)
 		{
-			RHI_VALIDATION_ERROR("(TextureCube) NumArraySlices must be 1. (NumArraySlices=%u). Use TextureCubeArray for arrays.", InTextureInfo.NumArraySlices);
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCube) NumArraySlices must be 1. (NumArraySlices=%u). Use TextureCubeArray for arrays.", InTextureInfo.NumArraySlices);
 			return nullptr;
 		}
 
@@ -124,13 +124,13 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	case ETextureDimension::TextureCubeArray:
 		if (InTextureInfo.GetWidth() != InTextureInfo.GetHeight())
 		{
-			RHI_VALIDATION_ERROR("(TextureCubeArray) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCubeArray) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
 			return nullptr;
 		}
 
 		if (InTextureInfo.NumArraySlices == 0)
 		{
-			RHI_VALIDATION_ERROR("(TextureCubeArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCubeArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
 			return nullptr;
 		}
 
@@ -140,19 +140,19 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 		break;
 
 	default:
-		RHI_VALIDATION_ERROR("Unsupported ETextureDimension enum value (%u).", static_cast<uint32>(InTextureInfo.Dimension));
+		RHI_VALIDATION_ERROR("CreateTexture: Unsupported ETextureDimension enum value (%s).", ToString(InTextureInfo.Dimension));
 		return nullptr;
 	}
 
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// Device feature support checks
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	if (InTextureInfo.IsTexture3D())
 	{
 		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxTexture3DWidth || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxTexture3DHeight ||
 			InTextureInfo.GetDepth() > RHIDeviceFeatureSupport::MaxTexture3DDepth)
 		{
-			RHI_VALIDATION_ERROR("(Texture3D) Extent (%u,%u,%u) exceeds device feature support limit (%u,%u,%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture3D) Extent (%u,%u,%u) exceeds device feature support limit (%u,%u,%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
                 InTextureInfo.GetDepth(), RHIDeviceFeatureSupport::MaxTexture3DWidth, RHIDeviceFeatureSupport::MaxTexture3DHeight, RHIDeviceFeatureSupport::MaxTexture3DDepth);
 			return nullptr;
 		}
@@ -161,7 +161,7 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	{
 		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxCubeTextureSize || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxCubeTextureSize)
 		{
-			RHI_VALIDATION_ERROR("(TextureCube) Face extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCube) Face extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
 				RHIDeviceFeatureSupport::MaxCubeTextureSize);
 			return nullptr;
 		}
@@ -171,8 +171,8 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 			const uint32 MaxCubeArraySlices = RHIDeviceFeatureSupport::MaxCubeArrayCount * RHI_NUM_CUBE_FACES;
 			if (InTextureInfo.NumArraySlices > MaxCubeArraySlices)
 			{
-				RHI_VALIDATION_ERROR("(TextureCubeArray) NumArraySlices (%u) exceeds device feature support limit (%u). (Cubes=%u)", InTextureInfo.NumArraySlices, MaxCubeArraySlices,
-                    RHIDeviceFeatureSupport::MaxCubeArrayCount);
+				RHI_VALIDATION_ERROR("CreateTexture: (TextureCubeArray) NumArraySlices (%u) exceeds device feature support limit (%u). (Cubes=%u)", 
+                    InTextureInfo.NumArraySlices, MaxCubeArraySlices, RHIDeviceFeatureSupport::MaxCubeArrayCount);
 				return nullptr;
 			}
 		}
@@ -181,23 +181,25 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	{
 		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxTexture2DSize || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxTexture2DSize)
 		{
-			RHI_VALIDATION_ERROR("(Texture2D) Extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), RHIDeviceFeatureSupport::MaxTexture2DSize);
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2D) Extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+                RHIDeviceFeatureSupport::MaxTexture2DSize);
 			return nullptr;
 		}
 
 		if (InTextureInfo.IsTexture2DArray() && InTextureInfo.NumArraySlices > RHIDeviceFeatureSupport::MaxTexture2DArrayLayers)
 		{
-			RHI_VALIDATION_ERROR("(Texture2DArray) NumArraySlices (%u) exceeds device feature support limit (%u).", InTextureInfo.NumArraySlices, RHIDeviceFeatureSupport::MaxTexture2DArrayLayers);
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2DArray) NumArraySlices (%u) exceeds device feature support limit (%u).", InTextureInfo.NumArraySlices, 
+                RHIDeviceFeatureSupport::MaxTexture2DArrayLayers);
 			return nullptr;
 		}
 	}
 
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// MipLevels
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	if (InTextureInfo.NumMipLevels == 0)
 	{
-		RHI_VALIDATION_ERROR("Invalid NumMipLevels (0). A texture must have at least one mip level.");
+		RHI_VALIDATION_ERROR("CreateTexture: Invalid NumMipLevels (0). A texture must have at least one mip level.");
 		return nullptr;
 	}
 
@@ -205,7 +207,7 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	{
 		if (InTextureInfo.NumMipLevels != 1)
 		{
-			RHI_VALIDATION_ERROR("Multisampled texture cannot have mip chains. (NumMipLevels=%u, Expected=1).", InTextureInfo.NumMipLevels);
+			RHI_VALIDATION_ERROR("CreateTexture: Multisampled texture cannot have mip chains. (NumMipLevels=%u, Expected=1).", InTextureInfo.NumMipLevels);
 			return nullptr;
 		}
 	}
@@ -214,30 +216,30 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 		const uint32 MaxPossibleMipLevels = Math::MaxMipLevelsFromExtent(InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), InTextureInfo.IsTexture3D() ? InTextureInfo.GetDepth() : 1u);
 		if (InTextureInfo.NumMipLevels > MaxPossibleMipLevels)
 		{
-			RHI_VALIDATION_ERROR("NumMipLevels (%u) exceeds maximum allowed (%u) based on texture extent (%u,%u,%u).", InTextureInfo.NumMipLevels, MaxPossibleMipLevels,
+			RHI_VALIDATION_ERROR("CreateTexture: NumMipLevels (%u) exceeds maximum allowed (%u) based on texture extent (%u,%u,%u).", InTextureInfo.NumMipLevels, MaxPossibleMipLevels,
 				InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), InTextureInfo.IsTexture3D() ? InTextureInfo.GetDepth() : 1u);
 			return nullptr;
 		}
 	}
 
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// Sample count sanity
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	if (InTextureInfo.NumSamples == 0)
 	{
-		RHI_VALIDATION_ERROR("NumSamples must be >= 1. (Got 0).");
+		RHI_VALIDATION_ERROR("CreateTexture: NumSamples must be >= 1. (Got 0).");
 		return nullptr;
 	}
 
 	if (InTextureInfo.IsTexture3D() && InTextureInfo.NumSamples > 1)
 	{
-		RHI_VALIDATION_ERROR("Texture3D does not support MSAA. (NumSamples=%u, Expected=1).", InTextureInfo.NumSamples);
+		RHI_VALIDATION_ERROR("CreateTexture: Texture3D does not support MSAA. (NumSamples=%u, Expected=1).", InTextureInfo.NumSamples);
 		return nullptr;
 	}
 
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	// Usage flag combinations
-	// ------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
 	const bool bIsRenderTarget = InTextureInfo.IsRenderTarget();
 	const bool bIsDepthStencil = InTextureInfo.IsDepthStencil();
 	const bool bIsUAV          = InTextureInfo.IsUnorderedAccessTexture();
@@ -245,56 +247,184 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 
 	if (bIsRenderTarget && bIsDepthStencil)
 	{
-		RHI_VALIDATION_ERROR("Texture cannot have both RenderTarget and DepthStencil usage flags set.");
+		RHI_VALIDATION_ERROR("CreateTexture: Texture cannot have both RenderTarget and DepthStencil usage flags set.");
 		return nullptr;
 	}
 
 	if (bIsDepthStencil && bIsUAV)
 	{
-		RHI_VALIDATION_ERROR("DepthStencil textures cannot have UnorderedAccessTexture usage flag set.");
+		RHI_VALIDATION_ERROR("CreateTexture: DepthStencil textures cannot have UnorderedAccessTexture usage flag set.");
 		return nullptr;
 	}
 
 	if (InTextureInfo.IsMultisampled() && bIsUAV)
 	{
-		RHI_VALIDATION_ERROR("Multisampled textures cannot have UnorderedAccessTexture usage flag set.");
+		RHI_VALIDATION_ERROR("CreateTexture: Multisampled textures cannot have UnorderedAccessTexture usage flag set.");
 		return nullptr;
 	}
 
 	if (bIsPresentable)
 	{
-		if (!InTextureInfo.IsTexture2D())
-		{
-			RHI_VALIDATION_ERROR("Presentable textures must be 2D. (Got Dimension=%u).", static_cast<uint32>(InTextureInfo.Dimension));
-			return nullptr;
-		}
-		
-        if (InTextureInfo.NumArraySlices != 1)
-		{
-			RHI_VALIDATION_ERROR("Presentable texture NumArraySlices (%u) is invalid. Expected 1 for swapchain surfaces.", InTextureInfo.NumArraySlices);
-			return nullptr;
-		}
-		
-        if (InTextureInfo.NumMipLevels != 1)
-		{
-			RHI_VALIDATION_ERROR("Presentable texture NumMipLevels (%u) invalid. Expected 1 for swapchain surfaces.", InTextureInfo.NumMipLevels);
-			return nullptr;
-		}
-
-		if (InTextureInfo.NumSamples != 1)
-		{
-			RHI_VALIDATION_ERROR("Presentable texture MSAA sample count (%u) invalid. Expected 1 for swapchain surfaces.", InTextureInfo.NumSamples);
-			return nullptr;
-		}
+		RHI_VALIDATION_ERROR("CreateTexture: Presentable textures are retrieved via a SwapChain.");
+		return nullptr;
 	}
 
-	// Forward to real RHI
 	return RealRHI->CreateTexture(InTextureInfo, InInitialState, InInitialData);
 }
 
-FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& BufferInfo, EResourceAccess InitialState, const void* InitialData)
 {
-    return RealRHI->CreateBuffer(InBufferInfo, InInitialState, InInitialData);
+    // -------------------------------------------------------------------------------------------
+    // Basic sanity
+    // -------------------------------------------------------------------------------------------
+    if (BufferInfo.Size == 0)
+    {
+        RHI_VALIDATION_ERROR("CreateBuffer: Buffer size must be greater than zero. (parameter 'Size' was 0 bytes)");
+        return nullptr;
+    }
+
+    if (BufferInfo.Flags == EBufferFlags::None)
+    {
+        RHI_VALIDATION_ERROR("CreateBuffer: Buffer flags must be specified. (parameter 'Flags' was EBufferFlags::None)");
+        return nullptr;
+    }
+
+    if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxBufferSize)
+    {
+		RHI_VALIDATION_ERROR("CreateBuffer: The buffer size (%llu bytes) exceeds device feature support. (MaxBufferSize=%llu)",
+			static_cast<uint64>(BufferInfo.Size), static_cast<uint64>(RHIDeviceFeatureSupport::MaxBufferSize));
+        return nullptr;
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Memory flags: require exactly one of Default/Dynamic/ReadBack
+    // -------------------------------------------------------------------------------------------
+    const bool bMemoryDefault  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Default);
+    const bool bMemoryDynamic  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Dynamic);
+    const bool bMemoryReadBack = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::ReadBack);
+
+    const int32 StorageFlagCount = (bMemoryDefault ? 1 : 0) + (bMemoryDynamic ? 1 : 0) + (bMemoryReadBack ? 1 : 0);
+    if (StorageFlagCount != 1)
+    {
+        RHI_VALIDATION_ERROR("CreateBuffer: Exactly one memory flag must be set. The options are Default/Dynamic/ReadBack. (The flags set are Default=%s, Dynamic=%s, ReadBack=%s)",
+            bMemoryDefault ? "true" : "false", bMemoryDynamic ? "true" : "false", bMemoryReadBack ? "true" : "false");
+        return nullptr;
+    }
+
+    const bool bIsConstantBuffer        = BufferInfo.IsConstantBuffer();
+    const bool bIsShaderResourceBuffer  = BufferInfo.IsShaderResourceBuffer();
+    const bool bIsVertexBuffer          = BufferInfo.IsVertexBuffer();
+    const bool bIsIndexBuffer           = BufferInfo.IsIndexBuffer();
+    const bool bIsUnorderedAccessBuffer = BufferInfo.IsUnorderedAccessBuffer();
+
+    // -------------------------------------------------------------------------------------------
+    // Constant buffer rules
+    // -------------------------------------------------------------------------------------------
+    if (bIsConstantBuffer)
+    {
+        // Disallow ReadBack for CB (GPU-read only in practice)
+        if (bMemoryReadBack)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: a buffer with ConstantBuffer usage-flag cannot use ReadBack memory. Use Default or Dynamic for GPU-accessible ConstantBuffer.");
+            return nullptr;
+        }
+
+        if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxConstantBufferSize)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: size (%llu bytes) exceeds device feature support. (MaxConstantBufferSize=%u)", 
+                static_cast<uint64>(BufferInfo.Size), RHIDeviceFeatureSupport::MaxConstantBufferSize);
+            return nullptr;
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Vertex / Index buffer rules
+    // -------------------------------------------------------------------------------------------
+    if (bIsVertexBuffer || bIsIndexBuffer)
+    {
+        if (BufferInfo.Stride == 0)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: %s requires a non-zero Stride. (Stride=0)", bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer");
+            return nullptr;
+        }
+
+        if ((BufferInfo.Size % BufferInfo.Stride) != 0ull)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: %s size must be a multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
+                bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer", static_cast<uint64>(BufferInfo.Size), BufferInfo.Stride);
+            return nullptr;
+        }
+
+        if (bIsIndexBuffer)
+        {
+            if (!(BufferInfo.Stride == 2u || BufferInfo.Stride == 4u))
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: IndexBuffer stride must be 2 or 4 bytes (uint16 or uint32). (Stride=%u)", BufferInfo.Stride);
+                return nullptr;
+            }
+        }
+
+        if (bMemoryReadBack)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: VertexBuffer/IndexBuffer cannot use ReadBack storage. Use Default or Dynamic memory for GPU pipeline consumption.");
+            return nullptr;
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // SRV/UAV buffer rules
+    // -------------------------------------------------------------------------------------------
+    if (bIsShaderResourceBuffer || bIsUnorderedAccessBuffer)
+    {
+        if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxStorageBufferSize)
+        {
+			RHI_VALIDATION_ERROR("CreateBuffer: %s size exceeds device feature support. (Size=%llu, MaxStorageBufferSize=%llu)",
+				bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer", static_cast<uint64>(BufferInfo.Size),
+				static_cast<uint64>(RHIDeviceFeatureSupport::MaxStorageBufferSize));
+            return nullptr;
+        }
+
+        if (BufferInfo.Stride > 0)
+        {
+            // Structured: enforce stride window and size divisibility
+            const uint32 MinStride = RHIDeviceFeatureSupport::StructuredBufferMinStride;
+            const uint32 MaxStride = RHIDeviceFeatureSupport::StructuredBufferMaxStride;
+
+            if (BufferInfo.Stride < MinStride || BufferInfo.Stride > MaxStride)
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer stride is outside device feature support. (Stride=%u, Allowed range: [%u, %u])", 
+                    BufferInfo.Stride, MinStride, MaxStride);
+                return nullptr;
+            }
+
+            if ((BufferInfo.Size % BufferInfo.Stride) != 0ull)
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer size must be an integer multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
+                    static_cast<uint64>(BufferInfo.Size), BufferInfo.Stride);
+                return nullptr;
+            }
+        }
+        else
+        {
+            const uint64 RequiredAlignment = static_cast<uint64>(RHIDeviceFeatureSupport::RawBufferRequiredAlignment);
+            if ((BufferInfo.Size % RequiredAlignment) != 0ull)
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: RWBuffer size must be aligned to satisfy device feature support. (Size=%llu, RequiredAlignment=%llu)",
+                    static_cast<uint64>(BufferInfo.Size), static_cast<uint64>(RequiredAlignment));
+                return nullptr;
+            }
+        }
+
+        // ReadBack heaps are not suitable for SRV/UAV usage
+        if (bMemoryReadBack)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: %s cannot use ReadBack storage. ReadBack heaps are not GPU-readable/writable.",
+                bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer");
+            return nullptr;
+        }
+    }
+
+    return RealRHI->CreateBuffer(BufferInfo, InitialState, InitialData);
 }
 
 FRHISamplerState* FRHIValidation::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)

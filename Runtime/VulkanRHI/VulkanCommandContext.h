@@ -159,6 +159,8 @@ public:
     }
 
 private:
+    void ForceFlushCommandPool();
+
     FVulkanQueue&              Queue;
     FVulkanCommandPool*        CommandPool;
     FVulkanCommandBuffer*      CommandBuffer;

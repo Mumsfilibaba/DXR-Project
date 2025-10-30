@@ -7,29 +7,82 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanInstance.h"
 
-////////////////////////////////////////////////////
-// Global variables that describe different features
+// -------------------------------------------------------------------------------------------
+// Vulkan Device Feature Support
+// -------------------------------------------------------------------------------------------
 
-VULKANRHI_API bool GVulkanForceBinding                    = false;
-VULKANRHI_API bool GVulkanForceDedicatedAllocations       = false;
-VULKANRHI_API bool GVulkanForceDedicatedImageAllocations  = GVulkanForceDedicatedAllocations || true;
-VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations = GVulkanForceDedicatedAllocations || false;
-VULKANRHI_API bool GVulkanAllowNullDescriptors            = true;
-VULKANRHI_API bool GVulkanAllowGeometryShaders            = false;
-VULKANRHI_API bool GVulkanAllowResetCommandBuffers        = false;
+VULKANRHI_API bool   GVulkanForceBinding                        = false;
+VULKANRHI_API bool   GVulkanForceDedicatedAllocations           = true;
+VULKANRHI_API bool   GVulkanForceDedicatedImageAllocations      = GVulkanForceDedicatedAllocations || false;
+VULKANRHI_API bool   GVulkanForceDedicatedBufferAllocations     = GVulkanForceDedicatedAllocations || false;
 
-VULKANRHI_API bool GVulkanSupportsDepthClip                 = false;
-VULKANRHI_API bool GVulkanSupportsConservativeRasterization = false;
-VULKANRHI_API bool GVulkanSupportsPipelineCacheControl      = false;
-VULKANRHI_API bool GVulkanSupportsAccelerationStructures    = false;
-VULKANRHI_API bool GVulkanSupportsMultiviews                = false;
+VULKANRHI_API bool   GVulkanAllowDedicatedAllocations           = false;
+VULKANRHI_API bool   GVulkanAllowNullDescriptors                = true;
+VULKANRHI_API bool   GVulkanAllowGeometryShaders                = true;
+VULKANRHI_API bool   GVulkanAllowResetCommandBuffers            = false;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper
+VULKANRHI_API bool   GVulkanSupportsDepthClip                   = false;
+VULKANRHI_API bool   GVulkanSupportsNullDescriptors             = false;
+VULKANRHI_API bool   GVulkanSupportsConservativeRasterization   = false;
+VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl        = false;
+VULKANRHI_API bool   GVulkanSupportsMultiviews                  = false;
+VULKANRHI_API bool   GVulkanSupportsBindless                    = false;
+VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest             = false;
+VULKANRHI_API bool   GVulkanSupportsSparseBinding               = false;
+VULKANRHI_API bool   GVulkanSupportsSparseResidency2D           = false;
+VULKANRHI_API bool   GVulkanSupportsSparseResidency3D           = false;
+VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased      = false;
+
+VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount               = 1;
+VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount                = 1;
+
+// -------------------------------------------------------------------------------------------
+// Programmable sample positions (VK_EXT_sample_locations)
+// -------------------------------------------------------------------------------------------
+VULKANRHI_API bool   GVulkanSupportsSampleLocations             = false;
+
+// -------------------------------------------------------------------------------------------
+// Fragment shader interlock (VK_EXT_fragment_shader_interlock)
+// -------------------------------------------------------------------------------------------
+VULKANRHI_API bool   GVulkanSupportsFragmentShaderInterlock     = false;
+
+// -------------------------------------------------------------------------------------------
+// Ray Tracing (VK_KHR_ray_tracing_pipeline, VK_KHR_ray_query)
+// -------------------------------------------------------------------------------------------
+VULKANRHI_API bool   GVulkanSupportsRayTracingPipeline          = false;
+VULKANRHI_API bool   GVulkanSupportsRayQuery                    = false;
+VULKANRHI_API bool   GVulkanSupportsAccelerationStructures      = false;
+
+// -------------------------------------------------------------------------------------------
+// Variable Rate Shading (VK_KHR_fragment_shading_rate)
+// -------------------------------------------------------------------------------------------
+VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate         = false;
+VULKANRHI_API uint32 GVulkanShadingRateTileSize                 = 0;
+
+// -------------------------------------------------------------------------------------------
+// Mesh Shaders (VK_EXT_mesh_shader)
+// -------------------------------------------------------------------------------------------
+VULKANRHI_API bool   GVulkanSupportsMeshShaders                 = false;
+VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices               = 0;
+VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations         = 0;
+VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations         = 0;
+
+// -------------------------------------------------------------------------------------------
+// Descriptor / Heap Limits
+// -------------------------------------------------------------------------------------------
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers            = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages       = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages       = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers      = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers      = 0;
+
+// -------------------------------------------------------------------------------------------
+// Helpers
+// -------------------------------------------------------------------------------------------
 
 static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
 {
-    if (!GVulkanAllowNullDescriptors && FCString::Strcmp(ExtensionProperty.extensionName, VK_EXT_ROBUSTNESS_2_EXTENSION_NAME) == 0)
+    if (!GVulkanAllowNullDescriptors && FCString::Strcmp(ExtensionProperty.extensionName, VK_KHR_ROBUSTNESS_2_EXTENSION_NAME) == 0)
     {
         return false;
     }
@@ -39,102 +92,90 @@ static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
     }
 }
 
-static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhysicalDeviceCreateInfo& DeviceDesc)
+template <typename FeatureStructType>
+static bool CheckRequiredFeatures(const FeatureStructType& RequiredFeatures, const FeatureStructType& AvailableFeatures, const char* StructName, const char* DeviceName)
 {
-    // Get the physical device properties
-    VkPhysicalDeviceProperties AdapterProperties;
-    vkGetPhysicalDeviceProperties(PhysicalDevice, &AdapterProperties);
+    TVulkanFeatureView<const FeatureStructType> RequiredFeaturesView(RequiredFeatures);
+    TVulkanFeatureView<const FeatureStructType> AvailableFeaturesView(AvailableFeatures);
 
-    // Get the physical device features
-    VkPhysicalDeviceFeatures2 DeviceFeatures2;
-    FMemory::Memzero(&DeviceFeatures2);
-    DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    
-    // Helper for checking for extensions
-    FVulkanStructureHelper DeviceFeaturesHelper(DeviceFeatures2);
+	for (SIZE_T i = 0; i < RequiredFeaturesView.Size(); ++i)
+	{
+		if (RequiredFeaturesView[i] == VK_TRUE && AvailableFeaturesView[i] != VK_TRUE)
+		{
+			VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See %s[%llu]", DeviceName, StructName, static_cast<uint64>(i));
+			return false;
+		}
+	}
 
-    // Vulkan 1.1 features
-    VkPhysicalDeviceVulkan11Features DeviceFeatures11;
-    FMemory::Memzero(&DeviceFeatures11);
-    DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-    DeviceFeaturesHelper.AddNext(DeviceFeatures11);
+	return true;
+}
 
-    // Vulkan 1.2 features
-    VkPhysicalDeviceVulkan12Features DeviceFeatures12;
-    FMemory::Memzero(&DeviceFeatures12);
-    DeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    DeviceFeaturesHelper.AddNext(DeviceFeatures12);
+static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanDeviceCreateInfo& DeviceCreateInfo)
+{
+	VkPhysicalDeviceProperties AdapterProperties = {};
+	vkGetPhysicalDeviceProperties(PhysicalDevice, &AdapterProperties);
 
-    // Get the physical device features
-    vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
+	VkPhysicalDeviceFeatures2 DeviceFeatures2 = {};
+	DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
-    // Check Vulkan 1.0 features
-    const uint64 NumFeatures10 = ((OFFSETOF(VkPhysicalDeviceFeatures, inheritedQueries) - OFFSETOF(VkPhysicalDeviceFeatures, robustBufferAccess)) / sizeof(VkBool32)) + 1;
+	VkPhysicalDeviceVulkan11Features DeviceFeatures11 = {};
+	DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
 
-    const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures);
-    const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures2.features);
+	VkPhysicalDeviceVulkan12Features DeviceFeatures12 = {};
+	DeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
 
-    bool bHasAllFeatures = true;
-    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures10; ++FeatureIndex)
-    {
-        if (RequiredFeatures[FeatureIndex] == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
-        {
-            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceFeatures[%d]", AdapterProperties.deviceName, FeatureIndex);
-            bHasAllFeatures = false;
-            break;
-        }
-    }
+	VkPhysicalDeviceVulkan13Features DeviceFeatures13 = {};
+	DeviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 
-    if (!bHasAllFeatures)
-    {
-        return false;
-    }
+	FVulkanStructChain FeatureChain(DeviceFeatures2);
+	FeatureChain.AddNext(DeviceFeatures11);
+	FeatureChain.AddNext(DeviceFeatures12);
+	FeatureChain.AddNext(DeviceFeatures13);
 
-    // Check Vulkan 1.1 features
-    const uint64 NumFeatures11 = ((OFFSETOF(VkPhysicalDeviceVulkan11Features, shaderDrawParameters) - OFFSETOF(VkPhysicalDeviceVulkan11Features, storageBuffer16BitAccess)) / sizeof(VkBool32)) + 1;
+	vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
 
-    RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures11.storageBuffer16BitAccess);
-    AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures11.storageBuffer16BitAccess);
+	// Vulkan 1.0
+	if (!CheckRequiredFeatures(DeviceCreateInfo.RequiredFeatures, DeviceFeatures2.features, "VkPhysicalDeviceFeatures", AdapterProperties.deviceName))
+	{
+		return false;
+	}
 
-    bHasAllFeatures = true;
-    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures11; ++FeatureIndex)
-    {
-        if (RequiredFeatures[FeatureIndex] == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
-        {
-            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceVulkan11Features[%d]", AdapterProperties.deviceName, FeatureIndex);
-            bHasAllFeatures = false;
-            break;
-        }
-    }
+	// Vulkan 1.1
+	if (!CheckRequiredFeatures(DeviceCreateInfo.RequiredFeatures11, DeviceFeatures11, "VkPhysicalDeviceVulkan11Features", AdapterProperties.deviceName))
+	{
+		return false;
+	}
 
-    if (!bHasAllFeatures)
-    {
-        return false;
-    }
+	// Vulkan 1.2
+	if (!CheckRequiredFeatures(DeviceCreateInfo.RequiredFeatures12, DeviceFeatures12, "VkPhysicalDeviceVulkan12Features", AdapterProperties.deviceName))
+	{
+		return false;
+	}
 
-    // Check Vulkan 1.2 features
-    const uint64 NumFeatures12 = ((OFFSETOF(VkPhysicalDeviceVulkan12Features, subgroupBroadcastDynamicId) - OFFSETOF(VkPhysicalDeviceVulkan12Features, samplerMirrorClampToEdge)) / sizeof(VkBool32)) + 1;
+	// Vulkan 1.3
+	if (!CheckRequiredFeatures(DeviceCreateInfo.RequiredFeatures13, DeviceFeatures13, "VkPhysicalDeviceVulkan13Features", AdapterProperties.deviceName))
+	{
+		return false;
+	}
 
-    RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures12.samplerMirrorClampToEdge);
-    AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures12.samplerMirrorClampToEdge);
+	return true;
+}
 
-    bHasAllFeatures = true;
-    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures12; ++FeatureIndex)
-    {
-        if (RequiredFeatures[FeatureIndex] == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
-        {
-            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceVulkan12Features[%d]", AdapterProperties.deviceName, FeatureIndex);
-            bHasAllFeatures = false;
-            break;
-        }
-    }
+template <typename FeatureStructType>
+static void EnableOptionalFeatures(FeatureStructType& EnableFeatures, const FeatureStructType& OptionalFeatures, const FeatureStructType& AvailableFeatures)
+{
+    TVulkanFeatureView<FeatureStructType> EnableFeaturesView(EnableFeatures);
 
-    if (!bHasAllFeatures)
-    {
-        return false;
-    }
+    TVulkanFeatureView<const FeatureStructType> OptionalFeaturesView(OptionalFeatures);
+	TVulkanFeatureView<const FeatureStructType> AvailableFeaturesView(AvailableFeatures);
 
-    return true;
+	for (SIZE_T i = 0; i < AvailableFeaturesView.Size(); ++i)
+	{
+		if (OptionalFeaturesView[i] == VK_TRUE && AvailableFeaturesView[i] != VK_TRUE)
+		{
+            EnableFeaturesView[i] = VK_TRUE;
+		}
+	}
 }
 
 static FString GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
@@ -172,7 +213,7 @@ FVulkanPhysicalDevice::~FVulkanPhysicalDevice()
     PhysicalDevice = VK_NULL_HANDLE;
 }
 
-bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc)
+bool FVulkanPhysicalDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 {
     VkResult Result = VK_SUCCESS;
 
@@ -225,7 +266,13 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
         VkPhysicalDeviceProperties AdapterProperties;
         vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
 
-        if (!CheckAvailability(CurrentAdapter, AdapterDesc))
+        if (AdapterProperties.apiVersion < VK_API_VERSION_1_3)
+        {
+            VULKAN_INFO("Skipping device '%s' since it's api-version is below Vulkan 1.3 (apiVersion=%s)", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
+            continue;
+        }
+
+        if (!CheckAvailability(CurrentAdapter, InDeviceCreateInfo))
         {
             continue;
         }
@@ -266,7 +313,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
         
         // Verify the required extensions
         bool bIsAllExtensionsSupported = true;
-        for (const CHAR* RequiredExtension : AdapterDesc.RequiredExtensionNames)
+        for (const CHAR* RequiredExtension : InDeviceCreateInfo.RequiredExtensionNames)
         {
             bool bIsSupported = false;
             for (const VkExtensionProperties& Extension : AvailableDeviceExtensions)
@@ -286,7 +333,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
             }
         }
 
-        // TODO: At this point we now the device is acceptable, now check for the most optional
+        // NOTE: At this point we now the device is acceptable, now check for the most optional
         if (bIsAllExtensionsSupported)
         {
             AcceptedAdapers.Add(CurrentAdapter);
@@ -328,13 +375,15 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     FMemory::Memzero(&DeviceProperties2);
     DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     
-    // Helper for checking for extensions
-    FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
-    
 #if VK_EXT_conservative_rasterization
     FMemory::Memzero(&ConservativeRasterizationProperties);
     ConservativeRasterizationProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
-    DevicePropertiesHelper.AddNext(ConservativeRasterizationProperties);
+#endif
+
+    // Helper for checking for extensions
+    FVulkanStructChain DevicePropertiesChain(DeviceProperties2);
+#if VK_EXT_conservative_rasterization
+    DevicePropertiesChain.AddNext(ConservativeRasterizationProperties);
 #endif
 
     vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
@@ -343,61 +392,26 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     FMemory::Memzero(&DeviceFeatures2);
     DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
-    // Helper for checking for extensions
-    FVulkanStructureHelper DeviceFeaturesHelper(DeviceFeatures2);
-    
-#if VK_EXT_depth_clip_enable
-    FMemory::Memzero(&DepthClipEnableFeatures);
-    DepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
-    DeviceFeaturesHelper.AddNext(DepthClipEnableFeatures);
-#endif
-    
-#if VK_EXT_robustness2
-    FMemory::Memzero(&Robustness2Features);
-    Robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
-    DeviceFeaturesHelper.AddNext(Robustness2Features);
-#endif
-    
-#if VK_EXT_pipeline_creation_cache_control
-    FMemory::Memzero(&PipelineCreationCacheControlFeatures);
-    PipelineCreationCacheControlFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
-    DeviceFeaturesHelper.AddNext(PipelineCreationCacheControlFeatures);
-#endif
-    
-#if VK_KHR_acceleration_structure
-    FMemory::Memzero(&AccelerationStructureFeatures);
-    AccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-    DeviceFeaturesHelper.AddNext(AccelerationStructureFeatures);
-#endif
-
-#if VK_KHR_ray_tracing_pipeline
-    FMemory::Memzero(&RayTracingPipelineFeatures);
-    RayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-    DeviceFeaturesHelper.AddNext(RayTracingPipelineFeatures);
-#endif
-
-#if VK_KHR_synchronization2
-    FMemory::Memzero(&Synchronization2Features);
-    Synchronization2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
-    DeviceFeaturesHelper.AddNext(Synchronization2Features);
-#endif
-
     // Vulkan 1.1 features
     FMemory::Memzero(&DeviceFeatures11);
     DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-    DeviceFeaturesHelper.AddNext(DeviceFeatures11);
 
     // Vulkan 1.2 features
     FMemory::Memzero(&DeviceFeatures12);
     DeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    DeviceFeaturesHelper.AddNext(DeviceFeatures12);
     
+    // Helper for checking for extensions
+    FVulkanStructChain DeviceFeaturesChain(DeviceFeatures2);
+    DeviceFeaturesChain.AddNext(DeviceFeatures11);
+    DeviceFeaturesChain.AddNext(DeviceFeatures12);
+
     // Get the physical device features
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
 
     // Get Physical Device Memory Properties
     FMemory::Memzero(&DeviceMemoryProperties2);
     DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
     
     VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *GetVersionAsString(DeviceProperties.apiVersion));
@@ -522,9 +536,7 @@ uint32 FVulkanPhysicalDevice::FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPro
 
 VkFormatProperties FVulkanPhysicalDevice::GetFormatProperties(VkFormat Format) const
 {
-    VkFormatProperties FormatProperties;
-    FMemory::Memzero(&FormatProperties);
-    
+    VkFormatProperties FormatProperties = {};
     vkGetPhysicalDeviceFormatProperties(PhysicalDevice, Format, &FormatProperties);
     return FormatProperties;
 }
@@ -602,7 +614,7 @@ FVulkanDevice::~FVulkanDevice()
     }
 }
 
-bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
+bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 {
     if (!PhysicalDevice)
     {
@@ -612,9 +624,10 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 
     VkResult Result = VK_SUCCESS;
 
-    // TODO: Device layers
-
-    // Verify Extensions
+    // -------------------------------------------------------------------------------------------
+    // Enumerate and select extensions
+    // -------------------------------------------------------------------------------------------
+    
     uint32 DeviceExtensionCount = 0;
     Result = vkEnumerateDeviceExtensionProperties(PhysicalDevice->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, nullptr);
     if (VULKAN_FAILED(Result))
@@ -632,45 +645,37 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     }
 
     TArray<const CHAR*> EnabledExtensionNames;
-    for (const VkExtensionProperties& ExtensionProperty : AvailableDeviceExtensions)
+    EnabledExtensionNames.Reserve(InDeviceCreateInfo.RequiredExtensionNames.Size() + InDeviceCreateInfo.OptionalExtensionNames.Size());
+
+    for (const VkExtensionProperties& ExtensionProperties : AvailableDeviceExtensions)
     {
-        // Filter out some extensions based on CVars etc. (If an extension is available but we want to disable it for debugging or similar)
-        if (!FilterExtensions(ExtensionProperty))
+        if (!FilterExtensions(ExtensionProperties))
         {
             continue;
         }
 
-        const auto CompareExtension = [=](const CHAR* Other) -> bool
+        const auto MatchExtensionNames = [&](const CHAR* InExtensionName) { return FCString::Strcmp(ExtensionProperties.extensionName, InExtensionName) == 0; };
+        if (InDeviceCreateInfo.RequiredExtensionNames.ContainsWithPredicate(MatchExtensionNames) || 
+            InDeviceCreateInfo.OptionalExtensionNames.ContainsWithPredicate(MatchExtensionNames))
         {
-            return FCString::Strcmp(ExtensionProperty.extensionName, Other) == 0;
-        };
-
-        if (DeviceDesc.RequiredExtensionNames.ContainsWithPredicate(CompareExtension) || DeviceDesc.OptionalExtensionNames.ContainsWithPredicate(CompareExtension))
-        {
-            EnabledExtensionNames.Add(ExtensionProperty.extensionName);
-            ExtensionNames.Emplace(ExtensionProperty.extensionName);
+            EnabledExtensionNames.Add(ExtensionProperties.extensionName);
+            ExtensionNames.Emplace(ExtensionProperties.extensionName);
         }
     }
 
-    for (const CHAR* ExtensionName : DeviceDesc.RequiredExtensionNames)
+    for (const CHAR* RequiredExtensionName : InDeviceCreateInfo.RequiredExtensionNames)
     {
-        const auto CompareExtension = [=](const CHAR* Other) -> bool
+        const auto MatchExtensionNames = [&](const CHAR* InExtensionName) { return FCString::Strcmp(RequiredExtensionName, InExtensionName) == 0; };
+        if (!EnabledExtensionNames.ContainsWithPredicate(MatchExtensionNames))
         {
-            return FCString::Strcmp(ExtensionName, Other) == 0;
-        };
-
-        if (!EnabledExtensionNames.ContainsWithPredicate(CompareExtension))
-        {
-            VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", ExtensionName);
+            VULKAN_ERROR_CRITICAL("Device extension '%s' could not be enabled", RequiredExtensionName);
             return false;
         }
     }
 
-    // Log enabled extensions and layers
-    IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
-    if (VerboseVulkan && VerboseVulkan->GetBool())
+    if (IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging"))
     {
-        if (!EnabledExtensionNames.IsEmpty())
+        if (VerboseVulkan->GetBool() && !EnabledExtensionNames.IsEmpty())
         {
             VULKAN_INFO("Enabled Device Extensions:");
             for (const CHAR* ExtensionName : EnabledExtensionNames)
@@ -680,6 +685,9 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
         }
     }
 
+    // -------------------------------------------------------------------------------------------
+    // Queues
+    // -------------------------------------------------------------------------------------------
     QueueIndicies = FVulkanPhysicalDevice::GetQueueFamilyIndices(PhysicalDevice->GetVkPhysicalDevice());
     if (!QueueIndicies)
     {
@@ -689,121 +697,211 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 
     VULKAN_INFO("QueueIndicies: Graphics=%d, Compute=%d, Copy=%d", QueueIndicies->GraphicsQueueIndex, QueueIndicies->ComputeQueueIndex, QueueIndicies->CopyQueueIndex);
 
-    TArray<VkDeviceQueueCreateInfo> QueueCreateInfos;
-
-    const TSet<uint32> UniqueQueueFamilies =
-    {
-        QueueIndicies->GraphicsQueueIndex,
-        QueueIndicies->CopyQueueIndex,
+    const TSet<uint32> UniqueQueueIndices = 
+    { 
+        QueueIndicies->GraphicsQueueIndex, 
+        QueueIndicies->CopyQueueIndex, 
         QueueIndicies->ComputeQueueIndex
     };
 
     const float DefaultQueuePriority = 0.0f;
-    for (uint32 QueueFamiliy : UniqueQueueFamilies)
+
+    TArray<VkDeviceQueueCreateInfo> QueueCreateInfos;
+    for (uint32 QueueFamilyIndex : UniqueQueueIndices)
     {
-        VkDeviceQueueCreateInfo QueueCreateInfo;
-        FMemory::Memzero(&QueueCreateInfo);
-
+        VkDeviceQueueCreateInfo QueueCreateInfo = {};
         QueueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        QueueCreateInfo.pQueuePriorities = &DefaultQueuePriority;
-        QueueCreateInfo.queueFamilyIndex = QueueFamiliy;
+        QueueCreateInfo.queueFamilyIndex = QueueFamilyIndex;
         QueueCreateInfo.queueCount       = 1;
-
+        QueueCreateInfo.pQueuePriorities = &DefaultQueuePriority;
         QueueCreateInfos.Add(QueueCreateInfo);
     }
 
-    VkDeviceCreateInfo DeviceCreateInfo;
-    FMemory::Memzero(&DeviceCreateInfo);
+    // -------------------------------------------------------------------------------------------
+    // Collect core features/properties + extension feature/property structs
+    // -------------------------------------------------------------------------------------------
 
-    DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    DeviceCreateInfo.enabledLayerCount       = 0;
-    DeviceCreateInfo.ppEnabledLayerNames     = nullptr;
-    DeviceCreateInfo.enabledExtensionCount   = EnabledExtensionNames.Size();
-    DeviceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
-    DeviceCreateInfo.queueCreateInfoCount    = QueueCreateInfos.Size();
-    DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
+    // Core feature blocks
+    VkPhysicalDeviceFeatures2 AvailableDeviceFeatures2 = {};
+    AvailableDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
-    VkPhysicalDeviceFeatures2 DeviceFeatures2;
-    FMemory::Memzero(&DeviceFeatures2);
-    DeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    DeviceFeatures2.features = DeviceDesc.RequiredFeatures;
+    VkPhysicalDeviceVulkan11Features AvailableDeviceFeatures11 = {};
+    AvailableDeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
 
-    const VkPhysicalDeviceFeatures& AvailableDeviceFeatures = GetPhysicalDevice()->GetFeatures();
-    if (AvailableDeviceFeatures.robustBufferAccess)
+    VkPhysicalDeviceVulkan12Features AvailableDeviceFeatures12 = {};
+    AvailableDeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+
+    VkPhysicalDeviceVulkan13Features AvailableDeviceFeatures13 = {};
+    AvailableDeviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+
+    // Extension feature/property blocks
+#if VK_EXT_depth_clip_enable
+    VkPhysicalDeviceDepthClipEnableFeaturesEXT AvailableDeviceDepthClipEnableFeatures = {};
+    AvailableDeviceDepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
+#endif
+
+#if VK_KHR_robustness2
+    VkPhysicalDeviceRobustness2FeaturesKHR AvailableDeviceRobustness2Features = {};
+    AvailableDeviceRobustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
+#endif
+
+#if VK_KHR_fragment_shading_rate
+    VkPhysicalDeviceFragmentShadingRateFeaturesKHR AvailableDeviceFragmentShadingRateFeatures = {};
+    AvailableDeviceFragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+
+    VkPhysicalDeviceFragmentShadingRatePropertiesKHR AvailableDeviceFragmentShadingRateProperties = {};
+    AvailableDeviceFragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+#endif
+
+#if VK_KHR_acceleration_structure
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR AvailableDeviceAccelerationStructureFeatures = {};
+    AvailableDeviceAccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+#endif
+
+#if VK_KHR_ray_tracing_pipeline
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR AvailableDeviceRayTracingPipelineFeatures = {};
+    AvailableDeviceRayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+#endif
+
+#if VK_KHR_ray_query
+    VkPhysicalDeviceRayQueryFeaturesKHR AvailableDeviceRayQueryFeatures = {};
+    AvailableDeviceRayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+#endif
+
+#if VK_EXT_mesh_shader
+    VkPhysicalDeviceMeshShaderFeaturesEXT AvailableDeviceMeshShaderFeatures = {};
+    AvailableDeviceMeshShaderFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+
+    VkPhysicalDeviceMeshShaderPropertiesEXT AvailableDeviceMeshShaderProperties = {};
+    AvailableDeviceMeshShaderProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
+#endif
+
+#if VK_EXT_sample_locations
+    VkPhysicalDeviceSampleLocationsPropertiesEXT AvailableDeviceSampleLocationsProperties = {};
+    AvailableDeviceSampleLocationsProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
+#endif
+
+#if VK_EXT_fragment_shader_interlock
+    VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT AvailableDeviceFragmentShaderInterlockFeatures = {};
+    AvailableDeviceFragmentShaderInterlockFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
+#endif
+
+    // Core property blocks
+    VkPhysicalDeviceProperties2 AvailableDeviceProperties2 = {};
+    AvailableDeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
+    VkPhysicalDeviceMultiviewProperties AvailableDeviceMultiviewProperties = {};
+    AvailableDeviceMultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
+
     {
-        DeviceFeatures2.features.robustBufferAccess = VK_TRUE;
+        FVulkanStructChain AvailableDeviceFeatureChain(AvailableDeviceFeatures2);
+        AvailableDeviceFeatureChain.AddNext(AvailableDeviceFeatures11);
+        AvailableDeviceFeatureChain.AddNext(AvailableDeviceFeatures12);
+        AvailableDeviceFeatureChain.AddNext(AvailableDeviceFeatures13);
+
+    #if VK_EXT_depth_clip_enable
+        if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceDepthClipEnableFeatures);
+        }
+    #endif
+    #if VK_KHR_robustness2
+        if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceRobustness2Features);
+        }
+    #endif
+    #if VK_KHR_fragment_shading_rate
+        if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceFragmentShadingRateFeatures);
+        }
+    #endif
+    #if VK_KHR_acceleration_structure
+        if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceAccelerationStructureFeatures);
+        }
+    #endif
+    #if VK_KHR_ray_tracing_pipeline
+        if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceRayTracingPipelineFeatures);
+        }
+    #endif
+    #if VK_KHR_ray_query
+        if (IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceRayQueryFeatures);
+        }
+    #endif
+    #if VK_EXT_mesh_shader
+        if (IsExtensionEnabled(VK_EXT_MESH_SHADER_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceMeshShaderFeatures);
+        }
+    #endif
+    #if VK_EXT_fragment_shader_interlock
+        if (IsExtensionEnabled(VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceFragmentShaderInterlockFeatures);
+        }
+    #endif
+
+        vkGetPhysicalDeviceFeatures2(PhysicalDevice->GetVkPhysicalDevice(), &AvailableDeviceFeatures2);
     }
 
-    // Vulkan 1.1 Features
-    VkPhysicalDeviceVulkan11Features DeviceFeaturesVulkan11 = DeviceDesc.RequiredFeatures11;
-    DeviceFeaturesVulkan11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-
-    const VkPhysicalDeviceVulkan11Features& AvailableDeviceFeaturesVulkan11 = GetPhysicalDevice()->GetFeaturesVulkan11();
-    if (AvailableDeviceFeaturesVulkan11.multiview)
     {
-        DeviceFeaturesVulkan11.multiview = VK_TRUE;
-        GVulkanSupportsMultiviews = true;
+        FVulkanStructChain AvailableDevicePropertiesChain(AvailableDeviceProperties2);
+        AvailableDevicePropertiesChain.AddNext(AvailableDeviceMultiviewProperties);
+
+    #if VK_KHR_fragment_shading_rate
+        if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+        {
+            AvailableDevicePropertiesChain.AddNext(AvailableDeviceFragmentShadingRateProperties);
+        }
+    #endif
+    #if VK_EXT_mesh_shader
+        if (IsExtensionEnabled(VK_EXT_MESH_SHADER_EXTENSION_NAME))
+        {
+            AvailableDevicePropertiesChain.AddNext(AvailableDeviceMeshShaderProperties);
+        }
+    #endif
+    #if VK_EXT_sample_locations
+        if (IsExtensionEnabled(VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME))
+        {
+            AvailableDevicePropertiesChain.AddNext(AvailableDeviceSampleLocationsProperties);
+        }
+    #endif
+
+        vkGetPhysicalDeviceProperties2(PhysicalDevice->GetVkPhysicalDevice(), &AvailableDeviceProperties2);
     }
 
-    // Vulkan 1.2 Features
-    VkPhysicalDeviceVulkan12Features DeviceFeaturesVulkan12 = DeviceDesc.RequiredFeatures12;
-    DeviceFeaturesVulkan12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    // -------------------------------------------------------------------------------------------
+    // Set all GVulkan* globals from collected caps
+    // -------------------------------------------------------------------------------------------
 
-    // Enable 'bufferDeviceAddress' if available
-    const VkPhysicalDeviceVulkan12Features& AvailableDeviceFeaturesVulkan12 = GetPhysicalDevice()->GetFeaturesVulkan12();
-    if (AvailableDeviceFeaturesVulkan12.bufferDeviceAddress)
+    const VkPhysicalDeviceFeatures& CoreDeviceFeatures10 = AvailableDeviceFeatures2.features;
+    const VkPhysicalDeviceProperties& CoreDeviceProperties10 = PhysicalDevice->GetProperties();
+
+    // Core/sparse/depth bounds
+    GVulkanSupportsDepthBoundsTest        = (CoreDeviceFeatures10.depthBounds == VK_TRUE);
+    GVulkanSupportsSparseBinding          = (CoreDeviceFeatures10.sparseBinding == VK_TRUE);
+    GVulkanSupportsSparseResidency2D      = (CoreDeviceFeatures10.sparseResidencyImage2D == VK_TRUE);
+    GVulkanSupportsSparseResidency3D      = (CoreDeviceFeatures10.sparseResidencyImage3D == VK_TRUE);
+    GVulkanSupportsSparseResidencyAliased = (CoreDeviceFeatures10.sparseResidencyAliased == VK_TRUE);
+
+#if VK_KHR_robustness2
+    if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME) && AvailableDeviceRobustness2Features.nullDescriptor)
     {
-        DeviceFeaturesVulkan12.bufferDeviceAddress = VK_TRUE;
-    }
-
-    // Enable 'timelineSemaphore' if available
-    if (AvailableDeviceFeaturesVulkan12.timelineSemaphore)
-    {
-        DeviceFeaturesVulkan12.timelineSemaphore = VK_TRUE;
-    }
-    
-    // Enable 'descriptorIndexing' if available
-    if (AvailableDeviceFeaturesVulkan12.descriptorIndexing)
-    {
-        DeviceFeaturesVulkan12.descriptorIndexing = VK_TRUE;
-    }
-
-    // Construct the pNext chain
-    FVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
-    DeviceCreateHelper.AddNext(DeviceFeatures2);
-    DeviceCreateHelper.AddNext(DeviceFeaturesVulkan11);
-    DeviceCreateHelper.AddNext(DeviceFeaturesVulkan12);
-
-    // Check and enable extension features
-#if VK_EXT_robustness2
-    VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
-    if (IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
-    {
-        const VkPhysicalDeviceRobustness2FeaturesEXT& AvailableRobustness2Features = GetPhysicalDevice()->GetRobustness2Features();
-
-        FMemory::Memzero(&Robustness2Features);
-        Robustness2Features.sType               = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
-        Robustness2Features.robustImageAccess2  = AvailableRobustness2Features.robustImageAccess2;
-        Robustness2Features.robustBufferAccess2 = AvailableRobustness2Features.robustBufferAccess2;
-        Robustness2Features.nullDescriptor      = AvailableRobustness2Features.nullDescriptor;
-        DeviceCreateHelper.AddNext(Robustness2Features);
+        GVulkanSupportsNullDescriptors = true;
     }
 #endif
 
 #if VK_EXT_depth_clip_enable
-    VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
-    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME))
+    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME) && AvailableDeviceDepthClipEnableFeatures.depthClipEnable && CoreDeviceFeatures10.depthClamp)
     {
-        const VkPhysicalDeviceDepthClipEnableFeaturesEXT& AvailableDepthClipEnableFeatures = GetPhysicalDevice()->GetDepthClipEnableFeatures();
-        if (AvailableDepthClipEnableFeatures.depthClipEnable && AvailableDeviceFeatures.depthClamp)
-        {
-            FMemory::Memzero(&DepthClipEnableFeatures);
-            DepthClipEnableFeatures.sType           = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
-            DepthClipEnableFeatures.depthClipEnable = VK_TRUE;
-            DeviceFeatures2.features.depthClamp     = VK_TRUE;
-            DeviceCreateHelper.AddNext(DepthClipEnableFeatures);
-            GVulkanSupportsDepthClip = true;
-        }
+        GVulkanSupportsDepthClip = true;
     }
 #endif
 
@@ -814,88 +912,335 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     }
 #endif
 
-#if VK_EXT_pipeline_creation_cache_control
-    VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT PipelineCreationCacheControlFeatures;
-    if (IsExtensionEnabled(VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME))
+    // Multiview (Core 1.1)
+    if (AvailableDeviceFeatures11.multiview)
     {
-        const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& AvailablePipelineCreationCacheControlFeatures = GetPhysicalDevice()->GetPipelineCreationCacheControlFeatures();
-        if (AvailablePipelineCreationCacheControlFeatures.pipelineCreationCacheControl)
+        GVulkanSupportsMultiviews    = true;
+        GVulkanMaxMultiviewViewCount = Math::Max<uint32>(1u, AvailableDeviceMultiviewProperties.maxMultiviewViewCount);
+    }
+    else
+    {
+        GVulkanSupportsMultiviews    = false;
+        GVulkanMaxMultiviewViewCount = 1u;
+    }
+
+    // Pipeline cache control (Core 1.3)
+    if (AvailableDeviceFeatures13.pipelineCreationCacheControl)
+    {
+        GVulkanSupportsPipelineCacheControl = true;
+    }
+
+    // Descriptor indexing (Bindless heuristic)
+    if (AvailableDeviceFeatures12.descriptorIndexing)
+    {
+        GVulkanSupportsBindless = true;
+    }
+
+    // Ray Tracing
+#if VK_KHR_acceleration_structure
+    if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) && AvailableDeviceAccelerationStructureFeatures.accelerationStructure == VK_TRUE)
+    {
+        GVulkanSupportsAccelerationStructures = true;
+    }
+#endif
+#if VK_KHR_ray_tracing_pipeline
+    if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) && AvailableDeviceRayTracingPipelineFeatures.rayTracingPipeline)
+    {
+        GVulkanSupportsRayTracingPipeline = true;
+    }
+#endif
+#if VK_KHR_ray_query
+    if (IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME) && AvailableDeviceRayQueryFeatures.rayQuery == VK_TRUE)
+    {
+        GVulkanSupportsRayQuery = true;
+    }
+#endif
+
+    // Fragment shading rate (VRS)
+#if VK_KHR_fragment_shading_rate
+    if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    {
+        if (AvailableDeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate || AvailableDeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate ||
+            AvailableDeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate)
+	    {
+		    GVulkanShadingRateTileSize = Math::Max<uint32>(1u, AvailableDeviceFragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width);
+		    GVulkanSupportsFragmentShadingRate = true;
+	    }
+    }
+#endif
+
+    // Mesh shaders
+#if VK_EXT_mesh_shader
+    if (IsExtensionEnabled(VK_EXT_MESH_SHADER_EXTENSION_NAME) && 
+        (AvailableDeviceMeshShaderFeatures.meshShader || AvailableDeviceMeshShaderFeatures.taskShader))
+    {
+        GVulkanMaxMeshOutputVertices       = AvailableDeviceMeshShaderProperties.maxMeshOutputVertices;
+        GVulkanMaxMeshWorkGroupInvocations = AvailableDeviceMeshShaderProperties.maxMeshWorkGroupInvocations;
+        GVulkanMaxTaskWorkGroupInvocations = AvailableDeviceMeshShaderProperties.maxTaskWorkGroupInvocations;
+        GVulkanSupportsMeshShaders         = true;
+    }
+#endif
+
+    // Sample locations
+#if VK_EXT_sample_locations
+    if (IsExtensionEnabled(VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME))
+    {
+        GVulkanSupportsSampleLocations = true;
+    }
+#endif
+
+    // Fragment shader interlock
+#if VK_EXT_fragment_shader_interlock
+    if (IsExtensionEnabled(VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME))
+    {
+        if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderSampleInterlock || AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderPixelInterlock ||
+            AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderShadingRateInterlock)
         {
-            FMemory::Memzero(&PipelineCreationCacheControlFeatures);
-            PipelineCreationCacheControlFeatures.sType                        = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
-            PipelineCreationCacheControlFeatures.pipelineCreationCacheControl = VK_TRUE;
-            DeviceCreateHelper.AddNext(PipelineCreationCacheControlFeatures);
-            GVulkanSupportsPipelineCacheControl = true;
+            GVulkanSupportsFragmentShaderInterlock = true;
         }
+    }
+#endif
+
+    // Limits / counts
+    GVulkanMaxDrawIndirectCount            = CoreDeviceProperties10.limits.maxDrawIndirectCount;
+    GVulkanMaxDescriptorSetSamplers        = CoreDeviceProperties10.limits.maxDescriptorSetSamplers;
+    GVulkanMaxDescriptorSetSampledImages   = CoreDeviceProperties10.limits.maxDescriptorSetSampledImages;
+    GVulkanMaxDescriptorSetStorageImages   = CoreDeviceProperties10.limits.maxDescriptorSetStorageImages;
+    GVulkanMaxDescriptorSetUniformBuffers  = CoreDeviceProperties10.limits.maxDescriptorSetUniformBuffers;
+    GVulkanMaxDescriptorSetStorageBuffers  = CoreDeviceProperties10.limits.maxDescriptorSetStorageBuffers;
+
+    // -------------------------------------------------------------------------------------------
+    // Build the feature chain we actually want, then create the device
+    // -------------------------------------------------------------------------------------------
+    VkDeviceCreateInfo DeviceCreateInfo = {};
+    DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    DeviceCreateInfo.enabledLayerCount       = 0;
+    DeviceCreateInfo.ppEnabledLayerNames     = nullptr;
+    DeviceCreateInfo.enabledExtensionCount   = EnabledExtensionNames.Size();
+    DeviceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
+    DeviceCreateInfo.queueCreateInfoCount    = QueueCreateInfos.Size();
+    DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
+
+    // Core features to enable (start from Required + clamp by available)
+    VkPhysicalDeviceFeatures2 EnableDeviceFeatures2 = {};
+    EnableDeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    EnableDeviceFeatures2.features = InDeviceCreateInfo.RequiredFeatures;
+    EnableOptionalFeatures(EnableDeviceFeatures2.features, InDeviceCreateInfo.OptionalFeatures, InDeviceCreateInfo.RequiredFeatures);
+
+    VkPhysicalDeviceVulkan11Features EnableDeviceFeatures11 = InDeviceCreateInfo.RequiredFeatures11;
+    EnableDeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    EnableOptionalFeatures(EnableDeviceFeatures11, InDeviceCreateInfo.OptionalFeatures11, InDeviceCreateInfo.RequiredFeatures11);
+
+    VkPhysicalDeviceVulkan12Features EnableDeviceFeatures12 = InDeviceCreateInfo.RequiredFeatures12;
+    EnableDeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    EnableOptionalFeatures(EnableDeviceFeatures12, InDeviceCreateInfo.OptionalFeatures12, InDeviceCreateInfo.RequiredFeatures12);
+
+    VkPhysicalDeviceVulkan13Features EnableDeviceFeatures13 = InDeviceCreateInfo.RequiredFeatures13;
+	EnableDeviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    EnableOptionalFeatures(EnableDeviceFeatures13, InDeviceCreateInfo.OptionalFeatures13, InDeviceCreateInfo.RequiredFeatures13);
+
+    // Extension features to enable
+#if VK_KHR_robustness2
+    VkPhysicalDeviceRobustness2FeaturesKHR EnableDeviceRobustness2Features = {};
+    if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
+    {
+        EnableDeviceRobustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
+
+        if (AvailableDeviceRobustness2Features.robustImageAccess2)
+        {
+            EnableDeviceRobustness2Features.robustImageAccess2 = VK_TRUE;
+        }
+		if (AvailableDeviceRobustness2Features.robustBufferAccess2)
+		{
+			EnableDeviceRobustness2Features.robustBufferAccess2 = VK_TRUE;
+		}
+		if (AvailableDeviceRobustness2Features.nullDescriptor)
+		{
+			EnableDeviceRobustness2Features.nullDescriptor = VK_TRUE;
+		}
+    }
+#endif
+
+#if VK_EXT_depth_clip_enable
+    VkPhysicalDeviceDepthClipEnableFeaturesEXT EnableDeviceDepthClipEnableFeatures = {};
+    if (GVulkanSupportsDepthClip)
+    {
+        EnableDeviceDepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
+
+		if (AvailableDeviceDepthClipEnableFeatures.depthClipEnable)
+		{
+            EnableDeviceDepthClipEnableFeatures.depthClipEnable = VK_TRUE;
+		}
+		if (AvailableDeviceFeatures2.features.depthClamp)
+		{
+            EnableDeviceFeatures2.features.depthClamp = VK_TRUE;
+		}
     }
 #endif
 
 #if VK_KHR_acceleration_structure
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR AccelerationStructureFeatures;
-    if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR EnableDeviceAccelerationStructureFeatures = {};
+    if (GVulkanSupportsAccelerationStructures)
     {
-        const VkPhysicalDeviceAccelerationStructureFeaturesKHR& AvailableAccelerationStructureFeatures = GetPhysicalDevice()->GetAccelerationStructureFeatures();
-        if (AvailableAccelerationStructureFeatures.accelerationStructure)
-        {
-            FMemory::Memzero(&AccelerationStructureFeatures);
-            AccelerationStructureFeatures.sType                 = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-            AccelerationStructureFeatures.accelerationStructure = VK_TRUE;
-            DeviceCreateHelper.AddNext(AccelerationStructureFeatures);
-            GVulkanSupportsAccelerationStructures = true;
-        }
+        EnableDeviceAccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+
+		if (AvailableDeviceAccelerationStructureFeatures.accelerationStructure)
+		{
+            EnableDeviceAccelerationStructureFeatures.accelerationStructure = VK_TRUE;
+		}
     }
 #endif
 
 #if VK_KHR_ray_tracing_pipeline
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingPipelineFeatures;
-    if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR EnableDeviceRayTracingPipelineFeatures = {};
+    if (GVulkanSupportsRayTracingPipeline)
     {
-        const VkPhysicalDeviceRayTracingPipelineFeaturesKHR& AvailableRayTracingPipelineFeatures = GetPhysicalDevice()->GetRayTracingPipelineFeatures();
-        if (AvailableRayTracingPipelineFeatures.rayTracingPipeline)
+        EnableDeviceRayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+
+		if (AvailableDeviceRayTracingPipelineFeatures.rayTracingPipeline)
+		{
+            EnableDeviceRayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
+		}
+    }
+#endif
+
+#if VK_KHR_ray_query
+    VkPhysicalDeviceRayQueryFeaturesKHR EnableDeviceRayQueryFeatures = {};
+    if (GVulkanSupportsRayQuery)
+    {
+        EnableDeviceRayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+
+        if (AvailableDeviceRayQueryFeatures.rayQuery)
         {
-            FMemory::Memzero(&RayTracingPipelineFeatures);
-            RayTracingPipelineFeatures.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-            RayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
-            DeviceCreateHelper.AddNext(RayTracingPipelineFeatures);
+            EnableDeviceRayQueryFeatures.rayQuery = VK_TRUE;
         }
     }
 #endif
 
-#if VK_KHR_synchronization2
-    VkPhysicalDeviceSynchronization2Features Synchronization2Features;
-    if (IsExtensionEnabled(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))
+#if VK_KHR_fragment_shading_rate
+    VkPhysicalDeviceFragmentShadingRateFeaturesKHR EnableDeviceFragmentShadingRateFeatures = {};
+    if (GVulkanSupportsFragmentShadingRate)
     {
-        const VkPhysicalDeviceSynchronization2Features& AvailableSynchronization2Features = GetPhysicalDevice()->GetSynchronization2Features();
-        if (AvailableSynchronization2Features.synchronization2)
-        {
-            FMemory::Memzero(&Synchronization2Features);
-            Synchronization2Features.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
-            Synchronization2Features.synchronization2 = VK_TRUE;
-            DeviceCreateHelper.AddNext(Synchronization2Features);
-        }
-        else
-        {
-            VULKAN_ERROR_CRITICAL("VK_KHR_synchronization2 is not available");
-            return false;
-        }
-    }
-    else
-    {
-        VULKAN_ERROR_CRITICAL("VK_KHR_synchronization2 is not available");
-        return false;
+        EnableDeviceFragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+
+		if (AvailableDeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate)
+		{
+            EnableDeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate = VK_TRUE;
+		}
+		if (AvailableDeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate)
+		{
+            EnableDeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate = VK_TRUE;
+		}
+		if (AvailableDeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate)
+		{
+            EnableDeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate = VK_TRUE;
+		}
     }
 #endif
 
+#if VK_EXT_mesh_shader
+    VkPhysicalDeviceMeshShaderFeaturesEXT EnableDeviceMeshShaderFeatures = {};
+    if (GVulkanSupportsMeshShaders)
+    {
+        EnableDeviceMeshShaderFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+
+        if (AvailableDeviceMeshShaderFeatures.meshShader)
+        {
+            EnableDeviceMeshShaderFeatures.meshShader = VK_TRUE;
+        }
+        if (AvailableDeviceMeshShaderFeatures.taskShader)
+        {
+            EnableDeviceMeshShaderFeatures.taskShader = VK_TRUE;
+        }
+    }
+#endif
+
+#if VK_EXT_fragment_shader_interlock
+    VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT EnableDeviceFragmentShaderInterlockFeatures = {};
+    if (GVulkanSupportsFragmentShaderInterlock)
+    {
+        EnableDeviceFragmentShaderInterlockFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
+
+		if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderSampleInterlock)
+		{
+            EnableDeviceFragmentShaderInterlockFeatures.fragmentShaderSampleInterlock = VK_TRUE;
+		}
+		if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderPixelInterlock)
+		{
+            EnableDeviceFragmentShaderInterlockFeatures.fragmentShaderPixelInterlock = VK_TRUE;
+		}
+		if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderShadingRateInterlock)
+		{
+            EnableDeviceFragmentShaderInterlockFeatures.fragmentShaderShadingRateInterlock = VK_TRUE;
+		}
+    }
+#endif
+
+    // Build the "Enable" chain
+    FVulkanStructChain EnableDeviceFeaturesChain(DeviceCreateInfo);
+    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures2);
+    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures11);
+    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures12);
+    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures13);
+
+#if VK_KHR_robustness2
+    if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceRobustness2Features);
+    }
+#endif
+#if VK_EXT_depth_clip_enable
+    if (GVulkanSupportsDepthClip)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceDepthClipEnableFeatures);
+    }
+#endif
+#if VK_KHR_acceleration_structure
+    if (GVulkanSupportsAccelerationStructures)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceAccelerationStructureFeatures);
+    }
+#endif
+#if VK_KHR_ray_tracing_pipeline
+    if (GVulkanSupportsRayTracingPipeline)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceRayTracingPipelineFeatures);
+    }
+#endif
+#if VK_KHR_ray_query
+    if (GVulkanSupportsRayQuery)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceRayQueryFeatures);
+    }
+#endif
+#if VK_KHR_fragment_shading_rate
+    if (GVulkanSupportsFragmentShadingRate)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceFragmentShadingRateFeatures);
+    }
+#endif
+#if VK_EXT_mesh_shader
+    if (GVulkanSupportsMeshShaders)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceMeshShaderFeatures);
+    }
+#endif
+#if VK_EXT_fragment_shader_interlock
+    if (GVulkanSupportsFragmentShaderInterlock)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceFragmentShaderInterlockFeatures);
+    }
+#endif
+
+    // Finally create the device
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR_CRITICAL("Failed to create Device");
         return false;
     }
-    else
-    {
-        return true;
-    }
+
+    return true;
 }
 
 bool FVulkanDevice::PostLoaderInitalize()
@@ -918,9 +1263,9 @@ bool FVulkanDevice::PostLoaderInitalize()
 
 bool FVulkanDevice::InitializeDeviceFeatureSupport()
 {
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
     // Baseline defaults
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
     RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = false;
     RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
 
@@ -935,7 +1280,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHIDeviceFeatureSupport::ShadingRateTier             = EShadingRateTier::NotSupported;
     RHIDeviceFeatureSupport::ShadingRateImageTileSize    = 0;
 
-    RHIDeviceFeatureSupport::bSupportDrawIndirect        = true;   // Vulkan core
+    RHIDeviceFeatureSupport::bSupportDrawIndirect        = true;
     RHIDeviceFeatureSupport::bSupportMultiDrawIndirect   = false;
     RHIDeviceFeatureSupport::MaxDrawIndirectCount        = 1;
 
@@ -949,31 +1294,39 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHIDeviceFeatureSupport::MaxCubeTextureSize          = 0;
     RHIDeviceFeatureSupport::MaxCubeArrayCount           = 0;
 
-    // ---------------------------------------------------------------------
-    // Pull core features/properties
-    // ---------------------------------------------------------------------
+    RHIDeviceFeatureSupport::MaxBufferSize               = 0;
+    RHIDeviceFeatureSupport::MaxConstantBufferSize       = 0;
+    RHIDeviceFeatureSupport::MaxStorageBufferSize        = 0;
+    RHIDeviceFeatureSupport::StructuredBufferMinStride   = 4;
+    RHIDeviceFeatureSupport::StructuredBufferMaxStride   = 2048;
+    RHIDeviceFeatureSupport::RawBufferRequiredAlignment  = 4;
+
+    // -------------------------------------------------------------------------------------------
+    // Core features/properties
+    // -------------------------------------------------------------------------------------------
     VkPhysicalDevice PhysicalDeviceHandle = GetPhysicalDevice()->GetVkPhysicalDevice();
 
-    // Core features (e.g., geometry shader support)
+    // Core features
     const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
     if (GVulkanAllowGeometryShaders && PhysicalDeviceFeatures.geometryShader)
     {
         RHIDeviceFeatureSupport::bSupportsGeometryShaders = true;
     }
 
-    // Core properties (indirect count + image/texture limits)
+    // Core properties
     const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
+
     {
         // DrawIndirect + MultiDrawIndirect
         if (PhysicalDeviceFeatures.multiDrawIndirect)
         {
             RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = true;
-            RHIDeviceFeatureSupport::MaxDrawIndirectCount = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
+            RHIDeviceFeatureSupport::MaxDrawIndirectCount      = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
         }
         else
         {
             RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = false;
-            RHIDeviceFeatureSupport::MaxDrawIndirectCount = 1;
+            RHIDeviceFeatureSupport::MaxDrawIndirectCount      = 1;
         }
 
         // Texture / Image limits
@@ -983,153 +1336,136 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         RHIDeviceFeatureSupport::MaxTexture3DHeight      = PhysicalDeviceProperties.limits.maxImageDimension3D;
         RHIDeviceFeatureSupport::MaxTexture3DDepth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
         RHIDeviceFeatureSupport::MaxCubeTextureSize      = PhysicalDeviceProperties.limits.maxImageDimensionCube;
+        RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
+        RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
+        RHIDeviceFeatureSupport::MaxCubeArrayCount       = PhysicalDeviceProperties.limits.maxImageArrayLayers / RHI_NUM_CUBE_FACES;
 
-        // Array layers (shared limit for 1D/2D/cube arrays)
-        const uint32 MaxArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
-        RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = MaxArrayLayers;
-        RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = MaxArrayLayers;
-        RHIDeviceFeatureSupport::MaxCubeArrayCount       = MaxArrayLayers / RHI_NUM_CUBE_FACES; // layers/6
+        // Buffer / Memory Limits
+        const uint32 MinBufferStride = sizeof(uint32);
+        RHIDeviceFeatureSupport::MaxConstantBufferSize      = PhysicalDeviceProperties.limits.maxUniformBufferRange;
+        RHIDeviceFeatureSupport::MaxStorageBufferSize       = PhysicalDeviceProperties.limits.maxStorageBufferRange;
+        RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0);
+        RHIDeviceFeatureSupport::StructuredBufferMinStride  = Math::Max<uint32>(MinBufferStride, (uint32)PhysicalDeviceProperties.limits.minStorageBufferOffsetAlignment);
+        RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint64(~0);
+        RHIDeviceFeatureSupport::RawBufferRequiredAlignment = MinBufferStride;
     }
 
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
     // SV_RenderTargetArrayIndex from VS (shaderOutputLayer in Vulkan 1.2)
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
     const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
     RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
 
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
     // View Instancing (multiview)
-    // ---------------------------------------------------------------------
-    if (IsExtensionEnabled(VK_KHR_MULTIVIEW_EXTENSION_NAME))
+    // -------------------------------------------------------------------------------------------
+    if (GVulkanSupportsMultiviews)
     {
-        VkPhysicalDeviceProperties2 DeviceProperties2;
-        FMemory::Memzero(&DeviceProperties2);
-        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-
-        VkPhysicalDeviceMultiviewPropertiesKHR MultiviewProperties;
-        FMemory::Memzero(&MultiviewProperties);
-        MultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES_KHR;
-
-        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
-        DevicePropertiesHelper.AddNext(MultiviewProperties);
-        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
-
-        RHIDeviceFeatureSupport::MaxViewInstanceCount = MultiviewProperties.maxMultiviewViewCount;
-        RHIDeviceFeatureSupport::bSupportsViewInstancing = (RHIDeviceFeatureSupport::MaxViewInstanceCount > 1);
+        RHIDeviceFeatureSupport::MaxViewInstanceCount    = GVulkanMaxMultiviewViewCount;
+        RHIDeviceFeatureSupport::bSupportsViewInstancing = RHIDeviceFeatureSupport::MaxViewInstanceCount > 1;
     }
     else
     {
+        RHIDeviceFeatureSupport::MaxViewInstanceCount    = 1;
         RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
-        RHIDeviceFeatureSupport::MaxViewInstanceCount = 1;
     }
 
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
     // Ray Tracing
-    //  - Tier1_1  => only if VK_KHR_ray_query is available
-    //  - Tier1    => pipeline RT without ray query
-    //  - Supports RT if acceleration structures + (pipeline OR ray query)
-    // ---------------------------------------------------------------------
-    const bool bHasRTPipeline             = IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+    // Tier1_1: Only if VK_KHR_ray_query is available
+    // Tier1: Pipeline ray tracing without ray query
+    // Supports ray tracing if acceleration structures + (pipeline OR ray query)
+    // -------------------------------------------------------------------------------------------
+    const bool bHasRayTracingPipeline     = IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
     const bool bHasRayQuery               = IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME);
     const bool bHasAccelerationStructures = IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 
-    if (bHasAccelerationStructures && (bHasRTPipeline || bHasRayQuery))
+    if (bHasAccelerationStructures && bHasRayTracingPipeline)
     {
-        RHIDeviceFeatureSupport::bSupportsRayTracing = true;
+        // Query pipeline RT properties for recursion depth
+        VkPhysicalDeviceProperties2 DeviceProperties2 = {};
+        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
-        if (bHasRTPipeline)
-        {
-            // Query pipeline RT properties for recursion depth
-            VkPhysicalDeviceProperties2 DeviceProperties2;
-            FMemory::Memzero(&DeviceProperties2);
-            DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        VkPhysicalDeviceRayTracingPipelinePropertiesKHR DeviceRayTracingPipelineProperties = {};
+        DeviceRayTracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
 
-            VkPhysicalDeviceRayTracingPipelinePropertiesKHR RTProps;
-            FMemory::Memzero(&RTProps);
-            RTProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+        FVulkanStructChain DeviceProperties2Chain(DeviceProperties2);
+        DeviceProperties2Chain.AddNext(DeviceRayTracingPipelineProperties);
 
-            FVulkanStructureHelper Helper(DeviceProperties2);
-            Helper.AddNext(RTProps);
-            vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
+        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
-            RHIDeviceFeatureSupport::RayTracingTier = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
-            RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = RTProps.maxRayRecursionDepth;
-        }
-        else
-        {
-            // Ray Query only (inline RT). No pipeline recursion depth.
-            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1_1;
-            RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 1; // not applicable; minimal non-zero
-        }
+        RHIDeviceFeatureSupport::bSupportsRayTracing         = true;
+        RHIDeviceFeatureSupport::RayTracingTier              = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
+        RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = DeviceRayTracingPipelineProperties.maxRayRecursionDepth;
     }
     else
     {
-        RHIDeviceFeatureSupport::bSupportsRayTracing = false;
-        RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::NotSupported;
+        RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
+        RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
         RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
     }
 
-    // ---------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (fragment shading rate)
-    //  - Tier2 if attachmentFragmentShadingRate (image-based) is supported
-    //  - Tier1 if pipeline/primitive shading rate is supported
-    // ---------------------------------------------------------------------
+    // Tier2: If attachmentFragmentShadingRate (image-based) is supported
+    // Tier1: If pipeline/primitive shading rate is supported
+    // -------------------------------------------------------------------------------------------
     if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
         // Query features
-        VkPhysicalDeviceFeatures2 Features2;
-        FMemory::Memzero(&Features2);
-        Features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        VkPhysicalDeviceFeatures2 DeviceFeatures2 = {};
+        DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
-        VkPhysicalDeviceFragmentShadingRateFeaturesKHR FSRFeatures;
-        FMemory::Memzero(&FSRFeatures);
-        FSRFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
+        VkPhysicalDeviceFragmentShadingRateFeaturesKHR DeviceFragmentShadingRateFeatures = {};
+        DeviceFragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
 
-        FVulkanStructureHelper FeaturesHelper(Features2);
-        FeaturesHelper.AddNext(FSRFeatures);
-        vkGetPhysicalDeviceFeatures2(PhysicalDeviceHandle, &Features2);
+        FVulkanStructChain DeviceFeaturesChain(DeviceFeatures2);
+        DeviceFeaturesChain.AddNext(DeviceFragmentShadingRateFeatures);
+
+        vkGetPhysicalDeviceFeatures2(PhysicalDeviceHandle, &DeviceFeatures2);
 
         // Query properties (tile size)
-        VkPhysicalDeviceProperties2 DeviceProperties2;
-        FMemory::Memzero(&DeviceProperties2);
+        VkPhysicalDeviceProperties2 DeviceProperties2 = {};
         DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
-        VkPhysicalDeviceFragmentShadingRatePropertiesKHR FSRProps;
-        FMemory::Memzero(&FSRProps);
-        FSRProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+        VkPhysicalDeviceFragmentShadingRatePropertiesKHR DeviceFragmentShadingRateProperties = {};
+        DeviceFragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
 
-        FVulkanStructureHelper PropsHelper(DeviceProperties2);
-        PropsHelper.AddNext(FSRProps);
+        FVulkanStructChain DevicePropertiesChain(DeviceProperties2);
+        DevicePropertiesChain.AddNext(DeviceFragmentShadingRateProperties);
+
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
-        if (FSRFeatures.attachmentFragmentShadingRate)
+        if (DeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate)
         {
             RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier2; // image-based
         }
-        else if (FSRFeatures.pipelineFragmentShadingRate || FSRFeatures.primitiveFragmentShadingRate)
+        else if (DeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate || DeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate)
         {
-            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier1; // per-draw / per-primitive
+            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier1; // per-draw/per-primitive
         }
         else
         {
             RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::NotSupported;
         }
 
-        // Store one dimension; most hardware uses square tiles (e.g., 16x16)
-        RHIDeviceFeatureSupport::ShadingRateImageTileSize = Math::Max<uint32>(1u, FSRProps.minFragmentShadingRateAttachmentTexelSize.width);
-        RHIDeviceFeatureSupport::bSupportsVRS = (RHIDeviceFeatureSupport::ShadingRateTier != EShadingRateTier::NotSupported);
+        RHIDeviceFeatureSupport::ShadingRateImageTileSize = Math::Max<uint32>(1u, DeviceFragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width);
+        RHIDeviceFeatureSupport::bSupportsVRS             = RHIDeviceFeatureSupport::ShadingRateTier != EShadingRateTier::NotSupported;
     }
     else
     {
-        RHIDeviceFeatureSupport::bSupportsVRS = false;
-        RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+        RHIDeviceFeatureSupport::bSupportsVRS             = false;
+        RHIDeviceFeatureSupport::ShadingRateTier          = EShadingRateTier::NotSupported;
         RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
     }
 
     return true;
 }
 
+// -------------------------------------------------------------------------------------------
 // Initialize default resources that are just for null bindings
+// -------------------------------------------------------------------------------------------
+
 bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandContext)
 {
     // Create the resources
@@ -1140,7 +1476,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     }
 
     // If null-descriptors are supported then we can return here, since we have no DefaultResources to upload
-    if (VulkanRobustness2EXT::SupportsNullDescriptors())
+    if (GVulkanSupportsNullDescriptors)
     {
         return true;
     }
@@ -1152,9 +1488,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
 
     VkImage DefaultImage = DefaultResources.NullImage;
 
-    VkImageMemoryBarrier2 ImageBarrier;
-    FMemory::Memzero(&ImageBarrier);
-
+    VkImageMemoryBarrier2 ImageBarrier = {};
     ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
     ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -1173,7 +1507,7 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
 
     CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
 
-    VkBufferImageCopy BufferImageCopy;
+    VkBufferImageCopy BufferImageCopy = {};
     BufferImageCopy.bufferOffset                    = 0;
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
@@ -1289,18 +1623,16 @@ uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 {
     // We only need to actually create these resources if we don't support null-descriptors
-    if (!VulkanRobustness2EXT::SupportsNullDescriptors())
+    if (!GVulkanSupportsNullDescriptors)
     {
-        if (!InitializeBuffersAndImages(Device))
+        if (!InitializeNullBufferAndImage(Device))
         {
             return false;
         }
     }
 
     // Create a NullSampler
-    VkSamplerCreateInfo SamplerCreateInfo;
-    FMemory::Memzero(&SamplerCreateInfo);
-
+    VkSamplerCreateInfo SamplerCreateInfo = {};
     SamplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     SamplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
     SamplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
@@ -1331,20 +1663,10 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     return true;
 }
 
-bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
+bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device)
 {
     // Create NullBuffer
-    VkBufferCreateInfo BufferCreateInfo;
-    FMemory::Memzero(&BufferCreateInfo);
-
-    BufferCreateInfo.usage = 
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | 
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | 
-        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | 
-        VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-
+    VkBufferCreateInfo BufferCreateInfo = {};
     BufferCreateInfo.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferCreateInfo.pNext                 = nullptr;
     BufferCreateInfo.flags                 = 0;
@@ -1352,6 +1674,13 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     BufferCreateInfo.queueFamilyIndexCount = 0;
     BufferCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
     BufferCreateInfo.size                  = VULKAN_DEFAULT_BUFFER_NUM_BYTES;
+	BufferCreateInfo.usage =
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+		VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+		VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
 
     VkResult Result = vkCreateBuffer(Device.GetVkDevice(), &BufferCreateInfo, nullptr, &NullBuffer);
     if (VULKAN_FAILED(Result))
@@ -1375,9 +1704,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     // Create a NullImage
     constexpr VkExtent3D NullExtent = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
 
-    VkImageCreateInfo ImageCreateInfo;
-    FMemory::Memzero(&ImageCreateInfo);
-
+    VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageCreateInfo.imageType             = VK_IMAGE_TYPE_2D;
     ImageCreateInfo.usage                 = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -1410,9 +1737,7 @@ bool FVulkanDefaultResources::InitializeBuffersAndImages(FVulkanDevice& Device)
     }
 
     // Create NullImageView
-    VkImageViewCreateInfo ImageViewCreateInfo;
-    FMemory::Memzero(&ImageViewCreateInfo);
-
+    VkImageViewCreateInfo ImageViewCreateInfo = {};
     ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     ImageViewCreateInfo.flags                           = 0;
     ImageViewCreateInfo.format                          = ImageCreateInfo.format;

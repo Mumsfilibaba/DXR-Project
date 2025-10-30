@@ -30,7 +30,7 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
 
     for (const FVulkanShaderInfo::FResourceBinding& Binding : ShaderInfo.ResourceBindings)
     {
-        VkDescriptorSetLayoutBinding LayoutBinding;
+        VkDescriptorSetLayoutBinding LayoutBinding = {};
         LayoutBinding.descriptorCount    = 1;
         LayoutBinding.binding            = Binding.BindingIndex;
         LayoutBinding.pImmutableSamplers = nullptr;
@@ -88,9 +88,7 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     }
 
     // Create PipelineLayout
-    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo;
-    FMemory::Memzero(&PipelineLayoutCreateInfo);
-
+    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = {};
     PipelineLayoutCreateInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutCreateInfo.setLayoutCount = SetLayouts.Size();
     PipelineLayoutCreateInfo.pSetLayouts    = SetLayouts.Data();
@@ -317,9 +315,7 @@ VkDescriptorSetLayout FVulkanPipelineLayoutManager::FindOrCreateSetLayouts(const
     }
     
     // Create the DescriptorSetLayout or assign an "default" empty DescriptorSetLayout
-    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo;
-    FMemory::Memzero(&DescriptorSetLayoutCreateInfo);
-
+    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo = {};
     DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     DescriptorSetLayoutCreateInfo.bindingCount = SetLayoutInfo.Bindings.Size();
     DescriptorSetLayoutCreateInfo.pBindings    = SetLayoutInfo.Bindings.Data();
