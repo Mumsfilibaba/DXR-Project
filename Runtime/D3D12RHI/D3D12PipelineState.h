@@ -78,7 +78,7 @@ public:
 private:
     FRHIDepthStencilStateInfo Info;
     D3D12_DEPTH_STENCIL_DESC  Desc;
-    uint64 Hash;
+    uint64                    Hash;
 };
 
 class FD3D12RasterizerState : public FRHIRasterizerState
@@ -105,7 +105,7 @@ public:
 private:
     FRHIRasterizerStateInfo Info;
     D3D12_RASTERIZER_DESC   Desc;
-    uint64 Hash;
+    uint64                  Hash;
 };
 
 class FD3D12BlendState : public FRHIBlendState
@@ -132,7 +132,7 @@ public:
 private:
     FRHIBlendStateInfo Info;
     D3D12_BLEND_DESC   Desc;
-    uint64 Hash;
+    uint64             Hash;
 };
 
 class FD3D12PipelineState : public FD3D12DeviceChild
@@ -422,13 +422,13 @@ public:
     FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
 
 private:
-    TComPtr<ID3D12StateObject>                     StateObject;
-    TComPtr<ID3D12StateObjectProperties>           StateObjectProperties;
-    FD3D12RootSignatureRef                         GlobalRootSignature;
+    TComPtr<ID3D12StateObject>                      StateObject;
+    TComPtr<ID3D12StateObjectProperties>            StateObjectProperties;
+    FD3D12RootSignatureRef                          GlobalRootSignature;
     // TODO: There could be more than one root signature for locals
-    FD3D12RootSignatureRef                         RayGenLocalRootSignature;
-    FD3D12RootSignatureRef                         MissLocalRootSignature;
-    FD3D12RootSignatureRef                         HitLocalRootSignature;
+    FD3D12RootSignatureRef                          RayGenLocalRootSignature;
+    FD3D12RootSignatureRef                          MissLocalRootSignature;
+    FD3D12RootSignatureRef                          HitLocalRootSignature;
     TMap<FString, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
 };
 

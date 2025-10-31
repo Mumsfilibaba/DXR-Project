@@ -100,7 +100,7 @@ struct RHIDeviceFeatureSupport
 
     // -------------------------------------------------------------------------------------------
     // Hardware Ray Tracing
-    // ------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
 
     /** Whether hardware-accelerated ray tracing is supported */
     static RHI_API bool bSupportsRayTracing;

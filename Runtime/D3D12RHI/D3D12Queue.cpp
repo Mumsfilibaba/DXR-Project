@@ -31,9 +31,7 @@ FD3D12Queue::~FD3D12Queue()
 
 bool FD3D12Queue::Initialize()
 {
-    D3D12_COMMAND_QUEUE_DESC Desc;
-    FMemory::Memzero(&Desc);
-
+    D3D12_COMMAND_QUEUE_DESC Desc = {};
     Desc.Type     = CommandListType;
     Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     Desc.NodeMask = GetDevice()->GetNodeMask();

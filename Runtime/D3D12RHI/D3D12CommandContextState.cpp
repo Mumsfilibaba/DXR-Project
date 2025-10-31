@@ -203,6 +203,7 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
 void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
     const D3D12_RESOURCE_BINDING_TIER ResourceBindingTier = GD3D12ResourceBindingTier;
+
     uint32 NumCBVs[ShaderVisibility_Count];
     uint32 NumSRVs[ShaderVisibility_Count];
     uint32 NumUAVs[ShaderVisibility_Count];
@@ -370,9 +371,9 @@ void FD3D12CommandContextState::ResetState()
     FMemory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
     GraphicsState.NumScissorRects = 0;
     
-    GraphicsState.PipelineState    = nullptr;
-    GraphicsState.ShadingRate      = D3D12_SHADING_RATE_1X1;
-    GraphicsState.ShadingRateImage = nullptr;
+    GraphicsState.PipelineState          = nullptr;
+    GraphicsState.ShadingRate            = D3D12_SHADING_RATE_1X1;
+    GraphicsState.ShadingRateImage       = nullptr;
 
     GraphicsState.bBindIndexBuffer       = true;
     GraphicsState.bBindRenderTargets     = true;
@@ -387,10 +388,10 @@ void FD3D12CommandContextState::ResetState()
     GraphicsState.bBindShaderConstants   = true;
     GraphicsState.bBindPrimitiveTopology = true;
 
-    ComputeState.PipelineState        = nullptr;
-    ComputeState.bBindPipelineState   = true;
-    ComputeState.bBindRootSignature   = true;
-    ComputeState.bBindShaderConstants = true;
+    ComputeState.PipelineState           = nullptr;
+    ComputeState.bBindPipelineState      = true;
+    ComputeState.bBindRootSignature      = true;
+    ComputeState.bBindShaderConstants    = true;
 }
 
 void FD3D12CommandContextState::ResetStateResources()
@@ -426,9 +427,9 @@ void FD3D12CommandContextState::ResetStateForNewCommandList()
     GraphicsState.bBindShaderConstants   = true;
     GraphicsState.bBindPrimitiveTopology = true;
 
-    ComputeState.bBindPipelineState   = true;
-    ComputeState.bBindRootSignature   = true;
-    ComputeState.bBindShaderConstants = true;
+    ComputeState.bBindPipelineState      = true;
+    ComputeState.bBindRootSignature      = true;
+    ComputeState.bBindShaderConstants    = true;
 }
 
 void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineState* InGraphicsPipelineState)

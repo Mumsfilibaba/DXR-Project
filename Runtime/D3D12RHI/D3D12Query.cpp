@@ -38,9 +38,7 @@ FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager*
 
 bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
 {
-    D3D12_QUERY_HEAP_DESC QueryHeapDesc;
-    FMemory::Memzero(&QueryHeapDesc);
-
+    D3D12_QUERY_HEAP_DESC QueryHeapDesc = {};
     QueryHeapDesc.Type     = InQueryHeapType;
     QueryHeapDesc.Count    = CVarNumTimestampQueriesPerHeap.GetValue();
     QueryHeapDesc.NodeMask = GetDevice()->GetNodeMask();
@@ -53,9 +51,7 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
         return false;
     }
 
-    D3D12_RESOURCE_DESC Desc;
-    FMemory::Memzero(&Desc);
-
+    D3D12_RESOURCE_DESC Desc = {};
     Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -75,10 +71,11 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
         return false;
     }
 
-    QueryHeap = NewQueryHeap;
-    ReadResource = NewResource;
+    QueryHeap     = NewQueryHeap;
+    ReadResource  = NewResource;
     QueryHeapType = InQueryHeapType;
-    NumQueries = QueryHeapDesc.Count;
+    NumQueries    = QueryHeapDesc.Count;
+
     QueryAllocations.Resize(NumQueries);
     return true;
 }
@@ -124,6 +121,7 @@ void FD3D12QueryHeap::ReadBackResults(FD3D12Queue& Queue)
     if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
     {
         const uint64 Frequency = Queue.GetFrequency();
+
         const uint64* TimestampResults = reinterpret_cast<uint64*>(Data);
         for (int32 Index = 0; Index < NumUsedQueries; Index++)
         {

@@ -928,9 +928,7 @@ bool FD3D12Device::CreateCommandQueues()
 
 bool FD3D12Device::CreateDefaultResources()
 {
-    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-    FMemory::Memzero(&CBVDesc);
-
+    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = {};
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes    = 0;
 
@@ -945,9 +943,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-    FMemory::Memzero(&UAVDesc);
-
+    D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
     UAVDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
     UAVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
     UAVDesc.Texture2D.MipSlice   = 0;
@@ -964,9 +960,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-    FMemory::Memzero(&SRVDesc);
-
+    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
     SRVDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
     SRVDesc.Format                        = DXGI_FORMAT_R8G8B8A8_UNORM;
     SRVDesc.Shader4ComponentMapping       = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -986,9 +980,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
-    FMemory::Memzero(&RTVDesc);
-
+    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
     RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
     RTVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
     RTVDesc.Texture2D.MipSlice   = 0;
@@ -1005,9 +997,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_SAMPLER_DESC SamplerDesc;
-    FMemory::Memzero(&SamplerDesc);
-
+    D3D12_SAMPLER_DESC SamplerDesc = {};
     SamplerDesc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     SamplerDesc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     SamplerDesc.AddressW       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -1419,9 +1409,7 @@ ID3D12CommandQueue* FD3D12Device::GetD3D12CommandQueue(ED3D12CommandQueueType Qu
 
 int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
-    D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
-    FMemory::Memzero(&Data);
-
+    D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = {};
     Data.Flags       = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
     Data.Format      = Format;
     Data.SampleCount = SampleCount;

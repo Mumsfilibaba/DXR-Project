@@ -240,9 +240,7 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
 
     for (uint32 i = 0; i < NumBoundResources; i++)
     {
-        D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
-        FMemory::Memzero(&ShaderBindDesc);
-        
+        D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc = {};
         if (FAILED(Reflection->GetResourceBindingDesc(i, &ShaderBindDesc)))
         {
             continue;
@@ -344,9 +342,7 @@ bool FD3D12GraphicsShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
-	D3D12_SHADER_DESC ShaderDesc;
-    FMemory::Memzero(&ShaderDesc);
-
+	D3D12_SHADER_DESC ShaderDesc = {};
 	HRESULT Result = Reflection->GetDesc(&ShaderDesc);
 	if (FAILED(Result))
 	{
@@ -382,9 +378,7 @@ bool FD3D12ComputeShader::Initialize(const TArray<uint8>& InCode)
         return false;
     }
 
-    D3D12_SHADER_DESC ShaderDesc;
-	FMemory::Memzero(&ShaderDesc);
-
+    D3D12_SHADER_DESC ShaderDesc = {};
     HRESULT Result = Reflection->GetDesc(&ShaderDesc);
     if (FAILED(Result))
     {
@@ -420,9 +414,7 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 		return false;
 	}
 
-	D3D12_LIBRARY_DESC LibraryDesc;
-	FMemory::Memzero(&LibraryDesc);
-
+	D3D12_LIBRARY_DESC LibraryDesc = {};
 	HRESULT Result = Reflection->GetDesc(&LibraryDesc);
 	if (FAILED(Result))
 	{
@@ -438,9 +430,7 @@ bool FD3D12RayTracingShader::Initialize(const TArray<uint8>& InCode)
 	// Make sure that the first shader is the one we wanted
 	ID3D12FunctionReflection* Function = Reflection->GetFunctionByIndex(0);
 
-	D3D12_FUNCTION_DESC FunctionDesc;
-	FMemory::Memzero(&FunctionDesc);
-
+	D3D12_FUNCTION_DESC FunctionDesc = {};
 	Function->GetDesc(&FunctionDesc);
 	if (FAILED(Result))
 	{

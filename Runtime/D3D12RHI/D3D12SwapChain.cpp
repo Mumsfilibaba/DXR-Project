@@ -82,9 +82,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
         return false;
     }
 
-    DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
-    FMemory::Memzero(&SwapChainDesc);
-
+    DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
     SwapChainDesc.Width              = Info.Width;
     SwapChainDesc.Height             = Info.Height;
     SwapChainDesc.Format             = NativeFormat;
@@ -97,9 +95,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
     SwapChainDesc.AlphaMode          = DXGI_ALPHA_MODE_IGNORE;
     SwapChainDesc.Flags              = Flags;
 
-    DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
-    FMemory::Memzero(&FullscreenDesc);
-
+    DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc = {};
     FullscreenDesc.RefreshRate.Numerator   = 0;
     FullscreenDesc.RefreshRate.Denominator = 1;
     FullscreenDesc.Scaling                 = DXGI_MODE_SCALING_STRETCHED;

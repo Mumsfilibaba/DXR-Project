@@ -140,9 +140,7 @@ void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D
 	}
 
 	// Otherwise: Different, non-chainable states -> cannot coalesce. Add a new barrier.
-	D3D12_RESOURCE_BARRIER Barrier;
-	FMemory::Memzero(&Barrier);
-
+	D3D12_RESOURCE_BARRIER Barrier = {};
 	Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	Barrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	Barrier.Transition.pResource   = Resource;
@@ -165,9 +163,7 @@ void FResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource
 		}
 	}
 
-	D3D12_RESOURCE_BARRIER Barrier;
-	FMemory::Memzero(&Barrier);
-
+	D3D12_RESOURCE_BARRIER Barrier = {};
 	Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 	Barrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 	Barrier.UAV.pResource = Resource;
@@ -579,7 +575,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginR
 
 void FD3D12CommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 {
-    D3D12_VIEWPORT Viewport;
+    D3D12_VIEWPORT Viewport = {};
     Viewport.Width    = ViewportRegion.Width;
     Viewport.Height   = ViewportRegion.Height;
     Viewport.TopLeftX = ViewportRegion.PositionX;
@@ -592,7 +588,7 @@ void FD3D12CommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 
 void FD3D12CommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
 {
-    D3D12_RECT ScissorRect;
+    D3D12_RECT ScissorRect = {};
     ScissorRect.left   = LONG(ScissorRegion.PositionX);
     ScissorRect.right  = LONG(ScissorRegion.PositionX) + LONG(ScissorRegion.Width);
     ScissorRect.top    = LONG(ScissorRegion.PositionY);
@@ -815,9 +811,7 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     }
 
     // Copy to Dest
-    D3D12_TEXTURE_COPY_LOCATION SourceLocation;
-    FMemory::Memzero(&SourceLocation);
-
+    D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
     SourceLocation.pResource                          = Allocation.Resource.Get();
     SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
     SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
@@ -899,9 +893,7 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
         for (uint32 MipLevel = 0; MipLevel < InCopyDesc.NumMipLevels; MipLevel++)
         {
             // Source
-            D3D12_TEXTURE_COPY_LOCATION SourceLocation;
-            FMemory::Memzero(&SourceLocation);
-
+            D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
             SourceLocation.pResource        = D3D12Source->GetResource()->GetD3D12Resource();
             SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
             SourceLocation.SubresourceIndex = D3D12CalculateSubresource(InCopyDesc.SrcMipSlice + MipLevel, SrcArraySlice + ArraySlice, 0, Src->GetNumMipLevels(), NumSrcArraySlices);
@@ -915,9 +907,7 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
             SourceBox.back   = Math::Max((InCopyDesc.SrcPosition.Z + InCopyDesc.Size.Z) >> MipLevel, 1);
 
             // Destination
-            D3D12_TEXTURE_COPY_LOCATION DestLocation;
-            FMemory::Memzero(&DestLocation);
-
+            D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
             DestLocation.pResource        = D3D12Destination->GetResource()->GetD3D12Resource();
             DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
             DestLocation.SubresourceIndex = D3D12CalculateSubresource(InCopyDesc.DstMipSlice + MipLevel, DstArraySlice + ArraySlice, 0, Dst->GetNumMipLevels(), NumDstArraySlices);
@@ -1207,9 +1197,7 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
 
     ResourceBarrierBatcher.FlushBarriers();
 
-    D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
-    FMemory::Memzero(&RayDispatchDesc);
-
+    D3D12_DISPATCH_RAYS_DESC RayDispatchDesc = {};
     RayDispatchDesc.RayGenerationShaderRecord = D3D12Scene->GetRayGenShaderRecord();
     RayDispatchDesc.MissShaderTable           = D3D12Scene->GetMissShaderTable();
     RayDispatchDesc.HitGroupTable             = D3D12Scene->GetHitGroupTable();
