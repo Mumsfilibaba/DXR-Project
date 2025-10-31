@@ -324,24 +324,24 @@ DECLARE_RHICOMMAND(FRHICommandSetComputePipelineState)
     FRHIComputePipelineState* PipelineState;
 };
 
-DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
+DECLARE_RHICOMMAND(FRHICommandSetShaderConstants)
 {
-    FORCEINLINE FRHICommandSet32BitShaderConstants(FRHIShader* InShader, const void* InShader32BitConstants, uint32 InNum32BitConstants)
+    FORCEINLINE FRHICommandSetShaderConstants(FRHIShader* InShader, const void* InShaderConstants, uint32 InNumShaderConstants)
         : Shader(InShader)
-        , Shader32BitConstants(InShader32BitConstants)
-        , Num32BitConstants(InNum32BitConstants)
+        , ShaderConstants(InShaderConstants)
+        , NumShaderConstants(InNumShaderConstants)
     { 
-        CHECK(InNum32BitConstants <= RHI_MAX_SHADER_CONSTANTS);
+        CHECK(InNumShaderConstants <= RHI_MAX_SHADER_CONSTANTS);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.Set32BitShaderConstants(Shader, Shader32BitConstants, Num32BitConstants);
+        CommandContext.SetShaderConstants(Shader, ShaderConstants, NumShaderConstants);
     }
 
     FRHIShader* Shader;
-    const void* Shader32BitConstants;
-    uint32      Num32BitConstants;
+    const void* ShaderConstants;
+    uint32      NumShaderConstants;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetShaderResourceView)

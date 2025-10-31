@@ -752,11 +752,11 @@ void FVulkanCommandContext::SetComputePipelineState(class FRHIComputePipelineSta
     ContextState.SetComputePipelineState(VulkanPipelineState);
 }
 
-void FVulkanCommandContext::Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void FVulkanCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    ContextState.SetPushConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
+    ContextState.SetPushConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
 void FVulkanCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)

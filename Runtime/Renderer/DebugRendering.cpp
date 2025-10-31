@@ -664,7 +664,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
         ShaderData.Color       = FVector4(1.0f, 0.0f, 0.0f, 1.0f);
 
         constexpr uint32 NumConstants = sizeof(FAABBShaderInfoHLSL) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(AABB_VS.Get(), &ShaderData, NumConstants);
+        CommandList.SetShaderConstants(AABB_VS.Get(), &ShaderData, NumConstants);
 
         CommandList.DrawIndexedInstanced(AABBIndexCount_Wireframe, 1, 0, 0, 0);
     }
@@ -705,7 +705,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
         PointLightData.WorldPosition = PointLight->Position;
 
         constexpr uint32 NumConstants = sizeof(FPointlightDebugData) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(LightDebug_VS.Get(), &PointLightData, NumConstants);
+        CommandList.SetShaderConstants(LightDebug_VS.Get(), &PointLightData, NumConstants);
 
         CommandList.DrawIndexedInstanced(SphereIndexCount, 1, 0, 0, 0);
     }
@@ -758,7 +758,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
             CommandList.SetConstantBuffer(AABBSolid_VS.Get(), Resources.CameraBuffer.Get(), 0);
 
             constexpr uint32 NumConstants = sizeof(FAABBShaderInfoHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(AABBSolid_VS.Get(), &ShaderData, NumConstants);
+            CommandList.SetShaderConstants(AABBSolid_VS.Get(), &ShaderData, NumConstants);
 
             CommandList.DrawIndexedInstanced(AABBIndexCount_Solid, 1, 0, 0, 0);
 
@@ -770,7 +770,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
 
             ShaderData.Color = FVector4(0.7f, 0.7f, 0.7f, 1.0f);
 
-            CommandList.Set32BitShaderConstants(AABB_VS.Get(), &ShaderData, NumConstants);
+            CommandList.SetShaderConstants(AABB_VS.Get(), &ShaderData, NumConstants);
 
             CommandList.DrawIndexedInstanced(AABBIndexCount_Wireframe, 1, 0, 0, 0);
         }
@@ -796,7 +796,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
         LightProbeData.WorldPosition = LightProbe->Origin;
 
         constexpr uint32 NumConstants = sizeof(FLightProbeDebugData) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(ProbeDebug_VS.Get(), &LightProbeData, NumConstants);
+        CommandList.SetShaderConstants(ProbeDebug_VS.Get(), &LightProbeData, NumConstants);
 
         if (LightProbe->SpecularCubeMap)
         {

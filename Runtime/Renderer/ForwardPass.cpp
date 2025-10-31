@@ -208,7 +208,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(VShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
+            CommandList.SetShaderConstants(VShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }

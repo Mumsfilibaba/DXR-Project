@@ -962,15 +962,15 @@ void FRHIValidationCommandContext::SetComputePipelineState(FRHIComputePipelineSt
     RealContext->SetComputePipelineState(PipelineState);
 }
 
-void FRHIValidationCommandContext::Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void FRHIValidationCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     if (!Shader)
     {
-        RHI_VALIDATION_ERROR("Invalid to call Set32BitShaderConstants when Shader is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call SetShaderConstants when Shader is nullptr");
         return;
     }
 
-    RealContext->Set32BitShaderConstants(Shader, Shader32BitConstants, Num32BitConstants);
+    RealContext->SetShaderConstants(Shader, ShaderConstants, NumShaderConstants);
 }
 
 void FRHIValidationCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)

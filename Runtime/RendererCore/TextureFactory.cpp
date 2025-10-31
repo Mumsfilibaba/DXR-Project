@@ -320,7 +320,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
 
         ShaderConstantData.CubeMapSize = StagingTexture->GetExtent().X;
 
-        CommandList.Set32BitShaderConstants(PanoramCS.Get(), &ShaderConstantData, 1);
+        CommandList.SetShaderConstants(PanoramCS.Get(), &ShaderConstantData, 1);
         CommandList.SetUnorderedAccessView(PanoramCS.Get(), StagingTextureUAV.Get(), 0);
 
         FRHIShaderResourceView* PanoramaSourceView = Source->GetShaderResourceView();
@@ -505,7 +505,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         ShaderConstantData.NumMipLevels = NumMipLevelsThisBatch;
 
         constexpr uint32 NumConstants = sizeof(FGenMipsConstants) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(ComputeShader.Get(), &ShaderConstantData, NumConstants);
+        CommandList.SetShaderConstants(ComputeShader.Get(), &ShaderConstantData, NumConstants);
 
         // Bind the original texture
         CommandList.SetShaderResourceView(ComputeShader.Get(), ShaderResourceViews[DispatchIndex].Get(), 0);
@@ -648,7 +648,7 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
         Constants.CurrentFaceResolution = CurrentWidth;
 
         constexpr uint32 NumConstants = sizeof(FSpecularIrradianceGenConstants) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(SpecularCubeMapFilter_CS.Get(), &Constants, NumConstants);
+        CommandList.SetShaderConstants(SpecularCubeMapFilter_CS.Get(), &Constants, NumConstants);
 
         FRHIUnorderedAccessView* UnorderedAccessView = SpecularIrradianceMapUAVs[Mip].Get();
         CommandList.SetUnorderedAccessView(SpecularCubeMapFilter_CS.Get(), UnorderedAccessView, 0);

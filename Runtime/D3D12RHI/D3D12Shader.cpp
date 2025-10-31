@@ -267,13 +267,13 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
             if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
             {
                 // NOTE: For now only one binding per shader can be used for constants
-                const uint8 Num32BitConstants = static_cast<uint8>(SizeInBytes) / static_cast<uint8>(sizeof(uint32));
-                if (ShaderBindDesc.BindCount > 1 || Num32BitConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT || NewResourceCount.Num32BitConstants != 0)
+                const uint8 NumShaderConstants = static_cast<uint8>(SizeInBytes) / static_cast<uint8>(sizeof(uint32));
+                if (ShaderBindDesc.BindCount > 1 || NumShaderConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT || NewResourceCount.NumShaderConstants != 0)
                 {
                     return false;
                 }
 
-                NewResourceCount.Num32BitConstants = Num32BitConstants;
+                NewResourceCount.NumShaderConstants = NumShaderConstants;
             }
             else
             {
@@ -467,12 +467,12 @@ void FShaderResourceCount::Combine(const FShaderResourceCount& Other)
     Ranges.NumSRVs     = Math::Max(Ranges.NumSRVs, Other.Ranges.NumSRVs);
     Ranges.NumUAVs     = Math::Max(Ranges.NumUAVs, Other.Ranges.NumUAVs);
     Ranges.NumSamplers = Math::Max(Ranges.NumSamplers, Other.Ranges.NumSamplers);
-    Num32BitConstants  = Math::Max(Num32BitConstants, Other.Num32BitConstants);
+    NumShaderConstants = Math::Max(NumShaderConstants, Other.NumShaderConstants);
 }
 
 bool FShaderResourceCount::IsCompatible(const FShaderResourceCount& Other) const
 {
-    if (Num32BitConstants > Other.Num32BitConstants)
+    if (NumShaderConstants > Other.NumShaderConstants)
     {
         return false;
     }

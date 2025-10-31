@@ -217,12 +217,12 @@ public:
         EmplaceCommand<FRHICommandSetComputePipelineState>(PipelineState);
     }
 
-    FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
+    FORCEINLINE void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) noexcept
     {
-        const int32 Size = Num32BitConstants * sizeof(uint32);
+        const int32 Size = NumShaderConstants * sizeof(uint32);
         void* SourceData = Allocate(Size, alignof(uint32));
-        FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
-        EmplaceCommand<FRHICommandSet32BitShaderConstants>(Shader, SourceData, Num32BitConstants);
+        FMemory::Memcpy(SourceData, ShaderConstants, Size);
+        EmplaceCommand<FRHICommandSetShaderConstants>(Shader, SourceData, NumShaderConstants);
     }
 
     FORCEINLINE void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) noexcept

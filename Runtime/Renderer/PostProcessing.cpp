@@ -172,7 +172,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FSceneRenderView&
     TonemapInfo.Padding1          = 0.0f;
 
     constexpr uint32 NumConstants = sizeof(FTonemapInfoHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
+    CommandList.SetShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
 
     CommandList.DrawInstanced(3, 1, 0, 0);
 
@@ -365,14 +365,14 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
         CommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
         CommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         CommandList.SetSamplerState(FXAADebugShader.Get(), FrameResources.FXAASampler.Get(), 0);
-        CommandList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
+        CommandList.SetShaderConstants(FXAADebugShader.Get(), &Settings, 2);
     }
     else
     {
         CommandList.SetGraphicsPipelineState(FXAAPSO.Get());
         CommandList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
         CommandList.SetSamplerState(FXAAShader.Get(), FrameResources.FXAASampler.Get(), 0);
-        CommandList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
+        CommandList.SetShaderConstants(FXAAShader.Get(), &Settings, 2);
     }
 
     CommandList.DrawInstanced(3, 1, 0, 0);

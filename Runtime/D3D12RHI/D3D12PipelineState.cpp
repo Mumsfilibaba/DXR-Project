@@ -375,16 +375,16 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
             RootSignatureLayout.bAllowInputAssembler = D3D12InputLayout ? true : false;
 
             // NOTE: For now all constants are put in visibility_all
-            uint8 Num32BitConstants = 0;
+            uint8 NumShaderConstants = 0;
             for (FD3D12Shader* Shader : BaseShaders)
             {
                 const uint32 Index = Shader->GetShaderVisibility();
                 RootSignatureLayout.ResourceCounts[Index] = Shader->GetResourceCount();
-                Num32BitConstants = Math::Max<uint8>(RootSignatureLayout.ResourceCounts[Index].Num32BitConstants, Num32BitConstants);
-                RootSignatureLayout.ResourceCounts[Index].Num32BitConstants = 0;
+                NumShaderConstants = Math::Max<uint8>(RootSignatureLayout.ResourceCounts[Index].NumShaderConstants, NumShaderConstants);
+                RootSignatureLayout.ResourceCounts[Index].NumShaderConstants = 0;
             }
 
-            RootSignatureLayout.ResourceCounts[ShaderVisibility_All].Num32BitConstants = Num32BitConstants;
+            RootSignatureLayout.ResourceCounts[ShaderVisibility_All].NumShaderConstants = NumShaderConstants;
 
             FD3D12RootSignatureManager& RootSignatureManager = GetDevice()->GetRootSignatureManager();
             RootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(RootSignatureLayout));

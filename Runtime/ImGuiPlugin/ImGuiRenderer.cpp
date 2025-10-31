@@ -551,7 +551,7 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
     
     CommandList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
-    CommandList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
+    CommandList.SetShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }
 
 void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData)

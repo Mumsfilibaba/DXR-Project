@@ -60,7 +60,7 @@ struct FShaderResourceCount
 {
     FShaderResourceCount()
         : Ranges()
-        , Num32BitConstants(0)
+        , NumShaderConstants(0)
     {
     }
 
@@ -68,7 +68,7 @@ struct FShaderResourceCount
     bool IsCompatible(const FShaderResourceCount& Other) const;
 
     FShaderResourceRange Ranges;
-    uint8                Num32BitConstants;
+    uint8                NumShaderConstants;
 };
 
 struct FD3D12ShaderHash

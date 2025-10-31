@@ -327,7 +327,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
+            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -684,7 +684,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
+            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -1088,7 +1088,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     }
 
     constexpr uint32 NumConstants = sizeof(FLightPassSettingsHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(LightPassShader, &LightPassSettings, NumConstants);
+    CommandList.SetShaderConstants(LightPassShader, &LightPassSettings, NumConstants);
 
     constexpr uint32 NumThreads = 16;
     const uint32 WorkGroupWidth  = Math::DivideByMultiple<uint32>(LightPassSettings.ScreenWidth, NumThreads);
@@ -1244,7 +1244,7 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
     constexpr uint32 NumConstants = sizeof(FReductionConstants) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NumConstants);
+    CommandList.SetShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NumConstants);
 
     uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
     uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();

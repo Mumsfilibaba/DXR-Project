@@ -205,7 +205,7 @@ void FMetalCommandContext::SetComputePipelineState(FRHIComputePipelineState* Pip
 {
 }
 
-void FMetalCommandContext::Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void FMetalCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
 }
 

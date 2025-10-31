@@ -629,12 +629,12 @@ void FD3D12CommandContext::SetComputePipelineState(class FRHIComputePipelineStat
     ContextState.SetComputePipelineState(ComputePipelineState);
 }
 
-void FD3D12CommandContext::Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void FD3D12CommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
-    ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
+    ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
 void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)

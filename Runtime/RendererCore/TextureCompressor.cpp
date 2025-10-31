@@ -172,7 +172,7 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     Buffer.TextureSizeRcp         = FVector2(1.0f) / TexSize;
 
     constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(BC6HCompressionShader.Get(), &Buffer, NumConstants);
+    CommandList.SetShaderConstants(BC6HCompressionShader.Get(), &Buffer, NumConstants);
     
     CommandList.TransitionTexture(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
 
@@ -341,7 +341,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
         Buffer.TextureSizeRcp = FVector2(CurrentFaceSizeRcp);
 
         constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
-        CommandList.Set32BitShaderConstants(BC6HCompressionCubeShader.Get(), &Buffer, NumConstants);
+        CommandList.SetShaderConstants(BC6HCompressionCubeShader.Get(), &Buffer, NumConstants);
 
         constexpr uint32 NumArraySlices = 6;
         const uint32 ThreadsX = Math::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);

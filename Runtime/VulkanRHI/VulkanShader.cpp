@@ -426,7 +426,7 @@ bool FVulkanShader::InitializeShaderLayout()
         NumPushBytes = Math::AlignUp(NumPushBytes, Alignment);
         CHECK(NumPushBytes <= MaxBytes);
 
-        // After we have aligned the bytes we convert into Num32BitConstants, i.e number of uint32's
+        // After we have aligned the bytes we convert into NumShaderConstants, i.e number of uint32's
         ShaderInfo.NumPushConstants = Math::AlignUp<uint32>(static_cast<uint32>(NumPushBytes), sizeof(uint32)) / sizeof(uint32);
         CHECK(ShaderInfo.NumPushConstants <= VULKAN_MAX_NUM_PUSH_CONSTANTS);
     }

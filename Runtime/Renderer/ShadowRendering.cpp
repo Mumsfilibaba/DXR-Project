@@ -552,7 +552,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
-                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
+                    CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                     if constexpr (RenderPassType == ECubeMapRenderPassType::SinglePass)
                     {
@@ -668,7 +668,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                         constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
-                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
+                        CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                         CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
@@ -1286,7 +1286,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                 constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
-                CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
+                CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                 // If we use vertex-shader instancing, we need to create our own instances and use instanced rendering
                 if constexpr (RenderPassType == ECascadeRenderPassType::SinglePass)
@@ -1390,7 +1390,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
-                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
+                    CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                     CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }

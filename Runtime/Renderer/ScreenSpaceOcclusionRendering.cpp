@@ -190,7 +190,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
 
     constexpr uint32 NumConstants = sizeof(FSSAOSettingsHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, NumConstants);
+    CommandList.SetShaderConstants(SSAOShader.Get(), &SSAOSettings, NumConstants);
 
     constexpr uint32 ThreadCount = 16;
     const uint32 DispatchWidth   = Math::DivideByMultiple<uint32>(Width, ThreadCount);
@@ -211,7 +211,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         CommandList.SetComputePipelineState(BlurHorizontalPSO.Get());
         
         CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
-        CommandList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.SetShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
         
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
@@ -225,7 +225,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         CommandList.SetComputePipelineState(BlurVerticalPSO.Get());
         
         CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
-        CommandList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.SetShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
         
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
     }

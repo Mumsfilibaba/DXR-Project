@@ -251,7 +251,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     SimpleCamera.Matrix = SimpleCamera.Matrix.GetTranspose();
 
     constexpr uint32 NumConstants = sizeof(FSimpleCameraBufferHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, NumConstants);
+    CommandList.SetShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, NumConstants);
 
     FRHIShaderResourceView* SkyboxSRV = nullptr;
     if (Scene->Skybox)
