@@ -86,7 +86,7 @@ FD3D12RHI::~FD3D12RHI()
 
     while (!PendingSubmissions.IsEmpty())
     {
-        ProcessPendingCommands();
+        ProcessPendingCommandSubmissions();
     }
 
     // Flush any objects that might need the context...
@@ -968,16 +968,16 @@ void* FD3D12RHI::GetNativeCopyCommandQueue()
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
 }
 
-void FD3D12RHI::ProcessPendingCommands()
+void FD3D12RHI::ProcessPendingCommandSubmissions()
 {
     bool bProcess = true;
     while (bProcess)
     {
-        FD3D12CommandPayload* CommandPayload = nullptr;
-        if (PendingSubmissions.Peek(CommandPayload))
+        FD3D12CommandSubmission* CommandSubmission = nullptr;
+        if (PendingSubmissions.Peek(CommandSubmission))
         {
-            CHECK(CommandPayload != nullptr);
-            if (!CommandPayload->SyncPoint.IsReached())
+            CHECK(CommandSubmission != nullptr);
+            if (!CommandSubmission->SyncPoint.IsReached())
             {
                 bProcess = false;
                 break;
@@ -986,7 +986,7 @@ void FD3D12RHI::ProcessPendingCommands()
             {
                 // If we are finished we remove the item from the queue
                 PendingSubmissions.Dequeue();
-                CommandPayload->Finish();
+                CommandSubmission->Finish();
             }
         }
         else
@@ -996,19 +996,19 @@ void FD3D12RHI::ProcessPendingCommands()
     }
 }
 
-void FD3D12RHI::SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue)
+void FD3D12RHI::SubmitCommands(FD3D12CommandSubmission* CommandSubmission, bool bFlushDeletionQueue)
 {
-    CHECK(CommandPayload != nullptr);
+    CHECK(CommandSubmission != nullptr);
 
-    if (!CommandPayload->IsEmpty())
+    if (!CommandSubmission->IsEmpty())
     {
         if (bFlushDeletionQueue)
         {
             TScopedLock Lock(DeletionQueueCS);
-            CommandPayload->DeletionQueue = Move(DeletionQueue);
+            CommandSubmission->DeletionQueue = Move(DeletionQueue);
         }
 
-        CommandPayload->SyncPoint = CommandPayload->Queue->ExecuteCommandLists(CommandPayload->CommandLists.Data(), CommandPayload->CommandLists.Size(), false);
-        PendingSubmissions.Enqueue(CommandPayload);
+        CommandSubmission->SyncPoint = CommandSubmission->Queue->ExecuteCommandLists(CommandSubmission->CommandLists.Data(), CommandSubmission->CommandLists.Size(), false);
+        PendingSubmissions.Enqueue(CommandSubmission);
     }
 }

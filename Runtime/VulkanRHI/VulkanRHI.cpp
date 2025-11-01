@@ -77,7 +77,7 @@ FVulkanRHI::~FVulkanRHI()
 
     while (!PendingSubmissions.IsEmpty())
     {
-        ProcessPendingCommands();
+        ProcessPendingCommandSubmissions();
     }
 
     // Flush before submitting since some objects needs the CommandContext
@@ -746,16 +746,16 @@ void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-void FVulkanRHI::ProcessPendingCommands()
+void FVulkanRHI::ProcessPendingCommandSubmissions()
 {
     bool bProcess = true;
     while (bProcess)
     {
-        FVulkanCommandPayload* CommandPayload = nullptr;
-        if (PendingSubmissions.Peek(CommandPayload))
+        FVulkanCommandSubmission* CommandSubmission = nullptr;
+        if (PendingSubmissions.Peek(CommandSubmission))
         {
-            CHECK(CommandPayload != nullptr);
-            if (!CommandPayload->IsExecutionFinished())
+            CHECK(CommandSubmission != nullptr);
+            if (!CommandSubmission->IsExecutionFinished())
             {
                 bProcess = false;
                 break;
@@ -764,7 +764,7 @@ void FVulkanRHI::ProcessPendingCommands()
             {
                 // If we are finished we remove the item from the queue
                 PendingSubmissions.Dequeue();
-                CommandPayload->Finish();
+                CommandSubmission->Finish();
             }
         }
         else
@@ -774,20 +774,20 @@ void FVulkanRHI::ProcessPendingCommands()
     }
 }
 
-void FVulkanRHI::SubmitCommands(FVulkanCommandPayload* CommandPayload, bool bFlushDeletionQueue)
+void FVulkanRHI::SubmitCommands(FVulkanCommandSubmission* CommandSubmission, bool bFlushDeletionQueue)
 {
-    CHECK(CommandPayload != nullptr);
+    CHECK(CommandSubmission != nullptr);
 
-    if (!CommandPayload->IsEmpty())
+    if (!CommandSubmission->IsEmpty())
     {
         if (bFlushDeletionQueue)
         {
             TScopedLock Lock(DeletionQueueCS);
-            CommandPayload->DeletionQueue = Move(DeletionQueue);
+            CommandSubmission->DeletionQueue = Move(DeletionQueue);
         }
 
-        CommandPayload->Submit();
+        CommandSubmission->Submit();
         
-        PendingSubmissions.Enqueue(CommandPayload);
+        PendingSubmissions.Enqueue(CommandSubmission);
     }
 }

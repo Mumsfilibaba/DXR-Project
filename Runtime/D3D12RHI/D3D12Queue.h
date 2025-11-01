@@ -57,10 +57,10 @@ private:
     FCriticalSection             CommandListsCS;
 };
 
-struct FD3D12CommandPayload
+struct FD3D12CommandSubmission
 {
-    FD3D12CommandPayload(FD3D12Device* InDevice, FD3D12Queue* InQueue);
-    ~FD3D12CommandPayload() = default;
+    FD3D12CommandSubmission(FD3D12Device* InDevice, FD3D12Queue* InQueue);
+    ~FD3D12CommandSubmission() = default;
 
     void Finish();
 

@@ -83,8 +83,8 @@ public:
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    void ProcessPendingCommands();
-    void SubmitCommands(FVulkanCommandPayload* CommandPayload, bool bFlushDeletionQueue);
+    void ProcessPendingCommandSubmissions();
+    void SubmitCommands(FVulkanCommandSubmission* CommandSubmission, bool bFlushDeletionQueue);
 
     FVulkanInstance* GetInstance()
     {
@@ -107,7 +107,7 @@ public:
     }
 
 private:
-    typedef TQueue<FVulkanCommandPayload*, EQueueType::MPSC>            FCommandPayloadQueue;
+    typedef TQueue<FVulkanCommandSubmission*, EQueueType::MPSC>         FCommandSubmissionQueue;
     typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
 
     FVulkanInstance               Instance;
@@ -119,7 +119,7 @@ private:
     FCriticalSection              DeletionQueueCS;
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
-    FCommandPayloadQueue          PendingSubmissions;
+    FCommandSubmissionQueue       PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;
 };

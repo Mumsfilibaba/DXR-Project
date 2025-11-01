@@ -124,6 +124,17 @@ public:
     void FinishCommandBuffer(bool bFlushPool);
     void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
 
+    bool IsRecording()        const { return ContextPhase >= ECommandContextPhase::Recording; }
+    bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
+    
+    bool NeedsCommandBuffer() const
+    {
+        return CommandBuffer == nullptr;
+    }
+
+    FBarrierBatcher&          GetBarrierBatcher()    { return BarrierBatcher; }
+    FVulkanCommandSubmission& GetSubmissionContext() { return *CommandSubmission; }
+    
     FVulkanQueue& GetCommandQueue() const
     {
         return Queue;
@@ -135,27 +146,9 @@ public:
         return *CommandBuffer;
     }
 
-    FBarrierBatcher& GetBarrierBatcher()
-    {
-        return BarrierBatcher;
-    }
-
-    FVulkanCommandPayload& GetCommandPayload()
-    {
-        return *CommandPayload;
-    }
-
     FVulkanFence* GetSubmissionFence() const
     {
-        return CommandPayload ? CommandPayload->Fence : nullptr;
-    }
-
-    bool IsRecording() const { return ContextPhase >= ECommandContextPhase::Recording; }
-    bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
-    
-    bool NeedsCommandBuffer() const
-    {
-        return CommandBuffer == nullptr;
+        return CommandSubmission ? CommandSubmission->Fence : nullptr;
     }
 
 private:
@@ -164,7 +157,7 @@ private:
     FVulkanQueue&              Queue;
     FVulkanCommandPool*        CommandPool;
     FVulkanCommandBuffer*      CommandBuffer;
-    FVulkanCommandPayload*     CommandPayload;
+    FVulkanCommandSubmission*  CommandSubmission;
     FVulkanQueryAllocator      TimestampQueryAllocator;
     FVulkanQueryAllocator      OcclusionQueryAllocator;
     FBarrierBatcher            BarrierBatcher;
@@ -172,5 +165,5 @@ private:
     FVulkanCommandContextState ContextState;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection CommandContextCS;
+    FCriticalSection           CommandContextCS;
 };

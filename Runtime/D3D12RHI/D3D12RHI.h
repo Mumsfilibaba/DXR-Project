@@ -87,8 +87,8 @@ public:
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
     
-    void ProcessPendingCommands();
-    void SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue);
+    void ProcessPendingCommandSubmissions();
+    void SubmitCommands(FD3D12CommandSubmission* CommandSubmission, bool bFlushDeletionQueue);
 
     FD3D12Adapter* GetAdapter() const
     {
@@ -108,15 +108,15 @@ public:
 private:
     bool InitializeDeviceFeatureSupport();
     
-    typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> FSamplerStateMap;
-    typedef TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   FCommandPayloadQueue;
+    typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef>  FSamplerStateMap;
+    typedef TQueue<FD3D12CommandSubmission*, EQueueType::MPSC> FCommandSubmissionQueue;
 
     FD3D12Adapter*               Adapter;
     FD3D12Device*                Device;
     FD3D12CommandContext*        DirectCommandContext;
     TArray<FD3D12DeferredObject> DeletionQueue;
     FCriticalSection             DeletionQueueCS;
-    FCommandPayloadQueue         PendingSubmissions;
+    FCommandSubmissionQueue      PendingSubmissions;
     FSamplerStateMap             SamplerStateMap;
     FCriticalSection             SamplerStateMapCS;
 

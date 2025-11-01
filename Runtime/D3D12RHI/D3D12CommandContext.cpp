@@ -193,7 +193,7 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , FD3D12DeviceChild(InDevice)
     , CommandList(nullptr)
     , CommandAllocator(nullptr)
-    , CommandPayload(nullptr)
+    , CommandSubmission(nullptr)
     , ContextState(InDevice, *this)
     , TimingQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
@@ -249,9 +249,9 @@ void FD3D12CommandContext::ObtainCommandList()
         }
     }
 
-    if (!CommandPayload)
+    if (!CommandSubmission)
     {
-        CommandPayload = new FD3D12CommandPayload(GetDevice(), Queue);
+        CommandSubmission = new FD3D12CommandSubmission(GetDevice(), Queue);
     }
 }
 
@@ -270,7 +270,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
         OcclusionQueryAllocator.PrepareForNewCommandList();
 
         // Ensure that all QueryHeaps are resolved
-        for (FD3D12QueryHeap* QueryHeap : CommandPayload->QueryHeaps)
+        for (FD3D12QueryHeap* QueryHeap : CommandSubmission->QueryHeaps)
         {
             QueryHeap->ResolveQueries(GetCommandList());
         }
@@ -281,18 +281,18 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
             return;
         }
 
-        CHECK(CommandPayload != nullptr);
-        CommandPayload->AddCommandList(CommandList);
+        CHECK(CommandSubmission != nullptr);
+        CommandSubmission->AddCommandList(CommandList);
         CommandList = nullptr;
 
         if (bFlushAllocator)
         {
-            CommandPayload->AddCommandAllocator(CommandAllocator);
+            CommandSubmission->AddCommandAllocator(CommandAllocator);
             CommandAllocator = nullptr;
         }
 
-        FD3D12RHI::Get()->SubmitCommands(CommandPayload, true);
-        CommandPayload = nullptr;
+        FD3D12RHI::Get()->SubmitCommands(CommandSubmission, true);
+        CommandSubmission = nullptr;
 
         // Reset the number of draw-calls for the current command-list
         NumDrawCalls = 0;
@@ -340,7 +340,7 @@ void FD3D12CommandContext::StartContext()
     ContextState.ResetState();
 
     // Process submitted commands
-    FD3D12RHI::Get()->ProcessPendingCommands();
+    FD3D12RHI::Get()->ProcessPendingCommandSubmissions();
 
     // Retrieve a new CommandList
     ObtainCommandList();

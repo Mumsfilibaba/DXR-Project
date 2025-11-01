@@ -69,10 +69,10 @@ private:
     FCriticalSection             CommandPoolsCS;
 };
 
-struct FVulkanCommandPayload
+struct FVulkanCommandSubmission
 {
-    FVulkanCommandPayload(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
-    ~FVulkanCommandPayload();
+    FVulkanCommandSubmission(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
+    ~FVulkanCommandSubmission();
 
     void AcquireFence();
     void Submit();
@@ -104,8 +104,8 @@ struct FVulkanCommandPayload
     }
 
     FVulkanQueue&                 Queue;
+    FVulkanDevice* const          Device;
     FVulkanFence*                 Fence;
-    FVulkanDevice*                Device;
     TArray<FVulkanCommandPool*>   CommandPools;
     TArray<FVulkanCommandBuffer*> CommandBuffers;
     TArray<FVulkanQueryPool*>     QueryPools;

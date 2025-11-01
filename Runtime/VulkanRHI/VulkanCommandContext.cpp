@@ -123,7 +123,7 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , Queue(InQueue)
     , CommandPool(nullptr)
     , CommandBuffer(nullptr)
-    , CommandPayload(nullptr)
+    , CommandSubmission(nullptr)
     , TimestampQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , BarrierBatcher(*this)
@@ -191,10 +191,10 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         }
     }
 
-    if (!CommandPayload)
+    if (!CommandSubmission)
     {
-        CommandPayload = new FVulkanCommandPayload(GetDevice(), Queue);
-        CommandPayload->AcquireFence();
+        CommandSubmission = new FVulkanCommandSubmission(GetDevice(), Queue);
+        CommandSubmission->AcquireFence();
     }
 }
 
@@ -213,20 +213,20 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
             VULKAN_ERROR_CRITICAL("Failed to End CommandBuffer");
         }
 
-        CommandPayload->AddCommandBuffer(CommandBuffer);
+        CommandSubmission->AddCommandBuffer(CommandBuffer);
         CommandBuffer = nullptr;
 
 		if (bFlushPool)
 		{
-			CommandPayload->AddCommandPool(CommandPool);
+			CommandSubmission->AddCommandPool(CommandPool);
 			CommandPool = nullptr;
 		}
 
         TimestampQueryAllocator.PrepareForNewCommandBuffer();
         OcclusionQueryAllocator.PrepareForNewCommandBuffer();
 
-        FVulkanRHI::Get()->SubmitCommands(CommandPayload, true);
-        CommandPayload = nullptr;
+        FVulkanRHI::Get()->SubmitCommands(CommandSubmission, true);
+        CommandSubmission = nullptr;
     }
 
     ContextState.ResetStateForNewCommandBuffer();
@@ -265,9 +265,9 @@ void FVulkanCommandContext::ForceFlushCommandPool()
         return;
     }
 
-	if (CommandPayload)
+	if (CommandSubmission)
 	{
-		CommandPayload->AddCommandPool(CommandPool);
+		CommandSubmission->AddCommandPool(CommandPool);
 		CommandPool = nullptr;
 	}
 }
@@ -297,7 +297,7 @@ void FVulkanCommandContext::StartContext()
 	// Pick up and retire any previously submitted command payloads to avoid unbounded growth 
     // in per-frame allocations and to free pools/buffers for reuse.
 	// -------------------------------------------------------------------------------------------
-	FVulkanRHI::Get()->ProcessPendingCommands();
+	FVulkanRHI::Get()->ProcessPendingCommandSubmissions();
 
 	// -------------------------------------------------------------------------------------------
 	// Acquire/allocate a fresh command buffer so the caller can immediately begin recording 
