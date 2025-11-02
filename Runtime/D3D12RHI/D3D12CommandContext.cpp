@@ -420,7 +420,7 @@ void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
     }
 
     CHECK(QueryAllocation.QueryHeap != nullptr);
-    GetCommandList()->BeginQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryPool);
+    GetCommandList()->BeginQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryHeap);
     D3D12Query->QueryAllocation = QueryAllocation;
 }
 
@@ -437,7 +437,7 @@ void FD3D12CommandContext::EndQuery(FRHIQuery* Query)
     }
 
     CHECK(QueryAllocation.QueryHeap != nullptr);
-    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryPool);
+    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryHeap);
 }
 
 void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
@@ -453,7 +453,7 @@ void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
     }
 
     CHECK(QueryAllocation.QueryHeap != nullptr);
-    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_TIMESTAMP, QueryAllocation.IndexInQueryPool);
+    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_TIMESTAMP, QueryAllocation.IndexInQueryHeap);
     D3D12Query->QueryAllocation = QueryAllocation;
 }
 
