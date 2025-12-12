@@ -1,5 +1,5 @@
 #include "Engine/RuntimeEngine.h"
-#include "Engine/EngineUI/InGameConsoleWidget.h"
+#include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
 #include "Engine/EngineUI/FrameProfilerWidget.h"
 #include "Engine/EngineUI/SceneInspectorWidget.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -26,7 +26,7 @@ bool FRuntimeEngine::Init()
 	if (IImguiPlugin::IsEnabled())
 	{
 		ProfilerWidget  = MakeSharedPtr<FFrameProfilerWidget>();
-		ConsoleWidget   = MakeSharedPtr<FInGameConsoleWidget>();
+		ConsoleWidget   = MakeSharedPtr<FRuntimeConsoleWidget>();
 		InspectorWidget = MakeSharedPtr<FSceneInspectorWidget>();
 	}
 

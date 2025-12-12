@@ -371,7 +371,7 @@ bool FImGuiPlugin::Unload()
     GImGuiPlugin = nullptr;
 
     // Reset cached pointers
-    PluginImGuiIO = nullptr;
+    PluginImGuiIO      = nullptr;
     PluginImGuiContext = nullptr;
     return true;
 }
@@ -504,10 +504,12 @@ void FImGuiPlugin::Tick(float Delta)
 
         const bool bEnableImGuiDelegates = CVarImGuiEnableImGuiDelegates.GetValue();
         if (bEnableImGuiDelegates)
-    #endif
         {
             DrawDelegates.Broadcast();
         }
+    #else
+        DrawDelegates.Broadcast();
+    #endif
 
         ImGui::EndFrame();
     }

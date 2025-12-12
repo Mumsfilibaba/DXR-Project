@@ -34,11 +34,11 @@ struct FImGuiTexture
     {
     }
 
-    FRHITextureRef            Texture;
-    FRHIShaderResourceViewRef View;
-    EResourceAccess           ResourceState;
-    bool                      bAllowBlending;
-    bool                      bSamplerLinear;
+    FRHITextureRef            Texture        = nullptr;
+    FRHIShaderResourceViewRef View           = nullptr;
+    EResourceAccess           ResourceState  = EResourceAccess::Common;
+    bool                      bAllowBlending = false;
+    bool                      bSamplerLinear = false;
 };
 
 struct IImguiPlugin : public FModuleInterface

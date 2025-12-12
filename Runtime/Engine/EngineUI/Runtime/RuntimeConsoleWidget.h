@@ -8,67 +8,48 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/IOutputDevice.h"
 #include "Core/Platform/CriticalSection.h"
-#include "Application/InputHandler.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "Engine/EngineUI/BaseConsoleWidget.h"
 
-struct FConsoleInputHandler final : public FInputHandler
-{
-    DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
-    FHandleKeyEventDelegate HandleKeyEventDelegate;
-
-    virtual bool OnKeyUp(const FKeyEvent& KeyEvent) override final
-    {
-        HandleKeyEventDelegate.Execute(KeyEvent);
-        return bConsoleToggled;
-    }
-
-    virtual bool OnKeyDown(const FKeyEvent& KeyEvent) override final
-    {
-        HandleKeyEventDelegate.Execute(KeyEvent);
-        return bConsoleToggled;
-    }
-
-    bool bConsoleToggled = false;
-};
-
-struct FConsoleMessage
-{
-    FConsoleMessage() = default;
-
-    FConsoleMessage(const FString& InMessage, ELogSeverity InSeverity)
-        : Message(InMessage)
-        , Severity(InSeverity)
-    {
-    }
-
-    FString      Message;
-    ELogSeverity Severity;
-};
-
-class FInGameConsoleWidget final : public IOutputDevice
+class FRuntimeConsoleWidget final : public IOutputDevice
 {
 public:
-    FInGameConsoleWidget();
-    ~FInGameConsoleWidget();
-
+    FRuntimeConsoleWidget();
+    ~FRuntimeConsoleWidget();
+    
     // IOutputDevice Interface
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;
-
+    
     // Draw the interface
     void Draw();
-    void DrawConsole();
-
+    
 private:
+    struct FConsoleMessage
+    {
+        FConsoleMessage() = default;
+    
+        FConsoleMessage(const FString& InMessage, ELogSeverity InSeverity)
+            : Message(InMessage)
+            , Severity(InSeverity)
+        {
+        }
+    
+        FString      Message;
+        ELogSeverity Severity;
+    };
+
     static constexpr int32 InvalidIndex = -1;
-
-    void HandleKeyPressedEvent(const FKeyEvent& Event);
-
+    
     // ImGui callback for the text-input field
     int32 InputTextCallback(struct ImGuiInputTextCallbackData* CallbackData);
+    
+    // Draw the console
+    void DrawConsole();
 
     // Clear the candidates array and reset the index
     void InvalidateCandidates();
+    void HandleKeyPressedEvent(const FKeyEvent& Event);
 
     TSharedPtr<FConsoleInputHandler> InputHandler;
     FDelegateHandle                  ImGuiDelegateHandle;
