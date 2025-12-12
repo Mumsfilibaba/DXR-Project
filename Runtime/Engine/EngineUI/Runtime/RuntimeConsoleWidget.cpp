@@ -179,19 +179,21 @@ void FRuntimeConsoleWidget::DrawConsole()
                     const char* PostFixText = "";
                     const char* SetByText   = "";
 
-                    // Value
+					const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
+					{
+						return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+					};
+
                     const float PostFixTextLength = 
                         Math::Max(ImGui::CalcTextSize("Bool").x,
                         Math::Max(ImGui::CalcTextSize("Int").x,
-                        Math::Max(ImGui::CalcTextSize("Float").x, 
-                                  ImGui::CalcTextSize("String").x)));
+                        Math::Max(ImGui::CalcTextSize("Float").x,  ImGui::CalcTextSize("String").x)));
 
                     const float SetByTextLength =
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
-                                  ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
+                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
+                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
+                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
+                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
 
                     IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                     if (ConsoleVariable)
