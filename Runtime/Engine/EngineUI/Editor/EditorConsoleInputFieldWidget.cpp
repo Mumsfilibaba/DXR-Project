@@ -52,6 +52,8 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
     // Console Input Field
     // -------------------------------------------------------------------------------------------
 
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6.0f, 6.0f));
+
     // Footer console window
     const ImGuiWindowFlags ConsoleWindowFlags =
         ImGuiWindowFlags_NoMove |
@@ -135,6 +137,8 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
     }
 
     ImGui::End();
+
+    ImGui::PopStyleVar();
 
     // -------------------------------------------------------------------------------------------
     // Candidates overlay window

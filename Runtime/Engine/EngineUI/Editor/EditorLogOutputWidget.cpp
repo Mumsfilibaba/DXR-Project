@@ -198,9 +198,12 @@ void FEditorLogOutputWidget::Draw()
     {
         return;
     } 
+    
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4.0f, 4.0f));
 
-    ImGuiWindowFlags Flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoCollapse;
-    if (ImGui::Begin("Output Log", &bVisible, Flags))
+    const ImGuiWindowFlags OutputLogFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoCollapse;
+    
+    if (ImGui::Begin("Output Log", &bVisible, OutputLogFlags))
     {
         DrawToolbar();
         DrawFilterBar();
@@ -215,4 +218,6 @@ void FEditorLogOutputWidget::Draw()
     }
 
     ImGui::End();
+
+    ImGui::PopStyleVar();
 }

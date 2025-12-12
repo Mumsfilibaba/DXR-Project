@@ -99,7 +99,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 	ImGui::DockBuilderSetNodeSize(Ids.Dockspace, Viewport->WorkSize);
 
 	// Split into main and the footer
-	constexpr float FooterSize = 48.0f;
+	constexpr float FooterSize = 38.0f;
 	const float FooterRatio = FooterSize / Viewport->WorkSize.y;
 
 	ImGuiID TopArea = 0;
