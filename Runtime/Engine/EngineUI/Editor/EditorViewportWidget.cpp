@@ -33,7 +33,7 @@ void FEditorViewportWidget::Draw()
         return;
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
     const ImGuiWindowFlags ViewportFlags = 
         ImGuiWindowFlags_NoScrollbar | 
