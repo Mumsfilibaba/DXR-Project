@@ -255,53 +255,6 @@ bool FEditorDockspaceWidget::BeginDockspace(bool& bOutOpen)
 	}
 
 	// -------------------------------------------------------------------------------------------
-    // Toolbar
-    // -------------------------------------------------------------------------------------------
-
-	{
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12, 6));
-		ImGui::BeginChild("##Toolbar", ImVec2(0, 36), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-
-		if (ImGui::Button("Play"))
-		{
-			// TODO
-		}
-
-		ImGui::SameLine();
-		
-		if (ImGui::Button("Simulate"))
-		{
-			// TODO
-		}
-		
-		ImGui::SameLine();
-		
-		if (ImGui::Button("Build"))
-		{
-			// TODO
-		}
-		
-		ImGui::SameLine();
-		
-		if (ImGui::Button("Content"))
-		{
-			// TODO
-		}
-
-		ImGui::SameLine();
-
-		ImGui::Dummy(ImVec2(16, 0));
-		
-		ImGui::SameLine();
-		
-		ImGui::TextUnformatted("|  Platform: Windows  |  Config: Development  |  RHI: D3D12");
-
-		ImGui::EndChild();
-		
-		ImGui::PopStyleVar();
-	}
-
-	// -------------------------------------------------------------------------------------------
     // Dockspace
     // -------------------------------------------------------------------------------------------
 
