@@ -104,8 +104,11 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
             DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, BorderRounding, 0, BorderThickness);
         }
 
-        // We need to eat the input
-        InputHandler->bConsoleToggled = bIsInputFieldActive;
+        // Ensure that the input ir propagated correctly
+        if (InputHandler)
+        {
+            InputHandler->bConsoleToggled = bIsInputFieldActive;
+        }
 
         // If we have candidates, we'll show overlay after ending this window
         bShowCandidatesOverlay = !Candidates.IsEmpty();
@@ -117,7 +120,7 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
                 if (SelectedCandidateIndex >= 0 && !Candidates.IsEmpty())
                 {
                     const FString& NewText = Candidates[SelectedCandidateIndex].Second;
-                    FCString::Strcpy(TextBuffer.Data(), *NewText);
+                    FCString::Strncpy(TextBuffer.Data(), *NewText, Math::Min(TextBuffer.Size(), NewText.Size()));
                     bUpdateCursorPosition = true;
                 }
                 else
@@ -153,7 +156,6 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         const float Scale          = FrameBufferScale.x;
         const float TotalWidth     = (InputRectMax.x - InputRectMin.x) * 3.0f;
         const float TotalHeight    = RowHeight * MaxVisibleRows;
-        const float TextAreaHeight = 384.0f * Scale;
     
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
@@ -209,6 +211,22 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
             VariableNameWidth  += Padding;
             VariableValueWidth += Padding;
 
+			const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
+			{
+				return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+			};
+
+			const float PostFixTextLength =
+				Math::Max(ImGui::CalcTextSize("Bool").x,
+				Math::Max(ImGui::CalcTextSize("Int").x,
+				Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
+
+			const float SetByTextLength =
+				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
+				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
+				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
+				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
+
             bool bIsActiveIndex = false;
             for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)
             {
@@ -232,22 +250,6 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
 
                 const char* PostFixText = "";
                 const char* SetByText   = "";
-
-                const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
-                {
-                    return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
-                };
-
-                const float PostFixTextLength = 
-                    Math::Max(ImGui::CalcTextSize("Bool").x,
-                    Math::Max(ImGui::CalcTextSize("Int").x,
-                    Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
-
-                const float SetByTextLength =
-                    Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
-                    Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
-                    Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
-                    Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
 
                 IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                 if (ConsoleVariable)

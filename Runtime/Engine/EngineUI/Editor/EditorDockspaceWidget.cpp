@@ -240,10 +240,12 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 void FEditorDockspaceWidget::DrawDockSpace()
 {
-	const ImGuiChildFlags ChildFlags =
+	const ImGuiWindowFlags WindowFlags = 
 		ImGuiWindowFlags_NoBackground | 
 		ImGuiWindowFlags_NoScrollbar | 
 		ImGuiWindowFlags_NoScrollWithMouse;
+
+	const ImGuiChildFlags ChildWindowFlags = ImGuiChildFlags_None;
 
 	float FooterHeight = 32.0f;
 	if (EditorEngine)
@@ -257,7 +259,7 @@ void FEditorDockspaceWidget::DrawDockSpace()
 	const float AvailableHeight = ImGui::GetContentRegionAvail().y;
 	const float DockspaceHeight = AvailableHeight - FooterHeight;
 
-	ImGui::BeginChild("##DockspaceArea", ImVec2(0, DockspaceHeight), false, ChildFlags);
+	ImGui::BeginChild("##DockspaceArea", ImVec2(0, DockspaceHeight), ChildWindowFlags, WindowFlags);
 
 	const ImGuiDockNodeFlags DockFlags = 
 		ImGuiDockNodeFlags_PassthruCentralNode | 

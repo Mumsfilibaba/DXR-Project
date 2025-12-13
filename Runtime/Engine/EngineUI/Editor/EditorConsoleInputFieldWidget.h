@@ -23,7 +23,8 @@ public:
 
     float GetHeight() const
     {
-        return 48.0f;
+        const float ConsoleAreaHeight = 48.0f;
+        return ConsoleAreaHeight;
     }
 
 private:
@@ -39,13 +40,10 @@ private:
     TStaticArray<CHAR, 256>                 TextBuffer;
     TSharedPtr<IOutputDevice>               OutputDevice;
     TSharedPtr<FConsoleInputHandler>        InputHandler;
-    FDelegateHandle                         ImGuiDelegateHandle;
 
     int32 SelectedCandidateIndex     = InvalidIndex;
     int32 HistoryIndex               = InvalidIndex;
     bool  bCandidateSelectionChanged = false;
     bool  bUpdateCursorPosition      = false;
-    bool  bIsActive                  = false;
-    bool  bAutoScroll                = true;
     bool  bScrollToBottom            = false;
 };

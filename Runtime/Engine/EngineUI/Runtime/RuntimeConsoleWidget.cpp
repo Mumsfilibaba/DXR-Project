@@ -154,6 +154,22 @@ void FRuntimeConsoleWidget::DrawConsole()
                 VariableNameWidth  += Padding;
                 VariableValueWidth += Padding;
 
+				const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
+				{
+					return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+				};
+
+				const float PostFixTextLength =
+					Math::Max(ImGui::CalcTextSize("Bool").x,
+					Math::Max(ImGui::CalcTextSize("Int").x,
+					Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
+
+				const float SetByTextLength =
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
+
                 // Draw UI
                 bool bIsActiveIndex = false;
                 for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)
@@ -178,22 +194,6 @@ void FRuntimeConsoleWidget::DrawConsole()
 
                     const char* PostFixText = "";
                     const char* SetByText   = "";
-
-					const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
-					{
-						return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
-					};
-
-                    const float PostFixTextLength = 
-                        Math::Max(ImGui::CalcTextSize("Bool").x,
-                        Math::Max(ImGui::CalcTextSize("Int").x,
-                        Math::Max(ImGui::CalcTextSize("Float").x,  ImGui::CalcTextSize("String").x)));
-
-                    const float SetByTextLength =
-                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
-                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
-                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
-                        Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
 
                     IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                     if (ConsoleVariable)
