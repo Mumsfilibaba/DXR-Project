@@ -11,7 +11,6 @@
 static bool GShowContentBrowser  = true;
 static bool GShowSceneHierarchy  = true;
 static bool GShowPropertiesPanel = true;
-static bool GShowPlaceActors     = false;
 
 static const float GStatusBarHeight = 22.0f;
 
@@ -360,23 +359,6 @@ void FEditorDockspaceWidget::DrawEngineWindows()
 			ImGui::Selectable("Crate_01.asset", false);
 			ImGui::Selectable("Door.asset", false);
 			ImGui::Selectable("Wood.asset", false);
-		}
-
-		ImGui::End();
-	}
-
-	if (GShowPlaceActors)
-	{
-		if (ImGui::Begin("Place Actors", &GShowPlaceActors))
-		{
-			ImGui::TextDisabled("Place Actors");
-
-			ImGui::Separator();
-
-			ImGui::Selectable("Empty Actor");
-			ImGui::Selectable("Point Light");
-			ImGui::Selectable("Camera");
-			ImGui::Selectable("Player Start");
 		}
 
 		ImGui::End();
