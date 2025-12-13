@@ -279,16 +279,21 @@ void FRuntimeConsoleWidget::DrawConsole()
                     switch (Severity)
                     {
                         case ELogSeverity::Info:
+                        {
                             return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-
+                        }
                         case ELogSeverity::Warning:
+                        {
                             return ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
-
+                        }
                         case ELogSeverity::Error:
+                        {
                             return ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-
-                        default: 
+                        }
+                        default:
+                        {
                             return ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+                        }
                     }
                 };
 

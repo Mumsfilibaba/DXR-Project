@@ -83,28 +83,34 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         };
 
         const float InputFieldWidth = 512.0f;
+		const float BorderRounding  = 16.0f;
+
+        // Add some spacing before the input field
+		ImGui::Dummy(ImVec2(4.0f, 0.0f));
+		ImGui::SameLine();
+
         ImGui::SetNextItemWidth(InputFieldWidth);
 
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+        
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
+
+        ImGui::PopStyleVar();
+
+        // Cache input rect in absolute screen coords, this is later used to draw the candidate window
+        InputRectMin = ImGui::GetItemRectMin();
+        InputRectMax = ImGui::GetItemRectMax();
 
         // Draw border if active
         bIsInputFieldActive = ImGui::IsItemActive();
         if (bIsInputFieldActive)
         {
-            const float BorderRounding  = 4.0f;
             const float BorderThickness = 2.0f;
             const ImU32 BorderColor     = IM_COL32(100, 136, 234, 255);
             
-            ImVec2 ItemMin = ImGui::GetItemRectMin();
-            ImVec2 ItemMax = ImGui::GetItemRectMax();
-
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
-            DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
+            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, BorderRounding, 0, BorderThickness);
         }
-
-        // Cache input rect in absolute screen coords, this is later used to draw the candidate window
-        InputRectMin = ImGui::GetItemRectMin();
-        InputRectMax = ImGui::GetItemRectMax();
 
         // We need to eat the input
         InputHandler->bConsoleToggled = bIsInputFieldActive;

@@ -49,7 +49,7 @@ void FEditorViewportWidget::Draw()
         ImGui::Image(&ViewportImage, Size);
     }
 
-    ImGui::End();
+    ImGui::End(); // Viewport Window
 
     ImGui::PopStyleVar();
 }

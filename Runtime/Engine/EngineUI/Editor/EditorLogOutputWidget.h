@@ -39,7 +39,6 @@ private:
         ELogSeverity Severity = ELogSeverity::Info;
     };
 
-    void DrawToolbar();
     void DrawFilterBar();
     void DrawLogList();
 
