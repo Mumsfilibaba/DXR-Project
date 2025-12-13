@@ -80,14 +80,12 @@ void FEditorDockspaceWidget::InitializeEditorStyle()
 
 void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 {
-	Ids.DockRight      = 0;
-	Ids.DockRightTop   = 0;
-	Ids.DockProperties = 0;
-	Ids.DockCenter     = 0;
-	Ids.DockLeft       = 0;
-	Ids.DockBottom     = 0;
-	Ids.DockBottomMain = 0;
-	Ids.DockFooter     = 0;
+	Ids.DockRight        = 0;
+	Ids.DockRightTop     = 0;
+	Ids.DockRightBottom  = 0;
+	Ids.DockCenter       = 0;
+	Ids.DockCenterTop    = 0;
+	Ids.DockCenterBottom = 0;
 
 	// Cleanup previous dockspace and add a new one
 	ImGui::DockBuilderRemoveNodeDockedWindows(Ids.Dockspace, true);
@@ -98,60 +96,37 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 	ImGui::DockBuilderSetNodePos(Ids.Dockspace, Viewport->WorkPos);
 	ImGui::DockBuilderSetNodeSize(Ids.Dockspace, Viewport->WorkSize);
 
-	// Split into main and the footer
-	constexpr float FooterSize = 38.0f;
-	const float FooterRatio = FooterSize / Viewport->WorkSize.y;
-
-	ImGuiID TopArea = 0;
-	ImGui::DockBuilderSplitNode(Ids.Dockspace, ImGuiDir_Down, FooterRatio, &Ids.DockFooter, &TopArea);
-
-	// Set size of the bottom strip (footer)
-	if (ImGuiDockNode* Footer = ImGui::DockBuilderGetNode(Ids.DockFooter))
-	{
-		ImGui::DockBuilderSetNodeSize(Footer->ID, ImVec2(Viewport->WorkSize.x, FooterSize));
-	}
-
-	ImGuiID TopAfterRight = 0;
-	ImGui::DockBuilderSplitNode(TopArea, ImGuiDir_Right, 0.22f, &Ids.DockRight, &TopAfterRight);
-
-	ImGuiID CenterBlock = 0;
-	ImGui::DockBuilderSplitNode(TopAfterRight, ImGuiDir_Down, 0.28f, &Ids.DockBottomMain, &CenterBlock);
-	ImGui::DockBuilderSplitNode(CenterBlock, ImGuiDir_Left, 0.16f, &Ids.DockLeft, &Ids.DockCenter);
-	ImGui::DockBuilderSplitNode(Ids.DockRight, ImGuiDir_Up, 0.55f, &Ids.DockRightTop, &Ids.DockProperties);
+	ImGui::DockBuilderSplitNode(Ids.Dockspace, ImGuiDir_Right, 0.22f, &Ids.DockRight, &Ids.DockCenter);
+	ImGui::DockBuilderSplitNode(Ids.DockCenter, ImGuiDir_Down, 0.28f, &Ids.DockCenterBottom, &Ids.DockCenterTop);
+	ImGui::DockBuilderSplitNode(Ids.DockRight, ImGuiDir_Up, 0.55f, &Ids.DockRightTop, &Ids.DockRightBottom);
 
 	// Assign windows to the dockspace items
-	ImGui::DockBuilderDockWindow("Viewport", Ids.DockCenter);
+	ImGui::DockBuilderDockWindow("Viewport", Ids.DockCenterTop);
 	ImGui::DockBuilderDockWindow("Scene Hierarchy", Ids.DockRightTop);
-	ImGui::DockBuilderDockWindow("Properties Panel", Ids.DockProperties);
-	ImGui::DockBuilderDockWindow("Output Log", Ids.DockBottomMain);
-	ImGui::DockBuilderDockWindow("Content Browser", Ids.DockBottomMain);
-	ImGui::DockBuilderDockWindow("Place Actors", Ids.DockLeft);
-	ImGui::DockBuilderDockWindow("Console", Ids.DockFooter);
-
-	if (ImGuiDockNode* DockNode = ImGui::DockBuilderGetNode(Ids.DockFooter))
-	{
-		DockNode->LocalFlags |= ImGuiDockNodeFlags_NoTabBar | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_NoResize;
-	}
+	ImGui::DockBuilderDockWindow("Properties Panel", Ids.DockRightBottom);
+	ImGui::DockBuilderDockWindow("Output Log", Ids.DockCenterBottom);
+	ImGui::DockBuilderDockWindow("Content Browser", Ids.DockCenterBottom);
 
 	ImGui::DockBuilderFinish(Ids.Dockspace);
 }
 
-bool FEditorDockspaceWidget::BeginDockspace(bool& bOutOpen)
+void FEditorDockspaceWidget::Draw()
 {
+	// Create a window for the viewport
 	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(MainViewport->WorkPos);
 	ImGui::SetNextWindowSize(MainViewport->WorkSize);
 	ImGui::SetNextWindowViewport(MainViewport->ID);
 
-	const ImGuiWindowFlags HostFlags = 
-		ImGuiWindowFlags_NoDocking | 
-		ImGuiWindowFlags_NoTitleBar | 
-		ImGuiWindowFlags_NoCollapse | 
-		ImGuiWindowFlags_NoResize | 
-		ImGuiWindowFlags_NoMove | 
+	const ImGuiWindowFlags HostFlags =
+		ImGuiWindowFlags_NoDocking |
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoBringToFrontOnFocus |
-		ImGuiWindowFlags_NoNavFocus | 
-		ImGuiWindowFlags_MenuBar | 
+		ImGuiWindowFlags_NoNavFocus |
+		ImGuiWindowFlags_MenuBar |
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoScrollWithMouse;
 
@@ -159,28 +134,37 @@ bool FEditorDockspaceWidget::BeginDockspace(bool& bOutOpen)
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-	bool bIsOpen = ImGui::Begin("##DockspaceHost", &bOutOpen, HostFlags);
+	// Window for the dockspace
+	ImGui::Begin("##DockspaceHost", nullptr, HostFlags);
+	
 	ImGui::PopStyleVar(3);
+	
+	// Draw all of the contents
+	DrawMenuBar();
+	DrawDockSpace();
+	DrawConsole();
+	DrawEngineWindows();
 
-	// -------------------------------------------------------------------------------------------
-    // Menu bar 
-    // -------------------------------------------------------------------------------------------
+	ImGui::End(); // Dockspace Host Window
+}
 
+void FEditorDockspaceWidget::DrawMenuBar()
+{
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
 			ImGui::MenuItem("New Level", "Ctrl+N");
-			ImGui::MenuItem("Open...", "Ctrl+O");
+			ImGui::MenuItem("Open", "Ctrl+O");
 
 			ImGui::Separator();
 
 			ImGui::MenuItem("Save All", "Ctrl+Shift+S");
-			
+
 			ImGui::Separator();
-			
+
 			ImGui::MenuItem("Exit");
-			
+
 			ImGui::EndMenu();
 		}
 
@@ -188,12 +172,12 @@ bool FEditorDockspaceWidget::BeginDockspace(bool& bOutOpen)
 		{
 			ImGui::MenuItem("Undo", "Ctrl+Z");
 			ImGui::MenuItem("Redo", "Ctrl+Y");
-			
+
 			ImGui::Separator();
-			
-			ImGui::MenuItem("Project Settings...");
-			ImGui::MenuItem("Editor Preferences...");
-			
+
+			ImGui::MenuItem("Project Settings");
+			ImGui::MenuItem("Editor Preferences");
+
 			ImGui::EndMenu();
 		}
 
@@ -212,21 +196,21 @@ bool FEditorDockspaceWidget::BeginDockspace(bool& bOutOpen)
 			ImGui::MenuItem("Content Browser", nullptr, true);
 			ImGui::MenuItem("Place Actors", nullptr, false);
 
-            // Engine widgets require engine pointer
+			// Engine widgets require engine pointer
 			if (EditorEngine)
-            {
-                if (FEditorLogOutputWidget* LogWidget = EditorEngine->GetLogOutputWidget().Get())
-                {
-                    bool bLogVisible = LogWidget->IsVisible();
-                    if (ImGui::MenuItem("Output Log", nullptr, bLogVisible))
+			{
+				if (FEditorLogOutputWidget* LogWidget = EditorEngine->GetLogOutputWidget().Get())
+				{
+					bool bLogVisible = LogWidget->IsVisible();
+					if (ImGui::MenuItem("Output Log", nullptr, bLogVisible))
 					{
 						LogWidget->SetVisible(!bLogVisible);
 					}
-                }
-                else
-                {
-                    ImGui::MenuItem("Output Log", nullptr, false, false);
-                }
+				}
+				else
+				{
+					ImGui::MenuItem("Output Log", nullptr, false, false);
+				}
 
 				if (FEditorViewportWidget* EditorWidget = EditorEngine->GetEditorViewportWidget().Get())
 				{
@@ -240,29 +224,47 @@ bool FEditorDockspaceWidget::BeginDockspace(bool& bOutOpen)
 				{
 					ImGui::MenuItem("Viewport", nullptr, false, false);
 				}
-            }
-			
+			}
+
 			ImGui::EndMenu();
 		}
 
 		if (ImGui::BeginMenu("Help"))
 		{
-			ImGui::MenuItem("About...");
+			ImGui::MenuItem("About");
 			ImGui::EndMenu();
 		}
 
 		ImGui::EndMenuBar();
 	}
+}
 
-	// -------------------------------------------------------------------------------------------
-    // Dockspace
-    // -------------------------------------------------------------------------------------------
+void FEditorDockspaceWidget::DrawDockSpace()
+{
+	const ImGuiChildFlags ChildFlags =
+		ImGuiWindowFlags_NoBackground | 
+		ImGuiWindowFlags_NoScrollbar | 
+		ImGuiWindowFlags_NoScrollWithMouse;
 
-	ImGui::BeginChild("##DockspaceArea", ImVec2(0, 0), false, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+	float FooterHeight = 32.0f;
+	if (EditorEngine)
+	{
+		if (FEditorConsoleInputFieldWidget* ConsoleInputWidget = EditorEngine->GetConsoleWidget().Get())
+		{
+			FooterHeight = ConsoleInputWidget->GetHeight();
+		}
+	}
+
+	const float AvailableHeight = ImGui::GetContentRegionAvail().y;
+	const float DockspaceHeight = AvailableHeight - FooterHeight;
+
+	ImGui::BeginChild("##DockspaceArea", ImVec2(0, DockspaceHeight), false, ChildFlags);
+
+	const ImGuiDockNodeFlags DockFlags = 
+		ImGuiDockNodeFlags_PassthruCentralNode | 
+		ImGuiDockNodeFlags_NoWindowMenuButton;
 
 	ImGuiID DockspaceId = ImGui::GetID("Dockspace");
-
-	const ImGuiDockNodeFlags DockFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoWindowMenuButton;
 	ImGui::DockSpace(DockspaceId, ImVec2(0, 0), DockFlags);
 
 	ImGui::EndChild();
@@ -281,13 +283,17 @@ bool FEditorDockspaceWidget::BeginDockspace(bool& bOutOpen)
 		BuildDockingLayout(LayoutIds);
 		bResetLayout = false;
 	}
-
-	return bIsOpen;
 }
 
-void FEditorDockspaceWidget::EndDockspace()
+void FEditorDockspaceWidget::DrawConsole()
 {
-	ImGui::End();
+	if (EditorEngine)
+	{
+		if (FEditorConsoleInputFieldWidget* ConsoleInputWidget = EditorEngine->GetConsoleWidget().Get())
+		{
+			ConsoleInputWidget->Draw();
+		}
+	}
 }
 
 void FEditorDockspaceWidget::DrawEngineWindows()
@@ -297,9 +303,9 @@ void FEditorDockspaceWidget::DrawEngineWindows()
 		if (ImGui::Begin("Scene Hierarchy", &GShowSceneHierarchy))
 		{
 			ImGui::TextDisabled("Actors");
-			
+
 			ImGui::Separator();
-			
+
 			if (ImGui::TreeNode("PersistentLevel"))
 			{
 				ImGui::Selectable("Crate_01");
@@ -319,20 +325,20 @@ void FEditorDockspaceWidget::DrawEngineWindows()
 			ImGui::TextDisabled("Properties");
 
 			ImGui::Separator();
-			
+
 			ImGui::TextUnformatted("Name: Crate_01");
 
 			float Location[3] = { 0,0,0 };
 			ImGui::InputFloat3("Location", Location);
-			
+
 			float Rotation[3] = { 0,0,0 };
 			ImGui::InputFloat3("Rotation", Rotation);
-			
+
 			float Scale[3] = { 1,1,1 };
 			ImGui::InputFloat3("Scale", Scale);
-			
+
 			ImGui::SeparatorText("Materials");
-			
+
 			ImGui::TextUnformatted("Wood_Oak");
 		}
 
@@ -344,11 +350,11 @@ void FEditorDockspaceWidget::DrawEngineWindows()
 		if (ImGui::Begin("Content Browser", &GShowContentBrowser))
 		{
 			ImGui::TextDisabled("Content");
-			
+
 			ImGui::Separator();
-			
+
 			ImGui::TextUnformatted("Path: /Game");
-			
+
 			ImGui::Separator();
 
 			ImGui::Selectable("Crate_01.asset", false);
@@ -364,7 +370,7 @@ void FEditorDockspaceWidget::DrawEngineWindows()
 		if (ImGui::Begin("Place Actors", &GShowPlaceActors))
 		{
 			ImGui::TextDisabled("Place Actors");
-			
+
 			ImGui::Separator();
 
 			ImGui::Selectable("Empty Actor");
@@ -375,14 +381,4 @@ void FEditorDockspaceWidget::DrawEngineWindows()
 
 		ImGui::End();
 	}
-}
-
-void FEditorDockspaceWidget::Draw()
-{
-	bool bOpen = true;
-	BeginDockspace(bOpen);
-
-	DrawEngineWindows();
-	
-	EndDockspace();
 }

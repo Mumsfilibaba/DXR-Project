@@ -19,15 +19,11 @@ public:
     ~FEditorConsoleInputFieldWidget();
 
     void Draw();
+    void DrawConsole();
 
-    void SetVisible(bool bInVisible) 
-    { 
-        bVisible = bInVisible; 
-    }
-
-    bool IsVisible() const 
-    { 
-        return bVisible; 
+    float GetHeight() const
+    {
+        return 48.0f;
     }
 
 private:
@@ -36,9 +32,6 @@ private:
     // ImGui callback for the text-input field
     int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
     
-    // Private function to draw the console input and candidates window
-    void DrawConsole();
-
     // Helper that can invalidate the candidate-list
     void InvalidateCandidates();
 
@@ -52,7 +45,6 @@ private:
     int32 HistoryIndex               = InvalidIndex;
     bool  bCandidateSelectionChanged = false;
     bool  bUpdateCursorPosition      = false;
-    bool  bVisible                   = false;
     bool  bIsActive                  = false;
     bool  bAutoScroll                = true;
     bool  bScrollToBottom            = false;

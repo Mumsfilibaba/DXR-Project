@@ -15,11 +15,6 @@ FEditorConsoleInputFieldWidget::FEditorConsoleInputFieldWidget(const TSharedPtr<
         FApplication::Get().RegisterInputHandler(InputHandler);
     }
 
-    if (IImguiPlugin::IsEnabled())
-    {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorConsoleInputFieldWidget::Draw));
-    }
-
     TextBuffer.Fill(0);
 }
 
@@ -29,19 +24,11 @@ FEditorConsoleInputFieldWidget::~FEditorConsoleInputFieldWidget()
     {
         FApplication::Get().UnregisterInputHandler(InputHandler);
     }
-
-    if (IImguiPlugin::IsEnabled())
-    {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
-    }
 }
 
 void FEditorConsoleInputFieldWidget::Draw()
 {
-    if (bVisible)
-    {
-        DrawConsole();
-    }
+    DrawConsole();
 }
 
 void FEditorConsoleInputFieldWidget::DrawConsole()
@@ -61,14 +48,19 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         ImGuiWindowFlags_NoScrollWithMouse |
         ImGuiWindowFlags_AlwaysAutoResize;
 
+    const ImGuiChildFlags ConsoleChildWindowFlags = ImGuiChildFlags_None;
+
     // We'll capture the input box rect to position the popup overlay
-    ImVec2 InputRectMin = ImVec2(0, 0);
-    ImVec2 InputRectMax = ImVec2(0, 0);
+    ImVec2 InputRectMin = ImVec2(0.0f, 0.0f);
+    ImVec2 InputRectMax = ImVec2(0.0f, 0.0f);
     
     bool bIsInputFieldActive    = false;
     bool bShowCandidatesOverlay = false;
-    if (ImGui::Begin("Console", &bVisible, ConsoleWindowFlags))
+    if (ImGui::BeginChild("Console", ImVec2(0.0f, GetHeight()), ConsoleChildWindowFlags, ConsoleWindowFlags))
     {
+        // Add some space between preview element and the console
+        ImGui::Dummy(ImVec2(0.0f, 2.0f));
+
         // Draw input
         const ImGuiInputTextFlags ConsoleInputFlags =
             ImGuiInputTextFlags_EnterReturnsTrue |
@@ -83,16 +75,16 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         };
 
         const float InputFieldWidth = 512.0f;
-		const float BorderRounding  = 16.0f;
+        const float BorderRounding  = 16.0f;
 
         // Add some spacing before the input field
-		ImGui::Dummy(ImVec2(4.0f, 0.0f));
-		ImGui::SameLine();
+        ImGui::Dummy(ImVec2(4.0f, 0.0f));
+        ImGui::SameLine();
 
         ImGui::SetNextItemWidth(InputFieldWidth);
 
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
-        
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
 
         ImGui::PopStyleVar();
@@ -107,7 +99,7 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         {
             const float BorderThickness = 2.0f;
             const ImU32 BorderColor     = IM_COL32(100, 136, 234, 255);
-            
+
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
             DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, BorderRounding, 0, BorderThickness);
         }
@@ -142,7 +134,7 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         }
     }
 
-    ImGui::End();
+    ImGui::EndChild();
 
     ImGui::PopStyleVar();
 
@@ -331,7 +323,7 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
             ImGui::PopStyleColor();
         }
 
-        ImGui::End();
+        ImGui::End(); // Console Candidates
 
         ImGui::PopStyleVar();
         ImGui::PopStyleVar();
@@ -347,8 +339,9 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
 
 void FEditorConsoleInputFieldWidget::InvalidateCandidates()
 {
-    SelectedCandidateIndex = InvalidIndex;
+    SelectedCandidateIndex     = InvalidIndex;
     bCandidateSelectionChanged = true;
+
     Candidates.Clear();
 }
 

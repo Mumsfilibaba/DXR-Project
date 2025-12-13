@@ -30,12 +30,10 @@ bool FEditorEngine::Init()
 	{
 		DockspaceWidget = MakeSharedPtr<FEditorDockspaceWidget>(this);
 		LogOutputWidget = MakeSharedPtr<FEditorLogOutputWidget>();
+		ConsoleWidget   = MakeSharedPtr<FEditorConsoleInputFieldWidget>(LogOutputWidget);
 		
 		ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
 		ViewportWidget->SetViewportWidget(GetViewportWidget());
-
-		ConsoleWidget = MakeSharedPtr<FEditorConsoleInputFieldWidget>(LogOutputWidget);
-		ConsoleWidget->SetVisible(true);
 	}
 
 	if (!CreateViewportRenderTarget())
