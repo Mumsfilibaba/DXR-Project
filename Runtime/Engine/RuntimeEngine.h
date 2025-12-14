@@ -15,5 +15,4 @@ public:
 private:
 	TSharedPtr<class FRuntimeConsoleWidget> ConsoleWidget;
 	TSharedPtr<class FFrameProfilerWidget>  ProfilerWidget;
-	TSharedPtr<class FSceneInspectorWidget> InspectorWidget;
 };

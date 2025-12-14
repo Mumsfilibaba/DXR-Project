@@ -1,14 +1,12 @@
 #include "Engine/RuntimeEngine.h"
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
 #include "Engine/EngineUI/FrameProfilerWidget.h"
-#include "Engine/EngineUI/SceneInspectorWidget.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 FRuntimeEngine::FRuntimeEngine()
     : FEngine()
 	, ConsoleWidget(nullptr)
 	, ProfilerWidget(nullptr)
-	, InspectorWidget(nullptr)
 {
 }
 
@@ -25,9 +23,8 @@ bool FRuntimeEngine::Init()
 
 	if (IImguiPlugin::IsEnabled())
 	{
-		ProfilerWidget  = MakeSharedPtr<FFrameProfilerWidget>();
-		ConsoleWidget   = MakeSharedPtr<FRuntimeConsoleWidget>();
-		InspectorWidget = MakeSharedPtr<FSceneInspectorWidget>();
+		ProfilerWidget = MakeSharedPtr<FFrameProfilerWidget>();
+		ConsoleWidget  = MakeSharedPtr<FRuntimeConsoleWidget>();
 	}
 
 	return true;
@@ -39,7 +36,6 @@ void FRuntimeEngine::Release()
 	{
 		ProfilerWidget.Reset();
 		ConsoleWidget.Reset();
-		InspectorWidget.Reset();
 	}
 
 	FEngine::Release();
