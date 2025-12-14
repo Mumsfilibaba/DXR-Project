@@ -35,6 +35,14 @@ void FEditorSceneHierarchyWidget::Draw()
 	if (ImGui::Begin("Scene Hierarchy", &bVisible, Flags))
 	{
 		DrawSceneInfo();
+
+		if (EditorEngine)
+		{
+			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsAnyItemHovered())
+			{
+				EditorEngine->ClearSelection();
+			}
+		}
 	}
 
 	ImGui::End();
