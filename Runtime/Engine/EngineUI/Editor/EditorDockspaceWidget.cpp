@@ -103,7 +103,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 	// Assign windows to the dockspace items
 	ImGui::DockBuilderDockWindow("Viewport", Ids.DockCenterTop);
 	ImGui::DockBuilderDockWindow("Scene Hierarchy", Ids.DockRightTop);
-	ImGui::DockBuilderDockWindow("Properties Panel", Ids.DockRightBottom);
+	ImGui::DockBuilderDockWindow("Properties", Ids.DockRightBottom);
 	ImGui::DockBuilderDockWindow("Output Log", Ids.DockCenterBottom);
 	ImGui::DockBuilderDockWindow("Content Browser", Ids.DockCenterBottom);
 
@@ -193,7 +193,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 			//ImGui::Separator();
 
-			ImGui::MenuItem("Properties Panel", nullptr, true);
+			ImGui::MenuItem("Properties", nullptr, true);
 			ImGui::MenuItem("Content Browser", nullptr, true);
 
 			// Engine widgets require engine pointer
@@ -313,33 +313,6 @@ void FEditorDockspaceWidget::DrawConsole()
 
 void FEditorDockspaceWidget::DrawEngineWindows()
 {
-	if (GShowPropertiesPanel)
-	{
-		if (ImGui::Begin("Properties Panel", &GShowPropertiesPanel))
-		{
-			ImGui::TextDisabled("Properties");
-
-			ImGui::Separator();
-
-			ImGui::TextUnformatted("Name: Crate_01");
-
-			float Location[3] = { 0,0,0 };
-			ImGui::InputFloat3("Location", Location);
-
-			float Rotation[3] = { 0,0,0 };
-			ImGui::InputFloat3("Rotation", Rotation);
-
-			float Scale[3] = { 1,1,1 };
-			ImGui::InputFloat3("Scale", Scale);
-
-			ImGui::SeparatorText("Materials");
-
-			ImGui::TextUnformatted("Wood_Oak");
-		}
-
-		ImGui::End();
-	}
-
 	if (GShowContentBrowser)
 	{
 		if (ImGui::Begin("Content Browser", &GShowContentBrowser))

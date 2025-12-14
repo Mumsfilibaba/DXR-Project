@@ -3,11 +3,16 @@
 #include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
+#include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Renderer/FrameResources.h"
 #include "RendererCore/RenderSettings.h"
 
 FEditorEngine::FEditorEngine()
     : FEngine()
+	, SelectedActor(nullptr)
+	, SelectedLight(nullptr)
+	, SelectedCamera(nullptr)
+	, SelectedLightProbe(nullptr)
     , DockspaceWidget(nullptr)
 	, ConsoleWidget(nullptr)
     , LogOutputWidget(nullptr)
@@ -34,6 +39,7 @@ bool FEditorEngine::Init()
 		LogOutputWidget      = MakeSharedPtr<FEditorLogOutputWidget>();
 		SceneHierarchyWidget = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
 		ConsoleWidget        = MakeSharedPtr<FEditorConsoleInputFieldWidget>(LogOutputWidget);
+		PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
 		
 		ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
 		ViewportWidget->SetViewportWidget(GetViewportWidget());
@@ -56,6 +62,7 @@ void FEditorEngine::Release()
 		SceneHierarchyWidget.Reset();
 		ConsoleWidget.Reset();
 		ViewportWidget.Reset();
+		PropertiesWidget.Reset();
 	}
 
 	FEngine::Release();
@@ -86,6 +93,46 @@ void FEditorEngine::RenderFrame()
 
 	// Render the rest
 	FEngine::RenderFrame();
+}
+
+void FEditorEngine::SetSelectedActor(FActor* InActor)
+{
+	SelectedActor = InActor;
+	SelectedLight = nullptr;
+	SelectedCamera = nullptr;
+    SelectedLightProbe = nullptr;
+}
+
+void FEditorEngine::SetSelectedLight(FLight* InLight)
+{
+	SelectedLight = InLight;
+	SelectedActor = nullptr;
+	SelectedCamera = nullptr;
+    SelectedLightProbe = nullptr;
+}
+
+void FEditorEngine::SetSelectedCamera(FCamera* InCamera)
+{
+    SelectedCamera = InCamera;
+    SelectedActor = nullptr;
+    SelectedLight = nullptr;
+    SelectedLightProbe = nullptr;
+}
+
+void FEditorEngine::SetSelectedLightProbe(FLightProbe* InProbe)
+{
+    SelectedLightProbe = InProbe;
+    SelectedActor = nullptr;
+    SelectedLight = nullptr;
+    SelectedCamera = nullptr;
+}
+
+void FEditorEngine::ClearSelection()
+{
+    SelectedActor = nullptr;
+    SelectedLight = nullptr;
+    SelectedCamera = nullptr;
+    SelectedLightProbe = nullptr;
 }
 
 bool FEditorEngine::CreateViewportRenderTarget()

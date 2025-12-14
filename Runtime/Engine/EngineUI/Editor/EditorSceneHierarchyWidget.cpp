@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
+#include "Engine/EditorEngine.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui.h>
@@ -25,572 +26,161 @@ FEditorSceneHierarchyWidget::~FEditorSceneHierarchyWidget()
 
 void FEditorSceneHierarchyWidget::Draw()
 {
-    if (!bVisible)
-    {
-        return;
-    }
+	if (!bVisible)
+	{
+		return;
+	}
 
-    const ImGuiWindowFlags Flags = 
-        ImGuiWindowFlags_NoFocusOnAppearing | 
-        ImGuiWindowFlags_NoSavedSettings;
+	const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
+	if (ImGui::Begin("Scene Hierarchy", &bVisible, Flags))
+	{
+		DrawSceneInfo();
+	}
 
-	if (ImGui::Begin("Scene Hierarchy", &bVisible))
-    {
-        DrawSceneInfo();
-    }
-
-    ImGui::End();
+	ImGui::End();
 }
 
 void FEditorSceneHierarchyWidget::DrawSceneInfo()
 {
-    // Same column size for all different types
-    const float ColumnWidth = 200.0f;
+	if (!EditorEngine)
+	{
+		ImGui::TextDisabled("No EditorEngine");
+		return;
+	}
 
-    // Cache the current world
-    FWorld* CurrentWorld = FEngine::Get()->GetWorld();
+	FWorld* World = EditorEngine->GetWorld();
+	if (!World)
+	{
+		ImGui::TextDisabled("No World");
+		return;
+	}
 
-    // Camera
-    if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_None))
+	// Pull current selection
+	FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
+	FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
+	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
+	FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
+
+	// Camera
+	if (FCamera* Camera = World->GetCamera())
+	{
+		if (ImGui::TreeNodeEx("Camera", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			const bool bIsSelected = (Camera == SelectedCamera);
+			if (ImGui::Selectable("Main Camera", bIsSelected))
+			{
+				EditorEngine->SetSelectedCamera(Camera);
+			}
+			ImGui::TreePop();
+		}
+	}
+
+	// Light Probes
+	const TArray<FLightProbe*>& LightProbes = World->GetLightProbes();
+	if (!LightProbes.IsEmpty())
+	{
+		if (ImGui::TreeNodeEx("Light Probes", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			int32 ProbeIndex = 0;
+			for (FLightProbe* Probe : LightProbes)
+			{
+				if (!Probe)
+				{
+					continue;
+				}
+
+				const bool bIsSelected = (Probe == SelectedLightProbe);
+
+				ImGui::PushID(Probe);
+
+				static constexpr uint32 LabelLength = 64;
+				char Label[LabelLength];
+				FCString::Snprintf(Label, LabelLength, "LightProbe %d", ProbeIndex++);
+
+				if (ImGui::Selectable(Label, bIsSelected))
+				{
+					EditorEngine->SetSelectedLightProbe(Probe);
+				}
+
+				ImGui::PopID();
+			}
+
+			ImGui::TreePop();
+		}
+	}
+
+	// Actors
+    const TArray<FActor*>& Actors = World->GetActors();
+    if (!Actors.IsEmpty())
     {
-        if (FCamera* Camera = CurrentWorld->GetCamera())
-        {
-            ImGui::PushID(Camera);
+	    if (ImGui::TreeNodeEx("Actors", ImGuiTreeNodeFlags_DefaultOpen))
+	    {
+		    for (FActor* Actor : Actors)
+		    {
+			    if (!Actor)
+			    {
+				    continue;
+			    }
 
-            ImGui::SeparatorText("Projection");
+			    const bool bIsSelected = (Actor == SelectedActor);
 
-            // Setup the columns
-            ImGui::Columns(2, nullptr, false);
-            ImGui::SetColumnWidth(0, ColumnWidth);
+			    ImGui::PushID(Actor);
 
-            // Add some extra spacing for the text elements...
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 10.0f));
+			    const FString& Name = Actor->GetName();
+			    const char* Label = Name.IsEmpty() ? "Actor" : *Name;
+			    if (ImGui::Selectable(Label, bIsSelected))
+			    {
+				    EditorEngine->SetSelectedActor(Actor);
+			    }
 
-            // Display the size of the viewport
-            ImGui::Text("Viewport size");
-            ImGui::NextColumn();
-            ImGui::Text("%.1f x %.1f", Camera->GetWidth(), Camera->GetHeight());
+			    ImGui::PopID();
+		    }
 
-            // ... pop the extra spacing
-            ImGui::PopStyleVar();
-
-            ImGui::NextColumn();
-
-            // Field Of View
-            ImGui::Text("Field Of View");
-            ImGui::NextColumn();
-
-            float FieldOfView = Camera->GetFieldOfView();
-            if (ImGui::SliderFloat("##FieldOfView", &FieldOfView, 40.0f, 120.0f, "%.1f Degrees"))
-            {
-                Camera->SetFieldOfView(FieldOfView);
-            }
-
-            // Reset the columns
-            ImGui::Columns(1);
-
-            // Transform
-            ImGui::SeparatorText("Transform");
-
-            FVector3 Position = Camera->GetPosition();
-            ImGuiExtensions::DrawFloat3Control("Position", Position);
-            Camera->SetPosition(Position.X, Position.Y, Position.Z);
-
-            // Rotation
-            FVector3 Rotation = Camera->GetRotation();
-            Rotation = FVector3::RadiansToDegrees(Rotation);
-
-            ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
-
-            Rotation = FVector3::DegreesToRadians(Rotation);
-
-            Camera->SetRotation(Rotation.X, Rotation.Y, Rotation.Z);
-
-            ImGui::PopID();
-        }
-
-        ImGui::NewLine();
+		    ImGui::TreePop();
+	    }
     }
 
-    // Lights
-    if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_None))
+	// Lights
+    const TArray<FLight*>& Lights = World->GetLights();
+    if (!Lights.IsEmpty())
     {
-        for (FLight* CurrentLight : CurrentWorld->GetLights())
-        {
-            ImGui::PushID(CurrentLight);
-
-            if (FPointLight* CurrentPointLight = Cast<FPointLight>(CurrentLight))
-            {
-                if (ImGui::TreeNode("PointLight"))
-                {
-                    // Color
-                    ImGui::SeparatorText("Settings");
-
-                    ImGui::Columns(2, nullptr, false);
-                    ImGui::SetColumnWidth(0, ColumnWidth);
-
-                    ImGui::Text("Color");
-                    ImGui::NextColumn();
-
-                    FVector3 Color = CurrentPointLight->GetColor();
-                    if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
-                    {
-                        CurrentPointLight->SetColor(Color);
-                    }
-
-                    ImGui::NextColumn();
-                    ImGui::Text("Intensity");
-                    ImGui::NextColumn();
-
-                    float Intensity = CurrentPointLight->GetIntensity();
-                    if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
-                    {
-                        CurrentPointLight->SetIntensity(Intensity);
-                    }
-
-                    ImGui::Columns(1);
-
-                    // Transform
-                    ImGui::SeparatorText("Transform");
-
-                    FVector3 Translation = CurrentPointLight->GetPosition();
-                    ImGuiExtensions::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
-                    CurrentPointLight->SetPosition(Translation);
-
-                    // Shadow Settings
-                    ImGui::SeparatorText("Shadows");
-
-                    ImGui::Columns(2, nullptr, false);
-                    ImGui::SetColumnWidth(0, ColumnWidth);
-
-                    // Bias
-                    ImGui::Text("Shadow-bias");
-                    ImGui::NextColumn();
-
-                    float ShadowBias = CurrentPointLight->GetShadowBias();
-                    if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
-                    {
-                        CurrentPointLight->SetShadowBias(ShadowBias);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
-                    }
-
-                    // Shadow Near Plane
-                    ImGui::NextColumn();
-                    ImGui::Text("Shadow near-plane");
-                    ImGui::NextColumn();
-
-                    float ShadowNearPlane = CurrentPointLight->GetShadowNearPlane();
-                    if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
-                    {
-                        CurrentPointLight->SetShadowNearPlane(ShadowNearPlane);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Shadow-map near-plane");
-                    }
-
-                    // Shadow Far Plane
-                    ImGui::NextColumn();
-                    ImGui::Text("Shadow far-plane");
-                    ImGui::NextColumn();
-
-                    float ShadowFarPlane = CurrentPointLight->GetShadowFarPlane();
-                    if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
-                    {
-                        CurrentPointLight->SetShadowFarPlane(ShadowFarPlane);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Shadow-map far-plane");
-                    }
-
-                    ImGui::Columns(1);
-
-                    ImGui::TreePop();
-                }
-            }
-            else if (FDirectionalLight* CurrentDirectionalLight = Cast<FDirectionalLight>(CurrentLight))
-            {
-                if (ImGui::TreeNode("DirectionalLight"))
-                {
-                    // Color and Intensity
-                    ImGui::SeparatorText("Settings");
-
-                    ImGui::Columns(2, nullptr, false);
-                    ImGui::SetColumnWidth(0, ColumnWidth);
-
-                    ImGui::Text("Color");
-                    ImGui::NextColumn();
-
-                    FVector3 Color = CurrentDirectionalLight->GetColor();
-                    if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
-                    {
-                        CurrentDirectionalLight->SetColor(Color);
-                    }
-
-                    ImGui::NextColumn();
-                    ImGui::Text("Intensity");
-                    ImGui::NextColumn();
-
-                    float Intensity = CurrentDirectionalLight->GetIntensity();
-                    if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
-                    {
-                        CurrentDirectionalLight->SetIntensity(Intensity);
-                    }
-
-                    ImGui::Columns(1);
-
-                    // Transform
-                    ImGui::SeparatorText("Direction");
-
-                    ImGui::Columns(2, nullptr, false);
-                    ImGui::SetColumnWidth(0, ColumnWidth);
-
-                    bool bSetRotation = false;
-                    FVector3 Rotation = CurrentDirectionalLight->GetRotation();
-
-                    ImGui::Text("Rotation theta (degrees)");
-                    ImGui::NextColumn();
-
-                    float RotationTheta = Math::RadiansToDegrees(Rotation.X);
-                    if (ImGui::SliderFloat("##RotationTheta", &RotationTheta, -90.0f, 90.0f, "%.2f"))
-                    {
-                        bSetRotation = true;
-                    }
-
-                    ImGui::NextColumn();
-                    ImGui::Text("Rotation phi (degrees)");
-                    ImGui::NextColumn();
-
-                    float RotationPhi = Math::RadiansToDegrees(Rotation.Y);
-                    if (ImGui::SliderFloat("##RotationPhi", &RotationPhi, 0.0f, 360.0f, "%.2f"))
-                    {
-                        bSetRotation = true;
-                    }
-
-                    if (bSetRotation)
-                    {
-                        Rotation.X = Math::DegreesToRadians(RotationTheta);
-                        Rotation.Y = Math::DegreesToRadians(RotationPhi);
-                        CurrentDirectionalLight->SetRotation(Rotation);
-                    }
-
-                    ImGui::NextColumn();
-                    ImGui::Text("Direction");
-                    ImGui::NextColumn();
-
-                    FVector3 Direction = CurrentDirectionalLight->GetDirectionVector();
-                    ImGui::InputFloat3("##Direction", Direction.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
-
-                    ImGui::Columns(1);
-
-                    // Shadow Settings
-                    ImGui::SeparatorText("Shadows");
-
-                    ImGui::Columns(2, nullptr, false);
-                    ImGui::SetColumnWidth(0, ColumnWidth);
-
-                    // Shadow Bias
-                    ImGui::Text("Shadow-bias");
-                    ImGui::NextColumn();
-
-                    float ShadowBias = CurrentDirectionalLight->GetShadowBias();
-                    if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
-                    {
-                        CurrentDirectionalLight->SetShadowBias(ShadowBias);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("A Bias value used in lightning calculations\nwhen measuring the depth in a ShadowMap");
-                    }
-
-                    // Cascade Split Lambda
-                    ImGui::NextColumn();
-                    ImGui::Text("Cascade Split Lambda");
-                    ImGui::NextColumn();
-
-                    float CascadeSplitLambda = CurrentDirectionalLight->GetCascadeSplitLambda();
-                    if (ImGui::SliderFloat("##CascadeSplitLambda", &CascadeSplitLambda, 0.0f, 1.0f, "%.2f"))
-                    {
-                        CurrentDirectionalLight->SetCascadeSplitLambda(CascadeSplitLambda);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Lambda for determine the splits of the shadow-cascades");
-                    }
-
-                    // Cascade Position Offset
-                    ImGui::NextColumn();
-                    ImGui::Text("Cascade Position Offset");
-                    ImGui::NextColumn();
-
-                    float CascadePositionOffset = CurrentDirectionalLight->GetShadowPositionOffset();
-                    if (ImGui::SliderFloat("##CascadePositionOffset", &CascadePositionOffset, 0.0f, 1000.0f, "%.1f"))
-                    {
-                        CurrentDirectionalLight->SetShadowPositionOffset(CascadePositionOffset);
-                    }
-
-                    // Shadow Near Plane
-                    ImGui::NextColumn();
-                    ImGui::Text("Shadow near-plane");
-                    ImGui::NextColumn();
-
-                    float ShadowNearPlane = CurrentDirectionalLight->GetShadowNearPlane();
-                    if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.0f, 1000.0f, "%.1f"))
-                    {
-                        CurrentDirectionalLight->SetShadowNearPlane(ShadowNearPlane);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Shadow-map near-plane");
-                    }
-
-                    // Shadow Far Plane
-                    ImGui::NextColumn();
-                    ImGui::Text("Shadow far-plane");
-                    ImGui::NextColumn();
-
-                    float ShadowFarPlane = CurrentDirectionalLight->GetShadowFarPlane();
-                    if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 0.0f, 1000.0f, "%.1f"))
-                    {
-                        CurrentDirectionalLight->SetShadowFarPlane(ShadowFarPlane);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Shadow-map far-plane");
-                    }
-
-                    // Size
-                    ImGui::NextColumn();
-                    ImGui::Text("Light area");
-                    ImGui::NextColumn();
-
-                    float LightArea = CurrentDirectionalLight->GetLightArea();
-                    if (ImGui::SliderFloat("##LightArea", &LightArea, 0.0f, 1.0f, "%.2f"))
-                    {
-                        CurrentDirectionalLight->SetLightArea(LightArea);
-                    }
-
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::SetTooltip("Value modifying the size when calculating soft shadows");
-                    }
-
-                    ImGui::Columns(1);
-
-                    ImGui::TreePop();
-                }
-            }
-
-            ImGui::PopID();
-        }
-
-        ImGui::NewLine();
-    }
-
-    // Light-Probes
-    if (ImGui::CollapsingHeader("Light-Probes", ImGuiTreeNodeFlags_None))
-    {
-        int32 LightProbeIndex = 0;
-        for (FLightProbe* CurrentLightProbe : CurrentWorld->GetLightProbes())
-        {
-            ImGui::PushID(CurrentLightProbe);
-
-            if (ImGui::TreeNode("##LightProbe", "LightProbe %d", LightProbeIndex++))
-            {
-                // Position
-                FVector3 Position = CurrentLightProbe->GetPosition();
-                ImGuiExtensions::DrawFloat3Control("Position", Position, 0.0f, ColumnWidth);
-                CurrentLightProbe->SetPosition(Position);
-
-                // Box Extent
-                FVector3 BoxExtent = CurrentLightProbe->GetBoxExtents();
-                ImGuiExtensions::DrawFloat3Control("Box Extent", BoxExtent, 0.0f, ColumnWidth);
-                CurrentLightProbe->SetBoxExtent(BoxExtent);
-
-                // Box Offset
-                FVector3 BoxOffset = CurrentLightProbe->GetBoxOffset();
-                ImGuiExtensions::DrawFloat3Control("Box Origin", BoxOffset, 0.0f, ColumnWidth);
-                CurrentLightProbe->SetBoxOffset(BoxOffset);
-
-                // Enable or disable box-projection
-                ImGui::Columns(2, nullptr, false);
-                ImGui::SetColumnWidth(0, ColumnWidth);
-
-                ImGui::Text("Enable Box-Projection");
-                ImGui::NextColumn();
-
-                bool bBoxProjection = CurrentLightProbe->GetBoxProjection();
-                if (ImGui::Checkbox("##BoxProjection", &bBoxProjection))
-                {
-                    CurrentLightProbe->SetBoxProjection(bBoxProjection);
-                }
-
-                ImGui::NextColumn();
-
-                // Reset the columns
-                ImGui::Columns(1);
-
-                ImGui::TreePop();
-            }
-
-            ImGui::PopID();
-        }
-
-        ImGui::NewLine();
-    }
-
-    // Actors
-    if (ImGui::CollapsingHeader("Actors", ImGuiTreeNodeFlags_None))
-    {
-        // Add some spacing above the text...
-        ImGui::Dummy(ImVec2(ColumnWidth, 5.0f));
-
-        // Actor count info
-        ImGui::Columns(2, nullptr, false);
-        ImGui::SetColumnWidth(0, ColumnWidth);
-
-        // ... add some spacing before the text ...
-        ImGui::Dummy(ImVec2(5.0f, 5.0f));
-        ImGui::SameLine();
-
-        ImGui::Text("Number of Actors");
-        ImGui::NextColumn();
-        ImGui::Text("%d", CurrentWorld->GetActors().Size());
-
-        ImGui::Columns(1);
-
-        // ... add some space after the text
-        ImGui::Dummy(ImVec2(ColumnWidth, 5.0f));
-
-        // Display all Actor Info
-        for (FActor* Actor : CurrentWorld->GetActors())
-        {
-            ImGui::PushID(Actor);
-
-            const FString ActorName = Actor->GetName();
-            if (ImGui::TreeNode(*ActorName))
-            {
-                // Transform
-                ImGui::SeparatorText("Transform");
-
-                FVector3 Translation = Actor->GetTransform().GetTranslation();
-                ImGuiExtensions::DrawFloat3Control("Translation", Translation);
-                Actor->GetTransform().SetTranslation(Translation);
-
-                // Rotation
-                FVector3 Rotation = Actor->GetTransform().GetRotation();
-                Rotation = FVector3::RadiansToDegrees(Rotation);
-
-                ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
-
-                Rotation = FVector3::DegreesToRadians(Rotation);
-
-                Actor->GetTransform().SetRotation(Rotation);
-
-                // Scale
-                FVector3 Scale0 = Actor->GetTransform().GetScale();
-                FVector3 Scale1 = Scale0;
-                ImGuiExtensions::DrawFloat3Control("Scale", Scale0, 1.0f);
-
-                ImGui::SameLine();
-
-                static bool bUniform = false;
-                ImGui::Checkbox("##Uniform", &bUniform);
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("Enable Uniform Scaling");
-                }
-
-                if (bUniform)
-                {
-                    if (Scale1.X != Scale0.X)
-                    {
-                        Scale0.Y = Scale0.X;
-                        Scale0.Z = Scale0.X;
-                    }
-                    else if (Scale1.Y != Scale0.Y)
-                    {
-                        Scale0.X = Scale0.Y;
-                        Scale0.Z = Scale0.Y;
-                    }
-                    else if (Scale1.Z != Scale0.Z)
-                    {
-                        Scale0.X = Scale0.Z;
-                        Scale0.Y = Scale0.Z;
-                    }
-                }
-
-                Actor->GetTransform().SetScale(Scale0);
-
-                // MeshComponent
-                if (FStaticMeshComponent* MeshComponent = Actor->GetComponentOfType<FStaticMeshComponent>())
-                {
-                    if (ImGui::CollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_None))
-                    {
-                        ImGui::Columns(2, nullptr, false);
-                        ImGui::SetColumnWidth(0, ColumnWidth);
-
-                        // Albedo
-                        ImGui::Text("Albedo");
-                        ImGui::NextColumn();
-
-                        FMaterialInfo MaterialInfo = MeshComponent->GetMaterial()->GetMaterialInfo();
-                        if (ImGuiExtensions::DrawColorEdit3("##Albedo", MaterialInfo.Albedo))
-                        {
-                            MeshComponent->GetMaterial()->SetAlbedo(MaterialInfo.Albedo);
-                        }
-
-                        // Roughness
-                        ImGui::NextColumn();
-                        ImGui::Text("Roughness");
-                        ImGui::NextColumn();
-
-                        if (ImGui::SliderFloat("##Roughness", &MaterialInfo.Roughness, 0.01f, 1.0f, "%.2f"))
-                        {
-                            MeshComponent->GetMaterial()->SetRoughness(MaterialInfo.Roughness);
-                        }
-
-                        // Metallic
-                        ImGui::NextColumn();
-                        ImGui::Text("Metallic");
-                        ImGui::NextColumn();
-
-                        if (ImGui::SliderFloat("##Metallic", &MaterialInfo.Metallic, 0.01f, 1.0f, "%.2f"))
-                        {
-                            MeshComponent->GetMaterial()->SetMetallic(MaterialInfo.Metallic);
-                        }
-
-                        // AO
-                        ImGui::NextColumn();
-                        ImGui::Text("AO");
-                        ImGui::NextColumn();
-
-                        if (ImGui::SliderFloat("##AO", &MaterialInfo.AmbientOcclusion, 0.01f, 1.0f, "%.2f"))
-                        {
-                            MeshComponent->GetMaterial()->SetAmbientOcclusion(MaterialInfo.AmbientOcclusion);
-                        }
-
-                        ImGui::Columns(1);
-                    }
-                }
-
-                ImGui::TreePop();
-            }
-
-            ImGui::PopID();
-        }
-
-        ImGui::NewLine();
+		if (ImGui::TreeNodeEx("Lights", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			int32 LightIndex = 0;
+			for (FLight* Light : Lights)
+			{
+				if (!Light)
+				{
+					continue;
+				}
+
+				const bool bIsSelected = (Light == SelectedLight);
+
+				ImGui::PushID(Light);
+
+				const char* TypeLabel = "Light";
+				if (Cast<FPointLight>(Light))
+				{
+					TypeLabel = "PointLight";
+				}
+				else if (Cast<FDirectionalLight>(Light))
+				{
+					TypeLabel = "DirectionalLight";
+				}
+
+				static constexpr uint32 LabelLength = 256;
+				char Label[LabelLength];
+				FCString::Snprintf(Label, LabelLength, "%s %d", TypeLabel, LightIndex++);
+
+				if (ImGui::Selectable(Label, bIsSelected))
+				{
+					EditorEngine->SetSelectedLight(Light);
+				}
+
+				ImGui::PopID();
+			}
+
+			ImGui::TreePop();
+		}
     }
 }

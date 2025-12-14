@@ -74,7 +74,6 @@ void FEditorLogOutputWidget::DrawFilterBar()
 
 	const char*  FilterButtonLabel    = "Filters";
 	const ImVec2 FilterButtonTextSize = ImGui::CalcTextSize(FilterButtonLabel);
-	const float  FullWidth            = ImGui::GetContentRegionAvail().x;
 	const float  FilterButtonWidth    = FilterButtonTextSize.x + Style.FramePadding.x * 2.0f;
 	const float  InputFieldWidth      = 512.0f;
     const float  BorderRounding       = 16.0f;
