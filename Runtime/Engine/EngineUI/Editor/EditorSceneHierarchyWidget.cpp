@@ -1,29 +1,21 @@
-#include "Core/Misc/ConsoleManager.h"
-#include "Engine/Engine.h"
-#include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Lights/DirectionalLight.h"
-#include "Engine/World/Components/StaticMeshComponent.h"
-#include "Engine/EngineUI/SceneInspectorWidget.h"
-#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
+#include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
+#include <imgui.h>
 
-static TAutoConsoleVariable<bool> CVarDrawSceneInspector(
-    "Engine.DrawSceneinspector",
-    "Draws the SceneInspector",
-    false,
-    EConsoleVariableFlags::Default);
-
-FSceneInspectorWidget::FSceneInspectorWidget()
-    : ImGuiDelegateHandle()
+FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditorEngine)
+    : EditorEngine(InEditorEngine)
+    , ImGuiDelegateHandle()
+    , bVisible(true)
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FSceneInspectorWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorSceneHierarchyWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
 
-FSceneInspectorWidget::~FSceneInspectorWidget()
+FEditorSceneHierarchyWidget::~FEditorSceneHierarchyWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -31,33 +23,26 @@ FSceneInspectorWidget::~FSceneInspectorWidget()
     }
 }
 
-void FSceneInspectorWidget::Draw()
+void FEditorSceneHierarchyWidget::Draw()
 {
-    bool bDrawInspector = CVarDrawSceneInspector.GetValue();
-    if (!bDrawInspector)
+    if (!bVisible)
     {
         return;
     }
 
-    const ImVec2 Size = ImGuiExtensions::GetMainViewportSize();
+    const ImGuiWindowFlags Flags = 
+        ImGuiWindowFlags_NoFocusOnAppearing | 
+        ImGuiWindowFlags_NoSavedSettings;
 
-    const float Width  = Math::Clamp<float>(Size.x * 0.3f, 128.0f, 576.0);
-    const float Height = Math::Clamp<float>(Size.y * 0.7f, 256.0f, 756.0);
-
-    ImGui::SetNextWindowPos(ImVec2(float(Size.x) * 0.5f, float(Size.y) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
-
-    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
-    if (ImGui::Begin("SceneInspector", &bDrawInspector, Flags))
+	if (ImGui::Begin("Scene Hierarchy", &bVisible))
     {
         DrawSceneInfo();
     }
 
-    CVarDrawSceneInspector->SetAsBool(bDrawInspector, EConsoleVariableFlags::SetByCode);
     ImGui::End();
 }
 
-void FSceneInspectorWidget::DrawSceneInfo()
+void FEditorSceneHierarchyWidget::DrawSceneInfo()
 {
     // Same column size for all different types
     const float ColumnWidth = 200.0f;

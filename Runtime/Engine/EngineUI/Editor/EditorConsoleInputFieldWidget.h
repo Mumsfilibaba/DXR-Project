@@ -23,8 +23,7 @@ public:
 
     float GetHeight() const
     {
-        const float ConsoleAreaHeight = 48.0f;
-        return ConsoleAreaHeight;
+        return 48.0f;
     }
 
 private:

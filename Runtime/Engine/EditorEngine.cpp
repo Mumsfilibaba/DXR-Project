@@ -2,6 +2,7 @@
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
 #include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
+#include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Renderer/FrameResources.h"
 #include "RendererCore/RenderSettings.h"
 
@@ -10,6 +11,7 @@ FEditorEngine::FEditorEngine()
     , DockspaceWidget(nullptr)
 	, ConsoleWidget(nullptr)
     , LogOutputWidget(nullptr)
+	, SceneHierarchyWidget(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
 {
@@ -28,9 +30,10 @@ bool FEditorEngine::Init()
 
 	if (IImguiPlugin::IsEnabled())
 	{
-		DockspaceWidget = MakeSharedPtr<FEditorDockspaceWidget>(this);
-		LogOutputWidget = MakeSharedPtr<FEditorLogOutputWidget>();
-		ConsoleWidget   = MakeSharedPtr<FEditorConsoleInputFieldWidget>(LogOutputWidget);
+		DockspaceWidget      = MakeSharedPtr<FEditorDockspaceWidget>(this);
+		LogOutputWidget      = MakeSharedPtr<FEditorLogOutputWidget>();
+		SceneHierarchyWidget = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
+		ConsoleWidget        = MakeSharedPtr<FEditorConsoleInputFieldWidget>(LogOutputWidget);
 		
 		ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
 		ViewportWidget->SetViewportWidget(GetViewportWidget());
@@ -50,6 +53,7 @@ void FEditorEngine::Release()
 	{
 		DockspaceWidget.Reset();
 		LogOutputWidget.Reset();
+		SceneHierarchyWidget.Reset();
 		ConsoleWidget.Reset();
 		ViewportWidget.Reset();
 	}

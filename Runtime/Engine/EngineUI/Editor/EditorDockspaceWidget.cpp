@@ -2,6 +2,7 @@
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
 #include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
 #include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
+#include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
@@ -169,10 +170,11 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 		if (ImGui::BeginMenu("Edit"))
 		{
-			ImGui::MenuItem("Undo", "Ctrl+Z");
-			ImGui::MenuItem("Redo", "Ctrl+Y");
+			// TODO: Add a undo/redo system
+			//ImGui::MenuItem("Undo", "Ctrl+Z");
+			//ImGui::MenuItem("Redo", "Ctrl+Y");
 
-			ImGui::Separator();
+			//ImGui::Separator();
 
 			ImGui::MenuItem("Project Settings");
 			ImGui::MenuItem("Editor Preferences");
@@ -182,18 +184,17 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 		if (ImGui::BeginMenu("Windows"))
 		{
-			if (ImGui::MenuItem("Reset Layout"))
-			{
-				ImGuiID DockspaceId = ImGui::GetID("Dockspace");
-				ImGui::DockBuilderRemoveNode(DockspaceId);
-			}
+			// TODO: Add this to the Editor Preferences
+			//if (ImGui::MenuItem("Reset Layout"))
+			//{
+			//	ImGuiID DockspaceId = ImGui::GetID("Dockspace");
+			//	ImGui::DockBuilderRemoveNode(DockspaceId);
+			//}
 
-			ImGui::Separator();
+			//ImGui::Separator();
 
-			ImGui::MenuItem("World Outliner", nullptr, true);
-			ImGui::MenuItem("Details", nullptr, true);
+			ImGui::MenuItem("Properties Panel", nullptr, true);
 			ImGui::MenuItem("Content Browser", nullptr, true);
-			ImGui::MenuItem("Place Actors", nullptr, false);
 
 			// Engine widgets require engine pointer
 			if (EditorEngine)
@@ -222,6 +223,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
 				else
 				{
 					ImGui::MenuItem("Viewport", nullptr, false, false);
+				}
+
+				if (FEditorSceneHierarchyWidget* SceneHierarchyWidget = EditorEngine->GetSceneHierarchyWidget().Get())
+				{
+					bool bLogVisible = SceneHierarchyWidget->IsVisible();
+					if (ImGui::MenuItem("Scene Hierarchy", nullptr, bLogVisible))
+					{
+						SceneHierarchyWidget->SetVisible(!bLogVisible);
+					}
+				}
+				else
+				{
+					ImGui::MenuItem("Scene Hierarchy", nullptr, false, false);
 				}
 			}
 
@@ -299,26 +313,6 @@ void FEditorDockspaceWidget::DrawConsole()
 
 void FEditorDockspaceWidget::DrawEngineWindows()
 {
-	if (GShowSceneHierarchy)
-	{
-		if (ImGui::Begin("Scene Hierarchy", &GShowSceneHierarchy))
-		{
-			ImGui::TextDisabled("Actors");
-
-			ImGui::Separator();
-
-			if (ImGui::TreeNode("PersistentLevel"))
-			{
-				ImGui::Selectable("Crate_01");
-				ImGui::Selectable("Light_01");
-				ImGui::Selectable("PlayerStart");
-				ImGui::TreePop();
-			}
-		}
-
-		ImGui::End();
-	}
-
 	if (GShowPropertiesPanel)
 	{
 		if (ImGui::Begin("Properties Panel", &GShowPropertiesPanel))
