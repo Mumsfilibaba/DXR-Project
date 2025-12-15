@@ -8,19 +8,9 @@
 #include "Application/WidgetPath.h"
 #include "Application/Widgets/WindowWidget.h"
 
-/** 
- * @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays).
- */
+/** @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays). */
 DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplication);
 
-/**
- * @class FApplication
- * 
- * @brief Central application class that handles event routing, window management, input processing, and more.
- * FApplication extends FGenericApplicationMessageHandler to receive and process various input and windowing events.
- * It also manages a platform-specific application (FGenericApplication) and interacts with a set of FWindowWidget objects. 
- * The class is intended to be a singleton-like interface that can be accessed throughout the engine via Get().
- */
 class APPLICATION_API FApplication : public FGenericApplicationMessageHandler , public TSharedFromThis<FApplication>
 {
 public:
@@ -109,8 +99,6 @@ public:
     virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual bool OnMonitorConfigurationChange() override final;
-
-public:
 
     /**
      * @brief Adds a new window to the application and creates its underlying platform window. 
@@ -354,20 +342,20 @@ public:
     }
 
 private:
-    TSet<EKeyboardKeyName::Type> PressedKeys;
-    TSet<EMouseButtonName::Type> PressedMouseButtons;
-    TArray<FMonitorInfo>         MonitorInfos;
+    TSet<EKeyboardKeyName::Type>      PressedKeys;
+    TSet<EMouseButtonName::Type>      PressedMouseButtons;
+    TArray<FMonitorInfo>              MonitorInfos;
 
-    bool bIsMonitorInfoValid;
-    bool bIsTrackingCursor;
-
-    FWidgetPath FocusPath;
-    FWidgetPath TrackedWidgets;
-
-    TArray<TSharedPtr<FWindowWidget>>       Windows;
+    FWidgetPath                       FocusPath;
+    FWidgetPath                       TrackedWidgets;
+    
+    TArray<TSharedPtr<FWindowWidget>> Windows;
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
     FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
+    
+    bool                              bIsMonitorInfoValid;
+    bool                              bIsTrackingCursor;
 
-    static TSharedPtr<FGenericApplication>   GPlatformApplication;
-    static TSharedPtr<FApplication> GApplication;
+    static TSharedPtr<FGenericApplication> GPlatformApplication;
+    static TSharedPtr<FApplication>        GApplication;
 };

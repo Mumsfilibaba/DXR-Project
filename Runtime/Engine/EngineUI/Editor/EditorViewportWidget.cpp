@@ -41,16 +41,20 @@ void FEditorViewportWidget::Draw()
 
     if (ImGui::Begin("Viewport", &bVisible, ViewportFlags))
     {
-        // Cache the new size of the viewport
-        const ImVec2 Size = ImGui::GetContentRegionAvail();
-        CachedViewportSize = FIntVector2(int32(Size.x), int32(Size.y));
+        // Update the relative viewport position
+		const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
+        ViewportWidget->SetPosition(FIntVector2(int32(ContentPos.x), int32(ContentPos.y)));
+
+        // Update the viewport image that we will render to
+		const ImVec2 ContentSize = ImGui::GetContentRegionAvail();
+		CachedViewportSize = FIntVector2(int32(ContentSize.x), int32(ContentSize.y));
+        ViewportWidget->SetSize(CachedViewportSize);
 
         // Draw the viewport texture
-        ImGui::Image(&ViewportImage, Size);
+        ImGui::Image(&ViewportImage, ContentSize);
     }
 
-    ImGui::End(); // Viewport Window
-
+    ImGui::End();
     ImGui::PopStyleVar();
 }
 

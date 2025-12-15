@@ -350,12 +350,12 @@ void FApplication::Tick(float Delta)
     // Tick all the windows, which in turn ticks their children
     for (const TSharedPtr<FWindowWidget>& CurrentWindow : Windows)
     {
-        FRectangle NewContentRectangle;
-        NewContentRectangle.Position = CurrentWindow->GetPosition();
-        NewContentRectangle.Width    = CurrentWindow->GetSize().X;
-        NewContentRectangle.Height   = CurrentWindow->GetSize().Y;
+        FRectangle WindowRectangle;
+        WindowRectangle.Position = CurrentWindow->GetPosition();
+        WindowRectangle.Width    = CurrentWindow->GetSize().X;
+        WindowRectangle.Height   = CurrentWindow->GetSize().Y;
 
-        CurrentWindow->Tick(NewContentRectangle);
+        CurrentWindow->Tick(WindowRectangle);
     }
 }
 

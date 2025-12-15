@@ -6,10 +6,6 @@
 
 class FViewportWidget;
 
-/**
- * @brief Interface for handling viewport-related events and interactions.
- */
-
 struct IViewport
 {
     /**

@@ -11,11 +11,10 @@ public:
     };
 
 public:
-
     FViewportWidget();
     virtual ~FViewportWidget();
 
-public:
+    void Initialize(const FInitializer& Initializer);
 
     // FWidget Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
@@ -48,17 +47,51 @@ public:
 
     virtual FEventResponse OnFocusGained() override final;
 
-public:
-    void Initialize(const FInitializer& Initializer);
-
     void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface)
     {
         ViewportInterface = InViewportInterface;
     }
 
-    TSharedPtr<IViewport>       GetViewportInterface()       { return ViewportInterface; }
-    TSharedPtr<const IViewport> GetViewportInterface() const { return ViewportInterface; }
+    TSharedPtr<IViewport> GetViewportInterface()
+    {
+        return ViewportInterface;
+    }
+
+    TSharedPtr<const IViewport> GetViewportInterface() const
+    {
+        return ViewportInterface;
+    }
+
+     /**
+     * @brief Sets the relative viewport size. This size will be clamped to the parent widget's size during Tick.
+     * 
+     * @param InSize The new size.
+     */
+    void SetSize(const FIntVector2& InSize) { Size = InSize; }
+    
+    /**
+     * @brief Sets the relative viewport position. This size will be clamped to the parent widget's size during Tick.
+     * 
+     * @param InPosition The new position.
+     */
+    void SetPosition(const FIntVector2& InPosition) { Position = InPosition; }
+
+    /**
+     * @brief Gets the current viewport size.
+     * 
+     * @return The size of the viewport.
+     */
+    FIntVector2 GetSize() const { return Size; }
+    
+    /**
+     * @brief Gets the current viewport position.
+     * 
+     * @return The position of the viewport.
+     */
+    FIntVector2 GetPosition() const { return Position; }
 
 private:
     TSharedPtr<IViewport> ViewportInterface;
+    FIntVector2           Position;
+    FIntVector2           Size;
 };
