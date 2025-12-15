@@ -69,6 +69,229 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
 	FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
 
+	// Scene data
+	FCamera* Camera = World->GetCamera();
+	const TArray<FActor*>&      Actors      = World->GetActors();
+	const TArray<FLight*>&      Lights      = World->GetLights();
+	const TArray<FLightProbe*>& LightProbes = World->GetLightProbes();
+
+	const bool bHasActors   = !Actors.IsEmpty();
+	const bool bHasLights   = !Lights.IsEmpty();
+	const bool bHasProbes   = !LightProbes.IsEmpty();
+	const bool bHasCamera   = Camera != nullptr;
+	const bool bHasLighting = bHasLights || bHasProbes;
+
+	const auto DrawLeafRow = [&](const char* Label, const char* Type, const bool bSelected, void* Id, auto&& OnClick)
+	{
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		ImGui::PushID(Id);
+
+		ImGuiTreeNodeFlags Flags =
+			ImGuiTreeNodeFlags_Leaf |
+			ImGuiTreeNodeFlags_NoTreePushOnOpen |
+			ImGuiTreeNodeFlags_SpanFullWidth;
+
+		if (bSelected)
+		{
+			Flags |= ImGuiTreeNodeFlags_Selected;
+		}
+
+		ImGui::TreeNodeEx(Label, Flags);
+
+		if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+		{
+			OnClick();
+		}
+
+		ImGui::TableSetColumnIndex(1);
+		ImGui::TextUnformatted(Type);
+
+		ImGui::PopID();
+	};
+
+	const auto DrawFolderRowBegin = [&](const char* Label, const char* Type, void* Id, bool bDefaultOpen = true) -> bool
+	{
+		ImGui::TableNextRow();
+		ImGui::TableSetColumnIndex(0);
+
+		ImGui::PushID(Id);
+
+		ImGuiTreeNodeFlags Flags =
+			ImGuiTreeNodeFlags_SpanFullWidth |
+			ImGuiTreeNodeFlags_OpenOnArrow |
+			ImGuiTreeNodeFlags_OpenOnDoubleClick;
+
+		if (bDefaultOpen)
+		{
+			Flags |= ImGuiTreeNodeFlags_DefaultOpen;
+		}
+
+		const bool bOpen = ImGui::TreeNodeEx(Label, Flags);
+
+		ImGui::TableSetColumnIndex(1);
+		ImGui::TextUnformatted(Type);
+
+		return bOpen;
+	};
+
+	const auto DrawFolderRowEnd = [&](bool bWasOpen)
+	{
+		if (bWasOpen)
+		{
+			ImGui::TreePop();
+		}
+
+		ImGui::PopID();
+	};
+
+	const ImGuiTableFlags TableFlags =
+		ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_RowBg |
+		ImGuiTableFlags_BordersInnerV |
+		ImGuiTableFlags_BordersOuterH |
+		ImGuiTableFlags_ScrollY |
+		ImGuiTableFlags_SizingStretchProp;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(10.0f, 6.0f));
+
+	const ImVec2 TableSize = ImVec2(0.0f, ImGui::GetContentRegionAvail().y);
+	if (!ImGui::BeginTable("##SceneOutliner", 2, TableFlags, TableSize))
+	{
+		ImGui::PopStyleVar();
+		return;
+	}
+
+	ImGui::TableSetupScrollFreeze(0, 1);
+	ImGui::TableSetupColumn("Item Label", ImGuiTableColumnFlags_WidthStretch);
+	ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 120.0f);
+	ImGui::TableHeadersRow();
+
+	// Camera (only if present)
+	if (bHasCamera)
+	{
+		DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, (void*)Camera, [&]()
+		{
+			EditorEngine->SetSelectedCamera(Camera); 
+		});
+	}
+
+	// Actors folder
+	if (bHasActors)
+	{
+		const bool bActorsOpen = DrawFolderRowBegin("Actors", "Folder", (void*)"ActorsFolder", true);
+		if (bActorsOpen)
+		{
+			for (FActor* Actor : Actors)
+			{
+				if (!Actor)
+				{
+					continue;
+				}
+
+				const FString& Name = Actor->GetName();
+				const char* Label = Name.IsEmpty() ? "Actor" : *Name;
+				DrawLeafRow(Label, "Actor", Actor == SelectedActor, (void*)Actor, [&]()
+				{
+					EditorEngine->SetSelectedActor(Actor);
+				});
+			}
+		}
+
+		DrawFolderRowEnd(bActorsOpen);
+	}
+
+	// Lighting folder
+	if (bHasLighting)
+	{
+		const bool bLightingOpen = DrawFolderRowBegin("Lighting", "Folder", (void*)"LightingFolder", true);
+		if (bLightingOpen)
+		{
+			// Lights
+			if (bHasLights)
+			{
+				int32 LightIndex = 0;
+				for (FLight* Light : Lights)
+				{
+					if (!Light)
+					{
+						continue;
+					}
+
+					const char* TypeLabel = "Light";
+					if (Cast<FPointLight>(Light))
+					{
+						TypeLabel = "PointLight";
+					}
+					else if (Cast<FDirectionalLight>(Light))
+					{
+						TypeLabel = "DirectionalLight";
+					}
+
+					constexpr uint32 LabelLength = 256;
+					char Label[LabelLength];
+					FCString::Snprintf(Label, LabelLength, "%s %d", TypeLabel, LightIndex++);
+
+					DrawLeafRow(Label, TypeLabel, (Light == SelectedLight), (void*)Light, [&]()
+					{
+						EditorEngine->SetSelectedLight(Light);
+					});
+				}
+			}
+
+			// Light Probes
+			if (bHasProbes)
+			{
+				int32 ProbeIndex = 0;
+				for (FLightProbe* Probe : LightProbes)
+				{
+					if (!Probe)
+					{
+						continue;
+					}
+
+					constexpr uint32 LabelLength = 256;
+					char Label[LabelLength];
+					FCString::Snprintf(Label, LabelLength, "LightProbe %d", ProbeIndex++);
+
+					DrawLeafRow(Label, "LightProbe", (Probe == SelectedLightProbe), (void*)Probe, [&]()
+					{
+						EditorEngine->SetSelectedLightProbe(Probe);
+					});
+				}
+			}
+		}
+
+		DrawFolderRowEnd(bLightingOpen);
+	}
+
+	ImGui::EndTable();
+	ImGui::PopStyleVar();
+}
+
+#if 0
+void FEditorSceneHierarchyWidget::DrawSceneInfo()
+{
+	if (!EditorEngine)
+	{
+		ImGui::TextDisabled("No EditorEngine");
+		return;
+	}
+
+	FWorld* World = EditorEngine->GetWorld();
+	if (!World)
+	{
+		ImGui::TextDisabled("No World");
+		return;
+	}
+
+	// Pull current selection
+	FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
+	FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
+	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
+	FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
+
 	// Camera
 	if (FCamera* Camera = World->GetCamera())
 	{
@@ -192,3 +415,4 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		}
     }
 }
+#endif
