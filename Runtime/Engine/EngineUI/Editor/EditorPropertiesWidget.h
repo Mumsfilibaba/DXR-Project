@@ -10,6 +10,7 @@ public:
     ~FEditorPropertiesWidget();
 
     void Draw();
+    void DrawWindowContents();
 
     void SetVisible(bool bInVisible)
     {

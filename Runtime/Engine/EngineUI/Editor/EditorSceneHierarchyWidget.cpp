@@ -149,8 +149,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	// Search Field (Actor Search)
 	// -------------------------------------------------------------------------------------------
 
-	ImGuiStyle& Style = ImGui::GetStyle();
-
 	ImGui::SetNextItemWidth(-1.0f);
 
 	const float BorderRounding = 16.0f;

@@ -37,12 +37,16 @@ void FEditorPropertiesWidget::Draw()
 		return;
 	}
 
-	if (!ImGui::Begin("Properties", &bVisible))
+	if (ImGui::Begin("Properties", &bVisible))
 	{
-		ImGui::End();
-		return;
+		DrawWindowContents();
 	}
+	
+	ImGui::End();
+}
 
+void FEditorPropertiesWidget::DrawWindowContents()
+{
 	FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
 	FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
 	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
@@ -51,7 +55,6 @@ void FEditorPropertiesWidget::Draw()
 	if (!SelectedActor && !SelectedLight && !SelectedCamera && !SelectedLightProbe)
 	{
 		ImGui::TextDisabled("No selection");
-		ImGui::End();
 		return;
 	}
 
@@ -69,6 +72,28 @@ void FEditorPropertiesWidget::Draw()
 		ImGui::PopStyleVar(2);
 	};
 
+	const auto DrawCollapsingHeader = [](const char* Label, ImGuiTreeNodeFlags Flags)
+	{
+		ImGuiStyle& Style = ImGui::GetStyle();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 1.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(Style.FramePadding.x, 8.0f));
+
+		const bool bResult = ImGui::CollapsingHeader(Label, Flags);
+
+		ImGui::PopStyleVar(3);
+
+		if (bResult)
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 0.0f));
+			ImGui::Dummy(ImVec2(0.0f, 4.0f));
+			ImGui::PopStyleVar();
+		}
+
+		return bResult;
+	};
+
 	// Actor properties
 	if (SelectedActor)
 	{
@@ -77,7 +102,7 @@ void FEditorPropertiesWidget::Draw()
 		const FString& ActorName = SelectedActor->GetName();
 		DrawLabelWithSeperator(ActorName.IsEmpty() ? "Actor" : *ActorName);
 
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			// Translation
 			FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
@@ -132,7 +157,7 @@ void FEditorPropertiesWidget::Draw()
 		// MeshComponent (moved here from hierarchy) :contentReference[oaicite:5]{index=5}
 		if (FStaticMeshComponent* MeshComponent = SelectedActor->GetComponentOfType<FStaticMeshComponent>())
 		{
-			if (ImGui::CollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_DefaultOpen))
+			if (DrawCollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				const float ColumnWidth = 200.0f;
 
@@ -185,8 +210,6 @@ void FEditorPropertiesWidget::Draw()
 		}
 
 		ImGui::PopID();
-		ImGui::End();
-		return;
 	}
 	// Light Properties
 	else if (SelectedLight) 
@@ -201,212 +224,218 @@ void FEditorPropertiesWidget::Draw()
 			DrawLabelWithSeperator("PointLight");
 
 			// PointLight
-			ImGui::SeparatorText("Settings");
-
-			ImGui::Columns(2, nullptr, false);
-			ImGui::SetColumnWidth(0, ColumnWidth);
-
-			ImGui::Text("Color");
-			ImGui::NextColumn();
-
-			FVector3 Color = Point->GetColor();
-			if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
+			if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Point->SetColor(Color);
+				ImGui::Columns(2, nullptr, false);
+				ImGui::SetColumnWidth(0, ColumnWidth);
+
+				ImGui::Text("Color");
+				ImGui::NextColumn();
+
+				FVector3 Color = Point->GetColor();
+				if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
+				{
+					Point->SetColor(Color);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Intensity");
+				ImGui::NextColumn();
+
+				float Intensity = Point->GetIntensity();
+				if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+				{
+					Point->SetIntensity(Intensity);
+				}
+
+				ImGui::Columns(1);
 			}
 
-			ImGui::NextColumn();
-			ImGui::Text("Intensity");
-			ImGui::NextColumn();
-
-			float Intensity = Point->GetIntensity();
-			if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+			if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Point->SetIntensity(Intensity);
+				FVector3 Translation = Point->GetPosition();
+				ImGuiExtensions::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
+				Point->SetPosition(Translation);
 			}
 
-			ImGui::Columns(1);
-
-			ImGui::SeparatorText("Transform");
-
-			FVector3 Translation = Point->GetPosition();
-			ImGuiExtensions::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
-			Point->SetPosition(Translation);
-
-			ImGui::SeparatorText("Shadows");
-
-			ImGui::Columns(2, nullptr, false);
-			ImGui::SetColumnWidth(0, ColumnWidth);
-
-			ImGui::Text("Shadow-bias");
-			ImGui::NextColumn();
-			
-			float ShadowBias = Point->GetShadowBias();
-			if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+			if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Point->SetShadowBias(ShadowBias);
-			}
+				ImGui::Columns(2, nullptr, false);
+				ImGui::SetColumnWidth(0, ColumnWidth);
 
-			ImGui::NextColumn();
-			ImGui::Text("Shadow near-plane");
-			ImGui::NextColumn();
-			
-			float ShadowNearPlane = Point->GetShadowNearPlane();
-			if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
-			{
-				Point->SetShadowNearPlane(ShadowNearPlane);
-			}
+				ImGui::Text("Shadow-bias");
+				ImGui::NextColumn();
 
-			ImGui::NextColumn();
-			ImGui::Text("Shadow far-plane");
-			ImGui::NextColumn();
-			
-			float ShadowFarPlane = Point->GetShadowFarPlane();
-			if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
-			{
-				Point->SetShadowFarPlane(ShadowFarPlane);
-			}
+				float ShadowBias = Point->GetShadowBias();
+				if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+				{
+					Point->SetShadowBias(ShadowBias);
+				}
 
-			ImGui::Columns(1);
+				ImGui::NextColumn();
+				ImGui::Text("Shadow near-plane");
+				ImGui::NextColumn();
+
+				float ShadowNearPlane = Point->GetShadowNearPlane();
+				if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
+				{
+					Point->SetShadowNearPlane(ShadowNearPlane);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Shadow far-plane");
+				ImGui::NextColumn();
+
+				float ShadowFarPlane = Point->GetShadowFarPlane();
+				if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
+				{
+					Point->SetShadowFarPlane(ShadowFarPlane);
+				}
+
+				ImGui::Columns(1);
+			}
 		}
 		else if (FDirectionalLight* Dir = Cast<FDirectionalLight>(SelectedLight))
 		{
 			DrawLabelWithSeperator("DirectionalLight");
 
 			// Directional light
-			ImGui::SeparatorText("Settings");
-
-			ImGui::Columns(2, nullptr, false);
-			ImGui::SetColumnWidth(0, ColumnWidth);
-
-			ImGui::Text("Color");
-			ImGui::NextColumn();
-
-			FVector3 Color = Dir->GetColor();
-			if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
+			if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Dir->SetColor(Color);
+				ImGui::Columns(2, nullptr, false);
+				ImGui::SetColumnWidth(0, ColumnWidth);
+
+				ImGui::Text("Color");
+				ImGui::NextColumn();
+
+				FVector3 Color = Dir->GetColor();
+				if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
+				{
+					Dir->SetColor(Color);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Intensity");
+				ImGui::NextColumn();
+
+				float Intensity = Dir->GetIntensity();
+				if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+				{
+					Dir->SetIntensity(Intensity);
+				}
+
+				ImGui::Columns(1);
 			}
 
-			ImGui::NextColumn();
-			ImGui::Text("Intensity");
-			ImGui::NextColumn();
-
-			float Intensity = Dir->GetIntensity();
-			if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
+			if (DrawCollapsingHeader("Direction", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				Dir->SetIntensity(Intensity);
+				ImGui::Columns(2, nullptr, false);
+				ImGui::SetColumnWidth(0, ColumnWidth);
+
+				bool bSetRotation = false;
+				FVector3 Rotation = Dir->GetRotation();
+
+				ImGui::Text("Rotation theta (degrees)");
+				ImGui::NextColumn();
+
+				float RotationTheta = Math::RadiansToDegrees(Rotation.X);
+				if (ImGui::SliderFloat("##RotationTheta", &RotationTheta, -90.0f, 90.0f, "%.2f"))
+				{
+					bSetRotation = true;
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Rotation phi (degrees)");
+				ImGui::NextColumn();
+
+				float RotationPhi = Math::RadiansToDegrees(Rotation.Y);
+				if (ImGui::SliderFloat("##RotationPhi", &RotationPhi, 0.0f, 360.0f, "%.2f"))
+				{
+					bSetRotation = true;
+				}
+
+				if (bSetRotation)
+				{
+					Rotation.X = Math::DegreesToRadians(RotationTheta);
+					Rotation.Y = Math::DegreesToRadians(RotationPhi);
+					Dir->SetRotation(Rotation);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Direction");
+				ImGui::NextColumn();
+				FVector3 Direction = Dir->GetDirectionVector();
+				ImGui::InputFloat3("##Direction", Direction.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+				ImGui::Columns(1);
 			}
 
-			ImGui::Columns(1);
-
-			ImGui::SeparatorText("Direction");
-
-			ImGui::Columns(2, nullptr, false);
-			ImGui::SetColumnWidth(0, ColumnWidth);
-
-			bool bSetRotation = false;
-			FVector3 Rotation = Dir->GetRotation();
-
-			ImGui::Text("Rotation theta (degrees)");
-			ImGui::NextColumn();
-
-			float RotationTheta = Math::RadiansToDegrees(Rotation.X);
-			if (ImGui::SliderFloat("##RotationTheta", &RotationTheta, -90.0f, 90.0f, "%.2f"))
+			if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				bSetRotation = true;
+				ImGui::Columns(2, nullptr, false);
+				ImGui::SetColumnWidth(0, ColumnWidth);
+
+				ImGui::Text("Shadow-bias");
+				ImGui::NextColumn();
+
+				float ShadowBias = Dir->GetShadowBias();
+				if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+				{
+					Dir->SetShadowBias(ShadowBias);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Cascade Split Lambda");
+				ImGui::NextColumn();
+
+				float Lambda = Dir->GetCascadeSplitLambda();
+				if (ImGui::SliderFloat("##CascadeSplitLambda", &Lambda, 0.0f, 1.0f, "%.2f"))
+				{
+					Dir->SetCascadeSplitLambda(Lambda);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Cascade Position Offset");
+				ImGui::NextColumn();
+
+				float Offset = Dir->GetShadowPositionOffset();
+				if (ImGui::SliderFloat("##CascadePositionOffset", &Offset, 0.0f, 1000.0f, "%.1f"))
+				{
+					Dir->SetShadowPositionOffset(Offset);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Shadow near-plane");
+				ImGui::NextColumn();
+
+				float ShadowNearPlane = Dir->GetShadowNearPlane();
+				if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.0f, 1000.0f, "%.1f"))
+				{
+					Dir->SetShadowNearPlane(ShadowNearPlane);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Shadow far-plane");
+				ImGui::NextColumn();
+
+				float ShadowFarPlane = Dir->GetShadowFarPlane();
+				if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 0.0f, 1000.0f, "%.1f"))
+				{
+					Dir->SetShadowFarPlane(ShadowFarPlane);
+				}
+
+				ImGui::NextColumn();
+				ImGui::Text("Light area");
+				ImGui::NextColumn();
+
+				float LightArea = Dir->GetLightArea();
+				if (ImGui::SliderFloat("##LightArea", &LightArea, 0.0f, 1.0f, "%.2f"))
+				{
+					Dir->SetLightArea(LightArea);
+				}
+
+				ImGui::Columns(1);
 			}
-
-			ImGui::NextColumn();
-			ImGui::Text("Rotation phi (degrees)");
-			ImGui::NextColumn();
-
-			float RotationPhi = Math::RadiansToDegrees(Rotation.Y);
-			if (ImGui::SliderFloat("##RotationPhi", &RotationPhi, 0.0f, 360.0f, "%.2f"))
-			{
-				bSetRotation = true;
-			}
-
-			if (bSetRotation)
-			{
-				Rotation.X = Math::DegreesToRadians(RotationTheta);
-				Rotation.Y = Math::DegreesToRadians(RotationPhi);
-				Dir->SetRotation(Rotation);
-			}
-
-			ImGui::NextColumn();
-			ImGui::Text("Direction");
-			ImGui::NextColumn();
-			FVector3 Direction = Dir->GetDirectionVector();
-			ImGui::InputFloat3("##Direction", Direction.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
-
-			ImGui::Columns(1);
-
-			ImGui::SeparatorText("Shadows");
-
-			ImGui::Columns(2, nullptr, false);
-			ImGui::SetColumnWidth(0, ColumnWidth);
-
-			ImGui::Text("Shadow-bias");
-			ImGui::NextColumn();
-
-			float ShadowBias = Dir->GetShadowBias();
-			if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
-			{
-				Dir->SetShadowBias(ShadowBias);
-			}
-
-			ImGui::NextColumn();
-			ImGui::Text("Cascade Split Lambda");
-			ImGui::NextColumn();
-			
-			float Lambda = Dir->GetCascadeSplitLambda();
-			if (ImGui::SliderFloat("##CascadeSplitLambda", &Lambda, 0.0f, 1.0f, "%.2f"))
-			{
-				Dir->SetCascadeSplitLambda(Lambda);
-			}
-
-			ImGui::NextColumn();
-			ImGui::Text("Cascade Position Offset");
-			ImGui::NextColumn();
-
-			float Offset = Dir->GetShadowPositionOffset();
-			if (ImGui::SliderFloat("##CascadePositionOffset", &Offset, 0.0f, 1000.0f, "%.1f"))
-			{
-				Dir->SetShadowPositionOffset(Offset);
-			}
-
-			ImGui::NextColumn();
-			ImGui::Text("Shadow near-plane");
-			ImGui::NextColumn();
-
-			float ShadowNearPlane = Dir->GetShadowNearPlane();
-			if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.0f, 1000.0f, "%.1f"))
-			{
-				Dir->SetShadowNearPlane(ShadowNearPlane);
-			}
-
-			ImGui::NextColumn();
-			ImGui::Text("Shadow far-plane");
-			ImGui::NextColumn();
-
-			float ShadowFarPlane = Dir->GetShadowFarPlane();
-			if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 0.0f, 1000.0f, "%.1f"))
-			{
-				Dir->SetShadowFarPlane(ShadowFarPlane);
-			}
-
-			ImGui::NextColumn();
-			ImGui::Text("Light area");
-			ImGui::NextColumn();
-			
-			float LightArea = Dir->GetLightArea();
-			if (ImGui::SliderFloat("##LightArea", &LightArea, 0.0f, 1.0f, "%.2f"))
-			{
-				Dir->SetLightArea(LightArea);
-			}
-
-			ImGui::Columns(1);
 		}
 		else
 		{
@@ -414,8 +443,6 @@ void FEditorPropertiesWidget::Draw()
 		}
 
 		ImGui::PopID();
-		ImGui::End();
-		return;
 	}
 	// Camera Properties
 	else if (SelectedCamera)
@@ -424,7 +451,7 @@ void FEditorPropertiesWidget::Draw()
 
 		DrawLabelWithSeperator("Camera");
 
-		if (ImGui::CollapsingHeader("Projection", ImGuiTreeNodeFlags_DefaultOpen))
+		if (DrawCollapsingHeader("Projection", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::Text("Viewport size: %.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
 
@@ -435,7 +462,7 @@ void FEditorPropertiesWidget::Draw()
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			FVector3 Position = SelectedCamera->GetPosition();
 			ImGuiExtensions::DrawFloat3Control("Position", Position);
@@ -449,8 +476,6 @@ void FEditorPropertiesWidget::Draw()
 		}
 
 		ImGui::PopID();
-		ImGui::End();
-		return;
 	}
 	// Light-Probe Properties
 	else if (SelectedLightProbe)
@@ -459,14 +484,14 @@ void FEditorPropertiesWidget::Draw()
 
 		DrawLabelWithSeperator("Light Probe");
 
-		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			FVector3 Position = SelectedLightProbe->GetPosition();
 			ImGuiExtensions::DrawFloat3Control("Position", Position);
 			SelectedLightProbe->SetPosition(Position);
 		}
 
-		if (ImGui::CollapsingHeader("Box Projection", ImGuiTreeNodeFlags_DefaultOpen))
+		if (DrawCollapsingHeader("Box Projection", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			FVector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
 			ImGuiExtensions::DrawFloat3Control("Box Extent", BoxExtent);
@@ -484,9 +509,5 @@ void FEditorPropertiesWidget::Draw()
 		}
 
 		ImGui::PopID();
-		ImGui::End();
-		return;
 	}
-
-	ImGui::End();
 }
