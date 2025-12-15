@@ -55,18 +55,27 @@ void FEditorPropertiesWidget::Draw()
 		return;
 	}
 
+	const auto DrawLabelWithSeperator = [](const char* InLabel)
+	{
+		static constexpr uint32 LabelLength = 256;
+		char Label[LabelLength];
+		FCString::Snprintf(Label, LabelLength, "%s", InLabel);
+		
+		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, ImVec2(0.1f, 0.5f));
+
+		ImGui::SeparatorText(Label);
+
+		ImGui::PopStyleVar(2);
+	};
+
 	// Actor properties
 	if (SelectedActor)
 	{
 		ImGui::PushID(SelectedActor);
 
 		const FString& ActorName = SelectedActor->GetName();
-
-		static constexpr uint32 LabelLength = 256;
-		char Label[LabelLength];
-		FCString::Snprintf(Label, LabelLength, "%s", ActorName.IsEmpty() ? "Actor" : *ActorName);
-
-		ImGui::SeparatorText(Label);
+		DrawLabelWithSeperator(ActorName.IsEmpty() ? "Actor" : *ActorName);
 
 		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -189,7 +198,9 @@ void FEditorPropertiesWidget::Draw()
 		// Point light
 		if (FPointLight* Point = Cast<FPointLight>(SelectedLight))
 		{
-			ImGui::TextUnformatted("PointLight");
+			DrawLabelWithSeperator("PointLight");
+
+			// PointLight
 			ImGui::SeparatorText("Settings");
 
 			ImGui::Columns(2, nullptr, false);
@@ -260,8 +271,9 @@ void FEditorPropertiesWidget::Draw()
 		}
 		else if (FDirectionalLight* Dir = Cast<FDirectionalLight>(SelectedLight))
 		{
+			DrawLabelWithSeperator("DirectionalLight");
+
 			// Directional light
-			ImGui::TextUnformatted("DirectionalLight");
 			ImGui::SeparatorText("Settings");
 
 			ImGui::Columns(2, nullptr, false);
@@ -410,7 +422,7 @@ void FEditorPropertiesWidget::Draw()
 	{
 		ImGui::PushID(SelectedCamera);
 
-		ImGui::SeparatorText("Camera");
+		DrawLabelWithSeperator("Camera");
 
 		if (ImGui::CollapsingHeader("Projection", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -445,7 +457,7 @@ void FEditorPropertiesWidget::Draw()
 	{
 		ImGui::PushID(SelectedLightProbe);
 
-		ImGui::SeparatorText("Light Probe");
+		DrawLabelWithSeperator("Light Probe");
 
 		if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{

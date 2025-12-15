@@ -202,7 +202,7 @@ void FEditorLogOutputWidget::DrawLogList()
             continue;
         }
 
-        if (bHasSearch && FCString::Strstr(*Message.Message, Search) == nullptr)
+        if (bHasSearch && !FCString::Stristr(*Message.Message, Search))
         {
             continue;
         }
@@ -227,6 +227,7 @@ void FEditorLogOutputWidget::DrawLogList()
         }
 
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PaddingY);
+
         ImGui::Indent(PaddingX);
         ImGui::TextColored(TextColor, "%s", *Message.Message);
         ImGui::Unindent(PaddingX);

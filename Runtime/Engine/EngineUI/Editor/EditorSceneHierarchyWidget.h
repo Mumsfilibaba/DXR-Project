@@ -23,7 +23,8 @@ public:
     }
 
 private:
-    FEditorEngine*  EditorEngine;
-    FDelegateHandle ImGuiDelegateHandle;
-    bool            bVisible;
+    FEditorEngine*          EditorEngine;
+    FDelegateHandle         ImGuiDelegateHandle;
+	TStaticArray<CHAR, 256> SearchFilterBuf;
+    bool                    bVisible;
 };

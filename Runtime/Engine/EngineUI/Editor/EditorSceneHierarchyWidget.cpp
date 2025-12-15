@@ -14,6 +14,8 @@ FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditor
         ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorSceneHierarchyWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
+
+	SearchFilterBuf.Fill(0);
 }
 
 FEditorSceneHierarchyWidget::~FEditorSceneHierarchyWidget()
@@ -71,6 +73,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	// Scene data
 	FCamera* Camera = World->GetCamera();
+
 	const TArray<FActor*>&      Actors      = World->GetActors();
 	const TArray<FLight*>&      Lights      = World->GetLights();
 	const TArray<FLightProbe*>& LightProbes = World->GetLightProbes();
@@ -78,10 +81,10 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	const bool bHasActors   = !Actors.IsEmpty();
 	const bool bHasLights   = !Lights.IsEmpty();
 	const bool bHasProbes   = !LightProbes.IsEmpty();
-	const bool bHasCamera   = Camera != nullptr;
+	const bool bHasCameras   = Camera != nullptr;
 	const bool bHasLighting = bHasLights || bHasProbes;
 
-	const auto DrawLeafRow = [&](const char* Label, const char* Type, const bool bSelected, void* Id, auto&& OnClick)
+	const auto DrawLeafRow = [](const char* Label, const char* Type, const bool bSelected, void* Id, auto&& OnClick)
 	{
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
@@ -111,18 +114,14 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		ImGui::PopID();
 	};
 
-	const auto DrawFolderRowBegin = [&](const char* Label, const char* Type, void* Id, bool bDefaultOpen = true) -> bool
+	const auto DrawFolderRowBegin = [](const char* Label, const char* Type, void* Id, bool bDefaultOpen = true) -> bool
 	{
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
 
 		ImGui::PushID(Id);
 
-		ImGuiTreeNodeFlags Flags =
-			ImGuiTreeNodeFlags_SpanFullWidth |
-			ImGuiTreeNodeFlags_OpenOnArrow |
-			ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
+		ImGuiTreeNodeFlags Flags = ImGuiTreeNodeFlags_SpanFullWidth;
 		if (bDefaultOpen)
 		{
 			Flags |= ImGuiTreeNodeFlags_DefaultOpen;
@@ -146,6 +145,40 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		ImGui::PopID();
 	};
 
+	// -------------------------------------------------------------------------------------------
+	// Search Field (Actor Search)
+	// -------------------------------------------------------------------------------------------
+
+	ImGuiStyle& Style = ImGui::GetStyle();
+
+	ImGui::SetNextItemWidth(-1.0f);
+
+	const float BorderRounding = 16.0f;
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+	ImGui::InputTextWithHint("##SceneHierarchySearch", "Search Actors", SearchFilterBuf.Data(), SearchFilterBuf.Size());
+	ImGui::PopStyleVar();
+
+	const ImVec2 ItemMin = ImGui::GetItemRectMin();
+	const ImVec2 ItemMax = ImGui::GetItemRectMax();
+
+	// Draw border if active
+	const bool bIsInputFieldActive = ImGui::IsItemActive();
+	if (bIsInputFieldActive)
+	{
+		const float BorderThickness = 2.0f;
+		const ImU32 BorderColor = IM_COL32(100, 136, 234, 255);
+
+		ImDrawList* DrawList = ImGui::GetWindowDrawList();
+		DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
+	}
+
+	// Separator between search and table
+	ImGui::Separator();
+
+	// -------------------------------------------------------------------------------------------
+	// Actor Table
+	// -------------------------------------------------------------------------------------------
+
 	const ImGuiTableFlags TableFlags =
 		ImGuiTableFlags_Resizable |
 		ImGuiTableFlags_RowBg |
@@ -168,13 +201,35 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 120.0f);
 	ImGui::TableHeadersRow();
 
-	// Camera (only if present)
-	if (bHasCamera)
+	// Cameras
+	if (bHasCameras)
 	{
-		DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, (void*)Camera, [&]()
+		const bool bCamerasOpen = DrawFolderRowBegin("Cameras", "Folder", (void*)"CamerasFolder", true);
+		if (bCamerasOpen)
 		{
-			EditorEngine->SetSelectedCamera(Camera); 
-		});
+			const CHAR* Name = "Main Camera";
+
+			bool bCameraFound = true;
+
+			const CHAR* Search = SearchFilterBuf.Data();
+			if (Search && Search[0] != '\0')
+			{
+				if (!FCString::Stristr(Name, Search))
+				{
+					bCameraFound = false;
+				}
+			}
+
+			if (bCameraFound)
+			{
+				DrawLeafRow(Name, "Camera", Camera == SelectedCamera, (void*)Camera, [&]()
+				{
+					EditorEngine->SetSelectedCamera(Camera);
+				});
+			}
+		}
+
+		DrawFolderRowEnd(bCamerasOpen);
 	}
 
 	// Actors folder
@@ -191,6 +246,16 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 				}
 
 				const FString& Name = Actor->GetName();
+				
+				const CHAR* Search = SearchFilterBuf.Data();
+				if (Search && Search[0] != '\0')
+				{
+					if (Name.IsEmpty() || !FCString::Stristr(*Name, Search))
+					{
+						continue;
+					}
+				}
+
 				const char* Label = Name.IsEmpty() ? "Actor" : *Name;
 				DrawLeafRow(Label, "Actor", Actor == SelectedActor, (void*)Actor, [&]()
 				{
@@ -233,6 +298,15 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 					char Label[LabelLength];
 					FCString::Snprintf(Label, LabelLength, "%s %d", TypeLabel, LightIndex++);
 
+					const CHAR* Search = SearchFilterBuf.Data();
+					if (Search && Search[0] != '\0')
+					{
+						if (!FCString::Stristr(Label, Search))
+						{
+							continue;
+						}
+					}
+
 					DrawLeafRow(Label, TypeLabel, (Light == SelectedLight), (void*)Light, [&]()
 					{
 						EditorEngine->SetSelectedLight(Light);
@@ -254,6 +328,15 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 					constexpr uint32 LabelLength = 256;
 					char Label[LabelLength];
 					FCString::Snprintf(Label, LabelLength, "LightProbe %d", ProbeIndex++);
+
+					const CHAR* Search = SearchFilterBuf.Data();
+					if (Search && Search[0] != '\0')
+					{
+						if (!FCString::Stristr(Label, Search))
+						{
+							continue;
+						}
+					}
 
 					DrawLeafRow(Label, "LightProbe", (Probe == SelectedLightProbe), (void*)Probe, [&]()
 					{
