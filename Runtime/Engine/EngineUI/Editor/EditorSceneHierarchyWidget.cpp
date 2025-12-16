@@ -81,7 +81,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	const bool bHasActors   = !Actors.IsEmpty();
 	const bool bHasLights   = !Lights.IsEmpty();
 	const bool bHasProbes   = !LightProbes.IsEmpty();
-	const bool bHasCameras   = Camera != nullptr;
+	const bool bHasCameras  = Camera != nullptr;
 	const bool bHasLighting = bHasLights || bHasProbes;
 
 	const auto DrawLeafRow = [](const char* Label, const char* Type, const bool bSelected, void* Id, auto&& OnClick)
