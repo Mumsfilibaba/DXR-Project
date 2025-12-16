@@ -62,9 +62,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 		ImGuiStorage* Storage = ImGui::GetStateStorage();
 
-		const ImGuiID OpenId = ImGui::GetID("Open");
-		bool bOpen = Storage->GetBool(OpenId, bDefaultOpen);
-
 		const float SelectableRowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
 
 		ImGui::TableNextRow();
@@ -74,6 +71,9 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 			ImGuiSelectableFlags_SpanAllColumns | 
 			ImGuiSelectableFlags_AllowItemOverlap;
 
+		const ImGuiID OpenId = ImGui::GetID("Open");
+
+		bool bOpen = Storage->GetBool(OpenId, bDefaultOpen);
 		if (ImGui::Selectable("##Row", false, SelectableFlags, ImVec2(0.0f, SelectableRowHeight)))
 		{
 			bOpen = !bOpen;
@@ -131,9 +131,22 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 			ImGuiSelectableFlags_SpanAllColumns |
 			ImGuiSelectableFlags_AllowItemOverlap;
 
+		if (bSelected)
+		{
+			const ImU32 SelectedColor = IM_COL32(0, 125, 255, 140);
+			ImGui::PushStyleColor(ImGuiCol_Header, SelectedColor);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, SelectedColor);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, SelectedColor);
+		}
+
 		if (ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, SelectableRowHeight)))
 		{
 			OnClick();
+		}
+
+		if (bSelected)
+		{
+			ImGui::PopStyleColor(3);
 		}
 
 		const ImVec2 RowMin       = ImGui::GetItemRectMin();
