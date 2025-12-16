@@ -11,7 +11,7 @@ FEditorLogOutputWidget::FEditorLogOutputWidget()
     , bFilterInfo(true)
     , bFilterWarning(true)
     , bFilterError(true)
-    , SearchFilterBuf()
+    , SearchFilterBuffer()
     , Messages()
 {
     if (FOutputDeviceLogger* Logger = FOutputDeviceLogger::Get())
@@ -24,7 +24,7 @@ FEditorLogOutputWidget::FEditorLogOutputWidget()
         ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorLogOutputWidget::Draw));
     }
 
-    SearchFilterBuf.Fill(0);
+    SearchFilterBuffer.Fill(0);
 }
 
 FEditorLogOutputWidget::~FEditorLogOutputWidget()
@@ -85,7 +85,7 @@ void FEditorLogOutputWidget::DrawFilterBar()
 	ImGui::SetNextItemWidth(InputFieldWidth);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
-	ImGui::InputTextWithHint("##LogSearch", "Search Log", SearchFilterBuf.Data(), SearchFilterBuf.Size());
+	ImGui::InputTextWithHint("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size());
     ImGui::PopStyleVar();
 
 	const ImVec2 ItemMin = ImGui::GetItemRectMin();
@@ -192,8 +192,8 @@ void FEditorLogOutputWidget::DrawLogList()
 	const float PaddingY = 4.0f;
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PaddingY);
 
-    const bool bHasSearch = (SearchFilterBuf[0] != 0);
-    const char* Search = SearchFilterBuf.Data();
+    const bool bHasSearch = (SearchFilterBuffer[0] != 0);
+    const char* Search = SearchFilterBuffer.Data();
     for (int i = 0; i < Local.Size(); ++i)
     {
         const FLogMessage& Message = Local[i];
@@ -247,7 +247,7 @@ void FEditorLogOutputWidget::Draw()
     if (!bVisible)
     {
         return;
-    } 
+    }
  
     ImGuiStyle& Style = ImGui::GetStyle();
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4.0f, 4.0f));

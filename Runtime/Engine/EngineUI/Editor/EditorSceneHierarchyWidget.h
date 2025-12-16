@@ -2,6 +2,7 @@
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 class FEditorEngine;
+class FActor;
 
 class FEditorSceneHierarchyWidget
 {
@@ -23,8 +24,14 @@ public:
     }
 
 private:
+    void DrawActorRow(FActor* Actor, const char* Type, const bool bSelected, float IndentPx);
+
     FEditorEngine*          EditorEngine;
+    FActor*                 RenamingActor;
     FDelegateHandle         ImGuiDelegateHandle;
-	TStaticArray<CHAR, 256> SearchFilterBuf;
+	TStaticArray<CHAR, 256> ActorSearchFilterBuffer;
+    TStaticArray<CHAR, 256> ActorRenameBuffer;
+    TStaticArray<CHAR, 256> ActorRenameBufferOriginal;
     bool                    bVisible;
+    bool                    bRequestRenameFocus;
 };

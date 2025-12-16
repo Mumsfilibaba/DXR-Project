@@ -49,11 +49,8 @@ private:
     bool                    bFilterWarning;
     bool                    bFilterError;
 
-    TStaticArray<CHAR, 128> SearchFilterBuf;
-
+    TStaticArray<CHAR, 256> SearchFilterBuffer;
     TArray<FLogMessage>     Messages;
     FCriticalSection        MessagesCS;
-
-    // ImGui hook
     FDelegateHandle         ImGuiDelegateHandle;
 };
