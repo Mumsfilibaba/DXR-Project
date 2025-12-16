@@ -67,13 +67,14 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	// Pull current selection
 	FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
+	FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
 	FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
 	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
-	FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
 
-	// Scene data
+	// Pull camera (Currently only a single camera)
 	FCamera* Camera = World->GetCamera();
 
+	// Scene data
 	const TArray<FActor*>&      Actors      = World->GetActors();
 	const TArray<FLight*>&      Lights      = World->GetLights();
 	const TArray<FLightProbe*>& LightProbes = World->GetLightProbes();
