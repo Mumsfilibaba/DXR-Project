@@ -2,6 +2,7 @@
 #include "Core/Templates/CString.h"
 #include "Application/Application.h"
 #include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui.h>
 
@@ -83,11 +84,12 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
 
         ImGui::SetNextItemWidth(InputFieldWidth);
 
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
 
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
 
-        ImGui::PopStyleVar();
+        ImGui::PopStyleVar(2);
 
         // Cache input rect in absolute screen coords, this is later used to draw the candidate window
         InputRectMin = ImGui::GetItemRectMin();

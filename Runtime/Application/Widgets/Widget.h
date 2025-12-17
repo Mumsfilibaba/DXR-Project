@@ -93,11 +93,8 @@ struct FRectangle
 class APPLICATION_API FWidget : public TSharedFromThis<FWidget>
 {
 public:
-
     FWidget();
     virtual ~FWidget();
-
-public:
 
     /**
      * @brief Updates the widget.

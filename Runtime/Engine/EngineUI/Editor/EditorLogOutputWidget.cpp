@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include <imgui.h>
@@ -84,9 +85,12 @@ void FEditorLogOutputWidget::DrawFilterBar()
 
 	ImGui::SetNextItemWidth(InputFieldWidth);
 
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+
 	ImGui::InputTextWithHint("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size());
-    ImGui::PopStyleVar();
+    
+    ImGui::PopStyleVar(2);
 
 	const ImVec2 ItemMin = ImGui::GetItemRectMin();
 	const ImVec2 ItemMax = ImGui::GetItemRectMax();

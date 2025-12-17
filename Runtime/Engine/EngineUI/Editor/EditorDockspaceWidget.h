@@ -1,6 +1,8 @@
 #pragma once
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
+class FEditorEngine;
+
 struct FLayoutIds
 {
     uint32 Dockspace        = 0; // Root dockspace
@@ -11,8 +13,6 @@ struct FLayoutIds
     uint32 DockCenterTop    = 0; // Center top (Viewport)
     uint32 DockCenterBottom = 0; // Center bottom (Output Log)
 };
-
-class FEditorEngine;
 
 class FEditorDockspaceWidget
 {

@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EditorEngine.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -217,9 +218,12 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	ImGui::SetNextItemWidth(-1.0f);
 
 	const float BorderRounding = 16.0f;
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+
 	ImGui::InputTextWithHint("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
-	ImGui::PopStyleVar();
+	
+	ImGui::PopStyleVar(2);
 
 	const ImVec2 ItemMin = ImGui::GetItemRectMin();
 	const ImVec2 ItemMax = ImGui::GetItemRectMax();
@@ -613,7 +617,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGui::TextUnformatted(Name.IsEmpty() ? "Actor" : *Name);
 	}
 
-	// Column 2: type — baseline compensation when InputText was used in this row.
+	// Column 2: type baseline compensation when InputText was used in this row.
 	ImGui::TableSetColumnIndex(2);
 
 	const float TypeLabelX            = ImGui::GetCursorScreenPos().x;
