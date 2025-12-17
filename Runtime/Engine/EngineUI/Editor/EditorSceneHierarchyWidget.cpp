@@ -322,12 +322,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 				}
 
 				DrawActorRow(Actor, "Actor", Actor == SelectedActor, ChildIndent);
-
-				//const char* Label = Name.IsEmpty() ? "Actor" : *Name;
-				//DrawLeafRow(Label, "Actor", Actor == SelectedActor, (void*)Actor, ChildIndent, [&]()
-				//{
-				//	EditorEngine->SetSelectedActor(Actor);
-				//});
 			}
 		}
 	}
@@ -424,40 +418,40 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	}
 
 	const auto BeginActorRename = [this](FActor* InActor)
+	{
+		RenamingActor = InActor;
+		bRequestRenameFocus = true;
+
+		ActorRenameBuffer.Fill(0);
+		ActorRenameBufferOriginal.Fill(0);
+
+		const FString& Name = InActor->GetName();
+		if (!Name.IsEmpty())
 		{
-			RenamingActor = InActor;
-			bRequestRenameFocus = true;
-
-			ActorRenameBuffer.Fill(0);
-			ActorRenameBufferOriginal.Fill(0);
-
-			const FString& Name = InActor->GetName();
-			if (!Name.IsEmpty())
-			{
-				FCString::Strncpy(ActorRenameBuffer.Data(), *Name, ActorRenameBuffer.Size());
-				FCString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
-			}
-		};
+			FCString::Strncpy(ActorRenameBuffer.Data(), *Name, ActorRenameBuffer.Size());
+			FCString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
+		}
+	};
 
 	const auto CancelActorRename = [this]()
-		{
-			RenamingActor = nullptr;
-			bRequestRenameFocus = false;
-		};
+	{
+		RenamingActor       = nullptr;
+		bRequestRenameFocus = false;
+	};
 
 	const auto CommitActorRename = [this]()
+	{
+		if (RenamingActor)
 		{
-			if (RenamingActor)
-			{
-				RenamingActor->SetName(FString(ActorRenameBuffer.Data()));
-				RenamingActor = nullptr;
-			}
+			RenamingActor->SetName(FString(ActorRenameBuffer.Data()));
+			RenamingActor = nullptr;
+		}
 
-			bRequestRenameFocus = false;
-		};
+		bRequestRenameFocus = false;
+	};
 
 	const ImU32 RowBlue_Selected = IM_COL32(0x1d, 0x4f, 0x8b, 140);
-	const ImU32 RowBlue_Rename = IM_COL32(0x3f, 0x7b, 0xb6, 160);
+	const ImU32 RowBlue_Rename   = IM_COL32(0x3f, 0x7b, 0xb6, 160);
 	const ImU32 BorderBlueRename = IM_COL32(0x3f, 0x7b, 0xb6, 255);
 
 	ImGuiStyle& Style = ImGui::GetStyle();
@@ -467,14 +461,9 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 	ImGui::PushID(Actor);
 
-	// Match ALL other rows (camera/lights/folders): TextLineHeight + CellPadding*2
 	const float SelectableRowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
 
-	// NOTE: must be mutable because we may stop renaming if actor is deselected.
 	bool bIsRenamingThis = (RenamingActor == Actor);
-
-	// If the actor got deselected (e.g. click outside table), stop renaming immediately.
-	// Commit is generally the expected "click away" behavior. (Swap to CancelActorRename() if you prefer.)
 	if (bIsRenamingThis && !bSelected)
 	{
 		CommitActorRename();
@@ -485,7 +474,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGuiSelectableFlags_SpanAllColumns |
 		ImGuiSelectableFlags_AllowItemOverlap;
 
-	// Apply per-row selected color (only when selected)
 	const ImU32 RowBlue = bIsRenamingThis ? RowBlue_Rename : RowBlue_Selected;
 	if (bSelected)
 	{
@@ -495,23 +483,19 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	}
 
 	const bool bRowPressed = ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, SelectableRowHeight));
-
 	if (bSelected)
 	{
 		ImGui::PopStyleColor(3);
 	}
 
-	const ImVec2 RowMin = ImGui::GetItemRectMin();
-	const ImVec2 RowMax = ImGui::GetItemRectMax();
-	const float  RowHeight = RowMax.y - RowMin.y;
-
-	// Center baseline within actual row rect
-	const float TextHeight = ImGui::GetTextLineHeight();
-	const float TextY = RowMin.y + (RowHeight - TextHeight) * 0.5f;
-
-	const float FontSize = ImGui::GetFontSize();
-	const float ArrowAdvance = FontSize;
-	const float ArrowTextGap = 6.0f;
+	const ImVec2 RowMin       = ImGui::GetItemRectMin();
+	const ImVec2 RowMax       = ImGui::GetItemRectMax();
+	const float  RowHeight    = RowMax.y - RowMin.y;
+	const float  TextHeight   = ImGui::GetTextLineHeight();
+	const float  TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
+	const float  FontSize     = ImGui::GetFontSize();
+	const float  ArrowAdvance = FontSize;
+	const float  ArrowTextGap = 6.0f;
 
 	// Column 0: Empty
 	ImGui::TableSetColumnIndex(0);
@@ -520,17 +504,14 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	// Column 1: Label
 	ImGui::TableSetColumnIndex(1);
 
-	const ImVec2 Column1Pos = ImGui::GetCursorScreenPos();
+	const ImVec2 Column1Pos   = ImGui::GetCursorScreenPos();
 	const float  Column1Width = ImGui::GetContentRegionAvail().x;
-	const float  Column1MinX = Column1Pos.x;
-	const float  Column1MaxX = Column1Pos.x + Column1Width;
+	const float  Column1MinX  = Column1Pos.x;
+	const float  Column1MaxX  = Column1Pos.x + Column1Width;
+	const float  LabelStartX  = Column1Pos.x + IndentPx + ArrowAdvance + ArrowTextGap;
+	const ImVec2 MousePos     = ImGui::GetIO().MousePos;
 
-	const float LabelStartX = Column1Pos.x + IndentPx + ArrowAdvance + ArrowTextGap;
-
-	// Click location test: only allow rename when clicking in label column space
-	const ImVec2 MousePos = ImGui::GetIO().MousePos;
 	const bool bClickedInLabelColumn = (MousePos.x >= Column1MinX && MousePos.x <= Column1MaxX);
-
 	if (bRowPressed)
 	{
 		if (!bSelected)
@@ -548,21 +529,17 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		}
 	}
 
-	// When we draw the rename input, we want it to be the same height as the row.
-	// Row height is driven by CellPadding; so set FramePadding.y to CellPadding.y for the InputText.
 	const float RenameFramePadY = Style.CellPadding.y;
-
 	if (bIsRenamingThis)
 	{
-		// Align input baseline to TextY and align its internal text X to LabelStartX
-		const float InputY = TextY - RenameFramePadY;
-		const float InputX = LabelStartX - Style.FramePadding.x; // keep X alignment consistent
+		const float InputY     = TextY - RenameFramePadY;
+		const float InputX     = LabelStartX - Style.FramePadding.x;
 		const float InputWidth = (Column1MaxX - InputX) - 2.0f;
 
 		ImGui::SetCursorScreenPos(ImVec2(InputX, InputY));
 		ImGui::SetNextItemWidth(InputWidth > 0.0f ? InputWidth : 0.0f);
 
-		const float BorderRounding = 16.0f;
+		const float BorderRounding  = 16.0f;
 		const float BorderThickness = 2.0f;
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
@@ -612,7 +589,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	// Column 2: type — baseline compensation when InputText was used in this row.
 	ImGui::TableSetColumnIndex(2);
 
-	const float TypeLabelX = ImGui::GetCursorScreenPos().x;
+	const float TypeLabelX            = ImGui::GetCursorScreenPos().x;
 	const float BaselineCompensationY = bIsRenamingThis ? RenameFramePadY : 0.0f;
 
 	ImGui::SetCursorScreenPos(ImVec2(TypeLabelX, TextY - BaselineCompensationY));
