@@ -229,7 +229,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	if (bIsInputFieldActive)
 	{
 		const float BorderThickness = 2.0f;
-		const ImU32 BorderColor = IM_COL32(100, 136, 234, 255);
+		const ImU32 BorderColor     = IM_COL32(100, 136, 234, 255);
 
 		ImDrawList* DrawList = ImGui::GetWindowDrawList();
 		DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
@@ -239,7 +239,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	// Divider between table and search field
 	// -------------------------------------------------------------------------------------------
 
-	ImGui::Dummy(ImVec2(0.0f, 4.0f));
+	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 
 	// -------------------------------------------------------------------------------------------
 	// Actor Table
@@ -248,7 +248,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	const ImGuiTableFlags TableFlags =
 		ImGuiTableFlags_Resizable |
 		ImGuiTableFlags_RowBg |
-		//ImGuiTableFlags_BordersInnerH |
 		ImGuiTableFlags_NoBordersInBody |
 		ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchProp;
@@ -276,7 +275,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	ImGui::TableSetupColumn("Item Label", ImGuiTableColumnFlags_WidthStretch);
 	ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, TypeColWidth);
 	
-	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, 8.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, 10.0f));
 	ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
 	for (int32 Column = 0; Column < 3; Column++)
@@ -443,7 +442,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 	const auto BeginActorRename = [this](FActor* InActor)
 	{
-		RenamingActor = InActor;
+		RenamingActor       = InActor;
 		bRequestRenameFocus = true;
 
 		ActorRenameBuffer.Fill(0);
@@ -600,6 +599,10 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		else if (bEnter || ImGui::IsItemDeactivatedAfterEdit())
 		{
 			CommitActorRename();
+		}
+		else if (ImGui::IsItemDeactivated())
+		{
+			CancelActorRename();
 		}
 	}
 	else

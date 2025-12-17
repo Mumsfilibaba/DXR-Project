@@ -112,7 +112,6 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 
 void FEditorDockspaceWidget::Draw()
 {
-	// Create a window for the viewport
 	ImGuiViewport* MainViewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(MainViewport->WorkPos);
 	ImGui::SetNextWindowSize(MainViewport->WorkSize);
