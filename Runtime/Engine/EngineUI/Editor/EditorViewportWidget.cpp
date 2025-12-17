@@ -55,7 +55,8 @@ void FEditorViewportWidget::Draw()
     }
 
     ImGui::End();
-    ImGui::PopStyleVar();
+
+    ImGui::PopStyleVar(); // WindowPadding
 }
 
 void FEditorViewportWidget::SetViewportWidget(const TSharedPtr<FViewportWidget>& InViewportWidget)

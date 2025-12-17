@@ -39,6 +39,8 @@ void FEditorSceneHierarchyWidget::Draw()
 		return;
 	}
 
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::SceneHierarchyItemSpacing);
+
 	const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
 	if (ImGui::Begin("Scene Hierarchy", &bVisible, Flags))
 	{
@@ -54,6 +56,8 @@ void FEditorSceneHierarchyWidget::Draw()
 	}
 
 	ImGui::End();
+
+	ImGui::PopStyleVar(); // ItemSpacing
 }
 
 void FEditorSceneHierarchyWidget::DrawSceneInfo()
@@ -217,14 +221,14 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	ImGui::SetNextItemWidth(-1.0f);
 
-	const float BorderRounding = 16.0f;
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
-	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
 
 	ImGui::InputTextWithHint("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
-	
+
 	ImGui::PopStyleVar(2);
 
+	// Cache input rect in absolute screen coords, this is later used to draw the candidate window
 	const ImVec2 ItemMin = ImGui::GetItemRectMin();
 	const ImVec2 ItemMax = ImGui::GetItemRectMax();
 
@@ -232,18 +236,15 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	const bool bIsInputFieldActive = ImGui::IsItemActive();
 	if (bIsInputFieldActive)
 	{
-		const float BorderThickness = 2.0f;
-		const ImU32 BorderColor     = IM_COL32(100, 136, 234, 255);
-
 		ImDrawList* DrawList = ImGui::GetWindowDrawList();
-		DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
+		DrawList->AddRect(
+			ItemMin,
+			ItemMax,
+			EditorStyleVars::InputFieldBorderColor,
+			EditorStyleVars::InputFieldBorderRounding,
+			0,
+			EditorStyleVars::InputFieldBorderThickness);
 	}
-
-	// -------------------------------------------------------------------------------------------
-	// Divider between table and search field
-	// -------------------------------------------------------------------------------------------
-
-	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 
 	// -------------------------------------------------------------------------------------------
 	// Actor Table
@@ -292,6 +293,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	// Setup padding for the content in the table
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0f, 4.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0, 8.0f));
 
 	// Cameras
 	if (bHasCameras)
@@ -299,13 +301,12 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		const bool bCamerasOpen = DrawFolderRow("Cameras", "Folder", "CamerasFolder", true, 0.0f);
 		if (bCamerasOpen)
 		{
-			const CHAR* Name = "Main Camera";
-
 			bool bCameraFound = true;
 
 			const CHAR* Search = ActorSearchFilterBuffer.Data();
 			if (Search && Search[0] != '\0')
 			{
+				const CHAR* Name = "Main Camera";
 				if (!FCString::Stristr(Name, Search))
 				{
 					bCameraFound = false;
@@ -334,12 +335,11 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 				{
 					continue;
 				}
-
-				const FString& Name = Actor->GetName();
 				
 				const CHAR* Search = ActorSearchFilterBuffer.Data();
 				if (Search && Search[0] != '\0')
 				{
+					const FString& Name = Actor->GetName();
 					if (Name.IsEmpty() || !FCString::Stristr(*Name, Search))
 					{
 						continue;
@@ -432,7 +432,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	}
 
 	ImGui::PopStyleColor(2); // Border Colors
-	ImGui::PopStyleVar(); // CellPadding
+	ImGui::PopStyleVar(2); // CellPadding
 
 	ImGui::EndTable();
 }

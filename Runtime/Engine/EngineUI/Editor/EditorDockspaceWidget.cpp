@@ -1,4 +1,5 @@
 #include "Engine/EditorEngine.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
 #include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
 #include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
@@ -52,6 +53,10 @@ void FEditorDockspaceWidget::InitializeEditorStyle()
     Style.ItemSpacing          = ImVec2(8.0f, 6.0f);
     Style.WindowPadding        = ImVec2(10.0f, 10.0f);
     Style.SeparatorTextPadding = ImVec2(6.0f, 6.0f);
+	Style.WindowBorderSize     = 0.0f;
+	Style.ChildBorderSize      = 0.0f;
+	Style.FrameBorderSize      = 0.0f;
+	Style.TabBarBorderSize     = 0.0f;
 
     Style.Colors[ImGuiCol_WindowBg]           = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
     Style.Colors[ImGuiCol_ChildBg]            = ImVec4(0.06f, 0.06f, 0.07f, 1.00f);
@@ -149,6 +154,10 @@ void FEditorDockspaceWidget::Draw()
 
 void FEditorDockspaceWidget::DrawMenuBar()
 {
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 10.0f)); // affects item height
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 8.0f));  // spacing between items
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 6.0f)); // padding inside the bar
+
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -249,6 +258,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 		ImGui::EndMenuBar();
 	}
+
+	ImGui::PopStyleVar(3);
 }
 
 void FEditorDockspaceWidget::DrawDockSpace()

@@ -76,22 +76,22 @@ void FEditorLogOutputWidget::DrawFilterBar()
 	const char*  FilterButtonLabel    = "Filters";
 	const ImVec2 FilterButtonTextSize = ImGui::CalcTextSize(FilterButtonLabel);
 	const float  FilterButtonWidth    = FilterButtonTextSize.x + Style.FramePadding.x * 2.0f;
-	const float  InputFieldWidth      = 512.0f;
-    const float  BorderRounding       = 16.0f;
 
     // Add some spacing before the input field
     ImGui::Dummy(ImVec2(4.0f, 0.0f));
     ImGui::SameLine();
 
+	const float InputFieldWidth = 512.0f;
 	ImGui::SetNextItemWidth(InputFieldWidth);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
+	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
 
 	ImGui::InputTextWithHint("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size());
-    
-    ImGui::PopStyleVar(2);
 
+	ImGui::PopStyleVar(2);
+
+	// Cache input rect in absolute screen coords, this is later used to draw the candidate window
 	const ImVec2 ItemMin = ImGui::GetItemRectMin();
 	const ImVec2 ItemMax = ImGui::GetItemRectMax();
 
@@ -99,11 +99,14 @@ void FEditorLogOutputWidget::DrawFilterBar()
 	const bool bIsInputFieldActive = ImGui::IsItemActive();
 	if (bIsInputFieldActive)
 	{
-		const float BorderThickness = 2.0f;
-		const ImU32 BorderColor = IM_COL32(100, 136, 234, 255);
-
 		ImDrawList* DrawList = ImGui::GetWindowDrawList();
-		DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
+		DrawList->AddRect(
+            ItemMin,
+            ItemMax,
+			EditorStyleVars::InputFieldBorderColor,
+			EditorStyleVars::InputFieldBorderRounding,
+			0,
+			EditorStyleVars::InputFieldBorderThickness);
 	}
 
 	// -------------------------------------------------------------------------------------------

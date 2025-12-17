@@ -75,17 +75,15 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
             return reinterpret_cast<FEditorConsoleInputFieldWidget*>(Data->UserData)->InputTextCallback(Data);
         };
 
-        const float InputFieldWidth = 512.0f;
-        const float BorderRounding  = 16.0f;
-
         // Add some spacing before the input field
         ImGui::Dummy(ImVec2(4.0f, 0.0f));
         ImGui::SameLine();
 
+        const float InputFieldWidth = 512.0f;
         ImGui::SetNextItemWidth(InputFieldWidth);
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
 
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
 
@@ -99,14 +97,17 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         bIsInputFieldActive = ImGui::IsItemActive();
         if (bIsInputFieldActive)
         {
-            const float BorderThickness = 2.0f;
-            const ImU32 BorderColor     = IM_COL32(100, 136, 234, 255);
-
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
-            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, BorderRounding, 0, BorderThickness);
+            DrawList->AddRect(
+                InputRectMin,
+                InputRectMax,
+                EditorStyleVars::InputFieldBorderColor, 
+                EditorStyleVars::InputFieldBorderRounding, 
+                0, 
+                EditorStyleVars::InputFieldBorderThickness);
         }
 
-        // Ensure that the input ir propagated correctly
+        // Ensure that the input is propagated correctly
         if (InputHandler)
         {
             InputHandler->bConsoleToggled = bIsInputFieldActive;
