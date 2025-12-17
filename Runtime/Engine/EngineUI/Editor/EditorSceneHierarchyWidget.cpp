@@ -236,37 +236,59 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	}
 
 	// -------------------------------------------------------------------------------------------
+	// Divider between table and search field
+	// -------------------------------------------------------------------------------------------
+
+	ImGui::Dummy(ImVec2(0.0f, 4.0f));
+
+	// -------------------------------------------------------------------------------------------
 	// Actor Table
 	// -------------------------------------------------------------------------------------------
 
 	const ImGuiTableFlags TableFlags =
 		ImGuiTableFlags_Resizable |
 		ImGuiTableFlags_RowBg |
-		ImGuiTableFlags_BordersInnerV |
-		ImGuiTableFlags_BordersOuterH |
+		//ImGuiTableFlags_BordersInnerH |
+		ImGuiTableFlags_NoBordersInBody |
 		ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchProp;
 
 	ImGuiStyle& Style = ImGui::GetStyle();
-	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0f, 4.0f));
 
-	const float ChildIndent = Style.IndentSpacing;
+	const float  ChildIndent    = Style.IndentSpacing;
+	const ImVec4 BorderDarkGray = ImVec4(37.0f / 255.0f, 37.0f / 255.0f, 37.0f / 255.0f, 1.0f);
+
+	ImGui::PushStyleColor(ImGuiCol_TableBorderLight, BorderDarkGray);
+	ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, BorderDarkGray);
 
 	const ImVec2 TableSize = ImVec2(0.0f, ImGui::GetContentRegionAvail().y);
 	if (!ImGui::BeginTable("##SceneOutliner", 3, TableFlags, TableSize))
 	{
-		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(2); // Border Colors
 		return;
 	}
 
 	ImGui::TableSetupScrollFreeze(0, 1);
+
+	// Custom header
+	const float TypeColWidth = ImGui::CalcTextSize("DirectionalLight").x + Style.CellPadding.x * 2.0f + 12.0f;
 	ImGui::TableSetupColumn("##Gutter", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_NoResize, 8.0f);
 	ImGui::TableSetupColumn("Item Label", ImGuiTableColumnFlags_WidthStretch);
-
-	const float TypeColWidth = ImGui::CalcTextSize("DirectionalLight").x + Style.CellPadding.x * 2.0f + 12.0f;
 	ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, TypeColWidth);
+	
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, 8.0f));
+	ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
-	ImGui::TableHeadersRow();
+	for (int32 Column = 0; Column < 3; Column++)
+	{
+		ImGui::TableSetColumnIndex(Column);
+		ImGui::TableHeader(ImGui::TableGetColumnName(Column));
+	}
+
+	ImGui::PopStyleVar(); // CellPadding
+
+	// Setup padding for the content in the table
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0f, 4.0f));
 
 	// Cameras
 	if (bHasCameras)
@@ -406,8 +428,10 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		}
 	}
 
+	ImGui::PopStyleColor(2); // Border Colors
+	ImGui::PopStyleVar(); // CellPadding
+
 	ImGui::EndTable();
-	ImGui::PopStyleVar();
 }
 
 void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, const bool bSelected, float IndentPx)
