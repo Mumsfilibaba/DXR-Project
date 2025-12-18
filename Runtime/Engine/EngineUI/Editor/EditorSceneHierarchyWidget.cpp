@@ -38,8 +38,9 @@ void FEditorSceneHierarchyWidget::Draw()
 	{
 		return;
 	}
-
+	
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::SceneHierarchyItemSpacing);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::SceneHierarchyWindowPadding);
 
 	const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
 	if (ImGui::Begin("Scene Hierarchy", &bVisible, Flags))
@@ -57,7 +58,7 @@ void FEditorSceneHierarchyWidget::Draw()
 
 	ImGui::End();
 
-	ImGui::PopStyleVar(); // ItemSpacing
+	ImGui::PopStyleVar(2);
 }
 
 void FEditorSceneHierarchyWidget::DrawSceneInfo()

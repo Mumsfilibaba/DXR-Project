@@ -2,6 +2,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
@@ -103,7 +104,7 @@ void FTextureDebugWidget::Draw()
             {
                 ImGui::NewLine();
 
-                if (ImGuiExtensions::ButtonCenteredOnLine("Close"))
+                if (EditorWidgets::ButtonCenteredOnLine("Close"))
                 {
                     CVarDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }

@@ -1,5 +1,6 @@
-#include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EditorEngine.h"
+#include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui.h>
@@ -37,12 +38,17 @@ void FEditorPropertiesWidget::Draw()
 		return;
 	}
 
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesItemSpacing);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::PropertiesWindowPadding);
+
 	if (ImGui::Begin("Properties", &bVisible))
 	{
 		DrawWindowContents();
 	}
 	
 	ImGui::End();
+
+	ImGui::PopStyleVar(2);
 }
 
 void FEditorPropertiesWidget::DrawWindowContents()
@@ -76,9 +82,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
 
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 1.0f));
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(Style.FramePadding.x, 8.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::PropertiesCollapsingFrameRounding);
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesCollapsingHeaderItemSpacing);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::PropertiesCollapsingFramePadding);
 
 		const bool bResult = ImGui::CollapsingHeader(Label, Flags);
 
@@ -106,13 +112,15 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		{
 			// Translation
 			FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
-			ImGuiExtensions::DrawFloat3Control("Translation", Translation);
+			EditorWidgets::DrawFloat3Control("Translation", Translation);
 			SelectedActor->GetTransform().SetTranslation(Translation);
 
 			// Rotation (degrees UI)
 			FVector3 Rotation = SelectedActor->GetTransform().GetRotation();
 			Rotation = FVector3::RadiansToDegrees(Rotation);
-			ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
+			
+			EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
+
 			Rotation = FVector3::DegreesToRadians(Rotation);
 			SelectedActor->GetTransform().SetRotation(Rotation);
 
@@ -122,7 +130,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 			FVector3 Scale0 = SelectedActor->GetTransform().GetScale();
 			FVector3 Scale1 = Scale0;
 
-			ImGuiExtensions::DrawFloat3Control("Scale", Scale0, 1.0f);
+			EditorWidgets::DrawFloat3Control("Scale", Scale0, 1.0f);
 
 			ImGui::SameLine();
 			ImGui::Checkbox("##UniformScale", &bUniformScale);
@@ -170,7 +178,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				ImGui::Text("Albedo");
 				ImGui::NextColumn();
 
-				if (ImGuiExtensions::DrawColorEdit3("##Albedo", MaterialInfo.Albedo))
+				if (EditorWidgets::DrawColorEdit3("##Albedo", MaterialInfo.Albedo))
 				{
 					MeshComponent->GetMaterial()->SetAlbedo(MaterialInfo.Albedo);
 				}
@@ -233,7 +241,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				ImGui::NextColumn();
 
 				FVector3 Color = Point->GetColor();
-				if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
+				if (EditorWidgets::DrawColorEdit3("##Color", Color))
 				{
 					Point->SetColor(Color);
 				}
@@ -254,7 +262,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 			if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				FVector3 Translation = Point->GetPosition();
-				ImGuiExtensions::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
+				EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
 				Point->SetPosition(Translation);
 			}
 
@@ -309,7 +317,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				ImGui::NextColumn();
 
 				FVector3 Color = Dir->GetColor();
-				if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
+				if (EditorWidgets::DrawColorEdit3("##Color", Color))
 				{
 					Dir->SetColor(Color);
 				}
@@ -465,12 +473,12 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			FVector3 Position = SelectedCamera->GetPosition();
-			ImGuiExtensions::DrawFloat3Control("Position", Position);
+			EditorWidgets::DrawFloat3Control("Position", Position);
 			SelectedCamera->SetPosition(Position.X, Position.Y, Position.Z);
 
 			FVector3 Rotation = SelectedCamera->GetRotation();
 			Rotation = FVector3::RadiansToDegrees(Rotation);
-			ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
+			EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
 			Rotation = FVector3::DegreesToRadians(Rotation);
 			SelectedCamera->SetRotation(Rotation.X, Rotation.Y, Rotation.Z);
 		}
@@ -487,18 +495,18 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			FVector3 Position = SelectedLightProbe->GetPosition();
-			ImGuiExtensions::DrawFloat3Control("Position", Position);
+			EditorWidgets::DrawFloat3Control("Position", Position);
 			SelectedLightProbe->SetPosition(Position);
 		}
 
 		if (DrawCollapsingHeader("Box Projection", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			FVector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
-			ImGuiExtensions::DrawFloat3Control("Box Extent", BoxExtent);
+			EditorWidgets::DrawFloat3Control("Box Extent", BoxExtent);
 			SelectedLightProbe->SetBoxExtent(BoxExtent);
 
 			FVector3 BoxOffset = SelectedLightProbe->GetBoxOffset();
-			ImGuiExtensions::DrawFloat3Control("Box Origin", BoxOffset);
+			EditorWidgets::DrawFloat3Control("Box Origin", BoxOffset);
 			SelectedLightProbe->SetBoxOffset(BoxOffset);
 
 			bool bBoxProjection = SelectedLightProbe->GetBoxProjection();
