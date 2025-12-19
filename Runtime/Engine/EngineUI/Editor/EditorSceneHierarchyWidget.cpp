@@ -69,9 +69,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 		ImGui::PushID(OpenKey);
 
-		ImGuiStorage* Storage = ImGui::GetStateStorage();
-
-		const float SelectableRowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
 
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
@@ -82,22 +79,26 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 		const ImGuiID OpenId = ImGui::GetID("Open");
 
+		ImGuiStorage* Storage = ImGui::GetStateStorage();
 		bool bOpen = Storage->GetBool(OpenId, bDefaultOpen);
-		if (ImGui::Selectable("##Row", false, SelectableFlags, ImVec2(0.0f, SelectableRowHeight)))
+
+		float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
+		if (ImGui::Selectable("##Row", false, SelectableFlags, ImVec2(0.0f, RowHeight)))
 		{
 			bOpen = !bOpen;
 			Storage->SetBool(OpenId, bOpen);
 		}
 
-		const ImVec2 RowMin       = ImGui::GetItemRectMin();
-		const ImVec2 RowMax       = ImGui::GetItemRectMax();
-		const float  RowHeight    = RowMax.y - RowMin.y;
-		const float  TextHeight   = ImGui::GetTextLineHeight();
-		const float  FontSize     = ImGui::GetFontSize();
-		const float  TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
-		const float  ArrowY       = RowMin.y + (RowHeight - FontSize) * 0.5f;
-		const float  ArrowTextGap = 6.0f;
-		const float  ArrowAdvance = FontSize;
+		const ImVec2 RowMin = ImGui::GetItemRectMin();
+		const ImVec2 RowMax = ImGui::GetItemRectMax();
+		RowHeight = RowMax.y - RowMin.y;
+		
+		const float TextHeight   = ImGui::GetTextLineHeight();
+		const float FontSize     = ImGui::GetFontSize();
+		const float TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
+		const float ArrowY       = RowMin.y + (RowHeight - FontSize) * 0.5f;
+		const float ArrowTextGap = 6.0f;
+		const float ArrowAdvance = FontSize;
 
 		ImGui::TableSetColumnIndex(0);
 		ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TextY));
@@ -129,8 +130,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
 
-		const float SelectableRowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
-
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
 
@@ -148,7 +147,8 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 			ImGui::PushStyleColor(ImGuiCol_HeaderActive, SelectedColor);
 		}
 
-		if (ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, SelectableRowHeight)))
+		float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
+		if (ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, RowHeight)))
 		{
 			OnClick();
 		}
@@ -158,14 +158,15 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 			ImGui::PopStyleColor(3);
 		}
 
-		const ImVec2 RowMin       = ImGui::GetItemRectMin();
-		const ImVec2 RowMax       = ImGui::GetItemRectMax();
-		const float  RowHeight    = RowMax.y - RowMin.y;
-		const float  TextHeight   = ImGui::GetTextLineHeight();
-		const float  FontSize     = ImGui::GetFontSize();
-		const float  TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
-		const float  ArrowTextGap = 6.0f;
-		const float  ArrowAdvance = FontSize;
+		const ImVec2 RowMin = ImGui::GetItemRectMin();
+		const ImVec2 RowMax = ImGui::GetItemRectMax();
+		RowHeight = RowMax.y - RowMin.y;
+		
+		const float TextHeight   = ImGui::GetTextLineHeight();
+		const float FontSize     = ImGui::GetFontSize();
+		const float TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
+		const float ArrowTextGap = 6.0f;
+		const float ArrowAdvance = FontSize;
 
 		ImGui::TableSetColumnIndex(0);
 		ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TextY));
@@ -281,7 +282,8 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	ImGui::TableSetupColumn("Item Label", ImGuiTableColumnFlags_WidthStretch);
 	ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, TypeColWidth);
 	
-	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, 10.0f));
+	const float CellPaddingY = Math::Max(0.0f, EditorStyleVars::SceneHierarchyTableRowHeight - ImGui::GetTextLineHeight()) * 0.5f;
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, CellPaddingY));
 	ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
 	for (int32 Column = 0; Column < 3; Column++)
@@ -294,7 +296,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	// Setup padding for the content in the table
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0f, 4.0f));
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0, 8.0f));
 
 	// Cameras
 	if (bHasCameras)
@@ -433,7 +434,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	}
 
 	ImGui::PopStyleColor(2); // Border Colors
-	ImGui::PopStyleVar(2); // CellPadding
+	ImGui::PopStyleVar(); // CellPadding
 
 	ImGui::EndTable();
 }
@@ -447,8 +448,8 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 	const auto BeginActorRename = [this](FActor* InActor)
 	{
-		RenamingActor       = InActor;
 		bRequestRenameFocus = true;
+		RenamingActor       = InActor;
 
 		ActorRenameBuffer.Fill(0);
 		ActorRenameBufferOriginal.Fill(0);
@@ -463,8 +464,8 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 	const auto CancelActorRename = [this]()
 	{
-		RenamingActor       = nullptr;
 		bRequestRenameFocus = false;
+		RenamingActor       = nullptr;
 	};
 
 	const auto CommitActorRename = [this]()
@@ -489,8 +490,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 	ImGui::PushID(Actor);
 
-	const float SelectableRowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
-
 	bool bIsRenamingThis = (RenamingActor == Actor);
 	if (bIsRenamingThis && !bSelected)
 	{
@@ -510,20 +509,24 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowBlue);
 	}
 
-	const bool bRowPressed = ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, SelectableRowHeight));
+	float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
+	
+	const bool bRowPressed = ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, RowHeight));
 	if (bSelected)
 	{
 		ImGui::PopStyleColor(3);
 	}
 
-	const ImVec2 RowMin       = ImGui::GetItemRectMin();
-	const ImVec2 RowMax       = ImGui::GetItemRectMax();
-	const float  RowHeight    = RowMax.y - RowMin.y;
-	const float  TextHeight   = ImGui::GetTextLineHeight();
-	const float  TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
-	const float  FontSize     = ImGui::GetFontSize();
-	const float  ArrowAdvance = FontSize;
-	const float  ArrowTextGap = 6.0f;
+	// TODO: Something more than TextLineHeight seems to be taken into account here. Not sure what this would be
+	const ImVec2 RowMin = ImGui::GetItemRectMin();
+	const ImVec2 RowMax = ImGui::GetItemRectMax();
+	RowHeight = RowMax.y - RowMin.y;
+
+	const float TextHeight   = ImGui::GetTextLineHeight();
+	const float TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
+	const float FontSize     = ImGui::GetFontSize();
+	const float ArrowAdvance = FontSize;
+	const float ArrowTextGap = 6.0f;
 
 	// Column 0: Empty
 	ImGui::TableSetColumnIndex(0);

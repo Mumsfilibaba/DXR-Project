@@ -8,7 +8,7 @@ ImU32  EditorStyleVars::InputFieldBorderColor     = IM_COL32(100, 136, 234, 255)
 
 ImVec2 EditorStyleVars::SceneHierarchyItemSpacing    = ImVec2(8.0f, 8.0f);
 ImVec2 EditorStyleVars::SceneHierarchyWindowPadding  = ImVec2(8.0f, 8.0f);
-float  EditorStyleVars::SceneHierarchyTableRowHeight = 0.0f;
+float  EditorStyleVars::SceneHierarchyTableRowHeight = 28.0f;
 
 ImVec2 EditorStyleVars::PropertiesItemSpacing                 = ImVec2(8.0f, 8.0f);
 ImVec2 EditorStyleVars::PropertiesWindowPadding               = ImVec2(8.0f, 8.0f);
