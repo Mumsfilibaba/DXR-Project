@@ -5,6 +5,8 @@
 
 struct EditorStyleVars
 {
+	static float MainMenuBarHeight;
+
     static ImVec2 InputFieldFramePadding;
 	static float  InputFieldBorderThickness;
 	static float  InputFieldBorderRounding;

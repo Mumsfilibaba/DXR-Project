@@ -66,9 +66,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	const auto DrawFolderRow = [](const char* Label, const char* Type, const char* OpenKey, bool bDefaultOpen, float IndentPx) -> bool
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
-
 		ImGui::PushID(OpenKey);
-
 
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
@@ -129,7 +127,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	const auto DrawLeafRow = [](const char* Label, const char* Type, bool bSelected, void* Id, float IndentPx, auto&& OnClick)
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
-
 		ImGui::TableNextRow();
 		ImGui::TableSetColumnIndex(0);
 
@@ -484,7 +481,6 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	const ImU32 BorderBlueRename = IM_COL32(0x3f, 0x7b, 0xb6, 255);
 
 	ImGuiStyle& Style = ImGui::GetStyle();
-
 	ImGui::TableNextRow();
 	ImGui::TableSetColumnIndex(0);
 
