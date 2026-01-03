@@ -291,3 +291,66 @@ void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
 		ImGui::Dummy(ImVec2(0.0f, PaddingY));
 	}
 }
+
+void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, const ImVec4& BrightPopupBg, float ButtonHeight, PopupAnchor& OutAnchor)
+{
+	const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
+	OutAnchor.bRequestPosition = false;
+
+	if (bThisPopupOpen)
+	{
+		ImGui::PushStyleColor(ImGuiCol_Button, BrightPopupBg);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BrightPopupBg);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, BrightPopupBg);
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 0.0f));
+	const bool bPressed = ImGui::Button(Label, ImVec2(0.0f, ButtonHeight));
+	ImGui::PopStyleVar();
+
+	if (bPressed)
+	{
+		ImGui::OpenPopup(PopupId);
+		OutAnchor.bRequestPosition = true;
+	}
+
+	if (bAnyPopupOpen && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && !bThisPopupOpen)
+	{
+		ImGui::OpenPopup(PopupId);
+		OutAnchor.bRequestPosition = true;
+	}
+
+	OutAnchor.Min = ImGui::GetItemRectMin();
+	OutAnchor.Max = ImGui::GetItemRectMax();
+
+	if (bThisPopupOpen)
+	{
+		ImGui::PopStyleColor(3);
+	}
+}
+
+bool EditorWidgets::EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, const ImVec4& BrightPopupBg, float MinWidth)
+{
+	if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
+	{
+		ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
+	}
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+
+	ImGui::PushStyleColor(ImGuiCol_PopupBg, BrightPopupBg);
+
+	ImGui::SetNextWindowSizeConstraints(ImVec2(MinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
+	return ImGui::BeginPopup(PopupId);
+}
+
+void EditorWidgets::EditorResetMenuPopup()
+{
+	ImGui::PopStyleColor();
+	ImGui::PopStyleVar(5);
+}

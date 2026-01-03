@@ -197,76 +197,12 @@ void FEditorDockspaceWidget::DrawMenuBar()
 			ImGui::IsPopupOpen(PopupWindows, ImGuiPopupFlags_None) ||
 			ImGui::IsPopupOpen(PopupHelp, ImGuiPopupFlags_None);
 
-		const auto DrawMenuButton = [&](const char* Label, const char* PopupId, PopupAnchor& OutAnchor)
-		{
-			const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
-			OutAnchor.bRequestPosition = false;
-
-			if (bThisPopupOpen)
-			{
-				ImGui::PushStyleColor(ImGuiCol_Button, BrightPopupBg);
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BrightPopupBg);
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, BrightPopupBg);
-			}
-
-			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 0.0f));
-			bool bPressed = ImGui::Button(Label, ImVec2(0.0f, EditorStyleVars::MainMenuBarHeight));
-			ImGui::PopStyleVar();
-
-			if (bPressed)
-			{
-				ImGui::OpenPopup(PopupId);
-				OutAnchor.bRequestPosition = true;
-			}
-
-			if (bAnyPopupOpen && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup) && !bThisPopupOpen)
-			{
-				ImGui::OpenPopup(PopupId);
-				OutAnchor.bRequestPosition = true;
-			}
-
-			OutAnchor.Min = ImGui::GetItemRectMin();
-			OutAnchor.Max = ImGui::GetItemRectMax();
-
-			if (bThisPopupOpen)
-			{
-				ImGui::PopStyleColor(3);
-			}
-		};
-
-		const auto BeginMenuPopup = [&](const char* PopupId, const PopupAnchor& Anchor) -> bool
-		{
-			if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
-			{
-				ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
-			}
-
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
-
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-			ImGui::PushStyleColor(ImGuiCol_PopupBg, BrightPopupBg);
-
-			ImGui::SetNextWindowSizeConstraints(ImVec2(160.0f, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
-
-			return ImGui::BeginPopup(PopupId);
-		};
-
-		const auto ResetMenuPopup = []()
-		{
-			ImGui::PopStyleColor();
-			ImGui::PopStyleVar(5);
-		};
-
 		// File
 		{
 			PopupAnchor FileAnchor;
-			DrawMenuButton("File", PopupFile, FileAnchor);
+			EditorWidgets::EditorDrawMenuButton("File", PopupFile, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, FileAnchor);
 
-			if (BeginMenuPopup(PopupFile, FileAnchor))
+			if (EditorWidgets::EditorBeginMenuPopup(PopupFile, FileAnchor, BrightPopupBg))
 			{
 				EditorWidgets::EditorMenuItem("New Level", "Ctrl+N");
 				EditorWidgets::EditorMenuItem("Open", "Ctrl+O");
@@ -277,7 +213,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 				ImGui::EndPopup();
 			}
 				
-			ResetMenuPopup();
+			EditorWidgets::EditorResetMenuPopup();
 		}
 
 		ImGui::SameLine(0.0f, 0.0f);
@@ -285,16 +221,16 @@ void FEditorDockspaceWidget::DrawMenuBar()
 		// Edit
 		{
 			PopupAnchor EditAnchor;
-			DrawMenuButton("Edit", PopupEdit, EditAnchor);
+			EditorWidgets::EditorDrawMenuButton("Edit", PopupEdit, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, EditAnchor);
 
-			if (BeginMenuPopup(PopupEdit, EditAnchor))
+			if (EditorWidgets::EditorBeginMenuPopup(PopupEdit, EditAnchor, BrightPopupBg))
 			{
 				EditorWidgets::EditorMenuItem("Project Settings");
 				EditorWidgets::EditorMenuItem("Editor Preferences");
 				ImGui::EndPopup();
 			}
 
-			ResetMenuPopup();
+			EditorWidgets::EditorResetMenuPopup();
 		}
 
 		ImGui::SameLine(0.0f, 0.0f);
@@ -302,9 +238,9 @@ void FEditorDockspaceWidget::DrawMenuBar()
 		// Windows
 		{
 			PopupAnchor WindowsAnchor;
-			DrawMenuButton("Windows", PopupWindows, WindowsAnchor);
+			EditorWidgets::EditorDrawMenuButton("Windows", PopupWindows, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
 
-			if (BeginMenuPopup(PopupWindows, WindowsAnchor))
+			if (EditorWidgets::EditorBeginMenuPopup(PopupWindows, WindowsAnchor, BrightPopupBg))
 			{
 				{
 					bool bProps = GShowPropertiesPanel;
@@ -367,7 +303,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 				ImGui::EndPopup();
 			}
 
-			ResetMenuPopup();
+			EditorWidgets::EditorResetMenuPopup();
 		}
 
 		ImGui::SameLine(0.0f, 0.0f);
@@ -375,15 +311,15 @@ void FEditorDockspaceWidget::DrawMenuBar()
 		// Help
 		{
 			PopupAnchor HelpAnchor;
-			DrawMenuButton("Help", PopupHelp, HelpAnchor);
+			EditorWidgets::EditorDrawMenuButton("Help", PopupHelp, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
 
-			if (BeginMenuPopup(PopupHelp, HelpAnchor))
+			if (EditorWidgets::EditorBeginMenuPopup(PopupHelp, HelpAnchor, BrightPopupBg))
 			{
 				EditorWidgets::EditorMenuItem("About");
 				ImGui::EndPopup();
 			}
 
-			ResetMenuPopup();
+			EditorWidgets::EditorResetMenuPopup();
 		}
 	}
 
