@@ -138,14 +138,15 @@ void EditorWidgets::EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, I
 	DrawList->AddLine(PointB, PointC, Color, Thickness);
 }
 
-bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool bSelected, bool bEnabled)
+bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
 {
 	const float PaddingX  = 8.0f;
 	const float PaddingY  = 6.0f;
 	const float RowHeight = ImGui::GetFontSize() + PaddingY * 2.0f;
 	const float RowWidth  = ImGui::GetContentRegionAvail().x;
 	const float CheckSize = ImGui::GetFontSize() * 0.85f;
-	const float GapRight  = 8.0f; // Gap between shortcut and check-mark (if both exist)
+	const float GapRight  = 8.0f; // Gap between shortcut and checkmark (when both exist)
+	const float ClipGap   = 4.0f; // Small gap between label clip and right-side content
 
 	ImGui::PushID(Label);
 
@@ -154,7 +155,9 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 		ImGui::BeginDisabled();
 	}
 
-	const ImGuiSelectableFlags Flags = ImGuiSelectableFlags_SpanAvailWidth | ImGuiSelectableFlags_NoPadWithHalfSpacing;
+	const ImGuiSelectableFlags Flags =
+		ImGuiSelectableFlags_SpanAvailWidth |
+		ImGuiSelectableFlags_NoPadWithHalfSpacing;
 
 	const bool bPressed = ImGui::Selectable("##row", false, Flags, ImVec2(RowWidth, RowHeight));
 	const bool bHovered = ImGui::IsItemHovered();
@@ -178,73 +181,79 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 
 	DrawList->AddRectFilled(RectMin, RectMax, Background, 0.0f);
 
+	// Hover-only border
+	if (bDrawBorder && bHovered)
+	{
+		const ImVec4 HoveredColor = ImVec4(17.0f / 255.0f, 103.0f / 255.0f, 177.0f / 255.0f, 1.0f);
+		const ImU32  BorderColor  = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
+		DrawList->AddRect(RectMin, RectMax, BorderColor, 0.0f, 0, 1.0f);
+	}
+
 	// Vertical centering reference
 	const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
 	const float  TextY     = RectMin.y + (RowHeight - LabelSize.y) * 0.5f;
 
-	// Compute right-side layout
 	const bool   bHasShortcut = (Shortcut && Shortcut[0] != '\0');
-	const ImVec2 ShortCutSize = bHasShortcut ? ImGui::CalcTextSize(Shortcut) : ImVec2(0, 0);
+	const ImVec2 ShortcutSize = bHasShortcut ? ImGui::CalcTextSize(Shortcut) : ImVec2(0.0f, 0.0f);
+	const float  RightInnerX  = RectMax.x - PaddingX;
 
-	// Right edge starts from the inside padding
-	float RightX = RectMax.x - PaddingX;
+	// Compute right-side layout positions
+	bool   bDrawCheckMark = bSelected;
+	ImVec2 CheckPos       = ImVec2(0.0f, 0.0f);
+	bool   bDrawShortcut  = bHasShortcut;
+	float  ShortcutX      = 0.0f;
 
-	// Checkmark position:
-	// - If shortcut exists: draw shortcut first (right-aligned), then check to its right.
-	// - If no shortcut: check goes flush to the right padding.
+	// Left-most X of anything on the right (shortcut/check)
+	float RightContentMinX = RightInnerX; 
 
-	ImVec2 CheckPos = ImVec2(0, 0);
-	if (bSelected)
+	if (bDrawCheckMark)
 	{
-		const float CheckY = RectMin.y + (RowHeight - CheckSize) * 0.5f;
-		if (bHasShortcut)
+		const float CheckY    = RectMin.y + (RowHeight - CheckSize) * 0.5f;
+		const float CheckMinX = RightInnerX - CheckSize;
+
+		CheckPos         = ImVec2(CheckMinX, CheckY);
+		RightContentMinX = CheckMinX;
+
+		if (bDrawShortcut)
 		{
-			// Reserve space: [shortcut][GapRight][check]
-			CheckPos = ImVec2(RightX - CheckSize, CheckY);
+			// Shortcut sits to the left of checkmark
+			ShortcutX = CheckMinX - GapRight - ShortcutSize.x;
 			
-			// Shrink available space for label
-			RightX -= (CheckSize + GapRight + ShortCutSize.x); 
-		}
-		else
-		{
-			CheckPos = ImVec2(RightX - CheckSize, CheckY);
-			
-			// Shrink available space for label
-			RightX -= CheckSize; 
+			// Shortcut becomes the left-most right-side content
+			RightContentMinX = ShortcutX; 
 		}
 	}
-	else
+	else if (bDrawShortcut)
 	{
-		// No checkmark. Only shortcut eats the right side.
-		if (bHasShortcut)
-		{
-			RightX -= ShortCutSize.x;
-		}
+		// Shortcut goes flush right when no checkmark
+		ShortcutX        = RightInnerX - ShortcutSize.x;
+		RightContentMinX = ShortcutX;
 	}
 
-	// Draw shortcut (so it sits left of the checkmark when checked)
-	if (bHasShortcut)
+	// Draw shortcut (if any)
+	if (bDrawShortcut)
 	{
-		// If checked, shortcut should end at: (checkPos.x - GapRight)
-		// If not checked, shortcut ends at: (RectMax.x - PaddingX)
-		const float ShortCutRightEdge = bSelected ? (CheckPos.x - GapRight) : (RectMax.x - PaddingX);
-		const float ShortCutX = ShortCutRightEdge - ShortCutSize.x;
-		const float ShortCutY = RectMin.y + (RowHeight - ShortCutSize.y) * 0.5f;
-
-		DrawList->AddText(ImVec2(ShortCutX, ShortCutY), ImGui::GetColorU32(ImGuiCol_TextDisabled), Shortcut);
+		const float ShortcutY = RectMin.y + (RowHeight - ShortcutSize.y) * 0.5f;
+		DrawList->AddText(ImVec2(ShortcutX, ShortcutY), ImGui::GetColorU32(ImGuiCol_TextDisabled), Shortcut);
 	}
 
-	// Draw checkmark last so it’s always crisp on top
-	if (bSelected)
+	// Draw checkmark last (crisp on top)
+	if (bDrawCheckMark)
 	{
 		EditorDrawCheckMark(DrawList, CheckPos, ImGui::GetColorU32(ImGuiCol_Text), CheckSize);
 	}
 
-	// Draw label (left aligned), but keep it from colliding with right-side stuff
-	// Clip label to [left, rightX] so long labels don't overlap shortcut/check.
+	// Draw label + clip to avoid overlap with right-side content
 	const float LabelX = RectMin.x + PaddingX;
-	const float ClipMaxX = (bHasShortcut || bSelected) ? ((bSelected && bHasShortcut) ? (CheckPos.x - GapRight - 4.0f) : (RectMax.x - PaddingX - (bHasShortcut ? ShortCutSize.x : 0.0f) - 4.0f))
-		: (RectMax.x - PaddingX);
+
+	float ClipMaxX = RectMax.x - PaddingX;
+	if (bDrawShortcut || bDrawCheckMark)
+	{
+		ClipMaxX = RightContentMinX - ClipGap;
+	}
+
+	// Avoid invalid clip rect if popup is extremely narrow
+	ClipMaxX = ImMax(ClipMaxX, LabelX + 1.0f);
 
 	DrawList->PushClipRect(ImVec2(LabelX, RectMin.y), ImVec2(ClipMaxX, RectMax.y), true);
 	DrawList->AddText(ImVec2(LabelX, TextY), ImGui::GetColorU32(ImGuiCol_Text), Label);
@@ -273,7 +282,7 @@ void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
 		ImGui::Dummy(ImVec2(0.0f, PaddingY));
 	}
 
-	const ImVec2 Min = ImGui::GetCursorScreenPos();
+	const ImVec2 Min   = ImGui::GetCursorScreenPos();
 	const float  Width = ImGui::GetContentRegionAvail().x;
 
 	// Use ImGui's separator color
@@ -292,7 +301,7 @@ void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
 	}
 }
 
-void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, const ImVec4& BrightPopupBg, float ButtonHeight, PopupAnchor& OutAnchor)
+void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, const ImVec4& BrightPopupBg, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
 {
 	const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
 	OutAnchor.bRequestPosition = false;
@@ -320,8 +329,19 @@ void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId,
 		OutAnchor.bRequestPosition = true;
 	}
 
+	const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);
+
 	OutAnchor.Min = ImGui::GetItemRectMin();
 	OutAnchor.Max = ImGui::GetItemRectMax();
+
+	// Hover-only border
+	if (bDrawBorder && bHovered)
+	{
+		const ImU32 BorderColor = ImGui::GetColorU32(ImGuiCol_Border);
+
+		ImDrawList* DrawList = ImGui::GetWindowDrawList();
+		DrawList->AddRect(OutAnchor.Min, OutAnchor.Max, BorderColor, 0.0f, 0, 1.0f);
+	}
 
 	if (bThisPopupOpen)
 	{

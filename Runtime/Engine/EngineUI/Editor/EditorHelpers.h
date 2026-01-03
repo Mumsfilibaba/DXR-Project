@@ -30,6 +30,19 @@ struct EditorStyleVars
 	static float  PropertiesCollapsingFrameRounding;
 };
 
+struct ENGINE_API EditorHelpers
+{
+	static FORCEINLINE ImU32 MakeBrighterColorU32(const ImVec4& HoveredColor, float BrightenAmount = 0.20f)
+	{
+		ImVec4 BrighterColor = HoveredColor;
+		BrighterColor.x = (BrighterColor.x + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.x + BrightenAmount);
+		BrighterColor.y = (BrighterColor.y + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.y + BrightenAmount);
+		BrighterColor.z = (BrighterColor.z + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.z + BrightenAmount);
+		BrighterColor.w = 1.0f;
+		return ImGui::GetColorU32(BrighterColor);
+	}
+};
+
 struct ENGINE_API EditorWidgets
 {
 	static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
@@ -48,8 +61,8 @@ struct ENGINE_API EditorWidgets
 
 	static void EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
 	static void EditorMenuSeparator(float Thickness = 1.0f, float PaddingY = 0.0f);
-	static bool EditorMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true);
-	static void EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, const ImVec4& BrightPopupBg, float ButtonHeight, PopupAnchor& OutAnchor);
-	static bool EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, const ImVec4& BrightPopupBg, float MinWidth = 160.0f);
+	static bool EditorMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = true);
+	static void EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, const ImVec4& BrightPopupBg, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = true);
+	static bool EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, const ImVec4& BrightPopupBg, float MinWidth = 180.0f);
 	static void EditorResetMenuPopup();
 };
