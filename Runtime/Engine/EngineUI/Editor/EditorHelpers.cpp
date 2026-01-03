@@ -18,11 +18,64 @@ ImVec2 EditorStyleVars::PropertiesCollapsingHeaderItemSpacing = ImVec2(8.0f, 2.0
 ImVec2 EditorStyleVars::PropertiesCollapsingFramePadding      = ImVec2(10.0f, 8.0f);
 float  EditorStyleVars::PropertiesCollapsingFrameRounding     = 2.0f;
 
+static void ApplyHoveredRowBg(bool bRowHovered)
+{
+	if (!bRowHovered)
+	{
+		return;
+	}
+
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		return;
+	}
+
+	// Slightly brighter hover (helps it read as a "row highlight").
+	ImVec4 Hover = ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered);
+	Hover.x = ImMin(Hover.x + 0.06f, 1.0f);
+	Hover.y = ImMin(Hover.y + 0.06f, 1.0f);
+	Hover.z = ImMin(Hover.z + 0.06f, 1.0f);
+	const ImU32 HoverBg = ImGui::GetColorU32(Hover);
+
+	const int ColumnCount = ImGui::TableGetColumnCount();
+	for (int ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
+	{
+		ImGui::TableSetColumnIndex(ColumnIndex);
+		ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, HoverBg);
+	}
+}
+
+static bool BeginFullRowHoverCatcher(float RowHeight)
+{
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		return false;
+	}
+
+	ImGui::TableSetColumnIndex(0);
+	const ImVec2 Cursor = ImGui::GetCursorScreenPos();
+
+	// Invisible item spanning all columns so hover works even over empty cell areas.
+	// NOTE: We reset cursor position afterward so the row contents draw on top.
+	const ImGuiSelectableFlags HoverFlags =
+		ImGuiSelectableFlags_SpanAllColumns |
+		ImGuiSelectableFlags_AllowOverlap |
+		ImGuiSelectableFlags_Disabled;
+
+	ImGui::Selectable("##RowHover", false, HoverFlags, ImVec2(0.0f, RowHeight));
+	const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	ImGui::SetCursorScreenPos(Cursor);
+	return bHovered;
+}
+
 bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
 	ImGuiStyle& Style = ImGui::GetStyle();
 
-	const float Size = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
+	const float Size   = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
 	const float Offset = (ImGui::GetContentRegionAvail().x - Size) * Alignment;
 	if (Offset > 0.0f)
 	{
@@ -32,98 +85,473 @@ bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 	return ImGui::Button(Label);
 }
 
-bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue, float ColumnWidth, float Speed)
+bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue, float ColumnWidth, float Speed, const FVector3* InRevertValue)
 {
 	bool bResult = false;
 
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		// Fallback: old 2-column layout (Label | Value)
+		ImGui::PushID(Label);
+		ImGui::Columns(2, nullptr, false);
+		ImGui::SetColumnWidth(0, ColumnWidth);
+		ImGui::Text("%s", Label);
+		ImGui::NextColumn();
+
+		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+
+		const float LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		const ImVec2 ButtonSize = ImVec2(LineHeight + 3.0f, LineHeight);
+
+		auto AxisFallback = [&](const char* AxisLabel, float& V, const ImVec4& Btn, const ImVec4& Hover, const ImVec4& Active)
+			{
+				ImGui::PushStyleColor(ImGuiCol_Button, Btn);
+				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Hover);
+				ImGui::PushStyleColor(ImGuiCol_ButtonActive, Active);
+
+				if (ImGui::Button(AxisLabel, ButtonSize))
+				{
+					V = ResetValue;
+					bResult = true;
+				}
+
+				ImGui::PopStyleColor(3);
+				ImGui::SameLine();
+
+				const char* DragId = (AxisLabel[0] == 'X') ? "##X" : (AxisLabel[0] == 'Y') ? "##Y" : "##Z";
+				bResult |= ImGui::DragFloat(DragId, &V, Speed);
+				ImGui::PopItemWidth();
+			};
+
+		AxisFallback("X", OutValue.X,
+			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
+			ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
+			ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
+
+		ImGui::SameLine();
+		AxisFallback("Y", OutValue.Y,
+			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
+			ImVec4(0.3f, 0.8f, 0.3f, 1.0f),
+			ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
+
+		ImGui::SameLine();
+		AxisFallback("Z", OutValue.Z,
+			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
+			ImVec4(0.2f, 0.35f, 0.9f, 1.0f),
+			ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
+
+		ImGui::PopStyleVar(2);
+		ImGui::Columns(1);
+		ImGui::PopID();
+		return bResult;
+	}
+
+	// --- Row + label cell ---
+	ImGuiStyle& Style = ImGui::GetStyle();
+	const float Gap = 2.0f;
+	const float LineHeight = ImGui::GetFontSize() + Style.FramePadding.y * 2.0f;
+	const float RowHeight = LineHeight;
+
+	ImGui::TableNextRow(0, RowHeight);
 	ImGui::PushID(Label);
 
-	ImGui::Columns(2, nullptr, false);
+	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
-	// Text
-	ImGui::SetColumnWidth(0, ColumnWidth);
-	
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
 	ImGui::Text("%s", Label);
 
-	ImGui::NextColumn();
+	// --- Value cell (XYZ controls) ---
+	ImGui::TableSetColumnIndex(1);
+	const float ButtonWidth = LineHeight * 0.90f;
+	const ImVec2 ButtonSize(ButtonWidth, LineHeight);
 
-	// Drag Floats
-	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+	const float Avail = ImGui::GetContentRegionAvail().x;
+	const float TotalButtons = 3.0f * ButtonSize.x;
+	const float TotalGaps = 8.0f * Gap;
+	float DragWidth = (Avail - TotalButtons - TotalGaps) / 3.0f;
 
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+	const float MinDragWidthForSingleRow = 38.0f;
+	const bool bStacked = (DragWidth < MinDragWidthForSingleRow);
 
-	const float  LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-	const ImVec2 ButtonSize = ImVec2(LineHeight + 3.0f, LineHeight);
-
-	// X
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.2f, 0.2f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
-
-	if (ImGui::Button("X", ButtonSize))
+	auto Axis = [&](const char* AxisLabel, float& V, const ImVec4& Btn, const ImVec4& Hover, const ImVec4& Active, float InDragWidth, bool bSameLine)
 	{
-		OutValue.X = ResetValue;
-		bResult    = true;
+		if (bSameLine)
+		{
+			ImGui::SameLine(0.0f, Gap);
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Gap, 0.0f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+
+		ImGui::PushStyleColor(ImGuiCol_Button, Btn);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Hover);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, Active);
+
+		if (ImGui::Button(AxisLabel, ButtonSize))
+		{
+			V = ResetValue;
+			bResult = true;
+		}
+		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+		ImGui::PopStyleColor(3);
+
+		ImGui::SameLine(0.0f, Gap);
+		ImGui::SetNextItemWidth(InDragWidth);
+
+		const char* DragId = (AxisLabel[0] == 'X') ? "##X" : (AxisLabel[0] == 'Y') ? "##Y" : "##Z";
+		bResult |= ImGui::DragFloat(DragId, &V, Speed, 0.0f, 0.0f, "%.3f");
+		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+		ImGui::PopStyleVar(2);
+	};
+
+	if (!bStacked)
+	{
+		DragWidth = ImMax(DragWidth, 1.0f);
+
+		Axis("X", OutValue.X,
+			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
+			ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
+			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
+			DragWidth, false);
+
+		Axis("Y", OutValue.Y,
+			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
+			ImVec4(0.3f, 0.8f, 0.3f, 1.0f),
+			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
+			DragWidth, true);
+
+		Axis("Z", OutValue.Z,
+			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
+			ImVec4(0.2f, 0.35f, 0.9f, 1.0f),
+			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
+			DragWidth, true);
+	}
+	else
+	{
+		const float StackedDragWidth = ImMax(Avail - ButtonSize.x - Gap, 1.0f);
+
+		Axis("X", OutValue.X,
+			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
+			ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
+			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
+			StackedDragWidth, false);
+
+		Axis("Y", OutValue.Y,
+			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
+			ImVec4(0.3f, 0.8f, 0.3f, 1.0f),
+			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
+			StackedDragWidth, false);
+
+		Axis("Z", OutValue.Z,
+			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
+			ImVec4(0.2f, 0.35f, 0.9f, 1.0f),
+			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
+			StackedDragWidth, false);
 	}
 
-	ImGui::PopStyleColor(3);
+	// --- Revert column ---
+	ImGui::TableSetColumnIndex(2);
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
 
-	ImGui::SameLine();
-	
-	ImGui::DragFloat("##X", &OutValue.X, Speed);
-	
-	ImGui::PopItemWidth();
-
-	ImGui::SameLine();
-
-	// Y
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-
-	if (ImGui::Button("Y", ButtonSize))
+	const bool bCanRevert = (InRevertValue != nullptr);
+	if (!bCanRevert)
 	{
-		OutValue.Y = ResetValue;
-		bResult    = true;
+		ImGui::BeginDisabled();
 	}
 
-	ImGui::PopStyleColor(3);
-
-	ImGui::SameLine();
-	
-	ImGui::DragFloat("##Y", &OutValue.Y, Speed);
-	
-	ImGui::PopItemWidth();
-
-	ImGui::SameLine();
-
-	// Z
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.2f, 0.35f, 0.9f, 1.0f));
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
-	
-	if (ImGui::Button("Z", ButtonSize))
+	if (ImGui::SmallButton("R"))
 	{
-		OutValue.Z = ResetValue;
-		bResult    = true;
+		OutValue = *InRevertValue;
+		bResult = true;
 	}
 
-	ImGui::PopStyleColor(3);
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
-	ImGui::SameLine();
+	if (!bCanRevert)
+	{
+		ImGui::EndDisabled();
+	}
 
-	ImGui::DragFloat("##Z", &OutValue.Z, Speed);
-	
-	ImGui::PopItemWidth();
-
-	// Reset
-	ImGui::PopStyleVar(2);
-	
-	ImGui::Columns(1);
-
+	ApplyHoveredRowBg(bRowHovered);
 	ImGui::PopID();
 	return bResult;
+}
+
+bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled)
+{
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		return false;
+	}
+
+	const float RowHeight = ImGui::GetFrameHeight();
+
+	ImGui::TableNextRow();
+
+	bool bResult = false;
+	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextUnformatted(Label);
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushID(Label);
+
+	if (!bEnabled)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	if (bUseSlider)
+	{
+		bResult = ImGui::SliderFloat("##Value", &InOutValue, MinValue, MaxValue, Format);
+	}
+	else
+	{
+		bResult = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
+	}
+
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+	bRowHovered |= ImGui::IsItemActive();
+
+	if (!bEnabled)
+	{
+		ImGui::EndDisabled();
+	}
+
+	ImGui::PopID();
+
+	ImGui::TableSetColumnIndex(2);
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
+
+	const bool bCanRevert = (InRevertValue != nullptr);
+	if (!bCanRevert || !bEnabled)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	if (ImGui::SmallButton("R") && bCanRevert)
+	{
+		InOutValue = *InRevertValue;
+		bResult = true;
+	}
+
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	if (!bCanRevert || !bEnabled)
+	{
+		ImGui::EndDisabled();
+	}
+
+	ApplyHoveredRowBg(bRowHovered);
+	return bEnabled && bResult;
+}
+
+bool EditorWidgets::DrawCheckboxProperty(const char* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled)
+{
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		return false;
+	}
+
+	const float RowHeight = ImGui::GetFrameHeight();
+
+	ImGui::TableNextRow();
+
+	bool bResult = false;
+	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextUnformatted(Label);
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushID(Label);
+
+	if (!bEnabled)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	bResult = ImGui::Checkbox("##Value", &InOutValue);
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+	bRowHovered |= ImGui::IsItemActive();
+
+	if (!bEnabled)
+	{
+		ImGui::EndDisabled();
+	}
+
+	ImGui::PopID();
+
+	ImGui::TableSetColumnIndex(2);
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
+
+	const bool bCanRevert = (InRevertValue != nullptr);
+	if (!bCanRevert || !bEnabled)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	if (ImGui::SmallButton("R") && bCanRevert)
+	{
+		InOutValue = *InRevertValue;
+		bResult = true;
+	}
+
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	if (!bCanRevert || !bEnabled)
+	{
+		ImGui::EndDisabled();
+	}
+
+	ApplyHoveredRowBg(bRowHovered);
+	return bEnabled && bResult;
+}
+
+bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags)
+{
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		return false;
+	}
+
+	const float RowHeight = ImGui::GetFrameHeight();
+	
+	ImGui::TableNextRow();
+
+	bool bResult     = false;
+	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextUnformatted(Label);
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushID(Label);
+
+	if (!bEnabled)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	bResult = ImGui::ColorEdit3("##Value", InOutColor, Flags);
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+	bRowHovered |= ImGui::IsItemActive();
+
+	if (!bEnabled)
+	{
+		ImGui::EndDisabled();
+	}
+
+	ImGui::PopID();
+
+	ImGui::TableSetColumnIndex(2);
+	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
+
+	const bool bCanRevert = (InRevertColor != nullptr);
+	if (!bCanRevert || !bEnabled)
+	{
+		ImGui::BeginDisabled();
+	}
+
+	if (ImGui::SmallButton("R") && bCanRevert)
+	{
+		static constexpr uint64 SizeInBytes = sizeof(float[3]);
+		FMemory::Memcpy(InOutColor, InRevertColor, SizeInBytes);
+		bResult = true;
+	}
+
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	if (!bCanRevert || !bEnabled)
+	{
+		ImGui::EndDisabled();
+	}
+
+	ApplyHoveredRowBg(bRowHovered);
+	return bEnabled && bResult;
+}
+
+void EditorWidgets::DrawTextProperty(const char* Label, const char* ValueText)
+{
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		ImGui::Text("%s: %s", Label, ValueText ? ValueText : "");
+		return;
+	}
+
+	const float RowHeight = ImGui::GetFrameHeight();
+
+	ImGui::TableNextRow();
+
+	bool bResult     = false;
+	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextUnformatted(Label);
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::TextUnformatted(ValueText ? ValueText : "");
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	ImGui::TableSetColumnIndex(2);
+	ImGui::BeginDisabled();
+	ImGui::SmallButton("R");
+	ImGui::EndDisabled();
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	ApplyHoveredRowBg(bRowHovered);
+}
+
+void EditorWidgets::DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value)
+{
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		ImGui::Text("%s: %.3f %.3f %.3f", Label, Value.X, Value.Y, Value.Z);
+		return;
+	}
+
+	const float RowHeight = ImGui::GetFrameHeight();
+
+	ImGui::TableNextRow();
+
+	bool bResult     = false;
+	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+	ImGui::TableSetColumnIndex(0);
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextUnformatted(Label);
+
+	ImGui::TableSetColumnIndex(1);
+	float Temp[3] = { Value.X, Value.Y, Value.Z };
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	ImGui::InputFloat3("##Value", Temp, "%.3f", ImGuiInputTextFlags_ReadOnly);
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	ImGui::TableSetColumnIndex(2);
+	ImGui::BeginDisabled();
+	ImGui::SmallButton("R");
+	ImGui::EndDisabled();
+	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	ApplyHoveredRowBg(bRowHovered);
 }
 
 void EditorWidgets::EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize)
@@ -373,4 +801,97 @@ void EditorWidgets::EditorResetMenuPopup()
 {
 	ImGui::PopStyleColor();
 	ImGui::PopStyleVar(5);
+}
+
+bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWidth, float RevertColumnWidth)
+{
+	// Tighter spacing (reduces the gap between label and widgets)
+	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(6.0f, 4.0f));
+
+	// Darker borders (more Unreal-like)
+	ImVec4 BorderStrong = ImGui::GetStyleColorVec4(ImGuiCol_Border);
+	BorderStrong.x *= 0.55f; BorderStrong.y *= 0.55f; BorderStrong.z *= 0.55f; BorderStrong.w = 1.0f;
+
+	ImVec4 BorderLight = BorderStrong;
+	BorderLight.x *= 0.85f; BorderLight.y *= 0.85f; BorderLight.z *= 0.85f; BorderLight.w = 1.0f;
+
+	ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, BorderStrong);
+	ImGui::PushStyleColor(ImGuiCol_TableBorderLight, BorderLight);
+
+	// Brighter row backgrounds (more Unreal-like). Default ImGui table row colors
+	// can be transparent depending on theme, so derive from WindowBg for consistency.
+	ImVec4 WindowBg = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
+	ImVec4 RowBg = WindowBg;
+	ImVec4 RowBgAlt = WindowBg;
+
+	RowBg.x = ImMin(RowBg.x + 0.05f, 1.0f);
+	RowBg.y = ImMin(RowBg.y + 0.05f, 1.0f);
+	RowBg.z = ImMin(RowBg.z + 0.05f, 1.0f);
+
+	RowBgAlt.x = ImMin(RowBgAlt.x + 0.07f, 1.0f);
+	RowBgAlt.y = ImMin(RowBgAlt.y + 0.07f, 1.0f);
+	RowBgAlt.z = ImMin(RowBgAlt.z + 0.07f, 1.0f);
+
+	ImGui::PushStyleColor(ImGuiCol_TableRowBg, RowBg);
+	ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, RowBgAlt);
+
+	const ImGuiTableFlags Flags =
+		ImGuiTableFlags_SizingStretchProp |
+		ImGuiTableFlags_BordersInnerV |
+		ImGuiTableFlags_BordersInnerH |
+		ImGuiTableFlags_BordersOuterV |
+		ImGuiTableFlags_BordersOuterH |
+		ImGuiTableFlags_RowBg |
+		ImGuiTableFlags_NoSavedSettings |
+		ImGuiTableFlags_Resizable;
+
+	if (!ImGui::BeginTable(TableId, 3, Flags))
+	{
+		ImGui::PopStyleColor(4);
+		ImGui::PopStyleVar();
+		return false;
+	}
+
+	ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, LabelColumnWidth);
+	ImGui::TableSetupColumn("##Value", ImGuiTableColumnFlags_WidthStretch);
+	ImGui::TableSetupColumn("##Revert", ImGuiTableColumnFlags_WidthFixed, RevertColumnWidth);
+
+	return true;
+}
+
+void EditorWidgets::EndPropertyTable()
+{
+	ImGui::EndTable();
+	ImGui::PopStyleColor(4); // TableBorderStrong, TableBorderLight, TableRowBg, TableRowBgAlt
+	ImGui::PopStyleVar();    // CellPadding
+}
+
+void EditorWidgets::PropertySeparatorRow(float PaddingY)
+{
+	ImGuiTable* Table = ImGui::GetCurrentTable();
+	if (!Table)
+	{
+		ImGui::Separator();
+		return;
+	}
+
+	ImGui::TableNextRow();
+	const int ColumnCount = ImGui::TableGetColumnCount();
+	for (int ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
+	{
+		ImGui::TableSetColumnIndex(ColumnIndex);
+		ImGui::Separator();
+	}
+}
+
+void EditorWidgets::PropertyRowLabel(const char* Label)
+{
+	ImGui::TableNextRow();
+	ImGui::TableSetColumnIndex(0);
+
+	ImGui::AlignTextToFramePadding();
+	ImGui::TextUnformatted(Label);
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::SetNextItemWidth(-FLT_MIN); // fill available width
 }

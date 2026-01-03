@@ -1,4 +1,5 @@
 #include "Engine/EditorEngine.h"
+#include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
@@ -53,9 +54,9 @@ void FEditorPropertiesWidget::Draw()
 
 void FEditorPropertiesWidget::DrawWindowContents()
 {
-	FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
-	FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
-	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
+	FActor* SelectedActor = EditorEngine->GetSelectedActor();
+	FLight* SelectedLight = EditorEngine->GetSelectedLight();
+	FCamera* SelectedCamera = EditorEngine->GetSelectedCamera();
 	FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
 
 	if (!SelectedActor && !SelectedLight && !SelectedCamera && !SelectedLightProbe)
@@ -69,12 +70,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		static constexpr uint32 LabelLength = 256;
 		char Label[LabelLength];
 		FCString::Snprintf(Label, LabelLength, "%s", InLabel);
-		
+
 		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, ImVec2(0.1f, 0.5f));
-
 		ImGui::SeparatorText(Label);
-
 		ImGui::PopStyleVar(2);
 	};
 
@@ -87,7 +86,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::PropertiesCollapsingFramePadding);
 
 		const bool bResult = ImGui::CollapsingHeader(Label, Flags);
-
 		ImGui::PopStyleVar(3);
 
 		if (bResult)
@@ -100,7 +98,12 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		return bResult;
 	};
 
+	static constexpr float LabelColumnWidth  = 200.0f;
+	static constexpr float RevertColumnWidth = 24.0f;
+
+	// ------------------------------------------------------------
 	// Actor properties
+	// ------------------------------------------------------------
 	if (SelectedActor)
 	{
 		ImGui::PushID(SelectedActor);
@@ -110,339 +113,331 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
 		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			// Translation
-			FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
-			EditorWidgets::DrawFloat3Control("Translation", Translation);
-			SelectedActor->GetTransform().SetTranslation(Translation);
-
-			// Rotation (degrees UI)
-			FVector3 Rotation = SelectedActor->GetTransform().GetRotation();
-			Rotation = FVector3::RadiansToDegrees(Rotation);
-			
-			EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
-
-			Rotation = FVector3::DegreesToRadians(Rotation);
-			SelectedActor->GetTransform().SetRotation(Rotation);
-
-			// Scale + optional uniform scaling toggle
-			static bool bUniformScale = false;
-
-			FVector3 Scale0 = SelectedActor->GetTransform().GetScale();
-			FVector3 Scale1 = Scale0;
-
-			EditorWidgets::DrawFloat3Control("Scale", Scale0, 1.0f);
-
-			ImGui::SameLine();
-			ImGui::Checkbox("##UniformScale", &bUniformScale);
-
-			if (ImGui::IsItemHovered())
+			if (EditorWidgets::BeginPropertyTable("##ActorTransformTable", LabelColumnWidth, RevertColumnWidth))
 			{
-				ImGui::SetTooltip("Enable Uniform Scaling");
-			}
+				// Translation
+				{
+					FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
+					const FVector3 Translation0 = Translation;
+					if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, LabelColumnWidth, 0.01f, &Translation0))
+					{
+						SelectedActor->GetTransform().SetTranslation(Translation);
+					}
+				}
 
-			if (bUniformScale)
-			{
-				if (Scale1.X != Scale0.X) 
+				// Rotation (degrees UI)
 				{
-					Scale0.Y = Scale0.X; 
-					Scale0.Z = Scale0.X; 
-				}
-				else if (Scale1.Y != Scale0.Y) 
-				{
-					Scale0.X = Scale0.Y; 
-					Scale0.Z = Scale0.Y;
-				}
-				else if (Scale1.Z != Scale0.Z)
-				{
-					Scale0.X = Scale0.Z;
-					Scale0.Y = Scale0.Z;
-				}
-			}
+					FVector3 Rotation = SelectedActor->GetTransform().GetRotation();
+					Rotation = FVector3::RadiansToDegrees(Rotation);
 
-			SelectedActor->GetTransform().SetScale(Scale0);
+					const FVector3 Rotation0 = Rotation;
+					if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, LabelColumnWidth, 0.25f, &Rotation0))
+					{
+						const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
+						SelectedActor->GetTransform().SetRotation(Radians);
+					}
+				}
+
+				// Scale
+				{
+					static bool bUniformScale = false;
+					const bool bUniformScale0 = bUniformScale;
+
+					FVector3 Scale = SelectedActor->GetTransform().GetScale();
+					const FVector3 ScaleOriginal = Scale;
+					const FVector3 ScaleBefore   = Scale;
+
+					const bool bScaleChanged   = EditorWidgets::DrawFloat3Control("Scale", Scale, 1.0f, LabelColumnWidth, 0.01f, &ScaleOriginal);
+					const bool bUniformChanged = EditorWidgets::DrawCheckboxProperty("Uniform Scale", bUniformScale, &bUniformScale0);
+
+					if (bUniformScale)
+					{
+						if (ScaleBefore.X != Scale.X)
+						{
+							Scale.Y = Scale.X;
+							Scale.Z = Scale.X;
+						}
+						else if (ScaleBefore.Y != Scale.Y)
+						{
+							Scale.X = Scale.Y;
+							Scale.Z = Scale.Y;
+						}
+						else if (ScaleBefore.Z != Scale.Z)
+						{
+							Scale.X = Scale.Z;
+							Scale.Y = Scale.Z;
+						}
+					}
+
+					if (bScaleChanged || bUniformChanged)
+					{
+						SelectedActor->GetTransform().SetScale(Scale);
+					}
+				}
+
+				EditorWidgets::EndPropertyTable();
+			}
 		}
 
-		// MeshComponent (moved here from hierarchy) :contentReference[oaicite:5]{index=5}
+		// MeshComponent
 		if (FStaticMeshComponent* MeshComponent = SelectedActor->GetComponentOfType<FStaticMeshComponent>())
 		{
 			if (DrawCollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				const float ColumnWidth = 200.0f;
-
-				ImGui::Columns(2, nullptr, false);
-				ImGui::SetColumnWidth(0, ColumnWidth);
-
-				FMaterialInfo MaterialInfo = MeshComponent->GetMaterial()->GetMaterialInfo();
-
-				// Albedo
-				ImGui::Text("Albedo");
-				ImGui::NextColumn();
-
-				if (EditorWidgets::DrawColorEdit3("##Albedo", MaterialInfo.Albedo))
+				if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialTable", LabelColumnWidth, RevertColumnWidth))
 				{
-					MeshComponent->GetMaterial()->SetAlbedo(MaterialInfo.Albedo);
+					FMaterialInfo MaterialInfo = MeshComponent->GetMaterial()->GetMaterialInfo();
+					const FMaterialInfo MaterialOriginal = MaterialInfo;
+
+					// Albedo
+					{
+						FFloatColor Albedo = MaterialInfo.Albedo;
+						const FFloatColor Albedo0 = MaterialOriginal.Albedo;
+
+						if (EditorWidgets::DrawColor3Property("Albedo", Albedo, Albedo0))
+						{
+							MeshComponent->GetMaterial()->SetAlbedo(Albedo);
+						}
+					}
+
+					// Roughness
+					{
+						float Roughness = MaterialInfo.Roughness;
+						const float Roughness0 = MaterialOriginal.Roughness;
+
+						if (EditorWidgets::DrawFloatProperty("Roughness", Roughness, 0.01f, 0.01f, 1.0f, "%.2f", true, &Roughness0))
+						{
+							MeshComponent->GetMaterial()->SetRoughness(Roughness);
+						}
+					}
+
+					// Metallic
+					{
+						float Metallic = MaterialInfo.Metallic;
+						const float Metallic0 = MaterialOriginal.Metallic;
+
+						if (EditorWidgets::DrawFloatProperty("Metallic", Metallic, 0.01f, 0.01f, 1.0f, "%.2f", true, &Metallic0))
+						{
+							MeshComponent->GetMaterial()->SetMetallic(Metallic);
+						}
+					}
+
+					// AO
+					{
+						float AO = MaterialInfo.AmbientOcclusion;
+						const float AO0 = MaterialOriginal.AmbientOcclusion;
+						
+						if (EditorWidgets::DrawFloatProperty("AO", AO, 0.01f, 0.01f, 1.0f, "%.2f", true, &AO0))
+						{
+							MeshComponent->GetMaterial()->SetAmbientOcclusion(AO);
+						}
+					}
+
+					EditorWidgets::EndPropertyTable();
 				}
-
-				// Roughness
-				ImGui::NextColumn();
-				ImGui::Text("Roughness");
-				ImGui::NextColumn();
-
-				if (ImGui::SliderFloat("##Roughness", &MaterialInfo.Roughness, 0.01f, 1.0f, "%.2f"))
-				{
-					MeshComponent->GetMaterial()->SetRoughness(MaterialInfo.Roughness);
-				}
-
-				// Metallic
-				ImGui::NextColumn();
-				ImGui::Text("Metallic");
-				ImGui::NextColumn();
-				
-				if (ImGui::SliderFloat("##Metallic", &MaterialInfo.Metallic, 0.01f, 1.0f, "%.2f"))
-				{
-					MeshComponent->GetMaterial()->SetMetallic(MaterialInfo.Metallic);
-				}
-
-				// AO
-				ImGui::NextColumn();
-				ImGui::Text("AO");
-				ImGui::NextColumn();
-
-				if (ImGui::SliderFloat("##AO", &MaterialInfo.AmbientOcclusion, 0.01f, 1.0f, "%.2f"))
-				{
-					MeshComponent->GetMaterial()->SetAmbientOcclusion(MaterialInfo.AmbientOcclusion);
-				}
-
-				ImGui::Columns(1);
 			}
 		}
 
 		ImGui::PopID();
+		return;
 	}
-	// Light Properties
-	else if (SelectedLight) 
+
+	// ------------------------------------------------------------
+	// Light properties
+	// ------------------------------------------------------------
+	if (SelectedLight)
 	{
 		ImGui::PushID(SelectedLight);
-
-		const float ColumnWidth = 200.0f;
 
 		// Point light
 		if (FPointLight* Point = Cast<FPointLight>(SelectedLight))
 		{
 			DrawLabelWithSeperator("PointLight");
 
-			// PointLight
 			if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::Columns(2, nullptr, false);
-				ImGui::SetColumnWidth(0, ColumnWidth);
-
-				ImGui::Text("Color");
-				ImGui::NextColumn();
-
-				FVector3 Color = Point->GetColor();
-				if (EditorWidgets::DrawColorEdit3("##Color", Color))
+				if (EditorWidgets::BeginPropertyTable("##PointLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
 				{
-					Point->SetColor(Color);
+					FVector3 Color = Point->GetColor();
+					const FVector3 Color0 = Color;
+					
+					if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
+					{
+						Point->SetColor(Color);
+					}
+
+					float Intensity = Point->GetIntensity();
+					const float Intensity0 = Intensity;
+					
+					if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
+					{
+						Point->SetIntensity(Intensity);
+					}
+
+					EditorWidgets::EndPropertyTable();
 				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Intensity");
-				ImGui::NextColumn();
-
-				float Intensity = Point->GetIntensity();
-				if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
-				{
-					Point->SetIntensity(Intensity);
-				}
-
-				ImGui::Columns(1);
 			}
 
 			if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				FVector3 Translation = Point->GetPosition();
-				EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
-				Point->SetPosition(Translation);
+				if (EditorWidgets::BeginPropertyTable("##PointLightTransformTable", LabelColumnWidth, RevertColumnWidth))
+				{
+					FVector3 Translation = Point->GetPosition();
+					const FVector3 Translation0 = Translation;
+					
+					if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, LabelColumnWidth, 0.01f, &Translation0))
+					{
+						Point->SetPosition(Translation);
+					}
+
+					EditorWidgets::EndPropertyTable();
+				}
 			}
 
 			if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::Columns(2, nullptr, false);
-				ImGui::SetColumnWidth(0, ColumnWidth);
-
-				ImGui::Text("Shadow-bias");
-				ImGui::NextColumn();
-
-				float ShadowBias = Point->GetShadowBias();
-				if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+				if (EditorWidgets::BeginPropertyTable("##PointLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
 				{
-					Point->SetShadowBias(ShadowBias);
+					float ShadowBias = Point->GetShadowBias();
+					const float ShadowBias0 = ShadowBias;
+					
+					if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
+					{
+						Point->SetShadowBias(ShadowBias);
+					}
+
+					float ShadowNearPlane = Point->GetShadowNearPlane();
+					const float ShadowNearPlane0 = ShadowNearPlane;
+					
+					if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 0.01f, 0.01f, 1.0f, "%.2f", true, &ShadowNearPlane0))
+					{
+						Point->SetShadowNearPlane(ShadowNearPlane);
+					}
+
+					float ShadowFarPlane = Point->GetShadowFarPlane();
+					const float ShadowFarPlane0 = ShadowFarPlane;
+
+					if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 1.0f, 100.0f, "%.1f", true, &ShadowFarPlane0))
+					{
+						Point->SetShadowFarPlane(ShadowFarPlane);
+					}
+
+					EditorWidgets::EndPropertyTable();
 				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Shadow near-plane");
-				ImGui::NextColumn();
-
-				float ShadowNearPlane = Point->GetShadowNearPlane();
-				if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.01f, 1.0f, "%0.2f"))
-				{
-					Point->SetShadowNearPlane(ShadowNearPlane);
-				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Shadow far-plane");
-				ImGui::NextColumn();
-
-				float ShadowFarPlane = Point->GetShadowFarPlane();
-				if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 1.0f, 100.0f, "%.1f"))
-				{
-					Point->SetShadowFarPlane(ShadowFarPlane);
-				}
-
-				ImGui::Columns(1);
 			}
 		}
 		else if (FDirectionalLight* Dir = Cast<FDirectionalLight>(SelectedLight))
 		{
 			DrawLabelWithSeperator("DirectionalLight");
 
-			// Directional light
 			if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::Columns(2, nullptr, false);
-				ImGui::SetColumnWidth(0, ColumnWidth);
-
-				ImGui::Text("Color");
-				ImGui::NextColumn();
-
-				FVector3 Color = Dir->GetColor();
-				if (EditorWidgets::DrawColorEdit3("##Color", Color))
+				if (EditorWidgets::BeginPropertyTable("##DirLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
 				{
-					Dir->SetColor(Color);
+					FVector3 Color = Dir->GetColor();
+					const FVector3 Color0 = Color;
+
+					if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
+					{
+						Dir->SetColor(Color);
+					}
+
+					float Intensity = Dir->GetIntensity();
+					const float Intensity0 = Intensity;
+
+					if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
+					{
+						Dir->SetIntensity(Intensity);
+					}
+
+					EditorWidgets::EndPropertyTable();
 				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Intensity");
-				ImGui::NextColumn();
-
-				float Intensity = Dir->GetIntensity();
-				if (ImGui::SliderFloat("##Intensity", &Intensity, 0.01f, 1000.0f, "%.2f"))
-				{
-					Dir->SetIntensity(Intensity);
-				}
-
-				ImGui::Columns(1);
 			}
 
 			if (DrawCollapsingHeader("Direction", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::Columns(2, nullptr, false);
-				ImGui::SetColumnWidth(0, ColumnWidth);
-
-				bool bSetRotation = false;
-				FVector3 Rotation = Dir->GetRotation();
-
-				ImGui::Text("Rotation theta (degrees)");
-				ImGui::NextColumn();
-
-				float RotationTheta = Math::RadiansToDegrees(Rotation.X);
-				if (ImGui::SliderFloat("##RotationTheta", &RotationTheta, -90.0f, 90.0f, "%.2f"))
+				if (EditorWidgets::BeginPropertyTable("##DirLightDirectionTable", LabelColumnWidth, RevertColumnWidth))
 				{
-					bSetRotation = true;
+					FVector3 Rotation = Dir->GetRotation();
+					
+					float RotationTheta = Math::RadiansToDegrees(Rotation.X);
+					float RotationPhi   = Math::RadiansToDegrees(Rotation.Y);
+
+					const float RotationTheta0 = RotationTheta;
+					const float RotationPhi0 = RotationPhi;
+
+					bool bSetRotation = false;
+					bSetRotation |= EditorWidgets::DrawFloatProperty("Rotation theta (degrees)", RotationTheta, 0.25f, -90.0f, 90.0f, "%.2f", true, &RotationTheta0);
+					bSetRotation |= EditorWidgets::DrawFloatProperty("Rotation phi (degrees)", RotationPhi, 0.25f, 0.0f, 360.0f, "%.2f", true, &RotationPhi0);
+
+					if (bSetRotation)
+					{
+						Rotation.X = Math::DegreesToRadians(RotationTheta);
+						Rotation.Y = Math::DegreesToRadians(RotationPhi);
+						Dir->SetRotation(Rotation);
+					}
+
+					const FVector3 Direction = Dir->GetDirectionVector();
+					EditorWidgets::DrawReadOnlyFloat3Property("Direction", Direction);
+
+					EditorWidgets::EndPropertyTable();
 				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Rotation phi (degrees)");
-				ImGui::NextColumn();
-
-				float RotationPhi = Math::RadiansToDegrees(Rotation.Y);
-				if (ImGui::SliderFloat("##RotationPhi", &RotationPhi, 0.0f, 360.0f, "%.2f"))
-				{
-					bSetRotation = true;
-				}
-
-				if (bSetRotation)
-				{
-					Rotation.X = Math::DegreesToRadians(RotationTheta);
-					Rotation.Y = Math::DegreesToRadians(RotationPhi);
-					Dir->SetRotation(Rotation);
-				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Direction");
-				ImGui::NextColumn();
-				FVector3 Direction = Dir->GetDirectionVector();
-				ImGui::InputFloat3("##Direction", Direction.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
-
-				ImGui::Columns(1);
 			}
 
 			if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::Columns(2, nullptr, false);
-				ImGui::SetColumnWidth(0, ColumnWidth);
-
-				ImGui::Text("Shadow-bias");
-				ImGui::NextColumn();
-
-				float ShadowBias = Dir->GetShadowBias();
-				if (ImGui::SliderFloat("##ShadowBias", &ShadowBias, 0.0001f, 0.1f, "%.4f"))
+				if (EditorWidgets::BeginPropertyTable("##DirLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
 				{
-					Dir->SetShadowBias(ShadowBias);
+					float ShadowBias = Dir->GetShadowBias();
+					const float ShadowBias0 = ShadowBias;
+					
+					if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
+					{
+						Dir->SetShadowBias(ShadowBias);
+					}
+
+					float Lambda = Dir->GetCascadeSplitLambda();
+					const float Lambda0 = Lambda;
+					
+					if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0))
+					{
+						Dir->SetCascadeSplitLambda(Lambda);
+					}
+
+					float Offset = Dir->GetShadowPositionOffset();
+					const float Offset0 = Offset;
+					
+					if (EditorWidgets::DrawFloatProperty("Cascade Position Offset", Offset, 1.0f, 0.0f, 1000.0f, "%.1f", true, &Offset0))
+					{
+						Dir->SetShadowPositionOffset(Offset);
+					}
+
+					float ShadowNearPlane = Dir->GetShadowNearPlane();
+					const float ShadowNearPlane0 = ShadowNearPlane;
+					
+					if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowNearPlane0))
+					{
+						Dir->SetShadowNearPlane(ShadowNearPlane);
+					}
+
+					float ShadowFarPlane = Dir->GetShadowFarPlane();
+					const float ShadowFarPlane0 = ShadowFarPlane;
+					
+					if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowFarPlane0))
+					{
+						Dir->SetShadowFarPlane(ShadowFarPlane);
+					}
+
+					float LightArea = Dir->GetLightArea();
+					const float LightArea0 = LightArea;
+
+					if (EditorWidgets::DrawFloatProperty("Light area", LightArea, 0.01f, 0.0f, 1.0f, "%.2f", true, &LightArea0))
+					{
+						Dir->SetLightArea(LightArea);
+					}
+
+					EditorWidgets::EndPropertyTable();
 				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Cascade Split Lambda");
-				ImGui::NextColumn();
-
-				float Lambda = Dir->GetCascadeSplitLambda();
-				if (ImGui::SliderFloat("##CascadeSplitLambda", &Lambda, 0.0f, 1.0f, "%.2f"))
-				{
-					Dir->SetCascadeSplitLambda(Lambda);
-				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Cascade Position Offset");
-				ImGui::NextColumn();
-
-				float Offset = Dir->GetShadowPositionOffset();
-				if (ImGui::SliderFloat("##CascadePositionOffset", &Offset, 0.0f, 1000.0f, "%.1f"))
-				{
-					Dir->SetShadowPositionOffset(Offset);
-				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Shadow near-plane");
-				ImGui::NextColumn();
-
-				float ShadowNearPlane = Dir->GetShadowNearPlane();
-				if (ImGui::SliderFloat("##ShadowNearPlane", &ShadowNearPlane, 0.0f, 1000.0f, "%.1f"))
-				{
-					Dir->SetShadowNearPlane(ShadowNearPlane);
-				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Shadow far-plane");
-				ImGui::NextColumn();
-
-				float ShadowFarPlane = Dir->GetShadowFarPlane();
-				if (ImGui::SliderFloat("##ShadowFarPlane", &ShadowFarPlane, 0.0f, 1000.0f, "%.1f"))
-				{
-					Dir->SetShadowFarPlane(ShadowFarPlane);
-				}
-
-				ImGui::NextColumn();
-				ImGui::Text("Light area");
-				ImGui::NextColumn();
-
-				float LightArea = Dir->GetLightArea();
-				if (ImGui::SliderFloat("##LightArea", &LightArea, 0.0f, 1.0f, "%.2f"))
-				{
-					Dir->SetLightArea(LightArea);
-				}
-
-				ImGui::Columns(1);
 			}
 		}
 		else
@@ -451,9 +446,13 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		}
 
 		ImGui::PopID();
+		return;
 	}
-	// Camera Properties
-	else if (SelectedCamera)
+
+	// ------------------------------------------------------------
+	// Camera properties
+	// ------------------------------------------------------------
+	if (SelectedCamera)
 	{
 		ImGui::PushID(SelectedCamera);
 
@@ -461,32 +460,62 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
 		if (DrawCollapsingHeader("Projection", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::Text("Viewport size: %.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
-
-			float FieldOfView = SelectedCamera->GetFieldOfView();
-			if (ImGui::SliderFloat("Field Of View", &FieldOfView, 40.0f, 120.0f, "%.1f Degrees"))
+			if (EditorWidgets::BeginPropertyTable("##CameraProjectionTable", LabelColumnWidth, RevertColumnWidth))
 			{
-				SelectedCamera->SetFieldOfView(FieldOfView);
+				{
+					char ViewportText[64];
+					FCString::Snprintf(ViewportText, 64, "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
+					EditorWidgets::DrawTextProperty("Viewport size", ViewportText);
+				}
+
+				{
+					float FieldOfView = SelectedCamera->GetFieldOfView();
+					const float FieldOfView0 = FieldOfView;
+					
+					if (EditorWidgets::DrawFloatProperty("Field Of View", FieldOfView, 0.1f, 40.0f, 120.0f, "%.1f", true, &FieldOfView0))
+					{
+						SelectedCamera->SetFieldOfView(FieldOfView);
+					}
+				}
+
+				EditorWidgets::EndPropertyTable();
 			}
 		}
 
 		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			FVector3 Position = SelectedCamera->GetPosition();
-			EditorWidgets::DrawFloat3Control("Position", Position);
-			SelectedCamera->SetPosition(Position.X, Position.Y, Position.Z);
+			if (EditorWidgets::BeginPropertyTable("##CameraTransformTable", LabelColumnWidth, RevertColumnWidth))
+			{
+				FVector3 Position = SelectedCamera->GetPosition();
+				const FVector3 Position0 = Position;
+				
+				if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, LabelColumnWidth, 0.01f, &Position0))
+				{
+					SelectedCamera->SetPosition(Position.X, Position.Y, Position.Z);
+				}
 
-			FVector3 Rotation = SelectedCamera->GetRotation();
-			Rotation = FVector3::RadiansToDegrees(Rotation);
-			EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
-			Rotation = FVector3::DegreesToRadians(Rotation);
-			SelectedCamera->SetRotation(Rotation.X, Rotation.Y, Rotation.Z);
+				FVector3 Rotation = SelectedCamera->GetRotation();
+				Rotation = FVector3::RadiansToDegrees(Rotation);
+				
+				const FVector3 Rotation0 = Rotation;
+				if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, LabelColumnWidth, 0.25f, &Rotation0))
+				{
+					const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
+					SelectedCamera->SetRotation(Radians.X, Radians.Y, Radians.Z);
+				}
+
+				EditorWidgets::EndPropertyTable();
+			}
 		}
 
 		ImGui::PopID();
+		return;
 	}
-	// Light-Probe Properties
-	else if (SelectedLightProbe)
+
+	// ------------------------------------------------------------
+	// Light-Probe properties
+	// ------------------------------------------------------------
+	if (SelectedLightProbe)
 	{
 		ImGui::PushID(SelectedLightProbe);
 
@@ -494,28 +523,53 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
 		if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			FVector3 Position = SelectedLightProbe->GetPosition();
-			EditorWidgets::DrawFloat3Control("Position", Position);
-			SelectedLightProbe->SetPosition(Position);
+			if (EditorWidgets::BeginPropertyTable("##ProbeTransformTable", LabelColumnWidth, RevertColumnWidth))
+			{
+				FVector3 Position = SelectedLightProbe->GetPosition();
+				const FVector3 Position0 = Position;
+				
+				if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, LabelColumnWidth, 0.01f, &Position0))
+				{
+					SelectedLightProbe->SetPosition(Position);
+				}
+
+				EditorWidgets::EndPropertyTable();
+			}
 		}
 
 		if (DrawCollapsingHeader("Box Projection", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			FVector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
-			EditorWidgets::DrawFloat3Control("Box Extent", BoxExtent);
-			SelectedLightProbe->SetBoxExtent(BoxExtent);
-
-			FVector3 BoxOffset = SelectedLightProbe->GetBoxOffset();
-			EditorWidgets::DrawFloat3Control("Box Origin", BoxOffset);
-			SelectedLightProbe->SetBoxOffset(BoxOffset);
-
-			bool bBoxProjection = SelectedLightProbe->GetBoxProjection();
-			if (ImGui::Checkbox("Enable Box-Projection", &bBoxProjection))
+			if (EditorWidgets::BeginPropertyTable("##ProbeBoxProjectionTable", LabelColumnWidth, RevertColumnWidth))
 			{
-				SelectedLightProbe->SetBoxProjection(bBoxProjection);
+				FVector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
+				const FVector3 BoxExtent0 = BoxExtent;
+				
+				if (EditorWidgets::DrawFloat3Control("Box Extent", BoxExtent, 0.0f, LabelColumnWidth, 0.01f, &BoxExtent0))
+				{
+					SelectedLightProbe->SetBoxExtent(BoxExtent);
+				}
+
+				FVector3 BoxOffset = SelectedLightProbe->GetBoxOffset();
+				const FVector3 BoxOffset0 = BoxOffset;
+				
+				if (EditorWidgets::DrawFloat3Control("Box Origin", BoxOffset, 0.0f, LabelColumnWidth, 0.01f, &BoxOffset0))
+				{
+					SelectedLightProbe->SetBoxOffset(BoxOffset);
+				}
+
+				bool bBoxProjection = SelectedLightProbe->GetBoxProjection();
+				const bool bBoxProjection0 = bBoxProjection;
+				
+				if (EditorWidgets::DrawCheckboxProperty("Enable Box-Projection", bBoxProjection, &bBoxProjection0))
+				{
+					SelectedLightProbe->SetBoxProjection(bBoxProjection);
+				}
+
+				EditorWidgets::EndPropertyTable();
 			}
 		}
 
 		ImGui::PopID();
+		return;
 	}
 }

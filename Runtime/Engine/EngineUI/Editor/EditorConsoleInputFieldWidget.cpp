@@ -76,7 +76,7 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         };
 
         // Add some spacing before the input field
-        ImGui::Dummy(ImVec2(4.0f, 0.0f));
+        ImGui::Dummy(ImVec2(1.0f, 0.0f));
         ImGui::SameLine();
 
         const float InputFieldWidth = 512.0f;

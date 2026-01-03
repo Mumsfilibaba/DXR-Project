@@ -47,7 +47,22 @@ struct ENGINE_API EditorWidgets
 {
 	static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
 
-	static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f);
+	static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f, const FVector3* InRevertValue = nullptr);
+	static bool DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
+	static bool DrawCheckboxProperty(const char* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
+	static void DrawTextProperty(const char* Label, const char* ValueText);
+	static void DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value);
+	static bool DrawColor3Property(const char* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
+ 
+	static FORCEINLINE bool DrawColor3Property(const char* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+	{
+		return DrawColor3Property(Label, InOutColor.RGBA, InRevertColor.RGBA, bEnabled, Flags);
+	}
+
+	static FORCEINLINE bool DrawColor3Property(const char* Label, FVector3& InOutColor, const FVector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+	{
+		return DrawColor3Property(Label, InOutColor.XYZ, InRevertColor.XYZ, bEnabled, Flags);
+	}
 
 	static FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
 	{
@@ -65,4 +80,9 @@ struct ENGINE_API EditorWidgets
 	static void EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, const ImVec4& BrightPopupBg, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = true);
 	static bool EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, const ImVec4& BrightPopupBg, float MinWidth = 180.0f);
 	static void EditorResetMenuPopup();
+
+	static bool BeginPropertyTable(const char* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
+	static void EndPropertyTable();
+	static void PropertyRowLabel(const char* Label);
+	static void PropertySeparatorRow(float PaddingY = 4.0f);
 };
