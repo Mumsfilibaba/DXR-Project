@@ -133,7 +133,7 @@ void FEditorLogOutputWidget::DrawFilterBar()
 
 	ImGui::SetNextWindowPos(ImVec2(ButtonMin.x, ButtonMax.y), ImGuiCond_Always);
 
-	const float PopupWidth = 256.0f;
+	const float PopupWidth = 128.0f;
 	ImGui::SetNextWindowSize(ImVec2(PopupWidth, 0.0f), ImGuiCond_Appearing);
 
 	const ImVec4 PopupColor = Style.Colors[ImGuiCol_Button];
@@ -199,8 +199,8 @@ void FEditorLogOutputWidget::DrawLogList()
 	const float PaddingY = 4.0f;
     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PaddingY);
 
-    const bool bHasSearch = (SearchFilterBuffer[0] != 0);
-    const char* Search = SearchFilterBuffer.Data();
+    const bool  bHasSearch = (SearchFilterBuffer[0] != 0);
+    const char* Search     = SearchFilterBuffer.Data();
     for (int i = 0; i < Local.Size(); ++i)
     {
         const FLogMessage& Message = Local[i];
@@ -260,7 +260,6 @@ void FEditorLogOutputWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4.0f, 4.0f));
 
     const ImGuiWindowFlags OutputLogFlags = ImGuiWindowFlags_NoCollapse;
-    
     if (ImGui::Begin("Output Log", &bVisible, OutputLogFlags))
     {
         DrawFilterBar();

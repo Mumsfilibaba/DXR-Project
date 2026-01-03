@@ -152,419 +152,6 @@ void FEditorDockspaceWidget::Draw()
 	ImGui::End(); // Dockspace Host Window
 }
 
-#if 0 
-void FEditorDockspaceWidget::DrawMenuBar()
-{
-	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 10.0f)); // affects item height
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 8.0f));  // spacing between items
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 6.0f)); // padding inside the bar
-
-	if (ImGui::BeginMenuBar())
-	{
-		if (ImGui::BeginMenu("File"))
-		{
-			ImGui::MenuItem("New Level", "Ctrl+N");
-			ImGui::MenuItem("Open", "Ctrl+O");
-
-			ImGui::Separator();
-
-			ImGui::MenuItem("Save All", "Ctrl+Shift+S");
-
-			ImGui::Separator();
-
-			ImGui::MenuItem("Exit");
-
-			ImGui::EndMenu();
-		}
-
-		if (ImGui::BeginMenu("Edit"))
-		{
-			// TODO: Add a undo/redo system
-			//ImGui::MenuItem("Undo", "Ctrl+Z");
-			//ImGui::MenuItem("Redo", "Ctrl+Y");
-
-			//ImGui::Separator();
-
-			ImGui::MenuItem("Project Settings");
-			ImGui::MenuItem("Editor Preferences");
-
-			ImGui::EndMenu();
-		}
-
-		if (ImGui::BeginMenu("Windows"))
-		{
-			// TODO: Add this to the Editor Preferences
-			//if (ImGui::MenuItem("Reset Layout"))
-			//{
-			//	ImGuiID DockspaceId = ImGui::GetID("Dockspace");
-			//	ImGui::DockBuilderRemoveNode(DockspaceId);
-			//}
-
-			//ImGui::Separator();
-
-			ImGui::MenuItem("Properties", nullptr, true);
-			ImGui::MenuItem("Content Browser", nullptr, true);
-
-			// Engine widgets require engine pointer
-			if (EditorEngine)
-			{
-				if (FEditorLogOutputWidget* LogWidget = EditorEngine->GetLogOutputWidget().Get())
-				{
-					bool bLogVisible = LogWidget->IsVisible();
-					if (ImGui::MenuItem("Output Log", nullptr, bLogVisible))
-					{
-						LogWidget->SetVisible(!bLogVisible);
-					}
-				}
-				else
-				{
-					ImGui::MenuItem("Output Log", nullptr, false, false);
-				}
-
-				if (FEditorViewportWidget* EditorWidget = EditorEngine->GetEditorViewportWidget().Get())
-				{
-					bool bLogVisible = EditorWidget->IsVisible();
-					if (ImGui::MenuItem("Viewport", nullptr, bLogVisible))
-					{
-						EditorWidget->SetVisible(!bLogVisible);
-					}
-				}
-				else
-				{
-					ImGui::MenuItem("Viewport", nullptr, false, false);
-				}
-
-				if (FEditorSceneHierarchyWidget* SceneHierarchyWidget = EditorEngine->GetSceneHierarchyWidget().Get())
-				{
-					bool bLogVisible = SceneHierarchyWidget->IsVisible();
-					if (ImGui::MenuItem("Scene Hierarchy", nullptr, bLogVisible))
-					{
-						SceneHierarchyWidget->SetVisible(!bLogVisible);
-					}
-				}
-				else
-				{
-					ImGui::MenuItem("Scene Hierarchy", nullptr, false, false);
-				}
-			}
-
-			ImGui::EndMenu();
-		}
-
-		if (ImGui::BeginMenu("Help"))
-		{
-			ImGui::MenuItem("About");
-			ImGui::EndMenu();
-		}
-
-		ImGui::EndMenuBar();
-	}
-
-	ImGui::PopStyleVar(3);
-}
-#endif
-
-#if 0
-static bool StylizedMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true)
-{
-	const ImGuiStyle& S = ImGui::GetStyle();
-
-	const float PadX = 8.0f;
-	const float PadY = 6.0f;
-
-	// Explicit row height (independent of FramePadding)
-	const float RowH = ImGui::GetFontSize() + PadY * 2.0f;
-
-	// Explicit row width (span full popup work width)
-	const float RowW = ImGui::GetContentRegionAvail().x;
-
-	// Use an ID that won't collide if labels repeat
-	ImGui::PushID(Label);
-
-	if (!bEnabled) ImGui::BeginDisabled();
-
-	// Create the full-width, full-height hit box
-	const ImGuiSelectableFlags Flags =
-		ImGuiSelectableFlags_SpanAvailWidth |
-		ImGuiSelectableFlags_NoPadWithHalfSpacing;
-
-	bool pressed = ImGui::Selectable("##row", bSelected, Flags, ImVec2(RowW, RowH));
-
-	const bool hovered = ImGui::IsItemHovered();
-	const bool active = ImGui::IsItemActive();
-
-	// Row rect (screen space)
-	const ImVec2 rMin = ImGui::GetItemRectMin();
-	const ImVec2 rMax = ImGui::GetItemRectMax();
-
-	// Draw background using Header colors (Selectable uses these semantics)
-	ImU32 bg = ImGui::GetColorU32(ImGuiCol_Header);
-	if (active)  bg = ImGui::GetColorU32(ImGuiCol_HeaderActive);
-	else if (hovered) bg = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
-
-	ImDrawList* dl = ImGui::GetWindowDrawList();
-	dl->AddRectFilled(rMin, rMax, bg, 0.0f);
-
-	// Draw label text with padding
-	const ImVec2 labelSize = ImGui::CalcTextSize(Label);
-	const float textY = rMin.y + (RowH - labelSize.y) * 0.5f;
-	dl->AddText(ImVec2(rMin.x + PadX, textY), ImGui::GetColorU32(ImGuiCol_Text), Label);
-
-	// Draw shortcut right-aligned (optional)
-	if (Shortcut && Shortcut[0] != '\0')
-	{
-		const ImVec2 scSize = ImGui::CalcTextSize(Shortcut);
-		dl->AddText(ImVec2(rMax.x - PadX - scSize.x, textY),
-			ImGui::GetColorU32(ImGuiCol_TextDisabled),
-			Shortcut);
-	}
-
-	if (!bEnabled) ImGui::EndDisabled();
-
-	ImGui::PopID();
-	return bEnabled && pressed;
-}
-#endif
-
-#if 0
-static void DrawCheckMark(ImDrawList* DL, ImVec2 Pos, ImU32 Col, float Sz)
-{
-	// Simple check-mark using 2 lines (looks very close to ImGui’s menu checkmark)
-	// Pos is top-left of the check mark box.
-	const float thickness = ImMax(1.0f, Sz / 6.0f);
-
-	const ImVec2 a(Pos.x + Sz * 0.15f, Pos.y + Sz * 0.55f);
-	const ImVec2 b(Pos.x + Sz * 0.40f, Pos.y + Sz * 0.80f);
-	const ImVec2 c(Pos.x + Sz * 0.85f, Pos.y + Sz * 0.20f);
-
-	DL->AddLine(a, b, Col, thickness);
-	DL->AddLine(b, c, Col, thickness);
-}
-
-static bool StylizedMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true)
-{
-	const float PadX = 8.0f;
-	const float PadY = 6.0f;
-
-	const float RowH = ImGui::GetFontSize() + PadY * 2.0f;
-	const float RowW = ImGui::GetContentRegionAvail().x;
-
-	// Reserve a "gutter" on the left for checkmark (always), so labels align
-	const float CheckBoxSize = ImGui::GetFontSize() * 0.85f;      // size of check-box
-	const float CheckGutter = CheckBoxSize + PadX;               // gutter width
-
-	ImGui::PushID(Label);
-
-	if (!bEnabled) ImGui::BeginDisabled();
-
-	const ImGuiSelectableFlags Flags =
-		ImGuiSelectableFlags_SpanAvailWidth |
-		ImGuiSelectableFlags_NoPadWithHalfSpacing;
-
-	bool pressed = ImGui::Selectable("##row", false, Flags, ImVec2(RowW, RowH));
-
-	const bool hovered = ImGui::IsItemHovered();
-	const bool active = ImGui::IsItemActive();
-
-	const ImVec2 rMin = ImGui::GetItemRectMin();
-	const ImVec2 rMax = ImGui::GetItemRectMax();
-
-	ImDrawList* dl = ImGui::GetWindowDrawList();
-
-	// Background
-	ImU32 bg = ImGui::GetColorU32(ImGuiCol_Header);
-	if (active)       bg = ImGui::GetColorU32(ImGuiCol_HeaderActive);
-	else if (hovered) bg = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
-
-	dl->AddRectFilled(rMin, rMax, bg, 0.0f);
-
-	// Text baseline (center vertically)
-	const ImVec2 labelSize = ImGui::CalcTextSize(Label);
-	const float textY = rMin.y + (RowH - labelSize.y) * 0.5f;
-
-	// Checkmark (if selected)
-	if (bSelected)
-	{
-		const float checkY = rMin.y + (RowH - CheckBoxSize) * 0.5f;
-		const ImVec2 checkPos(rMin.x + PadX, checkY);
-		DrawCheckMark(dl, checkPos, ImGui::GetColorU32(ImGuiCol_Text), CheckBoxSize);
-	}
-
-	// Label text (shifted by gutter so it aligns whether checked or not)
-	dl->AddText(ImVec2(rMin.x + CheckGutter, textY),
-		ImGui::GetColorU32(ImGuiCol_Text),
-		Label);
-
-	// Shortcut (right aligned)
-	if (Shortcut && Shortcut[0] != '\0')
-	{
-		const ImVec2 scSize = ImGui::CalcTextSize(Shortcut);
-		dl->AddText(ImVec2(rMax.x - PadX - scSize.x, textY),
-			ImGui::GetColorU32(ImGuiCol_TextDisabled),
-			Shortcut);
-	}
-
-	if (!bEnabled) ImGui::EndDisabled();
-
-	ImGui::PopID();
-	return bEnabled && pressed;
-}
-#endif
-
-static void DrawCheckMark(ImDrawList* DL, ImVec2 Pos, ImU32 Col, float Sz)
-{
-	const float thickness = ImMax(1.0f, Sz / 6.0f);
-
-	const ImVec2 a(Pos.x + Sz * 0.15f, Pos.y + Sz * 0.55f);
-	const ImVec2 b(Pos.x + Sz * 0.40f, Pos.y + Sz * 0.80f);
-	const ImVec2 c(Pos.x + Sz * 0.85f, Pos.y + Sz * 0.20f);
-
-	DL->AddLine(a, b, Col, thickness);
-	DL->AddLine(b, c, Col, thickness);
-}
-
-static bool StylizedMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true)
-{
-	const float PadX = 8.0f;
-	const float PadY = 6.0f;
-
-	const float RowH = ImGui::GetFontSize() + PadY * 2.0f;
-	const float RowW = ImGui::GetContentRegionAvail().x;
-
-	const float CheckSize = ImGui::GetFontSize() * 0.85f;
-	const float GapRight = 8.0f; // gap between shortcut and checkmark (if both exist)
-
-	ImGui::PushID(Label);
-
-	if (!bEnabled) ImGui::BeginDisabled();
-
-	const ImGuiSelectableFlags Flags =
-		ImGuiSelectableFlags_SpanAvailWidth |
-		ImGuiSelectableFlags_NoPadWithHalfSpacing;
-
-	const bool pressed = ImGui::Selectable("##row", false, Flags, ImVec2(RowW, RowH));
-	const bool hovered = ImGui::IsItemHovered();
-	const bool active = ImGui::IsItemActive();
-
-	const ImVec2 rMin = ImGui::GetItemRectMin();
-	const ImVec2 rMax = ImGui::GetItemRectMax();
-
-	ImDrawList* dl = ImGui::GetWindowDrawList();
-
-	// Background
-	ImU32 bg = ImGui::GetColorU32(ImGuiCol_Header);
-	if (active)       bg = ImGui::GetColorU32(ImGuiCol_HeaderActive);
-	else if (hovered) bg = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
-	dl->AddRectFilled(rMin, rMax, bg, 0.0f);
-
-	// Vertical centering reference
-	const ImVec2 labelSize = ImGui::CalcTextSize(Label);
-	const float textY = rMin.y + (RowH - labelSize.y) * 0.5f;
-
-	// Compute right-side layout
-	const bool hasShortcut = (Shortcut && Shortcut[0] != '\0');
-	const ImVec2 scSize = hasShortcut ? ImGui::CalcTextSize(Shortcut) : ImVec2(0, 0);
-
-	// Right edge starts from the inside padding
-	float rightX = rMax.x - PadX;
-
-	// Checkmark position:
-	// - If shortcut exists: draw shortcut first (right-aligned), then check to its right.
-	// - If no shortcut: check goes flush to the right padding.
-	ImVec2 checkPos(0, 0);
-	if (bSelected)
-	{
-		const float checkY = rMin.y + (RowH - CheckSize) * 0.5f;
-		if (hasShortcut)
-		{
-			// reserve space: [shortcut][GapRight][check]
-			checkPos = ImVec2(rightX - CheckSize, checkY);
-			rightX -= (CheckSize + GapRight + scSize.x); // shrink available space for label
-		}
-		else
-		{
-			checkPos = ImVec2(rightX - CheckSize, checkY);
-			rightX -= CheckSize; // shrink available space for label
-		}
-	}
-	else
-	{
-		// no checkmark: only shortcut eats the right side
-		if (hasShortcut)
-			rightX -= scSize.x;
-	}
-
-	// Draw shortcut (so it sits left of the checkmark when checked)
-	if (hasShortcut)
-	{
-		// If checked, shortcut should end at: (checkPos.x - GapRight)
-		// If not checked, shortcut ends at: (rMax.x - PadX)
-		const float scRightEdge = bSelected ? (checkPos.x - GapRight) : (rMax.x - PadX);
-		const float scX = scRightEdge - scSize.x;
-		const float scY = rMin.y + (RowH - scSize.y) * 0.5f;
-
-		dl->AddText(ImVec2(scX, scY),
-			ImGui::GetColorU32(ImGuiCol_TextDisabled),
-			Shortcut);
-	}
-
-	// Draw checkmark last so it’s always crisp on top
-	if (bSelected)
-	{
-		DrawCheckMark(dl, checkPos, ImGui::GetColorU32(ImGuiCol_Text), CheckSize);
-	}
-
-	// Draw label (left aligned), but keep it from colliding with right-side stuff
-	// Clip label to [left, rightX] so long labels don't overlap shortcut/check.
-	const float labelX = rMin.x + PadX;
-	const float clipMaxX = (hasShortcut || bSelected) ? ((bSelected && hasShortcut) ? (checkPos.x - GapRight - 4.0f) : (rMax.x - PadX - (hasShortcut ? scSize.x : 0.0f) - 4.0f))
-		: (rMax.x - PadX);
-
-	dl->PushClipRect(ImVec2(labelX, rMin.y), ImVec2(clipMaxX, rMax.y), true);
-	dl->AddText(ImVec2(labelX, textY),
-		ImGui::GetColorU32(ImGuiCol_Text),
-		Label);
-	dl->PopClipRect();
-
-	if (!bEnabled) ImGui::EndDisabled();
-
-	ImGui::PopID();
-	return bEnabled && pressed;
-}
-
-
-static void StylizedMenuSeparator(float Thickness = 1.0f, float PaddingY = 0.0f)
-{
-	ImGuiWindow* Window = ImGui::GetCurrentWindow();
-	if (Window->SkipItems)
-		return;
-
-	// Space above
-	if (PaddingY > 0.0f)
-		ImGui::Dummy(ImVec2(0.0f, PaddingY));
-
-	const ImVec2 Min = ImGui::GetCursorScreenPos();
-	const float W = ImGui::GetContentRegionAvail().x;
-
-	// Use ImGui's separator color
-	const ImU32 Col = ImGui::GetColorU32(ImGuiCol_Separator);
-
-	// Draw line
-	ImGui::GetWindowDrawList()->AddLine(
-		Min,
-		ImVec2(Min.x + W, Min.y),
-		Col,
-		Thickness
-	);
-
-	// Advance cursor by line thickness
-	ImGui::Dummy(ImVec2(0.0f, Thickness));
-
-	// Space below
-	if (PaddingY > 0.0f)
-		ImGui::Dummy(ImVec2(0.0f, PaddingY));
-}
-
 void FEditorDockspaceWidget::DrawMenuBar()
 {
 	const ImGuiWindowFlags ToolbarFlags =
@@ -585,13 +172,6 @@ void FEditorDockspaceWidget::DrawMenuBar()
 	BrightPopupBg.x = (BrightPopupBg.x + 0.1f > 1.0f) ? 1.0f : (BrightPopupBg.x + 0.1f);
 	BrightPopupBg.y = (BrightPopupBg.y + 0.1f > 1.0f) ? 1.0f : (BrightPopupBg.y + 0.1f);
 	BrightPopupBg.z = (BrightPopupBg.z + 0.1f > 1.0f) ? 1.0f : (BrightPopupBg.z + 0.1f);
-
-	struct PopupAnchor
-	{
-		ImVec2 Min = ImVec2(0.0f, 0.0f);
-		ImVec2 Max = ImVec2(0.0f, 0.0f);
-		bool   bRequestPosition = false;
-	};
 
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
@@ -681,35 +261,6 @@ void FEditorDockspaceWidget::DrawMenuBar()
 			ImGui::PopStyleVar(5);
 		};
 
-		//const auto StylizedMenuItem = [](const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true)
-		//{
-		//	//ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 10.0f));
-		//	//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 10.0f));
-
-		//	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 12.0f));
-
-		//	//const bool bResult = ImGui::MenuItem(Label, Shortcut, bSelected, bEnabled);
-
-		//	const ImGuiSelectableFlags Flags =
-		//		ImGuiSelectableFlags_SpanAvailWidth |
-		//		ImGuiSelectableFlags_NoPadWithHalfSpacing;
-
-		//	if (!bEnabled)
-		//	{
-		//		ImGui::BeginDisabled();
-		//	}
-
-		//	const bool bResult = ImGui::Selectable(Label, bSelected, Flags);
-		//	
-		//	if (!bEnabled)
-		//	{
-		//		ImGui::EndDisabled();
-		//	}
-
-		//	ImGui::PopStyleVar(1);
-		//	return bResult;
-		//};
-
 		// File
 		{
 			PopupAnchor FileAnchor;
@@ -717,12 +268,12 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 			if (BeginMenuPopup(PopupFile, FileAnchor))
 			{
-				StylizedMenuItem("New Level", "Ctrl+N");
-				StylizedMenuItem("Open", "Ctrl+O");
-				StylizedMenuSeparator();
-				StylizedMenuItem("Save All", "Ctrl+Shift+S");
-				StylizedMenuSeparator();
-				StylizedMenuItem("Exit");
+				EditorWidgets::EditorMenuItem("New Level", "Ctrl+N");
+				EditorWidgets::EditorMenuItem("Open", "Ctrl+O");
+				EditorWidgets::EditorMenuSeparator();
+				EditorWidgets::EditorMenuItem("Save All", "Ctrl+Shift+S");
+				EditorWidgets::EditorMenuSeparator();
+				EditorWidgets::EditorMenuItem("Exit");
 				ImGui::EndPopup();
 			}
 				
@@ -738,9 +289,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 			if (BeginMenuPopup(PopupEdit, EditAnchor))
 			{
-				StylizedMenuItem("Project Settings");
-				StylizedMenuItem("Editor Preferences");
-
+				EditorWidgets::EditorMenuItem("Project Settings");
+				EditorWidgets::EditorMenuItem("Editor Preferences");
 				ImGui::EndPopup();
 			}
 
@@ -758,7 +308,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 			{
 				{
 					bool bProps = GShowPropertiesPanel;
-					if (StylizedMenuItem("Properties", nullptr, bProps))
+					if (EditorWidgets::EditorMenuItem("Properties", nullptr, bProps))
 					{
 						GShowPropertiesPanel = !bProps;
 					}
@@ -766,7 +316,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 				{
 					bool bContent = GShowContentBrowser;
-					if (StylizedMenuItem("Content Browser", nullptr, bContent))
+					if (EditorWidgets::EditorMenuItem("Content Browser", nullptr, bContent))
 					{
 						GShowContentBrowser = !bContent;
 					}
@@ -777,40 +327,40 @@ void FEditorDockspaceWidget::DrawMenuBar()
 					if (FEditorLogOutputWidget* LogWidget = EditorEngine->GetLogOutputWidget().Get())
 					{
 						bool bVisible = LogWidget->IsVisible();
-						if (StylizedMenuItem("Output Log", nullptr, bVisible))
+						if (EditorWidgets::EditorMenuItem("Output Log", nullptr, bVisible))
 						{
 							LogWidget->SetVisible(!bVisible);
 						}
 					}
 					else
 					{
-						StylizedMenuItem("Output Log", nullptr, false, false);
+						EditorWidgets::EditorMenuItem("Output Log", nullptr, false, false);
 					}
 
 					if (FEditorViewportWidget* EditorWidget = EditorEngine->GetEditorViewportWidget().Get())
 					{
 						bool bVisible = EditorWidget->IsVisible();
-						if (StylizedMenuItem("Viewport", nullptr, bVisible))
+						if (EditorWidgets::EditorMenuItem("Viewport", nullptr, bVisible))
 						{
 							EditorWidget->SetVisible(!bVisible);
 						}
 					}
 					else
 					{
-						StylizedMenuItem("Viewport", nullptr, false, false);
+						EditorWidgets::EditorMenuItem("Viewport", nullptr, false, false);
 					}
 
 					if (FEditorSceneHierarchyWidget* SceneHierarchyWidget = EditorEngine->GetSceneHierarchyWidget().Get())
 					{
 						bool bVisible = SceneHierarchyWidget->IsVisible();
-						if (StylizedMenuItem("Scene Hierarchy", nullptr, bVisible))
+						if (EditorWidgets::EditorMenuItem("Scene Hierarchy", nullptr, bVisible))
 						{
 							SceneHierarchyWidget->SetVisible(!bVisible);
 						}
 					}
 					else
 					{
-						StylizedMenuItem("Scene Hierarchy", nullptr, false, false);
+						EditorWidgets::EditorMenuItem("Scene Hierarchy", nullptr, false, false);
 					}
 				}
 
@@ -829,7 +379,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 			if (BeginMenuPopup(PopupHelp, HelpAnchor))
 			{
-				StylizedMenuItem("About");
+				EditorWidgets::EditorMenuItem("About");
 				ImGui::EndPopup();
 			}
 

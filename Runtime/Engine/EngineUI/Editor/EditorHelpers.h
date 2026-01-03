@@ -3,6 +3,13 @@
 #include "Core/Math/Color.h"
 #include <imgui.h>
 
+struct PopupAnchor
+{
+	ImVec2 Min              = ImVec2(0.0f, 0.0f);
+	ImVec2 Max              = ImVec2(0.0f, 0.0f);
+	bool   bRequestPosition = false;
+};
+
 struct EditorStyleVars
 {
 	static float MainMenuBarHeight;
@@ -38,4 +45,8 @@ struct ENGINE_API EditorWidgets
 	{
 		return ImGui::ColorEdit3(Label, OutColor.RGBA, Flags);
 	}
+
+	static void EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
+	static void EditorMenuSeparator(float Thickness = 1.0f, float PaddingY = 0.0f);
+	static bool EditorMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true);
 };
