@@ -612,7 +612,8 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 	// Hover-only border
 	if (bDrawBorder && bHovered)
 	{
-		const ImVec4 HoveredColor = ImVec4(17.0f / 255.0f, 103.0f / 255.0f, 177.0f / 255.0f, 1.0f);
+		// Match the requested menu hover/press blue
+		const ImVec4 HoveredColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 		const ImU32  BorderColor  = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
 		DrawList->AddRect(RectMin, RectMax, BorderColor, 0.0f, 0, 1.0f);
 	}
@@ -632,7 +633,7 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 	float  ShortcutX      = 0.0f;
 
 	// Left-most X of anything on the right (shortcut/check)
-	float RightContentMinX = RightInnerX; 
+	float RightContentMinX = RightInnerX;
 
 	if (bDrawCheckMark)
 	{
@@ -645,10 +646,8 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 		if (bDrawShortcut)
 		{
 			// Shortcut sits to the left of checkmark
-			ShortcutX = CheckMinX - GapRight - ShortcutSize.x;
-			
-			// Shortcut becomes the left-most right-side content
-			RightContentMinX = ShortcutX; 
+			ShortcutX        = CheckMinX - GapRight - ShortcutSize.x;
+			RightContentMinX = ShortcutX;
 		}
 	}
 	else if (bDrawShortcut)
@@ -680,7 +679,6 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 		ClipMaxX = RightContentMinX - ClipGap;
 	}
 
-	// Avoid invalid clip rect if popup is extremely narrow
 	ClipMaxX = ImMax(ClipMaxX, LabelX + 1.0f);
 
 	DrawList->PushClipRect(ImVec2(LabelX, RectMin.y), ImVec2(ClipMaxX, RectMax.y), true);
@@ -736,9 +734,10 @@ void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId,
 
 	if (bThisPopupOpen)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Button, BrightPopupBg);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, BrightPopupBg);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, BrightPopupBg);
+		const ImVec4 PressedBlue = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+		ImGui::PushStyleColor(ImGuiCol_Button, PressedBlue);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, PressedBlue);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, PressedBlue);
 	}
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(12.0f, 0.0f));
@@ -791,7 +790,11 @@ bool EditorWidgets::EditorBeginMenuPopup(const char* PopupId, const PopupAnchor&
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
+	const ImVec4 MenuHoverBlue = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+
 	ImGui::PushStyleColor(ImGuiCol_PopupBg, BrightPopupBg);
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, MenuHoverBlue);
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, MenuHoverBlue);
 
 	ImGui::SetNextWindowSizeConstraints(ImVec2(MinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 	return ImGui::BeginPopup(PopupId);
@@ -799,7 +802,7 @@ bool EditorWidgets::EditorBeginMenuPopup(const char* PopupId, const PopupAnchor&
 
 void EditorWidgets::EditorResetMenuPopup()
 {
-	ImGui::PopStyleColor();
+	ImGui::PopStyleColor(3);
 	ImGui::PopStyleVar(5);
 }
 

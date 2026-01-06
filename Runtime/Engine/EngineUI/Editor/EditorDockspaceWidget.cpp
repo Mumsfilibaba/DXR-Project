@@ -166,7 +166,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 	const ImVec4 ToolbarBg    = Style.Colors[ImGuiCol_MenuBarBg];
 	const ImVec4 PopupBg      = Style.Colors[ImGuiCol_PopupBg];
-	const ImVec4 HoveredColor = ImVec4(17.0f / 255.0f, 103.0f / 255.0f, 177.0f / 255.0f, 1.0f);
+	const ImVec4 HoveredColor = ImVec4(87.0f / 255.0f, 87.0f / 255.0f, 87.0f / 255.0f, 1.0f);
+	const ImVec4 PressedColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
 	ImVec4 BrightPopupBg = PopupBg;
 	BrightPopupBg.x = (BrightPopupBg.x + 0.1f > 1.0f) ? 1.0f : (BrightPopupBg.x + 0.1f);
@@ -180,7 +181,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, ToolbarBg);
 	ImGui::PushStyleColor(ImGuiCol_Button, ToolbarBg);
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, HoveredColor);
-	ImGui::PushStyleColor(ImGuiCol_ButtonActive, PopupBg);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, PressedColor);
 
 	if (ImGui::BeginChild("##EditorToolbar", ImVec2(0.0f, EditorStyleVars::MainMenuBarHeight), ImGuiChildFlags_None, ToolbarFlags))
 	{
@@ -212,7 +213,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 				EditorWidgets::EditorMenuItem("Exit");
 				ImGui::EndPopup();
 			}
-				
+
 			EditorWidgets::EditorResetMenuPopup();
 		}
 
