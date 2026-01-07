@@ -10,8 +10,9 @@
 FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
 	, RenamingActor(nullptr)
-    , bVisible(true)
+	, bVisible(true)
 	, bRequestRenameFocus(false)
+	, bSelectionActiveInTable(false)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -38,32 +39,49 @@ void FEditorSceneHierarchyWidget::Draw()
 	{
 		return;
 	}
-	
+
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::SceneHierarchyItemSpacing);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::SceneHierarchyWindowPadding);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f));
 
-	const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing;
+	const ImGuiWindowFlags Flags =
+		ImGuiWindowFlags_NoFocusOnAppearing |
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoScrollWithMouse;
+
 	if (ImGui::Begin("Scene Hierarchy", &bVisible, Flags))
 	{
 		DrawSceneInfo();
-
-		if (EditorEngine)
-		{
-			if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !ImGui::IsAnyItemHovered())
-			{
-				EditorEngine->ClearSelection();
-			}
-		}
 	}
 
 	ImGui::End();
 
+	ImGui::PopStyleColor();
 	ImGui::PopStyleVar(2);
 }
 
 void FEditorSceneHierarchyWidget::DrawSceneInfo()
 {
-	const auto DrawFolderRow = [](const char* Label, const char* Type, const char* OpenKey, bool bDefaultOpen, float IndentPx) -> bool
+	// -----------------------------------------------------------------------------------------
+	// Shared colors
+	// -----------------------------------------------------------------------------------------
+
+	const ImVec4 RowHoverBg            = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+	const ImVec4 SearchBg              = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+	const ImVec4 SearchTextColor       = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+	const ImVec4 NameTextColor         = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+	const ImVec4 TypeTextColor         = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
+	const ImU32  BorderNormal          = IM_COL32(51, 51, 51, 255);
+	const ImU32  BorderHovered         = IM_COL32(74, 74, 74, 255);
+	const ImU32  BorderActive          = IM_COL32(9, 92, 176, 255);
+	const ImU32  SelectedActiveColor   = IM_COL32(0, 112, 224, 255);
+	const ImU32  SelectedInactiveColor = IM_COL32(64, 87, 111, 255);
+
+	// -----------------------------------------------------------------------------------------
+	// Row helpers
+	// -----------------------------------------------------------------------------------------
+
+	const auto DrawFolderRow = [&](const char* Label, const char* Type, const char* OpenKey, bool bDefaultOpen, float IndentPx) -> bool
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
 		ImGui::PushID(OpenKey);
@@ -72,7 +90,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		ImGui::TableSetColumnIndex(0);
 
 		const ImGuiSelectableFlags SelectableFlags =
-			ImGuiSelectableFlags_SpanAllColumns | 
+			ImGuiSelectableFlags_SpanAllColumns |
 			ImGuiSelectableFlags_AllowItemOverlap;
 
 		const ImGuiID OpenId = ImGui::GetID("Open");
@@ -80,17 +98,23 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		ImGuiStorage* Storage = ImGui::GetStateStorage();
 		bool bOpen = Storage->GetBool(OpenId, bDefaultOpen);
 
+		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowHoverBg);
+		ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowHoverBg);
+
 		float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
 		if (ImGui::Selectable("##Row", false, SelectableFlags, ImVec2(0.0f, RowHeight)))
 		{
+			bSelectionActiveInTable = true; // clicked in table on something
 			bOpen = !bOpen;
 			Storage->SetBool(OpenId, bOpen);
 		}
 
+		ImGui::PopStyleColor(2);
+
 		const ImVec2 RowMin = ImGui::GetItemRectMin();
 		const ImVec2 RowMax = ImGui::GetItemRectMax();
 		RowHeight = RowMax.y - RowMin.y;
-		
+
 		const float TextHeight   = ImGui::GetTextLineHeight();
 		const float FontSize     = ImGui::GetFontSize();
 		const float TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
@@ -100,13 +124,14 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 		ImGui::TableSetColumnIndex(0);
 		ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TextY));
-		
-		// TODO: Draw icon here perhaps?
 
 		ImGui::TableSetColumnIndex(1);
 
 		const ImVec2   CollumnPosition = ImGui::GetCursorScreenPos();
 		const ImVec2   ArrowPosition   = ImVec2(CollumnPosition.x + IndentPx, ArrowY);
+
+		ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
+
 		const ImU32    ArrowColor      = ImGui::GetColorU32(ImGuiCol_Text);
 		const ImGuiDir ArrowDirection  = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
 
@@ -116,15 +141,20 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		ImGui::SetCursorScreenPos(ImVec2(ArrowPosition.x + ArrowAdvance + ArrowTextGap, TextY));
 		ImGui::TextUnformatted(Label);
 
+		ImGui::PopStyleColor();
+
 		ImGui::TableSetColumnIndex(2);
 		ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TextY));
+
+		ImGui::PushStyleColor(ImGuiCol_Text, TypeTextColor);
 		ImGui::TextUnformatted(Type);
+		ImGui::PopStyleColor();
 
 		ImGui::PopID();
 		return bOpen;
 	};
 
-	const auto DrawLeafRow = [](const char* Label, const char* Type, bool bSelected, void* Id, float IndentPx, auto&& OnClick)
+	const auto DrawLeafRow = [&](const char* Label, const char* Type, bool bSelected, void* Id, float IndentPx, auto&& OnClick)
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
 		ImGui::TableNextRow();
@@ -138,15 +168,21 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 		if (bSelected)
 		{
-			const ImU32 SelectedColor = IM_COL32(0x1d, 0x4f, 0x8b, 140);
-			ImGui::PushStyleColor(ImGuiCol_Header, SelectedColor);
-			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, SelectedColor);
-			ImGui::PushStyleColor(ImGuiCol_HeaderActive, SelectedColor);
+			const ImU32 SelColor = bSelectionActiveInTable ? SelectedActiveColor : SelectedInactiveColor;
+			ImGui::PushStyleColor(ImGuiCol_Header, SelColor);
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, SelColor);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, SelColor);
+		}
+		else
+		{
+			ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowHoverBg);
+			ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowHoverBg);
 		}
 
 		float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
 		if (ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, RowHeight)))
 		{
+			bSelectionActiveInTable = true;
 			OnClick();
 		}
 
@@ -154,11 +190,15 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		{
 			ImGui::PopStyleColor(3);
 		}
+		else
+		{
+			ImGui::PopStyleColor(2);
+		}
 
 		const ImVec2 RowMin = ImGui::GetItemRectMin();
 		const ImVec2 RowMax = ImGui::GetItemRectMax();
 		RowHeight = RowMax.y - RowMin.y;
-		
+
 		const float TextHeight   = ImGui::GetTextLineHeight();
 		const float FontSize     = ImGui::GetFontSize();
 		const float TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
@@ -172,14 +212,24 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 		const ImVec2 Col1Pos = ImGui::GetCursorScreenPos();
 		ImGui::SetCursorScreenPos(ImVec2(Col1Pos.x + IndentPx + ArrowAdvance + ArrowTextGap, TextY));
+
+		ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
 		ImGui::TextUnformatted(Label);
+		ImGui::PopStyleColor();
 
 		ImGui::TableSetColumnIndex(2);
 		ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TextY));
+
+		ImGui::PushStyleColor(ImGuiCol_Text, TypeTextColor);
 		ImGui::TextUnformatted(Type);
+		ImGui::PopStyleColor();
 
 		ImGui::PopID();
 	};
+
+	// -----------------------------------------------------------------------------------------
+	// Engine / world checks
+	// -----------------------------------------------------------------------------------------
 
 	if (!EditorEngine)
 	{
@@ -200,6 +250,8 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
 	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
 
+	const bool bHasAnySelection = (SelectedActor != nullptr) || (SelectedLightProbe != nullptr) || (SelectedLight != nullptr) || (SelectedCamera != nullptr);
+
 	// Pull camera (Currently only a single camera)
 	FCamera* Camera = World->GetCamera();
 
@@ -214,71 +266,95 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	const bool bHasCameras  = Camera != nullptr;
 	const bool bHasLighting = bHasLights || bHasProbes;
 
-	// -------------------------------------------------------------------------------------------
-	// Search Field (Actor Search)
-	// -------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------
+	// Search Field
+	// -----------------------------------------------------------------------------------------
 
 	ImGui::SetNextItemWidth(-1.0f);
 
 	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
 	ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
 
+	ImGui::PushStyleColor(ImGuiCol_FrameBg, SearchBg);
+	ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, SearchBg);
+	ImGui::PushStyleColor(ImGuiCol_FrameBgActive, SearchBg);
+	ImGui::PushStyleColor(ImGuiCol_Text, SearchTextColor);
+	ImGui::PushStyleColor(ImGuiCol_TextDisabled, SearchTextColor);
+
 	ImGui::InputTextWithHint("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
 
+	ImGui::PopStyleColor(5);
 	ImGui::PopStyleVar(2);
 
-	// Cache input rect in absolute screen coords, this is later used to draw the candidate window
-	const ImVec2 ItemMin = ImGui::GetItemRectMin();
-	const ImVec2 ItemMax = ImGui::GetItemRectMax();
-
-	// Draw border if active
-	const bool bIsInputFieldActive = ImGui::IsItemActive();
-	if (bIsInputFieldActive)
+	// Always draw border with state colors
 	{
+		const ImVec2 ItemMin = ImGui::GetItemRectMin();
+		const ImVec2 ItemMax = ImGui::GetItemRectMax();
+
+		const bool bActive  = ImGui::IsItemActive();
+		const bool bHovered = ImGui::IsItemHovered();
+
+		const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
+
 		ImDrawList* DrawList = ImGui::GetWindowDrawList();
 		DrawList->AddRect(
 			ItemMin,
 			ItemMax,
-			EditorStyleVars::InputFieldBorderColor,
+			BorderColor,
 			EditorStyleVars::InputFieldBorderRounding,
 			0,
 			EditorStyleVars::InputFieldBorderThickness);
 	}
 
-	// -------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------
 	// Actor Table
-	// -------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------
 
 	const ImGuiTableFlags TableFlags =
 		ImGuiTableFlags_Resizable |
 		ImGuiTableFlags_RowBg |
+		ImGuiTableFlags_NoPadOuterX |
 		ImGuiTableFlags_NoBordersInBody |
 		ImGuiTableFlags_ScrollY |
 		ImGuiTableFlags_SizingStretchProp;
 
 	ImGuiStyle& Style = ImGui::GetStyle();
 
-	const float  ChildIndent    = Style.IndentSpacing;
-	const ImVec4 BorderDarkGray = ImVec4(37.0f / 255.0f, 37.0f / 255.0f, 37.0f / 255.0f, 1.0f);
+	const float ChildIndent = Style.IndentSpacing;
 
+	ImGui::PushStyleColor(ImGuiCol_TableRowBg, ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f));
+	ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f));
+
+	const ImVec4 BorderDarkGray = ImVec4(37.0f / 255.0f, 37.0f / 255.0f, 37.0f / 255.0f, 1.0f);
 	ImGui::PushStyleColor(ImGuiCol_TableBorderLight, BorderDarkGray);
 	ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, BorderDarkGray);
 
-	const ImVec2 TableSize = ImVec2(0.0f, ImGui::GetContentRegionAvail().y);
+	const float SavedCursorX = ImGui::GetCursorPosX();
+	ImGui::SetCursorPosX(0.0f);
+
+	const float TableHeight = ImGui::GetContentRegionAvail().y;
+	const float FullWidth   = ImGui::GetContentRegionAvail().x + Style.WindowPadding.x;
+
+	const ImVec2 TableSize = ImVec2(FullWidth, TableHeight);
+
+	// Track the table rect so we can apply your click rules.
+	const ImVec2 TableRectMin = ImGui::GetCursorScreenPos();
+	const ImVec2 TableRectMax = ImVec2(TableRectMin.x + TableSize.x, TableRectMin.y + TableSize.y);
+
 	if (!ImGui::BeginTable("##SceneOutliner", 3, TableFlags, TableSize))
 	{
-		ImGui::PopStyleColor(2); // Border Colors
+		ImGui::SetCursorPosX(SavedCursorX);
+		ImGui::PopStyleColor(4); // RowBg/Alt + BorderLight/Strong
 		return;
 	}
 
 	ImGui::TableSetupScrollFreeze(0, 1);
 
-	// Custom header
 	const float TypeColWidth = ImGui::CalcTextSize("DirectionalLight").x + Style.CellPadding.x * 2.0f + 12.0f;
 	ImGui::TableSetupColumn("##Gutter", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_NoResize, 8.0f);
 	ImGui::TableSetupColumn("Item Label", ImGuiTableColumnFlags_WidthStretch);
 	ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, TypeColWidth);
-	
+
 	const float CellPaddingY = Math::Max(0.0f, EditorStyleVars::SceneHierarchyTableRowHeight - ImGui::GetTextLineHeight()) * 0.5f;
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, CellPaddingY));
 	ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
@@ -289,9 +365,8 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		ImGui::TableHeader(ImGui::TableGetColumnName(Column));
 	}
 
-	ImGui::PopStyleVar(); // CellPadding
+	ImGui::PopStyleVar();
 
-	// Setup padding for the content in the table
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0f, 4.0f));
 
 	// Cameras
@@ -300,25 +375,10 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		const bool bCamerasOpen = DrawFolderRow("Cameras", "Folder", "CamerasFolder", true, 0.0f);
 		if (bCamerasOpen)
 		{
-			bool bCameraFound = true;
-
-			const CHAR* Search = ActorSearchFilterBuffer.Data();
-			if (Search && Search[0] != '\0')
+			DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, (void*)Camera, ChildIndent, [&]()
 			{
-				const CHAR* Name = "Main Camera";
-				if (!FCString::Stristr(Name, Search))
-				{
-					bCameraFound = false;
-				}
-			}
-
-			if (bCameraFound)
-			{
-				DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, (void*)Camera, ChildIndent, [&]()
-				{
-					EditorEngine->SetSelectedCamera(Camera);
-				});
-			}
+				EditorEngine->SetSelectedCamera(Camera);
+			});
 		}
 	}
 
@@ -334,7 +394,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 				{
 					continue;
 				}
-				
+
 				const CHAR* Search = ActorSearchFilterBuffer.Data();
 				if (Search && Search[0] != '\0')
 				{
@@ -430,10 +490,46 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		}
 	}
 
-	ImGui::PopStyleColor(2); // Border Colors
 	ImGui::PopStyleVar(); // CellPadding
-
 	ImGui::EndTable();
+
+	ImGui::SetCursorPosX(SavedCursorX);
+
+	ImGui::PopStyleColor(4); // RowBg/Alt + BorderLight/Strong
+
+	// -----------------------------------------------------------------------------------------
+	// Click rules
+	// -----------------------------------------------------------------------------------------
+
+	if (EditorEngine && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+	{
+		const ImVec2 MousePos = ImGui::GetIO().MousePos;
+
+		const bool bInTable = (MousePos.x >= TableRectMin.x && MousePos.x < TableRectMax.x) && (MousePos.y >= TableRectMin.y && MousePos.y < TableRectMax.y);
+		if (bInTable)
+		{
+			// If we clicked inside the table but not on any item (no row, no header, no scrollbar),
+			// then we clear selection.
+			if (!ImGui::IsAnyItemHovered())
+			{
+				EditorEngine->ClearSelection();
+
+				RenamingActor       = nullptr;
+				bRequestRenameFocus = false;
+			}
+
+			// Any click in the table makes the selection "active" (blue) if a row is selected.
+			bSelectionActiveInTable = true;
+		}
+		else
+		{
+			// Clicked outside the table: keep selection, but show it as inactive.
+			if (bHasAnySelection)
+			{
+				bSelectionActiveInTable = false;
+			}
+		}
+	}
 }
 
 void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, const bool bSelected, float IndentPx)
@@ -461,8 +557,8 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 	const auto CancelActorRename = [this]()
 	{
-		bRequestRenameFocus = false;
 		RenamingActor       = nullptr;
+		bRequestRenameFocus = false;
 	};
 
 	const auto CommitActorRename = [this]()
@@ -476,11 +572,15 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		bRequestRenameFocus = false;
 	};
 
-	const ImU32 RowBlue_Selected = IM_COL32(0x1d, 0x4f, 0x8b, 140);
-	const ImU32 RowBlue_Rename   = IM_COL32(0x3f, 0x7b, 0xb6, 160);
-	const ImU32 BorderBlueRename = IM_COL32(0x3f, 0x7b, 0xb6, 255);
+	// Colors
+	const ImVec4 ActorNameTextColor = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+	const ImVec4 ActorTypeTextColor = ImVec4(124.0f / 255.0f, 124.0f / 255.0f, 124.0f / 255.0f, 1.0f);
+	const ImU32  RowBlue_Selected   = IM_COL32(0, 112, 224, 255);
+	const ImU32  RowBlue_Rename     = IM_COL32(0x3f, 0x7b, 0xb6, 160);
+	const ImU32  BorderBlueRename   = IM_COL32(0x3f, 0x7b, 0xb6, 255);
 
 	ImGuiStyle& Style = ImGui::GetStyle();
+
 	ImGui::TableNextRow();
 	ImGui::TableSetColumnIndex(0);
 
@@ -506,14 +606,13 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	}
 
 	float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
-	
+
 	const bool bRowPressed = ImGui::Selectable("##Row", bSelected, SelectableFlags, ImVec2(0.0f, RowHeight));
 	if (bSelected)
 	{
 		ImGui::PopStyleColor(3);
 	}
 
-	// TODO: Something more than TextLineHeight seems to be taken into account here. Not sure what this would be
 	const ImVec2 RowMin = ImGui::GetItemRectMin();
 	const ImVec2 RowMax = ImGui::GetItemRectMax();
 	RowHeight = RowMax.y - RowMin.y;
@@ -572,6 +671,9 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(Style.FramePadding.x, RenameFramePadY));
 
+		// Ensure rename text matches actor name color
+		ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
+
 		if (bRequestRenameFocus)
 		{
 			ImGui::SetKeyboardFocusHere();
@@ -584,6 +686,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 		const bool bEnter = ImGui::InputText("##RenameActor", ActorRenameBuffer.Data(), ActorRenameBuffer.Size(), InputFlags);
 
+		ImGui::PopStyleColor(); // Text
 		ImGui::PopStyleVar(2);
 
 		if (ImGui::IsItemActive())
@@ -614,18 +717,23 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGui::SetCursorScreenPos(ImVec2(LabelStartX, TextY));
 
 		const FString& Name = Actor->GetName();
+
+		ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
 		ImGui::TextUnformatted(Name.IsEmpty() ? "Actor" : *Name);
+		ImGui::PopStyleColor();
 	}
 
-	// Column 2: type baseline compensation when InputText was used in this row.
+	// Column 2: type
 	ImGui::TableSetColumnIndex(2);
 
 	const float TypeLabelX            = ImGui::GetCursorScreenPos().x;
 	const float BaselineCompensationY = bIsRenamingThis ? RenameFramePadY : 0.0f;
 
 	ImGui::SetCursorScreenPos(ImVec2(TypeLabelX, TextY - BaselineCompensationY));
+
+	ImGui::PushStyleColor(ImGuiCol_Text, ActorTypeTextColor);
 	ImGui::TextUnformatted(Type);
+	ImGui::PopStyleColor();
 
 	ImGui::PopID();
 }
-

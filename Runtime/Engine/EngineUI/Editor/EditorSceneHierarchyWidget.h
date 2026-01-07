@@ -32,6 +32,7 @@ private:
 	TStaticArray<CHAR, 256> ActorSearchFilterBuffer;
     TStaticArray<CHAR, 256> ActorRenameBuffer;
     TStaticArray<CHAR, 256> ActorRenameBufferOriginal;
-    bool                    bVisible;
-    bool                    bRequestRenameFocus;
+	bool                    bVisible;
+	bool                    bRequestRenameFocus;
+	bool                    bSelectionActiveInTable;
 };

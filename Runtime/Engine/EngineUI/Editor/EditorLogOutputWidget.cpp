@@ -95,15 +95,25 @@ void FEditorLogOutputWidget::DrawFilterBar()
 	const ImVec2 ItemMin = ImGui::GetItemRectMin();
 	const ImVec2 ItemMax = ImGui::GetItemRectMax();
 
-	// Draw border if active
-	const bool bIsInputFieldActive = ImGui::IsItemActive();
-	if (bIsInputFieldActive)
+    // Always draw a border around the search bar with state colors:
+	// Normal:  RGB(51,51,51)
+	// Hovered: RGB(74,74,74)
+	// Active:  RGB(9,92,176)
+
 	{
+		const bool bActive  = ImGui::IsItemActive();
+		const bool bHovered = ImGui::IsItemHovered();
+
+		const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
+		const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
+		const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
+		const ImU32 BorderColor        = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
+
 		ImDrawList* DrawList = ImGui::GetWindowDrawList();
 		DrawList->AddRect(
-            ItemMin,
-            ItemMax,
-			EditorStyleVars::InputFieldBorderColor,
+			ItemMin,
+			ItemMax,
+			BorderColor,
 			EditorStyleVars::InputFieldBorderRounding,
 			0,
 			EditorStyleVars::InputFieldBorderThickness);
