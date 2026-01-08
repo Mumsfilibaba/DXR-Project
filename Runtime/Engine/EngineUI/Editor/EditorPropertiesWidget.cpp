@@ -54,9 +54,9 @@ void FEditorPropertiesWidget::Draw()
 
 void FEditorPropertiesWidget::DrawWindowContents()
 {
-	FActor* SelectedActor = EditorEngine->GetSelectedActor();
-	FLight* SelectedLight = EditorEngine->GetSelectedLight();
-	FCamera* SelectedCamera = EditorEngine->GetSelectedCamera();
+	FActor*      SelectedActor      = EditorEngine->GetSelectedActor();
+	FLight*      SelectedLight      = EditorEngine->GetSelectedLight();
+	FCamera*     SelectedCamera     = EditorEngine->GetSelectedCamera();
 	FLightProbe* SelectedLightProbe = EditorEngine->GetSelectedLightProbe();
 
 	if (!SelectedActor && !SelectedLight && !SelectedCamera && !SelectedLightProbe)
@@ -81,12 +81,19 @@ void FEditorPropertiesWidget::DrawWindowContents()
 	{
 		ImGuiStyle& Style = ImGui::GetStyle();
 
+		const ImVec4 HeaderBg = ImVec4(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
+		ImGui::PushStyleColor(ImGuiCol_Header, HeaderBg);
+		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, HeaderBg);
+		ImGui::PushStyleColor(ImGuiCol_HeaderActive, HeaderBg);
+
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::PropertiesCollapsingFrameRounding);
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::PropertiesCollapsingHeaderItemSpacing);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::PropertiesCollapsingFramePadding);
 
 		const bool bResult = ImGui::CollapsingHeader(Label, Flags);
+
 		ImGui::PopStyleVar(3);
+		ImGui::PopStyleColor(3);
 
 		if (bResult)
 		{
@@ -98,7 +105,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		return bResult;
 	};
 
-	static constexpr float LabelColumnWidth  = 200.0f;
+	static constexpr float LabelColumnWidth  = 160.0f;
 	static constexpr float RevertColumnWidth = 24.0f;
 
 	// ------------------------------------------------------------
@@ -119,6 +126,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				{
 					FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
 					const FVector3 Translation0 = Translation;
+
 					if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, LabelColumnWidth, 0.01f, &Translation0))
 					{
 						SelectedActor->GetTransform().SetTranslation(Translation);

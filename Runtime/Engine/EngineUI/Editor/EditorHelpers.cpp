@@ -31,15 +31,10 @@ static void ApplyHoveredRowBg(bool bRowHovered)
 		return;
 	}
 
-	// Slightly brighter hover (helps it read as a "row highlight").
-	ImVec4 Hover = ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered);
-	Hover.x = ImMin(Hover.x + 0.06f, 1.0f);
-	Hover.y = ImMin(Hover.y + 0.06f, 1.0f);
-	Hover.z = ImMin(Hover.z + 0.06f, 1.0f);
-	const ImU32 HoverBg = ImGui::GetColorU32(Hover);
+	const ImU32 HoverBg = IM_COL32(47, 47, 47, 255);
 
-	const int ColumnCount = ImGui::TableGetColumnCount();
-	for (int ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
+	const int32 ColumnCount = ImGui::TableGetColumnCount();
+	for (int32 ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
 	{
 		ImGui::TableSetColumnIndex(ColumnIndex);
 		ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, HoverBg);
@@ -55,6 +50,7 @@ static bool BeginFullRowHoverCatcher(float RowHeight)
 	}
 
 	ImGui::TableSetColumnIndex(0);
+
 	const ImVec2 Cursor = ImGui::GetCursorScreenPos();
 
 	// Invisible item spanning all columns so hover works even over empty cell areas.
@@ -71,12 +67,40 @@ static bool BeginFullRowHoverCatcher(float RowHeight)
 	return bHovered;
 }
 
+static void DrawInputBorderLastItem(float Rounding = -1.0f, float Thickness = 2.0f)
+{
+	ImGuiWindow* Window = ImGui::GetCurrentWindow();
+	if (!Window || Window->SkipItems)
+	{
+		return;
+	}
+
+	if (Rounding < 0.0f)
+	{
+		ImGuiStyle& Style = ImGui::GetStyle();
+		Rounding = Style.FrameRounding;
+	}
+
+	const bool bActive  = ImGui::IsItemActive();
+	const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+	const ImU32 ColorIdle   = IM_COL32(54, 54, 54, 255);
+	const ImU32 ColorHover  = IM_COL32(84, 84, 84, 255);
+	const ImU32 ColorActive = IM_COL32(0, 112, 224, 255);
+	const ImU32 Color       = bActive ? ColorActive : (bHovered ? ColorHover : ColorIdle);
+
+	ImVec2 Min = ImGui::GetItemRectMin();
+	ImVec2 Max = ImGui::GetItemRectMax();
+	Window->DrawList->AddRect(Min, Max, Color, Rounding, 0, Thickness);
+}
+
 bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
 	ImGuiStyle& Style = ImGui::GetStyle();
 
 	const float Size   = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
 	const float Offset = (ImGui::GetContentRegionAvail().x - Size) * Alignment;
+
 	if (Offset > 0.0f)
 	{
 		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Offset);
@@ -87,97 +111,47 @@ bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 
 bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue, float ColumnWidth, float Speed, const FVector3* InRevertValue)
 {
-	bool bResult = false;
-
 	ImGuiTable* Table = ImGui::GetCurrentTable();
 	if (!Table)
 	{
-		// Fallback: old 2-column layout (Label | Value)
-		ImGui::PushID(Label);
-		ImGui::Columns(2, nullptr, false);
-		ImGui::SetColumnWidth(0, ColumnWidth);
-		ImGui::Text("%s", Label);
-		ImGui::NextColumn();
-
-		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-
-		const float LineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-		const ImVec2 ButtonSize = ImVec2(LineHeight + 3.0f, LineHeight);
-
-		auto AxisFallback = [&](const char* AxisLabel, float& V, const ImVec4& Btn, const ImVec4& Hover, const ImVec4& Active)
-			{
-				ImGui::PushStyleColor(ImGuiCol_Button, Btn);
-				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Hover);
-				ImGui::PushStyleColor(ImGuiCol_ButtonActive, Active);
-
-				if (ImGui::Button(AxisLabel, ButtonSize))
-				{
-					V = ResetValue;
-					bResult = true;
-				}
-
-				ImGui::PopStyleColor(3);
-				ImGui::SameLine();
-
-				const char* DragId = (AxisLabel[0] == 'X') ? "##X" : (AxisLabel[0] == 'Y') ? "##Y" : "##Z";
-				bResult |= ImGui::DragFloat(DragId, &V, Speed);
-				ImGui::PopItemWidth();
-			};
-
-		AxisFallback("X", OutValue.X,
-			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
-			ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
-			ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
-
-		ImGui::SameLine();
-		AxisFallback("Y", OutValue.Y,
-			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
-			ImVec4(0.3f, 0.8f, 0.3f, 1.0f),
-			ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
-
-		ImGui::SameLine();
-		AxisFallback("Z", OutValue.Z,
-			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
-			ImVec4(0.2f, 0.35f, 0.9f, 1.0f),
-			ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
-
-		ImGui::PopStyleVar(2);
-		ImGui::Columns(1);
-		ImGui::PopID();
-		return bResult;
+		return false;
 	}
 
-	// --- Row + label cell ---
 	ImGuiStyle& Style = ImGui::GetStyle();
-	const float Gap = 2.0f;
+
+	const float Gap        = 2.0f;
 	const float LineHeight = ImGui::GetFontSize() + Style.FramePadding.y * 2.0f;
-	const float RowHeight = LineHeight;
+	const float RowHeight  = LineHeight;
 
 	ImGui::TableNextRow(0, RowHeight);
-	ImGui::PushID(Label);
 
+	bool bResult     = false;
 	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
+	// Label
 	ImGui::TableSetColumnIndex(0);
+	
+	const float LabelIndentPx = 24.0f;
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+
 	ImGui::AlignTextToFramePadding();
 	ImGui::Text("%s", Label);
 
-	// --- Value cell (XYZ controls) ---
+	// Value (always single row)
 	ImGui::TableSetColumnIndex(1);
-	const float ButtonWidth = LineHeight * 0.90f;
-	const ImVec2 ButtonSize(ButtonWidth, LineHeight);
+	ImGui::PushID(Label);
 
-	const float Avail = ImGui::GetContentRegionAvail().x;
+	const float  ButtonWidth = LineHeight * 0.90f;
+	const ImVec2 ButtonSize  = ImVec2(ButtonWidth, LineHeight);
+
+	const float Avail        = ImGui::GetContentRegionAvail().x;
 	const float TotalButtons = 3.0f * ButtonSize.x;
-	const float TotalGaps = 8.0f * Gap;
+	const float TotalGaps    = 5.0f * Gap;
+
 	float DragWidth = (Avail - TotalButtons - TotalGaps) / 3.0f;
+	DragWidth = ImMax(DragWidth, 1.0f); // clamp instead of stacking
 
-	const float MinDragWidthForSingleRow = 38.0f;
-	const bool bStacked = (DragWidth < MinDragWidthForSingleRow);
-
-	auto Axis = [&](const char* AxisLabel, float& V, const ImVec4& Btn, const ImVec4& Hover, const ImVec4& Active, float InDragWidth, bool bSameLine)
+	const auto Axis = [&](const char* AxisLabel, float& OutValue, const ImVec4& Btn, const ImVec4& Hover, const ImVec4& Active, float InDragWidth, bool bSameLine)
 	{
 		if (bSameLine)
 		{
@@ -193,10 +167,9 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
 		if (ImGui::Button(AxisLabel, ButtonSize))
 		{
-			V = ResetValue;
+			OutValue = ResetValue;
 			bResult = true;
 		}
-		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 		ImGui::PopStyleColor(3);
 
@@ -204,58 +177,25 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 		ImGui::SetNextItemWidth(InDragWidth);
 
 		const char* DragId = (AxisLabel[0] == 'X') ? "##X" : (AxisLabel[0] == 'Y') ? "##Y" : "##Z";
-		bResult |= ImGui::DragFloat(DragId, &V, Speed, 0.0f, 0.0f, "%.3f");
+		bResult |= ImGui::DragFloat(DragId, &OutValue, Speed, 0.0f, 0.0f, "%.3f");
+
+		// Per-state border for each component input
+		ImGuiStyle& Style = ImGui::GetStyle();
+		DrawInputBorderLastItem(Style.FrameRounding);
+
 		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+		bRowHovered |= ImGui::IsItemActive();
 
 		ImGui::PopStyleVar(2);
 	};
 
-	if (!bStacked)
-	{
-		DragWidth = ImMax(DragWidth, 1.0f);
+	Axis("X", OutValue.X, ImVec4(0.8f, 0.1f, 0.15f, 1.0f), ImVec4(0.9f, 0.2f, 0.2f, 1.0f), ImVec4(0.8f, 0.1f, 0.15f, 1.0f), DragWidth, false);
+	Axis("Y", OutValue.Y, ImVec4(0.2f, 0.7f, 0.2f, 1.0f), ImVec4(0.3f, 0.8f, 0.3f, 1.0f), ImVec4(0.2f, 0.7f, 0.2f, 1.0f), DragWidth, true);
+	Axis("Z", OutValue.Z, ImVec4(0.1f, 0.25f, 0.8f, 1.0f), ImVec4(0.2f, 0.35f, 0.9f, 1.0f), ImVec4(0.1f, 0.25f, 0.8f, 1.0f), DragWidth, true);
 
-		Axis("X", OutValue.X,
-			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
-			ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
-			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
-			DragWidth, false);
+	ImGui::PopID();
 
-		Axis("Y", OutValue.Y,
-			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
-			ImVec4(0.3f, 0.8f, 0.3f, 1.0f),
-			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
-			DragWidth, true);
-
-		Axis("Z", OutValue.Z,
-			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
-			ImVec4(0.2f, 0.35f, 0.9f, 1.0f),
-			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
-			DragWidth, true);
-	}
-	else
-	{
-		const float StackedDragWidth = ImMax(Avail - ButtonSize.x - Gap, 1.0f);
-
-		Axis("X", OutValue.X,
-			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
-			ImVec4(0.9f, 0.2f, 0.2f, 1.0f),
-			ImVec4(0.8f, 0.1f, 0.15f, 1.0f),
-			StackedDragWidth, false);
-
-		Axis("Y", OutValue.Y,
-			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
-			ImVec4(0.3f, 0.8f, 0.3f, 1.0f),
-			ImVec4(0.2f, 0.7f, 0.2f, 1.0f),
-			StackedDragWidth, false);
-
-		Axis("Z", OutValue.Z,
-			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
-			ImVec4(0.2f, 0.35f, 0.9f, 1.0f),
-			ImVec4(0.1f, 0.25f, 0.8f, 1.0f),
-			StackedDragWidth, false);
-	}
-
-	// --- Revert column ---
+	// Revert
 	ImGui::TableSetColumnIndex(2);
 	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
 
@@ -279,7 +219,6 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 	}
 
 	ApplyHoveredRowBg(bRowHovered);
-	ImGui::PopID();
 	return bResult;
 }
 
@@ -292,16 +231,21 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
 	}
 
 	const float RowHeight = ImGui::GetFrameHeight();
-
 	ImGui::TableNextRow();
 
 	bool bResult = false;
 	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
+	// Label
 	ImGui::TableSetColumnIndex(0);
+	
+	const float LabelIndentPx = 24.0f;
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+
 	ImGui::AlignTextToFramePadding();
 	ImGui::TextUnformatted(Label);
 
+	// Value
 	ImGui::TableSetColumnIndex(1);
 	ImGui::PushID(Label);
 
@@ -320,6 +264,9 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
 		bResult = ImGui::DragFloat("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
 	}
 
+	ImGuiStyle& Style = ImGui::GetStyle();
+	DrawInputBorderLastItem(Style.FrameRounding);
+
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 	bRowHovered |= ImGui::IsItemActive();
 
@@ -330,6 +277,7 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
 
 	ImGui::PopID();
 
+	// Revert
 	ImGui::TableSetColumnIndex(2);
 	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
 
@@ -339,7 +287,7 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
 		ImGui::BeginDisabled();
 	}
 
-	if (ImGui::SmallButton("R") && bCanRevert)
+	if (ImGui::SmallButton("R"))
 	{
 		InOutValue = *InRevertValue;
 		bResult = true;
@@ -368,10 +316,14 @@ bool EditorWidgets::DrawCheckboxProperty(const char* Label, bool& InOutValue, co
 
 	ImGui::TableNextRow();
 
-	bool bResult = false;
+	bool bResult     = false;
 	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
 	ImGui::TableSetColumnIndex(0);
+
+	const float LabelIndentPx = 24.0f;
+	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+
 	ImGui::AlignTextToFramePadding();
 	ImGui::TextUnformatted(Label);
 
@@ -384,6 +336,10 @@ bool EditorWidgets::DrawCheckboxProperty(const char* Label, bool& InOutValue, co
 	}
 
 	bResult = ImGui::Checkbox("##Value", &InOutValue);
+	
+	ImGuiStyle& Style = ImGui::GetStyle();
+	DrawInputBorderLastItem(Style.FrameRounding);
+
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 	bRowHovered |= ImGui::IsItemActive();
 
@@ -429,16 +385,27 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 	}
 
 	const float RowHeight = ImGui::GetFrameHeight();
-	
-	ImGui::TableNextRow();
+	ImGui::TableNextRow(0, RowHeight);
 
 	bool bResult     = false;
 	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
+	// ------------------------------------------------------------
+	// Label
+	// ------------------------------------------------------------
 	ImGui::TableSetColumnIndex(0);
-	ImGui::AlignTextToFramePadding();
-	ImGui::TextUnformatted(Label);
+	{
+		// Optional indent (keep/remove depending on your current style)
+		const float LabelIndentPx = 24.0f;
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
 
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted(Label);
+	}
+
+	// ------------------------------------------------------------
+	// Value (ColorButton + 3 DragFloat fields)
+	// ------------------------------------------------------------
 	ImGui::TableSetColumnIndex(1);
 	ImGui::PushID(Label);
 
@@ -447,10 +414,66 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 		ImGui::BeginDisabled();
 	}
 
-	ImGui::SetNextItemWidth(-FLT_MIN);
-	bResult = ImGui::ColorEdit3("##Value", InOutColor, Flags);
-	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-	bRowHovered |= ImGui::IsItemActive();
+	ImGuiStyle& Style = ImGui::GetStyle();
+	const float Gap         = 4.0f;
+	const float FrameHeight = ImGui::GetFrameHeight();
+
+	// Layout widths
+	const float Avail       = ImGui::GetContentRegionAvail().x;
+	const float ButtonWidth = FrameHeight; // square preview button
+
+	// Gaps: button->R, R->G, G->B  => 3 gaps
+	const float TotalGaps = 3.0f * Gap;
+
+	float FieldWidth = (Avail - ButtonWidth - TotalGaps) / 3.0f;
+	FieldWidth = ImMax(FieldWidth, 1.0f);
+
+	// Preview button + picker popup
+	{
+		const ImVec4 Color = ImVec4(InOutColor[0], InOutColor[1], InOutColor[2], 1.0f);
+
+		const ImGuiColorEditFlags ButtonFlags = Flags | ImGuiColorEditFlags_NoTooltip;
+		if (ImGui::ColorButton("##ColorBtn", Color, ButtonFlags, ImVec2(ButtonWidth, FrameHeight)))
+		{
+			ImGui::OpenPopup("##ColorPicker");
+		}
+
+		DrawInputBorderLastItem(Style.FrameRounding);
+
+		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+		bRowHovered |= ImGui::IsItemActive();
+
+		if (ImGui::BeginPopup("##ColorPicker"))
+		{
+			// Keep picker simple
+			bResult |= ImGui::ColorPicker3("##Picker", InOutColor, Flags);
+			ImGui::EndPopup();
+		}
+	}
+
+	ImGui::SameLine(0.0f, Gap);
+
+	// R / G / B drag floats (0..1)
+	const auto DrawComponentDragFloat = [&](const char* Id, float& OutValue, bool bSameLine)
+	{
+		if (bSameLine)
+		{
+			ImGui::SameLine(0.0f, Gap);
+		}
+
+		ImGui::SetNextItemWidth(FieldWidth);
+		bResult |= ImGui::DragFloat(Id, &OutValue, 0.01f, 0.0f, 1.0f, "%.3f");
+
+		ImGuiStyle& Style = ImGui::GetStyle();
+		DrawInputBorderLastItem(Style.FrameRounding);
+
+		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+		bRowHovered |= ImGui::IsItemActive();
+	};
+
+	DrawComponentDragFloat("##R", InOutColor[0], false);
+	DrawComponentDragFloat("##G", InOutColor[1], true);
+	DrawComponentDragFloat("##B", InOutColor[2], true);
 
 	if (!bEnabled)
 	{
@@ -459,6 +482,9 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 
 	ImGui::PopID();
 
+	// ------------------------------------------------------------
+	// Revert
+	// ------------------------------------------------------------
 	ImGui::TableSetColumnIndex(2);
 	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
 
@@ -496,25 +522,27 @@ void EditorWidgets::DrawTextProperty(const char* Label, const char* ValueText)
 	}
 
 	const float RowHeight = ImGui::GetFrameHeight();
-
 	ImGui::TableNextRow();
 
-	bool bResult     = false;
 	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
 	ImGui::TableSetColumnIndex(0);
-	ImGui::AlignTextToFramePadding();
-	ImGui::TextUnformatted(Label);
+
+	{
+		const float LabelIndentPx = 24.0f;
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted(Label);
+	}
 
 	ImGui::TableSetColumnIndex(1);
+	
+	ImGui::AlignTextToFramePadding();
 	ImGui::TextUnformatted(ValueText ? ValueText : "");
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
+	// Column 2: intentionally empty (no reset button for read-only)
 	ImGui::TableSetColumnIndex(2);
-	ImGui::BeginDisabled();
-	ImGui::SmallButton("R");
-	ImGui::EndDisabled();
-	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 	ApplyHoveredRowBg(bRowHovered);
 }
@@ -529,27 +557,31 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const char* Label, const FVector3
 	}
 
 	const float RowHeight = ImGui::GetFrameHeight();
-
 	ImGui::TableNextRow();
 
-	bool bResult     = false;
 	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
 	ImGui::TableSetColumnIndex(0);
-	ImGui::AlignTextToFramePadding();
-	ImGui::TextUnformatted(Label);
+	{
+		const float LabelIndentPx = 24.0f;
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted(Label);
+	}
 
 	ImGui::TableSetColumnIndex(1);
+
 	float Temp[3] = { Value.X, Value.Y, Value.Z };
 	ImGui::SetNextItemWidth(-FLT_MIN);
 	ImGui::InputFloat3("##Value", Temp, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+	ImGuiStyle& Style = ImGui::GetStyle();
+	DrawInputBorderLastItem(Style.FrameRounding);
+
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
+	// Column 2: intentionally empty (no reset button for read-only)
 	ImGui::TableSetColumnIndex(2);
-	ImGui::BeginDisabled();
-	ImGui::SmallButton("R");
-	ImGui::EndDisabled();
-	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 	ApplyHoveredRowBg(bRowHovered);
 }
@@ -808,49 +840,36 @@ void EditorWidgets::EditorResetMenuPopup()
 
 bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWidth, float RevertColumnWidth)
 {
-	// Tighter spacing (reduces the gap between label and widgets)
+	const ImVec4 RowBg       = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+	const ImVec4 TableBorder = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
+	const ImVec4 FrameBg     = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(6.0f, 4.0f));
 
-	// Darker borders (more Unreal-like)
-	ImVec4 BorderStrong = ImGui::GetStyleColorVec4(ImGuiCol_Border);
-	BorderStrong.x *= 0.55f; BorderStrong.y *= 0.55f; BorderStrong.z *= 0.55f; BorderStrong.w = 1.0f;
-
-	ImVec4 BorderLight = BorderStrong;
-	BorderLight.x *= 0.85f; BorderLight.y *= 0.85f; BorderLight.z *= 0.85f; BorderLight.w = 1.0f;
-
-	ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, BorderStrong);
-	ImGui::PushStyleColor(ImGuiCol_TableBorderLight, BorderLight);
-
-	// Brighter row backgrounds (more Unreal-like). Default ImGui table row colors
-	// can be transparent depending on theme, so derive from WindowBg for consistency.
-	ImVec4 WindowBg = ImGui::GetStyleColorVec4(ImGuiCol_WindowBg);
-	ImVec4 RowBg = WindowBg;
-	ImVec4 RowBgAlt = WindowBg;
-
-	RowBg.x = ImMin(RowBg.x + 0.05f, 1.0f);
-	RowBg.y = ImMin(RowBg.y + 0.05f, 1.0f);
-	RowBg.z = ImMin(RowBg.z + 0.05f, 1.0f);
-
-	RowBgAlt.x = ImMin(RowBgAlt.x + 0.07f, 1.0f);
-	RowBgAlt.y = ImMin(RowBgAlt.y + 0.07f, 1.0f);
-	RowBgAlt.z = ImMin(RowBgAlt.z + 0.07f, 1.0f);
-
 	ImGui::PushStyleColor(ImGuiCol_TableRowBg, RowBg);
-	ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, RowBgAlt);
+	ImGui::PushStyleColor(ImGuiCol_TableRowBgAlt, RowBg);
+
+	ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, TableBorder);
+	ImGui::PushStyleColor(ImGuiCol_TableBorderLight, TableBorder);
+
+	ImGui::PushStyleColor(ImGuiCol_FrameBg, FrameBg);
+	ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, FrameBg);
+	ImGui::PushStyleColor(ImGuiCol_FrameBgActive, FrameBg);
 
 	const ImGuiTableFlags Flags =
 		ImGuiTableFlags_SizingStretchProp |
-		ImGuiTableFlags_BordersInnerV |
-		ImGuiTableFlags_BordersInnerH |
-		ImGuiTableFlags_BordersOuterV |
-		ImGuiTableFlags_BordersOuterH |
 		ImGuiTableFlags_RowBg |
 		ImGuiTableFlags_NoSavedSettings |
-		ImGuiTableFlags_Resizable;
+		ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_BordersInnerH |
+		ImGuiTableFlags_BordersInnerV;
 
-	if (!ImGui::BeginTable(TableId, 3, Flags))
+	// Force table to use full content width (so it matches the collapsing header width)
+	const ImVec2 OuterSize(ImGui::GetContentRegionAvail().x, 0.0f);
+
+	if (!ImGui::BeginTable(TableId, 3, Flags, OuterSize))
 	{
-		ImGui::PopStyleColor(4);
+		ImGui::PopStyleColor(7);
 		ImGui::PopStyleVar();
 		return false;
 	}
@@ -865,8 +884,8 @@ bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWid
 void EditorWidgets::EndPropertyTable()
 {
 	ImGui::EndTable();
-	ImGui::PopStyleColor(4); // TableBorderStrong, TableBorderLight, TableRowBg, TableRowBgAlt
-	ImGui::PopStyleVar();    // CellPadding
+	ImGui::PopStyleColor(7);
+	ImGui::PopStyleVar();
 }
 
 void EditorWidgets::PropertySeparatorRow(float PaddingY)
