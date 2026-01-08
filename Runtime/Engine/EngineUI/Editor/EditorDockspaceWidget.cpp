@@ -59,7 +59,7 @@ void FEditorDockspaceWidget::InitializeEditorStyle()
 	Style.TabBarBorderSize     = 0.0f;
 	Style.DockingSeparatorSize = 4.0f;
 
-    Style.Colors[ImGuiCol_WindowBg]           = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
+	Style.Colors[ImGuiCol_WindowBg]           = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
     Style.Colors[ImGuiCol_ChildBg]            = ImVec4(0.06f, 0.06f, 0.07f, 1.00f);
     Style.Colors[ImGuiCol_PopupBg]            = ImVec4(0.09f, 0.09f, 0.10f, 1.00f);
     Style.Colors[ImGuiCol_Border]             = ImVec4(0.22f, 0.22f, 0.24f, 1.00f);
@@ -82,6 +82,24 @@ void FEditorDockspaceWidget::InitializeEditorStyle()
     Style.Colors[ImGuiCol_TitleBgActive]      = ImVec4(0.10f, 0.10f, 0.11f, 1.00f);
     Style.Colors[ImGuiCol_MenuBarBg]          = ImVec4(0.09f, 0.09f, 0.10f, 1.00f);
     Style.Colors[ImGuiCol_Separator]          = ImVec4(0.25f, 0.25f, 0.28f, 1.00f);
+
+	// Docking split line / seam colors
+	const ImVec4 SplitterIdle    = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+	const ImVec4 SplitterHovered = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+	const ImVec4 SplitterActive  = SplitterHovered;
+
+	// Idle seam is often Border (and sometimes BorderShadow)
+	Style.Colors[ImGuiCol_Border]            = SplitterIdle;
+	Style.Colors[ImGuiCol_BorderShadow]      = SplitterIdle;
+	// Hover/active is commonly SeparatorHovered/Active
+	Style.Colors[ImGuiCol_SeparatorHovered]  = SplitterHovered;
+	Style.Colors[ImGuiCol_SeparatorActive]   = SplitterActive;
+	// Some docking setups route hover/active through resize-grip colors
+	Style.Colors[ImGuiCol_ResizeGripHovered] = SplitterHovered;
+	Style.Colors[ImGuiCol_ResizeGripActive]  = SplitterActive;
+	// (Optional) if you want the non-hover separator color too
+	Style.Colors[ImGuiCol_Separator]         = SplitterIdle;
+	Style.Colors[ImGuiCol_ResizeGrip]        = SplitterIdle;
 }
 
 void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
