@@ -364,6 +364,13 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	const float CellPaddingY = Math::Max(0.0f, EditorStyleVars::SceneHierarchyTableRowHeight - ImGui::GetTextLineHeight()) * 0.5f;
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, CellPaddingY));
+	
+	const ImVec4 HeaderBg      = ImVec4(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
+	const ImVec4 HeaderBgHover = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+	ImGui::PushStyleColor(ImGuiCol_TableHeaderBg, HeaderBg);
+	ImGui::PushStyleColor(ImGuiCol_Header, HeaderBg);
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, HeaderBgHover);
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, HeaderBgHover);
 
 	ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 
@@ -404,6 +411,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		DrawList->AddLine(ImVec2(X1, HeaderMinY), ImVec2(X1, HeaderMaxY), BorderCol, Thickness);
 	}
 
+	ImGui::PopStyleColor(4); // Header colors
 	ImGui::PopStyleVar();
 
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0f, 4.0f));
@@ -668,12 +676,20 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGuiSelectableFlags_SpanAllColumns |
 		ImGuiSelectableFlags_AllowItemOverlap;
 
-	const ImU32 RowSelectedColor = bIsRenamingThis ? RowBlue_Rename : SelectedColor;
+	const ImU32  RowSelectedColor = bIsRenamingThis ? RowBlue_Rename : SelectedColor;
+	const ImVec4 RowHoverBg       = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+
+	// Selected actors use active/inactive color. Non-selected actors use consistent hover.
 	if (bSelected)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Header, RowSelectedColor);
 		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowSelectedColor);
 		ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowSelectedColor);
+	}
+	else
+	{
+		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowHoverBg);
+		ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowHoverBg);
 	}
 
 	float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
@@ -682,6 +698,10 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	if (bSelected)
 	{
 		ImGui::PopStyleColor(3);
+	}
+	else
+	{
+		ImGui::PopStyleColor(2);
 	}
 
 	const ImVec2 RowMin = ImGui::GetItemRectMin();
