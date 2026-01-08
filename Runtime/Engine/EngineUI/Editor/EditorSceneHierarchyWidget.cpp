@@ -414,10 +414,26 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		const bool bCamerasOpen = DrawFolderRow("Cameras", "Folder", "CamerasFolder", true, 0.0f);
 		if (bCamerasOpen)
 		{
-			DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, (void*)Camera, ChildIndent, [&]()
+			bool bCameraFound = true;
+
+			const CHAR* Search = ActorSearchFilterBuffer.Data();
+			if (Search && Search[0] != '\0')
 			{
-				EditorEngine->SetSelectedCamera(Camera);
-			});
+				// Match either the displayed name or the type (nice when user searches "camera")
+				const CHAR* CameraName = "Main Camera";
+				if (!FCString::Stristr(CameraName, Search) && !FCString::Stristr("Camera", Search))
+				{
+					bCameraFound = false;
+				}
+			}
+
+			if (bCameraFound)
+			{
+				DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, (void*)Camera, ChildIndent, [&]()
+				{
+					EditorEngine->SetSelectedCamera(Camera);
+				});
+			}
 		}
 	}
 
