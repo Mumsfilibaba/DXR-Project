@@ -57,6 +57,7 @@ void FEditorDockspaceWidget::InitializeEditorStyle()
 	Style.ChildBorderSize      = 0.0f;
 	Style.FrameBorderSize      = 0.0f;
 	Style.TabBarBorderSize     = 0.0f;
+	Style.DockingSeparatorSize = 4.0f;
 
     Style.Colors[ImGuiCol_WindowBg]           = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
     Style.Colors[ImGuiCol_ChildBg]            = ImVec4(0.06f, 0.06f, 0.07f, 1.00f);
@@ -130,7 +131,6 @@ void FEditorDockspaceWidget::Draw()
 		ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoBringToFrontOnFocus |
 		ImGuiWindowFlags_NoNavFocus |
-		//ImGuiWindowFlags_MenuBar |
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoScrollWithMouse;
 

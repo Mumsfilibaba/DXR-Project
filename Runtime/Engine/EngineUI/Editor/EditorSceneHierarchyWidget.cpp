@@ -350,6 +350,13 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	ImGui::TableSetupScrollFreeze(0, 1);
 
+	// Fill the whole table area (including empty space below rows)
+	{
+		ImDrawList* DrawList = ImGui::GetWindowDrawList();
+		const ImU32  Bg = IM_COL32(26, 26, 26, 255);
+		DrawList->AddRectFilled(TableRectMin, TableRectMax, Bg);
+	}
+
 	const float TypeColWidth = ImGui::CalcTextSize("DirectionalLight").x + Style.CellPadding.x * 2.0f + 12.0f;
 	ImGui::TableSetupColumn("##Gutter", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoHeaderLabel | ImGuiTableColumnFlags_NoResize, 8.0f);
 	ImGui::TableSetupColumn("Item Label", ImGuiTableColumnFlags_WidthStretch);
@@ -357,12 +364,44 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
 	const float CellPaddingY = Math::Max(0.0f, EditorStyleVars::SceneHierarchyTableRowHeight - ImGui::GetTextLineHeight()) * 0.5f;
 	ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(8.0, CellPaddingY));
+
 	ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+
+	float HeaderMinY = 0.0f;
+	float HeaderMaxY = 0.0f;
+	float Sep01X     = 0.0f; // between column 0 and 1
+	float Sep12X     = 0.0f; // between column 1 and 2
 
 	for (int32 Column = 0; Column < 3; Column++)
 	{
 		ImGui::TableSetColumnIndex(Column);
 		ImGui::TableHeader(ImGui::TableGetColumnName(Column));
+
+		const ImVec2 CellMin = ImGui::GetItemRectMin();
+		const ImVec2 CellMax = ImGui::GetItemRectMax();
+
+		if (Column == 1)
+		{
+			HeaderMinY = CellMin.y;
+			HeaderMaxY = CellMax.y;
+			Sep01X     = CellMin.x;
+		}
+		else if (Column == 2)
+		{
+			Sep12X = CellMin.x;
+		}
+	}
+
+	{
+		const ImU32 BorderCol = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
+		const float Thickness = 2.0f;
+
+		float X0 = Math::Floor(Sep01X) + 0.5f;
+		float X1 = Math::Floor(Sep12X) + 0.5f;
+
+		ImDrawList* DrawList = ImGui::GetWindowDrawList();
+		DrawList->AddLine(ImVec2(X0, HeaderMinY), ImVec2(X0, HeaderMaxY), BorderCol, Thickness);
+		DrawList->AddLine(ImVec2(X1, HeaderMinY), ImVec2(X1, HeaderMaxY), BorderCol, Thickness);
 	}
 
 	ImGui::PopStyleVar();
@@ -500,33 +539,44 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 	// -----------------------------------------------------------------------------------------
 	// Click rules
 	// -----------------------------------------------------------------------------------------
-
 	if (EditorEngine && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 	{
-		const ImVec2 MousePos = ImGui::GetIO().MousePos;
-
-		const bool bInTable = (MousePos.x >= TableRectMin.x && MousePos.x < TableRectMax.x) && (MousePos.y >= TableRectMin.y && MousePos.y < TableRectMax.y);
-		if (bInTable)
+		// If another window is on overlapping, the scene hierarchy panel is NOT hovered.
+		const bool bHierarchyHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+		if (!bHierarchyHovered)
 		{
-			// If we clicked inside the table but not on any item (no row, no header, no scrollbar),
-			// then we clear selection.
-			if (!ImGui::IsAnyItemHovered())
-			{
-				EditorEngine->ClearSelection();
-
-				RenamingActor       = nullptr;
-				bRequestRenameFocus = false;
-			}
-
-			// Any click in the table makes the selection "active" (blue) if a row is selected.
-			bSelectionActiveInTable = true;
-		}
-		else
-		{
-			// Clicked outside the table: keep selection, but show it as inactive.
+			// Click went to another window -> keep selection but make it inactive.
 			if (bHasAnySelection)
 			{
 				bSelectionActiveInTable = false;
+			}
+		}
+		else
+		{
+			// Click is inside Scene Hierarchy window.
+			const ImVec2 MousePos = ImGui::GetIO().MousePos;
+
+			const bool bInTableRect = (MousePos.x >= TableRectMin.x && MousePos.x < TableRectMax.x) && (MousePos.y >= TableRectMin.y && MousePos.y < TableRectMax.y);
+			if (!bInTableRect)
+			{
+				// Clicked in this window but outside the table (search bar/background) -> inactive selection.
+				if (bHasAnySelection)
+				{
+					bSelectionActiveInTable = false;
+				}
+			}
+			else
+			{
+				// Clicked in the table area. If we didn't click any row/header/scrollbar item -> clear selection.
+				if (!ImGui::IsAnyItemHovered())
+				{
+					EditorEngine->ClearSelection();
+					RenamingActor       = nullptr;
+					bRequestRenameFocus = false;
+				}
+
+				// Any click in table makes selection "active" again (blue).
+				bSelectionActiveInTable = true;
 			}
 		}
 	}
@@ -573,11 +623,16 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	};
 
 	// Colors
-	const ImVec4 ActorNameTextColor = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
-	const ImVec4 ActorTypeTextColor = ImVec4(124.0f / 255.0f, 124.0f / 255.0f, 124.0f / 255.0f, 1.0f);
-	const ImU32  RowBlue_Selected   = IM_COL32(0, 112, 224, 255);
-	const ImU32  RowBlue_Rename     = IM_COL32(0x3f, 0x7b, 0xb6, 160);
-	const ImU32  BorderBlueRename   = IM_COL32(0x3f, 0x7b, 0xb6, 255);
+	const ImVec4 ActorNameTextColor    = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+	const ImVec4 ActorTypeTextColor    = ImVec4(124.0f / 255.0f, 124.0f / 255.0f, 124.0f / 255.0f, 1.0f);
+	const ImU32  SelectedActiveColor   = IM_COL32(0, 112, 224, 255);
+	const ImU32  SelectedInactiveColor = IM_COL32(64, 87, 111, 255);
+	const ImU32  SelectedColor         = bSelectionActiveInTable ? SelectedActiveColor : SelectedInactiveColor;
+	const ImU32  RowBlue_Rename        = IM_COL32(0x3f, 0x7b, 0xb6, 160);
+	const ImVec4 SearchBg              = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+	const ImU32  BorderNormal          = IM_COL32(51, 51, 51, 255);
+	const ImU32  BorderHovered         = IM_COL32(74, 74, 74, 255);
+	const ImU32  BorderActive          = IM_COL32(9, 92, 176, 255);
 
 	ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -597,12 +652,12 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGuiSelectableFlags_SpanAllColumns |
 		ImGuiSelectableFlags_AllowItemOverlap;
 
-	const ImU32 RowBlue = bIsRenamingThis ? RowBlue_Rename : RowBlue_Selected;
+	const ImU32 RowSelectedColor = bIsRenamingThis ? RowBlue_Rename : SelectedColor;
 	if (bSelected)
 	{
-		ImGui::PushStyleColor(ImGuiCol_Header, RowBlue);
-		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowBlue);
-		ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowBlue);
+		ImGui::PushStyleColor(ImGuiCol_Header, RowSelectedColor);
+		ImGui::PushStyleColor(ImGuiCol_HeaderHovered, RowSelectedColor);
+		ImGui::PushStyleColor(ImGuiCol_HeaderActive, RowSelectedColor);
 	}
 
 	float RowHeight = ImGui::GetTextLineHeight() + Style.CellPadding.y * 2.0f;
@@ -638,8 +693,12 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	const ImVec2 MousePos     = ImGui::GetIO().MousePos;
 
 	const bool bClickedInLabelColumn = (MousePos.x >= Column1MinX && MousePos.x <= Column1MaxX);
+
 	if (bRowPressed)
 	{
+		// Any click on a row should re-activate selection (blue)
+		bSelectionActiveInTable = true;
+
 		if (!bSelected)
 		{
 			EditorEngine->SetSelectedActor(Actor);
@@ -656,6 +715,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 	}
 
 	const float RenameFramePadY = Style.CellPadding.y;
+
 	if (bIsRenamingThis)
 	{
 		const float InputY     = TextY - RenameFramePadY;
@@ -671,7 +731,12 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, BorderRounding);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(Style.FramePadding.x, RenameFramePadY));
 
-		// Ensure rename text matches actor name color
+		// Same background as search box
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, SearchBg);
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, SearchBg);
+		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, SearchBg);
+
+		// Rename text should match actor name color
 		ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
 
 		if (bRequestRenameFocus)
@@ -686,16 +751,21 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const char* Type, 
 
 		const bool bEnter = ImGui::InputText("##RenameActor", ActorRenameBuffer.Data(), ActorRenameBuffer.Size(), InputFlags);
 
-		ImGui::PopStyleColor(); // Text
+		ImGui::PopStyleColor(4); // FrameBg x3 + Text
 		ImGui::PopStyleVar(2);
 
-		if (ImGui::IsItemActive())
+		// Always draw border like search box
 		{
 			const ImVec2 ItemMin = ImGui::GetItemRectMin();
 			const ImVec2 ItemMax = ImGui::GetItemRectMax();
 
+			const bool bActive  = ImGui::IsItemActive();
+			const bool bHovered = ImGui::IsItemHovered();
+
+			const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
+
 			ImDrawList* DrawList = ImGui::GetWindowDrawList();
-			DrawList->AddRect(ItemMin, ItemMax, BorderBlueRename, BorderRounding, 0, BorderThickness);
+			DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
 		}
 
 		if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
