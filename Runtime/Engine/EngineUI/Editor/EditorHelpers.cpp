@@ -840,6 +840,9 @@ void EditorWidgets::EditorResetMenuPopup()
 
 bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWidth, float RevertColumnWidth)
 {
+	// -----------------------------------------------------------------------------------------
+	// colors
+	// -----------------------------------------------------------------------------------------
 	const ImVec4 RowBg       = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
 	const ImVec4 TableBorder = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
 	const ImVec4 FrameBg     = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
@@ -861,11 +864,31 @@ bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWid
 		ImGuiTableFlags_RowBg |
 		ImGuiTableFlags_NoSavedSettings |
 		ImGuiTableFlags_Resizable |
+		ImGuiTableFlags_NoPadOuterX |
 		ImGuiTableFlags_BordersInnerH |
 		ImGuiTableFlags_BordersInnerV;
 
-	// Force table to use full content width (so it matches the collapsing header width)
-	const ImVec2 OuterSize(ImGui::GetContentRegionAvail().x, 0.0f);
+	ImVec2 HeaderMin = ImGui::GetItemRectMin();
+	ImVec2 HeaderMax = ImGui::GetItemRectMax();
+
+	if (HeaderMax.x <= HeaderMin.x)
+	{
+		const ImVec2 CursorScreenPos = ImGui::GetCursorScreenPos();
+		HeaderMin = CursorScreenPos;
+		HeaderMax = ImVec2(CursorScreenPos.x + ImGui::GetContentRegionAvail().x, CursorScreenPos.y);
+	}
+
+	ImGui::SetCursorScreenPos(ImVec2(HeaderMin.x, HeaderMax.y));
+
+	const float TableWidth = HeaderMax.x - HeaderMin.x;
+	const ImVec2 OuterSize = ImVec2(TableWidth, 0.0f);
+
+	ImGuiStorage* Storage = ImGui::GetStateStorage();
+
+	const ImVec2 BorderMin = ImGui::GetCursorScreenPos();
+	Storage->SetFloat(ImGui::GetID("##LastPropTableX"), BorderMin.x);
+	Storage->SetFloat(ImGui::GetID("##LastPropTableY"), BorderMin.y);
+	Storage->SetFloat(ImGui::GetID("##LastPropTableW"), TableWidth);
 
 	if (!ImGui::BeginTable(TableId, 3, Flags, OuterSize))
 	{
@@ -877,16 +900,41 @@ bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWid
 	ImGui::TableSetupColumn("##Label", ImGuiTableColumnFlags_WidthFixed, LabelColumnWidth);
 	ImGui::TableSetupColumn("##Value", ImGuiTableColumnFlags_WidthStretch);
 	ImGui::TableSetupColumn("##Revert", ImGuiTableColumnFlags_WidthFixed, RevertColumnWidth);
-
 	return true;
 }
 
 void EditorWidgets::EndPropertyTable()
 {
 	ImGui::EndTable();
+
+	ImGuiStorage* Storage = ImGui::GetStateStorage();
+	
+	const float X0 = Storage->GetFloat(ImGui::GetID("##LastPropTableX"), 0.0f);
+	const float Y0 = Storage->GetFloat(ImGui::GetID("##LastPropTableY"), 0.0f);
+	const float W  = Storage->GetFloat(ImGui::GetID("##LastPropTableW"), 0.0f);
+
+	if (W > 0.0f)
+	{
+		const ImGuiStyle& Style = ImGui::GetStyle();
+
+		float BottomY = ImGui::GetCursorScreenPos().y - Style.ItemSpacing.y;
+
+		const ImU32 Color     = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
+		const float Thickness = 2.0f;
+
+		const float X1      = X0 + W;
+		const float YTop    = Math::Floor(Y0) + 0.5f;
+		const float YBottom = Math::Ceil(BottomY) - 0.5f;
+
+		ImDrawList* DrawList = ImGui::GetWindowDrawList();
+		DrawList->AddLine(ImVec2(X0, YTop), ImVec2(X1, YTop), Color, Thickness);
+		DrawList->AddLine(ImVec2(X0, YBottom), ImVec2(X1, YBottom), Color, Thickness);
+	}
+
 	ImGui::PopStyleColor(7);
 	ImGui::PopStyleVar();
 }
+
 
 void EditorWidgets::PropertySeparatorRow(float PaddingY)
 {

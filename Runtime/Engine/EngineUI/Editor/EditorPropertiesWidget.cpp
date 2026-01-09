@@ -98,7 +98,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		if (bResult)
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 0.0f));
-			ImGui::Dummy(ImVec2(0.0f, 4.0f));
 			ImGui::PopStyleVar();
 		}
 
