@@ -92,7 +92,9 @@ struct FImGuiTexture;
 
 struct EditorIcons
 {
-	static FImGuiTexture* UndoIcon;
+	static ImTextureID UndoIcon;
+	static ImTextureID SearchIcon;
+	static ImTextureID FolderIcon;
 
 	static bool Initialize();
 	static void Release();

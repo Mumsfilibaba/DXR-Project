@@ -1000,11 +1000,14 @@ struct EditorIconsInternal
 	inline static EditorIcon FolderIcon = EditorIcon();
 };
 
-FImGuiTexture* EditorIcons::UndoIcon;
-
-static bool LoadEditorIcon(const TCHAR* InRelativePath, EditorIcon& OutIcon)
+ImTextureID EditorIcons::UndoIcon   = nullptr;
+ImTextureID EditorIcons::SearchIcon = nullptr;
+ImTextureID EditorIcons::FolderIcon = nullptr;
+;
+static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon)
 {
 	OutIcon.Reset();
+	OutIconID = nullptr;
 
 	FString FullPath = FPaths::GetAssetDir();
 	if (!FullPath.EndsWith("/"))
@@ -1044,34 +1047,31 @@ static bool LoadEditorIcon(const TCHAR* InRelativePath, EditorIcon& OutIcon)
 		return false;
 	}
 
+	OutIconID = reinterpret_cast<ImTextureID>(OutIcon.ImGuiTexture.Get());
 	return true;
 }
 
-static void UnloadEditorIcon(FImGuiTexture** UndoIcon, EditorIcon& OutIcon)
+static void UnloadEditorIcon(ImTextureID& OutIconID, EditorIcon& OutIcon)
 {
-	if (UndoIcon)
-	{
-		*UndoIcon = nullptr;
-	}
-
 	if (OutIcon.Texture)
 	{
 		FAssetManager::Get().UnloadTexture(OutIcon.Texture);
 	}
 
 	OutIcon.Reset();
+	OutIconID = nullptr;
 }
 
 bool EditorIcons::Initialize()
 {
 	bool bResult = true;
-	bResult &= LoadEditorIcon("Editor/Icons/Undo.png", EditorIconsInternal::UndoIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Search.png", EditorIconsInternal::UndoIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::UndoIcon);
 	return bResult;
 }
 
 void EditorIcons::Release()
 {
-	UnloadEditorIcon(&UndoIcon, EditorIconsInternal::UndoIcon);
+	UnloadEditorIcon(UndoIcon, EditorIconsInternal::UndoIcon);
 }
