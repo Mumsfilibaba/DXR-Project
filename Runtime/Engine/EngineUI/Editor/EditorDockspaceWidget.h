@@ -20,7 +20,7 @@ public:
     FEditorDockspaceWidget(FEditorEngine* InEditorEngine);
     ~FEditorDockspaceWidget();
 
-	void InitializeEditorStyle();
+	bool InitializeEditorStyle();
     void BuildDockingLayout(FLayoutIds& Ids);
 
     void Draw();

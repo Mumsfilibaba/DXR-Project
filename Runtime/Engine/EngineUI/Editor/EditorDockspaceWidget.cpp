@@ -5,14 +5,13 @@
 #include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
+#include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 
-static bool GShowContentBrowser  = true;
-static bool GShowSceneHierarchy  = true;
-static bool GShowPropertiesPanel = true;
+static bool GShowContentBrowser = true;
 
 static const float GStatusBarHeight = 22.0f;
 
@@ -33,6 +32,9 @@ FEditorDockspaceWidget::FEditorDockspaceWidget(FEditorEngine* InEditorEngine)
 
 FEditorDockspaceWidget::~FEditorDockspaceWidget()
 {
+	// Release icons
+	EditorIcons::Release();
+
 	if (IImguiPlugin::IsEnabled())
 	{
 		IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
@@ -41,7 +43,7 @@ FEditorDockspaceWidget::~FEditorDockspaceWidget()
 	EditorEngine = nullptr;
 }
 
-void FEditorDockspaceWidget::InitializeEditorStyle()
+bool FEditorDockspaceWidget::InitializeEditorStyle()
 {
     ImGuiStyle& Style = ImGui::GetStyle();
     Style.WindowRounding       = 6.0f;
@@ -88,18 +90,24 @@ void FEditorDockspaceWidget::InitializeEditorStyle()
 	const ImVec4 SplitterHovered = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
 	const ImVec4 SplitterActive  = SplitterHovered;
 
-	// Idle seam is often Border (and sometimes BorderShadow)
 	Style.Colors[ImGuiCol_Border]            = SplitterIdle;
 	Style.Colors[ImGuiCol_BorderShadow]      = SplitterIdle;
-	// Hover/active is commonly SeparatorHovered/Active
 	Style.Colors[ImGuiCol_SeparatorHovered]  = SplitterHovered;
 	Style.Colors[ImGuiCol_SeparatorActive]   = SplitterActive;
-	// Some docking setups route hover/active through resize-grip colors
 	Style.Colors[ImGuiCol_ResizeGripHovered] = SplitterHovered;
 	Style.Colors[ImGuiCol_ResizeGripActive]  = SplitterActive;
-	// (Optional) if you want the non-hover separator color too
 	Style.Colors[ImGuiCol_Separator]         = SplitterIdle;
 	Style.Colors[ImGuiCol_ResizeGrip]        = SplitterIdle;
+
+	// Load necessary icons
+	if (EditorIcons::Initialize())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
@@ -111,7 +119,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 	Ids.DockCenterTop    = 0;
 	Ids.DockCenterBottom = 0;
 
-	// Cleanup previous dockspace and add a new one
+	// Cleanup previous Dockspace and add a new one
 	ImGui::DockBuilderRemoveNodeDockedWindows(Ids.Dockspace, true);
 	ImGui::DockBuilderRemoveNode(Ids.Dockspace);
 	ImGui::DockBuilderAddNode(Ids.Dockspace, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
@@ -124,7 +132,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 	ImGui::DockBuilderSplitNode(Ids.DockCenter, ImGuiDir_Down, 0.28f, &Ids.DockCenterBottom, &Ids.DockCenterTop);
 	ImGui::DockBuilderSplitNode(Ids.DockRight, ImGuiDir_Up, 0.55f, &Ids.DockRightTop, &Ids.DockRightBottom);
 
-	// Assign windows to the dockspace items
+	// Assign windows to the Dockspace items
 	ImGui::DockBuilderDockWindow("Viewport", Ids.DockCenterTop);
 	ImGui::DockBuilderDockWindow("Scene Hierarchy", Ids.DockRightTop);
 	ImGui::DockBuilderDockWindow("Properties", Ids.DockRightBottom);
@@ -156,7 +164,7 @@ void FEditorDockspaceWidget::Draw()
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-	// Window for the dockspace
+	// Window for the Dockspace
 	ImGui::Begin("##DockspaceHost", nullptr, HostFlags);
 	
 	ImGui::PopStyleVar(3);
@@ -262,14 +270,6 @@ void FEditorDockspaceWidget::DrawMenuBar()
 			if (EditorWidgets::EditorBeginMenuPopup(PopupWindows, WindowsAnchor, BrightPopupBg))
 			{
 				{
-					bool bProps = GShowPropertiesPanel;
-					if (EditorWidgets::EditorMenuItem("Properties", nullptr, bProps))
-					{
-						GShowPropertiesPanel = !bProps;
-					}
-				}
-
-				{
 					bool bContent = GShowContentBrowser;
 					if (EditorWidgets::EditorMenuItem("Content Browser", nullptr, bContent))
 					{
@@ -316,6 +316,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
 					else
 					{
 						EditorWidgets::EditorMenuItem("Scene Hierarchy", nullptr, false, false);
+					}
+
+					if (FEditorPropertiesWidget* PropertiesWidget = EditorEngine->GetPropertiesWidget().Get())
+					{
+						bool bVisible = PropertiesWidget->IsVisible();
+						if (EditorWidgets::EditorMenuItem("Properties", nullptr, bVisible))
+						{
+							PropertiesWidget->SetVisible(!bVisible);
+						}
+					}
+					else
+					{
+						EditorWidgets::EditorMenuItem("Properties", nullptr, false, false);
 					}
 				}
 

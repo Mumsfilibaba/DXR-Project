@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Color.h"
+#include "Core/Containers/UniquePtr.h"
 #include <imgui.h>
 
 struct PopupAnchor
@@ -85,4 +86,14 @@ struct ENGINE_API EditorWidgets
 	static void EndPropertyTable();
 	static void PropertyRowLabel(const char* Label);
 	static void PropertySeparatorRow(float PaddingY = 4.0f);
+};
+
+struct FImGuiTexture;
+
+struct EditorIcons
+{
+	static FImGuiTexture* UndoIcon;
+
+	static bool Initialize();
+	static void Release();
 };

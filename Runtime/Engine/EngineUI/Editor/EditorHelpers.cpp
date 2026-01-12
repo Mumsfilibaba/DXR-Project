@@ -1,4 +1,8 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Core/Misc/Paths.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Engine/Assets/AssetManager.h"
+#include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
 
 float EditorStyleVars::MainMenuBarHeight = 28.0f;
@@ -946,8 +950,9 @@ void EditorWidgets::PropertySeparatorRow(float PaddingY)
 	}
 
 	ImGui::TableNextRow();
-	const int ColumnCount = ImGui::TableGetColumnCount();
-	for (int ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
+
+	const int32 ColumnCount = ImGui::TableGetColumnCount();
+	for (int32 ColumnIndex = 0; ColumnIndex < ColumnCount; ++ColumnIndex)
 	{
 		ImGui::TableSetColumnIndex(ColumnIndex);
 		ImGui::Separator();
@@ -963,5 +968,100 @@ void EditorWidgets::PropertyRowLabel(const char* Label)
 	ImGui::TextUnformatted(Label);
 
 	ImGui::TableSetColumnIndex(1);
-	ImGui::SetNextItemWidth(-FLT_MIN); // fill available width
+	ImGui::SetNextItemWidth(-FLT_MIN); // Fill available width
+}
+
+struct EditorIcon
+{
+	void Reset()
+	{
+		Texture      = nullptr;
+		ImGuiTexture = nullptr;
+	}
+
+	FTextureRef               Texture      = nullptr;
+	TUniquePtr<FImGuiTexture> ImGuiTexture = nullptr;
+};
+
+struct EditorIconsInternal
+{
+	inline static EditorIcon UndoIcon   = EditorIcon();
+	inline static EditorIcon SearchIcon = EditorIcon();
+	inline static EditorIcon FolderIcon = EditorIcon();
+};
+
+FImGuiTexture* EditorIcons::UndoIcon;
+
+static bool LoadEditorIcon(const TCHAR* InRelativePath, EditorIcon& OutIcon)
+{
+	OutIcon.Reset();
+
+	FString FullPath = FPaths::GetAssetDir();
+	if (!FullPath.EndsWith("/"))
+	{
+		FullPath += "/";
+	}
+
+	FullPath += InRelativePath;
+
+	FTextureRef Texture = FAssetManager::Get().LoadTexture(FullPath, false);
+	if (!Texture)
+	{
+		LOG_ERROR("[EditorIcons]: Failed to load icon texture '%s'", *FullPath);
+		return false;
+	}
+
+	OutIcon.Texture = Texture;
+
+	FTexture2D* Texture2D = Texture->GetTexture2D();
+	if (!Texture2D)
+	{
+		LOG_ERROR("[EditorIcons]: Icon '%s' is not a 2D texture.", *FullPath);
+		return false;
+	}
+
+	FRHITextureRef TextureRHI = Texture2D->GetRHITexture();
+	if (!TextureRHI)
+	{
+		LOG_ERROR("[EditorIcons]: Icon '%s' has no RHI texture.", *FullPath);
+		return false;
+	}
+
+	OutIcon.ImGuiTexture = MakeUniquePtr<FImGuiTexture>(TextureRHI, EResourceAccess::PixelShaderResource);
+	if (!OutIcon.ImGuiTexture)
+	{
+		LOG_ERROR("[EditorIcons]: Failed to create ImGui texture wrapper for '%s'.", *FullPath);
+		return false;
+	}
+
+	return true;
+}
+
+static void UnloadEditorIcon(FImGuiTexture** UndoIcon, EditorIcon& OutIcon)
+{
+	if (UndoIcon)
+	{
+		*UndoIcon = nullptr;
+	}
+
+	if (OutIcon.Texture)
+	{
+		FAssetManager::Get().UnloadTexture(OutIcon.Texture);
+	}
+
+	OutIcon.Reset();
+}
+
+bool EditorIcons::Initialize()
+{
+	bool bResult = true;
+	bResult &= LoadEditorIcon("Editor/Icons/Undo.png", EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Search.png", EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", EditorIconsInternal::UndoIcon);
+	return bResult;
+}
+
+void EditorIcons::Release()
+{
+	UnloadEditorIcon(&UndoIcon, EditorIconsInternal::UndoIcon);
 }

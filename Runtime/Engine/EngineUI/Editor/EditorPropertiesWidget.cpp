@@ -104,8 +104,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
 		return bResult;
 	};
 
-	static constexpr float LabelColumnWidth  = 160.0f;
-	static constexpr float RevertColumnWidth = 24.0f;
+	static constexpr float LabelColumnWidth  = 128.0f;
+	static constexpr float RevertColumnWidth = 32.0f;
 
 	// ------------------------------------------------------------
 	// Actor properties
