@@ -120,6 +120,70 @@ static void DrawAxisLineForLastItem(ImU32 InColor)
 	Window->DrawList->AddRectFilled(LineMin, LineMax, InColor, 1.0f);
 }
 
+static bool ResetIconButton(float InSizePx = 0.0f)
+{
+	float ButtonSizePx = InSizePx;
+	if (ButtonSizePx <= 0.0f)
+	{
+		const float AvailableWidthPx = ImGui::GetContentRegionAvail().x;
+		ButtonSizePx = Math::Min(ImGui::GetFrameHeight(), AvailableWidthPx);
+	}
+
+	ButtonSizePx = Math::Max(1.0f, ButtonSizePx);
+	const ImVec2 ButtonSize = ImVec2(ButtonSizePx, ButtonSizePx);
+
+	ImGuiID UniqueSeedId = ImGui::GetItemID();
+	if (UniqueSeedId == 0)
+	{
+		UniqueSeedId = ImGui::GetID("##ResetIconButtonSeed");
+	}
+
+	ImGui::PushID((int32)UniqueSeedId);
+
+	const bool bWasPressed = ImGui::InvisibleButton("##Revert", ButtonSize);
+	const bool bIsHovered  = ImGui::IsItemHovered();
+	const bool bIsHeld     = ImGui::IsItemActive();
+
+	const ImVec2 ButtonRectMin = ImGui::GetItemRectMin();
+	const ImVec2 ButtonRectMax = ImGui::GetItemRectMax();
+
+	const ImGuiStyle& ImGuiStyle = ImGui::GetStyle();
+
+	ImDrawList* WindowDrawList = ImGui::GetWindowDrawList();
+	if (EditorIcons::UndoIcon)
+	{
+		const ImVec2 IconRectMin = ButtonRectMin;
+		const ImVec2 IconRectMax = ButtonRectMax;
+
+		const int32 IconTintIdle   = 220;
+		const int32 IconTintHover  = 160;
+		const int32 IconTintActive = 130;
+
+		const int32 IconTintValue = bIsHeld ? IconTintActive : (bIsHovered ? IconTintHover : IconTintIdle);
+
+		const float Alpha01  = Math::Clamp(ImGuiStyle.Alpha, 0.0f, 1.0f);
+		const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+
+		const ImU32 IconTintColor = IM_COL32(IconTintValue, IconTintValue, IconTintValue, Alpha255);
+		WindowDrawList->AddImage(EditorIcons::UndoIcon, IconRectMin, IconRectMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), IconTintColor);
+	}
+	else
+	{
+		const char* FallbackText = "R";
+
+		const ImVec2 FallbackTextSize     = ImGui::CalcTextSize(FallbackText);
+		const ImVec2 FallbackTextPosition = ImVec2(
+			(ButtonRectMin.x + ButtonRectMax.x) * 0.5f - FallbackTextSize.x * 0.5f,
+			(ButtonRectMin.y + ButtonRectMax.y) * 0.5f - FallbackTextSize.y * 0.5f);
+
+		const ImU32 TextColor = ImGui::GetColorU32(ImGuiCol_Text);
+		WindowDrawList->AddText(FallbackTextPosition, TextColor, FallbackText);
+	}
+
+	ImGui::PopID();
+	return bWasPressed;
+}
+
 bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
 	ImGuiStyle& Style = ImGui::GetStyle();
@@ -219,10 +283,10 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 		ImGui::BeginDisabled();
 	}
 
-	if (ImGui::SmallButton("R"))
+	if (ResetIconButton())
 	{
 		OutValue = *InRevertValue;
-		bResult = true;
+		bResult  = true;
 	}
 
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
@@ -301,10 +365,10 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
 		ImGui::BeginDisabled();
 	}
 
-	if (ImGui::SmallButton("R"))
+	if (ResetIconButton())
 	{
 		InOutValue = *InRevertValue;
-		bResult = true;
+		bResult    = true;
 	}
 
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
@@ -373,10 +437,10 @@ bool EditorWidgets::DrawCheckboxProperty(const char* Label, bool& InOutValue, co
 		ImGui::BeginDisabled();
 	}
 
-	if (ImGui::SmallButton("R") && bCanRevert)
+	if (ResetIconButton() && bCanRevert)
 	{
 		InOutValue = *InRevertValue;
-		bResult = true;
+		bResult    = true;
 	}
 
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
@@ -508,7 +572,7 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 		ImGui::BeginDisabled();
 	}
 
-	if (ImGui::SmallButton("R") && bCanRevert)
+	if (ResetIconButton() && bCanRevert)
 	{
 		static constexpr uint64 SizeInBytes = sizeof(float[3]);
 		FMemory::Memcpy(InOutColor, InRevertColor, SizeInBytes);
@@ -1004,7 +1068,7 @@ ImTextureID EditorIcons::UndoIcon   = nullptr;
 ImTextureID EditorIcons::SearchIcon = nullptr;
 ImTextureID EditorIcons::FolderIcon = nullptr;
 ;
-static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon)
+static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
 	OutIcon.Reset();
 	OutIconID = nullptr;
@@ -1046,8 +1110,14 @@ static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, 
 		LOG_ERROR("[EditorIcons]: Failed to create ImGui texture wrapper for '%s'.", *FullPath);
 		return false;
 	}
+	else
+	{
+		OutIcon.ImGuiTexture->bEnableBlending      = bEnableBlending;
+		OutIcon.ImGuiTexture->bEnableLinearSampler = bEnableLinearSampler;
 
-	OutIconID = reinterpret_cast<ImTextureID>(OutIcon.ImGuiTexture.Get());
+		OutIconID = reinterpret_cast<ImTextureID>(OutIcon.ImGuiTexture.Get());
+	}
+
 	return true;
 }
 
@@ -1066,8 +1136,8 @@ bool EditorIcons::Initialize()
 {
 	bool bResult = true;
 	bResult &= LoadEditorIcon("Editor/Icons/Undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::UndoIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::SearchIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
 	return bResult;
 }
 

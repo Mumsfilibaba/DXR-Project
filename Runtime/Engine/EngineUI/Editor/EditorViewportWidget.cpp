@@ -68,11 +68,11 @@ void FEditorViewportWidget::SetViewportImage(FRHITextureRef InViewportImage)
 {
 	if (InViewportImage)
 	{
-		ViewportImage.Texture        = InViewportImage;
-		ViewportImage.View           = MakeSharedRef<FRHIShaderResourceView>(InViewportImage->GetShaderResourceView());
-		ViewportImage.ResourceState  = EResourceAccess::RenderTarget;
-		ViewportImage.bSamplerLinear = false;
-		ViewportImage.bAllowBlending = false;
+		ViewportImage.Texture              = InViewportImage;
+		ViewportImage.View                 = MakeSharedRef<FRHIShaderResourceView>(InViewportImage->GetShaderResourceView());
+		ViewportImage.ResourceState        = EResourceAccess::RenderTarget;
+		ViewportImage.bEnableLinearSampler = false;
+		ViewportImage.bEnableBlending      = false;
 	}
 }
 

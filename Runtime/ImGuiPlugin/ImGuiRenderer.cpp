@@ -436,7 +436,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                 {
                     // TODO: Change this so that the same code can be used for font texture and images
                     const FImGuiTexture* DrawableTexture = reinterpret_cast<const FImGuiTexture*>(TextureID);
-                    if (!DrawableTexture->bAllowBlending)
+                    if (!DrawableTexture->bEnableBlending)
                     {
                         CommandList.SetGraphicsPipelineState(PipelineStateNoBlending.Get());
                     }
@@ -445,7 +445,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                         CommandList.SetGraphicsPipelineState(PipelineState.Get());
                     }
 
-                    if (DrawableTexture->bSamplerLinear)
+                    if (DrawableTexture->bEnableLinearSampler)
                     {
                         CommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
                     }

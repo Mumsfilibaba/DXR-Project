@@ -20,8 +20,8 @@ struct FImGuiTexture
         : View(MakeSharedRef<FRHIShaderResourceView>(InImage ? InImage->GetShaderResourceView() : nullptr))
         , Texture(InImage)
         , ResourceState(InResourceState)
-        , bAllowBlending(false)
-        , bSamplerLinear(false)
+        , bEnableBlending(false)
+        , bEnableLinearSampler(false)
     {
     }
 
@@ -29,16 +29,16 @@ struct FImGuiTexture
         : View(InImageView)
         , Texture(InImage)
         , ResourceState(InResourceState)
-		, bAllowBlending(false)
-		, bSamplerLinear(false)
+		, bEnableBlending(false)
+		, bEnableLinearSampler(false)
     {
     }
 
-    FRHITextureRef            Texture        = nullptr;
-    FRHIShaderResourceViewRef View           = nullptr;
-    EResourceAccess           ResourceState  = EResourceAccess::Common;
-    bool                      bAllowBlending = false;
-    bool                      bSamplerLinear = false;
+    FRHITextureRef            Texture              = nullptr;
+    FRHIShaderResourceViewRef View                 = nullptr;
+    EResourceAccess           ResourceState        = EResourceAccess::Common;
+    bool                      bEnableBlending      = false;
+    bool                      bEnableLinearSampler = false;
 };
 
 struct IImguiPlugin : public FModuleInterface
