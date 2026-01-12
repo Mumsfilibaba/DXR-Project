@@ -98,6 +98,28 @@ static void DrawInputBorderLastItem(float Rounding = -1.0f, float Thickness = 2.
 	Window->DrawList->AddRect(Min, Max, Color, Rounding, 0, Thickness);
 }
 
+static void DrawAxisLineForLastItem(ImU32 InColor)
+{
+	ImGuiWindow* Window = ImGui::GetCurrentWindow();
+	if (!Window || Window->SkipItems)
+	{
+		return;
+	}
+
+	const ImVec2 ItemMin = ImGui::GetItemRectMin();
+	const ImVec2 ItemMax = ImGui::GetItemRectMax();
+
+	const float PadX      = 6.0f;
+	const float PadY      = 5.0f;
+	const float Thickness = 2.0f;
+
+	const float X = ItemMin.x + PadX;
+	const ImVec2 LineMin = ImVec2(X - Thickness * 0.5f, ItemMin.y + PadY);
+	const ImVec2 LineMax = ImVec2(X + Thickness * 0.5f, ItemMax.y - PadY);
+
+	Window->DrawList->AddRectFilled(LineMin, LineMax, InColor, 1.0f);
+}
+
 bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
 	ImGuiStyle& Style = ImGui::GetStyle();
@@ -134,7 +156,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
 	// Label
 	ImGui::TableSetColumnIndex(0);
-	
+
 	const float LabelIndentPx = 24.0f;
 	ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
 
@@ -145,17 +167,13 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 	ImGui::TableSetColumnIndex(1);
 	ImGui::PushID(Label);
 
-	const float  ButtonWidth = LineHeight * 0.90f;
-	const ImVec2 ButtonSize  = ImVec2(ButtonWidth, LineHeight);
+	const float Avail = ImGui::GetContentRegionAvail().x;
+	const float TotalGaps = 2.0f * Gap; // gaps between X|Y and Y|Z
 
-	const float Avail        = ImGui::GetContentRegionAvail().x;
-	const float TotalButtons = 3.0f * ButtonSize.x;
-	const float TotalGaps    = 5.0f * Gap;
+	float DragWidth = (Avail - TotalGaps) / 3.0f;
+	DragWidth = ImMax(DragWidth, 1.0f);
 
-	float DragWidth = (Avail - TotalButtons - TotalGaps) / 3.0f;
-	DragWidth = ImMax(DragWidth, 1.0f); // clamp instead of stacking
-
-	const auto Axis = [&](const char* AxisLabel, float& OutValue, const ImVec4& Btn, const ImVec4& Hover, const ImVec4& Active, float InDragWidth, bool bSameLine)
+	const auto Axis = [&](const char* DragId, float& InOutValue, ImU32 InAxisColor, float InDragWidth, bool bSameLine)
 	{
 		if (bSameLine)
 		{
@@ -163,39 +181,31 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 		}
 
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Gap, 0.0f));
-		ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-
-		ImGui::PushStyleColor(ImGuiCol_Button, Btn);
-		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Hover);
-		ImGui::PushStyleColor(ImGuiCol_ButtonActive, Active);
-
-		if (ImGui::Button(AxisLabel, ButtonSize))
-		{
-			OutValue = ResetValue;
-			bResult = true;
-		}
-
-		ImGui::PopStyleColor(3);
-
-		ImGui::SameLine(0.0f, Gap);
 		ImGui::SetNextItemWidth(InDragWidth);
 
-		const char* DragId = (AxisLabel[0] == 'X') ? "##X" : (AxisLabel[0] == 'Y') ? "##Y" : "##Z";
-		bResult |= ImGui::DragFloat(DragId, &OutValue, Speed, 0.0f, 0.0f, "%.3f");
+		bResult |= ImGui::DragFloat(DragId, &InOutValue, Speed, 0.0f, 0.0f, "%.3f");
 
 		// Per-state border for each component input
-		ImGuiStyle& Style = ImGui::GetStyle();
-		DrawInputBorderLastItem(Style.FrameRounding);
+		ImGuiStyle& LocalStyle = ImGui::GetStyle();
+		DrawInputBorderLastItem(LocalStyle.FrameRounding);
+
+		// Cosmetic axis line (no interaction)
+		DrawAxisLineForLastItem(InAxisColor);
 
 		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 		bRowHovered |= ImGui::IsItemActive();
 
-		ImGui::PopStyleVar(2);
+		ImGui::PopStyleVar();
 	};
 
-	Axis("X", OutValue.X, ImVec4(0.8f, 0.1f, 0.15f, 1.0f), ImVec4(0.9f, 0.2f, 0.2f, 1.0f), ImVec4(0.8f, 0.1f, 0.15f, 1.0f), DragWidth, false);
-	Axis("Y", OutValue.Y, ImVec4(0.2f, 0.7f, 0.2f, 1.0f), ImVec4(0.3f, 0.8f, 0.3f, 1.0f), ImVec4(0.2f, 0.7f, 0.2f, 1.0f), DragWidth, true);
-	Axis("Z", OutValue.Z, ImVec4(0.1f, 0.25f, 0.8f, 1.0f), ImVec4(0.2f, 0.35f, 0.9f, 1.0f), ImVec4(0.1f, 0.25f, 0.8f, 1.0f), DragWidth, true);
+	// You can tweak these colors to match your screenshot better if needed.
+	const ImU32 XColor = IM_COL32(204, 26, 38, 255);
+	const ImU32 YColor = IM_COL32(51, 179, 51, 255);
+	const ImU32 ZColor = IM_COL32(26, 64, 204, 255);
+
+	Axis("##X", OutValue.X, XColor, DragWidth, false);
+	Axis("##Y", OutValue.Y, YColor, DragWidth, true);
+	Axis("##Z", OutValue.Z, ZColor, DragWidth, true);
 
 	ImGui::PopID();
 
