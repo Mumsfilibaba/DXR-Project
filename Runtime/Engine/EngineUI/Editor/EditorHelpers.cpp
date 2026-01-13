@@ -1319,18 +1319,22 @@ struct EditorIcon
 
 struct EditorIconsInternal
 {
-	inline static EditorIcon UndoIcon     = EditorIcon();
-	inline static EditorIcon SearchIcon   = EditorIcon();
-	inline static EditorIcon FolderIcon   = EditorIcon();
-	inline static EditorIcon LockedIcon   = EditorIcon();
-	inline static EditorIcon UnlockedIcon = EditorIcon();
+	inline static EditorIcon UndoIcon            = EditorIcon();
+	inline static EditorIcon SearchIcon          = EditorIcon();
+	inline static EditorIcon LockedIcon          = EditorIcon();
+	inline static EditorIcon UnlockedIcon        = EditorIcon();
+	inline static EditorIcon FolderIcon          = EditorIcon();
+	inline static EditorIcon FolderSmallIcon     = EditorIcon();
+	inline static EditorIcon FolderOpenSmallIcon = EditorIcon();
 };
 
-ImTextureID EditorIcons::UndoIcon     = nullptr;
-ImTextureID EditorIcons::SearchIcon   = nullptr;
-ImTextureID EditorIcons::FolderIcon   = nullptr;
-ImTextureID EditorIcons::LockedIcon   = nullptr;
-ImTextureID EditorIcons::UnlockedIcon = nullptr;
+ImTextureID EditorIcons::UndoIcon            = nullptr;
+ImTextureID EditorIcons::SearchIcon          = nullptr;
+ImTextureID EditorIcons::LockedIcon          = nullptr;
+ImTextureID EditorIcons::UnlockedIcon        = nullptr;
+ImTextureID EditorIcons::FolderIcon          = nullptr;
+ImTextureID EditorIcons::FolderSmallIcon     = nullptr;
+ImTextureID EditorIcons::FolderOpenSmallIcon = nullptr;
 ;
 static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1399,11 +1403,13 @@ static void UnloadEditorIcon(ImTextureID& OutIconID, EditorIcon& OutIcon)
 bool EditorIcons::Initialize()
 {
 	bool bResult = true;
-	bResult &= LoadEditorIcon("Editor/Icons/undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/search.png", SearchIcon, EditorIconsInternal::SearchIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/locked.png", LockedIcon, EditorIconsInternal::LockedIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/unlocked.png", UnlockedIcon, EditorIconsInternal::UnlockedIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::SearchIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Locked.png", LockedIcon, EditorIconsInternal::LockedIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Unlocked.png", UnlockedIcon, EditorIconsInternal::UnlockedIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/FolderSmall.png", FolderSmallIcon, EditorIconsInternal::FolderSmallIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/FolderOpenSmall.png", FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
 	return bResult;
 }
 

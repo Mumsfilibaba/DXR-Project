@@ -102,9 +102,11 @@ struct EditorIcons
 {
 	static ImTextureID UndoIcon;
 	static ImTextureID SearchIcon;
-	static ImTextureID FolderIcon;
 	static ImTextureID LockedIcon;
 	static ImTextureID UnlockedIcon;
+	static ImTextureID FolderIcon;
+	static ImTextureID FolderSmallIcon;
+	static ImTextureID FolderOpenSmallIcon;
 
 	static bool Initialize();
 	static void Release();

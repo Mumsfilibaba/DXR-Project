@@ -88,7 +88,7 @@ void FEditorLogOutputWidget::DrawFilterBar()
 		const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
 		const float  FrameHeight = ImGui::GetFontSize() + BasePadding.y * 2.0f;
 		const float  IconGapPx   = 6.0f;
-		const float  IconSizePx  = Math::Max(1.0f, (FrameHeight - BasePadding.y * 2.0f) + 4.0f);
+		const float  IconSizePx  = 16.0f;
 		const float  PaddedX     = BasePadding.x + IconSizePx + IconGapPx;
 
 		// Reserve room for the icon by increasing left padding.
