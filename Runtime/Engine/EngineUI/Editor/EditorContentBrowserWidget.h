@@ -20,6 +20,13 @@ public:
     }
 
 private:
-    FDelegateHandle ImGuiDelegateHandle;
-    bool            bVisible;
+	FDelegateHandle ImGuiDelegateHandle;
+
+	TStaticArray<CHAR, 256> FolderSearchBuffer;
+	TStaticArray<CHAR, 256> AssetSearchBuffer;
+
+	int32 SelectedFolderIndex       = 0;
+	int32 SelectedItemIndex         = -1;
+	bool  bSelectionActiveInBrowser = false;
+	bool  bVisible;
 };
