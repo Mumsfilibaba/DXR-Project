@@ -44,11 +44,19 @@ struct ENGINE_API EditorHelpers
 	}
 };
 
+enum class EVector3ControlType : uint8
+{
+	Default,
+	Position,
+	RotationDegrees,
+	Scale,
+};
+
 struct ENGINE_API EditorWidgets
 {
 	static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
 
-	static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f, const FVector3* InRevertValue = nullptr);
+	static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType);
 	static bool DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
 	static bool DrawCheckboxProperty(const char* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
 	static void DrawTextProperty(const char* Label, const char* ValueText);
@@ -95,6 +103,8 @@ struct EditorIcons
 	static ImTextureID UndoIcon;
 	static ImTextureID SearchIcon;
 	static ImTextureID FolderIcon;
+	static ImTextureID LockedIcon;
+	static ImTextureID UnlockedIcon;
 
 	static bool Initialize();
 	static void Release();

@@ -105,7 +105,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 	};
 
 	static constexpr float LabelColumnWidth  = 128.0f;
-	static constexpr float RevertColumnWidth = 32.0f;
+	static constexpr float RevertColumnWidth = 28.0f;
 
 	// ------------------------------------------------------------
 	// Actor properties
@@ -124,9 +124,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				// Translation
 				{
 					FVector3 Translation = SelectedActor->GetTransform().GetTranslation();
-					const FVector3 Translation0 = Translation;
+					const FVector3 TranslationRevert = FVector3(0.0f, 0.0f, 0.0f);
 
-					if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, LabelColumnWidth, 0.01f, &Translation0))
+					if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &TranslationRevert, EVector3ControlType::Position))
 					{
 						SelectedActor->GetTransform().SetTranslation(Translation);
 					}
@@ -137,8 +137,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					FVector3 Rotation = SelectedActor->GetTransform().GetRotation();
 					Rotation = FVector3::RadiansToDegrees(Rotation);
 
-					const FVector3 Rotation0 = Rotation;
-					if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, LabelColumnWidth, 0.25f, &Rotation0))
+					const FVector3 RotationRevert = FVector3(0.0f, 0.0f, 0.0f);
+
+					if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, &RotationRevert, EVector3ControlType::RotationDegrees))
 					{
 						const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
 						SelectedActor->GetTransform().SetRotation(Radians);
@@ -147,36 +148,11 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
 				// Scale
 				{
-					static bool bUniformScale = false;
-					const bool bUniformScale0 = bUniformScale;
-
 					FVector3 Scale = SelectedActor->GetTransform().GetScale();
-					const FVector3 ScaleOriginal = Scale;
-					const FVector3 ScaleBefore   = Scale;
+					const FVector3 ScaleRevert = FVector3(1.0f, 1.0f, 1.0f);
 
-					const bool bScaleChanged   = EditorWidgets::DrawFloat3Control("Scale", Scale, 1.0f, LabelColumnWidth, 0.01f, &ScaleOriginal);
-					const bool bUniformChanged = EditorWidgets::DrawCheckboxProperty("Uniform Scale", bUniformScale, &bUniformScale0);
-
-					if (bUniformScale)
-					{
-						if (ScaleBefore.X != Scale.X)
-						{
-							Scale.Y = Scale.X;
-							Scale.Z = Scale.X;
-						}
-						else if (ScaleBefore.Y != Scale.Y)
-						{
-							Scale.X = Scale.Y;
-							Scale.Z = Scale.Y;
-						}
-						else if (ScaleBefore.Z != Scale.Z)
-						{
-							Scale.X = Scale.Z;
-							Scale.Y = Scale.Z;
-						}
-					}
-
-					if (bScaleChanged || bUniformChanged)
+					const bool bScaleChanged = EditorWidgets::DrawFloat3Control("Scale", Scale, 1.0f, &ScaleRevert, EVector3ControlType::Scale);
+					if (bScaleChanged)
 					{
 						SelectedActor->GetTransform().SetScale(Scale);
 					}
@@ -199,7 +175,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					// Albedo
 					{
 						FFloatColor Albedo = MaterialInfo.Albedo;
-						const FFloatColor Albedo0 = MaterialOriginal.Albedo;
+						const FFloatColor Albedo0 = FFloatColor::White;
 
 						if (EditorWidgets::DrawColor3Property("Albedo", Albedo, Albedo0))
 						{
@@ -210,7 +186,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					// Roughness
 					{
 						float Roughness = MaterialInfo.Roughness;
-						const float Roughness0 = MaterialOriginal.Roughness;
+						const float Roughness0 = 0.0f;
 
 						if (EditorWidgets::DrawFloatProperty("Roughness", Roughness, 0.01f, 0.01f, 1.0f, "%.2f", true, &Roughness0))
 						{
@@ -221,7 +197,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					// Metallic
 					{
 						float Metallic = MaterialInfo.Metallic;
-						const float Metallic0 = MaterialOriginal.Metallic;
+						const float Metallic0 = 0.0f;
 
 						if (EditorWidgets::DrawFloatProperty("Metallic", Metallic, 0.01f, 0.01f, 1.0f, "%.2f", true, &Metallic0))
 						{
@@ -232,7 +208,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					// AO
 					{
 						float AO = MaterialInfo.AmbientOcclusion;
-						const float AO0 = MaterialOriginal.AmbientOcclusion;
+						const float AO0 = 1.0f;
 						
 						if (EditorWidgets::DrawFloatProperty("AO", AO, 0.01f, 0.01f, 1.0f, "%.2f", true, &AO0))
 						{
@@ -266,7 +242,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				if (EditorWidgets::BeginPropertyTable("##PointLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
 				{
 					FVector3 Color = Point->GetColor();
-					const FVector3 Color0 = Color;
+					const FVector3 Color0 = FVector3(1.0f, 1.0f, 1.0f);
 					
 					if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
 					{
@@ -274,7 +250,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float Intensity = Point->GetIntensity();
-					const float Intensity0 = Intensity;
+					const float Intensity0 = 1.0f;
 					
 					if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
 					{
@@ -290,9 +266,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				if (EditorWidgets::BeginPropertyTable("##PointLightTransformTable", LabelColumnWidth, RevertColumnWidth))
 				{
 					FVector3 Translation = Point->GetPosition();
-					const FVector3 Translation0 = Translation;
+					const FVector3 Translation0 = FVector3(0.0f, 0.0f, 0.0f);
 					
-					if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, LabelColumnWidth, 0.01f, &Translation0))
+					if (EditorWidgets::DrawFloat3Control("Translation", Translation, 0.0f, &Translation0, EVector3ControlType::Position))
 					{
 						Point->SetPosition(Translation);
 					}
@@ -306,7 +282,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				if (EditorWidgets::BeginPropertyTable("##PointLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
 				{
 					float ShadowBias = Point->GetShadowBias();
-					const float ShadowBias0 = ShadowBias;
+					const float ShadowBias0 = 0.005f;
 					
 					if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
 					{
@@ -314,7 +290,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float ShadowNearPlane = Point->GetShadowNearPlane();
-					const float ShadowNearPlane0 = ShadowNearPlane;
+					const float ShadowNearPlane0 = 1.0f;
 					
 					if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 0.01f, 0.01f, 1.0f, "%.2f", true, &ShadowNearPlane0))
 					{
@@ -322,7 +298,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float ShadowFarPlane = Point->GetShadowFarPlane();
-					const float ShadowFarPlane0 = ShadowFarPlane;
+					const float ShadowFarPlane0 = 30.0f;
 
 					if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 1.0f, 100.0f, "%.1f", true, &ShadowFarPlane0))
 					{
@@ -342,7 +318,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				if (EditorWidgets::BeginPropertyTable("##DirLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
 				{
 					FVector3 Color = Dir->GetColor();
-					const FVector3 Color0 = Color;
+					const FVector3 Color0 = FVector3(1.0f, 1.0f, 1.0f);
 
 					if (EditorWidgets::DrawColor3Property("Color", Color, Color0))
 					{
@@ -350,7 +326,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float Intensity = Dir->GetIntensity();
-					const float Intensity0 = Intensity;
+					const float Intensity0 = 1.0f;
 
 					if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
 					{
@@ -370,8 +346,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					float RotationTheta = Math::RadiansToDegrees(Rotation.X);
 					float RotationPhi   = Math::RadiansToDegrees(Rotation.Y);
 
-					const float RotationTheta0 = RotationTheta;
-					const float RotationPhi0 = RotationPhi;
+					const float RotationTheta0 = 0.0f;
+					const float RotationPhi0   = 0.0f;
 
 					bool bSetRotation = false;
 					bSetRotation |= EditorWidgets::DrawFloatProperty("Rotation theta (degrees)", RotationTheta, 0.25f, -90.0f, 90.0f, "%.2f", true, &RotationTheta0);
@@ -396,7 +372,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				if (EditorWidgets::BeginPropertyTable("##DirLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
 				{
 					float ShadowBias = Dir->GetShadowBias();
-					const float ShadowBias0 = ShadowBias;
+					const float ShadowBias0 = 0.005f;
 					
 					if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
 					{
@@ -404,7 +380,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float Lambda = Dir->GetCascadeSplitLambda();
-					const float Lambda0 = Lambda;
+					const float Lambda0 = 0.95f;
 					
 					if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0))
 					{
@@ -412,7 +388,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float Offset = Dir->GetShadowPositionOffset();
-					const float Offset0 = Offset;
+					const float Offset0 = 200.0f;
 					
 					if (EditorWidgets::DrawFloatProperty("Cascade Position Offset", Offset, 1.0f, 0.0f, 1000.0f, "%.1f", true, &Offset0))
 					{
@@ -420,7 +396,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float ShadowNearPlane = Dir->GetShadowNearPlane();
-					const float ShadowNearPlane0 = ShadowNearPlane;
+					const float ShadowNearPlane0 = 120.0f;
 					
 					if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowNearPlane0))
 					{
@@ -428,7 +404,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float ShadowFarPlane = Dir->GetShadowFarPlane();
-					const float ShadowFarPlane0 = ShadowFarPlane;
+					const float ShadowFarPlane0 = 250.0f;
 					
 					if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowFarPlane0))
 					{
@@ -436,7 +412,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 					}
 
 					float LightArea = Dir->GetLightArea();
-					const float LightArea0 = LightArea;
+					const float LightArea0 = 0.05f;
 
 					if (EditorWidgets::DrawFloatProperty("Light area", LightArea, 0.01f, 0.0f, 1.0f, "%.2f", true, &LightArea0))
 					{
@@ -477,7 +453,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
 				{
 					float FieldOfView = SelectedCamera->GetFieldOfView();
-					const float FieldOfView0 = FieldOfView;
+					const float FieldOfView0 = 60.0f;
 					
 					if (EditorWidgets::DrawFloatProperty("Field Of View", FieldOfView, 0.1f, 40.0f, 120.0f, "%.1f", true, &FieldOfView0))
 					{
@@ -494,9 +470,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
 			if (EditorWidgets::BeginPropertyTable("##CameraTransformTable", LabelColumnWidth, RevertColumnWidth))
 			{
 				FVector3 Position = SelectedCamera->GetPosition();
-				const FVector3 Position0 = Position;
+				const FVector3 Position0 = FVector3(0.0f, 0.0f, 0.0f);
 				
-				if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, LabelColumnWidth, 0.01f, &Position0))
+				if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
 				{
 					SelectedCamera->SetPosition(Position.X, Position.Y, Position.Z);
 				}
@@ -504,8 +480,8 @@ void FEditorPropertiesWidget::DrawWindowContents()
 				FVector3 Rotation = SelectedCamera->GetRotation();
 				Rotation = FVector3::RadiansToDegrees(Rotation);
 				
-				const FVector3 Rotation0 = Rotation;
-				if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, LabelColumnWidth, 0.25f, &Rotation0))
+				const FVector3 Rotation0 = FVector3(0.0f, 0.0f, 0.0f);
+				if (EditorWidgets::DrawFloat3Control("Rotation", Rotation, 0.0f, &Rotation0, EVector3ControlType::RotationDegrees))
 				{
 					const FVector3 Radians = FVector3::DegreesToRadians(Rotation);
 					SelectedCamera->SetRotation(Radians.X, Radians.Y, Radians.Z);
@@ -533,9 +509,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
 			if (EditorWidgets::BeginPropertyTable("##ProbeTransformTable", LabelColumnWidth, RevertColumnWidth))
 			{
 				FVector3 Position = SelectedLightProbe->GetPosition();
-				const FVector3 Position0 = Position;
+				const FVector3 Position0 = FVector3(0.0f, 0.0f, 0.0f);
 				
-				if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, LabelColumnWidth, 0.01f, &Position0))
+				if (EditorWidgets::DrawFloat3Control("Position", Position, 0.0f, &Position0, EVector3ControlType::Position))
 				{
 					SelectedLightProbe->SetPosition(Position);
 				}
@@ -549,23 +525,23 @@ void FEditorPropertiesWidget::DrawWindowContents()
 			if (EditorWidgets::BeginPropertyTable("##ProbeBoxProjectionTable", LabelColumnWidth, RevertColumnWidth))
 			{
 				FVector3 BoxExtent = SelectedLightProbe->GetBoxExtents();
-				const FVector3 BoxExtent0 = BoxExtent;
+				const FVector3 BoxExtent0 = FVector3(0.0f, 0.0f, 0.0f);
 				
-				if (EditorWidgets::DrawFloat3Control("Box Extent", BoxExtent, 0.0f, LabelColumnWidth, 0.01f, &BoxExtent0))
+				if (EditorWidgets::DrawFloat3Control("Box Extent", BoxExtent, 0.0f, &BoxExtent0, EVector3ControlType::Position))
 				{
 					SelectedLightProbe->SetBoxExtent(BoxExtent);
 				}
 
 				FVector3 BoxOffset = SelectedLightProbe->GetBoxOffset();
-				const FVector3 BoxOffset0 = BoxOffset;
+				const FVector3 BoxOffset0 = FVector3(0.0f, 0.0f, 0.0f);
 				
-				if (EditorWidgets::DrawFloat3Control("Box Origin", BoxOffset, 0.0f, LabelColumnWidth, 0.01f, &BoxOffset0))
+				if (EditorWidgets::DrawFloat3Control("Box Origin", BoxOffset, 0.0f, &BoxOffset0, EVector3ControlType::Position))
 				{
 					SelectedLightProbe->SetBoxOffset(BoxOffset);
 				}
 
 				bool bBoxProjection = SelectedLightProbe->GetBoxProjection();
-				const bool bBoxProjection0 = bBoxProjection;
+				const bool bBoxProjection0 = false;
 				
 				if (EditorWidgets::DrawCheckboxProperty("Enable Box-Projection", bBoxProjection, &bBoxProjection0))
 				{

@@ -57,8 +57,6 @@ static bool BeginFullRowHoverCatcher(float RowHeight)
 
 	const ImVec2 Cursor = ImGui::GetCursorScreenPos();
 
-	// Invisible item spanning all columns so hover works even over empty cell areas.
-	// NOTE: We reset cursor position afterward so the row contents draw on top.
 	const ImGuiSelectableFlags HoverFlags =
 		ImGuiSelectableFlags_SpanAllColumns |
 		ImGuiSelectableFlags_AllowOverlap |
@@ -184,6 +182,68 @@ static bool ResetIconButton(float InSizePx = 0.0f)
 	return bWasPressed;
 }
 
+static void DrawSuffixForLastItem(const char* InSuffix, ImU32 InColor, float InRightPadding = 6.0f)
+{
+	ImGuiWindow* Window = ImGui::GetCurrentWindow();
+	if (!Window || Window->SkipItems || !InSuffix)
+	{
+		return;
+	}
+
+	const ImVec2 ItemMin  = ImGui::GetItemRectMin();
+	const ImVec2 ItemMax  = ImGui::GetItemRectMax();
+	const ImVec2 TextSize = ImGui::CalcTextSize(InSuffix);
+
+	const float X = ItemMax.x - InRightPadding - TextSize.x;
+	const float Y = ItemMin.y + (ItemMax.y - ItemMin.y - TextSize.y) * 0.5f;
+
+	Window->DrawList->AddText(ImVec2(X, Y), InColor, InSuffix);
+}
+
+static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const char* InSuffix, ImU32 InColor, float InGapPx = 1.0f)
+{
+	ImGuiWindow* Window = ImGui::GetCurrentWindow();
+	if (!Window || Window->SkipItems || !InSuffix)
+	{
+		return;
+	}
+
+	ImGuiContext& Context = *GImGui;
+	if (!ImGui::TempInputIsActive(InItemId))
+	{
+		return;
+	}
+
+	if (Context.InputTextState.ID != InItemId)
+	{
+		return;
+	}
+
+	const char* EditText = Context.InputTextState.TextA.Data;
+	if (!EditText)
+	{
+		return;
+	}
+
+	const ImVec2 ItemMin = ImGui::GetItemRectMin();
+	const ImVec2 ItemMax = ImGui::GetItemRectMax();
+
+	const ImVec2 TextSize = ImGui::CalcTextSize(EditText);
+	const ImVec2 SuffixSize = ImGui::CalcTextSize(InSuffix);
+
+	const float TextStartX = ItemMin.x + ImGui::GetStyle().FramePadding.x;
+	const float RightLimit = ItemMax.x - ImGui::GetStyle().FramePadding.x;
+
+	const float DesiredX = TextStartX + TextSize.x + InGapPx;
+	if (DesiredX + SuffixSize.x > RightLimit)
+	{
+		return;
+	}
+
+	const float Y = ItemMin.y + (ItemMax.y - ItemMin.y - SuffixSize.y) * 0.5f;
+	Window->DrawList->AddText(ImVec2(DesiredX, Y), InColor, InSuffix);
+}
+
 bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
 	ImGuiStyle& Style = ImGui::GetStyle();
@@ -199,26 +259,74 @@ bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 	return ImGui::Button(Label);
 }
 
-bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue, float ColumnWidth, float Speed, const FVector3* InRevertValue)
+bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType)
 {
-	ImGuiTable* Table = ImGui::GetCurrentTable();
-	if (!Table)
+	ImGuiTable* CurrentTable = ImGui::GetCurrentTable();
+	if (!CurrentTable)
 	{
 		return false;
 	}
 
 	ImGuiStyle& Style = ImGui::GetStyle();
 
-	const float Gap        = 2.0f;
-	const float LineHeight = ImGui::GetFontSize() + Style.FramePadding.y * 2.0f;
-	const float RowHeight  = LineHeight;
+	const float AxisGapPx     = 2.0f;
+	const float FrameHeightPx = ImGui::GetFontSize() + Style.FramePadding.y * 2.0f;
+	const float RowHeightPx   = FrameHeightPx;
 
-	ImGui::TableNextRow(0, RowHeight);
+	ImGui::TableNextRow(0, RowHeightPx);
 
-	bool bResult     = false;
-	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+	bool bAnyValueChanged = false;
+	bool bRowHovered      = BeginFullRowHoverCatcher(RowHeightPx);
 
-	// Label
+	const bool bIsRotationDegrees = (InType == EVector3ControlType::RotationDegrees);
+	const bool bIsScaleControl    = (InType == EVector3ControlType::Scale);
+
+	// Decide speed per control type.
+	const auto GetAxisDragSpeed = [&]() -> float
+	{
+		if (bIsScaleControl)
+		{
+			return 0.0025f;
+		}
+
+		if (InType == EVector3ControlType::Position || bIsRotationDegrees)
+		{
+			return 1.0f;
+		}
+
+		return Speed;
+	};
+
+	// Dynamic float format: min 1 decimal, max 4 decimals.
+	const auto GetDynamicFormatString = [](float Value, char(&OutFormat)[8]) -> const char*
+	{
+		static const float Pow10Table[4] = { 10.0f, 100.0f, 1000.0f, 10000.0f };
+
+		const float AbsoluteValue = Math::Abs(Value);
+
+		int32 DecimalsToShow = 1;
+
+		for (int32 DecimalIndex = 1; DecimalIndex <= 4; ++DecimalIndex)
+		{
+			const float ScaleFactor       = Pow10Table[DecimalIndex - 1];
+			const float RoundedToDecimals = Math::Round(AbsoluteValue * ScaleFactor) / ScaleFactor;
+
+			// Tolerance to avoid float noise.
+			const float Tolerance = 1e-5f * (AbsoluteValue + 1.0f);
+
+			if (Math::Abs(AbsoluteValue - RoundedToDecimals) <= Tolerance)
+			{
+				DecimalsToShow = DecimalIndex;
+				break;
+			}
+
+			DecimalsToShow = 4;
+		}
+
+		FCString::Snprintf(OutFormat, sizeof(OutFormat), "%%.%df", DecimalsToShow);
+		return OutFormat;
+	};
+
 	ImGui::TableSetColumnIndex(0);
 
 	const float LabelIndentPx = 24.0f;
@@ -227,77 +335,203 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 	ImGui::AlignTextToFramePadding();
 	ImGui::Text("%s", Label);
 
-	// Value (always single row)
-	ImGui::TableSetColumnIndex(1);
-	ImGui::PushID(Label);
-
-	const float Avail = ImGui::GetContentRegionAvail().x;
-	const float TotalGaps = 2.0f * Gap; // gaps between X|Y and Y|Z
-
-	float DragWidth = (Avail - TotalGaps) / 3.0f;
-	DragWidth = ImMax(DragWidth, 1.0f);
-
-	const auto Axis = [&](const char* DragId, float& InOutValue, ImU32 InAxisColor, float InDragWidth, bool bSameLine)
+	bool bUniformScaleEnabled = false;
+	if (bIsScaleControl)
 	{
-		if (bSameLine)
+		ImGui::SameLine(0.0f, 8.0f);
+
+		ImGui::PushID(Label);
+
+		ImGuiStorage* StateStorage = ImGui::GetStateStorage();
+		const ImGuiID UniformScaleKey = ImGui::GetID("UniformScale");
+
+		bUniformScaleEnabled = StateStorage->GetBool(UniformScaleKey, false);
+		const bool bUniformScalePrev = bUniformScaleEnabled;
+
+		ImGui::Checkbox("##UniformScale", &bUniformScaleEnabled);
+
+		DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
+
+		if (bUniformScaleEnabled != bUniformScalePrev)
 		{
-			ImGui::SameLine(0.0f, Gap);
+			StateStorage->SetBool(UniformScaleKey, bUniformScaleEnabled);
 		}
-
-		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Gap, 0.0f));
-		ImGui::SetNextItemWidth(InDragWidth);
-
-		bResult |= ImGui::DragFloat(DragId, &InOutValue, Speed, 0.0f, 0.0f, "%.3f");
-
-		// Per-state border for each component input
-		ImGuiStyle& LocalStyle = ImGui::GetStyle();
-		DrawInputBorderLastItem(LocalStyle.FrameRounding);
-
-		// Cosmetic axis line (no interaction)
-		DrawAxisLineForLastItem(InAxisColor);
 
 		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 		bRowHovered |= ImGui::IsItemActive();
 
+		ImGui::PopID();
+	}
+
+	ImGui::TableSetColumnIndex(1);
+	ImGui::PushID(Label);
+
+	const float AvailableWidthPx = ImGui::GetContentRegionAvail().x;
+	const float TotalAxisGapsPx = 2.0f * AxisGapPx;
+
+	float AxisFieldWidthPx = (AvailableWidthPx - TotalAxisGapsPx) / 3.0f;
+	AxisFieldWidthPx = Math::Max(AxisFieldWidthPx, 1.0f);
+
+	bool bXChanged = false;
+	bool bYChanged = false;
+	bool bZChanged = false;
+
+	const auto DrawAxisField = [&](const char* DragWidgetId, float& InOutAxisValue, ImU32 AxisIndicatorColor, float FieldWidthPx, bool bPlaceOnSameLine) -> bool
+	{
+		if (bPlaceOnSameLine)
+		{
+			ImGui::SameLine(0.0f, AxisGapPx);
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(AxisGapPx, 0.0f));
+		ImGui::SetNextItemWidth(FieldWidthPx);
+
+		bool bAxisValueChanged = false;
+
+		// Dynamic decimals based on current value (1..4)
+		char FormatBuffer[8];
+		const char* FormatString = GetDynamicFormatString(InOutAxisValue, FormatBuffer);
+
+		const float AxisDragSpeed = GetAxisDragSpeed();
+		bAxisValueChanged |= ImGui::DragFloat(DragWidgetId, &InOutAxisValue, AxisDragSpeed, 0.0f, 0.0f, FormatString, ImGuiSliderFlags_NoRoundToFormat);
+
+		if (bIsRotationDegrees && ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0.0f))
+		{
+			const float RoundedDegrees = Math::Round(InOutAxisValue);
+			if (RoundedDegrees != InOutAxisValue)
+			{
+				InOutAxisValue    = RoundedDegrees;
+				bAxisValueChanged = true;
+			}
+		}
+
+		const bool bIsItemActive  = ImGui::IsItemActive();
+		const bool bIsItemHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+		const ImGuiID LastItemId = ImGui::GetItemID();
+
+		const bool bIsTempInputActive = ImGui::TempInputIsActive(LastItemId);
+		if (!bIsTempInputActive)
+		{
+			// Recompute format after potential snapping.
+			char FormatBufferAfter[8];
+			const char* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
+
+			char ValueTextBuffer[64];
+			FCString::Snprintf(ValueTextBuffer, sizeof(ValueTextBuffer), FormatStringAfter, InOutAxisValue);
+
+			ImGuiWindow* Window = ImGui::GetCurrentWindow();
+			if (Window && !Window->SkipItems)
+			{
+				const ImVec2 ItemMin         = ImGui::GetItemRectMin();
+				const ImVec2 ItemMax         = ImGui::GetItemRectMax();
+				const ImU32  BackgroundColor = ImGui::GetColorU32(bIsItemActive ? ImGuiCol_FrameBgActive : (bIsItemHovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg));
+
+				Window->DrawList->AddRectFilled(ItemMin, ItemMax, BackgroundColor, ImGui::GetStyle().FrameRounding);
+
+				const float  TextStartX    = ItemMin.x + ImGui::GetStyle().FramePadding.x;
+				const ImVec2 ValueTextSize = ImGui::CalcTextSize(ValueTextBuffer);
+				const float  TextPosY      = ItemMin.y + (ItemMax.y - ItemMin.y - ValueTextSize.y) * 0.5f;
+
+				Window->DrawList->AddText(ImVec2(TextStartX, TextPosY), ImGui::GetColorU32(ImGuiCol_Text), ValueTextBuffer);
+
+				if (bIsRotationDegrees)
+				{
+					const float DegreeGapPx = 1.0f;
+					const float DegreePosX  = TextStartX + ValueTextSize.x + DegreeGapPx;
+
+					Window->DrawList->AddText(ImVec2(DegreePosX, TextPosY), ImGui::GetColorU32(ImGuiCol_Text), "\xC2\xB0");
+				}
+			}
+		}
+
+		// Border on top (so it stays visible)
+		DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
+
+		// Cosmetic axis line (draw after overlay so it stays visible)
+		DrawAxisLineForLastItem(AxisIndicatorColor);
+
+		if (bIsRotationDegrees && bIsTempInputActive)
+		{
+			DrawSuffixAfterTempInputText(LastItemId, "\xC2\xB0", ImGui::GetColorU32(ImGuiCol_Text));
+		}
+
+		bRowHovered |= bIsItemHovered;
+		bRowHovered |= bIsItemActive;
+
 		ImGui::PopStyleVar();
+
+		bAnyValueChanged |= bAxisValueChanged;
+		return bAxisValueChanged;
 	};
 
-	// You can tweak these colors to match your screenshot better if needed.
-	const ImU32 XColor = IM_COL32(204, 26, 38, 255);
-	const ImU32 YColor = IM_COL32(51, 179, 51, 255);
-	const ImU32 ZColor = IM_COL32(26, 64, 204, 255);
+	const ImU32 XAxisColor = IM_COL32(204, 26, 38, 255);
+	const ImU32 YAxisColor = IM_COL32(51, 179, 51, 255);
+	const ImU32 ZAxisColor = IM_COL32(26, 64, 204, 255);
 
-	Axis("##X", OutValue.X, XColor, DragWidth, false);
-	Axis("##Y", OutValue.Y, YColor, DragWidth, true);
-	Axis("##Z", OutValue.Z, ZColor, DragWidth, true);
+	bXChanged = DrawAxisField("##X", OutValue.X, XAxisColor, AxisFieldWidthPx, false);
+	bYChanged = DrawAxisField("##Y", OutValue.Y, YAxisColor, AxisFieldWidthPx, true);
+	bZChanged = DrawAxisField("##Z", OutValue.Z, ZAxisColor, AxisFieldWidthPx, true);
+
+	if (bIsScaleControl && bUniformScaleEnabled)
+	{
+		if (bXChanged || bYChanged || bZChanged)
+		{
+			const float NewUniformScale = bXChanged ? OutValue.X : (bYChanged ? OutValue.Y : OutValue.Z);
+
+			bool bAppliedUniformScale = false;
+
+			if (OutValue.X != NewUniformScale) 
+			{ 
+				OutValue.X = NewUniformScale; 
+				bAppliedUniformScale = true; 
+			}
+			
+			if (OutValue.Y != NewUniformScale) 
+			{ 
+				OutValue.Y = NewUniformScale; 
+				bAppliedUniformScale = true; 
+			}
+
+			if (OutValue.Z != NewUniformScale) 
+			{ 
+				OutValue.Z = NewUniformScale; 
+				bAppliedUniformScale = true; 
+			}
+
+			if (bAppliedUniformScale)
+			{
+				bAnyValueChanged = true;
+			}
+		}
+	}
 
 	ImGui::PopID();
 
-	// Revert
 	ImGui::TableSetColumnIndex(2);
 	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
 
-	const bool bCanRevert = (InRevertValue != nullptr);
-	if (!bCanRevert)
+	const bool bHasRevertValue         = InRevertValue != nullptr;
+	const bool bShouldShowRevertButton = bHasRevertValue && (OutValue != *InRevertValue);
+
+	const float RevertSlotSizePx = FrameHeightPx;
+	if (bShouldShowRevertButton)
 	{
-		ImGui::BeginDisabled();
+		if (ResetIconButton())
+		{
+			OutValue = *InRevertValue;
+			bAnyValueChanged = true;
+		}
+
+		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 	}
-
-	if (ResetIconButton())
+	else
 	{
-		OutValue = *InRevertValue;
-		bResult  = true;
-	}
-
-	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-
-	if (!bCanRevert)
-	{
-		ImGui::EndDisabled();
+		ImGui::Dummy(ImVec2(RevertSlotSizePx, RevertSlotSizePx));
 	}
 
 	ApplyHoveredRowBg(bRowHovered);
-	return bResult;
+	return bAnyValueChanged;
 }
 
 bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled)
@@ -468,9 +702,6 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 	bool bResult     = false;
 	bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
-	// ------------------------------------------------------------
-	// Label
-	// ------------------------------------------------------------
 	ImGui::TableSetColumnIndex(0);
 	{
 		// Optional indent (keep/remove depending on your current style)
@@ -481,9 +712,6 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 		ImGui::TextUnformatted(Label);
 	}
 
-	// ------------------------------------------------------------
-	// Value (ColorButton + 3 DragFloat fields)
-	// ------------------------------------------------------------
 	ImGui::TableSetColumnIndex(1);
 	ImGui::PushID(Label);
 
@@ -496,12 +724,9 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 	const float Gap         = 4.0f;
 	const float FrameHeight = ImGui::GetFrameHeight();
 
-	// Layout widths
 	const float Avail       = ImGui::GetContentRegionAvail().x;
-	const float ButtonWidth = FrameHeight; // square preview button
-
-	// Gaps: button->R, R->G, G->B  => 3 gaps
-	const float TotalGaps = 3.0f * Gap;
+	const float ButtonWidth = FrameHeight;
+	const float TotalGaps   = 3.0f * Gap;
 
 	float FieldWidth = (Avail - ButtonWidth - TotalGaps) / 3.0f;
 	FieldWidth = ImMax(FieldWidth, 1.0f);
@@ -560,9 +785,6 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 
 	ImGui::PopID();
 
-	// ------------------------------------------------------------
-	// Revert
-	// ------------------------------------------------------------
 	ImGui::TableSetColumnIndex(2);
 	ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
 
@@ -619,7 +841,6 @@ void EditorWidgets::DrawTextProperty(const char* Label, const char* ValueText)
 	ImGui::TextUnformatted(ValueText ? ValueText : "");
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
-	// Column 2: intentionally empty (no reset button for read-only)
 	ImGui::TableSetColumnIndex(2);
 
 	ApplyHoveredRowBg(bRowHovered);
@@ -658,7 +879,6 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const char* Label, const FVector3
 
 	bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
-	// Column 2: intentionally empty (no reset button for read-only)
 	ImGui::TableSetColumnIndex(2);
 
 	ApplyHoveredRowBg(bRowHovered);
@@ -812,7 +1032,6 @@ void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
 		return;
 	}
 
-	// Space above
 	if (PaddingY > 0.0f)
 	{
 		ImGui::Dummy(ImVec2(0.0f, PaddingY));
@@ -820,17 +1039,12 @@ void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
 
 	const ImVec2 Min   = ImGui::GetCursorScreenPos();
 	const float  Width = ImGui::GetContentRegionAvail().x;
+	const ImU32  Color = ImGui::GetColorU32(ImGuiCol_Separator);
 
-	// Use ImGui's separator color
-	const ImU32 Color = ImGui::GetColorU32(ImGuiCol_Separator);
-
-	// Draw line
 	ImGui::GetWindowDrawList()->AddLine(Min, ImVec2(Min.x + Width, Min.y), Color, Thickness);
 
-	// Advance cursor by line thickness
 	ImGui::Dummy(ImVec2(0.0f, Thickness));
 
-	// Space below
 	if (PaddingY > 0.0f)
 	{
 		ImGui::Dummy(ImVec2(0.0f, PaddingY));
@@ -871,7 +1085,6 @@ void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId,
 	OutAnchor.Min = ImGui::GetItemRectMin();
 	OutAnchor.Max = ImGui::GetItemRectMax();
 
-	// Hover-only border
 	if (bDrawBorder && bHovered)
 	{
 		const ImU32 BorderColor = ImGui::GetColorU32(ImGuiCol_Border);
@@ -1059,14 +1272,18 @@ struct EditorIcon
 
 struct EditorIconsInternal
 {
-	inline static EditorIcon UndoIcon   = EditorIcon();
-	inline static EditorIcon SearchIcon = EditorIcon();
-	inline static EditorIcon FolderIcon = EditorIcon();
+	inline static EditorIcon UndoIcon     = EditorIcon();
+	inline static EditorIcon SearchIcon   = EditorIcon();
+	inline static EditorIcon FolderIcon   = EditorIcon();
+	inline static EditorIcon LockedIcon   = EditorIcon();
+	inline static EditorIcon UnlockedIcon = EditorIcon();
 };
 
-ImTextureID EditorIcons::UndoIcon   = nullptr;
-ImTextureID EditorIcons::SearchIcon = nullptr;
-ImTextureID EditorIcons::FolderIcon = nullptr;
+ImTextureID EditorIcons::UndoIcon     = nullptr;
+ImTextureID EditorIcons::SearchIcon   = nullptr;
+ImTextureID EditorIcons::FolderIcon   = nullptr;
+ImTextureID EditorIcons::LockedIcon   = nullptr;
+ImTextureID EditorIcons::UnlockedIcon = nullptr;
 ;
 static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1138,6 +1355,8 @@ bool EditorIcons::Initialize()
 	bResult &= LoadEditorIcon("Editor/Icons/Undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
 	bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::SearchIcon);
 	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Lock.png", LockedIcon, EditorIconsInternal::LockedIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/Unlock.png", UnlockedIcon, EditorIconsInternal::UnlockedIcon);
 	return bResult;
 }
 
