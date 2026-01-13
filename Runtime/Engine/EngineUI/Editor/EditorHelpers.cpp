@@ -274,7 +274,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 	const float RowHeightPx   = FrameHeightPx;
 
 	ImGui::TableNextRow(0, RowHeightPx);
-
+	
 	bool bAnyValueChanged = false;
 	bool bRowHovered      = BeginFullRowHoverCatcher(RowHeightPx);
 
@@ -338,25 +338,70 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 	bool bUniformScaleEnabled = false;
 	if (bIsScaleControl)
 	{
-		ImGui::SameLine(0.0f, 8.0f);
+		ImGui::SameLine(0.0f, 12.0f);
 
 		ImGui::PushID(Label);
 
-		ImGuiStorage* StateStorage = ImGui::GetStateStorage();
 		const ImGuiID UniformScaleKey = ImGui::GetID("UniformScale");
 
+		ImGuiStorage* StateStorage = ImGui::GetStateStorage();
 		bUniformScaleEnabled = StateStorage->GetBool(UniformScaleKey, false);
 		const bool bUniformScalePrev = bUniformScaleEnabled;
 
-		ImGui::Checkbox("##UniformScale", &bUniformScaleEnabled);
+		const float  IconButtonSizePx = 16.0f;
+		const ImVec2 IconButtonSize   = ImVec2(IconButtonSizePx, IconButtonSizePx);
 
-		DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
+		{
+			const ImVec2 CursorScreen = ImGui::GetCursorScreenPos();
+			const float  CenteredY    = CursorScreen.y + (RowHeightPx - IconButtonSizePx) * 0.5f;
+			ImGui::SetCursorScreenPos(ImVec2(CursorScreen.x, CenteredY));
+		}
+
+		const bool bPressed = ImGui::InvisibleButton("##UniformScale", IconButtonSize);
+
+		{
+			ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+			const ImVec2 RectMin = ImGui::GetItemRectMin();
+			const ImVec2 RectMax = ImGui::GetItemRectMax();
+
+			const float Pad = 2.0f;
+			ImVec2 IconMin = ImVec2(RectMin.x + Pad, RectMin.y + Pad);
+			ImVec2 IconMax = ImVec2(RectMax.x - Pad, RectMax.y - Pad);
+
+			const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
+			const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+			const ImU32 Tint     = IM_COL32(255, 255, 255, Alpha255);
+
+			ImTextureID Icon = bUniformScaleEnabled ? EditorIcons::LockedIcon : EditorIcons::UnlockedIcon;
+			if (Icon)
+			{
+				DrawList->AddImage(Icon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+			}
+			else
+			{
+				const char* FallbackText = bUniformScaleEnabled ? "L" : "U";
+
+				const ImVec2 TextSize = ImGui::CalcTextSize(FallbackText);
+				const ImVec2 TextPos  = ImVec2(
+					(RectMin.x + RectMax.x) * 0.5f - TextSize.x * 0.5f,
+					(RectMin.y + RectMax.y) * 0.5f - TextSize.y * 0.5f);
+				
+				DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), FallbackText);
+			}
+		}
+
+		if (bPressed)
+		{
+			bUniformScaleEnabled = !bUniformScaleEnabled;
+		}
 
 		if (bUniformScaleEnabled != bUniformScalePrev)
 		{
 			StateStorage->SetBool(UniformScaleKey, bUniformScaleEnabled);
 		}
 
+		// Keep row hover highlighting behavior (but icon itself does not change appearance)
 		bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 		bRowHovered |= ImGui::IsItemActive();
 
@@ -367,7 +412,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 	ImGui::PushID(Label);
 
 	const float AvailableWidthPx = ImGui::GetContentRegionAvail().x;
-	const float TotalAxisGapsPx = 2.0f * AxisGapPx;
+	const float TotalAxisGapsPx  = 2.0f * AxisGapPx;
 
 	float AxisFieldWidthPx = (AvailableWidthPx - TotalAxisGapsPx) / 3.0f;
 	AxisFieldWidthPx = Math::Max(AxisFieldWidthPx, 1.0f);
@@ -481,22 +526,22 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
 			bool bAppliedUniformScale = false;
 
-			if (OutValue.X != NewUniformScale) 
-			{ 
-				OutValue.X = NewUniformScale; 
-				bAppliedUniformScale = true; 
-			}
-			
-			if (OutValue.Y != NewUniformScale) 
-			{ 
-				OutValue.Y = NewUniformScale; 
-				bAppliedUniformScale = true; 
+			if (OutValue.X != NewUniformScale)
+			{
+				OutValue.X = NewUniformScale;
+				bAppliedUniformScale = true;
 			}
 
-			if (OutValue.Z != NewUniformScale) 
-			{ 
-				OutValue.Z = NewUniformScale; 
-				bAppliedUniformScale = true; 
+			if (OutValue.Y != NewUniformScale)
+			{
+				OutValue.Y = NewUniformScale;
+				bAppliedUniformScale = true;
+			}
+
+			if (OutValue.Z != NewUniformScale)
+			{
+				OutValue.Z = NewUniformScale;
+				bAppliedUniformScale = true;
 			}
 
 			if (bAppliedUniformScale)
@@ -1352,11 +1397,11 @@ static void UnloadEditorIcon(ImTextureID& OutIconID, EditorIcon& OutIcon)
 bool EditorIcons::Initialize()
 {
 	bool bResult = true;
-	bResult &= LoadEditorIcon("Editor/Icons/Undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::SearchIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Lock.png", LockedIcon, EditorIconsInternal::LockedIcon);
-	bResult &= LoadEditorIcon("Editor/Icons/Unlock.png", UnlockedIcon, EditorIconsInternal::UnlockedIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/search.png", SearchIcon, EditorIconsInternal::SearchIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/locked.png", LockedIcon, EditorIconsInternal::LockedIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/unlocked.png", UnlockedIcon, EditorIconsInternal::UnlockedIcon);
 	return bResult;
 }
 
