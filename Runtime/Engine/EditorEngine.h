@@ -7,6 +7,7 @@ class FEditorLogOutputWidget;
 class FEditorViewportWidget;
 class FEditorSceneHierarchyWidget;
 class FEditorPropertiesWidget;
+class FEditorContentBrowserWidget;
 
 class ENGINE_API FEditorEngine : public FEngine
 {
@@ -28,6 +29,7 @@ public:
     const TSharedPtr<FEditorViewportWidget>&           GetEditorViewportWidget() const { return ViewportWidget; }
     const TSharedPtr<FEditorSceneHierarchyWidget>&     GetSceneHierarchyWidget() const { return SceneHierarchyWidget; }
     const TSharedPtr<FEditorPropertiesWidget>&         GetPropertiesWidget() const { return PropertiesWidget; }
+    const TSharedPtr<FEditorContentBrowserWidget>&     GetContentBrowserWidget() const { return ContentBrowserWidget; }
 
     void SetSelectedActor(FActor* InActor);
     void SetSelectedLight(FLight* InLight);
@@ -55,6 +57,7 @@ private:
     TSharedPtr<FEditorViewportWidget>          ViewportWidget;
     TSharedPtr<FEditorSceneHierarchyWidget>    SceneHierarchyWidget;
     TSharedPtr<FEditorPropertiesWidget>        PropertiesWidget;
+    TSharedPtr<FEditorContentBrowserWidget>    ContentBrowserWidget;
     FRHITextureRef                             ViewportImage;
     FIntVector2                                ViewportImageSize;
 };

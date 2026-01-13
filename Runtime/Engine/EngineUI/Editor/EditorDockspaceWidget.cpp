@@ -6,6 +6,7 @@
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
+#include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui.h>
@@ -173,7 +174,6 @@ void FEditorDockspaceWidget::Draw()
 	DrawMenuBar();
 	DrawDockSpace();
 	DrawConsole();
-	DrawEngineWindows();
 
 	ImGui::End(); // Dockspace Host Window
 }
@@ -269,14 +269,6 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
 			if (EditorWidgets::EditorBeginMenuPopup(PopupWindows, WindowsAnchor, BrightPopupBg))
 			{
-				{
-					bool bContent = GShowContentBrowser;
-					if (EditorWidgets::EditorMenuItem("Content Browser", nullptr, bContent))
-					{
-						GShowContentBrowser = !bContent;
-					}
-				}
-
 				if (EditorEngine)
 				{
 					if (FEditorLogOutputWidget* LogWidget = EditorEngine->GetLogOutputWidget().Get())
@@ -329,6 +321,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
 					else
 					{
 						EditorWidgets::EditorMenuItem("Properties", nullptr, false, false);
+					}
+
+					if (FEditorContentBrowserWidget* ContentBrowserWidget = EditorEngine->GetContentBrowserWidget().Get())
+					{
+						bool bVisible = ContentBrowserWidget->IsVisible();
+						if (EditorWidgets::EditorMenuItem("Content Browser", nullptr, bVisible))
+						{
+							ContentBrowserWidget->SetVisible(!bVisible);
+						}
+					}
+					else
+					{
+						EditorWidgets::EditorMenuItem("Content Browser", nullptr, false, false);
 					}
 				}
 
@@ -417,28 +422,5 @@ void FEditorDockspaceWidget::DrawConsole()
 		{
 			ConsoleInputWidget->Draw();
 		}
-	}
-}
-
-void FEditorDockspaceWidget::DrawEngineWindows()
-{
-	if (GShowContentBrowser)
-	{
-		if (ImGui::Begin("Content Browser", &GShowContentBrowser))
-		{
-			ImGui::TextDisabled("Content");
-
-			ImGui::Separator();
-
-			ImGui::TextUnformatted("Path: /Game");
-
-			ImGui::Separator();
-
-			ImGui::Selectable("Crate_01.asset", false);
-			ImGui::Selectable("Door.asset", false);
-			ImGui::Selectable("Wood.asset", false);
-		}
-
-		ImGui::End();
 	}
 }

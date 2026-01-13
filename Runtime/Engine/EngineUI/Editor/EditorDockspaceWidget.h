@@ -28,9 +28,6 @@ public:
     void DrawDockSpace();
     void DrawConsole();
 
-    // TODO: All engine windows should be their seperate thing
-	void DrawEngineWindows();
-
 private:
 	FEditorEngine*  EditorEngine;
     FDelegateHandle ImGuiDelegateHandle;
