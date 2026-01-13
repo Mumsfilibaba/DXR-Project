@@ -92,13 +92,29 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
 		const bool bResult = ImGui::CollapsingHeader(Label, Flags);
 
+		const ImVec2 HeaderMin = ImGui::GetItemRectMin();
+		const ImVec2 HeaderMax = ImGui::GetItemRectMax();
+
 		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(3);
 
-		if (bResult)
+		if (!bResult)
 		{
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 0.0f));
-			ImGui::PopStyleVar();
+			ImGuiWindow* Window = ImGui::GetCurrentWindow();
+			if (Window && !Window->SkipItems)
+			{
+				const float Thickness = 2.0f;
+				const float Y         = Math::Ceil(HeaderMax.y) - 0.5f;
+
+				const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
+				const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+				const ImU32 Color    = IM_COL32(26, 26, 26, Alpha255);
+
+				Window->DrawList->AddLine(ImVec2(HeaderMin.x, Y), ImVec2(HeaderMax.x, Y), Color, Thickness);
+
+				const ImVec2 Cursor = ImGui::GetCursorScreenPos();
+				ImGui::SetCursorScreenPos(ImVec2(Cursor.x, HeaderMax.y + Thickness * 0.5f));
+			}
 		}
 
 		return bResult;

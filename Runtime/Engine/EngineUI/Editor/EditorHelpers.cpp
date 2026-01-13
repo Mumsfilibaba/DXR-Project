@@ -1253,7 +1253,8 @@ void EditorWidgets::EndPropertyTable()
 	{
 		const ImGuiStyle& Style = ImGui::GetStyle();
 
-		float BottomY = ImGui::GetCursorScreenPos().y - Style.ItemSpacing.y;
+		const ImVec2 CursorAfterTable = ImGui::GetCursorScreenPos();
+		float BottomY = CursorAfterTable.y - Style.ItemSpacing.y;
 
 		const ImU32 Color     = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
 		const float Thickness = 2.0f;
@@ -1263,14 +1264,15 @@ void EditorWidgets::EndPropertyTable()
 		const float YBottom = Math::Ceil(BottomY) - 0.5f;
 
 		ImDrawList* DrawList = ImGui::GetWindowDrawList();
-		DrawList->AddLine(ImVec2(X0, YTop), ImVec2(X1, YTop), Color, Thickness);
+		DrawList->AddLine(ImVec2(X0, YTop),    ImVec2(X1, YTop),    Color, Thickness);
 		DrawList->AddLine(ImVec2(X0, YBottom), ImVec2(X1, YBottom), Color, Thickness);
+
+		ImGui::SetCursorScreenPos(ImVec2(CursorAfterTable.x, BottomY + Thickness * 0.5f));
 	}
 
 	ImGui::PopStyleColor(7);
 	ImGui::PopStyleVar();
 }
-
 
 void EditorWidgets::PropertySeparatorRow(float PaddingY)
 {
