@@ -122,23 +122,44 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 		const float ArrowTextGap = 6.0f;
 		const float ArrowAdvance = FontSize;
 
+		// Folder icon between the arrow and the label.
+		const float FolderIconGapPx  = 6.0f;
+		const float FolderIconSizePx = Math::Min(16.0f, Math::Max(1.0f, RowHeight - 6.0f));
+
 		ImGui::TableSetColumnIndex(0);
 		ImGui::SetCursorScreenPos(ImVec2(ImGui::GetCursorScreenPos().x, TextY));
 
 		ImGui::TableSetColumnIndex(1);
 
-		const ImVec2   CollumnPosition = ImGui::GetCursorScreenPos();
-		const ImVec2   ArrowPosition   = ImVec2(CollumnPosition.x + IndentPx, ArrowY);
+		const ImVec2 CollumnPosition = ImGui::GetCursorScreenPos();
+		const ImVec2 ArrowPosition   = ImVec2(CollumnPosition.x + IndentPx, ArrowY);
 
 		ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
 
-		const ImU32    ArrowColor      = ImGui::GetColorU32(ImGuiCol_Text);
-		const ImGuiDir ArrowDirection  = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
+		const ImU32    ArrowColor     = ImGui::GetColorU32(ImGuiCol_Text);
+		const ImGuiDir ArrowDirection = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
 
 		ImDrawList* DrawList = ImGui::GetWindowDrawList();
 		ImGui::RenderArrow(DrawList, ArrowPosition, ArrowColor, ArrowDirection, 1.0f);
 
-		ImGui::SetCursorScreenPos(ImVec2(ArrowPosition.x + ArrowAdvance + ArrowTextGap, TextY));
+		float LabelX = ArrowPosition.x + ArrowAdvance + ArrowTextGap;
+
+		// Pick icon based on open/closed state.
+		if (EditorIcons::FolderSmallIcon || EditorIcons::FolderOpenSmallIcon)
+		{
+			ImTextureID FolderIcon = bOpen ? EditorIcons::FolderOpenSmallIcon : EditorIcons::FolderSmallIcon;
+			if (FolderIcon)
+			{
+				const float IconY = RowMin.y + (RowHeight - FolderIconSizePx) * 0.5f;
+				const ImVec2 IconMin = ImVec2(LabelX, IconY);
+				const ImVec2 IconMax = ImVec2(IconMin.x + FolderIconSizePx, IconMin.y + FolderIconSizePx);
+
+				DrawList->AddImage(FolderIcon, IconMin, IconMax);
+				LabelX = IconMax.x + FolderIconGapPx;
+			}
+		}
+
+		ImGui::SetCursorScreenPos(ImVec2(LabelX, TextY));
 		ImGui::TextUnformatted(Label);
 
 		ImGui::PopStyleColor();
