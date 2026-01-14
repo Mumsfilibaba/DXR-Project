@@ -108,6 +108,7 @@ struct EditorIcons
 	static ImTextureID FolderSmallIcon;
 	static ImTextureID FolderOpenSmallIcon;
 	static ImTextureID DocumentIcon;
+	static ImTextureID DocumentSmallIcon;
 
 	static bool Initialize();
 	static void Release();

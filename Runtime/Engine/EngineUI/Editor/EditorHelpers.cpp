@@ -1327,6 +1327,7 @@ struct EditorIconsInternal
 	inline static EditorIcon FolderSmallIcon     = EditorIcon();
 	inline static EditorIcon FolderOpenSmallIcon = EditorIcon();
 	inline static EditorIcon DocumentIcon        = EditorIcon();
+	inline static EditorIcon DocumentSmallIcon   = EditorIcon();
 };
 
 ImTextureID EditorIcons::UndoIcon            = nullptr;
@@ -1337,6 +1338,7 @@ ImTextureID EditorIcons::FolderIcon          = nullptr;
 ImTextureID EditorIcons::FolderSmallIcon     = nullptr;
 ImTextureID EditorIcons::FolderOpenSmallIcon = nullptr;
 ImTextureID EditorIcons::DocumentIcon        = nullptr;
+ImTextureID EditorIcons::DocumentSmallIcon   = nullptr;
 ;
 static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1413,6 +1415,7 @@ bool EditorIcons::Initialize()
 	bResult &= LoadEditorIcon("Editor/Icons/FolderSmall.png", FolderSmallIcon, EditorIconsInternal::FolderSmallIcon);
 	bResult &= LoadEditorIcon("Editor/Icons/FolderOpenSmall.png", FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
 	bResult &= LoadEditorIcon("Editor/Icons/Document.png", DocumentIcon, EditorIconsInternal::DocumentIcon);
+	bResult &= LoadEditorIcon("Editor/Icons/DocumentSmall.png", DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
 	return bResult;
 }
 
