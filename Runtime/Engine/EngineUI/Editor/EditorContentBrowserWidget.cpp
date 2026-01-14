@@ -363,11 +363,11 @@ void FEditorContentBrowserWidget::Draw()
 							ImTextureID Icon = nullptr;
 							if (Items[i].bFolder)
 							{
-								Icon = EditorIcons::FolderIcon ? EditorIcons::FolderIcon : EditorIcons::FolderSmallIcon;
+								Icon = EditorIcons::FolderIcon;
 							}
 							else
 							{
-								Icon = EditorIcons::FolderIcon ? EditorIcons::FolderIcon : EditorIcons::FolderSmallIcon;
+								Icon = EditorIcons::DocumentIcon;
 							}
 
 							if (Icon)
