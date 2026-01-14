@@ -1339,8 +1339,8 @@ ImTextureID EditorIcons::FolderSmallIcon     = nullptr;
 ImTextureID EditorIcons::FolderOpenSmallIcon = nullptr;
 ImTextureID EditorIcons::DocumentIcon        = nullptr;
 ImTextureID EditorIcons::DocumentSmallIcon   = nullptr;
-;
-static bool LoadEditorIcon(const TCHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
+
+static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
 	OutIcon.Reset();
 	OutIconID = nullptr;
@@ -1422,4 +1422,57 @@ bool EditorIcons::Initialize()
 void EditorIcons::Release()
 {
 	UnloadEditorIcon(UndoIcon, EditorIconsInternal::UndoIcon);
+}
+
+ImFont* EditorFonts::DefaultFont = nullptr;
+ImFont* EditorFonts::SegoeUI_18  = nullptr;
+ImFont* EditorFonts::Consola_14  = nullptr;
+
+static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
+{
+	FString FullPath = FPaths::GetAssetDir();
+	if (!FullPath.EndsWith("/"))
+	{
+		FullPath += "/";
+	}
+
+	FullPath += InRelativePath;
+
+	ImGuiIO& State = ImGui::GetIO();
+	return State.Fonts->AddFontFromFileTTF(*FullPath, SizePixels, FontCfgTemplate, GlyphRanges);
+}
+
+bool EditorFonts::Initialize()
+{
+	if (!IImguiPlugin::IsEnabled())
+	{
+		return false;
+	}
+
+	ImGuiIO& State = ImGui::GetIO();
+	State.Fonts->Clear();
+	
+	DefaultFont = State.Fonts->AddFontDefault();
+	SegoeUI_18  = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
+	Consola_14  = LoadEditorFont("Editor/Fonts/consola.ttf", 14.0f);
+
+	IImguiPlugin& ImGuiPlugin = IImguiPlugin::Get();
+	if (!ImGuiPlugin.UpdateFontAtlas())
+	{
+		return false;
+	}
+
+	if (SegoeUI_18)
+	{
+		State.FontDefault = SegoeUI_18;
+	}
+
+	return true;
+}
+
+void EditorFonts::Release()
+{
+	DefaultFont = nullptr;
+	SegoeUI_18  = nullptr;
+	Consola_14  = nullptr;
 }

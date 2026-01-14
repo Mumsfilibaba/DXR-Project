@@ -272,6 +272,7 @@ void FEditorContentBrowserWidget::Draw()
 			}
 
 			ImGui::EndChild();
+
 			ImGui::PopStyleColor(); // ChildBg
 
 			// -------------------------------------------------------------------------------------

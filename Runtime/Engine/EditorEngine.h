@@ -17,6 +17,8 @@ public:
 
     // FEngine Interface
     virtual bool Init() override final;
+    virtual bool InitPostRenderer() override final;
+
 	virtual void Release() override final;
 
     virtual void Tick(float DeltaTime) override final;

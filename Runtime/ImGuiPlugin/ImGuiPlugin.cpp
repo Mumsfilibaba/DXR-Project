@@ -83,8 +83,8 @@ bool FImGuiPlugin::Load()
     }
     else
     {
-        ImGuiIO& GenericIO = ImGui::GetIO();
-        PluginImGuiIO = &GenericIO;
+        ImGuiIO& State = ImGui::GetIO();
+        PluginImGuiIO = &State;
     }
 
     if (!PluginImGuiIO)
@@ -238,6 +238,9 @@ bool FImGuiPlugin::Load()
 
     // Update monitor info
     UpdateMonitorInfo();
+
+    // Default font
+    InitializeDefaultFont();
 
     // Setup the style
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -395,6 +398,18 @@ void FImGuiPlugin::ReleaseRHI()
     {
         Renderer->ReleaseRHI();
         Renderer.Reset();
+    }
+}
+
+bool FImGuiPlugin::UpdateFontAtlas()
+{
+    if (Renderer)
+    {
+        return Renderer->UpdateFontAtlas();
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -604,6 +619,14 @@ void FImGuiPlugin::UpdateMonitorInfo()
         }
     }
 }
+
+void FImGuiPlugin::InitializeDefaultFont()
+{
+    ImGuiIO& State = ImGui::GetIO();
+    State.Fonts->Clear();
+    State.Fonts->AddFontDefault();
+}
+
 void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
 {
     CHECK(Viewport->PlatformUserData == nullptr);

@@ -101,14 +101,12 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
 	Style.Colors[ImGuiCol_ResizeGrip]        = SplitterIdle;
 
 	// Load necessary icons
-	if (EditorIcons::Initialize())
-	{
-		return true;
-	}
-	else
+	if (!EditorIcons::Initialize())
 	{
 		return false;
 	}
+
+	return true;
 }
 
 void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)

@@ -221,10 +221,10 @@ void FEditorLogOutputWidget::DrawLogList()
     };
 
     // Copy under lock once per frame
-    TArray<FLogMessage> Local;
+    TArray<FLogMessage> LocalMessages;
     {
         SCOPED_LOCK(MessagesCS);
-        Local = Messages;
+        LocalMessages = Messages;
     }
     
 	const float PaddingX = 8.0f;
@@ -233,9 +233,9 @@ void FEditorLogOutputWidget::DrawLogList()
 
     const bool  bHasSearch = (SearchFilterBuffer[0] != 0);
     const char* Search     = SearchFilterBuffer.Data();
-    for (int i = 0; i < Local.Size(); ++i)
+    for (int32 i = 0; i < LocalMessages.Size(); ++i)
     {
-        const FLogMessage& Message = Local[i];
+        const FLogMessage& Message = LocalMessages[i];
         if (!IsSeverityMatching(Message.Severity))
         {
             continue;
@@ -268,7 +268,11 @@ void FEditorLogOutputWidget::DrawLogList()
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PaddingY);
 
         ImGui::Indent(PaddingX);
+
+		ImGui::PushFont(EditorFonts::Consola_14);
         ImGui::TextColored(TextColor, "%s", *Message.Message);
+		ImGui::PopFont();
+
         ImGui::Unindent(PaddingX);
     }
 

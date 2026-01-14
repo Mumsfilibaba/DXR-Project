@@ -113,3 +113,13 @@ struct EditorIcons
 	static bool Initialize();
 	static void Release();
 };
+
+struct EditorFonts
+{
+	static ImFont* DefaultFont;
+	static ImFont* SegoeUI_18;
+	static ImFont* Consola_14;
+
+	static bool Initialize();
+	static void Release();
+};

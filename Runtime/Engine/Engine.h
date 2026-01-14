@@ -34,6 +34,8 @@ public:
     virtual ~FEngine();
 
     virtual bool Init();
+    virtual bool InitPostRenderer() { return true; }
+
     virtual void Release();
 
     virtual bool Start();

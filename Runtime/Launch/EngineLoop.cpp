@@ -248,6 +248,13 @@ int32 FEngineLoop::Init()
         }
     }
 
+    // Init Engine resource that needs the renderer to be initialized
+	if (!FEngine::Get()->InitPostRenderer())
+	{
+		return -1;
+	}
+
+    // Start the engine
     if (!FEngine::Get()->Start())
     {
         return -1;

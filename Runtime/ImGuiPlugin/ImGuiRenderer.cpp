@@ -23,7 +23,7 @@ FImGuiRenderer* GImGuiRenderer = nullptr;
 
 FImGuiRenderer::FImGuiRenderer()
     : RenderedTextures()
-    , FontTexture(nullptr)
+    , FontAtlas(nullptr)
     , PipelineState(nullptr)
     , PipelineStateNoBlending(nullptr)
     , PShader(nullptr)
@@ -83,24 +83,11 @@ bool FImGuiRenderer::InitializeRHI()
     PlatformState.Renderer_SwapBuffers   = nullptr;
 #endif
 
-    // Build texture atlas
-    uint8* Pixels = nullptr;
-    int32  Width  = 0;
-    int32  Height = 0;
+    ImGuiIO& State = ImGui::GetIO();
+    State.BackendRendererUserData = this;
 
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.BackendRendererUserData = this;
-    UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
-
-    FontTexture = FTextureFactory::Get().LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
-    if (!FontTexture)
-    {
-        return false;
-    }
-    else
-    {
-        FontTexture->SetDebugName("ImGui FontTexture");
-    }
+    // Create initial font atlas
+    UpdateFontAtlas();
 
     TArray<uint8> ShaderCode;
 
@@ -248,7 +235,7 @@ bool FImGuiRenderer::InitializeRHI()
 void FImGuiRenderer::ReleaseRHI()
 {
     // Release all RHI textures
-    FontTexture.Reset();
+    FontAtlas.Reset();
     PipelineState.Reset();
     PipelineStateNoBlending.Reset();
     PShader.Reset();
@@ -256,6 +243,39 @@ void FImGuiRenderer::ReleaseRHI()
     IndexBuffer.Reset();
     LinearSampler.Reset();
     PointSampler.Reset();
+}
+
+bool FImGuiRenderer::UpdateFontAtlas()
+{
+    if (FontAtlas)
+    {
+        FontAtlas.Reset();
+    }
+
+	// Build texture atlas
+	uint8* Pixels = nullptr;
+	int32  Width  = 0;
+	int32  Height = 0;
+
+	// Ensure the default font is in the atlas
+    ImGuiIO& State = ImGui::GetIO();
+	State.Fonts->Build();
+	State.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
+
+	FontAtlas = FTextureFactory::Get().LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
+	if (!FontAtlas)
+	{
+		return false;
+	}
+	else
+	{
+		FontAtlas->SetDebugName("ImGui FontTexture");
+	}
+
+    // TODO: We need to uncomment below, but this requires changes to the renderer loop so keep avoiding this for now. 
+    // State.Fonts->SetTexID((ImTextureID)FontAtlas.Get());
+    
+    return true;
 }
 
 void FImGuiRenderer::Render(FRHICommandList& CommandList)
@@ -401,9 +421,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
     SetupRenderState(CommandList, DrawData, *ViewportData);
 
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
-    int32 GlobalVertexOffset = 0;
-    int32 GlobalIndexOffset  = 0;
-
+    int32  GlobalVertexOffset = 0;
+    int32  GlobalIndexOffset  = 0;
     ImVec2 ClipOffset = DrawData->DisplayPos;
     ImVec2 ClipScale  = DrawData->FramebufferScale;
     
@@ -475,13 +494,13 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                         CommandList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                     }
 
-                    FRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
+                    FRHIShaderResourceView* View = FontAtlas->GetShaderResourceView();
                     CommandList.SetShaderResourceView(PShader.Get(), View, 0);
                 }
 
                 // Project scissor/clipping rectangles into framebuffer space
-                ImVec2 ClipMin((DrawCommand->ClipRect.x - ClipOffset.x), (DrawCommand->ClipRect.y - ClipOffset.y));
-                ImVec2 ClipMax((DrawCommand->ClipRect.z - ClipOffset.x), (DrawCommand->ClipRect.w - ClipOffset.y));
+                ImVec2 ClipMin = ImVec2((DrawCommand->ClipRect.x - ClipOffset.x), (DrawCommand->ClipRect.y - ClipOffset.y));
+                ImVec2 ClipMax = ImVec2((DrawCommand->ClipRect.z - ClipOffset.x), (DrawCommand->ClipRect.w - ClipOffset.y));
 
                 if (ClipMin.x < 0.0f)
                 {

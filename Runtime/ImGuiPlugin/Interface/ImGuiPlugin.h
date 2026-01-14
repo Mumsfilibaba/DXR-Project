@@ -60,6 +60,8 @@ struct IImguiPlugin : public FModuleInterface
     virtual bool InitializeRHI() = 0;
     virtual void ReleaseRHI() = 0;
 
+    virtual bool UpdateFontAtlas() = 0;
+
     virtual void Tick(float Delta) = 0;
     virtual void Draw(FRHICommandList& CommandList) = 0;
 

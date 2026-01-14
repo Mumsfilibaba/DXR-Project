@@ -5,6 +5,7 @@
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Renderer/FrameResources.h"
 #include "RendererCore/RenderSettings.h"
 
@@ -49,6 +50,17 @@ bool FEditorEngine::Init()
 	}
 
 	if (!CreateViewportRenderTarget())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool FEditorEngine::InitPostRenderer()
+{
+	// Load fonts
+	if (!EditorFonts::Initialize())
 	{
 		return false;
 	}
