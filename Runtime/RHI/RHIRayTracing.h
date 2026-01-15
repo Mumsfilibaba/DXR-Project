@@ -8,6 +8,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+class FRHIRayTracingScene;
 class FRHIRayTracingGeometry;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
@@ -15,9 +16,8 @@ class FRHIBuffer;
 class FRHISamplerState;
 struct FRHIRayTracingGeometryInstance;
 
-typedef TSharedRef<class FRHIAccelerationStructure> FRHIAccelerationStructureRef;
-typedef TSharedRef<class FRHIRayTracingScene>       FRHIRayTracingSceneRef;
-typedef TSharedRef<class FRHIRayTracingGeometry>    FRHIRayTracingGeometryRef;
+typedef TSharedRef<FRHIRayTracingScene>    FRHIRayTracingSceneRef;
+typedef TSharedRef<FRHIRayTracingGeometry> FRHIRayTracingGeometryRef;
 
 struct FRayPayload
 {
@@ -56,7 +56,8 @@ struct FRHIRayTracingGeometryInstance
 {
     FRHIRayTracingGeometryInstance() noexcept = default;
 
-    FRHIRayTracingGeometryInstance(FRHIRayTracingGeometry* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex, ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform) noexcept
+    FRHIRayTracingGeometryInstance(FRHIRayTracingGeometry* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex,
+        ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform) noexcept
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -76,12 +77,18 @@ struct FRHIRayTracingGeometryInstance
     FMatrix3x4               Transform     = { };
 };
 
-struct FRHIAccelerationStructureInfo
+struct FRHIRayTracingGeometryInfo
 {
-    constexpr FRHIAccelerationStructureInfo() noexcept = default;
+    constexpr FRHIRayTracingGeometryInfo() noexcept = default;
 
-    constexpr FRHIAccelerationStructureInfo(EAccelerationStructureBuildFlags InFlags) noexcept
-        : Flags(InFlags)
+    constexpr FRHIRayTracingGeometryInfo(FRHIBuffer* InVertexBuffer, uint32 InNumVerticies, FRHIBuffer* InIndexBuffer, uint32 InNumIndices,
+        EIndexFormat InIndexFormat, EAccelerationStructureBuildFlags InFlags) noexcept
+        : VertexBuffer(InVertexBuffer)
+        , NumVertices(InNumVerticies)
+        , IndexBuffer(InIndexBuffer)
+        , NumIndices(InNumIndices)
+        , IndexFormat(InIndexFormat)
+        , Flags(InFlags)
     {
     }
 
@@ -90,76 +97,50 @@ struct FRHIAccelerationStructureInfo
     NODISCARD constexpr bool PreferFastTrace() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
     NODISCARD constexpr bool PreferFastBuild() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
-    constexpr bool operator==(const FRHIAccelerationStructureInfo& Other) const noexcept = default;
-
-    EAccelerationStructureBuildFlags Flags = EAccelerationStructureBuildFlags::None;
-};
-
-struct FRHIRayTracingGeometryInfo : public FRHIAccelerationStructureInfo
-{
-    constexpr FRHIRayTracingGeometryInfo() noexcept = default;
-
-    constexpr FRHIRayTracingGeometryInfo(
-        FRHIBuffer*                      InVertexBuffer,
-        uint32                           InNumVerticies,
-        FRHIBuffer*                      InIndexBuffer,
-        uint32                           InNumIndices,
-        EIndexFormat                     InIndexFormat,
-        EAccelerationStructureBuildFlags InFlags) noexcept
-        : FRHIAccelerationStructureInfo(InFlags)
-        , VertexBuffer(InVertexBuffer)
-        , NumVertices(InNumVerticies)
-        , IndexBuffer(InIndexBuffer)
-        , NumIndices(InNumIndices)
-        , IndexFormat(InIndexFormat)
-    {
-    }
-
     constexpr bool operator==(const FRHIRayTracingGeometryInfo& Other) const noexcept = default;
-
-    FRHIBuffer*  VertexBuffer = nullptr;
-    uint32       NumVertices  = 0;
-    FRHIBuffer*  IndexBuffer  = nullptr;
-    uint32       NumIndices   = 0;
-    EIndexFormat IndexFormat  = EIndexFormat::Unknown;
+    
+    FRHIBuffer*                      VertexBuffer = nullptr;
+    uint32                           NumVertices  = 0;
+    FRHIBuffer*                      IndexBuffer  = nullptr;
+    uint32                           NumIndices   = 0;
+    EIndexFormat                     IndexFormat  = EIndexFormat::Unknown;
+    EAccelerationStructureBuildFlags Flags        = EAccelerationStructureBuildFlags::None;
 };
 
-struct FRHIRayTracingSceneInfo : public FRHIAccelerationStructureInfo
+struct FRHIRayTracingSceneInfo
 {
     FRHIRayTracingSceneInfo() noexcept = default;
 
     FRHIRayTracingSceneInfo(const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags) noexcept
-        : FRHIAccelerationStructureInfo(InFlags)
-        , Instances(InInstances)
+        : Instances(InInstances)
+        , Flags(InFlags)
     {
     }
+
+    NODISCARD constexpr bool AllowUpdate() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
+
+    NODISCARD constexpr bool PreferFastTrace() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
+    NODISCARD constexpr bool PreferFastBuild() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
     bool operator==(const FRHIRayTracingSceneInfo& Other) const noexcept = default;
-
+    
     TArray<FRHIRayTracingGeometryInstance> Instances;
+    EAccelerationStructureBuildFlags       Flags = EAccelerationStructureBuildFlags::None;
 };
 
-class FRHIAccelerationStructure : public FRHIResource
+class FRHIRayTracingGeometry : public FRHIResource
 {
-protected:
-    explicit FRHIAccelerationStructure(const FRHIAccelerationStructureInfo& Initializer)
+protected: 
+    explicit FRHIRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
         : FRHIResource()
-        , Flags(Initializer.Flags)
+        , Flags(InGeometryInfo.Flags)
     {
     }
 
-    virtual ~FRHIAccelerationStructure() = default;
+    virtual ~FRHIRayTracingGeometry() = default;
 
 public:
-
-    // Returns the native handle for this resource
     virtual void* GetRHINativeHandle() const { return nullptr; }
-
-    // Retrieve the base-interface for the backend
-    virtual void* GetRHIBaseInterface() { return this; }
-
-    virtual class FRHIRayTracingScene*    GetRayTracingScene()    { return nullptr; }
-    virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
 
     virtual void SetDebugName(const FString& InName) { }
     virtual FString GetDebugName() const { return FString(); }
@@ -173,36 +154,33 @@ protected:
     EAccelerationStructureBuildFlags Flags;
 };
 
-class FRHIRayTracingGeometry : public FRHIAccelerationStructure
-{
-protected: 
-    explicit FRHIRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
-        : FRHIAccelerationStructure(InGeometryInfo)
-    {
-    }
-
-    virtual ~FRHIRayTracingGeometry() = default;
-
-public:
-    virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() override final { return this; }
-};
-
-class FRHIRayTracingScene : public FRHIAccelerationStructure
+class FRHIRayTracingScene : public FRHIResource
 {
 protected:
     explicit FRHIRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
-        : FRHIAccelerationStructure(InSceneInfo)
+        : FRHIResource()
+        , Flags(InSceneInfo.Flags)
     {
     }
 
     virtual ~FRHIRayTracingScene() = default;
 
 public:
-    virtual FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
-    
-    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+    virtual void* GetRHINativeHandle() const { return nullptr; }
 
+    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
+    virtual void SetDebugName(const FString& InName) { }
+    virtual FString GetDebugName() const { return FString(); }
+
+    EAccelerationStructureBuildFlags GetFlags() const 
+    {
+        return Flags;
+    }
+
+protected:
+    EAccelerationStructureBuildFlags Flags;
 };
 
 struct FRayTracingShaderResources

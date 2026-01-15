@@ -34,6 +34,8 @@ public:
     virtual ~FEngine();
 
     virtual bool Init();
+    virtual bool InitPostRenderer() { return true; }
+
     virtual void Release();
 
     virtual bool Start();
@@ -53,6 +55,12 @@ public:
     {
         return EngineWindow;
     }
+
+	/** @brief Returns the engine window */
+	TSharedPtr<FViewportWidget> GetViewportWidget() const
+	{
+		return EngineViewportWidget;
+	}
 
     /** @brief Returns the SceneViewport */
     TSharedPtr<FSceneViewport> GetSceneViewport() const

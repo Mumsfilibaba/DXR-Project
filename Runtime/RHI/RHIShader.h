@@ -22,17 +22,20 @@ typedef TSharedRef<class FRHIRayCallableShader>     FRHIRayCallableShaderRef;
 
 enum class EShaderStage : uint8
 {
-    Unknown         = 0,
+    Unknown = 0,
+    
     // Graphics
-    Vertex          = 1,
-    Hull            = 2,
-    Domain          = 3,
-    Geometry        = 4,
-    Mesh            = 5,
-    Amplification   = 6,
-    Pixel           = 7,
+    Vertex        = 1,
+    Hull          = 2,
+    Domain        = 3,
+    Geometry      = 4,
+    Mesh          = 5,
+    Amplification = 6,
+    Pixel         = 7,
+
     // Compute
-    Compute         = 8,
+    Compute = 8,
+    
     // RayTracing
     RayGen          = 9,
     RayAnyHit       = 10,
@@ -62,6 +65,21 @@ NODISCARD constexpr const CHAR* ToString(EShaderStage ShaderStage)
         case EShaderStage::RayCallable:     return "RayCallable";
         default:                            return "Unknown";
     }
+}
+
+NODISCARD constexpr bool IsShaderStageGraphics(EShaderStage ShaderStage)
+{
+    return ShaderStage >= EShaderStage::Vertex && ShaderStage < EShaderStage::Compute ? true : false;
+}
+
+NODISCARD constexpr bool IsShaderStageCompute(EShaderStage ShaderStage)
+{
+    return ShaderStage >= EShaderStage::Compute ? true : false;
+}
+
+NODISCARD constexpr bool IsShaderStageRayTracing(EShaderStage ShaderStage)
+{
+    return ShaderStage >= EShaderStage::RayGen ? true : false;
 }
 
 class FRHIShader : public FRHIResource
@@ -266,19 +284,3 @@ protected:
 
     virtual ~FRHIRayCallableShader() = default;
 };
-
-
-NODISCARD constexpr bool ShaderStageIsGraphics(EShaderStage ShaderStage)
-{
-    return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
-}
-
-NODISCARD constexpr bool ShaderStageIsCompute(EShaderStage ShaderStage)
-{
-    return (ShaderStage >= EShaderStage::Compute) ? true : false;
-}
-
-NODISCARD constexpr bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
-{
-    return (ShaderStage >= EShaderStage::RayGen) ? true : false;
-}

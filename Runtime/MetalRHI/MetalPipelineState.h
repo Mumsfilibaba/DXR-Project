@@ -1,26 +1,31 @@
 #pragma once
-#include "MetalDeviceContext.h"
-#include "MetalShader.h"
-#include "MetalRefCounted.h"
 #include "RHI/RHIResources.h"
+#include "MetalRHI/MetalDeviceContext.h"
+#include "MetalRHI/MetalShader.h"
+#include "MetalRHI/MetalRefCounted.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalVertexLayout>            FMetalVertexInputLayoutRef;
+typedef TSharedRef<class FMetalInputLayout>            FMetalVertexInputLayoutRef;
 typedef TSharedRef<class FMetalDepthStencilState>       FMetalDepthStencilStateRef;
 typedef TSharedRef<class FMetalGraphicsPipelineState>   FMetalGraphicsPipelineStateRef;
 typedef TSharedRef<class FMetalComputePipelineState>    FMetalComputePipelineStateRef;
 typedef TSharedRef<class FMetalRayTracingPipelineState> FMetalRayTracingPipelineStateRef;
 
-class FMetalVertexLayout : public FRHIVertexLayout
+class FMetalInputLayout : public FRHIInputLayout
 {
 public:
-    FMetalVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList);
-    virtual ~FMetalVertexLayout();
+    FMetalInputLayout(const TArray<FRHIInputElementInfo>& InInputElements);
+    virtual ~FMetalInputLayout();
 
-    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
     {
-        return InitializerList;
+        return &InputElements[Index];
+    }
+
+    virtual uint32 GetNumInputElementInfos() const override final
+    {
+        return InputElements.Size();
     }
 
     MTLVertexDescriptor* GetMTLVertexDescriptor() const 
@@ -29,21 +34,21 @@ public:
     }
 
 private:
-    FRHIVertexLayoutInitializerList InitializerList;
-    MTLVertexDescriptor*            VertexDescriptor;
+    TArray<FRHIInputElementInfo> InputElements;
+    MTLVertexDescriptor*         VertexDescriptor;
 };
 
 class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalDeviceChild
 {
 public:
-    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& InInitializer);
+    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FMetalDepthStencilState();
 
     bool Initialize();
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
     
     id<MTLDepthStencilState> GetMTLDepthStencilState() const 
@@ -52,36 +57,36 @@ public:
     }
     
 private:
-    id<MTLDepthStencilState>         DepthStencilState;
-    FRHIDepthStencilStateInitializer Initializer;
+    id<MTLDepthStencilState>  DepthStencilState;
+    FRHIDepthStencilStateInfo Info;
 };
 
 class FMetalRasterizerState : public FRHIRasterizerState
 {
 public:
-    FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
+    FMetalRasterizerState(const FRHIRasterizerStateInfo& InInfo);
     virtual ~FMetalRasterizerState();
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    virtual FRHIRasterizerStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     MTLTriangleFillMode FillMode;
     MTLWinding          FrontFaceWinding;
 
-    const FRHIRasterizerStateInitializer Initializer;
+    const FRHIRasterizerStateInfo Info;
 };
 
 class FMetalBlendState : public FRHIBlendState
 {
 public:
-    FMetalBlendState(const FRHIBlendStateInitializer& InInitializer);
+    FMetalBlendState(const FRHIBlendStateInfo& InInfo);
     virtual ~FMetalBlendState();
 
-    virtual FRHIBlendStateInitializer GetInitializer() const
+    virtual FRHIBlendStateInfo GetInfo() const
     {
-        return Initializer;
+        return Info;
     }
 
     struct FBlendAttachment
@@ -98,7 +103,7 @@ public:
     };
 
     FBlendAttachment ColorAttachments[RHI_MAX_RENDER_TARGETS];
-    const FRHIBlendStateInitializer Initializer;
+    const FRHIBlendStateInfo Info;
 };
 
 struct FMetalResourceBinding
@@ -116,7 +121,7 @@ struct FMetalResourceBinding
 class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalDeviceChild
 {
 public:
-    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
+    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInfo& Info)
         : FMetalDeviceChild(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)
@@ -134,31 +139,31 @@ public:
             SamplerBindings[ShaderStage].Fill(FMetalResourceBinding(0));
         }
         
-        DepthStencilState = MakeSharedRef<FMetalDepthStencilState>(Initializer.DepthStencilState);
+        DepthStencilState = MakeSharedRef<FMetalDepthStencilState>(Info.DepthStencilState);
         CHECK(DepthStencilState != nullptr);
         
-        RasterizerState = MakeSharedRef<FMetalRasterizerState>(Initializer.RasterizerState);
+        RasterizerState = MakeSharedRef<FMetalRasterizerState>(Info.RasterizerState);
         CHECK(RasterizerState != nullptr);
         
         MTLRenderPipelineDescriptor* Descriptor = [MTLRenderPipelineDescriptor new];
-        if (FMetalShader* VertexShader = GetMetalShader(Initializer.ShaderState.VertexShader))
+        if (FMetalShader* VertexShader = GetMetalShader(Info.VertexShader))
         {
             Descriptor.vertexFunction = VertexShader->GetMTLFunction();
         }
 
-        if (FMetalShader* PixelShader = GetMetalShader(Initializer.ShaderState.PixelShader))
+        if (FMetalShader* PixelShader = GetMetalShader(Info.PixelShader))
         {
             Descriptor.fragmentFunction = PixelShader->GetMTLFunction();
         }
         
-        for (uint32 Index = 0; Index < Initializer.PipelineFormats.NumRenderTargets; ++Index)
+        for (uint32 Index = 0; Index < Info.RasterizerOutputFormats.NumRenderTargets; ++Index)
         {
-            Descriptor.colorAttachments[Index].pixelFormat = ConvertFormat(Initializer.PipelineFormats.RenderTargetFormats[Index]);
+            Descriptor.colorAttachments[Index].pixelFormat = ConvertFormat(Info.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
         
-        Descriptor.depthAttachmentPixelFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
+        Descriptor.depthAttachmentPixelFormat = ConvertFormat(Info.RasterizerOutputFormats.DepthStencilFormat);
         
-        FMetalVertexLayout* InputLayout = static_cast<FMetalVertexLayout*>(Initializer.VertexInputLayout);
+        FMetalInputLayout* InputLayout = static_cast<FMetalInputLayout*>(Info.InputLayout);
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;

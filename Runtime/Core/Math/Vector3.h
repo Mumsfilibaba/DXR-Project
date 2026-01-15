@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Math/MathCommon.h"
+#include "Core/Math/Math.h"
 
 class FVector3
 {
@@ -83,17 +83,17 @@ public:
     /**
      * @brief Compares this vector with another vector within a specified threshold.
      * @param Other Vector to compare against.
-     * @param Epsilon The threshold for comparison.
+     * @param Threshold The threshold for comparison.
      * @return True if vectors are approximately equal, false otherwise.
      */
-    inline bool IsEqual(const FVector3& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
+    inline bool IsEqual(const FVector3& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
-        Epsilon = Math::Abs(Epsilon);
+        Threshold = Math::Abs(Threshold);
 
         for (int32 Index = 0; Index < 3; ++Index)
         {
             float Diff = XYZ[Index] - Other.XYZ[Index];
-            if (Math::Abs(Diff) > Epsilon)
+            if (Math::Abs(Diff) > Threshold)
             {
                 return false;
             }
@@ -109,7 +109,7 @@ public:
     FORCEINLINE bool IsUnitVector() const noexcept
     {
         const float LengthDiff = Math::Abs(1.0f - GetLengthSquared());
-        return LengthDiff < Math::FloatCompareEpsilon;
+        return LengthDiff < Math::Constants::CmpThreshold;
     }
 
     /**

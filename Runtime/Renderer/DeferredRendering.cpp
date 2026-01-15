@@ -100,7 +100,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             }
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = true;
@@ -112,25 +112,25 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             return;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInitializer.CullMode = ECullMode::None;
+            RasterizerStateInfo.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInitializer.CullMode = ECullMode::Back;
+            RasterizerStateInfo.CullMode = ECullMode::Back;
         }
 
-        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!NewPipelineInstance.RasterizerState)
         {
             DEBUG_BREAK();
             return;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        FRHIBlendStateInfo BlendStateInfo;
+        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!NewPipelineInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -143,13 +143,13 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
         else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
         {
-            FRHIVertexLayoutInitializerList VertexElementList =
+            TArray<FRHIInputElementInfo> InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
                 { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -158,12 +158,12 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
         else
         {
-            FRHIVertexLayoutInitializerList VertexElementList =
+            TArray<FRHIInputElementInfo> InputElements =
             {
                 { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -171,16 +171,16 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             }
         }
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.VertexInputLayout                  = NewPipelineInstance.InputLayout.Get();
-        PSOInitializer.BlendState                         = NewPipelineInstance.BlendState.Get();
-        PSOInitializer.DepthStencilState                  = NewPipelineInstance.DepthStencilState.Get();
-        PSOInitializer.RasterizerState                    = NewPipelineInstance.RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader           = NewPipelineInstance.VertexShader.Get();
-        PSOInitializer.ShaderState.PixelShader            = NewPipelineInstance.PixelShader.Get();
-        PSOInitializer.PipelineFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.InputLayout                                = NewPipelineInstance.InputLayout.Get();
+        PSOInfo.BlendState                                 = NewPipelineInstance.BlendState.Get();
+        PSOInfo.DepthStencilState                          = NewPipelineInstance.DepthStencilState.Get();
+        PSOInfo.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
+        PSOInfo.VertexShader                               = NewPipelineInstance.VertexShader.Get();
+        PSOInfo.PixelShader                                = NewPipelineInstance.PixelShader.Get();
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
 
-        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!NewPipelineInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -208,7 +208,7 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
     const FClearValue DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
@@ -327,7 +327,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
+            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -433,39 +433,39 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             return;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencilInitializer;
-        DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-        DepthStencilInitializer.bDepthEnable      = true;
-        DepthStencilInitializer.bDepthWriteEnable = false;
+        FRHIDepthStencilStateInfo DepthStencilInfo;
+        DepthStencilInfo.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilInfo.bDepthEnable      = true;
+        DepthStencilInfo.bDepthWriteEnable = false;
 
-        NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
+        NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
         if (!NewPipelineInstance.DepthStencilState)
         {
             DEBUG_BREAK();
             return;
         }
 
-        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        FRHIRasterizerStateInfo RasterizerStateInfo;
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInitializer.CullMode = ECullMode::None;
+            RasterizerStateInfo.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInitializer.CullMode = ECullMode::Back;
+            RasterizerStateInfo.CullMode = ECullMode::Back;
         }
 
-        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
         if (!NewPipelineInstance.RasterizerState)
         {
             DEBUG_BREAK();
             return;
         }
 
-        FRHIBlendStateInitializer BlendStateInitializer;
-        BlendStateInitializer.NumRenderTargets = GBuffer_NumRenderTargets;
+        FRHIBlendStateInfo BlendStateInfo;
+        BlendStateInfo.NumRenderTargets = GBuffer_NumRenderTargets;
 
-        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
         if (!NewPipelineInstance.BlendState)
         {
             DEBUG_BREAK();
@@ -475,21 +475,21 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         // NOTE: Always use the default InputLayout
         NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
 
-        FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.VertexInputLayout                      = NewPipelineInstance.InputLayout.Get();
-        PSOInitializer.BlendState                             = NewPipelineInstance.BlendState.Get();
-        PSOInitializer.DepthStencilState                      = NewPipelineInstance.DepthStencilState.Get();
-        PSOInitializer.RasterizerState                        = NewPipelineInstance.RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader               = NewPipelineInstance.VertexShader.Get();
-        PSOInitializer.ShaderState.PixelShader                = NewPipelineInstance.PixelShader.Get();
-        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FGlobalTextureFormats::AlbedoFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[1] = FGlobalTextureFormats::NormalFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[2] = FGlobalTextureFormats::MaterialFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[3] = FGlobalTextureFormats::VelocityFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
-        PSOInitializer.PipelineFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+        FRHIGraphicsPipelineStateInfo PSOInfo;
+        PSOInfo.InputLayout                                    = NewPipelineInstance.InputLayout.Get();
+        PSOInfo.BlendState                                     = NewPipelineInstance.BlendState.Get();
+        PSOInfo.DepthStencilState                              = NewPipelineInstance.DepthStencilState.Get();
+        PSOInfo.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
+        PSOInfo.VertexShader                                   = NewPipelineInstance.VertexShader.Get();
+        PSOInfo.PixelShader                                    = NewPipelineInstance.PixelShader.Get();
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::AlbedoFormat;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[1] = FGlobalTextureFormats::NormalFormat;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[2] = FGlobalTextureFormats::MaterialFormat;
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[3] = FGlobalTextureFormats::VelocityFormat;
+        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
         if (!NewPipelineInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -517,7 +517,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::AlbedoFormat, Width, Height, 1, 1, Usage);
 
     // Albedo
@@ -684,7 +684,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
+            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -746,7 +746,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHITextureInfo LUTInfo = FRHITextureInfo::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccess);
+    FRHITextureInfo LUTInfo = FRHITextureInfo::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
     FRHITextureRef StagingTexture = FRHI::Get()->CreateTexture(LUTInfo, EResourceAccess::Common);
 
     if (!StagingTexture)
@@ -759,7 +759,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         StagingTexture->SetDebugName("Staging IntegrationLUT");
     }
 
-    LUTInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
+    LUTInfo.UsageFlags = ETextureUsageFlags::ShaderResourceTexture;
 
     FrameResources.IntegrationLUT = FRHI::Get()->CreateTexture(LUTInfo, EResourceAccess::Common);
     if (!FrameResources.IntegrationLUT)
@@ -798,8 +798,10 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(BRDFShader.Get());
-    FRHIComputePipelineStateRef BRDFPipelineState = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = BRDFShader.Get();
+
+    FRHIComputePipelineStateRef BRDFPipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!BRDFPipelineState)
     {
         DEBUG_BREAK();
@@ -848,8 +850,10 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader.Get());
-    TiledLightPassPSO = FRHI::Get()->CreateComputePipelineState(DeferredLightPassInitializer);
+    FRHIComputePipelineStateInfo DeferredLightPassPSOInfo;
+    DeferredLightPassPSOInfo.Shader = TiledLightShader.Get();
+
+    TiledLightPassPSO = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSOInfo);
     if (!TiledLightPassPSO)
     {
         DEBUG_BREAK();
@@ -876,8 +880,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    DeferredLightPassInitializer = FRHIComputePipelineStateInitializer(TiledLightShader_TileDebug.Get());
-    TiledLightPassPSO_TileDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassInitializer);
+    DeferredLightPassPSOInfo.Shader = TiledLightShader_TileDebug.Get();
+
+    TiledLightPassPSO_TileDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSOInfo);
     if (!TiledLightPassPSO_TileDebug)
     {
         DEBUG_BREAK();
@@ -908,8 +913,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    DeferredLightPassInitializer = FRHIComputePipelineStateInitializer(TiledLightShader_CascadeDebug.Get());
-    TiledLightPassPSO_CascadeDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassInitializer);
+    DeferredLightPassPSOInfo.Shader = TiledLightShader_CascadeDebug.Get();
+
+    TiledLightPassPSO_CascadeDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSOInfo);
     if (!TiledLightPassPSO_CascadeDebug)
     {
         DEBUG_BREAK();
@@ -930,7 +936,7 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
         return true;
     }
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo FinalTargetInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage);
     FrameResources.FinalTarget = FRHI::Get()->CreateTexture(FinalTargetInfo, EResourceAccess::PixelShaderResource);
     if (FrameResources.FinalTarget)
@@ -1082,7 +1088,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     }
 
     constexpr uint32 NumConstants = sizeof(FLightPassSettingsHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(LightPassShader, &LightPassSettings, NumConstants);
+    CommandList.SetShaderConstants(LightPassShader, &LightPassSettings, NumConstants);
 
     constexpr uint32 NumThreads = 16;
     const uint32 WorkGroupWidth  = Math::DivideByMultiple<uint32>(LightPassSettings.ScreenWidth, NumThreads);
@@ -1128,9 +1134,10 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PipelineStateInfo(ReduceDepthInitalShader.Get());
-    ReduceDepthInitalPSO = FRHI::Get()->CreateComputePipelineState(PipelineStateInfo);
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = ReduceDepthInitalShader.Get();
 
+    ReduceDepthInitalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!ReduceDepthInitalPSO)
     {
         DEBUG_BREAK();
@@ -1156,9 +1163,9 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(ReduceDepthShader.Get());
-    ReduceDepthPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    PSOInfo.Shader = ReduceDepthShader.Get();
 
+    ReduceDepthPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!ReduceDepthPSO)
     {
         DEBUG_BREAK();
@@ -1188,7 +1195,7 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
     const uint32 ReducedWidth  = Math::DivideByMultiple(Width, Alignment);
     const uint32 ReducedHeight = Math::DivideByMultiple(Height, Alignment);
 
-    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, Usage);
     for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
     {
@@ -1237,7 +1244,7 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
     constexpr uint32 NumConstants = sizeof(FReductionConstants) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NumConstants);
+    CommandList.SetShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, NumConstants);
 
     uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
     uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();

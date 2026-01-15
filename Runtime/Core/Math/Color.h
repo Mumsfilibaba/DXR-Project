@@ -552,8 +552,8 @@ public:
      */
     FORCEINLINE bool operator==(const FFloatColor& RHS) const
     {
-        constexpr float Epsilon = 1e-6f;
-        return (Math::Abs(R - RHS.R) <= Epsilon) && (Math::Abs(G - RHS.G) <= Epsilon) && (Math::Abs(B - RHS.B) <= Epsilon) && (Math::Abs(A - RHS.A) <= Epsilon);
+        constexpr float Threshold = 1e-6f;
+        return (Math::Abs(R - RHS.R) <= Threshold) && (Math::Abs(G - RHS.G) <= Threshold) && (Math::Abs(B - RHS.B) <= Threshold) && (Math::Abs(A - RHS.A) <= Threshold);
     }
 
     /** @brief Inequality operator */

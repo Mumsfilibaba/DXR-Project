@@ -18,9 +18,7 @@ FVulkanFence::~FVulkanFence()
 
 bool FVulkanFence::Initialize(bool bSignaled)
 {
-    VkFenceCreateInfo FenceCreateInfo;
-    FMemory::Memzero(&FenceCreateInfo);
-
+	VkFenceCreateInfo FenceCreateInfo = {};
     FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     FenceCreateInfo.pNext = nullptr;
     FenceCreateInfo.flags = bSignaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;

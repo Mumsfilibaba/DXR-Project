@@ -67,19 +67,19 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilInitializer;
-    DepthStencilInitializer.DepthFunc         = EComparisonFunc::Always;
-    DepthStencilInitializer.bDepthEnable      = false;
-    DepthStencilInitializer.bDepthWriteEnable = false;
+    FRHIDepthStencilStateInfo DepthStencilInfo;
+    DepthStencilInfo.DepthFunc         = EComparisonFunc::Always;
+    DepthStencilInfo.bDepthEnable      = false;
+    DepthStencilInfo.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateInfo RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
@@ -89,29 +89,29 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer;
-    BlendStateInitializer.NumRenderTargets = 1;
+    FRHIBlendStateInfo BlendStateInfo;
+    BlendStateInfo.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.VertexInputLayout                      = nullptr;
-    PSOInitializer.BlendState                             = BlendState.Get();
-    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PSOInitializer.RasterizerState                        = RasterizerState.Get();
-    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
-    PSOInitializer.ShaderState.PixelShader                = TonemapShader.Get();
-    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
-    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.InputLayout                                    = nullptr;
+    PSOInfo.BlendState                                     = BlendState.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = TonemapShader.Get();
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    TonemapPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+    TonemapPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!TonemapPSO)
     {
         DEBUG_BREAK();
@@ -172,7 +172,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FSceneRenderView&
     TonemapInfo.Padding1          = 0.0f;
 
     constexpr uint32 NumConstants = sizeof(FTonemapInfoHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
+    CommandList.SetShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
 
     CommandList.DrawInstanced(3, 1, 0, 0);
 
@@ -230,19 +230,19 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilInitializer;
-    DepthStencilInitializer.DepthFunc         = EComparisonFunc::Always;
-    DepthStencilInitializer.bDepthEnable      = false;
-    DepthStencilInitializer.bDepthWriteEnable = false;
+    FRHIDepthStencilStateInfo DepthStencilInfo;
+    DepthStencilInfo.DepthFunc         = EComparisonFunc::Always;
+    DepthStencilInfo.bDepthEnable      = false;
+    DepthStencilInfo.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerInitializer;
+    FRHIRasterizerStateInfo RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
@@ -252,29 +252,29 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer;
-    BlendStateInitializer.NumRenderTargets = 1;
+    FRHIBlendStateInfo BlendStateInfo;
+    BlendStateInfo.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.VertexInputLayout                      = nullptr;
-    PSOInitializer.BlendState                             = BlendState.Get();
-    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PSOInitializer.RasterizerState                        = RasterizerState.Get();
-    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
-    PSOInitializer.ShaderState.PixelShader                = FXAAShader.Get();
-    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
-    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.InputLayout                                    = nullptr;
+    PSOInfo.BlendState                                     = BlendState.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = FXAAShader.Get();
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    FXAAPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+    FXAAPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!FXAAPSO)
     {
         DEBUG_BREAK();
@@ -304,9 +304,9 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInitializer.ShaderState.PixelShader = FXAADebugShader.Get();
+    PSOInfo.PixelShader = FXAADebugShader.Get();
 
-    FXAADebugPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInitializer);
+    FXAADebugPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!FXAADebugPSO)
     {
         DEBUG_BREAK();
@@ -365,14 +365,14 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
         CommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
         CommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         CommandList.SetSamplerState(FXAADebugShader.Get(), FrameResources.FXAASampler.Get(), 0);
-        CommandList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
+        CommandList.SetShaderConstants(FXAADebugShader.Get(), &Settings, 2);
     }
     else
     {
         CommandList.SetGraphicsPipelineState(FXAAPSO.Get());
         CommandList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
         CommandList.SetSamplerState(FXAAShader.Get(), FrameResources.FXAASampler.Get(), 0);
-        CommandList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
+        CommandList.SetShaderConstants(FXAAShader.Get(), &Settings, 2);
     }
 
     CommandList.DrawInstanced(3, 1, 0, 0);

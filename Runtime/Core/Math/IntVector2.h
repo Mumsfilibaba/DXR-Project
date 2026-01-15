@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Math/MathCommon.h"
+#include "Core/Math/Math.h"
 
 class FInt16Vector2
 {

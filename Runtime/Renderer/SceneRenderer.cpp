@@ -219,7 +219,11 @@ bool FSceneRenderer::Initialize()
         RenderSettings::OnDidChangeRenderResolution(Resources.CurrentRenderWidth, Resources.CurrentRenderHeight);
     }
 
-    FRHIBufferInfo CBInfo(sizeof(FCameraHLSL), sizeof(FCameraHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    FRHIBufferInfo CBInfo;
+    CBInfo.Size   = sizeof(FCameraHLSL);
+    CBInfo.Stride = sizeof(FCameraHLSL);
+    CBInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+
     Resources.CameraBuffer = FRHI::Get()->CreateBuffer(CBInfo, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
@@ -232,7 +236,7 @@ bool FSceneRenderer::Initialize()
     }
 
     // Initialize standard input layout
-    FRHIVertexLayoutInitializerList InputLayout =
+    TArray<FRHIInputElementInfo> InputElements =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0,  0, EVertexInputClass::Vertex, 0 },
         { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(FVertexNormal),   1, 0,  1, EVertexInputClass::Vertex, 0 },
@@ -240,7 +244,7 @@ bool FSceneRenderer::Initialize()
         { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 2, 0,  3, EVertexInputClass::Vertex, 0 },
     };
 
-    Resources.MeshInputLayout = FRHI::Get()->CreateVertexLayout(InputLayout);
+    Resources.MeshInputLayout = FRHI::Get()->CreateInputLayout(InputElements);
     if (!Resources.MeshInputLayout)
     {
         DEBUG_BREAK();
@@ -325,7 +329,7 @@ bool FSceneRenderer::Initialize()
         return false;
     }
 
-    if (false/*FRHIDeviceInfo::SupportsRayTracing*/)
+    if (false/*RHIDeviceFeatureSupport::bSupportsRayTracing*/)
     {
         if (!RayTracer.Initialize(Resources))
         {
@@ -642,7 +646,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 	}
 
 	// RayTracing PrePass
-	if (false /*FRHIDeviceInfo::SupportsRayTracing*/)
+	if (false /*RHIDeviceFeatureSupport::bSupportsRayTracing*/)
 	{
 		GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
 		RayTracer.PreRender(CommandList, Resources, CurrentScene);
@@ -986,17 +990,18 @@ void FSceneRenderer::PresentSwapChain(FRHISwapChainRef SwapChain)
 
 bool FSceneRenderer::InitShadingImage()
 {
-    if (FRHIDeviceInfo::ShadingRateTier != EShadingRateTier::Tier2 || FRHIDeviceInfo::ShadingRateImageTileSize == 0)
+    if (RHIDeviceFeatureSupport::ShadingRateTier != EShadingRateTier::Tier2 || RHIDeviceFeatureSupport::ShadingRateImageTileSize == 0)
     {
         return true;
     }
 
-    const uint32 Width  = Resources.CurrentRenderWidth / FRHIDeviceInfo::ShadingRateImageTileSize;
-    const uint32 Height = Resources.CurrentRenderHeight / FRHIDeviceInfo::ShadingRateImageTileSize;
+    const uint32 Width  = Resources.CurrentRenderWidth / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
+    const uint32 Height = Resources.CurrentRenderHeight / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, UsageFlags);
+
     ShadingImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);
-
     if (!ShadingImage)
     {
         DEBUG_BREAK();
@@ -1023,9 +1028,10 @@ bool FSceneRenderer::InitShadingImage()
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
-    ShadingRatePipeline = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = ShadingRateShader.Get();
 
+    ShadingRatePipeline = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!ShadingRatePipeline)
     {
         DEBUG_BREAK();

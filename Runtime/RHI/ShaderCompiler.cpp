@@ -805,7 +805,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     const glslang_stage_t GlslangStage = GetGlslangStage(CompileInfo.ShaderStage);
     
     // This is a work-around to enable gl_Layer from vertex-shaders
-    if (GlslangStage == GLSLANG_STAGE_VERTEX && FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader)
+    if (GlslangStage == GLSLANG_STAGE_VERTEX && RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader)
     {
         spvc_compiler_require_extension(Compiler, "GL_ARB_shader_viewport_layer_array");
     }

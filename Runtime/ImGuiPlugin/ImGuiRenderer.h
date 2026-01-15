@@ -41,6 +41,8 @@ public:
     bool InitializeRHI();
     void ReleaseRHI();
     
+    bool UpdateFontAtlas();
+
     void Render(FRHICommandList& CommandList);
     void RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear);
     
@@ -59,7 +61,7 @@ private:
     void ResetTexturesShaderResourceUsage(FRHICommandList& CommandList);
 
     TArray<const FImGuiTexture*> RenderedTextures;
-    FRHITextureRef               FontTexture;
+    FRHITextureRef               FontAtlas;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
     FRHIPixelShaderRef           PShader;

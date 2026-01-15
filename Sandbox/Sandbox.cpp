@@ -159,7 +159,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
         std::default_random_engine Generator;
 
-        std::uniform_real_distribution<float> Random0(0.0f, Math::TwoPI_Float);
+        std::uniform_real_distribution<float> Random0(0.0f, Math::Constants::TwoPI);
         std::uniform_real_distribution<float> Random1(0.05f, 1.0);
         std::uniform_real_distribution<float> Random2(0.05f, 0.7);
         std::uniform_real_distribution<float> Random3(0.5f, 1.0);
@@ -267,7 +267,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Plane");
-        NewActor->GetTransform().SetRotation(Math::HalfPI_Float, 0.0f, 0.0f);
+        NewActor->GetTransform().SetRotation(Math::Constants::HalfPI, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(50.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
@@ -377,7 +377,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Teapot");
-        NewActor->GetTransform().SetRotation(-Math::HalfPI_Float, Math::HalfPI_Float, 0.0f);
+        NewActor->GetTransform().SetRotation(-Math::Constants::HalfPI, Math::Constants::HalfPI, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 37.5f);
 
@@ -974,7 +974,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     if (FActor* NewActor = InWorld->CreateActor())
     {
         NewActor->SetName("Plane");
-        NewActor->GetTransform().SetRotation(Math::HalfPI_Float, 0.0f, 0.0f);
+        NewActor->GetTransform().SetRotation(Math::Constants::HalfPI, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(30.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 0.0f);
 
@@ -1196,7 +1196,7 @@ FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
     const uint32 SkyboxSize   = 1024;
     const uint32 NumMiplevels = FTextureFactoryHelpers::TextureSizeToMiplevels(SkyboxSize);
 
-    constexpr ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
+    constexpr ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, TextureFlags);
 
     FRHITextureRef Skybox = FRHI::Get()->CreateTexture(TextureInfo);

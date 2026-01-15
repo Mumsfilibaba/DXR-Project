@@ -29,17 +29,20 @@ FMesh::~FMesh()
 
 bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 {
-    const bool bEnableRayTracing = false; //FRHIDeviceInfo::SupportsRayTracing ;
+    const bool bEnableRayTracing = false; //RHIDeviceFeatureSupport::bSupportsRayTracing;
 
     VertexCount = CreateInfo.Vertices.Size();
     IndexCount  = CreateInfo.Indices.Size();
 
-    const EBufferUsageFlags BufferFlags = bEnableRayTracing ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
+    const EBufferFlags BufferFlags = bEnableRayTracing ? EBufferFlags::ShaderResourceBuffer | EBufferFlags::Default : EBufferFlags::Default;
 
     // Create VertexBuffer
-    FRHIBufferInfo VBInfo(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
+    FRHIBufferInfo VBInfo;
+    VBInfo.Stride = sizeof(FVertex);
+    VBInfo.Size   = VertexCount * VBInfo.Stride;
+    VBInfo.Flags  = BufferFlags | EBufferFlags::VertexBuffer;
 
+    VertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
     if (!VertexBuffer)
     {
         return false;
@@ -57,9 +60,10 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         VertexPositions[Index] = Vertex.Position;
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexPosition), sizeof(FVertexPosition), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexPositionBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexPositions.Data());
+	VBInfo.Stride = sizeof(FVertexPosition);
+	VBInfo.Size   = VertexCount * VBInfo.Stride;
 
+    VertexPositionBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexPositions.Data());
     if (!VertexPositionBuffer)
     {
         return false;
@@ -77,9 +81,10 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         VertexNormals[Index] = FVertexNormal(Vertex.Normal, Vertex.Tangent);
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexNormal), sizeof(FVertexNormal), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexNormalBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexNormals.Data());
+	VBInfo.Stride = sizeof(FVertexNormal);
+	VBInfo.Size   = VertexCount * VBInfo.Stride;
 
+    VertexNormalBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexNormals.Data());
     if (!VertexNormalBuffer)
     {
         return false;
@@ -97,9 +102,10 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         VertexTexCoords[Index] = Vertex.TexCoord;
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexTexCoord), sizeof(FVertexTexCoord), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexTexCoordBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
+    VBInfo.Stride = sizeof(FVertexTexCoord);
+    VBInfo.Size   = VertexCount * VBInfo.Stride;
 
+    VertexTexCoordBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
     if (!VertexTexCoordBuffer)
     {
         return false;
@@ -132,9 +138,12 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
         InitialIndicies = CreateInfo.Indices.Data();
     }
 
-    FRHIBufferInfo IBInfo(IndexCount * GetStrideFromIndexFormat(IndexFormat), GetStrideFromIndexFormat(IndexFormat), BufferFlags | EBufferUsageFlags::IndexBuffer);
-    IndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::IndexBuffer, InitialIndicies);
+	FRHIBufferInfo IBInfo;
+    IBInfo.Stride = GetStrideFromIndexFormat(IndexFormat);
+    IBInfo.Size   = IndexCount * IBInfo.Stride;
+    IBInfo.Flags  = BufferFlags | EBufferFlags::IndexBuffer;
 
+    IndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::IndexBuffer, InitialIndicies);
     if (!IndexBuffer)
     {
         return false;
@@ -158,41 +167,36 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
             RTGeometry->SetDebugName("RayTracing Geometry");
         }
 
-        FRHIBufferSRVInfo SRVInfo(VertexBuffer.Get(), 0, VertexCount);
+        FRHIShaderResourceViewInfo SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(VertexBuffer.Get(), 0, VertexCount);
         VertexBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
-
         if (!VertexBufferSRV)
         {
             return false;
         }
         
-        SRVInfo = FRHIBufferSRVInfo(VertexPositionBuffer.Get(), 0, VertexCount);
+        SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(VertexPositionBuffer.Get(), 0, VertexCount);
         VertexPositionBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
-
         if (!VertexPositionBufferSRV)
         {
             return false;
         }
         
-        SRVInfo = FRHIBufferSRVInfo(VertexNormalBuffer.Get(), 0, VertexCount);
+        SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(VertexNormalBuffer.Get(), 0, VertexCount);
         VertexNormalBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
-
         if (!VertexNormalBufferSRV)
         {
             return false;
         }
         
-        SRVInfo = FRHIBufferSRVInfo(VertexTexCoordBuffer.Get(), 0, VertexCount);
+        SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(VertexTexCoordBuffer.Get(), 0, VertexCount);
         VertexTexCoordBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
-
         if (!VertexTexCoordBufferSRV)
         {
             return false;
         }
 
-        SRVInfo = FRHIBufferSRVInfo(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::UInt32);
+        SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::UInt32);
         IndexBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
-
         if (!IndexBufferSRV)
         {
             return false;
@@ -255,7 +259,8 @@ FRHIBuffer* FMesh::GetVertexBuffer(EVertexStream VertexStream) const
         case EVertexStream::Positions: return VertexPositionBuffer.Get();
         case EVertexStream::Normals:   return VertexNormalBuffer.Get();
         case EVertexStream::TexCoords: return VertexTexCoordBuffer.Get();
-        default:                       return nullptr;
+        
+        default: return nullptr;
     }
 }
 
@@ -267,13 +272,14 @@ FRHIShaderResourceView* FMesh::GetVertexBufferSRV(EVertexStream VertexStream) co
         case EVertexStream::Positions: return VertexPositionBufferSRV.Get();
         case EVertexStream::Normals:   return VertexNormalBufferSRV.Get();
         case EVertexStream::TexCoords: return VertexTexCoordBufferSRV.Get();
-        default:                       return nullptr;
+        
+        default: return nullptr;
     }
 }
 
 void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
 {
-    constexpr const float Inf = TNumericLimits<float>::Infinity();
+    static constexpr const float Inf = TNumericLimits<float>::Infinity();
 
     FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
     FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);

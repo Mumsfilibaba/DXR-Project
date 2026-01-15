@@ -142,7 +142,7 @@ public:
         return Materials[Index];
     }
 
-    int32 GetNumMeshes()    const { return Meshes.Size(); }
+    int32 GetNumMeshes() const { return Meshes.Size(); }
     int32 GetNumMaterials() const { return Materials.Size(); }
 
     const FAABB& GetAABB() const
@@ -158,6 +158,6 @@ public:
 private:
     TArray<TSharedPtr<FMesh>>     Meshes;
     TArray<TSharedPtr<FMaterial>> Materials;
-    float                         UniformScale;
-    FAABB                         BoundingBox;
+    float UniformScale;
+    FAABB BoundingBox;
 };

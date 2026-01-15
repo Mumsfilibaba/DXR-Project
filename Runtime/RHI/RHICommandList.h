@@ -10,7 +10,6 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommands.h"
 #include "RHI/RHIRayTracing.h"
-#include "RHI/RHIStats.h"
 
 struct FRHIRenderTargetView;
 struct FRHIDepthStencilView;
@@ -30,18 +29,18 @@ class FRHISwapChain;
 class FRHICommandList;
 class FRHIImmediateCommandList;
 
-class RHI_API FRHICommandList : FNonCopyable
+class FRHICommandList : FNonCopyable
 {
 public:
-    FRHICommandList() noexcept;
-    ~FRHICommandList() noexcept;
+    RHI_API FRHICommandList() noexcept;
+    RHI_API ~FRHICommandList() noexcept;
 
-    void Execute() noexcept;
-    void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept;
-    void Reset() noexcept;
-    void ExchangeState(FRHICommandList& Other) noexcept;
+    RHI_API void Execute() noexcept;
+    RHI_API void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept;
+    RHI_API void Reset() noexcept;
+    RHI_API void ExchangeState(FRHICommandList& Other) noexcept;
 
-    void FlushDeletedResources() noexcept;
+    RHI_API void FlushDeletedResources() noexcept;
 
     FORCEINLINE void* Allocate(uint64 Size, uint32 Alignment) noexcept
     {
@@ -117,7 +116,7 @@ public:
         return NumCommands > 0;
     }
 
-public:
+    // Record commands
     template<typename LambdaType>
     FORCEINLINE void ExecuteLambda(LambdaType Lambda) noexcept
     {
@@ -132,7 +131,6 @@ public:
         EmplaceCommand<FRHICommandExecuteCommandList>(NewCommandList);
     }
 
-public:
     FORCEINLINE void BeginFrame() noexcept
     {
         EmplaceCommand<FRHICommandBeginFrame>();
@@ -219,12 +217,12 @@ public:
         EmplaceCommand<FRHICommandSetComputePipelineState>(PipelineState);
     }
 
-    FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
+    FORCEINLINE void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) noexcept
     {
-        const int32 Size = Num32BitConstants * sizeof(uint32);
+        const int32 Size = NumShaderConstants * sizeof(uint32);
         void* SourceData = Allocate(Size, alignof(uint32));
-        FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
-        EmplaceCommand<FRHICommandSet32BitShaderConstants>(Shader, SourceData, Num32BitConstants);
+        FMemory::Memcpy(SourceData, ShaderConstants, Size);
+        EmplaceCommand<FRHICommandSetShaderConstants>(Shader, SourceData, NumShaderConstants);
     }
 
     FORCEINLINE void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) noexcept
@@ -350,31 +348,31 @@ public:
     FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept
     {
         EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
-        FRHIStats::NumDrawCalls++;
+        RHIStatistics::NumDrawCalls++;
     }
 
     FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
-        FRHIStats::NumDrawCalls++;
+        RHIStatistics::NumDrawCalls++;
     }
 
     FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-        FRHIStats::NumDrawCalls++;
+        RHIStatistics::NumDrawCalls++;
     }
      
     FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
-        FRHIStats::NumDrawCalls++;
+        RHIStatistics::NumDrawCalls++;
     }
 
     FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
     {
         EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-        FRHIStats::NumDispatchCalls++;
+        RHIStatistics::NumDispatchCalls++;
     }
 
     FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
@@ -455,7 +453,6 @@ private:
 class RHI_API FRHICommandListExecutor : FNonCopyable
 {
 public:
-
     static bool Initialize();
     static void Release();
 

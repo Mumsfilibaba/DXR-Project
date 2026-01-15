@@ -76,9 +76,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     for (uint8 Index = 0; Index < Key.NumRenderTargets; Index++)
     {
         // Setup Attachments
-        VkAttachmentDescription ColorAttachment;
-        FMemory::Memzero(&ColorAttachment);
-
+        VkAttachmentDescription ColorAttachment = {};
         ColorAttachment.format         = ConvertFormat(Key.RenderTargetFormats[Index]);
         ColorAttachment.samples        = SampleCount;
         ColorAttachment.loadOp         = ConvertLoadAction(Key.RenderTargetActions[Index].LoadAction);
@@ -89,31 +87,23 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         ColorAttachment.finalLayout    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         Attachments.Add(ColorAttachment);
 
-        VkAttachmentReference ColorAttachmentRef;
-        FMemory::Memzero(&ColorAttachmentRef);
-
+        VkAttachmentReference ColorAttachmentRef = {};
         ColorAttachmentRef.attachment = Index;
         ColorAttachmentRef.layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         ColorAttachents.Add(ColorAttachmentRef);
     }
 
     // Setup Subpass
-    VkSubpassDescription Subpass;
-    FMemory::Memzero(&Subpass);
-
+    VkSubpassDescription Subpass = {};
     Subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
     Subpass.colorAttachmentCount = ColorAttachents.Size();
     Subpass.pColorAttachments    = ColorAttachents.Data();
 
     // Setup DepthStencil
-    VkAttachmentReference DepthAttachmentRef;
-    FMemory::Memzero(&DepthAttachmentRef);
-
+    VkAttachmentReference DepthAttachmentRef = {};
     if (Key.DepthStencilFormat != EFormat::Unknown)
     {
-        VkAttachmentDescription DepthAttachment;
-        FMemory::Memzero(&DepthAttachment);
-
+        VkAttachmentDescription DepthAttachment = {};
         DepthAttachment.format         = ConvertFormat(Key.DepthStencilFormat);
         DepthAttachment.samples        = SampleCount;
         DepthAttachment.loadOp         = ConvertLoadAction(Key.DepthStencilActions.LoadAction);
@@ -131,9 +121,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     }
 
     // Create RenderPass
-    VkRenderPassCreateInfo RenderPassCreateInfo;
-    FMemory::Memzero(&RenderPassCreateInfo);
-
+    VkRenderPassCreateInfo RenderPassCreateInfo = {};
     RenderPassCreateInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     RenderPassCreateInfo.attachmentCount = Attachments.Size();
     RenderPassCreateInfo.pAttachments    = Attachments.Data();
@@ -145,17 +133,17 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     uint32 CorrelationMask;
 
     VkRenderPassMultiviewCreateInfo MultiviewCreateInfo;
-    if (GVulkanSupportsMultiviews && Key.ViewInstancingInfo.bEnableViewInstancing)
+    if (GVulkanSupportsMultiviews && Key.ViewInstancingState.bEnableViewInstancing)
     {
         constexpr uint32 MaxArraySlices = 32;
         ViewMask = 0;
         CorrelationMask = 0;
 
         // Limit to the number of bits in a uint32
-        const uint32 NumViews = Math::Min<uint32>(Key.ViewInstancingInfo.NumArraySlices, MaxArraySlices);
+        const uint32 NumViews = Math::Min<uint32>(Key.ViewInstancingState.NumArraySlices, MaxArraySlices);
         for (uint32 Index = 0; Index < NumViews; Index++)
         {
-		    const uint32 BitIndex = Key.ViewInstancingInfo.StartRenderTargetArrayIndex + Index;
+		    const uint32 BitIndex = Key.ViewInstancingState.StartRenderTargetArrayIndex + Index;
 		    CHECK(BitIndex < 32);
 		    ViewMask |= (1u << BitIndex);
 	    }
@@ -169,7 +157,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         MultiviewCreateInfo.correlationMaskCount = 1;
         MultiviewCreateInfo.pCorrelationMasks    = &CorrelationMask;
 
-        FVulkanStructureHelper RenderPassCreateHelper(RenderPassCreateInfo);
+        FVulkanStructChain RenderPassCreateHelper(RenderPassCreateInfo);
         RenderPassCreateHelper.AddNext(MultiviewCreateInfo);
     }
 
@@ -200,9 +188,7 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
     }
 
     // Create new Framebuffer
-    VkFramebufferCreateInfo FramebufferCreateInfo;
-    FMemory::Memzero(&FramebufferCreateInfo);
-
+    VkFramebufferCreateInfo FramebufferCreateInfo = {};
     FramebufferCreateInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     FramebufferCreateInfo.renderPass      = FrameBufferKey.RenderPass;
     FramebufferCreateInfo.attachmentCount = FrameBufferKey.NumAttachmentViews;

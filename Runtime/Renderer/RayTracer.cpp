@@ -59,15 +59,15 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIRayTracingPipelineStateInitializer PSOInitializer;
-    PSOInitializer.RayGenShaders           = { RayGenShader.Get() };
-    PSOInitializer.MissShaders             = { RayMissShader.Get() };
-    PSOInitializer.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
-    PSOInitializer.MaxRecursionDepth       = 4;
-    PSOInitializer.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
-    PSOInitializer.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
+    FRHIRayTracingPipelineStateInitializer PSOInfo;
+    PSOInfo.RayGenShaders           = { RayGenShader.Get() };
+    PSOInfo.MissShaders             = { RayMissShader.Get() };
+    PSOInfo.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
+    PSOInfo.MaxRecursionDepth       = 4;
+    PSOInfo.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
+    PSOInfo.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
 
-    Pipeline = FRHI::Get()->CreateRayTracingPipelineState(PSOInitializer);
+    Pipeline = FRHI::Get()->CreateRayTracingPipelineState(PSOInfo);
     if (!Pipeline)
     {
         DEBUG_BREAK();
@@ -77,7 +77,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
 	const uint32 Width  = Resources.CurrentRenderWidth;
 	const uint32 Height = Resources.CurrentRenderHeight;
 
-    FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
     Resources.RTOutput = FRHI::Get()->CreateTexture(RTOutputInfo, EResourceAccess::UnorderedAccess);
     if (!Resources.RTOutput)
     {

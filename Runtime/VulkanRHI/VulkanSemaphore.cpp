@@ -18,9 +18,7 @@ FVulkanSemaphore::~FVulkanSemaphore()
 
 bool FVulkanSemaphore::Initialize()
 {
-    VkSemaphoreCreateInfo SemaphoreCreateInfo;
-    FMemory::Memzero(&SemaphoreCreateInfo);
-
+    VkSemaphoreCreateInfo SemaphoreCreateInfo = {};
     SemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
     SemaphoreCreateInfo.pNext = nullptr;
     SemaphoreCreateInfo.flags = 0;

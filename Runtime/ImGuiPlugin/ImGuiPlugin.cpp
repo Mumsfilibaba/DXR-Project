@@ -83,8 +83,8 @@ bool FImGuiPlugin::Load()
     }
     else
     {
-        ImGuiIO& GenericIO = ImGui::GetIO();
-        PluginImGuiIO = &GenericIO;
+        ImGuiIO& State = ImGui::GetIO();
+        PluginImGuiIO = &State;
     }
 
     if (!PluginImGuiIO)
@@ -239,6 +239,9 @@ bool FImGuiPlugin::Load()
     // Update monitor info
     UpdateMonitorInfo();
 
+    // Default font
+    InitializeDefaultFont();
+
     // Setup the style
     ImGuiStyle& Style = ImGui::GetStyle();
     ImGui::StyleColorsDark();
@@ -371,7 +374,7 @@ bool FImGuiPlugin::Unload()
     GImGuiPlugin = nullptr;
 
     // Reset cached pointers
-    PluginImGuiIO = nullptr;
+    PluginImGuiIO      = nullptr;
     PluginImGuiContext = nullptr;
     return true;
 }
@@ -395,6 +398,18 @@ void FImGuiPlugin::ReleaseRHI()
     {
         Renderer->ReleaseRHI();
         Renderer.Reset();
+    }
+}
+
+bool FImGuiPlugin::UpdateFontAtlas()
+{
+    if (Renderer)
+    {
+        return Renderer->UpdateFontAtlas();
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -504,10 +519,12 @@ void FImGuiPlugin::Tick(float Delta)
 
         const bool bEnableImGuiDelegates = CVarImGuiEnableImGuiDelegates.GetValue();
         if (bEnableImGuiDelegates)
-    #endif
         {
             DrawDelegates.Broadcast();
         }
+    #else
+        DrawDelegates.Broadcast();
+    #endif
 
         ImGui::EndFrame();
     }
@@ -602,6 +619,14 @@ void FImGuiPlugin::UpdateMonitorInfo()
         }
     }
 }
+
+void FImGuiPlugin::InitializeDefaultFont()
+{
+    ImGuiIO& State = ImGui::GetIO();
+    State.Fonts->Clear();
+    State.Fonts->AddFontDefault();
+}
+
 void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
 {
     CHECK(Viewport->PlatformUserData == nullptr);

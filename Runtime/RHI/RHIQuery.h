@@ -14,7 +14,7 @@ NODISCARD constexpr const CHAR* ToString(EQueryType QueryType)
     {
         case EQueryType::Timestamp: return "Timestamp";
         case EQueryType::Occlusion: return "Occlusion";
-        default:                    return "Unknown EQueryType";
+        default: return "Unknown EQueryType";
     }
 }
 

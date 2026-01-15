@@ -10,32 +10,32 @@ class FD3D12QueryHeapManager;
 class FD3D12CommandContext;
 class FD3D12Queue;
 
-typedef TSharedRef<FD3D12QueryHeap>   FD3D12QueryHeapRef;
+typedef TSharedRef<FD3D12QueryHeap>    FD3D12QueryHeapRef;
 typedef TSharedRef<struct FD3D12Query> FD3D12QueryRef;
 
 struct FD3D12QueryAllocation
 {
     FD3D12QueryAllocation()
         : QueryHeap(nullptr)
-        , IndexInQueryPool(D3D12_INVALID_QUERY_INDEX)
+        , IndexInQueryHeap(D3D12_INVALID_QUERY_INDEX)
         , Results(nullptr)
     {
     }
 
-    FD3D12QueryAllocation(FD3D12QueryHeap* InQueryHeap, int32 InIndexInQueryPool, uint64* InResults)
+    FD3D12QueryAllocation(FD3D12QueryHeap* InQueryHeap, int32 InIndexInQueryHeap, uint64* InResults)
         : QueryHeap(InQueryHeap)
-        , IndexInQueryPool(InIndexInQueryPool)
+        , IndexInQueryHeap(InIndexInQueryHeap)
         , Results(InResults)
     {
     }
 
     bool IsValid() const
     {
-        return QueryHeap != nullptr && IndexInQueryPool != D3D12_INVALID_QUERY_INDEX;
+        return QueryHeap != nullptr && IndexInQueryHeap != D3D12_INVALID_QUERY_INDEX;
     }
 
     FD3D12QueryHeap* QueryHeap;
-    int32            IndexInQueryPool;
+    int32            IndexInQueryHeap;
     uint64*          Results;
 };
 

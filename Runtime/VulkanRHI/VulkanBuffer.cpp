@@ -32,9 +32,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
-    VkBufferCreateInfo BufferCreateInfo;
-    FMemory::Memzero(&BufferCreateInfo);
-
+    VkBufferCreateInfo BufferCreateInfo = {};
     BufferCreateInfo.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferCreateInfo.pNext                 = nullptr;
     BufferCreateInfo.flags                 = 0;
@@ -51,7 +49,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     
     // VK_KHR_buffer_device_address (Core in 1.2)
     VkMemoryAllocateFlags AllocateFlags = 0;
-    if (VulkanBufferDeviceAddressKHR::IsEnabled() && Info.IsDefault())
+    if (Info.IsDefault())
     {
         AllocateFlags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
@@ -87,7 +85,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
     }
-    if (Info.IsUnorderedAccess() || Info.IsShaderResource())
+    if (Info.IsUnorderedAccessBuffer() || Info.IsShaderResourceBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);

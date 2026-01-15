@@ -64,9 +64,10 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
-    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = SSAOShader.Get();
 
+    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!PipelineState)
     {
         DEBUG_BREAK();
@@ -96,8 +97,8 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInitializer.Shader = BlurHorizontalShader.Get();
-    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    PSOInfo.Shader = BlurHorizontalShader.Get();
+    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
 
     if (!BlurHorizontalPSO)
     {
@@ -126,9 +127,9 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInitializer.Shader = BlurVerticalShader.Get();
+    PSOInfo.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSOInitializer);
+    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!BlurVerticalPSO)
     {
         DEBUG_BREAK();
@@ -189,7 +190,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
 
     constexpr uint32 NumConstants = sizeof(FSSAOSettingsHLSL) / sizeof(uint32);
-    CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, NumConstants);
+    CommandList.SetShaderConstants(SSAOShader.Get(), &SSAOSettings, NumConstants);
 
     constexpr uint32 ThreadCount = 16;
     const uint32 DispatchWidth   = Math::DivideByMultiple<uint32>(Width, ThreadCount);
@@ -210,7 +211,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         CommandList.SetComputePipelineState(BlurHorizontalPSO.Get());
         
         CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
-        CommandList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.SetShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
         
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
@@ -224,7 +225,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         CommandList.SetComputePipelineState(BlurVerticalPSO.Get());
         
         CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
-        CommandList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.SetShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
         
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
     }
@@ -234,7 +235,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
 
 bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
     FRHITextureInfo SSAOBufferInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
     FrameResources.SSAOBuffer = FRHI::Get()->CreateTexture(SSAOBufferInfo, EResourceAccess::NonPixelShaderResource);

@@ -48,12 +48,383 @@ void FRHIValidation::EndFrame()
 
 FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    return RealRHI->CreateTexture(InTextureInfo, InInitialState, InInitialData);
+	// -------------------------------------------------------------------------------------------
+	// Basic sanity
+	// -------------------------------------------------------------------------------------------
+	if (InTextureInfo.Dimension == ETextureDimension::None)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Invalid texture dimension (None). A valid ETextureDimension must be specified.");
+		return nullptr;
+	}
+
+	if (InTextureInfo.GetWidth() == 0 || InTextureInfo.GetHeight() == 0)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Invalid texture extent (Width=%u, Height=%u). Both dimensions must be greater than zero.", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsTexture3D())
+	{
+		if (InTextureInfo.GetDepth() == 0)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: Texture3D requires Depth > 0. (Depth=%u).", InTextureInfo.GetDepth());
+			return nullptr;
+		}
+
+		if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: Texture3D must have NumArraySlices == 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+	}
+	else if (InTextureInfo.GetDepth() != 0)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Non-3D textures must have Depth == 0. (Depth=%u).", InTextureInfo.GetDepth());
+		return nullptr;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// Dimension-specific rules
+	// -------------------------------------------------------------------------------------------
+	switch (InTextureInfo.Dimension)
+	{
+	case ETextureDimension::Texture2D:
+		if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2D) NumArraySlices must be 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::Texture2DArray:
+		if (InTextureInfo.NumArraySlices == 0)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2DArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::TextureCube:
+		if (InTextureInfo.GetWidth() != InTextureInfo.GetHeight())
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCube) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+			return nullptr;
+		}
+		
+        if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCube) NumArraySlices must be 1. (NumArraySlices=%u). Use TextureCubeArray for arrays.", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::TextureCubeArray:
+		if (InTextureInfo.GetWidth() != InTextureInfo.GetHeight())
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCubeArray) Faces must be square. (Width=%u, Height=%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight());
+			return nullptr;
+		}
+
+		if (InTextureInfo.NumArraySlices == 0)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCubeArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::Texture3D:
+		break;
+
+	default:
+		RHI_VALIDATION_ERROR("CreateTexture: Unsupported ETextureDimension enum value (%s).", ToString(InTextureInfo.Dimension));
+		return nullptr;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// Device feature support checks
+	// -------------------------------------------------------------------------------------------
+	if (InTextureInfo.IsTexture3D())
+	{
+		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxTexture3DWidth || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxTexture3DHeight ||
+			InTextureInfo.GetDepth() > RHIDeviceFeatureSupport::MaxTexture3DDepth)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture3D) Extent (%u,%u,%u) exceeds device feature support limit (%u,%u,%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+                InTextureInfo.GetDepth(), RHIDeviceFeatureSupport::MaxTexture3DWidth, RHIDeviceFeatureSupport::MaxTexture3DHeight, RHIDeviceFeatureSupport::MaxTexture3DDepth);
+			return nullptr;
+		}
+	}
+	else if (InTextureInfo.IsTextureCube() || InTextureInfo.IsTextureCubeArray())
+	{
+		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxCubeTextureSize || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxCubeTextureSize)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (TextureCube) Face extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+				RHIDeviceFeatureSupport::MaxCubeTextureSize);
+			return nullptr;
+		}
+
+		if (InTextureInfo.IsTextureCubeArray())
+		{
+			const uint32 MaxCubeArraySlices = RHIDeviceFeatureSupport::MaxCubeArrayCount * RHI_NUM_CUBE_FACES;
+			if (InTextureInfo.NumArraySlices > MaxCubeArraySlices)
+			{
+				RHI_VALIDATION_ERROR("CreateTexture: (TextureCubeArray) NumArraySlices (%u) exceeds device feature support limit (%u). (Cubes=%u)", 
+                    InTextureInfo.NumArraySlices, MaxCubeArraySlices, RHIDeviceFeatureSupport::MaxCubeArrayCount);
+				return nullptr;
+			}
+		}
+	}
+	else
+	{
+		if (InTextureInfo.GetWidth() > RHIDeviceFeatureSupport::MaxTexture2DSize || InTextureInfo.GetHeight() > RHIDeviceFeatureSupport::MaxTexture2DSize)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2D) Extent (%u,%u) exceeds device feature support limit (%u).", InTextureInfo.GetWidth(), InTextureInfo.GetHeight(),
+                RHIDeviceFeatureSupport::MaxTexture2DSize);
+			return nullptr;
+		}
+
+		if (InTextureInfo.IsTexture2DArray() && InTextureInfo.NumArraySlices > RHIDeviceFeatureSupport::MaxTexture2DArrayLayers)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture2DArray) NumArraySlices (%u) exceeds device feature support limit (%u).", InTextureInfo.NumArraySlices, 
+                RHIDeviceFeatureSupport::MaxTexture2DArrayLayers);
+			return nullptr;
+		}
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// MipLevels
+	// -------------------------------------------------------------------------------------------
+	if (InTextureInfo.NumMipLevels == 0)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Invalid NumMipLevels (0). A texture must have at least one mip level.");
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsMultisampled())
+	{
+		if (InTextureInfo.NumMipLevels != 1)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: Multisampled texture cannot have mip chains. (NumMipLevels=%u, Expected=1).", InTextureInfo.NumMipLevels);
+			return nullptr;
+		}
+	}
+	else
+	{
+		const uint32 MaxPossibleMipLevels = Math::MaxMipLevelsFromExtent(InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), InTextureInfo.IsTexture3D() ? InTextureInfo.GetDepth() : 1u);
+		if (InTextureInfo.NumMipLevels > MaxPossibleMipLevels)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: NumMipLevels (%u) exceeds maximum allowed (%u) based on texture extent (%u,%u,%u).", InTextureInfo.NumMipLevels, MaxPossibleMipLevels,
+				InTextureInfo.GetWidth(), InTextureInfo.GetHeight(), InTextureInfo.IsTexture3D() ? InTextureInfo.GetDepth() : 1u);
+			return nullptr;
+		}
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// Sample count sanity
+	// -------------------------------------------------------------------------------------------
+	if (InTextureInfo.NumSamples == 0)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: NumSamples must be >= 1. (Got 0).");
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsTexture3D() && InTextureInfo.NumSamples > 1)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Texture3D does not support MSAA. (NumSamples=%u, Expected=1).", InTextureInfo.NumSamples);
+		return nullptr;
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// Usage flag combinations
+	// -------------------------------------------------------------------------------------------
+	const bool bIsRenderTarget = InTextureInfo.IsRenderTarget();
+	const bool bIsDepthStencil = InTextureInfo.IsDepthStencil();
+	const bool bIsUAV          = InTextureInfo.IsUnorderedAccessTexture();
+	const bool bIsPresentable  = InTextureInfo.IsPresentable();
+
+	if (bIsRenderTarget && bIsDepthStencil)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Texture cannot have both RenderTarget and DepthStencil usage flags set.");
+		return nullptr;
+	}
+
+	if (bIsDepthStencil && bIsUAV)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: DepthStencil textures cannot have UnorderedAccessTexture usage flag set.");
+		return nullptr;
+	}
+
+	if (InTextureInfo.IsMultisampled() && bIsUAV)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Multisampled textures cannot have UnorderedAccessTexture usage flag set.");
+		return nullptr;
+	}
+
+	if (bIsPresentable)
+	{
+		RHI_VALIDATION_ERROR("CreateTexture: Presentable textures are retrieved via a SwapChain.");
+		return nullptr;
+	}
+
+	return RealRHI->CreateTexture(InTextureInfo, InInitialState, InInitialData);
 }
 
-FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& BufferInfo, EResourceAccess InitialState, const void* InitialData)
 {
-    return RealRHI->CreateBuffer(InBufferInfo, InInitialState, InInitialData);
+    // -------------------------------------------------------------------------------------------
+    // Basic sanity
+    // -------------------------------------------------------------------------------------------
+    if (BufferInfo.Size == 0)
+    {
+        RHI_VALIDATION_ERROR("CreateBuffer: Buffer size must be greater than zero. (parameter 'Size' was 0 bytes)");
+        return nullptr;
+    }
+
+    if (BufferInfo.Flags == EBufferFlags::None)
+    {
+        RHI_VALIDATION_ERROR("CreateBuffer: Buffer flags must be specified. (parameter 'Flags' was EBufferFlags::None)");
+        return nullptr;
+    }
+
+    if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxBufferSize)
+    {
+		RHI_VALIDATION_ERROR("CreateBuffer: The buffer size (%llu bytes) exceeds device feature support. (MaxBufferSize=%llu)",
+			static_cast<uint64>(BufferInfo.Size), static_cast<uint64>(RHIDeviceFeatureSupport::MaxBufferSize));
+        return nullptr;
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Memory flags: require exactly one of Default/Dynamic/ReadBack
+    // -------------------------------------------------------------------------------------------
+    const bool bMemoryDefault  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Default);
+    const bool bMemoryDynamic  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Dynamic);
+    const bool bMemoryReadBack = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::ReadBack);
+
+    const int32 StorageFlagCount = (bMemoryDefault ? 1 : 0) + (bMemoryDynamic ? 1 : 0) + (bMemoryReadBack ? 1 : 0);
+    if (StorageFlagCount != 1)
+    {
+        RHI_VALIDATION_ERROR("CreateBuffer: Exactly one memory flag must be set. The options are Default/Dynamic/ReadBack. (The flags set are Default=%s, Dynamic=%s, ReadBack=%s)",
+            bMemoryDefault ? "true" : "false", bMemoryDynamic ? "true" : "false", bMemoryReadBack ? "true" : "false");
+        return nullptr;
+    }
+
+    const bool bIsConstantBuffer        = BufferInfo.IsConstantBuffer();
+    const bool bIsShaderResourceBuffer  = BufferInfo.IsShaderResourceBuffer();
+    const bool bIsVertexBuffer          = BufferInfo.IsVertexBuffer();
+    const bool bIsIndexBuffer           = BufferInfo.IsIndexBuffer();
+    const bool bIsUnorderedAccessBuffer = BufferInfo.IsUnorderedAccessBuffer();
+
+    // -------------------------------------------------------------------------------------------
+    // Constant buffer rules
+    // -------------------------------------------------------------------------------------------
+    if (bIsConstantBuffer)
+    {
+        // Disallow ReadBack for CB (GPU-read only in practice)
+        if (bMemoryReadBack)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: a buffer with ConstantBuffer usage-flag cannot use ReadBack memory. Use Default or Dynamic for GPU-accessible ConstantBuffer.");
+            return nullptr;
+        }
+
+        if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxConstantBufferSize)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: size (%llu bytes) exceeds device feature support. (MaxConstantBufferSize=%u)", 
+                static_cast<uint64>(BufferInfo.Size), RHIDeviceFeatureSupport::MaxConstantBufferSize);
+            return nullptr;
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Vertex / Index buffer rules
+    // -------------------------------------------------------------------------------------------
+    if (bIsVertexBuffer || bIsIndexBuffer)
+    {
+        if (BufferInfo.Stride == 0)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: %s requires a non-zero Stride. (Stride=0)", bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer");
+            return nullptr;
+        }
+
+        if ((BufferInfo.Size % BufferInfo.Stride) != 0ull)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: %s size must be a multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
+                bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer", static_cast<uint64>(BufferInfo.Size), BufferInfo.Stride);
+            return nullptr;
+        }
+
+        if (bIsIndexBuffer)
+        {
+            if (!(BufferInfo.Stride == 2u || BufferInfo.Stride == 4u))
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: IndexBuffer stride must be 2 or 4 bytes (uint16 or uint32). (Stride=%u)", BufferInfo.Stride);
+                return nullptr;
+            }
+        }
+
+        if (bMemoryReadBack)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: VertexBuffer/IndexBuffer cannot use ReadBack storage. Use Default or Dynamic memory for GPU pipeline consumption.");
+            return nullptr;
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // SRV/UAV buffer rules
+    // -------------------------------------------------------------------------------------------
+    if (bIsShaderResourceBuffer || bIsUnorderedAccessBuffer)
+    {
+        if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxStorageBufferSize)
+        {
+			RHI_VALIDATION_ERROR("CreateBuffer: %s size exceeds device feature support. (Size=%llu, MaxStorageBufferSize=%llu)",
+				bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer", static_cast<uint64>(BufferInfo.Size),
+				static_cast<uint64>(RHIDeviceFeatureSupport::MaxStorageBufferSize));
+            return nullptr;
+        }
+
+        if (BufferInfo.Stride > 0)
+        {
+            // Structured: enforce stride window and size divisibility
+            const uint32 MinStride = RHIDeviceFeatureSupport::StructuredBufferMinStride;
+            const uint32 MaxStride = RHIDeviceFeatureSupport::StructuredBufferMaxStride;
+
+            if (BufferInfo.Stride < MinStride || BufferInfo.Stride > MaxStride)
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer stride is outside device feature support. (Stride=%u, Allowed range: [%u, %u])", 
+                    BufferInfo.Stride, MinStride, MaxStride);
+                return nullptr;
+            }
+
+            if ((BufferInfo.Size % BufferInfo.Stride) != 0ull)
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer size must be an integer multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
+                    static_cast<uint64>(BufferInfo.Size), BufferInfo.Stride);
+                return nullptr;
+            }
+        }
+        else
+        {
+            const uint64 RequiredAlignment = static_cast<uint64>(RHIDeviceFeatureSupport::RawBufferRequiredAlignment);
+            if ((BufferInfo.Size % RequiredAlignment) != 0ull)
+            {
+                RHI_VALIDATION_ERROR("CreateBuffer: RWBuffer size must be aligned to satisfy device feature support. (Size=%llu, RequiredAlignment=%llu)",
+                    static_cast<uint64>(BufferInfo.Size), static_cast<uint64>(RequiredAlignment));
+                return nullptr;
+            }
+        }
+
+        // ReadBack heaps are not suitable for SRV/UAV usage
+        if (bMemoryReadBack)
+        {
+            RHI_VALIDATION_ERROR("CreateBuffer: %s cannot use ReadBack storage. ReadBack heaps are not GPU-readable/writable.",
+                bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer");
+            return nullptr;
+        }
+    }
+
+    return RealRHI->CreateBuffer(BufferInfo, InitialState, InitialData);
 }
 
 FRHISamplerState* FRHIValidation::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
@@ -82,124 +453,134 @@ FRHIRayTracingGeometry* FRHIValidation::CreateRayTracingGeometry(const FRHIRayTr
     return RealRHI->CreateRayTracingGeometry(InGeometryInfo);
 }
 
-FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
+FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo)
 {
-    if (!InInfo.Texture)
+    if (InInfo.IsBufferSRV())
     {
-        RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a ShaderResourceView");
-        return nullptr;
-    }
+		if (!InInfo.BufferSRV.Buffer)
+		{
+			RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a ShaderResourceView");
+			return nullptr;
+		}
 
-    const FRHITextureInfo& TextureInfo = InInfo.Texture->GetInfo();
-    if (!TextureInfo.IsShaderResource())
-    {
-        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::ShaderResource to used with a ShaderResourceView");
-        return nullptr;
+		const FRHIBufferInfo& BufferInfo = InInfo.BufferSRV.Buffer->GetInfo();
+		if (!BufferInfo.IsShaderResourceBuffer())
+		{
+			RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::ShaderResourceBuffer to used with a ShaderResourceView");
+			return nullptr;
+		}
     }
-
-    if (InInfo.Format == EFormat::Unknown)
+    else if (InInfo.IsTextureSRV())
     {
-        RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a ShaderResourceView");
-        return nullptr;
+        if (!InInfo.TextureSRV.Texture)
+        {
+            RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a ShaderResourceView");
+            return nullptr;
+        }
+
+        const FRHITextureInfo& TextureInfo = InInfo.TextureSRV.Texture->GetInfo();
+        if (!TextureInfo.IsShaderResourceTexture())
+        {
+            RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::ShaderResourceTexture to used with a ShaderResourceView");
+            return nullptr;
+        }
+
+        if (InInfo.TextureSRV.Format == EFormat::Unknown)
+        {
+            RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a ShaderResourceView");
+            return nullptr;
+        }
+
+        if (IsTypelessFormat(InInfo.TextureSRV.Format))
+        {
+            RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a ShaderResourceView");
+            return nullptr;
+        }
+
+        const uint32 NumArraySlices = InInfo.TextureSRV.FirstArraySlice + InInfo.TextureSRV.NumSlices;
+        if (NumArraySlices > TextureInfo.NumArraySlices)
+        {
+            RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
+            return nullptr;
+        }
+
+        const uint32 NumMipLevels = InInfo.TextureSRV.FirstMipLevel + InInfo.TextureSRV.NumMips;
+        if (NumMipLevels > TextureInfo.NumMipLevels)
+        {
+            RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' MipLevels, but texture only contains '%u'", NumMipLevels, TextureInfo.NumMipLevels);
+            return nullptr;
+        }
     }
-
-    if (IsTypelessFormat(InInfo.Format))
+    else
     {
-        RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a ShaderResourceView");
-        return nullptr;
-    }
-
-    const uint32 NumArraySlices = InInfo.FirstArraySlice + InInfo.NumSlices;
-    if (NumArraySlices > TextureInfo.NumArraySlices)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
-        return nullptr;
-    }
-
-    const uint32 NumMipLevels = InInfo.FirstMipLevel + InInfo.NumMips;
-    if (NumMipLevels > TextureInfo.NumMipLevels)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a ShaderResourceView with '%u' MipLevels, but texture only contains '%u'", NumMipLevels, TextureInfo.NumMipLevels);
-        return nullptr;
+		RHI_VALIDATION_ERROR("Invalid type of ShaderResourceView");
+		return nullptr;
     }
 
     return RealRHI->CreateShaderResourceView(InInfo);
 }
 
-FRHIShaderResourceView* FRHIValidation::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
+FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
 {
-    if (!InInfo.Buffer)
+    if (InInfo.IsBufferUAV())
     {
-        RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a ShaderResourceView");
-        return nullptr;
+	    if (!InInfo.BufferUAV.Buffer)
+	    {
+		    RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a UnorderedAccessView");
+		    return nullptr;
+	    }
+
+	    const FRHIBufferInfo& BufferInfo = InInfo.BufferUAV.Buffer->GetInfo();
+	    if (!BufferInfo.IsUnorderedAccessBuffer())
+	    {
+		    RHI_VALIDATION_ERROR("Buffer must have a the EBufferFlags::UnorderedAccessBuffer to used with a UnorderedAccessView");
+		    return nullptr;
+	    }
     }
-
-    const FRHIBufferInfo& BufferInfo = InInfo.Buffer->GetInfo();
-    if (!BufferInfo.IsShaderResource())
+    else if (InInfo.IsTextureUAV())
     {
-        RHI_VALIDATION_ERROR("Buffer must have a the EBufferUsageFlags::ShaderResource to used with a ShaderResourceView");
-        return nullptr;
+		if (!InInfo.TextureUAV.Texture)
+		{
+			RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a UnorderedAccessView");
+			return nullptr;
+		}
+
+		const FRHITextureInfo& TextureInfo = InInfo.TextureUAV.Texture->GetInfo();
+		if (!TextureInfo.IsUnorderedAccessTexture())
+		{
+			RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::UnorderedAccessTexture to used with a UnorderedAccessView");
+			return nullptr;
+		}
+
+		if (InInfo.TextureUAV.Format == EFormat::Unknown)
+		{
+			RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a UnorderedAccessView");
+			return nullptr;
+		}
+
+		if (IsTypelessFormat(InInfo.TextureUAV.Format))
+		{
+			RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a UnorderedAccessView");
+			return nullptr;
+		}
+
+		const uint32 NumArraySlices = InInfo.TextureUAV.FirstArraySlice + InInfo.TextureUAV.NumSlices;
+		if (NumArraySlices > TextureInfo.NumArraySlices)
+		{
+			RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		if (InInfo.TextureUAV.MipLevel >= TextureInfo.NumMipLevels)
+		{
+			RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView for MipLevel '%u', but texture only contains '%u'", InInfo.TextureUAV.MipLevel, TextureInfo.NumMipLevels);
+			return nullptr;
+		}
     }
-
-    return RealRHI->CreateShaderResourceView(InInfo);
-}
-
-FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
-{
-    if (!InInfo.Texture)
+    else
     {
-        RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    const FRHITextureInfo& TextureInfo = InInfo.Texture->GetInfo();
-    if (!TextureInfo.IsUnorderedAccess())
-    {
-        RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::UnorderedAccess to used with a UnorderedAccessView");
-        return nullptr;
-    }
-
-    if (InInfo.Format == EFormat::Unknown)
-    {
-        RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    if (IsTypelessFormat(InInfo.Format))
-    {
-        RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    const uint32 NumArraySlices = InInfo.FirstArraySlice + InInfo.NumSlices;
-    if (NumArraySlices > TextureInfo.NumArraySlices)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView with '%u' ArraySlices, but texture only contains '%u'", NumArraySlices, TextureInfo.NumArraySlices);
-        return nullptr;
-    }
-
-    if (InInfo.MipLevel >= TextureInfo.NumMipLevels)
-    {
-        RHI_VALIDATION_ERROR("Trying to create a UnorderedAccessView for MipLevel '%u', but texture only contains '%u'", InInfo.MipLevel, TextureInfo.NumMipLevels);
-        return nullptr;
-    }
-
-    return RealRHI->CreateUnorderedAccessView(InInfo);
-}
-
-FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
-{
-    if (!InInfo.Buffer)
-    {
-        RHI_VALIDATION_ERROR("Buffer cannot be nullptr when creating a UnorderedAccessView");
-        return nullptr;
-    }
-
-    const FRHIBufferInfo& BufferInfo = InInfo.Buffer->GetInfo();
-    if (!BufferInfo.IsUnorderedAccess())
-    {
-        RHI_VALIDATION_ERROR("Buffer must have a the EBufferUsageFlags::UnorderedAccess to used with a UnorderedAccessView");
-        return nullptr;
+		RHI_VALIDATION_ERROR("Invalid type of UnorderedAccessView");
+		return nullptr;
     }
 
     return RealRHI->CreateUnorderedAccessView(InInfo);
@@ -265,34 +646,34 @@ FRHIRayMissShader* FRHIValidation::CreateRayMissShader(const TArray<uint8>& Shad
     return RealRHI->CreateRayMissShader(ShaderCode);
 }
 
-FRHIDepthStencilState* FRHIValidation::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FRHIValidation::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
 {
-    return RealRHI->CreateDepthStencilState(InInitializer);
+    return RealRHI->CreateDepthStencilState(InInfo);
 }
 
-FRHIRasterizerState* FRHIValidation::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FRHIValidation::CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo)
 {
-    return RealRHI->CreateRasterizerState(InInitializer);
+    return RealRHI->CreateRasterizerState(InInfo);
 }
 
-FRHIBlendState* FRHIValidation::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FRHIValidation::CreateBlendState(const FRHIBlendStateInfo& InInfo)
 {
-    return RealRHI->CreateBlendState(InInitializer);
+    return RealRHI->CreateBlendState(InInfo);
 }
 
-FRHIVertexLayout* FRHIValidation::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIInputLayout* FRHIValidation::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
 {
-    return RealRHI->CreateVertexLayout(InInitializerList);
+    return RealRHI->CreateInputLayout(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FRHIValidation::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FRHIValidation::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
 {
-    return RealRHI->CreateGraphicsPipelineState(InInitializer);
+    return RealRHI->CreateGraphicsPipelineState(InInfo);
 }
 
-FRHIComputePipelineState* FRHIValidation::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FRHIValidation::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
-    return RealRHI->CreateComputePipelineState(InInitializer);
+    return RealRHI->CreateComputePipelineState(InInfo);
 }
 
 FRHIRayTracingPipelineState* FRHIValidation::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
@@ -581,15 +962,15 @@ void FRHIValidationCommandContext::SetComputePipelineState(FRHIComputePipelineSt
     RealContext->SetComputePipelineState(PipelineState);
 }
 
-void FRHIValidationCommandContext::Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void FRHIValidationCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     if (!Shader)
     {
-        RHI_VALIDATION_ERROR("Invalid to call Set32BitShaderConstants when Shader is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call SetShaderConstants when Shader is nullptr");
         return;
     }
 
-    RealContext->Set32BitShaderConstants(Shader, Shader32BitConstants, Num32BitConstants);
+    RealContext->SetShaderConstants(Shader, ShaderConstants, NumShaderConstants);
 }
 
 void FRHIValidationCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)

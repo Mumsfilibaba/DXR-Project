@@ -6,7 +6,6 @@
 #include "Core/Containers/String.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "D3D12RHI/D3D12Device.h"
-#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12PipelineState.h"
@@ -50,27 +49,63 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
     "Number of descriptors in each Sampler OnlineDescriptorHeap", 
     1024);
 
-/* D3D12 Feature Support */
+// -------------------------------------------------------------------------------------------
+// D3D12 Feature Support
+// -------------------------------------------------------------------------------------------
 
+// -------------------------------------------------------------------------------------------
+// General Capability Flags
+// -------------------------------------------------------------------------------------------
 D3D12RHI_API bool GD3D12ForceBinding            = false;
 D3D12RHI_API bool GD3D12SupportPipelineCache    = false;
 D3D12RHI_API bool GD3D12SupportTightAlignment   = false;
 D3D12RHI_API bool GD3D12SupportGPUUploadHeaps   = false;
-D3D12RHI_API bool GD3D12SupportBindless         = false;
+D3D12RHI_API bool GD3D12SupportsBindless        = false;
 D3D12RHI_API bool GD3D12SupportEnhancedBarriers = false;
 
-D3D12RHI_API D3D12_RESOURCE_BINDING_TIER      GD3D12ResourceBindingTier     = D3D12_RESOURCE_BINDING_TIER_1;
-D3D12RHI_API D3D12_RAYTRACING_TIER            GD3D12RayTracingTier          = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER GD3D12VariableRateShadingTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D12_MESH_SHADER_TIER           GD3D12MeshShaderTier          = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER      GD3D12SamplerFeedbackTier     = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D12_VIEW_INSTANCING_TIER       GD3D12ViewInstancingTier      = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D_SHADER_MODEL                 GD3D12HighestShaderModel      = D3D_SHADER_MODEL_NONE;
+// -------------------------------------------------------------------------------------------
+// Core Feature Tiers
+// -------------------------------------------------------------------------------------------
+D3D12RHI_API D3D12_RESOURCE_BINDING_TIER              GD3D12ResourceBindingTier             = D3D12_RESOURCE_BINDING_TIER_1;
+D3D12RHI_API D3D12_RESOURCE_HEAP_TIER                 GD3D12ResourceHeapTier                = D3D12_RESOURCE_HEAP_TIER_1;
+D3D12RHI_API D3D12_RAYTRACING_TIER                    GD3D12RayTracingTier                  = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER         GD3D12VariableRateShadingTier         = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_MESH_SHADER_TIER                   GD3D12MeshShaderTier                  = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER              GD3D12SamplerFeedbackTier             = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_VIEW_INSTANCING_TIER               GD3D12ViewInstancingTier              = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_CONSERVATIVE_RASTERIZATION_TIER    GD3D12ConservativeRasterizationTier   = D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER GD3D12ProgrammableSamplePositionsTier = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_WORK_GRAPHS_TIER                   GD3D12WorkGraphsTier                  = D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_EXECUTE_INDIRECT_TIER              GD3D12ExecuteIndirectTier             = D3D12_EXECUTE_INDIRECT_TIER_1_0;
+D3D12RHI_API D3D12_TILED_RESOURCES_TIER               GD3D12TiledResourcesTier              = D3D12_TILED_RESOURCES_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D_ROOT_SIGNATURE_VERSION               GD3D12RootSignatureVersion            = D3D_ROOT_SIGNATURE_VERSION_1_0;
+D3D12RHI_API D3D_SHADER_MODEL                         GD3D12HighestShaderModel              = D3D_SHADER_MODEL_6_0;
 
+// -------------------------------------------------------------------------------------------
+// Boolean Capability Flags
+// -------------------------------------------------------------------------------------------
+D3D12RHI_API bool GD3D12RasterizerOrderViewsSupported  = false;
+D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats  = false;
+D3D12RHI_API bool GD3D12DepthBoundsTestSupported       = false;
+D3D12RHI_API bool GD3D12IsArchitectureUMA              = false;
+D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA = false;
+
+// -------------------------------------------------------------------------------------------
+// Descriptor / Heap Limits
+// -------------------------------------------------------------------------------------------
 D3D12RHI_API uint32 GD3D12MaxSamplerDescriptorHeapSize  = 0;
 D3D12RHI_API uint32 GD3D12MaxResourceDescriptorHeapSize = 0;
 
-/* Device Removed Handling */
+// -------------------------------------------------------------------------------------------
+// GPU Virtual Address / Command Capabilities
+// -------------------------------------------------------------------------------------------
+D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerResource    = 0;
+D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerProcess     = 0;
+D3D12RHI_API D3D12_COMMAND_LIST_SUPPORT_FLAGS GD3D12WriteBufferImmediateSupportFlags = D3D12_COMMAND_LIST_SUPPORT_FLAG_NONE;
+
+// -------------------------------------------------------------------------------------------
+// Device Removed Handling 
+// -------------------------------------------------------------------------------------------
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
@@ -293,7 +328,7 @@ bool FD3D12Adapter::Initialize()
                 TComPtr<IDXGraphicsAnalysis> TempGraphicsAnalysis;
                 if (SUCCEEDED(D3D12Functions::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&TempGraphicsAnalysis))))
                 {
-                    DXGraphicsAnalysis = TempGraphicsAnalysis;
+                    GraphicsAnalysisInterface = TempGraphicsAnalysis;
                 }
                 else
                 {
@@ -303,14 +338,14 @@ bool FD3D12Adapter::Initialize()
         }
     }
 
-	// Create Factory
-	uint32 FactoryFlags = 0;
-	if (bEnableDebugLayer)
-	{
+    // Create Factory
+    uint32 FactoryFlags = 0;
+    if (bEnableDebugLayer)
+    {
         FactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-	}
+    }
 
-	if (FAILED(D3D12Functions::CreateDXGIFactory2(FactoryFlags, IID_PPV_ARGS(&Factory))))
+    if (FAILED(D3D12Functions::CreateDXGIFactory2(FactoryFlags, IID_PPV_ARGS(&Factory))))
     {
         D3D12_ERROR_CRITICAL("[FD3D12Adapter]: FAILED to create factory");
         return false;
@@ -636,7 +671,7 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    if (!CreateCommandManagers())
+    if (!CreateCommandQueues())
     {
         return false;
     }
@@ -671,7 +706,7 @@ bool FD3D12Device::Initialize()
     }
 
     // Check for feature support
-    QueryFeatureSupport();
+    QueryDeviceFeatureSupport();
 
     // Create RootSignatureManager
     RootSignatureManager = new FD3D12RootSignatureManager(this);
@@ -868,28 +903,32 @@ bool FD3D12Device::CreateDevice()
     return true;
 }
 
-bool FD3D12Device::CreateCommandManagers()
+bool FD3D12Device::CreateCommandQueues()
 {
     DirectQueue = new FD3D12Queue(this, ED3D12CommandQueueType::Direct);
     if (!DirectQueue->Initialize())
+    {
         return false;
+    }
  
     CopyQueue = new FD3D12Queue(this, ED3D12CommandQueueType::Copy);
     if (!CopyQueue->Initialize())
+    {
         return false;
+    }
 
     ComputeQueue = new FD3D12Queue(this, ED3D12CommandQueueType::Compute);
     if (!ComputeQueue->Initialize())
+    {
         return false;
+    }
 
     return true;
 }
 
 bool FD3D12Device::CreateDefaultResources()
 {
-    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
-    FMemory::Memzero(&CBVDesc);
-
+    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc = {};
     CBVDesc.BufferLocation = 0;
     CBVDesc.SizeInBytes    = 0;
 
@@ -904,9 +943,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
-    FMemory::Memzero(&UAVDesc);
-
+    D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
     UAVDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
     UAVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
     UAVDesc.Texture2D.MipSlice   = 0;
@@ -923,9 +960,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-    FMemory::Memzero(&SRVDesc);
-
+    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc = {};
     SRVDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
     SRVDesc.Format                        = DXGI_FORMAT_R8G8B8A8_UNORM;
     SRVDesc.Shader4ComponentMapping       = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -945,9 +980,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
-    FMemory::Memzero(&RTVDesc);
-
+    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
     RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
     RTVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
     RTVDesc.Texture2D.MipSlice   = 0;
@@ -964,9 +997,7 @@ bool FD3D12Device::CreateDefaultResources()
         return false;
     }
 
-    D3D12_SAMPLER_DESC SamplerDesc;
-    FMemory::Memzero(&SamplerDesc);
-
+    D3D12_SAMPLER_DESC SamplerDesc = {};
     SamplerDesc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     SamplerDesc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
     SamplerDesc.AddressW       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -990,138 +1021,338 @@ bool FD3D12Device::CreateDefaultResources()
     return true;
 }
 
-void FD3D12Device::QueryFeatureSupport()
+void FD3D12Device::QueryDeviceFeatureSupport()
 {
-    // Check for Resource-Binding Tier
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
-        FMemory::Memzero(&Features);
+    // -------------------------------------------------------------------------------------------
+    // Baseline defaults
+    // -------------------------------------------------------------------------------------------
+    GD3D12SupportTightAlignment            = false;
+    GD3D12SupportGPUUploadHeaps            = false;
+    GD3D12SupportsBindless                 = false;
+    GD3D12SupportEnhancedBarriers          = false;
 
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
-        if (SUCCEEDED(Result))
+    GD3D12ResourceBindingTier              = D3D12_RESOURCE_BINDING_TIER_1;
+    GD3D12ResourceHeapTier                 = D3D12_RESOURCE_HEAP_TIER_1;
+    GD3D12RayTracingTier                   = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+    GD3D12VariableRateShadingTier          = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+    GD3D12MeshShaderTier                   = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    GD3D12SamplerFeedbackTier              = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+    GD3D12ViewInstancingTier               = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
+    GD3D12ConservativeRasterizationTier    = D3D12_CONSERVATIVE_RASTERIZATION_TIER_NOT_SUPPORTED;
+    GD3D12ProgrammableSamplePositionsTier  = D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER_NOT_SUPPORTED;
+    GD3D12WorkGraphsTier                   = D3D12_WORK_GRAPHS_TIER_NOT_SUPPORTED;
+    GD3D12ExecuteIndirectTier              = D3D12_EXECUTE_INDIRECT_TIER_1_0;
+    GD3D12TiledResourcesTier               = D3D12_TILED_RESOURCES_TIER_NOT_SUPPORTED;
+    GD3D12RootSignatureVersion             = D3D_ROOT_SIGNATURE_VERSION_1_0;
+    GD3D12HighestShaderModel               = D3D_SHADER_MODEL_6_0;
+
+    GD3D12RasterizerOrderViewsSupported    = false;
+    GD3D12TypedUAVLoadAdditionalFormats    = false;
+    GD3D12DepthBoundsTestSupported         = false;
+    GD3D12IsArchitectureUMA                = false;
+    GD3D12IsArchitectureCacheCoherentUMA   = false;
+
+    GD3D12MaxSamplerDescriptorHeapSize     = 0;
+    GD3D12MaxResourceDescriptorHeapSize    = 0;
+
+    GD3D12VirtualAddressBitsPerProcess     = 0;
+    GD3D12VirtualAddressBitsPerResource    = 0;
+    GD3D12WriteBufferImmediateSupportFlags = D3D12_COMMAND_LIST_SUPPORT_FLAG_NONE;
+
+    // -------------------------------------------------------------------------------------------
+    // Heap Tier, Binding Tier, Conservative Rasterization, Typed UAV loads, ROVs, Tiled Resources
+    // -------------------------------------------------------------------------------------------
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS Features = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(Features));
+        if (SUCCEEDED(hr))
         {
-            GD3D12ResourceBindingTier = Features.ResourceBindingTier;
-            D3D12_INFO("[FD3D12Device] Using ResourceBinding Tier %d", GD3D12ResourceBindingTier);
+            GD3D12ResourceBindingTier           = Features.ResourceBindingTier;
+            GD3D12ResourceHeapTier              = Features.ResourceHeapTier;
+            GD3D12ConservativeRasterizationTier = Features.ConservativeRasterizationTier;
+            GD3D12RasterizerOrderViewsSupported = !!Features.ROVsSupported;
+            GD3D12TypedUAVLoadAdditionalFormats = !!Features.TypedUAVLoadAdditionalFormats;
+            GD3D12TiledResourcesTier            = Features.TiledResourcesTier;
+
+            D3D12_INFO("[FD3D12Device] ResourceBinding Tier: %d", GD3D12ResourceBindingTier);
+            D3D12_INFO("[FD3D12Device] ResourceHeap Tier: %d", GD3D12ResourceHeapTier);
+            D3D12_INFO("[FD3D12Device] ConservativeRasterization Tier: %d", GD3D12ConservativeRasterizationTier);
+            D3D12_INFO("[FD3D12Device] TypedUAVLoadAdditionalFormats: %s", GD3D12TypedUAVLoadAdditionalFormats ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] ROVsSupported: %s", GD3D12RasterizerOrderViewsSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] TiledResources Tier: %d", GD3D12TiledResourcesTier);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Check for Ray-Tracing support
+    // -------------------------------------------------------------------------------------------
+    // Depth bounds test & programmable sample positions
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
-        FMemory::Memzero(&Features5);
+        D3D12_FEATURE_DATA_D3D12_OPTIONS2 Features2 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS2, &Features2, sizeof(Features2));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12DepthBoundsTestSupported        = !!Features2.DepthBoundsTestSupported;
+            GD3D12ProgrammableSamplePositionsTier = Features2.ProgrammableSamplePositionsTier;
 
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-        if (SUCCEEDED(Result))
+            D3D12_INFO("[FD3D12Device] DepthBoundsTestSupported: %s", GD3D12DepthBoundsTestSupported ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] ProgrammableSamplePositions Tier: %d", GD3D12ProgrammableSamplePositionsTier);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS2 query failed (hr=0x%08X). Using defaults.", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // View Instancing & Write buffer immediate flags
+    // -------------------------------------------------------------------------------------------
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(Features3));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12ViewInstancingTier               = Features3.ViewInstancingTier;
+            GD3D12WriteBufferImmediateSupportFlags = Features3.WriteBufferImmediateSupportFlags;
+
+            D3D12_INFO("[FD3D12Device] ViewInstancing Tier: %d", GD3D12ViewInstancingTier);
+            D3D12_INFO("[FD3D12Device] WriteBufferImmediate SupportFlags: 0x%X", static_cast<uint32>(GD3D12WriteBufferImmediateSupportFlags));
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_OPTIONS3 query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Ray Tracing (DXR)
+    // -------------------------------------------------------------------------------------------
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(Features5));
+        if (SUCCEEDED(hr))
         {
             GD3D12RayTracingTier = Features5.RaytracingTier;
-            D3D12_INFO("[FD3D12Device] Support RayTracing Tier %d", GD3D12RayTracingTier);
+            D3D12_INFO("[FD3D12Device] RayTracing Tier: %d", GD3D12RayTracingTier);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_OPTIONS5 query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Checking for Variable Shading Rate support
+    // -------------------------------------------------------------------------------------------
+    // Variable Rate Shading
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        FMemory::Memzero(&Features6);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
-        if (SUCCEEDED(Result))
+        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(Features6));
+        if (SUCCEEDED(hr))
         {
             GD3D12VariableRateShadingTier = Features6.VariableShadingRateTier;
-            D3D12_INFO("[FD3D12Device] Support VariableRateShading Tier %d", GD3D12VariableRateShadingTier);
+            D3D12_INFO("[FD3D12Device] VariableRateShading Tier: %d", GD3D12VariableRateShadingTier);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS6 query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Check for Mesh-Shaders, and SamplerFeedback support
+    // -------------------------------------------------------------------------------------------
+    // Mesh Shaders & Sampler Feedback
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
-        FMemory::Memzero(&Features7);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
-        if (SUCCEEDED(Result))
+        D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(Features7));
+        if (SUCCEEDED(hr))
         {
-            GD3D12MeshShaderTier = Features7.MeshShaderTier;
-            D3D12_INFO("[FD3D12Device] Support MeshShader Tier %d", GD3D12MeshShaderTier);
-
+            GD3D12MeshShaderTier      = Features7.MeshShaderTier;
             GD3D12SamplerFeedbackTier = Features7.SamplerFeedbackTier;
-            D3D12_INFO("[FD3D12Device] Support SamplerFeedback Tier %d", GD3D12SamplerFeedbackTier);
+
+            D3D12_INFO("[FD3D12Device] MeshShader Tier: %d", GD3D12MeshShaderTier);
+            D3D12_INFO("[FD3D12Device] SamplerFeedback Tier: %d", GD3D12SamplerFeedbackTier);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS7 query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Check support for enhanced barriers
+    // -------------------------------------------------------------------------------------------
+    // Enhanced Barriers
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS12 Features12;
-        FMemory::Memzero(&Features12);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &Features12, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS12));
-        if (SUCCEEDED(Result))
+        D3D12_FEATURE_DATA_D3D12_OPTIONS12 Features12 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &Features12, sizeof(Features12));
+        if (SUCCEEDED(hr))
         {
-            GD3D12SupportEnhancedBarriers = Features12.EnhancedBarriersSupported;
-            D3D12_INFO("[FD3D12Device] Supports Enhanced Barriers: %s", GD3D12SupportEnhancedBarriers ? "true" : "false");
+            GD3D12SupportEnhancedBarriers = !!Features12.EnhancedBarriersSupported;
+            D3D12_INFO("[FD3D12Device] Enhanced Barriers Supported: %s", GD3D12SupportEnhancedBarriers ? "true" : "false");
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS12 query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Check for GPU Upload-Heap Support
+    // -------------------------------------------------------------------------------------------
+    // GPU Upload Heaps
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS16 Features16;
-        FMemory::Memzero(&Features16);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &Features16, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS16));
-        if (SUCCEEDED(Result))
+        D3D12_FEATURE_DATA_D3D12_OPTIONS16 Features16 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &Features16, sizeof(Features16));
+        if (SUCCEEDED(hr))
         {
-            GD3D12SupportGPUUploadHeaps = Features16.GPUUploadHeapSupported;
-            D3D12_INFO("[FD3D12Device] Supports GPUUploadHeaps: %s", GD3D12SupportGPUUploadHeaps ? "true" : "false");
+            GD3D12SupportGPUUploadHeaps = !!Features16.GPUUploadHeapSupported;
+            D3D12_INFO("[FD3D12Device] GPU Upload Heaps Supported: %s", GD3D12SupportGPUUploadHeaps ? "true" : "false");
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS16 query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Retrieve DescriptorHeap information
+    // -------------------------------------------------------------------------------------------
+    // Descriptor heap sizes
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS19 Features19;
-        FMemory::Memzero(&Features19);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS19, &Features19, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS19));
-        if (SUCCEEDED(Result))
+        D3D12_FEATURE_DATA_D3D12_OPTIONS19 Features19 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS19, &Features19, sizeof(Features19));
+        if (SUCCEEDED(hr))
         {
-            GD3D12MaxSamplerDescriptorHeapSize = Features19.MaxSamplerDescriptorHeapSizeWithStaticSamplers;
-            D3D12_INFO("[FD3D12Device] Max Sampler Descriptor-Heap size: %u", GD3D12MaxSamplerDescriptorHeapSize);
-
+            GD3D12MaxSamplerDescriptorHeapSize  = Features19.MaxSamplerDescriptorHeapSizeWithStaticSamplers;
             GD3D12MaxResourceDescriptorHeapSize = Features19.MaxViewDescriptorHeapSize;
-            D3D12_INFO("[FD3D12Device] Max Resource Descriptor-Heap size: %u", GD3D12MaxResourceDescriptorHeapSize);
+
+            D3D12_INFO("[FD3D12Device] Max Sampler Descriptor-Heap Size: %u", GD3D12MaxSamplerDescriptorHeapSize);
+            D3D12_INFO("[FD3D12Device] Max Resource Descriptor-Heap Size: %u", GD3D12MaxResourceDescriptorHeapSize);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS19 query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Check for Tight Alignment Support
+    // -------------------------------------------------------------------------------------------
+    // Tight Alignment Support
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_TIGHT_ALIGNMENT TightAlignmentFeature;
-        FMemory::Memzero(&TightAlignmentFeature);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT, &TightAlignmentFeature, sizeof(D3D12_FEATURE_DATA_TIGHT_ALIGNMENT));
-        if (SUCCEEDED(Result))
+        D3D12_FEATURE_DATA_TIGHT_ALIGNMENT TightAlignment = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT, &TightAlignment, sizeof(TightAlignment));
+        if (SUCCEEDED(hr))
         {
-            GD3D12SupportTightAlignment = TightAlignmentFeature.SupportTier >= D3D12_TIGHT_ALIGNMENT_TIER_1;
-            D3D12_INFO("[FD3D12Device] Supports Tight Alignment: %s", GD3D12SupportTightAlignment ? "true" : "false");
+            GD3D12SupportTightAlignment = (TightAlignment.SupportTier >= D3D12_TIGHT_ALIGNMENT_TIER_1);
+            D3D12_INFO("[FD3D12Device] Tight Alignment Support: %s", GD3D12SupportTightAlignment ? "true" : "false");
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_TIGHT_ALIGNMENT query failed (hr=0x%08X)", hr);
         }
     }
 
-    // Check for the highest Shader-Model supported by the device
+    // -------------------------------------------------------------------------------------------
+    // Root Signature Version
+    // -------------------------------------------------------------------------------------------
     {
-        D3D12_FEATURE_DATA_SHADER_MODEL ShaderModelData;
-        FMemory::Memzero(&ShaderModelData);
-
-        ShaderModelData.HighestShaderModel = D3D_HIGHEST_SHADER_MODEL;
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &ShaderModelData, sizeof(D3D12_FEATURE_DATA_SHADER_MODEL));
-        if (SUCCEEDED(Result))
+        D3D12_FEATURE_DATA_ROOT_SIGNATURE RootSignature = { D3D_ROOT_SIGNATURE_VERSION_1_1 };
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &RootSignature, sizeof(RootSignature));
+        if (SUCCEEDED(hr))
         {
-            GD3D12HighestShaderModel = ShaderModelData.HighestShaderModel;
+            GD3D12RootSignatureVersion = RootSignature.HighestVersion;
+            D3D12_INFO("[FD3D12Device] RootSignature Version Supported: %s", (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_1) ? "1.1" : "1.0");
         }
-
-        // Shader-Model 6.6 and Resource-Binding Tier 3 is required for bindless on D3D12
-        if (GD3D12HighestShaderModel >= D3D_SHADER_MODEL_6_6 && GD3D12ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3)
+        else
         {
-            GD3D12SupportBindless = true;
-            D3D12_INFO("[FD3D12Device] Supports Bindless: %s", GD3D12SupportBindless ? "true" : "false");
+            GD3D12RootSignatureVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_ROOT_SIGNATURE query failed (hr=0x%08X)", hr);
         }
     }
+
+    // -------------------------------------------------------------------------------------------
+    // Highest Shader Model
+    // -------------------------------------------------------------------------------------------
+    {
+        D3D12_FEATURE_DATA_SHADER_MODEL ShaderModel = {};
+        ShaderModel.HighestShaderModel = D3D_HIGHEST_SHADER_MODEL;
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &ShaderModel, sizeof(ShaderModel));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12HighestShaderModel = ShaderModel.HighestShaderModel;
+            D3D12_INFO("[FD3D12Device] Highest Shader Model Supported: 0x%X", GD3D12HighestShaderModel);
+        }
+        else
+        {
+            GD3D12HighestShaderModel = D3D_SHADER_MODEL_6_0;
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_SHADER_MODEL query failed (hr=0x%08X). Using SM 6.0 baseline.", hr);
+        }
+
+        GD3D12SupportsBindless = (GD3D12HighestShaderModel >= D3D_SHADER_MODEL_6_6) && (GD3D12ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3);
+        D3D12_INFO("[FD3D12Device] Supports Bindless: %s", GD3D12SupportsBindless ? "true" : "false");
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // VirtualAddress
+    // -------------------------------------------------------------------------------------------
+    {
+        D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT VirtualAddress = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_GPU_VIRTUAL_ADDRESS_SUPPORT, &VirtualAddress, sizeof(VirtualAddress));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12VirtualAddressBitsPerProcess  = VirtualAddress.MaxGPUVirtualAddressBitsPerProcess;
+            GD3D12VirtualAddressBitsPerResource = VirtualAddress.MaxGPUVirtualAddressBitsPerResource;
+
+            D3D12_INFO("[FD3D12Device] VirtualAddress Bits/Process Supported: %u", GD3D12VirtualAddressBitsPerProcess);
+            D3D12_INFO("[FD3D12Device] VirtualAddress Bits/Resource Supported: %u", GD3D12VirtualAddressBitsPerResource);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_GPU_VIRTUAL_ADDRESS_SUPPORT query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // Architecture (UMA / CacheCoherentUMA)
+    // -------------------------------------------------------------------------------------------
+    {
+        D3D12_FEATURE_DATA_ARCHITECTURE1 Architecture = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ARCHITECTURE1, &Architecture, sizeof(Architecture));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12IsArchitectureUMA = !!Architecture.UMA;
+            GD3D12IsArchitectureCacheCoherentUMA = !!Architecture.CacheCoherentUMA;
+
+            D3D12_INFO("[FD3D12Device] UMA Architecture: %s", GD3D12IsArchitectureUMA ? "true" : "false");
+            D3D12_INFO("[FD3D12Device] CacheCoherentUMA Architecture: %s", GD3D12IsArchitectureCacheCoherentUMA ? "true" : "false");
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_ARCHITECTURE1 query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    // -------------------------------------------------------------------------------------------
+    // WorkGraphs & ExecuteIndirect
+    // -------------------------------------------------------------------------------------------
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS21 Features21 = {};
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS21, &Features21, sizeof(Features21));
+        if (SUCCEEDED(hr))
+        {
+            GD3D12WorkGraphsTier      = Features21.WorkGraphsTier;
+            GD3D12ExecuteIndirectTier = Features21.ExecuteIndirectTier;
+
+            D3D12_INFO("[FD3D12Device] WorkGraphs Tier: %d", GD3D12WorkGraphsTier);
+            D3D12_INFO("[FD3D12Device] ExecuteIndirect Tier: %d", GD3D12ExecuteIndirectTier);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device] D3D12_FEATURE_DATA_D3D12_OPTIONS19 query failed (hr=0x%08X)", hr);
+        }
+    }
+
+    return;
 }
 
 FD3D12Queue* FD3D12Device::GetQueue(ED3D12CommandQueueType QueueType)
@@ -1178,9 +1409,7 @@ ID3D12CommandQueue* FD3D12Device::GetD3D12CommandQueue(ED3D12CommandQueueType Qu
 
 int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
-    D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
-    FMemory::Memzero(&Data);
-
+    D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data = {};
     Data.Flags       = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
     Data.Format      = Format;
     Data.SampleCount = SampleCount;

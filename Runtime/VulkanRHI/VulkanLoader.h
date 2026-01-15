@@ -1,8 +1,9 @@
 #pragma once
 #include "VulkanRHI/VulkanCore.h"
 
-/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// -------------------------------------------------------------------------------------------
 // Loader macros
+// -------------------------------------------------------------------------------------------
 
 #define VULKAN_FUNCTION_DECLARATION(FunctionName) extern PFN_vk##FunctionName vk##FunctionName
 #define VULKAN_FUNCTION_DEFINITION(FunctionName)  PFN_vk##FunctionName vk##FunctionName = nullptr
@@ -32,8 +33,9 @@
 class FVulkanInstance;
 class FVulkanDevice;
 
-/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// -------------------------------------------------------------------------------------------
 // Pre-Instance Created Functions
+// -------------------------------------------------------------------------------------------
 
 VULKAN_FUNCTION_DECLARATION(GetInstanceProcAddr);
 
@@ -48,8 +50,9 @@ VULKAN_FUNCTION_DECLARATION(CreateDebugUtilsMessengerEXT);
 VULKAN_FUNCTION_DECLARATION(DestroyDebugUtilsMessengerEXT);
 #endif
 
-/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// -------------------------------------------------------------------------------------------
 // Instance Functions
+// -------------------------------------------------------------------------------------------
 
 VULKAN_FUNCTION_DECLARATION(EnumeratePhysicalDevices);
 VULKAN_FUNCTION_DECLARATION(EnumerateDeviceExtensionProperties);
@@ -89,10 +92,9 @@ VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfacePresentModesKHR);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceSupportKHR);
 #endif
 
-bool LoadInstanceFunctions(FVulkanInstance* Instance);
-
-/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// -------------------------------------------------------------------------------------------
 // Device Functions
+// -------------------------------------------------------------------------------------------
 
 VULKAN_FUNCTION_DECLARATION(DeviceWaitIdle);
 VULKAN_FUNCTION_DECLARATION(QueueWaitIdle);
@@ -125,7 +127,7 @@ VULKAN_FUNCTION_DECLARATION(BindBufferMemory);
 VULKAN_FUNCTION_DECLARATION(DestroyBuffer);
 
 // VK_KHR_buffer_device_address (Core in 1.2)
-VULKAN_FUNCTION_DECLARATION(GetBufferDeviceAddressKHR);
+VULKAN_FUNCTION_DECLARATION(GetBufferDeviceAddress);
 
 VULKAN_FUNCTION_DECLARATION(CreateImage);
 VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements);
@@ -133,9 +135,9 @@ VULKAN_FUNCTION_DECLARATION(BindImageMemory);
 VULKAN_FUNCTION_DECLARATION(DestroyImage);
 
 // VK_KHR_get_memory_requirements2 (Core in 1.1)
-VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2KHR);
-VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2KHR);
-VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2KHR);
+VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2);
+VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2);
+VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2);
 
 VULKAN_FUNCTION_DECLARATION(CreateShaderModule);
 VULKAN_FUNCTION_DECLARATION(DestroyShaderModule);
@@ -235,12 +237,11 @@ VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DECLARATION(CmdBuildAccelerationStructuresKHR);
 #endif
-#if VK_KHR_synchronization2
-VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier2KHR);
-#endif
+VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier2);
 
 struct VulkanLoader
 {
+    static bool LoadInstanceFunctions(FVulkanInstance* Instance);
     static bool LoadDeviceFunctions(FVulkanDevice* Device);
 };
 
@@ -258,9 +259,7 @@ public:
     static VkResult SetObjectName(VkDevice Device, const CHAR* Name, uint64 ObjectHandle, VkObjectType ObjectType)
     {
     #if VK_EXT_debug_utils
-        VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo;
-        FMemory::Memzero(&DebugUtilsObjectNameInfo);
-
+        VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo = {};
         DebugUtilsObjectNameInfo.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
         DebugUtilsObjectNameInfo.pNext        = nullptr;
         DebugUtilsObjectNameInfo.pObjectName  = Name;
@@ -282,7 +281,7 @@ private:
     static bool bIsEnabled;
 };
 
-class VulkanDedicatedAllocationKHR
+class VulkanRobustness2KHR
 {
 public:
     static void Initialize(FVulkanDevice* Device);
@@ -294,38 +293,4 @@ public:
     
 private:
     static bool bIsEnabled;
-};
-
-class VulkanBufferDeviceAddressKHR
-{
-public:
-    static void Initialize(FVulkanDevice* Device);
-    
-    static FORCEINLINE bool IsEnabled()
-    {
-        return bIsEnabled;
-    }
-    
-private:
-    static bool bIsEnabled;
-};
-
-class VulkanRobustness2EXT
-{
-public:
-    static void Initialize(FVulkanDevice* Device);
-    
-    static FORCEINLINE bool IsEnabled()
-    {
-        return bIsEnabled;
-    }
-    
-    static FORCEINLINE bool SupportsNullDescriptors()
-    {
-        return bSupportsNullDescriptors;
-    }
-    
-private:
-    static bool bIsEnabled;
-    static bool bSupportsNullDescriptors;
 };

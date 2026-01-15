@@ -14,7 +14,6 @@
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12SamplerState.h"
 #include "D3D12RHI/D3D12SwapChain.h"
-#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Loader.h"
 
@@ -87,7 +86,7 @@ FD3D12RHI::~FD3D12RHI()
 
     while (!PendingSubmissions.IsEmpty())
     {
-        ProcessPendingCommands();
+        ProcessPendingCommandSubmissions();
     }
 
     // Flush any objects that might need the context...
@@ -139,13 +138,6 @@ bool FD3D12RHI::Initialize()
         return false;
     }
 
-    // Initialize shader compiler
-    GD3D12ShaderCompiler = new FD3D12ShaderCompiler();
-    if (!GD3D12ShaderCompiler->Initialize())
-    {
-        return false;
-    }
-
     // Initialize context
     DirectCommandContext = new FD3D12CommandContext(GetDevice(), ED3D12CommandQueueType::Direct);
     if (!(DirectCommandContext && DirectCommandContext->Initialize()))
@@ -153,108 +145,150 @@ bool FD3D12RHI::Initialize()
         return false;
     }
 
-    // RenderTargetArrayIndex from vertex-shader Support
+    // Ensure that we have initialized the device feature support
+    if (!InitializeDeviceFeatureSupport())
     {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
-        FMemory::Memzero(&Features);
-
-        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
-        if (SUCCEEDED(Result))
-        {
-            if (Features.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation)
-            {
-                FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = true;
-            }
-            else
-            {
-                FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = false;
-            }
-        }
+        return false;
     }
 
-    // RayTracing Support
-    if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
-    {
+    return true;
+}
+
+bool FD3D12RHI::InitializeDeviceFeatureSupport()
+{
+	// -------------------------------------------------------------------------------------------
+	// Baseline defaults
+	// -------------------------------------------------------------------------------------------
+	RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = true; // Geometry Shaders are always supported
+	RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
+
+	RHIDeviceFeatureSupport::bSupportsViewInstancing     = false;
+	RHIDeviceFeatureSupport::MaxViewInstanceCount        = 1;
+
+	RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
+	RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
+	RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+
+	RHIDeviceFeatureSupport::bSupportsVRS                = false;
+	RHIDeviceFeatureSupport::ShadingRateTier             = EShadingRateTier::NotSupported;
+	RHIDeviceFeatureSupport::ShadingRateImageTileSize    = 0;
+
+	RHIDeviceFeatureSupport::bSupportDrawIndirect        = true;
+	RHIDeviceFeatureSupport::bSupportMultiDrawIndirect   = true;
+	RHIDeviceFeatureSupport::MaxDrawIndirectCount        = uint32(~0u);
+
+	// -------------------------------------------------------------------------------------------
+	// Texture / image limits (canonical D3D12 defines)
+	// -------------------------------------------------------------------------------------------
+	RHIDeviceFeatureSupport::MaxTexture1DSize        = D3D12_REQ_TEXTURE1D_U_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture2DSize        = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture3DWidth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture3DHeight      = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+	RHIDeviceFeatureSupport::MaxTexture3DDepth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+	RHIDeviceFeatureSupport::MaxCubeTextureSize      = D3D12_REQ_TEXTURECUBE_DIMENSION;
+	RHIDeviceFeatureSupport::MaxCubeArrayCount       = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / RHI_NUM_CUBE_FACES;
+
+	// -------------------------------------------------------------------------------------------
+	// Buffer / memory limits
+	// -------------------------------------------------------------------------------------------
+	RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0ull);
+	RHIDeviceFeatureSupport::MaxConstantBufferSize      = D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16;
+	RHIDeviceFeatureSupport::MaxStorageBufferSize       = uint64(~0ull);
+	RHIDeviceFeatureSupport::StructuredBufferMinStride  = 0;
+	RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint32(~0u);
+	RHIDeviceFeatureSupport::RawBufferRequiredAlignment = D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT;
+
+	// -------------------------------------------------------------------------------------------
+	// SV_RenderTargetArrayIndex from VS
+	// -------------------------------------------------------------------------------------------
+	{
+		D3D12_FEATURE_DATA_D3D12_OPTIONS Features = {};
+		if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(Features))))
+		{
+			RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = !!Features.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation;
+		}
+	}
+
+	// -------------------------------------------------------------------------------------------
+	// Ray Tracing (DXR)
+	// -------------------------------------------------------------------------------------------
+	if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
+	{
+		RHIDeviceFeatureSupport::bSupportsRayTracing         = true;
+		RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+
         if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
         {
-            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1_1;
-        }
-        else if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_0)
-        {
-            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1;
-        }
-
-        FRHIDeviceInfo::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
-    }
-    else
-    {
-        FRHIDeviceInfo::RayTracingTier = ERayTracingTier::NotSupported;
-    }
-
-    FRHIDeviceInfo::SupportsRayTracing = FRHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
-
-    // View-Instancing Support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3;
-        FMemory::Memzero(&Features3);
-
-        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
-        if (SUCCEEDED(Result))
-        {
-            if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
-            {
-                FRHIDeviceInfo::SupportsViewInstancing = true;
-                FRHIDeviceInfo::MaxViewInstanceCount   = D3D12_MAX_VIEW_INSTANCE_COUNT;
-            }
+            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1_1;
         }
         else
         {
-            FRHIDeviceInfo::SupportsViewInstancing = false;
-            FRHIDeviceInfo::MaxViewInstanceCount   = 0;
+            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1;
         }
-    }
+	}
+	else
+	{
+		RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
+		RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+		RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
+	}
 
-    // Variable-Rate-Shading Support
-    switch (GD3D12VariableRateShadingTier)
-    {
-        case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
-        {
-            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::NotSupported;
-            break;
-        }
-        case D3D12_VARIABLE_SHADING_RATE_TIER_1:
-        {
-            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier1;
-            break;
-        }
-        case D3D12_VARIABLE_SHADING_RATE_TIER_2:
-        {
-            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier2;
-            break;
-        }
-    }
+	// -------------------------------------------------------------------------------------------
+	// View Instancing
+	// -------------------------------------------------------------------------------------------
+	if (GD3D12ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
+	{
+		RHIDeviceFeatureSupport::bSupportsViewInstancing = true;
+		RHIDeviceFeatureSupport::MaxViewInstanceCount    = D3D12_MAX_VIEW_INSTANCE_COUNT;
+	}
+	else
+	{
+		RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
+		RHIDeviceFeatureSupport::MaxViewInstanceCount    = 1;
+	}
 
-    FRHIDeviceInfo::SupportsVRS = FRHIDeviceInfo::ShadingRateTier != EShadingRateTier::NotSupported;
-    if (FRHIDeviceInfo::SupportsVRS)
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        FMemory::Memzero(&Features6);
+	// -------------------------------------------------------------------------------------------
+	// Variable Rate Shading (VRS)
+	// -------------------------------------------------------------------------------------------
+	switch (GD3D12VariableRateShadingTier)
+	{
+	default:
+	case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
+		RHIDeviceFeatureSupport::ShadingRateTier          = EShadingRateTier::NotSupported;
+		RHIDeviceFeatureSupport::bSupportsVRS             = false;
+		RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+		break;
 
-        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
-        if (SUCCEEDED(Result))
-        {
-            FRHIDeviceInfo::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
-        }
-    }
-    else
-    {
-        FRHIDeviceInfo::ShadingRateImageTileSize = 0;
-    }
+	case D3D12_VARIABLE_SHADING_RATE_TIER_1:
+		RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier1;
+		RHIDeviceFeatureSupport::bSupportsVRS    = true;
+		break;
 
-    // GeometryShaders Support
-    FRHIDeviceInfo::SupportsGeometryShaders = true;
-    return true;
+	case D3D12_VARIABLE_SHADING_RATE_TIER_2:
+		RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier2;
+		RHIDeviceFeatureSupport::bSupportsVRS    = true;
+		break;
+	}
+
+	if (RHIDeviceFeatureSupport::bSupportsVRS)
+	{
+		// Tile size is not cached
+		D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6 = {};
+		if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(Features6))))
+		{
+			RHIDeviceFeatureSupport::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+		}
+		else
+		{
+			RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+		}
+	}
+
+	return true;
 }
+
 
 FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
@@ -295,9 +329,7 @@ FRHISamplerState* FD3D12RHI::CreateSamplerState(const FRHISamplerStateInfo& InSa
     }
     else
     {
-        D3D12_SAMPLER_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_SAMPLER_DESC Desc = {};
         Desc.AddressU       = ConvertSamplerMode(InSamplerInfo.AddressU);
         Desc.AddressV       = ConvertSamplerMode(InSamplerInfo.AddressV);
         Desc.AddressW       = ConvertSamplerMode(InSamplerInfo.AddressW);
@@ -367,244 +399,223 @@ FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracing
     return D3D12Geometry.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
+FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo)
 {
-    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.Texture);
-    CHECK(D3D12Texture != nullptr);
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.Format                  = ConvertFormat(InInfo.Format);
+    D3D12_SHADER_RESOURCE_VIEW_DESC Desc = {};
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-    const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
-    if (TextureInfo.IsTexture2D())
-    {
-        if (!TextureInfo.IsMultisampled())
-        {
-            Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
-            Desc.Texture2D.MostDetailedMip     = InInfo.FirstMipLevel;
-            Desc.Texture2D.MipLevels           = InInfo.NumMips;
-            Desc.Texture2D.ResourceMinLODClamp = InInfo.MinLODClamp;
-            Desc.Texture2D.PlaneSlice          = 0;
-        }
-        else
-        {
-            Desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-        }
-    }
-    else if (TextureInfo.IsTexture2DArray())
-    {
-        if (!TextureInfo.IsMultisampled())
-        {
-            Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-            Desc.Texture2DArray.MostDetailedMip     = InInfo.FirstMipLevel;
-            Desc.Texture2DArray.MipLevels           = InInfo.NumMips;
-            Desc.Texture2DArray.ResourceMinLODClamp = InInfo.MinLODClamp;
-            Desc.Texture2DArray.FirstArraySlice     = InInfo.FirstArraySlice;
-            Desc.Texture2DArray.ArraySize           = InInfo.NumSlices;
-            Desc.Texture2DArray.PlaneSlice          = 0;
-        }
-        else
-        {
-            Desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-            Desc.Texture2DMSArray.FirstArraySlice = InInfo.FirstArraySlice;
-            Desc.Texture2DMSArray.ArraySize       = InInfo.NumSlices;
-        }
-    }
-    else if (TextureInfo.IsTextureCube())
-    {
-        Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
-        Desc.TextureCube.MostDetailedMip     = InInfo.FirstMipLevel;
-        Desc.TextureCube.MipLevels           = InInfo.NumMips;
-        Desc.TextureCube.ResourceMinLODClamp = InInfo.MinLODClamp;
-    }
-    else if (TextureInfo.IsTextureCubeArray())
-    {
-        Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-        Desc.TextureCubeArray.MostDetailedMip     = InInfo.FirstMipLevel;
-        Desc.TextureCubeArray.MipLevels           = InInfo.NumMips;
-        Desc.TextureCubeArray.ResourceMinLODClamp = InInfo.MinLODClamp;
-        Desc.TextureCubeArray.First2DArrayFace    = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
-        Desc.TextureCubeArray.NumCubes            = InInfo.NumSlices;
-    }
-    else if (TextureInfo.IsTexture3D())
-    {
-        Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
-        Desc.Texture3D.MostDetailedMip     = InInfo.FirstMipLevel;
-        Desc.Texture3D.MipLevels           = InInfo.NumMips;
-        Desc.Texture3D.ResourceMinLODClamp = InInfo.MinLODClamp;
-    }
+    FRHIResource*   Resource      = nullptr;
+    FD3D12Resource* D3D12Resource = nullptr;
 
-    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), D3D12Texture);
-    if (!D3D12View->AllocateHandle())
+    if (InInfo.IsBufferSRV())
     {
-        return nullptr;
-    }
+		FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.BufferSRV.Buffer);
+		CHECK(D3D12Buffer != nullptr);
 
-    FD3D12Resource* D3D12Resource = D3D12Texture->GetResource();
-    CHECK(D3D12Resource != nullptr);
+		D3D12Resource = D3D12Buffer->GetResource();
+        Resource      = D3D12Buffer;
 
-    if (D3D12View->CreateView(D3D12Resource, Desc))
-    {
-        return D3D12View.ReleaseOwnership();
+		Desc.ViewDimension       = D3D12_SRV_DIMENSION_BUFFER;
+		Desc.Buffer.FirstElement = InInfo.BufferSRV.FirstElement;
+		Desc.Buffer.NumElements  = InInfo.BufferSRV.NumElements;
+
+		if (InInfo.BufferSRV.Format == EBufferSRVFormat::None)
+		{
+			Desc.Format                     = DXGI_FORMAT_UNKNOWN;
+			Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
+			Desc.Buffer.StructureByteStride = InInfo.BufferSRV.Buffer->GetInfo().Stride;
+		}
+		else
+		{
+			Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
+			Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
+			Desc.Buffer.StructureByteStride = 0;
+		}
     }
-    else
+    else if (InInfo.IsTextureSRV())
     {
-        return nullptr;
+		FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.TextureSRV.Texture);
+		CHECK(D3D12Texture != nullptr);
+
+        D3D12Resource = D3D12Texture->GetResource();
+        Resource      = D3D12Texture;
+
+		Desc.Format = ConvertFormat(InInfo.TextureSRV.Format);
+
+		const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
+		if (TextureInfo.IsTexture2D())
+		{
+			if (!TextureInfo.IsMultisampled())
+			{
+				Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
+				Desc.Texture2D.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
+				Desc.Texture2D.MipLevels           = InInfo.TextureSRV.NumMips;
+				Desc.Texture2D.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+				Desc.Texture2D.PlaneSlice          = 0;
+			}
+			else
+			{
+				Desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+			}
+		}
+		else if (TextureInfo.IsTexture2DArray())
+		{
+			if (!TextureInfo.IsMultisampled())
+			{
+				Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+				Desc.Texture2DArray.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
+				Desc.Texture2DArray.MipLevels           = InInfo.TextureSRV.NumMips;
+				Desc.Texture2DArray.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+				Desc.Texture2DArray.FirstArraySlice     = InInfo.TextureSRV.FirstArraySlice;
+				Desc.Texture2DArray.ArraySize           = InInfo.TextureSRV.NumSlices;
+				Desc.Texture2DArray.PlaneSlice          = 0;
+			}
+			else
+			{
+				Desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+				Desc.Texture2DMSArray.FirstArraySlice = InInfo.TextureSRV.FirstArraySlice;
+				Desc.Texture2DMSArray.ArraySize       = InInfo.TextureSRV.NumSlices;
+			}
+		}
+		else if (TextureInfo.IsTextureCube())
+		{
+			Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
+			Desc.TextureCube.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
+			Desc.TextureCube.MipLevels           = InInfo.TextureSRV.NumMips;
+			Desc.TextureCube.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+		}
+		else if (TextureInfo.IsTextureCubeArray())
+		{
+			Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+			Desc.TextureCubeArray.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
+			Desc.TextureCubeArray.MipLevels           = InInfo.TextureSRV.NumMips;
+			Desc.TextureCubeArray.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+			Desc.TextureCubeArray.First2DArrayFace    = InInfo.TextureSRV.FirstArraySlice * RHI_NUM_CUBE_FACES;
+			Desc.TextureCubeArray.NumCubes            = InInfo.TextureSRV.NumSlices;
+		}
+		else if (TextureInfo.IsTexture3D())
+		{
+			Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
+			Desc.Texture3D.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
+			Desc.Texture3D.MipLevels           = InInfo.TextureSRV.NumMips;
+			Desc.Texture3D.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+		}
     }
+	else
+	{
+		return nullptr;
+	}
+
+    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), Resource);
+	if (!D3D12View->AllocateHandle())
+	{
+		return nullptr;
+	}
+
+	CHECK(D3D12Resource != nullptr);
+
+	if (D3D12View->CreateView(D3D12Resource, Desc))
+	{
+		return D3D12View.ReleaseOwnership();
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
-FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
+FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
 {
-    FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.Buffer);
-    CHECK(D3D12Buffer != nullptr);
+	FRHIResource*   Resource      = nullptr;
+	FD3D12Resource* D3D12Resource = nullptr;
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.ViewDimension           = D3D12_SRV_DIMENSION_BUFFER;
-    Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    Desc.Buffer.FirstElement     = InInfo.FirstElement;
-    Desc.Buffer.NumElements      = InInfo.NumElements;
-
-    if (InInfo.Format == EBufferSRVFormat::None)
+    D3D12_UNORDERED_ACCESS_VIEW_DESC Desc = {};
+    if (InInfo.IsBufferUAV())
     {
-        Desc.Format                     = DXGI_FORMAT_UNKNOWN;
-        Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-        Desc.Buffer.StructureByteStride = InInfo.Buffer->GetStride();
+		FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.BufferUAV.Buffer);
+		CHECK(D3D12Buffer != nullptr);
+
+		D3D12Resource = D3D12Buffer->GetResource();
+		Resource      = D3D12Buffer;
+
+		Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
+		Desc.Buffer.FirstElement = InInfo.BufferUAV.FirstElement;
+		Desc.Buffer.NumElements  = InInfo.BufferUAV.NumElements;
+
+		if (InInfo.BufferUAV.Format == EBufferUAVFormat::None)
+		{
+			Desc.Format                     = DXGI_FORMAT_UNKNOWN;
+			Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
+			Desc.Buffer.StructureByteStride = InInfo.BufferUAV.Buffer->GetInfo().Stride;
+		}
+		else
+		{
+			Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
+			Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_RAW;
+			Desc.Buffer.StructureByteStride = 0;
+		}
     }
-    else
+    else if (InInfo.IsTextureUAV())
     {
-        Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
-        Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_RAW;
-        Desc.Buffer.StructureByteStride = 0;
-    }
+        Desc.Format = ConvertFormat(InInfo.TextureUAV.Format);
+        
+        FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.TextureUAV.Texture);
+        CHECK(D3D12Texture != nullptr);
 
-    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), InInfo.Buffer);
-    if (!D3D12View->AllocateHandle())
-    {
-        return nullptr;
-    }
+		D3D12Resource = D3D12Texture->GetResource();
+		Resource      = D3D12Texture;
 
-    FD3D12Resource* D3D12Resource = D3D12Buffer->GetResource();
-    CHECK(D3D12Resource != nullptr);
-
-    if (D3D12View->CreateView(D3D12Resource, Desc))
-    {
-        return D3D12View.ReleaseOwnership();
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
-{
-    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.Texture);
-    CHECK(D3D12Texture != nullptr);
-
-    D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.Format = ConvertFormat(InInfo.Format);
-
-    const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
-    if (TextureInfo.IsTexture2D())
-    {
-        if (!TextureInfo.IsMultisampled())
+        const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
+        if (TextureInfo.IsTexture2D())
         {
-            Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
-            Desc.Texture2D.MipSlice   = InInfo.MipLevel;
-            Desc.Texture2D.PlaneSlice = 0;
+            if (!TextureInfo.IsMultisampled())
+            {
+                Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
+                Desc.Texture2D.MipSlice   = InInfo.TextureUAV.MipLevel;
+                Desc.Texture2D.PlaneSlice = 0;
+            }
+            else
+            {
+                D3D12_ERROR("MultiSampled Textures is not supported");
+            }
         }
-        else
+        else if (TextureInfo.IsTexture2DArray())
         {
-            D3D12_ERROR("MultiSampled Textures is not supported");
+            if (!TextureInfo.IsMultisampled())
+            {
+                Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+                Desc.Texture2DArray.MipSlice        = InInfo.TextureUAV.MipLevel;
+                Desc.Texture2DArray.PlaneSlice      = 0;
+                Desc.Texture2DArray.FirstArraySlice = InInfo.TextureUAV.FirstArraySlice;
+                Desc.Texture2DArray.ArraySize       = InInfo.TextureUAV.NumSlices;
+            }
+            else
+            {
+                D3D12_ERROR("MultiSampled Textures is not supported");
+            }
         }
-    }
-    else if (TextureInfo.IsTexture2DArray())
-    {
-        if (!TextureInfo.IsMultisampled())
+        else if (TextureInfo.IsTextureCube() || TextureInfo.IsTextureCubeArray())
         {
             Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            Desc.Texture2DArray.MipSlice        = InInfo.MipLevel;
+            Desc.Texture2DArray.MipSlice        = InInfo.TextureUAV.MipLevel;
             Desc.Texture2DArray.PlaneSlice      = 0;
-            Desc.Texture2DArray.FirstArraySlice = InInfo.FirstArraySlice;
-            Desc.Texture2DArray.ArraySize       = InInfo.NumSlices;
+            Desc.Texture2DArray.FirstArraySlice = InInfo.TextureUAV.FirstArraySlice * RHI_NUM_CUBE_FACES;
+            Desc.Texture2DArray.ArraySize       = InInfo.TextureUAV.NumSlices * RHI_NUM_CUBE_FACES;
         }
-        else
+        else if (TextureInfo.IsTexture3D())
         {
-            D3D12_ERROR("MultiSampled Textures is not supported");
+            Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
+            Desc.Texture3D.FirstWSlice = InInfo.TextureUAV.FirstArraySlice;
+            Desc.Texture3D.WSize       = InInfo.TextureUAV.NumSlices;
+            Desc.Texture3D.MipSlice    = InInfo.TextureUAV.MipLevel;
         }
     }
-    else if (TextureInfo.IsTextureCube() || TextureInfo.IsTextureCubeArray())
-    {
-        Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice        = InInfo.MipLevel;
-        Desc.Texture2DArray.PlaneSlice      = 0;
-        Desc.Texture2DArray.FirstArraySlice = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
-        Desc.Texture2DArray.ArraySize       = InInfo.NumSlices * RHI_NUM_CUBE_FACES;
-    }
-    else if (TextureInfo.IsTexture3D())
-    {
-        Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
-        Desc.Texture3D.FirstWSlice = InInfo.FirstArraySlice;
-        Desc.Texture3D.WSize       = InInfo.NumSlices;
-        Desc.Texture3D.MipSlice    = InInfo.MipLevel;
-    }
 
-    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), InInfo.Texture);
+    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), Resource);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
     }
-
-    if (D3D12View->CreateView(nullptr, D3D12Texture->GetResource(), Desc))
-    {
-        return D3D12View.ReleaseOwnership();
-    }
-    else
-    {
-        return nullptr;
-    }
-}
-
-FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
-{
-    FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.Buffer);
-    CHECK(D3D12Buffer != nullptr);
-
-    D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
-    Desc.Buffer.FirstElement = InInfo.FirstElement;
-    Desc.Buffer.NumElements  = InInfo.NumElements;
-
-    if (InInfo.Format == EBufferUAVFormat::None)
-    {
-        Desc.Format                     = DXGI_FORMAT_UNKNOWN;
-        Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
-        Desc.Buffer.StructureByteStride = InInfo.Buffer->GetStride();
-    }
-    else
-    {
-        Desc.Format                     = DXGI_FORMAT_R32_TYPELESS;
-        Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_RAW;
-        Desc.Buffer.StructureByteStride = 0;
-    }
-
-    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), InInfo.Buffer);
-    if (!D3D12View->AllocateHandle())
-    {
-        return nullptr;
-    }
-
-    FD3D12Resource* D3D12Resource = D3D12Buffer->GetResource();
-    CHECK(D3D12Resource != nullptr);
 
     if (D3D12View->CreateView(nullptr, D3D12Resource, Desc))
     {
@@ -764,30 +775,30 @@ FRHIRayMissShader* FD3D12RHI::CreateRayMissShader(const TArray<uint8>& ShaderCod
     }
 }
 
-FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
 {
-    return new FD3D12DepthStencilState(InInitializer);
+    return new FD3D12DepthStencilState(InInfo);
 }
 
-FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo)
 {
-    return new FD3D12RasterizerState(InInitializer);
+    return new FD3D12RasterizerState(InInfo);
 }
 
-FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateInfo& InInfo)
 {
-    return new FD3D12BlendState(InInitializer);
+    return new FD3D12BlendState(InInfo);
 }
 
-FRHIVertexLayout* FD3D12RHI::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIInputLayout* FD3D12RHI::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
 {
-    return new FD3D12VertexLayout(InInitializerList);
+    return new FD3D12InputLayout(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
 {
     FD3D12GraphicsPipelineStateRef NewPipelineState = new FD3D12GraphicsPipelineState(GetDevice());
-    if (!NewPipelineState->Initialize(InInitializer))
+    if (!NewPipelineState->Initialize(InInfo))
     {
         return nullptr;
     }
@@ -797,9 +808,9 @@ FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGrap
     }
 }
 
-FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
-    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInitializer.Shader));
+    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInfo.Shader));
     if (!NewPipelineState->Initialize())
     {
         return nullptr;
@@ -870,8 +881,7 @@ bool FD3D12RHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemor
 
 bool FD3D12RHI::QueryUAVFormatSupport(EFormat Format) const
 {
-    D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
-    FMemory::Memzero(&FeatureData);
+    D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData = {};
 
     HRESULT Result = Device->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &FeatureData, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
     if (SUCCEEDED(Result))
@@ -958,16 +968,16 @@ void* FD3D12RHI::GetNativeCopyCommandQueue()
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
 }
 
-void FD3D12RHI::ProcessPendingCommands()
+void FD3D12RHI::ProcessPendingCommandSubmissions()
 {
     bool bProcess = true;
     while (bProcess)
     {
-        FD3D12CommandPayload* CommandPayload = nullptr;
-        if (PendingSubmissions.Peek(CommandPayload))
+        FD3D12CommandSubmission* CommandSubmission = nullptr;
+        if (PendingSubmissions.Peek(CommandSubmission))
         {
-            CHECK(CommandPayload != nullptr);
-            if (!CommandPayload->SyncPoint.IsReached())
+            CHECK(CommandSubmission != nullptr);
+            if (!CommandSubmission->SyncPoint.IsReached())
             {
                 bProcess = false;
                 break;
@@ -976,7 +986,7 @@ void FD3D12RHI::ProcessPendingCommands()
             {
                 // If we are finished we remove the item from the queue
                 PendingSubmissions.Dequeue();
-                CommandPayload->Finish();
+                CommandSubmission->Finish();
             }
         }
         else
@@ -986,19 +996,19 @@ void FD3D12RHI::ProcessPendingCommands()
     }
 }
 
-void FD3D12RHI::SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue)
+void FD3D12RHI::SubmitCommands(FD3D12CommandSubmission* CommandSubmission, bool bFlushDeletionQueue)
 {
-    CHECK(CommandPayload != nullptr);
+    CHECK(CommandSubmission != nullptr);
 
-    if (!CommandPayload->IsEmpty())
+    if (!CommandSubmission->IsEmpty())
     {
         if (bFlushDeletionQueue)
         {
             TScopedLock Lock(DeletionQueueCS);
-            CommandPayload->DeletionQueue = Move(DeletionQueue);
+            CommandSubmission->DeletionQueue = Move(DeletionQueue);
         }
 
-        CommandPayload->SyncPoint = CommandPayload->Queue->ExecuteCommandLists(CommandPayload->CommandLists.Data(), CommandPayload->CommandLists.Size(), false);
-        PendingSubmissions.Enqueue(CommandPayload);
+        CommandSubmission->SyncPoint = CommandSubmission->Queue->ExecuteCommandLists(CommandSubmission->CommandLists.Data(), CommandSubmission->CommandLists.Size(), false);
+        PendingSubmissions.Enqueue(CommandSubmission);
     }
 }

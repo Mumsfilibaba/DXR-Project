@@ -138,10 +138,10 @@ struct IRHICommandContext
     /**
      * @brief Set shader constants
      * @param Shader Shader to bind the constants to
-     * @param Shader32BitConstants Array of 32-bit constants
-     * @param Num32bitConstants Number o 32-bit constants (Each is 4 bytes)
+     * @param ShaderConstants Array of 32-bit constants
+     * @param NumShaderConstants Number o 32-bit constants (Each is 4 bytes)
      */
-    virtual void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) = 0;
+    virtual void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) = 0;
 
     /**
      * @brief Sets a single ShaderResourceView to the ParameterIndex this must be a valid index in the specified shader, which can be queried from the shader-object.

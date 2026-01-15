@@ -1,5 +1,5 @@
-#include "MetalBuffer.h"
-#include "MetalDeviceContext.h"
+#include "MetalRHI/MetalBuffer.h"
+#include "MetalRHI/MetalDeviceContext.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

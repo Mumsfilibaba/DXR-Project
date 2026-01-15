@@ -162,18 +162,18 @@ public:
     /**
      * @brief Compares this vector with another vector within a specified threshold.
      * @param Other Vector to compare against.
-     * @param Epsilon The threshold for comparison.
+     * @param Threshold The threshold for comparison.
      * @return True if vectors are approximately equal, false otherwise.
      */
-    inline bool IsEqual(const FVector4& Other, float Epsilon = Math::FloatCompareEpsilon) const noexcept
+    inline bool IsEqual(const FVector4& Other, float Threshold = Math::Constants::CmpThreshold) const noexcept
     {
     #if !USE_VECTOR_MATH
-        Epsilon = Math::Abs(Epsilon);
+        Threshold = Math::Abs(Threshold);
 
         for (int32 Index = 0; Index < 4; ++Index)
         {
             float Diff = XYZW[Index] - Other.XYZW[Index];
-            if (Math::Abs(Diff) > Epsilon)
+            if (Math::Abs(Diff) > Threshold)
             {
                 return false;
             }
@@ -181,13 +181,13 @@ public:
 
         return true;
     #else
-        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(Epsilon);
-        Epsilon_128 = FVectorMath::VectorAbs(Epsilon_128);
+        FFloat128 Threshold_128 = FVectorMath::VectorSet1(Threshold);
+        Threshold_128 = FVectorMath::VectorAbs(Threshold_128);
 
         FFloat128 XYZW_128 = FVectorMath::VectorSub(XYZW, Other.XYZW);
         XYZW_128 = FVectorMath::VectorAbs(XYZW_128);
 
-        return FVectorMath::VectorAllLessThan(XYZW_128, Epsilon_128);
+        return FVectorMath::VectorAllLessThan(XYZW_128, Threshold_128);
     #endif
     }
 
@@ -198,7 +198,7 @@ public:
     FORCEINLINE bool IsUnitVector() const noexcept
     {
         const float LengthDiff = Math::Abs(1.0f - GetLengthSquared());
-        return LengthDiff < Math::FloatCompareEpsilon;
+        return LengthDiff < Math::Constants::CmpThreshold;
     }
 
     /**

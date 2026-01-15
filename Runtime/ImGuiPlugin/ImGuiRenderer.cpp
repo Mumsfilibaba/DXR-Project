@@ -23,7 +23,7 @@ FImGuiRenderer* GImGuiRenderer = nullptr;
 
 FImGuiRenderer::FImGuiRenderer()
     : RenderedTextures()
-    , FontTexture(nullptr)
+    , FontAtlas(nullptr)
     , PipelineState(nullptr)
     , PipelineStateNoBlending(nullptr)
     , PShader(nullptr)
@@ -83,24 +83,11 @@ bool FImGuiRenderer::InitializeRHI()
     PlatformState.Renderer_SwapBuffers   = nullptr;
 #endif
 
-    // Build texture atlas
-    uint8* Pixels = nullptr;
-    int32  Width  = 0;
-    int32  Height = 0;
+    ImGuiIO& State = ImGui::GetIO();
+    State.BackendRendererUserData = this;
 
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.BackendRendererUserData = this;
-    UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
-
-    FontTexture = FTextureFactory::Get().LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
-    if (!FontTexture)
-    {
-        return false;
-    }
-    else
-    {
-        FontTexture->SetDebugName("ImGui FontTexture");
-    }
+    // Create initial font atlas
+    UpdateFontAtlas();
 
     TArray<uint8> ShaderCode;
 
@@ -132,21 +119,21 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIVertexLayoutInitializerList VertexElementList =
+    TArray<FRHIInputElementInfo> InputElements =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
         { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
-    FRHIVertexLayoutRef InputLayout = FRHI::Get()->CreateVertexLayout(VertexElementList);
+    FRHIInputLayoutRef InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
     if (!InputLayout)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIDepthStencilStateInitializer DepthStencilStateInfo;
+    FRHIDepthStencilStateInfo DepthStencilStateInfo;
     DepthStencilStateInfo.bDepthEnable      = false;
     DepthStencilStateInfo.bDepthWriteEnable = false;
 
@@ -157,65 +144,65 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIRasterizerStateInitializer RasterizerStateInitializer;
-    RasterizerStateInitializer.CullMode               = ECullMode::None;
-    RasterizerStateInitializer.bAntialiasedLineEnable = true;
+    FRHIRasterizerStateInfo RasterizerStateInfo;
+    RasterizerStateInfo.CullMode               = ECullMode::None;
+    RasterizerStateInfo.bAntialiasedLineEnable = true;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIBlendStateInitializer BlendStateInitializer;
-    BlendStateInitializer.bIndependentBlendEnable        = false;
-    BlendStateInitializer.NumRenderTargets               = 1;
-    BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
-    BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
-    BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
-    BlendStateInitializer.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
-    BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
-    BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
-    BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
+    FRHIBlendStateInfo BlendStateInfo;
+    BlendStateInfo.bIndependentBlendEnable        = false;
+    BlendStateInfo.NumRenderTargets               = 1;
+    BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
+    BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
+    BlendStateInfo.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+    BlendStateInfo.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
+    BlendStateInfo.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
+    BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+    BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    BlendStateInitializer.RenderTargets[0].bBlendEnable = false;
+    BlendStateInfo.RenderTargets[0].bBlendEnable = false;
 
-    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIGraphicsPipelineStateInitializer PSOProperties;
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.VertexInputLayout                      = InputLayout.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.BlendState                             = BlendStateBlending.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = PShader.Get();
+    PSOInfo.InputLayout                                    = InputLayout.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.BlendState                                     = BlendStateBlending.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOProperties);
+    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!PipelineState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    PSOProperties.BlendState = BlendStateNoBlending.Get();
+    PSOInfo.BlendState = BlendStateNoBlending.Get();
 
-    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSOProperties);
+    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!PipelineStateNoBlending)
     {
         DEBUG_BREAK();
@@ -248,7 +235,7 @@ bool FImGuiRenderer::InitializeRHI()
 void FImGuiRenderer::ReleaseRHI()
 {
     // Release all RHI textures
-    FontTexture.Reset();
+    FontAtlas.Reset();
     PipelineState.Reset();
     PipelineStateNoBlending.Reset();
     PShader.Reset();
@@ -256,6 +243,39 @@ void FImGuiRenderer::ReleaseRHI()
     IndexBuffer.Reset();
     LinearSampler.Reset();
     PointSampler.Reset();
+}
+
+bool FImGuiRenderer::UpdateFontAtlas()
+{
+    if (FontAtlas)
+    {
+        FontAtlas.Reset();
+    }
+
+	// Build texture atlas
+	uint8* Pixels = nullptr;
+	int32  Width  = 0;
+	int32  Height = 0;
+
+	// Ensure the default font is in the atlas
+    ImGuiIO& State = ImGui::GetIO();
+	State.Fonts->Build();
+	State.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
+
+	FontAtlas = FTextureFactory::Get().LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
+	if (!FontAtlas)
+	{
+		return false;
+	}
+	else
+	{
+		FontAtlas->SetDebugName("ImGui FontTexture");
+	}
+
+    // TODO: We need to uncomment below, but this requires changes to the renderer loop so keep avoiding this for now. 
+    // State.Fonts->SetTexID((ImTextureID)FontAtlas.Get());
+    
+    return true;
 }
 
 void FImGuiRenderer::Render(FRHICommandList& CommandList)
@@ -324,7 +344,11 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     if (!ViewportData->VertexBuffer || DrawData->TotalVtxCount > ViewportData->VertexCount)
     {
         const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
-        FRHIBufferInfo VBInfo(sizeof(ImDrawVert) * NewVertexCount, sizeof(ImDrawVert), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+
+        FRHIBufferInfo VBInfo;
+        VBInfo.Stride = sizeof(ImDrawVert);
+        VBInfo.Size   = VBInfo.Stride * NewVertexCount;
+        VBInfo.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
         TSharedRef<FRHIBuffer> NewVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
@@ -342,7 +366,11 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     if (!ViewportData->IndexBuffer || DrawData->TotalIdxCount > ViewportData->IndexCount)
     {
         const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
-        FRHIBufferInfo IBInfo(sizeof(ImDrawIdx) * NewIndexCount, sizeof(ImDrawIdx), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+
+        FRHIBufferInfo IBInfo;
+        IBInfo.Stride = sizeof(ImDrawIdx);
+        IBInfo.Size   = IBInfo.Stride * NewIndexCount;
+        IBInfo.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
         TSharedRef<FRHIBuffer> NewIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)
@@ -362,6 +390,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
 
     uint64 VertexOffset = 0;
     uint64 IndexOffset  = 0;
+
     for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
     {
         const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
@@ -392,9 +421,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
     SetupRenderState(CommandList, DrawData, *ViewportData);
 
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
-    int32 GlobalVertexOffset = 0;
-    int32 GlobalIndexOffset  = 0;
-
+    int32  GlobalVertexOffset = 0;
+    int32  GlobalIndexOffset  = 0;
     ImVec2 ClipOffset = DrawData->DisplayPos;
     ImVec2 ClipScale  = DrawData->FramebufferScale;
     
@@ -427,7 +455,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                 {
                     // TODO: Change this so that the same code can be used for font texture and images
                     const FImGuiTexture* DrawableTexture = reinterpret_cast<const FImGuiTexture*>(TextureID);
-                    if (!DrawableTexture->bAllowBlending)
+                    if (!DrawableTexture->bEnableBlending)
                     {
                         CommandList.SetGraphicsPipelineState(PipelineStateNoBlending.Get());
                     }
@@ -436,7 +464,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                         CommandList.SetGraphicsPipelineState(PipelineState.Get());
                     }
 
-                    if (DrawableTexture->bSamplerLinear)
+                    if (DrawableTexture->bEnableLinearSampler)
                     {
                         CommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
                     }
@@ -466,13 +494,13 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                         CommandList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                     }
 
-                    FRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
+                    FRHIShaderResourceView* View = FontAtlas->GetShaderResourceView();
                     CommandList.SetShaderResourceView(PShader.Get(), View, 0);
                 }
 
                 // Project scissor/clipping rectangles into framebuffer space
-                ImVec2 ClipMin((DrawCommand->ClipRect.x - ClipOffset.x), (DrawCommand->ClipRect.y - ClipOffset.y));
-                ImVec2 ClipMax((DrawCommand->ClipRect.z - ClipOffset.x), (DrawCommand->ClipRect.w - ClipOffset.y));
+                ImVec2 ClipMin = ImVec2((DrawCommand->ClipRect.x - ClipOffset.x), (DrawCommand->ClipRect.y - ClipOffset.y));
+                ImVec2 ClipMax = ImVec2((DrawCommand->ClipRect.z - ClipOffset.x), (DrawCommand->ClipRect.w - ClipOffset.y));
 
                 if (ClipMin.x < 0.0f)
                 {
@@ -542,7 +570,7 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
     
     CommandList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
-    CommandList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
+    CommandList.SetShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }
 
 void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData)

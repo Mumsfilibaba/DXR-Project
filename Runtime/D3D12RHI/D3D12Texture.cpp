@@ -42,9 +42,7 @@ FD3D12Texture::~FD3D12Texture()
 
 bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
 {
-    D3D12_RESOURCE_DESC ResourceDesc;
-    FMemory::Memzero(&ResourceDesc);
-
+    D3D12_RESOURCE_DESC ResourceDesc = {};
     ResourceDesc.Dimension        = ConvertTextureDimension(Info.Dimension);
     ResourceDesc.Flags            = ConvertTextureFlags(Info.UsageFlags);
     ResourceDesc.Format           = ConvertFormat(Info.Format);
@@ -85,13 +83,11 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
     }
 
-    D3D12_CLEAR_VALUE ClearValue;
+    D3D12_CLEAR_VALUE ClearValue = {};
 
     const bool bSupportClearValue = Info.IsRenderTarget() || Info.IsDepthStencil();
     if (bSupportClearValue)
     {
-        FMemory::Memzero(&ClearValue);
-
         ClearValue.Format = (Info.ClearValue.Format != EFormat::Unknown) ? ConvertFormat(Info.ClearValue.Format) : ResourceDesc.Format;
         if (Info.ClearValue.IsDepthStencilValue())
         {
@@ -115,9 +111,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     }
 
     {
-        D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
-        FMemory::Memzero(&ViewDesc);
-
+        D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc = {};
         ViewDesc.Format                  = D3D12CastShaderResourceFormat(ResourceDesc.Format);
         ViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
@@ -186,12 +180,10 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     const bool bIsTexture2D = Info.IsTexture2D();
     if (bIsTexture2D)
     {
-        if (Info.IsUnorderedAccess())
+        if (Info.IsUnorderedAccessTexture())
         {
-            D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc;
-            FMemory::Memzero(&ViewDesc);
-
             // TODO: Handle typeless
+            D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc = {};
             ViewDesc.Format               = D3D12CastShaderResourceFormat(ResourceDesc.Format);
             ViewDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
             ViewDesc.Texture2D.MipSlice   = 0;
@@ -315,10 +307,9 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
         return ExistingView;
     }
 
-    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
-    FMemory::Memzero(&RTVDesc);
-
+    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
     RTVDesc.Format = ConvertFormat(RenderTargetView.Format);
+
     D3D12_ERROR_COND(RTVDesc.Format != DXGI_FORMAT_UNKNOWN, "Unallowed format for RenderTargetViews");
 
     if (ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
@@ -453,10 +444,9 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
         return ExistingView;
     }
 
-    D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc;
-    FMemory::Memzero(&DSVDesc);
-
+    D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
     DSVDesc.Format = ConvertFormat(DepthStencilView.Format);
+
     if (DSVDesc.Format == DXGI_FORMAT_UNKNOWN)
     {
         D3D12_ERROR("Unallowed format for DepthStencilViews");

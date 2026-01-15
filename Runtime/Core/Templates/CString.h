@@ -84,6 +84,11 @@ public:
         return FPlatformString::Strstr(String, Substring);
     }
 
+	static FORCEINLINE CharType* Stristr(const CharType* String, const CharType* Substring) noexcept
+	{
+		return FPlatformString::Stristr(String, Substring);
+	}
+
     static FORCEINLINE CharType* Strpbrk(const CharType* String, const CharType* Set) noexcept
     {
         return FPlatformString::Strpbrk(String, Set);

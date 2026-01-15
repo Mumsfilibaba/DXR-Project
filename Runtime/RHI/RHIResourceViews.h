@@ -5,8 +5,8 @@
 
 enum class EBufferSRVFormat : uint32
 {
-    None   = 0,
-    UInt32 = 1,
+    None = 0,
+    UInt32,
 };
 
 NODISCARD constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
@@ -14,14 +14,14 @@ NODISCARD constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
     switch (BufferSRVFormat)
     {
         case EBufferSRVFormat::UInt32: return "UInt32";
-        default:                       return "Unknown";
+        default: return "Unknown";
     }
 }
 
 enum class EBufferUAVFormat : uint32
 {
-    None   = 0,
-    UInt32 = 1,
+    None = 0,
+    UInt32,
 };
 
 NODISCARD constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
@@ -29,15 +29,15 @@ NODISCARD constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
     switch (BufferSRVFormat)
     {
         case EBufferUAVFormat::UInt32: return "UInt32";
-        default:                       return "Unknown";
+        default: return "Unknown";
     }
 }
-
+ 
 enum class EAttachmentLoadAction : uint8
 {
     DontCare = 0, // Don't care
-    Load     = 1, // Use the stored data when RenderPass begin
-    Clear    = 2, // Clear data when RenderPass begin
+    Load,         // Use the stored data when RenderPass begin
+    Clear,        // Clear data when RenderPass begin
 };
 
 NODISCARD constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
@@ -47,14 +47,15 @@ NODISCARD constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
         case EAttachmentLoadAction::DontCare: return "DontCare";
         case EAttachmentLoadAction::Load:     return "Load";
         case EAttachmentLoadAction::Clear:    return "Clear";
-        default:                              return "Unknown";
+
+        default: return "Unknown";
     }
 }
 
 enum class EAttachmentStoreAction : uint8
 {
     DontCare = 0, // Don't care
-    Store    = 1, // Store the data after the RenderPass is finished
+    Store,        // Store the data after the RenderPass is finished
 };
 
 NODISCARD constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
@@ -63,152 +64,192 @@ NODISCARD constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
     {
         case EAttachmentStoreAction::DontCare: return "DontCare";
         case EAttachmentStoreAction::Store:    return "Store";
-        default:                               return "Unknown";
+
+        default: return "Unknown";
     }
 }
 
-struct FRHITextureSRVInfo
+NODISCARD constexpr EFormat SafeGetFormat(FRHITexture* Texture)
 {
-    constexpr FRHITextureSRVInfo() noexcept = default;
+    return Texture ? Texture->GetFormat() : EFormat::Unknown;
+}
 
-    constexpr FRHITextureSRVInfo(
-        FRHITexture* InTexture,
-        float        InMinLODClamp,
-        EFormat      InFormat,
-        uint8        InFirstMipLevel,
-        uint8        InNumMips,
-        uint16       InFirstArraySlice,
-        uint16       InNumSlices) noexcept
-        : Texture(InTexture)
-        , MinLODClamp(InMinLODClamp)
-        , Format(InFormat)
-        , FirstMipLevel(InFirstMipLevel)
-        , NumMips(InNumMips)
-        , FirstArraySlice(InFirstArraySlice)
-        , NumSlices(InNumSlices)
+struct FRHIShaderResourceViewInfo
+{
+public:
+    enum class EType
     {
+        Unknown = 0,
+        BufferSRV,
+        TextureSRV,
+    };
+    
+    struct FBufferSRV
+    {
+        constexpr bool operator==(const FBufferSRV& Other) const noexcept = default;
+
+        NODISCARD friend uint64 GetHashForType(const FBufferSRV& Value)
+        {
+            uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
+            HashCombine(Hash, UnderlyingTypeValue(Value.Format));
+            HashCombine(Hash, Value.FirstElement);
+            HashCombine(Hash, Value.NumElements);
+            return Hash;
+        }
+
+        FRHIBuffer*      Buffer;
+        EBufferSRVFormat Format;
+        uint32           FirstElement;
+        uint32           NumElements;
+    };
+
+    struct FTextureSRV
+    {
+        constexpr bool operator==(const FTextureSRV& Other) const noexcept = default;
+
+        NODISCARD friend uint64 GetHashForType(const FTextureSRV& Value)
+        {
+            uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
+            HashCombine(Hash, Value.MinLODClamp);
+            HashCombine(Hash, UnderlyingTypeValue(Value.Format));
+            HashCombine(Hash, Value.FirstMipLevel);
+            HashCombine(Hash, Value.NumMips);
+            HashCombine(Hash, Value.FirstArraySlice);
+            HashCombine(Hash, Value.NumSlices);
+            return Hash;
+        }
+
+        FRHITexture* Texture;
+        float        MinLODClamp;
+        EFormat      Format;
+        uint8        FirstMipLevel;
+        uint8        NumMips;
+        uint16       FirstArraySlice;
+        uint16       NumSlices;
+    };
+
+public:
+    static FRHIShaderResourceViewInfo CreateBufferSRV(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements,
+        EBufferSRVFormat InFormat = EBufferSRVFormat::None)
+    {
+        FRHIShaderResourceViewInfo ViewInfo;
+        ViewInfo.Type                   = EType::BufferSRV;
+        ViewInfo.BufferSRV.Buffer       = InBuffer;
+        ViewInfo.BufferSRV.Format       = InFormat;
+        ViewInfo.BufferSRV.FirstElement = InFirstElement;
+        ViewInfo.BufferSRV.NumElements  = InNumElements;
+        return ViewInfo;
     }
 
-    constexpr bool operator==(const FRHITextureSRVInfo& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHITextureSRVInfo& Value)
+	static FRHIShaderResourceViewInfo CreateTextureSRV(FRHITexture* InTexture, EFormat InFormat, uint8 InFirstMipLevel,
+		uint8 InNumMips, uint16 InFirstArraySlice, uint16 InNumSlices, float InMinLODClamp = 0.0f)
     {
-        uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
-        HashCombine(Hash, Value.MinLODClamp);
-        HashCombine(Hash, UnderlyingTypeValue(Value.Format));
-        HashCombine(Hash, Value.FirstMipLevel);
-        HashCombine(Hash, Value.NumMips);
-        HashCombine(Hash, Value.FirstArraySlice);
-        HashCombine(Hash, Value.NumSlices);
-        return Hash;
+        FRHIShaderResourceViewInfo ViewInfo;
+        ViewInfo.Type                       = EType::TextureSRV;
+        ViewInfo.TextureSRV.Texture         = InTexture;
+        ViewInfo.TextureSRV.Format          = InFormat;
+        ViewInfo.TextureSRV.MinLODClamp     = InMinLODClamp;
+        ViewInfo.TextureSRV.FirstMipLevel   = InFirstMipLevel;
+        ViewInfo.TextureSRV.NumMips         = InNumMips;
+        ViewInfo.TextureSRV.FirstArraySlice = InFirstArraySlice;
+        ViewInfo.TextureSRV.NumSlices       = InNumSlices;
+        return ViewInfo;
     }
 
-    FRHITexture* Texture         = nullptr;
-    float        MinLODClamp     = 0.0f;
-    EFormat      Format          = EFormat::Unknown;
-    uint8        FirstMipLevel   = 0;
-    uint8        NumMips         = 0;
-    uint16       FirstArraySlice = 0;
-    uint16       NumSlices       = 0;
+    NODISCARD constexpr bool IsBufferSRV() const { return Type == EType::BufferSRV; }
+    NODISCARD constexpr bool IsTextureSRV() const { return Type == EType::TextureSRV; }
+
+    EType Type = EType::Unknown;
+    union
+    {
+        FBufferSRV  BufferSRV;
+        FTextureSRV TextureSRV;
+    };
 };
 
-struct FRHIBufferSRVInfo
+struct FRHIUnorderedAccessViewInfo
 {
-    constexpr FRHIBufferSRVInfo() noexcept = default;
-
-    constexpr FRHIBufferSRVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferSRVFormat InFormat = EBufferSRVFormat::None) noexcept
-        : Buffer(InBuffer)
-        , Format(InFormat)
-        , FirstElement(InFirstElement)
-        , NumElements(InNumElements)
+public:
+    enum class EType
     {
-    }
+        Unknown = 0,
+        BufferUAV,
+        TextureUAV,
+    };
 
-    constexpr bool operator==(const FRHIBufferSRVInfo& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHIBufferSRVInfo& Value)
+    struct FTextureUAV
     {
-        uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
-        HashCombine(Hash, UnderlyingTypeValue(Value.Format));
-        HashCombine(Hash, Value.FirstElement);
-        HashCombine(Hash, Value.NumElements);
-        return Hash;
-    }
+        constexpr bool operator==(const FTextureUAV& Other) const noexcept = default;
 
-    FRHIBuffer*      Buffer       = nullptr;
-    EBufferSRVFormat Format       = EBufferSRVFormat::None;
-    uint32           FirstElement = 0;
-    uint32           NumElements  = 0;
-};
+        NODISCARD friend uint64 GetHashForType(const FTextureUAV& Value)
+        {
+            uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
+            HashCombine(Hash, UnderlyingTypeValue(Value.Format));
+            HashCombine(Hash, Value.MipLevel);
+            HashCombine(Hash, Value.FirstArraySlice);
+            HashCombine(Hash, Value.NumSlices);
+            return Hash;
+        }
 
-struct FRHITextureUAVInfo
-{
-    constexpr FRHITextureUAVInfo() noexcept = default;
+        FRHITexture* Texture;
+        EFormat      Format;
+        uint8        MipLevel;
+        uint16       FirstArraySlice;
+        uint16       NumSlices;
+    };
 
-    constexpr FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel, uint32 InFirstArraySlice, uint32 InNumSlices) noexcept
-        : Texture(InTexture)
-        , Format(InFormat)
-        , MipLevel(uint8(InMipLevel))
-        , FirstArraySlice(uint16(InFirstArraySlice))
-        , NumSlices(uint16(InNumSlices))
+    struct FBufferUAV
     {
-    }
+        constexpr bool operator==(const FBufferUAV& Other) const noexcept = default;
 
-    constexpr FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel) noexcept
-        : Texture(InTexture)
-        , Format(InFormat)
-        , MipLevel(uint8(InMipLevel))
-        , FirstArraySlice(0)
-        , NumSlices(1)
+        NODISCARD friend uint64 GetHashForType(const FBufferUAV& Value)
+        {
+            uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
+            HashCombine(Hash, UnderlyingTypeValue(Value.Format));
+            HashCombine(Hash, Value.FirstElement);
+            HashCombine(Hash, Value.NumElements);
+            return Hash;
+        }
+
+        FRHIBuffer*      Buffer;
+        EBufferUAVFormat Format;
+        uint32           FirstElement;
+        uint32           NumElements;
+    };
+
+public:
+	static FRHIUnorderedAccessViewInfo CreateBufferUAV(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferUAVFormat InFormat = EBufferUAVFormat::None)
+	{
+        FRHIUnorderedAccessViewInfo ViewInfo;
+		ViewInfo.Type                   = EType::BufferUAV;
+		ViewInfo.BufferUAV.Buffer       = InBuffer;
+		ViewInfo.BufferUAV.Format       = InFormat;
+		ViewInfo.BufferUAV.FirstElement = InFirstElement;
+		ViewInfo.BufferUAV.NumElements  = InNumElements;
+		return ViewInfo;
+	}
+
+	static FRHIUnorderedAccessViewInfo CreateTextureUAV(FRHITexture* InTexture, EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices)
+	{
+        FRHIUnorderedAccessViewInfo ViewInfo;
+		ViewInfo.Type                       = EType::TextureUAV;
+		ViewInfo.TextureUAV.Texture         = InTexture;
+		ViewInfo.TextureUAV.Format          = InFormat;
+		ViewInfo.TextureUAV.MipLevel        = InMipLevel;
+		ViewInfo.TextureUAV.FirstArraySlice = InFirstArraySlice;
+		ViewInfo.TextureUAV.NumSlices       = InNumSlices;
+		return ViewInfo;
+	}
+
+    NODISCARD constexpr bool IsBufferUAV() const { return Type == EType::BufferUAV; }
+    NODISCARD constexpr bool IsTextureUAV() const { return Type == EType::TextureUAV; }
+
+    EType Type = EType::Unknown;
+    union
     {
-    }
-
-    constexpr bool operator==(const FRHITextureUAVInfo& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHITextureUAVInfo& Value)
-    {
-        uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
-        HashCombine(Hash, UnderlyingTypeValue(Value.Format));
-        HashCombine(Hash, Value.MipLevel);
-        HashCombine(Hash, Value.FirstArraySlice);
-        HashCombine(Hash, Value.NumSlices);
-        return Hash;
-    }
-
-    FRHITexture* Texture         = nullptr;
-    EFormat      Format          = EFormat::Unknown;
-    uint8        MipLevel        = 0;
-    uint16       FirstArraySlice = 0;
-    uint16       NumSlices       = 0;
-};
-
-struct FRHIBufferUAVInfo
-{
-    constexpr FRHIBufferUAVInfo() noexcept = default;
-
-    constexpr FRHIBufferUAVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferUAVFormat InFormat = EBufferUAVFormat::None) noexcept
-        : Buffer(InBuffer)
-        , Format(InFormat)
-        , FirstElement(InFirstElement)
-        , NumElements(InNumElements)
-    {
-    }
-
-    constexpr bool operator==(const FRHIBufferUAVInfo& Other) const noexcept = default;
-
-    NODISCARD friend uint64 GetHashForType(const FRHIBufferUAVInfo& Value)
-    {
-        uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
-        HashCombine(Hash, UnderlyingTypeValue(Value.Format));
-        HashCombine(Hash, Value.FirstElement);
-        HashCombine(Hash, Value.NumElements);
-        return Hash;
-    }
-
-    FRHIBuffer*      Buffer       = nullptr;
-    EBufferUAVFormat Format       = EBufferUAVFormat::None;
-    uint32           FirstElement = 0;
-    uint32           NumElements  = 0;
+        FBufferUAV  BufferUAV;
+        FTextureUAV TextureUAV;
+    };
 };
 
 class FRHIResourceView : public FRHIResource
@@ -260,20 +301,12 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
-NODISCARD constexpr EFormat SafeGetFormat(FRHITexture* Texture)
-{
-    return Texture ? Texture->GetFormat() : EFormat::Unknown;
-}
-
 struct FRHIRenderTargetView
 {
     FRHIRenderTargetView() noexcept = default;
 
-    FRHIRenderTargetView(
-        FRHITexture*           InTexture,
-        EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
-        const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
+    FRHIRenderTargetView(FRHITexture* InTexture, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FFloatColor& InClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(0)
@@ -285,14 +318,8 @@ struct FRHIRenderTargetView
     {
     }
 
-    FRHIRenderTargetView(
-        FRHITexture*           InTexture,
-        EFormat                InFormat,
-        uint32                 InArrayIndex,
-        uint32                 InMipLevel,
-        EAttachmentLoadAction  InLoadAction,
-        EAttachmentStoreAction InStoreAction,
-        const FFloatColor&     InClearValue) noexcept
+    FRHIRenderTargetView(FRHITexture* InTexture, EFormat InFormat, uint32 InArrayIndex, uint32 InMipLevel, EAttachmentLoadAction InLoadAction,
+        EAttachmentStoreAction InStoreAction, const FFloatColor& InClearValue) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -306,25 +333,23 @@ struct FRHIRenderTargetView
 
     bool operator==(const FRHIRenderTargetView& Other) const noexcept = default;
 
-    FRHITexture*           Texture        = 0;
-    FFloatColor            ClearValue     = { };
-    uint16                 ArrayIndex     = 0;
-    uint16                 NumArraySlices = 0;
-    EFormat                Format         = EFormat::Unknown;
-    uint8                  MipLevel       = 0;
-    EAttachmentLoadAction  LoadAction     = EAttachmentLoadAction::DontCare;
-    EAttachmentStoreAction StoreAction    = EAttachmentStoreAction::DontCare;
+    FRHITexture* Texture        = 0;
+    FFloatColor  ClearValue     = { };
+    uint16       ArrayIndex     = 0;
+    uint16       NumArraySlices = 0;
+    EFormat      Format         = EFormat::Unknown;
+    uint8        MipLevel       = 0;
+
+    EAttachmentLoadAction  LoadAction  = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction StoreAction = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIDepthStencilView
 {
     FRHIDepthStencilView() noexcept = default;
 
-    explicit FRHIDepthStencilView(
-        FRHITexture*              InTexture,
-        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
+    explicit FRHIDepthStencilView(FRHITexture* InTexture, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& InClearValue = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(0)
@@ -336,13 +361,8 @@ struct FRHIDepthStencilView
     {
     }
 
-    FRHIDepthStencilView(
-        FRHITexture*              InTexture,
-        uint16                    InArrayIndex,
-        uint8                     InMipLevel,
-        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
+    FRHIDepthStencilView(FRHITexture* InTexture, uint16 InArrayIndex, uint8 InMipLevel, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& InClearValue = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -354,14 +374,8 @@ struct FRHIDepthStencilView
     {
     }
 
-    FRHIDepthStencilView(
-        FRHITexture*              InTexture,
-        uint16                    InArrayIndex,
-        uint8                     InMipLevel,
-        EFormat                   InFormat,
-        EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
-        EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
+    FRHIDepthStencilView(FRHITexture* InTexture, uint16 InArrayIndex, uint8 InMipLevel, EFormat InFormat, EAttachmentLoadAction InLoadAction = EAttachmentLoadAction::Clear,
+        EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store, const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -375,14 +389,15 @@ struct FRHIDepthStencilView
 
     bool operator==(const FRHIDepthStencilView& Other) const noexcept = default;
 
-    FRHITexture*           Texture        = nullptr;
-    FDepthStencilValue     ClearValue     = { };
-    uint16                 ArrayIndex     = 0;
-    uint16                 NumArraySlices = 0;
-    EFormat                Format         = EFormat::Unknown;
-    uint8                  MipLevel       = 0;
-    EAttachmentLoadAction  LoadAction     = EAttachmentLoadAction::DontCare;
-    EAttachmentStoreAction StoreAction    = EAttachmentStoreAction::DontCare;
+    FRHITexture*       Texture        = nullptr;
+    FDepthStencilValue ClearValue     = { };
+    uint16             ArrayIndex     = 0;
+    uint16             NumArraySlices = 0;
+    EFormat            Format         = EFormat::Unknown;
+    uint8              MipLevel       = 0;
+
+    EAttachmentLoadAction  LoadAction  = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction StoreAction = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIBeginRenderPassInfo
@@ -397,26 +412,30 @@ struct FRHIBeginRenderPassInfo
         , RenderTargets(InRenderTargets)
         , NumRenderTargets(InNumRenderTargets)
         , StaticShadingRate(EShadingRate::VRS_1x1)
-        , ViewInstancingInfo()
+        , ViewInstancingState()
     {
     }
 
-    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilView InDepthStencilView, FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1) noexcept
+    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilView InDepthStencilView,
+        FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1) noexcept
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
         , RenderTargets(InRenderTargets)
         , NumRenderTargets(InNumRenderTargets)
         , StaticShadingRate(InStaticShadingRate)
-        , ViewInstancingInfo()
+        , ViewInstancingState()
     {
     }
 
     bool operator==(const FRHIBeginRenderPassInfo& Other) const noexcept = default;
 
-    FRHITexture*         ShadingRateTexture = nullptr;
-    FRHIDepthStencilView DepthStencilView   = { };
-    FRenderTargetViews   RenderTargets      = { };
-    uint32               NumRenderTargets   = 0;
-    EShadingRate         StaticShadingRate  = EShadingRate::VRS_1x1;
-    FViewInstancingInfo  ViewInstancingInfo = { };
+    FRHIDepthStencilView DepthStencilView = { };
+
+    FRenderTargetViews RenderTargets = { };
+    uint32 NumRenderTargets = 0;
+
+    EShadingRate StaticShadingRate  = EShadingRate::VRS_1x1;
+    FRHITexture* ShadingRateTexture = nullptr;
+    
+    FRHIViewInstancingState ViewInstancingState = { };
 };

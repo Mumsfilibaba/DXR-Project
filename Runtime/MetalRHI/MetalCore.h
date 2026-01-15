@@ -3,7 +3,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Debug.h"
 #include "RHI/RHIResources.h"
-
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
 
@@ -329,7 +328,7 @@ constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, b
 constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     MTLTextureUsage Result = MTLTextureUsageUnknown;
-    if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccess))
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccessTexture))
     {
         Result |= MTLTextureUsageShaderWrite;
     }
@@ -341,7 +340,7 @@ constexpr MTLTextureUsage ConvertTextureFlags(ETextureUsageFlags Flag)
     {
         Result |= MTLTextureUsageRenderTarget;
     }
-    if (IsEnumFlagSet(Flag, ETextureUsageFlags::ShaderResource))
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::ShaderResourceTexture))
     {
         Result |= MTLTextureUsageShaderRead;
     }

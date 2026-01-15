@@ -3,6 +3,9 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "VulkanRHI/VulkanCore.h"
 
+// Need the beta header for VK_KHR_portability_subset
+#include <vulkan/vulkan_beta.h>
+
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct VulkanPlatformBase
@@ -11,9 +14,6 @@ struct VulkanPlatformBase
     {
         return
         {
-        #if VK_KHR_device_group_creation
-            VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME,
-        #endif
         #if VK_EXT_surface_maintenance1
             VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME,
         #endif
@@ -27,25 +27,8 @@ struct VulkanPlatformBase
     {
         return
         {
-            // NOTE: This extension must be enabled on platforms that has it available
-            "VK_KHR_portability_subset",
-        #if VK_KHR_get_memory_requirements2
-            VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_buffer_device_address
-            VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_maintenance1
-            VK_KHR_MAINTENANCE1_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_maintenance2
-            VK_KHR_MAINTENANCE2_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_maintenance3
-            VK_KHR_MAINTENANCE3_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_maintenance4
-            VK_KHR_MAINTENANCE_4_EXTENSION_NAME,
+        #if VK_KHR_portability_subset
+            VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, // NOTE: This extension must be enabled on platforms that has it available
         #endif
         #if VK_KHR_maintenance5
             VK_KHR_MAINTENANCE_5_EXTENSION_NAME,
@@ -68,12 +51,6 @@ struct VulkanPlatformBase
         #if VK_KHR_pipeline_library
             VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME,
         #endif
-        #if VK_KHR_timeline_semaphore
-            VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_shader_draw_parameters
-            VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,
-        #endif
         #if VK_KHR_push_descriptor
             VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
         #endif
@@ -89,32 +66,8 @@ struct VulkanPlatformBase
         #if VK_KHR_ray_tracing_maintenance1
             VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME,
         #endif
-        #if VK_KHR_dedicated_allocation
-            VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_spirv_1_4
-            VK_KHR_SPIRV_1_4_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_shader_float_controls
-            VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_device_group
-            VK_KHR_DEVICE_GROUP_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_synchronization2
-            VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
-        #endif
         #if VK_KHR_fragment_shading_rate
             VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, 
-        #endif
-        #if VK_KHR_multiview
-            VK_KHR_MULTIVIEW_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_dynamic_rendering
-            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-        #endif
-        #if VK_EXT_descriptor_indexing
-            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
         #endif
         #if VK_EXT_memory_budget
             VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
@@ -131,29 +84,27 @@ struct VulkanPlatformBase
         #if VK_EXT_conservative_rasterization
             VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME,
         #endif
-        #if VK_EXT_robustness2
-            VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,
+        #if VK_KHR_robustness2
+            VK_KHR_ROBUSTNESS_2_EXTENSION_NAME,
         #endif
-        #if VK_EXT_pipeline_creation_cache_control
-            VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME,
+        #if VK_EXT_swapchain_maintenance1
+        VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_sample_locations
+            VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_fragment_shader_interlock
+			VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME,
         #endif
         #if VK_NV_ray_tracing_invocation_reorder
             VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
-        #endif
-        #if VK_EXT_swapchain_maintenance1
-            VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME,
         #endif
         };
     }
     
     static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions()
     {
-        return
-        {
-        #if VK_KHR_get_physical_device_properties2
-            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-        #endif
-        };
+        return TArray<const CHAR*>();
     }
 
     static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceLayers()

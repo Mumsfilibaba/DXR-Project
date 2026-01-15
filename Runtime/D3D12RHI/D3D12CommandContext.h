@@ -38,8 +38,6 @@ public:
     FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
     ~FD3D12CommandContext();
 
-public:
-
     // IRHICommandContext Interface
     virtual void BeginFrame() override final { }
     virtual void EndFrame() override final { }
@@ -62,7 +60,7 @@ public:
     virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;
     virtual void SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class FRHIComputePipelineState* PipelineState) override final;
-    virtual void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
+    virtual void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) override final;
     virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
     virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) override final;
     virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
@@ -106,12 +104,12 @@ public:
         return reinterpret_cast<void*>(&CommandList);
     }
 
-public:
     bool Initialize();
     void ObtainCommandList();
     void FinishCommandList(bool bFlushAllocator);
     void SplitCommandList(bool bFlushAllocator, bool bWaitForQueue);
     void SplitCommandListAndResetState(bool bFlushAllocator, bool bWaitForQueue);
+    
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
     FD3D12CommandList& GetCommandList() 
@@ -120,10 +118,10 @@ public:
         return *CommandList; 
     }
 
-    FD3D12CommandPayload& GetCommandPayload()
+    FD3D12CommandSubmission& GetSubmissionContext()
     {
-        CHECK(CommandPayload != nullptr);
-        return *CommandPayload;
+        CHECK(CommandSubmission != nullptr);
+        return *CommandSubmission;
     }
 
     FResourceBarrierBatcher& GetResourceBarrierBatcher()
@@ -151,20 +149,20 @@ private:
 
     FD3D12CommandList*        CommandList;
     FD3D12CommandAllocator*   CommandAllocator;
-    FD3D12CommandPayload*     CommandPayload;
+    FD3D12CommandSubmission*  CommandSubmission;
     FD3D12CommandContextState ContextState;
     FD3D12QueryAllocator      TimingQueryAllocator;
     FD3D12QueryAllocator      OcclusionQueryAllocator;
     FResourceBarrierBatcher   ResourceBarrierBatcher;
     ED3D12CommandQueueType    QueueType;
 
-    uint32 NumDrawCalls;
+    uint32                    NumDrawCalls;
 
     // Keeps track of any programmatic captures currently being done
-    bool bIsCapturing : 1;
+    bool                      bIsCapturing : 1;
     // Keeps track of the recording state of the context. I.e has StartContext been called
-    bool bIsRecording : 1;
+    bool                      bIsRecording : 1;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection CommandContextCS;
+    FCriticalSection          CommandContextCS;
 };

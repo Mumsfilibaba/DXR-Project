@@ -75,7 +75,7 @@ public:
     virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;
     virtual void SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class FRHIComputePipelineState* PipelineState) override final;
-    virtual void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
+    virtual void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) override final;
     virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
     virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) override final;
     virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
@@ -124,6 +124,17 @@ public:
     void FinishCommandBuffer(bool bFlushPool);
     void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
 
+    bool IsRecording()        const { return ContextPhase >= ECommandContextPhase::Recording; }
+    bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
+    
+    bool NeedsCommandBuffer() const
+    {
+        return CommandBuffer == nullptr;
+    }
+
+    FBarrierBatcher&          GetBarrierBatcher()    { return BarrierBatcher; }
+    FVulkanCommandSubmission& GetSubmissionContext() { return *CommandSubmission; }
+    
     FVulkanQueue& GetCommandQueue() const
     {
         return Queue;
@@ -135,34 +146,18 @@ public:
         return *CommandBuffer;
     }
 
-    FBarrierBatcher& GetBarrierBatcher()
-    {
-        return BarrierBatcher;
-    }
-
-    FVulkanCommandPayload& GetCommandPayload()
-    {
-        return *CommandPayload;
-    }
-
     FVulkanFence* GetSubmissionFence() const
     {
-        return CommandPayload ? CommandPayload->Fence : nullptr;
-    }
-
-    bool IsRecording() const { return ContextPhase >= ECommandContextPhase::Recording; }
-    bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
-    
-    bool NeedsCommandBuffer() const
-    {
-        return CommandBuffer == nullptr;
+        return CommandSubmission ? CommandSubmission->Fence : nullptr;
     }
 
 private:
+    void ForceFlushCommandPool();
+
     FVulkanQueue&              Queue;
     FVulkanCommandPool*        CommandPool;
     FVulkanCommandBuffer*      CommandBuffer;
-    FVulkanCommandPayload*     CommandPayload;
+    FVulkanCommandSubmission*  CommandSubmission;
     FVulkanQueryAllocator      TimestampQueryAllocator;
     FVulkanQueryAllocator      OcclusionQueryAllocator;
     FBarrierBatcher            BarrierBatcher;
@@ -170,5 +165,5 @@ private:
     FVulkanCommandContextState ContextState;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection CommandContextCS;
+    FCriticalSection           CommandContextCS;
 };

@@ -48,9 +48,10 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInitializer TemporalAAInitializer(TemporalAAShader.Get());
-        TemporalAAPSO = FRHI::Get()->CreateComputePipelineState(TemporalAAInitializer);
+        FRHIComputePipelineStateInfo TemporalAA_PSOInfo;
+        TemporalAA_PSOInfo.Shader = TemporalAAShader.Get();
         
+        TemporalAAPSO = FRHI::Get()->CreateComputePipelineState(TemporalAA_PSOInfo);
         if (!TemporalAAPSO)
         {
             DEBUG_BREAK();
@@ -62,7 +63,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
         }
     }
 
-    FRHISamplerStateInfo SamplerInfo(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
+    FRHISamplerStateInfo SamplerInfo = FRHISamplerStateInfo::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
     LinearSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
     if (!LinearSampler)
     {
@@ -120,7 +121,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 Width, uint32 Height)
 {
     // TAA History-Buffer
-    FRHITextureInfo TAABufferInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);
+    FRHITextureInfo TAABufferInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture);
 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)

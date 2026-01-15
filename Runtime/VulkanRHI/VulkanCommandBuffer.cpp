@@ -15,12 +15,13 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanComma
 
 FVulkanCommandBuffer::~FVulkanCommandBuffer()
 {
+    CommandBuffer.FreeCommandBuffer(GetDevice()->GetVkDevice(), OwnerPool->GetVkCommandPool());
     CommandBuffer = VulkanInternal::FCommandBuffer();
 }
 
 bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
 {
-    VkCommandBufferAllocateInfo CommandBufferAllocateInfo = { };
+    VkCommandBufferAllocateInfo CommandBufferAllocateInfo = {};
     CommandBufferAllocateInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     CommandBufferAllocateInfo.pNext              = nullptr;
     CommandBufferAllocateInfo.commandPool        = OwnerPool->GetVkCommandPool();
@@ -55,7 +56,7 @@ bool FVulkanCommandBuffer::Reset()
 
 bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
 {
-    VkCommandBufferBeginInfo BeginInfo = { };
+    VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     BeginInfo.flags = Flags;
 
@@ -107,7 +108,7 @@ FVulkanCommandPool::~FVulkanCommandPool()
 
 bool FVulkanCommandPool::Initialize(VkCommandPoolCreateFlags InFlags)
 {
-    VkCommandPoolCreateInfo CommandPoolCreateInfo = { };
+    VkCommandPoolCreateInfo CommandPoolCreateInfo = {};
     CommandPoolCreateInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     CommandPoolCreateInfo.pNext            = nullptr;
     CommandPoolCreateInfo.flags            = InFlags;
@@ -186,7 +187,7 @@ FVulkanCommandBuffer* FVulkanCommandPool::GetOrCreateBuffer()
             CommandBuffer->Reset();
         }
     }
-    
+
     return CommandBuffer;
 }
 

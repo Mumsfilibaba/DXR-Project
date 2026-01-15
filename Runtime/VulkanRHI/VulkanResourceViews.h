@@ -46,6 +46,7 @@ public:
         VkAccelerationStructureKHR AccelerationStructure;
     };
 
+public:
     FVulkanResourceView(FVulkanDevice* InDevice);
     virtual ~FVulkanResourceView();
 
@@ -83,10 +84,9 @@ public:
     FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanShaderResourceView() = default;
 
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    bool InitializeSRV(const FRHIShaderResourceViewInfo& InInfo);
 
-    bool InitializeTextureSRV(const FRHITextureSRVInfo& InInfo);
-    bool InitializeBufferSRV(const FRHIBufferSRVInfo& InInfo);
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 };
 
 class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanResourceView
@@ -95,8 +95,7 @@ public:
     FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanUnorderedAccessView() = default;
 
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    bool InitializeUAV(const FRHIUnorderedAccessViewInfo& InInfo);
 
-    bool InitializeTextureUAV(const FRHITextureUAVInfo& InInfo);
-    bool InitializeBufferUAV(const FRHIBufferUAVInfo& InInfo);
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 };

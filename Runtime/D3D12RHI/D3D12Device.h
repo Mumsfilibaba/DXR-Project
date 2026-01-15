@@ -24,25 +24,59 @@ class FD3D12QueryHeapManager;
 typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
-/* D3D12 Feature Support */
+// -------------------------------------------------------------------------------------------
+// D3D12 Feature Support
+// -------------------------------------------------------------------------------------------
 
+// -------------------------------------------------------------------------------------------
+// General Capability Flags
+// -------------------------------------------------------------------------------------------
 extern D3D12RHI_API bool GD3D12ForceBinding;
 extern D3D12RHI_API bool GD3D12SupportPipelineCache;
 extern D3D12RHI_API bool GD3D12SupportTightAlignment;
 extern D3D12RHI_API bool GD3D12SupportGPUUploadHeaps;
-extern D3D12RHI_API bool GD3D12SupportBindless;
+extern D3D12RHI_API bool GD3D12SupportsBindless;
 extern D3D12RHI_API bool GD3D12SupportEnhancedBarriers;
 
-extern D3D12RHI_API D3D12_RESOURCE_BINDING_TIER      GD3D12ResourceBindingTier;
-extern D3D12RHI_API D3D12_RAYTRACING_TIER            GD3D12RayTracingTier;
-extern D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER GD3D12VariableRateShadingTier;
-extern D3D12RHI_API D3D12_MESH_SHADER_TIER           GD3D12MeshShaderTier;
-extern D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER      GD3D12SamplerFeedbackTier;
-extern D3D12RHI_API D3D12_VIEW_INSTANCING_TIER       GD3D12ViewInstancingTier;
-extern D3D12RHI_API D3D_SHADER_MODEL                 GD3D12HighestShaderModel;
+// -------------------------------------------------------------------------------------------
+// Core Feature Tiers
+// -------------------------------------------------------------------------------------------
+extern D3D12RHI_API D3D12_RESOURCE_BINDING_TIER              GD3D12ResourceBindingTier;
+extern D3D12RHI_API D3D12_RESOURCE_HEAP_TIER                 GD3D12ResourceHeapTier;
+extern D3D12RHI_API D3D12_RAYTRACING_TIER                    GD3D12RayTracingTier;
+extern D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER         GD3D12VariableRateShadingTier;
+extern D3D12RHI_API D3D12_MESH_SHADER_TIER                   GD3D12MeshShaderTier;
+extern D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER              GD3D12SamplerFeedbackTier;
+extern D3D12RHI_API D3D12_VIEW_INSTANCING_TIER               GD3D12ViewInstancingTier;
+extern D3D12RHI_API D3D12_CONSERVATIVE_RASTERIZATION_TIER    GD3D12ConservativeRasterizationTier;
+extern D3D12RHI_API D3D12_PROGRAMMABLE_SAMPLE_POSITIONS_TIER GD3D12ProgrammableSamplePositionsTier;
+extern D3D12RHI_API D3D12_WORK_GRAPHS_TIER                   GD3D12WorkGraphsTier;
+extern D3D12RHI_API D3D12_EXECUTE_INDIRECT_TIER              GD3D12ExecuteIndirectTier;
+extern D3D12RHI_API D3D12_TILED_RESOURCES_TIER               GD3D12TiledResourcesTier;
+extern D3D12RHI_API D3D_ROOT_SIGNATURE_VERSION               GD3D12RootSignatureVersion;
+extern D3D12RHI_API D3D_SHADER_MODEL                         GD3D12HighestShaderModel;
 
+// -------------------------------------------------------------------------------------------
+// Boolean Capability Flags
+// -------------------------------------------------------------------------------------------
+extern D3D12RHI_API bool GD3D12RasterizerOrderViewsSupported;
+extern D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats;
+extern D3D12RHI_API bool GD3D12DepthBoundsTestSupported;
+extern D3D12RHI_API bool GD3D12IsArchitectureUMA;
+extern D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA;
+
+// -------------------------------------------------------------------------------------------
+// Descriptor / Heap Limits
+// -------------------------------------------------------------------------------------------
 extern D3D12RHI_API uint32 GD3D12MaxSamplerDescriptorHeapSize;
 extern D3D12RHI_API uint32 GD3D12MaxResourceDescriptorHeapSize;
+
+// -------------------------------------------------------------------------------------------
+// GPU Virtual Address / Command Capabilities
+// -------------------------------------------------------------------------------------------
+extern D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerResource;
+extern D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerProcess;
+extern D3D12RHI_API D3D12_COMMAND_LIST_SUPPORT_FLAGS GD3D12WriteBufferImmediateSupportFlags;
 
 class FD3D12Adapter
 {
@@ -64,7 +98,7 @@ public:
 
     FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const
     {
-        return DXGraphicsAnalysis.Get();
+        return GraphicsAnalysisInterface.Get();
     }
 
     FORCEINLINE IDXGIAdapter1* GetDXGIAdapter() const 
@@ -85,23 +119,19 @@ public:
 #endif
 
 private:
-    uint32 AdapterIndex;
-    
-    bool bAllowTearing;
-    bool bEnableDebugLayer;
-
-    TComPtr<IDXGIAdapter1> Adapter;
-    TComPtr<IDXGIAdapter3> Adapter3;
-
-    TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
-    
-    TComPtr<IDXGIFactory2> Factory;
-    TComPtr<IDXGIFactory5> Factory5;
+    TComPtr<IDXGIAdapter1>       Adapter;
+    TComPtr<IDXGIAdapter3>       Adapter3;
+    TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
+    TComPtr<IDXGIFactory2>       Factory;
+    TComPtr<IDXGIFactory5>       Factory5;
 #if WIN10_BUILD_17134
-    TComPtr<IDXGIFactory6> Factory6;
+    TComPtr<IDXGIFactory6>       Factory6;
 #endif
 
     DXGI_ADAPTER_DESC1 AdapterDesc;
+    uint32             AdapterIndex;
+    bool               bAllowTearing;
+    bool               bEnableDebugLayer;
 };
 
 struct FD3D12DefaultDescriptors
@@ -183,11 +213,11 @@ public:
 
 private:
     bool CreateDevice();
-    bool CreateCommandManagers();
+    bool CreateCommandQueues();
     bool CreateDefaultResources();
-    void QueryFeatureSupport();
+    void QueryDeviceFeatureSupport();
 
-    FD3D12Adapter* const Adapter;
+    FD3D12Adapter* const           Adapter;
 
     FD3D12OnlineDescriptorHeap*    GlobalResourceHeap;
     FD3D12OnlineDescriptorHeap*    GlobalSamplerHeap;
@@ -217,9 +247,10 @@ private:
 
     D3D_FEATURE_LEVEL              MinFeatureLevel;
     D3D_FEATURE_LEVEL              ActiveFeatureLevel;
+    uint32                         NodeMask;
+    uint32                         NodeCount;
 
-    TComPtr<ID3D12Device> D3D12Device;
-
+    TComPtr<ID3D12Device>  D3D12Device;
 #if WIN10_BUILD_14393
     TComPtr<ID3D12Device1> D3D12Device1;
 #endif
@@ -247,7 +278,4 @@ private:
 #if WIN11_BUILD_22000
     TComPtr<ID3D12Device9> D3D12Device9;
 #endif
-
-    uint32 NodeMask;
-    uint32 NodeCount;
 };

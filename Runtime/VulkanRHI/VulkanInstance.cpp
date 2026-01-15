@@ -16,7 +16,8 @@ static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType, const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
 {
     if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
@@ -51,7 +52,7 @@ FVulkanInstance::~FVulkanInstance()
     Release();
 }
 
-bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
+bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo)
 {
     DriverHandle = VulkanPlatform::LoadVulkanLibrary();
     if (!DriverHandle)
@@ -141,26 +142,18 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     TArray<const CHAR*> EnabledLayerNames;
     for (const VkLayerProperties& LayerProperty : LayerProperties)
     {
-        const auto CompareLayer = [=](const CHAR* Other) -> bool
-        {
-            return FCString::Strcmp(LayerProperty.layerName, Other) == 0;
-        };
-
-        if (InstanceDesc.RequiredLayerNames.ContainsWithPredicate(CompareLayer) || InstanceDesc.OptionalLayerNames.ContainsWithPredicate(CompareLayer))
+        const auto MatchLayer = [=](const CHAR* Other) -> bool { return FCString::Strcmp(LayerProperty.layerName, Other) == 0; };
+        if (CreateInfo.RequiredLayerNames.ContainsWithPredicate(MatchLayer) || CreateInfo.OptionalLayerNames.ContainsWithPredicate(MatchLayer))
         {
             EnabledLayerNames.Add(LayerProperty.layerName);
             LayerNames.Emplace(LayerProperty.layerName);
         }
     }
 
-    for (const CHAR* LayerName : InstanceDesc.RequiredLayerNames)
+    for (const CHAR* LayerName : CreateInfo.RequiredLayerNames)
     {
-        const auto CompareLayer = [=](const CHAR* Other) -> bool
-        {
-            return FCString::Strcmp(LayerName, Other) == 0;
-        };
-        
-        if (!EnabledLayerNames.ContainsWithPredicate(CompareLayer))
+        const auto MatchLayer = [=](const CHAR* Other) -> bool { return FCString::Strcmp(LayerName, Other) == 0; };
+        if (!EnabledLayerNames.ContainsWithPredicate(MatchLayer))
         {
             VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", LayerName);
             return false;
@@ -171,26 +164,19 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     TArray<const CHAR*> EnabledExtensionNames;
     for (const VkExtensionProperties& ExtensionProperty : ExtensionProperties)
     {
-        const auto CompareExtension = [=](const CHAR* Other) -> bool
-        {
-            return FCString::Strcmp(ExtensionProperty.extensionName, Other) == 0;
-        };
-
-        if (InstanceDesc.RequiredExtensionNames.ContainsWithPredicate(CompareExtension) || InstanceDesc.OptionalExtensionNames.ContainsWithPredicate(CompareExtension))
+        const auto MatchExtension = [=](const CHAR* Other) -> bool { return FCString::Strcmp(ExtensionProperty.extensionName, Other) == 0; };
+        if (CreateInfo.RequiredExtensionNames.ContainsWithPredicate(MatchExtension) || 
+            CreateInfo.OptionalExtensionNames.ContainsWithPredicate(MatchExtension))
         {
             EnabledExtensionNames.Add(ExtensionProperty.extensionName);
             ExtensionNames.Emplace(ExtensionProperty.extensionName);
         }
     }
 
-    for (const CHAR* ExtensionName : InstanceDesc.RequiredExtensionNames)
+    for (const CHAR* ExtensionName : CreateInfo.RequiredExtensionNames)
     {
-        const auto CompareExtension = [=](const CHAR* Other) -> bool
-        {
-            return FCString::Strcmp(ExtensionName, Other) == 0;
-        };
-        
-        if (!EnabledExtensionNames.ContainsWithPredicate(CompareExtension))
+        const auto MatchExtension = [=](const CHAR* Other) -> bool { return FCString::Strcmp(ExtensionName, Other) == 0; };
+        if (!EnabledExtensionNames.ContainsWithPredicate(MatchExtension))
         {
             VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", ExtensionName);
             return false;
@@ -220,27 +206,23 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
         }
     }
 
-    VkApplicationInfo ApplicationInfo;
-    FMemory::Memzero(&ApplicationInfo);
-
+    VkApplicationInfo ApplicationInfo = {};
     ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     ApplicationInfo.pNext              = nullptr;
-    ApplicationInfo.apiVersion         = VK_API_VERSION_1_2;
+    ApplicationInfo.apiVersion         = VK_API_VERSION_1_3;
     ApplicationInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
     ApplicationInfo.pApplicationName   = "DXR-Project";
     ApplicationInfo.pEngineName        = "DXR-Engine";
     ApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 
-    VkInstanceCreateInfo InstanceCreateInfo;
-    FMemory::Memzero(&InstanceCreateInfo);
-
-    InstanceCreateInfo.sType                    = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    InstanceCreateInfo.flags                    = 0;
-    InstanceCreateInfo.pApplicationInfo         = &ApplicationInfo;
-    InstanceCreateInfo.enabledExtensionCount    = EnabledExtensionNames.Size();
-    InstanceCreateInfo.ppEnabledExtensionNames  = EnabledExtensionNames.Data();
-    InstanceCreateInfo.enabledLayerCount        = EnabledLayerNames.Size();
-    InstanceCreateInfo.ppEnabledLayerNames      = EnabledLayerNames.Data();
+    VkInstanceCreateInfo InstanceCreateInfo = {};
+    InstanceCreateInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    InstanceCreateInfo.flags                   = 0;
+    InstanceCreateInfo.pApplicationInfo        = &ApplicationInfo;
+    InstanceCreateInfo.enabledExtensionCount   = EnabledExtensionNames.Size();
+    InstanceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
+    InstanceCreateInfo.enabledLayerCount       = EnabledLayerNames.Size();
+    InstanceCreateInfo.ppEnabledLayerNames     = EnabledLayerNames.Data();
 
 #if VK_KHR_portability_enumeration
     if (IsExtensionEnabled(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME))
@@ -248,8 +230,6 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
         InstanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
     }
 #endif
-    
-    FVulkanStructureHelper InstanceCreateHelper(InstanceCreateInfo);
 
     bool bEnableDebugLayer = false;
     if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
@@ -258,9 +238,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
     }
 
 #if VK_EXT_debug_utils
-    VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo;
-    FMemory::Memzero(&DebugMessengerCreateInfo);
-
+    VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo = {};
     if (bEnableDebugLayer)
     {
         DebugMessengerCreateInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -270,9 +248,12 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
         DebugMessengerCreateInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         DebugMessengerCreateInfo.pfnUserCallback = DebugLayerCallback;
         DebugMessengerCreateInfo.pUserData       = nullptr;
-
-        InstanceCreateHelper.AddNext(DebugMessengerCreateInfo);
     }
+#endif
+
+    FVulkanStructChain InstanceCreateChain(InstanceCreateInfo);
+#if VK_EXT_debug_utils
+    InstanceCreateChain.AddNext(DebugMessengerCreateInfo);
 #endif
 
     Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
@@ -282,9 +263,9 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
         return false;
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////*/
+    // -------------------------------------------------------------------------------------------
     // Load functions that require the instance to be created
-
+    // -------------------------------------------------------------------------------------------
     VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyInstance);
 
     // Initialize DebugUtils extension helper

@@ -12,15 +12,15 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "PipelineCache.vkpsocache");
 
-FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
-    : FRHIVertexLayout()
-	, InitializerList(InInitializerList)
+FVulkanInputLayout::FVulkanInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+    : FRHIInputLayout()
+	, InputElements(InInputElements)
     , VertexInputBindingDescriptions()
     , VertexInputAttributeDescriptions()
     , CreateInfo{}
 {
     // Create a binding for each input-slot
-    for (const FVertexElement& Element : InInitializerList)
+    for (const FRHIInputElementInfo& Element : InInputElements)
     {
         // Search for a binding for this input slot
         bool bCreateBinding = true;
@@ -48,17 +48,17 @@ FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& 
     
     VertexInputBindingDescriptions.Shrink();
 
-    const int32 NumElements = InInitializerList.Size();
+    const int32 NumElements = InInputElements.Size();
     VertexInputAttributeDescriptions.Resize(NumElements);
 
     // Create a input-attribute for each element
     for (int32 Index = 0; Index < NumElements; Index++)
     {
         VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];
-        Attribute.format   = ConvertFormat(InInitializerList[Index].Format);
-        Attribute.binding  = InInitializerList[Index].InputSlot;
-        Attribute.location = InInitializerList[Index].ShaderElementIndex;
-        Attribute.offset   = InInitializerList[Index].ByteOffset;
+        Attribute.format   = ConvertFormat(InInputElements[Index].Format);
+        Attribute.binding  = InInputElements[Index].InputSlot;
+        Attribute.location = InInputElements[Index].ShaderElementIndex;
+        Attribute.offset   = InInputElements[Index].ByteOffset;
     }
 
     // VertexInputStateCreateInfo
@@ -78,54 +78,51 @@ FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& 
     }
 }
 
-FVulkanVertexLayout::~FVulkanVertexLayout()
+FVulkanInputLayout::~FVulkanInputLayout()
 {
 }
 
-FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
     : FRHIDepthStencilState()
-    , Initializer(InInitializer)
+    , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
     
     CreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    CreateInfo.depthTestEnable       = InInitializer.bDepthEnable;
-    CreateInfo.depthWriteEnable      = InInitializer.bDepthWriteEnable;
-    CreateInfo.depthCompareOp        = ConvertComparisonFunc(InInitializer.DepthFunc);
+    CreateInfo.depthTestEnable       = InInfo.bDepthEnable;
+    CreateInfo.depthWriteEnable      = InInfo.bDepthWriteEnable;
+    CreateInfo.depthCompareOp        = ConvertComparisonFunc(InInfo.DepthFunc);
     CreateInfo.depthBoundsTestEnable = VK_FALSE;
-    CreateInfo.stencilTestEnable     = InInitializer.bStencilEnable;
-    CreateInfo.front                 = ConvertStencilState(InInitializer.FrontFace);
-    CreateInfo.back                  = ConvertStencilState(InInitializer.BackFace);
+    CreateInfo.stencilTestEnable     = InInfo.bStencilEnable;
+    CreateInfo.front                 = ConvertStencilState(InInfo.FrontFace);
+    CreateInfo.back                  = ConvertStencilState(InInfo.BackFace);
     CreateInfo.minDepthBounds        = 0.0f;
     CreateInfo.maxDepthBounds        = 1.0f;
     
-    CreateInfo.front.compareMask = CreateInfo.back.compareMask = InInitializer.StencilReadMask;
-    CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInitializer.StencilWriteMask;
+    CreateInfo.front.compareMask = CreateInfo.back.compareMask = InInfo.StencilReadMask;
+    CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInfo.StencilWriteMask;
 }
 
 FVulkanDepthStencilState::~FVulkanDepthStencilState()
 {
 }
 
-FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer)
+FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInfo& InInfo)
     : FRHIRasterizerState()
     , FVulkanDeviceChild(InDevice)
-    , Initializer(InInitializer)
+    , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
     
-    // Helper for checking for extensions
-    FVulkanStructureHelper CreateInfoHelper(CreateInfo);
-    
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     CreateInfo.rasterizerDiscardEnable = VK_FALSE;
-    CreateInfo.polygonMode             = ConvertFillMode(InInitializer.FillMode);
-    CreateInfo.cullMode                = ConvertCullMode(InInitializer.CullMode);
-    CreateInfo.frontFace               = InInitializer.bFrontCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
-    CreateInfo.depthBiasEnable         = InInitializer.bEnableDepthBias ? VK_TRUE : VK_FALSE;
-    CreateInfo.depthBiasConstantFactor = InInitializer.DepthBias;
-    CreateInfo.depthBiasClamp          = InInitializer.DepthBiasClamp;
-    CreateInfo.depthBiasSlopeFactor    = InInitializer.SlopeScaledDepthBias;
+    CreateInfo.polygonMode             = ConvertFillMode(InInfo.FillMode);
+    CreateInfo.cullMode                = ConvertCullMode(InInfo.CullMode);
+    CreateInfo.frontFace               = InInfo.bFrontCounterClockwise ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE;
+    CreateInfo.depthBiasEnable         = InInfo.bEnableDepthBias ? VK_TRUE : VK_FALSE;
+    CreateInfo.depthBiasConstantFactor = InInfo.DepthBias;
+    CreateInfo.depthBiasClamp          = InInfo.DepthBiasClamp;
+    CreateInfo.depthBiasSlopeFactor    = InInfo.SlopeScaledDepthBias;
     CreateInfo.lineWidth               = 1.0f;
 
     // NOTE: we are forced to disable this since there are not really any equivalent in D3D12
@@ -136,37 +133,45 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     // NOTE: This extension is the only way to get parity with D3D12, see the above comment for more information
 #if VK_EXT_depth_clip_enable
     FMemory::Memzero(&DepthClipStateCreateInfo);
+
     DepthClipStateCreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
-    DepthClipStateCreateInfo.depthClipEnable = InInitializer.bDepthClipEnable ? VK_TRUE : VK_FALSE;
+    DepthClipStateCreateInfo.depthClipEnable = InInfo.bDepthClipEnable ? VK_TRUE : VK_FALSE;
     
     if (GVulkanSupportsDepthClip)
     {
         // NOTE: Since this feature is always enabled in D3D12, for now, we do the same in Vulkan
         // since the Depth-clipping is now controlled by a separate value as in D3D12
         CreateInfo.depthClampEnable = VK_TRUE;
-        CreateInfoHelper.AddNext(DepthClipStateCreateInfo);
     }
 #endif
     
 #if VK_EXT_conservative_rasterization
-    FMemory::Memzero(&ConservativeStateCreateInfo);
-    ConservativeStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
-    
-    if (InInitializer.bEnableConservativeRaster)
-    {
-        ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT;
-    }
-    else
-    {
-        ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT;
-    }
-
     if (GVulkanSupportsConservativeRasterization)
     {
+        FMemory::Memzero(&ConservativeStateCreateInfo);
+        ConservativeStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
+        
+        if (InInfo.bEnableConservativeRaster)
+        {
+            ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT;
+        }
+        else
+        {
+            ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT;
+        }
+
         const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& ConservativeRasterizationProperties = GetDevice()->GetPhysicalDevice()->GetConservativeRasterizationProperties();
         ConservativeStateCreateInfo.extraPrimitiveOverestimationSize = ConservativeRasterizationProperties.maxExtraPrimitiveOverestimationSize;
-        CreateInfoHelper.AddNext(ConservativeStateCreateInfo);
     }
+#endif
+
+    // Helper for checking for extensions
+    FVulkanStructChain CreateInfoChain(CreateInfo);
+#if VK_EXT_depth_clip_enable
+    CreateInfoChain.AddNext(DepthClipStateCreateInfo);
+#endif
+#if VK_EXT_conservative_rasterization
+    CreateInfoChain.AddNext(ConservativeStateCreateInfo);
 #endif
 }
 
@@ -174,29 +179,29 @@ FVulkanRasterizerState::~FVulkanRasterizerState()
 {
 }
 
-FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer)
+FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInfo& InInfo)
     : FRHIBlendState()
-    , Initializer(InInitializer)
+    , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
 
     // NOTE: Blend constants are configured as dynamic state
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    CreateInfo.logicOpEnable   = InInitializer.bLogicOpEnable;
-    CreateInfo.logicOp         = ConvertLogicOp(InInitializer.LogicOp);
-    CreateInfo.attachmentCount = InInitializer.NumRenderTargets;
+    CreateInfo.logicOpEnable   = InInfo.bLogicOpEnable;
+    CreateInfo.logicOp         = ConvertLogicOp(InInfo.LogicOp);
+    CreateInfo.attachmentCount = InInfo.NumRenderTargets;
     CreateInfo.pAttachments    = BlendAttachmentStates;
 
-    for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)
+    for (int32 Index = 0; Index < InInfo.NumRenderTargets; Index++)
     {
-        BlendAttachmentStates[Index].blendEnable         = InInitializer.RenderTargets[Index].bBlendEnable ? VK_TRUE : VK_FALSE;
-        BlendAttachmentStates[Index].srcColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlend);
-        BlendAttachmentStates[Index].dstColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlend);
-        BlendAttachmentStates[Index].colorBlendOp        = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOp);
-        BlendAttachmentStates[Index].srcAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlendAlpha);
-        BlendAttachmentStates[Index].dstAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlendAlpha);
-        BlendAttachmentStates[Index].alphaBlendOp        = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
-        BlendAttachmentStates[Index].colorWriteMask      = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
+        BlendAttachmentStates[Index].blendEnable         = InInfo.RenderTargets[Index].bBlendEnable ? VK_TRUE : VK_FALSE;
+        BlendAttachmentStates[Index].srcColorBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].SrcBlend);
+        BlendAttachmentStates[Index].dstColorBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlend);
+        BlendAttachmentStates[Index].colorBlendOp        = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOp);
+        BlendAttachmentStates[Index].srcAlphaBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].SrcBlendAlpha);
+        BlendAttachmentStates[Index].dstAlphaBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlendAlpha);
+        BlendAttachmentStates[Index].alphaBlendOp        = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOpAlpha);
+        BlendAttachmentStates[Index].colorWriteMask      = ConvertColorWriteFlags(InInfo.RenderTargets[Index].ColorWriteMask);
     }
 }
 
@@ -239,11 +244,11 @@ FVulkanGraphicsPipelineState::~FVulkanGraphicsPipelineState()
 {
 }
 
-bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
+bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo& Info)
 {
     // Gather Shaders for PipelineLayout
     FVulkanShader* Shaders[ShaderVisibility_Count];
-    if (FVulkanVertexShader* VulkanVertexShader = static_cast<FVulkanVertexShader*>(Initializer.ShaderState.VertexShader))
+    if (FVulkanVertexShader* VulkanVertexShader = static_cast<FVulkanVertexShader*>(Info.VertexShader))
     {
         Shaders[ShaderVisibility_Vertex] = VulkanVertexShader;
     }
@@ -253,10 +258,10 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         return false;
     }
 
-    Shaders[ShaderVisibility_Hull]     = static_cast<FVulkanHullShader*>(Initializer.ShaderState.HullShader);
-    Shaders[ShaderVisibility_Domain]   = static_cast<FVulkanDomainShader*>(Initializer.ShaderState.DomainShader);
-    Shaders[ShaderVisibility_Geometry] = static_cast<FVulkanGeometryShader*>(Initializer.ShaderState.GeometryShader);
-    Shaders[ShaderVisibility_Pixel]    = static_cast<FVulkanPixelShader*>(Initializer.ShaderState.PixelShader);
+    Shaders[ShaderVisibility_Hull]     = static_cast<FVulkanHullShader*>(Info.HullShader);
+    Shaders[ShaderVisibility_Domain]   = static_cast<FVulkanDomainShader*>(Info.DomainShader);
+    Shaders[ShaderVisibility_Geometry] = static_cast<FVulkanGeometryShader*>(Info.GeometryShader);
+    Shaders[ShaderVisibility_Pixel]    = static_cast<FVulkanPixelShader*>(Info.PixelShader);
     
     FVulkanPipelineLayoutInfo LayoutInfo;
     LayoutInfo.AddSetForStage(VK_SHADER_STAGE_VERTEX_BIT, Shaders[ShaderVisibility_Vertex]->GetShaderInfo());
@@ -295,9 +300,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
     
     // Gather ShaderModules
-    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo;
-    FMemory::Memzero(&ShaderStageCreateInfo);
-
+    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     ShaderStageCreateInfo.pName = "main";
     
@@ -373,9 +376,9 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     
     // VertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo VertexInputStateCreateInfo;
-    if (FVulkanVertexLayout* VertexInputLayout = static_cast<FVulkanVertexLayout*>(Initializer.VertexInputLayout))
+    if (FVulkanInputLayout* InputLayout = static_cast<FVulkanInputLayout*>(Info.InputLayout))
     {
-        VertexInputStateCreateInfo = VertexInputLayout->GetVkCreateInfo();
+        VertexInputStateCreateInfo = InputLayout->GetVkCreateInfo();
     }
     else
     {
@@ -384,25 +387,20 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
 
     // InputAssembly CreateInfo
-    VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo;
-    FMemory::Memzero(&InputAssemblyCreateInfo);
-
+    VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo = {};
     InputAssemblyCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(Initializer.PrimitiveTopology);
-    InputAssemblyCreateInfo.primitiveRestartEnable = Initializer.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
+    InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(Info.PrimitiveTopology);
+    InputAssemblyCreateInfo.primitiveRestartEnable = Info.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
 
     // Viewport CreateInfo
-    VkPipelineViewportStateCreateInfo ViewportStateCreateInfo;
-    FMemory::Memzero(&ViewportStateCreateInfo);
-
-    // NOTE: We use dynamic state for Viewports and Scissors
+    VkPipelineViewportStateCreateInfo ViewportStateCreateInfo = {};
     ViewportStateCreateInfo.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     ViewportStateCreateInfo.viewportCount = 1;
     ViewportStateCreateInfo.scissorCount  = 1;
 
     // RasterizerState CreateInfo
     VkPipelineRasterizationStateCreateInfo RasterizerStateCreateInfo;
-    if (FVulkanRasterizerState* RasterizerState = static_cast<FVulkanRasterizerState*>(Initializer.RasterizerState))
+    if (FVulkanRasterizerState* RasterizerState = static_cast<FVulkanRasterizerState*>(Info.RasterizerState))
     {
         RasterizerStateCreateInfo = RasterizerState->GetVkCreateInfo();
     }
@@ -413,9 +411,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
 
     // MultiSampling CreateInfo
-    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo;
-    FMemory::Memzero(&MultisamplingCreateInfo);
-
+    VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo = {};
     MultisamplingCreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     MultisamplingCreateInfo.sampleShadingEnable   = VK_FALSE;
     MultisamplingCreateInfo.rasterizationSamples  = VK_SAMPLE_COUNT_1_BIT;
@@ -426,7 +422,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
-    if (FVulkanDepthStencilState* DepthStencilState = static_cast<FVulkanDepthStencilState*>(Initializer.DepthStencilState))
+    if (FVulkanDepthStencilState* DepthStencilState = static_cast<FVulkanDepthStencilState*>(Info.DepthStencilState))
     {
         DepthStencilStateCreateInfo = DepthStencilState->GetVkCreateInfo();
     }
@@ -438,7 +434,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
-    if (FVulkanBlendState* BlendState = static_cast<FVulkanBlendState*>(Initializer.BlendState))
+    if (FVulkanBlendState* BlendState = static_cast<FVulkanBlendState*>(Info.BlendState))
     {
         BlendStateCreateInfo = BlendState->GetVkCreateInfo();
     }
@@ -456,9 +452,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         VK_DYNAMIC_STATE_BLEND_CONSTANTS,
     };
 
-    VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo;
-    FMemory::Memzero(&DynamicStateCreateInfo);
-
+    VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
@@ -466,23 +460,23 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     // Retrieve a compatible RenderPass
     // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
     FVulkanRenderPassKey RenderPassKey;
-    RenderPassKey.NumSamples                      = Initializer.SampleCount;
-    RenderPassKey.DepthStencilFormat              = Initializer.PipelineFormats.DepthStencilFormat;
+    RenderPassKey.NumSamples                      = Info.MultiSampleState.SampleCount;
+    RenderPassKey.DepthStencilFormat              = Info.RasterizerOutputFormats.DepthStencilFormat;
     RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
     RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
-    RenderPassKey.NumRenderTargets                = Initializer.PipelineFormats.NumRenderTargets;
+    RenderPassKey.NumRenderTargets                = Info.RasterizerOutputFormats.NumRenderTargets;
 
-    for (uint8 Index = 0; Index < Initializer.PipelineFormats.NumRenderTargets; Index++)
+    for (uint8 Index = 0; Index < Info.RasterizerOutputFormats.NumRenderTargets; Index++)
     {
         RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.RenderTargetActions[Index].StoreAction = EAttachmentStoreAction::Store;
-        RenderPassKey.RenderTargetFormats[Index] = Initializer.PipelineFormats.RenderTargetFormats[Index];
+        RenderPassKey.RenderTargetFormats[Index] = Info.RasterizerOutputFormats.RenderTargetFormats[Index];
     }
 
-    if (Initializer.ViewInstancingInfo.bEnableViewInstancing)
+    if (Info.ViewInstancingState.bEnableViewInstancing)
     {
-        RenderPassKey.ViewInstancingInfo = Initializer.ViewInstancingInfo;
-        ViewInstancingInfo = Initializer.ViewInstancingInfo;
+        RenderPassKey.ViewInstancingState = Info.ViewInstancingState;
+        ViewInstancingState = Info.ViewInstancingState;
     }
 
     VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
@@ -492,9 +486,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
 
     // Create PipelineState
-    VkGraphicsPipelineCreateInfo PipelineCreateInfo;
-    FMemory::Memzero(&PipelineCreateInfo);
-
+    VkGraphicsPipelineCreateInfo PipelineCreateInfo = {};
     PipelineCreateInfo.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     PipelineCreateInfo.stageCount          = ShaderStages.Size();
     PipelineCreateInfo.pStages             = ShaderStages.Data();
@@ -544,18 +536,16 @@ FVulkanComputePipelineState::~FVulkanComputePipelineState()
 {
 }
 
-bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInitializer& Initializer)
+bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo& InInfo)
 {
-    FVulkanComputeShader* VulkanComputeShader = static_cast<FVulkanComputeShader*>(Initializer.Shader);
+    FVulkanComputeShader* VulkanComputeShader = static_cast<FVulkanComputeShader*>(InInfo.Shader);
     if (!VulkanComputeShader)
     {
         VULKAN_ERROR_CRITICAL("Compute Shader cannot be nullptr");
         return false;
     }
 
-    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo;
-    FMemory::Memzero(&ShaderStageCreateInfo);
-
+    VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
     ShaderStageCreateInfo.pName  = "main";
@@ -584,9 +574,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     }
 
     // Create the ComputePipeline
-    VkComputePipelineCreateInfo PipelineCreateInfo;
-    FMemory::Memzero(&PipelineCreateInfo);
-
+    VkComputePipelineCreateInfo PipelineCreateInfo = {};
     PipelineCreateInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     PipelineCreateInfo.layout = PipelineLayout->GetVkPipelineLayout();
     PipelineCreateInfo.stage  = ShaderStageCreateInfo;
@@ -636,9 +624,7 @@ bool FVulkanPipelineStateManager::Initialize()
         return true;
     }
     
-    VkPipelineCacheCreateInfo CreateInfo;
-    FMemory::Memzero(&CreateInfo);
-    
+    VkPipelineCacheCreateInfo CreateInfo = {};
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     CreateInfo.pInitialData    = nullptr;
     CreateInfo.initialDataSize = 0;

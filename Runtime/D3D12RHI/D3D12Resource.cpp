@@ -27,9 +27,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC
 
 bool FD3D12Resource::Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue)
 {
-    D3D12_HEAP_PROPERTIES HeapProperties;
-    FMemory::Memzero(&HeapProperties);
-
+    D3D12_HEAP_PROPERTIES HeapProperties = {};
     HeapProperties.Type                 = HeapType;
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;

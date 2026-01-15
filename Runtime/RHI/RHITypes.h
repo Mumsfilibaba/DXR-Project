@@ -37,7 +37,7 @@ typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
-typedef TSharedRef<class FRHIVertexLayout>            FRHIVertexLayoutRef;
+typedef TSharedRef<class FRHIInputLayout>             FRHIInputLayoutRef;
 typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateRef;
 typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
 typedef TSharedRef<class FRHIRayTracingPipelineState> FRHIRayTracingPipelineStateRef;
@@ -248,7 +248,7 @@ NODISCARD constexpr const CHAR* ToString(EFormat Format)
         case EFormat::BC7_UNorm:                return "BC7_UNorm";
         case EFormat::BC7_UNorm_SRGB:           return "BC7_UNorm_SRGB";
 
-        default:                                return "Unknown";
+        default: return "Unknown";
     }
 }
 
@@ -260,17 +260,13 @@ NODISCARD constexpr uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R32G32B32A32_Float:
         case EFormat::R32G32B32A32_Uint:
         case EFormat::R32G32B32A32_Sint:
-        {
             return 16;
-        }
 
         case EFormat::R32G32B32_Typeless:
         case EFormat::R32G32B32_Float:
         case EFormat::R32G32B32_Uint:
         case EFormat::R32G32B32_Sint:
-        {
             return 12;
-        }
 
         case EFormat::R16G16B16A16_Typeless:
         case EFormat::R16G16B16A16_Float:
@@ -278,56 +274,44 @@ NODISCARD constexpr uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R16G16B16A16_Uint:
         case EFormat::R16G16B16A16_Snorm:
         case EFormat::R16G16B16A16_Sint:
-        
         case EFormat::R32G32_Typeless:
         case EFormat::R32G32_Float:
         case EFormat::R32G32_Uint:
         case EFormat::R32G32_Sint:
-        {
             return 8;
-        }
 
         case EFormat::R10G10B10A2_Typeless:
         case EFormat::R10G10B10A2_Unorm:
         case EFormat::R10G10B10A2_Uint:
-        
         case EFormat::R11G11B10_Float:
-        
         case EFormat::R8G8B8A8_Typeless:
         case EFormat::R8G8B8A8_Unorm:
         case EFormat::R8G8B8A8_Unorm_SRGB:
         case EFormat::R8G8B8A8_Uint:
         case EFormat::R8G8B8A8_Snorm:
         case EFormat::R8G8B8A8_Sint:
-
         case EFormat::R16G16_Typeless:
         case EFormat::R16G16_Float:
         case EFormat::R16G16_Unorm:
         case EFormat::R16G16_Uint:
         case EFormat::R16G16_Snorm:
         case EFormat::R16G16_Sint:
-        
         case EFormat::R32_Typeless:
         case EFormat::D32_Float:
         case EFormat::R32_Float:
         case EFormat::R32_Uint:
         case EFormat::R32_Sint:
-        
         case EFormat::R24G8_Typeless:
-        
         case EFormat::D24_Unorm_S8_Uint:
         case EFormat::R24_Unorm_X8_Typeless:
         case EFormat::X24_Typeless_G8_Uint:
-        {
             return 4;
-        }
 
         case EFormat::R8G8_Typeless:
         case EFormat::R8G8_Unorm:
         case EFormat::R8G8_Uint:
         case EFormat::R8G8_Snorm:
         case EFormat::R8G8_Sint:
-        
         case EFormat::R16_Typeless:
         case EFormat::R16_Float:
         case EFormat::D16_Unorm:
@@ -335,23 +319,17 @@ NODISCARD constexpr uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R16_Uint:
         case EFormat::R16_Snorm:
         case EFormat::R16_Sint:
-        {
             return 2;
-        }
 
         case EFormat::R8_Typeless:
         case EFormat::R8_Unorm:
         case EFormat::R8_Uint:
         case EFormat::R8_Snorm:
         case EFormat::R8_Sint:
-        {
             return 1;
-        }
 
         default:
-        {
             return 0;
-        }
     }
 }
 
@@ -384,14 +362,10 @@ NODISCARD constexpr bool IsTypelessFormat(EFormat Format)
         case EFormat::R8G8_Typeless:
         case EFormat::R16_Typeless:
         case EFormat::R8_Typeless:
-        {
             return true;
-        }
 
         default:
-        {
             return false;
-        }
     }
 }
 
@@ -401,21 +375,36 @@ NODISCARD constexpr EFormat CastSRVFormat(EFormat Format)
     switch (Format)
     {
         // TODO: Fix formats better
-        case EFormat::R32G32B32A32_Typeless: return EFormat::R32G32B32A32_Float;
-        case EFormat::R32G32B32_Typeless:    return EFormat::R32G32B32_Float;
-        case EFormat::R16G16B16A16_Typeless: return EFormat::R16G16B16A16_Float;
-        case EFormat::R32G32_Typeless:       return EFormat::R32G32B32_Float;
-        case EFormat::R10G10B10A2_Typeless:  return EFormat::R10G10B10A2_Unorm;
-        case EFormat::R8G8B8A8_Typeless:     return EFormat::R8G8B8A8_Unorm;
-        case EFormat::R16G16_Typeless:       return EFormat::R16G16_Float;
+        case EFormat::R32G32B32A32_Typeless:
+            return EFormat::R32G32B32A32_Float;
+        case EFormat::R32G32B32_Typeless:
+            return EFormat::R32G32B32_Float;
+        case EFormat::R16G16B16A16_Typeless:
+            return EFormat::R16G16B16A16_Float;
+        case EFormat::R32G32_Typeless:
+            return EFormat::R32G32B32_Float;
+        case EFormat::R10G10B10A2_Typeless:
+            return EFormat::R10G10B10A2_Unorm;
+        case EFormat::R8G8B8A8_Typeless:
+            return EFormat::R8G8B8A8_Unorm;
+        case EFormat::R16G16_Typeless:
+            return EFormat::R16G16_Float;
         case EFormat::R32_Typeless:
-        case EFormat::D32_Float:             return EFormat::R32_Float;
-        case EFormat::R24G8_Typeless:        return EFormat::R24_Unorm_X8_Typeless;
-        case EFormat::R8G8_Typeless:         return EFormat::R8G8_Unorm;
-        case EFormat::R16_Typeless:          return EFormat::R16_Float;
-        case EFormat::D16_Unorm:             return EFormat::R16_Unorm;
-        case EFormat::R8_Typeless:           return EFormat::R8_Unorm;
-        default:                             return Format;
+        case EFormat::D32_Float:
+            return EFormat::R32_Float;
+        case EFormat::R24G8_Typeless:
+            return EFormat::R24_Unorm_X8_Typeless;
+        case EFormat::R8G8_Typeless:
+            return EFormat::R8G8_Unorm;
+        case EFormat::R16_Typeless:
+            return EFormat::R16_Float;
+        case EFormat::D16_Unorm:
+            return EFormat::R16_Unorm;
+        case EFormat::R8_Typeless:
+            return EFormat::R8_Unorm;
+
+        default:
+            return Format;
     }
 }
 
@@ -432,7 +421,8 @@ NODISCARD constexpr const CHAR* ToString(EIndexFormat IndexFormat)
     {
         case EIndexFormat::uint16: return "uint16";
         case EIndexFormat::uint32: return "uint32";
-        default:                   return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
@@ -440,8 +430,9 @@ NODISCARD constexpr EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
 {
     switch (StrideInBytes)
     {
-        case 2:  return EIndexFormat::uint16;
-        case 4:  return EIndexFormat::uint32;
+        case 2: return EIndexFormat::uint16;
+        case 4: return EIndexFormat::uint32;
+
         default: return EIndexFormat::Unknown;
     }
 }
@@ -452,7 +443,8 @@ NODISCARD constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
     {
         case EIndexFormat::uint16: return 2;
         case EIndexFormat::uint32: return 4;
-        default:                   return 0;
+        
+        default: return 0;
     }
 }
 
@@ -501,7 +493,8 @@ NODISCARD constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
     case EComparisonFunc::NotEqual:     return "NotEqual";
     case EComparisonFunc::GreaterEqual: return "GreaterEqual";
     case EComparisonFunc::Always:       return "Always";
-    default:                            return "Unknown";
+    
+    default: return "Unknown";
     }
 }
 
@@ -551,7 +544,8 @@ NODISCARD constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
     case EResourceAccess::Present:                         return "Present";
     case EResourceAccess::GenericRead:                     return "GenericRead";
-    default:                                               return "Unknown";
+    
+    default: return "Unknown";
     }
 }
 
@@ -575,7 +569,8 @@ NODISCARD constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
     case EPrimitiveTopology::LineStrip:     return "LineStrip";
     case EPrimitiveTopology::TriangleList:  return "TriangleList";
     case EPrimitiveTopology::TriangleStrip: return "TriangleStrip";
-    default:                                return "Unknown";
+    
+    default: return "Unknown";
     }
 }
 
@@ -601,7 +596,8 @@ NODISCARD constexpr const CHAR* ToString(EShadingRate ShadingRate)
     case EShadingRate::VRS_2x4: return "VRS_2x4";
     case EShadingRate::VRS_4x2: return "VRS_4x2";
     case EShadingRate::VRS_4x4: return "VRS_4x4";
-    default:                    return "Unknown";
+    
+    default: return "Unknown";
     }
 }
 
@@ -622,7 +618,8 @@ NODISCARD constexpr const CHAR* ToString(EDescriptorType DescriptorType)
         case EDescriptorType::ShaderResource:  return "ShaderResource";
         case EDescriptorType::ConstantBuffer:  return "ConstantBuffer";
         case EDescriptorType::Sampler:         return "Sampler";
-        default:                               return "Unknown";
+        
+        default: return "Unknown";
     }
 }
 
@@ -635,7 +632,7 @@ struct FRHIDescriptorHandle
     };
 
     constexpr FRHIDescriptorHandle() noexcept
-        : Data(0)
+        : Handle(0)
     {
     }
 
@@ -652,23 +649,23 @@ struct FRHIDescriptorHandle
 
     constexpr bool operator==(const FRHIDescriptorHandle& Other) const noexcept
     {
-        return Data == Other.Data;
+        return Handle == Other.Handle;
     }
 
     constexpr bool operator!=(const FRHIDescriptorHandle& Other) const noexcept
     {
-        return Data != Other.Data;
+        return Handle != Other.Handle;
     }
 
     union
     {
         struct
         {
-            uint32          Index : 24;
-            EDescriptorType Type  : 8;
+            uint32 Index : 24;
+            EDescriptorType Type : 8;
         };
 
-        uint32 Data;
+        uint32 Handle;
     };
 };
 
@@ -740,7 +737,7 @@ struct FClearValue
         }
     }
 
-    NODISCARD bool IsColorValue()        const noexcept { return Type == EType::Color; }
+    NODISCARD bool IsColorValue() const noexcept { return Type == EType::Color; }
     NODISCARD bool IsDepthStencilValue() const noexcept { return Type == EType::DepthStencil; }
 
     NODISCARD FFloatColor& AsColor() noexcept 
@@ -841,8 +838,6 @@ struct FTextureRegion2D
     {
     }
 
-    constexpr bool operator==(const FTextureRegion2D& Other) const noexcept = default;
-
     uint32 Width     = 0;
     uint32 Height    = 0;
     uint32 PositionX = 0;
@@ -860,8 +855,6 @@ struct FBufferCopyInfo
     {
     }
 
-    constexpr bool operator==(const FBufferCopyInfo& Other) const noexcept = default;
-
     uint64 SrcOffset = 0;
     uint64 DstOffset = 0;
     uint64 Size      = 0;
@@ -869,8 +862,6 @@ struct FBufferCopyInfo
 
 struct FTextureCopyInfo
 {
-    bool operator==(const FTextureCopyInfo& Other) const noexcept = default;
-
     FIntVector3 DstPosition;
     uint32 DstArraySlice = 0;
     uint32 DstMipSlice = 0;
@@ -939,8 +930,6 @@ struct FRayTracingSceneBuildInfo
     {
     }
 
-    constexpr bool operator==(const FRayTracingSceneBuildInfo& Other) const noexcept = default;
-
     const FRHIRayTracingGeometryInstance* Instances = nullptr;
     uint32 NumInstances = 0;
     bool   bUpdate      = false;
@@ -959,8 +948,6 @@ struct FRayTracingGeometryBuildInfo
         , bUpdate(bUpdate)
     {
     }
-
-    constexpr bool operator==(const FRayTracingGeometryBuildInfo& Other) const noexcept = default;
 
     FRHIBuffer*  VertexBuffer = nullptr;
     uint32       NumVertices  = 0;
@@ -983,8 +970,6 @@ struct FRHITextureTransition
         return FRHITextureTransition{ BeforeState, AfterState, MipLevel, ArraySlice };
     }
 
-    constexpr bool operator==(const FRHITextureTransition& Other) const noexcept = default;
-
     EResourceAccess BeforeState = EResourceAccess::Common;
     EResourceAccess AfterState  = EResourceAccess::Common;
     uint32 MipLevel   = RHI_ALL_MIP_LEVELS;
@@ -997,8 +982,6 @@ struct FRHIBufferTransition
     {
         return FRHIBufferTransition{ BeforeState, AfterState };
     }
-
-    constexpr bool operator==(const FRHIBufferTransition& Other) const noexcept = default;
 
     EResourceAccess BeforeState = EResourceAccess::Common;
     EResourceAccess AfterState  = EResourceAccess::Common;

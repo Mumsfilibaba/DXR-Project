@@ -38,9 +38,7 @@ FVulkanQueryPool::~FVulkanQueryPool()
 
 bool FVulkanQueryPool::Initialize()
 {
-    VkQueryPoolCreateInfo QueryPoolCreateInfo;
-    FMemory::Memzero(&QueryPoolCreateInfo, sizeof(VkQueryPoolCreateInfo));
-
+    VkQueryPoolCreateInfo QueryPoolCreateInfo = {};
     QueryPoolCreateInfo.sType      = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
     QueryPoolCreateInfo.queryType  = ConvertQueryType(QueryType);
     QueryPoolCreateInfo.queryCount = NumQueries = CVarVulkanQueryPoolSize.GetValue();
@@ -173,7 +171,7 @@ FVulkanQueryAllocation FVulkanQueryAllocator::Allocate(uint64* InResults)
     FVulkanQueryAllocation QueryAllocation = QueryPool->Allocate(InResults);
     if (!QueryAllocation.IsValid())
     {
-        Context.GetCommandPayload().AddQueryPool(QueryPool);
+        Context.GetSubmissionContext().AddQueryPool(QueryPool);
         QueryPool = QueryPoolManager->ObtainQueryPool();
         QueryAllocation = QueryPool->Allocate(InResults);
     }
@@ -185,7 +183,7 @@ void FVulkanQueryAllocator::PrepareForNewCommandBuffer()
 {
     if (QueryPool)
     {
-        Context.GetCommandPayload().AddQueryPool(QueryPool);
+        Context.GetSubmissionContext().AddQueryPool(QueryPool);
         QueryPool = nullptr;
     }
 }

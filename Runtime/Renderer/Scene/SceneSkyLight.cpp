@@ -36,7 +36,7 @@ void FSceneSkyLight::FilterStaticCubeMaps()
     constexpr uint32 SpecularCubeMapSize = 256;
     const uint32 SpecularIrradianceMiplevels = Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
 
-    const ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
+    const ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo SpecularCubeMapInfo = FRHITextureInfo::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1,TextureFlags);
 
     FRHITextureRef TempSpecularCubeMap = FRHI::Get()->CreateTexture(SpecularCubeMapInfo, EResourceAccess::PixelShaderResource);

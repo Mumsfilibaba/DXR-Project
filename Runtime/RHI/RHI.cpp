@@ -146,6 +146,87 @@ static ERHIType GetRHIType()
     return RHIType;
 }
 
+
+static void LogRHIDeviceFeatureSupport()
+{
+    const auto YesNo = [](bool bBoolean) -> const char*
+    {
+        return bBoolean ? "Yes" : "No";
+    };
+
+    LOG_INFO("[RHI] ---------------------------------- Device Feature Support ----------------------------------");
+
+    // -------------------------------------------------------------------------------------------
+    // Shader / Pipeline Features
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Geometry Shaders                          : %s", YesNo(RHIDeviceFeatureSupport::bSupportsGeometryShaders));
+    LOG_INFO("[RHI] SV_RenderTargetArrayIndex from VS         : %s", YesNo(RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader));
+
+    // -------------------------------------------------------------------------------------------
+    // View Instancing
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] View Instancing                           : %s", YesNo(RHIDeviceFeatureSupport::bSupportsViewInstancing));
+    LOG_INFO("[RHI]   Max View Instances                      : %u", RHIDeviceFeatureSupport::MaxViewInstanceCount);
+
+    // -------------------------------------------------------------------------------------------
+    // Hardware Ray Tracing
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Ray Tracing                               : %s", YesNo(RHIDeviceFeatureSupport::bSupportsRayTracing));
+    LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHIDeviceFeatureSupport::RayTracingTier));
+    LOG_INFO("[RHI]   Max Recursion Depth                     : %u", RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth);
+    
+    // -------------------------------------------------------------------------------------------
+    // Variable Rate Shading (VRS)
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Variable Rate Shading                     : %s", YesNo(RHIDeviceFeatureSupport::bSupportsVRS));
+    LOG_INFO("[RHI]   Tier                                    : %s", ToString(RHIDeviceFeatureSupport::ShadingRateTier)); 
+    LOG_INFO("[RHI]   Shading Rate Image Tile Size            : %u", RHIDeviceFeatureSupport::ShadingRateImageTileSize);
+    
+    // -------------------------------------------------------------------------------------------
+    // Draw Indirect
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] DrawIndirect                              : %s", YesNo(RHIDeviceFeatureSupport::bSupportDrawIndirect));
+    LOG_INFO("[RHI]   MultiDrawIndirect                       : %s", YesNo(RHIDeviceFeatureSupport::bSupportMultiDrawIndirect)); 
+    LOG_INFO("[RHI]   Max Draws Per Indirect Call             : %u", RHIDeviceFeatureSupport::MaxDrawIndirectCount);
+
+    // -------------------------------------------------------------------------------------------
+    // Texture / Image Limits
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Texture / Image Limits:");
+
+    LOG_INFO("[RHI]   Texture1D:  MaxWidth                    : %u", RHIDeviceFeatureSupport::MaxTexture1DSize);
+    LOG_INFO("[RHI]               MaxArrayLayers              : %u", RHIDeviceFeatureSupport::MaxTexture1DArrayLayers);
+    
+    LOG_INFO("[RHI]   Texture2D:  MaxSize (W/H)               : %u", RHIDeviceFeatureSupport::MaxTexture2DSize);
+    LOG_INFO("[RHI]               MaxArrayLayers              : %u", RHIDeviceFeatureSupport::MaxTexture2DArrayLayers);
+    
+    LOG_INFO("[RHI]   Texture3D:  MaxWidth                    : %u", RHIDeviceFeatureSupport::MaxTexture3DWidth);
+    LOG_INFO("[RHI]               MaxHeight                   : %u", RHIDeviceFeatureSupport::MaxTexture3DHeight);
+    LOG_INFO("[RHI]               MaxDepth                    : %u", RHIDeviceFeatureSupport::MaxTexture3DDepth);
+    
+    LOG_INFO("[RHI]   CubeTexure: MaxFaceResolution           : %u", RHIDeviceFeatureSupport::MaxCubeTextureSize);
+    LOG_INFO("[RHI]               MaxCubeArrayCount           : %u", RHIDeviceFeatureSupport::MaxCubeArrayCount);
+
+    // -------------------------------------------------------------------------------------------
+    // Buffer / Memory Limits
+    // -------------------------------------------------------------------------------------------
+    LOG_INFO("[RHI] Buffer / Memory Limits:");
+    
+    LOG_INFO("[RHI]   MaxBufferSize                           : %llu", static_cast<uint64>(RHIDeviceFeatureSupport::MaxBufferSize)); 
+    
+    LOG_INFO("[RHI]   ConstantBuffer:   MaxSize               : %u", RHIDeviceFeatureSupport::MaxConstantBufferSize); 
+    
+    LOG_INFO("[RHI]   StorageBuffer:    MaxSize               : %llu", static_cast<uint64>(RHIDeviceFeatureSupport::MaxStorageBufferSize));
+    
+    LOG_INFO("[RHI]   StructuredBuffer: MinStride             : %u", RHIDeviceFeatureSupport::StructuredBufferMinStride);
+    LOG_INFO("[RHI]                     MaxStride             : %u", RHIDeviceFeatureSupport::StructuredBufferMaxStride);
+
+    LOG_INFO("[RHI]   RawBuffer:        RequiredAlignment     : %u", RHIDeviceFeatureSupport::RawBufferRequiredAlignment);
+
+    LOG_INFO("[RHI] --------------------------------------------------------------------------------------------");
+}
+
+
 FRHI* FRHI::GRHI = nullptr;
 
 bool FRHI::Initialize()
@@ -206,6 +287,8 @@ bool FRHI::Initialize()
         return false;
     }
 
+    // Log features of the loaded device and RHI
+    LogRHIDeviceFeatureSupport();
     return true;
 }
 

@@ -34,9 +34,7 @@ FVulkanUploadBuffer::~FVulkanUploadBuffer()
 
 bool FVulkanUploadBuffer::Initialize(uint64 Size)
 {
-    VkBufferCreateInfo BufferCreateInfo;
-    FMemory::Memzero(&BufferCreateInfo);
-
+    VkBufferCreateInfo BufferCreateInfo = {};
     BufferCreateInfo.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferCreateInfo.pNext                 = nullptr;
     BufferCreateInfo.flags                 = 0;

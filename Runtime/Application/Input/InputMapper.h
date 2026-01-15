@@ -17,8 +17,8 @@ public:
     FKey GetMouseKey(EMouseButtonName::Type MouseButton);
     FKey GetGamepadKey(EGamepadButtonName::Type GamepadButton);
 
-    EKeyboardKeyName::Type GetKeyboardKeyNameFromKey(FKey Key);
-    EMouseButtonName::Type GetMouseButtonNameFromKey(FKey Key);
+    EKeyboardKeyName::Type   GetKeyboardKeyNameFromKey(FKey Key);
+    EMouseButtonName::Type   GetMouseButtonNameFromKey(FKey Key);
     EGamepadButtonName::Type GetGamepadButtonNameFromKey(FKey Key);
 
 private:

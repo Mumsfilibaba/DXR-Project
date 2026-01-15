@@ -24,12 +24,10 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     VertexBuffer = MakeSharedRef<FD3D12Buffer>(BuildInfo.VertexBuffer);
     IndexBuffer  = MakeSharedRef<FD3D12Buffer>(BuildInfo.IndexBuffer);
 
-    D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
-    FMemory::Memzero(&GeometryDesc);
-
+    D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
     GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
     GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetResource()->GetGPUVirtualAddress();
-    GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetStride();
+    GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetInfo().Stride;
     GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
     GeometryDesc.Triangles.VertexCount                = BuildInfo.NumVertices;
     GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
@@ -41,9 +39,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
         GeometryDesc.Triangles.IndexCount  = BuildInfo.NumIndices;
     }
 
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
-    FMemory::Memzero(&Inputs);
-
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
     Inputs.DescsLayout    = D3D12_ELEMENTS_LAYOUT_ARRAY;
     Inputs.NumDescs       = 1;
     Inputs.pGeometryDescs = &GeometryDesc;
@@ -55,16 +51,13 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo;
-    FMemory::Memzero(&PreBuildInfo);
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
     uint64 CurrentSize = ResultBuffer ? ResultBuffer->GetWidth() : 0;
     if (CurrentSize < PreBuildInfo.ResultDataMaxSizeInBytes)
     {
-        D3D12_RESOURCE_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_RESOURCE_DESC Desc = {};
         Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         Desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -93,9 +86,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if (CurrentSize < RequiredSize)
     {
-        D3D12_RESOURCE_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_RESOURCE_DESC Desc = {};
         Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         Desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -122,9 +113,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
         CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
-    FMemory::Memzero(&AccelerationStructureDesc);
-
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
     AccelerationStructureDesc.Inputs                           = Inputs;
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
@@ -173,9 +162,7 @@ FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIR
 
 bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTracingSceneBuildInfo& BuildInfo)
 {
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
-    FMemory::Memzero(&Inputs);
-
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
     Inputs.NumDescs    = BuildInfo.NumInstances;
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
@@ -187,17 +174,13 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
-    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo;
-    FMemory::Memzero(&PreBuildInfo);
-
+    D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
     uint64 CurrentSize = ResultBuffer ? ResultBuffer->GetWidth() : 0;
     if (CurrentSize < PreBuildInfo.ResultDataMaxSizeInBytes)
     {
-        D3D12_RESOURCE_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_RESOURCE_DESC Desc = {};
         Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         Desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -221,9 +204,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
             ResultBuffer = Buffer;
         }
 
-        D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;
-        FMemory::Memzero(&SrvDesc);
-
+        D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = {};
         SrvDesc.ViewDimension                            = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
@@ -244,9 +225,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if (CurrentSize < RequiredSize)
     {
-        D3D12_RESOURCE_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_RESOURCE_DESC Desc = {};
         Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         Desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -289,9 +268,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     CurrentSize = InstanceBuffer ? InstanceBuffer->GetWidth() : 0;
     if (CurrentSize < InstanceDescs.SizeInBytes())
     {
-        D3D12_RESOURCE_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_RESOURCE_DESC Desc = {};
         Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         Desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -322,13 +299,12 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     CmdContext.UpdateBuffer(InstanceBuffer.Get(), FBufferRegion(0, InstanceDescs.SizeInBytes()), InstanceDescs.Data());
     CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
-    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc;
-    FMemory::Memzero(&AccelerationStructureDesc);
-
+    D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
     AccelerationStructureDesc.Inputs                           = Inputs;
     AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
+
     if (BuildInfo.bUpdate)
     {
         CHECK((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
@@ -405,9 +381,7 @@ bool FD3D12RayTracingScene::BuildBindingTable(
     uint64 CurrentSize = BindingTable ? BindingTable->GetWidth() : 0;
     if (CurrentSize < BindingTableSize)
     {
-        D3D12_RESOURCE_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_RESOURCE_DESC Desc = {};
         Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         Desc.Format             = DXGI_FORMAT_UNKNOWN;

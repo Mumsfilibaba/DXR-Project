@@ -6,7 +6,7 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12RefCounted.h"
 
-typedef TSharedRef<class FD3D12VertexLayout>            FD3D12VertexLayoutRef;
+typedef TSharedRef<class FD3D12InputLayout>             FD3D12InputLayoutRef;
 typedef TSharedRef<class FD3D12DepthStencilState>       FD3D12DepthStencilStateRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
 typedef TSharedRef<class FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
@@ -20,15 +20,20 @@ enum class ED3D12PipelineType
     RayTracing = 3,
 };
 
-class FD3D12VertexLayout : public FRHIVertexLayout
+class FD3D12InputLayout : public FRHIInputLayout
 {
 public:
-    FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList);
-    virtual ~FD3D12VertexLayout();
+    FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInputElements);
+    virtual ~FD3D12InputLayout();
 
-    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
     {
-        return InitializerList;
+        return &InputElements[Index];
+    }
+
+    virtual uint32 GetNumInputElementInfos() const override final
+    {
+        return InputElements.Size();
     }
 
     const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
@@ -42,7 +47,7 @@ public:
     }
 
 private:
-    FRHIVertexLayoutInitializerList  InitializerList;
+    TArray<FRHIInputElementInfo>     InputElements;
     D3D12_INPUT_LAYOUT_DESC          Desc;
     TArray<FString>                  SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
@@ -52,12 +57,12 @@ private:
 class FD3D12DepthStencilState : public FRHIDepthStencilState
 {
 public:
-    FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
+    FD3D12DepthStencilState(const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FD3D12DepthStencilState();
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
+    virtual FRHIDepthStencilStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
@@ -71,20 +76,20 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateInitializer Initializer;
-    D3D12_DEPTH_STENCIL_DESC         Desc;
-    uint64                           Hash;
+    FRHIDepthStencilStateInfo Info;
+    D3D12_DEPTH_STENCIL_DESC  Desc;
+    uint64                    Hash;
 };
 
 class FD3D12RasterizerState : public FRHIRasterizerState
 {
 public:
-    FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
+    FD3D12RasterizerState(const FRHIRasterizerStateInfo& InInfo);
     virtual ~FD3D12RasterizerState();
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    virtual FRHIRasterizerStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
@@ -98,20 +103,20 @@ public:
     }
 
 private:
-    FRHIRasterizerStateInitializer Initializer;
-    D3D12_RASTERIZER_DESC          Desc;
-    uint64                         Hash;
+    FRHIRasterizerStateInfo Info;
+    D3D12_RASTERIZER_DESC   Desc;
+    uint64                  Hash;
 };
 
 class FD3D12BlendState : public FRHIBlendState
 {
 public:
-    FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer);
+    FD3D12BlendState(const FRHIBlendStateInfo& InInfo);
     virtual ~FD3D12BlendState();
 
-    virtual FRHIBlendStateInitializer GetInitializer() const override final
+    virtual FRHIBlendStateInfo GetInfo() const override final
     {
-        return Initializer;
+        return Info;
     }
 
     const D3D12_BLEND_DESC& GetD3D12Desc() const
@@ -125,9 +130,9 @@ public:
     }
 
 private:
-    FRHIBlendStateInitializer Initializer;
-    D3D12_BLEND_DESC          Desc;
-    uint64                    Hash;
+    FRHIBlendStateInfo Info;
+    D3D12_BLEND_DESC   Desc;
+    uint64             Hash;
 };
 
 class FD3D12PipelineState : public FD3D12DeviceChild
@@ -301,7 +306,7 @@ public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12GraphicsPipelineState();
 
-    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
+    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
 
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
@@ -417,13 +422,13 @@ public:
     FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
 
 private:
-    TComPtr<ID3D12StateObject>                     StateObject;
-    TComPtr<ID3D12StateObjectProperties>           StateObjectProperties;
-    FD3D12RootSignatureRef                         GlobalRootSignature;
+    TComPtr<ID3D12StateObject>                      StateObject;
+    TComPtr<ID3D12StateObjectProperties>            StateObjectProperties;
+    FD3D12RootSignatureRef                          GlobalRootSignature;
     // TODO: There could be more than one root signature for locals
-    FD3D12RootSignatureRef                         RayGenLocalRootSignature;
-    FD3D12RootSignatureRef                         MissLocalRootSignature;
-    FD3D12RootSignatureRef                         HitLocalRootSignature;
+    FD3D12RootSignatureRef                          RayGenLocalRootSignature;
+    FD3D12RootSignatureRef                          MissLocalRootSignature;
+    FD3D12RootSignatureRef                          HitLocalRootSignature;
     TMap<FString, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
 };
 

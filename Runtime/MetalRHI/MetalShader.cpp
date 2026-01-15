@@ -1,4 +1,4 @@
-#include "MetalShader.h"
+#include "MetalRHI/MetalShader.h"
 
 FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility)
     : FMetalDeviceChild(InDevice)

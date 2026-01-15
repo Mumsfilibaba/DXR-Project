@@ -1,5 +1,5 @@
-#include "MetalSamplerState.h"
-#include "MetalDeviceContext.h"
+#include "MetalRHI/MetalSamplerState.h"
+#include "MetalRHI/MetalDeviceContext.h"
 
 FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateInfo& InSamplerInfo)
     : FRHISamplerState(InSamplerInfo)

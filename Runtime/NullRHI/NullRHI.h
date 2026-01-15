@@ -14,16 +14,8 @@ struct NULLRHI_API FNullRHIModule final : public FRHIModule
 class NULLRHI_API FNullRHI final : public FRHI
 {
 public:
-    FNullRHI()
-        : FRHI(ERHIType::Null)
-        , CommandContext(new FNullRHICommandContext())
-    {
-    }
-
-    ~FNullRHI()
-    {
-        SAFE_DELETE(CommandContext);
-    }
+    FNullRHI();
+    ~FNullRHI();
 
     virtual void BeginFrame() override final { }
     virtual void EndFrame() override final { }
@@ -58,24 +50,36 @@ public:
         return new FNullRHIRayTracingGeometry(InGeometryInfo);
     }
 
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHITextureSRVInfo& InInfo) override final
+    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo)
     {
-        return new FNullRHIShaderResourceView(InInfo.Texture);
+        if (InInfo.IsBufferSRV())
+        {
+            return new FNullRHIShaderResourceView(InInfo.BufferSRV.Buffer);
+        }
+        else if (InInfo.IsTextureSRV())
+        {
+            return new FNullRHIShaderResourceView(InInfo.TextureSRV.Texture);
+        }
+		else
+		{
+			return nullptr;
+		}
     }
 
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) override final
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
     {
-        return new FNullRHIShaderResourceView(InInfo.Buffer);
-    }
-
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) override final
-    {
-        return new FNullRHIUnorderedAccessView(InInfo.Texture);
-    }
-
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) override final
-    {
-        return new FNullRHIUnorderedAccessView(InInfo.Buffer);
+        if (InInfo.IsBufferUAV())
+        {
+            return new FNullRHIUnorderedAccessView(InInfo.BufferUAV.Buffer);
+        }
+        else if (InInfo.IsTextureUAV())
+        {
+            return new FNullRHIUnorderedAccessView(InInfo.TextureUAV.Texture);
+        }
+        else
+        {
+            return nullptr;
+        }
     }
 
     virtual class FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final
@@ -138,32 +142,32 @@ public:
         return new TNullRHIShader<FRHIRayMissShader>();
     }
 
-    virtual class FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final
+    virtual class FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) override final
     {
-        return new FNullRHIDepthStencilState(InInitializer);
+        return new FNullRHIDepthStencilState(InInfo);
     }
 
-    virtual class FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final
+    virtual class FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo) override final
     {
-        return new FNullRHIRasterizerState(InInitializer);
+        return new FNullRHIRasterizerState(InInfo);
     }
 
-    virtual class FRHIBlendState* CreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final
+    virtual class FRHIBlendState* CreateBlendState(const FRHIBlendStateInfo& InInfo) override final
     {
-        return new FNullRHIBlendState(InInitializer);
+        return new FNullRHIBlendState(InInfo);
     }
 
-    virtual class FRHIVertexLayout* CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final
+    virtual class FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements) override final
     {
-        return new FNullRHIVertexLayout(InInitializerList);
+        return new FNullRHIInputLayout(InInputElements);
     }
 
-    virtual class FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final
+    virtual class FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo) override final
     {
         return new FNullRHIGraphicsPipelineState();
     }
 
-    virtual class FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final
+    virtual class FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final
     {
         return new FNullRHIComputePipelineState();
     }

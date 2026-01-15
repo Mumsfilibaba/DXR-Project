@@ -16,10 +16,6 @@ DECLARE_DELEGATE(FOnWindowClosed);
 /** @brief Delegate called when the window activation state changes. */
 DECLARE_DELEGATE(FOnWindowActivationChanged);
 
-/**
- * @brief Represents a window in the application, managing its content, overlay, and platform-specific window.
- */
-
 class APPLICATION_API FWindowWidget : public FWidget
 {
 public:
@@ -60,16 +56,12 @@ public:
     FWindowWidget();
     virtual ~FWindowWidget();
 
-public:
-    
     // FWidget Interface
     virtual void Tick(const FRectangle& AssignedBounds) override final;
 
     virtual bool IsWindow() const override final;
 
     virtual void FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets) override final;
-
-public:
 
     /**
      * @brief Initializes the window with the specified parameters.
@@ -102,14 +94,14 @@ public:
     /**
      * @brief Called when the platform window is destroyed.
      * 
-     * This function is called from the FApplicationInstance when the platform window is destroyed.
+     * This function is called from the FApplication when the platform window is destroyed.
      */
     void OnWindowDestroyed();
 
     /**
      * @brief Called when the window activation state changes.
      * 
-     * This function is called from the FApplicationInstance when the platform window's activation state changes.
+     * This function is called from the FApplication when the platform window's activation state changes.
      * This means that the user switches windows, changing focus, or the entire application loses focus.
      * The behavior may vary depending on the platform, but generally, the function is called when the window loses or gains focus.
      * @param bIsActive True if the window is now active; false if it is inactive.
@@ -352,13 +344,12 @@ private:
     FOnWindowResized           OnWindowResizedDelegate;
     FOnWindowActivationChanged OnWindowActivationChangedDelegate;
 
-    FIntVector2       CachedPosition;
-    FIntVector2       CachedSize;
-    EWindowStyleFlags StyleFlags;
+    FIntVector2                CachedPosition;
+    FIntVector2                CachedSize;
+    EWindowStyleFlags          StyleFlags;
 
-    TSharedPtr<FWidget> Overlay;
-    TSharedPtr<FWidget> Content;
+    TSharedPtr<FWidget>        Overlay;
+    TSharedPtr<FWidget>        Content;
 
     TSharedRef<FGenericWindow> PlatformWindow;
-
 };

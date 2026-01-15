@@ -17,10 +17,11 @@ struct FRHIRayTracingGeometryInfo;
 enum class ERHIType : uint32
 {
     Unknown = 0,
-    Null    = 1,
-    D3D12   = 2,
-    Vulkan  = 3,
-    Metal   = 4,
+
+    Null   = 1,
+    D3D12  = 2,
+    Vulkan = 3,
+    Metal  = 4,
 };
 
 NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
@@ -31,7 +32,8 @@ NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
         case ERHIType::D3D12:  return "D3D12";
         case ERHIType::Vulkan: return "Vulkan";
         case ERHIType::Metal:  return "Metal";
-        default:               return "Unknown";
+
+        default: return "Unknown";
     }
 }
 
@@ -54,10 +56,6 @@ enum class EVideoMemoryType
 
 struct FRHIVideoMemoryInfo
 {
-    constexpr FRHIVideoMemoryInfo() noexcept = default;
-
-    constexpr bool operator==(const FRHIVideoMemoryInfo& Other) const noexcept = default;
-
     /** @brief Type of memory that is queried */
     EVideoMemoryType MemoryType = EVideoMemoryType::Local;
 
@@ -152,28 +150,14 @@ public:
      * @param InInfo Structure containing information about the shader resource view.
      * @return The newly created shader resource view.
      */
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHITextureSRVInfo& InInfo) = 0;
-
-    /**
-     * @brief Creates a new shader resource view for a buffer.
-     * @param InInfo Structure containing information about the shader resource view.
-     * @return The newly created shader resource view.
-     */
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) = 0;
+    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new unordered access view for a texture.
      * @param InInfo Structure containing information about the unordered access view.
      * @return The newly created unordered access view.
      */
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) = 0;
-
-    /**
-     * @brief Creates a new unordered access view for a buffer.
-     * @param InInfo Structure containing information about the unordered access view.
-     * @return The newly created unordered access view.
-     */
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) = 0;
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new compute shader.
@@ -261,45 +245,45 @@ public:
 
     /**
      * @brief Creates a new depth-stencil state.
-     * @param InInitializer Information about the depth-stencil state.
+     * @param InInfo Information about the depth-stencil state.
      * @return The newly created depth-stencil state.
      */
-    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) = 0;
+    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new rasterizer state.
-     * @param InInitializer Information about the rasterizer state.
+     * @param InInfo Information about the rasterizer state.
      * @return The newly created rasterizer state.
      */
-    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) = 0;
+    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new blend state.
-     * @param InInitializer Information about the blend state.
+     * @param InInfo Information about the blend state.
      * @return The newly created blend state.
      */
-    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInitializer& InInitializer) = 0;
+    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new vertex layout.
-     * @param InInitializerList Information about the vertex layout.
+     * @param InInputElements Array of InputElements.
      * @return The newly created vertex layout.
      */
-    virtual FRHIVertexLayout* CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) = 0;
+    virtual FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements) = 0;
 
     /**
      * @brief Creates a graphics pipeline state.
-     * @param InInitializer Information about the graphics pipeline state.
+     * @param InInfo Information about the graphics pipeline state.
      * @return The newly created pipeline state.
      */
-    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) = 0;
+    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a compute pipeline state.
-     * @param InInitializer Information about the compute pipeline state.
+     * @param InInfo Information about the compute pipeline state.
      * @return The newly created pipeline state.
      */
-    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) = 0;
+    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) = 0;
 
     /**
      * @brief Creates a ray-tracing pipeline state.

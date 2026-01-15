@@ -260,9 +260,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
-        VkImageMemoryBarrier2 ImageBarrier;
-        FMemory::Memzero(&ImageBarrier);
-
+        VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -404,7 +402,7 @@ void FVulkanSwapChain::SetDebugName(const FString& InName)
         BackBuffer->SetDebugName("BackBuffer Proxy");
 
         // Name all the images
-        for (uint32 i = 0; i < BackBuffers.Size(); ++i)
+        for (int32 i = 0; i < BackBuffers.Size(); ++i)
         {
             const FString ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", i);
             BackBuffers[i]->SetDebugName(ImageName);

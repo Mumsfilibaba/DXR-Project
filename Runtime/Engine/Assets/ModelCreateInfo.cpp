@@ -556,8 +556,8 @@ FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) no
         SphereInfo.Vertices[i].Position = Position * Radius;
 
         // Calculate UVs
-        SphereInfo.Vertices[i].TexCoord.Y = (Math::Asin(SphereInfo.Vertices[i].Position.Y) / Math::PI_Float) + 0.5f;
-        SphereInfo.Vertices[i].TexCoord.X = (Math::Atan2(SphereInfo.Vertices[i].Position.Z, SphereInfo.Vertices[i].Position.X) + Math::PI_Float) / (2.0f * Math::PI_Float);
+        SphereInfo.Vertices[i].TexCoord.Y = (Math::Asin(SphereInfo.Vertices[i].Position.Y) / Math::Constants::PI) + 0.5f;
+        SphereInfo.Vertices[i].TexCoord.X = (Math::Atan2(SphereInfo.Vertices[i].Position.Z, SphereInfo.Vertices[i].Position.X) + Math::Constants::PI) / (2.0f * Math::Constants::PI);
     }
 
     SphereInfo.Indices.Shrink();
@@ -586,7 +586,7 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     MeshCreateInfo.Indices.Resize(NumIndices);
 
     // Angle between each side segment
-    const float Angle = (2.0f * Math::PI_Float) / static_cast<float>(Sides);
+    const float Angle = (2.0f * Math::Constants::PI) / static_cast<float>(Sides);
     
     // Create the center vertex for the base cap
     MeshCreateInfo.Vertices[0].Position = FVector3(0.0f, 0.0f, 0.0f);
@@ -664,8 +664,8 @@ FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, ui
     MeshCreateInfo.Indices.Resize(NumIndices);
 
     // Step angles for each segment
-    const float RingStep = 2.0f * Math::PI_Float / static_cast<float>(RingSegments);
-    const float TubeStep = 2.0f * Math::PI_Float / static_cast<float>(TubeSegments);
+    const float RingStep = 2.0f * Math::Constants::PI / static_cast<float>(RingSegments);
+    const float TubeStep = 2.0f * Math::Constants::PI / static_cast<float>(TubeSegments);
 
     // Create vertices
     uint32 VertexIndex = 0;
@@ -1124,7 +1124,7 @@ FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float H
     const float HalfHeight = Height / 2.0f;
 
     // Angle increment per side
-    const float DeltaAngle = 2.0f * Math::PI_Float / static_cast<float>(Sides);
+    const float DeltaAngle = 2.0f * Math::Constants::PI / static_cast<float>(Sides);
 
     // Generate top cap vertices
     FVertex TopCenterVertex;

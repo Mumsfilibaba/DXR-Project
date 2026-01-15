@@ -139,12 +139,12 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             bIsStageUsed = false;
         }
 
-        if (ResourceCounts.Num32BitConstants > 0)
+        if (ResourceCounts.NumShaderConstants > 0)
         {
-            CHECK(ResourceCounts.Num32BitConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
+            CHECK(ResourceCounts.NumShaderConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT);
             CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
-            Insert32BitConstantRange(GetD3D12ShaderVisibility(ShaderStage), ResourceCounts.Num32BitConstants, 0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+            Insert32BitConstantRange(GetD3D12ShaderVisibility(ShaderStage), ResourceCounts.NumShaderConstants, 0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
             bIsStageUsed = false;
         }
 
@@ -197,19 +197,19 @@ void FD3D12RootSignatureDescHelper::InsertDescriptorTable(D3D12_SHADER_VISIBILIT
     RootSignatureCost++;
 }
 
-void FD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace)
+void FD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 NumShaderConstants, uint32 ShaderRegister, uint32 RegisterSpace)
 {
-    CHECK(Num32BitConstants > 0);
+    CHECK(NumShaderConstants > 0);
 
     D3D12_ROOT_PARAMETER& NewParameters = RootParameters[NumRootParameters++];
     NewParameters.ParameterType            = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
     NewParameters.ShaderVisibility         = ShaderVisibility;
-    NewParameters.Constants.Num32BitValues = Num32BitConstants;
+    NewParameters.Constants.Num32BitValues = NumShaderConstants;
     NewParameters.Constants.ShaderRegister = ShaderRegister;
     NewParameters.Constants.RegisterSpace  = RegisterSpace;
 
     // Each constant cost 1 DWORD
-    RootSignatureCost += Num32BitConstants;
+    RootSignatureCost += NumShaderConstants;
 }
 
 void FD3D12RootSignatureDescHelper::InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace)
@@ -386,19 +386,19 @@ FD3D12RootSignatureManager::~FD3D12RootSignatureManager()
 bool FD3D12RootSignatureManager::Initialize()
 {
     FD3D12RootSignatureLayout SimpleGraphicsKey;
-    SimpleGraphicsKey.Type                = ERootSignatureType::Graphics;
+    SimpleGraphicsKey.Type                 = ERootSignatureType::Graphics;
     SimpleGraphicsKey.bAllowInputAssembler = true;
-    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_All].NumShaderConstants    = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
 
     SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
     SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
     SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
     SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
-    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
-    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumCBVs      = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumSRVs      = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumUAVs      = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumSamplers  = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
 
     FD3D12RootSignature* SimpleGraphicsRootSignature = CreateRootSignature(SimpleGraphicsKey);
     if (!SimpleGraphicsRootSignature)
@@ -414,7 +414,7 @@ bool FD3D12RootSignatureManager::Initialize()
     FD3D12RootSignatureLayout GraphicsKey;
     GraphicsKey.Type                 = ERootSignatureType::Graphics;
     GraphicsKey.bAllowInputAssembler = true;
-    GraphicsKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    GraphicsKey.ResourceCounts[ShaderVisibility_All].NumShaderConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
 
     // NOTE: Skips visibility all, however constants are still visible to all stages
     for (uint32 Index = ShaderVisibility_Vertex; Index < ShaderVisibility_Count; Index++)
@@ -439,7 +439,7 @@ bool FD3D12RootSignatureManager::Initialize()
     FD3D12RootSignatureLayout ComputeKey;
     ComputeKey.Type                 = ERootSignatureType::Compute;
     ComputeKey.bAllowInputAssembler = false;
-    ComputeKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    ComputeKey.ResourceCounts[ShaderVisibility_All].NumShaderConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
@@ -464,7 +464,7 @@ bool FD3D12RootSignatureManager::Initialize()
     FD3D12RootSignatureLayout RTGlobalKey;
     RTGlobalKey.Type                 = ERootSignatureType::RayTracingGlobal;
     RTGlobalKey.bAllowInputAssembler = false;
-    RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+    RTGlobalKey.ResourceCounts[ShaderVisibility_All].NumShaderConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;

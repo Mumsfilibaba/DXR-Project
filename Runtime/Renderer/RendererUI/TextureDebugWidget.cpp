@@ -2,6 +2,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
@@ -88,7 +89,7 @@ void FTextureDebugWidget::Draw()
                         ImGui::SetCursorPos(NewPosition);
                     }
 
-                    CurrImage->bSamplerLinear = false;
+                    CurrImage->bEnableLinearSampler = false;
                     ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
                 }
             }
@@ -103,7 +104,7 @@ void FTextureDebugWidget::Draw()
             {
                 ImGui::NewLine();
 
-                if (ImGuiExtensions::ButtonCenteredOnLine("Close"))
+                if (EditorWidgets::ButtonCenteredOnLine("Close"))
                 {
                     CVarDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }
@@ -126,6 +127,7 @@ void FTextureDebugWidget::Draw()
                     FImGuiTexture* CurrImage = &DebugTextures[Index];
 
                     const float ImageRatio = float(CurrImage->Texture->GetWidth()) / float(CurrImage->Texture->GetHeight());
+
                     ImVec2 Size    = ImVec2(MenuImageSize * ImageRatio, MenuImageSize);
                     ImVec2 Uv0     = ImVec2(0.0f, 0.0f);
                     ImVec2 Uv1     = ImVec2(1.0f, 1.0f);

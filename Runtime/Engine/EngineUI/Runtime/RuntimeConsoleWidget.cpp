@@ -5,11 +5,11 @@
 #include "Application/Application.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include "Engine/EngineUI/InGameConsoleWidget.h"
+#include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
 
-FInGameConsoleWidget::FInGameConsoleWidget()
+FRuntimeConsoleWidget::FRuntimeConsoleWidget()
     : IOutputDevice()
-    , InputHandler(MakeSharedPtr<FConsoleInputHandler>())
+    , InputHandler()
     , ImGuiDelegateHandle()
     , Candidates()
     , SelectedCandidateIndex(InvalidIndex)
@@ -29,20 +29,21 @@ FInGameConsoleWidget::FInGameConsoleWidget()
 
     if (FApplication::IsInitialized())
     {
-        InputHandler->HandleKeyEventDelegate.BindRaw(this, &FInGameConsoleWidget::HandleKeyPressedEvent);
+        InputHandler = MakeSharedPtr<FConsoleInputHandler>();
+        InputHandler->HandleKeyEventDelegate.BindRaw(this, &FRuntimeConsoleWidget::HandleKeyPressedEvent);
         FApplication::Get().RegisterInputHandler(InputHandler);
     }
 
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FInGameConsoleWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRuntimeConsoleWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 
     TextBuffer.Fill(0);
 }
 
-FInGameConsoleWidget::~FInGameConsoleWidget()
+FRuntimeConsoleWidget::~FRuntimeConsoleWidget()
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
@@ -60,7 +61,7 @@ FInGameConsoleWidget::~FInGameConsoleWidget()
     }
 }
 
-void FInGameConsoleWidget::Draw()
+void FRuntimeConsoleWidget::Draw()
 {
     if (bIsActive)
     {
@@ -68,7 +69,7 @@ void FInGameConsoleWidget::Draw()
     }
 }
 
-void FInGameConsoleWidget::DrawConsole()
+void FRuntimeConsoleWidget::DrawConsole()
 {
     const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
     const ImVec2 MainViewportSize = ImGuiExtensions::GetMainViewportSize();
@@ -77,8 +78,7 @@ void FInGameConsoleWidget::DrawConsole()
     const float Scale          = FrameBufferScale.x;
     const float TotalWidth     = MainViewportSize.x;
     const float TextAreaHeight = 384.0f * Scale;
-
-    const float Transparency = 0.8f;
+    const float Transparency   = 0.8f;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
@@ -154,6 +154,22 @@ void FInGameConsoleWidget::DrawConsole()
                 VariableNameWidth  += Padding;
                 VariableValueWidth += Padding;
 
+				const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
+				{
+					return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+				};
+
+				const float PostFixTextLength =
+					Math::Max(ImGui::CalcTextSize("Bool").x,
+					Math::Max(ImGui::CalcTextSize("Int").x,
+					Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
+
+				const float SetByTextLength =
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
+					Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
+
                 // Draw UI
                 bool bIsActiveIndex = false;
                 for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)
@@ -178,20 +194,6 @@ void FInGameConsoleWidget::DrawConsole()
 
                     const char* PostFixText = "";
                     const char* SetByText   = "";
-
-                    // Value
-                    const float PostFixTextLength = 
-                        Math::Max(ImGui::CalcTextSize("Bool").x,
-                        Math::Max(ImGui::CalcTextSize("Int").x,
-                        Math::Max(ImGui::CalcTextSize("Float").x,
-                                   ImGui::CalcTextSize("String").x)));
-
-                    const float SetByTextLength =
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConstructor)).x,
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCommandLine)).x,
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConfigFile)).x,
-                        Math::Max(ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByCode)).x,
-                                   ImGui::CalcTextSize(SetByFlagToString(EConsoleVariableFlags::SetByConsole)).x))));
 
                     IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                     if (ConsoleVariable)
@@ -276,10 +278,22 @@ void FInGameConsoleWidget::DrawConsole()
                 {
                     switch (Severity)
                     {
-                        case ELogSeverity::Info:    return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-                        case ELogSeverity::Warning: return ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
-                        case ELogSeverity::Error:   return ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
-                        default:                    return ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+                        case ELogSeverity::Info:
+                        {
+                            return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+                        }
+                        case ELogSeverity::Warning:
+                        {
+                            return ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
+                        }
+                        case ELogSeverity::Error:
+                        {
+                            return ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+                        }
+                        default:
+                        {
+                            return ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+                        }
                     }
                 };
 
@@ -324,7 +338,7 @@ void FInGameConsoleWidget::DrawConsole()
             // Prepare callback for ImGui
             const auto TextInputCallback = [](ImGuiInputTextCallbackData* CallbackData)
             {
-                FInGameConsoleWidget* ConsoleWidget = reinterpret_cast<FInGameConsoleWidget*>(CallbackData->UserData);
+                FRuntimeConsoleWidget* ConsoleWidget = reinterpret_cast<FRuntimeConsoleWidget*>(CallbackData->UserData);
                 return ConsoleWidget->InputTextCallback(CallbackData);
             };
 
@@ -386,12 +400,12 @@ void FInGameConsoleWidget::DrawConsole()
     ImGui::PopStyleColor();
 }
 
-void FInGameConsoleWidget::Log(const FString& Message)
+void FRuntimeConsoleWidget::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FInGameConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
+void FRuntimeConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
@@ -406,14 +420,14 @@ void FInGameConsoleWidget::Log(ELogSeverity Severity, const FString& Message)
     bShouldScrollText = true;
 }
 
-void FInGameConsoleWidget::InvalidateCandidates()
+void FRuntimeConsoleWidget::InvalidateCandidates()
 {
     SelectedCandidateIndex = InvalidIndex;
     bCandidateSelectionChanged = true;
     Candidates.Clear();
 }
 
-int32 FInGameConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
+int32 FRuntimeConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
 {
     // If we have completed using the Enter key, then we need to update the cursor-position
     if (bUpdateCursorPosition)
@@ -623,7 +637,7 @@ int32 FInGameConsoleWidget::InputTextCallback(ImGuiInputTextCallbackData* Callba
     return 0;
 }
 
-void FInGameConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
+void FRuntimeConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
 {
     CHECK(InputHandler.IsValid());
 

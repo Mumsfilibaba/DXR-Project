@@ -98,9 +98,7 @@ void FBarrierBatcher::AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, c
 
 void FBarrierBatcher::FlushBarriers()
 {
-    VkDependencyInfo DependencyInfo;
-    FMemory::Memzero(&DependencyInfo);
-
+    VkDependencyInfo DependencyInfo = {};
     DependencyInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
 
     for (FBatch& Batch : Batches)
@@ -125,7 +123,7 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , Queue(InQueue)
     , CommandPool(nullptr)
     , CommandBuffer(nullptr)
-    , CommandPayload(nullptr)
+    , CommandSubmission(nullptr)
     , TimestampQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , BarrierBatcher(*this)
@@ -193,10 +191,10 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         }
     }
 
-    if (!CommandPayload)
+    if (!CommandSubmission)
     {
-        CommandPayload = new FVulkanCommandPayload(GetDevice(), Queue);
-        CommandPayload->AcquireFence();
+        CommandSubmission = new FVulkanCommandSubmission(GetDevice(), Queue);
+        CommandSubmission->AcquireFence();
     }
 }
 
@@ -215,20 +213,20 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
             VULKAN_ERROR_CRITICAL("Failed to End CommandBuffer");
         }
 
-        CommandPayload->AddCommandBuffer(CommandBuffer);
+        CommandSubmission->AddCommandBuffer(CommandBuffer);
         CommandBuffer = nullptr;
 
-        if (bFlushPool)
-        {
-            CommandPayload->AddCommandPool(CommandPool);
-            CommandPool = nullptr;
-        }
+		if (bFlushPool)
+		{
+			CommandSubmission->AddCommandPool(CommandPool);
+			CommandPool = nullptr;
+		}
 
         TimestampQueryAllocator.PrepareForNewCommandBuffer();
         OcclusionQueryAllocator.PrepareForNewCommandBuffer();
 
-        FVulkanRHI::Get()->SubmitCommands(CommandPayload, true);
-        CommandPayload = nullptr;
+        FVulkanRHI::Get()->SubmitCommands(CommandSubmission, true);
+        CommandSubmission = nullptr;
     }
 
     ContextState.ResetStateForNewCommandBuffer();
@@ -249,38 +247,96 @@ void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQue
     ObtainCommandBuffer();
 }
 
+void FVulkanCommandContext::ForceFlushCommandPool()
+{
+	// -------------------------------------------------------------------------------------------
+	// Forces submission of the current command-pool to the active command payload. This is 
+    // necessary because, at the end of a frame, there may be no further commands to submit after 
+    // the Present() call. In such cases, FinishContext() will not flush or reset the 
+    // command-pool, causing it to accumulate memory allocations across frames.
+	//
+	// By explicitly retiring the current command pool here, we ensure that command-buffers are 
+    // released and the pool is properly recycled, even in frames with minimal or no recorded 
+    // GPU work.
+	// -------------------------------------------------------------------------------------------
+
+    if (!CommandPool)
+    {
+        return;
+    }
+
+	if (CommandSubmission)
+	{
+		CommandSubmission->AddCommandPool(CommandPool);
+		CommandPool = nullptr;
+	}
+}
+
 void FVulkanCommandContext::StartContext()
 {
-    // TODO: Remove lock, the command context itself should only be used from a single thread
-    // Lock to the thread that started the context
-    CommandContextCS.Lock();
+	// -------------------------------------------------------------------------------------------
+	// NOTE: This context is intended to be used from a single thread. The lock only enforces 
+    // that the same thread which starts the context is the one that later finishes it. Once 
+    // the codebase guarantees single-threaded use per context, this lock can be removed.
+	// -------------------------------------------------------------------------------------------
+	CommandContextCS.Lock();
 
-    // Update state
-    CHECK(ContextPhase == ECommandContextPhase::Finished);
-    ContextPhase = ECommandContextPhase::Recording;
+	// -------------------------------------------------------------------------------------------
+	// Phase Transition: Finished -> Recording
+	// -------------------------------------------------------------------------------------------
+	CHECK(ContextPhase == ECommandContextPhase::Finished);
+	ContextPhase = ECommandContextPhase::Recording;
 
-    // Reset the state
-    ContextState.ResetState();
-    
-    // Process submitted commands
-    FVulkanRHI::Get()->ProcessPendingCommands();
-    
-    // Retrieve a new CommandBuffer
-    ObtainCommandBuffer();
+	// -------------------------------------------------------------------------------------------
+	// Clear cached bindings, barriers, and any transient state accumulated in the previous 
+    // frame/phase.
+	// -------------------------------------------------------------------------------------------
+	ContextState.ResetState();
+
+	// -------------------------------------------------------------------------------------------
+	// Pick up and retire any previously submitted command payloads to avoid unbounded growth 
+    // in per-frame allocations and to free pools/buffers for reuse.
+	// -------------------------------------------------------------------------------------------
+	FVulkanRHI::Get()->ProcessPendingCommandSubmissions();
+
+	// -------------------------------------------------------------------------------------------
+	// Acquire/allocate a fresh command buffer so the caller can immediately begin recording 
+    // GPU work in this context.
+	// -------------------------------------------------------------------------------------------
+	ObtainCommandBuffer();
 }
 
 void FVulkanCommandContext::FinishContext()
 {
-    // Submit the CommandBuffer
-    FinishCommandBuffer(true);
+	// -------------------------------------------------------------------------------------------
+	// Phase Validation
+	// -------------------------------------------------------------------------------------------
+	CHECK(ContextPhase == ECommandContextPhase::Recording);
 
-    // Update state
-    CHECK(ContextPhase == ECommandContextPhase::Recording);
-    ContextPhase = ECommandContextPhase::Finished;
+	// -------------------------------------------------------------------------------------------
+	// Finish the active command-buffer and request pool retirement/reset. We want one 
+    // command-pool per context per frame-in-flight. The actual pool retirement happens as part 
+    // of submit/payload path if there are commands to submit.
+	// -------------------------------------------------------------------------------------------
+	FinishCommandBuffer(true);
 
-    // TODO: Remove lock, the command context itself should only be used from a single thread
-    // Unlock from the thread that started the context
-    CommandContextCS.Unlock();
+	// -------------------------------------------------------------------------------------------
+	// In frames where Present() is the last operation and no additional commands are 
+    // recorded/submitted, ensure we don�t keep accumulating command-buffers in the pool across 
+    // frames by retiring the pool here.
+	// -------------------------------------------------------------------------------------------
+	ForceFlushCommandPool();
+
+	// -------------------------------------------------------------------------------------------
+	// Phase Transition: Recording -> Finished
+	// -------------------------------------------------------------------------------------------
+	ContextPhase = ECommandContextPhase::Finished;
+
+	// -------------------------------------------------------------------------------------------
+	// See note in StartContext(): once guaranteed single-threaded use is enforced by design, 
+    // this lock can be removed.
+	// -------------------------------------------------------------------------------------------
+	CommandContextCS.Unlock();
 }
 
 void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
@@ -346,9 +402,7 @@ void FVulkanCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Re
     if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
     {
         // NOTE: Here the image is expected to be in a "RenderTargetState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
-        VkImageMemoryBarrier2 ImageBarrier;
-        FMemory::Memzero(&ImageBarrier);
-
+        VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         ImageBarrier.oldLayout                       = ConvertResourceStateToImageLayout(EResourceAccess::RenderTarget);
@@ -402,9 +456,7 @@ void FVulkanCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& De
     if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
     {
         // NOTE: Here the image is expected to be in a "DepthStencilState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
-        VkImageMemoryBarrier2 ImageBarrier;
-        FMemory::Memzero(&ImageBarrier);
-
+        VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         ImageBarrier.oldLayout                       = ConvertResourceStateToImageLayout(EResourceAccess::DepthWrite);
@@ -571,10 +623,10 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
         RenderPassKey.NumSamples = NumSamples;
 
         // Setup ViewInstancing
-        if (BeginRenderPassInfo.ViewInstancingInfo.bEnableViewInstancing)
+        if (BeginRenderPassInfo.ViewInstancingState.bEnableViewInstancing)
         {
             // This view-instance information is used to create multi-view extension mask for the render-pass
-            RenderPassKey.ViewInstancingInfo = BeginRenderPassInfo.ViewInstancingInfo;
+            RenderPassKey.ViewInstancingState = BeginRenderPassInfo.ViewInstancingState;
 
             // If multi-view is enabled, then we are only allowed to use a single layer
             NumArrayLayers = 1;
@@ -608,7 +660,7 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
     BarrierBatcher.FlushBarriers();
 
     // Begin the RenderPass
-    VkRenderPassBeginInfo RenderPassBeginInfo = { };
+    VkRenderPassBeginInfo RenderPassBeginInfo = {};
     RenderPassBeginInfo.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass               = RenderPass;
     RenderPassBeginInfo.framebuffer              = FrameBuffer;
@@ -622,7 +674,7 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
     ContextPhase = ECommandContextPhase::InsideRenderPass;
 
     // Set the current view-instance so that we can verify that we have the same view-instance info inside the pipeline-state and the current render-pass
-    ContextState.SetViewInstanceInfo(BeginRenderPassInfo.ViewInstancingInfo);
+    ContextState.SetViewInstanceInfo(BeginRenderPassInfo.ViewInstancingState);
 }
 
 void FVulkanCommandContext::EndRenderPass()  
@@ -634,7 +686,7 @@ void FVulkanCommandContext::EndRenderPass()
 
 void FVulkanCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 {
-    VkViewport Viewport;
+    VkViewport Viewport = {};
     if (GVulkanEnableNegativeViewportHeight)
     {
         Viewport.width    =  ViewportRegion.Width;
@@ -659,7 +711,7 @@ void FVulkanCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 
 void FVulkanCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
 {
-    VkRect2D ScissorRect;
+    VkRect2D ScissorRect = {};
     ScissorRect.offset.x      = static_cast<int32_t>(ScissorRegion.PositionX);
     ScissorRect.offset.y      = static_cast<int32_t>(ScissorRegion.PositionY);
     ScissorRect.extent.width  = static_cast<int32_t>(ScissorRegion.Width);
@@ -700,11 +752,11 @@ void FVulkanCommandContext::SetComputePipelineState(class FRHIComputePipelineSta
     ContextState.SetComputePipelineState(VulkanPipelineState);
 }
 
-void FVulkanCommandContext::Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
+void FVulkanCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    ContextState.SetPushConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
+    ContextState.SetPushConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
 void FVulkanCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
@@ -804,7 +856,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Dst);
     CHECK(VulkanBuffer != nullptr);
 
-    if (IsEnumFlagSet(VulkanBuffer->GetFlags(), EBufferUsageFlags::Dynamic))
+    if (VulkanBuffer->GetInfo().IsDynamic())
     {
         VkDevice       NativeDevice = GetDevice()->GetVkDevice();
         VkDeviceMemory DeviceMemory = VulkanBuffer->GetVkDeviceMemory();
@@ -826,9 +878,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
         FMemory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
         
         // Flush memory ranges
-        VkMappedMemoryRange MappedMemoryRange;
-        FMemory::Memzero(&MappedMemoryRange);
-        
+        VkMappedMemoryRange MappedMemoryRange = {};
         MappedMemoryRange.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         MappedMemoryRange.memory = DeviceMemory;
         MappedMemoryRange.offset = 0;
@@ -850,7 +900,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
         CHECK(Allocation.Memory != nullptr);
         FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
         
-        VkBufferCopy BufferCopy;
+        VkBufferCopy BufferCopy = {};
         BufferCopy.srcOffset = Allocation.Offset;
         BufferCopy.dstOffset = BufferRegion.Offset;
         BufferCopy.size      = BufferRegion.Size;
@@ -888,7 +938,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
         Allocation.Memory += RowPitch;
     }
 
-    VkBufferImageCopy BufferImageCopy;
+    VkBufferImageCopy BufferImageCopy = {};
     BufferImageCopy.bufferOffset                    = Allocation.Offset;
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
@@ -917,9 +967,7 @@ void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     CHECK(SrcVulkanTexture->GetHeight() == DstVulkanTexture->GetHeight());
     CHECK(SrcVulkanTexture->GetDepth()  == DstVulkanTexture->GetDepth());
     
-    VkImageResolve ImageResolve;
-    FMemory::Memzero(&ImageResolve);
-    
+    VkImageResolve ImageResolve = {};
     ImageResolve.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
     ImageResolve.srcSubresource.mipLevel       = 0;
     ImageResolve.srcSubresource.baseArrayLayer = 0;
@@ -945,7 +993,7 @@ void FVulkanCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const F
     FVulkanBuffer* DstVulkanBuffer = FVulkanBuffer::Cast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
 
-    VkBufferCopy BufferCopy;
+    VkBufferCopy BufferCopy = {};
     BufferCopy.srcOffset = CopyDesc.SrcOffset;
     BufferCopy.dstOffset = CopyDesc.DstOffset;
     BufferCopy.size      = CopyDesc.Size;
@@ -1116,11 +1164,10 @@ void FVulkanCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITe
 
     const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
     const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
+
     if (NewLayout != PreviousLayout)
     {
-        VkImageMemoryBarrier2 ImageBarrier;
-        FMemory::Memzero(&ImageBarrier);
-
+        VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                       = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.newLayout                   = NewLayout;
         ImageBarrier.oldLayout                   = PreviousLayout;
@@ -1180,9 +1227,7 @@ void FVulkanCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
     CHECK(VulkanBuffer != nullptr);
 
-    VkBufferMemoryBarrier2 BufferBarrier;
-    FMemory::Memzero(&BufferBarrier);
-
+    VkBufferMemoryBarrier2 BufferBarrier = {};
     BufferBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
     BufferBarrier.srcAccessMask       = ConvertResourceStateToAccessFlags(BeforeState);
     BufferBarrier.dstAccessMask       = ConvertResourceStateToAccessFlags(AfterState);
@@ -1203,9 +1248,7 @@ void FVulkanCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
     FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
     CHECK(VulkanTexture != nullptr);
 
-    VkImageMemoryBarrier2 ImageBarrier;
-    FMemory::Memzero(&ImageBarrier);
-
+    VkImageMemoryBarrier2 ImageBarrier = {};
     ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
     ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
     ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_GENERAL;
@@ -1231,9 +1274,7 @@ void FVulkanCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
     CHECK(VulkanBuffer != nullptr);
 
-    VkBufferMemoryBarrier2 BufferBarrier;
-    FMemory::Memzero(&BufferBarrier);
-
+    VkBufferMemoryBarrier2 BufferBarrier = {};
     BufferBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
     BufferBarrier.srcAccessMask       = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
     BufferBarrier.dstAccessMask       = VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
@@ -1303,14 +1344,27 @@ void FVulkanCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTr
     UNREFERENCED_VARIABLE(InDepth);
 }
 
-void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
+void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bVerticalSync)
 {
-    FinishCommandBuffer(false);
+	// -------------------------------------------------------------------------------------------
+	// We intentionally do not retire or reset the command pool here. The goal is to maintain 
+    // a single command pool per command context, per thread, per frame-in-flight. This helps 
+    // avoid unnecessary command pool allocations or resets between multiple Present() calls
+	// in the same frame.
+	//
+	// The command pool will instead be explicitly retired at the end of FinishContext(), 
+    // ensuring proper lifecycle management without leaks.
+	// -------------------------------------------------------------------------------------------
+	FinishCommandBuffer(false);
 
-    FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(SwapChain);
-    VulkanSwapChain->Present(this, bVerticalSync);
+	FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(InSwapChain);
+	VulkanSwapChain->Present(this, bVerticalSync);
 
-    ObtainCommandBuffer();
+	// -------------------------------------------------------------------------------------------
+	// Acquire or allocate a fresh command buffer so that subsequent GPU work can continue 
+    // recording immediately after presenting.
+	// -------------------------------------------------------------------------------------------
+	ObtainCommandBuffer();
 }
 
 void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
@@ -1359,7 +1413,7 @@ void FVulkanCommandContext::InsertMarker(const FStringView& Message)
 #if VK_EXT_debug_utils
     if (VulkanDebugUtilsEXT::IsEnabled())
     {
-        VkDebugUtilsLabelEXT DebugUtilsLabel = { };
+        VkDebugUtilsLabelEXT DebugUtilsLabel = {};
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
         DebugUtilsLabel.pLabelName = Message.Data();
         DebugUtilsLabel.color[0]   = 0.0f;

@@ -45,7 +45,7 @@ struct FVulkanRenderPassKey
             uint8 NumSamples : 4;
             uint8 NumRenderTargets : 4;
 
-            FViewInstancingInfo ViewInstancingInfo;
+            FRHIViewInstancingState ViewInstancingState;
             
             EFormat RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
             FVulkanRenderPassActions RenderTargetActions[RHI_MAX_RENDER_TARGETS];

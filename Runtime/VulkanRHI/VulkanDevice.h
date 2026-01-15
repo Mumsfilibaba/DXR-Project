@@ -20,22 +20,73 @@
 class FVulkanInstance;
 class FVulkanPhysicalDevice;
 
-////////////////////////////////////////////////////
-// Global variables that describe different features
+// -------------------------------------------------------------------------------------------
+// Vulkan Device Feature Support
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API bool   GVulkanForceBinding;
+extern VULKANRHI_API bool   GVulkanForceDedicatedAllocations;
+extern VULKANRHI_API bool   GVulkanForceDedicatedImageAllocations;
+extern VULKANRHI_API bool   GVulkanForceDedicatedBufferAllocations;
 
-extern VULKANRHI_API bool GVulkanForceBinding;
-extern VULKANRHI_API bool GVulkanForceDedicatedAllocations;
-extern VULKANRHI_API bool GVulkanForceDedicatedImageAllocations;
-extern VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations;
-extern VULKANRHI_API bool GVulkanAllowNullDescriptors;
-extern VULKANRHI_API bool GVulkanAllowGeometryShaders;
-extern VULKANRHI_API bool GVulkanAllowResetCommandBuffers;
+extern VULKANRHI_API bool   GVulkanAllowDedicatedAllocations;
+extern VULKANRHI_API bool   GVulkanAllowNullDescriptors;
+extern VULKANRHI_API bool   GVulkanAllowGeometryShaders;
+extern VULKANRHI_API bool   GVulkanAllowResetCommandBuffers;
 
-extern VULKANRHI_API bool GVulkanSupportsDepthClip;
-extern VULKANRHI_API bool GVulkanSupportsConservativeRasterization;
-extern VULKANRHI_API bool GVulkanSupportsPipelineCacheControl;
+extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
+extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;
+extern VULKANRHI_API bool   GVulkanSupportsConservativeRasterization;
+extern VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl;
+extern VULKANRHI_API bool   GVulkanSupportsMultiviews;
+extern VULKANRHI_API bool   GVulkanSupportsBindless;
+extern VULKANRHI_API bool   GVulkanSupportsDepthBoundsTest;
+extern VULKANRHI_API bool   GVulkanSupportsSparseBinding;
+extern VULKANRHI_API bool   GVulkanSupportsSparseResidency2D;
+extern VULKANRHI_API bool   GVulkanSupportsSparseResidency3D;
+extern VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased;
+
+extern VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount;
+extern VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount;
+
+// -------------------------------------------------------------------------------------------
+// Programmable sample positions (VK_EXT_sample_locations)
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API bool GVulkanSupportsSampleLocations;
+
+// -------------------------------------------------------------------------------------------
+// Programmable sample positions (VK_EXT_fragment_shader_interlock)
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API bool GVulkanSupportsFragmentShaderInterlock;
+
+// -------------------------------------------------------------------------------------------
+// Ray Tracing (VK_KHR_ray_tracing_pipeline, VK_KHR_ray_query)
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API bool GVulkanSupportsRayTracingPipeline; 
+extern VULKANRHI_API bool GVulkanSupportsRayQuery;
 extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
-extern VULKANRHI_API bool GVulkanSupportsMultiviews;
+
+// -------------------------------------------------------------------------------------------
+// Variable Rate Shading (VK_KHR_fragment_shading_rate)
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate;
+extern VULKANRHI_API uint32 GVulkanShadingRateTileSize;
+
+// -------------------------------------------------------------------------------------------
+// Mesh shaders (VK_EXT_mesh_shader)
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API bool   GVulkanSupportsMeshShaders;
+extern VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices;
+extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
+extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;
+
+// -------------------------------------------------------------------------------------------
+// Descriptor / Heap Limits
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers;
+extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages;
+extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages;
+extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers;
+extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers;
 
 enum class EVulkanCommandQueueType
 {
@@ -45,25 +96,20 @@ enum class EVulkanCommandQueueType
     Compute  = 3, 
 };
 
-struct FVulkanPhysicalDeviceCreateInfo
+struct FVulkanDeviceCreateInfo
 {
-    FVulkanPhysicalDeviceCreateInfo()
-        : RequiredExtensionNames()
-        , OptionalExtensionNames()
-    {
-        FMemory::Memzero(&RequiredFeatures);
-        FMemory::Memzero(&RequiredFeatures11);
-        FMemory::Memzero(&RequiredFeatures12);
-    }
+    TArray<const CHAR*>              RequiredExtensionNames = {};
+    TArray<const CHAR*>              OptionalExtensionNames = {}; // Used to select most optimal adapter
 
-    TArray<const CHAR*> RequiredExtensionNames;
-    TArray<const CHAR*> OptionalExtensionNames; // Used to select most optimal adapter
+    VkPhysicalDeviceFeatures         RequiredFeatures   = {};
+    VkPhysicalDeviceVulkan11Features RequiredFeatures11 = {};
+    VkPhysicalDeviceVulkan12Features RequiredFeatures12 = {};
+    VkPhysicalDeviceVulkan13Features RequiredFeatures13 = {};
 
-    VkPhysicalDeviceFeatures         RequiredFeatures;
-    VkPhysicalDeviceVulkan11Features RequiredFeatures11;
-    VkPhysicalDeviceVulkan12Features RequiredFeatures12;
-
-    // TODO: Optional features that can be used so select the best adapter
+	VkPhysicalDeviceFeatures         OptionalFeatures   = {};
+	VkPhysicalDeviceVulkan11Features OptionalFeatures11 = {};
+	VkPhysicalDeviceVulkan12Features OptionalFeatures12 = {};
+	VkPhysicalDeviceVulkan13Features OptionalFeatures13 = {};
 };
 
 struct FVulkanQueueFamilyIndices
@@ -82,50 +128,107 @@ struct FVulkanQueueFamilyIndices
     uint32 ComputeQueueIndex  = uint32(~0);
 };
 
+struct FVulkanDefaultResources
+{
+	FVulkanDefaultResources()
+		: NullBuffer(VK_NULL_HANDLE)
+		, NullImage(VK_NULL_HANDLE)
+		, NullImageView(VK_NULL_HANDLE)
+		, NullSampler(VK_NULL_HANDLE)
+	{
+	}
+
+	~FVulkanDefaultResources()
+	{
+		CHECK(NullBuffer == VK_NULL_HANDLE);
+		CHECK(NullImage == VK_NULL_HANDLE);
+		CHECK(NullImageView == VK_NULL_HANDLE);
+		CHECK(NullSampler == VK_NULL_HANDLE);
+	}
+
+	bool Initialize(FVulkanDevice& Device);
+	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
+	void Release(FVulkanDevice& Device);
+
+	// Null-Buffer
+	VkBuffer                NullBuffer;
+	FVulkanMemoryAllocation NullBufferMemory;
+
+	// Null-Image
+	VkImage                 NullImage;
+	VkImageView             NullImageView;
+	FVulkanMemoryAllocation NullImageMemory;
+
+	// NullSampler
+	VkSampler               NullSampler;
+};
+
+struct FVulkanHashableSamplerCreateInfo
+{
+	bool operator==(const FVulkanHashableSamplerCreateInfo& Other) const
+	{
+		return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
+	}
+
+	bool operator!=(const FVulkanHashableSamplerCreateInfo& Other) const
+	{
+		return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
+	}
+
+	friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)
+	{
+		return CRC32::Generate(&Value, sizeof(Value));
+	}
+
+	VkSamplerCreateFlags Flags;
+	VkFilter             MagFilter;
+	VkFilter             MinFilter;
+	VkSamplerMipmapMode  MipmapMode;
+	VkSamplerAddressMode AddressModeU;
+	VkSamplerAddressMode AddressModeV;
+	VkSamplerAddressMode AddressModeW;
+	float                MipLodBias;
+	VkBool32             AnisotropyEnable;
+	float                MaxAnisotropy;
+	VkBool32             CompareEnable;
+	VkCompareOp          CompareOp;
+	float                MinLod;
+	float                MaxLod;
+	VkBorderColor        BorderColor;
+	VkBool32             UnnormalizedCoordinates;
+};
+
 class FVulkanPhysicalDevice
 {
 public:
-    static TOptional<FVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
+    static TOptional<FVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice PhysicalDevice);
 
+public:
     FVulkanPhysicalDevice(FVulkanInstance* InInstance);
     ~FVulkanPhysicalDevice();
 
-    bool Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc);
+    bool Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo);
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
     VkFormatProperties GetFormatProperties(VkFormat Format) const;
     
-    const VkPhysicalDeviceProperties& GetProperties() const { return DeviceProperties; }
-    const VkPhysicalDeviceFeatures& GetFeatures() const { return DeviceFeatures; }
-    const VkPhysicalDeviceMemoryProperties& GetMemoryProperties()  const { return DeviceMemoryProperties; }
-    // Vulkan 1.1, Vulkan 1.2 features
-    const VkPhysicalDeviceProperties2& GetProperties2() const { return DeviceProperties2; }
-    const VkPhysicalDeviceFeatures2& GetFeatures2() const { return DeviceFeatures2; }
+    // Vulkan 1.0 features
+    const VkPhysicalDeviceProperties&        GetProperties() const { return DeviceProperties; }
+    const VkPhysicalDeviceFeatures&          GetFeatures() const { return DeviceFeatures; }
+    const VkPhysicalDeviceMemoryProperties&  GetMemoryProperties()  const { return DeviceMemoryProperties; }
+
+    // Vulkan 1.1 features
+    const VkPhysicalDeviceVulkan11Features&  GetFeaturesVulkan11() const { return DeviceFeatures11; }
+    
+    // Vulkan 1.2 features
+    const VkPhysicalDeviceProperties2&       GetProperties2() const { return DeviceProperties2; }
+    const VkPhysicalDeviceFeatures2&         GetFeatures2() const { return DeviceFeatures2; }
     const VkPhysicalDeviceMemoryProperties2& GetMemoryProperties2() const { return DeviceMemoryProperties2; }
-    const VkPhysicalDeviceVulkan11Features& GetFeaturesVulkan11() const { return DeviceFeatures11; }
-    const VkPhysicalDeviceVulkan12Features& GetFeaturesVulkan12() const { return DeviceFeatures12; }
+    const VkPhysicalDeviceVulkan12Features&  GetFeaturesVulkan12() const { return DeviceFeatures12; }
 
     // Extension Information
-#if VK_EXT_depth_clip_enable
-    const VkPhysicalDeviceDepthClipEnableFeaturesEXT& GetDepthClipEnableFeatures() const { return DepthClipEnableFeatures; }
-#endif
-#if VK_EXT_robustness2
-    const VkPhysicalDeviceRobustness2FeaturesEXT& GetRobustness2Features() const { return Robustness2Features; }
-#endif
 #if VK_EXT_conservative_rasterization
     const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const { return ConservativeRasterizationProperties; }
-#endif
-#if VK_EXT_pipeline_creation_cache_control
-    const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& GetPipelineCreationCacheControlFeatures() const { return PipelineCreationCacheControlFeatures; }
-#endif
-#if VK_KHR_acceleration_structure
-    const VkPhysicalDeviceAccelerationStructureFeaturesKHR& GetAccelerationStructureFeatures() const { return AccelerationStructureFeatures; }
-#endif
-#if VK_KHR_ray_tracing_pipeline
-    const VkPhysicalDeviceRayTracingPipelineFeaturesKHR& GetRayTracingPipelineFeatures() const { return RayTracingPipelineFeatures; }
-#endif
-#if VK_KHR_synchronization2
-    const VkPhysicalDeviceSynchronization2Features& GetSynchronization2Features() const { return Synchronization2Features; }
 #endif
 
     FVulkanInstance* GetInstance() const
@@ -142,129 +245,24 @@ private:
     FVulkanInstance*                  Instance;
     VkPhysicalDevice                  PhysicalDevice;
     
+    // Vulkan 1.0 features
     VkPhysicalDeviceProperties        DeviceProperties;
     VkPhysicalDeviceFeatures          DeviceFeatures;
     VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
 
-    // Vulkan 1.1, Vulkan 1.2 features
+    // Vulkan 1.1 features
+    VkPhysicalDeviceVulkan11Features  DeviceFeatures11;
+    
+    // Vulkan 1.2 features
     VkPhysicalDeviceProperties2       DeviceProperties2;
     VkPhysicalDeviceFeatures2         DeviceFeatures2;
     VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
-    VkPhysicalDeviceVulkan11Features  DeviceFeatures11;
     VkPhysicalDeviceVulkan12Features  DeviceFeatures12;
 
     // Extension Information
-#if VK_EXT_depth_clip_enable
-    VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
-#endif
-#if VK_EXT_robustness2
-    VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
-#endif
 #if VK_EXT_conservative_rasterization
     VkPhysicalDeviceConservativeRasterizationPropertiesEXT ConservativeRasterizationProperties;
 #endif
-#if VK_EXT_pipeline_creation_cache_control
-    VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT PipelineCreationCacheControlFeatures;
-#endif
-#if VK_KHR_acceleration_structure
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR AccelerationStructureFeatures;
-#endif
-#if VK_KHR_ray_tracing_pipeline
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingPipelineFeatures;
-#endif
-#if VK_KHR_synchronization2
-    VkPhysicalDeviceSynchronization2Features Synchronization2Features;
-#endif
-};
-
-struct FVulkanDeviceCreateInfo
-{
-    FVulkanDeviceCreateInfo()
-        : RequiredExtensionNames()
-        , OptionalExtensionNames()
-        , RequiredFeatures()
-    {
-        FMemory::Memzero(&RequiredFeatures);
-        FMemory::Memzero(&RequiredFeatures11);
-        FMemory::Memzero(&RequiredFeatures12);
-    }
-
-    TArray<const CHAR*> RequiredExtensionNames;
-    TArray<const CHAR*> OptionalExtensionNames;
-
-    VkPhysicalDeviceFeatures         RequiredFeatures;
-    VkPhysicalDeviceVulkan11Features RequiredFeatures11;
-    VkPhysicalDeviceVulkan12Features RequiredFeatures12;
-};
-
-struct FVulkanDefaultResources
-{
-    FVulkanDefaultResources()
-        : NullBuffer(VK_NULL_HANDLE)
-        , NullImage(VK_NULL_HANDLE)
-        , NullImageView(VK_NULL_HANDLE)
-        , NullSampler(VK_NULL_HANDLE)
-    {
-    }
-    
-    ~FVulkanDefaultResources()
-    {
-        CHECK(NullBuffer    == VK_NULL_HANDLE);
-        CHECK(NullImage     == VK_NULL_HANDLE);
-        CHECK(NullImageView == VK_NULL_HANDLE);
-        CHECK(NullSampler   == VK_NULL_HANDLE);
-    }
-    
-    bool Initialize(FVulkanDevice& Device);
-    bool InitializeBuffersAndImages(FVulkanDevice& Device);
-    void Release(FVulkanDevice& Device);
-    
-    // Null-Buffer
-    VkBuffer                NullBuffer;
-    FVulkanMemoryAllocation NullBufferMemory;
-    
-    // Null-Image
-    VkImage                 NullImage;
-    VkImageView             NullImageView;
-    FVulkanMemoryAllocation NullImageMemory;
-    
-    // NullSampler
-    VkSampler               NullSampler;
-};
-
-struct FVulkanHashableSamplerCreateInfo
-{
-    bool operator==(const FVulkanHashableSamplerCreateInfo& Other) const
-    {
-        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
-    }
-
-    bool operator!=(const FVulkanHashableSamplerCreateInfo& Other) const
-    {
-        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
-    }
-
-    friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)
-    {
-        return CRC32::Generate(&Value, sizeof(Value));
-    }
-
-    VkSamplerCreateFlags Flags;
-    VkFilter             MagFilter;
-    VkFilter             MinFilter;
-    VkSamplerMipmapMode  MipmapMode;
-    VkSamplerAddressMode AddressModeU;
-    VkSamplerAddressMode AddressModeV;
-    VkSamplerAddressMode AddressModeW;
-    float                MipLodBias;
-    VkBool32             AnisotropyEnable;
-    float                MaxAnisotropy;
-    VkBool32             CompareEnable;
-    VkCompareOp          CompareOp;
-    float                MinLod;
-    float                MaxLod;
-    VkBorderColor        BorderColor;
-    VkBool32             UnnormalizedCoordinates;
 };
 
 class FVulkanDevice
@@ -273,23 +271,25 @@ public:
     FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter);
     ~FVulkanDevice();
 
-    bool Initialize(const FVulkanDeviceCreateInfo& DeviceDesc);
+    bool Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo);
     bool PostLoaderInitalize();
+    bool InitializeDeviceFeatureSupport();
     bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);
 
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
+
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
-    FVulkanQueryPoolManager* GetQueryPoolManager(EQueryType QueryType);
-    FVulkanRenderPassCache& GetRenderPassCache() { return *RenderPassCache; }
-    FVulkanMemoryManager& GetMemoryManager() { return *MemoryManager; }
-    FVulkanUploadHeapAllocator& GetUploadHeap() { return *UploadHeap; }
-    FVulkanFenceManager& GetFenceManager() { return *FenceManager; }
+    FVulkanQueryPoolManager*      GetQueryPoolManager(EQueryType QueryType);
+    FVulkanRenderPassCache&       GetRenderPassCache() { return *RenderPassCache; }
+    FVulkanMemoryManager&         GetMemoryManager() { return *MemoryManager; }
+    FVulkanUploadHeapAllocator&   GetUploadHeap() { return *UploadHeap; }
+    FVulkanFenceManager&          GetFenceManager() { return *FenceManager; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
-    FVulkanPipelineStateManager& GetPipelineStateManager() { return *PipelineStateManager; }
-    FVulkanDescriptorSetCache& GetDescriptorSetCache() { return *DescriptorSetCache; }
-    FVulkanDefaultResources& GetDefaultResources() { return DefaultResources; }
+    FVulkanPipelineStateManager&  GetPipelineStateManager() { return *PipelineStateManager; }
+    FVulkanDescriptorSetCache&    GetDescriptorSetCache() { return *DescriptorSetCache; }
+    FVulkanDefaultResources&      GetDefaultResources() { return DefaultResources; }
 
     bool IsLayerEnabled(const FString& LayerName)
     {
@@ -322,24 +322,24 @@ public:
     }
 
 private:
-    FVulkanInstance*              Instance;
-    FVulkanPhysicalDevice*        PhysicalDevice;
-    VkDevice                      Device;
-    FVulkanRenderPassCache*       RenderPassCache;
-    FVulkanUploadHeapAllocator*   UploadHeap;
-    FVulkanMemoryManager*         MemoryManager;
-    FVulkanFenceManager*          FenceManager;
-    FVulkanPipelineLayoutManager* PipelineLayoutManager;
-    FVulkanPipelineStateManager*  PipelineStateManager;
-    FVulkanDescriptorSetCache*    DescriptorSetCache;
-    FVulkanQueryPoolManager*      TimingQueryPoolManager;
-    FVulkanQueryPoolManager*      OcclusionQueryPoolManager;
-    FVulkanDefaultResources       DefaultResources;
+    FVulkanInstance*                     Instance;
+    FVulkanPhysicalDevice*               PhysicalDevice;
+    VkDevice                             Device;
+    FVulkanRenderPassCache*              RenderPassCache;
+    FVulkanUploadHeapAllocator*          UploadHeap;
+    FVulkanMemoryManager*                MemoryManager;
+    FVulkanFenceManager*                 FenceManager;
+    FVulkanPipelineLayoutManager*        PipelineLayoutManager;
+    FVulkanPipelineStateManager*         PipelineStateManager;
+    FVulkanDescriptorSetCache*           DescriptorSetCache;
+    FVulkanQueryPoolManager*             TimingQueryPoolManager;
+    FVulkanQueryPoolManager*             OcclusionQueryPoolManager;
+    FVulkanDefaultResources              DefaultResources;
 
-    TSet<FString> ExtensionNames;
-    TSet<FString> LayerNames;
+    TSet<FString>                        ExtensionNames;
+    TSet<FString>                        LayerNames;
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
 
     TMap<FVulkanHashableSamplerCreateInfo, VkSampler> SamplerMap;
-    FCriticalSection SamplerMapCS;
+    FCriticalSection                                  SamplerMapCS;
 };

@@ -77,7 +77,7 @@ FVulkanRHI::~FVulkanRHI()
 
     while (!PendingSubmissions.IsEmpty())
     {
-        ProcessPendingCommands();
+        ProcessPendingCommandSubmissions();
     }
 
     // Flush before submitting since some objects needs the CommandContext
@@ -139,61 +139,56 @@ bool FVulkanRHI::Initialize()
     }
     
     // Load functions that requires an instance here
-    if (!LoadInstanceFunctions(GetInstance()))
+    if (!VulkanLoader::LoadInstanceFunctions(GetInstance()))
     {
-        return false;
-    }
-
-    FVulkanPhysicalDeviceCreateInfo AdapterCreateInfo;
-    AdapterCreateInfo.RequiredExtensionNames = VulkanPlatform::GetRequiredDeviceExtensions();
-    AdapterCreateInfo.OptionalExtensionNames = VulkanPlatform::GetOptionalDeviceExtensions();
-    
-    // Enable required features (These are necessary to run)
-    AdapterCreateInfo.RequiredFeatures.samplerAnisotropy                    = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.shaderImageGatherExtended            = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.imageCubeArray                       = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.depthBiasClamp                       = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures11.shaderDrawParameters               = VK_TRUE;
-    AdapterCreateInfo.RequiredFeatures12.hostQueryReset                     = VK_TRUE;
-
-    PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
-    if (!PhysicalDevice->Initialize(AdapterCreateInfo))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to initialize VulkanPhyscicalDevice");
         return false;
     }
 
     FVulkanDeviceCreateInfo DeviceCreateInfo;
-    DeviceCreateInfo.RequiredExtensionNames = AdapterCreateInfo.RequiredExtensionNames;
-    DeviceCreateInfo.OptionalExtensionNames = AdapterCreateInfo.OptionalExtensionNames;
-    DeviceCreateInfo.RequiredFeatures       = AdapterCreateInfo.RequiredFeatures;
-    DeviceCreateInfo.RequiredFeatures11     = AdapterCreateInfo.RequiredFeatures11;
-    DeviceCreateInfo.RequiredFeatures12     = AdapterCreateInfo.RequiredFeatures12;
+    DeviceCreateInfo.RequiredExtensionNames = VulkanPlatform::GetRequiredDeviceExtensions();
+    DeviceCreateInfo.OptionalExtensionNames = VulkanPlatform::GetOptionalDeviceExtensions();
+    
+	// -------------------------------------------------------------------------------------------
+    // Enable required features (These are necessary to run)
+    // -------------------------------------------------------------------------------------------
 
-    // Enable optional features for Vulkan 1.0
-    const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
-    
-    // Enable geometryShader if the device supports them
-    if (PhysicalDeviceFeatures.geometryShader)
-    {
-        DeviceCreateInfo.RequiredFeatures.geometryShader = VK_TRUE;
-    }
-    
-    // Enable multiDrawIndirect if the device supports them
-    if (PhysicalDeviceFeatures.multiDrawIndirect)
-    {
-        DeviceCreateInfo.RequiredFeatures.multiDrawIndirect = VK_TRUE;
-    }
-    
-    // Enable optional features for Vulkan 1.2
-    const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
+    // Vulkan 1.0 Required
+    DeviceCreateInfo.RequiredFeatures.samplerAnisotropy                    = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.shaderImageGatherExtended            = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.imageCubeArray                       = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.depthBiasClamp                       = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
+    // Vulkan 1.0 Optional
+    DeviceCreateInfo.OptionalFeatures.geometryShader                       = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.multiDrawIndirect                    = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.robustBufferAccess                   = VK_TRUE;
 
-    // Enable shaderOutputLayer if the device supports them
-    if (PhysicalDeviceFeatures12.shaderOutputLayer)
+    // Vulkan 1.1 Required
+    DeviceCreateInfo.RequiredFeatures11.shaderDrawParameters               = VK_TRUE;
+    // Vulkan 1.1 Optional
+    DeviceCreateInfo.OptionalFeatures11.multiview                          = VK_TRUE;
+
+    // Vulkan 1.2 Required
+    DeviceCreateInfo.RequiredFeatures12.hostQueryReset                     = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures12.bufferDeviceAddress                = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer                  = VK_TRUE;
+    // Vulkan 1.2 Optional
+    DeviceCreateInfo.OptionalFeatures12.timelineSemaphore                  = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures12.descriptorIndexing                 = VK_TRUE;
+
+    // Vulkan 1.3 Required
+    DeviceCreateInfo.RequiredFeatures13.dynamicRendering                   = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures13.synchronization2                   = VK_TRUE;
+    // Vulkan 1.3 Optional
+    DeviceCreateInfo.OptionalFeatures13.pipelineCreationCacheControl       = VK_TRUE;
+
+    // Create physical device
+    PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
+    if (!PhysicalDevice->Initialize(DeviceCreateInfo))
     {
-        DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer = VK_TRUE;
+        VULKAN_ERROR_CRITICAL("Failed to initialize VulkanPhyscicalDevice");
+        return false;
     }
 
     Device = new FVulkanDevice(GetInstance(), GetPhysicalDevice());
@@ -363,13 +358,26 @@ FRHIRayTracingGeometry* FVulkanRHI::CreateRayTracingGeometry(const FRHIRayTracin
     return NewGeometry.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
+FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.Texture);
-    CHECK(VulkanTexture != nullptr);
+    FRHIResource* Resource = nullptr;
+    if (InInfo.IsBufferSRV())
+    {
+        Resource = InInfo.BufferSRV.Buffer;
+    }
+    else if (InInfo.IsTextureSRV())
+    {
+        Resource = InInfo.TextureSRV.Texture;
+    }
+    else
+    {
+        return nullptr;
+    }
 
-    FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanTexture);
-    if (!NewShaderResourceView->InitializeTextureSRV(InInfo))
+	CHECK(Resource != nullptr);
+
+    FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), Resource);
+    if (!NewShaderResourceView->InitializeSRV(InInfo))
     {
         return nullptr;
     }
@@ -379,45 +387,26 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHITextureSR
     }
 }
 
-FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
+FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.Buffer);
-    CHECK(VulkanBuffer != nullptr);
+	FRHIResource* Resource = nullptr;
+	if (InInfo.IsBufferUAV())
+	{
+		Resource = InInfo.BufferUAV.Buffer;
+	}
+	else if (InInfo.IsTextureUAV())
+	{
+		Resource = InInfo.TextureUAV.Texture;
+	}
+	else
+	{
+		return nullptr;
+	}
 
-    FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanBuffer);
-    if (!NewShaderResourceView->InitializeBufferSRV(InInfo))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewShaderResourceView.ReleaseOwnership();
-    }
-}
+	CHECK(Resource != nullptr);
 
-FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
-{
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.Texture);
-    CHECK(VulkanTexture != nullptr);
-
-    FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanTexture);
-    if (!NewUnorderedAccessView->InitializeTextureUAV(InInfo))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewUnorderedAccessView.ReleaseOwnership();
-    }
-}
-
-FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
-{
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.Buffer);
-    CHECK(VulkanBuffer != nullptr);
-
-    FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanBuffer);
-    if (!NewUnorderedAccessView->InitializeBufferUAV(InInfo))
+    FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), Resource);
+    if (!NewUnorderedAccessView->InitializeUAV(InInfo))
     {
         return nullptr;
     }
@@ -571,30 +560,30 @@ FRHIRayMissShader* FVulkanRHI::CreateRayMissShader(const TArray<uint8>& ShaderCo
     }
 }
 
-FRHIDepthStencilState* FVulkanRHI::CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+FRHIDepthStencilState* FVulkanRHI::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
 {
-    return new FVulkanDepthStencilState(InInitializer);
+    return new FVulkanDepthStencilState(InInfo);
 }
 
-FRHIRasterizerState* FVulkanRHI::CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+FRHIRasterizerState* FVulkanRHI::CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo)
 {
-    return new FVulkanRasterizerState(GetDevice(), InInitializer);
+    return new FVulkanRasterizerState(GetDevice(), InInfo);
 }
 
-FRHIBlendState* FVulkanRHI::CreateBlendState(const FRHIBlendStateInitializer& InInitializer)
+FRHIBlendState* FVulkanRHI::CreateBlendState(const FRHIBlendStateInfo& InInfo)
 {
-    return new FVulkanBlendState(InInitializer);
+    return new FVulkanBlendState(InInfo);
 }
 
-FRHIVertexLayout* FVulkanRHI::CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+FRHIInputLayout* FVulkanRHI::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
 {
-    return new FVulkanVertexLayout(InInitializerList);
+    return new FVulkanInputLayout(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
+FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
 {
     FVulkanGraphicsPipelineStateRef NewPipeline = new FVulkanGraphicsPipelineState(GetDevice());
-    if (!NewPipeline->Initialize(InInitializer))
+    if (!NewPipeline->Initialize(InInfo))
     {
         return nullptr;
     }
@@ -604,10 +593,10 @@ FRHIGraphicsPipelineState* FVulkanRHI::CreateGraphicsPipelineState(const FRHIGra
     }
 }
 
-FRHIComputePipelineState* FVulkanRHI::CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
+FRHIComputePipelineState* FVulkanRHI::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
     FVulkanComputePipelineStateRef NewPipeline = new FVulkanComputePipelineState(GetDevice());
-    if (!NewPipeline->Initialize(InInitializer))
+    if (!NewPipeline->Initialize(InInfo))
     {
         return nullptr;
     }
@@ -640,7 +629,6 @@ bool FVulkanRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemo
 
     MemoryProperties2.pNext = &MemoryBudgetProperties;
 
-    // Query memory properties
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice->GetVkPhysicalDevice(), &MemoryProperties2);
 
     OutMemoryStats.MemoryType   = MemoryType;
@@ -758,16 +746,16 @@ void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-void FVulkanRHI::ProcessPendingCommands()
+void FVulkanRHI::ProcessPendingCommandSubmissions()
 {
     bool bProcess = true;
     while (bProcess)
     {
-        FVulkanCommandPayload* CommandPayload = nullptr;
-        if (PendingSubmissions.Peek(CommandPayload))
+        FVulkanCommandSubmission* CommandSubmission = nullptr;
+        if (PendingSubmissions.Peek(CommandSubmission))
         {
-            CHECK(CommandPayload != nullptr);
-            if (!CommandPayload->IsExecutionFinished())
+            CHECK(CommandSubmission != nullptr);
+            if (!CommandSubmission->IsExecutionFinished())
             {
                 bProcess = false;
                 break;
@@ -776,7 +764,7 @@ void FVulkanRHI::ProcessPendingCommands()
             {
                 // If we are finished we remove the item from the queue
                 PendingSubmissions.Dequeue();
-                CommandPayload->Finish();
+                CommandSubmission->Finish();
             }
         }
         else
@@ -786,20 +774,20 @@ void FVulkanRHI::ProcessPendingCommands()
     }
 }
 
-void FVulkanRHI::SubmitCommands(FVulkanCommandPayload* CommandPayload, bool bFlushDeletionQueue)
+void FVulkanRHI::SubmitCommands(FVulkanCommandSubmission* CommandSubmission, bool bFlushDeletionQueue)
 {
-    CHECK(CommandPayload != nullptr);
+    CHECK(CommandSubmission != nullptr);
 
-    if (!CommandPayload->IsEmpty())
+    if (!CommandSubmission->IsEmpty())
     {
         if (bFlushDeletionQueue)
         {
             TScopedLock Lock(DeletionQueueCS);
-            CommandPayload->DeletionQueue = Move(DeletionQueue);
+            CommandSubmission->DeletionQueue = Move(DeletionQueue);
         }
 
-        CommandPayload->Submit();
+        CommandSubmission->Submit();
         
-        PendingSubmissions.Enqueue(CommandPayload);
+        PendingSubmissions.Enqueue(CommandSubmission);
     }
 }

@@ -30,7 +30,7 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
 
     for (const FVulkanShaderInfo::FResourceBinding& Binding : ShaderInfo.ResourceBindings)
     {
-        VkDescriptorSetLayoutBinding LayoutBinding;
+        VkDescriptorSetLayoutBinding LayoutBinding = {};
         LayoutBinding.descriptorCount    = 1;
         LayoutBinding.binding            = Binding.BindingIndex;
         LayoutBinding.pImmutableSamplers = nullptr;
@@ -88,9 +88,7 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     }
 
     // Create PipelineLayout
-    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo;
-    FMemory::Memzero(&PipelineLayoutCreateInfo);
-
+    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo = {};
     PipelineLayoutCreateInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     PipelineLayoutCreateInfo.setLayoutCount = SetLayouts.Size();
     PipelineLayoutCreateInfo.pSetLayouts    = SetLayouts.Data();
@@ -222,18 +220,18 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& RemappingInfo = StageMappingInfo.RemappingInfo[BindingIndex];
             switch(RemappingInfo.BindingType)
             {
-            case BindingType_UniformBuffer:
+            case VulkanBindingType_UniformBuffer:
                 StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
-            case BindingType_Sampler:
+            case VulkanBindingType_Sampler:
                 StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
-            case BindingType_SampledImage:
-            case BindingType_StorageBufferRead:
+            case VulkanBindingType_SampledImage:
+            case VulkanBindingType_StorageBufferRead:
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
-            case BindingType_StorageImage:
-            case BindingType_StorageBufferReadWrite:
+            case VulkanBindingType_StorageImage:
+            case VulkanBindingType_StorageBufferReadWrite:
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             default:
@@ -317,9 +315,7 @@ VkDescriptorSetLayout FVulkanPipelineLayoutManager::FindOrCreateSetLayouts(const
     }
     
     // Create the DescriptorSetLayout or assign an "default" empty DescriptorSetLayout
-    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo;
-    FMemory::Memzero(&DescriptorSetLayoutCreateInfo);
-
+    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo = {};
     DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     DescriptorSetLayoutCreateInfo.bindingCount = SetLayoutInfo.Bindings.Size();
     DescriptorSetLayoutCreateInfo.pBindings    = SetLayoutInfo.Bindings.Data();

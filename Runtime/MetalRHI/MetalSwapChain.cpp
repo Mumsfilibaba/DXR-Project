@@ -1,6 +1,6 @@
-#include "MetalSwapChain.h"
 #include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformEvent.h"
+#include "MetalRHI/MetalSwapChain.h"
 
 @implementation FMetalWindowView
 

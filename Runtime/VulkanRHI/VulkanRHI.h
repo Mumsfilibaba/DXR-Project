@@ -40,10 +40,8 @@ public:
     virtual FRHIQuery* CreateQuery(EQueryType InQueryType) override final;
     virtual FRHIRayTracingScene* CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final;
     virtual FRHIRayTracingGeometry* CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final;
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHITextureSRVInfo& InInfo) override final;
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) override final;
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) override final;
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) override final;
+    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo) override final;
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo) override final;
     virtual FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) override final;
@@ -56,12 +54,12 @@ public:
     virtual FRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final;
-    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final;
-    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final;
-    virtual FRHIVertexLayout* CreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final;
-    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final;
-    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
+    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) override final;
+    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo) override final;
+    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInfo& InInfo) override final;
+    virtual FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements) override final;
+    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo) override final;
+    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final;
     virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
     virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const override final;
@@ -85,8 +83,8 @@ public:
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    void ProcessPendingCommands();
-    void SubmitCommands(FVulkanCommandPayload* CommandPayload, bool bFlushDeletionQueue);
+    void ProcessPendingCommandSubmissions();
+    void SubmitCommands(FVulkanCommandSubmission* CommandSubmission, bool bFlushDeletionQueue);
 
     FVulkanInstance* GetInstance()
     {
@@ -109,8 +107,8 @@ public:
     }
 
 private:
+    typedef TQueue<FVulkanCommandSubmission*, EQueueType::MPSC>         FCommandSubmissionQueue;
     typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
-    typedef TQueue<FVulkanCommandPayload*, EQueueType::MPSC>            FCommandPayloadQueue;
 
     FVulkanInstance               Instance;
     FVulkanPhysicalDevice*        PhysicalDevice;
@@ -121,7 +119,7 @@ private:
     FCriticalSection              DeletionQueueCS;
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
-    FCommandPayloadQueue          PendingSubmissions;
+    FCommandSubmissionQueue       PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;
 };

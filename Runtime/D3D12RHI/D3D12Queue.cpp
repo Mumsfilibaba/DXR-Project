@@ -31,9 +31,7 @@ FD3D12Queue::~FD3D12Queue()
 
 bool FD3D12Queue::Initialize()
 {
-    D3D12_COMMAND_QUEUE_DESC Desc;
-    FMemory::Memzero(&Desc);
-
+    D3D12_COMMAND_QUEUE_DESC Desc = {};
     Desc.Type     = CommandListType;
     Desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
     Desc.NodeMask = GetDevice()->GetNodeMask();
@@ -177,7 +175,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
     return FD3D12FenceSyncPoint(FenceManager.GetFence(), FenceValue);
 }
 
-FD3D12CommandPayload::FD3D12CommandPayload(FD3D12Device* InDevice, FD3D12Queue* InQueue)
+FD3D12CommandSubmission::FD3D12CommandSubmission(FD3D12Device* InDevice, FD3D12Queue* InQueue)
     : Queue(InQueue)
     , Device(InDevice)
     , SyncPoint()
@@ -188,7 +186,7 @@ FD3D12CommandPayload::FD3D12CommandPayload(FD3D12Device* InDevice, FD3D12Queue* 
 {
 }
 
-void FD3D12CommandPayload::Finish()
+void FD3D12CommandSubmission::Finish()
 {
     for (FD3D12QueryHeap* QueryHeap : QueryHeaps)
     {

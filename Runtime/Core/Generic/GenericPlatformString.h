@@ -85,6 +85,45 @@ struct FGenericPlatformString
         return const_cast<CHAR*>(static_cast<const CHAR*>(::strstr(String, Find)));
     }
 
+	NODISCARD static FORCEINLINE CHAR* Stristr(const CHAR* String, const CHAR* Find) noexcept
+	{
+        if (!String || !Find)
+        {
+			return nullptr;
+        }
+
+        if (*Find == '\0')
+        {
+			return const_cast<CHAR*>(String); // Empty needle matches at start (same as strstr)
+        }
+
+		for (const CHAR* S = String; *S != '\0'; ++S)
+		{
+			const CHAR* H = S;
+			const CHAR* N = Find;
+
+			while (*H != '\0' && *N != '\0')
+			{
+				const CHAR Hc = ToLower(*H);
+				const CHAR Nc = ToLower(*N);
+                if (Hc != Nc)
+                {
+					break;
+                }
+
+				++H;
+				++N;
+			}
+
+            if (*N == '\0')
+            {
+				return const_cast<CHAR*>(S); // Matched whole needle
+            }
+		}
+
+		return nullptr;
+	}
+
     NODISCARD static FORCEINLINE CHAR* Strpbrk(const CHAR* String, const CHAR* Find) noexcept
     {
         return const_cast<CHAR*>(static_cast<const CHAR*>(::strpbrk(String, Find)));
@@ -258,6 +297,45 @@ struct FGenericPlatformString
     {
         return const_cast<WIDECHAR*>(static_cast<const WIDECHAR*>(::wcsstr(String, Find)));
     }
+
+	NODISCARD static FORCEINLINE WIDECHAR* Stristr(const WIDECHAR* String, const WIDECHAR* Find) noexcept
+	{
+		if (!String || !Find)
+		{
+			return nullptr;
+		}
+
+		if (*Find == '\0')
+		{
+			return const_cast<WIDECHAR*>(String); // Empty needle matches at start (same as strstr)
+		}
+
+		for (const WIDECHAR* S = String; *S != '\0'; ++S)
+		{
+			const WIDECHAR* H = S;
+			const WIDECHAR* N = Find;
+
+			while (*H != '\0' && *N != '\0')
+			{
+				const WIDECHAR Hc = ToLower(*H);
+				const WIDECHAR Nc = ToLower(*N);
+				if (Hc != Nc)
+				{
+					break;
+				}
+
+				++H;
+				++N;
+			}
+
+			if (*N == '\0')
+			{
+				return const_cast<WIDECHAR*>(S); // Matched whole needle
+			}
+		}
+
+		return nullptr;
+	}
 
     NODISCARD static FORCEINLINE WIDECHAR* Strpbrk(const WIDECHAR* String, const WIDECHAR* Find) noexcept
     {

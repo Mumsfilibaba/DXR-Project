@@ -42,7 +42,7 @@ struct FVulkanDescriptorRemappingInfo
 {
     struct FRemappingInfo
     {
-        EBindingType BindingType;
+        EVulkanBindingType BindingType;
         uint8        BindingIndex;
         uint8        OriginalBindingIndex;
     };

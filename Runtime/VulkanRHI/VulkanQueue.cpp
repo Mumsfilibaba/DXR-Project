@@ -46,7 +46,7 @@ bool FVulkanQueue::Initialize()
 FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
 {
     SCOPED_LOCK(CommandPoolsCS);
-    
+
     if (!AvailableCommandPools.IsEmpty())
     {
         FVulkanCommandPool* CommandPool;
@@ -57,10 +57,9 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
         }
     }
 
+    const VkCommandPoolCreateFlags CommandPoolFlags = GVulkanAllowResetCommandBuffers ? VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT : 0;
     FVulkanCommandPool* CommandPool = new FVulkanCommandPool(GetDevice(), QueueType);
-
-    const VkCommandPoolCreateFlags Flags = GVulkanAllowResetCommandBuffers ? VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT : 0;
-    if (!CommandPool->Initialize(Flags))
+    if (!CommandPool->Initialize(CommandPoolFlags))
     {
         DEBUG_BREAK();
         delete CommandPool;
@@ -86,9 +85,7 @@ void FVulkanQueue::RecycleCommandPool(FVulkanCommandPool* InCommandPool)
 
 bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, FVulkanFence* Fence)
 {
-    VkSubmitInfo SubmitInfo;
-    FMemory::Memzero(&SubmitInfo);
-
+    VkSubmitInfo SubmitInfo = {};
     SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     SubmitInfo.pNext = nullptr;
 
@@ -174,9 +171,7 @@ void FVulkanQueue::WaitForCompletion()
 
 bool FVulkanQueue::FlushWaitSemaphoresAndWait()
 {
-    VkSubmitInfo SubmitInfo;
-    FMemory::Memzero(&SubmitInfo);
-
+    VkSubmitInfo SubmitInfo = {};
     SubmitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     SubmitInfo.pNext                = nullptr;
     SubmitInfo.commandBufferCount   = 0;
@@ -215,7 +210,7 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
     return true;
 }
 
-FVulkanCommandPayload::FVulkanCommandPayload(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
+FVulkanCommandSubmission::FVulkanCommandSubmission(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
     : Queue(InQueue)
     , Fence(nullptr)
     , Device(InDevice)
@@ -226,26 +221,26 @@ FVulkanCommandPayload::FVulkanCommandPayload(FVulkanDevice* InDevice, FVulkanQue
 {
 }
 
-FVulkanCommandPayload::~FVulkanCommandPayload()
+FVulkanCommandSubmission::~FVulkanCommandSubmission()
 {
     CHECK(Fence == nullptr);
 }
 
-void FVulkanCommandPayload::AcquireFence()
+void FVulkanCommandSubmission::AcquireFence()
 {
 	FVulkanFenceManager& FenceManager = Device->GetFenceManager();
 	Fence = FenceManager.ObtainFence();
 	CHECK(Fence != nullptr);
 }
 
-void FVulkanCommandPayload::Submit()
+void FVulkanCommandSubmission::Submit()
 {
     CHECK(CommandBuffers.IsEmpty() == false);
     CHECK(Fence != nullptr);
     Queue.ExecuteCommandBuffer(CommandBuffers.Data(), CommandBuffers.Size(), Fence);
 }
 
-void FVulkanCommandPayload::Finish()
+void FVulkanCommandSubmission::Finish()
 {
     // Resolve queries
     for (FVulkanQueryPool* QueryPool : QueryPools)

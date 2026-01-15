@@ -35,6 +35,11 @@ namespace VulkanInternal
             return vkAllocateCommandBuffers(Device, AllocateInfo, &CommandBuffer);
         }
 
+		FORCEINLINE void FreeCommandBuffer(VkDevice Device, VkCommandPool CommandPool)
+		{
+			vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
+		}
+
 		FORCEINLINE VkResult ResetCommandBuffer(VkCommandBufferResetFlags Flags)
 		{
 			return vkResetCommandBuffer(CommandBuffer, Flags);
@@ -169,12 +174,10 @@ namespace VulkanInternal
                 BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
         }
     
-    #if VK_KHR_synchronization2
         FORCEINLINE void PipelineBarrier2(const VkDependencyInfo* DependencyInfo)
         {
-            vkCmdPipelineBarrier2KHR(CommandBuffer, DependencyInfo);
+            vkCmdPipelineBarrier2(CommandBuffer, DependencyInfo);
         }
-    #endif
 
         FORCEINLINE void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
         {

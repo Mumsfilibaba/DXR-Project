@@ -1,7 +1,6 @@
 #pragma once
-#include "MetalViews.h"
-
 #include "RHI/RHIRayTracing.h"
+#include "MetalRHI/MetalViews.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

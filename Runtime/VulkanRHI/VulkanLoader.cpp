@@ -2,8 +2,9 @@
 #include "VulkanRHI/VulkanInstance.h"
 #include "VulkanRHI/VulkanDevice.h"
 
-/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// -------------------------------------------------------------------------------------------
 // Pre-Instance Created Functions
+// -------------------------------------------------------------------------------------------
 
 VULKAN_FUNCTION_DEFINITION(GetInstanceProcAddr);
 
@@ -18,8 +19,9 @@ VULKAN_FUNCTION_DEFINITION(CreateDebugUtilsMessengerEXT);
 VULKAN_FUNCTION_DEFINITION(DestroyDebugUtilsMessengerEXT);
 #endif
 
-/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// -------------------------------------------------------------------------------------------
 // Instance Functions
+// -------------------------------------------------------------------------------------------
 
 VULKAN_FUNCTION_DEFINITION(EnumeratePhysicalDevices);
 VULKAN_FUNCTION_DEFINITION(EnumerateDeviceExtensionProperties);
@@ -59,70 +61,9 @@ VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfacePresentModesKHR);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceSupportKHR);
 #endif
 
-bool LoadInstanceFunctions(FVulkanInstance* Instance)
-{
-    if (!Instance)
-    {
-        VULKAN_ERROR_CRITICAL("Instance cannot be nullptr");
-        return false;
-    }
-
-    VkInstance InstanceHandle = Instance->GetVkInstance();
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, EnumeratePhysicalDevices);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, EnumerateDeviceExtensionProperties);
-
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceProperties);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFeatures);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceMemoryProperties);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceProperties2);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFeatures2);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceMemoryProperties2);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceQueueFamilyProperties);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFormatProperties);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceImageFormatProperties);
-    
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateDevice);
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDevice);
-
-    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetDeviceProcAddr);
-
-#if VK_EXT_metal_surface
-    if (Instance->IsExtensionEnabled(VK_EXT_METAL_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateMetalSurfaceEXT);
-    }
-#endif
-    
-#if VK_MVK_macos_surface
-    if (Instance->IsExtensionEnabled(VK_MVK_MACOS_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateMacOSSurfaceMVK);
-    }
-#endif
-
-#if VK_KHR_win32_surface
-    if (Instance->IsExtensionEnabled(VK_KHR_WIN32_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateWin32SurfaceKHR);
-    }
-#endif
-
-#if VK_KHR_surface
-    if (Instance->IsExtensionEnabled(VK_KHR_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroySurfaceKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceCapabilitiesKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceFormatsKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfacePresentModesKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceSupportKHR);
-    }
-#endif
-        
-    return true;
-}
-
-/*//////////////////////////////////////////////////////////////////////////////////////////////*/
+// -------------------------------------------------------------------------------------------
 // Device Functions
+// -------------------------------------------------------------------------------------------
 
 VULKAN_FUNCTION_DEFINITION(DeviceWaitIdle);
 VULKAN_FUNCTION_DEFINITION(QueueWaitIdle);
@@ -155,7 +96,7 @@ VULKAN_FUNCTION_DEFINITION(BindBufferMemory);
 VULKAN_FUNCTION_DEFINITION(DestroyBuffer);
 
 // VK_KHR_buffer_device_address (Core in 1.2)
-VULKAN_FUNCTION_DEFINITION(GetBufferDeviceAddressKHR);
+VULKAN_FUNCTION_DEFINITION(GetBufferDeviceAddress);
 
 VULKAN_FUNCTION_DEFINITION(CreateImage);
 VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements);
@@ -163,9 +104,9 @@ VULKAN_FUNCTION_DEFINITION(BindImageMemory);
 VULKAN_FUNCTION_DEFINITION(DestroyImage);
 
 // VK_KHR_get_memory_requirements2 (Core in 1.1)
-VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2KHR);
-VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2KHR);
-VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2KHR);
+VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2);
+VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2);
+VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2);
 
 VULKAN_FUNCTION_DEFINITION(CreateShaderModule);
 VULKAN_FUNCTION_DEFINITION(DestroyShaderModule);
@@ -265,9 +206,69 @@ VULKAN_FUNCTION_DEFINITION(CmdInsertDebugUtilsLabelEXT);
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DEFINITION(CmdBuildAccelerationStructuresKHR);
 #endif
-#if VK_KHR_synchronization2
-VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier2KHR);
+VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier2);
+
+bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance)
+{
+    if (!Instance)
+    {
+        VULKAN_ERROR_CRITICAL("Instance cannot be nullptr");
+        return false;
+    }
+
+    VkInstance InstanceHandle = Instance->GetVkInstance();
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, EnumeratePhysicalDevices);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, EnumerateDeviceExtensionProperties);
+
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceProperties);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFeatures);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceMemoryProperties);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceProperties2);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFeatures2);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceMemoryProperties2);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceQueueFamilyProperties);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFormatProperties);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceImageFormatProperties);
+    
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateDevice);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDevice);
+
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetDeviceProcAddr);
+
+#if VK_EXT_metal_surface
+    if (Instance->IsExtensionEnabled(VK_EXT_METAL_SURFACE_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateMetalSurfaceEXT);
+    }
 #endif
+    
+#if VK_MVK_macos_surface
+    if (Instance->IsExtensionEnabled(VK_MVK_MACOS_SURFACE_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateMacOSSurfaceMVK);
+    }
+#endif
+
+#if VK_KHR_win32_surface
+    if (Instance->IsExtensionEnabled(VK_KHR_WIN32_SURFACE_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateWin32SurfaceKHR);
+    }
+#endif
+
+#if VK_KHR_surface
+    if (Instance->IsExtensionEnabled(VK_KHR_SURFACE_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroySurfaceKHR);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceCapabilitiesKHR);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceFormatsKHR);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfacePresentModesKHR);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceSupportKHR);
+    }
+#endif
+        
+    return true;
+}
 
 bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
 {
@@ -306,10 +307,7 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBuffer);
 
     // VK_KHR_buffer_device_address (Core in 1.2)
-    if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddressKHR);
-    }
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddress);
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements);
@@ -317,12 +315,9 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImage);
 
     // VK_KHR_get_memory_requirements2 (Core in 1.1)
-    if (Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements2KHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements2KHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageSparseMemoryRequirements2KHR);
-    }
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements2);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements2);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageSparseMemoryRequirements2);
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateShaderModule);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyShaderModule);
@@ -401,13 +396,7 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     }
 #endif
 
-#if VK_KHR_synchronization2
-    if (Device->IsExtensionEnabled(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier2KHR);
-    }
-#endif
-
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier2);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdClearColorImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdClearDepthStencilImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdResolveImage);
@@ -434,9 +423,7 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginQuery);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndQuery);
 
-    VulkanDedicatedAllocationKHR::Initialize(Device);
-    VulkanBufferDeviceAddressKHR::Initialize(Device);
-    VulkanRobustness2EXT::Initialize(Device);
+    VulkanRobustness2KHR::Initialize(Device);
     return true;
 }
 
@@ -466,9 +453,9 @@ bool VulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
     return true;
 }
 
-bool VulkanDedicatedAllocationKHR::bIsEnabled = false;
+bool VulkanRobustness2KHR::bIsEnabled = false;
 
-void VulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
+void VulkanRobustness2KHR::Initialize(FVulkanDevice* Device)
 {
     if (!Device)
     {
@@ -476,51 +463,10 @@ void VulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
         return;
     }
 
-    // VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation (Core in 1.1)
-    if (Device->IsExtensionEnabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+#if VK_KHR_robustness2
+    if (Device->IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
     {
         bIsEnabled = true;
-    }
-}
-
-bool VulkanBufferDeviceAddressKHR::bIsEnabled = false;
-
-void VulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
-{
-    if (!Device)
-    {
-        VULKAN_ERROR_CRITICAL("Device cannot be nullptr");
-        return;
-    }
-
-    // VK_KHR_buffer_device_address (Core in 1.2)
-    if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
-    {
-        bIsEnabled = true;
-    }
-}
-
-bool VulkanRobustness2EXT::bIsEnabled = false;
-bool VulkanRobustness2EXT::bSupportsNullDescriptors = false;
-
-void VulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
-{
-    if (!Device)
-    {
-        VULKAN_ERROR_CRITICAL("Device cannot be nullptr");
-        return;
-    }
-
-#if VK_EXT_robustness2
-    if (Device->IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
-    {
-        bIsEnabled = true;
-        
-        const VkPhysicalDeviceRobustness2FeaturesEXT& AvailableFeatures = Device->GetPhysicalDevice()->GetRobustness2Features();
-        if (AvailableFeatures.nullDescriptor == VK_TRUE)
-        {
-            bSupportsNullDescriptors = true;
-        }
     }
 #endif
 }

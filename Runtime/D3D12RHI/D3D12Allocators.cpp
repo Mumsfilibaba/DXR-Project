@@ -49,16 +49,12 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
         // Allocate a new resource
         if (NewOffset >= BufferSize)
         {
-            D3D12_HEAP_PROPERTIES HeapProperties;
-            FMemory::Memzero(&HeapProperties);
-
+            D3D12_HEAP_PROPERTIES HeapProperties = {};
             HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
             HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
             HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-            D3D12_RESOURCE_DESC Desc;
-            FMemory::Memzero(&Desc);
-
+            D3D12_RESOURCE_DESC Desc = {};
             Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
             Desc.Flags              = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
             Desc.Format             = DXGI_FORMAT_UNKNOWN;
@@ -115,16 +111,12 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
     else
     {
         // Allocate a new 
-        D3D12_HEAP_PROPERTIES HeapProperties;
-        FMemory::Memzero(&HeapProperties);
-
+        D3D12_HEAP_PROPERTIES HeapProperties = {};
         HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
         HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
         HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-        D3D12_RESOURCE_DESC Desc;
-        FMemory::Memzero(&Desc);
-
+        D3D12_RESOURCE_DESC Desc = {};
         Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
         Desc.Flags              = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
         Desc.Format             = DXGI_FORMAT_UNKNOWN;
