@@ -97,31 +97,31 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         bIsInputFieldActive = ImGui::IsItemActive();
 
         // Always draw a border around the search bar with state colors:
-	    // Normal:  RGB(51,51,51)
-	    // Hovered: RGB(74,74,74)
-	    // Active:  RGB(9,92,176)
+        // Normal:  RGB(51,51,51)
+        // Hovered: RGB(74,74,74)
+        // Active:  RGB(9,92,176)
 
-	    {
-		    const ImVec2 ItemMin = ImGui::GetItemRectMin();
-		    const ImVec2 ItemMax = ImGui::GetItemRectMax();
+        {
+            const ImVec2 ItemMin = ImGui::GetItemRectMin();
+            const ImVec2 ItemMax = ImGui::GetItemRectMax();
 
-		    const bool bActive  = ImGui::IsItemActive();
-		    const bool bHovered = ImGui::IsItemHovered();
+            const bool bActive  = ImGui::IsItemActive();
+            const bool bHovered = ImGui::IsItemHovered();
 
-		    const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
-		    const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
-		    const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
-		    const ImU32 BorderColor        = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
+            const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
+            const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
+            const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
+            const ImU32 BorderColor        = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
 
-		    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-		    DrawList->AddRect(
-			    ItemMin,
-			    ItemMax,
-			    BorderColor,
-			    EditorStyleVars::InputFieldBorderRounding,
-			    0,
-			    EditorStyleVars::InputFieldBorderThickness);
-	    }
+            ImDrawList* DrawList = ImGui::GetWindowDrawList();
+            DrawList->AddRect(
+                ItemMin,
+                ItemMax,
+                BorderColor,
+                EditorStyleVars::InputFieldBorderRounding,
+                0,
+                EditorStyleVars::InputFieldBorderThickness);
+        }
 
         // Ensure that the input is propagated correctly
         if (InputHandler)
@@ -230,21 +230,21 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
             VariableNameWidth  += Padding;
             VariableValueWidth += Padding;
 
-			const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
-			{
-				return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
-			};
+            const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
+            {
+                return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+            };
 
-			const float PostFixTextLength =
-				Math::Max(ImGui::CalcTextSize("Bool").x,
-				Math::Max(ImGui::CalcTextSize("Int").x,
-				Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
+            const float PostFixTextLength =
+                Math::Max(ImGui::CalcTextSize("Bool").x,
+                Math::Max(ImGui::CalcTextSize("Int").x,
+                Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
 
-			const float SetByTextLength =
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
+            const float SetByTextLength =
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
 
             bool bIsActiveIndex = false;
             for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)

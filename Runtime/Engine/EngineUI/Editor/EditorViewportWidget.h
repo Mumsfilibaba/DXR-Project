@@ -12,7 +12,7 @@ public:
     void Draw();
     
     void SetViewportWidget(const TSharedPtr<FViewportWidget>& ViewportWidget);
-	void SetViewportImage(FRHITextureRef InViewportImage);
+    void SetViewportImage(FRHITextureRef InViewportImage);
     
     FIntVector2 GetViewportSize() const;
 
@@ -28,8 +28,8 @@ public:
 
 private:
     TSharedPtr<FViewportWidget> ViewportWidget;
-	FIntVector2                 CachedViewportSize;
-	FImGuiTexture               ViewportImage;
+    FIntVector2                 CachedViewportSize;
+    FImGuiTexture               ViewportImage;
     FDelegateHandle             ImGuiDelegateHandle;
     bool                        bVisible;
 };

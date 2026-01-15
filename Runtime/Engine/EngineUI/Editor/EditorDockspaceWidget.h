@@ -20,7 +20,7 @@ public:
     FEditorDockspaceWidget(FEditorEngine* InEditorEngine);
     ~FEditorDockspaceWidget();
 
-	bool InitializeEditorStyle();
+    bool InitializeEditorStyle();
     void BuildDockingLayout(FLayoutIds& Ids);
 
     void Draw();
@@ -29,8 +29,8 @@ public:
     void DrawConsole();
 
 private:
-	FEditorEngine*  EditorEngine;
+    FEditorEngine*  EditorEngine;
     FDelegateHandle ImGuiDelegateHandle;
-	FLayoutIds      LayoutIds;
+    FLayoutIds      LayoutIds;
     bool            bResetLayout;
 };

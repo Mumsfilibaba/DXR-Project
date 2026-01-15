@@ -42,12 +42,12 @@ void FEditorViewportWidget::Draw()
     if (ImGui::Begin("Viewport", &bVisible, ViewportFlags))
     {
         // Update the relative viewport position
-		const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
+        const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
         ViewportWidget->SetPosition(FIntVector2(int32(ContentPos.x), int32(ContentPos.y)));
 
         // Update the viewport image that we will render to
-		const ImVec2 ContentSize = ImGui::GetContentRegionAvail();
-		CachedViewportSize = FIntVector2(int32(ContentSize.x), int32(ContentSize.y));
+        const ImVec2 ContentSize = ImGui::GetContentRegionAvail();
+        CachedViewportSize = FIntVector2(int32(ContentSize.x), int32(ContentSize.y));
         ViewportWidget->SetSize(CachedViewportSize);
 
         // Draw the viewport texture
@@ -66,14 +66,14 @@ void FEditorViewportWidget::SetViewportWidget(const TSharedPtr<FViewportWidget>&
 
 void FEditorViewportWidget::SetViewportImage(FRHITextureRef InViewportImage)
 {
-	if (InViewportImage)
-	{
-		ViewportImage.Texture              = InViewportImage;
-		ViewportImage.View                 = MakeSharedRef<FRHIShaderResourceView>(InViewportImage->GetShaderResourceView());
-		ViewportImage.ResourceState        = EResourceAccess::RenderTarget;
-		ViewportImage.bEnableLinearSampler = false;
-		ViewportImage.bEnableBlending      = false;
-	}
+    if (InViewportImage)
+    {
+        ViewportImage.Texture              = InViewportImage;
+        ViewportImage.View                 = MakeSharedRef<FRHIShaderResourceView>(InViewportImage->GetShaderResourceView());
+        ViewportImage.ResourceState        = EResourceAccess::RenderTarget;
+        ViewportImage.bEnableLinearSampler = false;
+        ViewportImage.bEnableBlending      = false;
+    }
 }
 
 FIntVector2 FEditorViewportWidget::GetViewportSize() const
