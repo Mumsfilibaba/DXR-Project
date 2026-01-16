@@ -157,6 +157,38 @@ void FEditorContentBrowserWidget::Draw()
             }
         };
 
+        // -----------------------------------------------------------------------------------------
+        // Search filtering helpers
+        // -----------------------------------------------------------------------------------------
+        const auto GetTrimmedQuery = [&](const TStaticArray<CHAR, 256>& InBuf) -> const CHAR*
+        {
+            const CHAR* Q = InBuf.Data();
+            while (Q && *Q && FCharTraits::IsWhitespace(*Q))
+            {
+                ++Q;
+            }
+            return Q;
+        };
+
+        const auto MatchesSearch = [&](const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) -> bool
+        {
+            if (!InName)
+            {
+                return false;
+            }
+
+            const CHAR* Query = GetTrimmedQuery(InBuf);
+            if (!Query || *Query == 0)
+            {
+                return true;
+            }
+
+            return (FCString::Stristr(InName, Query) != nullptr);
+        };
+
+        const bool bFolderSearchActive = (GetTrimmedQuery(FolderSearchBuffer) && *GetTrimmedQuery(FolderSearchBuffer) != 0);
+        const bool bAssetSearchActive  = (GetTrimmedQuery(AssetSearchBuffer) && *GetTrimmedQuery(AssetSearchBuffer) != 0);
+
         const auto HasChildFolders = [&](const FileInfo& InFolder) -> bool
         {
             for (int32 i = 0; i < InFolder.FolderContents.Size(); ++i)
@@ -217,6 +249,37 @@ void FEditorContentBrowserWidget::Draw()
             ImGui::PushStyleColor(ImGuiCol_Text, MutedTextColor);
             ImGui::TextUnformatted(InText);
             ImGui::PopStyleColor();
+        };
+
+        // Folder tree filter: show folder if it matches OR any descendant matches
+        TFunction<bool(const FileInfo&)> FolderTreeMatches;
+        FolderTreeMatches = [&](const FileInfo& InFolder) -> bool
+        {
+            if (!bFolderSearchActive)
+            {
+                return true;
+            }
+
+            if (MatchesSearch(InFolder.Name, FolderSearchBuffer))
+            {
+                return true;
+            }
+
+            for (int32 i = 0; i < InFolder.FolderContents.Size(); ++i)
+            {
+                const FileInfo& Child = InFolder.FolderContents[i];
+                if (!Child.bIsFolder)
+                {
+                    continue;
+                }
+
+                if (FolderTreeMatches(Child))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         };
 
         const ImGuiTableFlags LayoutFlags =
@@ -296,7 +359,15 @@ void FEditorContentBrowserWidget::Draw()
 
                     const ImGuiID OpenId = ImGui::GetID("##CB_Open");
 
-                    bool bOpen = bHasChildFolders ? Storage->GetBool(OpenId, (InDepth == 0)) : false;
+                    // IMPORTANT:
+                    // - Normal mode uses stored open state
+                    // - Search mode forces open for matched branches so results are visible
+                    bool bOpen = false;
+                    if (bHasChildFolders)
+                    {
+                        bOpen = bFolderSearchActive ? true : Storage->GetBool(OpenId, (InDepth == 0));
+                    }
+
                     if (bSelected)
                     {
                         ImGui::PushStyleColor(ImGuiCol_Header, SelectedColor);
@@ -321,7 +392,7 @@ void FEditorContentBrowserWidget::Draw()
                         SetSelectedFolderPath(InPath);
                     }
 
-                    if (bHasChildFolders && bRowHovered && ImGui::IsMouseClicked(0))
+                    if (!bFolderSearchActive && bHasChildFolders && bRowHovered && ImGui::IsMouseClicked(0))
                     {
                         const int32 ClickCount = ImGui::GetMouseClickedCount(0);
                         if ((ClickCount > 0) && ((ClickCount & 1) == 0))
@@ -359,15 +430,17 @@ void FEditorContentBrowserWidget::Draw()
                         const float  ArrowSizePx = FontSize;
                         const ImRect ArrowRect   = ImRect(ImVec2(ArrowPos.x, RowMin.y), ImVec2(ArrowPos.x + ArrowSizePx + ArrowGapPx, RowMax.y));
 
-                        // Arrow click toggles ONLY on single click (ClickCount == 1)
-                        if (bRowHovered && ImGui::IsMouseClicked(0))
+                        if (!bFolderSearchActive && bRowHovered && ImGui::IsMouseClicked(0))
                         {
                             const int32 ClickCount = ImGui::GetMouseClickedCount(0);
                             if (ClickCount == 1)
                             {
                                 const ImVec2 Mouse = ImGui::GetMousePos();
 
-                                const bool bInsideArrow = (Mouse.x >= ArrowRect.Min.x && Mouse.x <= ArrowRect.Max.x && Mouse.y >= ArrowRect.Min.y && Mouse.y <= ArrowRect.Max.y);
+                                const bool bInsideArrow =
+                                    (Mouse.x >= ArrowRect.Min.x && Mouse.x <= ArrowRect.Max.x &&
+                                     Mouse.y >= ArrowRect.Min.y && Mouse.y <= ArrowRect.Max.y);
+
                                 if (bInsideArrow)
                                 {
                                     bOpen = !bOpen;
@@ -399,13 +472,17 @@ void FEditorContentBrowserWidget::Draw()
                     DrawList->AddText(ImVec2(X, TextY), ImGui::GetColorU32(NameTextColor), InFolder.Name);
 
                     ImGui::PopID();
-
                     return bHasChildFolders && bOpen;
                 };
 
                 TFunction<void(FileInfo&, TArray<int32>&, int32)> DrawFolderTree;
                 DrawFolderTree = [&](FileInfo& InFolder, TArray<int32>& InPath, int32 InDepth)
                 {
+                    if (!FolderTreeMatches(InFolder))
+                    {
+                        return;
+                    }
+
                     const bool bOpen = DrawFolderRow(InFolder, InPath, InDepth);
                     if (bOpen)
                     {
@@ -413,6 +490,11 @@ void FEditorContentBrowserWidget::Draw()
                         {
                             FileInfo& Child = InFolder.FolderContents[ChildIndex];
                             if (!Child.bIsFolder)
+                            {
+                                continue;
+                            }
+
+                            if (bFolderSearchActive && !FolderTreeMatches(Child))
                             {
                                 continue;
                             }
@@ -428,6 +510,11 @@ void FEditorContentBrowserWidget::Draw()
                 {
                     FileInfo& Root = RootFolders[RootIndex];
                     if (!Root.bIsFolder)
+                    {
+                        continue;
+                    }
+
+                    if (bFolderSearchActive && !FolderTreeMatches(Root))
                     {
                         continue;
                     }
@@ -508,158 +595,179 @@ void FEditorContentBrowserWidget::Draw()
                     {
                         CenteredMessage("Folder is empty");
                     }
-                    else if (ImGui::BeginTable("##CB_AssetGrid", ColumnCount, ImGuiTableFlags_SizingFixedFit))
+                    else
                     {
                         TArray<FileInfo>& Items = *ItemsPtr;
 
+                        int32 VisibleCount = 0;
                         for (int32 i = 0; i < Items.Size(); ++i)
                         {
-                            ImGui::TableNextColumn();
-                            ImGui::PushID(i);
-
-                            const bool bSelected = (SelectedItemIndex == i);
-
-                            FileInfo&  Item      = Items[i];
-                            const bool bIsFolder = Item.bIsFolder;
-
-                            const ImVec2 TileStart = ImGui::GetCursorScreenPos();
-                            const ImVec2 TileEnd   = ImVec2(TileStart.x + TileW, TileStart.y + TileH);
-
-                            ImGui::InvisibleButton("##TileBtn", ImVec2(TileW, TileH));
-
-                            const bool bHovered     = ImGui::IsItemHovered();
-                            const bool bPressed     = ImGui::IsItemClicked();
-                            const bool bDoubleClick = bPressed && ImGui::IsMouseDoubleClicked(0);
-
-                            if (bPressed)
+                            if (MatchesSearch(Items[i].Name, AssetSearchBuffer))
                             {
-                                SelectedItemIndex         = i;
-                                bSelectionActiveInBrowser = false;
-
-                                if (bDoubleClick && bIsFolder)
-                                {
-                                    SelectedFolderPath.Add(i);
-                                    SelectedItemIndex         = -1;
-                                    bSelectionActiveInBrowser = true;
-                                }
+                                ++VisibleCount;
                             }
-
-                            ImDrawList* WindowDrawList = ImGui::GetWindowDrawList();
-
-                            const ImU32 Bg = bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor);
-                            WindowDrawList->AddRectFilled(TileStart, TileEnd, Bg, CornerR);
-
-                            ImTextureID Icon = bIsFolder ? EditorIcons::FolderIcon : EditorIcons::DocumentIcon;
-                            if (!Icon && bIsFolder)
-                            {
-                                Icon = EditorIcons::FolderSmallIcon;
-                            }
-
-                            if (Icon)
-                            {
-                                const float  IconAreaH = TileH - LabelAreaH;
-                                const float  MaxIconSz = Math::Min((TileW - IconPadPx * 2.0f), (IconAreaH - IconPadPx * 2.0f));
-                                const float  IconSz    = Math::Max(1.0f, MaxIconSz);
-                                const ImVec2 IconMin   = ImVec2(TileStart.x + (TileW - IconSz) * 0.5f, TileStart.y + (IconAreaH - IconSz) * 0.5f);
-                                const ImVec2 IconMax   = ImVec2(IconMin.x + IconSz, IconMin.y + IconSz);
-                                WindowDrawList->AddImage(Icon, IconMin, IconMax);
-                            }
-
-                            {
-                                const ImVec2 LabelMin = ImVec2(TileStart.x + 8.0f, TileEnd.y - LabelAreaH + 6.0f);
-                                const ImVec2 LabelMax = ImVec2(TileEnd.x - 8.0f, TileEnd.y - 6.0f);
-
-                                ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
-                                ImGui::RenderTextClipped(LabelMin, LabelMax, Item.Name, nullptr, nullptr, ImVec2(0.5f, 0.0f));
-                                ImGui::PopStyleColor();
-                            }
-
-                            if (bHovered)
-                            {
-                                const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-                                const ImVec4 TooltipBorder = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
-                                const ImVec4 TextWhite     = ImVec4(1, 1, 1, 1);
-                                const ImVec4 TextGrey      = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
-
-                                ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-                                ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
-                                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
-                                ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 2.0f);
-
-                                ImGui::PushStyleColor(ImGuiCol_PopupBg, TooltipBg);
-                                ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
-                                ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
-
-                                ImGui::BeginTooltip();
-
-                                ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
-                                ImGui::TextUnformatted(Item.Name);
-                                ImGui::PopStyleColor();
-
-                                ImGui::Spacing();
-
-                                ImTextureID TypeIcon = nullptr;
-                                if (bIsFolder)
-                                {
-                                    TypeIcon = EditorIcons::FolderSmallIcon ? EditorIcons::FolderSmallIcon : EditorIcons::FolderIcon;
-                                }
-                                else
-                                {
-                                    TypeIcon = EditorIcons::DocumentSmallIcon ? EditorIcons::DocumentSmallIcon : EditorIcons::DocumentIcon;
-                                }
-
-                                const float IconSizePx = 16.0f;
-                                const float LineH      = ImGui::GetTextLineHeight();
-                                const float Y0         = ImGui::GetCursorPosY();
-                                const float IconOffset = Math::Max(0.0f, (LineH - IconSizePx) * 0.5f);
-
-                                if (TypeIcon)
-                                {
-                                    ImGui::SetCursorPosY(Y0 + IconOffset);
-                                    ImGui::Image(TypeIcon, ImVec2(IconSizePx, IconSizePx));
-                                    ImGui::SameLine();
-                                    ImGui::SetCursorPosY(Y0);
-                                }
-
-                                ImGui::PushStyleColor(ImGuiCol_Text, TextGrey);
-                                ImGui::TextUnformatted(bIsFolder ? "Folder" : "Document");
-                                ImGui::PopStyleColor();
-
-                                ImGui::Separator();
-
-                                char FolderPathBuf[512];
-                                BuildFolderPathString(SelectedFolderPath, FolderPathBuf, (int32)sizeof(FolderPathBuf));
-
-                                char FullPathBuf[768];
-                                if (FolderPathBuf[0] != 0)
-                                {
-                                    FCString::Snprintf(FullPathBuf, (int32)sizeof(FullPathBuf), "%s/%s", FolderPathBuf, Item.Name);
-                                }
-                                else
-                                {
-                                    FCString::Snprintf(FullPathBuf, (int32)sizeof(FullPathBuf), "%s", Item.Name);
-                                }
-
-                                ImGui::PushStyleColor(ImGuiCol_Text, MutedTextColor);
-                                ImGui::TextUnformatted("Path:");
-                                ImGui::PopStyleColor();
-
-                                ImGui::SameLine();
-
-                                ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
-                                ImGui::TextUnformatted(FullPathBuf);
-                                ImGui::PopStyleColor();
-
-                                ImGui::EndTooltip();
-
-                                ImGui::PopStyleColor(3);
-                                ImGui::PopStyleVar(4);
-                            }
-
-                            ImGui::PopID();
                         }
 
-                        ImGui::EndTable();
+                        if (VisibleCount <= 0)
+                        {
+                            CenteredMessage("No results");
+                        }
+                        else if (ImGui::BeginTable("##CB_AssetGrid", ColumnCount, ImGuiTableFlags_SizingFixedFit))
+                        {
+                            for (int32 i = 0; i < Items.Size(); ++i)
+                            {
+                                FileInfo& Item = Items[i];
+
+                                if (!MatchesSearch(Item.Name, AssetSearchBuffer))
+                                {
+                                    continue;
+                                }
+
+                                ImGui::TableNextColumn();
+                                ImGui::PushID(i);
+
+                                const bool bSelected = (SelectedItemIndex == i);
+                                const bool bIsFolder = Item.bIsFolder;
+
+                                const ImVec2 TileStart = ImGui::GetCursorScreenPos();
+                                const ImVec2 TileEnd   = ImVec2(TileStart.x + TileW, TileStart.y + TileH);
+
+                                ImGui::InvisibleButton("##TileBtn", ImVec2(TileW, TileH));
+
+                                const bool bHovered     = ImGui::IsItemHovered();
+                                const bool bPressed     = ImGui::IsItemClicked();
+                                const bool bDoubleClick = bPressed && ImGui::IsMouseDoubleClicked(0);
+
+                                if (bPressed)
+                                {
+                                    SelectedItemIndex         = i;
+                                    bSelectionActiveInBrowser = false;
+
+                                    if (bDoubleClick && bIsFolder)
+                                    {
+                                        SelectedFolderPath.Add(i);
+                                        SelectedItemIndex         = -1;
+                                        bSelectionActiveInBrowser = true;
+                                    }
+                                }
+
+                                ImDrawList* WindowDrawList = ImGui::GetWindowDrawList();
+
+                                const ImU32 Bg = bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor);
+                                WindowDrawList->AddRectFilled(TileStart, TileEnd, Bg, CornerR);
+
+                                ImTextureID Icon = bIsFolder ? EditorIcons::FolderIcon : EditorIcons::DocumentIcon;
+                                if (!Icon && bIsFolder)
+                                {
+                                    Icon = EditorIcons::FolderSmallIcon;
+                                }
+
+                                if (Icon)
+                                {
+                                    const float  IconAreaH = TileH - LabelAreaH;
+                                    const float  MaxIconSz = Math::Min((TileW - IconPadPx * 2.0f), (IconAreaH - IconPadPx * 2.0f));
+                                    const float  IconSz    = Math::Max(1.0f, MaxIconSz);
+                                    const ImVec2 IconMin   = ImVec2(TileStart.x + (TileW - IconSz) * 0.5f, TileStart.y + (IconAreaH - IconSz) * 0.5f);
+                                    const ImVec2 IconMax   = ImVec2(IconMin.x + IconSz, IconMin.y + IconSz);
+                                    WindowDrawList->AddImage(Icon, IconMin, IconMax);
+                                }
+
+                                {
+                                    const ImVec2 LabelMin = ImVec2(TileStart.x + 8.0f, TileEnd.y - LabelAreaH + 6.0f);
+                                    const ImVec2 LabelMax = ImVec2(TileEnd.x - 8.0f, TileEnd.y - 6.0f);
+
+                                    ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
+                                    ImGui::RenderTextClipped(LabelMin, LabelMax, Item.Name, nullptr, nullptr, ImVec2(0.5f, 0.0f));
+                                    ImGui::PopStyleColor();
+                                }
+
+                                if (bHovered)
+                                {
+                                    const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+                                    const ImVec4 TooltipBorder = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
+                                    const ImVec4 TextWhite     = ImVec4(1, 1, 1, 1);
+                                    const ImVec4 TextGrey      = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+
+                                    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+                                    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
+                                    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+                                    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 2.0f);
+
+                                    ImGui::PushStyleColor(ImGuiCol_PopupBg, TooltipBg);
+                                    ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
+                                    ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
+
+                                    ImGui::BeginTooltip();
+
+                                    ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
+                                    ImGui::TextUnformatted(Item.Name);
+                                    ImGui::PopStyleColor();
+
+                                    ImGui::Spacing();
+
+                                    ImTextureID TypeIcon = nullptr;
+                                    if (bIsFolder)
+                                    {
+                                        TypeIcon = EditorIcons::FolderSmallIcon ? EditorIcons::FolderSmallIcon : EditorIcons::FolderIcon;
+                                    }
+                                    else
+                                    {
+                                        TypeIcon = EditorIcons::DocumentSmallIcon ? EditorIcons::DocumentSmallIcon : EditorIcons::DocumentIcon;
+                                    }
+
+                                    const float IconSizePx = 16.0f;
+                                    const float LineH      = ImGui::GetTextLineHeight();
+                                    const float Y0         = ImGui::GetCursorPosY();
+                                    const float IconOffset = Math::Max(0.0f, (LineH - IconSizePx) * 0.5f);
+
+                                    if (TypeIcon)
+                                    {
+                                        ImGui::SetCursorPosY(Y0 + IconOffset);
+                                        ImGui::Image(TypeIcon, ImVec2(IconSizePx, IconSizePx));
+                                        ImGui::SameLine();
+                                        ImGui::SetCursorPosY(Y0);
+                                    }
+
+                                    ImGui::PushStyleColor(ImGuiCol_Text, TextGrey);
+                                    ImGui::TextUnformatted(bIsFolder ? "Folder" : "Document");
+                                    ImGui::PopStyleColor();
+
+                                    ImGui::Separator();
+
+                                    char FolderPathBuf[512];
+                                    BuildFolderPathString(SelectedFolderPath, FolderPathBuf, (int32)sizeof(FolderPathBuf));
+
+                                    char FullPathBuf[768];
+                                    if (FolderPathBuf[0] != 0)
+                                    {
+                                        FCString::Snprintf(FullPathBuf, (int32)sizeof(FullPathBuf), "%s/%s", FolderPathBuf, Item.Name);
+                                    }
+                                    else
+                                    {
+                                        FCString::Snprintf(FullPathBuf, (int32)sizeof(FullPathBuf), "%s", Item.Name);
+                                    }
+
+                                    ImGui::PushStyleColor(ImGuiCol_Text, MutedTextColor);
+                                    ImGui::TextUnformatted("Path:");
+                                    ImGui::PopStyleColor();
+
+                                    ImGui::SameLine();
+
+                                    ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
+                                    ImGui::TextUnformatted(FullPathBuf);
+                                    ImGui::PopStyleColor();
+
+                                    ImGui::EndTooltip();
+
+                                    ImGui::PopStyleColor(3);
+                                    ImGui::PopStyleVar(4);
+                                }
+
+                                ImGui::PopID();
+                            }
+
+                            ImGui::EndTable();
+                        }
                     }
 
                     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered())
