@@ -110,8 +110,8 @@ static void DrawAxisLineForLastItem(ImU32 InColor)
     const float PadX      = 6.0f;
     const float PadY      = 5.0f;
     const float Thickness = 2.0f;
+    const float X         = ItemMin.x + PadX;
 
-    const float X = ItemMin.x + PadX;
     const ImVec2 LineMin = ImVec2(X - Thickness * 0.5f, ItemMin.y + PadY);
     const ImVec2 LineMax = ImVec2(X + Thickness * 0.5f, ItemMax.y - PadY);
 
@@ -156,8 +156,7 @@ static bool ResetIconButton(float InSizePx = 0.0f)
         const int32 IconTintIdle   = 220;
         const int32 IconTintHover  = 160;
         const int32 IconTintActive = 130;
-
-        const int32 IconTintValue = bIsHeld ? IconTintActive : (bIsHovered ? IconTintHover : IconTintIdle);
+        const int32 IconTintValue  = bIsHeld ? IconTintActive : (bIsHovered ? IconTintHover : IconTintIdle);
 
         const float Alpha01  = Math::Clamp(ImGuiStyle.Alpha, 0.0f, 1.0f);
         const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
@@ -170,9 +169,7 @@ static bool ResetIconButton(float InSizePx = 0.0f)
         const char* FallbackText = "R";
 
         const ImVec2 FallbackTextSize     = ImGui::CalcTextSize(FallbackText);
-        const ImVec2 FallbackTextPosition = ImVec2(
-            (ButtonRectMin.x + ButtonRectMax.x) * 0.5f - FallbackTextSize.x * 0.5f,
-            (ButtonRectMin.y + ButtonRectMax.y) * 0.5f - FallbackTextSize.y * 0.5f);
+        const ImVec2 FallbackTextPosition = ImVec2((ButtonRectMin.x + ButtonRectMax.x) * 0.5f - FallbackTextSize.x * 0.5f, (ButtonRectMin.y + ButtonRectMax.y) * 0.5f - FallbackTextSize.y * 0.5f);
 
         const ImU32 TextColor = ImGui::GetColorU32(ImGuiCol_Text);
         WindowDrawList->AddText(FallbackTextPosition, TextColor, FallbackText);
@@ -225,16 +222,15 @@ static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const char* InSuffix,
         return;
     }
 
-    const ImVec2 ItemMin = ImGui::GetItemRectMin();
-    const ImVec2 ItemMax = ImGui::GetItemRectMax();
-
-    const ImVec2 TextSize = ImGui::CalcTextSize(EditText);
+    const ImVec2 ItemMin    = ImGui::GetItemRectMin();
+    const ImVec2 ItemMax    = ImGui::GetItemRectMax();
+    const ImVec2 TextSize   = ImGui::CalcTextSize(EditText);
     const ImVec2 SuffixSize = ImGui::CalcTextSize(InSuffix);
 
     const float TextStartX = ItemMin.x + ImGui::GetStyle().FramePadding.x;
     const float RightLimit = ItemMax.x - ImGui::GetStyle().FramePadding.x;
+    const float DesiredX   = TextStartX + TextSize.x + InGapPx;
 
-    const float DesiredX = TextStartX + TextSize.x + InGapPx;
     if (DesiredX + SuffixSize.x > RightLimit)
     {
         return;
@@ -281,7 +277,6 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     const bool bIsRotationDegrees = (InType == EVector3ControlType::RotationDegrees);
     const bool bIsScaleControl    = (InType == EVector3ControlType::Scale);
 
-    // Decide speed per control type.
     const auto GetAxisDragSpeed = [&]() -> float
     {
         if (bIsScaleControl)
@@ -297,7 +292,6 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
         return Speed;
     };
 
-    // Dynamic float format: min 1 decimal, max 4 decimals.
     const auto GetDynamicFormatString = [](float Value, char(&OutFormat)[8]) -> const char*
     {
         static const float Pow10Table[4] = { 10.0f, 100.0f, 1000.0f, 10000.0f };
@@ -383,9 +377,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
                 const char* FallbackText = bUniformScaleEnabled ? "L" : "U";
 
                 const ImVec2 TextSize = ImGui::CalcTextSize(FallbackText);
-                const ImVec2 TextPos  = ImVec2(
-                    (RectMin.x + RectMax.x) * 0.5f - TextSize.x * 0.5f,
-                    (RectMin.y + RectMax.y) * 0.5f - TextSize.y * 0.5f);
+                const ImVec2 TextPos  = ImVec2((RectMin.x + RectMax.x) * 0.5f - TextSize.x * 0.5f, (RectMin.y + RectMax.y) * 0.5f - TextSize.y * 0.5f);
                 
                 DrawList->AddText(TextPos, ImGui::GetColorU32(ImGuiCol_Text), FallbackText);
             }
@@ -490,10 +482,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
             }
         }
 
-        // Border on top (so it stays visible)
         DrawInputBorderLastItem(ImGui::GetStyle().FrameRounding);
-
-        // Cosmetic axis line (draw after overlay so it stays visible)
         DrawAxisLineForLastItem(AxisIndicatorColor);
 
         if (bIsRotationDegrees && bIsTempInputActive)
@@ -776,7 +765,6 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
     float FieldWidth = (Avail - ButtonWidth - TotalGaps) / 3.0f;
     FieldWidth = ImMax(FieldWidth, 1.0f);
 
-    // Preview button + picker popup
     {
         const ImVec4 Color = ImVec4(InOutColor[0], InOutColor[1], InOutColor[2], 1.0f);
 
@@ -793,7 +781,6 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 
         if (ImGui::BeginPopup("##ColorPicker"))
         {
-            // Keep picker simple
             bResult |= ImGui::ColorPicker3("##Picker", InOutColor, Flags);
             ImGui::EndPopup();
         }
@@ -941,15 +928,121 @@ void EditorWidgets::EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, I
     DrawList->AddLine(PointB, PointC, Color, Thickness);
 }
 
+void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
+{
+    ImGuiWindow* Window = ImGui::GetCurrentWindow();
+    if (!Window || Window->SkipItems)
+    {
+        return;
+    }
+
+    if (PaddingY > 0.0f)
+    {
+        ImGui::Dummy(ImVec2(0.0f, PaddingY));
+    }
+
+    const ImVec2 CursorMin = ImGui::GetCursorScreenPos();
+    const float  Width     = ImGui::GetContentRegionAvail().x;
+
+    constexpr float InsetX = 20.0f;
+
+    if (Width > (InsetX * 2.0f + 1.0f))
+    {
+        const ImU32 Color = IM_COL32(106, 106, 106, 255);
+
+        const float Y  = CursorMin.y + ((Thickness <= 1.0f) ? 0.5f : 0.0f);
+        const ImVec2 A = ImVec2(CursorMin.x + InsetX, Y);
+        const ImVec2 B = ImVec2(CursorMin.x + Width - InsetX, Y);
+
+        ImGui::GetWindowDrawList()->AddLine(A, B, Color, Thickness);
+    }
+
+    ImGui::Dummy(ImVec2(0.0f, Thickness));
+
+    if (PaddingY > 0.0f)
+    {
+        ImGui::Dummy(ImVec2(0.0f, PaddingY));
+    }
+}
+
+void EditorWidgets::EditorMenuLabeledSeparator(const char* Label, float Thickness, float PaddingY)
+{
+    ImGuiWindow* Window = ImGui::GetCurrentWindow();
+    if (!Window || Window->SkipItems)
+    {
+        return;
+    }
+
+    if (PaddingY > 0.0f)
+    {
+        ImGui::Dummy(ImVec2(0.0f, PaddingY));
+    }
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+    const ImVec2 CursorMin = ImGui::GetCursorScreenPos();
+    const float  Width     = ImGui::GetContentRegionAvail().x;
+
+    constexpr float InsetX = 20.0f;
+
+    const ImU32 LineColor  = IM_COL32(106, 106, 106, 255);
+    const ImU32 LabelColor = IM_COL32(160, 160, 160, 255);
+
+    const char* LabelToDraw = "";
+    char UpperLabel[128] = {};
+
+    if (Label && Label[0] != '\0')
+    {
+        int32 i = 0;
+        for (; Label[i] != '\0' && i < (int32)(sizeof(UpperLabel) - 1); ++i)
+        {
+            const CHAR Ch = (CHAR)Label[i];
+            UpperLabel[i] = (char)FCharTraits::ToUpper(Ch);
+        }
+
+        UpperLabel[i] = '\0';
+        LabelToDraw   = UpperLabel;
+    }
+
+    const ImVec2 LabelSize = ImGui::CalcTextSize(LabelToDraw);
+    const float  RowHeight = Math::Max(LabelSize.y, Thickness);
+    const float  YLine     = CursorMin.y + (RowHeight * 0.5f) + ((Thickness <= 1.0f) ? 0.5f : 0.0f);
+    const float  LabelX    = CursorMin.x + InsetX;
+    const float  LabelY    = CursorMin.y + (RowHeight - LabelSize.y) * 0.5f;
+
+    if (LabelSize.x > 0.0f)
+    {
+        DrawList->AddText(ImVec2(LabelX, LabelY), LabelColor, LabelToDraw);
+    }
+
+    const float GapAfterLabel = 12.0f;
+    const float LineStartX    = LabelX + LabelSize.x + GapAfterLabel;
+    const float LineEndX      = CursorMin.x + Width - InsetX;
+
+    if (LineEndX > LineStartX + 1.0f)
+    {
+        DrawList->AddLine(ImVec2(LineStartX, YLine), ImVec2(LineEndX, YLine), LineColor, Thickness);
+    }
+
+    ImGui::Dummy(ImVec2(0.0f, RowHeight));
+
+    if (PaddingY > 0.0f)
+    {
+        ImGui::Dummy(ImVec2(0.0f, PaddingY));
+    }
+}
+
 bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
 {
-    const float PaddingX  = 8.0f;
-    const float PaddingY  = 6.0f;
-    const float RowHeight = ImGui::GetFontSize() + PaddingY * 2.0f;
-    const float RowWidth  = ImGui::GetContentRegionAvail().x;
-    const float CheckSize = ImGui::GetFontSize() * 0.85f;
-    const float GapRight  = 8.0f; // Gap between shortcut and checkmark (when both exist)
-    const float ClipGap   = 4.0f; // Small gap between label clip and right-side content
+    const float PaddingX    = 8.0f;
+    const float PaddingY    = 4.0f;
+    const float RowHeight   = ImGui::GetFontSize() + PaddingY * 2.0f;
+    const float RowWidth    = ImGui::GetContentRegionAvail().x;
+    const float CheckSize   = ImGui::GetFontSize() * 0.85f;
+    const float GapRight    = 8.0f;
+    const float ClipGap     = 4.0f;
+    const float MenuIndentX = 20.0f;
+    const float IconGutterX = 0.0f;
 
     ImGui::PushID(Label);
 
@@ -971,7 +1064,9 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
+    // -----------------------------------------------------------------------------------------
     // Background
+    // -----------------------------------------------------------------------------------------
     ImU32 Background = ImGui::GetColorU32(ImGuiCol_Header);
     if (bActive)
     {
@@ -984,35 +1079,55 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 
     DrawList->AddRectFilled(RectMin, RectMax, Background, 0.0f);
 
-    // Hover-only border
     if (bDrawBorder && bHovered)
     {
-        // Match the requested menu hover/press blue
         const ImVec4 HoveredColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
-        const ImU32  BorderColor  = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
+        const ImU32  BorderColor = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
         DrawList->AddRect(RectMin, RectMax, BorderColor, 0.0f, 0, 1.0f);
     }
 
-    // Vertical centering reference
-    const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
-    const float  TextY     = RectMin.y + (RowHeight - LabelSize.y) * 0.5f;
+    // -----------------------------------------------------------------------------------------
+    // Layout
+    // -----------------------------------------------------------------------------------------
+    const float LeftInnerX  = RectMin.x + MenuIndentX;
+    const float RightInnerX = RectMax.x - MenuIndentX;
 
-    const bool   bHasShortcut = (Shortcut && Shortcut[0] != '\0');
-    const ImVec2 ShortcutSize = bHasShortcut ? ImGui::CalcTextSize(Shortcut) : ImVec2(0.0f, 0.0f);
-    const float  RightInnerX  = RectMax.x - PaddingX;
+    const bool bHasShortcut = (Shortcut && Shortcut[0] != '\0');
 
-    // Compute right-side layout positions
-    bool   bDrawCheckMark = bSelected;
-    ImVec2 CheckPos       = ImVec2(0.0f, 0.0f);
-    bool   bDrawShortcut  = bHasShortcut;
-    float  ShortcutX      = 0.0f;
+    // -----------------------------------------------------------------------------------------
+    // Upper-case shortcut
+    // -----------------------------------------------------------------------------------------
+    const char* ShortcutToDraw = Shortcut;
 
-    // Left-most X of anything on the right (shortcut/check)
-    float RightContentMinX = RightInnerX;
+    char UpperShortcut[128] = {};
+    if (bHasShortcut)
+    {
+        int32 i = 0;
+        for (; Shortcut[i] != '\0' && i < (int32)(sizeof(UpperShortcut) - 1); ++i)
+        {
+            const CHAR Ch    = (CHAR)Shortcut[i];
+            UpperShortcut[i] = (char)FCharTraits::ToUpper(Ch);
+        }
+        UpperShortcut[i] = '\0';
+        ShortcutToDraw   = UpperShortcut;
+    }
+
+    const ImVec2 ShortcutSize = bHasShortcut ? ImGui::CalcTextSize(ShortcutToDraw) : ImVec2(0.0f, 0.0f);
+    const ImVec2 LabelSize    = ImGui::CalcTextSize(Label);
+
+    const float OpticalBiasY = 0.5f;
+    const float LabelY       = RectMin.y + (RowHeight - LabelSize.y) * 0.5f + OpticalBiasY;
+
+    const bool bDrawCheckMark = bSelected;
+    const bool bDrawShortcut  = bHasShortcut;
+
+    ImVec2 CheckPos         = ImVec2(0.0f, 0.0f);
+    float  ShortcutX        = 0.0f;
+    float  RightContentMinX = RightInnerX;
 
     if (bDrawCheckMark)
     {
-        const float CheckY    = RectMin.y + (RowHeight - CheckSize) * 0.5f;
+        const float CheckY    = RectMin.y + (RowHeight - CheckSize) * 0.5f + OpticalBiasY;
         const float CheckMinX = RightInnerX - CheckSize;
 
         CheckPos         = ImVec2(CheckMinX, CheckY);
@@ -1020,44 +1135,62 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 
         if (bDrawShortcut)
         {
-            // Shortcut sits to the left of checkmark
             ShortcutX        = CheckMinX - GapRight - ShortcutSize.x;
             RightContentMinX = ShortcutX;
         }
     }
     else if (bDrawShortcut)
     {
-        // Shortcut goes flush right when no checkmark
         ShortcutX        = RightInnerX - ShortcutSize.x;
         RightContentMinX = ShortcutX;
     }
 
-    // Draw shortcut (if any)
+    // -----------------------------------------------------------------------------------------
+    // Draw shortcut text
+    // -----------------------------------------------------------------------------------------
     if (bDrawShortcut)
     {
-        const float ShortcutY = RectMin.y + (RowHeight - ShortcutSize.y) * 0.5f;
-        DrawList->AddText(ImVec2(ShortcutX, ShortcutY), ImGui::GetColorU32(ImGuiCol_TextDisabled), Shortcut);
+        const float ShortcutY = RectMin.y + (RowHeight - ShortcutSize.y) * 0.5f + OpticalBiasY;
+        DrawList->AddText(ImVec2(ShortcutX, ShortcutY), ImGui::GetColorU32(ImGuiCol_TextDisabled), ShortcutToDraw);
     }
 
-    // Draw checkmark last (crisp on top)
+    // -----------------------------------------------------------------------------------------
+    // Draw checkmark
+    // -----------------------------------------------------------------------------------------
     if (bDrawCheckMark)
     {
-        EditorDrawCheckMark(DrawList, CheckPos, ImGui::GetColorU32(ImGuiCol_Text), CheckSize);
+        if (EditorIcons::Checkmark)
+        {
+            const ImVec2 IconMin = CheckPos;
+            const ImVec2 IconMax = ImVec2(CheckPos.x + CheckSize, CheckPos.y + CheckSize);
+
+            // Tint to match menu text color (works well for monochrome icons)
+            const ImU32 Tint = ImGui::GetColorU32(ImGuiCol_Text);
+
+            DrawList->AddImage(EditorIcons::Checkmark, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+        }
+        else
+        {
+            // Fallback if icon not loaded
+            EditorDrawCheckMark(DrawList, CheckPos, ImGui::GetColorU32(ImGuiCol_Text), CheckSize);
+        }
     }
 
-    // Draw label + clip to avoid overlap with right-side content
-    const float LabelX = RectMin.x + PaddingX;
+    // -----------------------------------------------------------------------------------------
+    // Draw label
+    // -----------------------------------------------------------------------------------------
+    const float LabelX = LeftInnerX + PaddingX + IconGutterX;
 
-    float ClipMaxX = RectMax.x - PaddingX;
+    float ClipMaxX = RightInnerX - PaddingX;
     if (bDrawShortcut || bDrawCheckMark)
     {
         ClipMaxX = RightContentMinX - ClipGap;
     }
 
-    ClipMaxX = ImMax(ClipMaxX, LabelX + 1.0f);
+    ClipMaxX = Math::Max(ClipMaxX, LabelX + 1.0f);
 
     DrawList->PushClipRect(ImVec2(LabelX, RectMin.y), ImVec2(ClipMaxX, RectMax.y), true);
-    DrawList->AddText(ImVec2(LabelX, TextY), ImGui::GetColorU32(ImGuiCol_Text), Label);
+    DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
     DrawList->PopClipRect();
 
     if (!bEnabled)
@@ -1067,33 +1200,6 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
 
     ImGui::PopID();
     return bEnabled && bPressed;
-}
-
-void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
-{
-    ImGuiWindow* Window = ImGui::GetCurrentWindow();
-    if (Window->SkipItems)
-    {
-        return;
-    }
-
-    if (PaddingY > 0.0f)
-    {
-        ImGui::Dummy(ImVec2(0.0f, PaddingY));
-    }
-
-    const ImVec2 Min   = ImGui::GetCursorScreenPos();
-    const float  Width = ImGui::GetContentRegionAvail().x;
-    const ImU32  Color = ImGui::GetColorU32(ImGuiCol_Separator);
-
-    ImGui::GetWindowDrawList()->AddLine(Min, ImVec2(Min.x + Width, Min.y), Color, Thickness);
-
-    ImGui::Dummy(ImVec2(0.0f, Thickness));
-
-    if (PaddingY > 0.0f)
-    {
-        ImGui::Dummy(ImVec2(0.0f, PaddingY));
-    }
 }
 
 void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, const ImVec4& BrightPopupBg, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
@@ -1144,34 +1250,72 @@ void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId,
     }
 }
 
-bool EditorWidgets::EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, const ImVec4& BrightPopupBg, float MinWidth)
+bool EditorWidgets::EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, float MinWidth)
 {
     if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
     {
         ImGui::SetNextWindowPos(ImVec2(Anchor.Min.x, Anchor.Max.y), ImGuiCond_Always);
     }
 
+    // -----------------------------------------------------------------------------------------
+    // Popup styling
+    // -----------------------------------------------------------------------------------------
+    const ImVec4 PopupBg       = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+    const ImVec4 PopupBorder   = ImVec4(63.0f / 255.0f, 63.0f / 255.0f, 63.0f / 255.0f, 1.0f);
+    const ImVec4 TextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const ImVec4 ShortcutColor = ImVec4(175.0f / 255.0f, 175.0f / 255.0f, 175.0f / 255.0f, 1.0f);
+    const ImVec4 HoverBlue     = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+
+    constexpr float PopupPadY      = 10.0f;
+    constexpr float ContentIndentX = 20.0f;
+
+    const float FinalMinWidth = MinWidth + (ContentIndentX * 2.0f);
+
+    // -----------------------------------------------------------------------------------------
+    // Style vars
+    // -----------------------------------------------------------------------------------------
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, PopupPadY));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 
-    const ImVec4 MenuHoverBlue = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
+    // -----------------------------------------------------------------------------------------
+    // Style colors
+    // -----------------------------------------------------------------------------------------
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, PopupBg);
+    ImGui::PushStyleColor(ImGuiCol_Border, PopupBorder);
 
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, BrightPopupBg);
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, MenuHoverBlue);
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive, MenuHoverBlue);
+    ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
+    ImGui::PushStyleColor(ImGuiCol_TextDisabled, ShortcutColor);
 
-    ImGui::SetNextWindowSizeConstraints(ImVec2(MinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
-    return ImGui::BeginPopup(PopupId);
+    ImGui::PushStyleColor(ImGuiCol_Header, PopupBg);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, HoverBlue);
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, HoverBlue);
+
+    ImGui::SetNextWindowSizeConstraints(ImVec2(FinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
+
+    const bool bOpen = ImGui::BeginPopup(PopupId);
+    if (bOpen)
+    {
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+        const ImVec2 WinPos  = ImGui::GetWindowPos();
+        const ImVec2 WinSize = ImGui::GetWindowSize();
+        const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
+        const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
+
+        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, 0, 1.0f);
+    }
+
+    return bOpen;
 }
 
 void EditorWidgets::EditorResetMenuPopup()
 {
-    ImGui::PopStyleColor(3);
-    ImGui::PopStyleVar(5);
+    ImGui::PopStyleColor(7); // PopupBg, Border, Text, TextDisabled, Header, HeaderHovered, HeaderActive
+    ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
 }
 
 bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWidth, float RevertColumnWidth)
@@ -1328,6 +1472,7 @@ struct EditorIconsInternal
     inline static EditorIcon FolderOpenSmallIcon = EditorIcon();
     inline static EditorIcon DocumentIcon        = EditorIcon();
     inline static EditorIcon DocumentSmallIcon   = EditorIcon();
+    inline static EditorIcon Checkmark           = EditorIcon();
 };
 
 ImTextureID EditorIcons::UndoIcon            = nullptr;
@@ -1339,6 +1484,7 @@ ImTextureID EditorIcons::FolderSmallIcon     = nullptr;
 ImTextureID EditorIcons::FolderOpenSmallIcon = nullptr;
 ImTextureID EditorIcons::DocumentIcon        = nullptr;
 ImTextureID EditorIcons::DocumentSmallIcon   = nullptr;
+ImTextureID EditorIcons::Checkmark           = nullptr;
 
 static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1407,6 +1553,7 @@ static void UnloadEditorIcon(ImTextureID& OutIconID, EditorIcon& OutIcon)
 bool EditorIcons::Initialize()
 {
     bool bResult = true;
+
     bResult &= LoadEditorIcon("Editor/Icons/Undo.png", UndoIcon, EditorIconsInternal::UndoIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Search.png", SearchIcon, EditorIconsInternal::SearchIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Locked.png", LockedIcon, EditorIconsInternal::LockedIcon);
@@ -1416,12 +1563,23 @@ bool EditorIcons::Initialize()
     bResult &= LoadEditorIcon("Editor/Icons/FolderOpenSmall.png", FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Document.png", DocumentIcon, EditorIconsInternal::DocumentIcon);
     bResult &= LoadEditorIcon("Editor/Icons/DocumentSmall.png", DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/Checkmark.png", Checkmark, EditorIconsInternal::Checkmark);
+
     return bResult;
 }
 
 void EditorIcons::Release()
 {
     UnloadEditorIcon(UndoIcon, EditorIconsInternal::UndoIcon);
+    UnloadEditorIcon(SearchIcon, EditorIconsInternal::SearchIcon);
+    UnloadEditorIcon(LockedIcon, EditorIconsInternal::LockedIcon);
+    UnloadEditorIcon(UnlockedIcon, EditorIconsInternal::UnlockedIcon);
+    UnloadEditorIcon(FolderIcon, EditorIconsInternal::FolderIcon);
+    UnloadEditorIcon(FolderSmallIcon, EditorIconsInternal::FolderSmallIcon);
+    UnloadEditorIcon(FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
+    UnloadEditorIcon(DocumentIcon, EditorIconsInternal::DocumentIcon);
+    UnloadEditorIcon(DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
+    UnloadEditorIcon(Checkmark, EditorIconsInternal::Checkmark);
 }
 
 ImFont* EditorFonts::DefaultFont = nullptr;

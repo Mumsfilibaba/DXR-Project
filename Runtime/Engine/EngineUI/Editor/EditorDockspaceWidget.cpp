@@ -227,13 +227,14 @@ void FEditorDockspaceWidget::DrawMenuBar()
             PopupAnchor FileAnchor;
             EditorWidgets::EditorDrawMenuButton("File", PopupFile, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, FileAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupFile, FileAnchor, BrightPopupBg))
+            if (EditorWidgets::EditorBeginMenuPopup(PopupFile, FileAnchor))
             {
+                EditorWidgets::EditorMenuLabeledSeparator("Open");
                 EditorWidgets::EditorMenuItem("New Level", "Ctrl+N");
-                EditorWidgets::EditorMenuItem("Open", "Ctrl+O");
-                EditorWidgets::EditorMenuSeparator();
+                EditorWidgets::EditorMenuItem("Open Level", "Ctrl+O");
+                EditorWidgets::EditorMenuLabeledSeparator("Save");
                 EditorWidgets::EditorMenuItem("Save All", "Ctrl+Shift+S");
-                EditorWidgets::EditorMenuSeparator();
+                EditorWidgets::EditorMenuLabeledSeparator("Exit");
                 EditorWidgets::EditorMenuItem("Exit");
                 ImGui::EndPopup();
             }
@@ -248,8 +249,9 @@ void FEditorDockspaceWidget::DrawMenuBar()
             PopupAnchor EditAnchor;
             EditorWidgets::EditorDrawMenuButton("Edit", PopupEdit, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, EditAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupEdit, EditAnchor, BrightPopupBg))
+            if (EditorWidgets::EditorBeginMenuPopup(PopupEdit, EditAnchor))
             {
+                EditorWidgets::EditorMenuLabeledSeparator("Settings");
                 EditorWidgets::EditorMenuItem("Project Settings");
                 EditorWidgets::EditorMenuItem("Editor Preferences");
                 ImGui::EndPopup();
@@ -265,8 +267,10 @@ void FEditorDockspaceWidget::DrawMenuBar()
             PopupAnchor WindowsAnchor;
             EditorWidgets::EditorDrawMenuButton("Windows", PopupWindows, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupWindows, WindowsAnchor, BrightPopupBg))
+            if (EditorWidgets::EditorBeginMenuPopup(PopupWindows, WindowsAnchor))
             {
+                EditorWidgets::EditorMenuLabeledSeparator("Windows");
+
                 if (EditorEngine)
                 {
                     if (FEditorLogOutputWidget* LogWidget = EditorEngine->GetLogOutputWidget().Get())
@@ -348,8 +352,9 @@ void FEditorDockspaceWidget::DrawMenuBar()
             PopupAnchor HelpAnchor;
             EditorWidgets::EditorDrawMenuButton("Help", PopupHelp, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupHelp, HelpAnchor, BrightPopupBg))
+            if (EditorWidgets::EditorBeginMenuPopup(PopupHelp, HelpAnchor))
             {
+                EditorWidgets::EditorMenuLabeledSeparator("About");
                 EditorWidgets::EditorMenuItem("About");
                 ImGui::EndPopup();
             }
