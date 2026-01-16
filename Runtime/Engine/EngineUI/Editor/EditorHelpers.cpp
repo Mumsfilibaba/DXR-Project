@@ -900,106 +900,118 @@ bool EditorWidgets::EditorSearchField(const char* InId, const char* InHint, char
         return false;
     }
 
-    if (InWidth <= 0.0f)
+    ImGuiWindow* Window = ImGui::GetCurrentWindow();
+    if (!Window || Window->SkipItems)
     {
-        ImGui::SetNextItemWidth(-1.0f);
+        return false;
     }
-    else
-    {
-        ImGui::SetNextItemWidth(InWidth);
-    }
-
-    const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
-
-    const float IconGapPx  = 6.0f;
-    const float IconSizePx = 16.0f;
-    const float PaddedX    = BasePadding.x + IconSizePx + IconGapPx;
-
-    const ImVec4 SearchBg        = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
-    const ImVec4 SearchTextColor = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
-
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(PaddedX, BasePadding.y));
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
-
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, SearchBg);
-    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, SearchBg);
-    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, SearchBg);
-    ImGui::PushStyleColor(ImGuiCol_Text, SearchTextColor);
-    ImGui::PushStyleColor(ImGuiCol_TextDisabled, SearchTextColor);
-
-    bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, (size_t)InBufferSize);
-
-    const ImVec2  ItemMin = ImGui::GetItemRectMin();
-    const ImVec2  ItemMax = ImGui::GetItemRectMax();
-    const ImGuiID InputId = ImGui::GetItemID();
-
-    ImGui::SetItemAllowOverlap();
-
-    ImGui::PopStyleColor(5);
-    ImGui::PopStyleVar(2);
 
     // -------------------------------------------------------------------------------------
-    // Left-side icon (search OR clear button)
+    // Layout constants
+    // -------------------------------------------------------------------------------------
+    const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
+
+    const float IconGapPx   = 6.0f;
+    const float IconSizePx  = 16.0f;
+    const float Rounding    = EditorStyleVars::InputFieldBorderRounding;
+    const float BorderThick = EditorStyleVars::InputFieldBorderThickness;
+    const float TotalW      = (InWidth <= 0.0f) ? ImGui::GetContentRegionAvail().x : InWidth;
+    const float TotalH      = ImGui::GetFontSize() + BasePadding.y * 2.0f;
+
+    if (TotalW <= 1.0f)
+    {
+        ImGui::Dummy(ImVec2(1.0f, TotalH));
+        return false;
+    }
+
+    const ImVec2 Start     = ImGui::GetCursorScreenPos();
+    const ImVec2 End       = ImVec2(Start.x + TotalW, Start.y + TotalH);
+    const ImRect FullRect  = ImRect(Start, End);
+    const float  IconAreaW = BasePadding.x + IconSizePx + IconGapPx;
+
+    // -------------------------------------------------------------------------------------
+    // Colors
     // -------------------------------------------------------------------------------------
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-    const float  ItemH   = ItemMax.y - ItemMin.y;
-    const ImVec2 IconMin = ImVec2(ItemMin.x + BasePadding.x, ItemMin.y + (ItemH - IconSizePx) * 0.5f);
-    const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
+    const ImU32 BgColor            = IM_COL32(15, 15, 15, 255);
+    const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
+    const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
+    const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
+
+    const ImVec4 TextColor = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+    DrawList->AddRectFilled(Start, End, BgColor, Rounding);
+
+    // -------------------------------------------------------------------------------------
+    // Input
+    // -------------------------------------------------------------------------------------
+    ImGui::SetNextItemWidth(TotalW);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(IconAreaW, BasePadding.y));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
+    ImGui::PushStyleColor(ImGuiCol_TextDisabled, TextColor);
+
+    bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, (size_t)InBufferSize);
+
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(3);
+
+    const ImGuiID InputId = ImGui::GetItemID();
+
+    // -------------------------------------------------------------------------------------
+    // Icon rect
+    // -------------------------------------------------------------------------------------
+
+    const float  IconY    = Start.y + (TotalH - IconSizePx) * 0.5f;
+    const ImVec2 IconMin  = ImVec2(Start.x + BasePadding.x, IconY);
+    const ImVec2 IconMax  = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
+    const ImRect IconRect = ImRect(IconMin, IconMax);
 
     const bool bHasText = InOutBuffer[0] != '\0';
+
+    // -------------------------------------------------------------------------------------
+    // Clearing behavior
+    // -------------------------------------------------------------------------------------
+
+    bool bClearedThisFrame = false;
+
     if (bHasText && EditorIcons::CloseIcon)
     {
-        ImGui::PushID(InId);
+        const bool bIconHovered = ImGui::IsMouseHoveringRect(IconRect.Min, IconRect.Max, true);
+        const bool bIconHeld    = bIconHovered && ImGui::IsMouseDown(ImGuiMouseButton_Left);
+        const bool bIconPressed = bIconHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
 
-        const ImVec2 PrevCursor = ImGui::GetCursorScreenPos();
-
-        ImGui::SetCursorScreenPos(IconMin);
-
-        ImGui::PushItemFlag(ImGuiItemFlags_AllowOverlap, true);
-        ImGui::InvisibleButton("##SearchClearBtn", ImVec2(IconSizePx, IconSizePx));
-        ImGui::PopItemFlag();
-
-        const bool bHovered = ImGui::IsItemHovered();
-        const bool bHeld    = ImGui::IsItemActive();
-        const bool bPressed = ImGui::IsItemClicked(ImGuiMouseButton_Left);
-
-        ImGui::SetCursorScreenPos(PrevCursor);
-
-        if (bHovered)
+        if (bIconHovered)
         {
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
         }
 
-        const ImU32 Tint = bHeld ? IM_COL32(255, 255, 255, 180) : bHovered ? IM_COL32(255, 255, 255, 255) : IM_COL32(220, 220, 220, 255);
+        const ImU32 Tint = bIconHeld ? IM_COL32(255, 255, 255, 180) : bIconHovered ? IM_COL32(255, 255, 255, 255) : IM_COL32(220, 220, 220, 255);
         DrawList->AddImage(EditorIcons::CloseIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
 
-        if (bPressed)
+        if (bIconPressed)
         {
-            InOutBuffer[0] = '\0';
-            bChanged       = true;
+            InOutBuffer[0]    = '\0';
+            bClearedThisFrame = true;
+            bChanged          = true;
 
-            if (InputId != 0)
+            if (ImGuiInputTextState* State = ImGui::GetInputTextState(InputId))
             {
-                ImGuiContext& Context = *ImGui::GetCurrentContext();
-                if (Context.InputTextState.ID == InputId)
-                {
-                    Context.InputTextState.ClearText();
-                    Context.InputTextState.CursorClamp();
-                }
+                State->ClearText();
+                State->CursorClamp();
             }
 
-            ImGuiWindow* Window = ImGui::GetCurrentWindow();
-            if (Window && InputId != 0)
-            {
-                ImGui::SetActiveID(InputId, Window);
-                ImGui::SetFocusID(InputId, Window);
-                ImGui::FocusWindow(Window);
-            }
+            ImGui::SetActiveID(InputId, Window);
+            ImGui::SetFocusID(InputId, Window);
+            ImGui::FocusWindow(Window);
         }
-
-        ImGui::PopID();
     }
     else if (EditorIcons::SearchIcon)
     {
@@ -1012,25 +1024,15 @@ bool EditorWidgets::EditorSearchField(const char* InId, const char* InHint, char
 
     if (bDrawBorder)
     {
-        const bool bActive  = (InputId != 0) && (ImGui::GetActiveID() == InputId);
-        const bool bHovered = ImGui::IsMouseHoveringRect(ItemMin, ItemMax);
+        const bool bActive = ImGui::GetActiveID() == InputId;
+        const bool bHover  = ImGui::IsMouseHoveringRect(FullRect.Min, FullRect.Max, true);
 
-        const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
-        const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
-        const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
-
-        const ImU32 BorderColor = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
-
-        DrawList->AddRect(
-            ItemMin,
-            ItemMax,
-            BorderColor,
-            EditorStyleVars::InputFieldBorderRounding,
-            0,
-            EditorStyleVars::InputFieldBorderThickness);
+        const ImU32 BorderColor = bActive ? BorderColorActive : (bHover ? BorderColorHovered : BorderColorNormal);
+        DrawList->AddRect(Start, End, BorderColor, Rounding, 0, BorderThick);
     }
 
-    return bChanged;
+    ImGui::SetCursorScreenPos(ImVec2(Start.x, Start.y + TotalH));
+    return bChanged || bClearedThisFrame;
 }
 
 void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
