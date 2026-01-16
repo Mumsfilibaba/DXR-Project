@@ -240,21 +240,6 @@ static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const char* InSuffix,
     Window->DrawList->AddText(ImVec2(DesiredX, Y), InColor, InSuffix);
 }
 
-bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
-{
-    ImGuiStyle& Style = ImGui::GetStyle();
-
-    const float Size   = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
-    const float Offset = (ImGui::GetContentRegionAvail().x - Size) * Alignment;
-
-    if (Offset > 0.0f)
-    {
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Offset);
-    }
-
-    return ImGui::Button(Label);
-}
-
 bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType)
 {
     ImGuiTable* CurrentTable = ImGui::GetCurrentTable();
@@ -299,14 +284,11 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
         const float AbsoluteValue = Math::Abs(Value);
 
         int32 DecimalsToShow = 1;
-
         for (int32 DecimalIndex = 1; DecimalIndex <= 4; ++DecimalIndex)
         {
             const float ScaleFactor       = Pow10Table[DecimalIndex - 1];
             const float RoundedToDecimals = Math::Round(AbsoluteValue * ScaleFactor) / ScaleFactor;
-
-            // Tolerance to avoid float noise.
-            const float Tolerance = 1e-5f * (AbsoluteValue + 1.0f);
+            const float Tolerance         = 1e-5f * (AbsoluteValue + 1.0f);
 
             if (Math::Abs(AbsoluteValue - RoundedToDecimals) <= Tolerance)
             {
@@ -425,7 +407,6 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
         bool bAxisValueChanged = false;
 
-        // Dynamic decimals based on current value (1..4)
         char FormatBuffer[8];
         const char* FormatString = GetDynamicFormatString(InOutAxisValue, FormatBuffer);
 
@@ -450,7 +431,6 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
         const bool bIsTempInputActive = ImGui::TempInputIsActive(LastItemId);
         if (!bIsTempInputActive)
         {
-            // Recompute format after potential snapping.
             char FormatBufferAfter[8];
             const char* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
 
@@ -582,7 +562,6 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
     bool bResult = false;
     bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
-    // Label
     ImGui::TableSetColumnIndex(0);
     
     const float LabelIndentPx = 24.0f;
@@ -591,7 +570,6 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(Label);
 
-    // Value
     ImGui::TableSetColumnIndex(1);
     ImGui::PushID(Label);
 
@@ -722,6 +700,78 @@ bool EditorWidgets::DrawCheckboxProperty(const char* Label, bool& InOutValue, co
     return bEnabled && bResult;
 }
 
+void EditorWidgets::DrawTextProperty(const char* Label, const char* ValueText)
+{
+    ImGuiTable* Table = ImGui::GetCurrentTable();
+    if (!Table)
+    {
+        ImGui::Text("%s: %s", Label, ValueText ? ValueText : "");
+        return;
+    }
+
+    const float RowHeight = ImGui::GetFrameHeight();
+    ImGui::TableNextRow();
+
+    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+    ImGui::TableSetColumnIndex(0);
+
+    {
+        const float LabelIndentPx = 24.0f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(Label);
+    }
+
+    ImGui::TableSetColumnIndex(1);
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(ValueText ? ValueText : "");
+    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+    ImGui::TableSetColumnIndex(2);
+
+    ApplyHoveredRowBg(bRowHovered);
+}
+
+void EditorWidgets::DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value)
+{
+    ImGuiTable* Table = ImGui::GetCurrentTable();
+    if (!Table)
+    {
+        ImGui::Text("%s: %.3f %.3f %.3f", Label, Value.X, Value.Y, Value.Z);
+        return;
+    }
+
+    const float RowHeight = ImGui::GetFrameHeight();
+    ImGui::TableNextRow();
+
+    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+    ImGui::TableSetColumnIndex(0);
+    {
+        const float LabelIndentPx = 24.0f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(Label);
+    }
+
+    ImGui::TableSetColumnIndex(1);
+
+    float Temp[3] = { Value.X, Value.Y, Value.Z };
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    ImGui::InputFloat3("##Value", Temp, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+    ImGuiStyle& Style = ImGui::GetStyle();
+    DrawInputBorderLastItem(Style.FrameRounding);
+
+    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+
+    ImGui::TableSetColumnIndex(2);
+
+    ApplyHoveredRowBg(bRowHovered);
+}
+
 bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
@@ -738,7 +788,6 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
 
     ImGui::TableSetColumnIndex(0);
     {
-        // Optional indent (keep/remove depending on your current style)
         const float LabelIndentPx = 24.0f;
         ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
 
@@ -844,88 +893,80 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
     return bEnabled && bResult;
 }
 
-void EditorWidgets::DrawTextProperty(const char* Label, const char* ValueText)
+bool EditorWidgets::EditorSearchField(const char* InId, const char* InHint, char* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
 {
-    ImGuiTable* Table = ImGui::GetCurrentTable();
-    if (!Table)
+    if (!InId || !InHint || !InOutBuffer || InBufferSize <= 0)
     {
-        ImGui::Text("%s: %s", Label, ValueText ? ValueText : "");
-        return;
+        return false;
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow();
-
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
-
-    ImGui::TableSetColumnIndex(0);
-
+    if (InWidth <= 0.0f)
     {
-        const float LabelIndentPx = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(Label);
+        ImGui::SetNextItemWidth(-1.0f);
+    }
+    else
+    {
+        ImGui::SetNextItemWidth(InWidth);
     }
 
-    ImGui::TableSetColumnIndex(1);
-    
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(ValueText ? ValueText : "");
-    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
 
-    ImGui::TableSetColumnIndex(2);
+    const float IconGapPx  = 6.0f;
+    const float IconSizePx = 16.0f;
+    const float PaddedX    = BasePadding.x + IconSizePx + IconGapPx;
 
-    ApplyHoveredRowBg(bRowHovered);
-}
+    const ImVec4 SearchBg        = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+    const ImVec4 SearchTextColor = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
 
-void EditorWidgets::DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value)
-{
-    ImGuiTable* Table = ImGui::GetCurrentTable();
-    if (!Table)
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(PaddedX, BasePadding.y));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
+
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, SearchBg);
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, SearchBg);
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, SearchBg);
+    ImGui::PushStyleColor(ImGuiCol_Text, SearchTextColor);
+    ImGui::PushStyleColor(ImGuiCol_TextDisabled, SearchTextColor);
+
+    const bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, (size_t)InBufferSize);
+
+    if (EditorIcons::SearchIcon)
     {
-        ImGui::Text("%s: %.3f %.3f %.3f", Label, Value.X, Value.Y, Value.Z);
-        return;
+        const ImVec2 ItemMin = ImGui::GetItemRectMin();
+        const ImVec2 ItemMax = ImGui::GetItemRectMax();
+        const float  ItemH   = ItemMax.y - ItemMin.y;
+        const ImVec2 IconMin = ImVec2(ItemMin.x + BasePadding.x, ItemMin.y + (ItemH - IconSizePx) * 0.5f);
+        const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
+
+        ImGui::GetWindowDrawList()->AddImage(EditorIcons::SearchIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), IM_COL32(255, 255, 255, 255));
     }
 
-    const float RowHeight = ImGui::GetFrameHeight();
-    ImGui::TableNextRow();
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(2);
 
-    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
-
-    ImGui::TableSetColumnIndex(0);
+    if (bDrawBorder)
     {
-        const float LabelIndentPx = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(Label);
+        const ImVec2 ItemMin = ImGui::GetItemRectMin();
+        const ImVec2 ItemMax = ImGui::GetItemRectMax();
+
+        const bool bActive  = ImGui::IsItemActive();
+        const bool bHovered = ImGui::IsItemHovered();
+
+        const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
+        const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
+        const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
+
+        const ImU32 BorderColor = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
+
+        ImGui::GetWindowDrawList()->AddRect(
+            ItemMin,
+            ItemMax,
+            BorderColor,
+            EditorStyleVars::InputFieldBorderRounding,
+            0,
+            EditorStyleVars::InputFieldBorderThickness);
     }
 
-    ImGui::TableSetColumnIndex(1);
-
-    float Temp[3] = { Value.X, Value.Y, Value.Z };
-    ImGui::SetNextItemWidth(-FLT_MIN);
-    ImGui::InputFloat3("##Value", Temp, "%.3f", ImGuiInputTextFlags_ReadOnly);
-
-    ImGuiStyle& Style = ImGui::GetStyle();
-    DrawInputBorderLastItem(Style.FrameRounding);
-
-    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-
-    ImGui::TableSetColumnIndex(2);
-
-    ApplyHoveredRowBg(bRowHovered);
-}
-
-void EditorWidgets::EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize)
-{
-    const float Thickness = ImMax(1.0f, CheckMarkSize / 6.0f);
-
-    const ImVec2 PointA = ImVec2(Position.x + CheckMarkSize * 0.15f, Position.y + CheckMarkSize * 0.55f);
-    const ImVec2 PointB = ImVec2(Position.x + CheckMarkSize * 0.40f, Position.y + CheckMarkSize * 0.80f);
-    const ImVec2 PointC = ImVec2(Position.x + CheckMarkSize * 0.85f, Position.y + CheckMarkSize * 0.20f);
-
-    DrawList->AddLine(PointA, PointB, Color, Thickness);
-    DrawList->AddLine(PointB, PointC, Color, Thickness);
+    return bChanged;
 }
 
 void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
@@ -1321,7 +1362,7 @@ void EditorWidgets::EditorResetMenuPopup()
 bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWidth, float RevertColumnWidth)
 {
     // -----------------------------------------------------------------------------------------
-    // colors
+    // Colors
     // -----------------------------------------------------------------------------------------
     const ImVec4 RowBg       = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
     const ImVec4 TableBorder = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
@@ -1418,6 +1459,18 @@ void EditorWidgets::EndPropertyTable()
     ImGui::PopStyleVar();
 }
 
+void EditorWidgets::PropertyRowLabel(const char* Label)
+{
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(Label);
+
+    ImGui::TableSetColumnIndex(1);
+    ImGui::SetNextItemWidth(-FLT_MIN); // Fill available width
+}
+
 void EditorWidgets::PropertySeparatorRow(float PaddingY)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
@@ -1437,16 +1490,31 @@ void EditorWidgets::PropertySeparatorRow(float PaddingY)
     }
 }
 
-void EditorWidgets::PropertyRowLabel(const char* Label)
+bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
+    ImGuiStyle& Style = ImGui::GetStyle();
 
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(Label);
+    const float Size = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
+    const float Offset = (ImGui::GetContentRegionAvail().x - Size) * Alignment;
 
-    ImGui::TableSetColumnIndex(1);
-    ImGui::SetNextItemWidth(-FLT_MIN); // Fill available width
+    if (Offset > 0.0f)
+    {
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + Offset);
+    }
+
+    return ImGui::Button(Label);
+}
+
+void EditorWidgets::EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize)
+{
+    const float Thickness = ImMax(1.0f, CheckMarkSize / 6.0f);
+
+    const ImVec2 PointA = ImVec2(Position.x + CheckMarkSize * 0.15f, Position.y + CheckMarkSize * 0.55f);
+    const ImVec2 PointB = ImVec2(Position.x + CheckMarkSize * 0.40f, Position.y + CheckMarkSize * 0.80f);
+    const ImVec2 PointC = ImVec2(Position.x + CheckMarkSize * 0.85f, Position.y + CheckMarkSize * 0.20f);
+
+    DrawList->AddLine(PointA, PointB, Color, Thickness);
+    DrawList->AddLine(PointB, PointC, Color, Thickness);
 }
 
 struct EditorIcon

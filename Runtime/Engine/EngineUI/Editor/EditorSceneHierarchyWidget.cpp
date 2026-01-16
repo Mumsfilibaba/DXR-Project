@@ -291,63 +291,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     // Search Field
     // -----------------------------------------------------------------------------------------
 
-    ImGui::SetNextItemWidth(-1.0f);
-
-    {
-        const ImGuiStyle& Style = ImGui::GetStyle();
-
-        const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
-        const float  FrameHeight = ImGui::GetFontSize() + BasePadding.y * 2.0f;
-        const float  IconGapPx   = 6.0f;
-        const float  IconSizePx  = 16.0f;
-        const float  PaddedX     = BasePadding.x + IconSizePx + IconGapPx;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(PaddedX, BasePadding.y));
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
-
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, SearchBg);
-        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, SearchBg);
-        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, SearchBg);
-        ImGui::PushStyleColor(ImGuiCol_Text, SearchTextColor);
-        ImGui::PushStyleColor(ImGuiCol_TextDisabled, SearchTextColor);
-
-        ImGui::InputTextWithHint("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
-
-        if (EditorIcons::SearchIcon)
-        {
-            const ImVec2 ItemMin = ImGui::GetItemRectMin();
-            const ImVec2 ItemMax = ImGui::GetItemRectMax();
-            const float  ItemH   = ItemMax.y - ItemMin.y;
-            const ImVec2 IconMin = ImVec2(ItemMin.x + BasePadding.x, ItemMin.y + (ItemH - IconSizePx) * 0.5f);
-            const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
-            const ImU32  Tint    = IM_COL32(255, 255, 255, 255);
-
-            ImDrawList* DrawList = ImGui::GetWindowDrawList();
-            DrawList->AddImage(EditorIcons::SearchIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
-        }
-
-        ImGui::PopStyleColor(5);
-        ImGui::PopStyleVar(2);
-
-        {
-            const ImVec2 ItemMin = ImGui::GetItemRectMin();
-            const ImVec2 ItemMax = ImGui::GetItemRectMax();
-
-            const bool bActive  = ImGui::IsItemActive();
-            const bool bHovered = ImGui::IsItemHovered();
-
-            const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
-
-            ImDrawList* DrawList = ImGui::GetWindowDrawList();
-            DrawList->AddRect(
-                ItemMin,
-                ItemMax,
-                BorderColor,
-                EditorStyleVars::InputFieldBorderRounding,
-                0,
-                EditorStyleVars::InputFieldBorderThickness);
-        }
-    }
+    EditorWidgets::EditorSearchField("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
 
     // -----------------------------------------------------------------------------------------
     // Actor Table

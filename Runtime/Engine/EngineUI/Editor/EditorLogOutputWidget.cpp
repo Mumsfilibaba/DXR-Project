@@ -64,7 +64,6 @@ void FEditorLogOutputWidget::Log(ELogSeverity Severity, const FString& Message)
         bScrollToBottom = true;
     }
 }
-
 void FEditorLogOutputWidget::DrawFilterBar()
 {
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -77,69 +76,11 @@ void FEditorLogOutputWidget::DrawFilterBar()
     const ImVec2 FilterButtonTextSize = ImGui::CalcTextSize(FilterButtonLabel);
     const float  FilterButtonWidth    = FilterButtonTextSize.x + Style.FramePadding.x * 2.0f;
 
-    // Add some spacing before the input field
     ImGui::Dummy(ImVec2(1.0f, 0.0f));
     ImGui::SameLine();
 
     const float InputFieldWidth = 512.0f;
-    ImGui::SetNextItemWidth(InputFieldWidth);
-
-    {
-        const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
-        const float  FrameHeight = ImGui::GetFontSize() + BasePadding.y * 2.0f;
-        const float  IconGapPx   = 6.0f;
-        const float  IconSizePx  = 16.0f;
-        const float  PaddedX     = BasePadding.x + IconSizePx + IconGapPx;
-
-        // Reserve room for the icon by increasing left padding.
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(PaddedX, BasePadding.y));
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
-
-        ImGui::InputTextWithHint("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size());
-
-        // Draw search icon inside the input, before the hint/text.
-        if (EditorIcons::SearchIcon)
-        {
-            const ImVec2 ItemMin = ImGui::GetItemRectMin();
-            const ImVec2 ItemMax = ImGui::GetItemRectMax();
-            const float  ItemH   = ItemMax.y - ItemMin.y;
-            const ImVec2 IconMin = ImVec2(ItemMin.x + BasePadding.x, ItemMin.y + (ItemH - IconSizePx) * 0.5f);
-            const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
-            const ImU32  Tint    = IM_COL32(255, 255, 255, 255);
-
-            ImDrawList* DrawList = ImGui::GetWindowDrawList();
-            DrawList->AddImage(EditorIcons::SearchIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
-        }
-
-        ImGui::PopStyleVar(2);
-    }
-
-    // Cache input rect in absolute screen coords, this is later used to draw the candidate window
-    const ImVec2 ItemMin = ImGui::GetItemRectMin();
-    const ImVec2 ItemMax = ImGui::GetItemRectMax();
-
-    // Always draw a border around the search bar with state colors:
-    // Normal:  RGB(51,51,51)
-    // Hovered: RGB(74,74,74)
-    // Active:  RGB(9,92,176)
-    {
-        const bool bActive  = ImGui::IsItemActive();
-        const bool bHovered = ImGui::IsItemHovered();
-
-        const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
-        const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
-        const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
-        const ImU32 BorderColor        = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
-
-        ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRect(
-            ItemMin,
-            ItemMax,
-            BorderColor,
-            EditorStyleVars::InputFieldBorderRounding,
-            0,
-            EditorStyleVars::InputFieldBorderThickness);
-    }
+    EditorWidgets::EditorSearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), InputFieldWidth, true);
 
     // -------------------------------------------------------------------------------------------
     // Filters Button

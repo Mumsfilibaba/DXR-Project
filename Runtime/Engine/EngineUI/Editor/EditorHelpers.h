@@ -13,7 +13,7 @@ struct PopupAnchor
 
 struct EditorStyleVars
 {
-    static float MainMenuBarHeight;
+    static float  MainMenuBarHeight;
 
     static ImVec2 InputFieldFramePadding;
     static float  InputFieldBorderThickness;
@@ -40,6 +40,7 @@ struct ENGINE_API EditorHelpers
         BrighterColor.y = (BrighterColor.y + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.y + BrightenAmount);
         BrighterColor.z = (BrighterColor.z + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.z + BrightenAmount);
         BrighterColor.w = 1.0f;
+
         return ImGui::GetColorU32(BrighterColor);
     }
 };
@@ -54,13 +55,16 @@ enum class EVector3ControlType : uint8
 
 struct ENGINE_API EditorWidgets
 {
-    static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
+    // -----------------------------------------------------------------------------------------
+    // Menu
+    // -----------------------------------------------------------------------------------------
 
     static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType);
     static bool DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
     static bool DrawCheckboxProperty(const char* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
     static void DrawTextProperty(const char* Label, const char* ValueText);
     static void DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value);
+
     static bool DrawColor3Property(const char* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
  
     static FORCEINLINE bool DrawColor3Property(const char* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
@@ -83,7 +87,14 @@ struct ENGINE_API EditorWidgets
         return ImGui::ColorEdit3(Label, OutColor.RGBA, Flags);
     }
 
-    static void EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
+    // -----------------------------------------------------------------------------------------
+    // Search
+    // -----------------------------------------------------------------------------------------
+    static bool EditorSearchField(const char* InId, const char* InHint, char* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+
+    // -----------------------------------------------------------------------------------------
+    // Menu
+    // -----------------------------------------------------------------------------------------
     static void EditorMenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void EditorMenuLabeledSeparator(const char* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool EditorMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
@@ -91,10 +102,19 @@ struct ENGINE_API EditorWidgets
     static bool EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
     static void EditorResetMenuPopup();
 
+    // -----------------------------------------------------------------------------------------
+    // Property Table
+    // -----------------------------------------------------------------------------------------
     static bool BeginPropertyTable(const char* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
     static void EndPropertyTable();
     static void PropertyRowLabel(const char* Label);
     static void PropertySeparatorRow(float PaddingY = 4.0f);
+
+    // -----------------------------------------------------------------------------------------
+    // Other
+    // -----------------------------------------------------------------------------------------
+    static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
+    static void EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
 };
 
 struct FImGuiTexture;

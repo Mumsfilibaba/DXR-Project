@@ -224,63 +224,7 @@ void FEditorContentBrowserWidget::CenteredMessage(const char* InText, const ImVe
 
 void FEditorContentBrowserWidget::DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer)
 {
-    const ImVec4 SearchTextColor = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
-
-    ImGui::SetNextItemWidth(-1.0f);
-
-    const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
-    const float  IconGapPx   = 6.0f;
-    const float  IconSizePx  = 16.0f;
-    const float  PaddedX     = BasePadding.x + IconSizePx + IconGapPx;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(PaddedX, BasePadding.y));
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
-
-    const ImVec4 SearchBg = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
-
-    ImGui::PushStyleColor(ImGuiCol_FrameBg, SearchBg);
-    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, SearchBg);
-    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, SearchBg);
-    ImGui::PushStyleColor(ImGuiCol_Text, SearchTextColor);
-    ImGui::PushStyleColor(ImGuiCol_TextDisabled, SearchTextColor);
-
-    ImGui::InputTextWithHint(InId, InHint, InOutBuffer.Data(), InOutBuffer.Size());
-
-    if (EditorIcons::SearchIcon)
-    {
-        const ImVec2 ItemMin = ImGui::GetItemRectMin();
-        const ImVec2 ItemMax = ImGui::GetItemRectMax();
-        const float  ItemH   = ItemMax.y - ItemMin.y;
-        const ImVec2 IconMin = ImVec2(ItemMin.x + BasePadding.x, ItemMin.y + (ItemH - IconSizePx) * 0.5f);
-        const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
-
-        ImGui::GetWindowDrawList()->AddImage(EditorIcons::SearchIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), IM_COL32(255, 255, 255, 255));
-    }
-
-    ImGui::PopStyleColor(5);
-    ImGui::PopStyleVar(2);
-
-    {
-        const ImU32 BorderNormal  = IM_COL32(51, 51, 51, 255);
-        const ImU32 BorderHovered = IM_COL32(74, 74, 74, 255);
-        const ImU32 BorderActive  = IM_COL32(9, 92, 176, 255);
-
-        const ImVec2 ItemMin = ImGui::GetItemRectMin();
-        const ImVec2 ItemMax = ImGui::GetItemRectMax();
-
-        const bool bActive  = ImGui::IsItemActive();
-        const bool bHovered = ImGui::IsItemHovered();
-
-        const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
-
-        ImGui::GetWindowDrawList()->AddRect(
-            ItemMin,
-            ItemMax,
-            BorderColor,
-            EditorStyleVars::InputFieldBorderRounding,
-            0,
-            EditorStyleVars::InputFieldBorderThickness);
-    }
+    EditorWidgets::EditorSearchField(InId, InHint, InOutBuffer.Data(), InOutBuffer.Size(), -1.0f, true);
 }
 
 void FEditorContentBrowserWidget::DrawFolderPanel()
