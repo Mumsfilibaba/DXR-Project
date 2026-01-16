@@ -211,12 +211,9 @@ bool FEditorContentBrowserWidget::IsPathPrefixOfSelected(const TArray<int32>& In
 void FEditorContentBrowserWidget::CenteredMessage(const char* InText, const ImVec4& InMutedTextColor)
 {
     const ImVec2 Avail = ImGui::GetContentRegionAvail();
-    const ImVec2 Size = ImGui::CalcTextSize(InText);
+    const ImVec2 Size  = ImGui::CalcTextSize(InText);
 
-    ImGui::SetCursorPos(ImVec2(
-        Math::Max(0.0f, (Avail.x - Size.x) * 0.5f),
-        Math::Max(0.0f, (Avail.y - Size.y) * 0.5f)));
-
+    ImGui::SetCursorPos(ImVec2(Math::Max(0.0f, (Avail.x - Size.x) * 0.5f), Math::Max(0.0f, (Avail.y - Size.y) * 0.5f)));
     ImGui::PushStyleColor(ImGuiCol_Text, InMutedTextColor);
     ImGui::TextUnformatted(InText);
     ImGui::PopStyleColor();
@@ -347,16 +344,17 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
                 return false;
             }
         }
+
         return true;
     };
 
     const bool bSelected       = IsSelectedFolderPath(InPath);
     const bool bInSelectedPath = (!bSelected && IsPathPrefixOfSelected(InPath));
+    const bool bWindowFocused  = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
-    const bool bWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
     const ImU32 SelectedColor = (bWindowFocused && bSelectionActiveInBrowser) ? InFolderActiveColor : InFolderInactiveColor;
 
-    ImGui::PushID((void*)&InFolder);
+    ImGui::PushID(reinterpret_cast<void*>(&InFolder));
 
     const bool bHasChildFolders = HasChildFolders(InFolder);
     const ImGuiID OpenId = ImGui::GetID("##CB_Open");
@@ -386,6 +384,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
     }
 
     const float RowHeightPx = 20.0f;
+
     const ImGuiSelectableFlags SelFlags =
         ImGuiSelectableFlags_SpanAllColumns |
         ImGuiSelectableFlags_AllowItemOverlap;
@@ -395,8 +394,8 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
     if (bRowPressed)
     {
-        SelectedFolderPath = InPath;
-        SelectedItemIndex = -1;
+        SelectedFolderPath        = InPath;
+        SelectedItemIndex         = -1;
         bSelectionActiveInBrowser = true;
     }
 
@@ -442,7 +441,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
     if (bHasChildFolders)
     {
         const float  ArrowSizePx = FontSize;
-        const ImRect ArrowRect = ImRect(ImVec2(ArrowPos.x, RowMin.y), ImVec2(ArrowPos.x + ArrowSizePx + ArrowGapPx, RowMax.y));
+        const ImRect ArrowRect   = ImRect(ImVec2(ArrowPos.x, RowMin.y), ImVec2(ArrowPos.x + ArrowSizePx + ArrowGapPx, RowMax.y));
 
         if (!bFolderSearchActive && bRowHovered && ImGui::IsMouseClicked(0))
         {
@@ -475,6 +474,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         const float  IconY   = RowMin.y + (H - IconSizePx) * 0.5f;
         const ImVec2 IconMin = ImVec2(X, IconY);
         const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
+
         DrawList->AddImage(FolderIcon, IconMin, IconMax);
         X = IconMax.x + IconGapPx;
     }
@@ -553,13 +553,12 @@ void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InP
 
 void FEditorContentBrowserWidget::DrawContentPanel()
 {
-    const ImVec4 RightBg        = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
-    const ImVec4 NameTextColor  = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
-    const ImVec4 MutedTextColor = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
-
-    const ImU32 TileSelectedColor = IM_COL32(0, 112, 224, 255);
-    const ImU32 TileHoverColor    = IM_COL32(47, 47, 47, 255);
-    const ImU32 TileIdleColor     = IM_COL32(31, 31, 31, 255);
+    const ImVec4 RightBg           = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    const ImVec4 NameTextColor     = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+    const ImVec4 MutedTextColor    = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
+    const ImU32  TileSelectedColor = IM_COL32(0, 112, 224, 255);
+    const ImU32  TileHoverColor    = IM_COL32(47, 47, 47, 255);
+    const ImU32  TileIdleColor     = IM_COL32(31, 31, 31, 255);
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, RightBg);
 
