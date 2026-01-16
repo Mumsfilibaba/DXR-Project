@@ -1159,7 +1159,7 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
     // -----------------------------------------------------------------------------------------
     if (bDrawCheckMark)
     {
-        if (EditorIcons::Checkmark)
+        if (EditorIcons::CheckmarkIcon)
         {
             const ImVec2 IconMin = CheckPos;
             const ImVec2 IconMax = ImVec2(CheckPos.x + CheckSize, CheckPos.y + CheckSize);
@@ -1167,7 +1167,7 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
             // Tint to match menu text color (works well for monochrome icons)
             const ImU32 Tint = ImGui::GetColorU32(ImGuiCol_Text);
 
-            DrawList->AddImage(EditorIcons::Checkmark, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+            DrawList->AddImage(EditorIcons::CheckmarkIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
         }
         else
         {
@@ -1472,7 +1472,10 @@ struct EditorIconsInternal
     inline static EditorIcon FolderOpenSmallIcon = EditorIcon();
     inline static EditorIcon DocumentIcon        = EditorIcon();
     inline static EditorIcon DocumentSmallIcon   = EditorIcon();
-    inline static EditorIcon Checkmark           = EditorIcon();
+    inline static EditorIcon CheckmarkIcon       = EditorIcon();
+    inline static EditorIcon NextIcon            = EditorIcon();
+    inline static EditorIcon PreviousIcon        = EditorIcon();
+    inline static EditorIcon CloseIcon           = EditorIcon();
 };
 
 ImTextureID EditorIcons::UndoIcon            = nullptr;
@@ -1484,7 +1487,10 @@ ImTextureID EditorIcons::FolderSmallIcon     = nullptr;
 ImTextureID EditorIcons::FolderOpenSmallIcon = nullptr;
 ImTextureID EditorIcons::DocumentIcon        = nullptr;
 ImTextureID EditorIcons::DocumentSmallIcon   = nullptr;
-ImTextureID EditorIcons::Checkmark           = nullptr;
+ImTextureID EditorIcons::CheckmarkIcon       = nullptr;
+ImTextureID EditorIcons::NextIcon            = nullptr;
+ImTextureID EditorIcons::PreviousIcon        = nullptr;
+ImTextureID EditorIcons::CloseIcon           = nullptr;
 
 static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1563,7 +1569,10 @@ bool EditorIcons::Initialize()
     bResult &= LoadEditorIcon("Editor/Icons/FolderOpenSmall.png", FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Document.png", DocumentIcon, EditorIconsInternal::DocumentIcon);
     bResult &= LoadEditorIcon("Editor/Icons/DocumentSmall.png", DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
-    bResult &= LoadEditorIcon("Editor/Icons/Checkmark.png", Checkmark, EditorIconsInternal::Checkmark);
+    bResult &= LoadEditorIcon("Editor/Icons/Checkmark.png", CheckmarkIcon, EditorIconsInternal::CheckmarkIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/Next.png", NextIcon, EditorIconsInternal::NextIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/Previous.png", PreviousIcon, EditorIconsInternal::PreviousIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/Close.png", CloseIcon, EditorIconsInternal::CloseIcon);
 
     return bResult;
 }
@@ -1579,7 +1588,10 @@ void EditorIcons::Release()
     UnloadEditorIcon(FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
     UnloadEditorIcon(DocumentIcon, EditorIconsInternal::DocumentIcon);
     UnloadEditorIcon(DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
-    UnloadEditorIcon(Checkmark, EditorIconsInternal::Checkmark);
+    UnloadEditorIcon(CheckmarkIcon, EditorIconsInternal::CheckmarkIcon);
+    UnloadEditorIcon(NextIcon, EditorIconsInternal::NextIcon);
+    UnloadEditorIcon(PreviousIcon, EditorIconsInternal::PreviousIcon);
+    UnloadEditorIcon(CloseIcon, EditorIconsInternal::CloseIcon);
 }
 
 ImFont* EditorFonts::DefaultFont = nullptr;
