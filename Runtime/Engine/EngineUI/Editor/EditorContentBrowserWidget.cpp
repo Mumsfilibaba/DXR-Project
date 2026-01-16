@@ -235,7 +235,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
     const ImU32 FolderActiveColor   = IM_COL32(0, 112, 224, 255);
     const ImU32 FolderInactiveColor = IM_COL32(64, 87, 111, 255);
     const ImU32 FolderHoverColor    = IM_COL32(56, 56, 56, 255);
-    const ImU32 FolderPathColor     = IM_COL32(43, 43, 43, 255);
+    const ImU32 FolderPathColor     = IM_COL32(44, 50, 58, 255);
 
     const bool bFolderSearchActive = (GetTrimmedQuery(FolderSearchBuffer) && *GetTrimmedQuery(FolderSearchBuffer) != 0);
 
@@ -243,11 +243,18 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
     if (ImGui::BeginChild("##CB_Folders", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar))
     {
-        // Anchored search
         DrawSearchField("##CB_FolderSearch", "Search Paths", FolderSearchBuffer);
+
         ImGui::Dummy(ImVec2(0.0f, 6.0f));
 
-        // Scrollable folder tree
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, PanelBg);
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, IM_COL32(87, 87, 87, 255));
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, IM_COL32(127, 127, 127, 255));
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, IM_COL32(127, 127, 127, 255));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 12.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 16.0f);
+
         if (ImGui::BeginChild("##CB_FoldersScroll", ImVec2(0, 0), false, 0))
         {
             if (RootFolders.Size() > 0)
@@ -281,6 +288,9 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
         }
 
         ImGui::EndChild(); // ##CB_FoldersScroll
+
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(4);
     }
 
     ImGui::EndChild();
@@ -558,6 +568,14 @@ void FEditorContentBrowserWidget::DrawContentPanel()
         DrawSearchField("##CB_AssetSearch", "Search Assets", AssetSearchBuffer);
         ImGui::Dummy(ImVec2(0.0f, 6.0f));
 
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, RightBg);
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, IM_COL32(87, 87, 87, 255));
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, IM_COL32(127, 127, 127, 255));
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, IM_COL32(127, 127, 127, 255));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 12.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 16.0f);
+
         if (ImGui::BeginChild("##CB_GridScroll", ImVec2(0, 0), false, 0))
         {
             FileInfo* CurrentFolder    = GetFolderFromPath(SelectedFolderPath);
@@ -768,6 +786,9 @@ void FEditorContentBrowserWidget::DrawContentPanel()
         }
 
         ImGui::EndChild(); // ##CB_GridScroll
+
+        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(4);
     }
 
     ImGui::EndChild();
