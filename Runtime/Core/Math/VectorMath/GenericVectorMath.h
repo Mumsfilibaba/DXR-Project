@@ -19,10 +19,26 @@ struct FFloat128
 
 struct FGenericVectorMath
 {
+    // ---------------------------------------------------------------------------------------------
+    // Load / Store
+    // ---------------------------------------------------------------------------------------------
+
     static FORCEINLINE FFloat128 VECTORCALL VectorLoad(const float* Source) noexcept
     {
         return FFloat128();
     }
+
+    static FORCEINLINE void VECTORCALL VectorStore(FFloat128 Vector, float* Dest) noexcept
+    {
+    }
+
+    static FORCEINLINE void VECTORCALL VectorStore3(FFloat128 Vector, float* Dest) noexcept
+    {
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Construction
+    // ---------------------------------------------------------------------------------------------
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSet(float x, float y, float z, float w) noexcept
     {
@@ -49,9 +65,9 @@ struct FGenericVectorMath
         return FFloat128();
     }
 
-    static FORCEINLINE void VECTORCALL VectorStore(FFloat128 Vector, float* Dest) noexcept { }
-
-    static FORCEINLINE void VECTORCALL VectorStore3(FFloat128 Vector, float* Dest) noexcept { }
+    // ---------------------------------------------------------------------------------------------
+    // Shuffle / Broadcast
+    // ---------------------------------------------------------------------------------------------
 
     template<uint8 ComponentIndexX, uint8 ComponentIndexY, uint8 ComponentIndexZ, uint8 ComponentIndexW>
     static FORCEINLINE FFloat128 VECTORCALL VectorShuffle(FFloat128 VectorA) noexcept
@@ -77,6 +93,10 @@ struct FGenericVectorMath
         return FFloat128();
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Component extract
+    // ---------------------------------------------------------------------------------------------
+
     static FORCEINLINE float VECTORCALL VectorGetX(FFloat128 Vector) noexcept
     {
         return 0.0f;
@@ -96,6 +116,10 @@ struct FGenericVectorMath
     {
         return 0.0f;
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Arithmetic
+    // ---------------------------------------------------------------------------------------------
 
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
@@ -117,6 +141,10 @@ struct FGenericVectorMath
         return FFloat128();
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Horizontal ops
+    // ---------------------------------------------------------------------------------------------
+
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         return FFloat128();
@@ -126,6 +154,10 @@ struct FGenericVectorMath
     {
         return FFloat128();
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Reciprocal / sqrt
+    // ---------------------------------------------------------------------------------------------
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSqrt(FFloat128 Vector) noexcept
     {
@@ -142,6 +174,10 @@ struct FGenericVectorMath
         return FFloat128();
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Bitwise float ops (masks/signs/branchless)
+    // ---------------------------------------------------------------------------------------------
+
     static FORCEINLINE FFloat128 VECTORCALL VectorAnd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         return FFloat128();
@@ -151,6 +187,93 @@ struct FGenericVectorMath
     {
         return FFloat128();
     }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorXor(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorAndNot(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorSelect(FFloat128 Mask, FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorSignMask() noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorNegate(FFloat128 Vector) noexcept
+    {
+        return FFloat128();
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Compare masks (expected return format: all-bits set for true lanes, 0 for false lanes)
+    // ---------------------------------------------------------------------------------------------
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorCompareEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorCompareNotEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorCompareGreaterThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorCompareGreaterThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorCompareLessThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorCompareLessThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        return FFloat128();
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Special compare masks (NaN / Inf / NearEqual)
+    // ---------------------------------------------------------------------------------------------
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorIsNaNMask(FFloat128 Vector) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorIsInfMask(FFloat128 Vector) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorNearEqualMask(FFloat128 VectorA, FFloat128 VectorB, FFloat128 Epsilon) noexcept
+    {
+        return FFloat128();
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorNearEqualMask(FFloat128 VectorA, FFloat128 VectorB, float Epsilon) noexcept
+    {
+        return FFloat128();
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Dot + reductions (bool checks)
+    // ---------------------------------------------------------------------------------------------
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDot(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
@@ -182,6 +305,10 @@ struct FGenericVectorMath
         return 0.0f;
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Min / Max
+    // ---------------------------------------------------------------------------------------------
+
     static FORCEINLINE FFloat128 VECTORCALL VectorMin(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         return FFloat128();
@@ -191,6 +318,10 @@ struct FGenericVectorMath
     {
         return FFloat128();
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Integer vector ops (stubs)
+    // ---------------------------------------------------------------------------------------------
 
     static FORCEINLINE FInt128 VECTORCALL VectorLoadInt(const int32* Source) noexcept
     {

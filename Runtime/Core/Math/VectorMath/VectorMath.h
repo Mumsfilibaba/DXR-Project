@@ -5,6 +5,10 @@
     #define VECTOR_ALIGN ALIGN_AS(16)
 #endif
 
+// ---------------------------------------------------------------------------------------------
+// Platform selection
+// ---------------------------------------------------------------------------------------------
+
 #if PLATFORM_ARCHITECTURE_X86_64 && PLATFORM_SUPPORT_SSE_INTRIN
     #define USE_VECTOR_MATH (1)
 
@@ -42,11 +46,48 @@
 
 struct FVectorMath : public FPlatformVectorMath
 {
+    // ---------------------------------------------------------------------------------------------
+    // Base ops exposed from platform implementation
+    // ---------------------------------------------------------------------------------------------
+
     using FPlatformVectorMath::VectorMul;
     using FPlatformVectorMath::VectorDiv;
     using FPlatformVectorMath::VectorAdd;
     using FPlatformVectorMath::VectorSub;
     using FPlatformVectorMath::VectorHorizontalAdd;
+
+    // ---------------------------------------------------------------------------------------------
+    // Bitwise float ops (masks/signs/branchless)
+    // ---------------------------------------------------------------------------------------------
+
+    using FPlatformVectorMath::VectorXor;
+    using FPlatformVectorMath::VectorAndNot;
+    using FPlatformVectorMath::VectorSelect;
+    using FPlatformVectorMath::VectorSignMask;
+    using FPlatformVectorMath::VectorNegate;
+
+    // ---------------------------------------------------------------------------------------------
+    // Compare masks (expected return format: all-bits set for true lanes, 0 for false lanes)
+    // ---------------------------------------------------------------------------------------------
+
+    using FPlatformVectorMath::VectorCompareEqual;
+    using FPlatformVectorMath::VectorCompareNotEqual;
+    using FPlatformVectorMath::VectorCompareGreaterThan;
+    using FPlatformVectorMath::VectorCompareGreaterThanOrEqual;
+    using FPlatformVectorMath::VectorCompareLessThan;
+    using FPlatformVectorMath::VectorCompareLessThanOrEqual;
+
+    // ---------------------------------------------------------------------------------------------
+    // Special compare masks (NaN / Inf / NearEqual)
+    // ---------------------------------------------------------------------------------------------
+
+    using FPlatformVectorMath::VectorIsNaNMask;
+    using FPlatformVectorMath::VectorIsInfMask;
+    using FPlatformVectorMath::VectorNearEqualMask;
+
+    // ---------------------------------------------------------------------------------------------
+    // Pointer overload helpers
+    // ---------------------------------------------------------------------------------------------
 
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(const float* VectorA, FFloat128 VectorB) noexcept
     {
@@ -124,6 +165,10 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorSub(VectorA_128, VectorB_128);
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Small helpers
+    // ---------------------------------------------------------------------------------------------
+
     static FORCEINLINE FFloat128 VECTORCALL VectorAbs(FFloat128 Vector) noexcept
     {
         static constexpr int32 Mask = ~(1 << 31);
@@ -138,8 +183,8 @@ struct FVectorMath : public FPlatformVectorMath
         FFloat128 VectorC = VectorShuffle<1, 2, 0, 3>(VectorA);
         FFloat128 VectorD = VectorShuffle<1, 2, 0, 3>(VectorB);
 
-        VectorC = VectorMul(VectorB, VectorC); // (Ax * By, Ay * Bz, Az * Bx, w)
-        VectorD = VectorMul(VectorA, VectorD); // (Bx * Ay, By * Az, Bz * Ax, w)
+        VectorC = VectorMul(VectorB, VectorC);  // (Ax * By, Ay * Bz, Az * Bx, w)
+        VectorD = VectorMul(VectorA, VectorD);  // (Bx * Ay, By * Az, Bz * Ax, w)
 
         FFloat128 Result = VectorSub(VectorD, VectorC); // (Ay * Bz - Az * By, Az * Bx - Ax * Bz, Ax * By - Ay * Bx, 0)
 
@@ -177,6 +222,10 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorMinInt(MinValue, VectorMaxInt(MaxValue, Value));
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // 2x2 matrix helpers
+    // ---------------------------------------------------------------------------------------------
+
     static FORCEINLINE FFloat128 VECTORCALL MatrixMul2x2(FFloat128 MatrixA, FFloat128 MatrixB)
     {
         FFloat128 MatrixC = VectorShuffle<0, 3, 0, 3>(MatrixB);
@@ -211,6 +260,10 @@ struct FVectorMath : public FPlatformVectorMath
 
         return VectorSub(MatrixD, MatrixE);
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // 4x4 matrix helpers
+    // ---------------------------------------------------------------------------------------------
 
     static FORCEINLINE void VECTORCALL MatrixMul4x4(const float* InMatrixLHS, const float* InMatrixRHS, float* OutMatrix) noexcept
     {
