@@ -171,13 +171,16 @@ public:
      * @param BufferSize Size of the buffer to fill
      * @param Position Offset to start copy from
      */
-    FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = InvalidIndex) const
+    FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const
     {
-        CHECK(Position < StringLength || Position == 0);
+        CHECK(Position <= StringLength);
         if (Buffer && BufferSize > 0)
         {
-            const SizeType CopySize = Math::Min(BufferSize, StringLength - Position);
+            // Copy as much as we can, always keeping the output buffer null-terminated.
+            const SizeType Remaining = StringLength - Position;
+            const SizeType CopySize  = Math::Min(BufferSize - 1, Remaining);
             FCStringType::Strncpy(Buffer, CharData + Position, CopySize);
+            Buffer[CopySize] = 0;
         }
     }
 
@@ -210,8 +213,15 @@ public:
     template<typename... ArgTypes>
     FORCEINLINE void AppendFormat(const CharType* InFormat, ArgTypes&&... Args)
     {
-        const SizeType NumWritten = FCStringType::Snprintf(CharData + StringLength, NUM_CHARS, InFormat, Forward<ArgTypes>(Args)...);
-        const SizeType NewLength = StringLength + NumWritten;
+        // Remaining space excluding the implicit null terminator slot.
+        const SizeType RemainingCapacity = (NUM_CHARS - 1) - StringLength;
+        if (RemainingCapacity <= 0)
+        {
+            return;
+        }
+
+        const SizeType NumWritten = FCStringType::Snprintf(CharData + StringLength, RemainingCapacity, InFormat, Forward<ArgTypes>(Args)...);
+        const SizeType NewLength  = StringLength + NumWritten;
         if (NewLength < NUM_CHARS)
         {
             StringLength = NewLength;

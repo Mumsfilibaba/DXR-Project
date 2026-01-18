@@ -50,34 +50,24 @@ namespace TupleInternal
     struct TTupleLeaf<Index, ValueType&>
     {
         TTupleLeaf() = delete;
-        TTupleLeaf& operator=(const TTupleLeaf&) = delete;
-        TTupleLeaf& operator=(TTupleLeaf&&) = delete;
 
-        TTupleLeaf(const TTupleLeaf&) = default;
-        TTupleLeaf(TTupleLeaf&&) = default;
-
-        FORCEINLINE explicit TTupleLeaf(ValueType&& InValue) noexcept
-            : Value(Move(InValue))
-        {
-        }
-
-        FORCEINLINE explicit TTupleLeaf(const ValueType& InValue) noexcept
+        FORCEINLINE explicit TTupleLeaf(ValueType& InValue) noexcept
             : Value(InValue)
         {
         }
 
-        template<typename...ArgTypes>
-        FORCEINLINE explicit TTupleLeaf(ArgTypes&&... Args) noexcept requires(TIsConstructible<ValueType, ArgTypes&&...>::Value)
-            : Value(Forward<ArgTypes>(Args)...)
-        {
-        }
+        TTupleLeaf(TTupleLeaf&&) = default;
+        TTupleLeaf(const TTupleLeaf&) = default;
+
+        TTupleLeaf& operator=(TTupleLeaf&&) = delete;
+        TTupleLeaf& operator=(const TTupleLeaf&) = delete;
 
         NODISCARD FORCEINLINE int32 Swap(TTupleLeaf&) noexcept
         {
-            return 0; // Return zero for the ExpandPacks function
+            return 0; // References cannot be swapped here (outer storage handles it)
         }
 
-        ValueType Value;
+        ValueType& Value;
     };
 
     template<uint32 Iteration, uint32 Index, typename... Types>

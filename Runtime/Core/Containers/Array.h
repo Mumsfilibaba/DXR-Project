@@ -6,6 +6,7 @@
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Functional.h"
 #include "Core/Math/Random.h"
+#include "Core/Math/Math.h"
 
 template<typename ElementType, typename AllocatorType = TDefaultArrayAllocator<ElementType>>
 class TArray
@@ -565,6 +566,93 @@ public:
         RemoveAt(Position, 1);
     }
 
+    /**
+     * @brief Removes a range of elements by swapping elements from the back of the array into the removed range. This is O(NumElements) and does NOT preserve ordering.
+     * @param Position Start position of the range to remove
+     * @param NumElements Number of elements to remove
+     */
+    void RemoveAtSwap(SizeType Position, SizeType NumElements)
+    {
+        CHECK(Position + NumElements <= ArraySize);
+
+        if (NumElements <= 0)
+        {
+            return;
+        }
+
+        // If we remove from the tail, we can simply pop.
+        if (Position + NumElements == ArraySize)
+        {
+            Pop(NumElements);
+            return;
+        }
+
+        ElementType* Array = Allocator.GetAllocation();
+
+        // Destroy the removed range first.
+        ::DestroyObjects<ElementType>(Array + Position, NumElements);
+
+        // Only move elements that actually exist after the removed range.
+        const SizeType NumTailElements = ArraySize - (Position + NumElements);
+        const SizeType NumToMove       = (NumElements < NumTailElements) ? NumElements : NumTailElements;
+
+        if (NumToMove > 0)
+        {
+            const SizeType TailStartIndex = ArraySize - NumToMove;
+            ::RelocateObjects<ElementType>(Array + Position, Array + TailStartIndex, NumToMove);
+        }
+
+        ArraySize -= NumElements;
+    }
+
+    /**
+     * @brief Removes the element at the specified position by swapping with the last element. This is O(1) and does NOT preserve ordering.
+     * @param Position Index of element to remove
+     */
+    FORCEINLINE void RemoveAtSwap(SizeType Position)
+    {
+        RemoveAtSwap(Position, 1);
+    }
+
+    /**
+     * @brief Search the array and remove the first instance of the element using swap-remove. Does NOT preserve ordering.
+     * @param Element Element to remove
+     * @return Returns true if the element was found and removed
+     */
+    bool RemoveSingleSwap(const ElementType& Element)
+    {
+        const SizeType Index = Find(Element);
+        if (Index >= 0)
+        {
+            RemoveAtSwap(Index);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @brief Search the array and remove all elements satisfying the predicate using swap-remove. Does NOT preserve ordering.
+     * @param Predicate Callable that determines if an element should be removed
+     */
+    template<typename PredicateType>
+    void RemoveAllSwap(PredicateType&& Predicate)
+    {
+        ElementType* Array = Allocator.GetAllocation();
+        for (SizeType Index = 0; Index < ArraySize;)
+        {
+            if (Predicate(Array[Index]))
+            {
+                RemoveAtSwap(Index);
+                // Do not increment Index - new element was swapped into this slot
+                Array = Allocator.GetAllocation();
+            }
+            else
+            {
+                ++Index;
+            }
+        }
+    }
     /**
      * @brief Search the array and remove all instances of the element
      * @param Element Element to remove
@@ -1241,12 +1329,9 @@ private:
     {
         if (this != &FromArray)
         {
-            // Destroy current elements
             ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
-            // Move allocator resources
             Allocator.MoveFrom(Move(FromArray.Allocator));
 
-            // Transfer size and capacity
             ArraySize = FromArray.ArraySize;
             ArrayMax  = FromArray.ArrayMax;
             FromArray.ArraySize = 0;
@@ -1342,7 +1427,6 @@ private:
         return 2 * Index + 2;
     }
 
-    // Calculate how much the array should grow, will always be at least one
     NODISCARD static SizeType CalculateGrowth(SizeType NumElements, SizeType CurrentCapacity)
     {
         constexpr SizeType FirstAlloc = 4;
@@ -1425,7 +1509,6 @@ private:
             return;
         }
 
-        // Threshold for switching to insertion sort
         constexpr SizeType Threshold = 24;
         if ((Last - First + 1) >= Threshold)
         {

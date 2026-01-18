@@ -151,6 +151,11 @@ public:
      */
     int32 Write(const void* Source, int32 Size, int32 InWriteOffset)
     {
+        CHECK(Source != nullptr);
+        CHECK(Size >= 0);
+        CHECK(InWriteOffset >= 0);
+        CHECK((InWriteOffset + Size) <= StreamSize);
+
         uint8* Dest = Stream + InWriteOffset;
         FMemory::Memcpy(Dest, Source, Size);
         return Size;
@@ -204,18 +209,22 @@ public:
     {
         if (this != AddressOf(Other))
         {
-            if (StreamSize < Other.StreamSize)
+            // Ensure we have enough storage
+            if (StreamCapacity < Other.StreamSize)
             {
                 InternalFree();
                 InternalAllocate(Other.StreamSize);
-                
                 StreamCapacity = Other.StreamSize;
-                StreamSize     = Other.StreamSize;
             }
-            
-            FMemory::Memcpy(Stream, Other.Stream, Other.StreamSize);
+
+            StreamSize = Other.StreamSize;
+
+            if (StreamSize > 0)
+            {
+                FMemory::Memcpy(Stream, Other.Stream, StreamSize);
+            }
         }
-        
+
         return *this;
     }
 
@@ -228,15 +237,17 @@ public:
     {
         if (this != AddressOf(Other))
         {
+            InternalFree();
+
             Stream         = Other.Stream;
             StreamCapacity = Other.StreamCapacity;
             StreamSize     = Other.StreamSize;
-            
+
             Other.Stream         = nullptr;
             Other.StreamCapacity = 0;
             Other.StreamSize     = 0;
         }
-        
+
         return *this;
     }
 
@@ -276,15 +287,15 @@ private:
     void InternalFree()
     {
         FMemory::Free(Stream);
+        Stream = nullptr;
         
         StreamCapacity = 0;
         StreamSize     = 0;
     }
 
-    // ByteStream
-    uint8* Stream;        /**< Pointer to the stream data. */
-    int32  StreamCapacity;/**< Total allocated capacity of the stream in bytes. */
-    int32  StreamSize;    /**< Current size of the stream in bytes. */
+    uint8* Stream;
+    int32  StreamCapacity;
+    int32  StreamSize;
 };
 
 class FByteInputStream
@@ -320,7 +331,7 @@ public:
     FByteInputStream(const FByteInputStream& Other)
         : Stream(nullptr)
         , StreamSize(Other.StreamSize)
-        , StreamOffset(Other.StreamSize)
+        , StreamOffset(Other.StreamOffset)
     {
         InternalAllocate(Other.StreamSize);
         FMemory::Memcpy(Stream, Other.Stream, Other.StreamSize);
@@ -382,6 +393,10 @@ public:
      */
     int32 Read(void* Dest, int32 Size)
     {
+        CHECK(Dest != nullptr);
+        CHECK(Size >= 0);
+        CHECK((StreamOffset + Size) <= StreamSize);
+
         uint8* Source = Stream + StreamOffset;
         FMemory::Memcpy(Dest, Source, Size);
         StreamOffset += Size;
@@ -433,7 +448,13 @@ public:
     template<typename T>
     const T* PeekData(int32 Offset = 0) const
     {
-        return reinterpret_cast<const T*>(PeekData(Offset));
+        const int32 TotalOffset = StreamOffset + Offset;
+        if (TotalOffset < 0 || (TotalOffset + static_cast<int32>(sizeof(T))) > StreamSize)
+        {
+            return nullptr;
+        }
+
+        return reinterpret_cast<const T*>(Stream + TotalOffset);
     }
 
     /**
@@ -454,18 +475,22 @@ public:
     {
         if (this != AddressOf(Other))
         {
+            // Ensure storage is large enough
             if (StreamSize < Other.StreamSize)
             {
                 InternalFree();
                 InternalAllocate(Other.StreamSize);
-                
-                StreamOffset = Other.StreamSize;
-                StreamSize   = Other.StreamSize;
             }
-            
-            FMemory::Memcpy(Stream, Other.Stream, Other.StreamSize);
+
+            StreamSize   = Other.StreamSize;
+            StreamOffset = Other.StreamOffset;
+
+            if (StreamSize > 0)
+            {
+                FMemory::Memcpy(Stream, Other.Stream, StreamSize);
+            }
         }
-        
+
         return *this;
     }
 
@@ -478,15 +503,17 @@ public:
     {
         if (this != AddressOf(Other))
         {
+            InternalFree();
+
             Stream       = Other.Stream;
             StreamOffset = Other.StreamOffset;
             StreamSize   = Other.StreamSize;
-            
+
             Other.Stream       = nullptr;
             Other.StreamOffset = 0;
             Other.StreamSize   = 0;
         }
-        
+
         return *this;
     }
 
@@ -499,13 +526,13 @@ private:
     void InternalFree()
     {
         FMemory::Free(Stream);
+        Stream = nullptr;
         
         StreamOffset = 0;
         StreamSize   = 0;
     }
 
-    // ByteStream
     uint8* Stream;
-    int32 StreamSize;
-    int32 StreamOffset;
+    int32  StreamSize;
+    int32  StreamOffset;
 };

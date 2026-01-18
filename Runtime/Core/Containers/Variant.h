@@ -130,7 +130,7 @@ class TVariant
     {
         static void Move(void* Memory, void* Value)
         {
-            new (Memory) T(Move(*reinterpret_cast<T*>(Value)));
+            new (Memory) T(::Move(*reinterpret_cast<T*>(Value)));
         }
     };
 
@@ -141,6 +141,25 @@ class TVariant
             static constexpr void(*Table[])(void*, void*) = { &TMoveConstructor<Types>::Move... };
             CHECK(Index < MaxTypeIndex);
             Table[Index](Memory, Value);
+        }
+    };
+
+struct FSwapFuncsTable
+    {
+        template<typename T>
+        struct TSwapFuncs
+        {
+            static void Swap(void* A, void* B)
+            {
+                ::Swap(*reinterpret_cast<T*>(A), *reinterpret_cast<T*>(B));
+            }
+        };
+
+        static void Swap(TypeIndexType Index, void* A, void* B)
+        {
+            static constexpr void(*Table[])(void*, void*) = { &TSwapFuncs<Types>::Swap... };
+            CHECK(Index < MaxTypeIndex);
+            Table[Index](A, B);
         }
     };
 
@@ -288,35 +307,58 @@ public:
      */
     FORCEINLINE void Swap(TVariant& Other)
     {
+        if (this == AddressOf(Other))
+        {
+            return;
+        }
+
         if (IsValid() && Other.IsValid())
         {
             if (TypeIndex == Other.TypeIndex)
             {
-                // If both hold the same type, swap the contained objects
-                typedef typename TVariantType<TypeIndex>::Type SwappedType;
-                ::Swap(GetValue<SwappedType>(), Other.GetValue<SwappedType>());
+                // Both hold the same type -> swap the contained values
+                FSwapFuncsTable::Swap(TypeIndex, Value.Data, Other.Value.Data);
             }
             else
             {
-                // Swap the values out
-                TAlignedBytes<SizeInBytes, AlignmentInBytes> TempValue;
-                FMoveConstructorTable::Move(TypeIndex, TempValue.Data, Value.Data);
-                FMoveConstructorTable::Move(Other.TypeIndex, Value.Data, Other.Value.Data);
-                FMoveConstructorTable::Move(TypeIndex, Other.Value.Data, TempValue.Data);
+                // Different types -> move through temporary storage
+                const TypeIndexType AIndex = TypeIndex;
+                const TypeIndexType BIndex = Other.TypeIndex;
 
-                // Then swap the type index
-                ::Swap(TypeIndex, Other.TypeIndex);
+                TAlignedBytes<SizeInBytes, AlignmentInBytes> Temp;
+
+                FMoveConstructorTable::Move(AIndex, Temp.Data, Value.Data);
+                FDestructorTable::Destruct(AIndex, Value.Data);
+
+                FMoveConstructorTable::Move(BIndex, Value.Data, Other.Value.Data);
+                FDestructorTable::Destruct(BIndex, Other.Value.Data);
+
+                FMoveConstructorTable::Move(AIndex, Other.Value.Data, Temp.Data);
+                FDestructorTable::Destruct(AIndex, Temp.Data);
+
+                TypeIndex = BIndex;
+                Other.TypeIndex = AIndex;
             }
         }
         else if (IsValid())
         {
-            Other.Construct(Move(*this));
-            Destruct();
+            // Move this into Other
+            const TypeIndexType AIndex = TypeIndex;
+            FMoveConstructorTable::Move(AIndex, Other.Value.Data, Value.Data);
+            FDestructorTable::Destruct(AIndex, Value.Data);
+
+            Other.TypeIndex = AIndex;
+            TypeIndex = InvalidTypeIndex;
         }
         else if (Other.IsValid())
         {
-            Construct(Move(Other));
-            Other.Destruct();
+            // Move Other into this
+            const TypeIndexType BIndex = Other.TypeIndex;
+            FMoveConstructorTable::Move(BIndex, Value.Data, Other.Value.Data);
+            FDestructorTable::Destruct(BIndex, Other.Value.Data);
+
+            TypeIndex = BIndex;
+            Other.TypeIndex = InvalidTypeIndex;
         }
     }
 

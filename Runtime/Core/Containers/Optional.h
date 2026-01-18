@@ -186,7 +186,7 @@ public:
     {
         return HasValue() ? reinterpret_cast<const ElementType*>(Value.Data) : nullptr;
     }
-
+    
     /**
      * @brief Retrieve the optional value
      * @param Default Default value to return if a value is not set
@@ -194,8 +194,9 @@ public:
      */
     template<typename DefaultType>
     NODISCARD FORCEINLINE const ElementType& GetValueOrDefault(const DefaultType& Default) const
+        requires(TIsSame<typename TRemoveReference<DefaultType>::Type, ElementType>::Value)
     {
-        return HasValue() ? *reinterpret_cast<const ElementType*>(Value.Data) : static_cast<const ElementType&>(Default);
+        return HasValue() ? *reinterpret_cast<const ElementType*>(Value.Data) : Default;
     }
 
     /**

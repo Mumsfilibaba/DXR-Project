@@ -62,9 +62,13 @@ public:
     }
 
 public:
-    
     /** @brief Default constructor */
-    TString() = default;
+    TString()
+    {
+        // Keep invariant: always null-terminated
+        CharData.Resize(1);
+        CharData[0] = 0;
+    }
 
     /**
      * @brief Create a string from a c-string
@@ -90,8 +94,14 @@ public:
      * @param InLength Length of the string
      */
     FORCEINLINE explicit TString(SizeType InLength)
-        : CharData(InLength + 1)
     {
+        // Reserve space for InLength characters (plus null terminator) but keep string empty
+        CharData.Resize(1);
+        CharData[0] = 0;
+        if (InLength > 0)
+        {
+            CharData.Reserve(InLength + 1);
+        }
     }
 
     /**
@@ -167,6 +177,8 @@ public:
         if (bRemoveSlack)
         {
             CharData.Clear(true);
+            CharData.Resize(1);
+            CharData[0] = 0;
         }
         else if (!CharData.IsEmpty())
         {
@@ -181,12 +193,9 @@ public:
      */
     FORCEINLINE void Reset(SizeType NewLength = 0)
     {
-        const SizeType NewSizeWithZero = NewLength ? (NewLength + 1) : 0;
+        const SizeType NewSizeWithZero = (NewLength > 0) ? (NewLength + 1) : 1;
         CharData.Reset(NewSizeWithZero);
-        if (NewSizeWithZero)
-        {
-            CharData[0] = 0;
-        }
+        CharData[0] = 0;
     }
 
     /**
@@ -198,12 +207,17 @@ public:
     {
         CHECK(InLength == 0 || (InString && InLength > 0));
 
-        const SizeType NewSizeWithZero = (InLength) ? (InLength + 1) : 0;
+        const SizeType NewSizeWithZero = (InLength > 0) ? (InLength + 1) : 1;
         CharData.Reset(NewSizeWithZero);
-        if (NewSizeWithZero)
+
+        if (InLength > 0)
         {
             FCStringType::Strncpy(CharData.Data(), InString, InLength);
             CharData[InLength] = 0;
+        }
+        else
+        {
+            CharData[0] = 0;
         }
     }
 
@@ -274,12 +288,9 @@ public:
      */
     FORCEINLINE void Resize(SizeType NewLength)
     {
-        const SizeType NewSizeWithZero = (NewLength) ? (NewLength + 1) : 0;
+        const SizeType NewSizeWithZero = (NewLength > 0) ? (NewLength + 1) : 1;
         CharData.Resize(NewSizeWithZero);
-        if (NewSizeWithZero)
-        {
-            CharData[NewLength] = 0;
-        }
+        CharData[NewLength] = 0;
     }
 
     /**
@@ -288,7 +299,19 @@ public:
      */
     FORCEINLINE void Reserve(SizeType NewCapacity)
     {
-        CharData.Reserve(NewCapacity);
+        // Always reserve including space for null terminator
+        if (CharData.IsEmpty())
+        {
+            CharData.Resize(1);
+            CharData[0] = 0;
+        }
+
+        if (NewCapacity < 0)
+        {
+            NewCapacity = 0;
+        }
+
+        CharData.Reserve(NewCapacity + 1);
         CharData[Length()] = 0;
     }
 
@@ -298,23 +321,35 @@ public:
      * @param BufferSize Size of the buffer to fill
      * @param Position Offset to start copy from
      */
-    FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = InvalidIndex) const
+    FORCEINLINE void CopyToBuffer(CharType* Buffer, SizeType BufferSize, SizeType Position = 0) const
     {
-        const SizeType CurrentLength = Length();
-        CHECK(Position < CurrentLength || Position == 0);
-        
-        if (!Buffer || BufferSize == 0)
+        if (!Buffer || BufferSize <= 0)
         {
             return;
         }
 
-        if (Position == InvalidIndex)
+        const SizeType CurrentLength = Length();
+        if (Position < 0)
         {
             Position = 0;
         }
-        
-        const SizeType CopySize = Math::Min(BufferSize, CurrentLength - Position);
-        FCStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
+
+        if (Position > CurrentLength)
+        {
+            Buffer[0] = 0;
+            return;
+        }
+
+        const SizeType MaxCopy = BufferSize - 1;
+        const SizeType Remaining = CurrentLength - Position;
+        const SizeType CopySize = Math::Min(MaxCopy, Remaining);
+
+        if (CopySize > 0)
+        {
+            FCStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
+        }
+
+        Buffer[CopySize] = 0;
     }
 
     /**
@@ -1442,13 +1477,15 @@ public:
         NewString.Append(RHS, AppendLength);
         return NewString;
     }
-
     NODISCARD friend FORCEINLINE TString operator+(CharType LHS, const TString& RHS)
     {
-        // Allocate a long enough string
         const SizeType NewLength = RHS.Length() + 1;
-        TString NewString(NewLength);
-        // Copy the Char and String directly to avoid overhead
+
+        // Create a properly sized string (including space for the null terminator).
+        // Note: TString(SizeType) only reserves capacity, it does not resize the underlying storage.
+        TString NewString;
+        NewString.Resize(NewLength);
+
         CharType* StringData = NewString.Data();
         StringData[0] = LHS;
         FCStringType::Strncpy(StringData + 1, RHS.Data(), RHS.Length());
@@ -1588,23 +1625,46 @@ public:
 private:
     FORCEINLINE void InitializeByCopy(const CharType* InString, SizeType InLength)
     {
-        if (InString && InLength)
+        CharData.Clear(true);
+
+        // Keep invariant: always null-terminated
+        if (!InString || InLength <= 0)
         {
-            CharData.AppendUninitialized(InLength + 1);
-            FCStringType::Strncpy(CharData.Data(), InString, InLength);
-            CharData[InLength] = 0;
+            CharData.Resize(1);
+            CharData[0] = 0;
+            return;
         }
+
+        // Exactly InLength characters + null terminator
+        CharData.Resize(InLength + 1);
+        FCStringType::Strncpy(CharData.Data(), InString, InLength);
+        CharData[InLength] = 0;
     }
 
     FORCEINLINE void InitializeWithSlack(const CharType* InString, SizeType InLength, SizeType InSlack)
     {
-        if (InString && InLength)
+        CharData.Clear(true);
+
+        // Keep invariant: always null-terminated
+        if (!InString || InLength <= 0)
         {
-            CharData.Reserve(InLength + InSlack + 1);
-            CharData.AppendUninitialized(InLength + 1);
-            FCStringType::Strncpy(CharData.Data(), InString, InLength);
-            CharData[InLength] = 0;
+            CharData.Resize(1);
+            CharData[0] = 0;
+            return;
         }
+
+        if (InSlack < 0)
+        {
+            InSlack = 0;
+        }
+
+        // Reserve the final capacity up front (including null terminator)
+        CharData.Reserve(InLength + InSlack + 1);
+
+        // Exactly InLength characters + null terminator
+        CharData.Resize(InLength + 1);
+        FCStringType::Strncpy(CharData.Data(), InString, InLength);
+        CharData[InLength] = 0;
     }
 
     StorageType CharData;

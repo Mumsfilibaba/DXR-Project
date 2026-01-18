@@ -22,6 +22,7 @@ class TQueue
     {
         FNode* volatile                NextNode;
         TTypeAlignedBytes<ElementType> Item;
+        bool                           bHasItem;
     };
 
 public:
@@ -33,9 +34,10 @@ public:
      */
     TQueue()
     {
-        // Create a Node here to more easily handle edge cases
-        Head = new FNode();
+        // Create a dummy node to simplify edge cases.
+        Head = CreateDummyNode();
         Tail = Head;
+        NumElements = 0;
     }
 
     /**
@@ -43,12 +45,16 @@ public:
      */
     ~TQueue()
     {
+        // Drain all nodes including the final dummy.
         while (Tail != nullptr)
         {
             FNode* Node = Tail;
             Tail = Tail->NextNode;
             DeleteNode(Node);
         }
+
+        Head = nullptr;
+        NumElements = 0;
     }
 
     /**
@@ -68,16 +74,21 @@ public:
             NextNode = Tail->NextNode;
         }
 
-        // We are empty
+        // Empty queue
         if (NextNode == nullptr)
         {
             return false;
         }
 
-        // Move the item and "reset" it
+        CHECK(NextNode->bHasItem);
+
+        // Move out the item
         OutElement = Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
-        
-        // Set the next node
+
+        // Destruct the item and make this node the new dummy tail.
+        DestroyItemInNode(NextNode);
+
+        // Advance tail
         FNode* PreviousTail;
         if constexpr (QueueType == EQueueType::SPMC)
         {
@@ -110,12 +121,18 @@ public:
             NextNode = Tail->NextNode;
         }
 
-        // We are empty
+        // Empty queue
         if (NextNode == nullptr)
         {
             return false;
         }
-        
+
+        CHECK(NextNode->bHasItem);
+
+        // Destruct the item and make this node the new dummy tail.
+        DestroyItemInNode(NextNode);
+
+        // Advance tail
         FNode* PreviousTail;
         if constexpr (QueueType == EQueueType::SPMC)
         {
@@ -141,6 +158,7 @@ public:
         FNode* TailToDequeue;
         if constexpr (QueueType != EQueueType::SPSC)
         {
+            // Detach producer head from consumer tail (keep dummy tail).
             FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), Tail);
             TailToDequeue = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -150,30 +168,33 @@ public:
             TailToDequeue  = Tail->NextNode;
             Tail->NextNode = nullptr;
         }
-        
-        // Count all the nodes
+
+        // Snapshot element count
         int32 LocalNumElements = NumElements.Load();
         NumElements = 0;
         OutArray.Reserve(LocalNumElements);
-        
-        // Add all the elements to the array
-        FNode* CurrentTail  = TailToDequeue;
-        FNode* PreviousTail = nullptr;
-        while (CurrentTail)
+
+        // Drain detached list
+        FNode* Current = TailToDequeue;
+        while (Current)
         {
-            OutArray.Add(Move(*reinterpret_cast<ElementType*>(CurrentTail->Item.Data)));
-            PreviousTail = CurrentTail;
-            CurrentTail  = CurrentTail->NextNode;
-            DeleteNode(PreviousTail);
+            CHECK(Current->bHasItem);
+            OutArray.Add(Move(*reinterpret_cast<ElementType*>(Current->Item.Data)));
+            FNode* Next = Current->NextNode;
+            DeleteNode(Current);
+            Current = Next;
         }
     }
-    
+
     /**
      * @brief Clears the queue
      */
     void Clear()
     {
-        while (Dequeue());
+        while (Dequeue())
+        {
+        }
+
         NumElements = 0;
     }
 
@@ -235,7 +256,7 @@ public:
     {
         return NumElements.Load() == 0;
     }
-    
+
     /**
      * @return Returns the number of elements in the queue
      */
@@ -251,12 +272,14 @@ public:
      */
     bool Peek(ElementType& OutItem) const
     {
-        if (Tail->NextNode == nullptr)
+        FNode* Next = Tail->NextNode;
+        if (Next == nullptr)
         {
             return false;
         }
 
-        OutItem = *reinterpret_cast<ElementType*>(&Tail->NextNode->Item);
+        CHECK(Next->bHasItem);
+        OutItem = *reinterpret_cast<const ElementType*>(Next->Item.Data);
         return true;
     }
 
@@ -265,12 +288,14 @@ public:
      */
     ElementType* Peek()
     {
-        if (Tail->NextNode == nullptr)
+        FNode* Next = Tail->NextNode;
+        if (Next == nullptr)
         {
             return nullptr;
         }
 
-        return reinterpret_cast<ElementType*>(&Tail->NextNode->Item);
+        CHECK(Next->bHasItem);
+        return reinterpret_cast<ElementType*>(Next->Item.Data);
     }
 
     /**
@@ -278,32 +303,53 @@ public:
      */
     const ElementType* Peek() const
     {
-        if (Tail->NextNode == nullptr)
+        FNode* Next = Tail->NextNode;
+        if (Next == nullptr)
         {
             return nullptr;
         }
 
-        return reinterpret_cast<const ElementType*>(&Tail->NextNode->Item);
+        CHECK(Next->bHasItem);
+        return reinterpret_cast<const ElementType*>(Next->Item.Data);
     }
 
 private:
+
+    FORCEINLINE FNode* CreateDummyNode()
+    {
+        FNode* Result = new FNode();
+        Result->NextNode = nullptr;
+        Result->bHasItem = false;
+        return Result;
+    }
+
     template<typename... ArgTypes>
     FNode* CreateNode(ArgTypes&&... Args)
     {
-        // Construct the new Item
         FNode* Result = new FNode();
+        Result->NextNode = nullptr;
+        Result->bHasItem = true;
         new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(Forward<ArgTypes>(Args)...);
         return Result;
     }
 
-    void DeleteNode(FNode* Node)
+    FORCEINLINE void DestroyItemInNode(FNode* Node)
     {
-        // Call the destructor of the node since these elements are "constructed"
-        typedef ElementType ElementDestructType;
-        reinterpret_cast<ElementDestructType*>(Node->Item.Data)->~ElementDestructType();
+        if (Node->bHasItem)
+        {
+            typedef ElementType ElementDestructType;
+            reinterpret_cast<ElementDestructType*>(Node->Item.Data)->~ElementDestructType();
+            Node->bHasItem = false;
+        }
+    }
+
+    FORCEINLINE void DeleteNode(FNode* Node)
+    {
+        DestroyItemInNode(Node);
         delete Node;
     }
 
+private:
     FNode* volatile Head{nullptr};
     FNode* volatile Tail{nullptr};
     FAtomicInt32    NumElements;

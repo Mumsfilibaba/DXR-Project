@@ -248,10 +248,58 @@ public:
     {
         return static_cast<SizeType>(BaseSet.size());
     }
-    
+
     NODISCARD SizeType Capacity() const
     {
+        // For hash containers, the closest analogue to 'capacity' is the bucket count.
+        return static_cast<SizeType>(BaseSet.bucket_count());
+    }
+
+    NODISCARD SizeType MaxSize() const
+    {
         return static_cast<SizeType>(BaseSet.max_size());
+    }
+
+    NODISCARD SizeType BucketCount() const
+    {
+        return static_cast<SizeType>(BaseSet.bucket_count());
+    }
+
+    NODISCARD float LoadFactor() const
+    {
+        return BaseSet.load_factor();
+    }
+
+    NODISCARD float MaxLoadFactor() const
+    {
+        return BaseSet.max_load_factor();
+    }
+
+    FORCEINLINE void SetMaxLoadFactor(float InMaxLoadFactor)
+    {
+        BaseSet.max_load_factor(InMaxLoadFactor);
+    }
+
+    NODISCARD bool RemoveKey(const ElementType& InElement)
+    {
+        return BaseSet.erase(InElement) != 0;
+    }
+
+    NODISCARD bool RemoveKey(const ElementType& InElement, ElementType* OutRemovedElement)
+    {
+        typename BaseSetType::iterator It = BaseSet.find(InElement);
+        if (It == BaseSet.end())
+        {
+            return false;
+        }
+
+        if (OutRemovedElement)
+        {
+            *OutRemovedElement = *It;
+        }
+
+        BaseSet.erase(It);
+        return true;
     }
 
     NODISCARD TArray<ElementType> GetValues() const

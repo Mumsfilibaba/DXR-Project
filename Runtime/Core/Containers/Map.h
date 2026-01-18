@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Templates/TypeHash.h"
+#include "Core/Templates/Utility.h"
 
 // TODO: Custom map implementation
 #include <unordered_map>
@@ -228,6 +229,53 @@ public:
         }
     }
     
+
+    NODISCARD ValueType& FindOrAdd(KeyType&& Key)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            return Element->second;
+        }
+        else
+        {
+            auto InsertedElement = BaseMap.emplace(Forward<KeyType>(Key), ValueType());
+            return InsertedElement.first->second;
+        }
+    }
+
+    /**
+     * @brief Remove a key from the map.
+     * @return True if an element was removed.
+     */
+    NODISCARD bool RemoveKey(const KeyType& Key)
+    {
+        return BaseMap.erase(Key) > 0;
+    }
+
+    /**
+     * @brief Remove a key from the map and optionally copy its value out.
+     * @param Key Key to remove
+     * @param OutRemovedValue Optional pointer to receive removed value
+     * @return True if an element was removed
+     */
+    NODISCARD bool RemoveKey(const KeyType& Key, ValueType* OutRemovedValue)
+    {
+        typename BaseMapType::iterator It = BaseMap.find(Key);
+        if (It == BaseMap.end())
+        {
+            return false;
+        }
+
+        if (OutRemovedValue)
+        {
+            *OutRemovedValue = It->second;
+        }
+
+        BaseMap.erase(It);
+        return true;
+    }
+    
     void Remove(const KeyType& InElement)
     {
         BaseMap.erase(InElement);
@@ -264,9 +312,63 @@ public:
         return static_cast<SizeType>(BaseMap.size());
     }
     
+    /**
+     * @brief Returns the current bucket count of the underlying hash table.
+     *
+     * NOTE: std::unordered_map does not expose a traditional "capacity" like vectors do.
+     * BucketCount() is the closest meaningful metric for current allocation state.
+     */
     NODISCARD SizeType Capacity() const
     {
+        return static_cast<SizeType>(BaseMap.bucket_count());
+    }
+
+    /**
+     * @brief Returns the theoretical maximum number of elements the map can hold.
+     */
+    NODISCARD SizeType MaxSize() const
+    {
         return static_cast<SizeType>(BaseMap.max_size());
+    }
+
+    /**
+     * @brief Returns the current number of buckets in the hash table.
+     */
+    NODISCARD SizeType BucketCount() const
+    {
+        return static_cast<SizeType>(BaseMap.bucket_count());
+    }
+
+    /**
+     * @brief Returns the current load factor (size / bucket_count).
+     */
+    NODISCARD float LoadFactor() const
+    {
+        return BaseMap.load_factor();
+    }
+
+    /**
+     * @brief Returns the max load factor used by the hash table.
+     */
+    NODISCARD float MaxLoadFactor() const
+    {
+        return BaseMap.max_load_factor();
+    }
+
+    /**
+     * @brief Sets the max load factor used by the hash table.
+     */
+    void SetMaxLoadFactor(float InValue)
+    {
+        BaseMap.max_load_factor(InValue);
+    }
+
+    /**
+     * @brief Forces a rehash to at least InBucketCount buckets.
+     */
+    void Rehash(SizeType InBucketCount)
+    {
+        BaseMap.rehash(static_cast<size_t>(InBucketCount));
     }
 
     NODISCARD TArray<KeyType> GetKeys() const
@@ -293,6 +395,33 @@ public:
         }
 
         return Values;
+    }
+
+
+    /**
+     * @brief Run a function for each key/value pair (non-const).
+     * @param Lambda Callable taking (const KeyType&, ValueType&)
+     */
+    template<typename LambdaType>
+    void Foreach(LambdaType&& Lambda)
+    {
+        for (auto& Pair : BaseMap)
+        {
+            Lambda(Pair.first, Pair.second);
+        }
+    }
+
+    /**
+     * @brief Run a function for each key/value pair (const).
+     * @param Lambda Callable taking (const KeyType&, const ValueType&)
+     */
+    template<typename LambdaType>
+    void Foreach(LambdaType&& Lambda) const
+    {
+        for (const auto& Pair : BaseMap)
+        {
+            Lambda(Pair.first, Pair.second);
+        }
     }
 
 public:
