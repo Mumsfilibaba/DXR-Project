@@ -1610,6 +1610,7 @@ struct EditorIconsInternal
     inline static EditorIcon NextIcon            = EditorIcon();
     inline static EditorIcon PreviousIcon        = EditorIcon();
     inline static EditorIcon CloseIcon           = EditorIcon();
+    inline static EditorIcon FilterIcon          = EditorIcon();
 };
 
 ImTextureID EditorIcons::UndoIcon            = nullptr;
@@ -1625,6 +1626,7 @@ ImTextureID EditorIcons::CheckmarkIcon       = nullptr;
 ImTextureID EditorIcons::NextIcon            = nullptr;
 ImTextureID EditorIcons::PreviousIcon        = nullptr;
 ImTextureID EditorIcons::CloseIcon           = nullptr;
+ImTextureID EditorIcons::FilterIcon          = nullptr;
 
 static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1707,6 +1709,7 @@ bool EditorIcons::Initialize()
     bResult &= LoadEditorIcon("Editor/Icons/Next.png", NextIcon, EditorIconsInternal::NextIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Previous.png", PreviousIcon, EditorIconsInternal::PreviousIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Close.png", CloseIcon, EditorIconsInternal::CloseIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/Filter.png", FilterIcon, EditorIconsInternal::FilterIcon);
 
     return bResult;
 }
@@ -1726,6 +1729,7 @@ void EditorIcons::Release()
     UnloadEditorIcon(NextIcon, EditorIconsInternal::NextIcon);
     UnloadEditorIcon(PreviousIcon, EditorIconsInternal::PreviousIcon);
     UnloadEditorIcon(CloseIcon, EditorIconsInternal::CloseIcon);
+    UnloadEditorIcon(FilterIcon, EditorIconsInternal::FilterIcon);
 }
 
 ImFont* EditorFonts::DefaultFont = nullptr;

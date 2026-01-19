@@ -240,9 +240,42 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
     if (ImGui::BeginChild("##CB_Folders", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar))
     {
+        // ---------------------------------------------------------------------------------
+        // Search header bar
+        // ---------------------------------------------------------------------------------
+        constexpr float HeaderHeightPx  = 42.0f;
+        constexpr float HeaderInputPadX = 8.0f;
+        constexpr float HeaderBorderPx  = 2.0f;
+
+        const ImU32 HeaderBg     = IM_COL32(47, 47, 47, 255);
+        const ImU32 HeaderBorder = IM_COL32(26, 26, 26, 255);
+
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+        const ImVec2 CursorMin = ImGui::GetCursorScreenPos();
+        const float  Width     = ImGui::GetContentRegionAvail().x;
+        const ImVec2 BarMin    = CursorMin;
+        const ImVec2 BarMax    = ImVec2(CursorMin.x + Width, CursorMin.y + HeaderHeightPx);
+
+        // Background
+        DrawList->AddRectFilled(BarMin, BarMax, HeaderBg, 0.0f);
+        DrawList->AddRectFilled(BarMin, ImVec2(BarMax.x, BarMin.y + HeaderBorderPx), HeaderBorder, 0.0f);
+        DrawList->AddRectFilled(ImVec2(BarMin.x, BarMax.y - HeaderBorderPx), BarMax, HeaderBorder, 0.0f);
+
+        // Center input vertically inside bar
+        const float InputHeightPx = ImGui::GetFontSize() + EditorStyleVars::InputFieldFramePadding.y * 2.0f;
+        const float InputY        = BarMin.y + (HeaderHeightPx - InputHeightPx) * 0.5f;
+        const float InputW        = Math::Max(1.0f, Width - HeaderInputPadX * 2.0f);
+
+        ImGui::SetCursorScreenPos(ImVec2(BarMin.x + HeaderInputPadX, InputY));
+
         DrawSearchField("##CB_FolderSearch", "Search Paths", FolderSearchBuffer);
 
-        ImGui::Dummy(ImVec2(0.0f, 6.0f));
+        ImGui::SetCursorScreenPos(ImVec2(CursorMin.x, CursorMin.y + HeaderHeightPx));
+
+        // ---------------------------------------------------------------------------------
+        // Scrollbar styling
+        // ---------------------------------------------------------------------------------
 
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, PanelBg);
         ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, IM_COL32(87, 87, 87, 255));
@@ -344,7 +377,6 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
                 return false;
             }
         }
-
         return true;
     };
 
@@ -383,7 +415,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, InFolderActiveColor);
     }
 
-    const float RowHeightPx = 20.0f;
+    const float RowHeightPx = 24.0f;
 
     const ImGuiSelectableFlags SelFlags =
         ImGuiSelectableFlags_SpanAllColumns |
@@ -449,7 +481,6 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
             if (ClickCount == 1)
             {
                 const ImVec2 Mouse = ImGui::GetMousePos();
-
                 const bool bInsideArrow = (Mouse.x >= ArrowRect.Min.x && Mouse.x <= ArrowRect.Max.x && Mouse.y >= ArrowRect.Min.y && Mouse.y <= ArrowRect.Max.y);
                 if (bInsideArrow)
                 {
@@ -474,7 +505,6 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         const float  IconY   = RowMin.y + (H - IconSizePx) * 0.5f;
         const ImVec2 IconMin = ImVec2(X, IconY);
         const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
-
         DrawList->AddImage(FolderIcon, IconMin, IconMax);
         X = IconMax.x + IconGapPx;
     }

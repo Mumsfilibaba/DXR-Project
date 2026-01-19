@@ -90,11 +90,13 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
     // Search
     // -----------------------------------------------------------------------------------------
+
     static bool EditorSearchField(const char* InId, const char* InHint, char* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
 
     // -----------------------------------------------------------------------------------------
     // Menu
     // -----------------------------------------------------------------------------------------
+
     static void EditorMenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void EditorMenuLabeledSeparator(const char* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool EditorMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
@@ -105,6 +107,7 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
     // Property Table
     // -----------------------------------------------------------------------------------------
+
     static bool BeginPropertyTable(const char* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
     static void EndPropertyTable();
     static void PropertyRowLabel(const char* Label);
@@ -113,6 +116,7 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
     // Other
     // -----------------------------------------------------------------------------------------
+
     static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
     static void EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
 };
@@ -134,6 +138,7 @@ struct EditorIcons
     static ImTextureID NextIcon;
     static ImTextureID PreviousIcon;
     static ImTextureID CloseIcon;
+    static ImTextureID FilterIcon;
 
     static bool Initialize();
     static void Release();
