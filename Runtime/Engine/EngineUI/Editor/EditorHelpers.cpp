@@ -1611,6 +1611,7 @@ struct EditorIconsInternal
     inline static EditorIcon PreviousIcon        = EditorIcon();
     inline static EditorIcon CloseIcon           = EditorIcon();
     inline static EditorIcon FilterIcon          = EditorIcon();
+    inline static EditorIcon RightArrowIcon      = EditorIcon();
 };
 
 ImTextureID EditorIcons::UndoIcon            = nullptr;
@@ -1627,6 +1628,7 @@ ImTextureID EditorIcons::NextIcon            = nullptr;
 ImTextureID EditorIcons::PreviousIcon        = nullptr;
 ImTextureID EditorIcons::CloseIcon           = nullptr;
 ImTextureID EditorIcons::FilterIcon          = nullptr;
+ImTextureID EditorIcons::RightArrowIcon      = nullptr;
 
 static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1710,6 +1712,7 @@ bool EditorIcons::Initialize()
     bResult &= LoadEditorIcon("Editor/Icons/Previous.png", PreviousIcon, EditorIconsInternal::PreviousIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Close.png", CloseIcon, EditorIconsInternal::CloseIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Filter.png", FilterIcon, EditorIconsInternal::FilterIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/RightArrow.png", RightArrowIcon, EditorIconsInternal::RightArrowIcon);
 
     return bResult;
 }
@@ -1730,10 +1733,12 @@ void EditorIcons::Release()
     UnloadEditorIcon(PreviousIcon, EditorIconsInternal::PreviousIcon);
     UnloadEditorIcon(CloseIcon, EditorIconsInternal::CloseIcon);
     UnloadEditorIcon(FilterIcon, EditorIconsInternal::FilterIcon);
+    UnloadEditorIcon(RightArrowIcon, EditorIconsInternal::RightArrowIcon);
 }
 
 ImFont* EditorFonts::DefaultFont = nullptr;
 ImFont* EditorFonts::SegoeUI_18  = nullptr;
+ImFont* EditorFonts::SegoeUI_22  = nullptr;
 ImFont* EditorFonts::Consola_14  = nullptr;
 
 static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
@@ -1761,8 +1766,11 @@ bool EditorFonts::Initialize()
     State.Fonts->Clear();
     
     DefaultFont = State.Fonts->AddFontDefault();
-    SegoeUI_18  = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
-    Consola_14  = LoadEditorFont("Editor/Fonts/consola.ttf", 14.0f);
+    
+    SegoeUI_18 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
+    SegoeUI_22 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 22.0f);
+
+    Consola_14 = LoadEditorFont("Editor/Fonts/consola.ttf", 14.0f);
 
     IImguiPlugin& ImGuiPlugin = IImguiPlugin::Get();
     if (!ImGuiPlugin.UpdateFontAtlas())
@@ -1782,5 +1790,6 @@ void EditorFonts::Release()
 {
     DefaultFont = nullptr;
     SegoeUI_18  = nullptr;
+    SegoeUI_22  = nullptr;
     Consola_14  = nullptr;
 }

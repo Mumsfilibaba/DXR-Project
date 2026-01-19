@@ -113,25 +113,25 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
     ImGui::EndTable();
 }
 
-const CHAR* FEditorContentBrowserWidget::GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuf) const
+const CHAR* FEditorContentBrowserWidget::GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuffer) const
 {
-    const CHAR* Q = InBuf.Data();
-    while (Q && *Q && FCharTraits::IsWhitespace(*Q))
+    const CHAR* Query = InBuffer.Data();
+    while (Query && *Query && FCharTraits::IsWhitespace(*Query))
     {
-        ++Q;
+        ++Query;
     }
 
-    return Q;
+    return Query;
 }
 
-bool FEditorContentBrowserWidget::MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) const
+bool FEditorContentBrowserWidget::MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuffer) const
 {
     if (!InName)
     {
         return false;
     }
 
-    const CHAR* Query = GetTrimmedQuery(InBuf);
+    const CHAR* Query = GetTrimmedQuery(InBuffer);
     if (!Query || *Query == 0)
     {
         return true;
@@ -156,8 +156,8 @@ bool FEditorContentBrowserWidget::HasChildFolders(const FileInfo& InFolder) cons
 bool FEditorContentBrowserWidget::FolderTreeMatches(const FileInfo& InFolder) const
 {
     const CHAR* Query = GetTrimmedQuery(FolderSearchBuffer);
-    const bool bFolderSearchActive = (Query && *Query != 0);
 
+    const bool bFolderSearchActive = (Query && *Query != 0);
     if (!bFolderSearchActive)
     {
         return true;
@@ -260,9 +260,6 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
         const float InputHeightPx = ImGui::GetFontSize() + EditorStyleVars::InputFieldFramePadding.y * 2.0f;
         const float InputY        = BarMin.y + (HeaderHeightPx - InputHeightPx) * 0.5f;
-        const float InputW        = Math::Max(1.0f, Width - HeaderInputPadX * 2.0f);
-
-        (void)InputW;
 
         ImGui::SetCursorScreenPos(ImVec2(BarMin.x + HeaderInputPadX, InputY));
         DrawSearchField("##CB_FolderSearch", "Search Paths", FolderSearchBuffer);
@@ -499,6 +496,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         const ImVec2 IconMin = ImVec2(X, IconY);
         const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
         DrawList->AddImage(FolderIcon, IconMin, IconMax);
+
         X = IconMax.x + IconGapPx;
     }
 
@@ -592,8 +590,6 @@ void FEditorContentBrowserWidget::DrawContentPanel()
         // -----------------------------------------------------------------------------
 
         DrawContentHeaderBar();
-
-        ImGui::Dummy(ImVec2(0.0f, 6.0f));
 
         // -----------------------------------------------------------------------------
         // Search field
@@ -917,28 +913,45 @@ void FEditorContentBrowserWidget::NavigateForward()
 
 void FEditorContentBrowserWidget::DrawContentHeaderBar()
 {
-    constexpr float HeaderPadX       = 6.0f;
-    constexpr float NavIconPx        = 32.0f;
-    constexpr float NavButtonOuterPx = 40.0f;
-    constexpr float NavButtonGapPx   = 8.0f;
-    constexpr float AfterNavGapPx    = 12.0f;
-    constexpr float BorderThickness  = 1.0f;
-    constexpr float Rounding         = 2.0f;
-    constexpr float HeaderHeightPx   = 48.0f;
-    constexpr float IconPadPx        = (NavButtonOuterPx - NavIconPx) * 0.5f;
+    // -------------------------------------------------------------------------------------
+    // Layout
+    // -------------------------------------------------------------------------------------
+
+    constexpr float HeaderHeightPx    = 40.0f;
+    constexpr float HeaderPadX        = 6.0f;
+    constexpr float NavIconPx         = 24.0f;
+    constexpr float NavBtnH           = 32.0f;
+    constexpr float NavBtnExtraX      = 6.0f;
+    constexpr float NavBtnW           = NavBtnH + NavBtnExtraX * 2.0f;
+    constexpr float NavGapPx          = 4.0f;
+    constexpr float AfterNavGapPx     = 4.0f;
+    constexpr float NavButtonRounding = 4.0f;
+    constexpr float CrumbPadX         = 8.0f;
+    constexpr float CrumbPadY         = 1.0f;
+    constexpr float CrumbRounding     = 4.0f;
+    constexpr float BarRounding       = 4.0f;
+    constexpr float BarBorderTh       = 2.0f;
+    constexpr float SepIconPx         = 12.0f;
+    constexpr float SepGapAfterPx     = 6.0f;
 
     // -------------------------------------------------------------------------------------
     // Colors
     // -------------------------------------------------------------------------------------
 
-    const ImU32 HeaderBg     = IM_COL32(36, 36, 36, 255);
-    const ImU32 PathBg       = IM_COL32(15, 15, 15, 255);
-    const ImU32 PathBorder   = IM_COL32(26, 26, 26, 255);
-    const ImU32 ButtonBg     = IM_COL32(15, 15, 15, 255);
-    const ImU32 ButtonHover  = IM_COL32(47, 47, 47, 255);
-    const ImU32 ButtonActive = IM_COL32(56, 56, 56, 255);
-    const ImU32 SepTextColor = IM_COL32(110, 110, 110, 255);
-    const ImU32 TextColor    = IM_COL32(220, 220, 220, 255);
+    const ImU32 HeaderBg        = IM_COL32(36, 36, 36, 255);
+    const ImU32 NavBgIdle       = IM_COL32(36, 36, 36, 255);
+    const ImU32 NavBgHover      = IM_COL32(56, 56, 56, 255);
+    const ImU32 NavIconDisabled = IM_COL32(106, 106, 106, 255);
+    const ImU32 NavIconEnabled  = IM_COL32(192, 192, 192, 255);
+    const ImU32 NavIconHover    = IM_COL32(255, 255, 255, 255);
+    const ImU32 BarBg           = IM_COL32(15, 15, 15, 255);
+    const ImU32 BarBorderNormal = IM_COL32(51, 51, 51, 255);
+    const ImU32 BarBorderHover  = IM_COL32(74, 74, 74, 255);
+    const ImU32 CrumbBgIdle     = IM_COL32(15, 15, 15, 255);
+    const ImU32 CrumbBgHover    = IM_COL32(56, 56, 56, 255);
+    const ImU32 CrumbTextIdle   = IM_COL32(192, 192, 192, 255);
+    const ImU32 CrumbTextHover  = IM_COL32(255, 255, 255, 255);
+    const ImU32 SepColor        = IM_COL32(106, 106, 106, 255);
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
@@ -946,119 +959,207 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     const float  Width = ImGui::GetContentRegionAvail().x;
     const ImVec2 End   = ImVec2(Start.x + Width, Start.y + HeaderHeightPx);
 
+    // -------------------------------------------------------------------------------------
+    // Background
+    // -------------------------------------------------------------------------------------
+
     DrawList->AddRectFilled(Start, End, HeaderBg, 0.0f);
 
-    const float ControlY = Start.y + (HeaderHeightPx - NavButtonOuterPx) * 0.5f;
-    const float BackX    = Start.x + HeaderPadX;
-    const float ForwardX = BackX + NavButtonOuterPx + NavButtonGapPx;
-    const float BarX     = ForwardX + NavButtonOuterPx + AfterNavGapPx;
-    const float BarRight = End.x - HeaderPadX;
-    const float BarY     = ControlY;
-    const float BarH     = NavButtonOuterPx;
-    const float BarW     = Math::Max(1.0f, BarRight - BarX);
+    const float  ControlY = Start.y + (HeaderHeightPx - NavBtnH) * 0.5f;
+    const float  BackX    = Start.x + HeaderPadX;
+    const float  ForwardX = BackX + NavBtnW + NavGapPx;
+    const float  BarX     = ForwardX + NavBtnW + AfterNavGapPx;
+    const float  BarRight = End.x - HeaderPadX;
+    const float  BarY     = ControlY;
+    const float  BarH     = NavBtnH;
+    const float  BarW     = Math::Max(1.0f, BarRight - BarX);
+    const ImVec2 BarMin   = ImVec2(BarX, BarY);
+    const ImVec2 BarMax   = ImVec2(BarX + BarW, BarY + BarH);
 
-    const ImVec2 BarMin = ImVec2(BarX, BarY);
-    const ImVec2 BarMax = ImVec2(BarX + BarW, BarY + BarH);
+    // -------------------------------------------------------------------------------------
+    // Back/Forward button helper
+    // -------------------------------------------------------------------------------------
 
-    DrawList->AddRectFilled(BarMin, BarMax, PathBg, Rounding);
-    DrawList->AddRect(BarMin, BarMax, PathBorder, Rounding, 0, BorderThickness);
-
-    const bool bCanBack    = (BackHistory.Size() > 0);
-    const bool bCanForward = (ForwardHistory.Size() > 0);
-
-    auto DrawNavButtonAt = [&](const char* InId, float X, ImTextureID InIcon, bool bEnabled) -> bool
+    const auto DrawNavButton = [&](const char* InId, float X, ImTextureID InIcon, bool bEnabled, bool bForward) -> bool
     {
-        ImGui::SetCursorScreenPos(ImVec2(X, ControlY));
+        const ImVec2 BtnMin = ImVec2(X, ControlY);
+        const ImVec2 BtnMax = ImVec2(X + NavBtnW, ControlY + NavBtnH);
+
+        ImGui::SetCursorScreenPos(BtnMin);
         ImGui::PushID(InId);
 
-        if (!bEnabled)
+        const bool bPressed = ImGui::InvisibleButton("##NavBtn", ImVec2(NavBtnW, NavBtnH));
+        const bool bHovered = bEnabled ? ImGui::IsItemHovered() : false;
+
+        if (bHovered)
         {
-            ImGui::BeginDisabled();
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
         }
 
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, Rounding);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, BorderThickness);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(IconPadPx, IconPadPx));
+        const ImU32 BgCol = bHovered ? NavBgHover : NavBgIdle;
 
-        ImGui::PushStyleColor(ImGuiCol_Button, ButtonBg);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ButtonHover);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ButtonActive);
-        ImGui::PushStyleColor(ImGuiCol_Border, PathBorder);
+        ImU32 IconCol = NavIconDisabled;
+        if (bEnabled)
+        {
+            IconCol = bHovered ? NavIconHover : NavIconEnabled;
+        }
 
-        bool bPressed = false;
+        DrawList->AddRectFilled(BtnMin, BtnMax, BgCol, NavButtonRounding);
+
         if (InIcon)
         {
-            bPressed = ImGui::ImageButton("##NavBtn", InIcon, ImVec2(NavIconPx, NavIconPx));
+            const float  IconX   = BtnMin.x + (NavBtnW - NavIconPx) * 0.5f;
+            const float  IconY   = BtnMin.y + (NavBtnH - NavIconPx) * 0.5f;
+            const ImVec2 IconMin = ImVec2(IconX, IconY);
+            const ImVec2 IconMax = ImVec2(IconX + NavIconPx, IconY + NavIconPx);
+
+            DrawList->AddImage(InIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), IconCol);
         }
         else
         {
-            bPressed = ImGui::Button("?", ImVec2(NavButtonOuterPx, NavButtonOuterPx));
-        }
+            const float TriW = 8.0f;
+            const float TriH = 10.0f;
+            const float Cx   = (BtnMin.x + BtnMax.x) * 0.5f;
+            const float Cy   = (BtnMin.y + BtnMax.y) * 0.5f;
 
-        ImGui::PopStyleColor(4);
-        ImGui::PopStyleVar(3);
+            ImVec2 P0;
+            ImVec2 P1;
+            ImVec2 P2;
+            if (bForward)
+            {
+                P0 = ImVec2(Cx - TriW * 0.5f, Cy - TriH * 0.5f);
+                P1 = ImVec2(Cx - TriW * 0.5f, Cy + TriH * 0.5f);
+                P2 = ImVec2(Cx + TriW * 0.5f, Cy);
+            }
+            else
+            {
+                P0 = ImVec2(Cx + TriW * 0.5f, Cy - TriH * 0.5f);
+                P1 = ImVec2(Cx + TriW * 0.5f, Cy + TriH * 0.5f);
+                P2 = ImVec2(Cx - TriW * 0.5f, Cy);
+            }
 
-        if (!bEnabled)
-        {
-            ImGui::EndDisabled();
+            DrawList->AddTriangleFilled(P0, P1, P2, IconCol);
         }
 
         ImGui::PopID();
         return bEnabled && bPressed;
     };
 
-    if (DrawNavButtonAt("Back", BackX, EditorIcons::PreviousIcon, bCanBack))
+    const bool bCanBack    = BackHistory.Size() > 0;
+    const bool bCanForward = ForwardHistory.Size() > 0;
+
+    ImTextureID BackIcon    = EditorIcons::PreviousIcon;
+    ImTextureID ForwardIcon = EditorIcons::NextIcon;
+
+    if (DrawNavButton("Back", BackX, BackIcon, bCanBack, false))
     {
         NavigateBack();
     }
 
-    if (DrawNavButtonAt("Forward", ForwardX, EditorIcons::NextIcon, bCanForward))
+    if (DrawNavButton("Forward", ForwardX, ForwardIcon, bCanForward, true))
     {
         NavigateForward();
     }
 
+    // -------------------------------------------------------------------------------------
+    // Draw navigation bar
+    // -------------------------------------------------------------------------------------
+    
+    const bool  bBarHovered = ImGui::IsMouseHoveringRect(BarMin, BarMax, true);
+    const ImU32 BorderCol   = bBarHovered ? BarBorderHover : BarBorderNormal;
+
+    DrawList->AddRectFilled(BarMin, BarMax, BarBg, BarRounding);
+    DrawList->AddRect(BarMin, BarMax, BorderCol, BarRounding, 0, BarBorderTh);
+
+    // -------------------------------------------------------------------------------------
+    // Breadcrumb rendering
+    // -------------------------------------------------------------------------------------
+
     DrawList->PushClipRect(BarMin, BarMax, true);
 
-    constexpr float InnerPadX = 8.0f;
-
-    const float CrumbStartX = BarMin.x + InnerPadX;
-    const float CrumbY      = BarMin.y + (BarH - ImGui::GetTextLineHeight()) * 0.5f;
-
-    ImGui::SetCursorScreenPos(ImVec2(CrumbStartX, CrumbY));
-
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
-
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.08f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.12f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(TextColor));
+    float       CursorX = BarMin.x + 8.0f;
+    const float CenterY = BarMin.y + BarH * 0.5f;
 
     const auto DrawSeparator = [&]()
     {
-        ImGui::SameLine();
-        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(SepTextColor));
-        ImGui::TextUnformatted(">");
-        ImGui::PopStyleColor();
-        ImGui::SameLine();
+        if (EditorIcons::RightArrowIcon)
+        {
+            const float  IconY   = CenterY - SepIconPx * 0.5f;
+            const ImVec2 IconMin = ImVec2(CursorX, IconY);
+            const ImVec2 IconMax = ImVec2(CursorX + SepIconPx, IconY + SepIconPx);
+
+            DrawList->AddImage(EditorIcons::RightArrowIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), SepColor);
+
+            CursorX += SepIconPx + SepGapAfterPx;
+        }
+        else
+        {
+            const char*  Sep     = ">";
+            const ImVec2 SepSize = ImGui::CalcTextSize(Sep);
+            const ImVec2 SepPos  = ImVec2(CursorX, CenterY - SepSize.y * 0.5f);
+
+            DrawList->AddText(SepPos, SepColor, Sep);
+
+            CursorX += SepSize.x + SepGapAfterPx;
+        }
     };
 
-    const auto DrawCrumb = [&](const char* InLabel, const TArray<int32>& InTargetPath, int32 InId)
+    const auto DrawCrumbButton = [&](const char* InLabel, const TArray<int32>& InTargetPath, int32 InId)
     {
+        if (!InLabel || InLabel[0] == 0)
+        {
+            return;
+        }
+
+        ImFont* FontToUse = EditorFonts::SegoeUI_22 ? EditorFonts::SegoeUI_22 : ImGui::GetFont();
+        ImGui::PushFont(FontToUse);
+
+        const ImVec2 TextSize = ImGui::CalcTextSize(InLabel);
+        const float  ButtonW  = TextSize.x + CrumbPadX * 2.0f;
+        const float  ButtonH  = Math::Min(BarH - 4.0f, TextSize.y + CrumbPadY * 2.0f);
+        const float  ButtonY  = CenterY - ButtonH * 0.5f;
+
+        if (CursorX + ButtonW > BarMax.x - 6.0f)
+        {
+            ImGui::PopFont();
+            return;
+        }
+
+        const ImVec2 ButtonMin = ImVec2(CursorX, ButtonY);
+        const ImVec2 ButtonMax = ImVec2(CursorX + ButtonW, ButtonY + ButtonH);
+
+        ImGui::SetCursorScreenPos(ButtonMin);
         ImGui::PushID(InId);
 
-        if (ImGui::Button(InLabel))
+        const bool bPressed = ImGui::InvisibleButton("##CrumbBtn", ImVec2(ButtonW, ButtonH));
+        const bool bHovered = ImGui::IsItemHovered();
+
+        if (bHovered)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+        }
+
+        const ImU32 BgCol   = bHovered ? CrumbBgHover : CrumbBgIdle;
+        const ImU32 TextCol = bHovered ? CrumbTextHover : CrumbTextIdle;
+        DrawList->AddRectFilled(ButtonMin, ButtonMax, BgCol, CrumbRounding);
+
+        const ImVec2 TextPos = ImVec2(ButtonMin.x + CrumbPadX, CenterY - TextSize.y * 0.5f);
+        DrawList->AddText(FontToUse, FontToUse->FontSize, TextPos, TextCol, InLabel);
+
+        if (bPressed)
         {
             NavigateToFolderPath(InTargetPath, true);
         }
 
         ImGui::PopID();
+        ImGui::PopFont();
+
+        CursorX += ButtonW + 5.0f;
     };
 
     {
         TArray<int32> EmptyPath;
-        DrawCrumb("Root", EmptyPath, 1000);
+        DrawCrumbButton("Root", EmptyPath, 1000);
     }
 
     if (SelectedFolderPath.Size() > 0)
@@ -1072,15 +1173,12 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
 
             PrefixPath.Add(SelectedFolderPath[Depth]);
 
-            FileInfo* Folder  = GetFolderFromPath(PrefixPath);
-            const char* Label = Folder ? Folder->Name : "<Invalid>";
+            FileInfo*   Folder = GetFolderFromPath(PrefixPath);
+            const char* Label  = Folder ? Folder->Name : "<Invalid>";
 
-            DrawCrumb(Label, PrefixPath, 1100 + Depth);
+            DrawCrumbButton(Label, PrefixPath, 1100 + Depth);
         }
     }
-
-    ImGui::PopStyleColor(4);
-    ImGui::PopStyleVar(3);
 
     DrawList->PopClipRect();
 
