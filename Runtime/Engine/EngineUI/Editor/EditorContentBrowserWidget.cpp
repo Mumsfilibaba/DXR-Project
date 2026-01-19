@@ -226,23 +226,23 @@ void FEditorContentBrowserWidget::DrawSearchField(const char* InId, const char* 
 
 void FEditorContentBrowserWidget::DrawFolderPanel()
 {
-    const ImVec4 PanelBg       = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
-    const ImVec4 NameTextColor = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+    const ImVec4 PanelBg             = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
+    const ImVec4 NameTextColor       = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+    const ImU32  FolderActiveColor   = IM_COL32(0, 112, 224, 255);
+    const ImU32  FolderInactiveColor = IM_COL32(64, 87, 111, 255);
+    const ImU32  FolderHoverColor    = IM_COL32(56, 56, 56, 255);
+    const ImU32  FolderPathColor     = IM_COL32(44, 50, 58, 255);
 
-    const ImU32 FolderActiveColor   = IM_COL32(0, 112, 224, 255);
-    const ImU32 FolderInactiveColor = IM_COL32(64, 87, 111, 255);
-    const ImU32 FolderHoverColor    = IM_COL32(56, 56, 56, 255);
-    const ImU32 FolderPathColor     = IM_COL32(44, 50, 58, 255);
-
-    const bool bFolderSearchActive = (GetTrimmedQuery(FolderSearchBuffer) && *GetTrimmedQuery(FolderSearchBuffer) != 0);
+    const CHAR* TrimmedQuery        = GetTrimmedQuery(FolderSearchBuffer);
+    const bool  bFolderSearchActive = TrimmedQuery && *TrimmedQuery != 0;
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, PanelBg);
 
     if (ImGui::BeginChild("##CB_Folders", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar))
     {
-        constexpr float HeaderHeightPx   = 42.0f;
-        constexpr float HeaderInputPadX  = 8.0f;
-        constexpr float HeaderBorderPx   = 2.0f;
+        constexpr float HeaderHeightPx  = 42.0f;
+        constexpr float HeaderInputPadX = 8.0f;
+        constexpr float HeaderBorderPx  = 2.0f;
 
         const ImU32 HeaderBg     = IM_COL32(47, 47, 47, 255);
         const ImU32 HeaderBorder = IM_COL32(26, 26, 26, 255);
@@ -278,6 +278,12 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
         ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 12.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 16.0f);
 
+        float  ScrollY    = 0.0f;
+        float  ScrollMaxY = 0.0f;
+        ImVec2 ScrollPos  = ImVec2(0, 0);
+        ImVec2 ScrollSize = ImVec2(0, 0);
+
+        bool bScrollHasScrollbarY = false;
         if (ImGui::BeginChild("##CB_FoldersScroll", ImVec2(0, 0), false, 0))
         {
             if (RootFolders.Size() > 0)
@@ -308,9 +314,63 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
                 DrawFolderTreeRecursive(Root, Path, 0, Storage, NameTextColor, FolderActiveColor, FolderInactiveColor, FolderHoverColor, FolderPathColor, bFolderSearchActive);
             }
+
+            ScrollY    = ImGui::GetScrollY();
+            ScrollMaxY = ImGui::GetScrollMaxY();
+
+            ImGuiWindow* ScrollWindow = ImGui::GetCurrentWindow();
+            if (ScrollWindow)
+            {
+                bScrollHasScrollbarY = ScrollWindow->ScrollbarY;
+                ScrollPos            = ScrollWindow->Pos;
+                ScrollSize           = ScrollWindow->Size;
+            }
         }
 
         ImGui::EndChild(); // ##CB_FoldersScroll
+
+        // ---------------------------------------------------------------------------------
+        // Shadows overlay
+        // ---------------------------------------------------------------------------------
+        if (bScrollHasScrollbarY && ScrollSize.x > 0.0f && ScrollSize.y > 0.0f)
+        {
+            constexpr float ShadowHeightPx = 10.0f;
+            constexpr float EpsilonPx      = 1.0f;
+
+            const bool bShowTopShadow    = (ScrollY > EpsilonPx);
+            const bool bShowBottomShadow = (ScrollY < (ScrollMaxY - EpsilonPx));
+
+            if (bShowTopShadow || bShowBottomShadow)
+            {
+                ImDrawList* OverlayDrawList = ImGui::GetForegroundDrawList();
+
+                const ImVec2 ClipMin = ScrollPos;
+                const ImVec2 ClipMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+
+                OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
+
+                const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
+                const ImU32 Clear = IM_COL32(0, 0, 0, 0);
+
+                if (bShowTopShadow)
+                {
+                    const ImVec2 ShadowMin = ScrollPos;
+                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeightPx);
+
+                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
+                }
+
+                if (bShowBottomShadow)
+                {
+                    const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeightPx);
+                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+
+                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
+                }
+
+                OverlayDrawList->PopClipRect();
+            }
+        }
 
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(4);
@@ -610,11 +670,17 @@ void FEditorContentBrowserWidget::DrawContentPanel()
         ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 12.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 16.0f);
 
+        float  ScrollY    = 0.0f;
+        float  ScrollMaxY = 0.0f;
+        ImVec2 GridPos    = ImVec2(0, 0);
+        ImVec2 GridSize   = ImVec2(0, 0);
+
+        bool bGridHasScrollbarY = false;
         if (ImGui::BeginChild("##CB_GridScroll", ImVec2(0, 0), false, 0))
         {
-            FileInfo*         CurrentFolder = GetFolderFromPath(SelectedFolderPath);
-            TArray<FileInfo>* ItemsPtr      = nullptr;
+            FileInfo* CurrentFolder = GetFolderFromPath(SelectedFolderPath);
 
+            TArray<FileInfo>* ItemsPtr = nullptr;
             if (SelectedFolderPath.Size() <= 0)
             {
                 ItemsPtr = &RootFolders;
@@ -700,7 +766,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                                 NewPath.Add(i);
                                 NavigateToFolderPath(NewPath, true);
 
-                                SelectedItemIndex         = -1;
+                                SelectedItemIndex = -1;
                                 bSelectionActiveInBrowser = true;
                             }
                         }
@@ -829,48 +895,69 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                 }
             }
 
-            // -----------------------------------------------------------------------------
-            // Top + bottom shadows
-            // -----------------------------------------------------------------------------
-
-            {
-                ImGuiWindow* GridWindow = ImGui::GetCurrentWindow();
-                const bool bHasScrollBarY = (GridWindow && GridWindow->ScrollbarY);
-
-                if (bHasScrollBarY)
-                {
-                    constexpr float ShadowHeightPx = 10.0f;
-
-                    const ImU32 TopDark     = IM_COL32(0, 0, 0, 140);
-                    const ImU32 TopClear    = IM_COL32(0, 0, 0, 0);
-                    const ImU32 BottomClear = IM_COL32(0, 0, 0, 0);
-                    const ImU32 BottomDark  = IM_COL32(0, 0, 0, 140);
-
-                    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-
-                    {
-                        const ImVec2 ShadowMin = GridWindow->Pos;
-                        const ImVec2 ShadowMax = ImVec2(GridWindow->Pos.x + GridWindow->Size.x, GridWindow->Pos.y + ShadowHeightPx);
-
-                        DrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, TopDark, TopDark, TopClear, TopClear);
-                    }
-
-                    {
-                        const ImVec2 ShadowMin = ImVec2(GridWindow->Pos.x, GridWindow->Pos.y + GridWindow->Size.y - ShadowHeightPx);
-                        const ImVec2 ShadowMax = ImVec2(GridWindow->Pos.x + GridWindow->Size.x, GridWindow->Pos.y + GridWindow->Size.y);
-
-                        DrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, BottomClear, BottomClear, BottomDark, BottomDark);
-                    }
-                }
-            }
-
             if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered())
             {
                 SelectedItemIndex = -1;
             }
+
+            // Capture scroll metrics for shadow conditions
+            ScrollY    = ImGui::GetScrollY();
+            ScrollMaxY = ImGui::GetScrollMaxY();
+
+            ImGuiWindow* GridWindow = ImGui::GetCurrentWindow();
+            if (GridWindow)
+            {
+                bGridHasScrollbarY = GridWindow->ScrollbarY;
+                GridPos            = GridWindow->Pos;
+                GridSize           = GridWindow->Size;
+            }
         }
 
         ImGui::EndChild(); // ##CB_GridScroll
+
+        // -----------------------------------------------------------------------------
+        // Shadows
+        // -----------------------------------------------------------------------------
+
+        if (bGridHasScrollbarY && GridSize.x > 0.0f && GridSize.y > 0.0f)
+        {
+            constexpr float ShadowHeightPx = 10.0f;
+            constexpr float EpsilonPx      = 1.0f;
+
+            const bool bShowTopShadow    = ScrollY > EpsilonPx;
+            const bool bShowBottomShadow = ScrollY < (ScrollMaxY - EpsilonPx);
+
+            if (bShowTopShadow || bShowBottomShadow)
+            {
+                ImDrawList* OverlayDrawList = ImGui::GetForegroundDrawList();
+
+                const ImVec2 ClipMin = GridPos;
+                const ImVec2 ClipMax = ImVec2(GridPos.x + GridSize.x, GridPos.y + GridSize.y);
+
+                OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
+
+                const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
+                const ImU32 Clear = IM_COL32(0, 0, 0, 0);
+
+                if (bShowTopShadow)
+                {
+                    const ImVec2 ShadowMin = GridPos;
+                    const ImVec2 ShadowMax = ImVec2(GridPos.x + GridSize.x, GridPos.y + ShadowHeightPx);
+
+                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
+                }
+
+                if (bShowBottomShadow)
+                {
+                    const ImVec2 ShadowMin = ImVec2(GridPos.x, GridPos.y + GridSize.y - ShadowHeightPx);
+                    const ImVec2 ShadowMax = ImVec2(GridPos.x + GridSize.x, GridPos.y + GridSize.y);
+
+                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
+                }
+
+                OverlayDrawList->PopClipRect();
+            }
+        }
 
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(4);
@@ -957,13 +1044,13 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     // -------------------------------------------------------------------------------------
 
     constexpr float HeaderHeightPx    = 40.0f;
-    constexpr float HeaderPadX        = 6.0f;
+    constexpr float HeaderPadX        = 1.0f;
     constexpr float NavIconPx         = 24.0f;
     constexpr float NavBtnH           = 32.0f;
     constexpr float NavBtnExtraX      = 6.0f;
     constexpr float NavBtnW           = NavBtnH + NavBtnExtraX * 2.0f;
-    constexpr float NavGapPx          = 4.0f;
-    constexpr float AfterNavGapPx     = 4.0f;
+    constexpr float NavGapPx          = 2.0f;
+    constexpr float AfterNavGapPx     = 2.0f;
     constexpr float NavButtonRounding = 4.0f;
     constexpr float CrumbPadX         = 8.0f;
     constexpr float CrumbPadY         = 1.0f;
@@ -1016,7 +1103,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     const ImVec2 BarMax   = ImVec2(BarX + BarW, BarY + BarH);
 
     // -------------------------------------------------------------------------------------
-    // Back/Forward button helper
+    // Back/Forward button
     // -------------------------------------------------------------------------------------
 
     const auto DrawNavButton = [&](const char* InId, float X, ImTextureID InIcon, bool bEnabled, bool bForward) -> bool
