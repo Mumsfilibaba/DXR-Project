@@ -33,9 +33,11 @@ private:
     };
 
 private:
+
     // -----------------------------------------------------------------------------------------
     // Main draw helpers
     // -----------------------------------------------------------------------------------------
+
     void DrawLayoutTable();
     void DrawFolderPanel();
     void DrawContentPanel();
@@ -43,12 +45,14 @@ private:
     // -----------------------------------------------------------------------------------------
     // UI helpers
     // -----------------------------------------------------------------------------------------
+
     void DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer);
     void CenteredMessage(const char* InText, const ImVec4& InMutedTextColor);
 
     // -----------------------------------------------------------------------------------------
     // Search/filter helpers
     // -----------------------------------------------------------------------------------------
+
     const CHAR* GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuf) const;
     bool MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) const;
 
@@ -58,6 +62,7 @@ private:
     // -----------------------------------------------------------------------------------------
     // Folder tree helpers
     // -----------------------------------------------------------------------------------------
+
     bool HasChildFolders(const FileInfo& InFolder) const;
 
     void DrawFolderTreeRecursive(FileInfo& InFolder, TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor,
@@ -69,8 +74,19 @@ private:
     // -----------------------------------------------------------------------------------------
     // Content helpers
     // -----------------------------------------------------------------------------------------
+
     FileInfo* GetFolderFromPath(const TArray<int32>& InPath);
     void BuildFolderPathString(const TArray<int32>& InPath, char* OutBuf, int32 OutBufSize) const;
+
+    // -----------------------------------------------------------------------------------------
+    // Content panel header / navigation
+    // -----------------------------------------------------------------------------------------
+
+    void DrawContentHeaderBar();
+    void NavigateToFolderPath(const TArray<int32>& InNewPath, bool bAddToHistory);
+    void NavigateBack();
+    void NavigateForward();
+    bool ArePathsEqual(const TArray<int32>& A, const TArray<int32>& B) const;
 
 private:
     FDelegateHandle         ImGuiDelegateHandle;
@@ -85,6 +101,8 @@ private:
     // Example: [0]        -> RootFolders[0]
     //          [0, 2]     -> RootFolders[0].FolderContents[2]
     //          [0, 2, 1]  -> RootFolders[0].FolderContents[2].FolderContents[1]
-    TArray<int32>    SelectedFolderPath;
-    TArray<FileInfo> RootFolders;
+    TArray<int32>         SelectedFolderPath;
+    TArray<FileInfo>      RootFolders;
+    TArray<TArray<int32>> BackHistory;
+    TArray<TArray<int32>> ForwardHistory;
 };
