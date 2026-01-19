@@ -586,7 +586,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
     if (ImGui::BeginChild("##CB_Content", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar))
     {
         // -----------------------------------------------------------------------------
-        // Header bar (Back/Forward + Breadcrumb Path)
+        // Header bar
         // -----------------------------------------------------------------------------
 
         DrawContentHeaderBar();
@@ -612,9 +612,9 @@ void FEditorContentBrowserWidget::DrawContentPanel()
 
         if (ImGui::BeginChild("##CB_GridScroll", ImVec2(0, 0), false, 0))
         {
-            FileInfo* CurrentFolder = GetFolderFromPath(SelectedFolderPath);
+            FileInfo*         CurrentFolder = GetFolderFromPath(SelectedFolderPath);
+            TArray<FileInfo>* ItemsPtr      = nullptr;
 
-            TArray<FileInfo>* ItemsPtr = nullptr;
             if (SelectedFolderPath.Size() <= 0)
             {
                 ItemsPtr = &RootFolders;
@@ -736,6 +736,10 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                             ImGui::PopStyleColor();
                         }
 
+                        // -----------------------------------------------------------------------------
+                        // Tooltip
+                        // -----------------------------------------------------------------------------
+
                         if (bHovered)
                         {
                             const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
@@ -822,6 +826,41 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                     }
 
                     ImGui::EndTable();
+                }
+            }
+
+            // -----------------------------------------------------------------------------
+            // Top + bottom shadows
+            // -----------------------------------------------------------------------------
+
+            {
+                ImGuiWindow* GridWindow = ImGui::GetCurrentWindow();
+                const bool bHasScrollBarY = (GridWindow && GridWindow->ScrollbarY);
+
+                if (bHasScrollBarY)
+                {
+                    constexpr float ShadowHeightPx = 10.0f;
+
+                    const ImU32 TopDark     = IM_COL32(0, 0, 0, 140);
+                    const ImU32 TopClear    = IM_COL32(0, 0, 0, 0);
+                    const ImU32 BottomClear = IM_COL32(0, 0, 0, 0);
+                    const ImU32 BottomDark  = IM_COL32(0, 0, 0, 140);
+
+                    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+                    {
+                        const ImVec2 ShadowMin = GridWindow->Pos;
+                        const ImVec2 ShadowMax = ImVec2(GridWindow->Pos.x + GridWindow->Size.x, GridWindow->Pos.y + ShadowHeightPx);
+
+                        DrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, TopDark, TopDark, TopClear, TopClear);
+                    }
+
+                    {
+                        const ImVec2 ShadowMin = ImVec2(GridWindow->Pos.x, GridWindow->Pos.y + GridWindow->Size.y - ShadowHeightPx);
+                        const ImVec2 ShadowMax = ImVec2(GridWindow->Pos.x + GridWindow->Size.x, GridWindow->Pos.y + GridWindow->Size.y);
+
+                        DrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, BottomClear, BottomClear, BottomDark, BottomDark);
+                    }
                 }
             }
 
