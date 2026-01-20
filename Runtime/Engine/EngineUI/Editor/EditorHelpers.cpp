@@ -1776,9 +1776,11 @@ bool EditorFonts::Initialize()
 
     ImGuiIO& State = ImGui::GetIO();
     State.Fonts->Clear();
-    
+
+    // Default font
     DefaultFont = State.Fonts->AddFontDefault();
-    
+
+    // Load fonts from file
     SegoeUI_18 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
     SegoeUI_22 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 22.0f);
     Consola_16 = LoadEditorFont("Editor/Fonts/consola.ttf", 16.0f);
