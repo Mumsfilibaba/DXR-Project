@@ -319,8 +319,8 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
     // Layout
     // -----------------------------------------------------------------------------------------
 
-    constexpr float SidePadding     = 3.0f;
-    constexpr float TopPadding      = 12.0f;
+    constexpr float SidePadding     = 4.0f;
+    constexpr float TopPadding      = 8.0f;
     constexpr float BottomPadding   = 8.0f;
     constexpr float InnerPadding    = 3.0f;
     constexpr float HeaderHeight    = 42.0f;

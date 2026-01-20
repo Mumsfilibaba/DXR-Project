@@ -22,7 +22,7 @@ public:
 
     float GetHeight() const
     {
-        return 48.0f;
+        return 40.0f;
     }
 
 private:

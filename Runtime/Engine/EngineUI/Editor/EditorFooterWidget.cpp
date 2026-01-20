@@ -49,6 +49,9 @@ void FEditorFooterWidget::Draw()
     bool bIsInputFieldActive    = false;
     bool bShowCandidatesOverlay = false;
 
+    ImFont* FontToUse = EditorFonts::Consola_14 ? EditorFonts::Consola_14 : ImGui::GetFont();
+    ImGui::PushFont(FontToUse);
+
     if (ImGui::BeginChild("Console", ImVec2(0.0f, GetHeight()), ConsoleChildWindowFlags, ConsoleWindowFlags))
     {
         // Draw input
@@ -343,6 +346,8 @@ void FEditorFooterWidget::Draw()
         ImGui::PopStyleVar(4);
         ImGui::PopStyleColor(4);
     }
+
+    ImGui::PopFont();
 }
 
 void FEditorFooterWidget::InvalidateCandidates()
