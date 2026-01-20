@@ -26,7 +26,7 @@ public:
     void Draw();
     void DrawMenuBar();
     void DrawDockSpace();
-    void DrawConsole();
+    void DrawFooter();
 
 private:
     FEditorEngine*  EditorEngine;

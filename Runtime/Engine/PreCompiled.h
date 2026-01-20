@@ -21,9 +21,12 @@
 #include "Engine/Resources/Resource.h"
 #include "Engine/Resources/Texture.h"
 
-#include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
+#include "Engine/EngineUI/Editor/EditorFooterWidget.h"
+#include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
+#include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"

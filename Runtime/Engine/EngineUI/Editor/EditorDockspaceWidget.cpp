@@ -1,7 +1,7 @@
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
-#include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
+#include "Engine/EngineUI/Editor/EditorFooterWidget.h"
 #include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
@@ -118,7 +118,6 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
     Ids.DockCenterTop    = 0;
     Ids.DockCenterBottom = 0;
 
-    // Cleanup previous Dockspace and add a new one
     ImGui::DockBuilderRemoveNodeDockedWindows(Ids.Dockspace, true);
     ImGui::DockBuilderRemoveNode(Ids.Dockspace);
     ImGui::DockBuilderAddNode(Ids.Dockspace, ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
@@ -163,17 +162,15 @@ void FEditorDockspaceWidget::Draw()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 
-    // Window for the Dockspace
     ImGui::Begin("##DockspaceHost", nullptr, HostFlags);
-    
+
     ImGui::PopStyleVar(3);
-    
-    // Draw all of the contents
+
     DrawMenuBar();
     DrawDockSpace();
-    DrawConsole();
+    DrawFooter();
 
-    ImGui::End(); // Dockspace Host Window
+    ImGui::End();
 }
 
 void FEditorDockspaceWidget::DrawMenuBar()
@@ -381,7 +378,7 @@ void FEditorDockspaceWidget::DrawDockSpace()
     float FooterHeight = 32.0f;
     if (EditorEngine)
     {
-        if (FEditorConsoleInputFieldWidget* ConsoleInputWidget = EditorEngine->GetConsoleWidget().Get())
+        if (FEditorFooterWidget* ConsoleInputWidget = EditorEngine->GetFooterWidget().Get())
         {
             FooterHeight = ConsoleInputWidget->GetHeight();
         }
@@ -417,13 +414,13 @@ void FEditorDockspaceWidget::DrawDockSpace()
     }
 }
 
-void FEditorDockspaceWidget::DrawConsole()
+void FEditorDockspaceWidget::DrawFooter()
 {
     if (EditorEngine)
     {
-        if (FEditorConsoleInputFieldWidget* ConsoleInputWidget = EditorEngine->GetConsoleWidget().Get())
+        if (FEditorFooterWidget* FooterWidget = EditorEngine->GetFooterWidget().Get())
         {
-            ConsoleInputWidget->Draw();
+            FooterWidget->Draw();
         }
     }
 }
