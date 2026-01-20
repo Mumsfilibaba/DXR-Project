@@ -1,10 +1,10 @@
-#include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
+#include "Engine/EngineUI/Editor/EditorOutputLogWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include <imgui.h>
 
-FEditorLogOutputWidget::FEditorLogOutputWidget()
+FEditorOutputLogWidget::FEditorOutputLogWidget()
     : IOutputDevice()
     , bVisible(true)
     , bAutoScroll(true)
@@ -22,13 +22,13 @@ FEditorLogOutputWidget::FEditorLogOutputWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorLogOutputWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorOutputLogWidget::Draw));
     }
 
     SearchFilterBuffer.Fill(0);
 }
 
-FEditorLogOutputWidget::~FEditorLogOutputWidget()
+FEditorOutputLogWidget::~FEditorOutputLogWidget()
 {
     if (FOutputDeviceLogger* Logger = FOutputDeviceLogger::Get())
     {
@@ -41,12 +41,12 @@ FEditorLogOutputWidget::~FEditorLogOutputWidget()
     }
 }
 
-void FEditorLogOutputWidget::Log(const FString& Message)
+void FEditorOutputLogWidget::Log(const FString& Message)
 {
     Log(ELogSeverity::Info, Message);
 }
 
-void FEditorLogOutputWidget::Log(ELogSeverity Severity, const FString& Message)
+void FEditorOutputLogWidget::Log(ELogSeverity Severity, const FString& Message)
 {
     SCOPED_LOCK(MessagesCS);
 
@@ -64,7 +64,7 @@ void FEditorLogOutputWidget::Log(ELogSeverity Severity, const FString& Message)
         bScrollToBottom = true;
     }
 }
-void FEditorLogOutputWidget::DrawFilterBar()
+void FEditorOutputLogWidget::DrawFilterBar()
 {
     ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -141,7 +141,7 @@ void FEditorLogOutputWidget::DrawFilterBar()
     }
 }
 
-void FEditorLogOutputWidget::DrawLogList()
+void FEditorOutputLogWidget::DrawLogList()
 {
     const auto IsSeverityMatching = [this](ELogSeverity Severity)
     {
@@ -226,7 +226,7 @@ void FEditorLogOutputWidget::DrawLogList()
     }
 }
 
-void FEditorLogOutputWidget::Draw()
+void FEditorOutputLogWidget::Draw()
 {
     if (!bVisible)
     {

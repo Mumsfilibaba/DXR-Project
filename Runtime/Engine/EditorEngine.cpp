@@ -17,7 +17,7 @@ FEditorEngine::FEditorEngine()
     , SelectedLightProbe(nullptr)
     , DockspaceWidget(nullptr)
     , FooterWidget(nullptr)
-    , LogOutputWidget(nullptr)
+    , OutputLogWidget(nullptr)
     , SceneHierarchyWidget(nullptr)
     , ContentBrowserWidget(nullptr)
     , ViewportImage(nullptr)
@@ -39,9 +39,9 @@ bool FEditorEngine::Init()
     if (IImguiPlugin::IsEnabled())
     {
         DockspaceWidget      = MakeSharedPtr<FEditorDockspaceWidget>(this);
-        LogOutputWidget      = MakeSharedPtr<FEditorLogOutputWidget>();
+        OutputLogWidget      = MakeSharedPtr<FEditorOutputLogWidget>();
         SceneHierarchyWidget = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
-        FooterWidget         = MakeSharedPtr<FEditorFooterWidget>(LogOutputWidget);
+        FooterWidget         = MakeSharedPtr<FEditorFooterWidget>(OutputLogWidget);
         PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
         ContentBrowserWidget = MakeSharedPtr<FEditorContentBrowserWidget>();
         
@@ -73,7 +73,7 @@ void FEditorEngine::Release()
     if (IImguiPlugin::IsEnabled())
     {
         DockspaceWidget.Reset();
-        LogOutputWidget.Reset();
+        OutputLogWidget.Reset();
         SceneHierarchyWidget.Reset();
         FooterWidget.Reset();
         ViewportWidget.Reset();

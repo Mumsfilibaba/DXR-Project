@@ -2,7 +2,7 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
 #include "Engine/EngineUI/Editor/EditorFooterWidget.h"
-#include "Engine/EngineUI/Editor/EditorLogOutputWidget.h"
+#include "Engine/EngineUI/Editor/EditorOutputLogWidget.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
@@ -270,7 +270,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
 
                 if (EditorEngine)
                 {
-                    if (FEditorLogOutputWidget* LogWidget = EditorEngine->GetLogOutputWidget().Get())
+                    if (FEditorOutputLogWidget* LogWidget = EditorEngine->GetOutputLogWidget().Get())
                     {
                         bool bVisible = LogWidget->IsVisible();
                         if (EditorWidgets::EditorMenuItem("Output Log", nullptr, bVisible))
