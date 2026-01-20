@@ -62,6 +62,10 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.TabBarBorderSize     = 0.0f;
     Style.DockingSeparatorSize = 4.0f;
 
+    // ------------------------------------------------------------
+    // Default
+    // ------------------------------------------------------------
+
     Style.Colors[ImGuiCol_WindowBg]           = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
     Style.Colors[ImGuiCol_ChildBg]            = ImVec4(0.06f, 0.06f, 0.07f, 1.00f);
     Style.Colors[ImGuiCol_PopupBg]            = ImVec4(0.09f, 0.09f, 0.10f, 1.00f);
@@ -75,18 +79,14 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.Colors[ImGuiCol_Header]             = ImVec4(0.18f, 0.18f, 0.20f, 1.00f);
     Style.Colors[ImGuiCol_HeaderHovered]      = ImVec4(0.22f, 0.22f, 0.25f, 1.00f);
     Style.Colors[ImGuiCol_HeaderActive]       = ImVec4(0.26f, 0.26f, 0.30f, 1.00f);
-    Style.Colors[ImGuiCol_Tab]                = ImVec4(0.12f, 0.12f, 0.13f, 1.00f);
-    Style.Colors[ImGuiCol_TabHovered]         = ImVec4(0.24f, 0.24f, 0.26f, 1.00f);
-    Style.Colors[ImGuiCol_TabActive]          = ImVec4(0.18f, 0.18f, 0.20f, 1.00f);
-    Style.Colors[ImGuiCol_TabUnfocused]       = ImVec4(0.10f, 0.10f, 0.11f, 1.00f);
-    Style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.14f, 0.16f, 1.00f);
     Style.Colors[ImGuiCol_NavHighlight]       = ImVec4(0.37f, 0.37f, 0.80f, 1.00f);
-    Style.Colors[ImGuiCol_TitleBg]            = ImVec4(0.08f, 0.08f, 0.09f, 1.00f);
-    Style.Colors[ImGuiCol_TitleBgActive]      = ImVec4(0.10f, 0.10f, 0.11f, 1.00f);
     Style.Colors[ImGuiCol_MenuBarBg]          = ImVec4(0.09f, 0.09f, 0.10f, 1.00f);
     Style.Colors[ImGuiCol_Separator]          = ImVec4(0.25f, 0.25f, 0.28f, 1.00f);
 
+    // ------------------------------------------------------------
     // Docking split line / seam colors
+    // ------------------------------------------------------------
+
     const ImVec4 SplitterIdle    = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
     const ImVec4 SplitterHovered = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
     const ImVec4 SplitterActive  = SplitterHovered;
@@ -99,6 +99,24 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.Colors[ImGuiCol_ResizeGripActive]  = SplitterActive;
     Style.Colors[ImGuiCol_Separator]         = SplitterIdle;
     Style.Colors[ImGuiCol_ResizeGrip]        = SplitterIdle;
+
+    // ------------------------------------------------------------
+    // Docking Tabs
+    // ------------------------------------------------------------
+
+    Style.Colors[ImGuiCol_Tab]                = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_TabHovered]         = ImVec4(33.0f / 255.0f, 33.0f / 255.0f, 33.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_TabActive]          = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_TabUnfocused]       = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+
+    // ------------------------------------------------------------
+    // Title Bar
+    // ------------------------------------------------------------
+
+    Style.Colors[ImGuiCol_TitleBg]          = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_TitleBgActive]    = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
 
     // Load necessary icons
     if (!EditorIcons::Initialize())
