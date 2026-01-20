@@ -47,7 +47,7 @@ FEditorDockspaceWidget::~FEditorDockspaceWidget()
 bool FEditorDockspaceWidget::InitializeEditorStyle()
 {
     ImGuiStyle& Style = ImGui::GetStyle();
-    Style.WindowRounding       = 6.0f;
+    Style.WindowRounding       = 0.0f;
     Style.FrameRounding        = 4.0f;
     Style.GrabRounding         = 4.0f;
     Style.TabRounding          = 4.0f;

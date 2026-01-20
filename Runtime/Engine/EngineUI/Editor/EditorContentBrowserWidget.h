@@ -41,12 +41,13 @@ private:
     void DrawLayoutTable();
     void DrawFolderPanel();
     void DrawContentPanel();
+    void DrawContentGrid();
 
     // -----------------------------------------------------------------------------------------
     // UI helpers
     // -----------------------------------------------------------------------------------------
 
-    void DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer);
+    void DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth = -1.0f);
     void CenteredMessage(const char* InText, const ImVec4& InMutedTextColor);
 
     // -----------------------------------------------------------------------------------------

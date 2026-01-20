@@ -71,11 +71,19 @@ void FEditorContentBrowserWidget::Draw()
         return;
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, EditorStyleVars::SceneHierarchyItemSpacing);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, EditorStyleVars::SceneHierarchyWindowPadding);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
 
-    const ImGuiWindowFlags WindowFlags = ImGuiWindowFlags_NoFocusOnAppearing;
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(36, 36, 36, 255));
+    ImGui::PushStyleColor(ImGuiCol_ResizeGrip, IM_COL32(110, 110, 110, 120));
+    ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, IM_COL32(160, 160, 160, 200));
+    ImGui::PushStyleColor(ImGuiCol_ResizeGripActive,  IM_COL32(200, 200, 200, 255));
+
+    const ImGuiWindowFlags WindowFlags = 
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoFocusOnAppearing;
+
     if (ImGui::Begin("Content Browser", &bVisible, WindowFlags))
     {
         DrawLayoutTable();
@@ -83,34 +91,100 @@ void FEditorContentBrowserWidget::Draw()
 
     ImGui::End();
 
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar(3);
 }
 
 void FEditorContentBrowserWidget::DrawLayoutTable()
 {
-    const ImGuiTableFlags LayoutFlags =
-        ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_NoPadOuterX |
-        ImGuiTableFlags_BordersInnerV;
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-    if (!ImGui::BeginTable("##ContentBrowserLayout", 2, LayoutFlags))
+    const ImVec2 RootMin   = ImGui::GetCursorScreenPos();
+    const ImVec2 RootAvail = ImGui::GetContentRegionAvail();
+    const ImVec2 RootMax   = ImVec2(RootMin.x + RootAvail.x, RootMin.y + RootAvail.y);
+
+    // -----------------------------------------------------------------------------------------
+    // Layout
+    // -----------------------------------------------------------------------------------------
+
+    constexpr float PanelBorder = 4.0f;
+    constexpr float Splitter    = 3.0f;
+
+    // -----------------------------------------------------------------------------------------
+    // Color
+    // -----------------------------------------------------------------------------------------
+
+    const ImU32 BorderColor        = IM_COL32(21, 21, 21, 255);
+    const ImU32 SplitterColor      = IM_COL32(21, 21, 21, 255);
+    const ImU32 SplitterHoverColor = IM_COL32(56, 56, 56, 255);
+
+    const float OuterBorder = PanelBorder;
+
+    DrawList->AddRect(RootMin, RootMax, BorderColor, 0.0f, 0, OuterBorder);
+
+    const ImVec2 InnerMin  = ImVec2(RootMin.x + OuterBorder, RootMin.y + OuterBorder);
+    const ImVec2 InnerMax  = ImVec2(RootMax.x - OuterBorder, RootMax.y - OuterBorder);
+    const ImVec2 InnerSize = ImVec2(Math::Max(1.0f, InnerMax.x - InnerMin.x), Math::Max(1.0f, InnerMax.y - InnerMin.y));
+
+    static float FolderPanelWidth = 300.0f;
+
+    const float MinFolderWidth = 200.0f;
+    const float MaxFolderWidth = Math::Max(MinFolderWidth, InnerSize.x - 250.0f);
+
+    FolderPanelWidth = Math::Clamp(FolderPanelWidth, MinFolderWidth, MaxFolderWidth);
+
+    const float LeftWidth  = FolderPanelWidth;
+    const float RightWidth = Math::Max(1.0f, InnerSize.x - LeftWidth - Splitter);
+
+    const ImVec2 LeftMin  = InnerMin;
+    const ImVec2 LeftMax  = ImVec2(InnerMin.x + LeftWidth, InnerMax.y);
+    const ImVec2 SplitMin = ImVec2(LeftMax.x, InnerMin.y);
+    const ImVec2 SplitMax = ImVec2(LeftMax.x + Splitter, InnerMax.y);
+    const ImVec2 RightMin = ImVec2(SplitMax.x, InnerMin.y);
+    const ImVec2 RightMax = InnerMax;
+
+    DrawList->AddRect(LeftMin, LeftMax, BorderColor, 0.0f, 0, PanelBorder);
+    DrawList->AddRect(RightMin, RightMax, BorderColor, 0.0f, 0, PanelBorder);
+
+    // -----------------------------------------------------------------------------------------
+    // Splitter
+    // -----------------------------------------------------------------------------------------
+
+    ImGui::SetCursorScreenPos(SplitMin);
+    ImGui::InvisibleButton("##CB_Splitter", ImVec2(Splitter, InnerSize.y));
+
+    const bool bSplitterHovered = ImGui::IsItemHovered();
+    const bool bSplitterActive  = ImGui::IsItemActive();
+
+    if (bSplitterHovered || bSplitterActive)
     {
-        return;
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
     }
 
-    ImGui::TableSetupColumn("##Folders", ImGuiTableColumnFlags_WidthFixed, 260.0f);
-    ImGui::TableSetupColumn("##Content", ImGuiTableColumnFlags_WidthStretch);
+    const ImU32 SplitColor = (bSplitterHovered || bSplitterActive) ? SplitterHoverColor : SplitterColor;
+    DrawList->AddRectFilled(SplitMin, SplitMax, SplitColor, 0.0f);
 
-    ImGui::TableNextRow();
+    if (bSplitterActive)
+    {
+        const float DeltaX = ImGui::GetIO().MouseDelta.x;
+        FolderPanelWidth = Math::Clamp(FolderPanelWidth + DeltaX, MinFolderWidth, MaxFolderWidth);
+    }
 
-    ImGui::TableSetColumnIndex(0);
+    // -----------------------------------------------------------------------------------------
+    // Draw children
+    // -----------------------------------------------------------------------------------------
+
+    ImGui::SetCursorScreenPos(LeftMin);
+
+    ImGui::BeginChild("##CB_FolderPanelRoot", ImVec2(LeftWidth, InnerSize.y), false, ImGuiWindowFlags_NoScrollbar);
     DrawFolderPanel();
+    ImGui::EndChild();
 
-    ImGui::TableSetColumnIndex(1);
+    ImGui::SetCursorScreenPos(RightMin);
+
+    ImGui::BeginChild("##CB_ContentPanelRoot", ImVec2(RightWidth, InnerSize.y), false, ImGuiWindowFlags_NoScrollbar);
     DrawContentPanel();
-
-    ImGui::EndTable();
+    ImGui::EndChild();
 }
 
 const CHAR* FEditorContentBrowserWidget::GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuffer) const
@@ -208,69 +282,115 @@ bool FEditorContentBrowserWidget::IsPathPrefixOfSelected(const TArray<int32>& In
     return true;
 }
 
+void FEditorContentBrowserWidget::DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth)
+{
+    EditorWidgets::EditorSearchField(InId, InHint, InOutBuffer.Data(), InOutBuffer.Size(), InWidth, true);
+}
+
 void FEditorContentBrowserWidget::CenteredMessage(const char* InText, const ImVec4& InMutedTextColor)
 {
-    const ImVec2 Avail = ImGui::GetContentRegionAvail();
-    const ImVec2 Size  = ImGui::CalcTextSize(InText);
+    const ImVec2 Available = ImGui::GetContentRegionAvail();
+    const ImVec2 Size      = ImGui::CalcTextSize(InText);
 
-    ImGui::SetCursorPos(ImVec2(Math::Max(0.0f, (Avail.x - Size.x) * 0.5f), Math::Max(0.0f, (Avail.y - Size.y) * 0.5f)));
+    ImGui::SetCursorPos(ImVec2(Math::Max(0.0f, (Available.x - Size.x) * 0.5f), Math::Max(0.0f, (Available.y - Size.y) * 0.5f)));
     ImGui::PushStyleColor(ImGuiCol_Text, InMutedTextColor);
     ImGui::TextUnformatted(InText);
     ImGui::PopStyleColor();
 }
 
-void FEditorContentBrowserWidget::DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer)
-{
-    EditorWidgets::EditorSearchField(InId, InHint, InOutBuffer.Data(), InOutBuffer.Size(), -1.0f, true);
-}
-
 void FEditorContentBrowserWidget::DrawFolderPanel()
 {
-    const ImVec4 PanelBg             = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
-    const ImVec4 NameTextColor       = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
-    const ImU32  FolderActiveColor   = IM_COL32(0, 112, 224, 255);
-    const ImU32  FolderInactiveColor = IM_COL32(64, 87, 111, 255);
-    const ImU32  FolderHoverColor    = IM_COL32(56, 56, 56, 255);
-    const ImU32  FolderPathColor     = IM_COL32(44, 50, 58, 255);
+    // -----------------------------------------------------------------------------------------
+    // Color
+    // -----------------------------------------------------------------------------------------
+
+    const ImVec4 ParentBackGround = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    const ImVec4 HeaderBackGround = ImVec4(47.0f / 255.0f, 47.0f / 255.0f, 47.0f / 255.0f, 1.0f);
+    const ImVec4 ListBackGround   = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
+    const ImVec4 NameTextColor    = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+
+    const ImU32 FolderActiveColor   = IM_COL32(0, 112, 224, 255);
+    const ImU32 FolderInactiveColor = IM_COL32(64, 87, 111, 255);
+    const ImU32 FolderHoverColor    = IM_COL32(56, 56, 56, 255);
+    const ImU32 FolderPathColor     = IM_COL32(44, 50, 58, 255);
+    const ImU32 BorderColor         = IM_COL32(26, 26, 26, 255);
+
+    // -----------------------------------------------------------------------------------------
+    // Layout
+    // -----------------------------------------------------------------------------------------
+
+    constexpr float SidePadding     = 3.0f;
+    constexpr float TopPadding      = 12.0f;
+    constexpr float BottomPadding   = 8.0f;
+    constexpr float InnerPadding    = 3.0f;
+    constexpr float HeaderHeight    = 42.0f;
+    constexpr float BorderThickness = 2.0f;
+
+    // -----------------------------------------------------------------------------------------
+    // Outer container
+    // -----------------------------------------------------------------------------------------
 
     const CHAR* TrimmedQuery        = GetTrimmedQuery(FolderSearchBuffer);
     const bool  bFolderSearchActive = TrimmedQuery && *TrimmedQuery != 0;
 
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, PanelBg);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ParentBackGround);
 
     if (ImGui::BeginChild("##CB_Folders", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar))
     {
-        constexpr float HeaderHeightPx  = 42.0f;
-        constexpr float HeaderInputPadX = 8.0f;
-        constexpr float HeaderBorderPx  = 2.0f;
+        ImGuiStyle& Style = ImGui::GetStyle();
 
-        const ImU32 HeaderBg     = IM_COL32(47, 47, 47, 255);
-        const ImU32 HeaderBorder = IM_COL32(26, 26, 26, 255);
+        const ImVec2 PrevItemSpacing = Style.ItemSpacing;
+        Style.ItemSpacing.y = 0.0f;
 
-        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+        const float AvailableWidth = ImGui::GetContentRegionAvail().x;
+        const float InnerWidth     = Math::Max(1.0f, AvailableWidth - SidePadding * 2.0f);
 
-        const ImVec2 CursorMin = ImGui::GetCursorScreenPos();
-        const float  Width     = ImGui::GetContentRegionAvail().x;
-        const ImVec2 BarMin    = CursorMin;
-        const ImVec2 BarMax    = ImVec2(CursorMin.x + Width, CursorMin.y + HeaderHeightPx);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + TopPadding);
 
-        DrawList->AddRectFilled(BarMin, BarMax, HeaderBg, 0.0f);
-        DrawList->AddRectFilled(BarMin, ImVec2(BarMax.x, BarMin.y + HeaderBorderPx), HeaderBorder, 0.0f);
-        DrawList->AddRectFilled(ImVec2(BarMin.x, BarMax.y - HeaderBorderPx), BarMax, HeaderBorder, 0.0f);
+        // -------------------------------------------------------------------------------------
+        // Header
+        // -------------------------------------------------------------------------------------
 
-        const float InputHeightPx = ImGui::GetFontSize() + EditorStyleVars::InputFieldFramePadding.y * 2.0f;
-        const float InputY        = BarMin.y + (HeaderHeightPx - InputHeightPx) * 0.5f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + SidePadding);
+        const ImVec2 HeaderStartScreen = ImGui::GetCursorScreenPos();
 
-        ImGui::SetCursorScreenPos(ImVec2(BarMin.x + HeaderInputPadX, InputY));
-        DrawSearchField("##CB_FolderSearch", "Search Paths", FolderSearchBuffer);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, HeaderBackGround);
 
-        ImGui::SetCursorScreenPos(ImVec2(CursorMin.x, CursorMin.y + HeaderHeightPx));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-        // ---------------------------------------------------------------------------------
-        // Scrollbar styling
-        // ---------------------------------------------------------------------------------
+        if (ImGui::BeginChild("##CB_FolderHeader", ImVec2(InnerWidth, HeaderHeight), false, ImGuiWindowFlags_NoScrollbar))
+        {
+            const float PaddedWidth  = Math::Max(1.0f, InnerWidth - InnerPadding * 2.0f);
+            const float PaddedHeight = Math::Max(1.0f, HeaderHeight - InnerPadding * 2.0f);
+            const float InputHeight  = ImGui::GetFontSize() + EditorStyleVars::InputFieldFramePadding.y * 2.0f;
+            const float CenterY      = Math::Max(0.0f, (PaddedHeight - InputHeight) * 0.5f);
 
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, PanelBg);
+            ImGui::SetCursorPos(ImVec2(InnerPadding, InnerPadding + CenterY));
+            DrawSearchField("##CB_FolderSearch", "Search Paths", FolderSearchBuffer, PaddedWidth);
+
+            ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+            const ImVec2 HeaderMin = ImGui::GetWindowPos();
+            const ImVec2 HeaderMax = ImVec2(HeaderMin.x + ImGui::GetWindowSize().x, HeaderMin.y + ImGui::GetWindowSize().y);
+
+            DrawList->AddRectFilled(HeaderMin, ImVec2(HeaderMax.x, HeaderMin.y + BorderThickness), BorderColor, 0.0f);
+            DrawList->AddRectFilled(ImVec2(HeaderMin.x, HeaderMax.y - BorderThickness), HeaderMax, BorderColor, 0.0f);
+        }
+
+        ImGui::EndChild();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleColor();
+
+        // -------------------------------------------------------------------------------------
+        // List
+        // -------------------------------------------------------------------------------------
+
+        ImGui::SetCursorScreenPos(ImVec2(HeaderStartScreen.x, HeaderStartScreen.y + HeaderHeight));
+
+        const float AvailableHeight = ImGui::GetContentRegionAvail().y;
+        const float ListHeight      = Math::Max(1.0f, AvailableHeight - BottomPadding);
+
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, ListBackGround);
         ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, IM_COL32(87, 87, 87, 255));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, IM_COL32(127, 127, 127, 255));
         ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, IM_COL32(127, 127, 127, 255));
@@ -284,7 +404,11 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
         ImVec2 ScrollSize = ImVec2(0, 0);
 
         bool bScrollHasScrollbarY = false;
-        if (ImGui::BeginChild("##CB_FoldersScroll", ImVec2(0, 0), false, 0))
+
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ListBackGround);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(InnerPadding, InnerPadding));
+
+        if (ImGui::BeginChild("##CB_FoldersScroll", ImVec2(InnerWidth, ListHeight), false, 0))
         {
             if (RootFolders.Size() > 0)
             {
@@ -327,18 +451,17 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
             }
         }
 
-        ImGui::EndChild(); // ##CB_FoldersScroll
+        ImGui::EndChild();
+        ImGui::PopStyleVar();   // WindowPadding
+        ImGui::PopStyleColor(); // ChildBg
 
-        // ---------------------------------------------------------------------------------
-        // Shadows overlay
-        // ---------------------------------------------------------------------------------
         if (bScrollHasScrollbarY && ScrollSize.x > 0.0f && ScrollSize.y > 0.0f)
         {
-            constexpr float ShadowHeightPx = 10.0f;
-            constexpr float EpsilonPx      = 1.0f;
+            constexpr float ShadowHeight = 10.0f;
+            constexpr float Epsilon      = 1.0f;
 
-            const bool bShowTopShadow    = (ScrollY > EpsilonPx);
-            const bool bShowBottomShadow = (ScrollY < (ScrollMaxY - EpsilonPx));
+            const bool bShowTopShadow    = ScrollY > Epsilon;
+            const bool bShowBottomShadow = ScrollY < (ScrollMaxY - Epsilon);
 
             if (bShowTopShadow || bShowBottomShadow)
             {
@@ -355,16 +478,14 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
                 if (bShowTopShadow)
                 {
                     const ImVec2 ShadowMin = ScrollPos;
-                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeightPx);
-
+                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeight);
                     OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
                 }
 
                 if (bShowBottomShadow)
                 {
-                    const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeightPx);
+                    const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeight);
                     const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
-
                     OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
                 }
 
@@ -374,6 +495,8 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(4);
+
+        Style.ItemSpacing = PrevItemSpacing;
     }
 
     ImGui::EndChild();
@@ -442,6 +565,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
     ImGui::PushID(reinterpret_cast<void*>(&InFolder));
 
     const bool bHasChildFolders = HasChildFolders(InFolder);
+
     const ImGuiID OpenId = ImGui::GetID("##CB_Open");
 
     bool bOpen = false;
@@ -468,13 +592,13 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, InFolderActiveColor);
     }
 
-    const float RowHeightPx = 24.0f;
+    const float RowHeight = 24.0f;
 
     const ImGuiSelectableFlags SelFlags =
         ImGuiSelectableFlags_SpanAllColumns |
         ImGuiSelectableFlags_AllowItemOverlap;
 
-    const bool bRowPressed = ImGui::Selectable("##FolderRow", (bSelected || bInSelectedPath), SelFlags, ImVec2(0.0f, RowHeightPx));
+    const bool bRowPressed = ImGui::Selectable("##FolderRow", (bSelected || bInSelectedPath), SelFlags, ImVec2(0.0f, RowHeight));
     const bool bRowHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
     if (bRowPressed)
@@ -501,29 +625,29 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         ImGui::PopStyleColor(2);
     }
 
-    const ImVec2 RowMin       = ImGui::GetItemRectMin();
-    const ImVec2 RowMax       = ImGui::GetItemRectMax();
-    const float  H            = RowMax.y - RowMin.y;
-    const float  FontSize     = ImGui::GetFontSize();
-    const float  TextHeight   = ImGui::GetTextLineHeight();
-    const float  TextY        = RowMin.y + (H - TextHeight) * 0.5f;
-    const float  ArrowY       = RowMin.y + (H - FontSize) * 0.5f;
-    const float  EdgePadPx    = 2.0f;
-    const float  ArrowGapPx   = 4.0f;
-    const float  IconGapPx    = 4.0f;
-    const float  IconSizePx   = 16.0f;
-    const float  IndentStepPx = 18.0f;
-    const float  IndentPx     = (float)InDepth * IndentStepPx;
+    const ImVec2 RowMin      = ImGui::GetItemRectMin();
+    const ImVec2 RowMax      = ImGui::GetItemRectMax();
+    const float  Height      = RowMax.y - RowMin.y;
+    const float  FontSize    = ImGui::GetFontSize();
+    const float  TextHeight  = ImGui::GetTextLineHeight();
+    const float  TextY       = RowMin.y + (Height - TextHeight) * 0.5f;
+    const float  ArrowY      = RowMin.y + (Height - FontSize) * 0.5f;
+    const float  EdgePadding = 2.0f;
+    const float  ArrowGap    = 4.0f;
+    const float  IconGap     = 4.0f;
+    const float  IconSize    = 16.0f;
+    const float  IndentStep  = 18.0f;
+    const float  Indentation = (float)InDepth * IndentStep;
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
-    const ImVec2 ArrowPos = ImVec2(RowMin.x + EdgePadPx + IndentPx, ArrowY);
+    const ImVec2 ArrowPos = ImVec2(RowMin.x + EdgePadding + Indentation, ArrowY);
 
     float X = ArrowPos.x;
 
     if (bHasChildFolders)
     {
-        const float  ArrowSizePx = FontSize;
-        const ImRect ArrowRect   = ImRect(ImVec2(ArrowPos.x, RowMin.y), ImVec2(ArrowPos.x + ArrowSizePx + ArrowGapPx, RowMax.y));
+        const float  ArrowSize = FontSize;
+        const ImRect ArrowRect = ImRect(ImVec2(ArrowPos.x, RowMin.y), ImVec2(ArrowPos.x + ArrowSize + ArrowGap, RowMax.y));
 
         if (!bFolderSearchActive && bRowHovered && ImGui::IsMouseClicked(0))
         {
@@ -542,22 +666,22 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
         const ImGuiDir Dir = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
         ImGui::RenderArrow(DrawList, ArrowPos, IM_COL32(220, 220, 220, 255), Dir, 1.0f);
-        X += FontSize + ArrowGapPx;
+        X += FontSize + ArrowGap;
     }
     else
     {
-        X += FontSize + ArrowGapPx;
+        X += FontSize + ArrowGap;
     }
 
     ImTextureID FolderIcon = (bHasChildFolders && bOpen) ? EditorIcons::FolderOpenSmallIcon : EditorIcons::FolderSmallIcon;
     if (FolderIcon)
     {
-        const float  IconY   = RowMin.y + (H - IconSizePx) * 0.5f;
+        const float  IconY   = RowMin.y + (Height - IconSize) * 0.5f;
         const ImVec2 IconMin = ImVec2(X, IconY);
-        const ImVec2 IconMax = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
-        DrawList->AddImage(FolderIcon, IconMin, IconMax);
+        const ImVec2 IconMax = ImVec2(IconMin.x + IconSize, IconMin.y + IconSize);
 
-        X = IconMax.x + IconGapPx;
+        DrawList->AddImage(FolderIcon, IconMin, IconMax);
+        X = IconMax.x + IconGap;
     }
 
     DrawList->AddText(ImVec2(X, TextY), ImGui::GetColorU32(InNameTextColor), InFolder.Name);
@@ -634,349 +758,452 @@ void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InP
 
 void FEditorContentBrowserWidget::DrawContentPanel()
 {
-    const ImVec4 RightBg           = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    // -----------------------------------------------------------------------------------------
+    // Colors
+    // -----------------------------------------------------------------------------------------
+
+    const ImVec4 RightBackGround = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+
+    // -----------------------------------------------------------------------------------------
+    // Layout
+    // -----------------------------------------------------------------------------------------
+
+    constexpr float SidePadding           = 8.0f;
+    constexpr float SearchRowHeight       = 42.0f;
+    constexpr float SearchBarExtraPadding = 4.0f;
+    constexpr float GridEdgePadding       = 8.0f;
+    constexpr float GridSpacingX          = 4.0f;
+    constexpr float GridSpacingY          = 8.0f;
+    constexpr float ScrollBottomPaddingY  = 12.0f;
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+    const ImVec2 PanelMin = ImGui::GetCursorScreenPos();
+    const ImVec2 PanelMax = ImVec2(PanelMin.x + ImGui::GetContentRegionAvail().x, PanelMin.y + ImGui::GetContentRegionAvail().y);
+
+    DrawList->AddRectFilled(PanelMin, PanelMax, IM_COL32(36, 36, 36, 255));
+
+    // -----------------------------------------------------------------------------------------
+    // Navigation bar
+    // -----------------------------------------------------------------------------------------
+
+    DrawContentHeaderBar();
+
+    // -----------------------------------------------------------------------------------------
+    // Search row
+    // -----------------------------------------------------------------------------------------
+
+    {
+        const float  FullWidth   = ImGui::GetContentRegionAvail().x;
+        const float  InnerWidth  = Math::Max(1.0f, FullWidth - SidePadding * 2.0f);
+        const ImVec2 RowMin      = ImGui::GetCursorScreenPos();
+        const float  InputHeight = ImGui::GetFontSize() + EditorStyleVars::InputFieldFramePadding.y * 2.0f;
+        const float  InputY      = (RowMin.y + (SearchRowHeight - InputHeight) * 0.5f);
+
+        ImGui::SetCursorScreenPos(ImVec2(RowMin.x + SidePadding, InputY));
+        DrawSearchField("##CB_AssetSearch", "Search Content", AssetSearchBuffer, InnerWidth);
+        ImGui::SetCursorScreenPos(ImVec2(RowMin.x, RowMin.y + SearchRowHeight));
+    }
+
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, RightBackGround);
+
+    const ImVec2 ContentRegionAvailable = ImGui::GetContentRegionAvail();
+    const float  ScrollAvailableWidth   = ContentRegionAvailable.x;
+    const float  ScrollAvailableHeight  = ContentRegionAvailable.y;
+    const float  ScrollWidth            = Math::Max(1.0f, ScrollAvailableWidth - SidePadding * 2.0f);
+    const float  ScrollHeight           = Math::Max(1.0f, ScrollAvailableHeight - ScrollBottomPaddingY);
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + SidePadding);
+    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + SearchBarExtraPadding);
+
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, RightBackGround);
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, IM_COL32(87, 87, 87, 255));
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, IM_COL32(127, 127, 127, 255));
+    ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, IM_COL32(127, 127, 127, 255));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 12.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 16.0f);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(GridEdgePadding, GridEdgePadding));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(GridSpacingX, GridSpacingY));
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GridSpacingX, GridSpacingY));
+
+    // -----------------------------------------------------------------------------------------
+    // Scroll shadow tracking (like folder panel)
+    // -----------------------------------------------------------------------------------------
+
+    float  ScrollY    = 0.0f;
+    float  ScrollMaxY = 0.0f;
+    ImVec2 ScrollPos  = ImVec2(0, 0);
+    ImVec2 ScrollSize = ImVec2(0, 0);
+
+    bool bScrollHasScrollbarY = false;
+
+    if (ImGui::BeginChild("##CB_GridScroll", ImVec2(ScrollWidth, ScrollHeight), false, 0))
+    {
+        DrawContentGrid();
+
+        ScrollY    = ImGui::GetScrollY();
+        ScrollMaxY = ImGui::GetScrollMaxY();
+
+        ImGuiWindow* ScrollWindow = ImGui::GetCurrentWindow();
+        if (ScrollWindow)
+        {
+            bScrollHasScrollbarY = ScrollWindow->ScrollbarY;
+            ScrollPos            = ScrollWindow->Pos;
+            ScrollSize           = ScrollWindow->Size;
+        }
+    }
+
+    ImGui::EndChild();
+
+    // -----------------------------------------------------------------------------------------
+    // Scroll shadows
+    // -----------------------------------------------------------------------------------------
+
+    if (bScrollHasScrollbarY && ScrollSize.x > 0.0f && ScrollSize.y > 0.0f)
+    {
+        constexpr float ShadowHeight = 10.0f;
+        constexpr float Epsilon      = 1.0f;
+
+        const bool bShowTopShadow    = ScrollY > Epsilon;
+        const bool bShowBottomShadow = ScrollY < (ScrollMaxY - Epsilon);
+
+        if (bShowTopShadow || bShowBottomShadow)
+        {
+            ImDrawList* OverlayDrawList = ImGui::GetForegroundDrawList();
+
+            const ImVec2 ClipMin = ScrollPos;
+            const ImVec2 ClipMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+
+            OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
+
+            const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
+            const ImU32 Clear = IM_COL32(0, 0, 0, 0);
+
+            if (bShowTopShadow)
+            {
+                const ImVec2 ShadowMin = ScrollPos;
+                const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeight);
+                OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
+            }
+
+            if (bShowBottomShadow)
+            {
+                const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeight);
+                const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+                OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
+            }
+
+            OverlayDrawList->PopClipRect();
+        }
+    }
+
+    ImGui::PopStyleVar(3);
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(5);
+}
+
+void FEditorContentBrowserWidget::DrawContentGrid()
+{
+    // -----------------------------------------------------------------------------------------
+    // Tile Layout
+    // -----------------------------------------------------------------------------------------
+
     const ImVec4 NameTextColor     = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
     const ImVec4 MutedTextColor    = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
     const ImU32  TileSelectedColor = IM_COL32(0, 112, 224, 255);
     const ImU32  TileHoverColor    = IM_COL32(47, 47, 47, 255);
     const ImU32  TileIdleColor     = IM_COL32(31, 31, 31, 255);
 
-    ImGui::PushStyleColor(ImGuiCol_ChildBg, RightBg);
+    const float TileWidth       = 132.0f;
+    const float TileHeight      = 158.0f;
+    const float LabelAreaHeight = 40.0f;
+    const float CornerRounding  = 6.0f;
+    const float IconPadding     = 4.0f;
 
-    if (ImGui::BeginChild("##CB_Content", ImVec2(0, 0), false, ImGuiWindowFlags_NoScrollbar))
+    // -----------------------------------------------------------------------------------------
+    // Helper Lambdas
+    // -----------------------------------------------------------------------------------------
+
+    const auto CenteredMessage = [&](const char* InText, const ImVec4& InColor)
     {
-        // -----------------------------------------------------------------------------
-        // Header bar
-        // -----------------------------------------------------------------------------
-
-        DrawContentHeaderBar();
-
-        // -----------------------------------------------------------------------------
-        // Search field
-        // -----------------------------------------------------------------------------
-
-        DrawSearchField("##CB_AssetSearch", "Search Assets", AssetSearchBuffer);
-        ImGui::Dummy(ImVec2(0.0f, 6.0f));
-
-        // -----------------------------------------------------------------------------
-        // Scrollbar styling
-        // -----------------------------------------------------------------------------
-
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, RightBg);
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, IM_COL32(87, 87, 87, 255));
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, IM_COL32(127, 127, 127, 255));
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, IM_COL32(127, 127, 127, 255));
-
-        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 12.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarSize, 16.0f);
-
-        float  ScrollY    = 0.0f;
-        float  ScrollMaxY = 0.0f;
-        ImVec2 GridPos    = ImVec2(0, 0);
-        ImVec2 GridSize   = ImVec2(0, 0);
-
-        bool bGridHasScrollbarY = false;
-        if (ImGui::BeginChild("##CB_GridScroll", ImVec2(0, 0), false, 0))
+        if (!InText || InText[0] == 0)
         {
-            FileInfo* CurrentFolder = GetFolderFromPath(SelectedFolderPath);
-
-            TArray<FileInfo>* ItemsPtr = nullptr;
-            if (SelectedFolderPath.Size() <= 0)
-            {
-                ItemsPtr = &RootFolders;
-            }
-            else
-            {
-                ItemsPtr = CurrentFolder ? &CurrentFolder->FolderContents : nullptr;
-            }
-
-            const float TileW      = 132.0f;
-            const float TileH      = 158.0f;
-            const float LabelAreaH = 40.0f;
-            const float CornerR    = 6.0f;
-            const float IconPadPx  = 4.0f;
-            const float CellW      = TileW + ImGui::GetStyle().ItemSpacing.x;
-            const float AvailX     = ImGui::GetContentRegionAvail().x;
-
-            int32 ColumnCount = (int32)(AvailX / CellW);
-            if (ColumnCount < 1)
-            {
-                ColumnCount = 1;
-            }
-
-            if (!ItemsPtr)
-            {
-                CenteredMessage("No folder selected", MutedTextColor);
-            }
-            else if (ItemsPtr->Size() <= 0)
-            {
-                CenteredMessage("Folder is empty", MutedTextColor);
-            }
-            else
-            {
-                TArray<FileInfo>& Items = *ItemsPtr;
-
-                int32 VisibleCount = 0;
-                for (int32 i = 0; i < Items.Size(); ++i)
-                {
-                    if (MatchesSearch(Items[i].Name, AssetSearchBuffer))
-                    {
-                        ++VisibleCount;
-                    }
-                }
-
-                if (VisibleCount <= 0)
-                {
-                    CenteredMessage("No results", MutedTextColor);
-                }
-                else if (ImGui::BeginTable("##CB_AssetGrid", ColumnCount, ImGuiTableFlags_SizingFixedFit))
-                {
-                    for (int32 i = 0; i < Items.Size(); ++i)
-                    {
-                        FileInfo& Item = Items[i];
-
-                        if (!MatchesSearch(Item.Name, AssetSearchBuffer))
-                        {
-                            continue;
-                        }
-
-                        ImGui::TableNextColumn();
-                        ImGui::PushID(i);
-
-                        const bool bSelected = (SelectedItemIndex == i);
-                        const bool bIsFolder = Item.bIsFolder;
-
-                        const ImVec2 TileStart = ImGui::GetCursorScreenPos();
-                        const ImVec2 TileEnd   = ImVec2(TileStart.x + TileW, TileStart.y + TileH);
-
-                        ImGui::InvisibleButton("##TileBtn", ImVec2(TileW, TileH));
-
-                        const bool bHovered     = ImGui::IsItemHovered();
-                        const bool bPressed     = ImGui::IsItemClicked();
-                        const bool bDoubleClick = bPressed && ImGui::IsMouseDoubleClicked(0);
-
-                        if (bPressed)
-                        {
-                            SelectedItemIndex         = i;
-                            bSelectionActiveInBrowser = false;
-
-                            if (bDoubleClick && bIsFolder)
-                            {
-                                TArray<int32> NewPath = SelectedFolderPath;
-                                NewPath.Add(i);
-                                NavigateToFolderPath(NewPath, true);
-
-                                SelectedItemIndex = -1;
-                                bSelectionActiveInBrowser = true;
-                            }
-                        }
-
-                        ImDrawList* WindowDrawList = ImGui::GetWindowDrawList();
-
-                        const ImU32 Bg = bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor);
-                        WindowDrawList->AddRectFilled(TileStart, TileEnd, Bg, CornerR);
-
-                        ImTextureID Icon = bIsFolder ? EditorIcons::FolderIcon : EditorIcons::DocumentIcon;
-                        if (!Icon && bIsFolder)
-                        {
-                            Icon = EditorIcons::FolderSmallIcon;
-                        }
-
-                        if (Icon)
-                        {
-                            const float  IconAreaH = TileH - LabelAreaH;
-                            const float  MaxIconSz = Math::Min((TileW - IconPadPx * 2.0f), (IconAreaH - IconPadPx * 2.0f));
-                            const float  IconSz    = Math::Max(1.0f, MaxIconSz);
-                            const ImVec2 IconMin   = ImVec2(TileStart.x + (TileW - IconSz) * 0.5f, TileStart.y + (IconAreaH - IconSz) * 0.5f);
-                            const ImVec2 IconMax   = ImVec2(IconMin.x + IconSz, IconMin.y + IconSz);
-
-                            WindowDrawList->AddImage(Icon, IconMin, IconMax);
-                        }
-
-                        {
-                            const ImVec2 LabelMin = ImVec2(TileStart.x + 8.0f, TileEnd.y - LabelAreaH + 6.0f);
-                            const ImVec2 LabelMax = ImVec2(TileEnd.x - 8.0f, TileEnd.y - 6.0f);
-
-                            ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
-                            ImGui::RenderTextClipped(LabelMin, LabelMax, Item.Name, nullptr, nullptr, ImVec2(0.5f, 0.0f));
-                            ImGui::PopStyleColor();
-                        }
-
-                        // -----------------------------------------------------------------------------
-                        // Tooltip
-                        // -----------------------------------------------------------------------------
-
-                        if (bHovered)
-                        {
-                            const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-                            const ImVec4 TooltipBorder = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
-                            const ImVec4 TextWhite     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-                            const ImVec4 TextGrey      = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
-
-                            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-                            ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
-                            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
-                            ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 2.0f);
-
-                            ImGui::PushStyleColor(ImGuiCol_PopupBg, TooltipBg);
-                            ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
-                            ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
-
-                            ImGui::BeginTooltip();
-
-                            ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
-                            ImGui::TextUnformatted(Item.Name);
-                            ImGui::PopStyleColor();
-
-                            ImGui::Spacing();
-
-                            ImTextureID TypeIcon = nullptr;
-                            if (bIsFolder)
-                            {
-                                TypeIcon = EditorIcons::FolderSmallIcon ? EditorIcons::FolderSmallIcon : EditorIcons::FolderIcon;
-                            }
-                            else
-                            {
-                                TypeIcon = EditorIcons::DocumentSmallIcon ? EditorIcons::DocumentSmallIcon : EditorIcons::DocumentIcon;
-                            }
-
-                            const float IconSizePx = 16.0f;
-                            const float LineH      = ImGui::GetTextLineHeight();
-                            const float Y0         = ImGui::GetCursorPosY();
-                            const float IconOffset = Math::Max(0.0f, (LineH - IconSizePx) * 0.5f);
-
-                            if (TypeIcon)
-                            {
-                                ImGui::SetCursorPosY(Y0 + IconOffset);
-                                ImGui::Image(TypeIcon, ImVec2(IconSizePx, IconSizePx));
-                                ImGui::SameLine();
-                                ImGui::SetCursorPosY(Y0);
-                            }
-
-                            ImGui::PushStyleColor(ImGuiCol_Text, TextGrey);
-                            ImGui::TextUnformatted(bIsFolder ? "Folder" : "Document");
-                            ImGui::PopStyleColor();
-
-                            ImGui::Separator();
-
-                            char FolderPathBuf[512];
-                            BuildFolderPathString(SelectedFolderPath, FolderPathBuf, (int32)sizeof(FolderPathBuf));
-
-                            char FullPathBuf[768];
-                            if (FolderPathBuf[0] != 0)
-                            {
-                                FCString::Snprintf(FullPathBuf, (int32)sizeof(FullPathBuf), "%s/%s", FolderPathBuf, Item.Name);
-                            }
-                            else
-                            {
-                                FCString::Snprintf(FullPathBuf, (int32)sizeof(FullPathBuf), "%s", Item.Name);
-                            }
-
-                            ImGui::PushStyleColor(ImGuiCol_Text, MutedTextColor);
-                            ImGui::TextUnformatted("Path:");
-                            ImGui::PopStyleColor();
-
-                            ImGui::SameLine();
-
-                            ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
-                            ImGui::TextUnformatted(FullPathBuf);
-                            ImGui::PopStyleColor();
-
-                            ImGui::EndTooltip();
-
-                            ImGui::PopStyleColor(3);
-                            ImGui::PopStyleVar(4);
-                        }
-
-                        ImGui::PopID();
-                    }
-
-                    ImGui::EndTable();
-                }
-            }
-
-            if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered())
-            {
-                SelectedItemIndex = -1;
-            }
-
-            // Capture scroll metrics for shadow conditions
-            ScrollY    = ImGui::GetScrollY();
-            ScrollMaxY = ImGui::GetScrollMaxY();
-
-            ImGuiWindow* GridWindow = ImGui::GetCurrentWindow();
-            if (GridWindow)
-            {
-                bGridHasScrollbarY = GridWindow->ScrollbarY;
-                GridPos            = GridWindow->Pos;
-                GridSize           = GridWindow->Size;
-            }
+            return;
         }
 
-        ImGui::EndChild(); // ##CB_GridScroll
+        const ImVec2 Avail = ImGui::GetContentRegionAvail();
+        const ImVec2 Size  = ImGui::CalcTextSize(InText);
 
-        // -----------------------------------------------------------------------------
-        // Shadows
-        // -----------------------------------------------------------------------------
+        const float X = Math::Max(0.0f, (Avail.x - Size.x) * 0.5f);
+        const float Y = Math::Max(0.0f, (Avail.y - Size.y) * 0.35f);
 
-        if (bGridHasScrollbarY && GridSize.x > 0.0f && GridSize.y > 0.0f)
+        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + X, ImGui::GetCursorPosY() + Y));
+        ImGui::PushStyleColor(ImGuiCol_Text, InColor);
+        ImGui::TextUnformatted(InText);
+        ImGui::PopStyleColor();
+    };
+
+    const auto BuildFullPathForItem = [&](const FileInfo& InItem, CHAR* OutBuf, int32 OutBufSize)
+    {
+        if (!OutBuf || OutBufSize <= 0)
         {
-            constexpr float ShadowHeightPx = 10.0f;
-            constexpr float EpsilonPx      = 1.0f;
-
-            const bool bShowTopShadow    = ScrollY > EpsilonPx;
-            const bool bShowBottomShadow = ScrollY < (ScrollMaxY - EpsilonPx);
-
-            if (bShowTopShadow || bShowBottomShadow)
-            {
-                ImDrawList* OverlayDrawList = ImGui::GetForegroundDrawList();
-
-                const ImVec2 ClipMin = GridPos;
-                const ImVec2 ClipMax = ImVec2(GridPos.x + GridSize.x, GridPos.y + GridSize.y);
-
-                OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
-
-                const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
-                const ImU32 Clear = IM_COL32(0, 0, 0, 0);
-
-                if (bShowTopShadow)
-                {
-                    const ImVec2 ShadowMin = GridPos;
-                    const ImVec2 ShadowMax = ImVec2(GridPos.x + GridSize.x, GridPos.y + ShadowHeightPx);
-
-                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
-                }
-
-                if (bShowBottomShadow)
-                {
-                    const ImVec2 ShadowMin = ImVec2(GridPos.x, GridPos.y + GridSize.y - ShadowHeightPx);
-                    const ImVec2 ShadowMax = ImVec2(GridPos.x + GridSize.x, GridPos.y + GridSize.y);
-
-                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
-                }
-
-                OverlayDrawList->PopClipRect();
-            }
+            return;
         }
 
-        ImGui::PopStyleVar(2);
-        ImGui::PopStyleColor(4);
+        CHAR FolderPathBuf[512] = {};
+        BuildFolderPathString(SelectedFolderPath, FolderPathBuf, (int32)sizeof(FolderPathBuf));
+
+        if (FolderPathBuf[0] != 0)
+        {
+            FCString::Snprintf(OutBuf, OutBufSize, "%s/%s", FolderPathBuf, InItem.Name);
+        }
+        else
+        {
+            FCString::Snprintf(OutBuf, OutBufSize, "%s", InItem.Name);
+        }
+    };
+
+    const auto DrawItemTooltip = [&](const FileInfo& InItem)
+    {
+        const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+        const ImVec4 TooltipBorder = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
+        const ImVec4 TextWhite     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        const ImVec4 TextGrey      = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+
+        const bool bIsFolder = InItem.bIsFolder;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 2.0f);
+
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, TooltipBg);
+        ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
+        ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
+
+        ImGui::BeginTooltip();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
+        ImGui::TextUnformatted(InItem.Name);
+        ImGui::PopStyleColor();
+
+        ImGui::Spacing();
+
+        ImTextureID TypeIcon = nullptr;
+        if (bIsFolder)
+        {
+            TypeIcon = EditorIcons::FolderSmallIcon ? EditorIcons::FolderSmallIcon : EditorIcons::FolderIcon;
+        }
+        else
+        {
+            TypeIcon = EditorIcons::DocumentSmallIcon ? EditorIcons::DocumentSmallIcon : EditorIcons::DocumentIcon;
+        }
+
+        const float IconSize   = 16.0f;
+        const float LineHeight = ImGui::GetTextLineHeight();
+        const float CursorY    = ImGui::GetCursorPosY();
+        const float IconOffset = Math::Max(0.0f, (LineHeight - IconSize) * 0.5f);
+
+        if (TypeIcon)
+        {
+            ImGui::SetCursorPosY(CursorY + IconOffset);
+            ImGui::Image(TypeIcon, ImVec2(IconSize, IconSize));
+            ImGui::SameLine();
+            ImGui::SetCursorPosY(CursorY);
+        }
+
+        ImGui::PushStyleColor(ImGuiCol_Text, TextGrey);
+        ImGui::TextUnformatted(bIsFolder ? "Folder" : "Document");
+        ImGui::PopStyleColor();
+
+        ImGui::Separator();
+
+        CHAR FullPathBuf[768] = {};
+        BuildFullPathForItem(InItem, FullPathBuf, sizeof(FullPathBuf));
+
+        ImGui::PushStyleColor(ImGuiCol_Text, MutedTextColor);
+        ImGui::TextUnformatted("Path:");
+        ImGui::PopStyleColor();
+
+        ImGui::SameLine();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
+        ImGui::TextUnformatted(FullPathBuf);
+        ImGui::PopStyleColor();
+
+        ImGui::EndTooltip();
+
+        ImGui::PopStyleColor(3);
+        ImGui::PopStyleVar(4);
+    };
+
+    FileInfo* CurrentFolder = GetFolderFromPath(SelectedFolderPath);
+
+    TArray<FileInfo>* ItemsPtr = nullptr;
+    if (SelectedFolderPath.Size() <= 0)
+    {
+        ItemsPtr = &RootFolders;
+    }
+    else
+    {
+        ItemsPtr = CurrentFolder ? &CurrentFolder->FolderContents : nullptr;
     }
 
-    ImGui::EndChild();
-    ImGui::PopStyleColor();
+    if (!ItemsPtr)
+    {
+        CenteredMessage("No folder selected", MutedTextColor);
+        return;
+    }
+
+    TArray<FileInfo>& Items = *ItemsPtr;
+
+    // -----------------------------------------------------------------------------------------
+    // Search filtering
+    // -----------------------------------------------------------------------------------------
+
+    int32 VisibleCount = 0;
+    for (int32 i = 0; i < Items.Size(); ++i)
+    {
+        if (MatchesSearch(Items[i].Name, AssetSearchBuffer))
+        {
+            ++VisibleCount;
+        }
+    }
+
+    if (Items.Size() <= 0)
+    {
+        CenteredMessage("Folder is empty", MutedTextColor);
+        return;
+    }
+
+    if (VisibleCount <= 0)
+    {
+        CenteredMessage("No results", MutedTextColor);
+        return;
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Grid layout
+    // -----------------------------------------------------------------------------------------
+
+    const float CellWidth  = TileWidth + ImGui::GetStyle().CellPadding.x * 2.0f;
+    const float AvailableX = ImGui::GetContentRegionAvail().x;
+
+    int32 ColumnCount = (int32)(AvailableX / CellWidth);
+    if (ColumnCount < 1)
+    {
+        ColumnCount = 1;
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Draw tiles
+    // -----------------------------------------------------------------------------------------
+
+    if (ImGui::BeginTable("##CB_AssetGrid", ColumnCount, ImGuiTableFlags_SizingFixedFit))
+    {
+        for (int32 i = 0; i < Items.Size(); ++i)
+        {
+            FileInfo& Item = Items[i];
+
+            if (!MatchesSearch(Item.Name, AssetSearchBuffer))
+            {
+                continue;
+            }
+
+            ImGui::TableNextColumn();
+
+            ImGui::PushID(i);
+
+            const bool bSelected = (SelectedItemIndex == i);
+            const bool bIsFolder = Item.bIsFolder;
+
+            const ImVec2 TileStart = ImGui::GetCursorScreenPos();
+            const ImVec2 TileEnd   = ImVec2(TileStart.x + TileWidth, TileStart.y + TileHeight);
+
+            ImGui::InvisibleButton("##TileBtn", ImVec2(TileWidth, TileHeight));
+
+            const bool bHovered     = ImGui::IsItemHovered();
+            const bool bPressed     = ImGui::IsItemClicked();
+            const bool bDoubleClick = bPressed && ImGui::IsMouseDoubleClicked(0);
+
+            if (bPressed)
+            {
+                SelectedItemIndex = i;
+
+                if (bDoubleClick && bIsFolder)
+                {
+                    TArray<int32> NewPath = SelectedFolderPath;
+                    NewPath.Add(i);
+                    NavigateToFolderPath(NewPath, true);
+
+                    SelectedItemIndex = -1;
+                }
+            }
+
+            ImDrawList* WindowDrawList = ImGui::GetWindowDrawList();
+            const ImU32 BackGround  = bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor);
+
+            WindowDrawList->AddRectFilled(TileStart, TileEnd, BackGround, CornerRounding);
+
+            ImTextureID Icon = bIsFolder ? EditorIcons::FolderIcon : EditorIcons::DocumentIcon;
+            if (!Icon && bIsFolder)
+            {
+                Icon = EditorIcons::FolderSmallIcon;
+            }
+            if (!Icon && !bIsFolder)
+            {
+                Icon = EditorIcons::DocumentSmallIcon;
+            }
+
+            if (Icon)
+            {
+                const float  IconAreaHeight = TileHeight - LabelAreaHeight;
+                const float  MaxIconSz      = Math::Min((TileWidth - IconPadding * 2.0f), (IconAreaHeight - IconPadding * 2.0f));
+                const float  IconSz         = Math::Max(1.0f, MaxIconSz);
+                const ImVec2 IconMin        = ImVec2(TileStart.x + (TileWidth - IconSz) * 0.5f, TileStart.y + (IconAreaHeight - IconSz) * 0.5f);
+                const ImVec2 IconMax        = ImVec2(IconMin.x + IconSz, IconMin.y + IconSz);
+
+                WindowDrawList->AddImage(Icon, IconMin, IconMax);
+            }
+
+            {
+                const ImVec2 LabelMin = ImVec2(TileStart.x + 8.0f, TileEnd.y - LabelAreaHeight + 6.0f);
+                const ImVec2 LabelMax = ImVec2(TileEnd.x - 8.0f, TileEnd.y - 6.0f);
+
+                ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
+                ImGui::RenderTextClipped(LabelMin, LabelMax, Item.Name, nullptr, nullptr, ImVec2(0.5f, 0.0f));
+                ImGui::PopStyleColor();
+            }
+
+            if (bHovered)
+            {
+                DrawItemTooltip(Item);
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::EndTable();
+    }
+
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered())
+    {
+        SelectedItemIndex = -1;
+    }
 }
 
-bool FEditorContentBrowserWidget::ArePathsEqual(const TArray<int32>& A, const TArray<int32>& B) const
+bool FEditorContentBrowserWidget::ArePathsEqual(const TArray<int32>& PathA, const TArray<int32>& PathB) const
 {
-    if (A.Size() != B.Size())
+    if (PathA.Size() != PathB.Size())
     {
         return false;
     }
 
-    for (int32 i = 0; i < A.Size(); ++i)
+    for (int32 i = 0; i < PathA.Size(); ++i)
     {
-        if (A[i] != B[i])
+        if (PathA[i] != PathB[i])
         {
             return false;
         }
@@ -1043,78 +1270,77 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     // Layout
     // -------------------------------------------------------------------------------------
 
-    constexpr float HeaderHeightPx    = 40.0f;
-    constexpr float HeaderPadX        = 1.0f;
-    constexpr float NavIconPx         = 24.0f;
-    constexpr float NavBtnH           = 32.0f;
-    constexpr float NavBtnExtraX      = 6.0f;
-    constexpr float NavBtnW           = NavBtnH + NavBtnExtraX * 2.0f;
-    constexpr float NavGapPx          = 2.0f;
-    constexpr float AfterNavGapPx     = 2.0f;
+    constexpr float HeaderHeight      = 40.0f;
+    constexpr float HeaderPaddingX    = 8.0f;
+    constexpr float NavIcon           = 24.0f;
+    constexpr float NavButtonHeight   = 32.0f;
+    constexpr float NavButtonExtraX   = 6.0f;
+    constexpr float NavButtonWidth    = NavButtonHeight + NavButtonExtraX * 2.0f;
     constexpr float NavButtonRounding = 4.0f;
+    constexpr float NavGap            = 2.0f;
+    constexpr float AfterNavGap       = 2.0f;
     constexpr float CrumbPadX         = 8.0f;
     constexpr float CrumbPadY         = 1.0f;
     constexpr float CrumbRounding     = 4.0f;
     constexpr float BarRounding       = 4.0f;
     constexpr float BarBorderTh       = 2.0f;
-    constexpr float SepIconPx         = 12.0f;
-    constexpr float SepGapAfterPx     = 6.0f;
+    constexpr float BarRightPaddingX  = 8.0f;
+    constexpr float BarUpperPaddingY  = 8.0f;
+    constexpr float SeperatorIcon     = 12.0f;
+    constexpr float SeperatorGapAfter = 6.0f;
 
     // -------------------------------------------------------------------------------------
     // Colors
     // -------------------------------------------------------------------------------------
 
-    const ImU32 HeaderBg        = IM_COL32(36, 36, 36, 255);
-    const ImU32 NavBgIdle       = IM_COL32(36, 36, 36, 255);
-    const ImU32 NavBgHover      = IM_COL32(56, 56, 56, 255);
-    const ImU32 NavIconDisabled = IM_COL32(106, 106, 106, 255);
-    const ImU32 NavIconEnabled  = IM_COL32(192, 192, 192, 255);
-    const ImU32 NavIconHover    = IM_COL32(255, 255, 255, 255);
-    const ImU32 BarBg           = IM_COL32(15, 15, 15, 255);
-    const ImU32 BarBorderNormal = IM_COL32(51, 51, 51, 255);
-    const ImU32 BarBorderHover  = IM_COL32(74, 74, 74, 255);
-    const ImU32 CrumbBgIdle     = IM_COL32(15, 15, 15, 255);
-    const ImU32 CrumbBgHover    = IM_COL32(56, 56, 56, 255);
-    const ImU32 CrumbTextIdle   = IM_COL32(192, 192, 192, 255);
-    const ImU32 CrumbTextHover  = IM_COL32(255, 255, 255, 255);
-    const ImU32 SepColor        = IM_COL32(106, 106, 106, 255);
+    const ImU32 HeaderBackGround     = IM_COL32(36, 36, 36, 255);
+    const ImU32 NavBackGroundIdle    = IM_COL32(36, 36, 36, 255);
+    const ImU32 NavBackGroundHover   = IM_COL32(56, 56, 56, 255);
+    const ImU32 NavIconDisabled      = IM_COL32(106, 106, 106, 255);
+    const ImU32 NavIconEnabled       = IM_COL32(192, 192, 192, 255);
+    const ImU32 NavIconHover         = IM_COL32(255, 255, 255, 255);
+    const ImU32 BarBackGround        = IM_COL32(15, 15, 15, 255);
+    const ImU32 BarBorderNormal      = IM_COL32(51, 51, 51, 255);
+    const ImU32 BarBorderHover       = IM_COL32(74, 74, 74, 255);
+    const ImU32 CrumbBackGroundIdle  = IM_COL32(15, 15, 15, 255);
+    const ImU32 CrumbBackGroundHover = IM_COL32(56, 56, 56, 255);
+    const ImU32 CrumbTextIdle        = IM_COL32(192, 192, 192, 255);
+    const ImU32 CrumbTextHover       = IM_COL32(255, 255, 255, 255);
+    const ImU32 SeperatorColor       = IM_COL32(106, 106, 106, 255);
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-    const ImVec2 Start = ImGui::GetCursorScreenPos();
-    const float  Width = ImGui::GetContentRegionAvail().x;
-    const ImVec2 End   = ImVec2(Start.x + Width, Start.y + HeaderHeightPx);
+    const ImVec2 CursorScreenPos = ImGui::GetCursorScreenPos();
+    const ImVec2 Start           = ImVec2(CursorScreenPos.x, CursorScreenPos.y + BarUpperPaddingY);
+    const float  Width           = ImGui::GetContentRegionAvail().x - BarRightPaddingX;
+    const ImVec2 End             = ImVec2(Start.x + Width, Start.y + HeaderHeight);
 
-    // -------------------------------------------------------------------------------------
-    // Background
-    // -------------------------------------------------------------------------------------
+    DrawList->AddRectFilled(Start, End, HeaderBackGround, 0.0f);
 
-    DrawList->AddRectFilled(Start, End, HeaderBg, 0.0f);
+    const float  ControlY  = Start.y + (HeaderHeight - NavButtonHeight) * 0.5f;
+    const float  BackX     = Start.x + HeaderPaddingX;
+    const float  ForwardX  = BackX + NavButtonWidth + NavGap;
+    const float  BarX      = ForwardX + NavButtonWidth + AfterNavGap;
+    const float  BarRight  = End.x - HeaderPaddingX;
+    const float  BarY      = ControlY;
+    const float  BarHeight = NavButtonHeight;
+    const float  BarWidth  = Math::Max(1.0f, BarRight - BarX);
+    const ImVec2 BarMin    = ImVec2(BarX, BarY);
+    const ImVec2 BarMax    = ImVec2(BarX + BarWidth, BarY + BarHeight);
 
-    const float  ControlY = Start.y + (HeaderHeightPx - NavBtnH) * 0.5f;
-    const float  BackX    = Start.x + HeaderPadX;
-    const float  ForwardX = BackX + NavBtnW + NavGapPx;
-    const float  BarX     = ForwardX + NavBtnW + AfterNavGapPx;
-    const float  BarRight = End.x - HeaderPadX;
-    const float  BarY     = ControlY;
-    const float  BarH     = NavBtnH;
-    const float  BarW     = Math::Max(1.0f, BarRight - BarX);
-    const ImVec2 BarMin   = ImVec2(BarX, BarY);
-    const ImVec2 BarMax   = ImVec2(BarX + BarW, BarY + BarH);
-
-    // -------------------------------------------------------------------------------------
-    // Back/Forward button
-    // -------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------
+    // Navigation button helper lambda
+    // -----------------------------------------------------------------------------------------
 
     const auto DrawNavButton = [&](const char* InId, float X, ImTextureID InIcon, bool bEnabled, bool bForward) -> bool
     {
-        const ImVec2 BtnMin = ImVec2(X, ControlY);
-        const ImVec2 BtnMax = ImVec2(X + NavBtnW, ControlY + NavBtnH);
+        const ImVec2 ButtonMin = ImVec2(X, ControlY);
+        const ImVec2 ButtonMax = ImVec2(X + NavButtonWidth, ControlY + NavButtonHeight);
 
-        ImGui::SetCursorScreenPos(BtnMin);
+        ImGui::SetCursorScreenPos(ButtonMin);
         ImGui::PushID(InId);
 
-        const bool bPressed = ImGui::InvisibleButton("##NavBtn", ImVec2(NavBtnW, NavBtnH));
+        const bool bPressed = ImGui::InvisibleButton("##NavBtn", ImVec2(NavButtonWidth, NavButtonHeight));
         const bool bHovered = bEnabled ? ImGui::IsItemHovered() : false;
 
         if (bHovered)
@@ -1122,49 +1348,24 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
         }
 
-        const ImU32 BgCol = bHovered ? NavBgHover : NavBgIdle;
+        const ImU32 BackGroundColor = bHovered ? NavBackGroundHover : NavBackGroundIdle;
 
-        ImU32 IconCol = NavIconDisabled;
+        ImU32 IconTint = NavIconDisabled;
         if (bEnabled)
         {
-            IconCol = bHovered ? NavIconHover : NavIconEnabled;
+            IconTint = bHovered ? NavIconHover : NavIconEnabled;
         }
 
-        DrawList->AddRectFilled(BtnMin, BtnMax, BgCol, NavButtonRounding);
+        DrawList->AddRectFilled(ButtonMin, ButtonMax, BackGroundColor, NavButtonRounding);
 
         if (InIcon)
         {
-            const float  IconX   = BtnMin.x + (NavBtnW - NavIconPx) * 0.5f;
-            const float  IconY   = BtnMin.y + (NavBtnH - NavIconPx) * 0.5f;
+            const float  IconX   = ButtonMin.x + (NavButtonWidth - NavIcon) * 0.5f;
+            const float  IconY   = ButtonMin.y + (NavButtonHeight - NavIcon) * 0.5f;
             const ImVec2 IconMin = ImVec2(IconX, IconY);
-            const ImVec2 IconMax = ImVec2(IconX + NavIconPx, IconY + NavIconPx);
+            const ImVec2 IconMax = ImVec2(IconX + NavIcon, IconY + NavIcon);
 
-            DrawList->AddImage(InIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), IconCol);
-        }
-        else
-        {
-            const float TriW = 8.0f;
-            const float TriH = 10.0f;
-            const float Cx   = (BtnMin.x + BtnMax.x) * 0.5f;
-            const float Cy   = (BtnMin.y + BtnMax.y) * 0.5f;
-
-            ImVec2 P0;
-            ImVec2 P1;
-            ImVec2 P2;
-            if (bForward)
-            {
-                P0 = ImVec2(Cx - TriW * 0.5f, Cy - TriH * 0.5f);
-                P1 = ImVec2(Cx - TriW * 0.5f, Cy + TriH * 0.5f);
-                P2 = ImVec2(Cx + TriW * 0.5f, Cy);
-            }
-            else
-            {
-                P0 = ImVec2(Cx + TriW * 0.5f, Cy - TriH * 0.5f);
-                P1 = ImVec2(Cx + TriW * 0.5f, Cy + TriH * 0.5f);
-                P2 = ImVec2(Cx - TriW * 0.5f, Cy);
-            }
-
-            DrawList->AddTriangleFilled(P0, P1, P2, IconCol);
+            DrawList->AddImage(InIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), IconTint);
         }
 
         ImGui::PopID();
@@ -1187,46 +1388,40 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
         NavigateForward();
     }
 
-    // -------------------------------------------------------------------------------------
-    // Draw navigation bar
-    // -------------------------------------------------------------------------------------
-    
     const bool  bBarHovered = ImGui::IsMouseHoveringRect(BarMin, BarMax, true);
     const ImU32 BorderCol   = bBarHovered ? BarBorderHover : BarBorderNormal;
 
-    DrawList->AddRectFilled(BarMin, BarMax, BarBg, BarRounding);
+    DrawList->AddRectFilled(BarMin, BarMax, BarBackGround, BarRounding);
     DrawList->AddRect(BarMin, BarMax, BorderCol, BarRounding, 0, BarBorderTh);
-
-    // -------------------------------------------------------------------------------------
-    // Breadcrumb rendering
-    // -------------------------------------------------------------------------------------
 
     DrawList->PushClipRect(BarMin, BarMax, true);
 
     float       CursorX = BarMin.x + 8.0f;
-    const float CenterY = BarMin.y + BarH * 0.5f;
+    const float CenterY = BarMin.y + BarHeight * 0.5f;
+
+    // -----------------------------------------------------------------------------------------
+    // Helper Lambdas
+    // -----------------------------------------------------------------------------------------
 
     const auto DrawSeparator = [&]()
     {
         if (EditorIcons::RightArrowIcon)
         {
-            const float  IconY   = CenterY - SepIconPx * 0.5f;
+            const float  IconY   = CenterY - SeperatorIcon * 0.5f;
             const ImVec2 IconMin = ImVec2(CursorX, IconY);
-            const ImVec2 IconMax = ImVec2(CursorX + SepIconPx, IconY + SepIconPx);
+            const ImVec2 IconMax = ImVec2(CursorX + SeperatorIcon, IconY + SeperatorIcon);
 
-            DrawList->AddImage(EditorIcons::RightArrowIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), SepColor);
-
-            CursorX += SepIconPx + SepGapAfterPx;
+            DrawList->AddImage(EditorIcons::RightArrowIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), SeperatorColor);
+            CursorX += SeperatorIcon + SeperatorGapAfter;
         }
         else
         {
-            const char*  Sep     = ">";
-            const ImVec2 SepSize = ImGui::CalcTextSize(Sep);
-            const ImVec2 SepPos  = ImVec2(CursorX, CenterY - SepSize.y * 0.5f);
+            const char*  Seperator     = ">";
+            const ImVec2 SeperatorSize = ImGui::CalcTextSize(Seperator);
+            const ImVec2 SeperatorPos  = ImVec2(CursorX, CenterY - SeperatorSize.y * 0.5f);
 
-            DrawList->AddText(SepPos, SepColor, Sep);
-
-            CursorX += SepSize.x + SepGapAfterPx;
+            DrawList->AddText(SeperatorPos, SeperatorColor, Seperator);
+            CursorX += SeperatorSize.x + SeperatorGapAfter;
         }
     };
 
@@ -1240,24 +1435,24 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
         ImFont* FontToUse = EditorFonts::SegoeUI_22 ? EditorFonts::SegoeUI_22 : ImGui::GetFont();
         ImGui::PushFont(FontToUse);
 
-        const ImVec2 TextSize = ImGui::CalcTextSize(InLabel);
-        const float  ButtonW  = TextSize.x + CrumbPadX * 2.0f;
-        const float  ButtonH  = Math::Min(BarH - 4.0f, TextSize.y + CrumbPadY * 2.0f);
-        const float  ButtonY  = CenterY - ButtonH * 0.5f;
+        const ImVec2 TextSize     = ImGui::CalcTextSize(InLabel);
+        const float  ButtonWidth  = TextSize.x + CrumbPadX * 2.0f;
+        const float  ButtonHeight = Math::Min(BarHeight - 4.0f, TextSize.y + CrumbPadY * 2.0f);
+        const float  ButtonY      = CenterY - ButtonHeight * 0.5f;
 
-        if (CursorX + ButtonW > BarMax.x - 6.0f)
+        if (CursorX + ButtonWidth > BarMax.x - 6.0f)
         {
             ImGui::PopFont();
             return;
         }
 
         const ImVec2 ButtonMin = ImVec2(CursorX, ButtonY);
-        const ImVec2 ButtonMax = ImVec2(CursorX + ButtonW, ButtonY + ButtonH);
+        const ImVec2 ButtonMax = ImVec2(CursorX + ButtonWidth, ButtonY + ButtonHeight);
 
         ImGui::SetCursorScreenPos(ButtonMin);
         ImGui::PushID(InId);
 
-        const bool bPressed = ImGui::InvisibleButton("##CrumbBtn", ImVec2(ButtonW, ButtonH));
+        const bool bPressed = ImGui::InvisibleButton("##CrumbBtn", ImVec2(ButtonWidth, ButtonHeight));
         const bool bHovered = ImGui::IsItemHovered();
 
         if (bHovered)
@@ -1265,12 +1460,13 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
         }
 
-        const ImU32 BgCol   = bHovered ? CrumbBgHover : CrumbBgIdle;
-        const ImU32 TextCol = bHovered ? CrumbTextHover : CrumbTextIdle;
-        DrawList->AddRectFilled(ButtonMin, ButtonMax, BgCol, CrumbRounding);
+        const ImU32 BackGroundColor = bHovered ? CrumbBackGroundHover : CrumbBackGroundIdle;
+        const ImU32 TextColor       = bHovered ? CrumbTextHover : CrumbTextIdle;
+
+        DrawList->AddRectFilled(ButtonMin, ButtonMax, BackGroundColor, CrumbRounding);
 
         const ImVec2 TextPos = ImVec2(ButtonMin.x + CrumbPadX, CenterY - TextSize.y * 0.5f);
-        DrawList->AddText(FontToUse, FontToUse->FontSize, TextPos, TextCol, InLabel);
+        DrawList->AddText(FontToUse, FontToUse->FontSize, TextPos, TextColor, InLabel);
 
         if (bPressed)
         {
@@ -1280,7 +1476,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
         ImGui::PopID();
         ImGui::PopFont();
 
-        CursorX += ButtonW + 5.0f;
+        CursorX += ButtonWidth + 5.0f;
     };
 
     {
@@ -1308,5 +1504,5 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
 
     DrawList->PopClipRect();
 
-    ImGui::SetCursorScreenPos(ImVec2(Start.x, Start.y + HeaderHeightPx));
+    ImGui::SetCursorScreenPos(ImVec2(Start.x, Start.y + HeaderHeight));
 }
