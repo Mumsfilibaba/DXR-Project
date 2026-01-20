@@ -1612,6 +1612,9 @@ struct EditorIconsInternal
     inline static EditorIcon CloseIcon           = EditorIcon();
     inline static EditorIcon FilterIcon          = EditorIcon();
     inline static EditorIcon RightArrowIcon      = EditorIcon();
+    inline static EditorIcon DownArrowIcon       = EditorIcon();
+    inline static EditorIcon CollapseArrowDown   = EditorIcon();
+    inline static EditorIcon CollapseArrowRight  = EditorIcon();
 };
 
 ImTextureID EditorIcons::UndoIcon            = nullptr;
@@ -1629,6 +1632,9 @@ ImTextureID EditorIcons::PreviousIcon        = nullptr;
 ImTextureID EditorIcons::CloseIcon           = nullptr;
 ImTextureID EditorIcons::FilterIcon          = nullptr;
 ImTextureID EditorIcons::RightArrowIcon      = nullptr;
+ImTextureID EditorIcons::DownArrowIcon       = nullptr;
+ImTextureID EditorIcons::CollapseArrowDown   = nullptr;
+ImTextureID EditorIcons::CollapseArrowRight  = nullptr;
 
 static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -1713,6 +1719,9 @@ bool EditorIcons::Initialize()
     bResult &= LoadEditorIcon("Editor/Icons/Close.png", CloseIcon, EditorIconsInternal::CloseIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Filter.png", FilterIcon, EditorIconsInternal::FilterIcon);
     bResult &= LoadEditorIcon("Editor/Icons/RightArrow.png", RightArrowIcon, EditorIconsInternal::RightArrowIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/DownArrow.png", DownArrowIcon, EditorIconsInternal::DownArrowIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/CollapseArrowDown.png", CollapseArrowDown, EditorIconsInternal::CollapseArrowDown);
+    bResult &= LoadEditorIcon("Editor/Icons/CollapseArrowRight.png", CollapseArrowRight, EditorIconsInternal::CollapseArrowRight);
 
     return bResult;
 }
@@ -1734,12 +1743,15 @@ void EditorIcons::Release()
     UnloadEditorIcon(CloseIcon, EditorIconsInternal::CloseIcon);
     UnloadEditorIcon(FilterIcon, EditorIconsInternal::FilterIcon);
     UnloadEditorIcon(RightArrowIcon, EditorIconsInternal::RightArrowIcon);
+    UnloadEditorIcon(DownArrowIcon, EditorIconsInternal::DownArrowIcon);
+    UnloadEditorIcon(CollapseArrowDown, EditorIconsInternal::CollapseArrowDown);
+    UnloadEditorIcon(CollapseArrowRight, EditorIconsInternal::CollapseArrowRight);
 }
 
 ImFont* EditorFonts::DefaultFont = nullptr;
 ImFont* EditorFonts::SegoeUI_18  = nullptr;
 ImFont* EditorFonts::SegoeUI_22  = nullptr;
-ImFont* EditorFonts::Consola_14  = nullptr;
+ImFont* EditorFonts::Consola_16  = nullptr;
 
 static ImFont* LoadEditorFont(const CHAR* InRelativePath, float SizePixels, const ImFontConfig* FontCfgTemplate = nullptr, const ImWchar* GlyphRanges = nullptr)
 {
@@ -1770,7 +1782,7 @@ bool EditorFonts::Initialize()
     SegoeUI_18 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
     SegoeUI_22 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 22.0f);
 
-    Consola_14 = LoadEditorFont("Editor/Fonts/consola.ttf", 14.0f);
+    Consola_16 = LoadEditorFont("Editor/Fonts/consola.ttf", 16.0f);
 
     IImguiPlugin& ImGuiPlugin = IImguiPlugin::Get();
     if (!ImGuiPlugin.UpdateFontAtlas())
@@ -1791,5 +1803,5 @@ void EditorFonts::Release()
     DefaultFont = nullptr;
     SegoeUI_18  = nullptr;
     SegoeUI_22  = nullptr;
-    Consola_14  = nullptr;
+    Consola_16  = nullptr;
 }

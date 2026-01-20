@@ -140,6 +140,9 @@ struct EditorIcons
     static ImTextureID CloseIcon;
     static ImTextureID FilterIcon;
     static ImTextureID RightArrowIcon;
+    static ImTextureID DownArrowIcon;
+    static ImTextureID CollapseArrowDown;
+    static ImTextureID CollapseArrowRight;
 
     static bool Initialize();
     static void Release();
@@ -150,7 +153,7 @@ struct EditorFonts
     static ImFont* DefaultFont;
     static ImFont* SegoeUI_18;
     static ImFont* SegoeUI_22;
-    static ImFont* Consola_14;
+    static ImFont* Consola_16;
 
     static bool Initialize();
     static void Release();

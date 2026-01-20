@@ -49,7 +49,7 @@ void FEditorFooterWidget::Draw()
     bool bIsInputFieldActive    = false;
     bool bShowCandidatesOverlay = false;
 
-    ImFont* FontToUse = EditorFonts::Consola_14 ? EditorFonts::Consola_14 : ImGui::GetFont();
+    ImFont* FontToUse = EditorFonts::Consola_16 ? EditorFonts::Consola_16 : ImGui::GetFont();
     ImGui::PushFont(FontToUse);
 
     if (ImGui::BeginChild("Console", ImVec2(0.0f, GetHeight()), ConsoleChildWindowFlags, ConsoleWindowFlags))
