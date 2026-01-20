@@ -1781,7 +1781,6 @@ bool EditorFonts::Initialize()
     
     SegoeUI_18 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 18.0f);
     SegoeUI_22 = LoadEditorFont("Editor/Fonts/segoeui.ttf", 22.0f);
-
     Consola_16 = LoadEditorFont("Editor/Fonts/consola.ttf", 16.0f);
 
     IImguiPlugin& ImGuiPlugin = IImguiPlugin::Get();
