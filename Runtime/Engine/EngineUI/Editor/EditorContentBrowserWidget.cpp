@@ -631,7 +631,6 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
     const float  FontSize    = ImGui::GetFontSize();
     const float  TextHeight  = ImGui::GetTextLineHeight();
     const float  TextY       = RowMin.y + (Height - TextHeight) * 0.5f;
-    const float  ArrowY      = RowMin.y + (Height - FontSize) * 0.5f;
     const float  EdgePadding = 2.0f;
     const float  ArrowGap    = 4.0f;
     const float  IconGap     = 4.0f;
@@ -640,14 +639,17 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
     const float  Indentation = (float)InDepth * IndentStep;
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
-    const ImVec2 ArrowPos = ImVec2(RowMin.x + EdgePadding + Indentation, ArrowY);
 
-    float X = ArrowPos.x;
+    const float  CollapseIconSize = IconSize;
+    const float  CollapseIconY    = RowMin.y + (Height - CollapseIconSize) * 0.5f;
+    const ImVec2 CollapseIconPos  = ImVec2(RowMin.x + EdgePadding + Indentation, CollapseIconY);
+    const ImU32  CollapseIconTint = IM_COL32(101, 101, 101, 255);
 
+    float X = CollapseIconPos.x;
     if (bHasChildFolders)
     {
-        const float  ArrowSize = FontSize;
-        const ImRect ArrowRect = ImRect(ImVec2(ArrowPos.x, RowMin.y), ImVec2(ArrowPos.x + ArrowSize + ArrowGap, RowMax.y));
+        const float  ArrowSize = CollapseIconSize;
+        const ImRect ArrowRect = ImRect(ImVec2(CollapseIconPos.x, RowMin.y), ImVec2(CollapseIconPos.x + ArrowSize + ArrowGap, RowMax.y));
 
         if (!bFolderSearchActive && bRowHovered && ImGui::IsMouseClicked(0))
         {
@@ -664,13 +666,27 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
             }
         }
 
-        const ImGuiDir Dir = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
-        ImGui::RenderArrow(DrawList, ArrowPos, IM_COL32(220, 220, 220, 255), Dir, 1.0f);
-        X += FontSize + ArrowGap;
+        ImTextureID CollapseIcon = bOpen ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+        if (CollapseIcon)
+        {
+            const ImVec2 IconMin = CollapseIconPos;
+            const ImVec2 IconMax = ImVec2(IconMin.x + CollapseIconSize, IconMin.y + CollapseIconSize);
+
+            // NOTE: last parameter is tint color
+            DrawList->AddImage(CollapseIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), CollapseIconTint);
+        }
+        else
+        {
+            const ImGuiDir Dir = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
+            ImGui::RenderArrow(DrawList, ImVec2(CollapseIconPos.x, RowMin.y + (Height - FontSize) * 0.5f), IM_COL32(220, 220, 220, 255), Dir, 1.0f);
+        }
+
+        X += CollapseIconSize + ArrowGap;
     }
     else
     {
-        X += FontSize + ArrowGap;
+        // Keep alignment for leaf folders as well
+        X += CollapseIconSize + ArrowGap;
     }
 
     ImTextureID FolderIcon = (bHasChildFolders && bOpen) ? EditorIcons::FolderOpenSmallIcon : EditorIcons::FolderSmallIcon;
