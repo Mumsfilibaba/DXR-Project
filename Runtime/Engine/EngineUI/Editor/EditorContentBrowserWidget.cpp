@@ -287,13 +287,21 @@ void FEditorContentBrowserWidget::DrawSearchField(const char* InId, const char* 
     EditorWidgets::EditorSearchField(InId, InHint, InOutBuffer.Data(), InOutBuffer.Size(), InWidth, true);
 }
 
-void FEditorContentBrowserWidget::CenteredMessage(const char* InText, const ImVec4& InMutedTextColor)
+void FEditorContentBrowserWidget::CenteredMessage(const char* InText, const ImVec4& InColor)
 {
+    if (!InText || InText[0] == 0)
+    {
+        return;
+    }
+
     const ImVec2 Available = ImGui::GetContentRegionAvail();
     const ImVec2 Size      = ImGui::CalcTextSize(InText);
 
-    ImGui::SetCursorPos(ImVec2(Math::Max(0.0f, (Available.x - Size.x) * 0.5f), Math::Max(0.0f, (Available.y - Size.y) * 0.5f)));
-    ImGui::PushStyleColor(ImGuiCol_Text, InMutedTextColor);
+    const float X = Math::Max(0.0f, (Available.x - Size.x) * 0.5f);
+    const float Y = Math::Max(0.0f, (Available.y - Size.y) * 0.35f);
+
+    ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + X, ImGui::GetCursorPosY() + Y));
+    ImGui::PushStyleColor(ImGuiCol_Text, InColor);
     ImGui::TextUnformatted(InText);
     ImGui::PopStyleColor();
 }
@@ -812,12 +820,14 @@ void FEditorContentBrowserWidget::DrawContentPanel()
     {
         const float  FullWidth   = ImGui::GetContentRegionAvail().x;
         const float  InnerWidth  = Math::Max(1.0f, FullWidth - SidePadding * 2.0f);
+        const float  MaxWidth    = Math::Max(120.0f, FullWidth * 0.25f);
+        const float  SearchWidth = Math::Min(InnerWidth, MaxWidth);
         const ImVec2 RowMin      = ImGui::GetCursorScreenPos();
         const float  InputHeight = ImGui::GetFontSize() + EditorStyleVars::InputFieldFramePadding.y * 2.0f;
         const float  InputY      = (RowMin.y + (SearchRowHeight - InputHeight) * 0.5f);
 
         ImGui::SetCursorScreenPos(ImVec2(RowMin.x + SidePadding, InputY));
-        DrawSearchField("##CB_AssetSearch", "Search Content", AssetSearchBuffer, InnerWidth);
+        DrawSearchField("##CB_AssetSearch", "Search Content", AssetSearchBuffer, SearchWidth);
         ImGui::SetCursorScreenPos(ImVec2(RowMin.x, RowMin.y + SearchRowHeight));
     }
 
@@ -845,7 +855,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(GridSpacingX, GridSpacingY));
 
     // -----------------------------------------------------------------------------------------
-    // Scroll shadow tracking (like folder panel)
+    // Scroll shadow tracking
     // -----------------------------------------------------------------------------------------
 
     float  ScrollY    = 0.0f;
@@ -920,6 +930,91 @@ void FEditorContentBrowserWidget::DrawContentPanel()
     ImGui::PopStyleColor(5);
 }
 
+void FEditorContentBrowserWidget::DrawItemTooltip(const FileInfo& InItem)
+{
+    const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+    const ImVec4 TooltipBorder = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
+    const ImVec4 TextWhite     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const ImVec4 TextGrey      = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+
+    const bool bIsFolder = InItem.bIsFolder;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 2.0f);
+
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, TooltipBg);
+    ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
+    ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
+
+    ImGui::BeginTooltip();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
+    ImGui::TextUnformatted(InItem.Name);
+    ImGui::PopStyleColor();
+
+    ImGui::Spacing();
+
+    ImTextureID TypeIcon = nullptr;
+    if (bIsFolder)
+    {
+        TypeIcon = EditorIcons::FolderSmallIcon ? EditorIcons::FolderSmallIcon : EditorIcons::FolderIcon;
+    }
+    else
+    {
+        TypeIcon = EditorIcons::DocumentSmallIcon ? EditorIcons::DocumentSmallIcon : EditorIcons::DocumentIcon;
+    }
+
+    const float IconSize   = 16.0f;
+    const float LineHeight = ImGui::GetTextLineHeight();
+    const float CursorY    = ImGui::GetCursorPosY();
+    const float IconOffset = Math::Max(0.0f, (LineHeight - IconSize) * 0.5f);
+
+    if (TypeIcon)
+    {
+        ImGui::SetCursorPosY(CursorY + IconOffset);
+        ImGui::Image(TypeIcon, ImVec2(IconSize, IconSize));
+        ImGui::SameLine();
+        ImGui::SetCursorPosY(CursorY);
+    }
+
+    ImGui::PushStyleColor(ImGuiCol_Text, TextGrey);
+    ImGui::TextUnformatted(bIsFolder ? "Folder" : "Document");
+    ImGui::PopStyleColor();
+
+    ImGui::Separator();
+
+    CHAR FolderPathBuf[512] = {};
+    BuildFolderPathString(SelectedFolderPath, FolderPathBuf, (int32)sizeof(FolderPathBuf));
+
+    CHAR FullPathBuf[768] = {};
+    if (FolderPathBuf[0] != 0)
+    {
+        FCString::Snprintf(FullPathBuf, sizeof(FullPathBuf), "%s/%s", FolderPathBuf, InItem.Name);
+    }
+    else
+    {
+        FCString::Snprintf(FullPathBuf, sizeof(FullPathBuf), "%s", InItem.Name);
+    }
+
+    const ImVec4 MutedTextColor = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
+    ImGui::PushStyleColor(ImGuiCol_Text, MutedTextColor);
+    ImGui::TextUnformatted("Path:");
+    ImGui::PopStyleColor();
+
+    ImGui::SameLine();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
+    ImGui::TextUnformatted(FullPathBuf);
+    ImGui::PopStyleColor();
+
+    ImGui::EndTooltip();
+
+    ImGui::PopStyleColor(3);
+    ImGui::PopStyleVar(4);
+}
+
 void FEditorContentBrowserWidget::DrawContentGrid()
 {
     // -----------------------------------------------------------------------------------------
@@ -942,25 +1037,6 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     // Helper Lambdas
     // -----------------------------------------------------------------------------------------
 
-    const auto CenteredMessage = [&](const char* InText, const ImVec4& InColor)
-    {
-        if (!InText || InText[0] == 0)
-        {
-            return;
-        }
-
-        const ImVec2 Avail = ImGui::GetContentRegionAvail();
-        const ImVec2 Size  = ImGui::CalcTextSize(InText);
-
-        const float X = Math::Max(0.0f, (Avail.x - Size.x) * 0.5f);
-        const float Y = Math::Max(0.0f, (Avail.y - Size.y) * 0.35f);
-
-        ImGui::SetCursorPos(ImVec2(ImGui::GetCursorPosX() + X, ImGui::GetCursorPosY() + Y));
-        ImGui::PushStyleColor(ImGuiCol_Text, InColor);
-        ImGui::TextUnformatted(InText);
-        ImGui::PopStyleColor();
-    };
-
     const auto BuildFullPathForItem = [&](const FileInfo& InItem, CHAR* OutBuf, int32 OutBufSize)
     {
         if (!OutBuf || OutBufSize <= 0)
@@ -981,103 +1057,18 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         }
     };
 
-    const auto DrawItemTooltip = [&](const FileInfo& InItem)
-    {
-        const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-        const ImVec4 TooltipBorder = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
-        const ImVec4 TextWhite     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-        const ImVec4 TextGrey      = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+    // -----------------------------------------------------------------------------------------
+    // Find folder items
+    // -----------------------------------------------------------------------------------------
 
-        const bool bIsFolder = InItem.bIsFolder;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 2.0f);
-
-        ImGui::PushStyleColor(ImGuiCol_PopupBg, TooltipBg);
-        ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
-        ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
-
-        ImGui::BeginTooltip();
-
-        ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
-        ImGui::TextUnformatted(InItem.Name);
-        ImGui::PopStyleColor();
-
-        ImGui::Spacing();
-
-        ImTextureID TypeIcon = nullptr;
-        if (bIsFolder)
-        {
-            TypeIcon = EditorIcons::FolderSmallIcon ? EditorIcons::FolderSmallIcon : EditorIcons::FolderIcon;
-        }
-        else
-        {
-            TypeIcon = EditorIcons::DocumentSmallIcon ? EditorIcons::DocumentSmallIcon : EditorIcons::DocumentIcon;
-        }
-
-        const float IconSize   = 16.0f;
-        const float LineHeight = ImGui::GetTextLineHeight();
-        const float CursorY    = ImGui::GetCursorPosY();
-        const float IconOffset = Math::Max(0.0f, (LineHeight - IconSize) * 0.5f);
-
-        if (TypeIcon)
-        {
-            ImGui::SetCursorPosY(CursorY + IconOffset);
-            ImGui::Image(TypeIcon, ImVec2(IconSize, IconSize));
-            ImGui::SameLine();
-            ImGui::SetCursorPosY(CursorY);
-        }
-
-        ImGui::PushStyleColor(ImGuiCol_Text, TextGrey);
-        ImGui::TextUnformatted(bIsFolder ? "Folder" : "Document");
-        ImGui::PopStyleColor();
-
-        ImGui::Separator();
-
-        CHAR FullPathBuf[768] = {};
-        BuildFullPathForItem(InItem, FullPathBuf, sizeof(FullPathBuf));
-
-        ImGui::PushStyleColor(ImGuiCol_Text, MutedTextColor);
-        ImGui::TextUnformatted("Path:");
-        ImGui::PopStyleColor();
-
-        ImGui::SameLine();
-
-        ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
-        ImGui::TextUnformatted(FullPathBuf);
-        ImGui::PopStyleColor();
-
-        ImGui::EndTooltip();
-
-        ImGui::PopStyleColor(3);
-        ImGui::PopStyleVar(4);
-    };
-
-    FileInfo* CurrentFolder = GetFolderFromPath(SelectedFolderPath);
-
-    TArray<FileInfo>* ItemsPtr = nullptr;
-    if (SelectedFolderPath.Size() <= 0)
-    {
-        ItemsPtr = &RootFolders;
-    }
-    else
-    {
-        ItemsPtr = CurrentFolder ? &CurrentFolder->FolderContents : nullptr;
-    }
-
-    if (!ItemsPtr)
+    FileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
+    if (!Folder)
     {
         CenteredMessage("No folder selected", MutedTextColor);
         return;
     }
 
-    TArray<FileInfo>& Items = *ItemsPtr;
-
-    // -----------------------------------------------------------------------------------------
-    // Search filtering
-    // -----------------------------------------------------------------------------------------
+    TArray<FileInfo>& Items = Folder->FolderContents;
 
     int32 VisibleCount = 0;
     for (int32 i = 0; i < Items.Size(); ++i)
@@ -1159,7 +1150,29 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             }
 
             ImDrawList* WindowDrawList = ImGui::GetWindowDrawList();
-            const ImU32 BackGround  = bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor);
+            const ImU32 BackGround     = bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor);
+
+            // -----------------------------------------------------------------------------
+            // Tile shadow
+            // -----------------------------------------------------------------------------
+
+            if (bHovered || bSelected)
+            {
+                constexpr float ShadowOffsetY = 3.0f;
+                constexpr int32 ShadowLayers  = 3;
+
+                for (int32 Layer = 0; Layer < ShadowLayers; ++Layer)
+                {
+                    const float  Expand    = (float)Layer;
+                    const float  Rounding  = CornerRounding + Expand;
+                    const int32  Alpha     = (Layer == 0) ? 55 : (Layer == 1) ? 30 : 16;
+                    const ImU32  ShadowCol = IM_COL32(0, 0, 0, Alpha);
+                    const ImVec2 ShadowMin = ImVec2(TileStart.x - Expand, TileStart.y - Expand + ShadowOffsetY);
+                    const ImVec2 ShadowMax = ImVec2(TileEnd.x + Expand, TileEnd.y + Expand + ShadowOffsetY);
+
+                    WindowDrawList->AddRectFilled(ShadowMin, ShadowMax, ShadowCol, Rounding);
+                }
+            }
 
             WindowDrawList->AddRectFilled(TileStart, TileEnd, BackGround, CornerRounding);
 

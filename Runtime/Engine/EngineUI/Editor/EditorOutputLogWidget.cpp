@@ -326,8 +326,6 @@ void FEditorOutputLogWidget::Draw()
         const float OuterPadTop      = 10.0f;
         const float OuterPadBottom   = 4.0f;
         const float GapBetweenPanels = 6.0f;
-        const float HeaderInnerPadX  = 8.0f;
-        const float HeaderInnerPadY  = 8.0f;
         const float OutputRoundingPx = 4.0f;
         const float HeaderRowH       = ImGui::GetFrameHeight();
         const float HeaderHeight     = HeaderRowH + GapBetweenPanels;

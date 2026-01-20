@@ -208,11 +208,6 @@ void FEditorDockspaceWidget::DrawMenuBar()
     const ImVec4 HoveredColor = ImVec4(87.0f / 255.0f, 87.0f / 255.0f, 87.0f / 255.0f, 1.0f);
     const ImVec4 PressedColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
-    ImVec4 BrightPopupBg = PopupBg;
-    BrightPopupBg.x = (BrightPopupBg.x + 0.1f > 1.0f) ? 1.0f : (BrightPopupBg.x + 0.1f);
-    BrightPopupBg.y = (BrightPopupBg.y + 0.1f > 1.0f) ? 1.0f : (BrightPopupBg.y + 0.1f);
-    BrightPopupBg.z = (BrightPopupBg.z + 0.1f > 1.0f) ? 1.0f : (BrightPopupBg.z + 0.1f);
-
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
@@ -240,7 +235,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // File
         {
             PopupAnchor FileAnchor;
-            EditorWidgets::EditorDrawMenuButton("File", PopupFile, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, FileAnchor);
+            EditorWidgets::EditorDrawMenuButton("File", PopupFile, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, FileAnchor);
 
             if (EditorWidgets::EditorBeginMenuPopup(PopupFile, FileAnchor))
             {
@@ -262,7 +257,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Edit
         {
             PopupAnchor EditAnchor;
-            EditorWidgets::EditorDrawMenuButton("Edit", PopupEdit, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, EditAnchor);
+            EditorWidgets::EditorDrawMenuButton("Edit", PopupEdit, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, EditAnchor);
 
             if (EditorWidgets::EditorBeginMenuPopup(PopupEdit, EditAnchor))
             {
@@ -280,7 +275,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Windows
         {
             PopupAnchor WindowsAnchor;
-            EditorWidgets::EditorDrawMenuButton("Windows", PopupWindows, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
+            EditorWidgets::EditorDrawMenuButton("Windows", PopupWindows, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
 
             if (EditorWidgets::EditorBeginMenuPopup(PopupWindows, WindowsAnchor))
             {
@@ -365,7 +360,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Help
         {
             PopupAnchor HelpAnchor;
-            EditorWidgets::EditorDrawMenuButton("Help", PopupHelp, bAnyPopupOpen, BrightPopupBg, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
+            EditorWidgets::EditorDrawMenuButton("Help", PopupHelp, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
 
             if (EditorWidgets::EditorBeginMenuPopup(PopupHelp, HelpAnchor))
             {

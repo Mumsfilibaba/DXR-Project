@@ -71,9 +71,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     const ImVec4 SearchTextColor       = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
     const ImVec4 NameTextColor         = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
     const ImVec4 TypeTextColor         = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
-    const ImU32  BorderNormal          = IM_COL32(51, 51, 51, 255);
-    const ImU32  BorderHovered         = IM_COL32(74, 74, 74, 255);
-    const ImU32  BorderActive          = IM_COL32(9, 92, 176, 255);
     const ImU32  SelectedActiveColor   = IM_COL32(0, 112, 224, 255);
     const ImU32  SelectedInactiveColor = IM_COL32(64, 87, 111, 255);
 
@@ -120,7 +117,6 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         const float TextY        = RowMin.y + (RowHeight - TextHeight) * 0.5f;
         const float ArrowY       = RowMin.y + (RowHeight - FontSize) * 0.5f;
         const float ArrowTextGap = 6.0f;
-        const float ArrowAdvance = FontSize;
 
         // Folder icon between the arrow and the label.
         const float FolderIconGapPx  = 6.0f;

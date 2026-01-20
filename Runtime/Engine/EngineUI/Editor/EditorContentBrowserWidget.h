@@ -41,6 +41,7 @@ private:
     void DrawLayoutTable();
     void DrawFolderPanel();
     void DrawContentPanel();
+    void DrawItemTooltip(const FileInfo& InItem);
     void DrawContentGrid();
 
     // -----------------------------------------------------------------------------------------
