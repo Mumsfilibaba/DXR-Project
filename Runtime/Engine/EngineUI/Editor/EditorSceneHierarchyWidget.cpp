@@ -136,21 +136,30 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
         ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
 
-        const ImU32    ArrowColor     = ImGui::GetColorU32(ImGuiCol_Text);
-        const ImGuiDir ArrowDirection = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
-
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        ImGui::RenderArrow(DrawList, ArrowPosition, ArrowColor, ArrowDirection, 1.0f);
 
-        float LabelX = ArrowPosition.x + ArrowAdvance + ArrowTextGap;
+        const float  IconSizePx = 16.0f;
+        const ImVec2 IconPos    = ImVec2(CollumnPosition.x + IndentPx, RowMin.y + (RowHeight - IconSizePx) * 0.5f);
+        const ImU32  Tint       = IM_COL32(101, 101, 101, 255);
 
-        // Pick icon based on open/closed state.
+        ImTextureID ArrowIcon = bOpen ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+        if (ArrowIcon)
+        {
+            DrawList->AddImage(ArrowIcon, IconPos, ImVec2(IconPos.x + IconSizePx, IconPos.y + IconSizePx), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
+        }
+        else
+        {
+            const ImGuiDir Dir = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
+            ImGui::RenderArrow(DrawList, IconPos, Tint, Dir, 1.0f);
+        }
+
+        float LabelX = IconPos.x + IconSizePx + ArrowTextGap;
         if (EditorIcons::FolderSmallIcon || EditorIcons::FolderOpenSmallIcon)
         {
             ImTextureID FolderIcon = bOpen ? EditorIcons::FolderOpenSmallIcon : EditorIcons::FolderSmallIcon;
             if (FolderIcon)
             {
-                const float IconY = RowMin.y + (RowHeight - FolderIconSizePx) * 0.5f;
+                const float  IconY   = RowMin.y + (RowHeight - FolderIconSizePx) * 0.5f;
                 const ImVec2 IconMin = ImVec2(LabelX, IconY);
                 const ImVec2 IconMax = ImVec2(IconMin.x + FolderIconSizePx, IconMin.y + FolderIconSizePx);
 

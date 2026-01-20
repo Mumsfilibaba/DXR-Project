@@ -95,6 +95,32 @@ void FEditorPropertiesWidget::DrawWindowContents()
         const ImVec2 HeaderMin = ImGui::GetItemRectMin();
         const ImVec2 HeaderMax = ImGui::GetItemRectMax();
 
+        {
+            // Draw custom icon instead of the ImGui arrow
+            ImGuiWindow* Window = ImGui::GetCurrentWindow();
+            if (Window && !Window->SkipItems)
+            {
+                const float IconSize = 16.0f;
+                const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
+                const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+                const ImU32 Tint     = IM_COL32(101, 101, 101, Alpha255);
+                const ImU32 CoverCol = ImGui::ColorConvertFloat4ToU32(HeaderBg);
+
+                const float CoverWidth = Style.FramePadding.x + IconSize + 6.0f;
+                Window->DrawList->AddRectFilled(HeaderMin, ImVec2(HeaderMin.x + CoverWidth, HeaderMax.y), CoverCol);
+
+                const float  IconY   = HeaderMin.y + ((HeaderMax.y - HeaderMin.y) - IconSize) * 0.5f;
+                const ImVec2 IconMin = ImVec2(HeaderMin.x + Style.FramePadding.x, IconY);
+                const ImVec2 IconMax = ImVec2(IconMin.x + IconSize, IconMin.y + IconSize);
+
+                ImTextureID ArrowIcon = bResult ? EditorIcons::CollapseArrowDown : EditorIcons::CollapseArrowRight;
+                if (ArrowIcon)
+                {
+                    Window->DrawList->AddImage(ArrowIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), Tint);
+                }
+            }
+        }
+
         ImGui::PopStyleVar(3);
         ImGui::PopStyleColor(3);
 
