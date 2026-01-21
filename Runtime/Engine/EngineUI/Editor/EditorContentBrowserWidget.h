@@ -33,58 +33,28 @@ private:
     };
 
 private:
-
-    // -----------------------------------------------------------------------------------------
-    // Main draw helpers
-    // -----------------------------------------------------------------------------------------
-
     void DrawLayoutTable();
     void DrawFolderPanel();
     void DrawContentPanel();
     void DrawItemTooltip(const FileInfo& InItem);
     void DrawContentGrid();
-
-    // -----------------------------------------------------------------------------------------
-    // UI helpers
-    // -----------------------------------------------------------------------------------------
-
     void DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth = -1.0f);
-    void CenteredMessage(const char* InText, const ImVec4& InMutedTextColor);
-
-    // -----------------------------------------------------------------------------------------
-    // Search/filter helpers
-    // -----------------------------------------------------------------------------------------
-
-    const CHAR* GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuf) const;
-    bool MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) const;
-
-    bool FolderTreeMatches(const FileInfo& InFolder) const;
-    bool IsPathPrefixOfSelected(const TArray<int32>& InPath) const;
-
-    // -----------------------------------------------------------------------------------------
-    // Folder tree helpers
-    // -----------------------------------------------------------------------------------------
-
-    bool HasChildFolders(const FileInfo& InFolder) const;
+    void DrawCenteredMessage(const char* InText, const ImVec4& InMutedTextColor);
+    void DrawContentHeaderBar();
 
     void DrawFolderTreeRecursive(FileInfo& InFolder, TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor,
         const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
-
     bool DrawFolderRow(FileInfo& InFolder, const TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor, 
         const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
 
-    // -----------------------------------------------------------------------------------------
-    // Content helpers
-    // -----------------------------------------------------------------------------------------
+    const CHAR* GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuf) const;
+    bool MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) const;
+    bool FolderTreeMatches(const FileInfo& InFolder) const;
+    bool IsPathPrefixOfSelected(const TArray<int32>& InPath) const;
+    bool HasChildFolders(const FileInfo& InFolder) const;
 
     FileInfo* GetFolderFromPath(const TArray<int32>& InPath);
     void BuildFolderPathString(const TArray<int32>& InPath, char* OutBuf, int32 OutBufSize) const;
-
-    // -----------------------------------------------------------------------------------------
-    // Content panel header / navigation
-    // -----------------------------------------------------------------------------------------
-
-    void DrawContentHeaderBar();
     void NavigateToFolderPath(const TArray<int32>& InNewPath, bool bAddToHistory);
     void NavigateBack();
     void NavigateForward();

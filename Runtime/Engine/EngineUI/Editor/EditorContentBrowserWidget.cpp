@@ -287,7 +287,7 @@ void FEditorContentBrowserWidget::DrawSearchField(const char* InId, const char* 
     EditorWidgets::EditorSearchField(InId, InHint, InOutBuffer.Data(), InOutBuffer.Size(), InWidth, true);
 }
 
-void FEditorContentBrowserWidget::CenteredMessage(const char* InText, const ImVec4& InColor)
+void FEditorContentBrowserWidget::DrawCenteredMessage(const char* InText, const ImVec4& InColor)
 {
     if (!InText || InText[0] == 0)
     {
@@ -1064,7 +1064,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     FileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
     if (!Folder)
     {
-        CenteredMessage("No folder selected", MutedTextColor);
+        DrawCenteredMessage("No folder selected", MutedTextColor);
         return;
     }
 
@@ -1081,13 +1081,13 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
     if (Items.Size() <= 0)
     {
-        CenteredMessage("Folder is empty", MutedTextColor);
+        DrawCenteredMessage("Folder is empty", MutedTextColor);
         return;
     }
 
     if (VisibleCount <= 0)
     {
-        CenteredMessage("No results", MutedTextColor);
+        DrawCenteredMessage("No results", MutedTextColor);
         return;
     }
 
