@@ -328,8 +328,6 @@ void FEditorFooterWidget::Draw()
                 const char* HelpString = Candidate.First->GetHelpString();
                 if (HelpString && HelpString[0] != 0)
                 {
-                    ImGui::Separator();
-                    
                     ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
                     
                     ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + TooltipMaxWidth - 20.0f * Scale);
