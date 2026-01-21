@@ -86,7 +86,6 @@ void FEditorOutputLogWidget::DrawFilterBar()
     float SearchWidth = MaxSearchWidth;
     EditorWidgets::EditorSearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
 
-    // Ensure filter button matches search field height exactly
     float SearchBarHeight = ImGui::GetItemRectSize().y;
     if (SearchBarHeight <= 0.0f)
     {
@@ -105,20 +104,10 @@ void FEditorOutputLogWidget::DrawFilterBar()
 
         const char* Label = "Filter";
 
-        const ImVec2 TextSize = ImGui::CalcTextSize(Label);
-
-        // IMPORTANT: Match the search-bar height exactly
-        const float ButtonHeight = SearchBarHeight;
-
-        const float ButtonWidth =
-            IconSizePx +
-            IconTextGap +
-            TextSize.x +
-            TextArrowGap +
-            ArrowIconSizePx +
-            Style.FramePadding.x * 2.0f;
-
-        const ImVec2 ButtonSize = ImVec2(ButtonWidth, ButtonHeight);
+        const ImVec2 TextSize     = ImGui::CalcTextSize(Label);
+        const float  ButtonHeight = SearchBarHeight;
+        const float  ButtonWidth  = IconSizePx + IconTextGap + TextSize.x + TextArrowGap + ArrowIconSizePx + Style.FramePadding.x * 2.0f;
+        const ImVec2 ButtonSize   = ImVec2(ButtonWidth, ButtonHeight);
 
         const bool bPressed = ImGui::InvisibleButton("##FilterButton", ButtonSize);
         const bool bHovered = ImGui::IsItemHovered();
@@ -138,7 +127,6 @@ void FEditorOutputLogWidget::DrawFilterBar()
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
         DrawList->AddRectFilled(Min, Max, BgColor, ButtonRoundingPx);
 
-        // Left icon
         const float  LeftIconY   = Min.y + (ButtonHeight - IconSizePx) * 0.5f;
         const ImVec2 LeftIconMin = ImVec2(Min.x + Style.FramePadding.x, LeftIconY);
         const ImVec2 LeftIconMax = ImVec2(LeftIconMin.x + IconSizePx, LeftIconMin.y + IconSizePx);
@@ -148,13 +136,11 @@ void FEditorOutputLogWidget::DrawFilterBar()
             DrawList->AddImage(EditorIcons::FilterIcon, LeftIconMin, LeftIconMax, ImVec2(0, 0), ImVec2(1, 1), White);
         }
 
-        // Text
         const float TextX = LeftIconMax.x + IconTextGap;
         const float TextY = Min.y + (ButtonHeight - TextSize.y) * 0.5f;
 
         DrawList->AddText(EditorFonts::SegoeUI_22, EditorFonts::SegoeUI_22->FontSize, ImVec2(TextX, TextY), White, Label);
 
-        // Right icon (your current one)
         const float  RightIconX   = TextX + TextSize.x + TextArrowGap;
         const float  RightIconY   = Min.y + (ButtonHeight - ArrowIconSizePx) * 0.5f;
         const ImVec2 RightIconMin = ImVec2(RightIconX, RightIconY);
@@ -189,12 +175,10 @@ void FEditorOutputLogWidget::DrawFilterBar()
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
 
     ImGui::PushStyleColor(ImGuiCol_PopupBg, IM_COL32(56, 56, 56, 255));
-    ImGui::PushStyleColor(ImGuiCol_Border,  IM_COL32(69, 69, 69, 255));
-
-    // Selectable colors (Selectable uses Header colors)
-    ImGui::PushStyleColor(ImGuiCol_Header,        IM_COL32(56, 56, 56, 255)); // not hovered
-    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, IM_COL32(87, 87, 87, 255)); // hovered
-    ImGui::PushStyleColor(ImGuiCol_HeaderActive,  IM_COL32(87, 87, 87, 255)); // pressed
+    ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(69, 69, 69, 255));
+    ImGui::PushStyleColor(ImGuiCol_Header, IM_COL32(56, 56, 56, 255));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, IM_COL32(87, 87, 87, 255));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, IM_COL32(87, 87, 87, 255));
 
     if (ImGui::BeginPopup("LogFilterMenu"))
     {
@@ -243,7 +227,6 @@ void FEditorOutputLogWidget::DrawLogList()
         return true;
     };
 
-    // Copy under lock once per frame
     TArray<FLogMessage> LocalMessages;
     {
         SCOPED_LOCK(MessagesCS);
