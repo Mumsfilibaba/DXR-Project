@@ -1,12 +1,12 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Application/Application.h"
-#include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
+#include "Engine/EngineUI/Editor/EditorFooterWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui.h>
 
-FEditorConsoleInputFieldWidget::FEditorConsoleInputFieldWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
+FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
     : OutputDevice(InOutputDevice)
     , Candidates()
 {
@@ -19,7 +19,7 @@ FEditorConsoleInputFieldWidget::FEditorConsoleInputFieldWidget(const TSharedPtr<
     TextBuffer.Fill(0);
 }
 
-FEditorConsoleInputFieldWidget::~FEditorConsoleInputFieldWidget()
+FEditorFooterWidget::~FEditorFooterWidget()
 {
     if (FApplication::IsInitialized())
     {
@@ -27,22 +27,14 @@ FEditorConsoleInputFieldWidget::~FEditorConsoleInputFieldWidget()
     }
 }
 
-void FEditorConsoleInputFieldWidget::Draw()
-{
-    DrawConsole();
-}
-
-void FEditorConsoleInputFieldWidget::DrawConsole()
+void FEditorFooterWidget::Draw()
 {
     const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
-    // -------------------------------------------------------------------------------------------
-    // Console Input Field
-    // -------------------------------------------------------------------------------------------
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(36, 36, 36, 255));
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6.0f, 6.0f));
 
-    // Footer console window
     const ImGuiWindowFlags ConsoleWindowFlags =
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoDecoration |
@@ -51,17 +43,17 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
 
     const ImGuiChildFlags ConsoleChildWindowFlags = ImGuiChildFlags_None;
 
-    // We'll capture the input box rect to position the popup overlay
     ImVec2 InputRectMin = ImVec2(0.0f, 0.0f);
     ImVec2 InputRectMax = ImVec2(0.0f, 0.0f);
-    
+
     bool bIsInputFieldActive    = false;
     bool bShowCandidatesOverlay = false;
+
+    ImFont* FontToUse = EditorFonts::Consola_16 ? EditorFonts::Consola_16 : ImGui::GetFont();
+    ImGui::PushFont(FontToUse);
+
     if (ImGui::BeginChild("Console", ImVec2(0.0f, GetHeight()), ConsoleChildWindowFlags, ConsoleWindowFlags))
     {
-        // Add some space between preview element and the console
-        ImGui::Dummy(ImVec2(0.0f, 2.0f));
-
         // Draw input
         const ImGuiInputTextFlags ConsoleInputFlags =
             ImGuiInputTextFlags_EnterReturnsTrue |
@@ -72,56 +64,59 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
 
         const auto InputCallback = [](ImGuiInputTextCallbackData* Data)
         {
-            return reinterpret_cast<FEditorConsoleInputFieldWidget*>(Data->UserData)->InputTextCallback(Data);
+            return reinterpret_cast<FEditorFooterWidget*>(Data->UserData)->InputTextCallback(Data);
         };
 
-        // Add some spacing before the input field
-        ImGui::Dummy(ImVec2(1.0f, 0.0f));
         ImGui::SameLine();
 
         const float InputFieldWidth = 512.0f;
         ImGui::SetNextItemWidth(InputFieldWidth);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, EditorStyleVars::InputFieldFramePadding);
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, EditorStyleVars::InputFieldBorderRounding);
+        const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
+
+        const float InputRounding = 4.0f;
+
+        const ImU32 BgColor            = IM_COL32(15, 15, 15, 255);
+        const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
+        const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
+        const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
+
+        const ImVec4 TextColor = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+
+        const ImVec2 InputStart = ImGui::GetCursorScreenPos();
+        const float  InputH     = ImGui::GetFontSize() + BasePadding.y * 2.0f;
+        const ImVec2 InputEnd   = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputH);
+
+        ImDrawList* DrawList = ImGui::GetWindowDrawList();
+        DrawList->AddRectFilled(InputStart, InputEnd, BgColor, InputRounding);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, BasePadding);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
+
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
+        ImGui::PushStyleColor(ImGuiCol_TextDisabled, TextColor);
 
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
 
-        ImGui::PopStyleVar(2);
+        ImGui::PopStyleColor(5);
+        ImGui::PopStyleVar(3);
 
         // Cache input rect in absolute screen coords, this is later used to draw the candidate window
-        InputRectMin = ImGui::GetItemRectMin();
-        InputRectMax = ImGui::GetItemRectMax();
-
-        // Draw border if active
+        InputRectMin        = ImGui::GetItemRectMin();
+        InputRectMax        = ImGui::GetItemRectMax();
         bIsInputFieldActive = ImGui::IsItemActive();
 
-        // Always draw a border around the search bar with state colors:
-	    // Normal:  RGB(51,51,51)
-	    // Hovered: RGB(74,74,74)
-	    // Active:  RGB(9,92,176)
+        {
+            const bool bActive  = ImGui::IsItemActive();
+            const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
-	    {
-		    const ImVec2 ItemMin = ImGui::GetItemRectMin();
-		    const ImVec2 ItemMax = ImGui::GetItemRectMax();
-
-		    const bool bActive  = ImGui::IsItemActive();
-		    const bool bHovered = ImGui::IsItemHovered();
-
-		    const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
-		    const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
-		    const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
-		    const ImU32 BorderColor        = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
-
-		    ImDrawList* DrawList = ImGui::GetWindowDrawList();
-		    DrawList->AddRect(
-			    ItemMin,
-			    ItemMax,
-			    BorderColor,
-			    EditorStyleVars::InputFieldBorderRounding,
-			    0,
-			    EditorStyleVars::InputFieldBorderThickness);
-	    }
+            const ImU32 BorderColor = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
+            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, InputRounding, 0, EditorStyleVars::InputFieldBorderThickness);
+        }
 
         // Ensure that the input is propagated correctly
         if (InputHandler)
@@ -158,12 +153,13 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
 
     ImGui::EndChild();
 
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();   // WindowPadding
+    ImGui::PopStyleColor(); // ChildBg
 
     // -------------------------------------------------------------------------------------------
     // Candidates overlay window
     // -------------------------------------------------------------------------------------------
-    
+
     if (bIsInputFieldActive && bShowCandidatesOverlay)
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
@@ -175,25 +171,26 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
         const float Scale          = FrameBufferScale.x;
         const float TotalWidth     = (InputRectMax.x - InputRectMin.x) * 3.0f;
         const float TotalHeight    = RowHeight * MaxVisibleRows;
-    
+
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
-    
+
         const ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
         ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(WindowBG.x, WindowBG.y, WindowBG.z, Transparency));
-    
+
         const ImVec2 WindowPadding = ImVec2(10.0f * Scale, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, WindowPadding);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-    
+
         const ImVec2 WindowSize     = ImVec2(TotalWidth, TotalHeight);
         const ImVec2 WindowPosition = ImVec2(InputRectMin.x, InputRectMin.y - PanelOffsetY);
+
         ImGui::SetNextWindowSize(WindowSize, ImGuiCond_Always);
         ImGui::SetNextWindowPos(WindowPosition, ImGuiCond_Always, ImVec2(0.0f, 1.0f));
-    
+
         const ImGuiWindowFlags OverlayFlags =
             ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoDecoration |
@@ -230,21 +227,21 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
             VariableNameWidth  += Padding;
             VariableValueWidth += Padding;
 
-			const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
-			{
-				return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
-			};
+            const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
+            {
+                return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+            };
 
-			const float PostFixTextLength =
-				Math::Max(ImGui::CalcTextSize("Bool").x,
-				Math::Max(ImGui::CalcTextSize("Int").x,
-				Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
+            const float PostFixTextLength =
+                Math::Max(ImGui::CalcTextSize("Bool").x,
+                Math::Max(ImGui::CalcTextSize("Int").x,
+                Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
 
-			const float SetByTextLength =
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
-				Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
+            const float SetByTextLength =
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
+                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
 
             bool bIsActiveIndex = false;
             for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)
@@ -268,7 +265,7 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.85f, 0.85f, 1.0f));
 
                 const char* PostFixText = "";
-                const char* SetByText   = "";
+                const char* SetByText = "";
 
                 IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
                 if (ConsoleVariable)
@@ -346,19 +343,14 @@ void FEditorConsoleInputFieldWidget::DrawConsole()
 
         ImGui::End(); // Console Candidates
 
-        ImGui::PopStyleVar();
-        ImGui::PopStyleVar();
-        ImGui::PopStyleVar();
-        ImGui::PopStyleVar();
-    
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(4);
+        ImGui::PopStyleColor(4);
     }
+
+    ImGui::PopFont();
 }
 
-void FEditorConsoleInputFieldWidget::InvalidateCandidates()
+void FEditorFooterWidget::InvalidateCandidates()
 {
     SelectedCandidateIndex     = InvalidIndex;
     bCandidateSelectionChanged = true;
@@ -366,7 +358,7 @@ void FEditorConsoleInputFieldWidget::InvalidateCandidates()
     Candidates.Clear();
 }
 
-int32 FEditorConsoleInputFieldWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
+int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
 {
     if (bUpdateCursorPosition)
     {

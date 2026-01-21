@@ -1,6 +1,6 @@
 #include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
-#include "Engine/EngineUI/Editor/EditorConsoleInputFieldWidget.h"
+#include "Engine/EngineUI/Editor/EditorFooterWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
@@ -11,15 +11,15 @@
 
 FEditorEngine::FEditorEngine()
     : FEngine()
-	, SelectedActor(nullptr)
-	, SelectedLight(nullptr)
-	, SelectedCamera(nullptr)
-	, SelectedLightProbe(nullptr)
+    , SelectedActor(nullptr)
+    , SelectedLight(nullptr)
+    , SelectedCamera(nullptr)
+    , SelectedLightProbe(nullptr)
     , DockspaceWidget(nullptr)
-	, ConsoleWidget(nullptr)
-    , LogOutputWidget(nullptr)
-	, SceneHierarchyWidget(nullptr)
-	, ContentBrowserWidget(nullptr)
+    , FooterWidget(nullptr)
+    , OutputLogWidget(nullptr)
+    , SceneHierarchyWidget(nullptr)
+    , ContentBrowserWidget(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
 {
@@ -36,94 +36,94 @@ bool FEditorEngine::Init()
         return false;
     }
 
-	if (IImguiPlugin::IsEnabled())
-	{
-		DockspaceWidget      = MakeSharedPtr<FEditorDockspaceWidget>(this);
-		LogOutputWidget      = MakeSharedPtr<FEditorLogOutputWidget>();
-		SceneHierarchyWidget = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
-		ConsoleWidget        = MakeSharedPtr<FEditorConsoleInputFieldWidget>(LogOutputWidget);
-		PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
-		ContentBrowserWidget = MakeSharedPtr<FEditorContentBrowserWidget>();
-		
-		ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
-		ViewportWidget->SetViewportWidget(GetViewportWidget());
-	}
+    if (IImguiPlugin::IsEnabled())
+    {
+        DockspaceWidget      = MakeSharedPtr<FEditorDockspaceWidget>(this);
+        OutputLogWidget      = MakeSharedPtr<FEditorOutputLogWidget>();
+        SceneHierarchyWidget = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
+        FooterWidget         = MakeSharedPtr<FEditorFooterWidget>(OutputLogWidget);
+        PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
+        ContentBrowserWidget = MakeSharedPtr<FEditorContentBrowserWidget>();
+        
+        ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
+        ViewportWidget->SetViewportWidget(GetViewportWidget());
+    }
 
-	if (!CreateViewportRenderTarget())
-	{
-		return false;
-	}
+    if (!CreateViewportRenderTarget())
+    {
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 bool FEditorEngine::InitPostRenderer()
 {
-	// Load fonts
-	if (!EditorFonts::Initialize())
-	{
-		return false;
-	}
+    // Load fonts
+    if (!EditorFonts::Initialize())
+    {
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 void FEditorEngine::Release()
 {
-	if (IImguiPlugin::IsEnabled())
-	{
-		DockspaceWidget.Reset();
-		LogOutputWidget.Reset();
-		SceneHierarchyWidget.Reset();
-		ConsoleWidget.Reset();
-		ViewportWidget.Reset();
-		PropertiesWidget.Reset();
-		ContentBrowserWidget.Reset();
-	}
+    if (IImguiPlugin::IsEnabled())
+    {
+        DockspaceWidget.Reset();
+        OutputLogWidget.Reset();
+        SceneHierarchyWidget.Reset();
+        FooterWidget.Reset();
+        ViewportWidget.Reset();
+        PropertiesWidget.Reset();
+        ContentBrowserWidget.Reset();
+    }
 
-	FEngine::Release();
+    FEngine::Release();
 }
 
 void FEditorEngine::Tick(float DeltaTime)
 {
-	FEngine::Tick(DeltaTime);
+    FEngine::Tick(DeltaTime);
 
-	const FIntVector2 Size = ViewportWidget->GetViewportSize();
-	if (ViewportImageSize != Size)
-	{
-		CreateViewportRenderTarget();
-	}
+    const FIntVector2 Size = ViewportWidget->GetViewportSize();
+    if (ViewportImageSize != Size)
+    {
+        CreateViewportRenderTarget();
+    }
 }
 
 void FEditorEngine::RenderFrame()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	// Render to a separate render-target
-	FSceneRenderView RenderView;
-	RenderView.Scene        = GetWorld()->GetSceneInterface();
-	RenderView.RenderTarget = ViewportImage.Get();
+    // Render to a separate render-target
+    FSceneRenderView RenderView;
+    RenderView.Scene        = GetWorld()->GetSceneInterface();
+    RenderView.RenderTarget = ViewportImage.Get();
 
-	IRendererModule* RendererModule = IRendererModule::Get();
-	RendererModule->RenderSceneView(RenderView);
+    IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->RenderSceneView(RenderView);
 
-	// Render the rest
-	FEngine::RenderFrame();
+    // Render the rest
+    FEngine::RenderFrame();
 }
 
 void FEditorEngine::SetSelectedActor(FActor* InActor)
 {
-	SelectedActor      = InActor;
-	SelectedLight      = nullptr;
-	SelectedCamera     = nullptr;
+    SelectedActor      = InActor;
+    SelectedLight      = nullptr;
+    SelectedCamera     = nullptr;
     SelectedLightProbe = nullptr;
 }
 
 void FEditorEngine::SetSelectedLight(FLight* InLight)
 {
-	SelectedLight      = InLight;
-	SelectedActor      = nullptr;
-	SelectedCamera     = nullptr;
+    SelectedLight      = InLight;
+    SelectedActor      = nullptr;
+    SelectedCamera     = nullptr;
     SelectedLightProbe = nullptr;
 }
 
@@ -153,30 +153,30 @@ void FEditorEngine::ClearSelection()
 
 bool FEditorEngine::CreateViewportRenderTarget()
 {
-	const FIntVector2 Size = ViewportWidget->GetViewportSize();
-	if (Size.X == 0 || Size.Y == 0)
-	{
-		return ViewportImage != nullptr;
-	}
+    const FIntVector2 Size = ViewportWidget->GetViewportSize();
+    if (Size.X == 0 || Size.Y == 0)
+    {
+        return ViewportImage != nullptr;
+    }
 
-	const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-	FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(RenderSettings::GetBackBufferFormat(), Size.X, Size.Y, 1, 1, UsageFlags);
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(RenderSettings::GetBackBufferFormat(), Size.X, Size.Y, 1, 1, UsageFlags);
 
-	FRHITextureRef NewViewportImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::RenderTarget);
-	if (NewViewportImage)
-	{
-		ViewportImage = NewViewportImage;
-		ViewportImage->SetDebugName("Editor Viewport Image");
+    FRHITextureRef NewViewportImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::RenderTarget);
+    if (NewViewportImage)
+    {
+        ViewportImage = NewViewportImage;
+        ViewportImage->SetDebugName("Editor Viewport Image");
 
-		ViewportWidget->SetViewportImage(ViewportImage);
+        ViewportWidget->SetViewportImage(ViewportImage);
 
-		RenderSettings::ChangeRenderResolution(Size.X, Size.Y);
+        RenderSettings::ChangeRenderResolution(Size.X, Size.Y);
 
-		ViewportImageSize = Size;
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+        ViewportImageSize = Size;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

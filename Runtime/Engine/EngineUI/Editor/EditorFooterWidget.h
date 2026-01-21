@@ -12,18 +12,17 @@
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "Engine/EngineUI/BaseConsoleWidget.h"
 
-class FEditorConsoleInputFieldWidget final
+class FEditorFooterWidget final
 {
 public:
-    FEditorConsoleInputFieldWidget(const TSharedPtr<IOutputDevice>& InOutputDevice);
-    ~FEditorConsoleInputFieldWidget();
+    FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice);
+    ~FEditorFooterWidget();
 
     void Draw();
-    void DrawConsole();
 
     float GetHeight() const
     {
-        return 48.0f;
+        return 40.0f;
     }
 
 private:

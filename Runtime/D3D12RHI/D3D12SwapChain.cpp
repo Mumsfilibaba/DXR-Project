@@ -19,17 +19,17 @@ FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* I
 
 FD3D12SwapChain::~FD3D12SwapChain()
 {
-	BOOL FullscreenState;
+    BOOL FullscreenState;
     if (SwapChain)
     {
-		HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
-		if (SUCCEEDED(Result))
-		{
-			if (FullscreenState)
-			{
-				SwapChain->SetFullscreenState(FALSE, nullptr);
-			}
-		}
+        HRESULT Result = SwapChain->GetFullscreenState(&FullscreenState, nullptr);
+        if (SUCCEEDED(Result))
+        {
+            if (FullscreenState)
+            {
+                SwapChain->SetFullscreenState(FALSE, nullptr);
+            }
+        }
     }
 
     if (SwapChainWaitableObject)
@@ -37,10 +37,10 @@ FD3D12SwapChain::~FD3D12SwapChain()
         CloseHandle(SwapChainWaitableObject);
     }
 
-	if (BackBufferProxy)
-	{
-	    BackBufferProxy->SetSwapChain(nullptr);
-	}
+    if (BackBufferProxy)
+    {
+        BackBufferProxy->SetSwapChain(nullptr);
+    }
 }
 
 bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
@@ -211,8 +211,8 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
 
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
-			const DWORD WaitResult = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, TRUE);
-			if (WaitResult != WAIT_OBJECT_0)
+            const DWORD WaitResult = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, TRUE);
+            if (WaitResult != WAIT_OBJECT_0)
             {
                 return false;
             }

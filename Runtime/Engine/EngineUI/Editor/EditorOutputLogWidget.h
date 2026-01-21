@@ -10,11 +10,11 @@
 #include "Core/Misc/IOutputDevice.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FEditorLogOutputWidget final : public IOutputDevice
+class FEditorOutputLogWidget final : public IOutputDevice
 {
 public:
-    FEditorLogOutputWidget();
-    ~FEditorLogOutputWidget();
+    FEditorOutputLogWidget();
+    ~FEditorOutputLogWidget();
 
     // IOutputDevice
     void Log(const FString& Message) override final;

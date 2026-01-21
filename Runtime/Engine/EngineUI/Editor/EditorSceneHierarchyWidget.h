@@ -29,10 +29,10 @@ private:
     FEditorEngine*          EditorEngine;
     FActor*                 RenamingActor;
     FDelegateHandle         ImGuiDelegateHandle;
-	TStaticArray<CHAR, 256> ActorSearchFilterBuffer;
+    TStaticArray<CHAR, 256> ActorSearchFilterBuffer;
     TStaticArray<CHAR, 256> ActorRenameBuffer;
     TStaticArray<CHAR, 256> ActorRenameBufferOriginal;
-	bool                    bVisible;
-	bool                    bRequestRenameFocus;
-	bool                    bSelectionActiveInTable;
+    bool                    bVisible;
+    bool                    bRequestRenameFocus;
+    bool                    bSelectionActiveInTable;
 };
