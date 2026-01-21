@@ -31,8 +31,19 @@ FMacWindow::~FMacWindow()
 
 bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 {
+    const EWindowStyleFlags DecorationMask =
+        EWindowStyleFlags::Titled |
+        EWindowStyleFlags::Closable |
+        EWindowStyleFlags::Resizable |
+        EWindowStyleFlags::Minimizable |
+        EWindowStyleFlags::Maximizable;
+        
     NSWindowStyleMask WindowStyle = 0;
-    if (InInitializer.Style != EWindowStyleFlags::None)
+        
+    const bool bHasAnyDecoration = (InInitializer.Style & DecorationMask) != EWindowStyleFlags::None;
+    const bool bIsTransientPopup = !bHasAnyDecoration;
+
+    if (bHasAnyDecoration)
     {
         WindowStyle |= NSWindowStyleMaskTitled;
 
@@ -40,10 +51,12 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         {
             WindowStyle |= NSWindowStyleMaskClosable;
         }
+
         if ((InInitializer.Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskResizable;
         }
+
         if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskMiniaturizable;
@@ -107,14 +120,15 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             [[CocoaWindow standardWindowButton:NSWindowZoomButton] setEnabled:NO];
         }
 
-        NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-        if ((InInitializer.Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
+        NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorManaged;
+        if (bIsTransientPopup)
         {
-            Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
+            Behavior |= NSWindowCollectionBehaviorTransient;
+            Behavior |= NSWindowCollectionBehaviorIgnoresCycle;
         }
         else
         {
-            Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
+            Behavior |= NSWindowCollectionBehaviorParticipatesInCycle;
         }
 
         CocoaWindow.collectionBehavior = Behavior;
@@ -141,7 +155,10 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         [CocoaWindow setContentView:CocoaWindowView];
         [CocoaWindow makeFirstResponder:CocoaWindowView];
 
-        [NSApp addWindowsItem:CocoaWindow title:InInitializer.Title.GetNSString() filename:NO];
+        if ((InInitializer.Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
+        {
+            [NSApp addWindowsItem:CocoaWindow title:InInitializer.Title.GetNSString() filename:NO];
+        }
 
         if ([CocoaWindow respondsToSelector:@selector(setTabbingMode:)])
         {
@@ -171,11 +188,11 @@ void FMacWindow::Show(bool bFocus)
 
             if (bFocus)
             {
-                [CocoaWindow orderFront:nil];
+                [CocoaWindow makeKeyAndOrderFront:nil];
             }
             else
             {
-                [CocoaWindow makeKeyAndOrderFront:nil];
+                [CocoaWindow orderFront:nil];
             }
         }
 

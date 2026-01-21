@@ -32,15 +32,20 @@ public:
 
         FInitializer()
             : Title()
+            , ParentWindow(nullptr)
             , Size()
             , Position()
             , StyleFlags(EWindowStyleFlags::Default)
+            , bActivateOnShow(true)
         {
         }
 
         /** @brief The title of the window. */
         FString Title;     
         
+        /** @brief Optional parent/owner window (used for owned popup/tool windows). */
+        TSharedPtr<FWindowWidget> ParentWindow;
+
         /** @brief The size of the window (width, height). */
         FIntVector2 Size;      
         
@@ -49,6 +54,9 @@ public:
         
         /** @brief Style flags for the window. */
         EWindowStyleFlags StyleFlags;
+
+        /** @brief Should the window be activated when we show the window. */
+        bool bActivateOnShow;
     };
 
 public:
@@ -336,20 +344,38 @@ public:
         return StyleFlags;
     }
 
-private:
-    FString Title;
+    /**
+     * @brief Retrieves the parent/owner window of this window, if any.
+     * 
+     * @return The parent window widget, or nullptr if there is no parent.
+     */
+    TSharedPtr<FWindowWidget> GetParentWindow() const
+    {
+        return ParentWindowWidget;
+    }
 
+    /**
+     * @brief Gets the window style flags.
+     * 
+     * @return The style flags of the window.
+     */
+    bool ActivateOnShow() const
+    {
+        return bActivateOnShow;
+    }
+
+private:
+    FString                    Title;
     FOnWindowClosed            OnWindowClosedDelegate;
     FOnWindowMoved             OnWindowMovedDelegate;
     FOnWindowResized           OnWindowResizedDelegate;
     FOnWindowActivationChanged OnWindowActivationChangedDelegate;
-
     FIntVector2                CachedPosition;
     FIntVector2                CachedSize;
     EWindowStyleFlags          StyleFlags;
-
+    bool                       bActivateOnShow;
     TSharedPtr<FWidget>        Overlay;
     TSharedPtr<FWidget>        Content;
-
     TSharedRef<FGenericWindow> PlatformWindow;
+    TSharedPtr<FWindowWidget>  ParentWindowWidget;
 };

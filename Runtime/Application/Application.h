@@ -55,8 +55,6 @@ public:
     FApplication();
     virtual ~FApplication();
 
-public:
-
     // FGenericApplicationMessageHandler Interface Overrides
     virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
 
@@ -345,14 +343,11 @@ private:
     TSet<EKeyboardKeyName::Type>      PressedKeys;
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
     TArray<FMonitorInfo>              MonitorInfos;
-
     FWidgetPath                       FocusPath;
     FWidgetPath                       TrackedWidgets;
-    
     TArray<TSharedPtr<FWindowWidget>> Windows;
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
     FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
-    
     bool                              bIsMonitorInfoValid;
     bool                              bIsTrackingCursor;
 

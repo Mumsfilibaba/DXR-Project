@@ -45,10 +45,31 @@ static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags
     }
     if (Flags & ImGuiViewportFlags_TopMost)
     {
-        WindowStyleFlags |= EWindowStyleFlags::NoTaskBarIcon;
+        WindowStyleFlags |= EWindowStyleFlags::TopMost;
     }
 
     return WindowStyleFlags;
+}
+
+static const char* GetImGuiViewportPlatformTitle(const ImGuiViewport* InViewport)
+{
+	if (!InViewport)
+	{
+		return "ImGui Window";
+	}
+
+	if (InViewport == ImGui::GetMainViewport())
+	{
+		return "ImGui Main Viewport";
+	}
+
+	const ImGuiViewportP* ViewportP = reinterpret_cast<const ImGuiViewportP*>(InViewport);
+	if (ViewportP && ViewportP->Window && ViewportP->Window->Name && ViewportP->Window->Name[0] != '\0')
+	{
+		return ViewportP->Window->Name;
+	}
+
+	return "ImGui Window";
 }
 
 FImGuiPlugin* GImGuiPlugin = nullptr;
@@ -647,10 +668,12 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     const EWindowStyleFlags WindowStyle = GetWindowStyleFromImGuiViewportFlags(Viewport->Flags);
 
     FWindowWidget::FInitializer WindowInitializer;
-    WindowInitializer.Title      = "ImGui Window";
-    WindowInitializer.Size       = FIntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
-    WindowInitializer.Position   = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
-    WindowInitializer.StyleFlags = WindowStyle;
+    WindowInitializer.Title           = GetImGuiViewportPlatformTitle(Viewport);
+    WindowInitializer.Size            = FIntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
+    WindowInitializer.Position        = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
+    WindowInitializer.StyleFlags      = WindowStyle;
+    WindowInitializer.ParentWindow    = ParentWindow;
+    WindowInitializer.bActivateOnShow = !(Viewport->Flags & ImGuiViewportFlags_NoFocusOnAppearing);
 
     ViewportData->Window = CreateWidget<FWindowWidget>(WindowInitializer);
     CHECK(ViewportData->Window != nullptr);

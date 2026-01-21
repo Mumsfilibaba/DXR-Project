@@ -6,54 +6,57 @@
 
 static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
 {
-    // Determine the window style for WinAPI
-    DWORD NewStyle = 0;
-    if (Style != EWindowStyleFlags::None)
-    {
-        NewStyle = WS_OVERLAPPED;
+	const EWindowStyleFlags DecorationMask =
+		EWindowStyleFlags::Titled |
+		EWindowStyleFlags::Closable |
+		EWindowStyleFlags::Minimizable |
+		EWindowStyleFlags::Maximizable |
+		EWindowStyleFlags::Resizable;
+
+	const bool bHasAnyDecoration = (Style & DecorationMask) != EWindowStyleFlags::None;
+
+	DWORD NewStyle = 0;
+	if (!bHasAnyDecoration)
+	{
+		NewStyle = WS_POPUP;
+	}
+	else
+	{
+		NewStyle = WS_OVERLAPPED;
+
         if ((Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
-            NewStyle |= WS_CAPTION;
+			NewStyle |= WS_CAPTION;
         }
+
         if ((Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
-            NewStyle |= WS_SYSMENU;
+			NewStyle |= WS_SYSMENU;
         }
+
         if ((Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
-            NewStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
+			NewStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
         }
-        if ((Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
+
+        if ((Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None) 
         {
-            NewStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
+			NewStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
         }
+
         if ((Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
-            NewStyle |= WS_THICKFRAME;
+			NewStyle |= WS_THICKFRAME;
         }
-    }
-    else
-    {
-        // Popup-style window if EWindowStyleFlags::None
-        NewStyle = WS_POPUP;
-    }
+	}
 
-    DWORD NewStyleEx;
-    if ((Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
-    {
-        NewStyleEx = WS_EX_APPWINDOW;
-    }
-    else
-    {
-        NewStyleEx = WS_EX_TOOLWINDOW;
-    }
-
+	DWORD NewStyleEx = ((Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None) ? WS_EX_APPWINDOW : WS_EX_TOOLWINDOW;
     if ((Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
     {
-        NewStyleEx |= WS_EX_TOPMOST;
+		NewStyleEx |= WS_EX_TOPMOST;
     }
 
-    return FWindowsWindowStyle(NewStyle, NewStyleEx);
+	return FWindowsWindowStyle(NewStyle, NewStyleEx);
 }
 
 TSharedRef<FWindowsWindow> FWindowsWindow::Create(FWindowsApplication* InApplication)
@@ -146,22 +149,23 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
 void FWindowsWindow::Show(bool bFocus)
 {
-    if (!IsValid())
-    {
-        return;
-    }
+	if (!IsValid())
+	{
+		return;
+	}
 
-    if (bFocus)
-    {
-        ::ShowWindow(Window, SW_SHOWNORMAL);
-        ::BringWindowToTop(Window);
-        ::SetForegroundWindow(Window);
-        ::SetFocus(Window);
-    }
-    else
-    {
-        ::ShowWindow(Window, SW_SHOWNA);
-    }
+	if (bFocus)
+	{
+		::ShowWindow(Window, SW_SHOWNORMAL);
+		::BringWindowToTop(Window);
+		::SetForegroundWindow(Window);
+		::SetFocus(Window);
+	}
+	else
+	{
+		::ShowWindow(Window, SW_SHOWNOACTIVATE);
+		::SetWindowPos(Window, nullptr, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+	}
 }
 
 void FWindowsWindow::Destroy()

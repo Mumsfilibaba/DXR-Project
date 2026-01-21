@@ -283,6 +283,11 @@ void FApplication::CreateWindow(const TSharedPtr<FWindowWidget>& InWindow)
     WindowInitializer.Style    = InWindow->GetStyle();
     WindowInitializer.Position = InWindow->GetPosition();
     
+    if (TSharedPtr<FWindowWidget> ParentWindow = InWindow->GetParentWindow())
+    {
+        WindowInitializer.ParentWindow = ParentWindow->GetPlatformWindow().Get();
+    }
+
     // Calculate the maximum position and size of the new window so that if fits in the main monitor bounds.
     const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
     if (MonitorInfo.MainPosition.X > WindowInitializer.Position.X)
@@ -316,7 +321,7 @@ void FApplication::CreateWindow(const TSharedPtr<FWindowWidget>& InWindow)
         InWindow->SetPlatformWindow(PlatformWindow);        
         Windows.Add(InWindow);
 
-        PlatformWindow->Show(true);
+        PlatformWindow->Show(InWindow->ActivateOnShow());
     }
 }
 

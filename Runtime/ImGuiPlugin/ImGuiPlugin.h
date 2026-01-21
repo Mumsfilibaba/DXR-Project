@@ -60,22 +60,21 @@ public:
     void UpdateMonitorInfo();
     void InitializeDefaultFont();
 
-    // Callbacks
-    void   OnCreatePlatformWindow(ImGuiViewport* Viewport);
-    void   OnDestroyPlatformWindow(ImGuiViewport* Viewport);
-    void   OnShowPlatformWindow(ImGuiViewport* Viewport);
-    void   OnUpdatePlatformWindow(ImGuiViewport* Viewport);
+    void OnCreatePlatformWindow(ImGuiViewport* Viewport);
+    void OnDestroyPlatformWindow(ImGuiViewport* Viewport);
+    void OnShowPlatformWindow(ImGuiViewport* Viewport);
+    void OnUpdatePlatformWindow(ImGuiViewport* Viewport);
     ImVec2 OnGetPlatformWindowPosition(ImGuiViewport* Viewport);
-    void   OnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
+    void OnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
     ImVec2 OnGetPlatformWindowSize(ImGuiViewport* Viewport);
-    void   OnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
-    void   OnSetPlatformWindowFocus(ImGuiViewport* Viewport);
-    bool   OnGetPlatformWindowFocus(ImGuiViewport* Viewport);
-    bool   OnGetPlatformWindowMinimized(ImGuiViewport* Viewport);
-    void   OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
-    void   OnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
-    float  OnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
-    void   OnPlatformChangedViewport(ImGuiViewport* Viewport);
+    void OnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+    void OnSetPlatformWindowFocus(ImGuiViewport* Viewport);
+    bool OnGetPlatformWindowFocus(ImGuiViewport* Viewport);
+    bool OnGetPlatformWindowMinimized(ImGuiViewport* Viewport);
+    void OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
+    void OnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
+    float OnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
+    void OnPlatformChangedViewport(ImGuiViewport* Viewport);
 
 private:
     ImGuiIO*                       PluginImGuiIO;

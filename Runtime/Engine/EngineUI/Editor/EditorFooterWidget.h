@@ -35,6 +35,7 @@ private:
     void InvalidateCandidates();
 
     TArray<TPair<IConsoleObject*, FString>> Candidates;
+    FString                                 CandidateFilter;
     TStaticArray<CHAR, 256>                 TextBuffer;
     TSharedPtr<IOutputDevice>               OutputDevice;
     TSharedPtr<FConsoleInputHandler>        InputHandler;

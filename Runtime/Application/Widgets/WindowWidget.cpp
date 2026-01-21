@@ -16,6 +16,7 @@ FWindowWidget::FWindowWidget()
     , Content()
     , PlatformWindow(nullptr)
     , StyleFlags(EWindowStyleFlags::None)
+    , bActivateOnShow(true)
 {
 }
 
@@ -25,10 +26,12 @@ FWindowWidget::~FWindowWidget()
 
 void FWindowWidget::Initialize(const FInitializer& Initializer)
 {
-    Title          = Initializer.Title;
-    CachedPosition = Initializer.Position;
-    CachedSize     = Initializer.Size;
-    StyleFlags     = Initializer.StyleFlags;
+    Title              = Initializer.Title;
+    CachedPosition     = Initializer.Position;
+    CachedSize         = Initializer.Size;
+    StyleFlags         = Initializer.StyleFlags;
+    ParentWindowWidget = Initializer.ParentWindow;
+    bActivateOnShow    = Initializer.bActivateOnShow;
 }
 
 void FWindowWidget::Tick(const FRectangle& AssignedBounds)

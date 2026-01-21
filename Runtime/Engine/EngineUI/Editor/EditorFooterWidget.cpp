@@ -5,6 +5,8 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui.h>
+#include <cctype>
+#include <cstring>
 
 FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
     : OutputDevice(InOutputDevice)
@@ -72,16 +74,14 @@ void FEditorFooterWidget::Draw()
         const float InputFieldWidth = 512.0f;
         ImGui::SetNextItemWidth(InputFieldWidth);
 
-        const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
+        const ImVec2 BasePadding   = EditorStyleVars::InputFieldFramePadding;
+        const float  InputRounding = 4.0f;
 
-        const float InputRounding = 4.0f;
-
-        const ImU32 BgColor            = IM_COL32(15, 15, 15, 255);
-        const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
-        const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
-        const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
-
-        const ImVec4 TextColor = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+        const ImU32  BgColor            = IM_COL32(15, 15, 15, 255);
+        const ImU32  BorderColorNormal  = IM_COL32(51, 51, 51, 255);
+        const ImU32  BorderColorHovered = IM_COL32(74, 74, 74, 255);
+        const ImU32  BorderColorActive  = IM_COL32(9, 92, 176, 255);
+        const ImVec4 TextColor          = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
 
         const ImVec2 InputStart = ImGui::GetCursorScreenPos();
         const float  InputH     = ImGui::GetFontSize() + BasePadding.y * 2.0f;
@@ -153,7 +153,7 @@ void FEditorFooterWidget::Draw()
 
     ImGui::EndChild();
 
-    ImGui::PopStyleVar();   // WindowPadding
+    ImGui::PopStyleVar(); // WindowPadding
     ImGui::PopStyleColor(); // ChildBg
 
     // -------------------------------------------------------------------------------------------
@@ -164,168 +164,250 @@ void FEditorFooterWidget::Draw()
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
 
-        const float RowHeight      = 20.0f;
-        const int32 MaxVisibleRows = 20;
-        const float PanelOffsetY   = 4.0f;
-        const float Transparency   = 0.8f;
-        const float Scale          = FrameBufferScale.x;
-        const float TotalWidth     = (InputRectMax.x - InputRectMin.x) * 3.0f;
-        const float TotalHeight    = RowHeight * MaxVisibleRows;
+        const float  RowHeight      = 20.0f;
+        const int32  MaxVisibleRows = 20;
+        const float  PanelOffsetY   = 4.0f;
+        const float  Scale          = FrameBufferScale.x;
+        const float  TotalHeight    = RowHeight * MaxVisibleRows;
+        const ImVec2 WindowPadding  = ImVec2(10.0f * Scale, 4.0f * Scale);
+
+        const ImVec4 WindowBgColor             = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
+        const ImVec4 BorderColor               = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+        const ImVec4 SelectedBgColor           = ImVec4(64.0f / 255.0f, 87.0f / 255.0f, 111.0f / 255.0f, 1.0f);
+        const ImVec4 ScrollbarGrabColor        = ImVec4(87.0f / 255.0f, 87.0f / 255.0f, 87.0f / 255.0f, 1.0f);
+        const ImVec4 ScrollbarGrabHoveredColor = ImVec4(128.0f / 255.0f, 128.0f / 255.0f, 128.0f / 255.0f, 1.0f);
+        const ImVec4 TextSelectedColor         = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+        const ImVec4 TextNormalColor           = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
+        const ImU32  HighlightBgU32            = IM_COL32(139, 194, 74, 255);
+        const ImU32  HighlightTextU32          = IM_COL32(0, 0, 0, 255);
+
+        float MaxNameWidth = 0.0f;
+        Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
+        {
+            MaxNameWidth = Math::Max(MaxNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
+        });
+
+        const float  ReservedScrollbarWidth = Style.ScrollbarSize;
+        const float  ExtraRightPadding      = 6.0f * Scale;
+        const float  TotalWidth             = MaxNameWidth + (WindowPadding.x * 2.0f) + ReservedScrollbarWidth + ExtraRightPadding;
+        const ImVec2 WindowSize             = ImVec2(TotalWidth, TotalHeight);
+        const ImVec2 WindowPosition         = ImVec2(InputRectMin.x, InputRectMin.y - PanelOffsetY);
 
         ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
         ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, WindowBgColor);
+        ImGui::PushStyleColor(ImGuiCol_Border, BorderColor);
+        ImGui::PushStyleColor(ImGuiCol_Header, SelectedBgColor);
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, SelectedBgColor);
+        ImGui::PushStyleColor(ImGuiCol_HeaderActive, SelectedBgColor);
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, WindowBgColor);
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrab, ScrollbarGrabColor);
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabHovered, ScrollbarGrabHoveredColor);
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarGrabActive, ScrollbarGrabHoveredColor);
 
-        const ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(WindowBG.x, WindowBG.y, WindowBG.z, Transparency));
-
-        const ImVec2 WindowPadding = ImVec2(10.0f * Scale, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, WindowPadding);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
-
-        const ImVec2 WindowSize     = ImVec2(TotalWidth, TotalHeight);
-        const ImVec2 WindowPosition = ImVec2(InputRectMin.x, InputRectMin.y - PanelOffsetY);
+        ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 999.0f);
 
         ImGui::SetNextWindowSize(WindowSize, ImGuiCond_Always);
         ImGui::SetNextWindowPos(WindowPosition, ImGuiCond_Always, ImVec2(0.0f, 1.0f));
 
         const ImGuiWindowFlags OverlayFlags =
             ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoDecoration |
-            ImGuiWindowFlags_NoScrollWithMouse |
-            ImGuiWindowFlags_NoInputs |
-            ImGuiWindowFlags_AlwaysAutoResize |
+            ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoSavedSettings |
             ImGuiWindowFlags_NoFocusOnAppearing |
-            ImGuiWindowFlags_NoSavedSettings;
+            ImGuiWindowFlags_NoNavFocus;
 
         if (ImGui::Begin("ConsoleCandidates", nullptr, OverlayFlags))
         {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
-
             ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
 
-            const float Padding = 8.0f * Scale;
-
-            float VariableNameWidth  = 30.0f * Scale;
-            float VariableValueWidth = 20.0f * Scale;
-
-            // First find the maximum length of each column for the selectable
-            Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
+            const auto FindSubstringCaseInsensitive = [](const char* Haystack, const char* Needle) -> int32
             {
-                VariableNameWidth = Math::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
-
-                if (IConsoleVariable* Variable = Candidate.First->AsVariable())
+                if (!Haystack || !Needle || Needle[0] == 0)
                 {
-                    const FString Value = Variable->GetString();
-                    VariableValueWidth = Math::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
+                    return -1;
                 }
-            });
 
-            VariableNameWidth  += Padding;
-            VariableValueWidth += Padding;
+                for (int32 i = 0; Haystack[i] != 0; ++i)
+                {
+                    int32 j = 0;
+                    while (Needle[j] != 0)
+                    {
+                        const char A = static_cast<char>(tolower(static_cast<unsigned char>(Haystack[i + j])));
+                        const char B = static_cast<char>(tolower(static_cast<unsigned char>(Needle[j])));
 
-            const auto GetFlagStringLength = [](EConsoleVariableFlags Flag)
-            {
-                return ImGui::CalcTextSize(SetByFlagToString(Flag)).x;
+                        if (Haystack[i + j] == 0 || A != B)
+                        {
+                            break;
+                        }
+
+                        ++j;
+                    }
+
+                    if (Needle[j] == 0)
+                    {
+                        return i;
+                    }
+                }
+
+                return -1;
             };
 
-            const float PostFixTextLength =
-                Math::Max(ImGui::CalcTextSize("Bool").x,
-                Math::Max(ImGui::CalcTextSize("Int").x,
-                Math::Max(ImGui::CalcTextSize("Float").x, ImGui::CalcTextSize("String").x)));
-
-            const float SetByTextLength =
-                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConstructor),
-                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCommandLine),
-                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByConfigFile),
-                Math::Max(GetFlagStringLength(EConsoleVariableFlags::SetByCode), GetFlagStringLength(EConsoleVariableFlags::SetByConsole)))));
-
-            bool bIsActiveIndex = false;
-            for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); CandidateIndex++)
+            const auto DrawCandidateTooltip = [&](const TPair<IConsoleObject*, FString>& Candidate, const ImRect& InItemRect)
             {
-                const TPair<IConsoleObject*, FString>& Candidate = Candidates[CandidateIndex];
-                bIsActiveIndex = SelectedCandidateIndex == CandidateIndex;
+                const ImVec4 TooltipBg        = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
+                const ImVec4 TooltipBorder    = ImVec4(71.0f / 255.0f, 71.0f / 255.0f, 71.0f / 255.0f, 1.0f);
+                const ImVec4 TooltipTextWhite = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+                const ImVec4 TooltipTextGrey  = ImVec4(192.0f / 255.0f, 192.0f / 255.0f, 192.0f / 255.0f, 1.0f);
 
-                // VariableName
-                ImGui::PushID(CandidateIndex);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 2.0f);
 
-                const ImVec2 SelectableSize(ImGui::GetContentRegionAvail().x, 20.0f);
-                ImGui::Selectable(*Candidate.Second, bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
+                ImGui::PushStyleColor(ImGuiCol_PopupBg, TooltipBg);
+                ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
+                ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
 
-                // If the selectable is not visible we want to scroll to it
-                const bool bIsSelectableVisible = ImGuiExtensions::IsItemFullyVisible();
+                const float TooltipOffsetX  = 10.0f * Scale;
+                const float TooltipMaxWidth = 420.0f * Scale;
 
-                ImGui::SameLine(VariableNameWidth);
+                ImGui::SetNextWindowPos(ImVec2(InItemRect.Max.x + TooltipOffsetX, InItemRect.Min.y), ImGuiCond_Always);
+                ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, 0.0f), ImVec2(TooltipMaxWidth, FLT_MAX));
 
-                ImGui::AlignTextToFramePadding();
+                ImGui::BeginTooltip();
 
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.85f, 0.85f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
+                ImGui::TextUnformatted(*Candidate.Second);
+                ImGui::PopStyleColor();
 
-                const char* PostFixText = "";
-                const char* SetByText = "";
+                ImGui::Dummy(ImVec2(0.0f, 4.0f * Scale));
 
-                IConsoleVariable* ConsoleVariable = Candidate.First->AsVariable();
-                if (ConsoleVariable)
+                ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextGrey);
+
+                if (IConsoleVariable* Var = Candidate.First->AsVariable())
                 {
-                    const FString Value = ConsoleVariable->GetString();
-                    ImGui::Text("%s", *Value);
-
-                    if (ConsoleVariable->IsVariableBool())
+                    const char* TypeText = "Variable";
+                    if (Var->IsVariableBool())
                     {
-                        PostFixText = "Bool";
+                        TypeText = "Bool";
                     }
-                    else if (ConsoleVariable->IsVariableInt())
+                    else if (Var->IsVariableInt())
                     {
-                        PostFixText = "Int";
+                        TypeText = "Int";
                     }
-                    else if (ConsoleVariable->IsVariableFloat())
+                    else if (Var->IsVariableFloat())
                     {
-                        PostFixText = "Float";
+                        TypeText = "Float";
                     }
-                    else if (ConsoleVariable->IsVariableString())
+                    else if (Var->IsVariableString())
                     {
-                        PostFixText = "String";
+                        TypeText = "String";
                     }
 
-                    const EConsoleVariableFlags VariableFlags = (ConsoleVariable->GetFlags() & EConsoleVariableFlags::SetByMask);
-                    SetByText = SetByFlagToString(VariableFlags);
+                    const FString ValueString = Var->GetString();
+
+                    ImGui::Text("Type: %s", TypeText);
+                    ImGui::Text("Value: %s", *ValueString);
+
+                    const EConsoleVariableFlags VariableFlags = static_cast<EConsoleVariableFlags>(Var->GetFlags() & EConsoleVariableFlags::SetByMask);
+                    ImGui::Text("Set By: %s", SetByFlagToString(VariableFlags));
                 }
                 else if (Candidate.First->AsCommand())
                 {
-                    PostFixText = "Command";
+                    ImGui::TextUnformatted("Type: Command");
                 }
-
-                // Offset from the start is name + value
-                const float PostFixOffset = VariableNameWidth + VariableValueWidth;
-                ImGui::SameLine(PostFixOffset);
-
-                // PostFix
-                ImGui::Text("[%s]", PostFixText);
-
-                const float SetByOffset = PostFixOffset + PostFixTextLength + 20.0f * Scale;
-                if (ConsoleVariable)
-                {
-                    ImGui::SameLine(SetByOffset);
-                    ImGui::Text("[%s]", SetByText);
-                }
-
-                const float HelpStringOffset = SetByOffset + SetByTextLength + 20.0f * Scale;
-                ImGui::SameLine(HelpStringOffset);
 
                 const char* HelpString = Candidate.First->GetHelpString();
-                ImGui::Text(" [Help: %s]", HelpString);
+                if (HelpString && HelpString[0] != 0)
+                {
+                    ImGui::Separator();
+                    
+                    ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
+                    
+                    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + TooltipMaxWidth - 20.0f * Scale);
+                    ImGui::TextUnformatted(HelpString);
+                    ImGui::PopTextWrapPos();
+
+                    ImGui::PopStyleColor();
+                }
 
                 ImGui::PopStyleColor();
 
-                ImGui::PopID();
+                ImGui::EndTooltip();
 
-                // Check if we need to scroll to the current selected item
+                ImGui::PopStyleColor(3);
+                ImGui::PopStyleVar(4);
+            };
+
+            const float ContentWidth = ImGui::GetContentRegionAvail().x;
+            for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); ++CandidateIndex)
+            {
+                const TPair<IConsoleObject*, FString>& Candidate = Candidates[CandidateIndex];
+                const bool bIsActiveIndex = (SelectedCandidateIndex == CandidateIndex);
+
+                ImGui::PushID(CandidateIndex);
+
+                const ImVec2 SelectableSize(ContentWidth, RowHeight);
+                ImGui::Selectable("##CandidateSelectable", bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
+
+                const bool bIsSelectableVisible = ImGuiExtensions::IsItemFullyVisible();
+
+                const ImRect ItemRect    = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+                const ImVec2 TextStart   = ImVec2(ItemRect.Min.x + 6.0f * Scale, ItemRect.Min.y + (RowHeight - ImGui::GetTextLineHeight()) * 0.5f);
+                const ImU32  BaseTextU32 = ImGui::GetColorU32(bIsActiveIndex ? TextSelectedColor : TextNormalColor);
+
+                const char* NameText   = *Candidate.Second;
+                const char* FilterText = CandidateFilter.IsEmpty() ? nullptr : *CandidateFilter;
+
+                int32 MatchStart = -1;
+                int32 MatchLen   = 0;
+
+                if (FilterText && FilterText[0] != 0)
+                {
+                    MatchStart = FindSubstringCaseInsensitive(NameText, FilterText);
+                    MatchLen   = static_cast<int32>(strlen(FilterText));
+                }
+
+                ImDrawList* DrawList = ImGui::GetWindowDrawList();
+                if (MatchStart >= 0 && MatchLen > 0)
+                {
+                    const ImVec2 PrefixSize = ImGui::CalcTextSize(NameText, NameText + MatchStart);
+                    const ImVec2 MatchSize  = ImGui::CalcTextSize(NameText + MatchStart, NameText + MatchStart + MatchLen);
+                    const ImVec2 PrefixPos  = TextStart;
+                    const ImVec2 MatchPos   = ImVec2(TextStart.x + PrefixSize.x, TextStart.y);
+                    const ImVec2 SuffixPos  = ImVec2(MatchPos.x + MatchSize.x, TextStart.y);
+
+                    DrawList->AddText(PrefixPos, BaseTextU32, NameText, NameText + MatchStart);
+
+                    const float  HighlightPadY = 2.0f * Scale;
+                    const ImVec2 HighlightMin  = ImVec2(MatchPos.x - 1.0f * Scale, ItemRect.Min.y + HighlightPadY);
+                    const ImVec2 HighlightMax  = ImVec2(MatchPos.x + MatchSize.x + 1.0f * Scale, ItemRect.Max.y - HighlightPadY);
+                    DrawList->AddRectFilled(HighlightMin, HighlightMax, HighlightBgU32, 0.0f);
+
+                    DrawList->AddText(MatchPos, HighlightTextU32, NameText + MatchStart, NameText + MatchStart + MatchLen);
+                    DrawList->AddText(SuffixPos, BaseTextU32, NameText + MatchStart + MatchLen);
+                }
+                else
+                {
+                    DrawList->AddText(TextStart, BaseTextU32, NameText);
+                }
+
+                const bool bHoveredByMouse = ImGui::IsMouseHoveringRect(ItemRect.Min, ItemRect.Max, false);
+                if (bHoveredByMouse)
+                {
+                    DrawCandidateTooltip(Candidate, ItemRect);
+                }
+
                 if (bIsActiveIndex && bCandidateSelectionChanged)
                 {
-                    // Only scroll if the selectable was is not visible
                     if (!bIsSelectableVisible)
                     {
                         ImGui::SetScrollHereY(0.0f);
@@ -333,18 +415,17 @@ void FEditorFooterWidget::Draw()
 
                     bCandidateSelectionChanged = false;
                 }
+
+                ImGui::PopID();
             }
 
-            ImGui::PopStyleVar();
-
-            ImGui::PopStyleColor();
-            ImGui::PopStyleColor();
+            ImGui::PopStyleVar(); // SelectableTextAlign
         }
 
         ImGui::End(); // Console Candidates
 
-        ImGui::PopStyleVar(4);
-        ImGui::PopStyleColor(4);
+        ImGui::PopStyleVar(5);
+        ImGui::PopStyleColor(12);
     }
 
     ImGui::PopFont();
@@ -356,6 +437,7 @@ void FEditorFooterWidget::InvalidateCandidates()
     bCandidateSelectionChanged = true;
 
     Candidates.Clear();
+    CandidateFilter.Clear();
 }
 
 int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
@@ -392,6 +474,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
             if (WordLength > 0)
             {
                 const FStringView CandidateName(WordStart, WordLength);
+                CandidateFilter = FString(WordStart, WordLength);
                 FConsoleManager::Get().FindCandidates(CandidateName, Candidates);
 
                 // If we found any candidates, then want to reset the history index, otherwise the index will be the 
