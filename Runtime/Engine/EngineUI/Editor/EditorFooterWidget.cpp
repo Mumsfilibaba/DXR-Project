@@ -5,8 +5,6 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui.h>
-#include <cctype>
-#include <cstring>
 
 FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
     : OutputDevice(InOutputDevice)
@@ -139,8 +137,8 @@ void FEditorFooterWidget::Draw()
                 }
                 else
                 {
-                    const FString Cmd(TextBuffer.Data());
-                    FConsoleManager::Get().ExecuteCommand(*OutputDevice, Cmd);
+                    const FString Command(TextBuffer.Data());
+                    FConsoleManager::Get().ExecuteCommand(*OutputDevice, Command);
 
                     TextBuffer[0]   = 0;
                     bScrollToBottom = true;
