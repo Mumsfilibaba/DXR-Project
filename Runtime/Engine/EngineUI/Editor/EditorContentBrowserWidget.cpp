@@ -457,49 +457,49 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
                 ScrollPos            = ScrollWindow->Pos;
                 ScrollSize           = ScrollWindow->Size;
             }
+
+            if (bScrollHasScrollbarY && ScrollSize.x > 0.0f && ScrollSize.y > 0.0f)
+            {
+                constexpr float ShadowHeight = 10.0f;
+                constexpr float Epsilon      = 1.0f;
+
+                const bool bShowTopShadow    = ScrollY > Epsilon;
+                const bool bShowBottomShadow = ScrollY < (ScrollMaxY - Epsilon);
+
+                if (bShowTopShadow || bShowBottomShadow)
+                {
+                    ImDrawList* OverlayDrawList = ImGui::GetWindowDrawList();
+
+                    const ImVec2 ClipMin = ScrollPos;
+                    const ImVec2 ClipMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+
+                    OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
+
+                    const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
+                    const ImU32 Clear = IM_COL32(0, 0, 0, 0);
+
+                    if (bShowTopShadow)
+                    {
+                        const ImVec2 ShadowMin = ScrollPos;
+                        const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeight);
+                        OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
+                    }
+
+                    if (bShowBottomShadow)
+                    {
+                        const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeight);
+                        const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+                        OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
+                    }
+
+                    OverlayDrawList->PopClipRect();
+                }
+            }
         }
 
         ImGui::EndChild();
-        ImGui::PopStyleVar();   // WindowPadding
+        ImGui::PopStyleVar(); // WindowPadding
         ImGui::PopStyleColor(); // ChildBg
-
-        if (bScrollHasScrollbarY && ScrollSize.x > 0.0f && ScrollSize.y > 0.0f)
-        {
-            constexpr float ShadowHeight = 10.0f;
-            constexpr float Epsilon      = 1.0f;
-
-            const bool bShowTopShadow    = ScrollY > Epsilon;
-            const bool bShowBottomShadow = ScrollY < (ScrollMaxY - Epsilon);
-
-            if (bShowTopShadow || bShowBottomShadow)
-            {
-                ImDrawList* OverlayDrawList = ImGui::GetForegroundDrawList();
-
-                const ImVec2 ClipMin = ScrollPos;
-                const ImVec2 ClipMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
-
-                OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
-
-                const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
-                const ImU32 Clear = IM_COL32(0, 0, 0, 0);
-
-                if (bShowTopShadow)
-                {
-                    const ImVec2 ShadowMin = ScrollPos;
-                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeight);
-                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
-                }
-
-                if (bShowBottomShadow)
-                {
-                    const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeight);
-                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
-                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
-                }
-
-                OverlayDrawList->PopClipRect();
-            }
-        }
 
         ImGui::PopStyleVar(2);
         ImGui::PopStyleColor(4);
@@ -879,51 +879,47 @@ void FEditorContentBrowserWidget::DrawContentPanel()
             ScrollPos            = ScrollWindow->Pos;
             ScrollSize           = ScrollWindow->Size;
         }
+
+        if (bScrollHasScrollbarY && ScrollSize.x > 0.0f && ScrollSize.y > 0.0f)
+        {
+            constexpr float ShadowHeight = 10.0f;
+            constexpr float Epsilon      = 1.0f;
+
+            const bool bShowTopShadow    = ScrollY > Epsilon;
+            const bool bShowBottomShadow = ScrollY < (ScrollMaxY - Epsilon);
+
+            if (bShowTopShadow || bShowBottomShadow)
+            {
+                ImDrawList* OverlayDrawList = ImGui::GetWindowDrawList();
+
+                const ImVec2 ClipMin = ScrollPos;
+                const ImVec2 ClipMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+
+                OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
+
+                const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
+                const ImU32 Clear = IM_COL32(0, 0, 0, 0);
+
+                if (bShowTopShadow)
+                {
+                    const ImVec2 ShadowMin = ScrollPos;
+                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeight);
+                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
+                }
+
+                if (bShowBottomShadow)
+                {
+                    const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeight);
+                    const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
+                    OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
+                }
+
+                OverlayDrawList->PopClipRect();
+            }
+        }
     }
 
     ImGui::EndChild();
-
-    // -----------------------------------------------------------------------------------------
-    // Scroll shadows
-    // -----------------------------------------------------------------------------------------
-
-    if (bScrollHasScrollbarY && ScrollSize.x > 0.0f && ScrollSize.y > 0.0f)
-    {
-        constexpr float ShadowHeight = 10.0f;
-        constexpr float Epsilon      = 1.0f;
-
-        const bool bShowTopShadow    = ScrollY > Epsilon;
-        const bool bShowBottomShadow = ScrollY < (ScrollMaxY - Epsilon);
-
-        if (bShowTopShadow || bShowBottomShadow)
-        {
-            ImDrawList* OverlayDrawList = ImGui::GetForegroundDrawList();
-
-            const ImVec2 ClipMin = ScrollPos;
-            const ImVec2 ClipMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
-
-            OverlayDrawList->PushClipRect(ClipMin, ClipMax, true);
-
-            const ImU32 Dark  = IM_COL32(0, 0, 0, 140);
-            const ImU32 Clear = IM_COL32(0, 0, 0, 0);
-
-            if (bShowTopShadow)
-            {
-                const ImVec2 ShadowMin = ScrollPos;
-                const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ShadowHeight);
-                OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Dark, Dark, Clear, Clear);
-            }
-
-            if (bShowBottomShadow)
-            {
-                const ImVec2 ShadowMin = ImVec2(ScrollPos.x, ScrollPos.y + ScrollSize.y - ShadowHeight);
-                const ImVec2 ShadowMax = ImVec2(ScrollPos.x + ScrollSize.x, ScrollPos.y + ScrollSize.y);
-                OverlayDrawList->AddRectFilledMultiColor(ShadowMin, ShadowMax, Clear, Clear, Dark, Dark);
-            }
-
-            OverlayDrawList->PopClipRect();
-        }
-    }
 
     ImGui::PopStyleVar(3);
     ImGui::PopStyleVar(2);
