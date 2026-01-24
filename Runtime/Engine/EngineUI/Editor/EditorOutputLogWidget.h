@@ -1,24 +1,22 @@
 #pragma once
 #include "Core/Delegates/Delegate.h"
 #include "Core/Containers/Array.h"
-#include "Core/Containers/Pair.h"
-#include "Core/Containers/SharedPtr.h"
-#include "Core/Containers/SharedRef.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Containers/String.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Misc/IOutputDevice.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 class FEditorOutputLogWidget final : public IOutputDevice
 {
 public:
     FEditorOutputLogWidget();
-    ~FEditorOutputLogWidget();
+    virtual ~FEditorOutputLogWidget() override;
 
     // IOutputDevice
-    void Log(const FString& Message) override final;
-    void Log(ELogSeverity Severity, const FString& Message) override final;
+    virtual void Log(const FString& Message) override final;
+    virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
     void Draw();
 
@@ -40,7 +38,15 @@ private:
     };
 
     void DrawFilterBar();
-    void DrawLogList();
+    void DrawLogListRichText();
+
+    static int32 FindSubstringCaseInsensitive(const char* Haystack, const char* Needle);
+    
+    TStaticArray<CHAR, 256> SearchFilterBuffer;
+    TArray<FLogMessage>     Messages;
+    FCriticalSection        MessagesCS;
+    FRichTextViewContext    RichTextCtx;
+    FDelegateHandle         ImGuiDelegateHandle;
 
     bool                    bVisible;
     bool                    bAutoScroll;
@@ -48,9 +54,4 @@ private:
     bool                    bFilterInfo;
     bool                    bFilterWarning;
     bool                    bFilterError;
-
-    TStaticArray<CHAR, 256> SearchFilterBuffer;
-    TArray<FLogMessage>     Messages;
-    FCriticalSection        MessagesCS;
-    FDelegateHandle         ImGuiDelegateHandle;
 };

@@ -240,6 +240,124 @@ static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const char* InSuffix,
     Window->DrawList->AddText(ImVec2(DesiredX, Y), InColor, InSuffix);
 }
 
+static FORCEINLINE int32 ClampInt32(int32 V, int32 MinV, int32 MaxV)
+{
+    return (V < MinV) ? MinV : (V > MaxV ? MaxV : V);
+}
+
+static FORCEINLINE void NormalizeSelection(FRichTextSelectionPoint& A, FRichTextSelectionPoint& B)
+{
+    if (A.Line > B.Line || (A.Line == B.Line && A.Column > B.Column))
+    {
+        FRichTextSelectionPoint Temp = A;
+        A = B;
+        B = Temp;
+    }
+}
+
+static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& SelA, const FRichTextSelectionPoint& SelB, int32 LineIndex, int32& OutColStart, int32& OutColEnd, int32 LineCharCount)
+{
+    OutColStart = 0;
+    OutColEnd   = 0;
+
+    if (LineIndex < SelA.Line || LineIndex > SelB.Line)
+    {
+        return false;
+    }
+
+    if (SelA.Line == SelB.Line)
+    {
+        OutColStart = ClampInt32(SelA.Column, 0, LineCharCount);
+        OutColEnd   = ClampInt32(SelB.Column, 0, LineCharCount);
+        return OutColEnd > OutColStart;
+    }
+
+    if (LineIndex == SelA.Line)
+    {
+        OutColStart = ClampInt32(SelA.Column, 0, LineCharCount);
+        OutColEnd   = LineCharCount;
+        return OutColEnd > OutColStart;
+    }
+
+    if (LineIndex == SelB.Line)
+    {
+        OutColStart = 0;
+        OutColEnd   = ClampInt32(SelB.Column, 0, LineCharCount);
+        return OutColEnd > OutColStart;
+    }
+
+    OutColStart = 0;
+    OutColEnd   = LineCharCount;
+    return LineCharCount > 0;
+}
+
+static FString BuildSelectedText(const FRichTextViewContext& Ctx)
+{
+    if (!Ctx.bHasSelection || Ctx.Lines.IsEmpty())
+    {
+        return FString();
+    }
+
+    FRichTextSelectionPoint A = Ctx.SelStart;
+    FRichTextSelectionPoint B = Ctx.SelEnd;
+    NormalizeSelection(A, B);
+
+    FString Result;
+
+    const int32 LineMin = ClampInt32(A.Line, 0, Ctx.Lines.Size() - 1);
+    const int32 LineMax = ClampInt32(B.Line, 0, Ctx.Lines.Size() - 1);
+
+    for (int32 L = LineMin; L <= LineMax; ++L)
+    {
+        const FRichTextLine& Line = Ctx.Lines[L];
+
+        FString FullLine;
+        for (int32 s = 0; s < Line.Spans.Size(); ++s)
+        {
+            FullLine += Line.Spans[s].Text;
+        }
+
+        const char* Full = *FullLine;
+        const int32 FullLen = (int32)strlen(Full);
+
+        int32 SelColStart = 0;
+        int32 SelColEnd   = 0;
+
+        FRichTextSelectionPoint NA = A;
+        FRichTextSelectionPoint NB = B;
+
+        if (!SelectionIntersectsLine(NA, NB, L, SelColStart, SelColEnd, FullLen))
+        {
+            continue;
+        }
+
+        SelColStart = ClampInt32(SelColStart, 0, FullLen);
+        SelColEnd   = ClampInt32(SelColEnd, 0, FullLen);
+
+        if (SelColEnd > SelColStart)
+        {
+            const int32 SubLen = SelColEnd - SelColStart;
+
+            FString Sub;
+            Sub.Reserve(SubLen + 1);
+
+            for (int32 i = 0; i < SubLen; ++i)
+            {
+                const char C = Full[SelColStart + i];
+                Sub += C;
+            }
+
+            Result += Sub;
+            if (L != LineMax)
+            {
+                Result += "\n";
+            }
+        }
+    }
+
+    return Result;
+}
+
 bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType)
 {
     ImGuiTable* CurrentTable = ImGui::GetCurrentTable();
@@ -1556,11 +1674,356 @@ void EditorWidgets::PropertySeparatorRow(float PaddingY)
     }
 }
 
+bool EditorWidgets::BeginRichTextView(const char* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags)
+{
+    InOutContext.ClearForNewFrame();
+
+    const ImGuiWindowFlags Flags = InFlags | ImGuiWindowFlags_HorizontalScrollbar;
+
+    InOutContext.ViewId = ImGui::GetID(InId);
+
+    const bool bOpen = ImGui::BeginChild(InId, InSize, true, Flags);
+    if (!bOpen)
+    {
+        return false;
+    }
+
+    InOutContext.bActive      = true;
+    InOutContext.LineHeight   = ImGui::GetTextLineHeight();
+    InOutContext.CharWidth    = ImGui::CalcTextSize("A").x;
+    InOutContext.ContentStart = ImGui::GetCursorScreenPos();
+
+    if (ImGui::BeginPopupContextWindow("##RichTextViewContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+    {
+        const FString Selected = BuildSelectedText(InOutContext);
+        if (ImGui::MenuItem("Copy Selection", nullptr, false, InOutContext.bHasSelection && !Selected.IsEmpty()))
+        {
+            ImGui::SetClipboardText(*Selected);
+        }
+
+        if (ImGui::MenuItem("Copy All"))
+        {
+            FString All;
+            for (int32 L = 0; L < InOutContext.Lines.Size(); ++L)
+            {
+                const FRichTextLine& Line = InOutContext.Lines[L];
+                for (int32 s = 0; s < Line.Spans.Size(); ++s)
+                {
+                    All += Line.Spans[s].Text;
+                }
+
+                All += "\n";
+            }
+
+            ImGui::SetClipboardText(*All);
+        }
+
+        if (ImGui::MenuItem("Clear Selection", nullptr, false, InOutContext.bHasSelection))
+        {
+            InOutContext.bHasSelection = false;
+            InOutContext.bSelecting = false;
+        }
+
+        ImGui::EndPopup();
+    }
+
+    return true;
+}
+
+void EditorWidgets::RichTextLineBegin(FRichTextViewContext& InOutContext)
+{
+    if (!InOutContext.bActive)
+    {
+        return;
+    }
+
+    FRichTextLine Line;
+    Line.TotalChars = 0;
+    InOutContext.Lines.Add(Line);
+}
+
+void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor)
+{
+    if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
+    {
+        return;
+    }
+
+    FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
+
+    FRichTextSpan Span;
+    Span.Text           = InText;
+    Span.TextColor      = InTextColor;
+    Span.bHasBackground = false;
+
+    Line.TotalChars += (int32)strlen(InText);
+    Line.Spans.Add(Span);
+}
+
+void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
+{
+    if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
+    {
+        return;
+    }
+
+    FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
+
+    FRichTextSpan Span;
+    Span.Text            = InText;
+    Span.TextColor       = InTextColor;
+    Span.bHasBackground  = true;
+    Span.BackgroundColor = InBackgroundColor;
+
+    Line.TotalChars += (int32)strlen(InText);
+    Line.Spans.Add(Span);
+}
+
+void EditorWidgets::RichTextLineEnd(FRichTextViewContext& InOutContext)
+{
+    (void)InOutContext;
+}
+
+static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext& Ctx, const ImVec2& MousePos)
+{
+    FRichTextSelectionPoint P{};
+    P.Line   = 0;
+    P.Column = 0;
+
+    const float StartY = Ctx.ContentStart.y + Ctx.Padding.y;
+    const float StartX = Ctx.ContentStart.x + Ctx.Padding.x;
+    const float LocalY = MousePos.y - StartY;
+    const float LocalX = MousePos.x - StartX;
+
+    const int32 LineIndex   = (Ctx.LineHeight > 0.0f) ? (int32)(LocalY / Ctx.LineHeight) : 0;
+    const int32 MaxLine     = Math::Max(0, Ctx.Lines.Size() - 1);
+    const int32 ClampedLine = ClampInt32(LineIndex, 0, MaxLine);
+
+    P.Line = ClampedLine;
+
+    const int32 LineChars = Ctx.Lines.IsValidIndex(ClampedLine) ? Ctx.Lines[ClampedLine].TotalChars : 0;
+    const int32 Col       = (Ctx.CharWidth > 0.0f) ? (int32)(LocalX / Ctx.CharWidth) : 0;
+
+    P.Column = ClampInt32(Col, 0, LineChars);
+    return P;
+}
+
+void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
+{
+	if (!InOutContext.bActive)
+	{
+		ImGui::EndChild();
+		return;
+	}
+
+	ImGuiIO& State = ImGui::GetIO();
+
+	ImDrawList*  DrawList      = ImGui::GetWindowDrawList();
+	ImGuiWindow* CurrentWindow = ImGui::GetCurrentWindow();
+
+	const float FullLineHeight = InOutContext.LineHeight;
+
+	{
+		const float TotalHeight = InOutContext.Padding.y + static_cast<float>(InOutContext.Lines.Size()) * FullLineHeight + InOutContext.Padding.y;
+
+		const ImVec2 SavedCursorPos = ImGui::GetCursorPos();
+		ImGui::Dummy(ImVec2(0.0f, TotalHeight));
+		ImGui::SetCursorPos(SavedCursorPos);
+	}
+
+	const bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+	if (bHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+	{
+		InOutContext.bSelecting    = true;
+		InOutContext.bHasSelection = true;
+
+		InOutContext.SelStart = GetMouseSelectionPoint(InOutContext, State.MousePos);
+		InOutContext.SelEnd   = InOutContext.SelStart;
+
+		ImGui::SetWindowFocus();
+	}
+
+	if (InOutContext.bSelecting && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+	{
+		InOutContext.SelEnd = GetMouseSelectionPoint(InOutContext, State.MousePos);
+
+		{
+			const float TopY = CurrentWindow->InnerRect.Min.y;
+			const float BottomY = CurrentWindow->InnerRect.Max.y;
+			const float EdgeInsidePx = 10.0f;
+
+			float ScrollDir = 0.0f;
+			if (State.MousePos.y <= TopY + EdgeInsidePx)
+			{
+				ScrollDir = -1.0f;
+			}
+			else if (State.MousePos.y >= BottomY - EdgeInsidePx)
+			{
+				ScrollDir = 1.0f;
+			}
+			else if (State.MousePos.y < TopY)
+			{
+				ScrollDir = -1.0f;
+			}
+			else if (State.MousePos.y > BottomY)
+			{
+				ScrollDir = 1.0f;
+			}
+
+			const float ScrollMaxY = ImGui::GetScrollMaxY();
+			if (ScrollDir != 0.0f && ScrollMaxY > 0.0f)
+			{
+				const float DeltaTime     = (State.DeltaTime > 0.0f) ? State.DeltaTime : (1.0f / 60.0f);
+				const float OutsideRampPx = 100.0f;
+
+				float OutsideDistPx = 0.0f;
+				if (State.MousePos.y < TopY)
+				{
+					OutsideDistPx = TopY - State.MousePos.y;
+				}
+				else if (State.MousePos.y > BottomY)
+				{
+					OutsideDistPx = State.MousePos.y - BottomY;
+				}
+
+				OutsideDistPx = Math::Clamp(OutsideDistPx, 0.0f, OutsideRampPx);
+
+				float T = OutsideDistPx / OutsideRampPx;
+				T = Math::Clamp(T, 0.0f, 1.0f);
+				T = T * T * (3.0f - 2.0f * T);
+
+				const float BaseSpeedPxPerSec = 35000.0f;
+				const float MaxSpeedPxPerSec  = 140000.0f;
+
+				const float Speed = BaseSpeedPxPerSec + (MaxSpeedPxPerSec - BaseSpeedPxPerSec) * T;
+				float Delta = ScrollDir * Speed * DeltaTime;
+
+				if (Delta > -12.0f && Delta < 12.0f)
+				{
+					Delta = (ScrollDir < 0.0f) ? -12.0f : 12.0f;
+				}
+
+				float ScrollY = ImGui::GetScrollY();
+				ScrollY = Math::Clamp(ScrollY + Delta, 0.0f, ScrollMaxY);
+				ImGui::SetScrollY(ScrollY);
+
+				InOutContext.SelEnd = GetMouseSelectionPoint(InOutContext, State.MousePos);
+			}
+		}
+	}
+
+	if (InOutContext.bSelecting && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+	{
+		InOutContext.bSelecting = false;
+
+		if (InOutContext.SelStart.Line == InOutContext.SelEnd.Line && InOutContext.SelStart.Column == InOutContext.SelEnd.Column)
+		{
+			InOutContext.bHasSelection = false;
+		}
+	}
+
+	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && State.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C, false))
+	{
+		if (InOutContext.bHasSelection)
+		{
+			const FString Selected = BuildSelectedText(InOutContext);
+			if (!Selected.IsEmpty())
+			{
+				ImGui::SetClipboardText(*Selected);
+			}
+		}
+		else
+		{
+			const FRichTextSelectionPoint P = GetMouseSelectionPoint(InOutContext, State.MousePos);
+			if (InOutContext.Lines.IsValidIndex(P.Line))
+			{
+				FString LineText;
+				for (int32 s = 0; s < InOutContext.Lines[P.Line].Spans.Size(); ++s)
+				{
+					LineText += InOutContext.Lines[P.Line].Spans[s].Text;
+				}
+
+				ImGui::SetClipboardText(*LineText);
+			}
+		}
+	}
+
+	ImGuiListClipper Clipper;
+	Clipper.Begin(InOutContext.Lines.Size(), FullLineHeight);
+
+	FRichTextSelectionPoint SelA = InOutContext.SelStart;
+	FRichTextSelectionPoint SelB = InOutContext.SelEnd;
+	NormalizeSelection(SelA, SelB);
+
+	const ImU32 SelectionBg = ImGui::GetColorU32(ImGuiCol_TextSelectedBg);
+
+	while (Clipper.Step())
+	{
+		for (int32 LineIndex = Clipper.DisplayStart; LineIndex < Clipper.DisplayEnd; ++LineIndex)
+		{
+			if (!InOutContext.Lines.IsValidIndex(LineIndex))
+			{
+				continue;
+			}
+
+			const FRichTextLine& Line = InOutContext.Lines[LineIndex];
+
+			const float Y = InOutContext.ContentStart.y + InOutContext.Padding.y + LineIndex * FullLineHeight;
+			const float X = InOutContext.ContentStart.x + InOutContext.Padding.x;
+
+			const ImVec2 LineMin = ImVec2(CurrentWindow->WorkRect.Min.x, Y);
+			const ImVec2 LineMax = ImVec2(CurrentWindow->WorkRect.Max.x, Y + FullLineHeight);
+
+			if (InOutContext.bHasSelection)
+			{
+				int32 ColStart = 0;
+				int32 ColEnd = 0;
+
+				if (SelectionIntersectsLine(SelA, SelB, LineIndex, ColStart, ColEnd, Line.TotalChars))
+				{
+					const float SelX0 = X + ColStart * InOutContext.CharWidth;
+					const float SelX1 = X + ColEnd * InOutContext.CharWidth;
+					DrawList->AddRectFilled(ImVec2(SelX0, LineMin.y), ImVec2(SelX1, LineMax.y), SelectionBg, 0.0f);
+				}
+			}
+
+			float CursorX = X;
+			for (int32 s = 0; s < Line.Spans.Size(); ++s)
+			{
+				const FRichTextSpan& Span = Line.Spans[s];
+
+				const char* Text = *Span.Text;
+				if (!Text || Text[0] == 0)
+				{
+					continue;
+				}
+
+				const float SpanW = ImGui::CalcTextSize(Text).x;
+				if (Span.bHasBackground)
+				{
+					DrawList->AddRectFilled(ImVec2(CursorX, LineMin.y + 2.0f), ImVec2(CursorX + SpanW, LineMax.y - 2.0f), Span.BackgroundColor, 0.0f);
+				}
+
+				DrawList->AddText(ImVec2(CursorX, LineMin.y), Span.TextColor, Text);
+				CursorX += SpanW;
+			}
+		}
+	}
+
+	if (InOutContext.bScrollToBottom)
+	{
+		ImGui::SetScrollHereY(1.0f);
+		InOutContext.bScrollToBottom = false;
+	}
+
+	ImGui::EndChild();
+}
+
 bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
     ImGuiStyle& Style = ImGui::GetStyle();
 
-    const float Size = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
+    const float Size   = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
     const float Offset = (ImGui::GetContentRegionAvail().x - Size) * Alignment;
 
     if (Offset > 0.0f)

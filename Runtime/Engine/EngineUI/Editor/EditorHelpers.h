@@ -53,6 +53,52 @@ enum class EVector3ControlType : uint8
     Scale,
 };
 
+struct FRichTextSpan
+{
+    FString Text;
+    
+    ImU32 TextColor       = IM_COL32(255, 255, 255, 255);
+    bool  bHasBackground  = false;
+    ImU32 BackgroundColor = 0;
+};
+
+struct FRichTextLine
+{
+    TArray<FRichTextSpan> Spans;
+    int32 TotalChars = 0;
+};
+
+struct FRichTextSelectionPoint
+{
+    int32 Line   = 0;
+    int32 Column = 0;
+};
+
+struct FRichTextViewContext
+{
+    void ClearForNewFrame()
+    {
+        Lines.Clear();
+        bActive = false;
+    }
+
+    bool    bAutoScroll     = true;
+    bool    bScrollToBottom = false;
+    bool    bSelecting      = false;
+    bool    bHasSelection   = false;
+    bool    bActive         = false;
+    float   LineHeight      = 0.0f;
+    float   CharWidth       = 0.0f;
+    ImVec2  ContentStart    = ImVec2(0, 0);
+    ImVec2  Padding         = ImVec2(8.0f, 4.0f);
+    ImGuiID ViewId          = 0;
+
+    FRichTextSelectionPoint SelStart;
+    FRichTextSelectionPoint SelEnd;
+    TArray<FRichTextLine>   Lines;
+
+};
+
 struct ENGINE_API EditorWidgets
 {
     // -----------------------------------------------------------------------------------------
@@ -112,6 +158,17 @@ struct ENGINE_API EditorWidgets
     static void EndPropertyTable();
     static void PropertyRowLabel(const char* Label);
     static void PropertySeparatorRow(float PaddingY = 4.0f);
+
+    // -----------------------------------------------------------------------------------------
+    // Rich Text View
+    // -----------------------------------------------------------------------------------------
+
+    static bool BeginRichTextView(const char* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0);
+    static void RichTextLineBegin(FRichTextViewContext& InOutContext);
+    static void RichTextAddText(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor);
+    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void RichTextLineEnd(FRichTextViewContext& InOutContext);
+    static void EndRichTextView(FRichTextViewContext& InOutContext);
 
     // -----------------------------------------------------------------------------------------
     // Other
