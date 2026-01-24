@@ -1,6 +1,6 @@
 #include "FrameProfilerWidget.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/ThreadManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"

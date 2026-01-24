@@ -358,6 +358,30 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
     return Result;
 }
 
+static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext& Ctx, const ImVec2& MousePos)
+{
+    FRichTextSelectionPoint P{};
+    P.Line   = 0;
+    P.Column = 0;
+
+    const float StartY = Ctx.ContentStart.y + Ctx.Padding.y;
+    const float StartX = Ctx.ContentStart.x + Ctx.Padding.x;
+    const float LocalY = (MousePos.y - StartY);
+    const float LocalX = (MousePos.x - StartX);
+
+    const int32 LineIndex   = (Ctx.LineHeight > 0.0f) ? (int32)(LocalY / Ctx.LineHeight) : 0;
+    const int32 MaxLine     = Math::Max(0, Ctx.Lines.Size() - 1);
+    const int32 ClampedLine = ClampInt32(LineIndex, 0, MaxLine);
+
+    P.Line = ClampedLine;
+
+    const int32 LineChars = Ctx.Lines.IsValidIndex(ClampedLine) ? Ctx.Lines[ClampedLine].TotalChars : 0;
+    const int32 Col       = (Ctx.CharWidth > 0.0f) ? (int32)(LocalX / Ctx.CharWidth) : 0;
+
+    P.Column = ClampInt32(Col, 0, LineChars);
+    return P;
+}
+
 bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType)
 {
     ImGuiTable* CurrentTable = ImGui::GetCurrentTable();
@@ -1784,239 +1808,232 @@ void EditorWidgets::RichTextLineEnd(FRichTextViewContext& InOutContext)
     (void)InOutContext;
 }
 
-static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext& Ctx, const ImVec2& MousePos)
-{
-    FRichTextSelectionPoint P{};
-    P.Line   = 0;
-    P.Column = 0;
-
-    const float StartY = Ctx.ContentStart.y + Ctx.Padding.y;
-    const float StartX = Ctx.ContentStart.x + Ctx.Padding.x;
-    const float LocalY = MousePos.y - StartY;
-    const float LocalX = MousePos.x - StartX;
-
-    const int32 LineIndex   = (Ctx.LineHeight > 0.0f) ? (int32)(LocalY / Ctx.LineHeight) : 0;
-    const int32 MaxLine     = Math::Max(0, Ctx.Lines.Size() - 1);
-    const int32 ClampedLine = ClampInt32(LineIndex, 0, MaxLine);
-
-    P.Line = ClampedLine;
-
-    const int32 LineChars = Ctx.Lines.IsValidIndex(ClampedLine) ? Ctx.Lines[ClampedLine].TotalChars : 0;
-    const int32 Col       = (Ctx.CharWidth > 0.0f) ? (int32)(LocalX / Ctx.CharWidth) : 0;
-
-    P.Column = ClampInt32(Col, 0, LineChars);
-    return P;
-}
-
 void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
 {
-	if (!InOutContext.bActive)
-	{
-		ImGui::EndChild();
-		return;
-	}
+    if (!InOutContext.bActive)
+    {
+        ImGui::EndChild();
+        return;
+    }
 
-	ImGuiIO& State = ImGui::GetIO();
+    ImGuiIO& State = ImGui::GetIO();
 
-	ImDrawList*  DrawList      = ImGui::GetWindowDrawList();
-	ImGuiWindow* CurrentWindow = ImGui::GetCurrentWindow();
+    ImDrawList*  DrawList      = ImGui::GetWindowDrawList();
+    ImGuiWindow* CurrentWindow = ImGui::GetCurrentWindow();
 
-	const float FullLineHeight = InOutContext.LineHeight;
+    const float FullLineHeight = InOutContext.LineHeight;
 
-	{
-		const float TotalHeight = InOutContext.Padding.y + static_cast<float>(InOutContext.Lines.Size()) * FullLineHeight + InOutContext.Padding.y;
+    {
+        const float TotalHeight = InOutContext.Padding.y + static_cast<float>(InOutContext.Lines.Size()) * FullLineHeight + InOutContext.Padding.y;
 
-		const ImVec2 SavedCursorPos = ImGui::GetCursorPos();
-		ImGui::Dummy(ImVec2(0.0f, TotalHeight));
-		ImGui::SetCursorPos(SavedCursorPos);
-	}
+        const ImVec2 SavedCursorPos = ImGui::GetCursorPos();
+        ImGui::Dummy(ImVec2(0.0f, TotalHeight));
+        ImGui::SetCursorPos(SavedCursorPos);
+    }
 
-	const bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
-	if (bHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-	{
-		InOutContext.bSelecting    = true;
-		InOutContext.bHasSelection = true;
+    // -----------------------------------------------------------------------------------------
+    // Selection begin
+    // -----------------------------------------------------------------------------------------
 
-		InOutContext.SelStart = GetMouseSelectionPoint(InOutContext, State.MousePos);
-		InOutContext.SelEnd   = InOutContext.SelStart;
+    const bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+    if (bHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        InOutContext.bSelecting    = true;
+        InOutContext.bHasSelection = true;
 
-		ImGui::SetWindowFocus();
-	}
+        InOutContext.SelStart = GetMouseSelectionPoint(InOutContext, State.MousePos);
+        InOutContext.SelEnd   = InOutContext.SelStart;
 
-	if (InOutContext.bSelecting && ImGui::IsMouseDown(ImGuiMouseButton_Left))
-	{
-		InOutContext.SelEnd = GetMouseSelectionPoint(InOutContext, State.MousePos);
+        ImGui::SetWindowFocus();
+    }
 
-		{
-			const float TopY = CurrentWindow->InnerRect.Min.y;
-			const float BottomY = CurrentWindow->InnerRect.Max.y;
-			const float EdgeInsidePx = 10.0f;
+    // -----------------------------------------------------------------------------------------
+    // Selection update
+    // -----------------------------------------------------------------------------------------
 
-			float ScrollDir = 0.0f;
-			if (State.MousePos.y <= TopY + EdgeInsidePx)
-			{
-				ScrollDir = -1.0f;
-			}
-			else if (State.MousePos.y >= BottomY - EdgeInsidePx)
-			{
-				ScrollDir = 1.0f;
-			}
-			else if (State.MousePos.y < TopY)
-			{
-				ScrollDir = -1.0f;
-			}
-			else if (State.MousePos.y > BottomY)
-			{
-				ScrollDir = 1.0f;
-			}
+    if (InOutContext.bSelecting && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+    {
+        InOutContext.SelEnd = GetMouseSelectionPoint(InOutContext, State.MousePos);
 
-			const float ScrollMaxY = ImGui::GetScrollMaxY();
-			if (ScrollDir != 0.0f && ScrollMaxY > 0.0f)
-			{
-				const float DeltaTime     = (State.DeltaTime > 0.0f) ? State.DeltaTime : (1.0f / 60.0f);
-				const float OutsideRampPx = 100.0f;
+        {
+            const float TopY              = CurrentWindow->InnerRect.Min.y;
+            const float BottomY           = CurrentWindow->InnerRect.Max.y;
+            const float EdgeInsidePx      = 10.0f;
+            const float RampDistancePx    = 100.0f;
+            const float BaseSpeedPxPerSec = 20.0f;
+            const float MaxSpeedPxPerSec  = 2000.0f;
 
-				float OutsideDistPx = 0.0f;
-				if (State.MousePos.y < TopY)
-				{
-					OutsideDistPx = TopY - State.MousePos.y;
-				}
-				else if (State.MousePos.y > BottomY)
-				{
-					OutsideDistPx = State.MousePos.y - BottomY;
-				}
+            float ScrollDir         = 0.0f;
+            float DistPastTriggerPx = 0.0f;
 
-				OutsideDistPx = Math::Clamp(OutsideDistPx, 0.0f, OutsideRampPx);
+            if (State.MousePos.y <= TopY + EdgeInsidePx)
+            {
+                ScrollDir = -1.0f;
 
-				float T = OutsideDistPx / OutsideRampPx;
-				T = Math::Clamp(T, 0.0f, 1.0f);
-				T = T * T * (3.0f - 2.0f * T);
+                const float TriggerY = TopY + EdgeInsidePx;
+                DistPastTriggerPx = TriggerY - State.MousePos.y;
+            }
+            else if (State.MousePos.y >= BottomY - EdgeInsidePx)
+            {
+                ScrollDir = 1.0f;
 
-				const float BaseSpeedPxPerSec = 35000.0f;
-				const float MaxSpeedPxPerSec  = 140000.0f;
+                const float TriggerY = BottomY - EdgeInsidePx;
+                DistPastTriggerPx = State.MousePos.y - TriggerY;
+            }
 
-				const float Speed = BaseSpeedPxPerSec + (MaxSpeedPxPerSec - BaseSpeedPxPerSec) * T;
-				float Delta = ScrollDir * Speed * DeltaTime;
+            DistPastTriggerPx = Math::Max(0.0f, DistPastTriggerPx);
 
-				if (Delta > -12.0f && Delta < 12.0f)
-				{
-					Delta = (ScrollDir < 0.0f) ? -12.0f : 12.0f;
-				}
+            const float ScrollMaxY = ImGui::GetScrollMaxY();
+            if (ScrollDir != 0.0f && ScrollMaxY > 0.0f)
+            {
+                const float DeltaTime = (State.DeltaTime > 0.0f) ? State.DeltaTime : (1.0f / 60.0f);
 
-				float ScrollY = ImGui::GetScrollY();
-				ScrollY = Math::Clamp(ScrollY + Delta, 0.0f, ScrollMaxY);
-				ImGui::SetScrollY(ScrollY);
+                float T = DistPastTriggerPx / RampDistancePx;
+                T = Math::Clamp(T, 0.0f, 1.0f);
 
-				InOutContext.SelEnd = GetMouseSelectionPoint(InOutContext, State.MousePos);
-			}
-		}
-	}
+                T = T * T * (3.0f - 2.0f * T);
 
-	if (InOutContext.bSelecting && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-	{
-		InOutContext.bSelecting = false;
+                const float Speed = BaseSpeedPxPerSec + (MaxSpeedPxPerSec - BaseSpeedPxPerSec) * T;
+                float Delta = ScrollDir * Speed * DeltaTime;
 
-		if (InOutContext.SelStart.Line == InOutContext.SelEnd.Line && InOutContext.SelStart.Column == InOutContext.SelEnd.Column)
-		{
-			InOutContext.bHasSelection = false;
-		}
-	}
+                const float MinDeltaPx = 1.0f;
+                if (Delta > -MinDeltaPx && Delta < MinDeltaPx)
+                {
+                    Delta = (ScrollDir < 0.0f) ? -MinDeltaPx : MinDeltaPx;
+                }
 
-	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && State.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C, false))
-	{
-		if (InOutContext.bHasSelection)
-		{
-			const FString Selected = BuildSelectedText(InOutContext);
-			if (!Selected.IsEmpty())
-			{
-				ImGui::SetClipboardText(*Selected);
-			}
-		}
-		else
-		{
-			const FRichTextSelectionPoint P = GetMouseSelectionPoint(InOutContext, State.MousePos);
-			if (InOutContext.Lines.IsValidIndex(P.Line))
-			{
-				FString LineText;
-				for (int32 s = 0; s < InOutContext.Lines[P.Line].Spans.Size(); ++s)
-				{
-					LineText += InOutContext.Lines[P.Line].Spans[s].Text;
-				}
+                //LOG_INFO("DeltaTime=%.6f Speed=%.2f Delta=%.4f", DeltaTime, Speed, Delta);
 
-				ImGui::SetClipboardText(*LineText);
-			}
-		}
-	}
+                float ScrollY = ImGui::GetScrollY();
+                ScrollY = Math::Clamp(ScrollY + Delta, 0.0f, ScrollMaxY);
+                ImGui::SetScrollY(ScrollY);
 
-	ImGuiListClipper Clipper;
-	Clipper.Begin(InOutContext.Lines.Size(), FullLineHeight);
+                InOutContext.SelEnd = GetMouseSelectionPoint(InOutContext, State.MousePos);
+            }
+        }
+    }
 
-	FRichTextSelectionPoint SelA = InOutContext.SelStart;
-	FRichTextSelectionPoint SelB = InOutContext.SelEnd;
-	NormalizeSelection(SelA, SelB);
+    // -----------------------------------------------------------------------------------------
+    // Selection end
+    // -----------------------------------------------------------------------------------------
 
-	const ImU32 SelectionBg = ImGui::GetColorU32(ImGuiCol_TextSelectedBg);
+    if (InOutContext.bSelecting && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        InOutContext.bSelecting = false;
 
-	while (Clipper.Step())
-	{
-		for (int32 LineIndex = Clipper.DisplayStart; LineIndex < Clipper.DisplayEnd; ++LineIndex)
-		{
-			if (!InOutContext.Lines.IsValidIndex(LineIndex))
-			{
-				continue;
-			}
+        if (InOutContext.SelStart.Line == InOutContext.SelEnd.Line && InOutContext.SelStart.Column == InOutContext.SelEnd.Column)
+        {
+            InOutContext.bHasSelection = false;
+        }
+    }
 
-			const FRichTextLine& Line = InOutContext.Lines[LineIndex];
+    // -----------------------------------------------------------------------------------------
+    // Copy (Ctrl + C)
+    // -----------------------------------------------------------------------------------------
 
-			const float Y = InOutContext.ContentStart.y + InOutContext.Padding.y + LineIndex * FullLineHeight;
-			const float X = InOutContext.ContentStart.x + InOutContext.Padding.x;
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && State.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C, false))
+    {
+        if (InOutContext.bHasSelection)
+        {
+            const FString Selected = BuildSelectedText(InOutContext);
+            if (!Selected.IsEmpty())
+            {
+                ImGui::SetClipboardText(*Selected);
+            }
+        }
+        else
+        {
+            const FRichTextSelectionPoint P = GetMouseSelectionPoint(InOutContext, State.MousePos);
+            if (InOutContext.Lines.IsValidIndex(P.Line))
+            {
+                FString LineText;
+                for (int32 s = 0; s < InOutContext.Lines[P.Line].Spans.Size(); ++s)
+                {
+                    LineText += InOutContext.Lines[P.Line].Spans[s].Text;
+                }
 
-			const ImVec2 LineMin = ImVec2(CurrentWindow->WorkRect.Min.x, Y);
-			const ImVec2 LineMax = ImVec2(CurrentWindow->WorkRect.Max.x, Y + FullLineHeight);
+                ImGui::SetClipboardText(*LineText);
+            }
+        }
+    }
 
-			if (InOutContext.bHasSelection)
-			{
-				int32 ColStart = 0;
-				int32 ColEnd = 0;
+    // -----------------------------------------------------------------------------------------
+    // Draw
+    // -----------------------------------------------------------------------------------------
 
-				if (SelectionIntersectsLine(SelA, SelB, LineIndex, ColStart, ColEnd, Line.TotalChars))
-				{
-					const float SelX0 = X + ColStart * InOutContext.CharWidth;
-					const float SelX1 = X + ColEnd * InOutContext.CharWidth;
-					DrawList->AddRectFilled(ImVec2(SelX0, LineMin.y), ImVec2(SelX1, LineMax.y), SelectionBg, 0.0f);
-				}
-			}
+    ImGuiListClipper Clipper;
+    Clipper.Begin(InOutContext.Lines.Size(), FullLineHeight);
 
-			float CursorX = X;
-			for (int32 s = 0; s < Line.Spans.Size(); ++s)
-			{
-				const FRichTextSpan& Span = Line.Spans[s];
+    FRichTextSelectionPoint SelA = InOutContext.SelStart;
+    FRichTextSelectionPoint SelB = InOutContext.SelEnd;
+    NormalizeSelection(SelA, SelB);
 
-				const char* Text = *Span.Text;
-				if (!Text || Text[0] == 0)
-				{
-					continue;
-				}
+    const ImU32 SelectionBg = ImGui::GetColorU32(ImGuiCol_TextSelectedBg);
 
-				const float SpanW = ImGui::CalcTextSize(Text).x;
-				if (Span.bHasBackground)
-				{
-					DrawList->AddRectFilled(ImVec2(CursorX, LineMin.y + 2.0f), ImVec2(CursorX + SpanW, LineMax.y - 2.0f), Span.BackgroundColor, 0.0f);
-				}
+    while (Clipper.Step())
+    {
+        for (int32 LineIndex = Clipper.DisplayStart; LineIndex < Clipper.DisplayEnd; ++LineIndex)
+        {
+            if (!InOutContext.Lines.IsValidIndex(LineIndex))
+            {
+                continue;
+            }
 
-				DrawList->AddText(ImVec2(CursorX, LineMin.y), Span.TextColor, Text);
-				CursorX += SpanW;
-			}
-		}
-	}
+            const FRichTextLine& Line = InOutContext.Lines[LineIndex];
 
-	if (InOutContext.bScrollToBottom)
-	{
-		ImGui::SetScrollHereY(1.0f);
-		InOutContext.bScrollToBottom = false;
-	}
+            const float Y = InOutContext.ContentStart.y + InOutContext.Padding.y + LineIndex * FullLineHeight;
+            const float X = InOutContext.ContentStart.x + InOutContext.Padding.x;
 
-	ImGui::EndChild();
+            const ImVec2 LineMin = ImVec2(CurrentWindow->WorkRect.Min.x, Y);
+            const ImVec2 LineMax = ImVec2(CurrentWindow->WorkRect.Max.x, Y + FullLineHeight);
+
+            if (InOutContext.bHasSelection)
+            {
+                int32 ColStart = 0;
+                int32 ColEnd   = 0;
+
+                if (SelectionIntersectsLine(SelA, SelB, LineIndex, ColStart, ColEnd, Line.TotalChars))
+                {
+                    const float SelX0 = X + ColStart * InOutContext.CharWidth;
+                    const float SelX1 = X + ColEnd   * InOutContext.CharWidth;
+
+                    DrawList->AddRectFilled(ImVec2(SelX0, LineMin.y), ImVec2(SelX1, LineMax.y), SelectionBg, 0.0f);
+                }
+            }
+
+            float CursorX = X;
+            for (int32 s = 0; s < Line.Spans.Size(); ++s)
+            {
+                const FRichTextSpan& Span = Line.Spans[s];
+
+                const char* Text = *Span.Text;
+                if (!Text || Text[0] == 0)
+                {
+                    continue;
+                }
+
+                const float SpanW = ImGui::CalcTextSize(Text).x;
+                if (Span.bHasBackground)
+                {
+                    DrawList->AddRectFilled(ImVec2(CursorX, LineMin.y + 2.0f), ImVec2(CursorX + SpanW, LineMax.y - 2.0f), Span.BackgroundColor, 0.0f);
+                }
+
+                DrawList->AddText(ImVec2(CursorX, LineMin.y), Span.TextColor, Text);
+                CursorX += SpanW;
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Scroll to bottom
+    // -----------------------------------------------------------------------------------------
+    if (InOutContext.bScrollToBottom)
+    {
+        ImGui::SetScrollHereY(1.0f);
+        InOutContext.bScrollToBottom = false;
+    }
+
+    ImGui::EndChild();
 }
 
 bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)

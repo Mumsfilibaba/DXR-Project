@@ -440,7 +440,7 @@ void FImGuiPlugin::Tick(float Delta)
     TSharedRef<FGenericWindow> PlatformWindow = MainWindow->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
 
-    PluginImGuiIO->DeltaTime               = Delta / 1000.0f;
+    PluginImGuiIO->DeltaTime               = Delta;
     PluginImGuiIO->DisplaySize             = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
     PluginImGuiIO->FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
     PluginImGuiIO->DisplayFramebufferScale = ImVec2(PluginImGuiIO->FontGlobalScale, PluginImGuiIO->FontGlobalScale);
@@ -449,6 +449,7 @@ void FImGuiPlugin::Tick(float Delta)
     TSharedRef<FGenericWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
     
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
+    
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || PlatformWindow->IsChildWindow(PlatformForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
     {

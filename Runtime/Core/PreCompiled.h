@@ -162,7 +162,7 @@
 #include "Core/Threading/Runnable.h"
 #include "Core/Threading/ThreadManager.h"
 
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Time/Time.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Time/TimeUtilities.h"

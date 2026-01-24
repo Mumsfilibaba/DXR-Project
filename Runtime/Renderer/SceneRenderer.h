@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Application/Events.h"
 #include "Application/InputHandler.h"

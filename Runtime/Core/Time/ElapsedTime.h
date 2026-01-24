@@ -1,11 +1,11 @@
 #pragma once
 #include "Core/Time/Timespan.h"
 
-class CORE_API FStopwatch
+class CORE_API FElapsedTime
 {
 public:
-    FStopwatch();
-    ~FStopwatch() = default;
+    FElapsedTime();
+    ~FElapsedTime() = default;
 
     /** @brief Measure time between this and last call to tick */
     void Tick();
