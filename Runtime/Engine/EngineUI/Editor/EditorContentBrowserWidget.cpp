@@ -30,26 +30,65 @@ FEditorContentBrowserWidget::FEditorContentBrowserWidget()
     {
         Folder.FolderContents =
         {
-            { "Content", true, { } },
+            { "MyOtherContent", true, { } },
             { "Materials", true, { } },
-            { "Meshes", true, { } },
+            { "Geometry", true, { } },
             { "Textures", true, { } },
             { "Scenes", true, { } },
         };
 
-        for (FileInfo& SubFolder : Folder.FolderContents)
+        for (int32 i = 0; i < Folder.FolderContents.Size(); i++)
         {
-            SubFolder.FolderContents =
+            FileInfo& SubFolder = Folder.FolderContents[i];
+            if (i % 2 == 0)
             {
-                { "Meshes", true, { } },
-                { "Materials", true, { } },
-                { "Textures", true, { } },
-                { "Crate_01.asset", false, { } },
-                { "Door.asset", false, { } },
-                { "Wood.asset", false, { } },
-                { "Stone.asset", false, { } },
-                { "Metal.asset", false, { } },
-            };
+                SubFolder.FolderContents =
+                {
+                    { "Meshes", true, { } },
+                    { "Materials", true, { } },
+                    { "Textures", true, { } },
+                    { "Car.asset", false, { } },
+                    { "Door.asset", false, { } },
+                    { "Wood.asset", false, { } },
+                    { "Stone.asset", false, { } },
+                    { "Gold.asset", false, { } },
+                };
+            }
+            else
+            {
+                SubFolder.FolderContents =
+                {
+                    { "Animations", true, { } },
+                    { "Shaders", true, { } },
+                    { "Icons", true, { } },
+                    { "Bus.asset", false, { } },
+                    { "Train.asset", false, { } },
+                    { "Metal.asset", false, { } },
+                    { "Lava.asset", false, { } },
+                    { "Silver.asset", false, { } },
+                    { "WalkAnimation.asset", false, { } },
+                    { "JumpAnimation.asset", false, { } },
+                };
+            }
+
+            for (int32 j = 0; j < SubFolder.FolderContents.Size(); j++)
+            {
+                FileInfo& SubSubFolder = SubFolder.FolderContents[j];
+                if (SubSubFolder.bIsFolder)
+                {
+                    if (j % 2 == 0)
+                    {
+                        SubSubFolder.FolderContents =
+                        {
+                            { "WalkAnimation.asset", false, { } },
+                            { "JumpAnimation.asset", false, { } },
+                            { "LavaTexture.asset", false, { } },
+                            { "GoldTexture.asset", false, { } },
+                            { "SpaceshipModel.asset", false, { } },
+                        };
+                    }
+                }
+            }
         }
     }
 
@@ -561,43 +600,66 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
                 return false;
             }
         }
+
         return true;
     };
 
-    const bool bSelected       = IsSelectedFolderPath(InPath);
-    const bool bInSelectedPath = (!bSelected && IsPathPrefixOfSelected(InPath));
-    const bool bWindowFocused  = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+    ImGui::PushID("FolderTreeNode");
+    for (int32 i = 0; i < InPath.Size(); ++i)
+    {
+        ImGui::PushID(InPath[i]);
+    }
 
-    const ImU32 SelectedColor = (bWindowFocused && bSelectionActiveInBrowser) ? InFolderActiveColor : InFolderInactiveColor;
+    const auto PopFolderNodeIDScope = [&]()
+    {
+        for (int32 i = 0; i < InPath.Size(); ++i)
+        {
+            ImGui::PopID();
+        }
 
-    ImGui::PushID(reinterpret_cast<void*>(&InFolder));
+        ImGui::PopID();
+    };
 
     const bool bHasChildFolders = HasChildFolders(InFolder);
 
-    const ImGuiID OpenId = ImGui::GetID("##CB_Open");
+    const bool bSelected       = IsSelectedFolderPath(InPath);
+    const bool bInSelectedPath = (!bSelected && IsPathPrefixOfSelected(InPath));
+
+    ImGuiID OpenId = 0;
+    if (bHasChildFolders)
+    {
+        OpenId = ImGui::GetID("##CB_Open");
+    }
 
     bool bOpen = false;
     if (bHasChildFolders)
     {
-        bOpen = bFolderSearchActive ? true : InStorage->GetBool(OpenId, (InDepth == 0));
+        bOpen = InStorage->GetBool(OpenId, (InDepth == 0));
     }
 
+    const bool bWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows);
+    const ImU32 SelectedColor = (bWindowFocused && bSelectionActiveInBrowser) ? InFolderActiveColor : InFolderInactiveColor;
+
+    int32 NumPushedColors = 0;
     if (bSelected)
     {
         ImGui::PushStyleColor(ImGuiCol_Header, SelectedColor);
         ImGui::PushStyleColor(ImGuiCol_HeaderHovered, SelectedColor);
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, InFolderActiveColor);
+        NumPushedColors = 3;
     }
     else if (bInSelectedPath)
     {
         ImGui::PushStyleColor(ImGuiCol_Header, InFolderPathColor);
         ImGui::PushStyleColor(ImGuiCol_HeaderHovered, InFolderHoverColor);
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, InFolderActiveColor);
+        NumPushedColors = 3;
     }
     else
     {
         ImGui::PushStyleColor(ImGuiCol_HeaderHovered, InFolderHoverColor);
         ImGui::PushStyleColor(ImGuiCol_HeaderActive, InFolderActiveColor);
+        NumPushedColors = 2;
     }
 
     const float RowHeight = 24.0f;
@@ -614,7 +676,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         NavigateToFolderPath(InPath, true);
     }
 
-    if (!bFolderSearchActive && bHasChildFolders && bRowHovered && ImGui::IsMouseClicked(0))
+    if (bHasChildFolders && bRowHovered && ImGui::IsMouseClicked(0))
     {
         const int32 ClickCount = ImGui::GetMouseClickedCount(0);
         if ((ClickCount > 0) && ((ClickCount & 1) == 0))
@@ -624,13 +686,9 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         }
     }
 
-    if (bSelected || bInSelectedPath)
+    if (NumPushedColors > 0)
     {
-        ImGui::PopStyleColor(3);
-    }
-    else
-    {
-        ImGui::PopStyleColor(2);
+        ImGui::PopStyleColor(NumPushedColors);
     }
 
     const ImVec2 RowMin      = ImGui::GetItemRectMin();
@@ -644,7 +702,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
     const float  IconGap     = 4.0f;
     const float  IconSize    = 16.0f;
     const float  IndentStep  = 18.0f;
-    const float  Indentation = (float)InDepth * IndentStep;
+    const float  Indentation = static_cast<float>(InDepth) * IndentStep;
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
@@ -659,12 +717,13 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         const float  ArrowSize = CollapseIconSize;
         const ImRect ArrowRect = ImRect(ImVec2(CollapseIconPos.x, RowMin.y), ImVec2(CollapseIconPos.x + ArrowSize + ArrowGap, RowMax.y));
 
-        if (!bFolderSearchActive && bRowHovered && ImGui::IsMouseClicked(0))
+        if (bRowHovered && ImGui::IsMouseClicked(0))
         {
             const int32 ClickCount = ImGui::GetMouseClickedCount(0);
             if (ClickCount == 1)
             {
                 const ImVec2 Mouse = ImGui::GetMousePos();
+
                 const bool bInsideArrow = (Mouse.x >= ArrowRect.Min.x && Mouse.x <= ArrowRect.Max.x && Mouse.y >= ArrowRect.Min.y && Mouse.y <= ArrowRect.Max.y);
                 if (bInsideArrow)
                 {
@@ -680,22 +739,24 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
             const ImVec2 IconMin = CollapseIconPos;
             const ImVec2 IconMax = ImVec2(IconMin.x + CollapseIconSize, IconMin.y + CollapseIconSize);
 
-            // NOTE: last parameter is tint color
             DrawList->AddImage(CollapseIcon, IconMin, IconMax, ImVec2(0, 0), ImVec2(1, 1), CollapseIconTint);
         }
         else
         {
             const ImGuiDir Dir = bOpen ? ImGuiDir_Down : ImGuiDir_Right;
-            ImGui::RenderArrow(DrawList, ImVec2(CollapseIconPos.x, RowMin.y + (Height - FontSize) * 0.5f), IM_COL32(220, 220, 220, 255), Dir, 1.0f);
+            ImGui::RenderArrow(DrawList, ImVec2(CollapseIconPos.x, CollapseIconPos.y + (CollapseIconSize - FontSize) * 0.5f), IM_COL32(220, 220, 220, 255), Dir, 1.0f);
         }
 
         X += CollapseIconSize + ArrowGap;
     }
     else
     {
-        // Keep alignment for leaf folders as well
         X += CollapseIconSize + ArrowGap;
     }
+
+    // -----------------------------------------------------------------------------------------
+    // Folder icon
+    // -----------------------------------------------------------------------------------------
 
     ImTextureID FolderIcon = (bHasChildFolders && bOpen) ? EditorIcons::FolderOpenSmallIcon : EditorIcons::FolderSmallIcon;
     if (FolderIcon)
@@ -708,10 +769,62 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         X = IconMax.x + IconGap;
     }
 
-    DrawList->AddText(ImVec2(X, TextY), ImGui::GetColorU32(InNameTextColor), InFolder.Name);
+    // -------------------------------------------------------------------------------------
+    // Folder name
+    // -------------------------------------------------------------------------------------
 
-    ImGui::PopID();
-    return bHasChildFolders && bOpen;
+    {
+        const CHAR* NameText   = InFolder.Name ? InFolder.Name : "";
+        const CHAR* Query      = bFolderSearchActive ? GetTrimmedQuery(FolderSearchBuffer) : nullptr;
+        const CHAR* FilterText = (Query && *Query != 0) ? Query : nullptr;
+
+        int32 MatchStart = -1;
+        int32 MatchLen   = 0;
+
+        if (FilterText)
+        {
+            if (const char* MatchPtr = FCString::Stristr(NameText, FilterText))
+            {
+                MatchStart = static_cast<int32>(MatchPtr - NameText);
+                MatchLen   = static_cast<int32>(strlen(FilterText));
+            }
+        }
+
+        ImGuiIO& IO = ImGui::GetIO();
+
+        const float Scale = IO.DisplayFramebufferScale.x;
+
+        const ImU32 BaseTextU32      = ImGui::GetColorU32(InNameTextColor);
+        const ImU32 HighlightBgU32   = IM_COL32(139, 194, 74, 255);
+        const ImU32 HighlightTextU32 = IM_COL32(0, 0, 0, 255);
+
+        const ImVec2 TextStart = ImVec2(X, TextY);
+        if (MatchStart >= 0 && MatchLen > 0)
+        {
+            const ImVec2 PrefixSize = ImGui::CalcTextSize(NameText, NameText + MatchStart);
+            const ImVec2 MatchSize  = ImGui::CalcTextSize(NameText + MatchStart, NameText + MatchStart + MatchLen);
+            const ImVec2 PrefixPos  = TextStart;
+            const ImVec2 MatchPos   = ImVec2(TextStart.x + PrefixSize.x, TextStart.y);
+            const ImVec2 SuffixPos  = ImVec2(MatchPos.x + MatchSize.x, TextStart.y);
+
+            DrawList->AddText(PrefixPos, BaseTextU32, NameText, NameText + MatchStart);
+
+            const float  HighlightPadY = 2.0f * Scale;
+            const ImVec2 HighlightMin  = ImVec2(MatchPos.x - 1.0f * Scale, RowMin.y + HighlightPadY);
+            const ImVec2 HighlightMax  = ImVec2(MatchPos.x + MatchSize.x + 1.0f * Scale, RowMax.y - HighlightPadY);
+            DrawList->AddRectFilled(HighlightMin, HighlightMax, HighlightBgU32, 0.0f);
+
+            DrawList->AddText(MatchPos, HighlightTextU32, NameText + MatchStart, NameText + MatchStart + MatchLen);
+            DrawList->AddText(SuffixPos, BaseTextU32, NameText + MatchStart + MatchLen);
+        }
+        else
+        {
+            DrawList->AddText(TextStart, BaseTextU32, NameText);
+        }
+    }
+
+    PopFolderNodeIDScope();
+    return bOpen;
 }
 
 FEditorContentBrowserWidget::FileInfo* FEditorContentBrowserWidget::GetFolderFromPath(const TArray<int32>& InPath)
