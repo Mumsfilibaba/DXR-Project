@@ -1836,6 +1836,26 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
     // -----------------------------------------------------------------------------------------
 
     const bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+    if (bHovered)
+    {
+        const ImGuiStyle& Style = ImGui::GetStyle();
+
+        const bool bHasVScroll = ImGui::GetScrollMaxY() > 0.0f;
+        const bool bHasHScroll = ImGui::GetScrollMaxX() > 0.0f;
+
+        const ImVec2 WinPos  = ImGui::GetWindowPos();
+        const ImVec2 WinSize = ImGui::GetWindowSize();
+        const ImVec2 Mouse   = State.MousePos;
+
+        const float MaxX = WinPos.x + WinSize.x - (bHasVScroll ? Style.ScrollbarSize : 0.0f);
+        const float MaxY = WinPos.y + WinSize.y - (bHasHScroll ? Style.ScrollbarSize : 0.0f);
+
+        if (Mouse.x < MaxX && Mouse.y < MaxY)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_TextInput);
+        }
+    }
+
     if (bHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
         InOutContext.bSelecting    = true;
@@ -1901,8 +1921,6 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
                 {
                     Delta = (ScrollDir < 0.0f) ? -MinDeltaPx : MinDeltaPx;
                 }
-
-                //LOG_INFO("DeltaTime=%.6f Speed=%.2f Delta=%.4f", DeltaTime, Speed, Delta);
 
                 float ScrollY = ImGui::GetScrollY();
                 ScrollY = Math::Clamp(ScrollY + Delta, 0.0f, ScrollMaxY);
@@ -2027,6 +2045,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
     // -----------------------------------------------------------------------------------------
     // Scroll to bottom
     // -----------------------------------------------------------------------------------------
+
     if (InOutContext.bScrollToBottom)
     {
         ImGui::SetScrollHereY(1.0f);
