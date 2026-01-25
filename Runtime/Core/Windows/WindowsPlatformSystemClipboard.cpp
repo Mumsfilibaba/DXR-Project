@@ -1,0 +1,110 @@
+#include "Core/Windows/WindowsPlatformSystemClipboard.h"
+#include "Core/Windows/Windows.h"
+#include "Core/Memory/Memory.h"
+
+static bool OpenClipboardScoped(HWND InOwner)
+{
+    return ::OpenClipboard(InOwner) != 0;
+}
+
+bool FWindowsPlatformSystemClipboard::HasText()
+{
+    return ::IsClipboardFormatAvailable(CF_UNICODETEXT) != 0;
+}
+
+bool FWindowsPlatformSystemClipboard::GetText(FString& OutText)
+{
+    OutText.Clear();
+
+    if (!HasText())
+    {
+        return false;
+    }
+
+    if (!OpenClipboardScoped(nullptr))
+    {
+        return false;
+    }
+
+    HANDLE DataHandle = ::GetClipboardData(CF_UNICODETEXT);
+    if (!DataHandle)
+    {
+        ::CloseClipboard();
+        return false;
+    }
+
+    const WIDECHAR* WideText = reinterpret_cast<const WIDECHAR*>(::GlobalLock(DataHandle));
+    if (!WideText)
+    {
+        ::CloseClipboard();
+        return false;
+    }
+
+    OutText = WideToChar(FStringViewWide(WideText));
+
+    ::GlobalUnlock(DataHandle);
+    ::CloseClipboard();
+    return true;
+}
+
+bool FWindowsPlatformSystemClipboard::SetText(const FString& InText)
+{
+    if (!OpenClipboardScoped(nullptr))
+    {
+        return false;
+    }
+
+    ::EmptyClipboard();
+
+    const FStringWide WideText = CharToWide(FStringView(InText));
+
+    const WIDECHAR* WidePtr = *WideText;
+    if (!WidePtr)
+    {
+        ::CloseClipboard();
+        return false;
+    }
+
+    const SIZE_T CharCount = FCStringWide::Strlen(WidePtr) + 1;
+    const SIZE_T ByteCount = CharCount * sizeof(WIDECHAR);
+
+    HGLOBAL Memory = ::GlobalAlloc(GMEM_MOVEABLE, ByteCount);
+    if (!Memory)
+    {
+        ::CloseClipboard();
+        return false;
+    }
+
+    void* Dest = ::GlobalLock(Memory);
+    if (!Dest)
+    {
+        ::GlobalFree(Memory);
+        ::CloseClipboard();
+        return false;
+    }
+
+    FMemory::Memcpy(Dest, WidePtr, ByteCount);
+
+    ::GlobalUnlock(Memory);
+
+    if (!::SetClipboardData(CF_UNICODETEXT, Memory))
+    {
+        ::GlobalFree(Memory);
+        ::CloseClipboard();
+        return false;
+    }
+
+    ::CloseClipboard();
+    return true;
+}
+
+void FWindowsPlatformSystemClipboard::Clear()
+{
+    if (!OpenClipboardScoped(nullptr))
+    {
+        return;
+    }
+
+    ::EmptyClipboard();
+    ::CloseClipboard();
+}

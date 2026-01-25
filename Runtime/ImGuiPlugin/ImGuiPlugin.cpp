@@ -1,6 +1,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Platform/PlatformSystemClipboard.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Application.h"
 #include "Application/Widgets/ViewportWidget.h"
@@ -53,23 +54,23 @@ static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags
 
 static const char* GetImGuiViewportPlatformTitle(const ImGuiViewport* InViewport)
 {
-	if (!InViewport)
-	{
-		return "ImGui Window";
-	}
+    if (!InViewport)
+    {
+        return "ImGui Window";
+    }
 
-	if (InViewport == ImGui::GetMainViewport())
-	{
-		return "ImGui Main Viewport";
-	}
+    if (InViewport == ImGui::GetMainViewport())
+    {
+        return "ImGui Main Viewport";
+    }
 
-	const ImGuiViewportP* ViewportP = reinterpret_cast<const ImGuiViewportP*>(InViewport);
-	if (ViewportP && ViewportP->Window && ViewportP->Window->Name && ViewportP->Window->Name[0] != '\0')
-	{
-		return ViewportP->Window->Name;
-	}
+    const ImGuiViewportP* ViewportP = reinterpret_cast<const ImGuiViewportP*>(InViewport);
+    if (ViewportP && ViewportP->Window && ViewportP->Window->Name && ViewportP->Window->Name[0] != '\0')
+    {
+        return ViewportP->Window->Name;
+    }
 
-	return "ImGui Window";
+    return "ImGui Window";
 }
 
 FImGuiPlugin* GImGuiPlugin = nullptr;
@@ -126,7 +127,23 @@ bool FImGuiPlugin::Load()
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
-   
+
+    PluginImGuiIO->SetClipboardTextFn = [](void* UserData, const char* Text)
+    {
+        UNREFERENCED_VARIABLE(UserData);
+        FPlatformSystemClipboard::SetText(FString(Text));
+    };
+
+    PluginImGuiIO->GetClipboardTextFn = [](void* UserData) -> const char*
+    {
+        FImGuiPlugin* Context = reinterpret_cast<FImGuiPlugin*>(UserData);
+        Context->ClipboardText.Clear();
+        FPlatformSystemClipboard::GetText(Context->ClipboardText);
+        return *Context->ClipboardText;
+    };
+
+    PluginImGuiIO->ClipboardUserData = this;
+
     // Register platform interface (will be coupled with a renderer interface)
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
     
@@ -134,10 +151,10 @@ bool FImGuiPlugin::Load()
     // We have support for multiple Viewports, but we may not always want to utilize it
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
-	
+    
     // Configure viewports and docking in editor builds
     PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
@@ -383,14 +400,14 @@ bool FImGuiPlugin::Unload()
     // Reset the backend pointer ...
     PluginImGuiIO->BackendPlatformUserData = nullptr;
     PluginImGuiIO->BackendRendererUserData = nullptr;
-    
+
     // ... then destroy the context, this needs to happen in this order to avoid any asserts
     ImGui::DestroyContext(PluginImGuiContext);
     
-    // Release the renderer here since the renderer could call functions withing the DestroyContext function
+    // Release the renderer here since the renderer could call functions within the DestroyContext function
     // if there is still an open window.
     ReleaseRHI();
-    
+
     // Reset the global instance
     GImGuiPlugin = nullptr;
 

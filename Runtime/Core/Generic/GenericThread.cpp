@@ -34,14 +34,12 @@ uint32 FGenericThread::AllocTLSSlot()
 
 FGenericThread::FGenericThread(FRunnable* InRunnable, const CHAR* InThreadName)
     : Runnable(InRunnable)
-    , ThreadName(InThreadName)
+    , Name(InThreadName)
 {
-    // Register this thread in the ThreadManager
     FThreadManager::Get().RegisterThread(this);
 }
 
 FGenericThread::~FGenericThread()
 {
-    // Unregister this thread in the ThreadManager
     FThreadManager::Get().UnregisterThread(this);
 }

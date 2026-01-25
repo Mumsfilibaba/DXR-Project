@@ -66,10 +66,10 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
         // Ensure that this thread can be retrieved
         FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, CurrentThread);
 
-        // ThreadName can only be set from the running thread
-        if (!CurrentThread->ThreadName.IsEmpty())
+        // Thread-name can only be set from the running thread
+        if (!CurrentThread->Name.IsEmpty())
         {
-            const CHAR* ThreadName = *CurrentThread->ThreadName;
+            const CHAR* ThreadName = *CurrentThread->Name;
             ::pthread_setname_np(ThreadName);
         }
 

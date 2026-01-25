@@ -98,9 +98,9 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
         // Ensure that this thread can be retrieved
         FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, CurrentThread);
 
-        if (!CurrentThread->ThreadName.IsEmpty())
+        if (!CurrentThread->Name.IsEmpty())
         {
-            FStringWide WideName = CharToWide(CurrentThread->ThreadName);
+            FStringWide WideName = CharToWide(CurrentThread->Name);
             ::SetThreadDescription(CurrentThread->Thread, *WideName);
         }
 
