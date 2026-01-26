@@ -135,7 +135,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     ImGui::SameLine(0.0f, GapX);
 
     // -------------------------------------------------------------------------------------------
-    // Filter button (your existing style)
+    // Filter button
     // -------------------------------------------------------------------------------------------
 
     const float IconSizePx       = 18.0f;
@@ -207,7 +207,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     }
 
     // -------------------------------------------------------------------------------------------
-    // Popup menu (unchanged)
+    // Popup menu
     // -------------------------------------------------------------------------------------------
 
     const ImVec2 ButtonMin = ImGui::GetItemRectMin();
@@ -466,7 +466,7 @@ void FEditorOutputLogWidget::Draw()
         }
 
         // -------------------------------------------------------------------------------------
-        // Log view (RichTextView replaces the old Text list)
+        // Log view
         // -------------------------------------------------------------------------------------
 
         const ImU32  OutputBgU32 = IM_COL32(26, 26, 26, 255);

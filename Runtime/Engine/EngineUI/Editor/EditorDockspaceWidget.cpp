@@ -51,7 +51,6 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.FrameRounding        = 4.0f;
     Style.GrabRounding         = 4.0f;
     Style.TabRounding          = 4.0f;
-    Style.ScrollbarRounding    = 4.0f;
     Style.FramePadding         = ImVec2(10.0f, 6.0f);
     Style.ItemSpacing          = ImVec2(8.0f, 6.0f);
     Style.WindowPadding        = ImVec2(10.0f, 10.0f);
@@ -66,25 +65,23 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     // Default
     // ------------------------------------------------------------
 
-    Style.Colors[ImGuiCol_WindowBg]           = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
-    Style.Colors[ImGuiCol_ChildBg]            = ImVec4(0.06f, 0.06f, 0.07f, 1.00f);
-    Style.Colors[ImGuiCol_PopupBg]            = ImVec4(0.09f, 0.09f, 0.10f, 1.00f);
-    Style.Colors[ImGuiCol_Border]             = ImVec4(0.22f, 0.22f, 0.24f, 1.00f);
-    Style.Colors[ImGuiCol_FrameBg]            = ImVec4(0.13f, 0.13f, 0.14f, 1.00f);
-    Style.Colors[ImGuiCol_FrameBgHovered]     = ImVec4(0.18f, 0.18f, 0.20f, 1.00f);
-    Style.Colors[ImGuiCol_FrameBgActive]      = ImVec4(0.20f, 0.20f, 0.23f, 1.00f);
-    Style.Colors[ImGuiCol_Button]             = ImVec4(0.15f, 0.15f, 0.17f, 1.00f);
-    Style.Colors[ImGuiCol_ButtonHovered]      = ImVec4(0.23f, 0.23f, 0.26f, 1.00f);
-    Style.Colors[ImGuiCol_ButtonActive]       = ImVec4(0.28f, 0.28f, 0.32f, 1.00f);
-    Style.Colors[ImGuiCol_Header]             = ImVec4(0.18f, 0.18f, 0.20f, 1.00f);
-    Style.Colors[ImGuiCol_HeaderHovered]      = ImVec4(0.22f, 0.22f, 0.25f, 1.00f);
-    Style.Colors[ImGuiCol_HeaderActive]       = ImVec4(0.26f, 0.26f, 0.30f, 1.00f);
-    Style.Colors[ImGuiCol_NavHighlight]       = ImVec4(0.37f, 0.37f, 0.80f, 1.00f);
-    Style.Colors[ImGuiCol_MenuBarBg]          = ImVec4(0.09f, 0.09f, 0.10f, 1.00f);
-    Style.Colors[ImGuiCol_Separator]          = ImVec4(0.25f, 0.25f, 0.28f, 1.00f);
+    Style.Colors[ImGuiCol_WindowBg]       = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_ChildBg]        = ImVec4(0.06f, 0.06f, 0.07f, 1.0f);
+    Style.Colors[ImGuiCol_PopupBg]        = ImVec4(0.09f, 0.09f, 0.10f, 1.0f);
+    Style.Colors[ImGuiCol_FrameBg]        = ImVec4(0.13f, 0.13f, 0.14f, 1.0f);
+    Style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.18f, 0.18f, 0.20f, 1.0f);
+    Style.Colors[ImGuiCol_FrameBgActive]  = ImVec4(0.20f, 0.20f, 0.23f, 1.0f);
+    Style.Colors[ImGuiCol_Button]         = ImVec4(0.15f, 0.15f, 0.17f, 1.0f);
+    Style.Colors[ImGuiCol_ButtonHovered]  = ImVec4(0.23f, 0.23f, 0.26f, 1.0f);
+    Style.Colors[ImGuiCol_ButtonActive]   = ImVec4(0.28f, 0.28f, 0.32f, 1.0f);
+    Style.Colors[ImGuiCol_Header]         = ImVec4(0.18f, 0.18f, 0.20f, 1.0f);
+    Style.Colors[ImGuiCol_HeaderHovered]  = ImVec4(0.22f, 0.22f, 0.25f, 1.0f);
+    Style.Colors[ImGuiCol_HeaderActive]   = ImVec4(0.26f, 0.26f, 0.30f, 1.0f);
+    Style.Colors[ImGuiCol_NavHighlight]   = ImVec4(0.37f, 0.37f, 0.80f, 1.0f);
+    Style.Colors[ImGuiCol_MenuBarBg]      = ImVec4(0.09f, 0.09f, 0.10f, 1.0f);
 
     // ------------------------------------------------------------
-    // Docking split line / seam colors
+    // Docking split-line / Seam-colors
     // ------------------------------------------------------------
 
     const ImVec4 SplitterIdle    = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
@@ -95,9 +92,9 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.Colors[ImGuiCol_BorderShadow]      = SplitterIdle;
     Style.Colors[ImGuiCol_SeparatorHovered]  = SplitterHovered;
     Style.Colors[ImGuiCol_SeparatorActive]   = SplitterActive;
+    Style.Colors[ImGuiCol_Separator]         = SplitterIdle;
     Style.Colors[ImGuiCol_ResizeGripHovered] = SplitterHovered;
     Style.Colors[ImGuiCol_ResizeGripActive]  = SplitterActive;
-    Style.Colors[ImGuiCol_Separator]         = SplitterIdle;
     Style.Colors[ImGuiCol_ResizeGrip]        = SplitterIdle;
 
     // ------------------------------------------------------------
@@ -118,7 +115,22 @@ bool FEditorDockspaceWidget::InitializeEditorStyle()
     Style.Colors[ImGuiCol_TitleBgActive]    = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
     Style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(21.0f / 255.0f, 21.0f / 255.0f, 21.0f / 255.0f, 1.0f);
 
-    // Load necessary icons
+    // ------------------------------------------------------------
+    // Scrollbars
+    // ------------------------------------------------------------
+
+    Style.ScrollbarRounding = 12.0f;
+    Style.ScrollbarSize     = 16.0f;
+
+    Style.Colors[ImGuiCol_ScrollbarBg]          = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_ScrollbarGrab]        = ImVec4(87.0f / 255.0f, 87.0f / 255.0f, 87.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(127.0f / 255.0f, 127.0f / 255.0f, 127.0f / 255.0f, 1.0f);
+    Style.Colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(127.0f / 255.0f, 127.0f / 255.0f, 127.0f / 255.0f, 1.0f);
+
+    // ------------------------------------------------------------
+    // Icons
+    // ------------------------------------------------------------
+
     if (!EditorIcons::Initialize())
     {
         return false;
