@@ -296,7 +296,17 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     // Search Field
     // -----------------------------------------------------------------------------------------
 
+    const ImVec2 OldWindowPadding = ImGui::GetStyle().WindowPadding;
+    const ImVec2 OldItemSpacing   = ImGui::GetStyle().ItemSpacing;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(OldWindowPadding.x, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(OldItemSpacing.x, 0.0f));
+
+    ImGui::Dummy(ImVec2(0.0f, 5.0f));
     EditorWidgets::EditorSearchField("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
+    ImGui::Dummy(ImVec2(0.0f, 12.0f));
+
+    ImGui::PopStyleVar(2);
 
     // -----------------------------------------------------------------------------------------
     // Actor Table
