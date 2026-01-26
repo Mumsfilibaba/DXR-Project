@@ -39,10 +39,10 @@ private:
     TStaticArray<CHAR, 256>                 TextBuffer;
     TSharedPtr<IOutputDevice>               OutputDevice;
     TSharedPtr<FConsoleInputHandler>        InputHandler;
-
-    int32 SelectedCandidateIndex     = InvalidIndex;
-    int32 HistoryIndex               = InvalidIndex;
-    bool  bCandidateSelectionChanged = false;
-    bool  bUpdateCursorPosition      = false;
-    bool  bScrollToBottom            = false;
+    int32                                   SelectedCandidateIndex;
+    int32                                   HistoryIndex;
+    bool                                    bCandidateSelectionChanged;
+    bool                                    bUpdateCursorPosition;
+    bool                                    bScrollToBottom;
+    bool                                    bCandidatesOverlayOpen;
 };
