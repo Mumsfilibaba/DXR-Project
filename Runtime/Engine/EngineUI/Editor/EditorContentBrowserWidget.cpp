@@ -10,6 +10,12 @@ FEditorContentBrowserWidget::FEditorContentBrowserWidget()
     , SelectedItemIndex(-1)
     , bSelectionActiveInBrowser(false)
     , bVisible(true)
+    , bPendingMove(false)
+    , PendingMoveSourceIndex(-1)
+    , bDragPreviewInvalidSelfMove(false)
+    , bDragPreviewActive(false)
+    , DragPreviewIcon(nullptr)
+    , bDragPreviewIsFolder(false)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -19,6 +25,8 @@ FEditorContentBrowserWidget::FEditorContentBrowserWidget()
 
     FolderSearchBuffer.Fill(0);
     AssetSearchBuffer.Fill(0);
+
+    ResetDragPreviewState();
 
     RootFolders =
     {
@@ -321,12 +329,12 @@ bool FEditorContentBrowserWidget::IsPathPrefixOfSelected(const TArray<int32>& In
     return true;
 }
 
-void FEditorContentBrowserWidget::DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth)
+void FEditorContentBrowserWidget::DrawSearchField(const CHAR* InId, const CHAR* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth)
 {
     EditorWidgets::EditorSearchField(InId, InHint, InOutBuffer.Data(), InOutBuffer.Size(), InWidth, true);
 }
 
-void FEditorContentBrowserWidget::DrawCenteredMessage(const char* InText, const ImVec4& InColor)
+void FEditorContentBrowserWidget::DrawCenteredMessage(const CHAR* InText, const ImVec4& InColor)
 {
     if (!InText || InText[0] == 0)
     {
@@ -783,7 +791,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
         if (FilterText)
         {
-            if (const char* MatchPtr = FCString::Stristr(NameText, FilterText))
+            if (const CHAR* MatchPtr = FCString::Stristr(NameText, FilterText))
             {
                 MatchStart = static_cast<int32>(MatchPtr - NameText);
                 MatchLen   = static_cast<int32>(strlen(FilterText));
@@ -856,7 +864,7 @@ FEditorContentBrowserWidget::FileInfo* FEditorContentBrowserWidget::GetFolderFro
     return Current;
 }
 
-void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InPath, char* OutBuf, int32 OutBufSize) const
+void FEditorContentBrowserWidget::BuildFolderPathString(const TArray<int32>& InPath, CHAR* OutBuf, int32 OutBufSize) const
 {
     if (!OutBuf || OutBufSize <= 0)
     {
@@ -1126,6 +1134,10 @@ void FEditorContentBrowserWidget::DrawItemTooltip(const FileInfo& InItem)
 
 void FEditorContentBrowserWidget::DrawContentGrid()
 {
+    ResetDragPreviewState();
+
+    bool bDragHoverSelfMove = false;
+
     // -----------------------------------------------------------------------------------------
     // Tile Layout
     // -----------------------------------------------------------------------------------------
@@ -1219,6 +1231,14 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
     if (ImGui::BeginTable("##CB_AssetGrid", ColumnCount, ImGuiTableFlags_SizingFixedFit))
     {
+        struct FCBDndPayload
+        {
+            int32 Depth;
+            int32 Indices[32];
+            int32 SourceIndex;
+            bool  bIsFolder;
+        };
+
         for (int32 i = 0; i < Items.Size(); ++i)
         {
             FileInfo& Item = Items[i];
@@ -1229,7 +1249,6 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             }
 
             ImGui::TableNextColumn();
-
             ImGui::PushID(i);
 
             const bool bSelected = (SelectedItemIndex == i);
@@ -1240,7 +1259,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
             ImGui::InvisibleButton("##TileBtn", ImVec2(TileWidth, TileHeight));
 
-            const bool bHovered     = ImGui::IsItemHovered();
+            const bool bHovered     = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
             const bool bPressed     = ImGui::IsItemClicked();
             const bool bDoubleClick = bPressed && ImGui::IsMouseDoubleClicked(0);
 
@@ -1315,7 +1334,148 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 ImGui::PopStyleColor();
             }
 
-            if (bHovered)
+            // ---------------------------------------------------------------------------------
+            // Drag source (Folders and Files)
+            // ---------------------------------------------------------------------------------
+
+            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID | ImGuiDragDropFlags_SourceNoPreviewTooltip))
+            {
+                FCBDndPayload Payload = {};
+                Payload.Depth = Math::Min(SelectedFolderPath.Size(), 32);
+                
+                for (int32 P = 0; P < Payload.Depth; ++P)
+                {
+                    Payload.Indices[P] = SelectedFolderPath[P];
+                }
+
+                Payload.SourceIndex = i;
+                Payload.bIsFolder   = bIsFolder;
+
+                ImGui::SetDragDropPayload("CB_MOVE_ITEM", &Payload, sizeof(FCBDndPayload));
+
+                bDragPreviewActive   = true;
+                DragPreviewIcon      = Icon;
+                bDragPreviewIsFolder = bIsFolder;
+
+                FCString::Strncpy(DragPreviewSourceName, Item.Name, (int32)sizeof(DragPreviewSourceName));
+
+                ImGui::EndDragDropSource();
+            }
+
+            if (bIsFolder && bHovered && ImGui::IsDragDropActive())
+            {
+                const ImGuiPayload* ActivePayload = ImGui::GetDragDropPayload();
+                if (ActivePayload && ActivePayload->IsDataType("CB_MOVE_ITEM") && ActivePayload->DataSize == static_cast<int32>(sizeof(FCBDndPayload)))
+                {
+                    const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(ActivePayload->Data);
+                    if (Data && Data->bIsFolder)
+                    {
+                        TArray<int32> SourceParentPath;
+                        SourceParentPath.Reserve(Data->Depth);
+
+                        for (int32 P = 0; P < Data->Depth; ++P)
+                        {
+                            SourceParentPath.Add(Data->Indices[P]);
+                        }
+
+                        const bool bSameFolder = ArePathsEqual(SourceParentPath, SelectedFolderPath);
+                        const bool bSelfDrop   = bSameFolder && (Data->SourceIndex == i);
+
+                        if (bSelfDrop)
+                        {
+                            bDragHoverSelfMove       = true;
+                            DragPreviewTargetName[0] = 0;
+                        }
+                    }
+                }
+            }
+
+            // ---------------------------------------------------------------------------------
+            // Drag target (Folders)
+            // ---------------------------------------------------------------------------------
+
+            if (bIsFolder)
+            {
+                ImGui::PushStyleColor(ImGuiCol_DragDropTarget, IM_COL32(0, 0, 0, 0));
+
+                if (ImGui::BeginDragDropTarget())
+                {
+                    const ImGuiDragDropFlags DragDropFlags =
+                        ImGuiDragDropFlags_AcceptBeforeDelivery |
+                        ImGuiDragDropFlags_AcceptNoDrawDefaultRect;
+
+                    if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload("CB_MOVE_ITEM", DragDropFlags))
+                    {
+                        if (const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(Payload->Data))
+                        {
+                            TArray<int32> SourceParentPath;
+                            SourceParentPath.Reserve(Data->Depth);
+
+                            for (int32 P = 0; P < Data->Depth; ++P)
+                            {
+                                SourceParentPath.Add(Data->Indices[P]);
+                            }
+
+                            const int32 SourceIndex = Data->SourceIndex;
+
+                            const bool bSameFolder = ArePathsEqual(SourceParentPath, SelectedFolderPath);
+                            const bool bSelfDrop   = bSameFolder && (SourceIndex == i);
+
+                            if (Data->bIsFolder && bSelfDrop)
+                            {
+                                bDragHoverSelfMove = true;
+                                DragPreviewTargetName[0] = 0;
+                            }
+                            else
+                            {
+                                bDragHoverSelfMove = false;
+                                FCString::Strncpy(DragPreviewTargetName, Item.Name, (int32)sizeof(DragPreviewTargetName));
+                            }
+
+                            if (Payload->IsDelivery())
+                            {
+                                TArray<int32> TargetPath = SelectedFolderPath;
+                                TargetPath.Add(i);
+
+                                bool bInvalidDescendant = false;
+                                if (Data->bIsFolder)
+                                {
+                                    TArray<int32> SourceFullPath = SourceParentPath;
+                                    SourceFullPath.Add(SourceIndex);
+
+                                    if (TargetPath.Size() >= SourceFullPath.Size())
+                                    {
+                                        bInvalidDescendant = true;
+                                        
+                                        for (int32 P = 0; P < SourceFullPath.Size(); ++P)
+                                        {
+                                            if (TargetPath[P] != SourceFullPath[P])
+                                            {
+                                                bInvalidDescendant = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (!(Data->bIsFolder && bSelfDrop) && !bInvalidDescendant)
+                                {
+                                    bPendingMove                = true;
+                                    PendingMoveSourceParentPath = SourceParentPath;
+                                    PendingMoveSourceIndex      = SourceIndex;
+                                    PendingMoveTargetFolderPath = TargetPath;
+                                }
+                            }
+                        }
+                    }
+
+                    ImGui::EndDragDropTarget();
+                }
+
+                ImGui::PopStyleColor();
+            }
+
+            if (bHovered && !ImGui::IsDragDropActive())
             {
                 DrawItemTooltip(Item);
             }
@@ -1326,10 +1486,192 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         ImGui::EndTable();
     }
 
+    if (bPendingMove)
+    {
+        MoveItemToFolder(PendingMoveSourceParentPath, PendingMoveSourceIndex, PendingMoveTargetFolderPath);
+        bPendingMove      = false;
+        SelectedItemIndex = -1;
+    }
+
+    if (ImGui::IsDragDropActive() && bDragPreviewActive && DragPreviewSourceName[0] != 0)
+    {
+        const bool bHasFolderHoverTarget = (DragPreviewTargetName[0] != 0);
+        const bool bShowSelfWarning      = bDragHoverSelfMove;
+        const bool bShowTextAndDivider   = bHasFolderHoverTarget || bShowSelfWarning;
+
+        const ImVec4 PreviewBg     = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
+        const ImVec4 PreviewBorder = ImVec4(48.0f / 255.0f, 48.0f / 255.0f, 48.0f / 255.0f, 1.0f);
+
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, PreviewBg);
+        ImGui::PushStyleColor(ImGuiCol_Border, PreviewBorder);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize,  2.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 10.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding,  0.0f);
+
+        ImGui::BeginTooltip();
+        {
+            constexpr float IconSize         = 64.0f;
+            constexpr float DividerThickness = 2.0f;
+            constexpr float GapLeft          = 12.0f;
+            constexpr float GapRight         = 12.0f;
+
+            if (DragPreviewIcon)
+            {
+                ImGui::Image(DragPreviewIcon, ImVec2(IconSize, IconSize));
+            }
+            else
+            {
+                ImGui::Dummy(ImVec2(IconSize, IconSize));
+            }
+
+            if (bShowTextAndDivider)
+            {
+                const ImVec2 IconMax = ImGui::GetItemRectMax();
+
+                {
+                    ImDrawList* PreviewDrawList = ImGui::GetWindowDrawList();
+
+                    const ImU32  DividerCol = ImGui::GetColorU32(PreviewBorder);
+                    const float  DividerX   = IconMax.x + GapLeft;
+
+                    const ImVec2 WinMin = ImGui::GetWindowPos();
+                    const ImVec2 WinMax = ImVec2(WinMin.x + ImGui::GetWindowSize().x, WinMin.y + ImGui::GetWindowSize().y);
+
+                    PreviewDrawList->AddRectFilled(ImVec2(DividerX, WinMin.y), ImVec2(DividerX + DividerThickness, WinMax.y), DividerCol);
+                }
+
+                ImGui::SameLine(0.0f, GapLeft + DividerThickness + GapRight);
+
+                ImGui::BeginGroup();
+                {
+                    const float TextHeight = ImGui::GetTextLineHeight();
+                    const float CenteredY  = ImGui::GetCursorPosY() + Math::Max(0.0f, (IconSize - TextHeight) * 0.5f);
+                    ImGui::SetCursorPosY(CenteredY);
+
+                    ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
+
+                    if (bShowSelfWarning)
+                    {
+                        ImGui::TextUnformatted("Cannot move a folder into itself");
+                    }
+                    else
+                    {
+                        ImGui::Text("Move %s to %s", DragPreviewSourceName, DragPreviewTargetName);
+                    }
+
+                    ImGui::PopStyleColor();
+                }
+
+                ImGui::EndGroup();
+            }
+        }
+
+        ImGui::EndTooltip();
+
+        ImGui::PopStyleVar(5);
+        ImGui::PopStyleColor(2);
+    }
+
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered())
     {
         SelectedItemIndex = -1;
     }
+}
+
+void FEditorContentBrowserWidget::ResetDragPreviewState()
+{
+    DragPreviewSourceName[0]    = 0;
+    DragPreviewTargetName[0]    = 0;
+    bDragPreviewActive          = false;
+    DragPreviewIcon             = nullptr;
+    bDragPreviewIsFolder        = false;
+    bDragPreviewInvalidSelfMove = false;
+}
+
+bool FEditorContentBrowserWidget::MoveItemToFolder(const TArray<int32>& InSourceParentPath, int32 InSourceIndex, const TArray<int32>& InTargetFolderPath)
+{
+    if (InSourceIndex < 0)
+    {
+        return false;
+    }
+
+    if (InTargetFolderPath.Size() <= 0)
+    {
+        return false;
+    }
+
+    TArray<int32> TargetParentPath = InTargetFolderPath;
+    const int32 TargetFolderIndexOriginal = TargetParentPath.LastElement();
+    TargetParentPath.Pop();
+
+    if (ArePathsEqual(InSourceParentPath, TargetParentPath) && InSourceIndex == TargetFolderIndexOriginal)
+    {
+        return false;
+    }
+
+    FileInfo* SourceParent = GetFolderFromPath(InSourceParentPath);
+    if (!SourceParent || !SourceParent->FolderContents.IsValidIndex(InSourceIndex))
+    {
+        return false;
+    }
+
+    const FileInfo& SourceItem = SourceParent->FolderContents[InSourceIndex];
+    if (SourceItem.bIsFolder)
+    {
+        TArray<int32> SourceItemPath = InSourceParentPath;
+        SourceItemPath.Add(InSourceIndex);
+
+        const bool bTargetIsDescendant = (InTargetFolderPath.Size() >= SourceItemPath.Size()) &&
+            [&]()
+            {
+                for (int32 i = 0; i < SourceItemPath.Size(); ++i)
+                {
+                    if (InTargetFolderPath[i] != SourceItemPath[i])
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }();
+
+        if (bTargetIsDescendant)
+        {
+            return false;
+        }
+    }
+
+    int32 TargetFolderIndex = TargetFolderIndexOriginal;
+    if (ArePathsEqual(InSourceParentPath, TargetParentPath) && InSourceIndex < TargetFolderIndex)
+    {
+        TargetFolderIndex = Math::Max(0, TargetFolderIndex - 1);
+    }
+
+    FileInfo MovedItem = SourceParent->FolderContents[InSourceIndex];
+
+    const int32 OldSize = SourceParent->FolderContents.Size();
+    for (int32 i = InSourceIndex; i < OldSize - 1; ++i)
+    {
+        SourceParent->FolderContents[i] = SourceParent->FolderContents[i + 1];
+    }
+
+    SourceParent->FolderContents.Pop();
+
+    TArray<int32> AdjustedTargetFolderPath = TargetParentPath;
+    AdjustedTargetFolderPath.Add(TargetFolderIndex);
+
+    FileInfo* TargetFolder = GetFolderFromPath(AdjustedTargetFolderPath);
+    if (!TargetFolder || !TargetFolder->bIsFolder)
+    {
+        return false;
+    }
+
+    TargetFolder->FolderContents.Add(MovedItem);
+
+    SelectedItemIndex = -1;
+    return true;
 }
 
 bool FEditorContentBrowserWidget::ArePathsEqual(const TArray<int32>& PathA, const TArray<int32>& PathB) const
@@ -1467,10 +1809,10 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     const ImVec2 BarMax    = ImVec2(BarX + BarWidth, BarY + BarHeight);
 
     // -----------------------------------------------------------------------------------------
-    // Navigation button helper lambda
+    // Helper Lambdas
     // -----------------------------------------------------------------------------------------
 
-    const auto DrawNavButton = [&](const char* InId, float X, ImTextureID InIcon, bool bEnabled, bool bForward) -> bool
+    const auto DrawNavButton = [&](const CHAR* InId, float X, ImTextureID InIcon, bool bEnabled, bool bForward) -> bool
     {
         const ImVec2 ButtonMin = ImVec2(X, ControlY);
         const ImVec2 ButtonMax = ImVec2(X + NavButtonWidth, ControlY + NavButtonHeight);
@@ -1554,7 +1896,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
         }
         else
         {
-            const char*  Seperator     = ">";
+            const CHAR*  Seperator     = ">";
             const ImVec2 SeperatorSize = ImGui::CalcTextSize(Seperator);
             const ImVec2 SeperatorPos  = ImVec2(CursorX, CenterY - SeperatorSize.y * 0.5f);
 
@@ -1563,7 +1905,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
         }
     };
 
-    const auto DrawCrumbButton = [&](const char* InLabel, const TArray<int32>& InTargetPath, int32 InId)
+    const auto DrawCrumbButton = [&](const CHAR* InLabel, const TArray<int32>& InTargetPath, int32 InId)
     {
         if (!InLabel || InLabel[0] == 0)
         {
@@ -1634,7 +1976,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
             PrefixPath.Add(SelectedFolderPath[Depth]);
 
             FileInfo*   Folder = GetFolderFromPath(PrefixPath);
-            const char* Label  = Folder ? Folder->Name : "<Invalid>";
+            const CHAR* Label  = Folder ? Folder->Name : "<Invalid>";
 
             DrawCrumbButton(Label, PrefixPath, 1100 + Depth);
         }

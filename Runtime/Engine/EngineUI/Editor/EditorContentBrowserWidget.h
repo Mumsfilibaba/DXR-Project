@@ -38,8 +38,11 @@ private:
     void DrawContentPanel();
     void DrawItemTooltip(const FileInfo& InItem);
     void DrawContentGrid();
-    void DrawSearchField(const char* InId, const char* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth = -1.0f);
-    void DrawCenteredMessage(const char* InText, const ImVec4& InMutedTextColor);
+
+    void ResetDragPreviewState();
+    bool MoveItemToFolder(const TArray<int32>& InSourceParentPath, int32 InSourceIndex, const TArray<int32>& InTargetFolderPath);
+    void DrawSearchField(const CHAR* InId, const CHAR* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth = -1.0f);
+    void DrawCenteredMessage(const CHAR* InText, const ImVec4& InMutedTextColor);
     void DrawContentHeaderBar();
 
     void DrawFolderTreeRecursive(FileInfo& InFolder, TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor,
@@ -54,11 +57,12 @@ private:
     bool HasChildFolders(const FileInfo& InFolder) const;
 
     FileInfo* GetFolderFromPath(const TArray<int32>& InPath);
-    void BuildFolderPathString(const TArray<int32>& InPath, char* OutBuf, int32 OutBufSize) const;
+    void BuildFolderPathString(const TArray<int32>& InPath, CHAR* OutBuf, int32 OutBufSize) const;
     void NavigateToFolderPath(const TArray<int32>& InNewPath, bool bAddToHistory);
     void NavigateBack();
     void NavigateForward();
     bool ArePathsEqual(const TArray<int32>& A, const TArray<int32>& B) const;
+
 
 private:
     FDelegateHandle         ImGuiDelegateHandle;
@@ -69,12 +73,24 @@ private:
     bool                    bSelectionActiveInBrowser;
     bool                    bVisible;
 
+    bool                    bPendingMove;
+    TArray<int32>           PendingMoveSourceParentPath;
+    int32                   PendingMoveSourceIndex;
+    TArray<int32>           PendingMoveTargetFolderPath;
+
+    bool                    bDragPreviewActive;
+    bool                    bDragPreviewInvalidSelfMove;
+    ImTextureID             DragPreviewIcon;
+    bool                    bDragPreviewIsFolder;
+    CHAR                    DragPreviewSourceName[256];
+    CHAR                    DragPreviewTargetName[256];
+
     // Folder navigation path (indices into RootFolders/FolderContents).
     // Example: [0]        -> RootFolders[0]
     //          [0, 2]     -> RootFolders[0].FolderContents[2]
     //          [0, 2, 1]  -> RootFolders[0].FolderContents[2].FolderContents[1]
-    TArray<int32>         SelectedFolderPath;
-    TArray<FileInfo>      RootFolders;
-    TArray<TArray<int32>> BackHistory;
-    TArray<TArray<int32>> ForwardHistory;
+    TArray<int32>           SelectedFolderPath;
+    TArray<FileInfo>        RootFolders;
+    TArray<TArray<int32>>   BackHistory;
+    TArray<TArray<int32>>   ForwardHistory;
 };
