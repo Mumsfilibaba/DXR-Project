@@ -21,21 +21,18 @@ static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBu
         return nullptr;
     }
 
-    // Skip leading whitespace
     const CHAR* Start = InText;
     while (*Start && (*Start == ' ' || *Start == '\t' || *Start == '\n' || *Start == '\r'))
     {
         ++Start;
     }
 
-    // Find end
     const CHAR* End = Start;
     while (*End)
     {
         ++End;
     }
 
-    // Trim trailing whitespace
     while (End > Start && (End[-1] == ' ' || End[-1] == '\t' || End[-1] == '\n' || End[-1] == '\r'))
     {
         --End;

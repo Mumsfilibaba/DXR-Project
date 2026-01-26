@@ -70,7 +70,7 @@ void FEditorOutputLogWidget::Log(ELogSeverity Severity, const FString& Message)
     }
 }
 
-int32 FEditorOutputLogWidget::FindSubstringCaseInsensitive(const char* Haystack, const char* Needle)
+int32 FEditorOutputLogWidget::FindSubstringCaseInsensitive(const CHAR* Haystack, const CHAR* Needle)
 {
     if (!Haystack || !Needle || Needle[0] == 0)
     {
@@ -82,16 +82,16 @@ int32 FEditorOutputLogWidget::FindSubstringCaseInsensitive(const char* Haystack,
         int32 j = 0;
         while (Needle[j] != 0)
         {
-            const unsigned char A0 = (unsigned char)Haystack[i + j];
-            const unsigned char B0 = (unsigned char)Needle[j];
+            const CHAR A0 = static_cast<CHAR>(Haystack[i + j]);
+            const CHAR B0 = static_cast<CHAR>(Needle[j]);
 
             if (Haystack[i + j] == 0)
             {
                 break;
             }
 
-            const char A = (char)tolower(A0);
-            const char B = (char)tolower(B0);
+            const CHAR A = FCharTraits::ToLower(A0);
+            const CHAR B = FCharTraits::ToLower(B0);
 
             if (A != B)
             {
@@ -148,7 +148,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     {
         ImGui::PushFont(EditorFonts::SegoeUI_22);
 
-        const char* Label = "Filter";
+        const CHAR* Label = "Filter";
 
         const ImVec2 TextSize     = ImGui::CalcTextSize(Label);
         const float  ButtonHeight = SearchBarHeight;
@@ -280,7 +280,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     };
 
     const bool  bHasSearch = (SearchFilterBuffer[0] != 0);
-    const char* Search     = SearchFilterBuffer.Data();
+    const CHAR* Search     = SearchFilterBuffer.Data();
 
     RichTextCtx.bAutoScroll = bAutoScroll;
 
@@ -310,7 +310,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
                 continue;
             }
 
-            const char* Line = *Msg.Message;
+            const CHAR* Line = *Msg.Message;
             if (!Line)
             {
                 continue;

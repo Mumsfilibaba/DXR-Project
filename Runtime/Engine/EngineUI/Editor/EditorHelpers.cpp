@@ -166,7 +166,7 @@ static bool ResetIconButton(float InSizePx = 0.0f)
     }
     else
     {
-        const char* FallbackText = "R";
+        const CHAR* FallbackText = "R";
 
         const ImVec2 FallbackTextSize     = ImGui::CalcTextSize(FallbackText);
         const ImVec2 FallbackTextPosition = ImVec2((ButtonRectMin.x + ButtonRectMax.x) * 0.5f - FallbackTextSize.x * 0.5f, (ButtonRectMin.y + ButtonRectMax.y) * 0.5f - FallbackTextSize.y * 0.5f);
@@ -179,7 +179,7 @@ static bool ResetIconButton(float InSizePx = 0.0f)
     return bWasPressed;
 }
 
-static void DrawSuffixForLastItem(const char* InSuffix, ImU32 InColor, float InRightPadding = 6.0f)
+static void DrawSuffixForLastItem(const CHAR* InSuffix, ImU32 InColor, float InRightPadding = 6.0f)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
     if (!Window || Window->SkipItems || !InSuffix)
@@ -197,7 +197,7 @@ static void DrawSuffixForLastItem(const char* InSuffix, ImU32 InColor, float InR
     Window->DrawList->AddText(ImVec2(X, Y), InColor, InSuffix);
 }
 
-static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const char* InSuffix, ImU32 InColor, float InGapPx = 1.0f)
+static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const CHAR* InSuffix, ImU32 InColor, float InGapPx = 1.0f)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
     if (!Window || Window->SkipItems || !InSuffix)
@@ -216,7 +216,7 @@ static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const char* InSuffix,
         return;
     }
 
-    const char* EditText = Context.InputTextState.TextA.Data;
+    const CHAR* EditText = Context.InputTextState.TextA.Data;
     if (!EditText)
     {
         return;
@@ -317,7 +317,7 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
             FullLine += Line.Spans[s].Text;
         }
 
-        const char* Full = *FullLine;
+        const CHAR* Full = *FullLine;
         const int32 FullLen = (int32)strlen(Full);
 
         int32 SelColStart = 0;
@@ -343,7 +343,7 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
 
             for (int32 i = 0; i < SubLen; ++i)
             {
-                const char C = Full[SelColStart + i];
+                const CHAR C = Full[SelColStart + i];
                 Sub += C;
             }
 
@@ -419,7 +419,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
         return Speed;
     };
 
-    const auto GetDynamicFormatString = [](float Value, char(&OutFormat)[8]) -> const char*
+    const auto GetDynamicFormatString = [](float Value, CHAR(&OutFormat)[8]) -> const CHAR*
     {
         static const float Pow10Table[4] = { 10.0f, 100.0f, 1000.0f, 10000.0f };
 
@@ -498,7 +498,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
             }
             else
             {
-                const char* FallbackText = bUniformScaleEnabled ? "L" : "U";
+                const CHAR* FallbackText = bUniformScaleEnabled ? "L" : "U";
 
                 const ImVec2 TextSize = ImGui::CalcTextSize(FallbackText);
                 const ImVec2 TextPos  = ImVec2((RectMin.x + RectMax.x) * 0.5f - TextSize.x * 0.5f, (RectMin.y + RectMax.y) * 0.5f - TextSize.y * 0.5f);
@@ -537,7 +537,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     bool bYChanged = false;
     bool bZChanged = false;
 
-    const auto DrawAxisField = [&](const char* DragWidgetId, float& InOutAxisValue, ImU32 AxisIndicatorColor, float FieldWidthPx, bool bPlaceOnSameLine) -> bool
+    const auto DrawAxisField = [&](const CHAR* DragWidgetId, float& InOutAxisValue, ImU32 AxisIndicatorColor, float FieldWidthPx, bool bPlaceOnSameLine) -> bool
     {
         if (bPlaceOnSameLine)
         {
@@ -549,8 +549,8 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
         bool bAxisValueChanged = false;
 
-        char FormatBuffer[8];
-        const char* FormatString = GetDynamicFormatString(InOutAxisValue, FormatBuffer);
+        CHAR FormatBuffer[8];
+        const CHAR* FormatString = GetDynamicFormatString(InOutAxisValue, FormatBuffer);
 
         const float AxisDragSpeed = GetAxisDragSpeed();
         bAxisValueChanged |= ImGui::DragFloat(DragWidgetId, &InOutAxisValue, AxisDragSpeed, 0.0f, 0.0f, FormatString, ImGuiSliderFlags_NoRoundToFormat);
@@ -573,10 +573,10 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
         const bool bIsTempInputActive = ImGui::TempInputIsActive(LastItemId);
         if (!bIsTempInputActive)
         {
-            char FormatBufferAfter[8];
-            const char* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
+            CHAR FormatBufferAfter[8];
+            const CHAR* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
 
-            char ValueTextBuffer[64];
+            CHAR ValueTextBuffer[64];
             FCString::Snprintf(ValueTextBuffer, sizeof(ValueTextBuffer), FormatStringAfter, InOutAxisValue);
 
             ImGuiWindow* Window = ImGui::GetCurrentWindow();
@@ -690,7 +690,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     return bAnyValueChanged;
 }
 
-bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled)
+bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
@@ -770,7 +770,7 @@ bool EditorWidgets::DrawFloatProperty(const char* Label, float& InOutValue, floa
     return bEnabled && bResult;
 }
 
-bool EditorWidgets::DrawCheckboxProperty(const char* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled)
+bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
@@ -842,7 +842,7 @@ bool EditorWidgets::DrawCheckboxProperty(const char* Label, bool& InOutValue, co
     return bEnabled && bResult;
 }
 
-void EditorWidgets::DrawTextProperty(const char* Label, const char* ValueText)
+void EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
@@ -876,7 +876,7 @@ void EditorWidgets::DrawTextProperty(const char* Label, const char* ValueText)
     ApplyHoveredRowBg(bRowHovered);
 }
 
-void EditorWidgets::DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value)
+void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const FVector3& Value)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
@@ -914,7 +914,7 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const char* Label, const FVector3
     ApplyHoveredRowBg(bRowHovered);
 }
 
-bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags)
+bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags)
 {
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
@@ -980,7 +980,7 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
     ImGui::SameLine(0.0f, Gap);
 
     // R / G / B drag floats (0..1)
-    const auto DrawComponentDragFloat = [&](const char* Id, float& OutValue, bool bSameLine)
+    const auto DrawComponentDragFloat = [&](const CHAR* Id, float& OutValue, bool bSameLine)
     {
         if (bSameLine)
         {
@@ -1035,7 +1035,7 @@ bool EditorWidgets::DrawColor3Property(const char* Label, float* InOutColor, con
     return bEnabled && bResult;
 }
 
-bool EditorWidgets::EditorSearchField(const char* InId, const char* InHint, char* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
+bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
 {
     if (!InId || !InHint || !InOutBuffer || InBufferSize <= 0)
     {
@@ -1214,7 +1214,7 @@ void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
     }
 }
 
-void EditorWidgets::EditorMenuLabeledSeparator(const char* Label, float Thickness, float PaddingY)
+void EditorWidgets::EditorMenuLabeledSeparator(const CHAR* Label, float Thickness, float PaddingY)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
     if (!Window || Window->SkipItems)
@@ -1237,8 +1237,8 @@ void EditorWidgets::EditorMenuLabeledSeparator(const char* Label, float Thicknes
     const ImU32 LineColor  = IM_COL32(106, 106, 106, 255);
     const ImU32 LabelColor = IM_COL32(160, 160, 160, 255);
 
-    const char* LabelToDraw = "";
-    char UpperLabel[128] = {};
+    const CHAR* LabelToDraw = "";
+    CHAR UpperLabel[128] = {};
 
     if (Label && Label[0] != '\0')
     {
@@ -1246,7 +1246,7 @@ void EditorWidgets::EditorMenuLabeledSeparator(const char* Label, float Thicknes
         for (; Label[i] != '\0' && i < (int32)(sizeof(UpperLabel) - 1); ++i)
         {
             const CHAR Ch = (CHAR)Label[i];
-            UpperLabel[i] = (char)FCharTraits::ToUpper(Ch);
+            UpperLabel[i] = (CHAR)FCharTraits::ToUpper(Ch);
         }
 
         UpperLabel[i] = '\0';
@@ -1281,7 +1281,7 @@ void EditorWidgets::EditorMenuLabeledSeparator(const char* Label, float Thicknes
     }
 }
 
-bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
+bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
 {
     const float PaddingX    = 8.0f;
     const float PaddingY    = 4.0f;
@@ -1346,16 +1346,16 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
     // -----------------------------------------------------------------------------------------
     // Upper-case shortcut
     // -----------------------------------------------------------------------------------------
-    const char* ShortcutToDraw = Shortcut;
+    const CHAR* ShortcutToDraw = Shortcut;
 
-    char UpperShortcut[128] = {};
+    CHAR UpperShortcut[128] = {};
     if (bHasShortcut)
     {
         int32 i = 0;
         for (; Shortcut[i] != '\0' && i < (int32)(sizeof(UpperShortcut) - 1); ++i)
         {
             const CHAR Ch    = (CHAR)Shortcut[i];
-            UpperShortcut[i] = (char)FCharTraits::ToUpper(Ch);
+            UpperShortcut[i] = (CHAR)FCharTraits::ToUpper(Ch);
         }
         UpperShortcut[i] = '\0';
         ShortcutToDraw   = UpperShortcut;
@@ -1451,7 +1451,7 @@ bool EditorWidgets::EditorMenuItem(const char* Label, const char* Shortcut, bool
     return bEnabled && bPressed;
 }
 
-void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
+void EditorWidgets::EditorDrawMenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
 {
     const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
     OutAnchor.bRequestPosition = false;
@@ -1499,7 +1499,7 @@ void EditorWidgets::EditorDrawMenuButton(const char* Label, const char* PopupId,
     }
 }
 
-bool EditorWidgets::EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, float MinWidth)
+bool EditorWidgets::EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth)
 {
     if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
     {
@@ -1567,7 +1567,7 @@ void EditorWidgets::EditorResetMenuPopup()
     ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
 }
 
-bool EditorWidgets::BeginPropertyTable(const char* TableId, float LabelColumnWidth, float RevertColumnWidth)
+bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth, float RevertColumnWidth)
 {
     // -----------------------------------------------------------------------------------------
     // Colors
@@ -1667,7 +1667,7 @@ void EditorWidgets::EndPropertyTable()
     ImGui::PopStyleVar();
 }
 
-void EditorWidgets::PropertyRowLabel(const char* Label)
+void EditorWidgets::PropertyRowLabel(const CHAR* Label)
 {
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
@@ -1698,7 +1698,7 @@ void EditorWidgets::PropertySeparatorRow(float PaddingY)
     }
 }
 
-bool EditorWidgets::BeginRichTextView(const char* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags)
+bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags)
 {
     InOutContext.ClearForNewFrame();
 
@@ -1766,7 +1766,7 @@ void EditorWidgets::RichTextLineBegin(FRichTextViewContext& InOutContext)
     InOutContext.Lines.Add(Line);
 }
 
-void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor)
+void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor)
 {
     if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
     {
@@ -1784,7 +1784,7 @@ void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const ch
     Line.Spans.Add(Span);
 }
 
-void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
+void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
 {
     if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
     {
@@ -2024,7 +2024,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
             {
                 const FRichTextSpan& Span = Line.Spans[s];
 
-                const char* Text = *Span.Text;
+                const CHAR* Text = *Span.Text;
                 if (!Text || Text[0] == 0)
                 {
                     continue;

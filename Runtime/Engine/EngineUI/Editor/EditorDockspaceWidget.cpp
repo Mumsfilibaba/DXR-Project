@@ -233,10 +233,10 @@ void FEditorDockspaceWidget::DrawMenuBar()
     {
         ImGui::SetCursorPosY(0.0f);
 
-        const char* PopupFile    = "##ToolbarPopup_File";
-        const char* PopupEdit    = "##ToolbarPopup_Edit";
-        const char* PopupWindows = "##ToolbarPopup_Windows";
-        const char* PopupHelp    = "##ToolbarPopup_Help";
+        const CHAR* PopupFile    = "##ToolbarPopup_File";
+        const CHAR* PopupEdit    = "##ToolbarPopup_Edit";
+        const CHAR* PopupWindows = "##ToolbarPopup_Windows";
+        const CHAR* PopupHelp    = "##ToolbarPopup_Help";
 
         const bool bAnyPopupOpen =
             ImGui::IsPopupOpen(PopupFile, ImGuiPopupFlags_None) ||

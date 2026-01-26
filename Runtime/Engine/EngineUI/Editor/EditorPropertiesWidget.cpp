@@ -65,10 +65,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
         return;
     }
 
-    const auto DrawLabelWithSeperator = [](const char* InLabel)
+    const auto DrawLabelWithSeperator = [](const CHAR* InLabel)
     {
         static constexpr uint32 LabelLength = 256;
-        char Label[LabelLength];
+        CHAR Label[LabelLength];
         FCString::Snprintf(Label, LabelLength, "%s", InLabel);
 
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
@@ -77,7 +77,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         ImGui::PopStyleVar(2);
     };
 
-    const auto DrawCollapsingHeader = [](const char* Label, ImGuiTreeNodeFlags Flags)
+    const auto DrawCollapsingHeader = [](const CHAR* Label, ImGuiTreeNodeFlags Flags)
     {
         ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -488,7 +488,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             if (EditorWidgets::BeginPropertyTable("##CameraProjectionTable", LabelColumnWidth, RevertColumnWidth))
             {
                 {
-                    char ViewportText[64];
+                    CHAR ViewportText[64];
                     FCString::Snprintf(ViewportText, 64, "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
                     EditorWidgets::DrawTextProperty("Viewport size", ViewportText);
                 }

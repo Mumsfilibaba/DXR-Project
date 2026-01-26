@@ -106,19 +106,19 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
 
     static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType);
-    static bool DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
-    static bool DrawCheckboxProperty(const char* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
-    static void DrawTextProperty(const char* Label, const char* ValueText);
-    static void DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value);
+    static bool DrawFloatProperty(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
+    static bool DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
+    static void DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
+    static void DrawReadOnlyFloat3Property(const CHAR* Label, const FVector3& Value);
 
-    static bool DrawColor3Property(const char* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
+    static bool DrawColor3Property(const CHAR* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
  
-    static FORCEINLINE bool DrawColor3Property(const char* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.RGBA, InRevertColor.RGBA, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColor3Property(const char* Label, FVector3& InOutColor, const FVector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FVector3& InOutColor, const FVector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.XYZ, InRevertColor.XYZ, bEnabled, Flags);
     }
@@ -137,36 +137,36 @@ struct ENGINE_API EditorWidgets
     // Search
     // -----------------------------------------------------------------------------------------
 
-    static bool EditorSearchField(const char* InId, const char* InHint, char* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+    static bool EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
 
     // -----------------------------------------------------------------------------------------
     // Menu
     // -----------------------------------------------------------------------------------------
 
     static void EditorMenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
-    static void EditorMenuLabeledSeparator(const char* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
-    static bool EditorMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
-    static void EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
-    static bool EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
+    static void EditorMenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
+    static bool EditorMenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
+    static void EditorDrawMenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
+    static bool EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
     static void EditorResetMenuPopup();
 
     // -----------------------------------------------------------------------------------------
     // Property Table
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginPropertyTable(const char* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
+    static bool BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
     static void EndPropertyTable();
-    static void PropertyRowLabel(const char* Label);
+    static void PropertyRowLabel(const CHAR* Label);
     static void PropertySeparatorRow(float PaddingY = 4.0f);
 
     // -----------------------------------------------------------------------------------------
     // Rich Text View
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginRichTextView(const char* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0);
+    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0);
     static void RichTextLineBegin(FRichTextViewContext& InOutContext);
-    static void RichTextAddText(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor);
-    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
+    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
     static void RichTextLineEnd(FRichTextViewContext& InOutContext);
     static void EndRichTextView(FRichTextViewContext& InOutContext);
 
