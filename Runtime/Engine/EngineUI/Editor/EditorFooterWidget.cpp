@@ -203,7 +203,7 @@ void FEditorFooterWidget::Draw()
 
         bMouseInsideOverlayRect = ImGui::IsMouseHoveringRect(OverlayMin, OverlayMax, false);
 
-        if (bMouseInsideOverlayRect && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        if (bCandidatesOverlayOpen && bMouseInsideOverlayRect && ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
             bCandidatesOverlayOpen = true;
         }
