@@ -38,17 +38,17 @@ private:
     void DrawContentPanel();
     void DrawItemTooltip(const FileInfo& InItem);
     void DrawContentGrid();
-
-    void ResetDragPreviewState();
-    bool MoveItemToFolder(const TArray<int32>& InSourceParentPath, int32 InSourceIndex, const TArray<int32>& InTargetFolderPath);
     void DrawSearchField(const CHAR* InId, const CHAR* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth = -1.0f);
     void DrawCenteredMessage(const CHAR* InText, const ImVec4& InMutedTextColor);
     void DrawContentHeaderBar();
-
+    void DrawContentHeaderArea(const ImVec4& InBackGround, float InSidePadding, float InSearchRowHeight);
     void DrawFolderTreeRecursive(FileInfo& InFolder, TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor,
         const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
     bool DrawFolderRow(FileInfo& InFolder, const TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor, 
         const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
+
+    void ResetDragPreviewState();
+    bool MoveItemToFolder(const TArray<int32>& InSourceParentPath, int32 InSourceIndex, const TArray<int32>& InTargetFolderPath);
 
     const CHAR* GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuf) const;
     bool MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) const;
