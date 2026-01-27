@@ -680,6 +680,71 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         }
     };
 
+    const auto DrawLabelWithSearchHighlight = [&](ImDrawList* InDrawList, const ImVec2& InLabelMin, const ImVec2& InLabelMax, const CHAR* InText, const CHAR* InFilterText, ImU32 InBaseTextU32)
+    {
+        if (!InDrawList)
+        {
+            return;
+        }
+
+        const CHAR* Text       = InText ? InText : "";
+        const CHAR* FilterText = (InFilterText && *InFilterText != 0) ? InFilterText : nullptr;
+
+        // Match behavior of RenderTextClipped(..., ImVec2(0.5f, 0.0f)): horizontally centered, top-aligned.
+        const ImVec2 FullSize = ImGui::CalcTextSize(Text);
+        const float  AvailW   = Math::Max(1.0f, InLabelMax.x - InLabelMin.x);
+        const float  X        = InLabelMin.x + Math::Max(0.0f, (AvailW - FullSize.x) * 0.5f);
+        const float  Y        = InLabelMin.y;
+        const ImVec2 TextStart = ImVec2(X, Y);
+
+        int32 MatchStart = -1;
+        int32 MatchLen   = 0;
+
+        if (FilterText)
+        {
+            if (const CHAR* MatchPtr = FCString::Stristr(Text, FilterText))
+            {
+                MatchStart = static_cast<int32>(MatchPtr - Text);
+                MatchLen   = static_cast<int32>(strlen(FilterText));
+            }
+        }
+
+        InDrawList->PushClipRect(InLabelMin, InLabelMax, true);
+
+        if (MatchStart >= 0 && MatchLen > 0)
+        {
+            ImGuiIO& IO = ImGui::GetIO();
+            const float Scale = IO.DisplayFramebufferScale.x;
+
+            const ImU32 HighlightBgU32   = IM_COL32(139, 194, 74, 255);
+            const ImU32 HighlightTextU32 = IM_COL32(0, 0, 0, 255);
+
+            const ImVec2 PrefixSize = ImGui::CalcTextSize(Text, Text + MatchStart);
+            const ImVec2 MatchSize  = ImGui::CalcTextSize(Text + MatchStart, Text + MatchStart + MatchLen);
+
+            const ImVec2 PrefixPos = TextStart;
+            const ImVec2 MatchPos  = ImVec2(TextStart.x + PrefixSize.x, TextStart.y);
+            const ImVec2 SuffixPos = ImVec2(MatchPos.x + MatchSize.x, TextStart.y);
+
+            InDrawList->AddText(PrefixPos, InBaseTextU32, Text, Text + MatchStart);
+
+            const float  TextHeight   = ImGui::GetTextLineHeight();
+            const ImVec2 HighlightMin = ImVec2(MatchPos.x - 1.0f * Scale, MatchPos.y - 1.0f * Scale);
+            const ImVec2 HighlightMax = ImVec2(MatchPos.x + MatchSize.x + 1.0f * Scale, MatchPos.y + TextHeight + 1.0f * Scale);
+            InDrawList->AddRectFilled(HighlightMin, HighlightMax, HighlightBgU32, 0.0f);
+
+            InDrawList->AddText(MatchPos, HighlightTextU32, Text + MatchStart, Text + MatchStart + MatchLen);
+            InDrawList->AddText(SuffixPos, InBaseTextU32, Text + MatchStart + MatchLen);
+        }
+        else
+        {
+            InDrawList->AddText(TextStart, InBaseTextU32, Text);
+        }
+
+        InDrawList->PopClipRect();
+    };
+
+
     // -----------------------------------------------------------------------------------------
     // Find folder items
     // -----------------------------------------------------------------------------------------
@@ -831,11 +896,15 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 const ImVec2 LabelMin = ImVec2(TileStart.x + 8.0f, TileEnd.y - LabelAreaHeight + 6.0f);
                 const ImVec2 LabelMax = ImVec2(TileEnd.x - 8.0f, TileEnd.y - 6.0f);
 
+                const CHAR* Query      = GetTrimmedQuery(AssetSearchBuffer);
+                const CHAR* FilterText = (Query && *Query != 0) ? Query : nullptr;
+
                 ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
-                ImGui::RenderTextClipped(LabelMin, LabelMax, Item.Name, nullptr, nullptr, ImVec2(0.5f, 0.0f));
+                const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
+                DrawLabelWithSearchHighlight(WindowDrawList, LabelMin, LabelMax, Item.Name, FilterText, BaseTextU32);
                 ImGui::PopStyleColor();
             }
-
+            
             // ---------------------------------------------------------------------------------
             // Drag source (Folders and Files)
             // ---------------------------------------------------------------------------------
