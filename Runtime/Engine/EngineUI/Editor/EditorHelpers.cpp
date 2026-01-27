@@ -1831,6 +1831,12 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         ImGui::SetCursorPos(SavedCursorPos);
     }
 
+    const auto MarkKeyboardCaptureActive = [&]()
+    {
+        ImGui::SetWindowFocus();
+        ImGui::SetNextFrameWantCaptureKeyboard(true);
+    };
+
     // -----------------------------------------------------------------------------------------
     // Selection begin
     // -----------------------------------------------------------------------------------------
@@ -1856,6 +1862,16 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         }
     }
 
+    if (bHovered && (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)))
+    {
+        MarkKeyboardCaptureActive();
+    }
+
+    if (bHovered && (State.MouseWheel != 0.0f || State.MouseWheelH != 0.0f))
+    {
+        MarkKeyboardCaptureActive();
+    }
+
     if (bHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
         InOutContext.bSelecting    = true;
@@ -1864,7 +1880,35 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         InOutContext.SelStart = GetMouseSelectionPoint(InOutContext, State.MousePos);
         InOutContext.SelEnd   = InOutContext.SelStart;
 
-        ImGui::SetWindowFocus();
+        MarkKeyboardCaptureActive();
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Select all (Ctrl + A)
+    // -----------------------------------------------------------------------------------------
+
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && State.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_A, false))
+    {
+        ImGui::SetNextFrameWantCaptureKeyboard(true);
+
+        if (!InOutContext.Lines.IsEmpty())
+        {
+            const int32 LastLineIndex = InOutContext.Lines.Size() - 1;
+            const int32 LastCol       = InOutContext.Lines[LastLineIndex].TotalChars;
+
+            InOutContext.bHasSelection = true;
+            InOutContext.bSelecting    = false;
+
+            InOutContext.SelStart.Line   = 0;
+            InOutContext.SelStart.Column = 0;
+            InOutContext.SelEnd.Line     = LastLineIndex;
+            InOutContext.SelEnd.Column   = LastCol;
+        }
+        else
+        {
+            InOutContext.bHasSelection = false;
+            InOutContext.bSelecting    = false;
+        }
     }
 
     // -----------------------------------------------------------------------------------------
@@ -1951,6 +1995,8 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
 
     if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && State.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C, false))
     {
+        ImGui::SetNextFrameWantCaptureKeyboard(true);
+
         if (InOutContext.bHasSelection)
         {
             const FString Selected = BuildSelectedText(InOutContext);

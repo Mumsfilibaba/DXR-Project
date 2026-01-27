@@ -188,8 +188,6 @@ bool FEngine::CreateSceneViewport()
     FRHISwapChainRef SwapChain = SceneViewport->GetRHISwapChain();
     RenderSettings::ChangeRenderResolution(SwapChain->GetWidth(), SwapChain->GetHeight());
 
-    // Make sure we have focus on the new viewport
-    FApplication::Get().SetFocusWidget(EngineViewportWidget);
     return true;
 }
 
@@ -385,7 +383,7 @@ void FEngine::RenderFrame()
 {
     TRACE_FUNCTION_SCOPE();
 
-	IRendererModule* RendererModule = IRendererModule::Get();
+    IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->RenderUI();
     RendererModule->PresentSwapChain(SceneViewport->GetRHISwapChain());
 }

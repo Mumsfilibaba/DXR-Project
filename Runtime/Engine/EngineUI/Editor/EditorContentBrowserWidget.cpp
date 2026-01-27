@@ -1812,7 +1812,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     // Helper Lambdas
     // -----------------------------------------------------------------------------------------
 
-    const auto DrawNavButton = [&](const CHAR* InId, float X, ImTextureID InIcon, bool bEnabled, bool bForward) -> bool
+    const auto DrawNavButton = [&](const CHAR* InId, float X, ImTextureID InIcon, bool bEnabled) -> bool
     {
         const ImVec2 ButtonMin = ImVec2(X, ControlY);
         const ImVec2 ButtonMax = ImVec2(X + NavButtonWidth, ControlY + NavButtonHeight);
@@ -1858,12 +1858,12 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     ImTextureID BackIcon    = EditorIcons::PreviousIcon;
     ImTextureID ForwardIcon = EditorIcons::NextIcon;
 
-    if (DrawNavButton("Back", BackX, BackIcon, bCanBack, false))
+    if (DrawNavButton("Back", BackX, BackIcon, bCanBack))
     {
         NavigateBack();
     }
 
-    if (DrawNavButton("Forward", ForwardX, ForwardIcon, bCanForward, true))
+    if (DrawNavButton("Forward", ForwardX, ForwardIcon, bCanForward))
     {
         NavigateForward();
     }

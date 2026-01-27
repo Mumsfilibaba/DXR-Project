@@ -35,7 +35,7 @@ public:
      */
     static bool FORCEINLINE IsInitialized()
     {
-        return GApplication.IsValid();
+        return GApplicationInstance.IsValid();
     }
 
     /**
@@ -46,13 +46,13 @@ public:
      */
     static FORCEINLINE FApplication& Get()
     {
-        CHECK(GApplication.IsValid());
-        return *GApplication;
+        CHECK(GApplicationInstance.IsValid());
+        return *GApplicationInstance;
     }
     
 public:
 
-    FApplication();
+    FApplication(TSharedPtr<FGenericApplication> InPlatformApplication);
     virtual ~FApplication();
 
     // FGenericApplicationMessageHandler Interface Overrides
@@ -246,21 +246,21 @@ public:
      * 
      * @return A shared pointer to the current FGenericApplication.
      */
-    TSharedPtr<FGenericApplication> GetPlatformApplication() const { return GPlatformApplication; }
+    TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
 
     /**
      * @brief Retrieves the primary input device interface (e.g., for gamepads).
      * 
      * @return A pointer to the current FInputDevice instance, or nullptr if none.
      */
-    FInputDevice* GetInputDevice() const { return GPlatformApplication->GetInputDevice(); }
+    FInputDevice* GetInputDevice() const { return PlatformApplication->GetInputDevice(); }
 
     /**
      * @brief Retrieves the cursor interface being used by the platform application.
      * 
      * @return A shared pointer to the ICursor interface, or nullptr if unsupported.
      */
-    TSharedPtr<ICursor> GetCursor() const { return GPlatformApplication->Cursor; }
+    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->GetCursor(); }
 
     /**
      * @brief Gets the window that currently has focus (for receiving keyboard input, etc.).
@@ -268,6 +268,13 @@ public:
      * @return A shared pointer to the focused window, or nullptr if none.
      */
     TSharedPtr<FWindowWidget> GetFocusWindow() const;
+
+    /**
+     * @brief Gets the widget that currently has focus (for receiving keyboard input, etc.).
+     *
+     * @return A shared pointer to the focused widget, or nullptr if none.
+     */
+    TSharedPtr<FWidget> GetFocusLeafWidget() const;
 
     /**
      * @brief Sets focus to the specified widget and all of its parents up to the top-level window.
@@ -340,6 +347,7 @@ public:
     }
 
 private:
+    TSharedPtr<FGenericApplication>   PlatformApplication;
     TSet<EKeyboardKeyName::Type>      PressedKeys;
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
     TArray<FMonitorInfo>              MonitorInfos;
@@ -351,6 +359,5 @@ private:
     bool                              bIsMonitorInfoValid;
     bool                              bIsTrackingCursor;
 
-    static TSharedPtr<FGenericApplication> GPlatformApplication;
-    static TSharedPtr<FApplication>        GApplication;
+    static TSharedPtr<FApplication> GApplicationInstance;
 };

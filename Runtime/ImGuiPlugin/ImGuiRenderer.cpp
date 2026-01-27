@@ -653,8 +653,6 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
 
 void FImGuiRenderer::OnDestroyWindow(ImGuiViewport* Viewport)
 {
-    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
-    CHECK(ViewportData != nullptr);
     Viewport->RendererUserData = nullptr;
 }
 

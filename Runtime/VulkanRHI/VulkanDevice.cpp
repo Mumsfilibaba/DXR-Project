@@ -1346,7 +1346,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         RHIDeviceFeatureSupport::MaxStorageBufferSize       = PhysicalDeviceProperties.limits.maxStorageBufferRange;
         RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0);
         RHIDeviceFeatureSupport::StructuredBufferMinStride  = Math::Max<uint32>(MinBufferStride, (uint32)PhysicalDeviceProperties.limits.minStorageBufferOffsetAlignment);
-        RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint64(~0);
+        RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint32(~0);
         RHIDeviceFeatureSupport::RawBufferRequiredAlignment = MinBufferStride;
     }
 

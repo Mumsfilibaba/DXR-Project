@@ -18,31 +18,15 @@ void FViewportWidget::Initialize(const FInitializer& Initializer)
     ViewportInterface = Initializer.ViewportInterface;
 }
 
-#if 0
-void FViewportWidget::Tick(const FRectangle& AssignedBounds)
-{
-    FRectangle ViewportRectangle;
-    ViewportRectangle.Position = AssignedBounds.Position + Position;
-
-    // Clamp size to parent bounds
-    ViewportRectangle.Width  = Math::Min(Size.X, Math::Max(AssignedBounds.Width - Position.X, 0));
-    ViewportRectangle.Height = Math::Min(Size.Y, Math::Max(AssignedBounds.Height - Position.Y, 0));
-
-    SetContentRectangle(AssignedBounds);
-}
-#endif
-
 void FViewportWidget::Tick(const FRectangle& AssignedBounds)
 {
     if (Size.X != 0 && Size.Y != 0)
     {
-        // Desired viewport in world space
         FRectangle Desired;
         Desired.Position = AssignedBounds.Position + Position;
         Desired.Width    = Size.X;
         Desired.Height   = Size.Y;
 
-        // Clamp to parent by intersection
         const int32 ParentLeft    = AssignedBounds.Position.X;
         const int32 ParentTop     = AssignedBounds.Position.Y;
         const int32 ParentRight   = ParentLeft + AssignedBounds.Width;

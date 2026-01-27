@@ -17,6 +17,22 @@ enum class EVisibility
 ENUM_CLASS_OPERATORS(EVisibility);
 
 /**
+ * @brief Policy controlling whether a widget should automatically receive focus when its owning window becomes active.
+ */
+enum class EWidgetActivationPolicy
+{
+    /**
+     * @brief When the owning window is activated, focus the window content widget.
+     */
+    AutoFocusOnWindowActivate,
+
+    /**
+     * @brief Do not automatically focus this widget when the owning window is activated.
+     */
+    DoNotAutoFocusOnWindowActivate,
+};
+
+/**
  * @brief Creates a widget of the specified type.
  * 
  * @tparam WidgetType The type of the widget to create.
@@ -302,8 +318,31 @@ public:
         return ContentRectangle;
     }
 
+    /**
+     * @brief Gets the widget activation policy.
+     *
+     * This controls whether the widget should automatically receive focus when its owning window becomes active.
+     * @return The current activation policy.
+     */
+    EWidgetActivationPolicy GetActivationPolicy() const
+    {
+        return ActivationPolicy;
+    }
+
+    /**
+     * @brief Sets the widget activation policy.
+     *
+     * This controls whether the widget should automatically receive focus when its owning window becomes active.
+     * @param InActivationPolicy The new activation policy.
+     */
+    void SetActivationPolicy(EWidgetActivationPolicy InActivationPolicy)
+    {
+        ActivationPolicy = InActivationPolicy;
+    }
+
 private:
-    EVisibility       Visibility;
-    FRectangle        ContentRectangle;
-    TWeakPtr<FWidget> ParentWidget;
+    EVisibility             Visibility;
+    EWidgetActivationPolicy ActivationPolicy;
+    FRectangle              ContentRectangle;
+    TWeakPtr<FWidget>       ParentWidget;
 };

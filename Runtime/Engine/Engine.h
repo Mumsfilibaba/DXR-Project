@@ -56,11 +56,11 @@ public:
         return EngineWindow;
     }
 
-	/** @brief Returns the engine window */
-	TSharedPtr<FViewportWidget> GetViewportWidget() const
-	{
-		return EngineViewportWidget;
-	}
+    /** @brief Returns the engine window */
+    TSharedPtr<FViewportWidget> GetViewportWidget() const
+    {
+        return EngineViewportWidget;
+    }
 
     /** @brief Returns the SceneViewport */
     TSharedPtr<FSceneViewport> GetSceneViewport() const

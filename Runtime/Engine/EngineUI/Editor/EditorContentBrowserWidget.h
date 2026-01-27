@@ -61,8 +61,7 @@ private:
     void NavigateToFolderPath(const TArray<int32>& InNewPath, bool bAddToHistory);
     void NavigateBack();
     void NavigateForward();
-    bool ArePathsEqual(const TArray<int32>& A, const TArray<int32>& B) const;
-
+    bool ArePathsEqual(const TArray<int32>& PathA, const TArray<int32>& PathB) const;
 
 private:
     FDelegateHandle         ImGuiDelegateHandle;

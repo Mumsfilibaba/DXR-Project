@@ -32,4 +32,5 @@ private:
     FImGuiTexture               ViewportImage;
     FDelegateHandle             ImGuiDelegateHandle;
     bool                        bVisible;
+    bool                        bViewportInputActive;
 };

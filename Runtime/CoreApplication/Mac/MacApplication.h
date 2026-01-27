@@ -160,9 +160,7 @@ public:
     FMacApplication(const TSharedPtr<FMacCursor>& InCursor);
     virtual ~FMacApplication();
 
-public:
-
-    // FGenericApplication Interface Overrides
+    // FGenericApplication Interface
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
@@ -190,8 +188,6 @@ public:
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
-
-public:
 
     /**
      * @brief Defers an NSObject event (NSEvent, NSNotification, etc.) for later processing.
@@ -258,6 +254,7 @@ public:
     }
 
 public:
+
     /**
      * @brief Retrieves a human-readable name for a monitor (NSScreen).
      * 

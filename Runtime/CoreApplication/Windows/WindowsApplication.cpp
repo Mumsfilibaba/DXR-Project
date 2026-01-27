@@ -27,16 +27,16 @@ TSharedPtr<FGenericApplication> FWindowsApplication::Create()
     // Get the application instance (HINSTANCE)
     HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(::GetModuleHandleA(0));
     
-    // TODO: Replace with actual icon resource
+    // TODO: Replace with actual icon
     HICON Icon = ::LoadIcon(0, IDI_APPLICATION);
 
     TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeSharedPtr<FWindowsApplication>(AppInstanceHandle, Icon);
-    GWindowsApplication = NewWindowsApplication .Get();
+    GWindowsApplication = NewWindowsApplication.Get();
     return NewWindowsApplication;
 }
 
 FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIcon)
-    : FGenericApplication(TSharedPtr<ICursor>(new FWindowsCursor()))
+    : FGenericApplication(MakeSharedPtr<FWindowsCursor>())
     , Icon(InIcon)
     , InstanceHandle(InInstanceHandle)
     , XInputDevice()
