@@ -2,6 +2,7 @@
 #include "Core/Containers/StaticArray.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Templates/CString.h"
 #include "Engine/Assets/AssetManager.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
@@ -301,7 +302,7 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
         }
 
         const CHAR* Full = *FullLine;
-        const int32 FullLen = static_cast<int32>(strlen(Full));
+        const int32 FullLen = static_cast<int32>(FCString::Strlen(Full));
 
         int32 SelColStart = 0;
         int32 SelColEnd   = 0;
@@ -1766,7 +1767,7 @@ void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CH
     Span.TextColor      = InTextColor;
     Span.bHasBackground = false;
 
-    Line.TotalChars += static_cast<int32>(strlen(InText));
+    Line.TotalChars += static_cast<int32>(FCString::Strlen(InText));
     Line.Spans.Add(Span);
 }
 
@@ -1785,7 +1786,7 @@ void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const 
     Span.bHasBackground  = true;
     Span.BackgroundColor = InBackgroundColor;
 
-    Line.TotalChars += static_cast<int32>(strlen(InText));
+    Line.TotalChars += static_cast<int32>(FCString::Strlen(InText));
     Line.Spans.Add(Span);
 }
 

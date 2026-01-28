@@ -70,46 +70,6 @@ void FEditorOutputLogWidget::Log(ELogSeverity Severity, const FString& Message)
     }
 }
 
-int32 FEditorOutputLogWidget::FindSubstringCaseInsensitive(const CHAR* Haystack, const CHAR* Needle)
-{
-    if (!Haystack || !Needle || Needle[0] == 0)
-    {
-        return -1;
-    }
-
-    for (int32 i = 0; Haystack[i] != 0; ++i)
-    {
-        int32 j = 0;
-        while (Needle[j] != 0)
-        {
-            const CHAR A0 = static_cast<CHAR>(Haystack[i + j]);
-            const CHAR B0 = static_cast<CHAR>(Needle[j]);
-
-            if (Haystack[i + j] == 0)
-            {
-                break;
-            }
-
-            const CHAR A = FCharTraits::ToLower(A0);
-            const CHAR B = FCharTraits::ToLower(B0);
-
-            if (A != B)
-            {
-                break;
-            }
-
-            ++j;
-        }
-
-        if (Needle[j] == 0)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
 void FEditorOutputLogWidget::DrawFilterBar()
 {
     ImGuiStyle& Style = ImGui::GetStyle();
@@ -335,8 +295,8 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
             if (bHasSearch)
             {
-                const int32 MatchStart = FindSubstringCaseInsensitive(Line, Search);
-                const int32 MatchLen   = static_cast<int32>(strlen(Search));
+                const int32 MatchStart = FStringView(Line).Find(Search, EStringCaseType::NoCase);
+                const int32 MatchLen   = static_cast<int32>(FCString::Strlen(Search));
 
                 if (MatchStart >= 0 && MatchLen > 0)
                 {
@@ -363,7 +323,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
                     EditorWidgets::RichTextAddTextBg(RichTextCtx, *Match, HighlightTextU32, HighlightBgU32);
 
-                    const int32 LineLen     = static_cast<int32>(strlen(Line));
+                    const int32 LineLen     = static_cast<int32>(FCString::Strlen(Line));
                     const int32 SuffixStart = MatchStart + MatchLen;
 
                     if (SuffixStart < LineLen)

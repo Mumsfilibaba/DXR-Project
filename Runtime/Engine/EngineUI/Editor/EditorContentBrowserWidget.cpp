@@ -763,7 +763,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             if (const CHAR* MatchPtr = FCString::Stristr(Text, FilterText))
             {
                 MatchStart = static_cast<int32>(MatchPtr - Text);
-                MatchLen   = static_cast<int32>(strlen(FilterText));
+                MatchLen   = static_cast<int32>(FCString::Strlen(FilterText));
             }
         }
 
@@ -2042,7 +2042,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
             if (const CHAR* MatchPtr = FCString::Stristr(NameText, FilterText))
             {
                 MatchStart = static_cast<int32>(MatchPtr - NameText);
-                MatchLen   = static_cast<int32>(strlen(FilterText));
+                MatchLen   = static_cast<int32>(FCString::Strlen(FilterText));
             }
         }
 

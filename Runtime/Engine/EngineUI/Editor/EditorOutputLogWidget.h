@@ -40,8 +40,6 @@ private:
     void DrawFilterBar();
     void DrawLogListRichText();
 
-    static int32 FindSubstringCaseInsensitive(const CHAR* Haystack, const CHAR* Needle);
-    
     TStaticArray<CHAR, 256> SearchFilterBuffer;
     TArray<FLogMessage>     Messages;
     FCriticalSection        MessagesCS;

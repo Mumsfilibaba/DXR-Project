@@ -296,38 +296,6 @@ void FEditorFooterWidget::Draw()
 
             const bool bHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
 
-            const auto FindSubstringCaseInsensitive = [](const CHAR* Haystack, const CHAR* Needle) -> int32
-            {
-                if (!Haystack || !Needle || Needle[0] == 0)
-                {
-                    return -1;
-                }
-
-                for (int32 i = 0; Haystack[i] != 0; ++i)
-                {
-                    int32 j = 0;
-                    while (Needle[j] != 0)
-                    {
-                        const CHAR A = static_cast<CHAR>(FCharTraits::ToLower(static_cast<CHAR>(Haystack[i + j])));
-                        const CHAR B = static_cast<CHAR>(FCharTraits::ToLower(static_cast<CHAR>(Needle[j])));
-
-                        if (Haystack[i + j] == 0 || A != B)
-                        {
-                            break;
-                        }
-
-                        ++j;
-                    }
-
-                    if (Needle[j] == 0)
-                    {
-                        return i;
-                    }
-                }
-
-                return -1;
-            };
-
             const auto DrawCandidateTooltip = [&](const TPair<IConsoleObject*, FString>& Candidate, const ImRect& InItemRect)
             {
                 const ImVec4 TooltipBg        = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
@@ -443,8 +411,8 @@ void FEditorFooterWidget::Draw()
 
                 if (FilterText && FilterText[0] != 0)
                 {
-                    MatchStart = FindSubstringCaseInsensitive(NameText, FilterText);
-                    MatchLen   = static_cast<int32>(strlen(FilterText));
+                    MatchStart = FStringView(NameText).Find(FilterText, EStringCaseType::NoCase);
+                    MatchLen   = static_cast<int32>(FCString::Strlen(FilterText));
                 }
 
                 ImDrawList* DrawList = ImGui::GetWindowDrawList();
