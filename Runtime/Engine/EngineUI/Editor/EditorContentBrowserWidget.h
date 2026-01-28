@@ -48,7 +48,13 @@ private:
         const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
 
     void ResetDragPreviewState();
+    void ClearItemSelection();
+    void SelectSingleItem(int32 InIndex);
+    void ToggleItemSelection(int32 InIndex);
+    void SelectItemRange(int32 InStartIndex, int32 InEndIndex, bool bAddToExisting);
+    bool IsItemSelected(int32 InIndex) const;
     bool MoveItemToFolder(const TArray<int32>& InSourceParentPath, int32 InSourceIndex, const TArray<int32>& InTargetFolderPath);
+    bool MoveItemsToFolder(const TArray<int32>& InSourceParentPath, const TArray<int32>& InSourceIndices, const TArray<int32>& InTargetFolderPath);
 
     const CHAR* GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuf) const;
     bool MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) const;
@@ -68,19 +74,21 @@ private:
     TStaticArray<CHAR, 256> FolderSearchBuffer;
     TStaticArray<CHAR, 256> AssetSearchBuffer;
     int32                   SelectedFolderIndex;
-    int32                   SelectedItemIndex;
+    TArray<int32>           SelectedItemIndices;
+    int32                   LastSelectedItemIndex;
     bool                    bSelectionActiveInBrowser;
     bool                    bVisible;
 
     bool                    bPendingMove;
     TArray<int32>           PendingMoveSourceParentPath;
-    int32                   PendingMoveSourceIndex;
+    TArray<int32>           PendingMoveSourceIndices;
     TArray<int32>           PendingMoveTargetFolderPath;
 
     bool                    bDragPreviewActive;
     bool                    bDragPreviewInvalidSelfMove;
     ImTextureID             DragPreviewIcon;
     bool                    bDragPreviewIsFolder;
+    int32                   DragPreviewSelectionCount;
     CHAR                    DragPreviewSourceName[256];
     CHAR                    DragPreviewTargetName[256];
 
