@@ -163,7 +163,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
         const ImVec2 Max = ImGui::GetItemRectMax();
 
         const float Alpha01  = (Style.Alpha < 0.0f) ? 0.0f : (Style.Alpha > 1.0f ? 1.0f : Style.Alpha);
-        const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+        const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
 
         const ImU32 BgIdle  = IM_COL32(36, 36, 36, Alpha255);
         const ImU32 BgHover = IM_COL32(56, 56, 56, Alpha255);
@@ -336,7 +336,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
             if (bHasSearch)
             {
                 const int32 MatchStart = FindSubstringCaseInsensitive(Line, Search);
-                const int32 MatchLen   = (int32)strlen(Search);
+                const int32 MatchLen   = static_cast<int32>(strlen(Search));
 
                 if (MatchStart >= 0 && MatchLen > 0)
                 {
@@ -363,7 +363,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
                     EditorWidgets::RichTextAddTextBg(RichTextCtx, *Match, HighlightTextU32, HighlightBgU32);
 
-                    const int32 LineLen     = (int32)strlen(Line);
+                    const int32 LineLen     = static_cast<int32>(strlen(Line));
                     const int32 SuffixStart = MatchStart + MatchLen;
 
                     if (SuffixStart < LineLen)

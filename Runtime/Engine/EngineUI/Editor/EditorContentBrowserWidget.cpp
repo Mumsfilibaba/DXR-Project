@@ -604,17 +604,17 @@ void FEditorContentBrowserWidget::DrawItemTooltip(const FileInfo& InItem)
 
     ImGui::Separator();
 
-    CHAR FolderPathBuf[512] = {};
-    BuildFolderPathString(SelectedFolderPath, FolderPathBuf, (int32)sizeof(FolderPathBuf));
+    TStaticArray<CHAR, 512> FolderPathBuf{};
+    BuildFolderPathString(SelectedFolderPath, FolderPathBuf.Data(), static_cast<int32>(FolderPathBuf.Size()));
 
-    CHAR FullPathBuf[768] = {};
+    TStaticArray<CHAR, 768> FullPathBuf{};
     if (FolderPathBuf[0] != 0)
     {
-        FCString::Snprintf(FullPathBuf, sizeof(FullPathBuf), "%s/%s", FolderPathBuf, InItem.Name);
+        FCString::Snprintf(FullPathBuf.Data(), static_cast<int32>(FullPathBuf.Size()), "%s/%s", FolderPathBuf.Data(), InItem.Name);
     }
     else
     {
-        FCString::Snprintf(FullPathBuf, sizeof(FullPathBuf), "%s", InItem.Name);
+        FCString::Snprintf(FullPathBuf.Data(), static_cast<int32>(FullPathBuf.Size()), "%s", InItem.Name);
     }
 
     const ImVec4 MutedTextColor = ImVec4(122.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
@@ -625,7 +625,7 @@ void FEditorContentBrowserWidget::DrawItemTooltip(const FileInfo& InItem)
     ImGui::SameLine();
 
     ImGui::PushStyleColor(ImGuiCol_Text, TextWhite);
-    ImGui::TextUnformatted(FullPathBuf);
+    ImGui::TextUnformatted(FullPathBuf.Data());
     ImGui::PopStyleColor();
 
     ImGui::EndTooltip();
@@ -667,12 +667,12 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             return;
         }
 
-        CHAR FolderPathBuf[512] = {};
-        BuildFolderPathString(SelectedFolderPath, FolderPathBuf, (int32)sizeof(FolderPathBuf));
+        TStaticArray<CHAR, 512> FolderPathBuf{};
+        BuildFolderPathString(SelectedFolderPath, FolderPathBuf.Data(), static_cast<int32>(FolderPathBuf.Size()));
 
         if (FolderPathBuf[0] != 0)
         {
-            FCString::Snprintf(OutBuf, OutBufSize, "%s/%s", FolderPathBuf, InItem.Name);
+            FCString::Snprintf(OutBuf, OutBufSize, "%s/%s", FolderPathBuf.Data(), InItem.Name);
         }
         else
         {
@@ -799,7 +799,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     const float CellWidth  = TileWidth + ImGui::GetStyle().CellPadding.x * 2.0f;
     const float AvailableX = ImGui::GetContentRegionAvail().x;
 
-    int32 ColumnCount = (int32)(AvailableX / CellWidth);
+    int32 ColumnCount = static_cast<int32>(AvailableX / CellWidth);
     if (ColumnCount < 1)
     {
         ColumnCount = 1;
@@ -814,7 +814,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         struct FCBDndPayload
         {
             int32 Depth;
-            int32 Indices[32];
+            TStaticArray<int32, 32> Indices;
             int32 SourceIndex;
             bool  bIsFolder;
         };
@@ -892,7 +892,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                 for (int32 Layer = 0; Layer < ShadowLayers; ++Layer)
                 {
-                    const float  Expand    = (float)Layer;
+                    const float  Expand    = static_cast<float>(Layer);
                     const float  Rounding  = CornerRounding + Expand;
                     const int32  Alpha     = (Layer == 0) ? 55 : (Layer == 1) ? 30 : 16;
                     const ImU32  ShadowCol = IM_COL32(0, 0, 0, Alpha);
@@ -952,7 +952,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 ImTextureID     PrimaryIcon = GetItemIcon(PrimaryItem);
 
                 FCBDndPayload Payload = {};
-                Payload.Depth = Math::Min(SelectedFolderPath.Size(), 32);
+                Payload.Depth = Math::Min(SelectedFolderPath.Size(), static_cast<int32>(Payload.Indices.Size()));
                 
                 for (int32 P = 0; P < Payload.Depth; ++P)
                 {
@@ -970,7 +970,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 DragPreviewSelectionCount = Math::Max(1, SelectedItemIndices.Size());
 
                 const CHAR* PrimaryName = PrimaryItem.Name ? PrimaryItem.Name : "";
-                FCString::Strncpy(DragPreviewSourceName, PrimaryName, (int32)sizeof(DragPreviewSourceName));
+                FCString::Strncpy(DragPreviewSourceName.Data(), PrimaryName, static_cast<int32>(DragPreviewSourceName.Size()));
 
                 ImGui::EndDragDropSource();
             }
@@ -995,7 +995,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                         const bool bTargetSelected = bSameFolder && IsItemSelected(i);
 
                         bDragHoverSelfMove = bTargetSelected;
-                        FCString::Strncpy(DragPreviewTargetName, Item.Name, (int32)sizeof(DragPreviewTargetName));
+                        FCString::Strncpy(DragPreviewTargetName.Data(), Item.Name, static_cast<int32>(DragPreviewTargetName.Size()));
                     }
                 }
             }
@@ -1030,7 +1030,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                             const bool bTargetSelected = bSameFolder && IsItemSelected(i);
                             bDragHoverSelfMove = bTargetSelected;
 
-                            FCString::Strncpy(DragPreviewTargetName, Item.Name, (int32)sizeof(DragPreviewTargetName));
+                            FCString::Strncpy(DragPreviewTargetName.Data(), Item.Name, static_cast<int32>(DragPreviewTargetName.Size()));
 
                             if (Payload->IsDelivery())
                             {
@@ -1135,10 +1135,10 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 const ImVec2 IconMin        = ImGui::GetItemRectMin();
                 const ImVec2 IconMax        = ImGui::GetItemRectMax();
 
-                CHAR CountBuf[16] = {};
-                FCString::Snprintf(CountBuf, sizeof(CountBuf), "+%d", DragPreviewSelectionCount);
+                TStaticArray<CHAR, 16> CountBuf{};
+                FCString::Snprintf(CountBuf.Data(), static_cast<int32>(CountBuf.Size()), "+%d", DragPreviewSelectionCount);
 
-                const ImVec2 TextSize = ImGui::CalcTextSize(CountBuf);
+                const ImVec2 TextSize = ImGui::CalcTextSize(CountBuf.Data());
                 constexpr float LabelPadX = 6.0f;
                 constexpr float LabelPadY = 3.0f;
 
@@ -1149,7 +1149,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 const ImU32 LabelText   = IM_COL32(230, 230, 230, 255);
 
                 PreviewDrawList->AddRectFilled(LabelMin, LabelMax, LabelBg, 4.0f);
-                PreviewDrawList->AddText(ImVec2(LabelMin.x + LabelPadX, LabelMin.y + LabelPadY), LabelText, CountBuf);
+                PreviewDrawList->AddText(ImVec2(LabelMin.x + LabelPadX, LabelMin.y + LabelPadY), LabelText, CountBuf.Data());
             }
 
             if (bShowTextAndDivider)
@@ -1209,16 +1209,16 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     else if (bMultiSelection)
                     {
                         const CHAR* ItemLabel = (OtherSelectionCount == 1) ? "item" : "items";
-                        ImGui::Text("Move %s and %d other %s to %s", DragPreviewSourceName, OtherSelectionCount, ItemLabel, DragPreviewTargetName);
+                        ImGui::Text("Move %s and %d other %s to %s", DragPreviewSourceName.Data(), OtherSelectionCount, ItemLabel, DragPreviewTargetName.Data());
 
                         if (bShowSelfWarning && bHasFolderHoverTarget)
                         {
-                            ImGui::Text("%s cannot be moved to itself", DragPreviewTargetName);
+                            ImGui::Text("%s cannot be moved to itself", DragPreviewTargetName.Data());
                         }
                     }
                     else if (bHasFolderHoverTarget)
                     {
-                        ImGui::Text("Move %s to %s", DragPreviewSourceName, DragPreviewTargetName);
+                        ImGui::Text("Move %s to %s", DragPreviewSourceName.Data(), DragPreviewTargetName.Data());
                     }
 
                     ImGui::PopStyleColor();

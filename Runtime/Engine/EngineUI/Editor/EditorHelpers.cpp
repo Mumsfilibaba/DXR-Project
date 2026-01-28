@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Core/Containers/StaticArray.h"
 #include "Core/Misc/Paths.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/Assets/AssetManager.h"
@@ -136,7 +137,7 @@ static bool ResetIconButton(float InSizePx = 0.0f)
         UniqueSeedId = ImGui::GetID("##ResetIconButtonSeed");
     }
 
-    ImGui::PushID((int32)UniqueSeedId);
+    ImGui::PushID(static_cast<int32>(UniqueSeedId));
 
     const bool bWasPressed = ImGui::InvisibleButton("##Revert", ButtonSize);
     const bool bIsHovered  = ImGui::IsItemHovered();
@@ -159,7 +160,7 @@ static bool ResetIconButton(float InSizePx = 0.0f)
         const int32 IconTintValue  = bIsHeld ? IconTintActive : (bIsHovered ? IconTintHover : IconTintIdle);
 
         const float Alpha01  = Math::Clamp(ImGuiStyle.Alpha, 0.0f, 1.0f);
-        const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+        const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
 
         const ImU32 IconTintColor = IM_COL32(IconTintValue, IconTintValue, IconTintValue, Alpha255);
         WindowDrawList->AddImage(EditorIcons::UndoIcon, IconRectMin, IconRectMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), IconTintColor);
@@ -318,7 +319,7 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
         }
 
         const CHAR* Full = *FullLine;
-        const int32 FullLen = (int32)strlen(Full);
+        const int32 FullLen = static_cast<int32>(strlen(Full));
 
         int32 SelColStart = 0;
         int32 SelColEnd   = 0;
@@ -369,14 +370,14 @@ static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext
     const float LocalY = (MousePos.y - StartY);
     const float LocalX = (MousePos.x - StartX);
 
-    const int32 LineIndex   = (Ctx.LineHeight > 0.0f) ? (int32)(LocalY / Ctx.LineHeight) : 0;
+    const int32 LineIndex   = (Ctx.LineHeight > 0.0f) ? static_cast<int32>(LocalY / Ctx.LineHeight) : 0;
     const int32 MaxLine     = Math::Max(0, Ctx.Lines.Size() - 1);
     const int32 ClampedLine = ClampInt32(LineIndex, 0, MaxLine);
 
     P.Line = ClampedLine;
 
     const int32 LineChars = Ctx.Lines.IsValidIndex(ClampedLine) ? Ctx.Lines[ClampedLine].TotalChars : 0;
-    const int32 Col       = (Ctx.CharWidth > 0.0f) ? (int32)(LocalX / Ctx.CharWidth) : 0;
+    const int32 Col       = (Ctx.CharWidth > 0.0f) ? static_cast<int32>(LocalX / Ctx.CharWidth) : 0;
 
     P.Column = ClampInt32(Col, 0, LineChars);
     return P;
@@ -419,9 +420,9 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
         return Speed;
     };
 
-    const auto GetDynamicFormatString = [](float Value, CHAR(&OutFormat)[8]) -> const CHAR*
+    const auto GetDynamicFormatString = [](float Value, TStaticArray<CHAR, 8>& OutFormat) -> const CHAR*
     {
-        static const float Pow10Table[4] = { 10.0f, 100.0f, 1000.0f, 10000.0f };
+        static const TStaticArray<float, 4> Pow10Table = { 10.0f, 100.0f, 1000.0f, 10000.0f };
 
         const float AbsoluteValue = Math::Abs(Value);
 
@@ -441,8 +442,8 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
             DecimalsToShow = 4;
         }
 
-        FCString::Snprintf(OutFormat, sizeof(OutFormat), "%%.%df", DecimalsToShow);
-        return OutFormat;
+        FCString::Snprintf(OutFormat.Data(), static_cast<int32>(OutFormat.Size()), "%%.%df", DecimalsToShow);
+        return OutFormat.Data();
     };
 
     ImGui::TableSetColumnIndex(0);
@@ -488,7 +489,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
             ImVec2 IconMax = ImVec2(RectMax.x - Pad, RectMax.y - Pad);
 
             const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
-            const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+            const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
             const ImU32 Tint     = IM_COL32(255, 255, 255, Alpha255);
 
             ImTextureID Icon = bUniformScaleEnabled ? EditorIcons::LockedIcon : EditorIcons::UnlockedIcon;
@@ -549,7 +550,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
         bool bAxisValueChanged = false;
 
-        CHAR FormatBuffer[8];
+        TStaticArray<CHAR, 8> FormatBuffer;
         const CHAR* FormatString = GetDynamicFormatString(InOutAxisValue, FormatBuffer);
 
         const float AxisDragSpeed = GetAxisDragSpeed();
@@ -573,11 +574,11 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
         const bool bIsTempInputActive = ImGui::TempInputIsActive(LastItemId);
         if (!bIsTempInputActive)
         {
-            CHAR FormatBufferAfter[8];
+            TStaticArray<CHAR, 8> FormatBufferAfter;
             const CHAR* FormatStringAfter = GetDynamicFormatString(InOutAxisValue, FormatBufferAfter);
 
-            CHAR ValueTextBuffer[64];
-            FCString::Snprintf(ValueTextBuffer, sizeof(ValueTextBuffer), FormatStringAfter, InOutAxisValue);
+            TStaticArray<CHAR, 64> ValueTextBuffer;
+            FCString::Snprintf(ValueTextBuffer.Data(), static_cast<int32>(ValueTextBuffer.Size()), FormatStringAfter, InOutAxisValue);
 
             ImGuiWindow* Window = ImGui::GetCurrentWindow();
             if (Window && !Window->SkipItems)
@@ -589,10 +590,10 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
                 Window->DrawList->AddRectFilled(ItemMin, ItemMax, BackgroundColor, ImGui::GetStyle().FrameRounding);
 
                 const float  TextStartX    = ItemMin.x + ImGui::GetStyle().FramePadding.x;
-                const ImVec2 ValueTextSize = ImGui::CalcTextSize(ValueTextBuffer);
+                const ImVec2 ValueTextSize = ImGui::CalcTextSize(ValueTextBuffer.Data());
                 const float  TextPosY      = ItemMin.y + (ItemMax.y - ItemMin.y - ValueTextSize.y) * 0.5f;
 
-                Window->DrawList->AddText(ImVec2(TextStartX, TextPosY), ImGui::GetColorU32(ImGuiCol_Text), ValueTextBuffer);
+                Window->DrawList->AddText(ImVec2(TextStartX, TextPosY), ImGui::GetColorU32(ImGuiCol_Text), ValueTextBuffer.Data());
 
                 if (bIsRotationDegrees)
                 {
@@ -900,9 +901,9 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const FVector3
 
     ImGui::TableSetColumnIndex(1);
 
-    float Temp[3] = { Value.X, Value.Y, Value.Z };
+    TStaticArray<float, 3> Temp = { Value.X, Value.Y, Value.Z };
     ImGui::SetNextItemWidth(-FLT_MIN);
-    ImGui::InputFloat3("##Value", Temp, "%.3f", ImGuiInputTextFlags_ReadOnly);
+    ImGui::InputFloat3("##Value", Temp.Data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
 
     ImGuiStyle& Style = ImGui::GetStyle();
     DrawInputBorderLastItem(Style.FrameRounding);
@@ -1019,7 +1020,7 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
 
     if (ResetIconButton() && bCanRevert)
     {
-        static constexpr uint64 SizeInBytes = sizeof(float[3]);
+        static constexpr uint64 SizeInBytes = sizeof(TStaticArray<float, 3>);
         FMemory::Memcpy(InOutColor, InRevertColor, SizeInBytes);
         bResult = true;
     }
@@ -1100,7 +1101,7 @@ bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR
     ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
     ImGui::PushStyleColor(ImGuiCol_TextDisabled, TextColor);
 
-    bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, (size_t)InBufferSize);
+    bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, static_cast<size_t>(InBufferSize));
 
     ImGui::PopStyleColor(5);
     ImGui::PopStyleVar(3);
@@ -1238,19 +1239,20 @@ void EditorWidgets::EditorMenuLabeledSeparator(const CHAR* Label, float Thicknes
     const ImU32 LabelColor = IM_COL32(160, 160, 160, 255);
 
     const CHAR* LabelToDraw = "";
-    CHAR UpperLabel[128] = {};
+    TStaticArray<CHAR, 128> UpperLabel{};
 
     if (Label && Label[0] != '\0')
     {
         int32 i = 0;
-        for (; Label[i] != '\0' && i < (int32)(sizeof(UpperLabel) - 1); ++i)
+        const int32 UpperLabelMax = static_cast<int32>(UpperLabel.Size()) - 1;
+        for (; Label[i] != '\0' && i < UpperLabelMax; ++i)
         {
-            const CHAR Ch = (CHAR)Label[i];
-            UpperLabel[i] = (CHAR)FCharTraits::ToUpper(Ch);
+            const CHAR Ch = static_cast<CHAR>(Label[i]);
+            UpperLabel[i] = static_cast<CHAR>(FCharTraits::ToUpper(Ch));
         }
 
         UpperLabel[i] = '\0';
-        LabelToDraw   = UpperLabel;
+        LabelToDraw   = UpperLabel.Data();
     }
 
     const ImVec2 LabelSize = ImGui::CalcTextSize(LabelToDraw);
@@ -1348,17 +1350,18 @@ bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool
     // -----------------------------------------------------------------------------------------
     const CHAR* ShortcutToDraw = Shortcut;
 
-    CHAR UpperShortcut[128] = {};
+    TStaticArray<CHAR, 128> UpperShortcut{};
     if (bHasShortcut)
     {
         int32 i = 0;
-        for (; Shortcut[i] != '\0' && i < (int32)(sizeof(UpperShortcut) - 1); ++i)
+        const int32 UpperShortcutMax = static_cast<int32>(UpperShortcut.Size()) - 1;
+        for (; Shortcut[i] != '\0' && i < UpperShortcutMax; ++i)
         {
-            const CHAR Ch    = (CHAR)Shortcut[i];
-            UpperShortcut[i] = (CHAR)FCharTraits::ToUpper(Ch);
+            const CHAR Ch    = static_cast<CHAR>(Shortcut[i]);
+            UpperShortcut[i] = static_cast<CHAR>(FCharTraits::ToUpper(Ch));
         }
         UpperShortcut[i] = '\0';
-        ShortcutToDraw   = UpperShortcut;
+        ShortcutToDraw   = UpperShortcut.Data();
     }
 
     const ImVec2 ShortcutSize = bHasShortcut ? ImGui::CalcTextSize(ShortcutToDraw) : ImVec2(0.0f, 0.0f);
@@ -1780,7 +1783,7 @@ void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CH
     Span.TextColor      = InTextColor;
     Span.bHasBackground = false;
 
-    Line.TotalChars += (int32)strlen(InText);
+    Line.TotalChars += static_cast<int32>(strlen(InText));
     Line.Spans.Add(Span);
 }
 
@@ -1799,7 +1802,7 @@ void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const 
     Span.bHasBackground  = true;
     Span.BackgroundColor = InBackgroundColor;
 
-    Line.TotalChars += (int32)strlen(InText);
+    Line.TotalChars += static_cast<int32>(strlen(InText));
     Line.Spans.Add(Span);
 }
 

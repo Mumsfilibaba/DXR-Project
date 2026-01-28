@@ -89,8 +89,8 @@ private:
     ImTextureID             DragPreviewIcon;
     bool                    bDragPreviewIsFolder;
     int32                   DragPreviewSelectionCount;
-    CHAR                    DragPreviewSourceName[256];
-    CHAR                    DragPreviewTargetName[256];
+    TStaticArray<CHAR, 256> DragPreviewSourceName;
+    TStaticArray<CHAR, 256> DragPreviewTargetName;
 
     // Folder navigation path (indices into RootFolders/FolderContents).
     // Example: [0]        -> RootFolders[0]
