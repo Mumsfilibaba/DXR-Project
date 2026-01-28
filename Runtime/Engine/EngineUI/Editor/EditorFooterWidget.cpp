@@ -11,7 +11,11 @@ FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutp
     , Candidates()
     , SelectedCandidateIndex(InvalidIndex)
     , HistoryIndex(InvalidIndex)
+    , LastCursorPosition(0)
+    , PendingCursorPosition(0)
     , bCandidateSelectionChanged(false)
+    , bRequestCursorPosition(false)
+    , bRequestInputFocus(false)
     , bUpdateCursorPosition(false)
     , bScrollToBottom(false)
     , bCandidatesOverlayOpen(false)
@@ -75,6 +79,12 @@ void FEditorFooterWidget::Draw()
 
         const float InputFieldWidth = 512.0f;
         ImGui::SetNextItemWidth(InputFieldWidth);
+
+        if (bRequestInputFocus)
+        {
+            ImGui::SetKeyboardFocusHere();
+            bRequestInputFocus = false;
+        }
 
         const ImVec2 BasePadding   = EditorStyleVars::InputFieldFramePadding;
         const float  InputRounding = 4.0f;
@@ -284,6 +294,8 @@ void FEditorFooterWidget::Draw()
         {
             ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
 
+            const bool bHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
+
             const auto FindSubstringCaseInsensitive = [](const CHAR* Haystack, const CHAR* Needle) -> int32
             {
                 if (!Haystack || !Needle || Needle[0] == 0)
@@ -332,7 +344,7 @@ void FEditorFooterWidget::Draw()
                 ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
                 ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
 
-                const float TooltipOffsetX  = 10.0f * Scale;
+                const float TooltipOffsetX  = (10.0f * Scale) + (bHasVerticalScrollbar ? Style.ScrollbarSize : 0.0f);
                 const float TooltipMaxWidth = 420.0f * Scale;
 
                 ImGui::SetNextWindowPos(ImVec2(InItemRect.Max.x + TooltipOffsetX, InItemRect.Min.y), ImGuiCond_Always);
@@ -402,6 +414,7 @@ void FEditorFooterWidget::Draw()
             };
 
             const float ContentWidth = ImGui::GetContentRegionAvail().x;
+            int32 ClickedCandidateIndex = InvalidIndex;
             for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); ++CandidateIndex)
             {
                 const TPair<IConsoleObject*, FString>& Candidate = Candidates[CandidateIndex];
@@ -410,7 +423,11 @@ void FEditorFooterWidget::Draw()
                 ImGui::PushID(CandidateIndex);
 
                 const ImVec2 SelectableSize(ContentWidth, RowHeight);
-                ImGui::Selectable("##CandidateSelectable", bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
+                const bool bCandidateClicked = ImGui::Selectable("##CandidateSelectable", bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
+                if (bCandidateClicked)
+                {
+                    ClickedCandidateIndex = CandidateIndex;
+                }
 
                 const bool bIsSelectableVisible = ImGuiExtensions::IsItemFullyVisible();
 
@@ -473,6 +490,13 @@ void FEditorFooterWidget::Draw()
                 ImGui::PopID();
             }
 
+            if (ClickedCandidateIndex != InvalidIndex)
+            {
+                ApplyCandidateToBuffer(ClickedCandidateIndex);
+                bRequestInputFocus = true;
+                InvalidateCandidates();
+            }
+
             ImGui::PopStyleVar(); // SelectableTextAlign
         }
 
@@ -483,6 +507,60 @@ void FEditorFooterWidget::Draw()
     }
 
     ImGui::PopFont();
+}
+
+void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
+{
+    if (!Candidates.IsValidIndex(CandidateIndex))
+    {
+        return;
+    }
+
+    const CHAR* Buffer = TextBuffer.Data();
+    const int32 BufferLength = FCString::Strlen(Buffer);
+
+    int32 CursorPos = LastCursorPosition;
+    if (CursorPos < 0)
+    {
+        CursorPos = 0;
+    }
+    else if (CursorPos > BufferLength)
+    {
+        CursorPos = BufferLength;
+    }
+
+    const CHAR* WordEnd   = Buffer + CursorPos;
+    const CHAR* WordStart = WordEnd;
+
+    while (WordStart > Buffer)
+    {
+        const CHAR CurrentChar = WordStart[-1];
+        if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
+        {
+            break;
+        }
+
+        WordStart--;
+    }
+
+    const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
+    if (WordLength <= 0)
+    {
+        return;
+    }
+
+    const FString Prefix(Buffer, static_cast<int32>(WordStart - Buffer));
+    const FString Suffix(WordEnd);
+
+    const FString& CandidateText = Candidates[CandidateIndex].Second;
+    const FString NewBuffer = Prefix + CandidateText + Suffix;
+
+    const int32 CopyLen = Math::Min(TextBuffer.Size(), NewBuffer.Size());
+    FCString::Strncpy(TextBuffer.Data(), *NewBuffer, CopyLen);
+    TextBuffer[TextBuffer.Size() - 1] = 0;
+
+    PendingCursorPosition = Prefix.Size() + CandidateText.Size();
+    bRequestCursorPosition = true;
 }
 
 void FEditorFooterWidget::InvalidateCandidates()
@@ -496,7 +574,21 @@ void FEditorFooterWidget::InvalidateCandidates()
 
 int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
 {
-    if (bUpdateCursorPosition)
+    if (bRequestCursorPosition)
+    {
+        CallbackData->CursorPos = PendingCursorPosition;
+        if (CallbackData->CursorPos < 0)
+        {
+            CallbackData->CursorPos = 0;
+        }
+        else if (CallbackData->CursorPos > CallbackData->BufTextLen)
+        {
+            CallbackData->CursorPos = CallbackData->BufTextLen;
+        }
+
+        bRequestCursorPosition = false;
+    }
+    else if (bUpdateCursorPosition)
     {
         CallbackData->CursorPos = CallbackData->BufTextLen;
         bUpdateCursorPosition = false;
@@ -693,6 +785,8 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
             break;
         }
     }
+
+    LastCursorPosition = CallbackData->CursorPos;
 
     return 0;
 }

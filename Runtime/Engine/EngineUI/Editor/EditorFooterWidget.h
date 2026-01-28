@@ -33,6 +33,7 @@ private:
     
     // Helper that can invalidate the candidate-list
     void InvalidateCandidates();
+    void ApplyCandidateToBuffer(int32 CandidateIndex);
 
     TArray<TPair<IConsoleObject*, FString>> Candidates;
     FString                                 CandidateFilter;
@@ -41,7 +42,11 @@ private:
     TSharedPtr<FConsoleInputHandler>        InputHandler;
     int32                                   SelectedCandidateIndex;
     int32                                   HistoryIndex;
+    int32                                   LastCursorPosition;
+    int32                                   PendingCursorPosition;
     bool                                    bCandidateSelectionChanged;
+    bool                                    bRequestCursorPosition;
+    bool                                    bRequestInputFocus;
     bool                                    bUpdateCursorPosition;
     bool                                    bScrollToBottom;
     bool                                    bCandidatesOverlayOpen;
