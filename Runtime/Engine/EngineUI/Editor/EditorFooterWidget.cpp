@@ -107,8 +107,9 @@ void FEditorFooterWidget::Draw()
         ImGui::PopStyleColor(5);
         ImGui::PopStyleVar(3);
 
-        InputRectMin        = ImGui::GetItemRectMin();
-        InputRectMax        = ImGui::GetItemRectMax();
+        InputRectMin = ImGui::GetItemRectMin();
+        InputRectMax = ImGui::GetItemRectMax();
+        
         bIsInputFieldActive = ImGui::IsItemActive();
 
         {
