@@ -446,6 +446,26 @@ void FEditorOutputLogWidget::Draw()
 
         ImGui::EndChild();
 
+        const ImVec2 LogOuterMin = ImGui::GetItemRectMin();
+        const ImVec2 LogOuterMax = ImGui::GetItemRectMax();
+
+        if (RichTextCtx.bHasSelection && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            const ImVec2 MousePos = ImGui::GetIO().MousePos;
+
+            const bool bMouseInLogOuter =
+                MousePos.x >= LogOuterMin.x &&
+                MousePos.x <= LogOuterMax.x &&
+                MousePos.y >= LogOuterMin.y &&
+                MousePos.y <= LogOuterMax.y;
+
+            if (!bMouseInLogOuter)
+            {
+                RichTextCtx.bHasSelection = false;
+                RichTextCtx.bSelecting    = false;
+            }
+        }
+
         ImGui::PopStyleColor(2);
         ImGui::PopStyleVar(2);
     }
