@@ -9,7 +9,7 @@
 
 static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBufSize)
 {
-    if (!OutBuf || OutBufSize <= 0)
+    if (OutBufSize <= 0)
     {
         return nullptr;
     }
@@ -38,7 +38,7 @@ static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBu
         --End;
     }
 
-    const int32 Len = (int32)(End - Start);
+    const int32 Len = static_cast<int32>(End - Start);
     if (Len <= 0)
     {
         return nullptr;
@@ -454,9 +454,9 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
         
         {
-            CHAR FilterBuf[256];
+            TStaticArray<CHAR, 256> FilterBuf{};
 
-            const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf, static_cast<int32>(sizeof(FilterBuf)));
+            const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
             const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
             DrawTextWithSearchHighlight(DrawList, ImVec2(X, TextY), RowMin, RowMax, Label, FilterText, BaseTextU32);
@@ -541,9 +541,9 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
         
         {
-            CHAR FilterBuf[256];
+            TStaticArray<CHAR, 256> FilterBuf{};
 
-            const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf, static_cast<int32>(sizeof(FilterBuf)));
+            const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
             const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
             DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(X, TextY), RowMin, RowMax, Label, FilterText, BaseTextU32);
@@ -589,7 +589,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
             if (bCameraFound)
             {
-                DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, (void*)Camera, ChildIndent, [&]()
+                DrawLeafRow("Main Camera", "Camera", Camera == SelectedCamera, reinterpret_cast<void*>(Camera), ChildIndent, [&]()
                 {
                     EditorEngine->SetSelectedCamera(Camera);
                 });
@@ -649,19 +649,19 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                         TypeLabel = "DirectionalLight";
                     }
 
-                    CHAR Label[256];
-                    FCString::Snprintf(Label, 256, "%s %d", TypeLabel, LightIndex++);
+                    TStaticArray<CHAR, 256> Label{};
+                    FCString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s %d", TypeLabel, LightIndex++);
 
                     const CHAR* Search = ActorSearchFilterBuffer.Data();
                     if (Search && Search[0] != '\0')
                     {
-                        if (!FCString::Stristr(Label, Search))
+                        if (!FCString::Stristr(Label.Data(), Search))
                         {
                             continue;
                         }
                     }
 
-                    DrawLeafRow(Label, TypeLabel, Light == SelectedLight, (void*)Light, ChildIndent, [&]()
+                    DrawLeafRow(Label.Data(), TypeLabel, Light == SelectedLight, reinterpret_cast<void*>(Light), ChildIndent, [&]()
                     {
                         EditorEngine->SetSelectedLight(Light);
                     });
@@ -678,19 +678,19 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                         continue;
                     }
 
-                    CHAR Label[256];
-                    FCString::Snprintf(Label, 256, "LightProbe %d", ProbeIndex++);
+                    TStaticArray<CHAR, 256> Label{};
+                    FCString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "LightProbe %d", ProbeIndex++);
 
                     const CHAR* Search = ActorSearchFilterBuffer.Data();
                     if (Search && Search[0] != '\0')
                     {
-                        if (!FCString::Stristr(Label, Search))
+                        if (!FCString::Stristr(Label.Data(), Search))
                         {
                             continue;
                         }
                     }
 
-                    DrawLeafRow(Label, "LightProbe", Probe == SelectedLightProbe, (void*)Probe, ChildIndent, [&]()
+                    DrawLeafRow(Label.Data(), "LightProbe", Probe == SelectedLightProbe, reinterpret_cast<void*>(Probe), ChildIndent, [&]()
                     {
                         EditorEngine->SetSelectedLightProbe(Probe);
                     });
@@ -985,8 +985,8 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
     {
         ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
 
-        CHAR FilterBuf[256];
-        const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf, (int32)sizeof(FilterBuf));
+        TStaticArray<CHAR, 256> FilterBuf{};
+        const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
         const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
         const FString& Name = Actor->GetName();

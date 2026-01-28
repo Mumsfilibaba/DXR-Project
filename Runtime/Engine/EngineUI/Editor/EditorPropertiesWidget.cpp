@@ -2,6 +2,7 @@
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Core/Containers/StaticArray.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include <imgui.h>
@@ -67,13 +68,13 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
     const auto DrawLabelWithSeperator = [](const CHAR* InLabel)
     {
-        static constexpr uint32 LabelLength = 256;
-        CHAR Label[LabelLength];
-        FCString::Snprintf(Label, LabelLength, "%s", InLabel);
+        static constexpr int32 LabelLength = 256;
+        TStaticArray<CHAR, LabelLength> Label{};
+        FCString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s", InLabel);
 
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, ImVec2(0.1f, 0.5f));
-        ImGui::SeparatorText(Label);
+        ImGui::SeparatorText(Label.Data());
         ImGui::PopStyleVar(2);
     };
 
@@ -102,7 +103,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 const float IconSize = 16.0f;
                 const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
-                const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+                const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
                 const ImU32 Tint     = IM_COL32(101, 101, 101, Alpha255);
                 const ImU32 CoverCol = ImGui::ColorConvertFloat4ToU32(HeaderBg);
 
@@ -134,7 +135,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 const float Y         = Math::Ceil(HeaderMax.y) - 0.5f;
 
                 const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
-                const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+                const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
                 const ImU32 Color    = IM_COL32(26, 26, 26, Alpha255);
 
                 if (bDrawBottomBorder)
@@ -498,9 +499,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
             if (EditorWidgets::BeginPropertyTable("##CameraProjectionTable", LabelColumnWidth, RevertColumnWidth))
             {
                 {
-                    CHAR ViewportText[64];
-                    FCString::Snprintf(ViewportText, 64, "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
-                    EditorWidgets::DrawTextProperty("Viewport size", ViewportText);
+                    TStaticArray<CHAR, 64> ViewportText{};
+                    FCString::Snprintf(ViewportText.Data(), static_cast<int32>(ViewportText.Size()), "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
+                    EditorWidgets::DrawTextProperty("Viewport size", ViewportText.Data());
                 }
 
                 {
@@ -550,7 +551,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
     // ------------------------------------------------------------
     // Light-Probe
     // ------------------------------------------------------------
-    
+
     if (SelectedLightProbe)
     {
         ImGui::PushID(SelectedLightProbe);
