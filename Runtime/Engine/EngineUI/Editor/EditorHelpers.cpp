@@ -180,24 +180,6 @@ static bool ResetIconButton(float InSizePx = 0.0f)
     return bWasPressed;
 }
 
-static void DrawSuffixForLastItem(const CHAR* InSuffix, ImU32 InColor, float InRightPadding = 6.0f)
-{
-    ImGuiWindow* Window = ImGui::GetCurrentWindow();
-    if (!Window || Window->SkipItems || !InSuffix)
-    {
-        return;
-    }
-
-    const ImVec2 ItemMin  = ImGui::GetItemRectMin();
-    const ImVec2 ItemMax  = ImGui::GetItemRectMax();
-    const ImVec2 TextSize = ImGui::CalcTextSize(InSuffix);
-
-    const float X = ItemMax.x - InRightPadding - TextSize.x;
-    const float Y = ItemMin.y + (ItemMax.y - ItemMin.y - TextSize.y) * 0.5f;
-
-    Window->DrawList->AddText(ImVec2(X, Y), InColor, InSuffix);
-}
-
 static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const CHAR* InSuffix, ImU32 InColor, float InGapPx = 1.0f)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
@@ -1684,6 +1666,7 @@ void EditorWidgets::PropertyRowLabel(const CHAR* Label)
 
 void EditorWidgets::PropertySeparatorRow(float PaddingY)
 {
+    UNREFERENCED_VARIABLE(PaddingY);
     ImGuiTable* Table = ImGui::GetCurrentTable();
     if (!Table)
     {

@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Containers/String.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include <imgui.h>
 
@@ -27,7 +28,7 @@ private:
     // NOTE: Remove this when we actually search the file tree
     struct FileInfo
     {
-        const CHAR*      Name;
+        FString          Name;
         bool             bIsFolder;
         TArray<FileInfo> FolderContents;
     };
@@ -46,6 +47,15 @@ private:
         const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
     bool DrawFolderRow(FileInfo& InFolder, const TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor, 
         const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
+
+    void BeginFolderRename(const TArray<int32>& InPath, const FileInfo& InFolder);
+    void CommitFolderRename();
+    void CancelFolderRename();
+    void BeginItemRename(const TArray<int32>& InParentPath, int32 InIndex, const FileInfo& InItem);
+    void CommitItemRename();
+    void CancelItemRename();
+    bool IsRenamingFolderPath(const TArray<int32>& InPath) const;
+    bool IsRenamingItem(const TArray<int32>& InParentPath, int32 InIndex) const;
 
     void ResetDragPreviewState();
     void ClearItemSelection();
@@ -91,6 +101,18 @@ private:
     int32                   DragPreviewSelectionCount;
     TStaticArray<CHAR, 256> DragPreviewSourceName;
     TStaticArray<CHAR, 256> DragPreviewTargetName;
+
+    TArray<int32>           RenamingFolderPath;
+    TStaticArray<CHAR, 256> FolderRenameBuffer;
+    TStaticArray<CHAR, 256> FolderRenameBufferOriginal;
+    bool                    bRequestFolderRenameFocus;
+
+    TArray<int32>           RenamingItemParentPath;
+    int32                   RenamingItemIndex;
+    TStaticArray<CHAR, 256> ItemRenameBuffer;
+    TStaticArray<CHAR, 256> ItemRenameBufferOriginal;
+    TStaticArray<CHAR, 64>  ItemRenameExtension;
+    bool                    bRequestItemRenameFocus;
 
     // Folder navigation path (indices into RootFolders/FolderContents).
     // Example: [0]        -> RootFolders[0]
