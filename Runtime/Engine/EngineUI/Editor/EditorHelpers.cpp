@@ -1066,7 +1066,17 @@ bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR
     const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
     const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
 
-    const ImVec4 TextColor = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+    const ImVec4 HintTextInactive = ImVec4(76.0f / 255.0f, 76.0f / 255.0f, 76.0f / 255.0f, 1.0f);
+    const ImVec4 HintTextActive   = ImVec4(97.0f / 255.0f, 97.0f / 255.0f, 97.0f / 255.0f, 1.0f);
+    const ImVec4 InputTextColor   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const ImU32  IconInactive     = IM_COL32(192, 192, 192, 255);
+    const ImU32  IconActive       = IM_COL32(255, 255, 255, 255);
+
+    const ImGuiID PendingInputId = ImGui::GetID(InId);
+    const bool bInputWasActive   = ImGui::GetActiveID() == PendingInputId;
+    const bool bInputClicked     = ImGui::IsMouseHoveringRect(FullRect.Min, FullRect.Max, true) && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool bUseActiveHint    = bInputWasActive || bInputClicked;
+    const ImVec4 HintTextColor   = bUseActiveHint ? HintTextActive : HintTextInactive;
     DrawList->AddRectFilled(Start, End, BgColor, Rounding);
 
     // -------------------------------------------------------------------------------------
@@ -1081,8 +1091,8 @@ bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR
     ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
-    ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
-    ImGui::PushStyleColor(ImGuiCol_TextDisabled, TextColor);
+    ImGui::PushStyleColor(ImGuiCol_Text, InputTextColor);
+    ImGui::PushStyleColor(ImGuiCol_TextDisabled, HintTextColor);
 
     bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, static_cast<size_t>(InBufferSize));
 
@@ -1119,7 +1129,7 @@ bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR
             ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
         }
 
-        const ImU32 Tint = bIconHeld ? IM_COL32(255, 255, 255, 180) : bIconHovered ? IM_COL32(255, 255, 255, 255) : IM_COL32(220, 220, 220, 255);
+        const ImU32 Tint = bIconHovered ? IconActive : IconInactive;
         DrawList->AddImage(EditorIcons::CloseIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
 
         if (bIconPressed)
@@ -1141,7 +1151,9 @@ bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR
     }
     else if (EditorIcons::SearchIcon)
     {
-        DrawList->AddImage(EditorIcons::SearchIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), IM_COL32(255, 255, 255, 255));
+        const bool bActive = ImGui::GetActiveID() == InputId;
+        const ImU32 Tint = bActive ? IconActive : IconInactive;
+        DrawList->AddImage(EditorIcons::SearchIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
     }
 
     // -------------------------------------------------------------------------------------

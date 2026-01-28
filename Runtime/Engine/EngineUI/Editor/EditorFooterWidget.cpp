@@ -80,6 +80,7 @@ void FEditorFooterWidget::Draw()
         const float InputFieldWidth = 512.0f;
         ImGui::SetNextItemWidth(InputFieldWidth);
 
+        const bool bWantsInputFocus = bRequestInputFocus;
         if (bRequestInputFocus)
         {
             ImGui::SetKeyboardFocusHere();
@@ -93,11 +94,19 @@ void FEditorFooterWidget::Draw()
         const ImU32  BorderColorNormal  = IM_COL32(51, 51, 51, 255);
         const ImU32  BorderColorHovered = IM_COL32(74, 74, 74, 255);
         const ImU32  BorderColorActive  = IM_COL32(9, 92, 176, 255);
-        const ImVec4 TextColor          = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+        const ImVec4 HintTextInactive   = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+        const ImVec4 HintTextActive     = ImVec4(99.0f / 255.0f, 99.0f / 255.0f, 99.0f / 255.0f, 1.0f);
+        const ImVec4 InputTextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         const ImVec2 InputStart = ImGui::GetCursorScreenPos();
         const float  InputH     = ImGui::GetFontSize() + BasePadding.y * 2.0f;
         const ImVec2 InputEnd   = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputH);
+
+        const ImGuiID ConsoleInputId  = ImGui::GetID("##ConsoleInput");
+        const bool    bInputWasActive = ImGui::GetActiveID() == ConsoleInputId;
+        const bool    bInputClicked   = ImGui::IsMouseHoveringRect(InputStart, InputEnd, true) && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+        const bool    bUseActiveHint  = bInputWasActive || bWantsInputFocus || bInputClicked;
+        const ImVec4  HintTextColor   = bUseActiveHint ? HintTextActive : HintTextInactive;
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
         DrawList->AddRectFilled(InputStart, InputEnd, BgColor, InputRounding);
@@ -109,8 +118,8 @@ void FEditorFooterWidget::Draw()
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
-        ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
-        ImGui::PushStyleColor(ImGuiCol_TextDisabled, TextColor);
+        ImGui::PushStyleColor(ImGuiCol_Text, InputTextColor);
+        ImGui::PushStyleColor(ImGuiCol_TextDisabled, HintTextColor);
 
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
 
