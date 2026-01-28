@@ -69,7 +69,7 @@ void FEditorViewportWidget::Draw()
 
         // Update the relative viewport position
         const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
-        ViewportWidget->SetPosition(FIntVector2(int32(ContentPos.x), int32(ContentPos.y)));
+        ViewportWidget->SetPosition(FIntVector2(static_cast<int32>(ContentPos.x), static_cast<int32>(ContentPos.y)), EViewportPositionSpace::Screen);
 
         // Update the viewport image that we will render to
         const ImVec2 ContentSize = ImGui::GetContentRegionAvail();

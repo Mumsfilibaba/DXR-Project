@@ -1,5 +1,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Widgets/ViewportWidget.h"
+#include "Application/Widgets/WindowWidget.h"
 
 FViewportWidget::FViewportWidget()
     : FWidget()
@@ -16,6 +17,32 @@ FViewportWidget::~FViewportWidget()
 void FViewportWidget::Initialize(const FInitializer& Initializer)
 {
     ViewportInterface = Initializer.ViewportInterface;
+}
+
+void FViewportWidget::SetPosition(const FIntVector2& InPosition, EViewportPositionSpace InSpace)
+{
+    Position = InPosition;
+
+    if (InSpace == EViewportPositionSpace::Screen)
+    {
+        TWeakPtr<FWidget> LocalParentWidget = GetParentWidget();
+        CHECK(LocalParentWidget != nullptr);
+
+        while (LocalParentWidget)
+        {
+            if (LocalParentWidget->IsWindow())
+            {
+                TSharedPtr<FWindowWidget> WindowWidget = StaticCastSharedPtr<FWindowWidget>(LocalParentWidget.ToSharedPtr());
+
+                const FIntVector2 WindowPos = WindowWidget->GetPosition();
+                Position.X -= WindowPos.X;
+                Position.Y -= WindowPos.Y;
+                break;
+            }
+
+            LocalParentWidget = LocalParentWidget->GetParentWidget();
+        }
+    }
 }
 
 void FViewportWidget::Tick(const FRectangle& AssignedBounds)
