@@ -120,10 +120,11 @@ void FEditorFooterWidget::Draw()
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_Text, InputTextColor);
         ImGui::PushStyleColor(ImGuiCol_TextDisabled, HintTextColor);
+        ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, EditorStyleVars::InputFieldSelectionColor);
 
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
 
-        ImGui::PopStyleColor(5);
+        ImGui::PopStyleColor(6);
         ImGui::PopStyleVar(3);
 
         InputRectMin = ImGui::GetItemRectMin();

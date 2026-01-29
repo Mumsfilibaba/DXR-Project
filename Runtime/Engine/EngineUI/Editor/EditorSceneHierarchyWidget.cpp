@@ -823,6 +823,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, SearchBg);
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, SearchBg);
         ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
+        ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, EditorStyleVars::InputFieldSelectionColor);
 
         if (bRequestRenameFocus)
         {
@@ -836,7 +837,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
 
         const bool bEnter = ImGui::InputText("##RenameActor", ActorRenameBuffer.Data(), ActorRenameBuffer.Size(), InputFlags);
 
-        ImGui::PopStyleColor(4);
+        ImGui::PopStyleColor(5);
         ImGui::PopStyleVar(2);
 
         {

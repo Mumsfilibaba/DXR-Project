@@ -13,6 +13,7 @@ ImVec2 EditorStyleVars::InputFieldFramePadding    = ImVec2(12.0f, 6.0f);
 float  EditorStyleVars::InputFieldBorderThickness = 2.0f;
 float  EditorStyleVars::InputFieldBorderRounding  = 16.0f;
 ImU32  EditorStyleVars::InputFieldBorderColor     = IM_COL32(100, 136, 234, 255);
+ImVec4 EditorStyleVars::InputFieldSelectionColor  = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
 
 ImVec2 EditorStyleVars::SceneHierarchyItemSpacing    = ImVec2(8.0f, 8.0f);
 ImVec2 EditorStyleVars::SceneHierarchyWindowPadding  = ImVec2(8.0f, 8.0f);
@@ -1141,10 +1142,11 @@ bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* 
     ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
     ImGui::PushStyleColor(ImGuiCol_Text, InputTextColor);
     ImGui::PushStyleColor(ImGuiCol_TextDisabled, HintTextColor);
+    ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, EditorStyleVars::InputFieldSelectionColor);
 
     bool bChanged = ImGui::InputTextWithHint(InId, InHint, InOutBuffer, static_cast<size_t>(InBufferSize));
 
-    ImGui::PopStyleColor(5);
+    ImGui::PopStyleColor(6);
     ImGui::PopStyleVar(3);
 
     const ImGuiID InputId = ImGui::GetItemID();
@@ -2202,7 +2204,11 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
                 const float SpanWidth = ImGui::CalcTextSize(Text).x;
                 if (Span.bHasBackground)
                 {
-                    DrawList->AddRectFilled(ImVec2(CursorX, LineMin.y + 2.0f), ImVec2(CursorX + SpanWidth, LineMax.y - 2.0f), Span.BackgroundColor, 0.0f);
+                    const float HighlightPadY    = 2.0f;
+                    const float HighlightMarginY = 2.0f;
+                    const float HighlightTopY    = LineMin.y + HighlightPadY - HighlightMarginY;
+                    const float HighlightBotY    = LineMax.y - HighlightPadY + HighlightMarginY;
+                    DrawList->AddRectFilled(ImVec2(CursorX, HighlightTopY), ImVec2(CursorX + SpanWidth, HighlightBotY), Span.BackgroundColor, 0.0f);
                 }
 
                 DrawList->AddText(ImVec2(CursorX, LineMin.y), Span.TextColor, Text);

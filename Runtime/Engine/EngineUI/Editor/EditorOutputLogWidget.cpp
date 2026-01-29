@@ -370,8 +370,8 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     const ImU32 DefaultTextU32   = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32 WarningTextU32   = IM_COL32(255, 255, 0, 255);
     const ImU32 ErrorTextU32     = IM_COL32(255, 0, 0, 255);
-    const ImU32 HighlightBgU32   = IM_COL32(139, 194, 74, 255);
-    const ImU32 HighlightTextU32 = IM_COL32(0, 0, 0, 255);
+    const ImU32 HighlightBgU32   = IM_COL32(13, 59, 105, 255);
+    const ImU32 HighlightTextU32 = IM_COL32(192, 192, 192, 255);
 
     ImGui::PushFont(EditorFonts::Consola_16);
     ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f));

@@ -79,6 +79,7 @@ struct ENGINE_API EditorStyleVars
     static float  InputFieldBorderThickness;
     static float  InputFieldBorderRounding;
     static ImU32  InputFieldBorderColor;
+    static ImVec4 InputFieldSelectionColor;
     
     static ImVec2 SceneHierarchyItemSpacing;
     static ImVec2 SceneHierarchyWindowPadding;
