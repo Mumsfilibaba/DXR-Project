@@ -111,9 +111,8 @@ private:
     void AppendFolderPayloadPath(const ImGuiPayload* Payload, TArray<TArray<int32>>& InOutPaths) const;
     int32 FindChildFolderIndexByName(const FileInfo& ParentFolder, const FString& FolderName) const;
     int32 FindChildFileIndexByName(const FileInfo& ParentFolder, const FString& FileName) const;
-    void AccumulateMergeFileConflicts(const FileInfo& SourceFolder, const FileInfo& TargetFolder, int32& InOutCount, TStaticArray<CHAR, 256>& InOutFirstName) const;
-    bool HasMergeableContent(const FileInfo& SourceFolder, const FileInfo& TargetFolder) const;
-    void UpdateDragPreviewNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>& TargetPath);
+    void UpdateDragPreviewNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath, const TArray<int32>& TargetPath);
+    void SetDragPreviewTarget(const CHAR* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath);
     bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder);
 
 private:
@@ -140,7 +139,6 @@ private:
     bool                       bHasLastActiveFolderPath;
 
     bool                       bDragPreviewActive;
-    bool                       bDragPreviewInvalidSelfMove;
     ImTextureID                DragPreviewIcon;
     bool                       bDragPreviewIsFolder;
     int32                      DragPreviewSelectionCount;
@@ -148,9 +146,6 @@ private:
     int32                      DragPreviewIllegalMoveCount;
     TStaticArray<CHAR, 256>    DragPreviewSourceName;
     TStaticArray<CHAR, 256>    DragPreviewTargetName;
-    bool                       bDragPreviewHasNameConflict;
-    int32                      DragPreviewConflictCount;
-    TStaticArray<CHAR, 256>    DragPreviewConflictFileName;
 
     TArray<int32>              RenamingFolderPath;
     TStaticArray<CHAR, 256>    FolderRenameBuffer;

@@ -448,6 +448,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
         ImGuiStorage* StateStorage = ImGui::GetStateStorage();
         bUniformScaleEnabled = StateStorage->GetBool(UniformScaleKey, false);
+
         const bool bUniformScalePrev = bUniformScaleEnabled;
 
         const float  IconButtonSizePx = 16.0f;
