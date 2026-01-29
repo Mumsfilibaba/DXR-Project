@@ -28,12 +28,13 @@ public:
 private:
     static constexpr int32 InvalidIndex = -1;
 
-    // ImGui callback for the text-input field
-    int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
-    
+    void ApplyCandidateToBuffer(int32 CandidateIndex);
+
     // Helper that can invalidate the candidate-list
     void InvalidateCandidates();
-    void ApplyCandidateToBuffer(int32 CandidateIndex);
+
+    // ImGui callback for the text-input field
+    int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
 
     TArray<TPair<IConsoleObject*, FString>> Candidates;
     FString                                 CandidateFilter;

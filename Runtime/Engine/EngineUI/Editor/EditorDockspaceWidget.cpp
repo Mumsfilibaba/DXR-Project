@@ -12,10 +12,6 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-static bool GShowContentBrowser = true;
-
-static const float GStatusBarHeight = 22.0f;
-
 FEditorDockspaceWidget::FEditorDockspaceWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , ImGuiDelegateHandle()
@@ -247,21 +243,21 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // File
         {
             PopupAnchor FileAnchor;
-            EditorWidgets::EditorDrawMenuButton("File", PopupFile, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, FileAnchor);
+            EditorWidgets::DrawMenuButton("File", PopupFile, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, FileAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupFile, FileAnchor))
+            if (EditorWidgets::BeginMenuPopup(PopupFile, FileAnchor))
             {
-                EditorWidgets::EditorMenuLabeledSeparator("Open");
-                EditorWidgets::EditorMenuItem("New Level", "Ctrl+N");
-                EditorWidgets::EditorMenuItem("Open Level", "Ctrl+O");
-                EditorWidgets::EditorMenuLabeledSeparator("Save");
-                EditorWidgets::EditorMenuItem("Save All", "Ctrl+Shift+S");
-                EditorWidgets::EditorMenuLabeledSeparator("Exit");
-                EditorWidgets::EditorMenuItem("Exit");
+                EditorWidgets::MenuLabeledSeparator("Open");
+                EditorWidgets::MenuItem("New Level", "Ctrl+N");
+                EditorWidgets::MenuItem("Open Level", "Ctrl+O");
+                EditorWidgets::MenuLabeledSeparator("Save");
+                EditorWidgets::MenuItem("Save All", "Ctrl+Shift+S");
+                EditorWidgets::MenuLabeledSeparator("Exit");
+                EditorWidgets::MenuItem("Exit");
                 ImGui::EndPopup();
             }
 
-            EditorWidgets::EditorResetMenuPopup();
+            EditorWidgets::ResetMenuPopup();
         }
 
         ImGui::SameLine(0.0f, 0.0f);
@@ -269,17 +265,17 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Edit
         {
             PopupAnchor EditAnchor;
-            EditorWidgets::EditorDrawMenuButton("Edit", PopupEdit, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, EditAnchor);
+            EditorWidgets::DrawMenuButton("Edit", PopupEdit, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, EditAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupEdit, EditAnchor))
+            if (EditorWidgets::BeginMenuPopup(PopupEdit, EditAnchor))
             {
-                EditorWidgets::EditorMenuLabeledSeparator("Settings");
-                EditorWidgets::EditorMenuItem("Project Settings");
-                EditorWidgets::EditorMenuItem("Editor Preferences");
+                EditorWidgets::MenuLabeledSeparator("Settings");
+                EditorWidgets::MenuItem("Project Settings");
+                EditorWidgets::MenuItem("Editor Preferences");
                 ImGui::EndPopup();
             }
 
-            EditorWidgets::EditorResetMenuPopup();
+            EditorWidgets::ResetMenuPopup();
         }
 
         ImGui::SameLine(0.0f, 0.0f);
@@ -287,84 +283,84 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Windows
         {
             PopupAnchor WindowsAnchor;
-            EditorWidgets::EditorDrawMenuButton("Windows", PopupWindows, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
+            EditorWidgets::DrawMenuButton("Windows", PopupWindows, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupWindows, WindowsAnchor))
+            if (EditorWidgets::BeginMenuPopup(PopupWindows, WindowsAnchor))
             {
-                EditorWidgets::EditorMenuLabeledSeparator("Windows");
+                EditorWidgets::MenuLabeledSeparator("Windows");
 
                 if (EditorEngine)
                 {
                     if (FEditorOutputLogWidget* LogWidget = EditorEngine->GetOutputLogWidget().Get())
                     {
                         bool bVisible = LogWidget->IsVisible();
-                        if (EditorWidgets::EditorMenuItem("Output Log", nullptr, bVisible))
+                        if (EditorWidgets::MenuItem("Output Log", nullptr, bVisible))
                         {
                             LogWidget->SetVisible(!bVisible);
                         }
                     }
                     else
                     {
-                        EditorWidgets::EditorMenuItem("Output Log", nullptr, false, false);
+                        EditorWidgets::MenuItem("Output Log", nullptr, false, false);
                     }
 
                     if (FEditorViewportWidget* EditorWidget = EditorEngine->GetEditorViewportWidget().Get())
                     {
                         bool bVisible = EditorWidget->IsVisible();
-                        if (EditorWidgets::EditorMenuItem("Viewport", nullptr, bVisible))
+                        if (EditorWidgets::MenuItem("Viewport", nullptr, bVisible))
                         {
                             EditorWidget->SetVisible(!bVisible);
                         }
                     }
                     else
                     {
-                        EditorWidgets::EditorMenuItem("Viewport", nullptr, false, false);
+                        EditorWidgets::MenuItem("Viewport", nullptr, false, false);
                     }
 
                     if (FEditorSceneHierarchyWidget* SceneHierarchyWidget = EditorEngine->GetSceneHierarchyWidget().Get())
                     {
                         bool bVisible = SceneHierarchyWidget->IsVisible();
-                        if (EditorWidgets::EditorMenuItem("Scene Hierarchy", nullptr, bVisible))
+                        if (EditorWidgets::MenuItem("Scene Hierarchy", nullptr, bVisible))
                         {
                             SceneHierarchyWidget->SetVisible(!bVisible);
                         }
                     }
                     else
                     {
-                        EditorWidgets::EditorMenuItem("Scene Hierarchy", nullptr, false, false);
+                        EditorWidgets::MenuItem("Scene Hierarchy", nullptr, false, false);
                     }
 
                     if (FEditorPropertiesWidget* PropertiesWidget = EditorEngine->GetPropertiesWidget().Get())
                     {
                         bool bVisible = PropertiesWidget->IsVisible();
-                        if (EditorWidgets::EditorMenuItem("Properties", nullptr, bVisible))
+                        if (EditorWidgets::MenuItem("Properties", nullptr, bVisible))
                         {
                             PropertiesWidget->SetVisible(!bVisible);
                         }
                     }
                     else
                     {
-                        EditorWidgets::EditorMenuItem("Properties", nullptr, false, false);
+                        EditorWidgets::MenuItem("Properties", nullptr, false, false);
                     }
 
                     if (FEditorContentBrowserWidget* ContentBrowserWidget = EditorEngine->GetContentBrowserWidget().Get())
                     {
                         bool bVisible = ContentBrowserWidget->IsVisible();
-                        if (EditorWidgets::EditorMenuItem("Content Browser", nullptr, bVisible))
+                        if (EditorWidgets::MenuItem("Content Browser", nullptr, bVisible))
                         {
                             ContentBrowserWidget->SetVisible(!bVisible);
                         }
                     }
                     else
                     {
-                        EditorWidgets::EditorMenuItem("Content Browser", nullptr, false, false);
+                        EditorWidgets::MenuItem("Content Browser", nullptr, false, false);
                     }
                 }
 
                 ImGui::EndPopup();
             }
 
-            EditorWidgets::EditorResetMenuPopup();
+            EditorWidgets::ResetMenuPopup();
         }
 
         ImGui::SameLine(0.0f, 0.0f);
@@ -372,16 +368,16 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Help
         {
             PopupAnchor HelpAnchor;
-            EditorWidgets::EditorDrawMenuButton("Help", PopupHelp, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
+            EditorWidgets::DrawMenuButton("Help", PopupHelp, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
 
-            if (EditorWidgets::EditorBeginMenuPopup(PopupHelp, HelpAnchor))
+            if (EditorWidgets::BeginMenuPopup(PopupHelp, HelpAnchor))
             {
-                EditorWidgets::EditorMenuLabeledSeparator("About");
-                EditorWidgets::EditorMenuItem("About");
+                EditorWidgets::MenuLabeledSeparator("About");
+                EditorWidgets::MenuItem("About");
                 ImGui::EndPopup();
             }
 
-            EditorWidgets::EditorResetMenuPopup();
+            EditorWidgets::ResetMenuPopup();
         }
     }
 

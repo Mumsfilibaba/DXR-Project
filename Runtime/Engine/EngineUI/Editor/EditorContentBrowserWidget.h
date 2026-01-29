@@ -42,15 +42,15 @@ private:
 
     struct FCBDndPayload
     {
-        int32 Depth;
+        int32                   Depth;
         TStaticArray<int32, 32> Indices;
-        int32 SourceIndex;
-        bool  bIsFolder;
+        int32                   SourceIndex;
+        bool                    bIsFolder;
     };
 
     struct FCBFolderDndPayload
     {
-        int32 Depth;
+        int32                   Depth;
         TStaticArray<int32, 32> Indices;
     };
 
@@ -60,14 +60,13 @@ private:
     void DrawContentPanel();
     void DrawItemTooltip(const FileInfo& InItem);
     void DrawContentGrid();
-    void DrawSearchField(const CHAR* InId, const CHAR* InHint, TStaticArray<CHAR, 256>& InOutBuffer, float InWidth = -1.0f);
     void DrawCenteredMessage(const CHAR* InText, const ImVec4& InMutedTextColor);
     void DrawContentHeaderBar();
     void DrawContentHeaderArea(const ImVec4& InBackGround, float InSidePadding, float InSearchRowHeight);
     void DrawFolderTreeRecursive(FileInfo& InFolder, TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor,
-        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
+        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR* InFolderSearchQuery);
     bool DrawFolderRow(FileInfo& InFolder, const TArray<int32>& InPath, int32 InDepth, ImGuiStorage* InStorage, const ImVec4& InNameTextColor, const ImU32 InFolderActiveColor, 
-        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, bool bFolderSearchActive);
+        const ImU32 InFolderInactiveColor, const ImU32 InFolderHoverColor, const ImU32 InFolderPathColor, const CHAR* InFolderSearchQuery);
 
     void BeginFolderRename(const TArray<int32>& InPath, const FileInfo& InFolder);
     void CommitFolderRename();
@@ -84,12 +83,10 @@ private:
     void ToggleItemSelection(int32 InIndex);
     void SelectItemRange(int32 InStartIndex, int32 InEndIndex, bool bAddToExisting);
     bool IsItemSelected(int32 InIndex) const;
-    bool MoveItemToFolder(const TArray<int32>& InSourceParentPath, int32 InSourceIndex, const TArray<int32>& InTargetFolderPath);
     bool MoveItemsToFolder(const TArray<int32>& InSourceParentPath, const TArray<int32>& InSourceIndices, const TArray<int32>& InTargetFolderPath);
 
-    const CHAR* GetTrimmedQuery(const TStaticArray<CHAR, 256>& InBuf) const;
-    bool MatchesSearch(const CHAR* InName, const TStaticArray<CHAR, 256>& InBuf) const;
-    bool FolderTreeMatches(const FileInfo& InFolder) const;
+    bool MatchesSearch(const CHAR* InName, const CHAR* InQuery) const;
+    bool FolderTreeMatches(const FileInfo& InFolder, const CHAR* InQuery) const;
     bool IsPathPrefixOfSelected(const TArray<int32>& InPath) const;
     bool HasChildFolders(const FileInfo& InFolder) const;
 
@@ -109,7 +106,6 @@ private:
     TArray<TArray<int32>> RemoveRootPaths(const TArray<TArray<int32>>& InPaths) const;
     TArray<TArray<int32>> FilterTopLevelPaths(const TArray<TArray<int32>>& InPaths) const;
     TArray<TArray<int32>> GetFilteredFolderSelectionPaths() const;
-    bool IsTargetDescendantOfFolderSelection(const TArray<int32>& TargetPath) const;
     void QueueFolderMoveRequests(const TArray<TArray<int32>>& DragPaths, const TArray<int32>& TargetPath);
     void BuildDragSourceSelection(const FCBDndPayload& Data, TArray<int32>& OutSourceParentPath, const FileInfo*& OutSourceParentFolder, TArray<int32>& OutSourceIndices, TArray<TArray<int32>>& OutSourceFolderPaths) const;
     void AppendFolderPayloadPath(const ImGuiPayload* Payload, TArray<TArray<int32>>& InOutPaths) const;
@@ -117,9 +113,6 @@ private:
     int32 FindChildFileIndexByName(const FileInfo& ParentFolder, const FString& FileName) const;
     void AccumulateMergeFileConflicts(const FileInfo& SourceFolder, const FileInfo& TargetFolder, int32& InOutCount, TStaticArray<CHAR, 256>& InOutFirstName) const;
     bool HasMergeableContent(const FileInfo& SourceFolder, const FileInfo& TargetFolder) const;
-    void AccumulateDirectFileConflicts(const FileInfo& SourceParent, const TArray<int32>& SourceIndices, const FileInfo& TargetFolder, int32& InOutCount, TStaticArray<CHAR, 256>& InOutFirstName) const;
-    bool GetFolderMergeConflictInfo(const TArray<TArray<int32>>& SourceFolderPaths, const TArray<int32>& TargetPath, int32& OutConflictCount, TStaticArray<CHAR, 256>& OutFirstName) const;
-    bool ComputeNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>& TargetPath, int32& OutConflictCount, TStaticArray<CHAR, 256>& OutFirstName) const;
     void UpdateDragPreviewNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>& TargetPath);
     bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder);
 
@@ -127,7 +120,6 @@ private:
     FDelegateHandle            ImGuiDelegateHandle;
     TStaticArray<CHAR, 256>    FolderSearchBuffer;
     TStaticArray<CHAR, 256>    AssetSearchBuffer;
-    int32                      SelectedFolderIndex;
     TArray<int32>              SelectedItemIndices;
     int32                      LastSelectedItemIndex;
     bool                       bSelectionActiveInBrowser;

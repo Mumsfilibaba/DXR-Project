@@ -73,7 +73,7 @@ void FEditorViewportWidget::Draw()
 
         // Update the viewport image that we will render to
         const ImVec2 ContentSize = ImGui::GetContentRegionAvail();
-        CachedViewportSize = FIntVector2(int32(ContentSize.x), int32(ContentSize.y));
+        CachedViewportSize = FIntVector2(static_cast<int32>(ContentSize.x), static_cast<int32>(ContentSize.y));
         ViewportWidget->SetSize(CachedViewportSize);
 
         // Draw the viewport texture
@@ -152,7 +152,7 @@ FIntVector2 FEditorViewportWidget::GetViewportSize() const
     if (ImGuiWindow* ViewportWindow = ImGui::FindWindowByName("Viewport"))
     {
         const ImVec2 Size = ViewportWindow->ContentRegionRect.GetSize();
-        return FIntVector2(int32(Size.x), int32(Size.y));
+        return FIntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y));
     }
 
     return FIntVector2(1920, 1080);

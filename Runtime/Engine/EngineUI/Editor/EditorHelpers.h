@@ -4,46 +4,7 @@
 #include "Core/Containers/UniquePtr.h"
 #include <imgui.h>
 
-struct PopupAnchor
-{
-    ImVec2 Min              = ImVec2(0.0f, 0.0f);
-    ImVec2 Max              = ImVec2(0.0f, 0.0f);
-    bool   bRequestPosition = false;
-};
-
-struct EditorStyleVars
-{
-    static float  MainMenuBarHeight;
-
-    static ImVec2 InputFieldFramePadding;
-    static float  InputFieldBorderThickness;
-    static float  InputFieldBorderRounding;
-    static ImU32  InputFieldBorderColor;
-    
-    static ImVec2 SceneHierarchyItemSpacing;
-    static ImVec2 SceneHierarchyWindowPadding;
-    static float  SceneHierarchyTableRowHeight;
-
-    static ImVec2 PropertiesItemSpacing;
-    static ImVec2 PropertiesWindowPadding;
-    static ImVec2 PropertiesCollapsingHeaderItemSpacing;
-    static ImVec2 PropertiesCollapsingFramePadding;
-    static float  PropertiesCollapsingFrameRounding;
-};
-
-struct ENGINE_API EditorHelpers
-{
-    static FORCEINLINE ImU32 MakeBrighterColorU32(const ImVec4& HoveredColor, float BrightenAmount = 0.20f)
-    {
-        ImVec4 BrighterColor = HoveredColor;
-        BrighterColor.x = (BrighterColor.x + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.x + BrightenAmount);
-        BrighterColor.y = (BrighterColor.y + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.y + BrightenAmount);
-        BrighterColor.z = (BrighterColor.z + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.z + BrightenAmount);
-        BrighterColor.w = 1.0f;
-
-        return ImGui::GetColorU32(BrighterColor);
-    }
-};
+struct FImGuiTexture;
 
 enum class EVector3ControlType : uint8
 {
@@ -53,13 +14,21 @@ enum class EVector3ControlType : uint8
     Scale,
 };
 
+struct PopupAnchor
+{
+    ImVec2 Min = ImVec2(0.0f, 0.0f);
+    ImVec2 Max = ImVec2(0.0f, 0.0f);
+    
+    bool bRequestPosition = false;
+};
+
 struct FRichTextSpan
 {
     FString Text;
-    
+
     ImU32 TextColor       = IM_COL32(255, 255, 255, 255);
-    bool  bHasBackground  = false;
     ImU32 BackgroundColor = 0;
+    bool  bHasBackground  = false;
 };
 
 struct FRichTextLine
@@ -81,23 +50,70 @@ struct FRichTextViewContext
         Lines.Clear();
         bActive = false;
     }
-
+    
+    FRichTextSelectionPoint SelStart;
+    FRichTextSelectionPoint SelEnd;
+    TArray<FRichTextLine>   Lines;
+    
+    ImGuiID ViewId          = 0;
+    ImVec2  Padding         = ImVec2(8.0f, 4.0f);
+    ImVec2  ContentStart    = ImVec2(0, 0);
+    float   LineHeight      = 0.0f;
+    float   CharWidth       = 0.0f;
     bool    bAutoScroll     = true;
     bool    bScrollToBottom = false;
     bool    bSelecting      = false;
     bool    bHasSelection   = false;
     bool    bActive         = false;
-    float   LineHeight      = 0.0f;
-    float   CharWidth       = 0.0f;
-    ImVec2  ContentStart    = ImVec2(0, 0);
-    ImVec2  Padding         = ImVec2(8.0f, 4.0f);
-    ImGuiID ViewId          = 0;
-
-    FRichTextSelectionPoint SelStart;
-    FRichTextSelectionPoint SelEnd;
-    TArray<FRichTextLine>   Lines;
-
 };
+
+// -----------------------------------------------------------------------------------------
+// Style-vars
+// -----------------------------------------------------------------------------------------
+
+struct ENGINE_API EditorStyleVars
+{
+    static float  MainMenuBarHeight;
+
+    static ImVec2 InputFieldFramePadding;
+    static float  InputFieldBorderThickness;
+    static float  InputFieldBorderRounding;
+    static ImU32  InputFieldBorderColor;
+    
+    static ImVec2 SceneHierarchyItemSpacing;
+    static ImVec2 SceneHierarchyWindowPadding;
+    static float  SceneHierarchyTableRowHeight;
+
+    static ImVec2 PropertiesItemSpacing;
+    static ImVec2 PropertiesWindowPadding;
+    static ImVec2 PropertiesCollapsingHeaderItemSpacing;
+    static ImVec2 PropertiesCollapsingFramePadding;
+    static float  PropertiesCollapsingFrameRounding;
+};
+
+// -----------------------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------------------
+
+struct ENGINE_API EditorHelpers
+{
+    static FORCEINLINE ImU32 MakeBrighterColorU32(const ImVec4& HoveredColor, float BrightenAmount = 0.20f)
+    {
+        ImVec4 BrighterColor = HoveredColor;
+        BrighterColor.x = (BrighterColor.x + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.x + BrightenAmount);
+        BrighterColor.y = (BrighterColor.y + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.y + BrightenAmount);
+        BrighterColor.z = (BrighterColor.z + BrightenAmount > 1.0f) ? 1.0f : (BrighterColor.z + BrightenAmount);
+        BrighterColor.w = 1.0f;
+
+        return ImGui::GetColorU32(BrighterColor);
+    }
+
+    static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBufSize);
+};
+
+// -----------------------------------------------------------------------------------------
+// Widgets
+// -----------------------------------------------------------------------------------------
 
 struct ENGINE_API EditorWidgets
 {
@@ -137,18 +153,19 @@ struct ENGINE_API EditorWidgets
     // Search
     // -----------------------------------------------------------------------------------------
 
-    static bool EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+    static bool SearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+    static void DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR* Text, const CHAR* FilterText, ImU32 BaseTextU32, float HighlightPadX = 1.0f, float HighlightPadY = 1.0f, const ImVec2* ClampMin = nullptr, const ImVec2* ClampMax = nullptr);
 
     // -----------------------------------------------------------------------------------------
     // Menu
     // -----------------------------------------------------------------------------------------
 
-    static void EditorMenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
-    static void EditorMenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
-    static bool EditorMenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
-    static void EditorDrawMenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
-    static bool EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
-    static void EditorResetMenuPopup();
+    static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
+    static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
+    static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
+    static void DrawMenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
+    static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
+    static void ResetMenuPopup();
 
     // -----------------------------------------------------------------------------------------
     // Property Table
@@ -175,12 +192,14 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
 
     static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
-    static void EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
+    static void DrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
 };
 
-struct FImGuiTexture;
+// -----------------------------------------------------------------------------------------
+// Icons
+// -----------------------------------------------------------------------------------------
 
-struct EditorIcons
+struct ENGINE_API EditorIcons
 {
     static ImTextureID UndoIcon;
     static ImTextureID SearchIcon;
@@ -207,7 +226,11 @@ struct EditorIcons
     static void Release();
 };
 
-struct EditorFonts
+// -----------------------------------------------------------------------------------------
+// Fonts
+// -----------------------------------------------------------------------------------------
+
+struct ENGINE_API EditorFonts
 {
     static ImFont* DefaultFont;
     static ImFont* SegoeUI_18;

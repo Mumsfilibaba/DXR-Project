@@ -7,120 +7,6 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBufSize)
-{
-    if (OutBufSize <= 0)
-    {
-        return nullptr;
-    }
-
-    OutBuf[0] = 0;
-
-    if (!InText)
-    {
-        return nullptr;
-    }
-
-    const CHAR* Start = InText;
-    while (*Start && (*Start == ' ' || *Start == '\t' || *Start == '\n' || *Start == '\r'))
-    {
-        ++Start;
-    }
-
-    const CHAR* End = Start;
-    while (*End)
-    {
-        ++End;
-    }
-
-    while (End > Start && (End[-1] == ' ' || End[-1] == '\t' || End[-1] == '\n' || End[-1] == '\r'))
-    {
-        --End;
-    }
-
-    const int32 Len = static_cast<int32>(End - Start);
-    if (Len <= 0)
-    {
-        return nullptr;
-    }
-
-    const int32 CopyLen = Math::Min(Len, OutBufSize - 1);
-    FCString::Strncpy(OutBuf, Start, CopyLen + 1);
-    OutBuf[CopyLen] = 0;
-
-    return OutBuf[0] ? OutBuf : nullptr;
-}
-
-static void DrawTextWithSearchHighlight(ImDrawList* InDrawList, const ImVec2& InTextPos, const ImVec2& InRowMin, const ImVec2& InRowMax, const CHAR* InText, const CHAR* InFilterText, ImU32 InBaseTextU32)
-{
-    if (!InDrawList || !InText)
-    {
-        return;
-    }
-
-    const CHAR* FilterText = (InFilterText && *InFilterText != 0) ? InFilterText : nullptr;
-
-    int32 MatchStart = -1;
-    int32 MatchLen   = 0;
-
-    if (FilterText)
-    {
-        if (const CHAR* MatchPtr = FCString::Stristr(InText, FilterText))
-        {
-            MatchStart = static_cast<int32>(MatchPtr - InText);
-            MatchLen   = static_cast<int32>(FCString::Strlen(FilterText));
-        }
-    }
-
-    if (MatchStart >= 0 && MatchLen > 0)
-    {
-        const ImGuiIO& IO = ImGui::GetIO();
-
-        const float Scale = IO.DisplayFramebufferScale.x;
-
-        const ImU32 HighlightBgU32   = IM_COL32(139, 194, 74, 255);
-        const ImU32 HighlightTextU32 = IM_COL32(0, 0, 0, 255);
-
-        const ImVec2 PrefixSize = ImGui::CalcTextSize(InText, InText + MatchStart);
-        const ImVec2 MatchSize  = ImGui::CalcTextSize(InText + MatchStart, InText + MatchStart + MatchLen);
-
-        const ImVec2 PrefixPos = InTextPos;
-        const ImVec2 MatchPos  = ImVec2(InTextPos.x + PrefixSize.x, InTextPos.y);
-        const ImVec2 SuffixPos = ImVec2(MatchPos.x + MatchSize.x, InTextPos.y);
-
-        if (MatchStart > 0)
-        {
-            InDrawList->AddText(PrefixPos, InBaseTextU32, InText, InText + MatchStart);
-        }
-
-        const float PadX = 1.0f * Scale;
-        const float PadY = 1.0f * Scale;
-
-        const float TextMinY = MatchPos.y;
-        const float TextMaxY = MatchPos.y + MatchSize.y;
-
-        ImVec2 HighlightMin = ImVec2(MatchPos.x - PadX, TextMinY - PadY);
-        ImVec2 HighlightMax = ImVec2(MatchPos.x + MatchSize.x + PadX, TextMaxY + PadY);
-
-        HighlightMin.y = ImMax(HighlightMin.y, InRowMin.y);
-        HighlightMax.y = ImMin(HighlightMax.y, InRowMax.y);
-
-        InDrawList->AddRectFilled(HighlightMin, HighlightMax, HighlightBgU32, 0.0f);
-
-        InDrawList->AddText(MatchPos, HighlightTextU32, InText + MatchStart, InText + MatchStart + MatchLen);
-
-        const CHAR* Suffix = InText + MatchStart + MatchLen;
-        if (Suffix && *Suffix != 0)
-        {
-            InDrawList->AddText(SuffixPos, InBaseTextU32, Suffix);
-        }
-    }
-    else
-    {
-        InDrawList->AddText(InTextPos, InBaseTextU32, InText);
-    }
-}
-
 FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
     , RenamingActor(nullptr)
@@ -240,7 +126,7 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,   ImVec2(OldItemSpacing.x, 0.0f));
 
         ImGui::Dummy(ImVec2(0.0f, 5.0f));
-        EditorWidgets::EditorSearchField("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
+        EditorWidgets::SearchField("##SceneHierarchySearch", "Search Actors", ActorSearchFilterBuffer.Data(), ActorSearchFilterBuffer.Size());
         ImGui::Dummy(ImVec2(0.0f, 12.0f));
 
         ImGui::PopStyleVar(2);
@@ -456,10 +342,10 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         {
             TStaticArray<CHAR, 256> FilterBuf{};
 
-            const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
+            const CHAR* FilterText  = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
             const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
-            DrawTextWithSearchHighlight(DrawList, ImVec2(X, TextY), RowMin, RowMax, Label, FilterText, BaseTextU32);
+            EditorWidgets::DrawTextWithSearchHighlight(DrawList, ImVec2(X, TextY), Label, FilterText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
         }
 
         ImGui::PopStyleColor();
@@ -543,10 +429,10 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
         {
             TStaticArray<CHAR, 256> FilterBuf{};
 
-            const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
+            const CHAR* FilterText  = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
             const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
-            DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(X, TextY), RowMin, RowMax, Label, FilterText, BaseTextU32);
+            EditorWidgets::DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(X, TextY), Label, FilterText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
         }
 
         ImGui::PopStyleColor();
@@ -986,12 +872,12 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
         ImGui::PushStyleColor(ImGuiCol_Text, ActorNameTextColor);
 
         TStaticArray<CHAR, 256> FilterBuf{};
-        const CHAR* FilterText  = GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
+        const CHAR* FilterText  = EditorHelpers::GetTrimmedQuery(ActorSearchFilterBuffer.Data(), FilterBuf.Data(), static_cast<int32>(FilterBuf.Size()));
         const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
 
         const FString& Name = Actor->GetName();
         const CHAR* NameText = Name.IsEmpty() ? "Actor" : *Name;
-        DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(LabelStartX, NameTextY), RowMin, RowMax, NameText, FilterText, BaseTextU32);
+        EditorWidgets::DrawTextWithSearchHighlight(ImGui::GetWindowDrawList(), ImVec2(LabelStartX, NameTextY), NameText, FilterText, BaseTextU32, 1.0f, 1.0f, &RowMin, &RowMax);
 
         ImGui::PopStyleColor();
     }

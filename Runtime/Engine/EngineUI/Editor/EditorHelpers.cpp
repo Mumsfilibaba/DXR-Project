@@ -1019,7 +1019,55 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
     return bEnabled && bResult;
 }
 
-bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
+const CHAR* EditorHelpers::GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBufSize)
+{
+    if (!OutBuf || OutBufSize <= 0)
+    {
+        return nullptr;
+    }
+
+    OutBuf[0] = 0;
+
+    if (!InText)
+    {
+        return nullptr;
+    }
+
+    const CHAR* Start = InText;
+    while (*Start && FCharTraits::IsWhitespace(*Start))
+    {
+        ++Start;
+    }
+
+    const CHAR* End = Start;
+    while (*End)
+    {
+        ++End;
+    }
+
+    while (End > Start && FCharTraits::IsWhitespace(End[-1]))
+    {
+        --End;
+    }
+
+    const int32 Len = static_cast<int32>(End - Start);
+    if (Len <= 0)
+    {
+        return nullptr;
+    }
+
+    if (*End == 0)
+    {
+        return Start;
+    }
+
+    const int32 CopyLen = Math::Min(Len, OutBufSize - 1);
+    FCString::Strncpy(OutBuf, Start, CopyLen + 1);
+    OutBuf[CopyLen] = 0;
+    return OutBuf[0] ? OutBuf : nullptr;
+}
+
+bool EditorWidgets::SearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
 {
     if (!InId || !InHint || !InOutBuffer || InBufferSize <= 0)
     {
@@ -1172,7 +1220,75 @@ bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR
     return bChanged || bClearedThisFrame;
 }
 
-void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
+void EditorWidgets::DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR* Text, const CHAR* FilterText, ImU32 BaseTextU32, float HighlightPadX, float HighlightPadY, const ImVec2* ClampMin, const ImVec2* ClampMax)
+{
+    if (!DrawList || !Text)
+    {
+        return;
+    }
+
+    const CHAR* Query = (FilterText && *FilterText != 0) ? FilterText : nullptr;
+
+    int32 MatchStart = -1;
+    int32 MatchLen   = 0;
+
+    if (Query)
+    {
+        if (const CHAR* MatchPtr = FCString::Stristr(Text, Query))
+        {
+            MatchStart = static_cast<int32>(MatchPtr - Text);
+            MatchLen   = static_cast<int32>(FCString::Strlen(Query));
+        }
+    }
+
+    if (MatchStart >= 0 && MatchLen > 0)
+    {
+        const float Scale = ImGui::GetIO().DisplayFramebufferScale.x;
+        const float PadX  = HighlightPadX * Scale;
+        const float PadY  = HighlightPadY * Scale;
+
+        const ImU32 HighlightBgU32   = IM_COL32(139, 194, 74, 255);
+        const ImU32 HighlightTextU32 = IM_COL32(0, 0, 0, 255);
+
+        const ImVec2 PrefixSize = ImGui::CalcTextSize(Text, Text + MatchStart);
+        const ImVec2 MatchSize  = ImGui::CalcTextSize(Text + MatchStart, Text + MatchStart + MatchLen);
+
+        const ImVec2 PrefixPos = TextPos;
+        const ImVec2 MatchPos  = ImVec2(TextPos.x + PrefixSize.x, TextPos.y);
+        const ImVec2 SuffixPos = ImVec2(MatchPos.x + MatchSize.x, TextPos.y);
+
+        if (MatchStart > 0)
+        {
+            DrawList->AddText(PrefixPos, BaseTextU32, Text, Text + MatchStart);
+        }
+
+        ImVec2 HighlightMin = ImVec2(MatchPos.x - PadX, MatchPos.y - PadY);
+        ImVec2 HighlightMax = ImVec2(MatchPos.x + MatchSize.x + PadX, MatchPos.y + MatchSize.y + PadY);
+
+        if (ClampMin && ClampMax)
+        {
+            HighlightMin.x = ImMax(HighlightMin.x, ClampMin->x);
+            HighlightMin.y = ImMax(HighlightMin.y, ClampMin->y);
+            HighlightMax.x = ImMin(HighlightMax.x, ClampMax->x);
+            HighlightMax.y = ImMin(HighlightMax.y, ClampMax->y);
+        }
+
+        DrawList->AddRectFilled(HighlightMin, HighlightMax, HighlightBgU32, 0.0f);
+        DrawList->AddText(MatchPos, HighlightTextU32, Text + MatchStart, Text + MatchStart + MatchLen);
+
+        const CHAR* Suffix = Text + MatchStart + MatchLen;
+        if (Suffix && *Suffix != 0)
+        {
+            DrawList->AddText(SuffixPos, BaseTextU32, Suffix);
+        }
+    }
+    else
+    {
+        DrawList->AddText(TextPos, BaseTextU32, Text);
+    }
+}
+
+void EditorWidgets::MenuSeparator(float Thickness, float PaddingY)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
     if (!Window || Window->SkipItems)
@@ -1209,7 +1325,7 @@ void EditorWidgets::EditorMenuSeparator(float Thickness, float PaddingY)
     }
 }
 
-void EditorWidgets::EditorMenuLabeledSeparator(const CHAR* Label, float Thickness, float PaddingY)
+void EditorWidgets::MenuLabeledSeparator(const CHAR* Label, float Thickness, float PaddingY)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
     if (!Window || Window->SkipItems)
@@ -1277,7 +1393,7 @@ void EditorWidgets::EditorMenuLabeledSeparator(const CHAR* Label, float Thicknes
     }
 }
 
-bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
+bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSelected, bool bEnabled, bool bDrawBorder)
 {
     const float PaddingX    = 8.0f;
     const float PaddingY    = 4.0f;
@@ -1420,7 +1536,7 @@ bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool
         else
         {
             // Fallback if icon not loaded
-            EditorDrawCheckMark(DrawList, CheckPos, ImGui::GetColorU32(ImGuiCol_Text), CheckSize);
+            DrawCheckMark(DrawList, CheckPos, ImGui::GetColorU32(ImGuiCol_Text), CheckSize);
         }
     }
 
@@ -1451,7 +1567,7 @@ bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool
     return bEnabled && bPressed;
 }
 
-void EditorWidgets::EditorDrawMenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
+void EditorWidgets::DrawMenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
 {
     const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
     OutAnchor.bRequestPosition = false;
@@ -1499,7 +1615,7 @@ void EditorWidgets::EditorDrawMenuButton(const CHAR* Label, const CHAR* PopupId,
     }
 }
 
-bool EditorWidgets::EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth)
+bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth)
 {
     if (Anchor.bRequestPosition || ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None))
     {
@@ -1509,6 +1625,7 @@ bool EditorWidgets::EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor&
     // -----------------------------------------------------------------------------------------
     // Popup styling
     // -----------------------------------------------------------------------------------------
+
     const ImVec4 PopupBg       = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
     const ImVec4 PopupBorder   = ImVec4(63.0f / 255.0f, 63.0f / 255.0f, 63.0f / 255.0f, 1.0f);
     const ImVec4 TextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1523,6 +1640,7 @@ bool EditorWidgets::EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor&
     // -----------------------------------------------------------------------------------------
     // Style vars
     // -----------------------------------------------------------------------------------------
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
@@ -1533,6 +1651,7 @@ bool EditorWidgets::EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor&
     // -----------------------------------------------------------------------------------------
     // Style colors
     // -----------------------------------------------------------------------------------------
+
     ImGui::PushStyleColor(ImGuiCol_PopupBg, PopupBg);
     ImGui::PushStyleColor(ImGuiCol_Border, PopupBorder);
 
@@ -1561,7 +1680,7 @@ bool EditorWidgets::EditorBeginMenuPopup(const CHAR* PopupId, const PopupAnchor&
     return bOpen;
 }
 
-void EditorWidgets::EditorResetMenuPopup()
+void EditorWidgets::ResetMenuPopup()
 {
     ImGui::PopStyleColor(7); // PopupBg, Border, Text, TextDisabled, Header, HeaderHovered, HeaderActive
     ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
@@ -2117,7 +2236,7 @@ bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
     return ImGui::Button(Label);
 }
 
-void EditorWidgets::EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize)
+void EditorWidgets::DrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize)
 {
     const float Thickness = ImMax(1.0f, CheckMarkSize / 6.0f);
 
