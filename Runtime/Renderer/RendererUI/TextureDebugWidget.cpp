@@ -104,7 +104,7 @@ void FTextureDebugWidget::Draw()
             {
                 ImGui::NewLine();
 
-                if (EditorWidgets::ButtonCenteredOnLine("Close"))
+                if (EditorWidgets::DrawButtonCenteredOnLine("Close"))
                 {
                     CVarDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }

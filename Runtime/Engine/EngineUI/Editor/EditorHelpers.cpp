@@ -120,13 +120,13 @@ static void DrawAxisLineForLastItem(ImU32 InColor)
     Window->DrawList->AddRectFilled(LineMin, LineMax, InColor, 1.0f);
 }
 
-static bool ResetIconButton(float InSizePx = 0.0f)
+static bool ResetIconButton(float InSize = 0.0f)
 {
-    float ButtonSizePx = InSizePx;
+    float ButtonSizePx = InSize;
     if (ButtonSizePx <= 0.0f)
     {
-        const float AvailableWidthPx = ImGui::GetContentRegionAvail().x;
-        ButtonSizePx = Math::Min(ImGui::GetFrameHeight(), AvailableWidthPx);
+        const float AvailableWidth = ImGui::GetContentRegionAvail().x;
+        ButtonSizePx = Math::Min(ImGui::GetFrameHeight(), AvailableWidth);
     }
 
     ButtonSizePx = Math::Max(1.0f, ButtonSizePx);
@@ -181,7 +181,7 @@ static bool ResetIconButton(float InSizePx = 0.0f)
     return bWasPressed;
 }
 
-static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const CHAR* InSuffix, ImU32 InColor, float InGapPx = 1.0f)
+static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const CHAR* InSuffix, ImU32 InColor, float InGap = 1.0f)
 {
     ImGuiWindow* Window = ImGui::GetCurrentWindow();
     if (!Window || Window->SkipItems || !InSuffix)
@@ -213,7 +213,7 @@ static void DrawSuffixAfterTempInputText(ImGuiID InItemId, const CHAR* InSuffix,
 
     const float TextStartX = ItemMin.x + ImGui::GetStyle().FramePadding.x;
     const float RightLimit = ItemMax.x - ImGui::GetStyle().FramePadding.x;
-    const float DesiredX   = TextStartX + TextSize.x + InGapPx;
+    const float DesiredX   = TextStartX + TextSize.x + InGap;
 
     if (DesiredX + SuffixSize.x > RightLimit)
     {
@@ -376,14 +376,14 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
     ImGuiStyle& Style = ImGui::GetStyle();
 
-    const float AxisGapPx     = 2.0f;
-    const float FrameHeightPx = ImGui::GetFontSize() + Style.FramePadding.y * 2.0f;
-    const float RowHeightPx   = FrameHeightPx;
+    const float AxisGap     = 2.0f;
+    const float FrameHeight = ImGui::GetFontSize() + Style.FramePadding.y * 2.0f;
+    const float RowHeight   = FrameHeight;
 
-    ImGui::TableNextRow(0, RowHeightPx);
+    ImGui::TableNextRow(0, RowHeight);
     
     bool bAnyValueChanged = false;
-    bool bRowHovered      = BeginFullRowHoverCatcher(RowHeightPx);
+    bool bRowHovered      = BeginFullRowHoverCatcher(RowHeight);
 
     const bool bIsRotationDegrees = (InType == EVector3ControlType::RotationDegrees);
     const bool bIsScaleControl    = (InType == EVector3ControlType::Scale);
@@ -431,8 +431,8 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
     ImGui::TableSetColumnIndex(0);
 
-    const float LabelIndentPx = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+    const float LabelIndent = 24.0f;
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("%s", Label);
@@ -455,7 +455,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
         {
             const ImVec2 CursorScreen = ImGui::GetCursorScreenPos();
-            const float  CenteredY    = CursorScreen.y + (RowHeightPx - IconButtonSizePx) * 0.5f;
+            const float  CenteredY    = CursorScreen.y + (RowHeight - IconButtonSizePx) * 0.5f;
             ImGui::SetCursorScreenPos(ImVec2(CursorScreen.x, CenteredY));
         }
 
@@ -511,25 +511,25 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     ImGui::TableSetColumnIndex(1);
     ImGui::PushID(Label);
 
-    const float AvailableWidthPx = ImGui::GetContentRegionAvail().x;
-    const float TotalAxisGapsPx  = 2.0f * AxisGapPx;
+    const float AvailableWidth = ImGui::GetContentRegionAvail().x;
+    const float TotalAxisGaps  = 2.0f * AxisGap;
 
-    float AxisFieldWidthPx = (AvailableWidthPx - TotalAxisGapsPx) / 3.0f;
-    AxisFieldWidthPx = Math::Max(AxisFieldWidthPx, 1.0f);
+    float AxisFieldWidth = (AvailableWidth - TotalAxisGaps) / 3.0f;
+    AxisFieldWidth = Math::Max(AxisFieldWidth, 1.0f);
 
     bool bXChanged = false;
     bool bYChanged = false;
     bool bZChanged = false;
 
-    const auto DrawAxisField = [&](const CHAR* DragWidgetId, float& InOutAxisValue, ImU32 AxisIndicatorColor, float FieldWidthPx, bool bPlaceOnSameLine) -> bool
+    const auto DrawAxisField = [&](const CHAR* DragWidgetId, float& InOutAxisValue, ImU32 AxisIndicatorColor, float FieldWidth, bool bPlaceOnSameLine) -> bool
     {
         if (bPlaceOnSameLine)
         {
-            ImGui::SameLine(0.0f, AxisGapPx);
+            ImGui::SameLine(0.0f, AxisGap);
         }
 
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(AxisGapPx, 0.0f));
-        ImGui::SetNextItemWidth(FieldWidthPx);
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(AxisGap, 0.0f));
+        ImGui::SetNextItemWidth(FieldWidth);
 
         bool bAxisValueChanged = false;
 
@@ -580,8 +580,8 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
 
                 if (bIsRotationDegrees)
                 {
-                    const float DegreeGapPx = 1.0f;
-                    const float DegreePosX  = TextStartX + ValueTextSize.x + DegreeGapPx;
+                    const float DegreeGap = 1.0f;
+                    const float DegreePosX  = TextStartX + ValueTextSize.x + DegreeGap;
 
                     Window->DrawList->AddText(ImVec2(DegreePosX, TextPosY), ImGui::GetColorU32(ImGuiCol_Text), "\xC2\xB0");
                 }
@@ -609,9 +609,9 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     const ImU32 YAxisColor = IM_COL32(51, 179, 51, 255);
     const ImU32 ZAxisColor = IM_COL32(26, 64, 204, 255);
 
-    bXChanged = DrawAxisField("##X", OutValue.X, XAxisColor, AxisFieldWidthPx, false);
-    bYChanged = DrawAxisField("##Y", OutValue.Y, YAxisColor, AxisFieldWidthPx, true);
-    bZChanged = DrawAxisField("##Z", OutValue.Z, ZAxisColor, AxisFieldWidthPx, true);
+    bXChanged = DrawAxisField("##X", OutValue.X, XAxisColor, AxisFieldWidth, false);
+    bYChanged = DrawAxisField("##Y", OutValue.Y, YAxisColor, AxisFieldWidth, true);
+    bZChanged = DrawAxisField("##Z", OutValue.Z, ZAxisColor, AxisFieldWidth, true);
 
     if (bIsScaleControl && bUniformScaleEnabled)
     {
@@ -654,7 +654,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     const bool bHasRevertValue         = InRevertValue != nullptr;
     const bool bShouldShowRevertButton = bHasRevertValue && (OutValue != *InRevertValue);
 
-    const float RevertSlotSizePx = FrameHeightPx;
+    const float RevertSlotSize = FrameHeight;
     if (bShouldShowRevertButton)
     {
         if (ResetIconButton())
@@ -667,7 +667,7 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     }
     else
     {
-        ImGui::Dummy(ImVec2(RevertSlotSizePx, RevertSlotSizePx));
+        ImGui::Dummy(ImVec2(RevertSlotSize, RevertSlotSize));
     }
 
     ApplyHoveredRowBg(bRowHovered);
@@ -690,8 +690,8 @@ bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, floa
 
     ImGui::TableSetColumnIndex(0);
     
-    const float LabelIndentPx = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+    const float LabelIndent = 24.0f;
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
 
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(Label);
@@ -771,8 +771,8 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, co
 
     ImGui::TableSetColumnIndex(0);
 
-    const float LabelIndentPx = 24.0f;
-    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+    const float LabelIndent = 24.0f;
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
 
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(Label);
@@ -843,8 +843,8 @@ void EditorWidgets::DrawTextProperty(const CHAR* Label, const CHAR* ValueText)
     ImGui::TableSetColumnIndex(0);
 
     {
-        const float LabelIndentPx = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+        const float LabelIndent = 24.0f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(Label);
     }
@@ -876,8 +876,8 @@ void EditorWidgets::DrawReadOnlyFloat3Property(const CHAR* Label, const FVector3
 
     ImGui::TableSetColumnIndex(0);
     {
-        const float LabelIndentPx = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+        const float LabelIndent = 24.0f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(Label);
     }
@@ -914,8 +914,8 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
 
     ImGui::TableSetColumnIndex(0);
     {
-        const float LabelIndentPx = 24.0f;
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndentPx);
+        const float LabelIndent = 24.0f;
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
 
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(Label);
@@ -1067,7 +1067,7 @@ const CHAR* EditorHelpers::GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int
     return OutBuf[0] ? OutBuf : nullptr;
 }
 
-bool EditorWidgets::SearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
+bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
 {
     if (!InId || !InHint || !InOutBuffer || InBufferSize <= 0)
     {
@@ -1085,23 +1085,23 @@ bool EditorWidgets::SearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOu
     // -------------------------------------------------------------------------------------
     const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
 
-    const float IconGapPx   = 6.0f;
-    const float IconSizePx  = 16.0f;
+    const float IconGap     = 6.0f;
+    const float IconSize    = 16.0f;
     const float Rounding    = EditorStyleVars::InputFieldBorderRounding;
     const float BorderThick = EditorStyleVars::InputFieldBorderThickness;
-    const float TotalW      = (InWidth <= 0.0f) ? ImGui::GetContentRegionAvail().x : InWidth;
-    const float TotalH      = ImGui::GetFontSize() + BasePadding.y * 2.0f;
+    const float TotalWidth  = (InWidth <= 0.0f) ? ImGui::GetContentRegionAvail().x : InWidth;
+    const float TotalHeight = ImGui::GetFontSize() + BasePadding.y * 2.0f;
 
-    if (TotalW <= 1.0f)
+    if (TotalWidth <= 1.0f)
     {
-        ImGui::Dummy(ImVec2(1.0f, TotalH));
+        ImGui::Dummy(ImVec2(1.0f, TotalHeight));
         return false;
     }
 
-    const ImVec2 Start     = ImGui::GetCursorScreenPos();
-    const ImVec2 End       = ImVec2(Start.x + TotalW, Start.y + TotalH);
-    const ImRect FullRect  = ImRect(Start, End);
-    const float  IconAreaW = BasePadding.x + IconSizePx + IconGapPx;
+    const ImVec2 Start         = ImGui::GetCursorScreenPos();
+    const ImVec2 End           = ImVec2(Start.x + TotalWidth, Start.y + TotalHeight);
+    const ImRect FullRect      = ImRect(Start, End);
+    const float  IconAreaWidth = BasePadding.x + IconSize + IconGap;
 
     // -------------------------------------------------------------------------------------
     // Colors
@@ -1109,30 +1109,29 @@ bool EditorWidgets::SearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOu
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
-    const ImU32 BgColor            = IM_COL32(15, 15, 15, 255);
-    const ImU32 BorderColorNormal  = IM_COL32(51, 51, 51, 255);
-    const ImU32 BorderColorHovered = IM_COL32(74, 74, 74, 255);
-    const ImU32 BorderColorActive  = IM_COL32(9, 92, 176, 255);
+    const ImU32  BgColor            = IM_COL32(15, 15, 15, 255);
+    const ImU32  BorderColorNormal  = IM_COL32(51, 51, 51, 255);
+    const ImU32  BorderColorHovered = IM_COL32(74, 74, 74, 255);
+    const ImU32  BorderColorActive  = IM_COL32(9, 92, 176, 255);
+    const ImVec4 HintTextInactive   = ImVec4(76.0f / 255.0f, 76.0f / 255.0f, 76.0f / 255.0f, 1.0f);
+    const ImVec4 HintTextActive     = ImVec4(97.0f / 255.0f, 97.0f / 255.0f, 97.0f / 255.0f, 1.0f);
+    const ImVec4 InputTextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    const ImU32  IconInactive       = IM_COL32(192, 192, 192, 255);
+    const ImU32  IconActive         = IM_COL32(255, 255, 255, 255);
 
-    const ImVec4 HintTextInactive = ImVec4(76.0f / 255.0f, 76.0f / 255.0f, 76.0f / 255.0f, 1.0f);
-    const ImVec4 HintTextActive   = ImVec4(97.0f / 255.0f, 97.0f / 255.0f, 97.0f / 255.0f, 1.0f);
-    const ImVec4 InputTextColor   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-    const ImU32  IconInactive     = IM_COL32(192, 192, 192, 255);
-    const ImU32  IconActive       = IM_COL32(255, 255, 255, 255);
-
-    const ImGuiID PendingInputId = ImGui::GetID(InId);
-    const bool bInputWasActive   = ImGui::GetActiveID() == PendingInputId;
-    const bool bInputClicked     = ImGui::IsMouseHoveringRect(FullRect.Min, FullRect.Max, true) && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-    const bool bUseActiveHint    = bInputWasActive || bInputClicked;
-    const ImVec4 HintTextColor   = bUseActiveHint ? HintTextActive : HintTextInactive;
+    const ImGuiID PendingInputId  = ImGui::GetID(InId);
+    const bool    bInputWasActive = ImGui::GetActiveID() == PendingInputId;
+    const bool    bInputClicked   = ImGui::IsMouseHoveringRect(FullRect.Min, FullRect.Max, true) && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+    const bool    bUseActiveHint  = bInputWasActive || bInputClicked;
+    const ImVec4  HintTextColor   = bUseActiveHint ? HintTextActive : HintTextInactive;
     DrawList->AddRectFilled(Start, End, BgColor, Rounding);
 
     // -------------------------------------------------------------------------------------
     // Input
     // -------------------------------------------------------------------------------------
-    ImGui::SetNextItemWidth(TotalW);
+    ImGui::SetNextItemWidth(TotalWidth);
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(IconAreaW, BasePadding.y));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(IconAreaWidth, BasePadding.y));
     ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f);
 
@@ -1153,9 +1152,9 @@ bool EditorWidgets::SearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOu
     // Icon rect
     // -------------------------------------------------------------------------------------
 
-    const float  IconY    = Start.y + (TotalH - IconSizePx) * 0.5f;
+    const float  IconY    = Start.y + (TotalHeight - IconSize) * 0.5f;
     const ImVec2 IconMin  = ImVec2(Start.x + BasePadding.x, IconY);
-    const ImVec2 IconMax  = ImVec2(IconMin.x + IconSizePx, IconMin.y + IconSizePx);
+    const ImVec2 IconMax  = ImVec2(IconMin.x + IconSize, IconMin.y + IconSize);
     const ImRect IconRect = ImRect(IconMin, IconMax);
 
     const bool bHasText = InOutBuffer[0] != '\0';
@@ -1216,7 +1215,7 @@ bool EditorWidgets::SearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOu
         DrawList->AddRect(Start, End, BorderColor, Rounding, 0, BorderThick);
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(Start.x, Start.y + TotalH));
+    ImGui::SetCursorScreenPos(ImVec2(Start.x, Start.y + TotalHeight));
     return bChanged || bClearedThisFrame;
 }
 
@@ -1428,6 +1427,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
     // -----------------------------------------------------------------------------------------
     // Background
     // -----------------------------------------------------------------------------------------
+
     ImU32 Background = ImGui::GetColorU32(ImGuiCol_Header);
     if (bActive)
     {
@@ -1450,6 +1450,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
     // -----------------------------------------------------------------------------------------
     // Layout
     // -----------------------------------------------------------------------------------------
+    
     const float LeftInnerX  = RectMin.x + MenuIndentX;
     const float RightInnerX = RectMax.x - MenuIndentX;
 
@@ -1458,6 +1459,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
     // -----------------------------------------------------------------------------------------
     // Upper-case shortcut
     // -----------------------------------------------------------------------------------------
+
     const CHAR* ShortcutToDraw = Shortcut;
 
     TStaticArray<CHAR, 128> UpperShortcut{};
@@ -1567,7 +1569,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
     return bEnabled && bPressed;
 }
 
-void EditorWidgets::DrawMenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
+void EditorWidgets::MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder)
 {
     const bool bThisPopupOpen = ImGui::IsPopupOpen(PopupId, ImGuiPopupFlags_None);
     OutAnchor.bRequestPosition = false;
@@ -1759,9 +1761,9 @@ void EditorWidgets::EndPropertyTable()
     
     const float X0 = Storage->GetFloat(ImGui::GetID("##LastPropTableX"), 0.0f);
     const float Y0 = Storage->GetFloat(ImGui::GetID("##LastPropTableY"), 0.0f);
-    const float W  = Storage->GetFloat(ImGui::GetID("##LastPropTableW"), 0.0f);
+    const float TableWidth = Storage->GetFloat(ImGui::GetID("##LastPropTableW"), 0.0f);
 
-    if (W > 0.0f)
+    if (TableWidth > 0.0f)
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -1771,7 +1773,7 @@ void EditorWidgets::EndPropertyTable()
         const ImU32 Color     = ImGui::GetColorU32(ImGuiCol_TableBorderStrong);
         const float Thickness = 2.0f;
 
-        const float X1      = X0 + W;
+        const float X1      = X0 + TableWidth;
         const float YTop    = Math::Floor(Y0) + 0.5f;
         const float YBottom = Math::Ceil(BottomY) - 0.5f;
 
@@ -2042,37 +2044,37 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         {
             const float TopY              = CurrentWindow->InnerRect.Min.y;
             const float BottomY           = CurrentWindow->InnerRect.Max.y;
-            const float EdgeInsidePx      = 10.0f;
-            const float RampDistancePx    = 100.0f;
+            const float EdgeInside      = 10.0f;
+            const float RampDistance    = 100.0f;
             const float BaseSpeedPxPerSec = 20.0f;
             const float MaxSpeedPxPerSec  = 2000.0f;
 
             float ScrollDir         = 0.0f;
-            float DistPastTriggerPx = 0.0f;
+            float DistPastTrigger = 0.0f;
 
-            if (State.MousePos.y <= TopY + EdgeInsidePx)
+            if (State.MousePos.y <= TopY + EdgeInside)
             {
                 ScrollDir = -1.0f;
 
-                const float TriggerY = TopY + EdgeInsidePx;
-                DistPastTriggerPx = TriggerY - State.MousePos.y;
+                const float TriggerY = TopY + EdgeInside;
+                DistPastTrigger = TriggerY - State.MousePos.y;
             }
-            else if (State.MousePos.y >= BottomY - EdgeInsidePx)
+            else if (State.MousePos.y >= BottomY - EdgeInside)
             {
                 ScrollDir = 1.0f;
 
-                const float TriggerY = BottomY - EdgeInsidePx;
-                DistPastTriggerPx = State.MousePos.y - TriggerY;
+                const float TriggerY = BottomY - EdgeInside;
+                DistPastTrigger = State.MousePos.y - TriggerY;
             }
 
-            DistPastTriggerPx = Math::Max(0.0f, DistPastTriggerPx);
+            DistPastTrigger = Math::Max(0.0f, DistPastTrigger);
 
             const float ScrollMaxY = ImGui::GetScrollMaxY();
             if (ScrollDir != 0.0f && ScrollMaxY > 0.0f)
             {
                 const float DeltaTime = (State.DeltaTime > 0.0f) ? State.DeltaTime : (1.0f / 60.0f);
 
-                float T = DistPastTriggerPx / RampDistancePx;
+                float T = DistPastTrigger / RampDistance;
                 T = Math::Clamp(T, 0.0f, 1.0f);
 
                 T = T * T * (3.0f - 2.0f * T);
@@ -2080,10 +2082,10 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
                 const float Speed = BaseSpeedPxPerSec + (MaxSpeedPxPerSec - BaseSpeedPxPerSec) * T;
                 float Delta = ScrollDir * Speed * DeltaTime;
 
-                const float MinDeltaPx = 1.0f;
-                if (Delta > -MinDeltaPx && Delta < MinDeltaPx)
+                const float MinDelta = 1.0f;
+                if (Delta > -MinDelta && Delta < MinDelta)
                 {
-                    Delta = (ScrollDir < 0.0f) ? -MinDeltaPx : MinDeltaPx;
+                    Delta = (ScrollDir < 0.0f) ? -MinDelta : MinDelta;
                 }
 
                 float ScrollY = ImGui::GetScrollY();
@@ -2196,14 +2198,14 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
                     continue;
                 }
 
-                const float SpanW = ImGui::CalcTextSize(Text).x;
+                const float SpanWidth = ImGui::CalcTextSize(Text).x;
                 if (Span.bHasBackground)
                 {
-                    DrawList->AddRectFilled(ImVec2(CursorX, LineMin.y + 2.0f), ImVec2(CursorX + SpanW, LineMax.y - 2.0f), Span.BackgroundColor, 0.0f);
+                    DrawList->AddRectFilled(ImVec2(CursorX, LineMin.y + 2.0f), ImVec2(CursorX + SpanWidth, LineMax.y - 2.0f), Span.BackgroundColor, 0.0f);
                 }
 
                 DrawList->AddText(ImVec2(CursorX, LineMin.y), Span.TextColor, Text);
-                CursorX += SpanW;
+                CursorX += SpanWidth;
             }
         }
     }
@@ -2221,7 +2223,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
     ImGui::EndChild();
 }
 
-bool EditorWidgets::ButtonCenteredOnLine(const CHAR* Label, float Alignment)
+bool EditorWidgets::DrawButtonCenteredOnLine(const CHAR* Label, float Alignment)
 {
     ImGuiStyle& Style = ImGui::GetStyle();
 

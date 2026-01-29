@@ -99,8 +99,8 @@ void FEditorFooterWidget::Draw()
         const ImVec4 InputTextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         const ImVec2 InputStart = ImGui::GetCursorScreenPos();
-        const float  InputH     = ImGui::GetFontSize() + BasePadding.y * 2.0f;
-        const ImVec2 InputEnd   = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputH);
+        const float  InputHeight = ImGui::GetFontSize() + BasePadding.y * 2.0f;
+        const ImVec2 InputEnd    = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputHeight);
 
         const ImGuiID ConsoleInputId  = ImGui::GetID("##ConsoleInput");
         const bool    bInputWasActive = ImGui::GetActiveID() == ConsoleInputId;

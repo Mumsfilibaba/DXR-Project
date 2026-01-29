@@ -406,6 +406,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
     // -----------------------------------------------------------------------------------------
 
     TStaticArray<CHAR, 256> TrimmedQueryBuf{};
+
     const CHAR* TrimmedQuery        = EditorHelpers::GetTrimmedQuery(FolderSearchBuffer.Data(), TrimmedQueryBuf.Data(), static_cast<int32>(TrimmedQueryBuf.Size()));
     const bool  bFolderSearchActive = TrimmedQuery && *TrimmedQuery != 0;
 
@@ -442,7 +443,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
             const float CenterY      = Math::Max(0.0f, (PaddedHeight - InputHeight) * 0.5f);
 
             ImGui::SetCursorPos(ImVec2(InnerPadding, InnerPadding + CenterY));
-            EditorWidgets::SearchField("##CB_FolderSearch", "Search Paths", FolderSearchBuffer.Data(), FolderSearchBuffer.Size(), PaddedWidth, true);
+            EditorWidgets::DrawSearchField("##CB_FolderSearch", "Search Paths", FolderSearchBuffer.Data(), FolderSearchBuffer.Size(), PaddedWidth, true);
 
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
@@ -496,6 +497,7 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
                 if (SelectedFolderPath.Size() > 0)
                 {
                     FolderSelectionPaths.Add(SelectedFolderPath);
+
                     FolderSelectionAnchor       = SelectedFolderPath;
                     bFolderSelectionAnchorValid = true;
                 }
@@ -727,7 +729,6 @@ void FEditorContentBrowserWidget::DrawContentPanel()
     ImGui::PopStyleColor(5);
 }
 
-
 void FEditorContentBrowserWidget::DrawItemTooltip(const FileInfo& InItem)
 {
     const ImVec4 TooltipBg     = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
@@ -873,11 +874,11 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         const CHAR* Text       = InText ? InText : "";
         const CHAR* FilterText = (InFilterText && *InFilterText != 0) ? InFilterText : nullptr;
 
-        const ImVec2 FullSize = ImGui::CalcTextSize(Text);
-        const float  AvailW   = Math::Max(1.0f, InLabelMax.x - InLabelMin.x);
-        const float  X        = InLabelMin.x + Math::Max(0.0f, (AvailW - FullSize.x) * 0.5f);
-        const float  Y        = InLabelMin.y;
-        const ImVec2 TextStart = ImVec2(X, Y);
+        const ImVec2 FullSize       = ImGui::CalcTextSize(Text);
+        const float  AvailableWidth = Math::Max(1.0f, InLabelMax.x - InLabelMin.x);
+        const float  X              = InLabelMin.x + Math::Max(0.0f, (AvailableWidth - FullSize.x) * 0.5f);
+        const float  Y              = InLabelMin.y;
+        const ImVec2 TextStart      = ImVec2(X, Y);
 
         InDrawList->PushClipRect(InLabelMin, InLabelMax, true);
         EditorWidgets::DrawTextWithSearchHighlight(InDrawList, TextStart, Text, FilterText, InBaseTextU32);
@@ -915,8 +916,11 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     if (bDrawGrid)
     {
         TArray<FileInfo>& Items = *ItemsPtr;
+        
         const ImGuiIO& IO = ImGui::GetIO();
+        
         TStaticArray<CHAR, 256> AssetQueryBuf{};
+        
         const CHAR* AssetQuery = EditorHelpers::GetTrimmedQuery(AssetSearchBuffer.Data(), AssetQueryBuf.Data(), static_cast<int32>(AssetQueryBuf.Size()));
         if (RenamingItemIndex >= 0 && !ArePathsEqual(RenamingItemParentPath, SelectedFolderPath))
         {
@@ -1003,8 +1007,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             const bool bSelected    = IsItemSelected(i);
             const bool bWasSelected = bSelected;
             const bool bIsFolder    = Item.bIsFolder;
-            bool       bIsRenaming  = IsRenamingItem(SelectedFolderPath, i);
-
+            
+            bool bIsRenaming = IsRenamingItem(SelectedFolderPath, i);
             if (bIsRenaming && !bSelected)
             {
                 CommitItemRename();
@@ -1015,9 +1019,9 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             const ImVec2 TileEnd   = ImVec2(TileStart.x + TileWidth, TileStart.y + TileHeight);
             const ImVec2 LabelMin  = ImVec2(TileStart.x + 8.0f, TileEnd.y - LabelAreaHeight + 6.0f);
             const ImVec2 LabelMax  = ImVec2(TileEnd.x - 8.0f, TileEnd.y - 6.0f);
+            const ImVec2 MousePos  = IO.MousePos;
 
-            const ImVec2 MousePos     = IO.MousePos;
-            const bool   bMouseInLabel = (MousePos.x >= LabelMin.x && MousePos.x <= LabelMax.x && MousePos.y >= LabelMin.y && MousePos.y <= LabelMax.y);
+            const bool bMouseInLabel = (MousePos.x >= LabelMin.x && MousePos.x <= LabelMax.x && MousePos.y >= LabelMin.y && MousePos.y <= LabelMax.y);
 
             ImGui::InvisibleButton("##TileBtn", ImVec2(TileWidth, TileHeight));
 
@@ -1068,7 +1072,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             }
 
             ImDrawList* WindowDrawList = ImGui::GetWindowDrawList();
-            const ImU32 BackGround     = bIsRenaming ? TileRenameColor : (bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor));
+            
+            const ImU32 BackGround = bIsRenaming ? TileRenameColor : (bSelected ? TileSelectedColor : (bHovered ? TileHoverColor : TileIdleColor));
 
             // -----------------------------------------------------------------------------
             // Tile shadow
@@ -1095,7 +1100,6 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             WindowDrawList->AddRectFilled(TileStart, TileEnd, BackGround, CornerRounding);
 
             ImTextureID Icon = GetItemIcon(Item);
-
             if (Icon)
             {
                 const float  IconAreaHeight = TileHeight - LabelAreaHeight;
@@ -1154,7 +1158,6 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     const bool bInputHovered  = ImGui::IsItemHovered();
 
                     const ImU32 BorderColor = bActive ? BorderActive : (bInputHovered ? BorderHovered : BorderNormal);
-
                     WindowDrawList->AddRect(ItemMin, ItemMax, BorderColor, 4.0f, 0, 2.0f);
                 }
 
@@ -1173,8 +1176,10 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 const CHAR* FilterText = (AssetQuery && *AssetQuery != 0) ? AssetQuery : nullptr;
 
                 ImGui::PushStyleColor(ImGuiCol_Text, NameTextColor);
+                
                 const ImU32 BaseTextU32 = ImGui::GetColorU32(ImGuiCol_Text);
                 DrawLabelWithSearchHighlight(WindowDrawList, LabelMin, LabelMax, Item.Name.IsEmpty() ? "" : *Item.Name, FilterText, BaseTextU32);
+                
                 ImGui::PopStyleColor();
             }
             
@@ -1211,9 +1216,9 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                 ImGui::SetDragDropPayload("CB_MOVE_ITEM", &Payload, sizeof(FCBDndPayload));
 
-                bDragPreviewActive   = true;
-                DragPreviewIcon      = PrimaryIcon ? PrimaryIcon : Icon;
-                bDragPreviewIsFolder = PrimaryItem.bIsFolder;
+                bDragPreviewActive        = true;
+                DragPreviewIcon           = PrimaryIcon ? PrimaryIcon : Icon;
+                bDragPreviewIsFolder      = PrimaryItem.bIsFolder;
                 DragPreviewSelectionCount = Math::Max(1, SelectedItemIndices.Size());
 
                 const CHAR* PrimaryName = PrimaryItem.Name.IsEmpty() ? "" : *PrimaryItem.Name;
@@ -1230,8 +1235,9 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(ActivePayload->Data);
                     if (Data)
                     {
-                        TArray<int32> SourceParentPath;
                         const FileInfo* SourceParentFolder = nullptr;
+
+                        TArray<int32> SourceParentPath;
                         TArray<int32> SourceIndices;
                         TArray<TArray<int32>> SourceFolderPaths;
                         BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
@@ -1240,6 +1246,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                         TArray<int32> TargetPath = SelectedFolderPath;
                         TargetPath.Add(i);
+
                         UpdateDragPreviewNameConflicts(SourceFolderPaths, SourceParentFolder, &SourceIndices, TargetPath);
                     }
                 }
@@ -1274,8 +1281,9 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     {
                         if (const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(Payload->Data))
                         {
-                            TArray<int32> SourceParentPath;
                             const FileInfo* SourceParentFolder = nullptr;
+
+                            TArray<int32> SourceParentPath;
                             TArray<int32> SourceIndices;
                             TArray<TArray<int32>> SourceFolderPaths;
                             BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
@@ -1285,6 +1293,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                             TArray<int32> TargetPath = SelectedFolderPath;
                             TargetPath.Add(i);
+                            
                             UpdateDragPreviewNameConflicts(SourceFolderPaths, SourceParentFolder, &SourceIndices, TargetPath);
 
                             if (Payload->IsDelivery())
@@ -1414,8 +1423,10 @@ void FEditorContentBrowserWidget::DrawContentGrid()
     if (bPendingMove)
     {
         MoveItemsToFolder(PendingMoveSourceParentPath, PendingMoveSourceIndices, PendingMoveTargetFolderPath);
-        bPendingMove      = false;
+        
+        bPendingMove = false;
         PendingMoveSourceIndices.Clear();
+        
         ClearItemSelection();
     }
 
@@ -1452,8 +1463,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 }
 
                 const FileInfo* PrimaryFolder = GetFolderFromPath(PrimaryPath);
+                
                 const CHAR* PrimaryName = (PrimaryFolder && !PrimaryFolder->Name.IsEmpty()) ? *PrimaryFolder->Name : "";
-
                 if (PrimaryName[0] != 0)
                 {
                     bDragPreviewActive        = true;
@@ -1487,11 +1498,10 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         const bool bSingleFile         = bSingleSelection && !bDragPreviewIsFolder;
         const bool bSingleSelfMove     = bSingleFolder && bDragPreviewInvalidSelfMove;
         const bool bSingleFileConflict = bSingleFile && !bHasLegalMove && bHasIllegalMoves;
-
-        const bool bStatusForbidden   = bHasFolderHoverTarget && !bHasLegalMove;
-        const bool bStatusPartial     = bHasFolderHoverTarget && bHasLegalMove && bHasIllegalMoves;
-        const bool bStatusAllowed     = bHasFolderHoverTarget && bHasLegalMove && !bHasIllegalMoves;
-        const bool bShowStatusIcon    = bHasFolderHoverTarget;
+        const bool bStatusForbidden    = bHasFolderHoverTarget && !bHasLegalMove;
+        const bool bStatusPartial      = bHasFolderHoverTarget && bHasLegalMove && bHasIllegalMoves;
+        const bool bStatusAllowed      = bHasFolderHoverTarget && bHasLegalMove && !bHasIllegalMoves;
+        const bool bShowStatusIcon     = bHasFolderHoverTarget;
 
         const ImVec4 PreviewBg     = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
         const ImVec4 PreviewBorder = ImVec4(48.0f / 255.0f, 48.0f / 255.0f, 48.0f / 255.0f, 1.0f);
@@ -1533,14 +1543,15 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 FCString::Snprintf(CountBuf.Data(), static_cast<int32>(CountBuf.Size()), "+%d", DragPreviewSelectionCount);
 
                 const ImVec2 TextSize = ImGui::CalcTextSize(CountBuf.Data());
+
                 constexpr float LabelPadX = 6.0f;
                 constexpr float LabelPadY = 3.0f;
 
                 ImVec2 LabelMin = ImVec2(IconMin.x + 1.0f, IconMax.y - TextSize.y - LabelPadY * 2.0f - 2.0f);
                 ImVec2 LabelMax = ImVec2(LabelMin.x + TextSize.x + LabelPadX * 2.0f, LabelMin.y + TextSize.y + LabelPadY * 2.0f);
 
-                const ImU32 LabelBg     = IM_COL32(24, 24, 24, 255);
-                const ImU32 LabelText   = IM_COL32(230, 230, 230, 255);
+                const ImU32 LabelBg   = IM_COL32(24, 24, 24, 255);
+                const ImU32 LabelText = IM_COL32(230, 230, 230, 255);
 
                 PreviewDrawList->AddRectFilled(LabelMin, LabelMax, LabelBg, 4.0f);
                 PreviewDrawList->AddText(ImVec2(LabelMin.x + LabelPadX, LabelMin.y + LabelPadY), LabelText, CountBuf.Data());
@@ -1568,8 +1579,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 {
                     TStaticArray<CHAR, 256> Line1{};
                     TStaticArray<CHAR, 256> Line2{};
+                    
                     int32 LineCount = 0;
-
                     if (bHasFolderHoverTarget)
                     {
                         if (!bHasLegalMove && bHasIllegalMoves && bDragPreviewHasNameConflict)
@@ -1636,8 +1647,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
 
                     if (LineCount > 0)
                     {
-                        const float TextHeight  = ImGui::GetTextLineHeight();
-                        const float LineSpacing = ImGui::GetStyle().ItemSpacing.y;
+                        const float TextHeight      = ImGui::GetTextLineHeight();
+                        const float LineSpacing     = ImGui::GetStyle().ItemSpacing.y;
                         const float TextBlockHeight = (LineCount * TextHeight) + ((LineCount - 1) * LineSpacing);
 
                         float MaxLineWidth = 0.0f;
@@ -1651,7 +1662,8 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                         }
 
                         const ImTextureID StatusIcon = bStatusForbidden ? EditorIcons::ForbiddenIcon : (bShowStatusIcon ? EditorIcons::CircledCheckmarkIcon : nullptr);
-                        const bool bHasStatusIcon = bShowStatusIcon && StatusIcon;
+                        
+                        const bool  bHasStatusIcon = bShowStatusIcon && StatusIcon;
                         const float StatusIconSize = TextHeight;
                         const float StatusIconGap  = 6.0f;
                         const float StatusIndent   = bHasStatusIcon ? (StatusIconSize + StatusIconGap) : 0.0f;
@@ -2003,7 +2015,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderArea(const ImVec4& InBackGrou
 
             ImGui::SetCursorScreenPos(ImVec2(RowMin.x + InSidePadding, InputY));
 
-            EditorWidgets::SearchField("##CB_AssetSearch", "Search Content", AssetSearchBuffer.Data(), AssetSearchBuffer.Size(), SearchWidth, true);
+            EditorWidgets::DrawSearchField("##CB_AssetSearch", "Search Content", AssetSearchBuffer.Data(), AssetSearchBuffer.Size(), SearchWidth, true);
 
             ImGui::SetCursorScreenPos(ImVec2(RowMin.x, RowMin.y));
         }
@@ -2471,9 +2483,10 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
                 const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(ActivePayload->Data);
                 if (Data)
                 {
-                    TArray<int32> SourceParentPath;
                     const FileInfo* SourceParentFolder = nullptr;
-                    TArray<int32> SourceIndices;
+                    
+                    TArray<int32>         SourceParentPath;
+                    TArray<int32>         SourceIndices;
                     TArray<TArray<int32>> SourceFolderPaths;
                     BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
@@ -2502,9 +2515,10 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         {
             if (const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(Payload->Data))
             {
-                TArray<int32> SourceParentPath;
                 const FileInfo* SourceParentFolder = nullptr;
-                TArray<int32> SourceIndices;
+                
+                TArray<int32>         SourceParentPath;
+                TArray<int32>         SourceIndices;
                 TArray<TArray<int32>> SourceFolderPaths;
                 BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
@@ -2627,7 +2641,6 @@ void FEditorContentBrowserWidget::CommitItemRename()
     if (ParentFolder && ParentFolder->FolderContents.IsValidIndex(RenamingItemIndex))
     {
         FileInfo& Item = ParentFolder->FolderContents[RenamingItemIndex];
-
         if (Item.bIsFolder || ItemRenameExtension[0] == 0)
         {
             Item.Name = FString(ItemRenameBuffer.Data());
@@ -2794,6 +2807,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
     }
 
     TArray<int32> TargetParentPath = InTargetFolderPath;
+
     const int32 TargetFolderIndexOriginal = TargetParentPath.LastElement();
     TargetParentPath.Pop();
 
@@ -2863,9 +2877,9 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
 
     for (int32 Index = 0; Index < UniqueIndices.Size(); ++Index)
     {
-        const int32     SourceIndex = UniqueIndices[Index];
-        const FileInfo& SourceItem  = SourceParent->FolderContents[SourceIndex];
-
+        const int32 SourceIndex = UniqueIndices[Index];
+        
+        const FileInfo& SourceItem = SourceParent->FolderContents[SourceIndex];
         if (SourceItem.bIsFolder)
         {
             TArray<int32> SourceFullPath = InSourceParentPath;
@@ -2922,6 +2936,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
     }
 
     bool bDidMove = false;
+
     TArray<int32> IndicesToRemove;
     IndicesToRemove.Reserve(FilteredIndices.Size());
 
@@ -3686,6 +3701,7 @@ void FEditorContentBrowserWidget::UpdateDragPreviewNameConflicts(const TArray<TA
     for (int32 Index = 0; Index < SourceFolderPaths.Size(); ++Index)
     {
         const TArray<int32>& SourcePath = SourceFolderPaths[Index];
+
         const FileInfo* SourceFolder = GetFolderFromPath(SourcePath);
         if (!SourceFolder || !SourceFolder->bIsFolder)
         {
@@ -3706,8 +3722,10 @@ void FEditorContentBrowserWidget::UpdateDragPreviewNameConflicts(const TArray<TA
             bCanMoveFolder = HasMergeableContent(*SourceFolder, TargetFolder->FolderContents[TargetFolderIndex]);
 
             int32 MergeConflictCount = 0;
+            
             TStaticArray<CHAR, 256> MergeFirstName{};
             AccumulateMergeFileConflicts(*SourceFolder, TargetFolder->FolderContents[TargetFolderIndex], MergeConflictCount, MergeFirstName);
+            
             if (MergeConflictCount > 0)
             {
                 if (ConflictCount == 0)
@@ -3753,8 +3771,10 @@ void FEditorContentBrowserWidget::UpdateDragPreviewNameConflicts(const TArray<TA
                 bCanMoveFolder = HasMergeableContent(Item, TargetFolder->FolderContents[TargetFolderIndex]);
 
                 int32 MergeConflictCount = 0;
+                
                 TStaticArray<CHAR, 256> MergeFirstName{};
                 AccumulateMergeFileConflicts(Item, TargetFolder->FolderContents[TargetFolderIndex], MergeConflictCount, MergeFirstName);
+                
                 if (MergeConflictCount > 0)
                 {
                     if (ConflictCount == 0)

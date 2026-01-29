@@ -243,7 +243,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // File
         {
             PopupAnchor FileAnchor;
-            EditorWidgets::DrawMenuButton("File", PopupFile, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, FileAnchor);
+            EditorWidgets::MenuButton("File", PopupFile, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, FileAnchor);
 
             if (EditorWidgets::BeginMenuPopup(PopupFile, FileAnchor))
             {
@@ -265,7 +265,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Edit
         {
             PopupAnchor EditAnchor;
-            EditorWidgets::DrawMenuButton("Edit", PopupEdit, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, EditAnchor);
+            EditorWidgets::MenuButton("Edit", PopupEdit, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, EditAnchor);
 
             if (EditorWidgets::BeginMenuPopup(PopupEdit, EditAnchor))
             {
@@ -283,7 +283,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Windows
         {
             PopupAnchor WindowsAnchor;
-            EditorWidgets::DrawMenuButton("Windows", PopupWindows, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
+            EditorWidgets::MenuButton("Windows", PopupWindows, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, WindowsAnchor);
 
             if (EditorWidgets::BeginMenuPopup(PopupWindows, WindowsAnchor))
             {
@@ -368,7 +368,7 @@ void FEditorDockspaceWidget::DrawMenuBar()
         // Help
         {
             PopupAnchor HelpAnchor;
-            EditorWidgets::DrawMenuButton("Help", PopupHelp, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
+            EditorWidgets::MenuButton("Help", PopupHelp, bAnyPopupOpen, EditorStyleVars::MainMenuBarHeight, HelpAnchor);
 
             if (EditorWidgets::BeginMenuPopup(PopupHelp, HelpAnchor))
             {

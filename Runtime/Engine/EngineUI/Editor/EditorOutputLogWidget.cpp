@@ -89,16 +89,16 @@ void FEditorOutputLogWidget::Draw()
         const float OuterPadTop      = 10.0f;
         const float OuterPadBottom   = 4.0f;
         const float GapBetweenPanels = 6.0f;
-        const float OutputRoundingPx = 4.0f;
-        const float HeaderRowH       = ImGui::GetFrameHeight();
-        const float HeaderHeight     = HeaderRowH + GapBetweenPanels;
+        const float OutputRounding = 4.0f;
+        const float HeaderRowHeight  = ImGui::GetFrameHeight();
+        const float HeaderHeight     = HeaderRowHeight + GapBetweenPanels;
 
-        const ImVec2 ContentMin = ImGui::GetWindowContentRegionMin();
-        const ImVec2 ContentMax = ImGui::GetWindowContentRegionMax();
-        const float  ContentW   = (ContentMax.x - ContentMin.x);
-        const float  ContentH   = (ContentMax.y - ContentMin.y);
+        const ImVec2 ContentMin    = ImGui::GetWindowContentRegionMin();
+        const ImVec2 ContentMax    = ImGui::GetWindowContentRegionMax();
+        const float  ContentWidth  = (ContentMax.x - ContentMin.x);
+        const float  ContentHeight = (ContentMax.y - ContentMin.y);
 
-        float ChildWidth = ContentW - OuterPadX * 2.0f;
+        float ChildWidth = ContentWidth - OuterPadX * 2.0f;
         if (ChildWidth < 1.0f)
         {
             ChildWidth = 1.0f;
@@ -131,7 +131,7 @@ void FEditorOutputLogWidget::Draw()
 
         ImGui::SetCursorPos(ImVec2(OutputX, OutputY));
 
-        float OutputHeight = (ContentMin.y + ContentH) - OutputY - OuterPadBottom;
+        float OutputHeight = (ContentMin.y + ContentHeight) - OutputY - OuterPadBottom;
         if (OutputHeight < 1.0f)
         {
             OutputHeight = 1.0f;
@@ -144,7 +144,7 @@ void FEditorOutputLogWidget::Draw()
         const ImU32  OutputBgU32 = IM_COL32(26, 26, 26, 255);
         const ImVec4 OutputBg    = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
 
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, OutputRoundingPx);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, OutputRounding);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::PushStyleColor(ImGuiCol_ChildBg, OutputBgU32);
         ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, OutputBg);
@@ -201,7 +201,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     const float MaxSearchWidth = AvailableX * 0.25f;
 
     float SearchWidth = MaxSearchWidth;
-    EditorWidgets::SearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
+    EditorWidgets::DrawSearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
 
     float SearchBarHeight = ImGui::GetItemRectSize().y;
     if (SearchBarHeight <= 0.0f)
@@ -215,11 +215,11 @@ void FEditorOutputLogWidget::DrawFilterBar()
     // Filter button
     // -------------------------------------------------------------------------------------------
 
-    const float IconSizePx       = 18.0f;
-    const float ArrowIconSizePx  = 14.0f;
-    const float IconTextGap      = 6.0f;
-    const float TextArrowGap     = 6.0f;
-    const float ButtonRoundingPx = 6.0f;
+    const float IconSize       = 18.0f;
+    const float ArrowIconSize  = 14.0f;
+    const float IconTextGap    = 6.0f;
+    const float TextArrowGap   = 6.0f;
+    const float ButtonRounding = 6.0f;
 
     const auto DrawFilterButton = [&]() -> bool
     {
@@ -229,7 +229,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
 
         const ImVec2 TextSize     = ImGui::CalcTextSize(Label);
         const float  ButtonHeight = SearchBarHeight;
-        const float  ButtonWidth  = IconSizePx + IconTextGap + TextSize.x + TextArrowGap + ArrowIconSizePx + Style.FramePadding.x * 2.0f;
+        const float  ButtonWidth  = IconSize + IconTextGap + TextSize.x + TextArrowGap + ArrowIconSize + Style.FramePadding.x * 2.0f;
         const ImVec2 ButtonSize   = ImVec2(ButtonWidth, ButtonHeight);
 
         const bool bPressed = ImGui::InvisibleButton("##FilterButton", ButtonSize);
@@ -248,11 +248,11 @@ void FEditorOutputLogWidget::DrawFilterBar()
         const ImU32 White   = IM_COL32(255, 255, 255, Alpha255);
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRectFilled(Min, Max, BgColor, ButtonRoundingPx);
+        DrawList->AddRectFilled(Min, Max, BgColor, ButtonRounding);
 
-        const float  LeftIconY   = Min.y + (ButtonHeight - IconSizePx) * 0.5f;
+        const float  LeftIconY   = Min.y + (ButtonHeight - IconSize) * 0.5f;
         const ImVec2 LeftIconMin = ImVec2(Min.x + Style.FramePadding.x, LeftIconY);
-        const ImVec2 LeftIconMax = ImVec2(LeftIconMin.x + IconSizePx, LeftIconMin.y + IconSizePx);
+        const ImVec2 LeftIconMax = ImVec2(LeftIconMin.x + IconSize, LeftIconMin.y + IconSize);
 
         if (EditorIcons::FilterIcon)
         {
@@ -265,9 +265,9 @@ void FEditorOutputLogWidget::DrawFilterBar()
         DrawList->AddText(EditorFonts::SegoeUI_22, EditorFonts::SegoeUI_22->FontSize, ImVec2(TextX, TextY), White, Label);
 
         const float  RightIconX   = TextX + TextSize.x + TextArrowGap;
-        const float  RightIconY   = Min.y + (ButtonHeight - ArrowIconSizePx) * 0.5f;
+        const float  RightIconY   = Min.y + (ButtonHeight - ArrowIconSize) * 0.5f;
         const ImVec2 RightIconMin = ImVec2(RightIconX, RightIconY);
-        const ImVec2 RightIconMax = ImVec2(RightIconMin.x + ArrowIconSizePx, RightIconMin.y + ArrowIconSizePx);
+        const ImVec2 RightIconMax = ImVec2(RightIconMin.x + ArrowIconSize, RightIconMin.y + ArrowIconSize);
 
         if (EditorIcons::DownArrowIcon)
         {
