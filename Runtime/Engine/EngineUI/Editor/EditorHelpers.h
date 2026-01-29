@@ -192,6 +192,8 @@ struct EditorIcons
     static ImTextureID DocumentIcon;
     static ImTextureID DocumentSmallIcon;
     static ImTextureID CheckmarkIcon;
+    static ImTextureID ForbiddenIcon;
+    static ImTextureID CircledCheckmarkIcon;
     static ImTextureID NextIcon;
     static ImTextureID PreviousIcon;
     static ImTextureID CloseIcon;

@@ -1121,7 +1121,6 @@ bool EditorWidgets::EditorSearchField(const CHAR* InId, const CHAR* InHint, CHAR
     if (bHasText && EditorIcons::CloseIcon)
     {
         const bool bIconHovered = ImGui::IsMouseHoveringRect(IconRect.Min, IconRect.Max, true);
-        const bool bIconHeld    = bIconHovered && ImGui::IsMouseDown(ImGuiMouseButton_Left);
         const bool bIconPressed = bIconHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
 
         if (bIconHovered)
@@ -1328,7 +1327,7 @@ bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool
     if (bDrawBorder && bHovered)
     {
         const ImVec4 HoveredColor = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
-        const ImU32  BorderColor = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
+        const ImU32  BorderColor  = EditorHelpers::MakeBrighterColorU32(HoveredColor, 0.20f);
         DrawList->AddRect(RectMin, RectMax, BorderColor, 0.0f, 0, 1.0f);
     }
 
@@ -1395,6 +1394,7 @@ bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool
     // -----------------------------------------------------------------------------------------
     // Draw shortcut text
     // -----------------------------------------------------------------------------------------
+
     if (bDrawShortcut)
     {
         const float ShortcutY = RectMin.y + (RowHeight - ShortcutSize.y) * 0.5f + OpticalBiasY;
@@ -1404,6 +1404,7 @@ bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool
     // -----------------------------------------------------------------------------------------
     // Draw checkmark
     // -----------------------------------------------------------------------------------------
+
     if (bDrawCheckMark)
     {
         if (EditorIcons::CheckmarkIcon)
@@ -1426,6 +1427,7 @@ bool EditorWidgets::EditorMenuItem(const CHAR* Label, const CHAR* Shortcut, bool
     // -----------------------------------------------------------------------------------------
     // Draw label
     // -----------------------------------------------------------------------------------------
+
     const float LabelX = LeftInnerX + PaddingX + IconGutterX;
 
     float ClipMaxX = RightInnerX - PaddingX;
@@ -2151,6 +2153,8 @@ struct EditorIconsInternal
     inline static EditorIcon DocumentIcon        = EditorIcon();
     inline static EditorIcon DocumentSmallIcon   = EditorIcon();
     inline static EditorIcon CheckmarkIcon       = EditorIcon();
+    inline static EditorIcon ForbiddenIcon       = EditorIcon();
+    inline static EditorIcon CircledCheckmarkIcon = EditorIcon();
     inline static EditorIcon NextIcon            = EditorIcon();
     inline static EditorIcon PreviousIcon        = EditorIcon();
     inline static EditorIcon CloseIcon           = EditorIcon();
@@ -2171,6 +2175,8 @@ ImTextureID EditorIcons::FolderOpenSmallIcon = nullptr;
 ImTextureID EditorIcons::DocumentIcon        = nullptr;
 ImTextureID EditorIcons::DocumentSmallIcon   = nullptr;
 ImTextureID EditorIcons::CheckmarkIcon       = nullptr;
+ImTextureID EditorIcons::ForbiddenIcon       = nullptr;
+ImTextureID EditorIcons::CircledCheckmarkIcon = nullptr;
 ImTextureID EditorIcons::NextIcon            = nullptr;
 ImTextureID EditorIcons::PreviousIcon        = nullptr;
 ImTextureID EditorIcons::CloseIcon           = nullptr;
@@ -2258,6 +2264,8 @@ bool EditorIcons::Initialize()
     bResult &= LoadEditorIcon("Editor/Icons/Document.png", DocumentIcon, EditorIconsInternal::DocumentIcon);
     bResult &= LoadEditorIcon("Editor/Icons/DocumentSmall.png", DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Checkmark.png", CheckmarkIcon, EditorIconsInternal::CheckmarkIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/Forbidden.png", ForbiddenIcon, EditorIconsInternal::ForbiddenIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/CircledCheckmark.png", CircledCheckmarkIcon, EditorIconsInternal::CircledCheckmarkIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Next.png", NextIcon, EditorIconsInternal::NextIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Previous.png", PreviousIcon, EditorIconsInternal::PreviousIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Close.png", CloseIcon, EditorIconsInternal::CloseIcon);
@@ -2282,6 +2290,8 @@ void EditorIcons::Release()
     UnloadEditorIcon(DocumentIcon, EditorIconsInternal::DocumentIcon);
     UnloadEditorIcon(DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
     UnloadEditorIcon(CheckmarkIcon, EditorIconsInternal::CheckmarkIcon);
+    UnloadEditorIcon(ForbiddenIcon, EditorIconsInternal::ForbiddenIcon);
+    UnloadEditorIcon(CircledCheckmarkIcon, EditorIconsInternal::CircledCheckmarkIcon);
     UnloadEditorIcon(NextIcon, EditorIconsInternal::NextIcon);
     UnloadEditorIcon(PreviousIcon, EditorIconsInternal::PreviousIcon);
     UnloadEditorIcon(CloseIcon, EditorIconsInternal::CloseIcon);

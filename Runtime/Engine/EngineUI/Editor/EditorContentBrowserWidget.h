@@ -33,6 +33,27 @@ private:
         TArray<FileInfo> FolderContents;
     };
 
+    struct FFolderMoveRequest
+    {
+        TArray<int32> SourceParentPath;
+        TArray<int32> SourceIndices;
+        TArray<int32> TargetFolderPath;
+    };
+
+    struct FCBDndPayload
+    {
+        int32 Depth;
+        TStaticArray<int32, 32> Indices;
+        int32 SourceIndex;
+        bool  bIsFolder;
+    };
+
+    struct FCBFolderDndPayload
+    {
+        int32 Depth;
+        TStaticArray<int32, 32> Indices;
+    };
+
 private:
     void DrawLayoutTable();
     void DrawFolderPanel();
@@ -73,53 +94,90 @@ private:
     bool HasChildFolders(const FileInfo& InFolder) const;
 
     FileInfo* GetFolderFromPath(const TArray<int32>& InPath);
+    const FileInfo* GetFolderFromPath(const TArray<int32>& InPath) const;
     void BuildFolderPathString(const TArray<int32>& InPath, CHAR* OutBuf, int32 OutBufSize) const;
     void NavigateToFolderPath(const TArray<int32>& InNewPath, bool bAddToHistory);
     void NavigateBack();
     void NavigateForward();
     bool ArePathsEqual(const TArray<int32>& PathA, const TArray<int32>& PathB) const;
+    bool IsPathPrefix(const TArray<int32>& Prefix, const TArray<int32>& Full) const;
+    int32 FindPathIndex(const TArray<TArray<int32>>& Paths, const TArray<int32>& Path) const;
+    bool ContainsPath(const TArray<TArray<int32>>& Paths, const TArray<int32>& Path) const;
+    void AddUniquePath(TArray<TArray<int32>>& Paths, const TArray<int32>& Path) const;
+    void RemovePath(TArray<TArray<int32>>& Paths, const TArray<int32>& Path) const;
+    TArray<TArray<int32>> BuildUniquePaths(const TArray<TArray<int32>>& InPaths) const;
+    TArray<TArray<int32>> RemoveRootPaths(const TArray<TArray<int32>>& InPaths) const;
+    TArray<TArray<int32>> FilterTopLevelPaths(const TArray<TArray<int32>>& InPaths) const;
+    TArray<TArray<int32>> GetFilteredFolderSelectionPaths() const;
+    bool IsTargetDescendantOfFolderSelection(const TArray<int32>& TargetPath) const;
+    void QueueFolderMoveRequests(const TArray<TArray<int32>>& DragPaths, const TArray<int32>& TargetPath);
+    void BuildDragSourceSelection(const FCBDndPayload& Data, TArray<int32>& OutSourceParentPath, const FileInfo*& OutSourceParentFolder, TArray<int32>& OutSourceIndices, TArray<TArray<int32>>& OutSourceFolderPaths) const;
+    void AppendFolderPayloadPath(const ImGuiPayload* Payload, TArray<TArray<int32>>& InOutPaths) const;
+    int32 FindChildFolderIndexByName(const FileInfo& ParentFolder, const FString& FolderName) const;
+    int32 FindChildFileIndexByName(const FileInfo& ParentFolder, const FString& FileName) const;
+    void AccumulateMergeFileConflicts(const FileInfo& SourceFolder, const FileInfo& TargetFolder, int32& InOutCount, TStaticArray<CHAR, 256>& InOutFirstName) const;
+    bool HasMergeableContent(const FileInfo& SourceFolder, const FileInfo& TargetFolder) const;
+    void AccumulateDirectFileConflicts(const FileInfo& SourceParent, const TArray<int32>& SourceIndices, const FileInfo& TargetFolder, int32& InOutCount, TStaticArray<CHAR, 256>& InOutFirstName) const;
+    bool GetFolderMergeConflictInfo(const TArray<TArray<int32>>& SourceFolderPaths, const TArray<int32>& TargetPath, int32& OutConflictCount, TStaticArray<CHAR, 256>& OutFirstName) const;
+    bool ComputeNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>& TargetPath, int32& OutConflictCount, TStaticArray<CHAR, 256>& OutFirstName) const;
+    void UpdateDragPreviewNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>& TargetPath);
+    bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder);
 
 private:
-    FDelegateHandle         ImGuiDelegateHandle;
-    TStaticArray<CHAR, 256> FolderSearchBuffer;
-    TStaticArray<CHAR, 256> AssetSearchBuffer;
-    int32                   SelectedFolderIndex;
-    TArray<int32>           SelectedItemIndices;
-    int32                   LastSelectedItemIndex;
-    bool                    bSelectionActiveInBrowser;
-    bool                    bVisible;
+    FDelegateHandle            ImGuiDelegateHandle;
+    TStaticArray<CHAR, 256>    FolderSearchBuffer;
+    TStaticArray<CHAR, 256>    AssetSearchBuffer;
+    int32                      SelectedFolderIndex;
+    TArray<int32>              SelectedItemIndices;
+    int32                      LastSelectedItemIndex;
+    bool                       bSelectionActiveInBrowser;
+    bool                       bVisible;
+    float                      FolderPanelWidth;
 
-    bool                    bPendingMove;
-    TArray<int32>           PendingMoveSourceParentPath;
-    TArray<int32>           PendingMoveSourceIndices;
-    TArray<int32>           PendingMoveTargetFolderPath;
+    bool                       bPendingMove;
+    TArray<int32>              PendingMoveSourceParentPath;
+    TArray<int32>              PendingMoveSourceIndices;
+    TArray<int32>              PendingMoveTargetFolderPath;
+    TArray<FFolderMoveRequest> PendingFolderMoves;
 
-    bool                    bDragPreviewActive;
-    bool                    bDragPreviewInvalidSelfMove;
-    ImTextureID             DragPreviewIcon;
-    bool                    bDragPreviewIsFolder;
-    int32                   DragPreviewSelectionCount;
-    TStaticArray<CHAR, 256> DragPreviewSourceName;
-    TStaticArray<CHAR, 256> DragPreviewTargetName;
+    TArray<TArray<int32>>      FolderSelectionPaths;
+    TArray<int32>              FolderSelectionAnchor;
+    bool                       bFolderSelectionAnchorValid;
+    TArray<TArray<int32>>      FolderVisiblePaths;
+    TArray<int32>              LastActiveFolderPath;
+    bool                       bHasLastActiveFolderPath;
 
-    TArray<int32>           RenamingFolderPath;
-    TStaticArray<CHAR, 256> FolderRenameBuffer;
-    TStaticArray<CHAR, 256> FolderRenameBufferOriginal;
-    bool                    bRequestFolderRenameFocus;
+    bool                       bDragPreviewActive;
+    bool                       bDragPreviewInvalidSelfMove;
+    ImTextureID                DragPreviewIcon;
+    bool                       bDragPreviewIsFolder;
+    int32                      DragPreviewSelectionCount;
+    bool                       bDragPreviewHasAnyLegalMove;
+    int32                      DragPreviewIllegalMoveCount;
+    TStaticArray<CHAR, 256>    DragPreviewSourceName;
+    TStaticArray<CHAR, 256>    DragPreviewTargetName;
+    bool                       bDragPreviewHasNameConflict;
+    int32                      DragPreviewConflictCount;
+    TStaticArray<CHAR, 256>    DragPreviewConflictFileName;
 
-    TArray<int32>           RenamingItemParentPath;
-    int32                   RenamingItemIndex;
-    TStaticArray<CHAR, 256> ItemRenameBuffer;
-    TStaticArray<CHAR, 256> ItemRenameBufferOriginal;
-    TStaticArray<CHAR, 64>  ItemRenameExtension;
-    bool                    bRequestItemRenameFocus;
+    TArray<int32>              RenamingFolderPath;
+    TStaticArray<CHAR, 256>    FolderRenameBuffer;
+    TStaticArray<CHAR, 256>    FolderRenameBufferOriginal;
+    bool                       bRequestFolderRenameFocus;
+
+    TArray<int32>              RenamingItemParentPath;
+    int32                      RenamingItemIndex;
+    TStaticArray<CHAR, 256>    ItemRenameBuffer;
+    TStaticArray<CHAR, 256>    ItemRenameBufferOriginal;
+    TStaticArray<CHAR, 64>     ItemRenameExtension;
+    bool                       bRequestItemRenameFocus;
 
     // Folder navigation path (indices into RootFolders/FolderContents).
     // Example: [0]        -> RootFolders[0]
     //          [0, 2]     -> RootFolders[0].FolderContents[2]
     //          [0, 2, 1]  -> RootFolders[0].FolderContents[2].FolderContents[1]
-    TArray<int32>           SelectedFolderPath;
-    TArray<FileInfo>        RootFolders;
-    TArray<TArray<int32>>   BackHistory;
-    TArray<TArray<int32>>   ForwardHistory;
+    TArray<int32>              SelectedFolderPath;
+    TArray<FileInfo>           RootFolders;
+    TArray<TArray<int32>>      BackHistory;
+    TArray<TArray<int32>>      ForwardHistory;
 };
