@@ -1186,8 +1186,8 @@ bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
         ImGui::SetNextWindowPos(Viewport->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     }
 
-    // Set minimum size so message area can be vertically centered; AlwaysAutoResize handles the rest
-    ImGui::SetNextWindowSizeConstraints(ImVec2(360.0f, 120.0f), ImVec2(FLT_MAX, FLT_MAX));
+    // Set minimum width only; AlwaysAutoResize handles the rest
+    ImGui::SetNextWindowSizeConstraints(ImVec2(360.0f, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
     // Match error window style
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -1212,19 +1212,16 @@ bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
 
     if (ImGui::Begin(TitleText, &InOutContext.bVisible, WindowFlags))
     {
-        const float ButtonWidth   = 100.0f;
-        const float ButtonHeight  = ImGui::GetFrameHeight();
-        const float Gap           = 12.0f;
-        const float VerticalGap   = 12.0f;
+        const float ButtonWidth  = 100.0f;
+        const float ButtonHeight = ImGui::GetFrameHeight();
+        const float Gap          = 12.0f;
 
         const float AvailableX = ImGui::GetContentRegionAvail().x;
-        const float AvailableY = ImGui::GetContentRegionAvail().y;
-        const float MessageAreaHeight = AvailableY - (ButtonHeight + 2.0f * VerticalGap);
 
-        // Vertically center the message text in the area above the buttons
+        // Center the message text on the x-axis
         const ImVec2 MessageTextSize = ImGui::CalcTextSize(MessageText, nullptr, true, AvailableX);
-        const float MessageOffsetY = Math::Max(0.0f, (MessageAreaHeight - MessageTextSize.y) * 0.5f);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + MessageOffsetY);
+        const float MessageStartX   = ImGui::GetCursorPosX() + Math::Max(0.0f, (AvailableX - MessageTextSize.x) * 0.5f);
+        ImGui::SetCursorPosX(MessageStartX);
 
         ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + AvailableX);
         ImGui::TextUnformatted(MessageText);
