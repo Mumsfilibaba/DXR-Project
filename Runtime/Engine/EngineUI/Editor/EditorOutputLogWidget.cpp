@@ -474,4 +474,3 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     ImGui::PopStyleColor();
     ImGui::PopFont();
 }
-

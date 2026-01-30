@@ -7,7 +7,7 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include <imgui_internal.h>
 
-float EditorStyleVars::MainMenuBarHeight = 28.0f;
+float  EditorStyleVars::MainMenuBarHeight = 28.0f;
 
 ImVec2 EditorStyleVars::InputFieldFramePadding    = ImVec2(12.0f, 6.0f);
 float  EditorStyleVars::InputFieldBorderThickness = 2.0f;
@@ -1669,9 +1669,7 @@ bool EditorWidgets::MenuItem(const CHAR* Label, const CHAR* Shortcut, bool bSele
             const ImVec2 IconMin = CheckPos;
             const ImVec2 IconMax = ImVec2(CheckPos.x + CheckSize, CheckPos.y + CheckSize);
 
-            // Tint to match menu text color (works well for monochrome icons)
             const ImU32 Tint = ImGui::GetColorU32(ImGuiCol_Text);
-
             DrawList->AddImage(EditorIcons::CheckmarkIcon, IconMin, IconMax, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), Tint);
         }
         else
@@ -1824,7 +1822,7 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
 void EditorWidgets::ResetMenuPopup()
 {
     ImGui::PopStyleColor(7); // PopupBg, Border, Text, TextDisabled, Header, HeaderHovered, HeaderActive
-    ImGui::PopStyleVar(5);   // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
+    ImGui::PopStyleVar(5); // WindowBorderSize, PopupBorderSize, PopupRounding, WindowPadding, ItemSpacing
 }
 
 bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth, float RevertColumnWidth)
@@ -1832,6 +1830,7 @@ bool EditorWidgets::BeginPropertyTable(const CHAR* TableId, float LabelColumnWid
     // -----------------------------------------------------------------------------------------
     // Colors
     // -----------------------------------------------------------------------------------------
+
     const ImVec4 RowBg       = ImVec4(36.0f / 255.0f, 36.0f / 255.0f, 36.0f / 255.0f, 1.0f);
     const ImVec4 TableBorder = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
     const ImVec4 FrameBg     = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
