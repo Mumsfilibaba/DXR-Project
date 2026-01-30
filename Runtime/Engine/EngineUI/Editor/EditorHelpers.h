@@ -205,10 +205,9 @@ struct ENGINE_API EditorWidgets
 
     static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0, bool bWithContextMenu = true);
     static void RichTextSelectAll(RichTextViewContext& InOutContext);
-    static void RichTextLineBegin(RichTextViewContext& InOutContext);
+    static void RichTextNewLine(RichTextViewContext& InOutContext);
     static void RichTextAddText(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
     static void RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
-    static void RichTextLineEnd(RichTextViewContext& InOutContext);
     static void EndRichTextView(RichTextViewContext& InOutContext);
 
     static FString GetSelectedRichText(const RichTextViewContext& InContext);

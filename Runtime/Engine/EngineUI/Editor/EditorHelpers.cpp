@@ -1099,7 +1099,8 @@ void EditorWidgets::DrawErrorWindow(ErrorWindowContext& InOutContext)
     const ImGuiWindowFlags WindowFlags =
         ImGuiWindowFlags_NoDocking |
         ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoResize;
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoSavedSettings;
 
     bool bClosePressed = false;
     const bool bBeginWindow = ImGui::Begin(TitleText, nullptr, WindowFlags);
@@ -1181,11 +1182,12 @@ bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
 
     if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
-        ImGui::SetNextWindowPos(Viewport->GetCenter(), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        // Use Appearing so the window is centered when opened but can be moved by the user
+        ImGui::SetNextWindowPos(Viewport->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     }
 
-    // Set minimum width only, let AlwaysAutoResize handle the rest
-    ImGui::SetNextWindowSizeConstraints(ImVec2(360.0f, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
+    // Set minimum size so message area can be vertically centered; AlwaysAutoResize handles the rest
+    ImGui::SetNextWindowSizeConstraints(ImVec2(360.0f, 120.0f), ImVec2(FLT_MAX, FLT_MAX));
 
     // Match error window style
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -1202,23 +1204,37 @@ bool EditorWidgets::DrawConfirmDialog(ConfirmDialogContext& InOutContext)
         ImGuiWindowFlags_NoDocking |
         ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_AlwaysAutoResize;
+        ImGuiWindowFlags_AlwaysAutoResize |
+        ImGuiWindowFlags_NoSavedSettings;
 
     bool bConfirmed = false;
     bool bCancelled = false;
 
     if (ImGui::Begin(TitleText, &InOutContext.bVisible, WindowFlags))
     {
-        ImGui::TextUnformatted(MessageText);
-        ImGui::Spacing();
-        ImGui::Spacing();
-
         const float ButtonWidth   = 100.0f;
         const float ButtonHeight  = ImGui::GetFrameHeight();
         const float Gap           = 12.0f;
+        const float VerticalGap   = 12.0f;
+
+        const float AvailableX = ImGui::GetContentRegionAvail().x;
+        const float AvailableY = ImGui::GetContentRegionAvail().y;
+        const float MessageAreaHeight = AvailableY - (ButtonHeight + 2.0f * VerticalGap);
+
+        // Vertically center the message text in the area above the buttons
+        const ImVec2 MessageTextSize = ImGui::CalcTextSize(MessageText, nullptr, true, AvailableX);
+        const float MessageOffsetY = Math::Max(0.0f, (MessageAreaHeight - MessageTextSize.y) * 0.5f);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + MessageOffsetY);
+
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + AvailableX);
+        ImGui::TextUnformatted(MessageText);
+        ImGui::PopTextWrapPos();
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
         const float TwoButtonsWidth = ButtonWidth * 2.0f + Gap;
-        const float AvailableX    = ImGui::GetContentRegionAvail().x;
-        const float StartX        = ImGui::GetCursorPosX() + Math::Max(0.0f, (AvailableX - TwoButtonsWidth) * 0.5f);
+        const float StartX          = ImGui::GetCursorPosX() + Math::Max(0.0f, (AvailableX - TwoButtonsWidth) * 0.5f);
 
         ImGui::SetCursorPosX(StartX);
         if (DrawDialogButton("Yes", ImVec2(ButtonWidth, ButtonHeight)))
@@ -2261,7 +2277,7 @@ FString EditorWidgets::GetSelectedRichText(const RichTextViewContext& InContext)
     return BuildSelectedText(InContext);
 }
 
-void EditorWidgets::RichTextLineBegin(RichTextViewContext& InOutContext)
+void EditorWidgets::RichTextNewLine(RichTextViewContext& InOutContext)
 {
     if (!InOutContext.bActive)
     {
@@ -2308,11 +2324,6 @@ void EditorWidgets::RichTextAddTextBg(RichTextViewContext& InOutContext, const C
 
     Line.TotalChars += static_cast<int32>(FCString::Strlen(InText));
     Line.Spans.Add(Span);
-}
-
-void EditorWidgets::RichTextLineEnd(RichTextViewContext& InOutContext)
-{
-    (void)InOutContext;
 }
 
 void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)

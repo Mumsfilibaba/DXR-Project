@@ -409,7 +409,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
                 LineColor = ErrorTextU32;
             }
 
-            EditorWidgets::RichTextLineBegin(RichTextCtx);
+            EditorWidgets::RichTextNewLine(RichTextCtx);
 
             if (bHasSearch)
             {
@@ -465,8 +465,6 @@ void FEditorOutputLogWidget::DrawLogListRichText()
             {
                 EditorWidgets::RichTextAddText(RichTextCtx, Line, LineColor);
             }
-
-            EditorWidgets::RichTextLineEnd(RichTextCtx);
         }
 
         if (EditorWidgets::BeginPopupContextWindow("OutputLogContextMenu"))
