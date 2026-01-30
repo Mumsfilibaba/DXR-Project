@@ -648,16 +648,21 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
 
             if (EditorWidgets::BeginPopupContextWindow("FolderPanelContextMenu"))
             {
-                EditorWidgets::MenuLabeledSeparator("Folder Panel");
+                EditorWidgets::MenuLabeledSeparator("Create");
+
                 const bool bHasFolderSelection = SelectedFolderPath.Size() > 0;
                 if (EditorWidgets::MenuItem("New folder", nullptr, false, true))
                 {
                     AddNewFolderInCurrentPath();
                 }
+
+                EditorWidgets::MenuLabeledSeparator("Common");
+
                 if (EditorWidgets::MenuItem("Delete", "Delete", false, bHasFolderSelection))
                 {
                     DeleteSelectedFolderInTree();
                 }
+                
                 if (EditorWidgets::MenuItem("Rename", "F2", false, bHasFolderSelection))
                 {
                     if (bHasFolderSelection)
@@ -669,14 +674,17 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
                         }
                     }
                 }
+                
                 if (EditorWidgets::MenuItem("Copy", nullptr, false, bHasFolderSelection))
                 {
                     CopySelectedFolderPaths();
                 }
+                
                 if (EditorWidgets::MenuItem("Paste", nullptr, false, HasClipboardContent()))
                 {
                     PasteInCurrentFolder();
                 }
+                
                 EditorWidgets::EndPopupContext();
             }
 
@@ -810,19 +818,21 @@ void FEditorContentBrowserWidget::DrawContentPanel()
 
         if (EditorWidgets::BeginPopupContextWindow("ContentPanelContextMenu"))
         {
-            EditorWidgets::MenuLabeledSeparator("Content Panel");
-            
+            EditorWidgets::MenuLabeledSeparator("Create");
+
             const bool bHasSelection = SelectedItemIndices.Size() > 0;
             if (EditorWidgets::MenuItem("New folder", nullptr, false, true))
             {
                 AddNewFolderInCurrentPath();
             }
-            
+
+            EditorWidgets::MenuLabeledSeparator("Common");
+
             if (EditorWidgets::MenuItem("Delete", "Delete", false, bHasSelection))
             {
                 DeleteSelectedContentItems();
             }
-            
+
             if (EditorWidgets::MenuItem("Rename", "F2", false, bHasSelection))
             {
                 if (bHasSelection && SelectedFolderPath.Size() > 0)
@@ -834,7 +844,7 @@ void FEditorContentBrowserWidget::DrawContentPanel()
                     }
                 }
             }
-            
+
             if (EditorWidgets::MenuItem("Copy", nullptr, false, bHasSelection))
             {
                 CopySelectedContent();

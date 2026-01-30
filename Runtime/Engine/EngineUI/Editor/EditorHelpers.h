@@ -175,22 +175,19 @@ struct ENGINE_API EditorWidgets
     static void DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR* Text, const CHAR* FilterText, ImU32 BaseTextU32, float HighlightPadX = 1.0f, float HighlightPadY = 1.0f, const ImVec2* ClampMin = nullptr, const ImVec2* ClampMax = nullptr);
 
     // -----------------------------------------------------------------------------------------
-    // Menu
+    // Popup
     // -----------------------------------------------------------------------------------------
 
+    static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
+    static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
+    static bool BeginPopupContextItem(const CHAR* PopupId);
+    
     static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
     static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
     static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
     static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
-    static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
+    
     static void EndMenuPopup();
-
-    // -----------------------------------------------------------------------------------------
-    // Context Popup
-    // -----------------------------------------------------------------------------------------
-
-    static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
-    static bool BeginPopupContextItem(const CHAR* PopupId);
     static void EndPopupContext();
 
     // -----------------------------------------------------------------------------------------

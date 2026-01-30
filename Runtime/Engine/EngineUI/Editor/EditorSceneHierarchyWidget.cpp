@@ -598,9 +598,20 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
 
     if (EditorWidgets::BeginPopupContextItem("SceneHierarchyContextMenu"))
     {
-        EditorWidgets::MenuLabeledSeparator("Scene Hierarchy");
-        EditorWidgets::MenuItem("Add Actor", nullptr, false, false);
+        EditorWidgets::MenuLabeledSeparator("Create");
+
+        if (EditorWidgets::MenuItem("Add Actor", nullptr, false, false))
+        {
+            // TODO
+        }
+
+        EditorWidgets::MenuLabeledSeparator("Common");
         
+        if (EditorWidgets::MenuItem("Delete", "Delete", false, false))
+        {
+            // TODO
+        }
+
         FActor* SelectedActorForMenu = EditorEngine->GetSelectedActor();
         const bool bHasActorSelected = (SelectedActorForMenu != nullptr);
         if (EditorWidgets::MenuItem("Rename", "F2", false, bHasActorSelected))
@@ -620,6 +631,16 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
                     FCString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
                 }
             }
+        }
+
+        if (EditorWidgets::MenuItem("Copy", "Ctrl+C", false, false))
+        {
+            // TODO
+        }
+
+        if (EditorWidgets::MenuItem("Copy", "Ctrl+V", false, false))
+        {
+            // TODO
         }
 
         EditorWidgets::EndPopupContext();

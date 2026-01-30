@@ -2002,11 +2002,14 @@ bool EditorWidgets::BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags
     const bool bOpen = ImGui::BeginPopupContextWindow(PopupId, Flags);
     if (bOpen)
     {
+        // Set cursor to arrow when context menu is open
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
         const ImVec2 WinPos  = ImGui::GetWindowPos();
         const ImVec2 WinSize = ImGui::GetWindowSize();
         const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
         const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-        
+
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
         DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
     }
@@ -2027,11 +2030,14 @@ bool EditorWidgets::BeginPopupContextItem(const CHAR* PopupId)
     const bool bOpen = ImGui::BeginPopupContextItem(PopupId);
     if (bOpen)
     {
+        // Set cursor to arrow when context menu is open
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
         const ImVec2 WinPos  = ImGui::GetWindowPos();
         const ImVec2 WinSize = ImGui::GetWindowSize();
         const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
         const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-        
+
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
         DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
     }
@@ -2342,7 +2348,7 @@ void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
     // Selection begin
     // -----------------------------------------------------------------------------------------
 
-    const bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+    const bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows | ImGuiHoveredFlags_NoPopupHierarchy);
     if (bHovered)
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
