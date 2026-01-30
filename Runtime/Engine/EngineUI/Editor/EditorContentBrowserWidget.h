@@ -117,7 +117,16 @@ private:
     void SetDragPreviewTarget(const CHAR* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath);
     bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder, const FString& SourceFolderPath);
 
+    void AddNewFolderInCurrentPath();
+    void DeleteSelectedContentItems();
+    void DeleteSelectedFolderInTree();
+    void CopySelectedContent();
+    void CopySelectedFolderPaths();
+    bool HasClipboardContent() const;
+    void PasteInCurrentFolder();
+
 private:
+    static FileInfo DeepCopyFileInfo(const FileInfo& In);
     FDelegateHandle            ImGuiDelegateHandle;
     TStaticArray<CHAR, 256>    FolderSearchBuffer;
     TStaticArray<CHAR, 256>    AssetSearchBuffer;
@@ -167,6 +176,17 @@ private:
     //          [0, 2, 1]  -> RootFolders[0].FolderContents[2].FolderContents[1]
     TArray<int32>              SelectedFolderPath;
     ErrorWindowContext         FailedMoveErrorContext;
+
+    bool                       bClipboardValid;
+    bool                       bClipboardFromContentPanel;
+    TArray<int32>              ClipboardContentParentPath;
+    TArray<int32>              ClipboardContentIndices;
+    TArray<TArray<int32>>      ClipboardFolderPaths;
+
+    ConfirmDialogContext       DeleteConfirmContext;
+    bool                       bPendingDeleteContent;
+    bool                       bPendingDeleteFolder;
+
     TArray<FileInfo>           RootFolders;
     TArray<TArray<int32>>      BackHistory;
     TArray<TArray<int32>>      ForwardHistory;

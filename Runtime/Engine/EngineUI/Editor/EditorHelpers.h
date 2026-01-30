@@ -76,6 +76,14 @@ struct ErrorWindowContext
     bool bVisible = false;
 };
 
+struct ConfirmDialogContext
+{
+    FString Title;
+    FString Message;
+
+    bool bVisible = false;
+};
+
 // -----------------------------------------------------------------------------------------
 // Style-vars
 // -----------------------------------------------------------------------------------------
@@ -175,7 +183,15 @@ struct ENGINE_API EditorWidgets
     static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
     static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
     static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
-    static void ResetMenuPopup();
+    static void EndMenuPopup();
+
+    // -----------------------------------------------------------------------------------------
+    // Context Popup
+    // -----------------------------------------------------------------------------------------
+
+    static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
+    static bool BeginPopupContextItem(const CHAR* PopupId);
+    static void EndPopupContext();
 
     // -----------------------------------------------------------------------------------------
     // Property Table
@@ -190,12 +206,15 @@ struct ENGINE_API EditorWidgets
     // Rich Text View
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0);
+    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0, bool bWithContextMenu = true);
+    static void RichTextSelectAll(RichTextViewContext& InOutContext);
     static void RichTextLineBegin(RichTextViewContext& InOutContext);
     static void RichTextAddText(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
     static void RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
     static void RichTextLineEnd(RichTextViewContext& InOutContext);
     static void EndRichTextView(RichTextViewContext& InOutContext);
+
+    static FString GetSelectedRichText(const RichTextViewContext& InContext);
 
     // -----------------------------------------------------------------------------------------
     // Buttons
@@ -209,6 +228,12 @@ struct ENGINE_API EditorWidgets
     // -----------------------------------------------------------------------------------------
 
     static void DrawErrorWindow(ErrorWindowContext& InOutContext);
+
+    // -----------------------------------------------------------------------------------------
+    // Confirmation dialog
+    // -----------------------------------------------------------------------------------------
+
+    static bool DrawConfirmDialog(ConfirmDialogContext& InOutContext);
 
     // -----------------------------------------------------------------------------------------
     // Other

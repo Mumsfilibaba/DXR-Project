@@ -137,7 +137,7 @@ void FEditorFooterWidget::Draw()
             const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
             const ImU32 BorderColor = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
-            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, InputRounding, 0, EditorStyleVars::InputFieldBorderThickness);
+            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, InputRounding, ImDrawListFlags_AntiAliasedLines, EditorStyleVars::InputFieldBorderThickness);
         }
 
         if (InputHandler)

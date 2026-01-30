@@ -149,6 +149,10 @@ FEditorContentBrowserWidget::FEditorContentBrowserWidget()
     , bRequestFolderRenameFocus(false)
     , RenamingItemIndex(-1)
     , bRequestItemRenameFocus(false)
+    , bClipboardValid(false)
+    , bClipboardFromContentPanel(false)
+    , bPendingDeleteContent(false)
+    , bPendingDeleteFolder(false)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -327,7 +331,7 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
 
     const float OuterBorder = PanelBorder;
 
-    DrawList->AddRect(RootMin, RootMax, BorderColor, 0.0f, 0, OuterBorder);
+    DrawList->AddRect(RootMin, RootMax, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, OuterBorder);
 
     const ImVec2 InnerMin  = ImVec2(RootMin.x + OuterBorder, RootMin.y + OuterBorder);
     const ImVec2 InnerMax  = ImVec2(RootMax.x - OuterBorder, RootMax.y - OuterBorder);
@@ -348,8 +352,8 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
     const ImVec2 RightMin = ImVec2(SplitMax.x, InnerMin.y);
     const ImVec2 RightMax = InnerMax;
 
-    DrawList->AddRect(LeftMin, LeftMax, BorderColor, 0.0f, 0, PanelBorder);
-    DrawList->AddRect(RightMin, RightMax, BorderColor, 0.0f, 0, PanelBorder);
+    DrawList->AddRect(LeftMin, LeftMax, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, PanelBorder);
+    DrawList->AddRect(RightMin, RightMax, BorderColor, 0.0f, ImDrawListFlags_AntiAliasedLines, PanelBorder);
 
     // -----------------------------------------------------------------------------------------
     // Splitter
@@ -390,6 +394,20 @@ void FEditorContentBrowserWidget::DrawLayoutTable()
     ImGui::BeginChild("##CB_ContentPanelRoot", ImVec2(RightWidth, InnerSize.y), false, ImGuiWindowFlags_NoScrollbar);
     DrawContentPanel();
     ImGui::EndChild();
+
+    if (EditorWidgets::DrawConfirmDialog(DeleteConfirmContext))
+    {
+        if (bPendingDeleteContent)
+        {
+            DeleteSelectedContentItems();
+            bPendingDeleteContent = false;
+        }
+        else if (bPendingDeleteFolder)
+        {
+            DeleteSelectedFolderInTree();
+            bPendingDeleteFolder = false;
+        }
+    }
 }
 
 void FEditorContentBrowserWidget::DrawFolderPanel()
@@ -627,6 +645,59 @@ void FEditorContentBrowserWidget::DrawFolderPanel()
             }
 
             ShadowState = CaptureScrollShadowState();
+
+            if (EditorWidgets::BeginPopupContextWindow("FolderPanelContextMenu"))
+            {
+                EditorWidgets::MenuLabeledSeparator("Folder Panel");
+                const bool bHasFolderSelection = SelectedFolderPath.Size() > 0;
+                if (EditorWidgets::MenuItem("New folder", nullptr, false, true))
+                {
+                    AddNewFolderInCurrentPath();
+                }
+                if (EditorWidgets::MenuItem("Delete", "Delete", false, bHasFolderSelection))
+                {
+                    DeleteSelectedFolderInTree();
+                }
+                if (EditorWidgets::MenuItem("Rename", "F2", false, bHasFolderSelection))
+                {
+                    if (bHasFolderSelection)
+                    {
+                        const FileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
+                        if (Folder)
+                        {
+                            BeginFolderRename(SelectedFolderPath, *Folder);
+                        }
+                    }
+                }
+                if (EditorWidgets::MenuItem("Copy", nullptr, false, bHasFolderSelection))
+                {
+                    CopySelectedFolderPaths();
+                }
+                if (EditorWidgets::MenuItem("Paste", nullptr, false, HasClipboardContent()))
+                {
+                    PasteInCurrentFolder();
+                }
+                EditorWidgets::EndPopupContext();
+            }
+
+            if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) && ImGui::IsKeyPressed(ImGuiKey_Delete) && SelectedFolderPath.Size() > 0)
+            {
+                DeleteConfirmContext.Title = "Delete Folder";
+                
+                const FileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
+                if (Folder)
+                {
+                    const FString FolderName = Folder->Name.IsEmpty() ? "this folder" : Folder->Name;
+                    DeleteConfirmContext.Message.Format("Are you sure you want to delete \"%s\" and its contents?", *FolderName);
+                }
+                else
+                {
+                    DeleteConfirmContext.Message = "Are you sure you want to delete this folder and its contents?";
+                }
+                
+                DeleteConfirmContext.bVisible = true;
+                bPendingDeleteFolder          = true;
+            }
         }
 
         ImGui::EndChild();
@@ -736,6 +807,74 @@ void FEditorContentBrowserWidget::DrawContentPanel()
     {
         DrawContentGrid();
         ShadowState = CaptureScrollShadowState();
+
+        if (EditorWidgets::BeginPopupContextWindow("ContentPanelContextMenu"))
+        {
+            EditorWidgets::MenuLabeledSeparator("Content Panel");
+            
+            const bool bHasSelection = SelectedItemIndices.Size() > 0;
+            if (EditorWidgets::MenuItem("New folder", nullptr, false, true))
+            {
+                AddNewFolderInCurrentPath();
+            }
+            
+            if (EditorWidgets::MenuItem("Delete", "Delete", false, bHasSelection))
+            {
+                DeleteSelectedContentItems();
+            }
+            
+            if (EditorWidgets::MenuItem("Rename", "F2", false, bHasSelection))
+            {
+                if (bHasSelection && SelectedFolderPath.Size() > 0)
+                {
+                    FileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
+                    if (Folder && Folder->FolderContents.IsValidIndex(SelectedItemIndices[0]))
+                    {
+                        BeginItemRename(SelectedFolderPath, SelectedItemIndices[0], Folder->FolderContents[SelectedItemIndices[0]]);
+                    }
+                }
+            }
+            
+            if (EditorWidgets::MenuItem("Copy", nullptr, false, bHasSelection))
+            {
+                CopySelectedContent();
+            }
+
+            if (EditorWidgets::MenuItem("Paste", nullptr, false, HasClipboardContent()))
+            {
+                PasteInCurrentFolder();
+            }
+
+            EditorWidgets::EndPopupContext();
+        }
+
+        if (ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows) && ImGui::IsKeyPressed(ImGuiKey_Delete) && SelectedItemIndices.Size() > 0)
+        {
+            DeleteConfirmContext.Title = "Delete";
+            
+            FileInfo* Folder = GetFolderFromPath(SelectedFolderPath);
+            if (Folder && SelectedItemIndices.Size() == 1)
+            {
+                const int32 Index = SelectedItemIndices[0];
+                if (Folder->FolderContents.IsValidIndex(Index))
+                {
+                    const FileInfo& Item = Folder->FolderContents[Index];
+                    const FString ItemName = Item.Name.IsEmpty() ? "this item" : Item.Name;
+                    DeleteConfirmContext.Message.Format("Are you sure you want to delete \"%s\"?", *ItemName);
+                }
+                else
+                {
+                    DeleteConfirmContext.Message = "Are you sure you want to delete the selected item?";
+                }
+            }
+            else
+            {
+                DeleteConfirmContext.Message = "Are you sure you want to delete the selected items?";
+            }
+            
+            DeleteConfirmContext.bVisible = true;
+            bPendingDeleteContent         = true;
+        }
     }
 
     ImGui::EndChild();
@@ -1176,7 +1315,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                     const bool bInputHovered  = ImGui::IsItemHovered();
 
                     const ImU32 BorderColor = bActive ? BorderActive : (bInputHovered ? BorderHovered : BorderNormal);
-                    WindowDrawList->AddRect(ItemMin, ItemMax, BorderColor, 4.0f, 0, 2.0f);
+                    WindowDrawList->AddRect(ItemMin, ItemMax, BorderColor, 4.0f, ImDrawListFlags_AntiAliasedLines, 2.0f);
                 }
 
                 if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
@@ -1861,7 +2000,7 @@ void FEditorContentBrowserWidget::DrawContentHeaderBar()
     const ImU32 BorderCol   = bBarHovered ? BarBorderHover : BarBorderNormal;
 
     DrawList->AddRectFilled(BarMin, BarMax, BarBackGround, BarRounding);
-    DrawList->AddRect(BarMin, BarMax, BorderCol, BarRounding, 0, BarBorderTh);
+    DrawList->AddRect(BarMin, BarMax, BorderCol, BarRounding, ImDrawListFlags_AntiAliasedLines, BarBorderTh);
 
     DrawList->PushClipRect(BarMin, BarMax, true);
 
@@ -2383,7 +2522,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
             const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
 
             ImDrawList* RenameDrawList = ImGui::GetWindowDrawList();
-            RenameDrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
+            RenameDrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, ImDrawListFlags_AntiAliasedLines, BorderThickness);
         }
 
         if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))
@@ -3779,4 +3918,246 @@ bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, Fi
     }
 
     return bMovedAny;
+}
+
+FEditorContentBrowserWidget::FileInfo FEditorContentBrowserWidget::DeepCopyFileInfo(const FileInfo& In)
+{
+    FileInfo Out;
+    Out.Name = In.Name;
+    Out.bIsFolder = In.bIsFolder;
+    for (int32 i = 0; i < In.FolderContents.Size(); ++i)
+    {
+        Out.FolderContents.Add(DeepCopyFileInfo(In.FolderContents[i]));
+    }
+    return Out;
+}
+
+void FEditorContentBrowserWidget::AddNewFolderInCurrentPath()
+{
+    CommitItemRename();
+    CommitFolderRename();
+
+    FileInfo* ParentFolder = GetFolderFromPath(SelectedFolderPath);
+    if (!ParentFolder)
+    {
+        return;
+    }
+
+    const FString NewFolderName("New folder");
+    FileInfo NewFolder;
+    NewFolder.Name = NewFolderName;
+    NewFolder.bIsFolder = true;
+
+    ParentFolder->FolderContents.Add(NewFolder);
+    const int32 NewIndex = ParentFolder->FolderContents.Size() - 1;
+
+    // Select the new folder so the rename input is shown (avoids bIsRenaming && !bSelected committing immediately)
+    SelectSingleItem(NewIndex);
+    BeginItemRename(SelectedFolderPath, NewIndex, ParentFolder->FolderContents[NewIndex]);
+}
+
+void FEditorContentBrowserWidget::DeleteSelectedContentItems()
+{
+    if (SelectedFolderPath.Size() <= 0 || SelectedItemIndices.IsEmpty())
+    {
+        return;
+    }
+
+    FileInfo* ParentFolder = GetFolderFromPath(SelectedFolderPath);
+    if (!ParentFolder)
+    {
+        return;
+    }
+
+    TArray<int32> SortedIndices = SelectedItemIndices;
+    SortedIndices.Sort();
+    for (int32 i = SortedIndices.Size() - 1; i >= 0; --i)
+    {
+        const int32 Index = SortedIndices[i];
+        if (ParentFolder->FolderContents.IsValidIndex(Index))
+        {
+            ParentFolder->FolderContents.RemoveAt(Index);
+        }
+    }
+
+    ClearItemSelection();
+}
+
+void FEditorContentBrowserWidget::DeleteSelectedFolderInTree()
+{
+    if (SelectedFolderPath.Size() <= 0)
+    {
+        return;
+    }
+
+    TArray<int32> ParentPath = SelectedFolderPath;
+    const int32 FolderIndex = ParentPath.LastElement();
+    ParentPath.Pop();
+
+    FileInfo* ParentFolder = GetFolderFromPath(ParentPath);
+    if (!ParentFolder || !ParentFolder->FolderContents.IsValidIndex(FolderIndex))
+    {
+        return;
+    }
+
+    ParentFolder->FolderContents.RemoveAt(FolderIndex);
+    NavigateToFolderPath(ParentPath, false);
+    FolderSelectionPaths.Clear();
+    if (ParentPath.Size() > 0)
+    {
+        FolderSelectionPaths.Add(ParentPath);
+        FolderSelectionAnchor = ParentPath;
+        bFolderSelectionAnchorValid = true;
+    }
+}
+
+void FEditorContentBrowserWidget::CopySelectedContent()
+{
+    if (SelectedFolderPath.Size() <= 0 || SelectedItemIndices.IsEmpty())
+    {
+        return;
+    }
+
+    bClipboardValid = true;
+    bClipboardFromContentPanel = true;
+    ClipboardContentParentPath = SelectedFolderPath;
+    ClipboardContentIndices = SelectedItemIndices;
+    ClipboardFolderPaths.Clear();
+}
+
+void FEditorContentBrowserWidget::CopySelectedFolderPaths()
+{
+    TArray<TArray<int32>> Paths = GetFilteredFolderSelectionPaths();
+    if (Paths.IsEmpty() && SelectedFolderPath.Size() > 0)
+    {
+        Paths.Add(SelectedFolderPath);
+    }
+    if (Paths.IsEmpty())
+    {
+        return;
+    }
+
+    bClipboardValid = true;
+    bClipboardFromContentPanel = false;
+    ClipboardContentParentPath.Clear();
+    ClipboardContentIndices.Clear();
+    ClipboardFolderPaths = Paths;
+}
+
+bool FEditorContentBrowserWidget::HasClipboardContent() const
+{
+    return bClipboardValid && (
+        (bClipboardFromContentPanel && ClipboardContentIndices.Size() > 0) ||
+        (!bClipboardFromContentPanel && ClipboardFolderPaths.Size() > 0));
+}
+
+void FEditorContentBrowserWidget::PasteInCurrentFolder()
+{
+    if (!HasClipboardContent() || SelectedFolderPath.Size() <= 0)
+    {
+        return;
+    }
+
+    FileInfo* TargetFolder = GetFolderFromPath(SelectedFolderPath);
+    if (!TargetFolder || !TargetFolder->bIsFolder)
+    {
+        return;
+    }
+
+    if (bClipboardFromContentPanel)
+    {
+        FileInfo* SourceParent = GetFolderFromPath(ClipboardContentParentPath);
+        if (!SourceParent)
+        {
+            return;
+        }
+
+        for (int32 Index = 0; Index < ClipboardContentIndices.Size(); ++Index)
+        {
+            const int32 SourceIndex = ClipboardContentIndices[Index];
+            if (!SourceParent->FolderContents.IsValidIndex(SourceIndex))
+            {
+                continue;
+            }
+
+            const FileInfo& SourceItem = SourceParent->FolderContents[SourceIndex];
+            FString BaseName = SourceItem.Name;
+            int32 Suffix = 0;
+            TStaticArray<CHAR, 256> Buf{};
+            while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0 ||
+                   (!SourceItem.bIsFolder && FindChildFileIndexByName(*TargetFolder, BaseName) >= 0))
+            {
+                ++Suffix;
+                if (SourceItem.bIsFolder)
+                {
+                    FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", *SourceItem.Name, Suffix);
+                    BaseName = Buf.Data();
+                }
+                else
+                {
+                    int32 Dot = -1;
+                    const CHAR* NameStr = *SourceItem.Name;
+                    const int32 Len = static_cast<int32>(FCString::Strlen(NameStr));
+                    for (int32 i = Len - 1; i > 0; --i)
+                    {
+                        if (NameStr[i] == '.')
+                        {
+                            Dot = i;
+                            break;
+                        }
+                    }
+                    if (Dot >= 0)
+                    {
+                        FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%.*s (%d)%s", Dot, NameStr, Suffix, NameStr + Dot);
+                        BaseName = Buf.Data();
+                    }
+                    else
+                    {
+                        FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", NameStr, Suffix);
+                        BaseName = Buf.Data();
+                    }
+                }
+            }
+
+            FileInfo CopyItem = DeepCopyFileInfo(SourceItem);
+            CopyItem.Name = BaseName;
+            TargetFolder->FolderContents.Add(CopyItem);
+        }
+    }
+    else
+    {
+        for (int32 PathIndex = 0; PathIndex < ClipboardFolderPaths.Size(); ++PathIndex)
+        {
+            const TArray<int32>& FolderPath = ClipboardFolderPaths[PathIndex];
+            if (FolderPath.Size() <= 0)
+            {
+                continue;
+            }
+
+            if (IsPathPrefix(FolderPath, SelectedFolderPath))
+            {
+                continue;
+            }
+
+            const FileInfo* SourceFolder = GetFolderFromPath(FolderPath);
+            if (!SourceFolder || !SourceFolder->bIsFolder)
+            {
+                continue;
+            }
+
+            FString BaseName = SourceFolder->Name;
+            int32 Suffix = 0;
+            while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0)
+            {
+                ++Suffix;
+                TStaticArray<CHAR, 256> Buf{};
+                FCString::Snprintf(Buf.Data(), static_cast<int32>(Buf.Size()), "%s (%d)", *SourceFolder->Name, Suffix);
+                BaseName = Buf.Data();
+            }
+
+            FileInfo CopyFolder = DeepCopyFileInfo(*SourceFolder);
+            CopyFolder.Name = BaseName;
+            TargetFolder->FolderContents.Add(CopyFolder);
+        }
+    }
 }

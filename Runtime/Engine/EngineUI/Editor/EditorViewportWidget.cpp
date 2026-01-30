@@ -116,7 +116,7 @@ void FEditorViewportWidget::Draw()
             const ImVec2 BorderMin = ImVec2(ContentPos.x + 0.5f, ContentPos.y + 0.5f);
             const ImVec2 BorderMax = ImVec2(ContentPos.x + ContentSize.x - 0.5f, ContentPos.y + ContentSize.y - 0.5f);
 
-            DrawList->AddRect(BorderMin, BorderMax, BorderColorU32, 0.0f, 0, BorderThickness);
+            DrawList->AddRect(BorderMin, BorderMax, BorderColorU32, 0.0f, ImDrawListFlags_AntiAliasedLines, BorderThickness);
         }
     }
 

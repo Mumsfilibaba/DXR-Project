@@ -254,10 +254,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
                 EditorWidgets::MenuItem("Save All", "Ctrl+Shift+S");
                 EditorWidgets::MenuLabeledSeparator("Exit");
                 EditorWidgets::MenuItem("Exit");
-                ImGui::EndPopup();
+                EditorWidgets::EndMenuPopup();
             }
-
-            EditorWidgets::ResetMenuPopup();
         }
 
         ImGui::SameLine(0.0f, 0.0f);
@@ -272,10 +270,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
                 EditorWidgets::MenuLabeledSeparator("Settings");
                 EditorWidgets::MenuItem("Project Settings");
                 EditorWidgets::MenuItem("Editor Preferences");
-                ImGui::EndPopup();
+                EditorWidgets::EndMenuPopup();
             }
-
-            EditorWidgets::ResetMenuPopup();
         }
 
         ImGui::SameLine(0.0f, 0.0f);
@@ -357,10 +353,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
                     }
                 }
 
-                ImGui::EndPopup();
+                EditorWidgets::EndMenuPopup();
             }
-
-            EditorWidgets::ResetMenuPopup();
         }
 
         ImGui::SameLine(0.0f, 0.0f);
@@ -374,10 +368,8 @@ void FEditorDockspaceWidget::DrawMenuBar()
             {
                 EditorWidgets::MenuLabeledSeparator("About");
                 EditorWidgets::MenuItem("About");
-                ImGui::EndPopup();
+                EditorWidgets::EndMenuPopup();
             }
-
-            EditorWidgets::ResetMenuPopup();
         }
     }
 

@@ -593,6 +593,39 @@ void FEditorSceneHierarchyWidget::DrawSceneInfo()
     ImGui::PopStyleColor(4);
 
     // -----------------------------------------------------------------------------------------
+    // Context menu
+    // -----------------------------------------------------------------------------------------
+
+    if (EditorWidgets::BeginPopupContextItem("SceneHierarchyContextMenu"))
+    {
+        EditorWidgets::MenuLabeledSeparator("Scene Hierarchy");
+        EditorWidgets::MenuItem("Add Actor", nullptr, false, false);
+        
+        FActor* SelectedActorForMenu = EditorEngine->GetSelectedActor();
+        const bool bHasActorSelected = (SelectedActorForMenu != nullptr);
+        if (EditorWidgets::MenuItem("Rename", "F2", false, bHasActorSelected))
+        {
+            if (SelectedActorForMenu)
+            {
+                bRequestRenameFocus = true;
+                RenamingActor       = SelectedActorForMenu;
+                
+                ActorRenameBuffer.Fill(0);
+                ActorRenameBufferOriginal.Fill(0);
+        
+                const FString& Name = SelectedActorForMenu->GetName();
+                if (!Name.IsEmpty())
+                {
+                    FCString::Strncpy(ActorRenameBuffer.Data(), *Name, ActorRenameBuffer.Size());
+                    FCString::Strncpy(ActorRenameBufferOriginal.Data(), *Name, ActorRenameBufferOriginal.Size());
+                }
+            }
+        }
+
+        EditorWidgets::EndPopupContext();
+    }
+
+    // -----------------------------------------------------------------------------------------
     // Click rules
     // -----------------------------------------------------------------------------------------
 
@@ -855,7 +888,7 @@ void FEditorSceneHierarchyWidget::DrawActorRow(FActor* Actor, const CHAR* Type, 
             const ImU32 BorderColor = bActive ? BorderActive : (bHovered ? BorderHovered : BorderNormal);
 
             ImDrawList* DrawList = ImGui::GetWindowDrawList();
-            DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, 0, BorderThickness);
+            DrawList->AddRect(ItemMin, ItemMax, BorderColor, BorderRounding, ImDrawListFlags_AntiAliasedLines, BorderThickness);
         }
 
         if (ImGui::IsItemActive() && ImGui::IsKeyPressed(ImGuiKey_Escape))

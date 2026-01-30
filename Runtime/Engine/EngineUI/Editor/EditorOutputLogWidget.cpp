@@ -1,4 +1,5 @@
 #include "Engine/EngineUI/Editor/EditorOutputLogWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include <imgui.h>
@@ -376,7 +377,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     ImGui::PushFont(EditorFonts::Consola_16);
     ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f));
 
-    if (EditorWidgets::BeginRichTextView("##OutputLogRichText", ImVec2(-1.0f, -1.0f), RichTextCtx))
+    if (EditorWidgets::BeginRichTextView("##OutputLogRichText", ImVec2(-1.0f, -1.0f), RichTextCtx, 0, false))
     {
         for (int32 i = 0; i < LocalMessages.Size(); ++i)
         {
@@ -466,6 +467,33 @@ void FEditorOutputLogWidget::DrawLogListRichText()
             }
 
             EditorWidgets::RichTextLineEnd(RichTextCtx);
+        }
+
+        if (EditorWidgets::BeginPopupContextWindow("OutputLogContextMenu"))
+        {
+            EditorWidgets::MenuLabeledSeparator("Output Log");
+
+            if (EditorWidgets::MenuItem("Select All", nullptr, false, true))
+            {
+                EditorWidgets::RichTextSelectAll(RichTextCtx);
+            }
+
+            if (EditorWidgets::MenuItem("Copy", nullptr, false, RichTextCtx.bHasSelection))
+            {
+                const FString Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
+                if (!Selected.IsEmpty())
+                {
+                    ImGui::SetClipboardText(*Selected);
+                }
+            }
+
+            if (EditorWidgets::MenuItem("Clear log", nullptr, false, true))
+            {
+                SCOPED_LOCK(MessagesCS);
+                Messages.Clear();
+            }
+            
+            EditorWidgets::EndPopupContext();
         }
 
         EditorWidgets::EndRichTextView(RichTextCtx);
