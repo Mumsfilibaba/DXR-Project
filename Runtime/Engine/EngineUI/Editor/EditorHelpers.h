@@ -22,7 +22,7 @@ struct PopupAnchor
     bool bRequestPosition = false;
 };
 
-struct FRichTextSpan
+struct RichTextSpan
 {
     FString Text;
 
@@ -31,30 +31,30 @@ struct FRichTextSpan
     bool  bHasBackground  = false;
 };
 
-struct FRichTextLine
+struct RichTextLine
 {
-    TArray<FRichTextSpan> Spans;
+    TArray<RichTextSpan> Spans;
     int32 TotalChars = 0;
 };
 
-struct FRichTextSelectionPoint
+struct RichTextSelectionPoint
 {
     int32 Line   = 0;
     int32 Column = 0;
 };
 
-struct FRichTextViewContext
+struct RichTextViewContext
 {
     void ClearForNewFrame()
     {
         Lines.Clear();
         bActive = false;
     }
-    
-    FRichTextSelectionPoint SelStart;
-    FRichTextSelectionPoint SelEnd;
-    TArray<FRichTextLine>   Lines;
-    
+
+    TArray<RichTextLine>   Lines;
+    RichTextSelectionPoint SelStart;
+    RichTextSelectionPoint SelEnd;
+
     ImGuiID ViewId          = 0;
     ImVec2  Padding         = ImVec2(8.0f, 4.0f);
     ImVec2  ContentStart    = ImVec2(0, 0);
@@ -65,6 +65,15 @@ struct FRichTextViewContext
     bool    bSelecting      = false;
     bool    bHasSelection   = false;
     bool    bActive         = false;
+};
+
+struct ErrorWindowContext
+{
+    TArray<FString> Entries;
+    FString         Title;
+    FString         HeaderText;
+
+    bool bVisible = false;
 };
 
 // -----------------------------------------------------------------------------------------
@@ -119,7 +128,7 @@ struct ENGINE_API EditorHelpers
 struct ENGINE_API EditorWidgets
 {
     // -----------------------------------------------------------------------------------------
-    // Menu
+    // Inputs
     // -----------------------------------------------------------------------------------------
 
     static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType);
@@ -181,18 +190,30 @@ struct ENGINE_API EditorWidgets
     // Rich Text View
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0);
-    static void RichTextLineBegin(FRichTextViewContext& InOutContext);
-    static void RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
-    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
-    static void RichTextLineEnd(FRichTextViewContext& InOutContext);
-    static void EndRichTextView(FRichTextViewContext& InOutContext);
+    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0);
+    static void RichTextLineBegin(RichTextViewContext& InOutContext);
+    static void RichTextAddText(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
+    static void RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void RichTextLineEnd(RichTextViewContext& InOutContext);
+    static void EndRichTextView(RichTextViewContext& InOutContext);
+
+    // -----------------------------------------------------------------------------------------
+    // Buttons
+    // -----------------------------------------------------------------------------------------
+
+    static bool DrawDialogButton(const CHAR* Label, const ImVec2& Size);
+    static bool DrawButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
+
+    // -----------------------------------------------------------------------------------------
+    // Error handling
+    // -----------------------------------------------------------------------------------------
+
+    static void DrawErrorWindow(ErrorWindowContext& InOutContext);
 
     // -----------------------------------------------------------------------------------------
     // Other
     // -----------------------------------------------------------------------------------------
 
-    static bool DrawButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
     static void DrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
 };
 

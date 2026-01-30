@@ -230,17 +230,17 @@ static FORCEINLINE int32 ClampInt32(int32 V, int32 MinV, int32 MaxV)
     return (V < MinV) ? MinV : (V > MaxV ? MaxV : V);
 }
 
-static FORCEINLINE void NormalizeSelection(FRichTextSelectionPoint& A, FRichTextSelectionPoint& B)
+static FORCEINLINE void NormalizeSelection(RichTextSelectionPoint& A, RichTextSelectionPoint& B)
 {
     if (A.Line > B.Line || (A.Line == B.Line && A.Column > B.Column))
     {
-        FRichTextSelectionPoint Temp = A;
+        RichTextSelectionPoint Temp = A;
         A = B;
         B = Temp;
     }
 }
 
-static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& SelA, const FRichTextSelectionPoint& SelB, int32 LineIndex, int32& OutColStart, int32& OutColEnd, int32 LineCharCount)
+static FORCEINLINE bool SelectionIntersectsLine(const RichTextSelectionPoint& SelA, const RichTextSelectionPoint& SelB, int32 LineIndex, int32& OutColStart, int32& OutColEnd, int32 LineCharCount)
 {
     OutColStart = 0;
     OutColEnd   = 0;
@@ -276,15 +276,15 @@ static FORCEINLINE bool SelectionIntersectsLine(const FRichTextSelectionPoint& S
     return LineCharCount > 0;
 }
 
-static FString BuildSelectedText(const FRichTextViewContext& Ctx)
+static FString BuildSelectedText(const RichTextViewContext& Ctx)
 {
     if (!Ctx.bHasSelection || Ctx.Lines.IsEmpty())
     {
         return FString();
     }
 
-    FRichTextSelectionPoint A = Ctx.SelStart;
-    FRichTextSelectionPoint B = Ctx.SelEnd;
+    RichTextSelectionPoint A = Ctx.SelStart;
+    RichTextSelectionPoint B = Ctx.SelEnd;
     NormalizeSelection(A, B);
 
     FString Result;
@@ -294,7 +294,7 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
 
     for (int32 L = LineMin; L <= LineMax; ++L)
     {
-        const FRichTextLine& Line = Ctx.Lines[L];
+        const RichTextLine& Line = Ctx.Lines[L];
 
         FString FullLine;
         for (int32 s = 0; s < Line.Spans.Size(); ++s)
@@ -308,8 +308,8 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
         int32 SelColStart = 0;
         int32 SelColEnd   = 0;
 
-        FRichTextSelectionPoint NA = A;
-        FRichTextSelectionPoint NB = B;
+        RichTextSelectionPoint NA = A;
+        RichTextSelectionPoint NB = B;
 
         if (!SelectionIntersectsLine(NA, NB, L, SelColStart, SelColEnd, FullLen))
         {
@@ -343,9 +343,9 @@ static FString BuildSelectedText(const FRichTextViewContext& Ctx)
     return Result;
 }
 
-static FRichTextSelectionPoint GetMouseSelectionPoint(const FRichTextViewContext& Ctx, const ImVec2& MousePos)
+static RichTextSelectionPoint GetMouseSelectionPoint(const RichTextViewContext& Ctx, const ImVec2& MousePos)
 {
-    FRichTextSelectionPoint P{};
+    RichTextSelectionPoint P{};
     P.Line   = 0;
     P.Column = 0;
 
@@ -1069,6 +1069,140 @@ const CHAR* EditorHelpers::GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int
     return OutBuf[0] ? OutBuf : nullptr;
 }
 
+void EditorWidgets::DrawErrorWindow(ErrorWindowContext& InOutContext)
+{
+    if (!InOutContext.bVisible)
+    {
+        return;
+    }
+
+    const CHAR* TitleText  = !InOutContext.Title.IsEmpty() ? *InOutContext.Title : "Failed Renames";
+    const CHAR* HeaderText = !InOutContext.HeaderText.IsEmpty() ? *InOutContext.HeaderText : "The following files could not be moved";
+
+    if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+    {
+        ImGui::SetNextWindowPos(Viewport->GetCenter(), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
+    }
+
+    ImGui::SetNextWindowSize(ImVec2(780.0f, 420.0f), ImGuiCond_FirstUseEver);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, ImVec2(0.5f, 0.5f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(20.0f, 16.0f));
+
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, IM_COL32(26, 26, 26, 255));
+    ImGui::PushStyleColor(ImGuiCol_TitleBg, IM_COL32(26, 26, 26, 255));
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, IM_COL32(26, 26, 26, 255));
+    ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(44, 44, 44, 255));
+
+    const ImGuiWindowFlags WindowFlags =
+        ImGuiWindowFlags_NoDocking |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoResize;
+
+    bool bClosePressed = false;
+    const bool bBeginWindow = ImGui::Begin(TitleText, nullptr, WindowFlags);
+    if (bBeginWindow)
+    {
+        ImGui::TextUnformatted(HeaderText);
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        const float LineHeight     = ImGui::GetTextLineHeightWithSpacing();
+        const float MinHeight      = 140.0f;
+        const float EntriesHeight  = LineHeight * InOutContext.Entries.Size();
+        const float DesiredHeight  = Math::Clamp(MinHeight + EntriesHeight, 140.0f, 260.0f);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.0f, 8.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(26, 26, 26, 255));
+
+        const ImGuiWindowFlags ChildFlags = ImGuiWindowFlags_AlwaysUseWindowPadding;
+        ImGui::BeginChild("##FailedMoveList", ImVec2(0.0f, DesiredHeight), false, ChildFlags);
+
+        if (InOutContext.Entries.IsEmpty())
+        {
+            ImGui::TextUnformatted("No files listed.");
+        }
+        else
+        {
+            for (int32 Index = 0; Index < InOutContext.Entries.Size(); ++Index)
+            {
+                ImGui::TextUnformatted(*InOutContext.Entries[Index]);
+            }
+        }
+
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(3);
+
+        const ImVec2 ListMin = ImGui::GetItemRectMin();
+        const ImVec2 ListMax = ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddRect(ListMin, ListMax, IM_COL32(36, 36, 36, 255), 0.0f, 0, 3.0f);
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+
+        const float ButtonWidth  = 120.0f;
+        const float ButtonHeight = ImGui::GetFrameHeight();
+        const float AvailableX   = ImGui::GetContentRegionAvail().x;
+        const float CursorX      = ImGui::GetCursorPosX();
+        const float ButtonPosX   = CursorX + Math::Max(0.0f, AvailableX - ButtonWidth);
+        ImGui::SetCursorPosX(ButtonPosX);
+
+        const ImVec2 ButtonSize(ButtonWidth, ButtonHeight);
+        bClosePressed = DrawDialogButton("Close", ButtonSize);
+    }
+
+    ImGui::End();
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar(4);
+
+    if (bClosePressed)
+    {
+        InOutContext.bVisible = false;
+        InOutContext.Entries.Clear();
+        InOutContext.HeaderText.Clear();
+        InOutContext.Title.Clear();
+    }
+}
+
+bool EditorWidgets::DrawDialogButton(const CHAR* Label, const ImVec2& Size)
+{
+    ImGui::PushID(Label);
+
+    const bool bPressed = ImGui::InvisibleButton("##DialogButton", Size);
+    const bool bHovered = ImGui::IsItemHovered();
+    const bool bHeld    = ImGui::IsItemActive();
+
+    const ImVec2 Min = ImGui::GetItemRectMin();
+    const ImVec2 Max = ImGui::GetItemRectMax();
+
+    const ImU32 BgIdle    = IM_COL32(56, 56, 56, 255);
+    const ImU32 BgHover   = IM_COL32(87, 87, 87, 255);
+    const ImU32 BgHeld    = IM_COL32(47, 47, 47, 255);
+    const ImU32 BgColor   = bHeld ? BgHeld : (bHovered ? BgHover : BgIdle);
+    const ImU32 TextColor = IM_COL32(255, 255, 255, 255);
+
+    const float Rounding = 4.0f;
+
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+    DrawList->AddRectFilled(Min, Max, BgColor, Rounding);
+
+    ImGui::PushFont(EditorFonts::SegoeUI_22);
+
+    const ImVec2 TextSize = ImGui::CalcTextSize(Label);
+    const ImVec2 TextPos  = ImVec2(Min.x + (Size.x - TextSize.x) * 0.5f, Min.y + (Size.y - TextSize.y) * 0.5f);
+    DrawList->AddText(TextPos, TextColor, Label);
+
+    ImGui::PopFont();
+
+    ImGui::PopID();
+    return bPressed;
+}
+
 bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth, bool bDrawBorder)
 {
     if (!InId || !InHint || !InOutBuffer || InBufferSize <= 0)
@@ -1085,6 +1219,7 @@ bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* 
     // -------------------------------------------------------------------------------------
     // Layout constants
     // -------------------------------------------------------------------------------------
+
     const ImVec2 BasePadding = EditorStyleVars::InputFieldFramePadding;
 
     const float IconGap     = 6.0f;
@@ -1131,6 +1266,7 @@ bool EditorWidgets::DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* 
     // -------------------------------------------------------------------------------------
     // Input
     // -------------------------------------------------------------------------------------
+
     ImGui::SetNextItemWidth(TotalWidth);
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(IconAreaWidth, BasePadding.y));
@@ -1823,7 +1959,7 @@ void EditorWidgets::PropertySeparatorRow(float PaddingY)
     }
 }
 
-bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags)
+bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags)
 {
     InOutContext.ClearForNewFrame();
 
@@ -1855,7 +1991,7 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FR
             FString All;
             for (int32 L = 0; L < InOutContext.Lines.Size(); ++L)
             {
-                const FRichTextLine& Line = InOutContext.Lines[L];
+                const RichTextLine& Line = InOutContext.Lines[L];
                 for (int32 s = 0; s < Line.Spans.Size(); ++s)
                 {
                     All += Line.Spans[s].Text;
@@ -1879,28 +2015,28 @@ bool EditorWidgets::BeginRichTextView(const CHAR* InId, const ImVec2& InSize, FR
     return true;
 }
 
-void EditorWidgets::RichTextLineBegin(FRichTextViewContext& InOutContext)
+void EditorWidgets::RichTextLineBegin(RichTextViewContext& InOutContext)
 {
     if (!InOutContext.bActive)
     {
         return;
     }
 
-    FRichTextLine Line;
+    RichTextLine Line;
     Line.TotalChars = 0;
     InOutContext.Lines.Add(Line);
 }
 
-void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor)
+void EditorWidgets::RichTextAddText(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor)
 {
     if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
     {
         return;
     }
 
-    FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
+    RichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
 
-    FRichTextSpan Span;
+    RichTextSpan Span;
     Span.Text           = InText;
     Span.TextColor      = InTextColor;
     Span.bHasBackground = false;
@@ -1909,16 +2045,16 @@ void EditorWidgets::RichTextAddText(FRichTextViewContext& InOutContext, const CH
     Line.Spans.Add(Span);
 }
 
-void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
+void EditorWidgets::RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor)
 {
     if (!InOutContext.bActive || InOutContext.Lines.IsEmpty() || !InText)
     {
         return;
     }
 
-    FRichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
+    RichTextLine& Line = InOutContext.Lines[InOutContext.Lines.Size() - 1];
 
-    FRichTextSpan Span;
+    RichTextSpan Span;
     Span.Text            = InText;
     Span.TextColor       = InTextColor;
     Span.bHasBackground  = true;
@@ -1928,12 +2064,12 @@ void EditorWidgets::RichTextAddTextBg(FRichTextViewContext& InOutContext, const 
     Line.Spans.Add(Span);
 }
 
-void EditorWidgets::RichTextLineEnd(FRichTextViewContext& InOutContext)
+void EditorWidgets::RichTextLineEnd(RichTextViewContext& InOutContext)
 {
     (void)InOutContext;
 }
 
-void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
+void EditorWidgets::EndRichTextView(RichTextViewContext& InOutContext)
 {
     if (!InOutContext.bActive)
     {
@@ -2132,7 +2268,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
         }
         else
         {
-            const FRichTextSelectionPoint P = GetMouseSelectionPoint(InOutContext, State.MousePos);
+            const RichTextSelectionPoint P = GetMouseSelectionPoint(InOutContext, State.MousePos);
             if (InOutContext.Lines.IsValidIndex(P.Line))
             {
                 FString LineText;
@@ -2153,8 +2289,8 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
     ImGuiListClipper Clipper;
     Clipper.Begin(InOutContext.Lines.Size(), FullLineHeight);
 
-    FRichTextSelectionPoint SelA = InOutContext.SelStart;
-    FRichTextSelectionPoint SelB = InOutContext.SelEnd;
+    RichTextSelectionPoint SelA = InOutContext.SelStart;
+    RichTextSelectionPoint SelB = InOutContext.SelEnd;
     NormalizeSelection(SelA, SelB);
 
     const ImU32 SelectionBg = ImGui::GetColorU32(ImGuiCol_TextSelectedBg);
@@ -2168,7 +2304,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
                 continue;
             }
 
-            const FRichTextLine& Line = InOutContext.Lines[LineIndex];
+            const RichTextLine& Line = InOutContext.Lines[LineIndex];
 
             const float Y = InOutContext.ContentStart.y + InOutContext.Padding.y + LineIndex * FullLineHeight;
             const float X = InOutContext.ContentStart.x + InOutContext.Padding.x;
@@ -2193,7 +2329,7 @@ void EditorWidgets::EndRichTextView(FRichTextViewContext& InOutContext)
             float CursorX = X;
             for (int32 s = 0; s < Line.Spans.Size(); ++s)
             {
-                const FRichTextSpan& Span = Line.Spans[s];
+                const RichTextSpan& Span = Line.Spans[s];
 
                 const CHAR* Text = *Span.Text;
                 if (!Text || Text[0] == 0)

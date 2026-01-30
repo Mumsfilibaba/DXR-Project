@@ -43,7 +43,7 @@ private:
     TStaticArray<CHAR, 256> SearchFilterBuffer;
     TArray<FLogMessage>     Messages;
     FCriticalSection        MessagesCS;
-    FRichTextViewContext    RichTextCtx;
+    RichTextViewContext     RichTextCtx;
     FDelegateHandle         ImGuiDelegateHandle;
 
     bool                    bVisible;

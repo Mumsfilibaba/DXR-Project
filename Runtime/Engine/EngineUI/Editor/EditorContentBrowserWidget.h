@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include <imgui.h>
 
@@ -84,6 +85,7 @@ private:
     void SelectItemRange(int32 InStartIndex, int32 InEndIndex, bool bAddToExisting);
     bool IsItemSelected(int32 InIndex) const;
     bool MoveItemsToFolder(const TArray<int32>& InSourceParentPath, const TArray<int32>& InSourceIndices, const TArray<int32>& InTargetFolderPath);
+    void ReportFailedMove(const FString& InFullPath);
 
     bool MatchesSearch(const CHAR* InName, const CHAR* InQuery) const;
     bool FolderTreeMatches(const FileInfo& InFolder, const CHAR* InQuery) const;
@@ -113,7 +115,7 @@ private:
     int32 FindChildFileIndexByName(const FileInfo& ParentFolder, const FString& FileName) const;
     void UpdateDragPreviewNameConflicts(const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath, const TArray<int32>& TargetPath);
     void SetDragPreviewTarget(const CHAR* TargetName, const TArray<int32>& TargetPath, const TArray<TArray<int32>>& SourceFolderPaths, const FileInfo* SourceParentFolder, const TArray<int32>* SourceIndices, const TArray<int32>* SourceParentPath);
-    bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder);
+    bool MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder, const FString& SourceFolderPath);
 
 private:
     FDelegateHandle            ImGuiDelegateHandle;
@@ -164,6 +166,7 @@ private:
     //          [0, 2]     -> RootFolders[0].FolderContents[2]
     //          [0, 2, 1]  -> RootFolders[0].FolderContents[2].FolderContents[1]
     TArray<int32>              SelectedFolderPath;
+    ErrorWindowContext         FailedMoveErrorContext;
     TArray<FileInfo>           RootFolders;
     TArray<TArray<int32>>      BackHistory;
     TArray<TArray<int32>>      ForwardHistory;

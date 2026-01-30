@@ -5,12 +5,6 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-static void LogFileMoveConflict(const CHAR* InFileName)
-{
-    const CHAR* NameText = InFileName && InFileName[0] ? InFileName : "";
-    LOG_ERROR("Failed to move %s since there already is a file with that name in the directory.", NameText);
-}
-
 // -------------------------------------------------------------------------------------------------
 // Scroll shadow helpers
 // -------------------------------------------------------------------------------------------------
@@ -255,10 +249,28 @@ FEditorContentBrowserWidget::~FEditorContentBrowserWidget()
     }
 }
 
+static FString AppendNameToPath(const FString& BasePath, const FString& Name)
+{
+    if (Name.IsEmpty())
+    {
+        return BasePath;
+    }
+
+    FString Result = BasePath;
+    if (!Result.IsEmpty())
+    {
+        Result += "/";
+    }
+
+    Result += Name;
+    return Result;
+}
+
 void FEditorContentBrowserWidget::Draw()
 {
     if (!bVisible)
     {
+        EditorWidgets::DrawErrorWindow(FailedMoveErrorContext);
         return;
     }
 
@@ -284,6 +296,8 @@ void FEditorContentBrowserWidget::Draw()
 
     ImGui::PopStyleColor(4);
     ImGui::PopStyleVar(3);
+
+    EditorWidgets::DrawErrorWindow(FailedMoveErrorContext);
 }
 
 void FEditorContentBrowserWidget::DrawLayoutTable()
@@ -2773,6 +2787,12 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
         return false;
     }
 
+    constexpr int32 PathBufSize = 512;
+    CHAR SourceParentPathBuf[PathBufSize];
+    SourceParentPathBuf[0] = 0;
+    BuildFolderPathString(InSourceParentPath, SourceParentPathBuf, PathBufSize);
+    const FString SourceParentPathStr = SourceParentPathBuf;
+
     TArray<int32> TargetParentPath = InTargetFolderPath;
 
     const int32 TargetFolderIndexOriginal = TargetParentPath.LastElement();
@@ -2919,12 +2939,13 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
         }
 
         FileInfo& Item = SourceParent->FolderContents[SourceIndex];
+        const FString ItemPath = AppendNameToPath(SourceParentPathStr, Item.Name);
         if (Item.bIsFolder)
         {
             const int32 ExistingFolderIndex = FindChildFolderIndexByName(*TargetFolder, Item.Name);
             if (ExistingFolderIndex >= 0)
             {
-                if (MergeFolderContents(TargetFolder->FolderContents[ExistingFolderIndex], Item))
+                if (MergeFolderContents(TargetFolder->FolderContents[ExistingFolderIndex], Item, ItemPath))
                 {
                     bDidMove = true;
                 }
@@ -2946,8 +2967,7 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
 
         if (FindChildFileIndexByName(*TargetFolder, Item.Name) >= 0)
         {
-            const CHAR* NameText = Item.Name.IsEmpty() ? "" : *Item.Name;
-            LogFileMoveConflict(NameText);
+            ReportFailedMove(ItemPath);
             continue;
         }
 
@@ -3004,6 +3024,26 @@ bool FEditorContentBrowserWidget::MoveItemsToFolder(const TArray<int32>& InSourc
     }
 
     return true;
+}
+
+void FEditorContentBrowserWidget::ReportFailedMove(const FString& InFullPath)
+{
+    FString Entry = InFullPath;
+    if (Entry.IsEmpty())
+    {
+        Entry = "Unnamed asset";
+    }
+
+    LOG_ERROR("Failed to move %s since there already is a file with that name in the directory.", *Entry);
+
+    if (!FailedMoveErrorContext.Entries.Contains(Entry))
+    {
+        FailedMoveErrorContext.Entries.Add(Entry);
+    }
+
+    FailedMoveErrorContext.Title      = "Failed Renames";
+    FailedMoveErrorContext.HeaderText = "The following files could not be moved";
+    FailedMoveErrorContext.bVisible   = true;
 }
 
 bool FEditorContentBrowserWidget::MatchesSearch(const CHAR* InName, const CHAR* InQuery) const
@@ -3675,7 +3715,7 @@ void FEditorContentBrowserWidget::SetDragPreviewTarget(const CHAR* TargetName, c
     UpdateDragPreviewNameConflicts(SourceFolderPaths, SourceParentFolder, SourceIndices, SourceParentPath, TargetPath);
 }
 
-bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder)
+bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, FileInfo& SourceFolder, const FString& SourceFolderPath)
 {
     if (!TargetFolder.bIsFolder || !SourceFolder.bIsFolder)
     {
@@ -3698,12 +3738,13 @@ bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, Fi
     for (int32 Index = 0; Index < SourceFolder.FolderContents.Size();)
     {
         FileInfo& Item = SourceFolder.FolderContents[Index];
+        const FString ItemPath = AppendNameToPath(SourceFolderPath, Item.Name);
         if (Item.bIsFolder)
         {
             const int32 ExistingFolderIndex = FindChildFolderIndexByName(TargetFolder, Item.Name);
             if (ExistingFolderIndex >= 0)
             {
-                if (MergeFolderContents(TargetFolder.FolderContents[ExistingFolderIndex], Item))
+                if (MergeFolderContents(TargetFolder.FolderContents[ExistingFolderIndex], Item, ItemPath))
                 {
                     bMovedAny = true;
                 }
@@ -3727,8 +3768,7 @@ bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, Fi
 
         if (FindChildFileIndexByName(TargetFolder, Item.Name) >= 0)
         {
-            const CHAR* NameText = Item.Name.IsEmpty() ? "" : *Item.Name;
-            LogFileMoveConflict(NameText);
+            ReportFailedMove(ItemPath);
             ++Index;
             continue;
         }
