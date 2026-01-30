@@ -2661,48 +2661,50 @@ struct EditorIcon
 
 struct EditorIconsInternal
 {
-    inline static EditorIcon UndoIcon            = EditorIcon();
-    inline static EditorIcon SearchIcon          = EditorIcon();
-    inline static EditorIcon LockedIcon          = EditorIcon();
-    inline static EditorIcon UnlockedIcon        = EditorIcon();
-    inline static EditorIcon FolderIcon          = EditorIcon();
-    inline static EditorIcon FolderSmallIcon     = EditorIcon();
-    inline static EditorIcon FolderOpenSmallIcon = EditorIcon();
-    inline static EditorIcon DocumentIcon        = EditorIcon();
-    inline static EditorIcon DocumentSmallIcon   = EditorIcon();
-    inline static EditorIcon CheckmarkIcon       = EditorIcon();
-    inline static EditorIcon ForbiddenIcon       = EditorIcon();
+    inline static EditorIcon UndoIcon             = EditorIcon();
+    inline static EditorIcon SearchIcon           = EditorIcon();
+    inline static EditorIcon LockedIcon           = EditorIcon();
+    inline static EditorIcon UnlockedIcon         = EditorIcon();
+    inline static EditorIcon FolderIcon           = EditorIcon();
+    inline static EditorIcon FolderSmallIcon      = EditorIcon();
+    inline static EditorIcon FolderSmall2Icon     = EditorIcon();
+    inline static EditorIcon FolderOpenSmallIcon  = EditorIcon();
+    inline static EditorIcon DocumentIcon         = EditorIcon();
+    inline static EditorIcon DocumentSmallIcon    = EditorIcon();
+    inline static EditorIcon CheckmarkIcon        = EditorIcon();
+    inline static EditorIcon ForbiddenIcon        = EditorIcon();
     inline static EditorIcon CircledCheckmarkIcon = EditorIcon();
-    inline static EditorIcon NextIcon            = EditorIcon();
-    inline static EditorIcon PreviousIcon        = EditorIcon();
-    inline static EditorIcon CloseIcon           = EditorIcon();
-    inline static EditorIcon FilterIcon          = EditorIcon();
-    inline static EditorIcon RightArrowIcon      = EditorIcon();
-    inline static EditorIcon DownArrowIcon       = EditorIcon();
-    inline static EditorIcon CollapseArrowDown   = EditorIcon();
-    inline static EditorIcon CollapseArrowRight  = EditorIcon();
+    inline static EditorIcon NextIcon             = EditorIcon();
+    inline static EditorIcon PreviousIcon         = EditorIcon();
+    inline static EditorIcon CloseIcon            = EditorIcon();
+    inline static EditorIcon FilterIcon           = EditorIcon();
+    inline static EditorIcon RightArrowIcon       = EditorIcon();
+    inline static EditorIcon DownArrowIcon        = EditorIcon();
+    inline static EditorIcon CollapseArrowDown    = EditorIcon();
+    inline static EditorIcon CollapseArrowRight   = EditorIcon();
 };
 
-ImTextureID EditorIcons::UndoIcon            = nullptr;
-ImTextureID EditorIcons::SearchIcon          = nullptr;
-ImTextureID EditorIcons::LockedIcon          = nullptr;
-ImTextureID EditorIcons::UnlockedIcon        = nullptr;
-ImTextureID EditorIcons::FolderIcon          = nullptr;
-ImTextureID EditorIcons::FolderSmallIcon     = nullptr;
-ImTextureID EditorIcons::FolderOpenSmallIcon = nullptr;
-ImTextureID EditorIcons::DocumentIcon        = nullptr;
-ImTextureID EditorIcons::DocumentSmallIcon   = nullptr;
-ImTextureID EditorIcons::CheckmarkIcon       = nullptr;
-ImTextureID EditorIcons::ForbiddenIcon       = nullptr;
+ImTextureID EditorIcons::UndoIcon             = nullptr;
+ImTextureID EditorIcons::SearchIcon           = nullptr;
+ImTextureID EditorIcons::LockedIcon           = nullptr;
+ImTextureID EditorIcons::UnlockedIcon         = nullptr;
+ImTextureID EditorIcons::FolderIcon           = nullptr;
+ImTextureID EditorIcons::FolderSmallIcon      = nullptr;
+ImTextureID EditorIcons::FolderSmall2Icon     = nullptr;
+ImTextureID EditorIcons::FolderOpenSmallIcon  = nullptr;
+ImTextureID EditorIcons::DocumentIcon         = nullptr;
+ImTextureID EditorIcons::DocumentSmallIcon    = nullptr;
+ImTextureID EditorIcons::CheckmarkIcon        = nullptr;
+ImTextureID EditorIcons::ForbiddenIcon        = nullptr;
 ImTextureID EditorIcons::CircledCheckmarkIcon = nullptr;
-ImTextureID EditorIcons::NextIcon            = nullptr;
-ImTextureID EditorIcons::PreviousIcon        = nullptr;
-ImTextureID EditorIcons::CloseIcon           = nullptr;
-ImTextureID EditorIcons::FilterIcon          = nullptr;
-ImTextureID EditorIcons::RightArrowIcon      = nullptr;
-ImTextureID EditorIcons::DownArrowIcon       = nullptr;
-ImTextureID EditorIcons::CollapseArrowDown   = nullptr;
-ImTextureID EditorIcons::CollapseArrowRight  = nullptr;
+ImTextureID EditorIcons::NextIcon             = nullptr;
+ImTextureID EditorIcons::PreviousIcon         = nullptr;
+ImTextureID EditorIcons::CloseIcon            = nullptr;
+ImTextureID EditorIcons::FilterIcon           = nullptr;
+ImTextureID EditorIcons::RightArrowIcon       = nullptr;
+ImTextureID EditorIcons::DownArrowIcon        = nullptr;
+ImTextureID EditorIcons::CollapseArrowDown    = nullptr;
+ImTextureID EditorIcons::CollapseArrowRight   = nullptr;
 
 static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, EditorIcon& OutIcon, bool bEnableBlending = true, bool bEnableLinearSampler = true)
 {
@@ -2778,6 +2780,7 @@ bool EditorIcons::Initialize()
     bResult &= LoadEditorIcon("Editor/Icons/Unlocked.png", UnlockedIcon, EditorIconsInternal::UnlockedIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Folder.png", FolderIcon, EditorIconsInternal::FolderIcon);
     bResult &= LoadEditorIcon("Editor/Icons/FolderSmall.png", FolderSmallIcon, EditorIconsInternal::FolderSmallIcon);
+    bResult &= LoadEditorIcon("Editor/Icons/FolderSmall2.png", FolderSmall2Icon, EditorIconsInternal::FolderSmall2Icon);
     bResult &= LoadEditorIcon("Editor/Icons/FolderOpenSmall.png", FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
     bResult &= LoadEditorIcon("Editor/Icons/Document.png", DocumentIcon, EditorIconsInternal::DocumentIcon);
     bResult &= LoadEditorIcon("Editor/Icons/DocumentSmall.png", DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);
@@ -2804,6 +2807,7 @@ void EditorIcons::Release()
     UnloadEditorIcon(UnlockedIcon, EditorIconsInternal::UnlockedIcon);
     UnloadEditorIcon(FolderIcon, EditorIconsInternal::FolderIcon);
     UnloadEditorIcon(FolderSmallIcon, EditorIconsInternal::FolderSmallIcon);
+    UnloadEditorIcon(FolderSmall2Icon, EditorIconsInternal::FolderSmall2Icon);
     UnloadEditorIcon(FolderOpenSmallIcon, EditorIconsInternal::FolderOpenSmallIcon);
     UnloadEditorIcon(DocumentIcon, EditorIconsInternal::DocumentIcon);
     UnloadEditorIcon(DocumentSmallIcon, EditorIconsInternal::DocumentSmallIcon);

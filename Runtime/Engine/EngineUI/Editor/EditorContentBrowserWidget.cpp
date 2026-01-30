@@ -926,7 +926,7 @@ void FEditorContentBrowserWidget::DrawItemTooltip(const FileInfo& InItem)
     ImTextureID TypeIcon = nullptr;
     if (bIsFolder)
     {
-        TypeIcon = EditorIcons::FolderSmallIcon ? EditorIcons::FolderSmallIcon : EditorIcons::FolderIcon;
+        TypeIcon = EditorIcons::FolderSmall2Icon ? EditorIcons::FolderSmall2Icon : EditorIcons::FolderIcon;
     }
     else
     {

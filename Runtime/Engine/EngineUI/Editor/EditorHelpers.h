@@ -250,6 +250,7 @@ struct ENGINE_API EditorIcons
     static ImTextureID UnlockedIcon;
     static ImTextureID FolderIcon;
     static ImTextureID FolderSmallIcon;
+    static ImTextureID FolderSmall2Icon;
     static ImTextureID FolderOpenSmallIcon;
     static ImTextureID DocumentIcon;
     static ImTextureID DocumentSmallIcon;
