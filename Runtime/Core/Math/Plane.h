@@ -70,7 +70,7 @@ public:
 
         for (int32 Index = 0; Index < 4; ++Index)
         {
-            float Diff = reinterpret_cast<const float*>(this)[Index] - reinterpret_cast<const float*>(&Other)[Index];
+            float Diff = XYZW[Index] - Other.XYZW[Index];
             if (Math::Abs(Diff) > Threshold)
             {
                 return false;

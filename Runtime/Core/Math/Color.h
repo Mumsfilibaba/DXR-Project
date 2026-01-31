@@ -149,6 +149,8 @@ public:
     FORCEINLINE explicit FFloatColor(const FVector3& InVector)
     {
         FMemory::Memcpy(RGBA, &InVector, sizeof(FVector3));
+
+        RGBA[3] = 1.0f;
     }
 
     /**

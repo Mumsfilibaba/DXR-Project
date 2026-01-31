@@ -35,6 +35,42 @@ private:
         return Value;
     }
 
+    static FORCEINLINE uint32 VECTORCALL IntToBits(int32 Value) noexcept
+    {
+        uint32 Bits = 0;
+        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
+        return Bits;
+    }
+
+    static FORCEINLINE int32 VECTORCALL BitsToInt(uint32 Bits) noexcept
+    {
+        int32 Value = 0;
+        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    }
+
+    static FORCEINLINE int32 VECTORCALL AddWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint32 UA = IntToBits(A);
+        const uint32 UB = IntToBits(B);
+        return BitsToInt(UA + UB);
+    }
+
+    static FORCEINLINE int32 VECTORCALL SubWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint32 UA = IntToBits(A);
+        const uint32 UB = IntToBits(B);
+        return BitsToInt(UA - UB);
+    }
+
+    static FORCEINLINE int32 VECTORCALL MulWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint64 UA = static_cast<uint64>(IntToBits(A));
+        const uint64 UB = static_cast<uint64>(IntToBits(B));
+        const uint32 Lo = static_cast<uint32>(UA * UB);
+        return BitsToInt(Lo);
+    }
+
     static FORCEINLINE uint32 VECTORCALL BoolMask(bool bValue) noexcept
     {
         return bValue ? 0xFFFFFFFFu : 0u;
@@ -489,10 +525,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(static_cast<uint32>(Vector.x)),
-            BitsToFloat(static_cast<uint32>(Vector.y)),
-            BitsToFloat(static_cast<uint32>(Vector.z)),
-            BitsToFloat(static_cast<uint32>(Vector.w))
+            BitsToFloat(IntToBits(Vector.x)),
+            BitsToFloat(IntToBits(Vector.y)),
+            BitsToFloat(IntToBits(Vector.z)),
+            BitsToFloat(IntToBits(Vector.w))
         };
     }
 
@@ -500,10 +536,10 @@ public:
     {
         return FInt128
         {
-            static_cast<int32>(FloatToBits(Vector.x)),
-            static_cast<int32>(FloatToBits(Vector.y)),
-            static_cast<int32>(FloatToBits(Vector.z)),
-            static_cast<int32>(FloatToBits(Vector.w))
+            BitsToInt(FloatToBits(Vector.x)),
+            BitsToInt(FloatToBits(Vector.y)),
+            BitsToInt(FloatToBits(Vector.z)),
+            BitsToInt(FloatToBits(Vector.w))
         };
     }
 
@@ -524,17 +560,38 @@ public:
 
     static FORCEINLINE FInt128 VECTORCALL VectorAddInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return FInt128{ VectorA.x + VectorB.x, VectorA.y + VectorB.y, VectorA.z + VectorB.z, VectorA.w + VectorB.w };
+        // Match SSE2 semantics (wrap-around / modulo 2^32).
+        return FInt128
+        {
+            AddWrapInt32(VectorA.x, VectorB.x),
+            AddWrapInt32(VectorA.y, VectorB.y),
+            AddWrapInt32(VectorA.z, VectorB.z),
+            AddWrapInt32(VectorA.w, VectorB.w)
+        };
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorSubInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return FInt128{ VectorA.x - VectorB.x, VectorA.y - VectorB.y, VectorA.z - VectorB.z, VectorA.w - VectorB.w };
+        // Match SSE2 semantics (wrap-around / modulo 2^32).
+        return FInt128
+        {
+            SubWrapInt32(VectorA.x, VectorB.x),
+            SubWrapInt32(VectorA.y, VectorB.y),
+            SubWrapInt32(VectorA.z, VectorB.z),
+            SubWrapInt32(VectorA.w, VectorB.w)
+        };
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorMulInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return FInt128{ VectorA.x * VectorB.x, VectorA.y * VectorB.y, VectorA.z * VectorB.z, VectorA.w * VectorB.w };
+        // Match SSE2 semantics (mullo / modulo 2^32).
+        return FInt128
+        {
+            MulWrapInt32(VectorA.x, VectorB.x),
+            MulWrapInt32(VectorA.y, VectorB.y),
+            MulWrapInt32(VectorA.z, VectorB.z),
+            MulWrapInt32(VectorA.w, VectorB.w)
+        };
     }
 
     static FORCEINLINE bool VECTORCALL VectorEqualInt(FInt128 VectorA, FInt128 VectorB) noexcept

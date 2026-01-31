@@ -101,9 +101,9 @@ public:
         Result.Z = (Vector.X * M[0][2]) + (Vector.Y * M[1][2]) + (Vector.Z * M[2][2]) + (Vector.W * M[3][2]);
         Result.W = (Vector.X * M[0][3]) + (Vector.Y * M[1][3]) + (Vector.Z * M[2][3]) + (Vector.W * M[3][3]);
     #else
-        FFloat128 Vector128 = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Vector));
+        FFloat128 Vector128 = FVectorMath::VectorLoad(Vector.XYZW);
         FFloat128 Result128 = FVectorMath::VectorTransform(M[0], Vector128);
-        FVectorMath::VectorStore(Result128, reinterpret_cast<float*>(&Result));
+        FVectorMath::VectorStore(Result128, Result.XYZW);
     #endif
 
         return Result;
