@@ -171,10 +171,8 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAbs(FFloat128 Vector) noexcept
     {
-        static constexpr int32 Mask = ~(1 << 31);
-
-        FInt128 Mask_128 = VectorSetInt1(Mask);
-        return VectorAnd(Vector, VectorIntToFloat(Mask_128));
+        // abs(x) = andnot(signMask, x)
+        return VectorAndNot(VectorSignMask(), Vector);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorCross(FFloat128 VectorA, FFloat128 VectorB) noexcept
@@ -214,12 +212,12 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE FFloat128 VECTORCALL VectorClamp(FFloat128 Value, FFloat128 MinValue, FFloat128 MaxValue) noexcept
     {
-        return VectorMin(MinValue, VectorMax(MaxValue, Value));
+        return VectorMax(MinValue, VectorMin(MaxValue, Value));
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorClampInt(FInt128 Value, FInt128 MinValue, FInt128 MaxValue) noexcept
     {
-        return VectorMinInt(MinValue, VectorMaxInt(MaxValue, Value));
+        return VectorMaxInt(MinValue, VectorMinInt(MaxValue, Value));
     }
 
     // ---------------------------------------------------------------------------------------------

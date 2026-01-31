@@ -23,10 +23,20 @@ struct FVectorMathSSE
 
     static FORCEINLINE FFloat128 VECTORCALL VectorLoad(const float* Source) noexcept
     {
+        return _mm_loadu_ps(Source);
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorLoadAligned(const float* Source) noexcept
+    {
         return _mm_load_ps(Source);
     }
 
     static FORCEINLINE void VECTORCALL VectorStore(FFloat128 Vector, float* Dest) noexcept
+    {
+        _mm_storeu_ps(Dest, Vector);
+    }
+
+    static FORCEINLINE void VECTORCALL VectorStoreAligned(FFloat128 Vector, float* Dest) noexcept
     {
         _mm_store_ps(Dest, Vector);
     }
@@ -249,7 +259,29 @@ struct FVectorMathSSE
         return _mm_rcp_ps(Vector);
     }
 
-    // ---------------------------------------------------------------------------------------------
+        static FORCEINLINE FFloat128 VECTORCALL VectorRecipAccurate(FFloat128 Vector) noexcept
+    {
+        // One Newton-Raphson refinement step on rcp approximation.
+        const FFloat128 Rcp = _mm_rcp_ps(Vector);
+        // Rcp * (2 - x * Rcp)
+        const FFloat128 Two = _mm_set1_ps(2.0f);
+        return _mm_mul_ps(Rcp, _mm_sub_ps(Two, _mm_mul_ps(Vector, Rcp)));
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorRecipSqrtAccurate(FFloat128 Vector) noexcept
+    {
+        // One Newton-Raphson refinement step on rsqrt approximation.
+        const FFloat128 Rsqrt = _mm_rsqrt_ps(Vector);
+        // Rsqrt * (1.5 - 0.5 * x * Rsqrt * Rsqrt)
+        const FFloat128 Half = _mm_set1_ps(0.5f);
+        const FFloat128 ThreeHalfs = _mm_set1_ps(1.5f);
+
+        const FFloat128 RsqrtSq = _mm_mul_ps(Rsqrt, Rsqrt);
+        const FFloat128 Term = _mm_mul_ps(Half, _mm_mul_ps(Vector, RsqrtSq));
+        return _mm_mul_ps(Rsqrt, _mm_sub_ps(ThreeHalfs, Term));
+    }
+
+// ---------------------------------------------------------------------------------------------
     // Bitwise float ops (masks/signs/branchless)
     // ---------------------------------------------------------------------------------------------
 
@@ -371,6 +403,14 @@ struct FVectorMathSSE
         VectorD = VectorShuffle<2, 3, 0, 1>(VectorC);
 
         return VectorAdd(VectorC, VectorD);
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorDot3(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        // dot3(a,b) = dot4(a,b) - (aw*bw)
+        const FFloat128 Dot4 = VectorDot(VectorA, VectorB);
+        const FFloat128 WTerm = VectorMul(VectorBroadcast<3>(VectorA), VectorBroadcast<3>(VectorB));
+        return VectorSub(Dot4, WTerm);
     }
 
     // ---------------------------------------------------------------------------------------------

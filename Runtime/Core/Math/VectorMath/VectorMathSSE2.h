@@ -16,6 +16,11 @@ struct FVectorMathSSE2 : public FVectorMathSSE
 {
     static FORCEINLINE FInt128 VECTORCALL VectorLoadInt(const int32* Source) noexcept
     {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(Source));
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorLoadIntAligned(const int32* Source) noexcept
+    {
         return _mm_load_si128(reinterpret_cast<const __m128i*>(Source));
     }
 
@@ -54,7 +59,45 @@ struct FVectorMathSSE2 : public FVectorMathSSE
         return _mm_castps_si128(Vector);
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Bitwise int ops
+    // ---------------------------------------------------------------------------------------------
+
+    static FORCEINLINE FInt128 VECTORCALL VectorAndInt(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        return _mm_and_si128(VectorA, VectorB);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorOrInt(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        return _mm_or_si128(VectorA, VectorB);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorXorInt(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        return _mm_xor_si128(VectorA, VectorB);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorAndNotInt(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        // (~A) & B
+        return _mm_andnot_si128(VectorA, VectorB);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorSelectInt(FInt128 Mask, FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        // (Mask & A) | (~Mask & B)
+        const FInt128 MaskedA = VectorAndInt(Mask, VectorA);
+        const FInt128 MaskedB = VectorAndNotInt(Mask, VectorB);
+        return VectorOrInt(MaskedA, MaskedB);
+    }
+
     static FORCEINLINE void VECTORCALL VectorStoreInt(FInt128 Vector, int32* Dest) noexcept
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(Dest), Vector);
+    }
+
+    static FORCEINLINE void VECTORCALL VectorStoreIntAligned(FInt128 Vector, int32* Dest) noexcept
     {
         _mm_store_si128(reinterpret_cast<__m128i*>(Dest), Vector);
     }
@@ -81,111 +124,69 @@ struct FVectorMathSSE2 : public FVectorMathSSE
 
     static FORCEINLINE FInt128 VECTORCALL VectorMulInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Unpack and multiply individual elements
-        FInt128 VectorA_Low  = _mm_unpacklo_epi32(VectorA, _mm_setzero_si128());
-        FInt128 VectorB_Low  = _mm_unpacklo_epi32(VectorB, _mm_setzero_si128());
-        FInt128 VectorA_High = _mm_unpackhi_epi32(VectorA, _mm_setzero_si128());
-        FInt128 VectorB_High = _mm_unpackhi_epi32(VectorB, _mm_setzero_si128());
+        // SSE2 has no 4-wide 32-bit multiply, so we combine two mul_epu32 results.
+        // Returns the low 32 bits of each 32-bit product (matches _mm_mullo_epi32 semantics).
+        const FInt128 Even64 = _mm_mul_epu32(VectorA, VectorB); // lanes 0 and 2
+        const FInt128 A_Odd  = _mm_srli_si128(VectorA, 4);
+        const FInt128 B_Odd  = _mm_srli_si128(VectorB, 4);
+        const FInt128 Odd64  = _mm_mul_epu32(A_Odd, B_Odd);     // lanes 1 and 3
 
-        FInt128 Prod_Low  = _mm_mul_epu32(VectorA_Low, VectorB_Low);   // Multiply lower two 32-bit integers
-        FInt128 Prod_High = _mm_mul_epu32(VectorA_High, VectorB_High); // Multiply higher two 32-bit integers
+        const FInt128 EvenLo32 = _mm_shuffle_epi32(Even64, _MM_SHUFFLE(2, 0, 2, 0)); // (p0, p2, p0, p2)
+        const FInt128 OddLo32  = _mm_shuffle_epi32(Odd64,  _MM_SHUFFLE(2, 0, 2, 0)); // (p1, p3, p1, p3)
 
-        // Pack the results back into a single FInt128
-        FInt128 Shuffle_Low  = _mm_shuffle_epi32(Prod_Low, _MM_SHUFFLE(0, 0, 0, 0));
-        FInt128 Shuffle_High = _mm_shuffle_epi32(Prod_High, _MM_SHUFFLE(2, 2, 2, 2));
-        return _mm_or_si128(Shuffle_Low, Shuffle_High);
+        return _mm_unpacklo_epi32(EvenLo32, OddLo32); // (p0, p1, p2, p3)
     }
 
     static FORCEINLINE bool VECTORCALL VectorEqualInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Compare for equality
-        FInt128 Compare_128 = _mm_cmpeq_epi32(VectorA, VectorB);
-
-        // Reinterpret the comparison result as __m128 to use _mm_movemask_ps
-        int32 Mask = _mm_movemask_ps(*reinterpret_cast<const __m128*>(&Compare_128));
-
-        // Check if all four comparison results are true
-        return (Mask & 0xf) == 0xf;
+        const FInt128 Compare_128 = _mm_cmpeq_epi32(VectorA, VectorB);
+        const int32 Mask = _mm_movemask_epi8(Compare_128);
+        return Mask == 0xFFFF;
     }
 
     static FORCEINLINE bool VECTORCALL VectorGreaterThanInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Compare for greater than
-        FInt128 Compare_128 = _mm_cmpgt_epi32(VectorA, VectorB);
-
-        // Reinterpret the comparison result as __m128 to use _mm_movemask_ps
-        int32 Mask = _mm_movemask_ps(*reinterpret_cast<const __m128*>(&Compare_128));
-
-        // Check if all four comparison results are true
-        return (Mask & 0xf) == 0xf;
+        const FInt128 Compare_128 = _mm_cmpgt_epi32(VectorA, VectorB);
+        const int32 Mask = _mm_movemask_epi8(Compare_128);
+        return Mask == 0xFFFF;
     }
 
     static FORCEINLINE bool VECTORCALL VectorGreaterThanOrEqualInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Check for not less than
-        // VectorA >= VectorB is equivalent to !(VectorA < VectorB)
-        FInt128 Compare_128 = _mm_cmpgt_epi32(VectorB, VectorA); // VectorB > VectorA
-
-        // Reinterpret as __m128 and extract mask
-        int32 Mask = _mm_movemask_ps(*reinterpret_cast<const __m128*>(&Compare_128));
-
-        // All elements should NOT be less than, i.e., no elements should have VectorB > VectorA
-        return (Mask & 0xf) == 0x0;
+        // A >= B <=> !(B > A)
+        const FInt128 Compare_128 = _mm_cmpgt_epi32(VectorB, VectorA);
+        const int32 Mask = _mm_movemask_epi8(Compare_128);
+        return Mask == 0x0000;
     }
 
     static FORCEINLINE bool VECTORCALL VectorLessThanInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Compare for less than by swapping operands
-        FInt128 Compare_128 = _mm_cmpgt_epi32(VectorB, VectorA); // VectorB > VectorA
-
-        // Reinterpret the comparison result as __m128 to use _mm_movemask_ps
-        int32 Mask = _mm_movemask_ps(*reinterpret_cast<const __m128*>(&Compare_128));
-
-        // Check if all four comparison results are true
-        return (Mask & 0xf) == 0xf;
+        const FInt128 Compare_128 = _mm_cmpgt_epi32(VectorB, VectorA);
+        const int32 Mask = _mm_movemask_epi8(Compare_128);
+        return Mask == 0xFFFF;
     }
 
     static FORCEINLINE bool VECTORCALL VectorLessThanOrEqualInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Check for not greater than
-        // VectorA <= VectorB is equivalent to !(VectorA > VectorB)
-        FInt128 Compare_128 = _mm_cmpgt_epi32(VectorA, VectorB); // VectorA > VectorB
-
-        // Reinterpret as __m128 and extract mask
-        int32 Mask = _mm_movemask_ps(*reinterpret_cast<const __m128*>(&Compare_128));
-
-        // All elements should NOT be greater than, i.e., no elements should have VectorA > VectorB
-        return (Mask & 0xf) == 0x0;
+        // A <= B <=> !(A > B)
+        const FInt128 Compare_128 = _mm_cmpgt_epi32(VectorA, VectorB);
+        const int32 Mask = _mm_movemask_epi8(Compare_128);
+        return Mask == 0x0000;
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorMinInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Compute (VectorA - VectorB)
-        FInt128 Diff = _mm_sub_epi32(VectorA, VectorB);
-        
-        // Compute sign mask: if A < B, the sign bit of (A - B) will be set
-        FInt128 SignMask = _mm_srai_epi32(Diff, 31);  // Arithmetic shift right to get sign bits
-        
-        // Compute VectorB + ((VectorA - VectorB) & signMask)
-        // If A < B, signMask is all 1s, so (A - B) & signMask = A - B
-        // Therefore, B + (A - B) = A
-        // If A >= B, signMask is 0, so B + 0 = B
-        return _mm_add_epi32(VectorB, _mm_and_si128(Diff, SignMask));
+        // Min without relying on (A-B) sign (avoids overflow corner cases).
+        const FInt128 MaskAgtB = _mm_cmpgt_epi32(VectorA, VectorB); // A > B
+        // Select B where (A > B), else A.
+        return _mm_or_si128(_mm_and_si128(MaskAgtB, VectorB), _mm_andnot_si128(MaskAgtB, VectorA));
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorMaxInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        // Compute (VectorA - VectorB)
-        FInt128 Diff = _mm_sub_epi32(VectorA, VectorB);
-        
-        // Compute sign mask: if A < B, the sign bit of (A - B) will be set
-        FInt128 SignMask = _mm_srai_epi32(Diff, 31);  // Arithmetic shift right to get sign bits
-        
-        // Compute VectorA - ((VectorA - VectorB) & signMask)
-        // If A < B, signMask is all 1s, so (A - B) & signMask = A - B
-        // Therefore, A - (A - B) = B
-        // If A >= B, signMask is 0, so A - 0 = A
-        return _mm_sub_epi32(VectorA, _mm_and_si128(Diff, SignMask));
+        const FInt128 MaskAgtB = _mm_cmpgt_epi32(VectorA, VectorB); // A > B
+        // Select A where (A > B), else B.
+        return _mm_or_si128(_mm_and_si128(MaskAgtB, VectorA), _mm_andnot_si128(MaskAgtB, VectorB));
     }
 };
 

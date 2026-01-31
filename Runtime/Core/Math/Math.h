@@ -16,51 +16,50 @@ struct Math
         // Fundamental Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float PI             = 3.14159265358979323846f;   // π
-        static constexpr float E              = 2.71828182845904523536f;   // Euler’s number
-
-        static constexpr float HalfPI         = PI * 0.5f;                 // π / 2
-        static constexpr float TwoPI          = PI * 2.0f;                 // 2π
-        static constexpr float QuarterPI      = PI * 0.25f;                // π / 4
+        static constexpr float PI        = 3.14159265358979323846f;   // π
+        static constexpr float E         = 2.71828182845904523536f;   // Euler’s number
+        static constexpr float HalfPI    = PI * 0.5f;                 // π / 2
+        static constexpr float TwoPI     = PI * 2.0f;                 // 2π
+        static constexpr float QuarterPI = PI * 0.25f;                // π / 4
 
         // -------------------------------------------------------------------------------------------
         // Degree / Radian Conversions
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float RadToDeg       = 180.0f / PI;               // Radians → degrees
-        static constexpr float Deg2Rad        = PI / 180.0f;               // Degrees → radians
+        static constexpr float RadToDeg = 180.0f / PI; // Radians → degrees
+        static constexpr float Deg2Rad  = PI / 180.0f; // Degrees → radians
 
         // -------------------------------------------------------------------------------------------
         // Inverse Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float InvPI          = 1.0f / PI;                 // 1/π
-        static constexpr float InvTwoPI       = 1.0f / TwoPI;              // 1/(2π)
+        static constexpr float InvPI    = 1.0f / PI;    // 1/π
+        static constexpr float InvTwoPI = 1.0f / TwoPI; // 1/(2π)
 
         // -------------------------------------------------------------------------------------------
         // Root Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float Sqrt2          = 1.41421356237f;            // √2
-        static constexpr float Sqrt3          = 1.73205080757f;            // √3
-        static constexpr float SqrtPI         = 1.77245385091f;            // √π
-        static constexpr float InvSqrtPI      = 0.56418958355f;            // 1/√π
-        static constexpr float InvSqrt2       = 0.70710678118f;            // 1/√2
+        static constexpr float Sqrt2     = 1.41421356237f; // √2
+        static constexpr float Sqrt3     = 1.73205080757f; // √3
+        static constexpr float SqrtPI    = 1.77245385091f; // √π
+        static constexpr float InvSqrtPI = 0.56418958355f; // 1/√π
+        static constexpr float InvSqrt2  = 0.70710678118f; // 1/√2
 
         // -------------------------------------------------------------------------------------------
         // Logarithmic / Exponential Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float Ln2            = 0.69314718056f;            // ln(2)
-        static constexpr float Ln10           = 2.30258509300f;            // ln(10)
-        static constexpr float Log2E          = 1.44269504089f;            // log₂(e)
-        static constexpr float Log10E         = 0.43429448190f;            // log₁₀(e)
+        static constexpr float Ln2    = 0.69314718056f; // ln(2)
+        static constexpr float Ln10   = 2.30258509300f; // ln(10)
+        static constexpr float Log2E  = 1.44269504089f; // log₂(e)
+        static constexpr float Log10E = 0.43429448190f; // log₁₀(e)
 
         // -------------------------------------------------------------------------------------------
         // Miscellaneous Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float GoldenRatio    = 1.61803398875f;            // φ (golden ratio)
+        static constexpr float GoldenRatio = 1.61803398875f; // φ (golden ratio)
 
         // -------------------------------------------------------------------------------------------
         // Tolerances / Numeric Limits
@@ -86,9 +85,16 @@ public:
 
     /** @brief Returns the absolute value of the given number. */
     template<typename T>
-    static FORCEINLINE constexpr T Abs(T Value) requires(TIsArithmetic<T>::Value)
+    static FORCEINLINE constexpr T Abs(T Value) requires(TIsInteger<T>::Value)
     {
         return std::abs(Value);
+    }
+
+    /** @brief Returns the absolute value of the given number. */
+    template<typename T>
+    static FORCEINLINE constexpr T Abs(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return std::fabs(Value);
     }
 
     /** @brief Rounds a floating-point value to the nearest integer (floating result). */
