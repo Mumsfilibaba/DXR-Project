@@ -11,10 +11,10 @@ public:
 
     /** @brief Default constructor (Initializes all components to zero) */
     FORCEINLINE FMatrix4() noexcept
-        : M{ {0.0f, 0.0f, 0.0f, 0.0f},
-             {0.0f, 0.0f, 0.0f, 0.0f},
-             {0.0f, 0.0f, 0.0f, 0.0f},
-             {0.0f, 0.0f, 0.0f, 0.0f} }
+        : M{ { 0.0f, 0.0f, 0.0f, 0.0f },
+             { 0.0f, 0.0f, 0.0f, 0.0f },
+             { 0.0f, 0.0f, 0.0f, 0.0f },
+             { 0.0f, 0.0f, 0.0f, 0.0f } }
     {
     }
 
@@ -101,9 +101,9 @@ public:
         Result.Z = (Vector.X * M[0][2]) + (Vector.Y * M[1][2]) + (Vector.Z * M[2][2]) + (Vector.W * M[3][2]);
         Result.W = (Vector.X * M[0][3]) + (Vector.Y * M[1][3]) + (Vector.Z * M[2][3]) + (Vector.W * M[3][3]);
     #else
-        FFloat128 Vector_128 = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Vector));
-        FFloat128 Result_128 = FVectorMath::VectorTransform(M[0], Vector_128);
-        FVectorMath::VectorStore(Result_128, reinterpret_cast<float*>(&Result));
+        FFloat128 Vector128 = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Vector));
+        FFloat128 Result128 = FVectorMath::VectorTransform(M[0], Vector128);
+        FVectorMath::VectorStore(Result128, reinterpret_cast<float*>(&Result));
     #endif
 
         return Result;
@@ -123,9 +123,9 @@ public:
         Result.Y = (Vector.X * M[0][1]) + (Vector.Y * M[1][1]) + (Vector.Z * M[2][1]) + (1.0f * M[3][1]);
         Result.Z = (Vector.X * M[0][2]) + (Vector.Y * M[1][2]) + (Vector.Z * M[2][2]) + (1.0f * M[3][2]);
     #else
-        FFloat128 Vector_128 = FVectorMath::VectorSet(Vector.X, Vector.Y, Vector.Z, 1.0f);
-        FFloat128 Result_128 = FVectorMath::VectorTransform(M[0], Vector_128);
-        Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
+        FFloat128 Vector128 = FVectorMath::VectorSet(Vector.X, Vector.Y, Vector.Z, 1.0f);
+        FFloat128 Result128 = FVectorMath::VectorTransform(M[0], Vector128);
+        Result = FVector3(FVectorMath::VectorGetX(Result128), FVectorMath::VectorGetY(Result128), FVectorMath::VectorGetZ(Result128));
     #endif
 
         return Result;
@@ -148,13 +148,12 @@ public:
         Result.Y = ((Position.X * M[0][1]) + (Position.Y * M[1][1]) + (Position.Z * M[2][1]) + (1.0f * M[3][1])) * ComponentW;
         Result.Z = ((Position.X * M[0][2]) + (Position.Y * M[1][2]) + (Position.Z * M[2][2]) + (1.0f * M[3][2])) * ComponentW;
     #else
-        FFloat128 Position_128 = FVectorMath::VectorSet(Position.X, Position.Y, Position.Z, 1.0f);
-        FFloat128 VectorA      = FVectorMath::VectorTransform(M[0], Position_128);
-        FFloat128 VectorB      = FVectorMath::VectorBroadcast<3>(VectorA);
-        FFloat128 VectorC      = FVectorMath::VectorOne();
-        FFloat128 VectorD      = FVectorMath::VectorDiv(VectorC, VectorB);
-        FFloat128 Result_128   = FVectorMath::VectorMul(VectorD, VectorD);
-        Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
+        FFloat128 Position128 = FVectorMath::VectorSet(Position.X, Position.Y, Position.Z, 1.0f);
+        FFloat128 Clip128     = FVectorMath::VectorTransform(M[0], Position128);
+        FFloat128 W128        = FVectorMath::VectorBroadcast<3>(Clip128);
+        FFloat128 InvW128     = FVectorMath::VectorDiv(FVectorMath::VectorOne(), W128);
+        FFloat128 Result128   = FVectorMath::VectorMul(Clip128, InvW128);
+        Result = FVector3(FVectorMath::VectorGetX(Result128), FVectorMath::VectorGetY(Result128), FVectorMath::VectorGetZ(Result128));
     #endif
 
         return Result;
@@ -174,9 +173,9 @@ public:
         Result.Y = (Direction.X * M[0][1]) + (Direction.Y * M[1][1]) + (Direction.Z * M[2][1]);
         Result.Z = (Direction.X * M[0][2]) + (Direction.Y * M[1][2]) + (Direction.Z * M[2][2]);
     #else
-        FFloat128 Direction_128 = FVectorMath::VectorSet(Direction.X, Direction.Y, Direction.Z, 0.0f);
-        FFloat128 Result_128    = FVectorMath::VectorTransform(M[0], Direction_128);
-        Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
+        FFloat128 Direction128 = FVectorMath::VectorSet(Direction.X, Direction.Y, Direction.Z, 0.0f);
+        FFloat128 Result128    = FVectorMath::VectorTransform(M[0], Direction128);
+        Result = FVector3(FVectorMath::VectorGetX(Result128), FVectorMath::VectorGetY(Result128), FVectorMath::VectorGetZ(Result128));
     #endif
 
         return Result;
@@ -226,47 +225,66 @@ public:
         FMatrix4 Inverse;
 
     #if !USE_VECTOR_MATH
-        // Calculate the inverse of a 4x4 matrix manually
-        float ScalarA = (M[2][2] * M[3][3]) - (M[2][3] * M[3][2]);
-        float ScalarB = (M[2][1] * M[3][3]) - (M[2][3] * M[3][1]);
-        float ScalarC = (M[2][1] * M[3][2]) - (M[2][2] * M[3][1]);
-        float ScalarD = (M[2][0] * M[3][3]) - (M[2][3] * M[3][0]);
-        float ScalarE = (M[2][0] * M[3][2]) - (M[2][2] * M[3][0]);
-        float ScalarF = (M[2][0] * M[3][1]) - (M[2][1] * M[3][0]);
+        const float A00 = M[0][0]; 
+        const float A01 = M[0][1]; 
+        const float A02 = M[0][2]; 
+        const float A03 = M[0][3];
 
-        // Compute the adjugate matrix
-        Inverse.M[0][0] =   (M[1][1] * ScalarA) - (M[1][2] * ScalarB) + (M[1][3] * ScalarC);
-        Inverse.M[0][1] = -((M[1][0] * ScalarA) - (M[1][2] * ScalarD) + (M[1][3] * ScalarE));
-        Inverse.M[0][2] =   (M[1][0] * ScalarB) - (M[1][1] * ScalarD) + (M[1][3] * ScalarF);
-        Inverse.M[0][3] = -((M[1][0] * ScalarC) - (M[1][1] * ScalarE) + (M[1][2] * ScalarF));
+        const float A10 = M[1][0]; 
+        const float A11 = M[1][1]; 
+        const float A12 = M[1][2]; 
+        const float A13 = M[1][3];
 
-        Inverse.M[1][0] = -((M[0][1] * ScalarA) - (M[0][2] * ScalarB) + (M[0][3] * ScalarC));
-        Inverse.M[1][1] =   (M[0][0] * ScalarA) - (M[0][2] * ScalarD) + (M[0][3] * ScalarE);
-        Inverse.M[1][2] = -((M[0][0] * ScalarB) - (M[0][1] * ScalarD) + (M[0][3] * ScalarF));
-        Inverse.M[1][3] =   (M[0][0] * ScalarC) - (M[0][1] * ScalarE) + (M[0][2] * ScalarF);
+        const float A20 = M[2][0]; 
+        const float A21 = M[2][1]; 
+        const float A22 = M[2][2]; 
+        const float A23 = M[2][3];
 
-        float ScalarG = (M[1][2] * M[3][3]) - (M[1][3] * M[3][2]);
-        float ScalarH = (M[1][1] * M[3][3]) - (M[1][3] * M[3][1]);
-        float ScalarI = (M[1][1] * M[3][2]) - (M[1][2] * M[3][1]);
-        float ScalarJ = (M[1][0] * M[3][3]) - (M[1][3] * M[3][0]);
-        float ScalarK = (M[1][0] * M[3][2]) - (M[1][2] * M[3][0]);
-        float ScalarL = (M[1][0] * M[3][1]) - (M[1][1] * M[3][0]);
+        const float A30 = M[3][0]; 
+        const float A31 = M[3][1]; 
+        const float A32 = M[3][2]; 
+        const float A33 = M[3][3];
 
-        Inverse.M[2][0] =   (M[0][1] * ScalarA) - (M[0][2] * ScalarB) + (M[0][3] * ScalarC);
-        Inverse.M[2][1] = -((M[0][0] * ScalarA) - (M[0][2] * ScalarD) + (M[0][3] * ScalarE));
-        Inverse.M[2][2] =   (M[0][0] * ScalarB) - (M[0][1] * ScalarD) + (M[0][3] * ScalarF);
-        Inverse.M[2][3] = -((M[0][0] * ScalarC) - (M[0][1] * ScalarE) + (M[0][2] * ScalarF));
+        const float B00 = (A00 * A11) - (A01 * A10);
+        const float B01 = (A00 * A12) - (A02 * A10);
+        const float B02 = (A00 * A13) - (A03 * A10);
+        const float B03 = (A01 * A12) - (A02 * A11);
+        const float B04 = (A01 * A13) - (A03 * A11);
+        const float B05 = (A02 * A13) - (A03 * A12);
 
-        float Determinant    = (M[0][0] * Inverse.M[0][0]) + (M[0][1] * Inverse.M[1][0]) + (M[0][2] * Inverse.M[2][0]) + (M[0][3] * Inverse.M[3][0]);
-        float RcpDeterminant = 1.0f / Determinant;
+        const float B06 = (A20 * A31) - (A21 * A30);
+        const float B07 = (A20 * A32) - (A22 * A30);
+        const float B08 = (A20 * A33) - (A23 * A30);
+        const float B09 = (A21 * A32) - (A22 * A31);
+        const float B10 = (A21 * A33) - (A23 * A31);
+        const float B11 = (A22 * A33) - (A23 * A32);
 
-        for (int32 Row = 0; Row < 4; ++Row)
+        const float Det = (B00 * B11) - (B01 * B10) + (B02 * B09) + (B03 * B08) - (B04 * B07) + (B05 * B06);
+        if (Math::Abs(Det) <= Math::Constants::CmpThreshold)
         {
-            for (int32 Col = 0; Col < 4; ++Col)
-            {
-                Inverse.M[Row][Col] *= RcpDeterminant;
-            }
+            return FMatrix4();
         }
+
+        const float InvDet = 1.0f / Det;
+        Inverse.M[0][0] =  ((A11 * B11) - (A12 * B10) + (A13 * B09)) * InvDet;
+        Inverse.M[0][1] = (-(A01 * B11) + (A02 * B10) - (A03 * B09)) * InvDet;
+        Inverse.M[0][2] =  ((A31 * B05) - (A32 * B04) + (A33 * B03)) * InvDet;
+        Inverse.M[0][3] = (-(A21 * B05) + (A22 * B04) - (A23 * B03)) * InvDet;
+
+        Inverse.M[1][0] = (-(A10 * B11) + (A12 * B08) - (A13 * B07)) * InvDet;
+        Inverse.M[1][1] =  ((A00 * B11) - (A02 * B08) + (A03 * B07)) * InvDet;
+        Inverse.M[1][2] = (-(A30 * B05) + (A32 * B02) - (A33 * B01)) * InvDet;
+        Inverse.M[1][3] =  ((A20 * B05) - (A22 * B02) + (A23 * B01)) * InvDet;
+
+        Inverse.M[2][0] =  ((A10 * B10) - (A11 * B08) + (A13 * B06)) * InvDet;
+        Inverse.M[2][1] = (-(A00 * B10) + (A01 * B08) - (A03 * B06)) * InvDet;
+        Inverse.M[2][2] =  ((A30 * B04) - (A31 * B02) + (A33 * B00)) * InvDet;
+        Inverse.M[2][3] = (-(A20 * B04) + (A21 * B02) - (A23 * B00)) * InvDet;
+
+        Inverse.M[3][0] = (-(A10 * B09) + (A11 * B07) - (A12 * B06)) * InvDet;
+        Inverse.M[3][1] =  ((A00 * B09) - (A01 * B07) + (A02 * B06)) * InvDet;
+        Inverse.M[3][2] = (-(A30 * B03) + (A31 * B01) - (A32 * B00)) * InvDet;
+        Inverse.M[3][3] =  ((A20 * B03) - (A21 * B01) + (A22 * B00)) * InvDet;
     #else
         FVectorMath::MatrixInvert4x4(M[0], Inverse.M[0]);
     #endif
@@ -283,42 +301,59 @@ public:
         FMatrix4 Adjugate;
 
     #if !USE_VECTOR_MATH
-        // Calculate the adjugate matrix manually
-        float ScalarA = (M[2][2] * M[3][3]) - (M[2][3] * M[3][2]);
-        float ScalarB = (M[2][1] * M[3][3]) - (M[2][3] * M[3][1]);
-        float ScalarC = (M[2][1] * M[3][2]) - (M[2][2] * M[3][1]);
-        float ScalarD = (M[2][0] * M[3][3]) - (M[2][3] * M[3][0]);
-        float ScalarE = (M[2][0] * M[3][2]) - (M[2][2] * M[3][0]);
-        float ScalarF = (M[2][0] * M[3][1]) - (M[2][1] * M[3][0]);
+        const float A00 = M[0][0];
+        const float A01 = M[0][1];
+        const float A02 = M[0][2];
+        const float A03 = M[0][3];
 
-        Adjugate.M[0][0] =   (M[1][1] * ScalarA) - (M[1][2] * ScalarB) + (M[1][3] * ScalarC);
-        Adjugate.M[0][1] = -((M[1][0] * ScalarA) - (M[1][2] * ScalarD) + (M[1][3] * ScalarE));
-        Adjugate.M[0][2] =   (M[1][0] * ScalarB) - (M[1][1] * ScalarD) + (M[1][3] * ScalarF);
-        Adjugate.M[0][3] = -((M[1][0] * ScalarC) - (M[1][1] * ScalarE) + (M[1][2] * ScalarF));
+        const float A10 = M[1][0];
+        const float A11 = M[1][1];
+        const float A12 = M[1][2];
+        const float A13 = M[1][3];
 
-        float ScalarG = (M[1][2] * M[3][3]) - (M[1][3] * M[3][2]);
-        float ScalarH = (M[1][1] * M[3][3]) - (M[1][3] * M[3][1]);
-        float ScalarI = (M[1][1] * M[3][2]) - (M[1][2] * M[3][1]);
-        float ScalarJ = (M[1][0] * M[3][3]) - (M[1][3] * M[3][0]);
-        float ScalarK = (M[1][0] * M[3][2]) - (M[1][2] * M[3][0]);
-        float ScalarL = (M[1][0] * M[3][1]) - (M[1][1] * M[3][0]);
+        const float A20 = M[2][0];
+        const float A21 = M[2][1];
+        const float A22 = M[2][2];
+        const float A23 = M[2][3];
 
-        Adjugate.M[2][0] =   (M[0][1] * ScalarA) - (M[0][2] * ScalarB) + (M[0][3] * ScalarC);
-        Adjugate.M[2][1] = -((M[0][0] * ScalarA) - (M[0][2] * ScalarD) + (M[0][3] * ScalarE));
-        Adjugate.M[2][2] =   (M[0][0] * ScalarB) - (M[0][1] * ScalarD) + (M[0][3] * ScalarF);
-        Adjugate.M[2][3] = -((M[0][0] * ScalarC) - (M[0][1] * ScalarE) + (M[0][2] * ScalarF));
+        const float A30 = M[3][0];
+        const float A31 = M[3][1];
+        const float A32 = M[3][2];
+        const float A33 = M[3][3];
 
-        float ScalarM = (M[1][2] * M[2][3]) - (M[1][3] * M[2][2]);
-        float ScalarN = (M[1][1] * M[2][3]) - (M[1][3] * M[2][1]);
-        float ScalarO = (M[1][1] * M[2][2]) - (M[1][2] * M[2][1]);
-        float ScalarP = (M[1][0] * M[2][3]) - (M[1][3] * M[2][0]);
-        float ScalarQ = (M[1][0] * M[2][2]) - (M[1][2] * M[2][0]);
-        float ScalarR = (M[1][0] * M[2][1]) - (M[1][1] * M[2][0]);
+        const float B00 = (A00 * A11) - (A01 * A10);
+        const float B01 = (A00 * A12) - (A02 * A10);
+        const float B02 = (A00 * A13) - (A03 * A10);
+        const float B03 = (A01 * A12) - (A02 * A11);
+        const float B04 = (A01 * A13) - (A03 * A11);
+        const float B05 = (A02 * A13) - (A03 * A12);
 
-        Adjugate.M[3][0] = -((M[0][1] * ScalarM) - (M[0][2] * ScalarN) + (M[0][3] * ScalarO));
-        Adjugate.M[3][1] =   (M[0][0] * ScalarM) - (M[0][2] * ScalarP) + (M[0][3] * ScalarQ);
-        Adjugate.M[3][2] = -((M[0][0] * ScalarN) - (M[0][1] * ScalarP) + (M[0][3] * ScalarR));
-        Adjugate.M[3][3] =   (M[0][0] * ScalarO) - (M[0][1] * ScalarQ) + (M[0][2] * ScalarR);
+        const float B06 = (A20 * A31) - (A21 * A30);
+        const float B07 = (A20 * A32) - (A22 * A30);
+        const float B08 = (A20 * A33) - (A23 * A30);
+        const float B09 = (A21 * A32) - (A22 * A31);
+        const float B10 = (A21 * A33) - (A23 * A31);
+        const float B11 = (A22 * A33) - (A23 * A32);
+
+        Adjugate.M[0][0] =  (A11 * B11) - (A12 * B10) + (A13 * B09);
+        Adjugate.M[0][1] = -(A01 * B11) + (A02 * B10) - (A03 * B09);
+        Adjugate.M[0][2] =  (A31 * B05) - (A32 * B04) + (A33 * B03);
+        Adjugate.M[0][3] = -(A21 * B05) + (A22 * B04) - (A23 * B03);
+
+        Adjugate.M[1][0] = -(A10 * B11) + (A12 * B08) - (A13 * B07);
+        Adjugate.M[1][1] =  (A00 * B11) - (A02 * B08) + (A03 * B07);
+        Adjugate.M[1][2] = -(A30 * B05) + (A32 * B02) - (A33 * B01);
+        Adjugate.M[1][3] =  (A20 * B05) - (A22 * B02) + (A23 * B01);
+
+        Adjugate.M[2][0] =  (A10 * B10) - (A11 * B08) + (A13 * B06);
+        Adjugate.M[2][1] = -(A00 * B10) + (A01 * B08) - (A03 * B06);
+        Adjugate.M[2][2] =  (A30 * B04) - (A31 * B02) + (A33 * B00);
+        Adjugate.M[2][3] = -(A20 * B04) + (A21 * B02) - (A23 * B00);
+
+        Adjugate.M[3][0] = -(A10 * B09) + (A11 * B07) - (A12 * B06);
+        Adjugate.M[3][1] =  (A00 * B09) - (A01 * B07) + (A02 * B06);
+        Adjugate.M[3][2] = -(A30 * B03) + (A31 * B01) - (A32 * B00);
+        Adjugate.M[3][3] =  (A20 * B03) - (A21 * B01) + (A22 * B00);
     #else
         FVectorMath::MatrixAdjoint4x4(M[0], Adjugate.M[0]);
     #endif
@@ -419,14 +454,14 @@ public:
 
         return true;
     #else
-        FFloat128 Threshold_128 = FVectorMath::VectorSet1(Math::Abs(Threshold));
+        FFloat128 Threshold128 = FVectorMath::VectorSet1(Math::Abs(Threshold));
 
         for (int32 Row = 0; Row < 4; ++Row)
         {
             FFloat128 Diff       = FVectorMath::VectorSub(M[Row], Other.M[Row]);
-            FFloat128 Result_128 = FVectorMath::VectorAbs(Diff);
+            FFloat128 Result128 = FVectorMath::VectorAbs(Diff);
 
-            if (FVectorMath::VectorAllGreaterThan(Result_128, Threshold_128))
+            if (!FVectorMath::VectorAllLessThanOrEqual(Result128, Threshold128))
             {
                 return false;
             }
@@ -598,25 +633,27 @@ public:
     inline FMatrix4& operator*=(const FMatrix4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
-        M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]) + (M[0][2] * Other.M[2][0]) + (M[0][3] * Other.M[3][0]);
-        M[0][1] = (M[0][0] * Other.M[0][1]) + (M[0][1] * Other.M[1][1]) + (M[0][2] * Other.M[2][1]) + (M[0][3] * Other.M[3][1]);
-        M[0][2] = (M[0][0] * Other.M[0][2]) + (M[0][1] * Other.M[1][2]) + (M[0][2] * Other.M[2][2]) + (M[0][3] * Other.M[3][2]);
-        M[0][3] = (M[0][0] * Other.M[0][3]) + (M[0][1] * Other.M[1][3]) + (M[0][2] * Other.M[2][3]) + (M[0][3] * Other.M[3][3]);
+        const FMatrix4 Left(*this);
 
-        M[1][0] = (M[1][0] * Other.M[0][0]) + (M[1][1] * Other.M[1][0]) + (M[1][2] * Other.M[2][0]) + (M[1][3] * Other.M[3][0]);
-        M[1][1] = (M[1][0] * Other.M[0][1]) + (M[1][1] * Other.M[1][1]) + (M[1][2] * Other.M[2][1]) + (M[1][3] * Other.M[3][1]);
-        M[1][2] = (M[1][0] * Other.M[0][2]) + (M[1][1] * Other.M[1][2]) + (M[1][2] * Other.M[2][2]) + (M[1][3] * Other.M[3][2]);
-        M[1][3] = (M[1][0] * Other.M[0][3]) + (M[1][1] * Other.M[1][3]) + (M[1][2] * Other.M[2][3]) + (M[1][3] * Other.M[3][3]);
+        M[0][0] = (Left.M[0][0] * Other.M[0][0]) + (Left.M[0][1] * Other.M[1][0]) + (Left.M[0][2] * Other.M[2][0]) + (Left.M[0][3] * Other.M[3][0]);
+        M[0][1] = (Left.M[0][0] * Other.M[0][1]) + (Left.M[0][1] * Other.M[1][1]) + (Left.M[0][2] * Other.M[2][1]) + (Left.M[0][3] * Other.M[3][1]);
+        M[0][2] = (Left.M[0][0] * Other.M[0][2]) + (Left.M[0][1] * Other.M[1][2]) + (Left.M[0][2] * Other.M[2][2]) + (Left.M[0][3] * Other.M[3][2]);
+        M[0][3] = (Left.M[0][0] * Other.M[0][3]) + (Left.M[0][1] * Other.M[1][3]) + (Left.M[0][2] * Other.M[2][3]) + (Left.M[0][3] * Other.M[3][3]);
 
-        M[2][0] = (M[2][0] * Other.M[0][0]) + (M[2][1] * Other.M[1][0]) + (M[2][2] * Other.M[2][0]) + (M[2][3] * Other.M[3][0]);
-        M[2][1] = (M[2][0] * Other.M[0][1]) + (M[2][1] * Other.M[1][1]) + (M[2][2] * Other.M[2][1]) + (M[2][3] * Other.M[3][1]);
-        M[2][2] = (M[2][0] * Other.M[0][2]) + (M[2][1] * Other.M[1][2]) + (M[2][2] * Other.M[2][2]) + (M[2][3] * Other.M[3][2]);
-        M[2][3] = (M[2][0] * Other.M[0][3]) + (M[2][1] * Other.M[1][3]) + (M[2][2] * Other.M[2][3]) + (M[2][3] * Other.M[3][3]);
+        M[1][0] = (Left.M[1][0] * Other.M[0][0]) + (Left.M[1][1] * Other.M[1][0]) + (Left.M[1][2] * Other.M[2][0]) + (Left.M[1][3] * Other.M[3][0]);
+        M[1][1] = (Left.M[1][0] * Other.M[0][1]) + (Left.M[1][1] * Other.M[1][1]) + (Left.M[1][2] * Other.M[2][1]) + (Left.M[1][3] * Other.M[3][1]);
+        M[1][2] = (Left.M[1][0] * Other.M[0][2]) + (Left.M[1][1] * Other.M[1][2]) + (Left.M[1][2] * Other.M[2][2]) + (Left.M[1][3] * Other.M[3][2]);
+        M[1][3] = (Left.M[1][0] * Other.M[0][3]) + (Left.M[1][1] * Other.M[1][3]) + (Left.M[1][2] * Other.M[2][3]) + (Left.M[1][3] * Other.M[3][3]);
 
-        M[3][0] = (M[3][0] * Other.M[0][0]) + (M[3][1] * Other.M[1][0]) + (M[3][2] * Other.M[2][0]) + (M[3][3] * Other.M[3][0]);
-        M[3][1] = (M[3][0] * Other.M[0][1]) + (M[3][1] * Other.M[1][1]) + (M[3][2] * Other.M[2][1]) + (M[3][3] * Other.M[3][1]);
-        M[3][2] = (M[3][0] * Other.M[0][2]) + (M[3][1] * Other.M[1][2]) + (M[3][2] * Other.M[2][2]) + (M[3][3] * Other.M[3][2]);
-        M[3][3] = (M[3][0] * Other.M[0][3]) + (M[3][1] * Other.M[1][3]) + (M[3][2] * Other.M[2][3]) + (M[3][3] * Other.M[3][3]);
+        M[2][0] = (Left.M[2][0] * Other.M[0][0]) + (Left.M[2][1] * Other.M[1][0]) + (Left.M[2][2] * Other.M[2][0]) + (Left.M[2][3] * Other.M[3][0]);
+        M[2][1] = (Left.M[2][0] * Other.M[0][1]) + (Left.M[2][1] * Other.M[1][1]) + (Left.M[2][2] * Other.M[2][1]) + (Left.M[2][3] * Other.M[3][1]);
+        M[2][2] = (Left.M[2][0] * Other.M[0][2]) + (Left.M[2][1] * Other.M[1][2]) + (Left.M[2][2] * Other.M[2][2]) + (Left.M[2][3] * Other.M[3][2]);
+        M[2][3] = (Left.M[2][0] * Other.M[0][3]) + (Left.M[2][1] * Other.M[1][3]) + (Left.M[2][2] * Other.M[2][3]) + (Left.M[2][3] * Other.M[3][3]);
+
+        M[3][0] = (Left.M[3][0] * Other.M[0][0]) + (Left.M[3][1] * Other.M[1][0]) + (Left.M[3][2] * Other.M[2][0]) + (Left.M[3][3] * Other.M[3][0]);
+        M[3][1] = (Left.M[3][0] * Other.M[0][1]) + (Left.M[3][1] * Other.M[1][1]) + (Left.M[3][2] * Other.M[2][1]) + (Left.M[3][3] * Other.M[3][1]);
+        M[3][2] = (Left.M[3][0] * Other.M[0][2]) + (Left.M[3][1] * Other.M[1][2]) + (Left.M[3][2] * Other.M[2][2]) + (Left.M[3][3] * Other.M[3][2]);
+        M[3][3] = (Left.M[3][0] * Other.M[0][3]) + (Left.M[3][1] * Other.M[1][3]) + (Left.M[3][2] * Other.M[2][3]) + (Left.M[3][3] * Other.M[3][3]);
     #else
         FVectorMath::MatrixMul4x4(M[0], Other.M[0], M[0]);
     #endif
@@ -654,12 +691,12 @@ public:
         Result.M[3][2] = M[3][2] * Scalar;
         Result.M[3][3] = M[3][3] * Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorMul(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorMul(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorMul(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorMul(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorMul(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorMul(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorMul(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorMul(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
         FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
@@ -698,12 +735,12 @@ public:
         M[3][2] = M[3][2] * Scalar;
         M[3][3] = M[3][3] * Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorMul(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorMul(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorMul(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorMul(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorMul(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorMul(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorMul(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorMul(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, M[0]);
         FVectorMath::VectorStore(MatrixRow1, M[1]);
@@ -830,12 +867,12 @@ public:
         Result.M[3][2] = M[3][2] + Scalar;
         Result.M[3][3] = M[3][3] + Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
         FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
@@ -874,12 +911,12 @@ public:
         M[3][2] = M[3][2] + Scalar;
         M[3][3] = M[3][3] + Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, M[0]);
         FVectorMath::VectorStore(MatrixRow1, M[1]);
@@ -1006,12 +1043,12 @@ public:
         Result.M[3][2] = M[3][2] - Scalar;
         Result.M[3][3] = M[3][3] - Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorSub(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorSub(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorSub(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorSub(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorSub(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorSub(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorSub(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorSub(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
         FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
@@ -1050,12 +1087,12 @@ public:
         M[3][2] = M[3][2] - Scalar;
         M[3][3] = M[3][3] - Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, M[0]);
         FVectorMath::VectorStore(MatrixRow1, M[1]);
@@ -1096,12 +1133,12 @@ public:
         Result.M[3][2] = M[3][2] / Scalar;
         Result.M[3][3] = M[3][3] / Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorDiv(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorDiv(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorDiv(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorDiv(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorDiv(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorDiv(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorDiv(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorDiv(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
         FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
@@ -1140,12 +1177,12 @@ public:
         M[3][2] = M[3][2] / Scalar;
         M[3][3] = M[3][3] / Scalar;
     #else
-        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Scalars128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 MatrixRow0 = FVectorMath::VectorDiv(M[0], Scalars_128);
-        FFloat128 MatrixRow1 = FVectorMath::VectorDiv(M[1], Scalars_128);
-        FFloat128 MatrixRow2 = FVectorMath::VectorDiv(M[2], Scalars_128);
-        FFloat128 MatrixRow3 = FVectorMath::VectorDiv(M[3], Scalars_128);
+        FFloat128 MatrixRow0 = FVectorMath::VectorDiv(M[0], Scalars128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorDiv(M[1], Scalars128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorDiv(M[2], Scalars128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorDiv(M[3], Scalars128);
 
         FVectorMath::VectorStore(MatrixRow0, M[0]);
         FVectorMath::VectorStore(MatrixRow1, M[1]);

@@ -202,11 +202,11 @@ public:
 
         return true;
     #else
-        FFloat128 Threshold_128 = FVectorMath::VectorSet1(Threshold);
-        FFloat128 VectorA       = FVectorMath::VectorAbs(Threshold_128);
-        FFloat128 VectorB       = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
-        FFloat128 Result_128    = FVectorMath::VectorAbs(VectorB);
-        return FVectorMath::VectorAllLessThan(Result_128, Threshold_128);
+        const float AbsThreshold = Math::Abs(Threshold);
+        FFloat128 Threshold_128  = FVectorMath::VectorSet1(AbsThreshold);
+        FFloat128 Diff_128       = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
+        FFloat128 AbsDiff_128    = FVectorMath::VectorAbs(Diff_128);
+        return FVectorMath::VectorAllLessThan(AbsDiff_128, Threshold_128);
     #endif
     }
 
@@ -308,18 +308,7 @@ public:
      */
     FORCEINLINE FMatrix2& operator*=(const FMatrix2& Other) noexcept
     {
-    #if !USE_VECTOR_MATH
-        M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]);
-        M[0][1] = (M[0][1] * Other.M[1][1]) + (M[0][0] * Other.M[0][1]);
-        M[1][0] = (M[1][0] * Other.M[0][0]) + (M[1][1] * Other.M[1][0]);
-        M[1][1] = (M[1][1] * Other.M[1][1]) + (M[1][0] * Other.M[0][1]);
-    #else
-        FFloat128 M_128      = FVectorMath::VectorLoad(&M[0][0]);
-        FFloat128 Other_128  = FVectorMath::VectorLoad(&Other.M[0][0]);
-        FFloat128 Result_128 = FVectorMath::MatrixMul2x2(M_128, Other_128);
-        FVectorMath::VectorStore(Result_128, &M[0][0]);
-    #endif
-
+        *this = (*this) * Other;
         return *this;
     }
 

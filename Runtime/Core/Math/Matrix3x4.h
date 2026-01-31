@@ -1,5 +1,7 @@
 #pragma once
 #include "Core/Math/Matrix4.h"
+#include "Core/Memory/Memory.h"
+#include "Core/Math/Math.h"
 
 /** @brief 3x4 Matrix class with float components. Represents a 3D affine transformation matrix. */
 class VECTOR_ALIGN FMatrix3x4
