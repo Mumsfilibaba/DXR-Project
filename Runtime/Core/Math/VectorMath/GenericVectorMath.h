@@ -1,84 +1,64 @@
 #pragma once
 #include "Core/Math/Math.h"
-#include "Core/Memory/Memory.h"
 
 struct FInt128
 {
-    int32 x = 0;
-    int32 y = 0;
-    int32 z = 0;
-    int32 w = 0;
+    FORCEINLINE constexpr FInt128() noexcept
+        : X(0), Y(0), Z(0), W(0)
+    {
+    }
+
+    FORCEINLINE constexpr FInt128(int32 InX, int32 InY, int32 InZ, int32 InW) noexcept
+        : X(InX), Y(InY), Z(InZ), W(InW)
+    {
+    }
+
+    union
+    {
+        struct
+        {
+            int32 X;
+            int32 Y;
+            int32 Z;
+            int32 W;
+        };
+
+        int32 XYZW[4];
+    };
 };
 
 struct FFloat128
 {
-    float x = 0.0f;
-    float y = 0.0f;
-    float z = 0.0f;
-    float w = 0.0f;
+    FORCEINLINE constexpr FFloat128() noexcept
+        : X(0.0f), Y(0.0f), Z(0.0f), W(0.0f)
+    {
+    }
+
+    FORCEINLINE constexpr FFloat128(float InX, float InY, float InZ, float InW) noexcept
+        : X(InX), Y(InY), Z(InZ), W(InW)
+    {
+    }
+
+    union
+    {
+        struct
+        {
+            float X;
+            float Y;
+            float Z;
+            float W;
+        };
+
+        float XYZW[4];
+    };
 };
 
 struct FGenericVectorMath
 {
 private:
-    static FORCEINLINE uint32 VECTORCALL FloatToBits(float Value) noexcept
-    {
-        uint32 Bits = 0;
-        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
-        return Bits;
-    }
-
-    static FORCEINLINE float VECTORCALL BitsToFloat(uint32 Bits) noexcept
-    {
-        float Value = 0.0f;
-        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
-        return Value;
-    }
-
-    static FORCEINLINE uint32 VECTORCALL IntToBits(int32 Value) noexcept
-    {
-        uint32 Bits = 0;
-        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
-        return Bits;
-    }
-
-    static FORCEINLINE int32 VECTORCALL BitsToInt(uint32 Bits) noexcept
-    {
-        int32 Value = 0;
-        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
-        return Value;
-    }
-
-    static FORCEINLINE int32 VECTORCALL AddWrapInt32(int32 A, int32 B) noexcept
-    {
-        const uint32 UA = IntToBits(A);
-        const uint32 UB = IntToBits(B);
-        return BitsToInt(UA + UB);
-    }
-
-    static FORCEINLINE int32 VECTORCALL SubWrapInt32(int32 A, int32 B) noexcept
-    {
-        const uint32 UA = IntToBits(A);
-        const uint32 UB = IntToBits(B);
-        return BitsToInt(UA - UB);
-    }
-
-    static FORCEINLINE int32 VECTORCALL MulWrapInt32(int32 A, int32 B) noexcept
-    {
-        const uint64 UA = static_cast<uint64>(IntToBits(A));
-        const uint64 UB = static_cast<uint64>(IntToBits(B));
-        const uint32 Lo = static_cast<uint32>(UA * UB);
-        return BitsToInt(Lo);
-    }
-
-    static FORCEINLINE uint32 VECTORCALL BoolMask(bool bValue) noexcept
-    {
-        return bValue ? 0xFFFFFFFFu : 0u;
-    }
-
     static FORCEINLINE FFloat128 VECTORCALL MaskToFloat128(uint32 Mask) noexcept
     {
-        const float M = BitsToFloat(Mask);
+        const float M = Math::BitsToFloat(Mask);
         return FFloat128{ M, M, M, M };
     }
 
@@ -95,17 +75,17 @@ public:
 
     static FORCEINLINE void VECTORCALL VectorStore(FFloat128 Vector, float* Dest) noexcept
     {
-        Dest[0] = Vector.x;
-        Dest[1] = Vector.y;
-        Dest[2] = Vector.z;
-        Dest[3] = Vector.w;
+        Dest[0] = Vector.X;
+        Dest[1] = Vector.Y;
+        Dest[2] = Vector.Z;
+        Dest[3] = Vector.W;
     }
 
     static FORCEINLINE void VECTORCALL VectorStore3(FFloat128 Vector, float* Dest) noexcept
     {
-        Dest[0] = Vector.x;
-        Dest[1] = Vector.y;
-        Dest[2] = Vector.z;
+        Dest[0] = Vector.X;
+        Dest[1] = Vector.Y;
+        Dest[2] = Vector.Z;
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -149,7 +129,7 @@ public:
         static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
         static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
 
-        const float V[4] = { VectorA.x, VectorA.y, VectorA.z, VectorA.w };
+        const float V[4] = { VectorA.X, VectorA.Y, VectorA.Z, VectorA.W };
         return FFloat128{ V[ComponentIndexX], V[ComponentIndexY], V[ComponentIndexZ], V[ComponentIndexW] };
     }
 
@@ -161,8 +141,8 @@ public:
         static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
         static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
 
-        const float A[4] = { VectorA.x, VectorA.y, VectorA.z, VectorA.w };
-        const float B[4] = { VectorB.x, VectorB.y, VectorB.z, VectorB.w };
+        const float A[4] = { VectorA.X, VectorA.Y, VectorA.Z, VectorA.W };
+        const float B[4] = { VectorB.X, VectorB.Y, VectorB.Z, VectorB.W };
         return FFloat128{ A[ComponentIndexX], A[ComponentIndexY], B[ComponentIndexZ], B[ComponentIndexW] };
     }
 
@@ -174,8 +154,8 @@ public:
         static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
         static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
 
-        const float A[4] = { VectorA.x, VectorA.y, VectorA.z, VectorA.w };
-        const float B[4] = { VectorB.x, VectorB.y, VectorB.z, VectorB.w };
+        const float A[4] = { VectorA.X, VectorA.Y, VectorA.Z, VectorA.W };
+        const float B[4] = { VectorB.X, VectorB.Y, VectorB.Z, VectorB.W };
         return FFloat128{ A[ComponentIndexX], B[ComponentIndexY], A[ComponentIndexZ], B[ComponentIndexW] };
     }
 
@@ -190,10 +170,10 @@ public:
     // Component extract
     // ---------------------------------------------------------------------------------------------
 
-    static FORCEINLINE float VECTORCALL VectorGetX(FFloat128 Vector) noexcept { return Vector.x; }
-    static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept { return Vector.y; }
-    static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept { return Vector.z; }
-    static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept { return Vector.w; }
+    static FORCEINLINE float VECTORCALL VectorGetX(FFloat128 Vector) noexcept { return Vector.X; }
+    static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept { return Vector.Y; }
+    static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept { return Vector.Z; }
+    static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept { return Vector.W; }
 
     // ---------------------------------------------------------------------------------------------
     // Arithmetic
@@ -201,22 +181,22 @@ public:
 
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return FFloat128{ VectorA.x * VectorB.x, VectorA.y * VectorB.y, VectorA.z * VectorB.z, VectorA.w * VectorB.w };
+        return FFloat128{ VectorA.X * VectorB.X, VectorA.Y * VectorB.Y, VectorA.Z * VectorB.Z, VectorA.W * VectorB.W };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDiv(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return FFloat128{ VectorA.x / VectorB.x, VectorA.y / VectorB.y, VectorA.z / VectorB.z, VectorA.w / VectorB.w };
+        return FFloat128{ VectorA.X / VectorB.X, VectorA.Y / VectorB.Y, VectorA.Z / VectorB.Z, VectorA.W / VectorB.W };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return FFloat128{ VectorA.x + VectorB.x, VectorA.y + VectorB.y, VectorA.z + VectorB.z, VectorA.w + VectorB.w };
+        return FFloat128{ VectorA.X + VectorB.X, VectorA.Y + VectorB.Y, VectorA.Z + VectorB.Z, VectorA.W + VectorB.W };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSub(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return FFloat128{ VectorA.x - VectorB.x, VectorA.y - VectorB.y, VectorA.z - VectorB.z, VectorA.w - VectorB.w };
+        return FFloat128{ VectorA.X - VectorB.X, VectorA.Y - VectorB.Y, VectorA.Z - VectorB.Z, VectorA.W - VectorB.W };
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -226,12 +206,12 @@ public:
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         // Matches _mm_hadd_ps(A, B) layout: (Ax+Ay, Az+Aw, Bx+By, Bz+Bw)
-        return FFloat128{ VectorA.x + VectorA.y, VectorA.z + VectorA.w, VectorB.x + VectorB.y, VectorB.z + VectorB.w };
+        return FFloat128{ VectorA.X + VectorA.Y, VectorA.Z + VectorA.W, VectorB.X + VectorB.Y, VectorB.Z + VectorB.W };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalSum(FFloat128 Vector) noexcept
     {
-        const float Sum = Vector.x + Vector.y + Vector.z + Vector.w;
+        const float Sum = Vector.X + Vector.Y + Vector.Z + Vector.W;
         return VectorSet1(Sum);
     }
 
@@ -241,17 +221,17 @@ public:
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSqrt(FFloat128 Vector) noexcept
     {
-        return FFloat128{ Math::Sqrt(Vector.x), Math::Sqrt(Vector.y), Math::Sqrt(Vector.z), Math::Sqrt(Vector.w) };
+        return FFloat128{ Math::Sqrt(Vector.X), Math::Sqrt(Vector.Y), Math::Sqrt(Vector.Z), Math::Sqrt(Vector.W) };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorRecipSqrt(FFloat128 Vector) noexcept
     {
-        return FFloat128{ 1.0f / Math::Sqrt(Vector.x), 1.0f / Math::Sqrt(Vector.y), 1.0f / Math::Sqrt(Vector.z), 1.0f / Math::Sqrt(Vector.w) };
+        return FFloat128{ 1.0f / Math::Sqrt(Vector.X), 1.0f / Math::Sqrt(Vector.Y), 1.0f / Math::Sqrt(Vector.Z), 1.0f / Math::Sqrt(Vector.W) };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorRecip(FFloat128 Vector) noexcept
     {
-        return FFloat128{ 1.0f / Vector.x, 1.0f / Vector.y, 1.0f / Vector.z, 1.0f / Vector.w };
+        return FFloat128{ 1.0f / Vector.X, 1.0f / Vector.Y, 1.0f / Vector.Z, 1.0f / Vector.W };
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -260,35 +240,35 @@ public:
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAnd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const uint32 Ax = FloatToBits(VectorA.x), Ay = FloatToBits(VectorA.y), Az = FloatToBits(VectorA.z), Aw = FloatToBits(VectorA.w);
-        const uint32 Bx = FloatToBits(VectorB.x), By = FloatToBits(VectorB.y), Bz = FloatToBits(VectorB.z), Bw = FloatToBits(VectorB.w);
+        const uint32 Ax = Math::FloatToBits(VectorA.X), Ay = Math::FloatToBits(VectorA.Y), Az = Math::FloatToBits(VectorA.Z), Aw = Math::FloatToBits(VectorA.W);
+        const uint32 Bx = Math::FloatToBits(VectorB.X), By = Math::FloatToBits(VectorB.Y), Bz = Math::FloatToBits(VectorB.Z), Bw = Math::FloatToBits(VectorB.W);
 
-        return FFloat128{ BitsToFloat(Ax & Bx), BitsToFloat(Ay & By), BitsToFloat(Az & Bz), BitsToFloat(Aw & Bw) };
+        return FFloat128{ Math::BitsToFloat(Ax & Bx), Math::BitsToFloat(Ay & By), Math::BitsToFloat(Az & Bz), Math::BitsToFloat(Aw & Bw) };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorOr(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const uint32 Ax = FloatToBits(VectorA.x), Ay = FloatToBits(VectorA.y), Az = FloatToBits(VectorA.z), Aw = FloatToBits(VectorA.w);
-        const uint32 Bx = FloatToBits(VectorB.x), By = FloatToBits(VectorB.y), Bz = FloatToBits(VectorB.z), Bw = FloatToBits(VectorB.w);
+        const uint32 Ax = Math::FloatToBits(VectorA.X), Ay = Math::FloatToBits(VectorA.Y), Az = Math::FloatToBits(VectorA.Z), Aw = Math::FloatToBits(VectorA.W);
+        const uint32 Bx = Math::FloatToBits(VectorB.X), By = Math::FloatToBits(VectorB.Y), Bz = Math::FloatToBits(VectorB.Z), Bw = Math::FloatToBits(VectorB.W);
 
-        return FFloat128{ BitsToFloat(Ax | Bx), BitsToFloat(Ay | By), BitsToFloat(Az | Bz), BitsToFloat(Aw | Bw) };
+        return FFloat128{ Math::BitsToFloat(Ax | Bx), Math::BitsToFloat(Ay | By), Math::BitsToFloat(Az | Bz), Math::BitsToFloat(Aw | Bw) };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorXor(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const uint32 Ax = FloatToBits(VectorA.x), Ay = FloatToBits(VectorA.y), Az = FloatToBits(VectorA.z), Aw = FloatToBits(VectorA.w);
-        const uint32 Bx = FloatToBits(VectorB.x), By = FloatToBits(VectorB.y), Bz = FloatToBits(VectorB.z), Bw = FloatToBits(VectorB.w);
+        const uint32 Ax = Math::FloatToBits(VectorA.X), Ay = Math::FloatToBits(VectorA.Y), Az = Math::FloatToBits(VectorA.Z), Aw = Math::FloatToBits(VectorA.W);
+        const uint32 Bx = Math::FloatToBits(VectorB.X), By = Math::FloatToBits(VectorB.Y), Bz = Math::FloatToBits(VectorB.Z), Bw = Math::FloatToBits(VectorB.W);
 
-        return FFloat128{ BitsToFloat(Ax ^ Bx), BitsToFloat(Ay ^ By), BitsToFloat(Az ^ Bz), BitsToFloat(Aw ^ Bw) };
+        return FFloat128{ Math::BitsToFloat(Ax ^ Bx), Math::BitsToFloat(Ay ^ By), Math::BitsToFloat(Az ^ Bz), Math::BitsToFloat(Aw ^ Bw) };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAndNot(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         // (~A) & B
-        const uint32 Ax = FloatToBits(VectorA.x), Ay = FloatToBits(VectorA.y), Az = FloatToBits(VectorA.z), Aw = FloatToBits(VectorA.w);
-        const uint32 Bx = FloatToBits(VectorB.x), By = FloatToBits(VectorB.y), Bz = FloatToBits(VectorB.z), Bw = FloatToBits(VectorB.w);
+        const uint32 Ax = Math::FloatToBits(VectorA.X), Ay = Math::FloatToBits(VectorA.Y), Az = Math::FloatToBits(VectorA.Z), Aw = Math::FloatToBits(VectorA.W);
+        const uint32 Bx = Math::FloatToBits(VectorB.X), By = Math::FloatToBits(VectorB.Y), Bz = Math::FloatToBits(VectorB.Z), Bw = Math::FloatToBits(VectorB.W);
 
-        return FFloat128{ BitsToFloat((~Ax) & Bx), BitsToFloat((~Ay) & By), BitsToFloat((~Az) & Bz), BitsToFloat((~Aw) & Bw) };
+        return FFloat128{ Math::BitsToFloat((~Ax) & Bx), Math::BitsToFloat((~Ay) & By), Math::BitsToFloat((~Az) & Bz), Math::BitsToFloat((~Aw) & Bw) };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSelect(FFloat128 Mask, FFloat128 VectorA, FFloat128 VectorB) noexcept
@@ -317,10 +297,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(VectorA.x == VectorB.x)),
-            BitsToFloat(BoolMask(VectorA.y == VectorB.y)),
-            BitsToFloat(BoolMask(VectorA.z == VectorB.z)),
-            BitsToFloat(BoolMask(VectorA.w == VectorB.w))
+            Math::BitsToFloat(Math::BoolMask(VectorA.X == VectorB.X)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Y == VectorB.Y)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Z == VectorB.Z)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.W == VectorB.W))
         };
     }
 
@@ -328,10 +308,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(VectorA.x != VectorB.x)),
-            BitsToFloat(BoolMask(VectorA.y != VectorB.y)),
-            BitsToFloat(BoolMask(VectorA.z != VectorB.z)),
-            BitsToFloat(BoolMask(VectorA.w != VectorB.w))
+            Math::BitsToFloat(Math::BoolMask(VectorA.X != VectorB.X)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Y != VectorB.Y)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Z != VectorB.Z)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.W != VectorB.W))
         };
     }
 
@@ -339,10 +319,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(VectorA.x > VectorB.x)),
-            BitsToFloat(BoolMask(VectorA.y > VectorB.y)),
-            BitsToFloat(BoolMask(VectorA.z > VectorB.z)),
-            BitsToFloat(BoolMask(VectorA.w > VectorB.w))
+            Math::BitsToFloat(Math::BoolMask(VectorA.X > VectorB.X)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Y > VectorB.Y)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Z > VectorB.Z)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.W > VectorB.W))
         };
     }
 
@@ -350,10 +330,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(VectorA.x >= VectorB.x)),
-            BitsToFloat(BoolMask(VectorA.y >= VectorB.y)),
-            BitsToFloat(BoolMask(VectorA.z >= VectorB.z)),
-            BitsToFloat(BoolMask(VectorA.w >= VectorB.w))
+            Math::BitsToFloat(Math::BoolMask(VectorA.X >= VectorB.X)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Y >= VectorB.Y)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Z >= VectorB.Z)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.W >= VectorB.W))
         };
     }
 
@@ -361,10 +341,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(VectorA.x < VectorB.x)),
-            BitsToFloat(BoolMask(VectorA.y < VectorB.y)),
-            BitsToFloat(BoolMask(VectorA.z < VectorB.z)),
-            BitsToFloat(BoolMask(VectorA.w < VectorB.w))
+            Math::BitsToFloat(Math::BoolMask(VectorA.X < VectorB.X)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Y < VectorB.Y)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Z < VectorB.Z)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.W < VectorB.W))
         };
     }
 
@@ -372,10 +352,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(VectorA.x <= VectorB.x)),
-            BitsToFloat(BoolMask(VectorA.y <= VectorB.y)),
-            BitsToFloat(BoolMask(VectorA.z <= VectorB.z)),
-            BitsToFloat(BoolMask(VectorA.w <= VectorB.w))
+            Math::BitsToFloat(Math::BoolMask(VectorA.X <= VectorB.X)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Y <= VectorB.Y)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.Z <= VectorB.Z)),
+            Math::BitsToFloat(Math::BoolMask(VectorA.W <= VectorB.W))
         };
     }
 
@@ -387,10 +367,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(Math::IsNaN(Vector.x))),
-            BitsToFloat(BoolMask(Math::IsNaN(Vector.y))),
-            BitsToFloat(BoolMask(Math::IsNaN(Vector.z))),
-            BitsToFloat(BoolMask(Math::IsNaN(Vector.w)))
+            Math::BitsToFloat(Math::BoolMask(Math::IsNaN(Vector.X))),
+            Math::BitsToFloat(Math::BoolMask(Math::IsNaN(Vector.Y))),
+            Math::BitsToFloat(Math::BoolMask(Math::IsNaN(Vector.Z))),
+            Math::BitsToFloat(Math::BoolMask(Math::IsNaN(Vector.W)))
         };
     }
 
@@ -398,26 +378,26 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(BoolMask(Math::IsInfinity(Vector.x))),
-            BitsToFloat(BoolMask(Math::IsInfinity(Vector.y))),
-            BitsToFloat(BoolMask(Math::IsInfinity(Vector.z))),
-            BitsToFloat(BoolMask(Math::IsInfinity(Vector.w)))
+            Math::BitsToFloat(Math::BoolMask(Math::IsInfinity(Vector.X))),
+            Math::BitsToFloat(Math::BoolMask(Math::IsInfinity(Vector.Y))),
+            Math::BitsToFloat(Math::BoolMask(Math::IsInfinity(Vector.Z))),
+            Math::BitsToFloat(Math::BoolMask(Math::IsInfinity(Vector.W)))
         };
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorNearEqualMask(FFloat128 VectorA, FFloat128 VectorB, FFloat128 Epsilon) noexcept
     {
-        const float Dx = Math::Abs(VectorA.x - VectorB.x);
-        const float Dy = Math::Abs(VectorA.y - VectorB.y);
-        const float Dz = Math::Abs(VectorA.z - VectorB.z);
-        const float Dw = Math::Abs(VectorA.w - VectorB.w);
+        const float Dx = Math::Abs(VectorA.X - VectorB.X);
+        const float Dy = Math::Abs(VectorA.Y - VectorB.Y);
+        const float Dz = Math::Abs(VectorA.Z - VectorB.Z);
+        const float Dw = Math::Abs(VectorA.W - VectorB.W);
 
         return FFloat128
         {
-            BitsToFloat(BoolMask(Dx <= Epsilon.x)),
-            BitsToFloat(BoolMask(Dy <= Epsilon.y)),
-            BitsToFloat(BoolMask(Dz <= Epsilon.z)),
-            BitsToFloat(BoolMask(Dw <= Epsilon.w))
+            Math::BitsToFloat(Math::BoolMask(Dx <= Epsilon.X)),
+            Math::BitsToFloat(Math::BoolMask(Dy <= Epsilon.Y)),
+            Math::BitsToFloat(Math::BoolMask(Dz <= Epsilon.Z)),
+            Math::BitsToFloat(Math::BoolMask(Dw <= Epsilon.W))
         };
     }
 
@@ -432,33 +412,33 @@ public:
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDot(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const float Dot = (VectorA.x * VectorB.x) + (VectorA.y * VectorB.y) + (VectorA.z * VectorB.z) + (VectorA.w * VectorB.w);
+        const float Dot = (VectorA.X * VectorB.X) + (VectorA.Y * VectorB.Y) + (VectorA.Z * VectorB.Z) + (VectorA.W * VectorB.W);
         return VectorSet1(Dot);
     }
 
     static FORCEINLINE bool VECTORCALL VectorAllEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return (VectorA.x == VectorB.x) && (VectorA.y == VectorB.y) && (VectorA.z == VectorB.z) && (VectorA.w == VectorB.w);
+        return (VectorA.X == VectorB.X) && (VectorA.Y == VectorB.Y) && (VectorA.Z == VectorB.Z) && (VectorA.W == VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorAllGreaterThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return (VectorA.x > VectorB.x) && (VectorA.y > VectorB.y) && (VectorA.z > VectorB.z) && (VectorA.w > VectorB.w);
+        return (VectorA.X > VectorB.X) && (VectorA.Y > VectorB.Y) && (VectorA.Z > VectorB.Z) && (VectorA.W > VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorAllGreaterThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return (VectorA.x >= VectorB.x) && (VectorA.y >= VectorB.y) && (VectorA.z >= VectorB.z) && (VectorA.w >= VectorB.w);
+        return (VectorA.X >= VectorB.X) && (VectorA.Y >= VectorB.Y) && (VectorA.Z >= VectorB.Z) && (VectorA.W >= VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorAllLessThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return (VectorA.x < VectorB.x) && (VectorA.y < VectorB.y) && (VectorA.z < VectorB.z) && (VectorA.w < VectorB.w);
+        return (VectorA.X < VectorB.X) && (VectorA.Y < VectorB.Y) && (VectorA.Z < VectorB.Z) && (VectorA.W < VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorAllLessThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return (VectorA.x <= VectorB.x) && (VectorA.y <= VectorB.y) && (VectorA.z <= VectorB.z) && (VectorA.w <= VectorB.w);
+        return (VectorA.X <= VectorB.X) && (VectorA.Y <= VectorB.Y) && (VectorA.Z <= VectorB.Z) && (VectorA.W <= VectorB.W);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -469,10 +449,10 @@ public:
     {
         return FFloat128
         {
-            (VectorA.x < VectorB.x) ? VectorA.x : VectorB.x,
-            (VectorA.y < VectorB.y) ? VectorA.y : VectorB.y,
-            (VectorA.z < VectorB.z) ? VectorA.z : VectorB.z,
-            (VectorA.w < VectorB.w) ? VectorA.w : VectorB.w
+            (VectorA.X < VectorB.X) ? VectorA.X : VectorB.X,
+            (VectorA.Y < VectorB.Y) ? VectorA.Y : VectorB.Y,
+            (VectorA.Z < VectorB.Z) ? VectorA.Z : VectorB.Z,
+            (VectorA.W < VectorB.W) ? VectorA.W : VectorB.W
         };
     }
 
@@ -480,10 +460,10 @@ public:
     {
         return FFloat128
         {
-            (VectorA.x > VectorB.x) ? VectorA.x : VectorB.x,
-            (VectorA.y > VectorB.y) ? VectorA.y : VectorB.y,
-            (VectorA.z > VectorB.z) ? VectorA.z : VectorB.z,
-            (VectorA.w > VectorB.w) ? VectorA.w : VectorB.w
+            (VectorA.X > VectorB.X) ? VectorA.X : VectorB.X,
+            (VectorA.Y > VectorB.Y) ? VectorA.Y : VectorB.Y,
+            (VectorA.Z > VectorB.Z) ? VectorA.Z : VectorB.Z,
+            (VectorA.W > VectorB.W) ? VectorA.W : VectorB.W
         };
     }
 
@@ -525,10 +505,10 @@ public:
     {
         return FFloat128
         {
-            BitsToFloat(IntToBits(Vector.x)),
-            BitsToFloat(IntToBits(Vector.y)),
-            BitsToFloat(IntToBits(Vector.z)),
-            BitsToFloat(IntToBits(Vector.w))
+            Math::BitsToFloat(Math::IntToBits(Vector.X)),
+            Math::BitsToFloat(Math::IntToBits(Vector.Y)),
+            Math::BitsToFloat(Math::IntToBits(Vector.Z)),
+            Math::BitsToFloat(Math::IntToBits(Vector.W))
         };
     }
 
@@ -536,26 +516,26 @@ public:
     {
         return FInt128
         {
-            BitsToInt(FloatToBits(Vector.x)),
-            BitsToInt(FloatToBits(Vector.y)),
-            BitsToInt(FloatToBits(Vector.z)),
-            BitsToInt(FloatToBits(Vector.w))
+            Math::BitsToInt(Math::FloatToBits(Vector.X)),
+            Math::BitsToInt(Math::FloatToBits(Vector.Y)),
+            Math::BitsToInt(Math::FloatToBits(Vector.Z)),
+            Math::BitsToInt(Math::FloatToBits(Vector.W))
         };
     }
 
     static FORCEINLINE void VECTORCALL VectorStoreInt(FInt128 Vector, int32* Dest) noexcept
     {
-        Dest[0] = Vector.x;
-        Dest[1] = Vector.y;
-        Dest[2] = Vector.z;
-        Dest[3] = Vector.w;
+        Dest[0] = Vector.X;
+        Dest[1] = Vector.Y;
+        Dest[2] = Vector.Z;
+        Dest[3] = Vector.W;
     }
 
     static FORCEINLINE void VECTORCALL VectorStoreInt3(FInt128 Vector, int32* Dest) noexcept
     {
-        Dest[0] = Vector.x;
-        Dest[1] = Vector.y;
-        Dest[2] = Vector.z;
+        Dest[0] = Vector.X;
+        Dest[1] = Vector.Y;
+        Dest[2] = Vector.Z;
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorAddInt(FInt128 VectorA, FInt128 VectorB) noexcept
@@ -563,10 +543,10 @@ public:
         // Match SSE2 semantics (wrap-around / modulo 2^32).
         return FInt128
         {
-            AddWrapInt32(VectorA.x, VectorB.x),
-            AddWrapInt32(VectorA.y, VectorB.y),
-            AddWrapInt32(VectorA.z, VectorB.z),
-            AddWrapInt32(VectorA.w, VectorB.w)
+            Math::AddWrapInt32(VectorA.X, VectorB.X),
+            Math::AddWrapInt32(VectorA.Y, VectorB.Y),
+            Math::AddWrapInt32(VectorA.Z, VectorB.Z),
+            Math::AddWrapInt32(VectorA.W, VectorB.W)
         };
     }
 
@@ -575,10 +555,10 @@ public:
         // Match SSE2 semantics (wrap-around / modulo 2^32).
         return FInt128
         {
-            SubWrapInt32(VectorA.x, VectorB.x),
-            SubWrapInt32(VectorA.y, VectorB.y),
-            SubWrapInt32(VectorA.z, VectorB.z),
-            SubWrapInt32(VectorA.w, VectorB.w)
+            Math::SubWrapInt32(VectorA.X, VectorB.X),
+            Math::SubWrapInt32(VectorA.Y, VectorB.Y),
+            Math::SubWrapInt32(VectorA.Z, VectorB.Z),
+            Math::SubWrapInt32(VectorA.W, VectorB.W)
         };
     }
 
@@ -587,46 +567,46 @@ public:
         // Match SSE2 semantics (mullo / modulo 2^32).
         return FInt128
         {
-            MulWrapInt32(VectorA.x, VectorB.x),
-            MulWrapInt32(VectorA.y, VectorB.y),
-            MulWrapInt32(VectorA.z, VectorB.z),
-            MulWrapInt32(VectorA.w, VectorB.w)
+            Math::MulWrapInt32(VectorA.X, VectorB.X),
+            Math::MulWrapInt32(VectorA.Y, VectorB.Y),
+            Math::MulWrapInt32(VectorA.Z, VectorB.Z),
+            Math::MulWrapInt32(VectorA.W, VectorB.W)
         };
     }
 
     static FORCEINLINE bool VECTORCALL VectorEqualInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return (VectorA.x == VectorB.x) && (VectorA.y == VectorB.y) && (VectorA.z == VectorB.z) && (VectorA.w == VectorB.w);
+        return (VectorA.X == VectorB.X) && (VectorA.Y == VectorB.Y) && (VectorA.Z == VectorB.Z) && (VectorA.W == VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorGreaterThanInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return (VectorA.x > VectorB.x) && (VectorA.y > VectorB.y) && (VectorA.z > VectorB.z) && (VectorA.w > VectorB.w);
+        return (VectorA.X > VectorB.X) && (VectorA.Y > VectorB.Y) && (VectorA.Z > VectorB.Z) && (VectorA.W > VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorGreaterThanOrEqualInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return (VectorA.x >= VectorB.x) && (VectorA.y >= VectorB.y) && (VectorA.z >= VectorB.z) && (VectorA.w >= VectorB.w);
+        return (VectorA.X >= VectorB.X) && (VectorA.Y >= VectorB.Y) && (VectorA.Z >= VectorB.Z) && (VectorA.W >= VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorLessThanInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return (VectorA.x < VectorB.x) && (VectorA.y < VectorB.y) && (VectorA.z < VectorB.z) && (VectorA.w < VectorB.w);
+        return (VectorA.X < VectorB.X) && (VectorA.Y < VectorB.Y) && (VectorA.Z < VectorB.Z) && (VectorA.W < VectorB.W);
     }
 
     static FORCEINLINE bool VECTORCALL VectorLessThanOrEqualInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
-        return (VectorA.x <= VectorB.x) && (VectorA.y <= VectorB.y) && (VectorA.z <= VectorB.z) && (VectorA.w <= VectorB.w);
+        return (VectorA.X <= VectorB.X) && (VectorA.Y <= VectorB.Y) && (VectorA.Z <= VectorB.Z) && (VectorA.W <= VectorB.W);
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorMinInt(FInt128 VectorA, FInt128 VectorB) noexcept
     {
         return FInt128
         {
-            (VectorA.x < VectorB.x) ? VectorA.x : VectorB.x,
-            (VectorA.y < VectorB.y) ? VectorA.y : VectorB.y,
-            (VectorA.z < VectorB.z) ? VectorA.z : VectorB.z,
-            (VectorA.w < VectorB.w) ? VectorA.w : VectorB.w
+            (VectorA.X < VectorB.X) ? VectorA.X : VectorB.X,
+            (VectorA.Y < VectorB.Y) ? VectorA.Y : VectorB.Y,
+            (VectorA.Z < VectorB.Z) ? VectorA.Z : VectorB.Z,
+            (VectorA.W < VectorB.W) ? VectorA.W : VectorB.W
         };
     }
 
@@ -634,10 +614,10 @@ public:
     {
         return FInt128
         {
-            (VectorA.x > VectorB.x) ? VectorA.x : VectorB.x,
-            (VectorA.y > VectorB.y) ? VectorA.y : VectorB.y,
-            (VectorA.z > VectorB.z) ? VectorA.z : VectorB.z,
-            (VectorA.w > VectorB.w) ? VectorA.w : VectorB.w
+            (VectorA.X > VectorB.X) ? VectorA.X : VectorB.X,
+            (VectorA.Y > VectorB.Y) ? VectorA.Y : VectorB.Y,
+            (VectorA.Z > VectorB.Z) ? VectorA.Z : VectorB.Z,
+            (VectorA.W > VectorB.W) ? VectorA.W : VectorB.W
         };
     }
 };

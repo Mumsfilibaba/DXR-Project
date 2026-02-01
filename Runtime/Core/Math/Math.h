@@ -3,6 +3,7 @@
 #include "Core/Templates/NumericLimits.h"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 struct Math
 {
@@ -380,6 +381,71 @@ public:
     // -------------------------------------------------------------------------------------------
     // Bit / Numeric Helpers
     // -------------------------------------------------------------------------------------------
+
+    /** @brief Reinterprets a float as its uint32 bit pattern (avoids aliasing UB). */
+    static FORCEINLINE uint32 FloatToBits(float Value) noexcept
+    {
+        static_assert(sizeof(float) == sizeof(uint32));
+        uint32 Bits = 0;
+        std::memcpy(&Bits, &Value, sizeof(Bits));
+        return Bits;
+    }
+
+    /** @brief Reinterprets a uint32 bit pattern as a float (avoids aliasing UB). */
+    static FORCEINLINE float BitsToFloat(uint32 Bits) noexcept
+    {
+        float Value = 0.0f;
+        std::memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    }
+
+    /** @brief Reinterprets an int32 as its uint32 bit pattern (avoids aliasing UB). */
+    static FORCEINLINE uint32 IntToBits(int32 Value) noexcept
+    {
+        static_assert(sizeof(int32) == sizeof(uint32));
+        uint32 Bits = 0;
+        std::memcpy(&Bits, &Value, sizeof(Bits));
+        return Bits;
+    }
+
+    /** @brief Reinterprets a uint32 bit pattern as an int32 (avoids aliasing UB). */
+    static FORCEINLINE int32 BitsToInt(uint32 Bits) noexcept
+    {
+        int32 Value = 0;
+        std::memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    }
+
+    /** @brief Adds two int32 values with wrap-around semantics (avoids signed overflow UB). */
+    static FORCEINLINE int32 AddWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint32 UA = IntToBits(A);
+        const uint32 UB = IntToBits(B);
+        return BitsToInt(UA + UB);
+    }
+
+    /** @brief Subtracts two int32 values with wrap-around semantics (avoids signed overflow UB). */
+    static FORCEINLINE int32 SubWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint32 UA = IntToBits(A);
+        const uint32 UB = IntToBits(B);
+        return BitsToInt(UA - UB);
+    }
+
+    /** @brief Multiplies two int32 values with wrap-around semantics (avoids signed overflow UB). */
+    static FORCEINLINE int32 MulWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint64 UA = static_cast<uint64>(IntToBits(A));
+        const uint64 UB = static_cast<uint64>(IntToBits(B));
+        const uint32 Lo = static_cast<uint32>(UA * UB);
+        return BitsToInt(Lo);
+    }
+
+    /** @brief Returns 0xFFFFFFFF for true, otherwise 0. */
+    static FORCEINLINE uint32 BoolMask(bool bValue) noexcept
+    {
+        return bValue ? 0xFFFFFFFFu : 0u;
+    }
 
     /** @brief Returns the maximum representable value for the given bit width. */
     template<const uint64 NumBits>
