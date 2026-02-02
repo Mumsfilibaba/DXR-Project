@@ -29,6 +29,13 @@ struct TArrayAllocatorInterface
     FORCEINLINE void MoveFrom(TArrayAllocatorInterface&& Other) { }
 
     /**
+     * @brief Move allocation from another allocator-instance (with element count)
+     * @param Other Other allocator instance
+     * @param NumElements Number of live elements stored in the allocation
+     */
+    FORCEINLINE void MoveFrom(TArrayAllocatorInterface&& Other, SizeType NumElements) { }
+
+    /**
      * @brief Retrieve the allocation
      * @return Returns the allocation
      */
@@ -58,7 +65,19 @@ public:
 
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount)
     {
-        Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewCount * sizeof(ElementType)));
+        UNREFERENCED_VARIABLE(CurrentCount);
+        CHECK(NewCount >= 0);
+
+        if (NewCount == 0)
+        {
+            Free();
+            return nullptr;
+        }
+
+        const SIZE_T NewSizeInBytes = static_cast<SIZE_T>(NewCount) * sizeof(ElementType);
+        CHECK((NewSizeInBytes / sizeof(ElementType)) == static_cast<SIZE_T>(NewCount));
+
+        Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewSizeInBytes));
         return Allocation;
     }
 
@@ -79,6 +98,12 @@ public:
         Other.Allocation = nullptr;
     }
 
+    FORCEINLINE void MoveFrom(TDefaultArrayAllocator&& Other, SizeType NumElements)
+    {
+        UNREFERENCED_VARIABLE(NumElements);
+        MoveFrom(::Move(Other));
+    }
+
     NODISCARD FORCEINLINE ElementType* GetAllocation() const
     {
         return Allocation;
@@ -97,7 +122,6 @@ public:
 private:
     ElementType* Allocation = nullptr;
 };
-
 
 template<typename ElementType, int32 NumInlineElements>
 class TInlineArrayAllocator
@@ -137,13 +161,20 @@ public:
 
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewElementCount)
     {
+        CHECK(CurrentCount >= 0);
+        CHECK(NewElementCount >= 0);
+
         if (NewElementCount > NumInlineElements)
         {
             if (!DynamicAllocation.HasAllocation())
             {
                 CHECK(CurrentCount <= NumInlineElements);
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
-                ::RelocateObjects<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
+
+                if (CurrentCount > 0)
+                {
+                    ::RelocateObjects<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
+                }
             }
             else
             {
@@ -157,7 +188,11 @@ public:
             if (DynamicAllocation.HasAllocation())
             {
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
-                ::RelocateObjects<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
+                if (CurrentCount > 0)
+                {
+                    ::RelocateObjects<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
+                }
+
                 Free();
             }
 
@@ -177,17 +212,53 @@ public:
         }
     }
 
+    /**
+     * @brief Move allocation from another allocator-instance (with element count)
+     *
+     * NOTE: The allocator does not know how many elements are live unless the container passes it in.
+     * Moving inline storage without NumElements is undefined for non-reallocatable ElementType.
+     */
+    FORCEINLINE void MoveFrom(TInlineArrayAllocator&& Other, SizeType NumElements)
+    {
+        CHECK(this != &Other);
+        CHECK(NumElements >= 0);
+
+        // Move/relocate inline elements if the source is inline.
+        if (!Other.DynamicAllocation.HasAllocation())
+        {
+            if (NumElements > 0)
+            {
+                CHECK(NumElements <= NumInlineElements);
+                ::RelocateObjects<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumElements);
+            }
+
+            // Clear the source inline storage after relocation (raw storage, safe).
+            FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
+        }
+
+        // Steal heap allocation (if any). This also frees our current heap allocation if we had one.
+        DynamicAllocation.MoveFrom(::Move(Other.DynamicAllocation));
+    }
+
+    /**
+     * @brief Move allocation from another allocator-instance
+     *
+     * Only safe for reallocatable element types, because we don't know how many elements are live.
+     */
     FORCEINLINE void MoveFrom(TInlineArrayAllocator&& Other)
     {
         CHECK(this != &Other);
 
+        static_assert(TIsReallocatable<ElementType>::Value,
+            "TInlineArrayAllocator::MoveFrom(TInlineArrayAllocator&&) requires ElementType to be reallocatable. "
+            "Use MoveFrom(TInlineArrayAllocator&&, SizeType NumElements) for non-reallocatable types.");
+
         if (!Other.DynamicAllocation.HasAllocation())
         {
-            ::RelocateObjects<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
+            FMemory::Memmove(reinterpret_cast<void*>(InlineAllocation.GetElements()), reinterpret_cast<const void*>(Other.InlineAllocation.GetElements()), InlineAllocation.Size());
             FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
         }
 
-        // This call Free's any potential dynamic allocation we own
         DynamicAllocation.MoveFrom(::Move(Other.DynamicAllocation));
     }
 

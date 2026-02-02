@@ -336,6 +336,12 @@
     #define DEPRECATED(Message)
 #endif
 
+#if defined(__cpp_no_unique_address) && (__cpp_no_unique_address >= 201803L)
+    #define NO_UNIQUE_ADDRESS [[no_unique_address]]
+#else
+    #define NO_UNIQUE_ADDRESS
+#endif
+
 // Standard Alignment
 #if (__cplusplus >= 201703L) && defined(__cpp_aligned_new)
     #define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)

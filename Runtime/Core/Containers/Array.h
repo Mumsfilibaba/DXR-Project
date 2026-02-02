@@ -5,8 +5,6 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Functional.h"
-#include "Core/Math/Random.h"
-#include "Core/Math/Math.h"
 
 template<typename ElementType, typename AllocatorType = TDefaultArrayAllocator<ElementType>>
 class TArray
@@ -477,6 +475,13 @@ public:
     FORCEINLINE void InsertUninitialized(SizeType Position, SizeType NumElements)
     {
         CHECK(Position <= ArraySize);
+        CHECK(NumElements >= 0);
+
+        if (NumElements == 0)
+        {
+            return;
+        }
+
         InsertUninitializedUnchecked(Position, NumElements);
         ArraySize += NumElements;
     }
@@ -522,7 +527,16 @@ public:
      */
     FORCEINLINE void AppendUninitialized(SizeType NumElements)
     {
+        CHECK(NumElements >= 0);
+
+        if (NumElements == 0)
+        {
+            return;
+        }
+
         const SizeType NewSize = ArraySize + NumElements;
+        CHECK(NewSize >= ArraySize);
+
         EnsureCapacity(NewSize);
         ArraySize = NewSize;
     }
@@ -533,8 +547,17 @@ public:
      */
     void Pop(SizeType NumElements = 1)
     {
+        CHECK(NumElements >= 0);
+        CHECK(NumElements <= ArraySize);
+
+        if (NumElements == 0)
+        {
+            return;
+        }
+
         CHECK(!IsEmpty());
-        SizeType NewArraySize = ArraySize - NumElements;
+
+        const SizeType NewArraySize = ArraySize - NumElements;
         ::DestroyObjects<ElementType>(Allocator.GetAllocation() + NewArraySize, NumElements);
         ArraySize = NewArraySize;
     }
@@ -546,15 +569,19 @@ public:
      */
     void RemoveAt(SizeType Position, SizeType NumElements)
     {
+        CHECK(NumElements >= 0);
+        CHECK(Position >= 0);
         CHECK(Position + NumElements <= ArraySize);
 
-        if (NumElements)
+        if (NumElements == 0)
         {
-            ElementType* TempPositionData = Allocator.GetAllocation() + Position;
-            ::DestroyObjects<ElementType>(TempPositionData, NumElements);
-            ::RelocateObjects<ElementType>(TempPositionData, TempPositionData + NumElements, ArraySize - (Position + NumElements));
-            ArraySize -= NumElements;
+            return;
         }
+
+        ElementType* TempPositionData = Allocator.GetAllocation() + Position;
+        ::DestroyObjects<ElementType>(TempPositionData, NumElements);
+        ::RelocateObjects<ElementType>(TempPositionData, TempPositionData + NumElements, ArraySize - (Position + NumElements));
+        ArraySize -= NumElements;
     }
 
     /**
@@ -661,6 +688,7 @@ public:
     bool Remove(const ElementType& Element)
     {
         bool bRemoved = false;
+        
         ElementType* Array = Allocator.GetAllocation();
         for (SizeType Index = 0; Index < ArraySize;)
         {
@@ -775,7 +803,16 @@ public:
     template<class LambdaType>
     void Foreach(LambdaType&& Lambda)
     {
-        for (ElementType* RESTRICT Current = Allocator.GetAllocation(), *RESTRICT End = Current + ArraySize; Current != End; ++Current)
+        if (ArraySize == 0)
+        {
+            return;
+        }
+
+        ElementType* RESTRICT Current = Allocator.GetAllocation();
+        CHECK(Current != nullptr);
+
+        ElementType* RESTRICT End = Current + ArraySize;
+        for (; Current != End; ++Current)
         {
             Lambda(*Current);
         }
@@ -788,7 +825,16 @@ public:
     template<class LambdaType>
     void Foreach(LambdaType&& Lambda) const
     {
-        for (const ElementType* RESTRICT Current = Allocator.GetAllocation(), *RESTRICT End = Current + ArraySize; Current != End; ++Current)
+        if (ArraySize == 0)
+        {
+            return;
+        }
+
+        const ElementType* RESTRICT Current = Allocator.GetAllocation();
+        CHECK(Current != nullptr);
+
+        const ElementType* RESTRICT End = Current + ArraySize;
+        for (; Current != End; ++Current)
         {
             Lambda(*Current);
         }
@@ -803,6 +849,7 @@ public:
     {
         CHECK(IsValidIndex(FirstIndex));
         CHECK(IsValidIndex(SecondIndex));
+
         ElementType* Array = Allocator.GetAllocation();
         ::Swap(Array[FirstIndex], Array[SecondIndex]);
     }
@@ -822,6 +869,7 @@ public:
     {
         const SizeType HalfSize = ArraySize / 2;
         ElementType* Array = Allocator.GetAllocation();
+
         for (SizeType Index = 0; Index < HalfSize; ++Index)
         {
             const SizeType ReverseIndex = ArraySize - Index - 1;
@@ -856,7 +904,17 @@ public:
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const
     {
+        if (ArrayMax == 0)
+        {
+            return false;
+        }
+
         const ElementType* Array = Allocator.GetAllocation();
+        if (!Array)
+        {
+            return false;
+        }
+
         return Address >= Array && Address < (Array + ArrayMax);
     }
 
@@ -1030,6 +1088,7 @@ public:
         for (SizeType Index = StartIndex; Index >= 0; --Index)
         {
             Heapify(ArraySize, Index);
+
             if (Index == 0)
             {
                 break;
@@ -1165,9 +1224,7 @@ public:
     template<typename ArrayType>
     NODISCARD bool operator==(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
     {
-        return ArraySize == FArrayContainerHelper::Size(Other) ?
-            ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) :
-            false;
+        return ArraySize == FArrayContainerHelper::Size(Other) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : false;
     }
 
     /**
@@ -1297,6 +1354,8 @@ private:
 
     FORCEINLINE void CreateUninitialized(SizeType NumElements)
     {
+        CHECK(NumElements >= 0);
+
         if (ArrayMax < NumElements)
         {
             Allocator.Realloc(ArrayMax, NumElements);
@@ -1320,9 +1379,25 @@ private:
 
     void InitializeByCopy(const ElementType* Elements, SizeType NumElements, SizeType ExtraCapacity)
     {
-        const SizeType NewSize = NumElements + ExtraCapacity;
-        CreateUninitialized(NewSize);
-        ::CopyConstructObjects<ElementType>(Allocator.GetAllocation(), Elements, NumElements);
+        CHECK(NumElements >= 0);
+        CHECK(ExtraCapacity >= 0);
+
+        const SizeType NewCapacity = NumElements + ExtraCapacity;
+        CHECK(NewCapacity >= NumElements);
+
+        if (ArrayMax < NewCapacity)
+        {
+            Allocator.Realloc(ArrayMax, NewCapacity);
+            ArrayMax = NewCapacity;
+        }
+
+        ArraySize = NumElements;
+
+        if (NumElements > 0)
+        {
+            CHECK(Elements != nullptr);
+            ::CopyConstructObjects<ElementType>(Allocator.GetAllocation(), Elements, NumElements);
+        }
     }
 
     void InitializeByMove(TArray&& FromArray)
@@ -1330,7 +1405,7 @@ private:
         if (this != &FromArray)
         {
             ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
-            Allocator.MoveFrom(Move(FromArray.Allocator));
+            Allocator.MoveFrom(Move(FromArray.Allocator), FromArray.ArraySize);
 
             ArraySize = FromArray.ArraySize;
             ArrayMax  = FromArray.ArrayMax;
@@ -1348,12 +1423,13 @@ private:
                 // For non-trivial objects, reallocate with proper handling
                 AllocatorType NewAllocator;
                 NewAllocator.Realloc(ArrayMax, NewCapacity);
+
                 if (ArraySize)
                 {
                     ::RelocateObjects<ElementType>(NewAllocator.GetAllocation(), Allocator.GetAllocation(), ArraySize);
                 }
 
-                Allocator.MoveFrom(Move(NewAllocator));
+                Allocator.MoveFrom(Move(NewAllocator), ArraySize);
             }
             else
             {
@@ -1377,6 +1453,8 @@ private:
 
     void FORCEINLINE EnsureCapacity(SizeType RequiredCapacity)
     {
+        CHECK(RequiredCapacity >= 0);
+
         if (RequiredCapacity > ArrayMax)
         {
             const SizeType NewCapacity = CalculateGrowth(RequiredCapacity, ArrayMax);
@@ -1427,31 +1505,44 @@ private:
         return 2 * Index + 2;
     }
 
-    NODISCARD static SizeType CalculateGrowth(SizeType NumElements, SizeType CurrentCapacity)
+    NODISCARD static SizeType CalculateGrowth(SizeType RequiredCapacity, SizeType CurrentCapacity)
     {
+        CHECK(RequiredCapacity >= 0);
+        CHECK(CurrentCapacity >= 0);
+
         constexpr SizeType FirstAlloc = 4;
 
-        SizeType NewSize;
-        if (CurrentCapacity)
+        if (RequiredCapacity <= CurrentCapacity)
         {
-            NewSize = CurrentCapacity + NumElements + (CurrentCapacity >> 1);
-        }
-        else if (NumElements > FirstAlloc)
-        {
-            NewSize = NumElements;
-        }
-        else
-        {
-            NewSize = FirstAlloc;
+            return CurrentCapacity;
         }
 
-        return NewSize;
+        if (CurrentCapacity)
+        {
+            SizeType NewCapacity = CurrentCapacity + (CurrentCapacity >> 1);
+            if (NewCapacity < RequiredCapacity)
+            {
+                NewCapacity = RequiredCapacity;
+            }
+
+            CHECK(NewCapacity >= RequiredCapacity);
+            return NewCapacity;
+        }
+
+        return (RequiredCapacity > FirstAlloc) ? RequiredCapacity : FirstAlloc;
     }
 
     NODISCARD SizeType FindForward(auto&& Predicate) const
     {
+        if (ArraySize == 0)
+        {
+            return InvalidIndex;
+        }
+
         const ElementType* Start = Allocator.GetAllocation();
-        const ElementType* End   = Start + ArraySize;
+        CHECK(Start != nullptr);
+
+        const ElementType* End = Start + ArraySize;
         for (const ElementType* Current = Start; Current != End; ++Current)
         {
             if (Predicate(*Current))
@@ -1465,10 +1556,16 @@ private:
 
     NODISCARD SizeType FindReverse(auto&& Predicate) const
     {
-        const ElementType* Start   = Allocator.GetAllocation();
-        const ElementType* End     = Start;
+        if (ArraySize == 0)
+        {
+            return InvalidIndex;
+        }
+
+        const ElementType* Start = Allocator.GetAllocation();
+        CHECK(Start != nullptr);
+
         const ElementType* Current = Start + ArraySize;
-        while (Current != End)
+        while (Current != Start)
         {
             --Current;
             if (Predicate(*Current))
