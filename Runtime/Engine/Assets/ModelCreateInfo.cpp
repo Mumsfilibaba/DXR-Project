@@ -598,8 +598,8 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     for (uint32 i = 0; i < Sides; ++i)
     {
         // Calculate the position of the current vertex on the base circle
-        const float x = Radius * Math::Cos<float>(Angle * i);
-        const float z = Radius * Math::Sin<float>(Angle * i);
+        const float x = Radius * Math::Cos(Angle * i);
+        const float z = Radius * Math::Sin(Angle * i);
         const FVector3 BasePosition(x, 0.0f, z);
 
         // Base vertex
@@ -672,19 +672,19 @@ FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, ui
     for (uint32 i = 0; i < RingSegments; ++i)
     {
         const float RingAngle = i * RingStep;
-        const FVector3 RingCenter = FVector3(RingRadius * Math::Cos<float>(RingAngle), 0.0f, RingRadius * Math::Sin<float>(RingAngle));
+        const FVector3 RingCenter = FVector3(RingRadius * Math::Cos(RingAngle), 0.0f, RingRadius * Math::Sin(RingAngle));
         for (uint32 j = 0; j < TubeSegments; ++j)
         {
             const float TubeAngle = j * TubeStep;
-            const float CosTube   = Math::Cos<float>(TubeAngle);
-            const float SinTube   = Math::Sin<float>(TubeAngle);
+            const float CosTube   = Math::Cos(TubeAngle);
+            const float SinTube   = Math::Sin(TubeAngle);
 
             // Position of the vertex
-            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * Math::Cos<float>(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * Math::Sin<float>(RingAngle));
+            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * Math::Cos(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * Math::Sin(RingAngle));
             MeshCreateInfo.Vertices[VertexIndex].Position = Position;
 
             // Normal vector
-            FVector3 Normal = FVector3(CosTube * Math::Cos<float>(RingAngle), SinTube, CosTube * Math::Sin<float>(RingAngle));
+            FVector3 Normal = FVector3(CosTube * Math::Cos(RingAngle), SinTube, CosTube * Math::Sin(RingAngle));
             Normal.Normalize();
             
             MeshCreateInfo.Vertices[VertexIndex].Normal = Normal;

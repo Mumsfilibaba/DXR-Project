@@ -1,11 +1,9 @@
 #pragma once
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/NumericLimits.h"
-#include <algorithm>
-#include <cmath>
-#include <cstring>
+#include "Core/Platform/PlatformMath.h"
 
-struct Math
+struct Math : public FPlatformMath
 {
     // -------------------------------------------------------------------------------------------
     // Constants
@@ -77,138 +75,24 @@ public:
     // Standard Math (roots, rounding, trig, log)
     // -------------------------------------------------------------------------------------------
 
-    /** @brief Returns the square root of the given value. */
-    template<typename T>
-    static FORCEINLINE T Sqrt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::sqrt(Value);
-    }
-
-    /** @brief Returns the absolute value of the given number. */
-    template<typename T>
-    static FORCEINLINE constexpr T Abs(T Value) requires(TIsInteger<T>::Value)
-    {
-        return std::abs(Value);
-    }
-
-    /** @brief Returns the absolute value of the given number. */
-    template<typename T>
-    static FORCEINLINE constexpr T Abs(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::fabs(Value);
-    }
-
-    /** @brief Rounds a floating-point value to the nearest integer (floating result). */
-    template<typename T>
-    static FORCEINLINE T Round(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::round(Value);
-    }
-
-    /** @brief Rounds a floating-point value to the nearest integer (integer result). */
-    template<typename T>
-    static FORCEINLINE int32 RoundToInt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<int32>(std::round(Value));
-    }
-
-    /** @brief Floors a floating-point value to the next lowest integer (floating result). */
-    template<typename T>
-    static FORCEINLINE T Floor(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::floor(Value));
-    }
-
-    /** @brief Floors a floating-point value to the next lowest integer (integer result). */
-    template<typename T>
-    static FORCEINLINE int32 FloorToInt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<int32>(std::floor(Value));
-    }
-
-    /** @brief Ceils a floating-point value to the next highest integer (floating result). */
-    template<typename T>
-    static FORCEINLINE T Ceil(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::ceil(Value));
-    }
-
-    /** @brief Ceils a floating-point value to the next highest integer (integer result). */
-    template<typename T>
-    static FORCEINLINE int32 CeilToInt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<int32>(std::ceil(Value));
-    }
-
-    /** @brief Returns the base-2 logarithm of the given value. */
-    template<typename T>
-    static FORCEINLINE T Log2(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::log2(Value));
-    }
-
-    /** @brief Returns the arcsine (in radians) of the given value. */
-    template<typename T>
-    static FORCEINLINE T Asin(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::asin(Value));
-    }
-
-    /** @brief Returns the arccosine (in radians) of the given value. */
-    template<typename T>
-    static FORCEINLINE T Acos(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::acos(Value));
-    }
-
-    /** @brief Returns the arctangent of Y/X in radians. */
-    template<typename T>
-    static FORCEINLINE T Atan2(T Y, T X) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::atan2(Y, X));
-    }
-
-    /** @brief Returns the sine of the given angle in radians. */
-    template<typename T>
-    static FORCEINLINE T Sin(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::sin(Value));
-    }
-
-    /** @brief Returns the cosine of the given angle in radians. */
-    template<typename T>
-    static FORCEINLINE T Cos(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::cos(Value));
-    }
-
-    /** @brief Returns the tangent of the given angle in radians. */
-    template<typename T>
-    static FORCEINLINE T Tan(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::tan(Value));
-    }
-
-    /** @brief Returns the floating-point remainder of Value / Divider. */
-    template<typename T>
-    static FORCEINLINE T FMod(T Value, T Divider) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::fmod(Value, Divider));
-    }
-
-    /** @brief Returns true if the given value is NaN (Not-a-Number). */
-    template<typename T>
-    static FORCEINLINE bool IsNaN(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::isnan(Value);
-    }
-
-    /** @brief Returns true if the given value is infinite. */
-    template<typename T>
-    static FORCEINLINE bool IsInfinity(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::isinf(Value);
-    }
+    using FPlatformMath::Sqrt;
+    using FPlatformMath::Abs;
+    using FPlatformMath::Round;
+    using FPlatformMath::RoundToInt;
+    using FPlatformMath::Floor;
+    using FPlatformMath::FloorToInt;
+    using FPlatformMath::Ceil;
+    using FPlatformMath::CeilToInt;
+    using FPlatformMath::Log2;
+    using FPlatformMath::Asin;
+    using FPlatformMath::Acos;
+    using FPlatformMath::Atan2;
+    using FPlatformMath::Sin;
+    using FPlatformMath::Cos;
+    using FPlatformMath::Tan;
+    using FPlatformMath::FMod;
+    using FPlatformMath::IsNaN;
+    using FPlatformMath::IsInfinity;
 
 public:
 
@@ -387,7 +271,7 @@ public:
     {
         static_assert(sizeof(float) == sizeof(uint32));
         uint32 Bits = 0;
-        std::memcpy(&Bits, &Value, sizeof(Bits));
+        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
         return Bits;
     }
 
@@ -395,7 +279,7 @@ public:
     static FORCEINLINE float BitsToFloat(uint32 Bits) noexcept
     {
         float Value = 0.0f;
-        std::memcpy(&Value, &Bits, sizeof(Value));
+        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
         return Value;
     }
 
@@ -404,7 +288,7 @@ public:
     {
         static_assert(sizeof(int32) == sizeof(uint32));
         uint32 Bits = 0;
-        std::memcpy(&Bits, &Value, sizeof(Bits));
+        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
         return Bits;
     }
 
@@ -412,7 +296,7 @@ public:
     static FORCEINLINE int32 BitsToInt(uint32 Bits) noexcept
     {
         int32 Value = 0;
-        std::memcpy(&Value, &Bits, sizeof(Value));
+        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
         return Value;
     }
 
