@@ -74,8 +74,8 @@ public:
             return nullptr;
         }
 
-        const SIZE_T NewSizeInBytes = static_cast<SIZE_T>(NewCount) * sizeof(ElementType);
-        CHECK((NewSizeInBytes / sizeof(ElementType)) == static_cast<SIZE_T>(NewCount));
+        const SizeType NewSizeInBytes = static_cast<SizeType>(NewCount) * sizeof(ElementType);
+        CHECK((NewSizeInBytes / sizeof(ElementType)) == static_cast<SizeType>(NewCount));
 
         Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewSizeInBytes));
         return Allocation;
