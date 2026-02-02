@@ -4,6 +4,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Containers/StaticArray.h"
 #include "Core/Templates/NumericLimits.h"
+#include "Core/Platform/PlatformTime.h"
 
 #define ENABLE_PROFILER 1
 #define NUM_PROFILER_SAMPLES 200
@@ -160,7 +161,7 @@ public:
     FORCEINLINE FFrameProfilerScopedTrace(const CHAR* InName)
         : Sample(InName)
     {
-        Sample.ThreadHandle = FPlatformThreadMisc::GetCurrentThreadHandle();
+        Sample.ThreadHandle   = FPlatformThreadMisc::GetCurrentThreadHandle();
         Sample.StartTimeStamp = FPlatformTime::QueryPerformanceCounter();
     }
 
