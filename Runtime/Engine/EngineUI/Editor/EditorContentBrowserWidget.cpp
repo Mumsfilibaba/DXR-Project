@@ -1664,16 +1664,27 @@ void FEditorContentBrowserWidget::DrawContentGrid()
         const ImVec4 PreviewBg     = ImVec4(15.0f / 255.0f, 15.0f / 255.0f, 15.0f / 255.0f, 1.0f);
         const ImVec4 PreviewBorder = ImVec4(48.0f / 255.0f, 48.0f / 255.0f, 48.0f / 255.0f, 1.0f);
 
-        ImGui::PushStyleColor(ImGuiCol_PopupBg, PreviewBg);
-        ImGui::PushStyleColor(ImGuiCol_Border, PreviewBorder);
+        ImVec2 PreviewPos = ImGui::GetMousePos();
+        PreviewPos.x += 16.0f;
+        PreviewPos.y += 16.0f;
+        ImGui::SetNextWindowPos(PreviewPos, ImGuiCond_Always);
+
+        const ImGuiWindowFlags PreviewFlags =
+            ImGuiWindowFlags_NoDecoration |
+            ImGuiWindowFlags_AlwaysAutoResize |
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoFocusOnAppearing |
+            ImGuiWindowFlags_NoNav |
+            ImGuiWindowFlags_NoMouseInputs;
+
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, PreviewBg);
+        ImGui::PushStyleColor(ImGuiCol_Border,   PreviewBorder);
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 2.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize,  2.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12.0f, 10.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding,  0.0f);
 
-        ImGui::BeginTooltip();
+        ImGui::Begin("##CB_DragPreview", nullptr, PreviewFlags);
 
         {
             constexpr float IconSize         = 64.0f;
@@ -1850,9 +1861,9 @@ void FEditorContentBrowserWidget::DrawContentGrid()
             }
         }
 
-        ImGui::EndTooltip();
+        ImGui::End();
 
-        ImGui::PopStyleVar(5);
+        ImGui::PopStyleVar(3);
         ImGui::PopStyleColor(2);
     }
 
@@ -2400,6 +2411,16 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
     const ImVec2 RowMin      = ImGui::GetItemRectMin();
     const ImVec2 RowMax      = ImGui::GetItemRectMax();
+
+    bool bRowHoveredForDrag = bRowHovered;
+    if (ImGui::IsDragDropActive())
+    {
+        // During drag & drop, ImGui may suppress hovered state for underlying items because another item is active.
+        // Compute hover from the row rect so the folder panel can react while dragging.
+        bRowHoveredForDrag =
+            ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem) &&
+            ImGui::IsMouseHoveringRect(RowMin, RowMax, true);
+    }
     const float  Height      = RowMax.y - RowMin.y;
     const float  FontSize    = ImGui::GetFontSize();
     const float  TextHeight  = ImGui::GetTextLineHeight();
@@ -2413,6 +2434,14 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
     ImDrawList* DrawList = ImGui::GetWindowDrawList();
 
+
+
+    // Show hovered row even while another item is active (e.g. while dragging from the content panel).
+    // Selectable's internal hover test is suppressed during drag, so we draw the hover background manually.
+    if (ImGui::IsDragDropActive() && bRowHoveredForDrag && !bSelected && !bInSelectedPath && !bIsRenaming)
+    {
+        DrawList->AddRectFilled(RowMin, RowMax, InFolderHoverColor);
+    }
     const float  CollapseIconSize = IconSize;
     const float  CollapseIconY    = RowMin.y + (Height - CollapseIconSize) * 0.5f;
     const ImVec2 CollapseIconPos  = ImVec2(RowMin.x + EdgePadding + Indentation, CollapseIconY);
@@ -2609,7 +2638,7 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         ImGui::EndDragDropSource();
     }
 
-    if (bRowHovered && ImGui::IsDragDropActive())
+    if (bRowHoveredForDrag && ImGui::IsDragDropActive())
     {
         if (const ImGuiPayload* ActivePayload = ImGui::GetDragDropPayload())
         {
@@ -2640,7 +2669,8 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         }
     }
 
-    if (ImGui::BeginDragDropTarget())
+    const ImRect DropRect(RowMin, RowMax);
+    if (ImGui::BeginDragDropTargetCustom(DropRect, ImGui::GetID("##CB_FolderDropTarget")))
     {
         const ImGuiDragDropFlags DragDropFlags =
             ImGuiDragDropFlags_AcceptBeforeDelivery |
