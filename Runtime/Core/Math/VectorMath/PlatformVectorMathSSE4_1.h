@@ -1,6 +1,6 @@
 #pragma once
 #if PLATFORM_SUPPORT_SSE4_1_INTRIN
-#include "Core/Math/VectorMath/VectorMathSSSE3.h"
+#include "Core/Math/VectorMath/PlatformVectorMathSSSE3.h"
 
 #if PLATFORM_WINDOWS
     #include <smmintrin.h> // SSE4.1 and SSE4.2
@@ -10,7 +10,7 @@
     #error "No valid platform. This code requires SSE4.1 support on Windows or macOS."
 #endif
 
-struct FVectorMathSSE4_1 : public FVectorMathSSSE3
+struct FPlatformVectorMathSSE4_1 : public FPlatformVectorMathSSSE3
 {
     static FORCEINLINE FFloat128 VECTORCALL VectorSelect(FFloat128 Mask, FFloat128 VectorA, FFloat128 VectorB) noexcept
     {

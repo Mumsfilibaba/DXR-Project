@@ -1,6 +1,6 @@
 #pragma once
 #if PLATFORM_SUPPORT_SSSE3_INTRIN
-#include "Core/Math/VectorMath/VectorMathSSE3.h"
+#include "Core/Math/VectorMath/PlatformVectorMathSSE3.h"
 
 #if PLATFORM_WINDOWS
     #include <tmmintrin.h> // SSSE3
@@ -10,7 +10,7 @@
     #error "No valid platform. This code requires SSSE3 support on Windows or macOS."
 #endif
 
-struct FVectorMathSSSE3 : public FVectorMathSSE3
+struct FPlatformVectorMathSSSE3 : public FPlatformVectorMathSSE3
 {
 };
 

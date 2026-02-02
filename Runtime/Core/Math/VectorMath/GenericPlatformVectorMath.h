@@ -53,7 +53,7 @@ struct FFloat128
     };
 };
 
-struct FGenericVectorMath
+struct FGenericPlatformVectorMath
 {
 private:
     static FORCEINLINE FFloat128 VECTORCALL MaskToFloat128(uint32 Mask) noexcept

@@ -15,7 +15,7 @@
 typedef __m128 FFloat128;
 // TODO: define a fallback to typedef __m128i FInt128;
 
-struct FVectorMathSSE
+struct FPlatformVectorMathSSE
 {
     // ---------------------------------------------------------------------------------------------
     // Load / Store

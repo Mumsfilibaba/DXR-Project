@@ -1,6 +1,6 @@
 #pragma once
 #if PLATFORM_SUPPORT_SSE2_INTRIN
-#include "Core/Math/VectorMath/VectorMathSSE.h"
+#include "Core/Math/VectorMath/PlatformVectorMathSSE.h"
 
 #if PLATFORM_WINDOWS
     #include <emmintrin.h> // SSE2
@@ -12,7 +12,7 @@
 
 typedef __m128i FInt128;
 
-struct FVectorMathSSE2 : public FVectorMathSSE
+struct FPlatformVectorMathSSE2 : public FPlatformVectorMathSSE
 {
     static FORCEINLINE FInt128 VECTORCALL VectorLoadInt(const int32* Source) noexcept
     {
