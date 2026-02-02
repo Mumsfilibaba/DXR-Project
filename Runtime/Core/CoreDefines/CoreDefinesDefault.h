@@ -36,7 +36,9 @@
     #define DEBUG_BREAK() ((void)0)
 #endif
 
+// -------------------------------------------------------------------------------------------------
 // Warning Control Macros
+// -------------------------------------------------------------------------------------------------
 
 // Disable unreferenced variable warning
 #if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)

@@ -27,7 +27,10 @@
     #define __has_cpp_attribute(x) 0
 #endif
 
+// -------------------------------------------------------------------------------------------------
 // Compiler Detection
+// -------------------------------------------------------------------------------------------------
+
 #ifdef _MSC_VER
     #ifndef PLATFORM_COMPILER_MSVC
         #define PLATFORM_COMPILER_MSVC (1)
@@ -44,7 +47,10 @@
     #error "Unknown Compiler"
 #endif
 
+// -------------------------------------------------------------------------------------------------
 // Define the standard SSE macros since MSVC does not do this for us
+// -------------------------------------------------------------------------------------------------
+
 #if PLATFORM_COMPILER_MSVC
     #if defined(_M_IX86_FP) && (_M_IX86_FP >= 1)
         #define __SSE__
@@ -59,7 +65,25 @@
     #endif
 #endif
 
+// ------------------------------------------------------------------------------------------------------------
+// Define a baseline NEON macro for MSVC ARM64 builds (MSVC does not always define __ARM_NEON__/__ARM_NEON__).
+// ------------------------------------------------------------------------------------------------------------
+
+#if PLATFORM_COMPILER_MSVC
+    #if defined(_M_ARM64) || defined(_M_ARM64EC)
+        #ifndef __ARM_NEON
+            #define __ARM_NEON (1)
+        #endif
+        #ifndef __ARM_NEON__
+            #define __ARM_NEON__ (1)
+        #endif
+    #endif
+#endif
+
+// -------------------------------------------------------------------------------------------------
 // Platform Detection
+// -------------------------------------------------------------------------------------------------
+
 #if defined(_WIN32) || defined(_WIN64)
     #ifndef PLATFORM_WINDOWS
         #define PLATFORM_WINDOWS (1)
@@ -72,7 +96,9 @@
     #error "Unsupported platform"
 #endif
 
+// -------------------------------------------------------------------------------------------------
 // Architecture Detection
+// -------------------------------------------------------------------------------------------------
 
 // x86/x64 Architecture
 #if defined(_M_X64) || defined(__amd64__) || defined(__x86_64__)
@@ -92,21 +118,16 @@
     #define PLATFORM_ARCHITECTURE_ARM64 (0)
 #endif
 
-// ARM32 Architecture
-#if defined(__arm__) || defined(_M_ARM)
-    #ifndef PLATFORM_ARCHITECTURE_ARM32
-        #define PLATFORM_ARCHITECTURE_ARM32 (1)
-    #endif
-#else
-    #define PLATFORM_ARCHITECTURE_ARM32 (0)
-#endif
-
 // Determine if 64-bit architecture
 #if PLATFORM_ARCHITECTURE_X86_64 || PLATFORM_ARCHITECTURE_ARM64
     #define PLATFORM_64BIT (1)
 #else
     #define PLATFORM_64BIT (0)
 #endif
+
+// -------------------------------------------------------------------------------------------------
+// Vector Intrinsics Detection
+// -------------------------------------------------------------------------------------------------
 
 // Check for SSE intrinsics support
 #if PLATFORM_ARCHITECTURE_X86_64
@@ -183,14 +204,73 @@
     #endif
 #endif
 
+// Check for ARM SIMD intrinsics support (ARM64 only)
+#if PLATFORM_ARCHITECTURE_ARM64
+    // AArch64 requires AdvSIMD (NEON/ASIMD) as part of the baseline architecture.
+    #ifndef PLATFORM_SUPPORT_NEON_INTRIN
+        #define PLATFORM_SUPPORT_NEON_INTRIN (1)
+    #endif
+
+    // Optional ARM feature extensions (compile-target dependent).
+    #if defined(__ARM_FEATURE_DOTPROD)
+        #define PLATFORM_SUPPORT_NEON_DOTPROD_INTRIN (1)
+    #else
+        #define PLATFORM_SUPPORT_NEON_DOTPROD_INTRIN (0)
+    #endif
+
+    #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+        #define PLATFORM_SUPPORT_NEON_FP16_INTRIN (1)
+    #else
+        #define PLATFORM_SUPPORT_NEON_FP16_INTRIN (0)
+    #endif
+
+    #if defined(__ARM_FEATURE_BF16_VECTOR_ARITHMETIC)
+        #define PLATFORM_SUPPORT_NEON_BF16_INTRIN (1)
+    #else
+        #define PLATFORM_SUPPORT_NEON_BF16_INTRIN (0)
+    #endif
+
+    // Toolchains disagree a bit on naming here; cover the common spellings.
+    #if defined(__ARM_FEATURE_MATMUL_INT8) || defined(__ARM_FEATURE_I8MM)
+        #define PLATFORM_SUPPORT_NEON_I8MM_INTRIN (1)
+    #else
+        #define PLATFORM_SUPPORT_NEON_I8MM_INTRIN (0)
+    #endif
+
+    // Scalable vector / matrix extensions (not used by the float4 NEON backend, but exposed for future dispatch).
+    #if defined(__ARM_FEATURE_SVE)
+        #define PLATFORM_SUPPORT_SVE_INTRIN (1)
+    #else
+        #define PLATFORM_SUPPORT_SVE_INTRIN (0)
+    #endif
+
+    #if defined(__ARM_FEATURE_SVE2)
+        #define PLATFORM_SUPPORT_SVE2_INTRIN (1)
+    #else
+        #define PLATFORM_SUPPORT_SVE2_INTRIN (0)
+    #endif
+
+    #if defined(__ARM_FEATURE_SME)
+        #define PLATFORM_SUPPORT_SME_INTRIN (1)
+    #else
+        #define PLATFORM_SUPPORT_SME_INTRIN (0)
+    #endif
+#endif
+
+// -------------------------------------------------------------------------------------------------
 // Assertion Control
+// -------------------------------------------------------------------------------------------------
+
 #if ENABLE_ASSERTS
     #define CHECK(Condition) assert(Condition)
 #else
     #define CHECK(Condition) ((void)0)
 #endif
 
+// -------------------------------------------------------------------------------------------------
 // Utility Macros
+// -------------------------------------------------------------------------------------------------
+
 #ifndef SAFE_DELETE
     #define SAFE_DELETE(OutObject) \
         do { \
