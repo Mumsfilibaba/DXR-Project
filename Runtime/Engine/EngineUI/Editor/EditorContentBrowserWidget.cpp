@@ -1737,7 +1737,7 @@ void FEditorContentBrowserWidget::DrawContentGrid()
                 {
                     TStaticArray<CHAR, 256> Line1{};
                     TStaticArray<CHAR, 256> Line2{};
-                    
+
                     int32 LineCount = 0;
                     if (bHasFolderHoverTarget)
                     {
@@ -2569,7 +2569,8 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
         {
             FolderSelectionPaths.Clear();
             AddFolderPathSelection(InPath);
-            FolderSelectionAnchor = InPath;
+
+            FolderSelectionAnchor       = InPath;
             bFolderSelectionAnchorValid = true;
         }
 
@@ -2612,32 +2613,32 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
     {
         if (const ImGuiPayload* ActivePayload = ImGui::GetDragDropPayload())
         {
-                    if (ActivePayload->IsDataType("CB_MOVE_ITEM") && ActivePayload->DataSize == static_cast<int32>(sizeof(FCBDndPayload)))
-                    {
-                        const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(ActivePayload->Data);
-                        if (Data)
-                        {
-                            const FileInfo* SourceParentFolder = nullptr;
-                            
-                            TArray<int32>         SourceParentPath;
-                            TArray<int32>         SourceIndices;
-                            TArray<TArray<int32>> SourceFolderPaths;
-                            BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
+            if (ActivePayload->IsDataType("CB_MOVE_ITEM") && ActivePayload->DataSize == static_cast<int32>(sizeof(FCBDndPayload)))
+            {
+                const FCBDndPayload* Data = reinterpret_cast<const FCBDndPayload*>(ActivePayload->Data);
+                if (Data)
+                {
+                    const FileInfo* SourceParentFolder = nullptr;
 
-                            const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
-                            SetDragPreviewTarget(TargetName, InPath, SourceFolderPaths, SourceParentFolder, &SourceIndices, &SourceParentPath);
-                        }
-                    }
-                    else if (ActivePayload->IsDataType("CB_MOVE_FOLDER"))
-                    {
-                        const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+                    TArray<int32>         SourceParentPath;
+                    TArray<int32>         SourceIndices;
+                    TArray<TArray<int32>> SourceFolderPaths;
+                    BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
-                        TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
-                        AppendFolderPayloadPath(ActivePayload, DragPaths);
-                        SetDragPreviewTarget(TargetName, InPath, DragPaths, nullptr, nullptr, nullptr);
-                    }
+                    const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+                    SetDragPreviewTarget(TargetName, InPath, SourceFolderPaths, SourceParentFolder, &SourceIndices, &SourceParentPath);
                 }
             }
+            else if (ActivePayload->IsDataType("CB_MOVE_FOLDER"))
+            {
+                const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+
+                TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
+                AppendFolderPayloadPath(ActivePayload, DragPaths);
+                SetDragPreviewTarget(TargetName, InPath, DragPaths, nullptr, nullptr, nullptr);
+            }
+        }
+    }
 
     if (ImGui::BeginDragDropTarget())
     {
@@ -2656,8 +2657,8 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
                 TArray<TArray<int32>> SourceFolderPaths;
                 BuildDragSourceSelection(*Data, SourceParentPath, SourceParentFolder, SourceIndices, SourceFolderPaths);
 
-                        const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
-                        SetDragPreviewTarget(TargetName, InPath, SourceFolderPaths, SourceParentFolder, &SourceIndices, &SourceParentPath);
+                const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+                SetDragPreviewTarget(TargetName, InPath, SourceFolderPaths, SourceParentFolder, &SourceIndices, &SourceParentPath);
 
                 if (Payload->IsDelivery() && bDragPreviewHasAnyLegalMove)
                 {
@@ -2671,11 +2672,11 @@ bool FEditorContentBrowserWidget::DrawFolderRow(FileInfo& InFolder, const TArray
 
         if (const ImGuiPayload* Payload = ImGui::AcceptDragDropPayload("CB_MOVE_FOLDER", DragDropFlags))
         {
-                        const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
+            const CHAR* TargetName = InFolder.Name.IsEmpty() ? "" : *InFolder.Name;
 
-                        TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
-                        AppendFolderPayloadPath(Payload, DragPaths);
-                        SetDragPreviewTarget(TargetName, InPath, DragPaths, nullptr, nullptr, nullptr);
+            TArray<TArray<int32>> DragPaths = GetFilteredFolderSelectionPaths();
+            AppendFolderPayloadPath(Payload, DragPaths);
+            SetDragPreviewTarget(TargetName, InPath, DragPaths, nullptr, nullptr, nullptr);
 
             if (Payload->IsDelivery() && bDragPreviewHasAnyLegalMove)
             {
@@ -3933,8 +3934,9 @@ bool FEditorContentBrowserWidget::MergeFolderContents(FileInfo& TargetFolder, Fi
 FEditorContentBrowserWidget::FileInfo FEditorContentBrowserWidget::DeepCopyFileInfo(const FileInfo& In)
 {
     FileInfo Out;
-    Out.Name = In.Name;
+    Out.Name      = In.Name;
     Out.bIsFolder = In.bIsFolder;
+
     for (int32 i = 0; i < In.FolderContents.Size(); ++i)
     {
         Out.FolderContents.Add(DeepCopyFileInfo(In.FolderContents[i]));
@@ -3954,8 +3956,9 @@ void FEditorContentBrowserWidget::AddNewFolderInCurrentPath()
     }
 
     const FString NewFolderName("New folder");
+
     FileInfo NewFolder;
-    NewFolder.Name = NewFolderName;
+    NewFolder.Name      = NewFolderName;
     NewFolder.bIsFolder = true;
 
     ParentFolder->FolderContents.Add(NewFolder);
@@ -3981,6 +3984,7 @@ void FEditorContentBrowserWidget::DeleteSelectedContentItems()
 
     TArray<int32> SortedIndices = SelectedItemIndices;
     SortedIndices.Sort();
+
     for (int32 i = SortedIndices.Size() - 1; i >= 0; --i)
     {
         const int32 Index = SortedIndices[i];
@@ -4013,10 +4017,12 @@ void FEditorContentBrowserWidget::DeleteSelectedFolderInTree()
     ParentFolder->FolderContents.RemoveAt(FolderIndex);
     NavigateToFolderPath(ParentPath, false);
     FolderSelectionPaths.Clear();
+
     if (ParentPath.Size() > 0)
     {
         FolderSelectionPaths.Add(ParentPath);
-        FolderSelectionAnchor = ParentPath;
+
+        FolderSelectionAnchor       = ParentPath;
         bFolderSelectionAnchorValid = true;
     }
 }
@@ -4028,10 +4034,11 @@ void FEditorContentBrowserWidget::CopySelectedContent()
         return;
     }
 
-    bClipboardValid = true;
+    bClipboardValid            = true;
     bClipboardFromContentPanel = true;
     ClipboardContentParentPath = SelectedFolderPath;
-    ClipboardContentIndices = SelectedItemIndices;
+    ClipboardContentIndices    = SelectedItemIndices;
+
     ClipboardFolderPaths.Clear();
 }
 
@@ -4047,8 +4054,9 @@ void FEditorContentBrowserWidget::CopySelectedFolderPaths()
         return;
     }
 
-    bClipboardValid = true;
+    bClipboardValid            = true;
     bClipboardFromContentPanel = false;
+
     ClipboardContentParentPath.Clear();
     ClipboardContentIndices.Clear();
     ClipboardFolderPaths = Paths;
@@ -4056,9 +4064,7 @@ void FEditorContentBrowserWidget::CopySelectedFolderPaths()
 
 bool FEditorContentBrowserWidget::HasClipboardContent() const
 {
-    return bClipboardValid && (
-        (bClipboardFromContentPanel && ClipboardContentIndices.Size() > 0) ||
-        (!bClipboardFromContentPanel && ClipboardFolderPaths.Size() > 0));
+    return bClipboardValid && ((bClipboardFromContentPanel && ClipboardContentIndices.Size() > 0) || (!bClipboardFromContentPanel && ClipboardFolderPaths.Size() > 0));
 }
 
 void FEditorContentBrowserWidget::PasteInCurrentFolder()
@@ -4093,9 +4099,9 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
             const FileInfo& SourceItem = SourceParent->FolderContents[SourceIndex];
             FString BaseName = SourceItem.Name;
             int32 Suffix = 0;
+
             TStaticArray<CHAR, 256> Buf{};
-            while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0 ||
-                   (!SourceItem.bIsFolder && FindChildFileIndexByName(*TargetFolder, BaseName) >= 0))
+            while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0 || (!SourceItem.bIsFolder && FindChildFileIndexByName(*TargetFolder, BaseName) >= 0))
             {
                 ++Suffix;
                 if (SourceItem.bIsFolder)
@@ -4157,6 +4163,7 @@ void FEditorContentBrowserWidget::PasteInCurrentFolder()
 
             FString BaseName = SourceFolder->Name;
             int32 Suffix = 0;
+
             while (FindChildFolderIndexByName(*TargetFolder, BaseName) >= 0)
             {
                 ++Suffix;
