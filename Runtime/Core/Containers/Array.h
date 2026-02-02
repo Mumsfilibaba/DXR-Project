@@ -248,6 +248,8 @@ public:
      */
     void Resize(SizeType NewSize)
     {
+        CHECK(NewSize >= 0);
+
         if (NewSize > ArraySize)
         {
             if (NewSize > ArrayMax)
@@ -278,6 +280,8 @@ public:
      */
     void ResizeUninitialized(SizeType NewSize)
     {
+        CHECK(NewSize >= 0);
+
         if (NewSize > ArraySize)
         {
             if (NewSize > ArrayMax)
@@ -438,12 +442,23 @@ public:
      */
     void Insert(SizeType Position, const ElementType* Elements, SizeType InNumElements)
     {
+        CHECK(Position >= 0);
+        CHECK(InNumElements >= 0);
+
+        if (InNumElements == 0)
+        {
+            return;
+        }
+
         CHECK(Position <= ArraySize);
         CHECK(Elements != nullptr);
 
         InsertUninitializedUnchecked(Position, InNumElements);
         ::CopyConstructObjects<ElementType>(Allocator.GetAllocation() + Position, Elements, InNumElements);
-        ArraySize += InNumElements;
+
+        const SizeType NewSize = ArraySize + InNumElements;
+        CHECK(NewSize >= ArraySize); // overflow guard for signed SizeType
+        ArraySize = NewSize;
     }
 
     /**
@@ -474,9 +489,20 @@ public:
      */
     FORCEINLINE void InsertUninitialized(SizeType Position, SizeType NumElements)
     {
+        CHECK(Position >= 0);
+        CHECK(NumElements >= 0);
+
+        if (NumElements == 0)
+        {
+            return;
+        }
+
         CHECK(Position <= ArraySize);
         InsertUninitializedUnchecked(Position, NumElements);
-        ArraySize += NumElements;
+
+        const SizeType NewSize = ArraySize + NumElements;
+        CHECK(NewSize >= ArraySize); // overflow guard for signed SizeType
+        ArraySize = NewSize;
     }
 
     /**
@@ -486,12 +512,18 @@ public:
      */
     void Append(const ElementType* InElements, SizeType NumElements)
     {
+        CHECK(NumElements >= 0);
+
         if (NumElements > 0)
         {
             CHECK(InElements != nullptr);
-            EnsureCapacity(ArraySize + NumElements);
+
+            const SizeType NewSize = ArraySize + NumElements;
+            CHECK(NewSize >= ArraySize); // overflow guard for signed SizeType
+
+            EnsureCapacity(NewSize);
             ::CopyConstructObjects<ElementType>(Allocator.GetAllocation() + ArraySize, InElements, NumElements);
-            ArraySize += NumElements;
+            ArraySize = NewSize;
         }
     }
 
@@ -520,7 +552,15 @@ public:
      */
     FORCEINLINE void AppendUninitialized(SizeType NumElements)
     {
+        CHECK(NumElements >= 0);
+        if (NumElements == 0)
+        {
+            return;
+        }
+
         const SizeType NewSize = ArraySize + NumElements;
+        CHECK(NewSize >= ArraySize); // overflow guard for signed SizeType
+
         EnsureCapacity(NewSize);
         ArraySize = NewSize;
     }
@@ -531,8 +571,15 @@ public:
      */
     void Pop(SizeType NumElements = 1)
     {
-        CHECK(!IsEmpty());
-        SizeType NewArraySize = ArraySize - NumElements;
+        CHECK(NumElements >= 0);
+        if (NumElements == 0)
+        {
+            return;
+        }
+
+        CHECK(NumElements <= ArraySize);
+
+        const SizeType NewArraySize = ArraySize - NumElements;
         ::DestroyObjects<ElementType>(Allocator.GetAllocation() + NewArraySize, NumElements);
         ArraySize = NewArraySize;
     }
@@ -544,15 +591,21 @@ public:
      */
     void RemoveAt(SizeType Position, SizeType NumElements)
     {
+        CHECK(Position >= 0);
+        CHECK(NumElements >= 0);
+
+        if (NumElements == 0)
+        {
+            return;
+        }
+
+        CHECK(Position < ArraySize);
         CHECK(Position + NumElements <= ArraySize);
 
-        if (NumElements)
-        {
-            ElementType* TempPositionData = Allocator.GetAllocation() + Position;
-            ::DestroyObjects<ElementType>(TempPositionData, NumElements);
-            ::RelocateObjects<ElementType>(TempPositionData, TempPositionData + NumElements, ArraySize - (Position + NumElements));
-            ArraySize -= NumElements;
-        }
+        ElementType* TempPositionData = Allocator.GetAllocation() + Position;
+        ::DestroyObjects<ElementType>(TempPositionData, NumElements);
+        ::RelocateObjects<ElementType>(TempPositionData, TempPositionData + NumElements, ArraySize - (Position + NumElements));
+        ArraySize -= NumElements;
     }
 
     /**
@@ -571,12 +624,16 @@ public:
      */
     void RemoveAtSwap(SizeType Position, SizeType NumElements)
     {
-        CHECK(Position + NumElements <= ArraySize);
+        CHECK(Position >= 0);
+        CHECK(NumElements >= 0);
 
-        if (NumElements <= 0)
+        if (NumElements == 0)
         {
             return;
         }
+
+        CHECK(Position < ArraySize);
+        CHECK(Position + NumElements <= ArraySize);
 
         // If we remove from the tail, we can simply pop.
         if (Position + NumElements == ArraySize)
@@ -651,6 +708,7 @@ public:
             }
         }
     }
+
     /**
      * @brief Search the array and remove all instances of the element
      * @param Element Element to remove
@@ -773,12 +831,21 @@ public:
     template<class LambdaType>
     void Foreach(LambdaType&& Lambda)
     {
-        for (ElementType* RESTRICT Current = Allocator.GetAllocation(), *RESTRICT End = Current + ArraySize; Current != End; ++Current)
+        if (ArraySize == 0)
+        {
+            return;
+        }
+
+        ElementType* RESTRICT Current = Allocator.GetAllocation();
+        CHECK(Current != nullptr);
+
+        ElementType* RESTRICT End = Current + ArraySize;
+        for (; Current != End; ++Current)
         {
             Lambda(*Current);
         }
     }
-
+    
     /**
      * @brief Perform a function on each element in the array (const version)
      * @param Lambda Callable that takes one element and performs some operation on it
@@ -786,12 +853,21 @@ public:
     template<class LambdaType>
     void Foreach(LambdaType&& Lambda) const
     {
-        for (const ElementType* RESTRICT Current = Allocator.GetAllocation(), *RESTRICT End = Current + ArraySize; Current != End; ++Current)
+        if (ArraySize == 0)
+        {
+            return;
+        }
+
+        const ElementType* RESTRICT Current = Allocator.GetAllocation();
+        CHECK(Current != nullptr);
+
+        const ElementType* RESTRICT End = Current + ArraySize;
+        for (; Current != End; ++Current)
         {
             Lambda(*Current);
         }
     }
-
+    
     /**
      * @brief Swap two elements within the array
      * @param FirstIndex Index of the first element to swap
@@ -854,7 +930,17 @@ public:
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const
     {
+        if (Address == nullptr || ArrayMax <= 0)
+        {
+            return false;
+        }
+
         const ElementType* Array = Allocator.GetAllocation();
+        if (Array == nullptr)
+        {
+            return false;
+        }
+
         return Address >= Array && Address < (Array + ArrayMax);
     }
 
@@ -1163,9 +1249,7 @@ public:
     template<typename ArrayType>
     NODISCARD bool operator==(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
     {
-        return ArraySize == FArrayContainerHelper::Size(Other) ?
-            ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) :
-            false;
+        return ArraySize == FArrayContainerHelper::Size(Other) ? ::CompareObjects<ElementType>(Allocator.GetAllocation(), FArrayContainerHelper::Data(Other), ArraySize) : false;
     }
 
     /**
@@ -1293,14 +1377,21 @@ private:
 
     // Initialization Helpers
 
+    FORCEINLINE void EnsureCapacityUninitialized(SizeType NewCapacity)
+    {
+        CHECK(NewCapacity >= 0);
+        if (ArrayMax < NewCapacity)
+        {
+            // Note: This path assumes there are no live elements in the allocation.
+            Allocator.Realloc(ArrayMax, NewCapacity);
+            ArrayMax = NewCapacity;
+        }
+    }
+
     FORCEINLINE void CreateUninitialized(SizeType NumElements)
     {
-        if (ArrayMax < NumElements)
-        {
-            Allocator.Realloc(ArrayMax, NumElements);
-            ArrayMax = NumElements;
-        }
-
+        CHECK(NumElements >= 0);
+        EnsureCapacityUninitialized(NumElements);
         ArraySize = NumElements;
     }
 
@@ -1318,9 +1409,20 @@ private:
 
     void InitializeByCopy(const ElementType* Elements, SizeType NumElements, SizeType ExtraCapacity)
     {
-        const SizeType NewSize = NumElements + ExtraCapacity;
-        CreateUninitialized(NewSize);
-        ::CopyConstructObjects<ElementType>(Allocator.GetAllocation(), Elements, NumElements);
+        CHECK(NumElements >= 0);
+        CHECK(ExtraCapacity >= 0);
+
+        const SizeType NewCapacity = NumElements + ExtraCapacity;
+        CHECK(NewCapacity >= NumElements); // overflow guard for signed SizeType
+
+        EnsureCapacityUninitialized(NewCapacity);
+        ArraySize = NumElements;
+
+        if (NumElements > 0)
+        {
+            CHECK(Elements != nullptr);
+            ::CopyConstructObjects<ElementType>(Allocator.GetAllocation(), Elements, NumElements);
+        }
     }
 
     void InitializeByMove(TArray&& FromArray)
@@ -1375,6 +1477,8 @@ private:
 
     void FORCEINLINE EnsureCapacity(SizeType RequiredCapacity)
     {
+        CHECK(RequiredCapacity >= 0);
+
         if (RequiredCapacity > ArrayMax)
         {
             const SizeType NewCapacity = CalculateGrowth(RequiredCapacity, ArrayMax);
@@ -1425,31 +1529,45 @@ private:
         return 2 * Index + 2;
     }
 
-    NODISCARD static SizeType CalculateGrowth(SizeType NumElements, SizeType CurrentCapacity)
+    NODISCARD static SizeType CalculateGrowth(SizeType RequiredCapacity, SizeType CurrentCapacity)
     {
+        CHECK(RequiredCapacity >= 0);
+
         constexpr SizeType FirstAlloc = 4;
 
-        SizeType NewSize;
-        if (CurrentCapacity)
+        if (CurrentCapacity <= 0)
         {
-            NewSize = CurrentCapacity + NumElements + (CurrentCapacity >> 1);
-        }
-        else if (NumElements > FirstAlloc)
-        {
-            NewSize = NumElements;
-        }
-        else
-        {
-            NewSize = FirstAlloc;
+            return (RequiredCapacity > FirstAlloc) ? RequiredCapacity : FirstAlloc;
         }
 
-        return NewSize;
+        // Grow by ~1.5x, but never less than RequiredCapacity.
+        SizeType NewCapacity = CurrentCapacity + (CurrentCapacity >> 1);
+
+        // Overflow / wrap-around guard for signed SizeType
+        if (NewCapacity < CurrentCapacity)
+        {
+            NewCapacity = RequiredCapacity;
+        }
+
+        if (NewCapacity < RequiredCapacity)
+        {
+            NewCapacity = RequiredCapacity;
+        }
+
+        return NewCapacity;
     }
 
     NODISCARD SizeType FindForward(auto&& Predicate) const
     {
+        if (ArraySize == 0)
+        {
+            return InvalidIndex;
+        }
+
         const ElementType* Start = Allocator.GetAllocation();
-        const ElementType* End   = Start + ArraySize;
+        CHECK(Start != nullptr);
+
+        const ElementType* End = Start + ArraySize;
         for (const ElementType* Current = Start; Current != End; ++Current)
         {
             if (Predicate(*Current))
@@ -1463,7 +1581,14 @@ private:
 
     NODISCARD SizeType FindReverse(auto&& Predicate) const
     {
-        const ElementType* Start   = Allocator.GetAllocation();
+        if (ArraySize == 0)
+        {
+            return InvalidIndex;
+        }
+
+        const ElementType* Start = Allocator.GetAllocation();
+        CHECK(Start != nullptr);
+
         const ElementType* End     = Start;
         const ElementType* Current = Start + ArraySize;
         while (Current != End)
