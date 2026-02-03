@@ -137,53 +137,82 @@ void FEditorGuizmoWidget::Draw()
     // Actor (full TRS)
     // ---------------------------------------------------------------------
 
-    if (SelectedActor)
-    {
-        FMatrix4 Model = SelectedActor->GetTransform().GetTransformMatrix();
-
-        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model);
-        if (bChanged || EditorGuizmo::IsUsing())
-        {
-            FVector3 Translation;
-            FVector3 RotationDegrees;
-            FVector3 Scale;
-            EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
-
-            SelectedActor->GetTransform().SetTranslation(Translation);
-            SelectedActor->GetTransform().SetRotation(FVector3::DegreesToRadians(RotationDegrees));
-            SelectedActor->GetTransform().SetScale(Scale);
-        }
-
-        return;
-    }
+    if (SelectedActor) 
+    { 
+        FMatrix4 Model = SelectedActor->GetTransform().GetTransformMatrix(); 
+ 
+        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model); 
+        if (bChanged || EditorGuizmo::IsUsing()) 
+        { 
+            FVector3 Translation; 
+            FVector3 RotationDegrees; 
+            FVector3 Scale; 
+            EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale); 
+  
+            // Only commit the components that the current gizmo operation is expected to modify.
+            // This prevents Decompose->Recompose drift (e.g. translation/scale changing rotation).
+            if (Operation == EditorGuizmo::Translate) 
+            { 
+                SelectedActor->GetTransform().SetTranslation(Translation); 
+            } 
+            else if (Operation == EditorGuizmo::Rotate) 
+            { 
+                SelectedActor->GetTransform().SetRotation(FVector3::DegreesToRadians(RotationDegrees)); 
+            } 
+            else if (Operation == EditorGuizmo::Scale) 
+            { 
+                SelectedActor->GetTransform().SetScale(Scale); 
+            } 
+            else 
+            { 
+                SelectedActor->GetTransform().SetTranslation(Translation); 
+                SelectedActor->GetTransform().SetRotation(FVector3::DegreesToRadians(RotationDegrees)); 
+                SelectedActor->GetTransform().SetScale(Scale); 
+            } 
+        } 
+ 
+        return; 
+    } 
 
     // ---------------------------------------------------------------------
     // Camera (TR, no scale)
     // ---------------------------------------------------------------------
 
-    if (SelectedCamera)
-    {
-        const FVector3 CamPos = SelectedCamera->GetPosition();
-        const FVector3 CamRot = SelectedCamera->GetRotation();
-
-        FMatrix4 Model = (FMatrix4::Scale(FVector3(1.0f, 1.0f, 1.0f)) * FMatrix4::RotationRollPitchYaw(CamRot)) * FMatrix4::Translation(CamPos);
-
-        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model);
-        if (bChanged || EditorGuizmo::IsUsing())
-        {
-            FVector3 Translation;
-            FVector3 RotationDegrees;
-            FVector3 Scale;
-            EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale);
-
-            SelectedCamera->SetPosition(Translation.X, Translation.Y, Translation.Z);
-
-            const FVector3 RotationRadians = FVector3::DegreesToRadians(RotationDegrees);
-            SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z);
-        }
-
-        return;
-    }
+    if (SelectedCamera) 
+    { 
+        const FVector3 CamPos = SelectedCamera->GetPosition(); 
+        const FVector3 CamRot = SelectedCamera->GetRotation(); 
+ 
+        FMatrix4 Model = (FMatrix4::Scale(FVector3(1.0f, 1.0f, 1.0f)) * FMatrix4::RotationRollPitchYaw(CamRot)) * FMatrix4::Translation(CamPos); 
+ 
+        const bool bChanged = EditorGuizmo::Manipulate(Camera->GetViewMatrix(), Camera->GetProjectionMatrix(), Operation, Mode, Model); 
+        if (bChanged || EditorGuizmo::IsUsing()) 
+        { 
+            FVector3 Translation; 
+            FVector3 RotationDegrees; 
+            FVector3 Scale; 
+            EditorGuizmo::DecomposeMatrixToComponents(Model, Translation, RotationDegrees, Scale); 
+ 
+            if (Operation == EditorGuizmo::Translate) 
+            { 
+                SelectedCamera->SetPosition(Translation.X, Translation.Y, Translation.Z); 
+            } 
+            else if (Operation == EditorGuizmo::Rotate) 
+            { 
+                const FVector3 RotationRadians = FVector3::DegreesToRadians(RotationDegrees); 
+                SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z); 
+            } 
+            else 
+            { 
+                SelectedCamera->SetPosition(Translation.X, Translation.Y, Translation.Z); 
+ 
+                const FVector3 RotationRadians = FVector3::DegreesToRadians(RotationDegrees); 
+                SelectedCamera->SetRotation(RotationRadians.X, RotationRadians.Y, RotationRadians.Z); 
+            } 
+        } 
+ 
+        return; 
+    } 
 
     // ---------------------------------------------------------------------
     // Light Probe (translation only)

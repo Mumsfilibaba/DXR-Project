@@ -611,28 +611,27 @@ static void ComputeSnap(FVector4& Value, const float* Snap)
     }
 }
 
-static float ComputeAngleOnPlan()
-{
-    const float Length = GuizmoContext.TranslationPlan.IntersectRay(
-        FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z),
-        FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z));
-
-    if (Length < 0.0f)
-    {
-        return GuizmoContext.RotationAngleOrigin;
-    }
-
-    FVector4 ModelPosition       = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
-    FVector4 LocalPosition       = (GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length - ModelPosition).GetNormalized();
-    FVector4 PerpendicularVector = GuizmoContext.RotationVectorSource.CrossProduct(FVector4(GuizmoContext.TranslationPlan.GetNormal(), 0.0f));
-    PerpendicularVector.Normalize();
-
-    float AcosAngle = Math::Clamp(LocalPosition.DotProduct(GuizmoContext.RotationVectorSource), -1.0f, 1.0f);
-    float Angle     = Math::Acos(AcosAngle);
-
-    Angle *= (LocalPosition.DotProduct(PerpendicularVector) < 0.0f) ? 1.0f : -1.0f;
-    return Angle;
-}
+static float ComputeAngleOnPlan() 
+{ 
+    const float Length = GuizmoContext.TranslationPlan.IntersectRay( 
+        FVector3(GuizmoContext.RayOrigin.X, GuizmoContext.RayOrigin.Y, GuizmoContext.RayOrigin.Z), 
+        FVector3(GuizmoContext.RayVector.X, GuizmoContext.RayVector.Y, GuizmoContext.RayVector.Z)); 
+ 
+    if (Length < 0.0f) 
+    { 
+        return GuizmoContext.RotationAngleOrigin; 
+    } 
+ 
+    const FVector3 PlaneNormal3 = GuizmoContext.TranslationPlan.GetNormal(); 
+    const FVector4 PlaneNormal  = FVector4(PlaneNormal3.X, PlaneNormal3.Y, PlaneNormal3.Z, 0.0f); 
+ 
+    const FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f); 
+    const FVector4 LocalPosition = (GuizmoContext.RayOrigin + GuizmoContext.RayVector * Length - ModelPosition).GetNormalized(); 
+ 
+    const float CosAngle = Math::Clamp(LocalPosition.DotProduct(GuizmoContext.RotationVectorSource), -1.0f, 1.0f); 
+    const float SinAngle = PlaneNormal.DotProduct(GuizmoContext.RotationVectorSource.CrossProduct(LocalPosition)); 
+    return Math::Atan2(SinAngle, CosAngle); 
+} 
 
 static void DrawRotationGizmo(EditorGuizmo::EOperation Op, int32 Type)
 {
@@ -762,25 +761,47 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation Op, int32 Type)
     }
 }
 
-static void DrawHatchedAxis(const FVector4& Axis)
-{
-    if (GuizmoContext.Style.HatchedAxisLineThickness <= 0.0f)
-    {
-        return;
-    }
+static void DrawHatchedAxis(const FVector4& Axis) 
+{ 
+    if (GuizmoContext.Style.HatchedAxisLineThickness <= 0.0f) 
+    { 
+        return; 
+    } 
 
     for (int32 HatchSegmentIndex = 1; HatchSegmentIndex < 10; HatchSegmentIndex++)
     {
         ImVec2 BaseSSpace2     = WorldToPos(Axis * 0.05f * static_cast<float>(HatchSegmentIndex * 2) * GuizmoContext.ScreenFactor, GuizmoContext.MVP);
         ImVec2 WorldDirSSpace2 = WorldToPos(Axis * 0.05f * static_cast<float>(HatchSegmentIndex * 2 + 1) * GuizmoContext.ScreenFactor, GuizmoContext.MVP);
-        GuizmoContext.DrawList->AddLine(BaseSSpace2, WorldDirSSpace2, GetColorU32(EditorGuizmo::HatchedAxisLines), GuizmoContext.Style.HatchedAxisLineThickness);
-    }
+        GuizmoContext.DrawList->AddLine(BaseSSpace2, WorldDirSSpace2, GetColorU32(EditorGuizmo::HatchedAxisLines), GuizmoContext.Style.HatchedAxisLineThickness); 
+    } 
+} 
+
+static void DrawScaleHandleCircle(ImDrawList* DrawList, const ImVec2& Center, float Radius, ImU32 Color)
+{
+    DrawList->AddCircleFilled(Center, Radius, Color);
 }
 
-static void DrawScaleGizmo(EditorGuizmo::EOperation Op, int32 Type)
+static void DrawScaleHandleSquare(ImDrawList* DrawList, const ImVec2& Center, float HalfSize, ImU32 Color)
 {
-    ImDrawList* DrawList = GuizmoContext.DrawList;
+    const ImVec2 Half(HalfSize, HalfSize);
+    DrawList->AddRectFilled(Center - Half, Center + Half, Color);
+}
 
+static void DrawScaleHandle(ImDrawList* DrawList, const ImVec2& Center, float Size, ImU32 Color)
+{
+    if (GuizmoContext.Style.ScaleHandleShape == EditorGuizmo::ScaleHandleShape_Square)
+    {
+        DrawScaleHandleSquare(DrawList, Center, Size, Color);
+        return;
+    }
+
+    DrawScaleHandleCircle(DrawList, Center, Size, Color);
+}
+ 
+static void DrawScaleGizmo(EditorGuizmo::EOperation Op, int32 Type) 
+{ 
+    ImDrawList* DrawList = GuizmoContext.DrawList; 
+ 
         if (!Intersects(Op, EditorGuizmo::Scale))
     {
         return;
@@ -825,24 +846,24 @@ static void DrawScaleGizmo(EditorGuizmo::EOperation Op, int32 Type)
                 ImVec2 WorldDirSSpaceNoScale = WorldToPos(DirAxis * MarkerScale * GuizmoContext.ScreenFactor, GuizmoContext.MVP);
                 ImVec2 WorldDirSSpace        = WorldToPos((DirAxis * MarkerScale * ScaleDisplay[AxisIndex]) * GuizmoContext.ScreenFactor, GuizmoContext.MVP);
 
-                if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID))
-                {
-                    ImU32 ScaleLineColor = GetColorU32(EditorGuizmo::ScaleLine);
-                    DrawList->AddLine(BaseSSpace, WorldDirSSpaceNoScale, ScaleLineColor, GuizmoContext.Style.ScaleLineThickness);
-                    DrawList->AddCircleFilled(WorldDirSSpaceNoScale, GuizmoContext.Style.ScaleLineCircleSize, ScaleLineColor);
-                }
-
-                if (!bHasTranslateOnAxis || GuizmoContext.bUsing)
-                {
-                    DrawList->AddLine(BaseSSpace, WorldDirSSpace, Colors[AxisIndex + 1], GuizmoContext.Style.ScaleLineThickness);
-                }
-
-                DrawList->AddCircleFilled(WorldDirSSpace, GuizmoContext.Style.ScaleLineCircleSize, Colors[AxisIndex + 1]);
-
-                if (GuizmoContext.AxisFactor[AxisIndex] < 0.0f)
-                {
-                    DrawHatchedAxis(DirAxis * ScaleDisplay[AxisIndex]);
-                }
+                if (GuizmoContext.bUsing && (GuizmoContext.GetCurrentID() == GuizmoContext.EditingID)) 
+                { 
+                    ImU32 ScaleLineColor = GetColorU32(EditorGuizmo::ScaleLine); 
+                    DrawList->AddLine(BaseSSpace, WorldDirSSpaceNoScale, ScaleLineColor, GuizmoContext.Style.ScaleLineThickness); 
+                    DrawScaleHandle(DrawList, WorldDirSSpaceNoScale, GuizmoContext.Style.ScaleLineCircleSize, ScaleLineColor);
+                } 
+ 
+                if (!bHasTranslateOnAxis || GuizmoContext.bUsing) 
+                { 
+                    DrawList->AddLine(BaseSSpace, WorldDirSSpace, Colors[AxisIndex + 1], GuizmoContext.Style.ScaleLineThickness); 
+                } 
+ 
+                DrawScaleHandle(DrawList, WorldDirSSpace, GuizmoContext.Style.ScaleLineCircleSize, Colors[AxisIndex + 1]);
+ 
+                if (GuizmoContext.AxisFactor[AxisIndex] < 0.0f) 
+                { 
+                    DrawHatchedAxis(DirAxis * ScaleDisplay[AxisIndex]); 
+                } 
             }
         }
     }
@@ -907,14 +928,14 @@ static void DrawScaleUniveralGizmo(EditorGuizmo::EOperation Op, int32 Type)
             if (bBelowAxisLimit)
             {
                 bool  bHasTranslateOnAxis = Contains(Op, static_cast<EditorGuizmo::EOperation>(EditorGuizmo::TranslateX << AxisIndex));
-                float MarkerScale         = bHasTranslateOnAxis ? 1.4f : 1.0f;
-
-                ImVec2 WorldDirSSpace = WorldToPos((DirAxis * MarkerScale * ScaleDisplay[AxisIndex]) * GuizmoContext.ScreenFactor, GuizmoContext.MVPLocal);
-                DrawList->AddCircleFilled(WorldDirSSpace, 12.0f, Colors[AxisIndex + 1]);
-            }
-        }
-    }
-
+                float MarkerScale         = bHasTranslateOnAxis ? 1.4f : 1.0f; 
+ 
+                ImVec2 WorldDirSSpace = WorldToPos((DirAxis * MarkerScale * ScaleDisplay[AxisIndex]) * GuizmoContext.ScreenFactor, GuizmoContext.MVPLocal); 
+                DrawScaleHandle(DrawList, WorldDirSSpace, GuizmoContext.Style.ScaleLineCircleSize * 2.0f, Colors[AxisIndex + 1]);
+            } 
+        } 
+    } 
+ 
     // Draw screen circle
     DrawList->AddCircle(GuizmoContext.ScreenSquareCenter, 20.0f, Colors[0], 32, GuizmoContext.Style.CenterCircleSize);
 
@@ -1719,15 +1740,15 @@ static bool HandleTranslation(float* Matrix, float* DeltaMatrix, EditorGuizmo::E
             const FVector4 ModelPosition = FVector4(GuizmoContext.Model.GetTranslation(), 1.0f);
             FVector4 Delta = NewOrigin - ModelPosition;
 
-            // 1 axis constraint
-            if (GuizmoContext.CurrentOperation >= MoveType_MoveX && GuizmoContext.CurrentOperation <= MoveType_MoveZ)
-            {
-                const int32 AxisIndex = GuizmoContext.CurrentOperation - MoveType_MoveX;
-                const FVector4 AxisValue = FVector4(GuizmoContext.Model.M[0][AxisIndex], GuizmoContext.Model.M[1][AxisIndex], GuizmoContext.Model.M[2][AxisIndex], 0.0f);
-
-                const float LengthOnAxis = AxisValue.DotProduct(Delta);
-                Delta = AxisValue * LengthOnAxis;
-            }
+            // 1 axis constraint 
+            if (GuizmoContext.CurrentOperation >= MoveType_MoveX && GuizmoContext.CurrentOperation <= MoveType_MoveZ) 
+            { 
+                const int32 AxisIndex = GuizmoContext.CurrentOperation - MoveType_MoveX; 
+                const FVector4 AxisValue = FVector4(GuizmoContext.Model.M[AxisIndex][0], GuizmoContext.Model.M[AxisIndex][1], GuizmoContext.Model.M[AxisIndex][2], 0.0f); 
+ 
+                const float LengthOnAxis = AxisValue.DotProduct(Delta); 
+                Delta = AxisValue * LengthOnAxis; 
+            } 
 
             // Snap
             if (Snap)
@@ -1925,18 +1946,18 @@ static bool HandleScale(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOperat
             FVector4 Delta = NewOrigin - ModelLocalPosition;
 
             // 1 axis constraint
-            if (GuizmoContext.CurrentOperation >= MoveType_ScaleX && GuizmoContext.CurrentOperation <= MoveType_ScaleZ)
-            {
-                const int32 AxisIndex = GuizmoContext.CurrentOperation - MoveType_ScaleX;
-
-                const FVector4 AxisValue = FVector4(
-                    GuizmoContext.ModelLocal.M[0][AxisIndex],
-                    GuizmoContext.ModelLocal.M[1][AxisIndex],
-                    GuizmoContext.ModelLocal.M[2][AxisIndex],
-                    0.0f);
-
-                const float LengthOnAxis = AxisValue.DotProduct(Delta);
-                Delta = AxisValue * LengthOnAxis;
+            if (GuizmoContext.CurrentOperation >= MoveType_ScaleX && GuizmoContext.CurrentOperation <= MoveType_ScaleZ) 
+            { 
+                const int32 AxisIndex = GuizmoContext.CurrentOperation - MoveType_ScaleX; 
+ 
+                const FVector4 AxisValue = FVector4( 
+                    GuizmoContext.ModelLocal.M[AxisIndex][0], 
+                    GuizmoContext.ModelLocal.M[AxisIndex][1], 
+                    GuizmoContext.ModelLocal.M[AxisIndex][2], 
+                    0.0f); 
+ 
+                const float LengthOnAxis = AxisValue.DotProduct(Delta); 
+                Delta = AxisValue * LengthOnAxis; 
 
                 const FVector4 ModelLocalPositionScale = FVector4(GuizmoContext.ModelLocal.GetTranslation(), 1.0f);
                 const FVector4 BaseVector = GuizmoContext.TranslationPlanOrigin - ModelLocalPositionScale;
@@ -2093,27 +2114,37 @@ static bool HandleRotation(float* Matrix, float* DeltaMatrix, EditorGuizmo::EOpe
         ImGui::SetNextFrameWantCaptureMouse(true);
 
         GuizmoContext.RotationAngle = ComputeAngleOnPlan();
-        if (Snap)
-        {
-            float SnapInRadian = Snap[0] * Math::Constants::Deg2Rad;
-            ComputeSnap(&GuizmoContext.RotationAngle, SnapInRadian);
-        }
-
-        FVector4 RotationAxisLocalSpace = GuizmoContext.ModelInverse.Transform(
-            FVector4(GuizmoContext.TranslationPlan.X, GuizmoContext.TranslationPlan.Y, GuizmoContext.TranslationPlan.Z, 0.0f));
-        RotationAxisLocalSpace.Normalize();
-
-        FMatrix4 DeltaRotation;
-        DeltaRotation = FQuaternion::FromAxisAngle(
-            FVector3(RotationAxisLocalSpace.X, RotationAxisLocalSpace.Y, RotationAxisLocalSpace.Z), 
-            GuizmoContext.RotationAngle - GuizmoContext.RotationAngleOrigin).ToMatrix4();
-        
-        if (GuizmoContext.RotationAngle != GuizmoContext.RotationAngleOrigin)
-        {
-            bModified = true;
-        }
-
-        GuizmoContext.RotationAngleOrigin = GuizmoContext.RotationAngle;
+        if (Snap) 
+        { 
+            float SnapInRadian = Snap[0] * Math::Constants::Deg2Rad; 
+            ComputeSnap(&GuizmoContext.RotationAngle, SnapInRadian); 
+        } 
+ 
+        float RotationAngleDelta = GuizmoContext.RotationAngle - GuizmoContext.RotationAngleOrigin; 
+        if (RotationAngleDelta > Math::Constants::PI) 
+        { 
+            RotationAngleDelta -= Math::Constants::TwoPI; 
+        } 
+        else if (RotationAngleDelta < -Math::Constants::PI) 
+        { 
+            RotationAngleDelta += Math::Constants::TwoPI; 
+        } 
+ 
+        FVector4 RotationAxisLocalSpace = GuizmoContext.ModelInverse.Transform( 
+            FVector4(GuizmoContext.TranslationPlan.X, GuizmoContext.TranslationPlan.Y, GuizmoContext.TranslationPlan.Z, 0.0f)); 
+        RotationAxisLocalSpace.Normalize(); 
+ 
+        FMatrix4 DeltaRotation; 
+        DeltaRotation = FQuaternion::FromAxisAngle( 
+            FVector3(RotationAxisLocalSpace.X, RotationAxisLocalSpace.Y, RotationAxisLocalSpace.Z),  
+            RotationAngleDelta).ToMatrix4(); 
+         
+        if (Math::Abs(RotationAngleDelta) > Math::Constants::Epsilon) 
+        { 
+            bModified = true; 
+        } 
+ 
+        GuizmoContext.RotationAngleOrigin = GuizmoContext.RotationAngle; 
 
         FMatrix4 ScaleOrigin = FMatrix4::Scale(GuizmoContext.ModelScaleOrigin.X, GuizmoContext.ModelScaleOrigin.Y, GuizmoContext.ModelScaleOrigin.Z);
         if (bApplyRotationLocally)
@@ -2168,17 +2199,18 @@ static void ComputeFrustumPlanes(FPlane* Frustum, const float* Clip)
 }
 
 // Constructors and remaining EditorGuizmo functions
-EditorGuizmo::Style::Style()
-{
-    // Default values
-    TranslationLineThickness   = 3.0f;
-    TranslationLineArrowSize   = 6.0f;
-    RotationLineThickness      = 2.0f;
-    RotationOuterLineThickness = 3.0f;
-    ScaleLineThickness         = 3.0f;
-    ScaleLineCircleSize        = 6.0f;
-    HatchedAxisLineThickness   = 6.0f;
-    CenterCircleSize           = 6.0f;
+EditorGuizmo::Style::Style() 
+{ 
+    // Default values 
+    TranslationLineThickness   = 3.0f; 
+    TranslationLineArrowSize   = 6.0f; 
+    RotationLineThickness      = 2.0f; 
+    RotationOuterLineThickness = 3.0f; 
+    ScaleLineThickness         = 3.0f; 
+    ScaleLineCircleSize        = 6.0f; 
+    ScaleHandleShape           = EditorGuizmo::ScaleHandleShape_Square;
+    HatchedAxisLineThickness   = 6.0f; 
+    CenterCircleSize           = 6.0f; 
 
     // Initialize default colors
     Colors[EditorGuizmo::DirectionX]          = ImVec4(0.666f, 0.000f, 0.000f, 1.000f);
@@ -2285,42 +2317,46 @@ void EditorGuizmo::Enable(bool bEnable)
     }
 }
 
-void EditorGuizmo::DecomposeMatrixToComponents(const float* Matrix, float* Translation, float* Rotation, float* Scale)
-{
-    const FMatrix4 MatrixData = LoadMatrix(Matrix);
-
-    FVector3 RightVec = FVector3(MatrixData.M[0][0], MatrixData.M[0][1], MatrixData.M[0][2]);
-    FVector3 UpVec    = FVector3(MatrixData.M[1][0], MatrixData.M[1][1], MatrixData.M[1][2]);
-    FVector3 DirVec   = FVector3(MatrixData.M[2][0], MatrixData.M[2][1], MatrixData.M[2][2]);
-
-    Scale[0] = RightVec.GetLength();
-    Scale[1] = UpVec.GetLength();
-    Scale[2] = DirVec.GetLength();
-
-    FMatrix4 MatrixOrthonormal = MatrixData;
-    MatrixOrthonormal.OrthoNormalize();
-
-    Rotation[0] = Math::Constants::RadToDeg * Math::Atan2(MatrixOrthonormal.M[1][2], MatrixOrthonormal.M[2][2]);
-    Rotation[1] = Math::Constants::RadToDeg * Math::Atan2(-MatrixOrthonormal.M[0][2], Math::Sqrt(MatrixOrthonormal.M[1][2] * MatrixOrthonormal.M[1][2] + MatrixOrthonormal.M[2][2] * MatrixOrthonormal.M[2][2]));
-    Rotation[2] = Math::Constants::RadToDeg * Math::Atan2(MatrixOrthonormal.M[0][1], MatrixOrthonormal.M[0][0]);
-
-    const FVector3 MatrixTranslation = MatrixData.GetTranslation();
-    Translation[0] = MatrixTranslation.X;
-    Translation[1] = MatrixTranslation.Y;
-    Translation[2] = MatrixTranslation.Z;
-}
-
-void EditorGuizmo::RecomposeMatrixFromComponents(const float* Translation, const float* Rotation, const float* Scale, float* Matrix)
-{
-    const float RadX = Rotation[0] * Math::Constants::Deg2Rad;
-    const float RadY = Rotation[1] * Math::Constants::Deg2Rad;
-    const float RadZ = Rotation[2] * Math::Constants::Deg2Rad;
-    FMatrix4 MatrixData = FMatrix4::RotationX(RadX) * FMatrix4::RotationY(RadY) * FMatrix4::RotationZ(RadZ);
-
-    float ValidScale[3];
-    for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++)
-    {
-        if (Math::Abs(Scale[AxisIndex]) < Math::Constants::Epsilon)
+void EditorGuizmo::DecomposeMatrixToComponents(const float* Matrix, float* Translation, float* Rotation, float* Scale) 
+{ 
+    const FMatrix4 MatrixData = LoadMatrix(Matrix); 
+ 
+    FVector3 RightVec = FVector3(MatrixData.M[0][0], MatrixData.M[0][1], MatrixData.M[0][2]); 
+    FVector3 UpVec    = FVector3(MatrixData.M[1][0], MatrixData.M[1][1], MatrixData.M[1][2]); 
+    FVector3 DirVec   = FVector3(MatrixData.M[2][0], MatrixData.M[2][1], MatrixData.M[2][2]); 
+ 
+    Scale[0] = RightVec.GetLength(); 
+    Scale[1] = UpVec.GetLength(); 
+    Scale[2] = DirVec.GetLength(); 
+ 
+    FMatrix4 MatrixOrthonormal = MatrixData; 
+    MatrixOrthonormal.OrthoNormalize(); 
+  
+    const FMatrix3 RotationMatrix3  = MatrixOrthonormal.GetRotationAndScale(); 
+    const FQuaternion RotationQuat  = FQuaternion::FromRotationMatrix(RotationMatrix3); 
+    const FVector3 EulerRadians     = RotationQuat.ToEuler(); 
+    const FVector3 EulerDegrees     = EulerRadians * Math::Constants::RadToDeg; 
+    Rotation[0] = EulerDegrees.X; 
+    Rotation[1] = EulerDegrees.Y; 
+    Rotation[2] = EulerDegrees.Z; 
+ 
+    const FVector3 MatrixTranslation = MatrixData.GetTranslation(); 
+    Translation[0] = MatrixTranslation.X; 
+    Translation[1] = MatrixTranslation.Y; 
+    Translation[2] = MatrixTranslation.Z; 
+} 
+ 
+void EditorGuizmo::RecomposeMatrixFromComponents(const float* Translation, const float* Rotation, const float* Scale, float* Matrix) 
+{ 
+    const float RadX = Rotation[0] * Math::Constants::Deg2Rad; 
+    const float RadY = Rotation[1] * Math::Constants::Deg2Rad; 
+    const float RadZ = Rotation[2] * Math::Constants::Deg2Rad; 
+    FMatrix4 MatrixData = FMatrix4::RotationRollPitchYaw(RadX, RadY, RadZ); 
+ 
+    float ValidScale[3]; 
+    for (int32 AxisIndex = 0; AxisIndex < 3; AxisIndex++) 
+    { 
+        if (Math::Abs(Scale[AxisIndex]) < Math::Constants::Epsilon) 
         {
             ValidScale[AxisIndex] = 0.001f;
         }

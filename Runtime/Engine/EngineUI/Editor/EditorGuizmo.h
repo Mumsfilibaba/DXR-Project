@@ -35,10 +35,16 @@ public:
         Universal = Translate | Rotate | ScaleU
     };
 
-    enum EMode
+    enum EMode 
+    { 
+        Local, 
+        World 
+    }; 
+    
+    enum EScaleHandleShape
     {
-        Local,
-        World
+        ScaleHandleShape_Circle,
+        ScaleHandleShape_Square
     };
 
     enum EColor
@@ -62,21 +68,21 @@ public:
     };
 
 public:
-    struct Style
-    {
-        Style();
-
-        float TranslationLineThickness;   // Thickness of lines for translation gizmo
-        float TranslationLineArrowSize;   // Size of arrow at the end of lines for translation gizmo
-        float RotationLineThickness;      // Thickness of lines for rotation gizmo
-        float RotationOuterLineThickness; // Thickness of line surrounding the rotation gizmo
-        float ScaleLineThickness;         // Thickness of lines for scale gizmo
-        float ScaleLineCircleSize;        // Size of circle at the end of lines for scale gizmo
-        float HatchedAxisLineThickness;   // Thickness of hatched axis lines
-        float CenterCircleSize;           // Size of circle at the center of the translate/scale gizmo
-
-        ImVec4 Colors[Count];
-    };
+    struct Style 
+    { 
+        Style(); 
+ 
+        float             TranslationLineThickness;   // Thickness of lines for translation gizmo 
+        float             TranslationLineArrowSize;   // Size of arrow at the end of lines for translation gizmo 
+        float             RotationLineThickness;      // Thickness of lines for rotation gizmo 
+        float             RotationOuterLineThickness; // Thickness of line surrounding the rotation gizmo 
+        float             ScaleLineThickness;         // Thickness of lines for scale gizmo 
+        float             ScaleLineCircleSize;        // Size of circle at the end of lines for scale gizmo 
+        EScaleHandleShape ScaleHandleShape;           // Shape of axis handles for scale gizmo
+        float             HatchedAxisLineThickness;   // Thickness of hatched axis lines 
+        float             CenterCircleSize;           // Size of circle at the center of the translate/scale gizmo 
+        ImVec4            Colors[Count]; 
+    }; 
 
 public:
 
