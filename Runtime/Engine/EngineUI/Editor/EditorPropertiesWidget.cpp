@@ -3,10 +3,9 @@
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Core/Containers/StaticArray.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include <imgui.h>
-#include <imgui_internal.h>
 
 FEditorPropertiesWidget::FEditorPropertiesWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)

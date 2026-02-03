@@ -566,6 +566,31 @@ public:
     }
 
     /**
+     * @brief Orthonormalizes the upper 3x3 (rotation) part of this matrix using Gram-Schmidt.
+     *        Ensures the three axis vectors are unit length and mutually orthogonal.
+     */
+    inline void OrthoNormalize() noexcept
+    {
+        FVector3 Right(M[0][0], M[0][1], M[0][2]);
+        FVector3 Up   (M[1][0], M[1][1], M[1][2]);
+        FVector3 Dir  (M[2][0], M[2][1], M[2][2]);
+
+        Right.Normalize();
+        Up = (Up - Right * Up.DotProduct(Right)).GetNormalized();
+        Dir = Right.CrossProduct(Up).GetNormalized();
+
+        M[0][0] = Right.X;
+        M[0][1] = Right.Y;
+        M[0][2] = Right.Z;
+        M[1][0] = Up.X;
+        M[1][1] = Up.Y;
+        M[1][2] = Up.Z;
+        M[2][0] = Dir.X;
+        M[2][1] = Dir.Y;
+        M[2][2] = Dir.Z;
+    }
+
+    /**
      * @brief Returns the upper 3x3 rotation and scale matrix
      * @return A 3x3 matrix containing the upper part of the matrix
      */

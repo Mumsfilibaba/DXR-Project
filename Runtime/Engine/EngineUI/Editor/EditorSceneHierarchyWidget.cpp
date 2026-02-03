@@ -1,11 +1,10 @@
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Engine/EditorEngine.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
-#include "Engine/EditorEngine.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include "Core/Misc/OutputDeviceLogger.h"
-#include <imgui.h>
-#include <imgui_internal.h>
 
 FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)

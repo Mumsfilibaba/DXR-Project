@@ -1,9 +1,8 @@
-#include "Engine/EngineUI/Editor/EditorViewportWidget.h"
-#include "ImGuiPlugin/ImGuiRenderer.h"
-#include "RHI/RHIResources.h"
 #include "Application/Application.h"
-#include <imgui.h>
-#include <imgui_internal.h>
+#include "RHI/RHIResources.h"
+#include "Engine/EngineUI/Editor/EditorViewportWidget.h"
+#include "ImGuiPlugin/ImGuiCore.h"
+#include "ImGuiPlugin/ImGuiRenderer.h"
 
 FEditorViewportWidget::FEditorViewportWidget()
     : CachedViewportSize(0, 0)

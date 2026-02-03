@@ -1,9 +1,8 @@
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
-#include "Core/Misc/OutputDeviceLogger.h"
-#include <imgui.h>
-#include <imgui_internal.h>
 
 // -------------------------------------------------------------------------------------------------
 // Scroll shadow helpers

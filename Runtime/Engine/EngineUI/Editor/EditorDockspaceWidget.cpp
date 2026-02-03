@@ -8,9 +8,8 @@
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
-#include <imgui.h>
-#include <imgui_internal.h>
 
 FEditorDockspaceWidget::FEditorDockspaceWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)

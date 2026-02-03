@@ -2,7 +2,7 @@
 #include "Core/Containers/String.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
-#include <imgui.h>
+#include "ImGuiPlugin/ImGuiCore.h"
 
 struct ImGuiStorage;
 

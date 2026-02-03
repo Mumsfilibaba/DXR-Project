@@ -3,8 +3,8 @@
 #include "Application/Application.h"
 #include "Engine/EngineUI/Editor/EditorFooterWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include <imgui.h>
 
 FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
     : OutputDevice(InOutputDevice)

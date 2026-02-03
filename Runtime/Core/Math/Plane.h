@@ -1,4 +1,6 @@
 #pragma once
+#include "Core/Math/Math.h"
+#include "Core/Math/Vector3.h"
 #include "Core/Math/Vector4.h"
 
 class VECTOR_ALIGN FPlane
@@ -169,6 +171,36 @@ public:
         FFloat128 DotProduct_128 = FVectorMath::VectorDot(Normal_128, Point_128);
         return FVectorMath::VectorGetX(DotProduct_128) + W;
     #endif
+    }
+
+    /**
+     * @brief Creates a plane from a point on the plane and the plane's normal vector.
+     * @param Point A point on the plane.
+     * @param Normal The normal vector of the plane (does not need to be normalized).
+     * @return A plane with normalized normal and W = -Normal.DotProduct(Point).
+     */
+    static FORCEINLINE FPlane FromPointAndNormal(const FVector3& Point, const FVector3& Normal) noexcept
+    {
+        const FVector3 NormalizedNormal = Normal.GetNormalized();
+        return FPlane(NormalizedNormal, -NormalizedNormal.DotProduct(Point));
+    }
+
+    /**
+     * @brief Computes the intersection parameter t of a ray with this plane.
+     *        The intersection point is Origin + t * Direction.
+     * @param Origin The ray origin.
+     * @param Direction The ray direction (does not need to be normalized).
+     * @return The parameter t, or -1.0f if the ray is parallel to the plane (no intersection).
+     */
+    FORCEINLINE float IntersectRay(const FVector3& Origin, const FVector3& Direction) const noexcept
+    {
+        const float Denominator = GetNormal().DotProduct(Direction);
+        if (Math::Abs(Denominator) < Math::Constants::Epsilon)
+        {
+            return -1.0f;
+        }
+        const float Numerator = DotProductCoord(Origin);
+        return -(Numerator / Denominator);
     }
 
     /**
