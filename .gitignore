@@ -34,3 +34,4 @@ packages/
 *.glsl
 *.dxrmesh
 *.pipelinecache
+/Solutions

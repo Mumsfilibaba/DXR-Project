@@ -23,7 +23,7 @@ FFrameProfilerWidget::FFrameProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FFrameProfilerWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FFrameProfilerWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -32,7 +32,7 @@ FFrameProfilerWidget::~FFrameProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

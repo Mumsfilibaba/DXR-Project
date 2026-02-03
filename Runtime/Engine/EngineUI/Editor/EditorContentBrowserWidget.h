@@ -8,24 +8,6 @@ struct ImGuiStorage;
 
 class FEditorContentBrowserWidget
 {
-public:
-    FEditorContentBrowserWidget();
-    ~FEditorContentBrowserWidget();
-
-    void Draw();
-
-    void SetVisible(bool bInVisible)
-    {
-        bVisible = bInVisible;
-    }
-
-    bool IsVisible() const
-    {
-        return bVisible;
-    }
-
-private:
-
     // NOTE: Remove this when we actually search the file tree
     struct FileInfo
     {
@@ -55,7 +37,25 @@ private:
         TStaticArray<int32, 32> Indices;
     };
 
+public:
+    FEditorContentBrowserWidget();
+    ~FEditorContentBrowserWidget();
+
+    void Draw();
+
+    void SetVisible(bool bInVisible)
+    {
+        bVisible = bInVisible;
+    }
+
+    bool IsVisible() const
+    {
+        return bVisible;
+    }
+
 private:
+    static FileInfo DeepCopyFileInfo(const FileInfo& In);
+
     void DrawLayoutTable();
     void DrawFolderPanel();
     void DrawContentPanel();
@@ -126,7 +126,6 @@ private:
     void PasteInCurrentFolder();
 
 private:
-    static FileInfo DeepCopyFileInfo(const FileInfo& In);
     FDelegateHandle            ImGuiDelegateHandle;
     TStaticArray<CHAR, 256>    FolderSearchBuffer;
     TStaticArray<CHAR, 256>    AssetSearchBuffer;

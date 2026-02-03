@@ -17,7 +17,7 @@ FTextureDebugWidget::FTextureDebugWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FTextureDebugWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FTextureDebugWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -26,7 +26,7 @@ FTextureDebugWidget::~FTextureDebugWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

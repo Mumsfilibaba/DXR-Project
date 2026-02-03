@@ -39,11 +39,16 @@ public:
 
     virtual bool UpdateFontAtlas() override final;
 
-    virtual void Tick(float Delta) override final;
+    virtual void NewFrame(float DeltaTime) override final;
+    virtual void Tick(float DeltaTime) override final;
     virtual void Draw(FRHICommandList& CommandList) override final;
 
-    virtual FDelegateHandle AddDelegate(const FImGuiDelegate& Delegate) override final;
-    virtual void RemoveDelegate(FDelegateHandle DelegateHandle) override final;
+    virtual FDelegateHandle AddBeginFrameDelegate(const FImGuiDelegate& Delegate) override final;
+    virtual FDelegateHandle AddDrawDelegate(const FImGuiDelegate& Delegate) override final;
+    virtual FDelegateHandle AddEndFrameDelegate(const FImGuiDelegate& Delegate) override final;
+    virtual void RemoveBeginFrameDelegate(FDelegateHandle DelegateHandle) override final;
+    virtual void RemoveDrawDelegate(FDelegateHandle DelegateHandle) override final;
+    virtual void RemoveEndFrameDelegate(FDelegateHandle DelegateHandle) override final;
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) override final;
 
@@ -85,7 +90,9 @@ private:
     TSharedPtr<FViewportWidget>    MainViewport;
     TArray<FMonitorInfo>           MonitorInfos;
     FString                        ClipboardText;
+    FImGuiDrawMulticastDelegate    BeginFrameDelegates;
     FImGuiDrawMulticastDelegate    DrawDelegates;
+    FImGuiDrawMulticastDelegate    EndFrameDelegates;
     FDelegateHandle                OnMonitorConfigChangedDelegateHandle;
 };
 

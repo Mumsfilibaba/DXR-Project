@@ -36,7 +36,7 @@ FRuntimeConsoleWidget::FRuntimeConsoleWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRuntimeConsoleWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FRuntimeConsoleWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 
@@ -57,7 +57,7 @@ FRuntimeConsoleWidget::~FRuntimeConsoleWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-         IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+         IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

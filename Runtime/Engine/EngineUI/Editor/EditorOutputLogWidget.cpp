@@ -25,7 +25,7 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorOutputLogWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorOutputLogWidget::Draw));
     }
 
     SearchFilterBuffer.Fill(0);
@@ -43,7 +43,7 @@ FEditorOutputLogWidget::~FEditorOutputLogWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

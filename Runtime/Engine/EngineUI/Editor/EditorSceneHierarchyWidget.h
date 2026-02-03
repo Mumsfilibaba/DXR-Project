@@ -26,6 +26,7 @@ public:
 private:
     void DrawActorRow(FActor* Actor, const CHAR* Type, const bool bSelected, float Indent);
 
+private:
     FEditorEngine*          EditorEngine;
     FActor*                 RenamingActor;
     FDelegateHandle         ImGuiDelegateHandle;

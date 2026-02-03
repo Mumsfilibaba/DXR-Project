@@ -14,7 +14,7 @@ FEditorPropertiesWidget::FEditorPropertiesWidget(FEditorEngine* InEditorEngine)
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorPropertiesWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorPropertiesWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -23,7 +23,7 @@ FEditorPropertiesWidget::~FEditorPropertiesWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

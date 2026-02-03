@@ -14,6 +14,8 @@
 
 class FEditorFooterWidget final
 {
+    static constexpr int32 InvalidIndex = -1;
+
 public:
     FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice);
     ~FEditorFooterWidget();
@@ -26,8 +28,6 @@ public:
     }
 
 private:
-    static constexpr int32 InvalidIndex = -1;
-
     void ApplyCandidateToBuffer(int32 CandidateIndex);
 
     // Helper that can invalidate the candidate-list
@@ -36,6 +36,7 @@ private:
     // ImGui callback for the text-input field
     int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
 
+private:
     TArray<TPair<IConsoleObject*, FString>> Candidates;
     FString                                 CandidateFilter;
     TStaticArray<CHAR, 256>                 TextBuffer;

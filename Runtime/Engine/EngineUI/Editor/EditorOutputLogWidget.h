@@ -10,6 +10,12 @@
 
 class FEditorOutputLogWidget final : public IOutputDevice
 {
+    struct FLogMessage
+    {
+        FString      Message;
+        ELogSeverity Severity = ELogSeverity::Info;
+    };
+
 public:
     FEditorOutputLogWidget();
     virtual ~FEditorOutputLogWidget() override;
@@ -31,15 +37,10 @@ public:
     }
 
 private:
-    struct FLogMessage
-    {
-        FString      Message;
-        ELogSeverity Severity = ELogSeverity::Info;
-    };
-
     void DrawFilterBar();
     void DrawLogListRichText();
 
+private:
     TStaticArray<CHAR, 256> SearchFilterBuffer;
     TArray<FLogMessage>     Messages;
     FCriticalSection        MessagesCS;

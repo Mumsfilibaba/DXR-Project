@@ -5,6 +5,7 @@
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
+#include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Renderer/FrameResources.h"
 #include "RendererCore/RenderSettings.h"
@@ -20,6 +21,7 @@ FEditorEngine::FEditorEngine()
     , OutputLogWidget(nullptr)
     , SceneHierarchyWidget(nullptr)
     , ContentBrowserWidget(nullptr)
+    , GuizmoWidget(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
 {
@@ -44,6 +46,7 @@ bool FEditorEngine::Init()
         FooterWidget         = MakeSharedPtr<FEditorFooterWidget>(OutputLogWidget);
         PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
         ContentBrowserWidget = MakeSharedPtr<FEditorContentBrowserWidget>();
+        GuizmoWidget         = MakeSharedPtr<FEditorGuizmoWidget>(this);
         
         ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
         ViewportWidget->SetViewportWidget(GetViewportWidget());
@@ -79,6 +82,7 @@ void FEditorEngine::Release()
         ViewportWidget.Reset();
         PropertiesWidget.Reset();
         ContentBrowserWidget.Reset();
+        GuizmoWidget.Reset();
     }
 
     FEngine::Release();

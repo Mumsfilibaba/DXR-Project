@@ -507,7 +507,7 @@ static void ComputeColors(ImU32* Colors, int32 Type, EditorGuizmo::EOperation Op
                 break;
             }
 
-            // Note: this internal function is only called with three possible values for operation
+            // NOTE: this internal function is only called with three possible values for operation
             default:
             {
                 break;
@@ -657,7 +657,9 @@ static void DrawRotationGizmo(EditorGuizmo::EOperation Op, int32 Type)
     }
     else
     {
-        ViewDirNormalized = GuizmoContext.CameraDir.GetNormalized();
+        // Match the "front" half used for picking (camera-forward depth test).
+        // The arc we render should be the half that's closer to the camera, which is opposite the camera forward direction.
+        ViewDirNormalized = (-GuizmoContext.CameraDir).GetNormalized();
     }
 
     ViewDirNormalized = GuizmoContext.ModelInverse.Transform(FVector4(ViewDirNormalized.X, ViewDirNormalized.Y, ViewDirNormalized.Z, 0.0f));
@@ -1050,12 +1052,11 @@ static void DrawTranslationGizmo(EditorGuizmo::EOperation Op, int32 Type)
 
 static bool CanActivate()
 {
-    if (ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive())
-    {
-        return true;
-    }
-
-    return false;
+    // NOTE:
+    // In the editor viewport we often have an InvisibleButton covering the entire viewport
+    // to handle focus / input routing. That makes ImGui report "some item is hovered/active",
+    // which would prevent the gizmo from ever activating on click/drag.
+    return ImGui::IsMouseClicked(0) && GuizmoContext.bMouseOver;
 }
 
 static bool HandleAndDrawLocalBounds(const float* Bounds, float* Matrix, const float* SnapValues, EditorGuizmo::EOperation Operation)
@@ -2214,8 +2215,15 @@ void EditorGuizmo::BeginFrame()
         ImGuiWindowFlags_NoBringToFrontOnFocus;
 
 #ifdef IMGUI_HAS_VIEWPORT
-    ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
-    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos);
+    ImGuiViewport* TargetViewport = ImGui::GetMainViewport();
+    if (GuizmoContext.AlternativeWindow != nullptr && GuizmoContext.AlternativeWindow->Viewport != nullptr)
+    {
+        TargetViewport = GuizmoContext.AlternativeWindow->Viewport;
+    }
+
+    ImGui::SetNextWindowViewport(TargetViewport->ID);
+    ImGui::SetNextWindowSize(TargetViewport->Size);
+    ImGui::SetNextWindowPos(TargetViewport->Pos);
 #else
     ImGuiIO& State = ImGui::GetIO();
     ImGui::SetNextWindowSize(State.DisplaySize);

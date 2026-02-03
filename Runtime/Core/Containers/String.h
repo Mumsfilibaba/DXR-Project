@@ -1658,7 +1658,7 @@ public:
         const SizeType NewLength = RHS.Length() + 1;
 
         // Create a properly sized string (including space for the null terminator).
-        // Note: TString(SizeType) only reserves capacity, it does not resize the underlying storage.
+        // NOTE: TString(SizeType) only reserves capacity, it does not resize the underlying storage.
         TString NewString;
         NewString.Resize(NewLength);
 

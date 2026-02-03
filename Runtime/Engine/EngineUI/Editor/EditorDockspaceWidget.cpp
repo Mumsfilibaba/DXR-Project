@@ -19,7 +19,7 @@ FEditorDockspaceWidget::FEditorDockspaceWidget(FEditorEngine* InEditorEngine)
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorDockspaceWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorDockspaceWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
 
         InitializeEditorStyle();
@@ -33,7 +33,7 @@ FEditorDockspaceWidget::~FEditorDockspaceWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 
     EditorEngine = nullptr;

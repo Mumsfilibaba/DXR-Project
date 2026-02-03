@@ -15,7 +15,7 @@ FEditorSceneHierarchyWidget::FEditorSceneHierarchyWidget(FEditorEngine* InEditor
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorSceneHierarchyWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorSceneHierarchyWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 
@@ -28,7 +28,7 @@ FEditorSceneHierarchyWidget::~FEditorSceneHierarchyWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

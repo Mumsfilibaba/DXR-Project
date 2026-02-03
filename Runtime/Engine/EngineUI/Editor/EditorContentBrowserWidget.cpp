@@ -155,7 +155,7 @@ FEditorContentBrowserWidget::FEditorContentBrowserWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorContentBrowserWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorContentBrowserWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 
@@ -248,7 +248,7 @@ FEditorContentBrowserWidget::~FEditorContentBrowserWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 
