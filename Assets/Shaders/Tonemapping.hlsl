@@ -6,11 +6,10 @@ Texture2D FinalImage : register(t0);
 SamplerState PointSampler : register(s0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
-    // 0-16
     int   TonemappingType;
+    int   OutputSRGB;
     float ReinhardIntensity;
     float Padding0;
-    float Padding1;
 SHADER_CONSTANT_BLOCK_END
 
 float4 TonemappingPS(float2 TexCoord : TEXCOORD0) : SV_TARGET
@@ -40,6 +39,10 @@ float4 TonemappingPS(float2 TexCoord : TEXCOORD0) : SV_TARGET
         }
     }
 
-    Color = LinearToSRGB(Color);
+    if (Constants.OutputSRGB != 0)
+    {
+        Color = LinearToSRGB(Color);
+    }
+
     return float4(Color, 1.0);
 }

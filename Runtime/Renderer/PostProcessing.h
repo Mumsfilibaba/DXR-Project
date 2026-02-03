@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
+#include "Core/Math/Vector3.h"
 #include "Renderer/RenderPass.h"
 #include "Renderer/FrameResources.h"
 
@@ -14,11 +15,10 @@ enum class ETonemappingType : int32
 
 struct FTonemapInfoHLSL
 {
-    // 0-16
     ETonemappingType TonemappingType;
+    int32            bOutputSRGB;
     float            ReinhardIntensity;
     float            Padding0;
-    float            Padding1;
 };
 
 MARK_AS_REALLOCATABLE(FTonemapInfoHLSL);
@@ -29,13 +29,43 @@ public:
     FTonemapPass(FSceneRenderer* InRenderer);
     virtual ~FTonemapPass();
 
+    bool Initialize(FFrameResources& FrameResources);
+    bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRHITexture* OutputTarget, bool bOutputSRGB);
+
+private:
+    FRHIGraphicsPipelineStateRef TonemapPSO_Linear;
+    FRHIGraphicsPipelineStateRef TonemapPSO_BackBuffer;
+    FRHIPixelShaderRef           TonemapShader;
+};
+
+struct FFinalCompositeInfoHLSL
+{
+    int32  bEnableSelectionOutline;
+    float  OutlineAlpha;
+    float  Padding0;
+    float  Padding1;
+    FVector3 OutlineColor;
+    float  Padding2;
+};
+
+MARK_AS_REALLOCATABLE(FFinalCompositeInfoHLSL);
+
+#if EDITOR_BUILD
+class FFinalCompositePass : public FRenderPass
+{
+public:
+    FFinalCompositePass(FSceneRenderer* InRenderer);
+    virtual ~FFinalCompositePass();
+
     bool Initialize(const FFrameResources& FrameResources);
     void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
 
 private:
-    FRHIGraphicsPipelineStateRef TonemapPSO;
-    FRHIPixelShaderRef           TonemapShader;
+    FRHIGraphicsPipelineStateRef CompositePSO;
+    FRHIPixelShaderRef           CompositeShader;
 };
+#endif
 
 class FFXAAPass : public FRenderPass
 {

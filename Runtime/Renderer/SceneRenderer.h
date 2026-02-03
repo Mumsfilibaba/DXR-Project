@@ -20,6 +20,9 @@
 #include "Renderer/DebugRendering.h"
 #include "Renderer/TemporalAA.h"
 #include "Renderer/PostProcessing.h"
+#if EDITOR_BUILD
+#include "Renderer/SelectionOutlinePass.h"
+#endif
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
@@ -28,6 +31,11 @@
 
 class FViewportWidget;
 class FSceneRenderer;
+
+#if EDITOR_BUILD
+class FEditorNoJitterDepthPass;
+class FEditorSelectionIDPass;
+#endif
 
 struct FCameraHLSL
 {
@@ -166,6 +174,33 @@ public:
         return FrameCounter;
     }
 
+    FRHITexture* GetSelectionMaskTexture() const
+    {
+#if EDITOR_BUILD
+        return SelectionOutlinePass ? SelectionOutlinePass->GetSelectionMask() : nullptr;
+#else
+        return nullptr;
+#endif
+    }
+
+    FRHITexture* GetSelectionDilatedMaskTexture() const
+    {
+#if EDITOR_BUILD
+        return SelectionOutlinePass ? SelectionOutlinePass->GetDilatedMask() : nullptr;
+#else
+        return nullptr;
+#endif
+    }
+
+    FRHITexture* GetSelectionRingTexture() const
+    {
+#if EDITOR_BUILD
+        return SelectionOutlinePass ? SelectionOutlinePass->GetRingMask() : nullptr;
+#else
+        return nullptr;
+#endif
+    }
+
 private:
     bool InitShadingImage();
 
@@ -187,9 +222,17 @@ private:
     FScreenSpaceOcclusionPass*  ScreenSpaceOcclusionPass;
     FSkyboxRenderPass*          SkyboxRenderPass;
     FTemporalAA*                TemporalAA;
+#if EDITOR_BUILD
+    FSelectionOutlinePass*      SelectionOutlinePass;
+    FEditorNoJitterDepthPass*   EditorNoJitterDepthPass;
+    FEditorSelectionIDPass*     EditorSelectionIDPass;
+#endif
     FForwardPass*               ForwardPass;
     FFXAAPass*                  FXAAPass;
     FTonemapPass*               TonemapPass;
+#if EDITOR_BUILD
+    FFinalCompositePass*        FinalCompositePass;
+#endif
     FLightProbeRenderer*        LightProbeRenderer;
     FDebugRenderer*             DebugRenderer;
     FRayTracer                  RayTracer;

@@ -92,14 +92,14 @@ struct FVSOutput
 FVSOutput VSMain(FVSInput Input)
 {
     // Position
-    const float4 PositionWS = mul(float4(Input.Position, 1.0), Constants.Transform.Transform);
+    const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position);
+    const float4 PositionWS  = float4(PositionWS3, 1.0);
 
     // Normal
-    const float4x4 TransformInv = Constants.Transform.TransformInv;  
-    float3 Normal = normalize(mul(float4(Input.Normal, 0.0), TransformInv).xyz);
+    float3 Normal = normalize(TransformDirectionInvT(Constants.Transform, Input.Normal));
 
     // Tangent 
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), TransformInv).xyz);
+    float3 Tangent = normalize(TransformDirectionInvT(Constants.Transform, Input.Tangent));
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
     
     // Bitangent 
@@ -110,7 +110,7 @@ FVSOutput VSMain(FVSInput Input)
     Output.Tangent          = Tangent;
     Output.Bitangent        = Bitangent;
     Output.Position         = mul(PositionWS, CameraBuffer.ViewProjection);
-    Output.PositionWS       = PositionWS.xyz;
+    Output.PositionWS       = PositionWS3;
     // TODO: Handle moving objects (aka PrevTransform)
     Output.ClipPosition     = Output.Position;
     Output.PrevClipPosition = mul(PositionWS, CameraBuffer.PrevViewProjection);

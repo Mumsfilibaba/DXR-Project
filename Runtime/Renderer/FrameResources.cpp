@@ -429,11 +429,17 @@ void FFrameResources::Release()
 
     SSAOBuffer.Reset();
     FinalTarget.Reset();
+    TonemappedTarget.Reset();
 
     for (FRHITextureRef& Buffer : GBuffer)
     {
         Buffer.Reset();
     }
+
+#if EDITOR_BUILD
+    EditorNoJitterDepth.Reset();
+    EditorObjectID_NoJitter.Reset();
+#endif
 
     ReducedDepthBuffer[0].Reset();
     ReducedDepthBuffer[1].Reset();

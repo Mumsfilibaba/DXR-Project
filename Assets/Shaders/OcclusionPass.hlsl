@@ -20,7 +20,7 @@ struct FVSOutput
 FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output = (FVSOutput)0;
-    Output.Position = mul(float4(Input.Position, 1.0), Constants.Transform.Transform);
-    Output.Position = mul(Output.Position, CameraBuffer.ViewProjection);
+    const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position);
+    Output.Position = mul(float4(PositionWS3, 1.0), CameraBuffer.ViewProjection);
     return Output;
 }

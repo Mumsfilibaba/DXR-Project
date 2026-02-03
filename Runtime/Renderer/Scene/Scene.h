@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Map.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Math/Vector3.h"
 #include "RendererCore/Interfaces/IScene.h"
@@ -15,6 +16,7 @@
 
 class FWorld;
 class FMaterial;
+class FActor;
 class FDirectionalLight;
 class FPointLight;
 class FSkyLight;
@@ -44,6 +46,10 @@ public:
 
     // Adds a static mesh to the scene
     virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) override final;
+
+    // ObjectID allocation for editor highlighting/picking. Current implementation assigns IDs per logical Actor (not per mesh instance).
+    uint32 GetOrCreateObjectID(FActor* Actor);
+    uint32 GetObjectID(FActor* Actor) const;
 
     // Update all scene objects with the world version of the object
     void SyncSceneAndWorld();
@@ -84,4 +90,8 @@ public:
     // Objects to be deleted next frame
     TArray<FSceneObject*> DeferredObjects;
     FCriticalSection      DeferredObjectsCS;
+
+    // Stable object IDs (0 reserved for background).
+    TMap<FActor*, uint32> ActorToObjectID;
+    uint32                NextObjectID = 1;
 };

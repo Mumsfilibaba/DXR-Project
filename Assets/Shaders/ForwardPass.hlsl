@@ -93,10 +93,10 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
     
-    float3 Normal = normalize(mul(float4(Input.Normal, 0.0), Constants.TransformBuffer.Transform).xyz);
+    float3 Normal = normalize(TransformDirectionWS(Constants.TransformBuffer, Input.Normal));
     Output.Normal = Normal;
     
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), Constants.TransformBuffer.Transform).xyz);
+    float3 Tangent = normalize(TransformDirectionWS(Constants.TransformBuffer, Input.Tangent));
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent = Tangent;
     
@@ -105,15 +105,15 @@ FVSOutput VSMain(FVSInput Input)
 
     Output.TexCoord = Input.TexCoord;
 
-    float4 WorldPosition = mul(float4(Input.Position, 1.0), Constants.TransformBuffer.Transform);
-    Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
-    Output.WorldPosition = WorldPosition.xyz;
+    const float3 WorldPosition3 = TransformPositionWS(Constants.TransformBuffer, Input.Position);
+    Output.Position      = mul(float4(WorldPosition3, 1.0), CameraBuffer.ViewProjection);
+    Output.WorldPosition = WorldPosition3;
 
     float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
     TangentSpace          = transpose(TangentSpace);
     
     Output.TangentViewPos  = mul(CameraBuffer.PositionWS, TangentSpace);
-    Output.TangentPosition = mul(WorldPosition.xyz, TangentSpace);
+    Output.TangentPosition = mul(WorldPosition3, TangentSpace);
 
     return Output;
 }

@@ -13,10 +13,6 @@
     #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
 #endif
 
-#ifndef USE_UNJITTERED_CAMERA
-    #define USE_UNJITTERED_CAMERA (0)
-#endif
-
 // PerObject Constants
 SHADER_CONSTANT_BLOCK_BEGIN
     FTransform Transform;
@@ -41,8 +37,6 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 #endif
 #endif
 
-// VertexShader
-
 struct FVSInput
 {
     float3 Position : POSITION0;
@@ -60,7 +54,7 @@ struct FVSOutput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
-#if ENABLE_PARALLAX_MAPPING 
+#if ENABLE_PARALLAX_MAPPING
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
 #endif
@@ -71,16 +65,10 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
 
-    // Position
     const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position);
     const float4 PositionWS  = float4(PositionWS3, 1.0);
-#if USE_UNJITTERED_CAMERA
     Output.Position = mul(PositionWS, CameraBuffer.ViewProjectionUnjittered);
-#else
-    Output.Position = mul(PositionWS, CameraBuffer.ViewProjection);
-#endif
 
-    // Normal
 #if ENABLE_PARALLAX_MAPPING
     float3 Normal  = normalize(TransformDirectionInvT(Constants.Transform, Input.Normal));
     float3 Tangent = normalize(TransformDirectionInvT(Constants.Transform, Input.Tangent));
@@ -99,20 +87,18 @@ FVSOutput VSMain(FVSInput Input)
     return Output;
 }
 
-// PixelShader
-
 struct FPSInput
 {
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
-#if ENABLE_PARALLAX_MAPPING 
+#endif
+#if ENABLE_PARALLAX_MAPPING
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
 #endif
 };
 
 #if ENABLE_PARALLAX_MAPPING
-
-// TODO: We probably do not want any constants like this, it should be a constantbuffer or something similar
 static const float HEIGHT_SCALE = 0.03f;
 
 float SampleHeightMap(float2 TexCoords)
@@ -134,7 +120,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float2 CurrentTexCoords     = TexCoords;
     float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
     
-    float CurrentLayerDepth	= 0.0;
+    float CurrentLayerDepth = 0.0;
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
         CurrentTexCoords     -= DeltaTexCoords;
@@ -153,7 +139,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 }
 #endif
 
-void PSMain(FPSInput Input)
+uint PSMain(FPSInput Input) : SV_Target0
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
@@ -188,4 +174,6 @@ void PSMain(FPSInput Input)
     #endif
 #endif
 #endif
+
+    return Constants.Transform.ObjectID;
 }

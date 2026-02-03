@@ -6,10 +6,14 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
+#if EDITOR_BUILD
+#include "Engine/EditorEngine.h"
+#endif
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Renderer/SceneRenderer.h"
+#include "Renderer/EditorSelectionRendering.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 #include "RendererCore/TextureFactory.h"
@@ -153,9 +157,17 @@ FSceneRenderer::FSceneRenderer()
     , ScreenSpaceOcclusionPass(nullptr)
     , SkyboxRenderPass(nullptr)
     , TemporalAA(nullptr)
+#if EDITOR_BUILD
+    , SelectionOutlinePass(nullptr)
+    , EditorNoJitterDepthPass(nullptr)
+    , EditorSelectionIDPass(nullptr)
+#endif
     , ForwardPass(nullptr)
     , FXAAPass(nullptr)
     , TonemapPass(nullptr)
+#if EDITOR_BUILD
+    , FinalCompositePass(nullptr)
+#endif
     , LightProbeRenderer(nullptr)
     , DebugRenderer(nullptr)
     , RayTracer(this)
@@ -184,9 +196,17 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(ScreenSpaceOcclusionPass);
     SAFE_DELETE(SkyboxRenderPass);
     SAFE_DELETE(TemporalAA);
+#if EDITOR_BUILD
+    SAFE_DELETE(SelectionOutlinePass);
+    SAFE_DELETE(EditorNoJitterDepthPass);
+    SAFE_DELETE(EditorSelectionIDPass);
+#endif
     SAFE_DELETE(ForwardPass);
     SAFE_DELETE(FXAAPass);
     SAFE_DELETE(TonemapPass);
+#if EDITOR_BUILD
+    SAFE_DELETE(FinalCompositePass);
+#endif
     SAFE_DELETE(LightProbeRenderer);
     SAFE_DELETE(DebugRenderer);
 
@@ -423,6 +443,26 @@ bool FSceneRenderer::InitializeRenderPasses()
         return false;
     }
 
+#if EDITOR_BUILD
+    SelectionOutlinePass = new FSelectionOutlinePass(this);
+    if (!SelectionOutlinePass->Initialize(Resources))
+    {
+        return false;
+    }
+
+    EditorNoJitterDepthPass = new FEditorNoJitterDepthPass(this);
+    if (!EditorNoJitterDepthPass->Initialize(Resources))
+    {
+        return false;
+    }
+
+    EditorSelectionIDPass = new FEditorSelectionIDPass(this);
+    if (!EditorSelectionIDPass->Initialize(Resources))
+    {
+        return false;
+    }
+#endif
+
     ForwardPass = new FForwardPass(this);
     if (!ForwardPass->Initialize(Resources))
     {
@@ -434,6 +474,14 @@ bool FSceneRenderer::InitializeRenderPasses()
     {
         return false;
     }
+
+#if EDITOR_BUILD
+    FinalCompositePass = new FFinalCompositePass(this);
+    if (!FinalCompositePass->Initialize(Resources))
+    {
+        return false;
+    }
+#endif
 
     FXAAPass = new FFXAAPass(this);
     if (!FXAAPass->Initialize(Resources))
@@ -485,7 +533,6 @@ void FSceneRenderer::BeginFrame()
 	{
 		TRACE_SCOPE("Prepare SwapChains");
 
-		const bool bEnableVSync = CVarVSyncEnabled.GetValue();
 		for (FRHISwapChainRef SwapChain : SwapChainsToPrepare)
 		{
 			FRHITexture* BackBuffer = SwapChain->GetBackBuffer();
@@ -576,6 +623,11 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 	{
 		// TODO: Only do this once?
 		DepthPrePass->InitializePipelineState(Material, Resources);
+
+    #if EDITOR_BUILD
+        EditorNoJitterDepthPass->InitializePipelineState(Material, Resources);
+        EditorSelectionIDPass->InitializePipelineState(Material, Resources);
+    #endif
 		
         BasePass->InitializePipelineState(Material, Resources);
 		
@@ -825,14 +877,38 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 	AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView()),
 		Resources.GBuffer[GBufferIndex_Depth], EResourceAccess::PixelShaderResource);
 
+	// Editor selection outline (ObjectID -> mask -> dilate/erode -> ring -> composite after tonemap)
+#if EDITOR_BUILD
+    {
+        TArray<uint32> SelectedObjectIDs;
+
+        if (FEditorEngine* EditorEngine = static_cast<FEditorEngine*>(FEngine::Get()))
+        {
+            if (FActor* SelectedActor = EditorEngine->GetSelectedActor())
+            {
+                SelectedObjectIDs.Add(CurrentScene->GetOrCreateObjectID(SelectedActor));
+            }
+        }
+
+        EditorNoJitterDepthPass->Execute(CommandList, Resources, CurrentScene);
+        EditorSelectionIDPass->Execute(CommandList, Resources, CurrentScene);
+        SelectionOutlinePass->Execute(CommandList, Resources, SelectedObjectIDs);
+    }
+#endif
+
 	// FXAA
 	if (CVarEnableFXAA.GetValue())
 	{
 		FXAAPass->Execute(CommandList, SceneRenderView, Resources);
 	}
 
-	// Perform ToneMapping and blit to BackBuffer
-	TonemapPass->Execute(CommandList, SceneRenderView, Resources);
+	// Perform ToneMapping and output to BackBuffer
+#if EDITOR_BUILD
+    TonemapPass->Execute(CommandList, Resources, Resources.TonemappedTarget.Get(), false);
+    FinalCompositePass->Execute(CommandList, SceneRenderView, Resources);
+#else
+    TonemapPass->Execute(CommandList, Resources, SceneRenderView.RenderTarget, true);
+#endif
 
 	AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
 		Resources.FinalTarget, EResourceAccess::PixelShaderResource);
@@ -962,6 +1038,34 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
             DEBUG_BREAK();
             return;
         }
+
+#if EDITOR_BUILD
+        if (!EditorNoJitterDepthPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!EditorSelectionIDPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+#endif
+
+        if (!TonemapPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+#if EDITOR_BUILD
+        if (!SelectionOutlinePass->CreateResources(InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+#endif
 
         LOG_INFO("Changed render-resolution. From: w=%d h=%d, To: w=%d h=%d", 
             Resources.CurrentRenderWidth, Resources.CurrentRenderHeight, InWidth, InHeight);

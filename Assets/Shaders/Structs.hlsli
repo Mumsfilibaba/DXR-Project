@@ -75,9 +75,35 @@ struct FVertex
 
 struct FTransform
 {
-    float4x4 Transform;
-    float4x4 TransformInv;
+    // Row-major float3x4 affine transform (3 rows x 4 columns).
+    row_major float3x4 Transform;
+
+    // Inverse-transpose transform (used for normals, tangents etc).
+    row_major float3x4 TransformInvT;
+
+    uint ObjectID;
+    uint Padding0;
+    uint Padding1;
+    uint Padding2;
 };
+
+float3 TransformPositionWS(FTransform T, float3 Position)
+{
+    const float4 V = float4(Position, 1.0);
+    return float3(dot(V, T.Transform[0]), dot(V, T.Transform[1]), dot(V, T.Transform[2]));
+}
+
+float3 TransformDirectionWS(FTransform T, float3 Direction)
+{
+    const float4 V = float4(Direction, 0.0);
+    return float3(dot(V, T.Transform[0]), dot(V, T.Transform[1]), dot(V, T.Transform[2]));
+}
+
+float3 TransformDirectionInvT(FTransform T, float3 Direction)
+{
+    const float4 V = float4(Direction, 0.0);
+    return float3(dot(V, T.TransformInvT[0]), dot(V, T.TransformInvT[1]), dot(V, T.TransformInvT[2]));
+}
 
 struct FMaterial
 {

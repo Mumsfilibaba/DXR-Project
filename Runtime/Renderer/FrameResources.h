@@ -163,6 +163,7 @@ struct FGlobalTextureFormats
     static constexpr EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
     static constexpr EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     static constexpr EFormat VelocityFormat     = EFormat::R16G16_Float;
+    static constexpr EFormat ObjectIDFormat     = EFormat::R32_Uint;
     static constexpr EFormat ShadowMaskFormat   = EFormat::R32_Float;
     static constexpr EFormat ShadowMapFormat    = EFormat::D32_Float;
     static constexpr EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
@@ -210,7 +211,14 @@ struct FFrameResources
     // GBuffer
     FRHITextureRef SSAOBuffer;
     FRHITextureRef FinalTarget;
+    FRHITextureRef TonemappedTarget;
     FRHITextureRef GBuffer[GBuffer_NumBuffers];
+
+#if EDITOR_BUILD
+    // Editor-only: non-jittered depth + ObjectID buffers (used for stable selection outlines and picking).
+    FRHITextureRef EditorNoJitterDepth;
+    FRHITextureRef EditorObjectID_NoJitter;
+#endif
 
     // TODO: Depth-pyramid, could be used for other techniques as well 
     static constexpr int32 NumReducedDepthBuffers = 2;

@@ -25,7 +25,7 @@
 
 // Per-object
 SHADER_CONSTANT_BLOCK_BEGIN
-    float4x4 WorldModelMatrix;
+    FTransform Transform;
 SHADER_CONSTANT_BLOCK_END
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
@@ -101,7 +101,8 @@ FVSPointOutput Point_VSMain(FVSInput Input)
 {
     FVSPointOutput Output = (FVSPointOutput)0;
 
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.WorldModelMatrix);
+    const float3 WorldPositionWS = TransformPositionWS(Constants.Transform, Input.Position);
+    const float4 WorldPosition   = float4(WorldPositionWS, 1.0f);
     Output.WorldPosition = WorldPosition.xyz;
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING

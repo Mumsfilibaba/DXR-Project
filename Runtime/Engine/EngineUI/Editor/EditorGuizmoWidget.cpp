@@ -104,7 +104,6 @@ void FEditorGuizmoWidget::Draw()
     }
 
     EditorGuizmo::SetAlternativeWindow(ViewportWindow);
-
     EditorGuizmo::BeginFrame();
     EditorGuizmo::SetDrawlist(ViewportWindow->DrawList);
 
