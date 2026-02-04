@@ -67,7 +67,7 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
         delete CommandPool;
         return nullptr;
     }
-        
+
     CommandPools.Add(CommandPool);
     return CommandPool;
 }
