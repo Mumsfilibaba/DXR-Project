@@ -4,6 +4,7 @@
     #include "RHI/ShaderCompiler.h"
     #include "Core/Math/Math.h"
     #include "Core/Misc/FrameProfiler.h"
+    #include "Renderer/Performance/GPUProfiler.h"
     #include "Renderer/SceneRenderer.h"
     #include "Renderer/SelectionOutlineSettings.h"
 
@@ -89,6 +90,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     {
         return false;
     }
+
     SelectionMask->SetDebugName("SelectionMask");
 
     DilationTemp = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
@@ -96,6 +98,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     {
         return false;
     }
+
     DilationTemp->SetDebugName("SelectionMask Dilate Temp");
 
     DilatedMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
@@ -103,6 +106,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     {
         return false;
     }
+
     DilatedMask->SetDebugName("SelectionMask Dilated");
 
     ErosionTemp = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
@@ -110,6 +114,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     {
         return false;
     }
+
     ErosionTemp->SetDebugName("SelectionMask Erode Temp");
 
     ErodedMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
@@ -117,6 +122,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     {
         return false;
     }
+
     ErodedMask->SetDebugName("SelectionMask Eroded");
 
     RingMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
@@ -124,6 +130,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     {
         return false;
     }
+
     RingMask->SetDebugName("SelectionRing");
 
     return true;
@@ -230,6 +237,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
         {
             return false;
         }
+
         MaskPSO->SetDebugName("SelectionMask PSO");
     }
 
@@ -343,7 +351,11 @@ bool FSelectionOutlinePass::CreatePipelineStates()
 
 void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, TArrayView<const uint32> SelectedIDs)
 {
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Selection Outline");
+
     TRACE_SCOPE("SelectionOutline");
+
+    GPU_TRACE_SCOPE(CommandList, "Selection Outline");
 
     const FSelectionOutlineSettings Settings = GetSelectionOutlineSettings();
     if (!Settings.bEnabled)
@@ -623,6 +635,8 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     }
 
     CommandList.TransitionTexture(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Selection Outline");
 }
 
 #endif // EDITOR_BUILD

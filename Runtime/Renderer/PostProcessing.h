@@ -42,11 +42,28 @@ private:
 struct FFinalCompositeInfoHLSL
 {
     int32  bEnableSelectionOutline;
+    int32  bEnableGrid;
     float  OutlineAlpha;
-    float  Padding0;
-    float  Padding1;
+    float  GridPlaneY;
+
+    float  GridMinorSize;
+    float  GridMajorSize;
+    float  GridMinorWidth;
+    float  GridMajorWidth;
+
     FVector3 OutlineColor;
-    float  Padding2;
+    float    GridFadeDistance;
+
+    FVector3 GridMinorColor;
+    float    GridMinorAlpha;
+
+    FVector3 GridMajorColor;
+    float    GridMajorAlpha;
+
+    float    GridHorizonFade;
+    float    GridDepthBias;
+    float    GridMaxTraceDistance;
+    float    Padding2;
 };
 
 MARK_AS_REALLOCATABLE(FFinalCompositeInfoHLSL);

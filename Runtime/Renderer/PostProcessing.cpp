@@ -4,6 +4,7 @@
 #include "Renderer/PostProcessing.h"
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/SceneRenderer.h"
+#include "Renderer/EditorGridSettings.h"
 #include "Renderer/SelectionOutlineSettings.h"
 #include "RendererCore/RenderSettings.h"
 
@@ -195,6 +196,8 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     TRACE_SCOPE("Tonemapping");
 
+    GPU_TRACE_SCOPE(CommandList, "Tonemapping");
+
     const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
     const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
 
@@ -355,6 +358,8 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
 
     TRACE_SCOPE("Final Composite");
 
+    GPU_TRACE_SCOPE(CommandList, "Final Composite");
+
     const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
     const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
 
@@ -373,14 +378,18 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
     CommandList.SetGraphicsPipelineState(CompositePSO.Get());
 
     CommandList.SetShaderResourceView(CompositeShader.Get(), FrameResources.TonemappedTarget->GetShaderResourceView(), 0);
+    CommandList.SetConstantBuffer(CompositeShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
     const FSelectionOutlineSettings OutlineSettings = GetSelectionOutlineSettings();
+    const FEditorGridSettings GridSettings = GetEditorGridSettings();
 #if EDITOR_BUILD
     FRHITexture* SelectionRingTexture = GetRenderer()->GetSelectionRingTexture();
     const bool bCanUseSelectionOutline = OutlineSettings.bEnabled && (SelectionRingTexture != nullptr);
+    const bool bCanUseGrid = GridSettings.bEnabled && (FrameResources.EditorNoJitterDepth != nullptr);
 #else
     FRHITexture* SelectionRingTexture = nullptr;
     const bool bCanUseSelectionOutline = false;
+    const bool bCanUseGrid = false;
 #endif
     if (bCanUseSelectionOutline)
     {
@@ -391,6 +400,15 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
         CommandList.SetShaderResourceView(CompositeShader.Get(), nullptr, 1);
     }
 
+    if (bCanUseGrid)
+    {
+        CommandList.SetShaderResourceView(CompositeShader.Get(), FrameResources.EditorNoJitterDepth->GetShaderResourceView(), 2);
+    }
+    else
+    {
+        CommandList.SetShaderResourceView(CompositeShader.Get(), nullptr, 2);
+    }
+
     FRHISamplerState* PointSampler  = FrameResources.GBufferSampler.Get();
     FRHISamplerState* LinearSampler = FrameResources.FXAASampler ? FrameResources.FXAASampler.Get() : FrameResources.GBufferSampler.Get();
     CommandList.SetSamplerState(CompositeShader.Get(), PointSampler, 0);
@@ -398,10 +416,27 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
 
     FFinalCompositeInfoHLSL Info;
     Info.bEnableSelectionOutline = bCanUseSelectionOutline ? 1 : 0;
+    Info.bEnableGrid             = bCanUseGrid ? 1 : 0;
     Info.OutlineAlpha            = OutlineSettings.Alpha;
-    Info.Padding0                = 0.0f;
-    Info.Padding1                = 0.0f;
+    Info.GridPlaneY              = GridSettings.PlaneY;
+
+    Info.GridMinorSize           = GridSettings.MinorSize;
+    Info.GridMajorSize           = GridSettings.MajorSize;
+    Info.GridMinorWidth          = GridSettings.MinorWidth;
+    Info.GridMajorWidth          = GridSettings.MajorWidth;
+
     Info.OutlineColor            = OutlineSettings.Color;
+    Info.GridFadeDistance        = GridSettings.FadeDistance;
+    Info.GridMaxTraceDistance    = GridSettings.MaxTraceDistance;
+
+    Info.GridMinorColor          = GridSettings.MinorColor;
+    Info.GridMinorAlpha          = GridSettings.MinorAlpha;
+
+    Info.GridMajorColor          = GridSettings.MajorColor;
+    Info.GridMajorAlpha          = GridSettings.MajorAlpha;
+
+    Info.GridHorizonFade         = GridSettings.HorizonFade;
+    Info.GridDepthBias           = GridSettings.DepthBias;
     Info.Padding2                = 0.0f;
 
     constexpr uint32 NumConstants = sizeof(FFinalCompositeInfoHLSL) / sizeof(uint32);
