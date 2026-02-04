@@ -50,6 +50,7 @@ public:
     // ObjectID allocation for editor highlighting/picking. Current implementation assigns IDs per logical Actor (not per mesh instance).
     uint32 GetOrCreateObjectID(FActor* Actor);
     uint32 GetObjectID(FActor* Actor) const;
+    virtual FActor* GetActorByObjectID(uint32 ObjectID) const override final;
 
     // Update all scene objects with the world version of the object
     void SyncSceneAndWorld();
@@ -93,5 +94,6 @@ public:
 
     // Stable object IDs (0 reserved for background).
     TMap<FActor*, uint32> ActorToObjectID;
+    TMap<uint32, FActor*> ObjectIDToActor;
     uint32                NextObjectID = 1;
 };

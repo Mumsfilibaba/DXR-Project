@@ -5,5 +5,6 @@
 #include "RHI/RHIResourceViews.h"
 #include "RHI/RHISamplerState.h"
 #include "RHI/RHIQuery.h"
+#include "RHI/RHIFence.h"
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHISwapChain.h"

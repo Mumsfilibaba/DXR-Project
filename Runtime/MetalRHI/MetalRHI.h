@@ -8,6 +8,7 @@
 #include "MetalRHI/MetalShader.h"
 #include "MetalRHI/MetalCommandContext.h"
 #include "MetalRHI/MetalQuery.h"
+#include "MetalRHI/MetalFence.h"
 #include "MetalRHI/MetalPipelineState.h"
 #include "MetalRHI/MetalRayTracing.h"
 #include "MetalRHI/MetalDeviceContext.h"
@@ -45,6 +46,7 @@ public:
     virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final;
     virtual FRHISwapChain* CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo) override final;
     virtual FRHIQuery* CreateQuery(EQueryType InQueryType) override final;
+    virtual FRHIGpuFence* CreateFence() override final { return new FMetalGpuFence(); }
     virtual FRHIRayTracingScene* CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final;
     virtual FRHIRayTracingGeometry* CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final;
     virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo) override final;

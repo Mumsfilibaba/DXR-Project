@@ -49,27 +49,27 @@ struct FVSInput
 #endif
 };
 
-struct FVSOutput
-{
-#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    float2 TexCoord : TEXCOORD0;
-#endif
-#if ENABLE_PARALLAX_MAPPING
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
-#endif
-    float4 Position : SV_Position;
-};
-
-FVSOutput VSMain(FVSInput Input)
-{
+struct FVSOutput 
+{ 
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING 
+    float2 TexCoord : TEXCOORD0; 
+#endif 
+#if ENABLE_PARALLAX_MAPPING 
+    float3 TangentViewPos  : TANGENTVIEWPOS0; 
+    float3 TangentPosition : TANGENTPOSITION0; 
+#endif 
+    float4 Position : SV_Position; 
+}; 
+ 
+FVSOutput VSMain(FVSInput Input) 
+{ 
     FVSOutput Output;
 
-    const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position);
-    const float4 PositionWS  = float4(PositionWS3, 1.0);
-    Output.Position = mul(PositionWS, CameraBuffer.ViewProjectionUnjittered);
-
-#if ENABLE_PARALLAX_MAPPING
+    const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position); 
+    const float4 PositionWS  = float4(PositionWS3, 1.0); 
+    Output.Position = mul(PositionWS, CameraBuffer.ViewProjectionUnjittered); 
+ 
+#if ENABLE_PARALLAX_MAPPING 
     float3 Normal  = normalize(TransformDirectionInvT(Constants.Transform, Input.Normal));
     float3 Tangent = normalize(TransformDirectionInvT(Constants.Transform, Input.Tangent));
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
@@ -87,16 +87,16 @@ FVSOutput VSMain(FVSInput Input)
     return Output;
 }
 
-struct FPSInput
-{
-#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    float2 TexCoord : TEXCOORD0;
-#endif
-#if ENABLE_PARALLAX_MAPPING
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
-#endif
-};
+struct FPSInput 
+{ 
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING 
+    float2 TexCoord : TEXCOORD0; 
+#endif 
+#if ENABLE_PARALLAX_MAPPING 
+    float3 TangentViewPos  : TANGENTVIEWPOS0; 
+    float3 TangentPosition : TANGENTPOSITION0; 
+#endif 
+}; 
 
 #if ENABLE_PARALLAX_MAPPING
 static const float HEIGHT_SCALE = 0.03f;
@@ -139,8 +139,8 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 }
 #endif
 
-uint PSMain(FPSInput Input) : SV_Target0
-{
+uint PSMain(FPSInput Input) : SV_Target0 
+{ 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
 
@@ -173,7 +173,7 @@ uint PSMain(FPSInput Input) : SV_Target0
         }
     #endif
 #endif
-#endif
-
-    return Constants.Transform.ObjectID;
-}
+#endif 
+ 
+    return Constants.Transform.ObjectID; 
+} 

@@ -27,7 +27,9 @@ public:
     bool ExecuteCommandBuffer(class FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class FVulkanFence* Fence);
     
     void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);
+    void AddWaitTimelineSemaphore(VkSemaphore Semaphore, uint64 Value, VkPipelineStageFlags WaitStage);
     void AddSignalSemaphore(VkSemaphore Semaphore);
+    void AddSignalTimelineSemaphore(VkSemaphore Semaphore, uint64 Value);
     
     bool IsWaitingForSemaphore(VkSemaphore Semaphore) const { return WaitSemaphores.Contains(Semaphore); }
     bool IsSignalingSemaphore(VkSemaphore Semaphore)  const { return SignalSemaphores.Contains(Semaphore); }
@@ -63,7 +65,9 @@ private:
     EVulkanCommandQueueType      QueueType;
     TArray<VkSemaphore>          WaitSemaphores;
     TArray<VkPipelineStageFlags> WaitStages;
+    TArray<uint64>               WaitSemaphoreValues;
     TArray<VkSemaphore>          SignalSemaphores;
+    TArray<uint64>               SignalSemaphoreValues;
     TQueue<FVulkanCommandPool*>  AvailableCommandPools;
     TArray<FVulkanCommandPool*>  CommandPools;
     FCriticalSection             CommandPoolsCS;

@@ -80,6 +80,8 @@ VULKAN_FUNCTION_DEFINITION(GetFenceStatus);
 
 VULKAN_FUNCTION_DEFINITION(CreateSemaphore);
 VULKAN_FUNCTION_DEFINITION(DestroySemaphore);
+VULKAN_FUNCTION_DEFINITION(WaitSemaphores);
+VULKAN_FUNCTION_DEFINITION(GetSemaphoreCounterValue);
 
 VULKAN_FUNCTION_DEFINITION(CreateImageView);
 VULKAN_FUNCTION_DEFINITION(DestroyImageView);
@@ -89,6 +91,7 @@ VULKAN_FUNCTION_DEFINITION(FreeMemory);
 VULKAN_FUNCTION_DEFINITION(MapMemory);
 VULKAN_FUNCTION_DEFINITION(UnmapMemory);
 VULKAN_FUNCTION_DEFINITION(FlushMappedMemoryRanges);
+VULKAN_FUNCTION_DEFINITION(InvalidateMappedMemoryRanges);
 
 VULKAN_FUNCTION_DEFINITION(CreateBuffer);
 VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements);
@@ -192,6 +195,7 @@ VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DEFINITION(CmdFillBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBufferToImage);
+VULKAN_FUNCTION_DEFINITION(CmdCopyImageToBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyImage);
 VULKAN_FUNCTION_DEFINITION(CmdBlitImage);
 VULKAN_FUNCTION_DEFINITION(CmdDispatch);
@@ -294,12 +298,15 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSemaphore);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySemaphore);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, WaitSemaphores);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetSemaphoreCounterValue);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AllocateMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FreeMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, MapMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, UnmapMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FlushMappedMemoryRanges);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, InvalidateMappedMemoryRanges);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements);
@@ -414,6 +421,7 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdFillBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBufferToImage);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImageToBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBlitImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDispatch);

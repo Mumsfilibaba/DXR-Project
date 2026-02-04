@@ -184,6 +184,7 @@ uint32 FScene::GetOrCreateObjectID(FActor* Actor)
     }
 
     ActorToObjectID.Add(Actor, NewID);
+    ObjectIDToActor.Add(NewID, Actor);
     return NewID;
 }
 
@@ -200,6 +201,21 @@ uint32 FScene::GetObjectID(FActor* Actor) const
     }
 
     return 0;
+}
+
+FActor* FScene::GetActorByObjectID(uint32 ObjectID) const
+{
+    if (ObjectID == 0)
+    {
+        return nullptr;
+    }
+
+    if (FActor* const* ExistingActor = ObjectIDToActor.Find(ObjectID))
+    {
+        return *ExistingActor;
+    }
+
+    return nullptr;
 }
 
 void FScene::SyncSceneAndWorld()

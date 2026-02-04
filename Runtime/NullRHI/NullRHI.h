@@ -60,10 +60,10 @@ public:
         {
             return new FNullRHIShaderResourceView(InInfo.TextureSRV.Texture);
         }
-		else
-		{
-			return nullptr;
-		}
+        else
+        {
+            return nullptr;
+        }
     }
 
     virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
@@ -191,6 +191,11 @@ public:
     virtual class FRHIQuery* CreateQuery(EQueryType InQueryType) override final
     {
         return new FNullRHIQuery(InQueryType);
+    }
+
+    virtual FRHIGpuFence* CreateFence() override final
+    {
+        return new FNullRHIGpuFence();
     }
 
     virtual struct IRHICommandContext* ObtainCommandContext() override final

@@ -355,9 +355,17 @@ void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CopyContext.FinishEncoder();
 }
 
-void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc)
-{
-}
+void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) 
+{ 
+} 
+ 
+void FMetalCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) 
+{ 
+} 
+ 
+void FMetalCommandContext::WriteFence(FRHIGpuFence* Fence) 
+{ 
+} 
 
 void FMetalCommandContext::DiscardContents(class FRHITexture* Texture)
 {

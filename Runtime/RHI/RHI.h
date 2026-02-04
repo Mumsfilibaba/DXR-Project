@@ -10,6 +10,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class FRHI;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
+class FRHIGpuFence;
 struct IRHICommandContext;
 struct FRHIRayTracingSceneInfo;
 struct FRHIRayTracingGeometryInfo;
@@ -298,6 +299,12 @@ public:
      * @return The newly created query object.
      */
     virtual FRHIQuery* CreateQuery(EQueryType InQueryType) = 0;
+
+    /**
+     * @brief Creates a GPU fence for GPU->CPU synchronization.
+     * @return The newly created fence object.
+     */
+    virtual FRHIGpuFence* CreateFence() = 0;
 
     /**
      * @brief Obtains a command context.

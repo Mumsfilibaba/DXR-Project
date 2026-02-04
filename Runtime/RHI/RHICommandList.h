@@ -304,6 +304,16 @@ public:
         EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
 
+    FORCEINLINE void CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) noexcept
+    {
+        EmplaceCommand<FRHICommandCopyTextureRegionToBuffer>(Dst, DstOffset, Src, SrcRegion, SrcMipLevel);
+    }
+
+    FORCEINLINE void WriteFence(FRHIGpuFence* Fence) noexcept
+    {
+        EmplaceCommand<FRHICommandWriteFence>(Fence);
+    }
+
     FORCEINLINE void DiscardContents(FRHITexture* Texture) noexcept
     {
         EmplaceCommand<FRHICommandDiscardContents>(Texture);

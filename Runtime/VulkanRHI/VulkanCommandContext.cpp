@@ -5,6 +5,7 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanFence.h"
 
 static constexpr bool GVulkanEnableNegativeViewportHeight = true;
 
@@ -52,48 +53,48 @@ void FBarrierBatcher::AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, 
 
 void FBarrierBatcher::AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2& InBarrier)
 {
-	CHECK(InBarrier.sType == VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2);
-	CHECK(InBarrier.srcQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
-	CHECK(InBarrier.dstQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
+    CHECK(InBarrier.sType == VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2);
+    CHECK(InBarrier.srcQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
+    CHECK(InBarrier.dstQueueFamilyIndex == VK_QUEUE_FAMILY_IGNORED);
 
-	for (FBatch& Batch : Batches)
-	{
-		if (Batch.DependencyFlags == DependencyFlags)
-		{
-			// Coalesce with existing barrier if same image + subresource range
-			for (VkImageMemoryBarrier2& Barrier : Batch.ImageMemoryBarriers)
-			{
-				if (Barrier.image == InBarrier.image)
-				{
-					const VkImageSubresourceRange& RangeA = Barrier.subresourceRange;
-					const VkImageSubresourceRange& RangeB = InBarrier.subresourceRange;
+    for (FBatch& Batch : Batches)
+    {
+        if (Batch.DependencyFlags == DependencyFlags)
+        {
+            // Coalesce with existing barrier if same image + subresource range
+            for (VkImageMemoryBarrier2& Barrier : Batch.ImageMemoryBarriers)
+            {
+                if (Barrier.image == InBarrier.image)
+                {
+                    const VkImageSubresourceRange& RangeA = Barrier.subresourceRange;
+                    const VkImageSubresourceRange& RangeB = InBarrier.subresourceRange;
 
-					const bool bSameRange = (RangeA.aspectMask == RangeB.aspectMask && RangeA.baseMipLevel == RangeB.baseMipLevel && 
+                    const bool bSameRange = (RangeA.aspectMask == RangeB.aspectMask && RangeA.baseMipLevel == RangeB.baseMipLevel && 
                         RangeA.levelCount == RangeB.levelCount && RangeA.baseArrayLayer == RangeB.baseArrayLayer && RangeA.layerCount == RangeB.layerCount);
 
-					if (bSameRange)
-					{
-						// Keep original oldLayout, advance to the latest newLayout.
-						Barrier.newLayout = InBarrier.newLayout;
+                    if (bSameRange)
+                    {
+                        // Keep original oldLayout, advance to the latest newLayout.
+                        Barrier.newLayout = InBarrier.newLayout;
 
-						// Be conservative. Union access + stage masks.
-						Barrier.srcAccessMask |= InBarrier.srcAccessMask;
-						Barrier.dstAccessMask |= InBarrier.dstAccessMask;
-						Barrier.srcStageMask  |= InBarrier.srcStageMask;
-						Barrier.dstStageMask  |= InBarrier.dstStageMask;
-						return;
-					}
-				}
-			}
+                        // Be conservative. Union access + stage masks.
+                        Barrier.srcAccessMask |= InBarrier.srcAccessMask;
+                        Barrier.dstAccessMask |= InBarrier.dstAccessMask;
+                        Barrier.srcStageMask  |= InBarrier.srcStageMask;
+                        Barrier.dstStageMask  |= InBarrier.dstStageMask;
+                        return;
+                    }
+                }
+            }
 
-			// ...otherwise add a new barrier
-			Batch.ImageMemoryBarriers.Add(InBarrier);
-			return;
-		}
-	}
+            // ...otherwise add a new barrier
+            Batch.ImageMemoryBarriers.Add(InBarrier);
+            return;
+        }
+    }
 
-	FBatch& Batch = Batches.Emplace(DependencyFlags);
-	Batch.ImageMemoryBarriers.Add(InBarrier);
+    FBatch& Batch = Batches.Emplace(DependencyFlags);
+    Batch.ImageMemoryBarriers.Add(InBarrier);
 }
 
 void FBarrierBatcher::FlushBarriers()
@@ -200,36 +201,47 @@ void FVulkanCommandContext::ObtainCommandBuffer()
 
 void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
 {
+    SubmitCommandBuffer(bFlushPool);
+}
+
+FVulkanFence* FVulkanCommandContext::SubmitCommandBuffer(bool bFlushPool)
+{
     CHECK(CommandBuffer != nullptr);
 
     // Flush barrier before we submit the CommandBuffer
     BarrierBatcher.FlushBarriers();
 
     const uint32 NumCommands = CommandBuffer->GetNumCommands();
-    if (NumCommands > 0)
+    if (NumCommands == 0)
     {
-        if (!CommandBuffer->End())
-        {
-            VULKAN_ERROR_CRITICAL("Failed to End CommandBuffer");
-        }
-
-        CommandSubmission->AddCommandBuffer(CommandBuffer);
-        CommandBuffer = nullptr;
-
-		if (bFlushPool)
-		{
-			CommandSubmission->AddCommandPool(CommandPool);
-			CommandPool = nullptr;
-		}
-
-        TimestampQueryAllocator.PrepareForNewCommandBuffer();
-        OcclusionQueryAllocator.PrepareForNewCommandBuffer();
-
-        FVulkanRHI::Get()->SubmitCommands(CommandSubmission, true);
-        CommandSubmission = nullptr;
+        ContextState.ResetStateForNewCommandBuffer();
+        return nullptr;
     }
 
+    if (!CommandBuffer->End())
+    {
+        VULKAN_ERROR_CRITICAL("Failed to End CommandBuffer");
+    }
+
+    CommandSubmission->AddCommandBuffer(CommandBuffer);
+    CommandBuffer = nullptr;
+
+    if (bFlushPool)
+    {
+        CommandSubmission->AddCommandPool(CommandPool);
+        CommandPool = nullptr;
+    }
+
+    TimestampQueryAllocator.PrepareForNewCommandBuffer();
+    OcclusionQueryAllocator.PrepareForNewCommandBuffer();
+
+    FVulkanFence* SubmittedFence = CommandSubmission->Fence;
+
+    FVulkanRHI::Get()->SubmitCommands(CommandSubmission, true);
+    CommandSubmission = nullptr;
+
     ContextState.ResetStateForNewCommandBuffer();
+    return SubmittedFence;
 }
 
 void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue)
@@ -249,94 +261,94 @@ void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQue
 
 void FVulkanCommandContext::ForceFlushCommandPool()
 {
-	// -------------------------------------------------------------------------------------------
-	// Forces submission of the current command-pool to the active command payload. This is 
+    // -------------------------------------------------------------------------------------------
+    // Forces submission of the current command-pool to the active command payload. This is 
     // necessary because, at the end of a frame, there may be no further commands to submit after 
     // the Present() call. In such cases, FinishContext() will not flush or reset the 
     // command-pool, causing it to accumulate memory allocations across frames.
-	//
-	// By explicitly retiring the current command pool here, we ensure that command-buffers are 
+    //
+    // By explicitly retiring the current command pool here, we ensure that command-buffers are 
     // released and the pool is properly recycled, even in frames with minimal or no recorded 
     // GPU work.
-	// -------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
 
     if (!CommandPool)
     {
         return;
     }
 
-	if (CommandSubmission)
-	{
-		CommandSubmission->AddCommandPool(CommandPool);
-		CommandPool = nullptr;
-	}
+    if (CommandSubmission)
+    {
+        CommandSubmission->AddCommandPool(CommandPool);
+        CommandPool = nullptr;
+    }
 }
 
 void FVulkanCommandContext::StartContext()
 {
-	// -------------------------------------------------------------------------------------------
-	// NOTE: This context is intended to be used from a single thread. The lock only enforces 
+    // -------------------------------------------------------------------------------------------
+    // NOTE: This context is intended to be used from a single thread. The lock only enforces 
     // that the same thread which starts the context is the one that later finishes it. Once 
     // the codebase guarantees single-threaded use per context, this lock can be removed.
-	// -------------------------------------------------------------------------------------------
-	CommandContextCS.Lock();
+    // -------------------------------------------------------------------------------------------
+    CommandContextCS.Lock();
 
-	// -------------------------------------------------------------------------------------------
-	// Phase Transition: Finished -> Recording
-	// -------------------------------------------------------------------------------------------
-	CHECK(ContextPhase == ECommandContextPhase::Finished);
-	ContextPhase = ECommandContextPhase::Recording;
+    // -------------------------------------------------------------------------------------------
+    // Phase Transition: Finished -> Recording
+    // -------------------------------------------------------------------------------------------
+    CHECK(ContextPhase == ECommandContextPhase::Finished);
+    ContextPhase = ECommandContextPhase::Recording;
 
-	// -------------------------------------------------------------------------------------------
-	// Clear cached bindings, barriers, and any transient state accumulated in the previous 
+    // -------------------------------------------------------------------------------------------
+    // Clear cached bindings, barriers, and any transient state accumulated in the previous 
     // frame/phase.
-	// -------------------------------------------------------------------------------------------
-	ContextState.ResetState();
+    // -------------------------------------------------------------------------------------------
+    ContextState.ResetState();
 
-	// -------------------------------------------------------------------------------------------
-	// Pick up and retire any previously submitted command payloads to avoid unbounded growth 
+    // -------------------------------------------------------------------------------------------
+    // Pick up and retire any previously submitted command payloads to avoid unbounded growth 
     // in per-frame allocations and to free pools/buffers for reuse.
-	// -------------------------------------------------------------------------------------------
-	FVulkanRHI::Get()->ProcessPendingCommandSubmissions();
+    // -------------------------------------------------------------------------------------------
+    FVulkanRHI::Get()->ProcessPendingCommandSubmissions();
 
-	// -------------------------------------------------------------------------------------------
-	// Acquire/allocate a fresh command buffer so the caller can immediately begin recording 
+    // -------------------------------------------------------------------------------------------
+    // Acquire/allocate a fresh command buffer so the caller can immediately begin recording 
     // GPU work in this context.
-	// -------------------------------------------------------------------------------------------
-	ObtainCommandBuffer();
+    // -------------------------------------------------------------------------------------------
+    ObtainCommandBuffer();
 }
 
 void FVulkanCommandContext::FinishContext()
 {
-	// -------------------------------------------------------------------------------------------
-	// Phase Validation
-	// -------------------------------------------------------------------------------------------
-	CHECK(ContextPhase == ECommandContextPhase::Recording);
+    // -------------------------------------------------------------------------------------------
+    // Phase Validation
+    // -------------------------------------------------------------------------------------------
+    CHECK(ContextPhase == ECommandContextPhase::Recording);
 
-	// -------------------------------------------------------------------------------------------
-	// Finish the active command-buffer and request pool retirement/reset. We want one 
+    // -------------------------------------------------------------------------------------------
+    // Finish the active command-buffer and request pool retirement/reset. We want one 
     // command-pool per context per frame-in-flight. The actual pool retirement happens as part 
     // of submit/payload path if there are commands to submit.
-	// -------------------------------------------------------------------------------------------
-	FinishCommandBuffer(true);
+    // -------------------------------------------------------------------------------------------
+    FinishCommandBuffer(true);
 
-	// -------------------------------------------------------------------------------------------
-	// In frames where Present() is the last operation and no additional commands are 
+    // -------------------------------------------------------------------------------------------
+    // In frames where Present() is the last operation and no additional commands are 
     // recorded/submitted, ensure we don�t keep accumulating command-buffers in the pool across 
     // frames by retiring the pool here.
-	// -------------------------------------------------------------------------------------------
-	ForceFlushCommandPool();
+    // -------------------------------------------------------------------------------------------
+    ForceFlushCommandPool();
 
-	// -------------------------------------------------------------------------------------------
-	// Phase Transition: Recording -> Finished
-	// -------------------------------------------------------------------------------------------
-	ContextPhase = ECommandContextPhase::Finished;
+    // -------------------------------------------------------------------------------------------
+    // Phase Transition: Recording -> Finished
+    // -------------------------------------------------------------------------------------------
+    ContextPhase = ECommandContextPhase::Finished;
 
-	// -------------------------------------------------------------------------------------------
-	// See note in StartContext(): once guaranteed single-threaded use is enforced by design, 
+    // -------------------------------------------------------------------------------------------
+    // See note in StartContext(): once guaranteed single-threaded use is enforced by design, 
     // this lock can be removed.
-	// -------------------------------------------------------------------------------------------
-	CommandContextCS.Unlock();
+    // -------------------------------------------------------------------------------------------
+    CommandContextCS.Unlock();
 }
 
 void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
@@ -1129,6 +1141,70 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
     }
 }
 
+void FVulkanCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel)
+{
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::Cast(this, Src);
+    CHECK(SrcVulkanTexture != nullptr);
+
+    FVulkanBuffer* DstVulkanBuffer = FVulkanBuffer::Cast(Dst);
+    CHECK(DstVulkanBuffer != nullptr);
+
+    BarrierBatcher.FlushBarriers();
+
+    VkBufferImageCopy Copy = {};
+    Copy.bufferOffset      = DstOffset;
+    Copy.bufferRowLength   = 0;
+    Copy.bufferImageHeight = 0;
+
+    Copy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+    Copy.imageSubresource.mipLevel       = SrcMipLevel;
+    Copy.imageSubresource.baseArrayLayer = 0;
+    Copy.imageSubresource.layerCount     = 1;
+
+    const uint32 MipX = SrcRegion.PositionX >> SrcMipLevel;
+    const uint32 MipY = SrcRegion.PositionY >> SrcMipLevel;
+
+    Copy.imageOffset.x = static_cast<int32>(MipX);
+    Copy.imageOffset.y = static_cast<int32>(MipY);
+    Copy.imageOffset.z = 0;
+
+    Copy.imageExtent.width  = Math::Max(SrcRegion.Width >> SrcMipLevel, 1u);
+    Copy.imageExtent.height = Math::Max(SrcRegion.Height >> SrcMipLevel, 1u);
+    Copy.imageExtent.depth  = 1;
+
+    vkCmdCopyImageToBuffer(GetCommandBuffer().GetVkCommandBuffer(), SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanBuffer->GetVkBuffer(), 1, &Copy);
+}
+
+void FVulkanCommandContext::WriteFence(FRHIGpuFence* Fence)
+{
+    CHECK(Fence != nullptr);
+    FVulkanGpuFence* VulkanFence = static_cast<FVulkanGpuFence*>(Fence);
+
+    if (!CommandBuffer)
+    {
+        ObtainCommandBuffer();
+    }
+
+    if (CommandBuffer && CommandBuffer->GetNumCommands() > 0)
+    {
+        if (VulkanFence->UsesTimeline())
+        {
+            VulkanFence->EnqueueSignal(GetCommandQueue());
+        }
+
+        FVulkanFence* SubmittedFence = SubmitCommandBuffer(true);
+        if (!VulkanFence->UsesTimeline())
+        {
+            VulkanFence->SetSubmissionFence(SubmittedFence);
+        }
+
+        ObtainCommandBuffer();
+    }
+}
+
 void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
 {
     UNREFERENCED_VARIABLE(Resource);
@@ -1213,8 +1289,8 @@ void FVulkanCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITe
                 LayerCount = 1u;
             }
 
-			ImageBarrier.subresourceRange.baseArrayLayer = BaseArrayLayer;
-			ImageBarrier.subresourceRange.layerCount = LayerCount;
+            ImageBarrier.subresourceRange.baseArrayLayer = BaseArrayLayer;
+            ImageBarrier.subresourceRange.layerCount = LayerCount;
         }
 
         CHECK(!IsInsideRenderPass());
@@ -1346,25 +1422,25 @@ void FVulkanCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTr
 
 void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bVerticalSync)
 {
-	// -------------------------------------------------------------------------------------------
-	// We intentionally do not retire or reset the command pool here. The goal is to maintain 
+    // -------------------------------------------------------------------------------------------
+    // We intentionally do not retire or reset the command pool here. The goal is to maintain 
     // a single command pool per command context, per thread, per frame-in-flight. This helps 
     // avoid unnecessary command pool allocations or resets between multiple Present() calls
-	// in the same frame.
-	//
-	// The command pool will instead be explicitly retired at the end of FinishContext(), 
+    // in the same frame.
+    //
+    // The command pool will instead be explicitly retired at the end of FinishContext(), 
     // ensuring proper lifecycle management without leaks.
-	// -------------------------------------------------------------------------------------------
-	FinishCommandBuffer(false);
+    // -------------------------------------------------------------------------------------------
+    FinishCommandBuffer(false);
 
-	FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(InSwapChain);
-	VulkanSwapChain->Present(this, bVerticalSync);
+    FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(InSwapChain);
+    VulkanSwapChain->Present(this, bVerticalSync);
 
-	// -------------------------------------------------------------------------------------------
-	// Acquire or allocate a fresh command buffer so that subsequent GPU work can continue 
+    // -------------------------------------------------------------------------------------------
+    // Acquire or allocate a fresh command buffer so that subsequent GPU work can continue 
     // recording immediately after presenting.
-	// -------------------------------------------------------------------------------------------
-	ObtainCommandBuffer();
+    // -------------------------------------------------------------------------------------------
+    ObtainCommandBuffer();
 }
 
 void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)

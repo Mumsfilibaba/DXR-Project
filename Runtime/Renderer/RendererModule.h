@@ -15,16 +15,19 @@ public:
     virtual bool Initialize() override final;
     virtual void Release() override final;
 
-	virtual void BeginFrame() override final;
-	virtual void Tick() override final;
-	virtual void EndFrame() override final;
+    virtual void BeginFrame() override final;
+    virtual void Tick() override final;
+    virtual void EndFrame() override final;
 
-    virtual void RenderSceneView(const FSceneRenderView& SceneRenderView) override final;
-	virtual void RenderUI() override final;
-
-    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height) override final;
-	virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) override final;
-	virtual void PresentSwapChain(FRHISwapChainRef SwapChain) override final;
+    virtual void RenderSceneView(const FSceneRenderView& SceneRenderView) override final; 
+    virtual void RenderUI() override final; 
+ 
+    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) override final; 
+    virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID) override final; 
+ 
+    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height) override final; 
+    virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) override final; 
+    virtual void PresentSwapChain(FRHISwapChainRef SwapChain) override final; 
 
     // Creates and adds a scene to the list of scenes
     virtual IScene* CreateScene(FWorld* World) override final;

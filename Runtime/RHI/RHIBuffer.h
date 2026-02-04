@@ -1,9 +1,11 @@
-#pragma once
-#include "Core/Containers/String.h"
-#include "RHI/RHIResource.h"
+#pragma once 
+#include "Core/Containers/String.h" 
+#include "RHI/RHIResource.h" 
+ 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-enum class EBufferFlags : uint16
-{
+enum class EBufferFlags : uint16 
+{ 
     None = 0,
 
     Default  = FLAG(1), // Default Device Memory
@@ -38,27 +40,32 @@ struct FRHIBufferInfo
     uint64 Size   = 0;
 };
 
-class FRHIBuffer : public FRHIResource
-{
-protected:
-    explicit FRHIBuffer(const FRHIBufferInfo& InBufferInfo)
+class FRHIBuffer : public FRHIResource 
+{ 
+protected: 
+    explicit FRHIBuffer(const FRHIBufferInfo& InBufferInfo) 
         : FRHIResource()
         , Info(InBufferInfo)
     {
     }
 
-public:
-    virtual void* GetRHINativeHandle() const = 0;
-    virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
+public: 
+    virtual void* GetRHINativeHandle() const = 0; 
+    virtual FRHIDescriptorHandle GetBindlessHandle() const = 0; 
+ 
+    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) { return nullptr; } 
+    virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) { } 
+ 
+    virtual void SetDebugName(const FString& InName) = 0; 
+    virtual FString GetDebugName() const = 0; 
+ 
+    const FRHIBufferInfo& GetInfo() const 
+    { 
+        return Info; 
+    } 
 
-    virtual void SetDebugName(const FString& InName) = 0;
-    virtual FString GetDebugName() const = 0;
+protected: 
+    FRHIBufferInfo Info; 
+}; 
 
-    const FRHIBufferInfo& GetInfo() const
-    {
-        return Info;
-    }
-
-protected:
-    FRHIBufferInfo Info;
-};
+ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -7,8 +7,8 @@
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
-#include "Renderer/FrameResources.h"
 #include "RendererCore/RenderSettings.h"
+#include "RendererCore/Interfaces/IRendererModule.h"
 
 FEditorEngine::FEditorEngine()
     : FEngine()
@@ -91,6 +91,31 @@ void FEditorEngine::Release()
 void FEditorEngine::Tick(float DeltaTime)
 {
     FEngine::Tick(DeltaTime);
+
+    // Consume any completed async editor pick results.
+    if (FWorld* LocalWorld = GetWorld())
+    {
+        if (IRendererModule* RendererModule = IRendererModule::Get())
+        {
+            uint32 PickedObjectID = 0;
+            if (RendererModule->PollEditorObjectPickResult(LocalWorld->GetSceneInterface(), PickedObjectID))
+            {
+                IScene* Scene       = LocalWorld->GetSceneInterface();
+                FActor* PickedActor = Scene ? Scene->GetActorByObjectID(PickedObjectID) : nullptr;
+
+                LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickedObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
+
+                if (PickedActor)
+                {
+                    SetSelectedActor(PickedActor);
+                }
+                else
+                {
+                    ClearSelection();
+                }
+            }
+        }
+    }
 
     const FIntVector2 Size = ViewportWidget->GetViewportSize();
     if (ViewportImageSize != Size)

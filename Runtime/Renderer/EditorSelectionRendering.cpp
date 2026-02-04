@@ -313,14 +313,14 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
             }
 
-            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
-
-            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
-
-            CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
-        }
-    }
+            CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat()); 
+  
+            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32); 
+            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants); 
+  
+            CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0); 
+        } 
+    } 
 
     CommandList.EndRenderPass();
 
@@ -410,7 +410,7 @@ void FEditorSelectionIDPass::InitializePipelineState(FMaterial* Material, const 
     }
 
     FRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc         = EComparisonFunc::Equal;
+    DepthStencilStateInfo.DepthFunc         = EComparisonFunc::LessEqual;
     DepthStencilStateInfo.bDepthEnable      = true;
     DepthStencilStateInfo.bDepthWriteEnable = false;
 
@@ -533,7 +533,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
         return;
     }
 
-    CommandList.TransitionTexture(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthRead));
+    CommandList.TransitionTexture(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite)); 
     CommandList.TransitionTexture(FrameResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Editor SelectionID");
@@ -638,14 +638,19 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
             constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
             CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
 
+            if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
+            {
+                CommandList.SetShaderConstants(PixelShader, &StaticMesh->GetTransformShaderData(), NumConstants);
+            }
+
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
     }
 
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTexture(FrameResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
-    CommandList.TransitionTexture(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTexture(FrameResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource)); 
+    CommandList.TransitionTexture(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource)); 
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Editor SelectionID");
 }

@@ -32,17 +32,23 @@ struct IRendererModule : public FModuleInterface
     /** @brief Run a frame on the Renderer side */
     virtual void Tick() = 0;
 
-	/** @brief End the frame */
-	virtual void EndFrame() = 0;
+    /** @brief End the frame */
+    virtual void EndFrame() = 0;
 
     /** @brief Render the scene */
     virtual void RenderSceneView(const FSceneRenderView& SceneRenderView) = 0;
 
-    /** @brief Render UI */
-    virtual void RenderUI() = 0;
-
-    /** @brief Resize a SwapChain on the RHIThread */
-    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight) = 0;
+    /** @brief Render UI */ 
+    virtual void RenderUI() = 0; 
+ 
+    /** @brief Request an async editor ObjectID pick at the given pixel (in render target space). */ 
+    virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) = 0; 
+ 
+    /** @brief Poll for a completed editor ObjectID pick. Returns true if a result was produced. */ 
+    virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID) = 0; 
+ 
+    /** @brief Resize a SwapChain on the RHIThread */ 
+    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight) = 0; 
 
     /** @brief Prepare a swapchain for being used in rendering */
     virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) = 0;

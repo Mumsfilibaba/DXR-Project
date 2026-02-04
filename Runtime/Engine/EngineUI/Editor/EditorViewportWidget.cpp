@@ -1,8 +1,11 @@
 #include "Application/Application.h"
-#include "RHI/RHIResources.h"
-#include "Engine/EngineUI/Editor/EditorViewportWidget.h"
-#include "ImGuiPlugin/ImGuiCore.h"
-#include "ImGuiPlugin/ImGuiRenderer.h"
+#include "RHI/RHIResources.h" 
+#include "Engine/Engine.h" 
+#include "Engine/EngineUI/Editor/EditorGuizmo.h" 
+#include "Engine/EngineUI/Editor/EditorViewportWidget.h" 
+#include "ImGuiPlugin/ImGuiCore.h" 
+#include "ImGuiPlugin/ImGuiRenderer.h" 
+#include "RendererCore/Interfaces/IRendererModule.h" 
 
 FEditorViewportWidget::FEditorViewportWidget()
     : CachedViewportSize(0, 0)
@@ -77,27 +80,79 @@ void FEditorViewportWidget::Draw()
 
         // Draw the viewport texture
         ImGui::Image(&ViewportImage, ContentSize);
+        const ImVec2 ImageMin  = ImGui::GetItemRectMin();
+        const ImVec2 ImageSize = ImGui::GetItemRectSize();
 
         // ---------------------------------------------------------------------
         // Viewport activation
         // ---------------------------------------------------------------------
 
-        ImGui::SetCursorScreenPos(ContentPos);
+        ImGui::SetCursorScreenPos(ImageMin);
 
         const ImGuiButtonFlags ButtonFlags =
             ImGuiButtonFlags_MouseButtonLeft |
             ImGuiButtonFlags_MouseButtonRight |
             ImGuiButtonFlags_MouseButtonMiddle;
 
-        ImGui::InvisibleButton("##ViewportInputArea", ContentSize, ButtonFlags);
+        ImGui::InvisibleButton("##ViewportInputArea", ImageSize, ButtonFlags);
 
-        if (ImGui::IsItemClicked(ImGuiMouseButton_Left) || ImGui::IsItemClicked(ImGuiMouseButton_Right) || ImGui::IsItemClicked(ImGuiMouseButton_Middle))
+        const bool bWasViewportInputActive = bViewportInputActive;
+        const bool bClickedLeft            = ImGui::IsItemClicked(ImGuiMouseButton_Left);
+        const bool bClickedRight           = ImGui::IsItemClicked(ImGuiMouseButton_Right);
+        const bool bClickedMiddle          = ImGui::IsItemClicked(ImGuiMouseButton_Middle);
+        const bool bAnyItemClick           = bClickedLeft || bClickedRight || bClickedMiddle;
+
+        if (bAnyItemClick)
         {
             bViewportInputActive = true;
 
             if (ViewportWidget && FApplication::IsInitialized())
             {
                 FApplication::Get().SetFocusWidget(ViewportWidget);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Editor picking (ObjectID readback request) 
+        // --------------------------------------------------------------------- 
+ 
+        // Only pick if the viewport was already active before this click. The first click just activates input. 
+        const bool bBlockPickForGizmo = 
+            EditorGuizmo::IsUsingAny() || 
+            EditorGuizmo::IsOver() || 
+            EditorGuizmo::IsUsingViewManipulate() || 
+            EditorGuizmo::IsViewManipulateHovered(); 
+ 
+        if (bWasViewportInputActive && bClickedLeft && !bBlockPickForGizmo) 
+        { 
+            const ImVec2 MousePos = ImGui::GetMousePos(); 
+ 
+            const float LocalXf = MousePos.x - ImageMin.x; 
+            const float LocalYf = MousePos.y - ImageMin.y; 
+
+            if (LocalXf >= 0.0f && LocalYf >= 0.0f && LocalXf < ImageSize.x && LocalYf < ImageSize.y)
+            {
+                if (FEngine::IsInitialized())
+                {
+                    if (FWorld* World = FEngine::Get()->GetWorld())
+                    {
+                        if (IRendererModule* RendererModule = IRendererModule::Get())
+                        {
+                            const uint32 RenderWidth  = ViewportImage.Texture ? ViewportImage.Texture->GetWidth() : static_cast<uint32>(ContentSize.x);
+                            const uint32 RenderHeight = ViewportImage.Texture ? ViewportImage.Texture->GetHeight() : static_cast<uint32>(ContentSize.y);
+
+                            const float SafeW = ImageSize.x > 0.0f ? ImageSize.x : 1.0f;
+                            const float SafeH = ImageSize.y > 0.0f ? ImageSize.y : 1.0f;
+
+                            const float U = LocalXf / SafeW;
+                            const float V = LocalYf / SafeH;
+
+                            const uint32 PixelX = RenderWidth > 0 ? Math::Min(static_cast<uint32>(U * float(RenderWidth)), RenderWidth - 1) : 0;
+                            const uint32 PixelY = RenderHeight > 0 ? Math::Min(static_cast<uint32>(V * float(RenderHeight)), RenderHeight - 1) : 0;
+                            RendererModule->RequestEditorObjectPick(World->GetSceneInterface(), PixelX, PixelY);
+                        }
+                    }
+                }
             }
         }
 

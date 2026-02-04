@@ -686,6 +686,11 @@ FRHIQuery* FRHIValidation::CreateQuery(EQueryType InQueryType)
     return RealRHI->CreateQuery(InQueryType);
 }
 
+FRHIGpuFence* FRHIValidation::CreateFence()
+{
+    return RealRHI->CreateFence();
+}
+
 IRHICommandContext* FRHIValidation::ObtainCommandContext()
 {
     IRHICommandContext* RealContext = RealRHI->ObtainCommandContext();
@@ -1161,6 +1166,34 @@ void FRHIValidationCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITextu
     }
 
     RealContext->CopyTextureRegion(Dst, Src, CopyDesc);
+}
+
+void FRHIValidationCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel)
+{
+    if (!Dst)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call CopyTextureRegionToBuffer when Dst is nullptr");
+        return;
+    }
+
+    if (!Src)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call CopyTextureRegionToBuffer when Src is nullptr");
+        return;
+    }
+
+    RealContext->CopyTextureRegionToBuffer(Dst, DstOffset, Src, SrcRegion, SrcMipLevel);
+}
+
+void FRHIValidationCommandContext::WriteFence(FRHIGpuFence* Fence)
+{
+    if (!Fence)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call WriteFence when Fence is nullptr");
+        return;
+    }
+
+    RealContext->WriteFence(Fence);
 }
 
 void FRHIValidationCommandContext::DiscardContents(FRHITexture* Texture)

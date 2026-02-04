@@ -7,10 +7,10 @@ typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
 {
 public:
-	static FORCEINLINE FVulkanBuffer* Cast(FRHIBuffer* Buffer)
-	{
-		return static_cast<FVulkanBuffer*>(Buffer);
-	}
+    static FORCEINLINE FVulkanBuffer* Cast(FRHIBuffer* Buffer)
+    {
+        return static_cast<FVulkanBuffer*>(Buffer);
+    }
 
 public:
     FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc);
@@ -18,11 +18,13 @@ public:
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
-	// FRHIBuffer Interface
-	virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkBuffer()); }
-	virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    // FRHIBuffer Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkBuffer()); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
+    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
+    virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
 
     VkBuffer GetVkBuffer() const
     {

@@ -1,10 +1,12 @@
 #pragma once
+#include "Core/CoreTypes.h"
 
 class FCamera;
 class FLight;
 class FStaticMeshComponent;
 class FSkyboxComponent;
 class FLightProbe;
+class FActor;
 
 struct IScene
 {
@@ -27,4 +29,7 @@ struct IScene
 
     // Add a static Mesh
     virtual void AddStaticMesh(FStaticMeshComponent* InMeshComponent) = 0;
+
+    // Resolve an ObjectID (from the selection/picking buffer) back to an Actor.
+    virtual FActor* GetActorByObjectID(uint32 ObjectID) const = 0;
 };

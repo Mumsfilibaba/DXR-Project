@@ -1340,15 +1340,15 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
         RHIDeviceFeatureSupport::MaxCubeArrayCount       = PhysicalDeviceProperties.limits.maxImageArrayLayers / RHI_NUM_CUBE_FACES;
 
-        // Buffer / Memory Limits
-        const uint32 MinBufferStride = sizeof(uint32);
-        RHIDeviceFeatureSupport::MaxConstantBufferSize      = PhysicalDeviceProperties.limits.maxUniformBufferRange;
-        RHIDeviceFeatureSupport::MaxStorageBufferSize       = PhysicalDeviceProperties.limits.maxStorageBufferRange;
-        RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0);
-        RHIDeviceFeatureSupport::StructuredBufferMinStride  = Math::Max<uint32>(MinBufferStride, (uint32)PhysicalDeviceProperties.limits.minStorageBufferOffsetAlignment);
-        RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint32(~0);
-        RHIDeviceFeatureSupport::RawBufferRequiredAlignment = MinBufferStride;
-    }
+        // Buffer / Memory Limits 
+        const uint32 MinBufferStride = sizeof(uint32); 
+        RHIDeviceFeatureSupport::MaxConstantBufferSize      = PhysicalDeviceProperties.limits.maxUniformBufferRange; 
+        RHIDeviceFeatureSupport::MaxStorageBufferSize       = PhysicalDeviceProperties.limits.maxStorageBufferRange; 
+        RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0); 
+        RHIDeviceFeatureSupport::StructuredBufferMinStride  = MinBufferStride; 
+        RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint32(~0); 
+        RHIDeviceFeatureSupport::RawBufferRequiredAlignment = MinBufferStride; 
+    } 
 
     // -------------------------------------------------------------------------------------------
     // SV_RenderTargetArrayIndex from VS (shaderOutputLayer in Vulkan 1.2)

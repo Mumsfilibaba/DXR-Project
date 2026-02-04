@@ -55,14 +55,14 @@ private:
     FLightProbe* SelectedLightProbe;
 
     // Editor Interface
-    TSharedPtr<FEditorDockspaceWidget>         DockspaceWidget;
-    TSharedPtr<FEditorFooterWidget>            FooterWidget;
-    TSharedPtr<FEditorOutputLogWidget>         OutputLogWidget;
-    TSharedPtr<FEditorViewportWidget>          ViewportWidget;
-    TSharedPtr<FEditorSceneHierarchyWidget>    SceneHierarchyWidget;
-    TSharedPtr<FEditorPropertiesWidget>        PropertiesWidget;
-    TSharedPtr<FEditorContentBrowserWidget>    ContentBrowserWidget;
-    TSharedPtr<FEditorGuizmoWidget>            GuizmoWidget;
-    FRHITextureRef                             ViewportImage;
-    FIntVector2                                ViewportImageSize;
+    TSharedPtr<FEditorDockspaceWidget>      DockspaceWidget;
+    TSharedPtr<FEditorFooterWidget>         FooterWidget;
+    TSharedPtr<FEditorOutputLogWidget>      OutputLogWidget;
+    TSharedPtr<FEditorViewportWidget>       ViewportWidget;
+    TSharedPtr<FEditorSceneHierarchyWidget> SceneHierarchyWidget;
+    TSharedPtr<FEditorPropertiesWidget>     PropertiesWidget;
+    TSharedPtr<FEditorContentBrowserWidget> ContentBrowserWidget;
+    TSharedPtr<FEditorGuizmoWidget>         GuizmoWidget;
+    FRHITextureRef                          ViewportImage;
+    FIntVector2                             ViewportImageSize;
 };
