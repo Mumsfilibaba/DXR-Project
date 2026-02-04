@@ -116,6 +116,12 @@ struct FMaterial
     float AO;
     int   Padding0;
     int   Padding1;
+
+    // 32-48
+    float ParallaxHeightScale;
+    float ParallaxMinLayers;
+    float ParallaxMaxLayers;
+    float Padding2;
 };
 
 struct FLightProbeInfo

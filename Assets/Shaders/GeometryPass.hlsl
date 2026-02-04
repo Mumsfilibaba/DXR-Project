@@ -3,6 +3,7 @@
 #include "Constants.hlsli"
 #include "ColorSpaceTransforms.hlsli"
 #include "FastMath.hlsli"
+#include "ParallaxMapping.hlsli"
 
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)
@@ -153,48 +154,6 @@ struct FPSOutput
     float2 Velocity : SV_Target3;
 };
 
-#if ENABLE_PARALLAX_MAPPING
-// TODO: We do not want any constants like this, it should be a constantbuffer or something similar
-static const float HEIGHT_SCALE = 0.03;
-
-float SampleHeightMap(float2 TexCoords)
-{
-    return 1.0 - HeightTex.Sample(MaterialSampler, TexCoords);
-}
-
-float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
-{
-    const float MinLayers = 32;
-    const float MaxLayers = 64;
-
-    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0, 0.0, 1.0), ViewDir)));
-    float LayerDepth = 1.0 / NumLayers;
-    
-    float2 P              = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
-    float2 DeltaTexCoords = P / NumLayers;
-
-    float2 CurrentTexCoords     = TexCoords;
-    float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
-    
-    float CurrentLayerDepth	= 0.0;
-    while (CurrentLayerDepth < CurrentDepthMapValue)
-    {
-        CurrentTexCoords     -= DeltaTexCoords;
-        CurrentDepthMapValue  = SampleHeightMap(CurrentTexCoords);
-        CurrentLayerDepth    += LayerDepth;
-    }
-
-    float2 PrevTexCoords = CurrentTexCoords + DeltaTexCoords;
-
-    float AfterDepth  = CurrentDepthMapValue - CurrentLayerDepth;
-    float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
-
-    float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
-    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0 - Weight);
-    return FinalTexCoords;
-}
-#endif
-
 FPSOutput PSMain(FPSInput Input)
 {
     float2 TexCoords = Input.TexCoord;
@@ -203,9 +162,14 @@ FPSOutput PSMain(FPSInput Input)
 #if ENABLE_PARALLAX_MAPPING
     TexCoords.y = 1.0 - TexCoords.y;
 
+    const float2 TexCoordsDx = ddx(TexCoords);
+    const float2 TexCoordsDy = ddy(TexCoords);
+
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
-    TexCoords      = ParallaxMapping(TexCoords, ViewDir);
-    if (TexCoords.x > 1.0 || TexCoords.y > 1.0 || TexCoords.x < 0.0 || TexCoords.y < 0.0)
+
+    uint bParallaxDiscard = 0;
+    TexCoords = ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+    if (bParallaxDiscard != 0)
     {
         discard;
     }

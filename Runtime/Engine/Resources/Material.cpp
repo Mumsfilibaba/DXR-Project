@@ -2,6 +2,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/Engine.h"
+#include "Core/Math/Math.h"
 
 FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
     : AlbedoMap()
@@ -44,6 +45,9 @@ void FMaterial::BuildBuffer(FRHICommandList& CommandList)
     MaterialData.Metallic         = MaterialInfo.Metallic;
     MaterialData.Roughness        = MaterialInfo.Roughness;
     MaterialData.AmbientOcclusion = MaterialInfo.AmbientOcclusion;
+    MaterialData.ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
+    MaterialData.ParallaxMinLayers   = MaterialInfo.ParallaxMinLayers;
+    MaterialData.ParallaxMaxLayers   = MaterialInfo.ParallaxMaxLayers;
 
     CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(MaterialBuffer.Get(), FBufferRegion(0, sizeof(FMaterialHLSL)), &MaterialData);
@@ -117,6 +121,22 @@ void FMaterial::EnableDoubleSided(bool bIsDoubleSided)
     {
         MaterialInfo.MaterialFlags |= EMaterialFlags::DoubleSided;
     }
+}
+
+void FMaterial::SetParallaxHeightScale(float InParallaxHeightScale)
+{
+    MaterialInfo.ParallaxHeightScale = InParallaxHeightScale;
+    bMaterialBufferIsDirty           = true;
+}
+
+void FMaterial::SetParallaxLayers(float InParallaxMinLayers, float InParallaxMaxLayers)
+{
+    InParallaxMinLayers = Math::Max(InParallaxMinLayers, 1.0f);
+    InParallaxMaxLayers = Math::Max(InParallaxMaxLayers, InParallaxMinLayers);
+
+    MaterialInfo.ParallaxMinLayers = InParallaxMinLayers;
+    MaterialInfo.ParallaxMaxLayers = InParallaxMaxLayers;
+    bMaterialBufferIsDirty         = true;
 }
 
 void FMaterial::SetName(const FString& InName)

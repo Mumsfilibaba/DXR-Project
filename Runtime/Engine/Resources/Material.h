@@ -28,6 +28,9 @@ struct FMaterialInfo
         , Roughness(0.0f)
         , Metallic(0.0f)
         , AmbientOcclusion(0.5f)
+        , ParallaxHeightScale(0.03f)
+        , ParallaxMinLayers(32.0f)
+        , ParallaxMaxLayers(64.0f)
         , MaterialFlags(EMaterialFlags::None)
 
     {
@@ -37,6 +40,9 @@ struct FMaterialInfo
     float          Roughness;
     float          Metallic;
     float          AmbientOcclusion;
+    float          ParallaxHeightScale;
+    float          ParallaxMinLayers;
+    float          ParallaxMaxLayers;
     EMaterialFlags MaterialFlags;
 };
 
@@ -50,6 +56,11 @@ struct FMaterialHLSL
     float    AmbientOcclusion = 1.0f;
     int32    Padding0         = 0;
     int32    Padding1         = 0;
+    // 32-48
+    float    ParallaxHeightScale = 0.03f;
+    float    ParallaxMinLayers   = 32.0f;
+    float    ParallaxMaxLayers   = 64.0f;
+    float    Padding2            = 0.0f;
 };
 
 class ENGINE_API FMaterial
@@ -74,6 +85,9 @@ public:
     void EnableHeightMap(bool bEnableHeightMap);
     void EnableAlphaMask(bool bEnableAlphaMask);
     void EnableDoubleSided(bool bIsDoubleSided);
+
+    void SetParallaxHeightScale(float InParallaxHeightScale);
+    void SetParallaxLayers(float InParallaxMinLayers, float InParallaxMaxLayers);
     
     void SetName(const FString& InName);
 
@@ -118,6 +132,21 @@ public:
     const FString& GetName() const
     {
         return Name;
+    }
+
+    float GetParallaxHeightScale() const
+    {
+        return MaterialInfo.ParallaxHeightScale;
+    }
+
+    float GetParallaxMinLayers() const
+    {
+        return MaterialInfo.ParallaxMinLayers;
+    }
+
+    float GetParallaxMaxLayers() const
+    {
+        return MaterialInfo.ParallaxMaxLayers;
     }
 
 public:

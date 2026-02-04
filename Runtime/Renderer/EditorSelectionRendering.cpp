@@ -6,8 +6,15 @@
 #include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+#include "Core/Misc/ConsoleManager.h"
 
 #if EDITOR_BUILD
+
+static TAutoConsoleVariable<bool> CVarEditorSelectionUseUnjitteredCamera(
+    "Renderer.Editor.Selection.UseUnjitteredCamera",
+    "Use unjittered camera matrices for editor selection buffers (depth/ObjectID). Disable to better match TAA-jittered shading at the cost of more outline jitter.",
+    true,
+    EConsoleVariableFlags::Default);
 
 FEditorNoJitterDepthPass::FEditorNoJitterDepthPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -33,7 +40,7 @@ void FEditorNoJitterDepthPass::InitializePipelineState(FMaterial* Material, cons
     TArray<uint8>         ShaderCode;
     TArray<FShaderDefine> ShaderDefines;
 
-    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", "(1)");
+    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", CVarEditorSelectionUseUnjitteredCamera.GetValue() ? "(1)" : "(0)");
 
     if (Material->HasHeightMap())
     {
@@ -258,11 +265,14 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        if (Material->HasAlphaMask())
+        if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
             CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
             CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+        }
 
+        if (Material->HasAlphaMask())
+        {
             if (Material->IsPackedMaterial())
             {
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
@@ -272,27 +282,17 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 0);
             }
         }
-        else if (Material->HasHeightMap())
+
+        if (Material->HasHeightMap())
         {
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-            CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
         }
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
-            if (Material->HasAlphaMask() || Material->IsDoubleSided())
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
-                };
 
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
-            }
-            else if (Material->HasHeightMap())
+            if (Material->HasHeightMap())
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
@@ -302,6 +302,16 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
+            }
+            else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+            {
+                FRHIBuffer* VertexBuffers[] =
+                {
+                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                };
+
+                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
             }
             else
             {
@@ -352,6 +362,8 @@ void FEditorSelectionIDPass::InitializePipelineState(FMaterial* Material, const 
 
     TArray<uint8>         ShaderCode;
     TArray<FShaderDefine> ShaderDefines;
+
+    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", CVarEditorSelectionUseUnjitteredCamera.GetValue() ? "(1)" : "(0)");
 
     if (Material->HasHeightMap())
     {
@@ -602,17 +614,8 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
-            if (Material->HasAlphaMask() || Material->IsDoubleSided())
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
-                };
 
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
-            }
-            else if (Material->HasHeightMap())
+            if (Material->HasHeightMap())
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
@@ -622,6 +625,16 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
                 };
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
+            }
+            else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+            {
+                FRHIBuffer* VertexBuffers[] =
+                {
+                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                };
+
+                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
             }
             else
             {

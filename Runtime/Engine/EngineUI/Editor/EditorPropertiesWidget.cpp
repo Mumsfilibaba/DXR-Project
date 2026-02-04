@@ -266,6 +266,32 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         }
                     }
 
+                    // Parallax height scale
+                    if (MeshComponent->GetMaterial()->HasHeightMap())
+                    {
+                        float ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
+                        const float ParallaxHeightScale0 = 0.03f;
+
+                        if (EditorWidgets::DrawFloatProperty("Parallax Height Scale", ParallaxHeightScale, 0.001f, 0.0f, 0.2f, "%.3f", true, &ParallaxHeightScale0))
+                        {
+                            MeshComponent->GetMaterial()->SetParallaxHeightScale(ParallaxHeightScale);
+                        }
+
+                        float ParallaxMinLayers = MaterialInfo.ParallaxMinLayers;
+                        const float ParallaxMinLayers0 = 32.0f;
+                        if (EditorWidgets::DrawFloatProperty("Parallax Min Layers", ParallaxMinLayers, 1.0f, 1.0f, 128.0f, "%.0f", true, &ParallaxMinLayers0))
+                        {
+                            MeshComponent->GetMaterial()->SetParallaxLayers(ParallaxMinLayers, MeshComponent->GetMaterial()->GetParallaxMaxLayers());
+                        }
+
+                        float ParallaxMaxLayers = MaterialInfo.ParallaxMaxLayers;
+                        const float ParallaxMaxLayers0 = 64.0f;
+                        if (EditorWidgets::DrawFloatProperty("Parallax Max Layers", ParallaxMaxLayers, 1.0f, 1.0f, 256.0f, "%.0f", true, &ParallaxMaxLayers0))
+                        {
+                            MeshComponent->GetMaterial()->SetParallaxLayers(MeshComponent->GetMaterial()->GetParallaxMinLayers(), ParallaxMaxLayers);
+                        }
+                    }
+
                     EditorWidgets::EndPropertyTable();
                 }
             }
