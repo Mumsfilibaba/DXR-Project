@@ -19,7 +19,9 @@ struct FWindowsPlatformMisc final : public FGenericPlatformMisc
 
     static FORCEINLINE void MemoryBarrier()
     {
+    #if PLATFORM_ARCHITECTURE_X86_64
         _mm_sfence();
+    #endif
     }
 
     static FORCEINLINE int32 GetLastErrorString(FString& OutErrorString)
