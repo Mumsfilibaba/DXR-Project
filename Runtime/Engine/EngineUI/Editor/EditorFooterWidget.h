@@ -14,6 +14,8 @@
 
 class FEditorFooterWidget final
 {
+    static constexpr int32 InvalidIndex = -1;
+
 public:
     FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice);
     ~FEditorFooterWidget();
@@ -26,23 +28,28 @@ public:
     }
 
 private:
-    static constexpr int32 InvalidIndex = -1;
+    void ApplyCandidateToBuffer(int32 CandidateIndex);
 
-    // ImGui callback for the text-input field
-    int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
-    
     // Helper that can invalidate the candidate-list
     void InvalidateCandidates();
 
+    // ImGui callback for the text-input field
+    int32 InputTextCallback(struct ImGuiInputTextCallbackData* Data);
+
+private:
     TArray<TPair<IConsoleObject*, FString>> Candidates;
     FString                                 CandidateFilter;
     TStaticArray<CHAR, 256>                 TextBuffer;
     TSharedPtr<IOutputDevice>               OutputDevice;
     TSharedPtr<FConsoleInputHandler>        InputHandler;
-
-    int32 SelectedCandidateIndex     = InvalidIndex;
-    int32 HistoryIndex               = InvalidIndex;
-    bool  bCandidateSelectionChanged = false;
-    bool  bUpdateCursorPosition      = false;
-    bool  bScrollToBottom            = false;
+    int32                                   SelectedCandidateIndex;
+    int32                                   HistoryIndex;
+    int32                                   LastCursorPosition;
+    int32                                   PendingCursorPosition;
+    bool                                    bCandidateSelectionChanged;
+    bool                                    bRequestCursorPosition;
+    bool                                    bRequestInputFocus;
+    bool                                    bUpdateCursorPosition;
+    bool                                    bScrollToBottom;
+    bool                                    bCandidatesOverlayOpen;
 };

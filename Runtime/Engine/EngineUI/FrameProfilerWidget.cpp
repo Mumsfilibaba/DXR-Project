@@ -1,6 +1,6 @@
 #include "FrameProfilerWidget.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/ThreadManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -23,7 +23,7 @@ FFrameProfilerWidget::FFrameProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FFrameProfilerWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FFrameProfilerWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -32,7 +32,7 @@ FFrameProfilerWidget::~FFrameProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

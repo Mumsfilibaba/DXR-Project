@@ -626,6 +626,45 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
     FTextureCopyInfo CopyInfo;
 };
 
+DECLARE_RHICOMMAND(FRHICommandCopyTextureRegionToBuffer)
+{
+    FORCEINLINE FRHICommandCopyTextureRegionToBuffer(FRHIBuffer* InDst, uint64 InDstOffset, FRHITexture* InSrc, const FTextureRegion2D& InSrcRegion, uint32 InSrcMipLevel)
+        : Dst(InDst)
+        , DstOffset(InDstOffset)
+        , Src(InSrc)
+        , SrcRegion(InSrcRegion)
+        , SrcMipLevel(InSrcMipLevel)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.CopyTextureRegionToBuffer(Dst, DstOffset, Src, SrcRegion, SrcMipLevel);
+    }
+
+    FRHIBuffer*      Dst;
+    uint64           DstOffset;
+    FRHITexture*     Src;
+    FTextureRegion2D SrcRegion;
+    uint32           SrcMipLevel;
+};
+
+DECLARE_RHICOMMAND(FRHICommandWriteFence)
+{
+    FORCEINLINE FRHICommandWriteFence(FRHIGpuFence* InFence)
+        : Fence(InFence)
+    {
+        CHECK(Fence != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.WriteFence(Fence);
+    }
+
+    FRHIGpuFence* Fence;
+};
+
 DECLARE_RHICOMMAND(FRHICommandDiscardContents)
 {
     FORCEINLINE FRHICommandDiscardContents(FRHITexture* InTexture)

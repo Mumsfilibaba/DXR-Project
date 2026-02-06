@@ -71,6 +71,8 @@ void FWorld::Tick(float DeltaTime)
     // Update the view-proj matrices, at this point we should have a valid view and projection matrix
     if (CurrentCamera)
     {
+        // Keep matrices in sync every frame for both rendering and editor gizmos.
+        CurrentCamera->UpdateViewMatrix();
         CurrentCamera->UpdateWorldToClipSpaceMatrices();
     }
 }

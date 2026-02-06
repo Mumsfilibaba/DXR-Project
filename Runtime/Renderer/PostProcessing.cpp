@@ -3,6 +3,9 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/PostProcessing.h"
 #include "Renderer/Performance/GPUProfiler.h"
+#include "Renderer/SceneRenderer.h"
+#include "Renderer/EditorGridSettings.h"
+#include "Renderer/SelectionOutlineSettings.h"
 #include "RendererCore/RenderSettings.h"
 
 static TAutoConsoleVariable<bool> CVarFXAADebug(
@@ -24,19 +27,26 @@ static TAutoConsoleVariable<float> CVarTonemappingReinhardIntensity(
 
 FTonemapPass::FTonemapPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
-    , TonemapPSO(nullptr)
+    , TonemapPSO_Linear(nullptr)
+    , TonemapPSO_BackBuffer(nullptr)
     , TonemapShader(nullptr)
 {
 }
 
 FTonemapPass::~FTonemapPass()
 {
-    TonemapPSO.Reset();
+    TonemapPSO_Linear.Reset();
+    TonemapPSO_BackBuffer.Reset();
     TonemapShader.Reset();
 }
 
-bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
+bool FTonemapPass::Initialize(FFrameResources& FrameResources)
 {
+    if (!CreateResources(FrameResources, FrameResources.CurrentRenderWidth, FrameResources.CurrentRenderHeight))
+    {
+        return false;
+    }
+
     TArray<uint8> ShaderCode;
 
     FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
@@ -107,12 +117,22 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
     PSOInfo.VertexShader                                   = VShader.Get();
     PSOInfo.PixelShader                                    = TonemapShader.Get();
     PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
     PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
     PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    TonemapPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
-    if (!TonemapPSO)
+    // Linear output (float HDR->LDR target)
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    TonemapPSO_Linear = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    if (!TonemapPSO_Linear)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // BackBuffer output (runtime path)
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+    TonemapPSO_BackBuffer = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    if (!TonemapPSO_BackBuffer)
     {
         DEBUG_BREAK();
         return false;
@@ -121,7 +141,35 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
     return true;
 }
 
-void FTonemapPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources)
+bool FTonemapPass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
+#if !EDITOR_BUILD
+    (void)FrameResources;
+    (void)Width;
+    (void)Height;
+    return true;
+#else
+    if (Width <= 0 || Height <= 0)
+    {
+        return true;
+    }
+
+    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
+    const FClearValue ClearValue(FGlobalTextureFormats::FinalTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
+
+    FrameResources.TonemappedTarget = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
+    if (!FrameResources.TonemappedTarget)
+    {
+        return false;
+    }
+
+    FrameResources.TonemappedTarget->SetDebugName("Tonemapped Target");
+    return true;
+#endif
+}
+
+void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRHITexture* OutputTarget, bool bOutputSRGB)
 {
     // Function to return a enum from the tonemap cvar
     const auto GetTonemappingFunctionCVar = []()
@@ -139,9 +187,178 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FSceneRenderView&
         }
     };
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Tonemapping and BackBuffer-Blit");
+    if (!OutputTarget)
+    {
+        return;
+    }
 
-    TRACE_SCOPE("Tonemapping and BackBuffer-Blit");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Tonemapping");
+
+    TRACE_SCOPE("Tonemapping");
+
+    GPU_TRACE_SCOPE(CommandList, "Tonemapping");
+
+    const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
+    const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
+
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
+
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetScissorRect(ScissorRegion);
+
+    const bool bNeedsTransition = !OutputTarget->GetInfo().IsPresentable();
+    if (bNeedsTransition)
+    {
+        CommandList.TransitionTexture(OutputTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    }
+
+    FRHIBeginRenderPassInfo RenderPass;
+    RenderPass.NumRenderTargets            = 1;
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(OutputTarget, EAttachmentLoadAction::DontCare);
+
+    CommandList.BeginRenderPass(RenderPass);
+
+    const FRHIGraphicsPipelineStateRef& PSO = (OutputTarget->GetFormat() == RenderSettings::GetBackBufferFormat()) ? TonemapPSO_BackBuffer : TonemapPSO_Linear;
+    CommandList.SetGraphicsPipelineState(PSO.Get());
+
+    FRHIShaderResourceView* FinalTargetSRV = FrameResources.FinalTarget->GetShaderResourceView();
+    CommandList.SetShaderResourceView(TonemapShader.Get(), FinalTargetSRV, 0);
+    CommandList.SetSamplerState(TonemapShader.Get(), FrameResources.GBufferSampler.Get(), 0);
+
+    FTonemapInfoHLSL TonemapInfo;
+    TonemapInfo.TonemappingType   = GetTonemappingFunctionCVar();
+    TonemapInfo.bOutputSRGB       = bOutputSRGB ? 1 : 0;
+    TonemapInfo.ReinhardIntensity = Math::Clamp<float>(CVarTonemappingReinhardIntensity.GetValue(), 0.1f, 10.0f);
+    TonemapInfo.Padding0          = 0.0f;
+
+    constexpr uint32 NumConstants = sizeof(FTonemapInfoHLSL) / sizeof(uint32);
+    CommandList.SetShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
+
+    CommandList.DrawInstanced(3, 1, 0, 0);
+
+    CommandList.EndRenderPass();
+
+    if (bNeedsTransition)
+    {
+        CommandList.TransitionTexture(OutputTarget, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Tonemapping");
+}
+
+#if EDITOR_BUILD
+FFinalCompositePass::FFinalCompositePass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , CompositePSO(nullptr)
+    , CompositeShader(nullptr)
+{
+}
+
+FFinalCompositePass::~FFinalCompositePass()
+{
+    CompositePSO.Reset();
+    CompositeShader.Reset();
+}
+
+bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
+{
+    TArray<uint8> ShaderCode;
+
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIVertexShaderRef VShader = FRHI::Get()->CreateVertexShader(ShaderCode);
+    if (!VShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/FinalComposite.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    CompositeShader = FRHI::Get()->CreatePixelShader(ShaderCode);
+    if (!CompositeShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIDepthStencilStateInfo DepthStencilInfo;
+    DepthStencilInfo.DepthFunc         = EComparisonFunc::Always;
+    DepthStencilInfo.bDepthEnable      = false;
+    DepthStencilInfo.bDepthWriteEnable = false;
+
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
+    if (!DepthStencilState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIRasterizerStateInfo RasterizerInitializer;
+    RasterizerInitializer.CullMode = ECullMode::None;
+
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
+    if (!RasterizerState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIBlendStateInfo BlendStateInfo;
+    BlendStateInfo.NumRenderTargets = 1;
+
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    if (!BlendState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.InputLayout                                    = nullptr;
+    PSOInfo.BlendState                                     = BlendState.Get();
+    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
+    PSOInfo.RasterizerState                                = RasterizerState.Get();
+    PSOInfo.VertexShader                                   = VShader.Get();
+    PSOInfo.PixelShader                                    = CompositeShader.Get();
+    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
+
+    CompositePSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    if (!CompositePSO)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    return true;
+}
+
+void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources)
+{
+    if (!FrameResources.TonemappedTarget)
+    {
+        return;
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Final Composite");
+
+    TRACE_SCOPE("Final Composite");
+
+    GPU_TRACE_SCOPE(CommandList, "Final Composite");
 
     const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
     const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
@@ -154,32 +371,84 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FSceneRenderView&
 
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Load);
-    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::DontCare);
 
     CommandList.BeginRenderPass(RenderPass);
 
-    CommandList.SetGraphicsPipelineState(TonemapPSO.Get());
+    CommandList.SetGraphicsPipelineState(CompositePSO.Get());
 
-    FRHIShaderResourceView* FinalTargetSRV = FrameResources.FinalTarget->GetShaderResourceView();
-    CommandList.SetShaderResourceView(TonemapShader.Get(), FinalTargetSRV, 0);
-    CommandList.SetSamplerState(TonemapShader.Get(), FrameResources.GBufferSampler.Get(), 0);
+    CommandList.SetShaderResourceView(CompositeShader.Get(), FrameResources.TonemappedTarget->GetShaderResourceView(), 0);
+    CommandList.SetConstantBuffer(CompositeShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    FTonemapInfoHLSL TonemapInfo;
-    TonemapInfo.TonemappingType   = GetTonemappingFunctionCVar();
-    TonemapInfo.ReinhardIntensity = Math::Clamp<float>(CVarTonemappingReinhardIntensity.GetValue(), 0.1f, 10.0f);
-    TonemapInfo.Padding0          = 0.0f;
-    TonemapInfo.Padding1          = 0.0f;
+    const FSelectionOutlineSettings OutlineSettings = GetSelectionOutlineSettings();
+    const FEditorGridSettings GridSettings = GetEditorGridSettings();
+#if EDITOR_BUILD
+    FRHITexture* SelectionRingTexture = GetRenderer()->GetSelectionRingTexture();
+    const bool bCanUseSelectionOutline = OutlineSettings.bEnabled && (SelectionRingTexture != nullptr);
+    const bool bCanUseGrid = GridSettings.bEnabled && (FrameResources.EditorNoJitterDepth != nullptr);
+#else
+    FRHITexture* SelectionRingTexture = nullptr;
+    const bool bCanUseSelectionOutline = false;
+    const bool bCanUseGrid = false;
+#endif
+    if (bCanUseSelectionOutline)
+    {
+        CommandList.SetShaderResourceView(CompositeShader.Get(), SelectionRingTexture->GetShaderResourceView(), 1);
+    }
+    else
+    {
+        CommandList.SetShaderResourceView(CompositeShader.Get(), nullptr, 1);
+    }
 
-    constexpr uint32 NumConstants = sizeof(FTonemapInfoHLSL) / sizeof(uint32);
-    CommandList.SetShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
+    if (bCanUseGrid)
+    {
+        CommandList.SetShaderResourceView(CompositeShader.Get(), FrameResources.EditorNoJitterDepth->GetShaderResourceView(), 2);
+    }
+    else
+    {
+        CommandList.SetShaderResourceView(CompositeShader.Get(), nullptr, 2);
+    }
+
+    FRHISamplerState* PointSampler  = FrameResources.GBufferSampler.Get();
+    FRHISamplerState* LinearSampler = FrameResources.FXAASampler ? FrameResources.FXAASampler.Get() : FrameResources.GBufferSampler.Get();
+    CommandList.SetSamplerState(CompositeShader.Get(), PointSampler, 0);
+    CommandList.SetSamplerState(CompositeShader.Get(), LinearSampler, 1);
+
+    FFinalCompositeInfoHLSL Info;
+    Info.bEnableSelectionOutline = bCanUseSelectionOutline ? 1 : 0;
+    Info.bEnableGrid             = bCanUseGrid ? 1 : 0;
+    Info.OutlineAlpha            = OutlineSettings.Alpha;
+    Info.GridPlaneY              = GridSettings.PlaneY;
+
+    Info.GridMinorSize           = GridSettings.MinorSize;
+    Info.GridMajorSize           = GridSettings.MajorSize;
+    Info.GridMinorWidth          = GridSettings.MinorWidth;
+    Info.GridMajorWidth          = GridSettings.MajorWidth;
+
+    Info.OutlineColor            = OutlineSettings.Color;
+    Info.GridFadeDistance        = GridSettings.FadeDistance;
+    Info.GridMaxTraceDistance    = GridSettings.MaxTraceDistance;
+
+    Info.GridMinorColor          = GridSettings.MinorColor;
+    Info.GridMinorAlpha          = GridSettings.MinorAlpha;
+
+    Info.GridMajorColor          = GridSettings.MajorColor;
+    Info.GridMajorAlpha          = GridSettings.MajorAlpha;
+
+    Info.GridHorizonFade         = GridSettings.HorizonFade;
+    Info.GridDepthBias           = GridSettings.DepthBias;
+    Info.Padding2                = 0.0f;
+
+    constexpr uint32 NumConstants = sizeof(FFinalCompositeInfoHLSL) / sizeof(uint32);
+    CommandList.SetShaderConstants(CompositeShader.Get(), &Info, NumConstants);
 
     CommandList.DrawInstanced(3, 1, 0, 0);
 
     CommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Tonemapping and BackBuffer-Blit");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Final Composite");
 }
+#endif
 
 FFXAAPass::FFXAAPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)

@@ -549,7 +549,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
                     const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
-                    ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
+                    ShadowPerObjectBuffer.Transform = TransformShaderData;
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                     CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
@@ -665,7 +665,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
                         const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
-                        ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
+                        ShadowPerObjectBuffer.Transform = TransformShaderData;
 
                         constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                         CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
@@ -1283,7 +1283,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
                 const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
-                ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
+                ShadowPerObjectBuffer.Transform = TransformShaderData;
 
                 constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                 CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
@@ -1387,7 +1387,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
                     const FTransformBufferHLSL& TransformShaderData = StaticMesh->GetTransformShaderData();
-                    ShadowPerObjectBuffer.WorldMatrix = TransformShaderData.Transform;
+                    ShadowPerObjectBuffer.Transform = TransformShaderData;
 
                     constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
                     CommandList.SetShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);

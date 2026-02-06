@@ -8,6 +8,7 @@ class FRHIRayTracingScene;
 class FRHIQuery;
 class FRHIShader;
 class FRHIRayTracingPipelineState;
+class FRHIGpuFence;
 struct FRayTracingShaderResources;
 struct FRHIRayTracingGeometryInstance;
 struct FRHITextureTransition;
@@ -254,6 +255,21 @@ struct IRHICommandContext
      * @param CopyDesc Information about the copy operation
      */
     virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) = 0;
+
+    /**
+     * @brief Copies a 2D region from a texture to a buffer (typically readback).
+     * @param Dst Destination buffer.
+     * @param DstOffset Offset into destination buffer (bytes).
+     * @param Src Source texture.
+     * @param SrcRegion Source region (texel coordinates).
+     * @param SrcMipLevel Source mip level.
+     */
+    virtual void CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) = 0;
+
+    /**
+     * @brief Splits the command stream and signals the provided fence after all prior GPU work is complete.
+     */
+    virtual void WriteFence(FRHIGpuFence* Fence) = 0;
 
     /**
      * @brief Signal the driver that the contents can be discarded

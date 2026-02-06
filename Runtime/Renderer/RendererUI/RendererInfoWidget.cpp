@@ -18,7 +18,7 @@ FRendererInfoWidget::FRendererInfoWidget(FSceneRenderer* InRenderer)
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRendererInfoWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FRendererInfoWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -27,7 +27,7 @@ FRendererInfoWidget::~FRendererInfoWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

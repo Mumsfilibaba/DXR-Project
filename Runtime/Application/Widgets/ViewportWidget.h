@@ -2,6 +2,12 @@
 #include "Application/IViewport.h"
 #include "Application/Widgets/Widget.h"
 
+enum class EViewportPositionSpace
+{
+    Parent,
+    Screen,
+};
+
 class APPLICATION_API FViewportWidget : public FWidget
 {
 public:
@@ -74,7 +80,7 @@ public:
      * 
      * @param InPosition The new position.
      */
-    void SetPosition(const FIntVector2& InPosition) { Position = InPosition; }
+    void SetPosition(const FIntVector2& InPosition, EViewportPositionSpace InSpace = EViewportPositionSpace::Parent);
 
     /**
      * @brief Gets the current viewport size.

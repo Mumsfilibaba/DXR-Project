@@ -218,7 +218,6 @@ public:
     /**
      * @brief Creates a basic instance of FGenericApplication.
      * 
-     * This acts as a null-application and can be used when a full-fledged platform application is not required.
      * @return A shared pointer to the created FGenericApplication.
      */
     static TSharedPtr<FGenericApplication> Create();
@@ -362,7 +361,7 @@ public:
     /**
      * @brief Sets the message handler for this application.
      * 
-     * The message handler is responsible for processing platform messages (e.g., keyboard/mouse events).
+     * The message handler is responsible for processing platform messages (keyboard/mouse events).
      * @param InMessageHandler The message handler to use.
      */
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
@@ -380,17 +379,19 @@ public:
         return MessageHandler; 
     }
 
-public:
-
     /** 
-     * @brief The cursor associated with this application. 
+     * @brief Retrieves the cursor interface for this application. 
      * 
-     * May be null on some platforms that do not support cursors or rely on system defaults.
+     * @return The cursor interface for the application. May be null on some platforms that do not support 
+     * cursors or rely on system defaults.
      */
-    const TSharedPtr<ICursor> Cursor; 
+    TSharedPtr<ICursor> GetCursor() const { return Cursor; }
 
 protected:
     TSharedPtr<FGenericApplicationMessageHandler> MessageHandler;
+
+private:
+    const TSharedPtr<ICursor> Cursor; 
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

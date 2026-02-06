@@ -115,8 +115,6 @@ public:
     FWindowsApplication(HINSTANCE InInstance, HICON InIcon);
     virtual ~FWindowsApplication();
 
-public:
-
     // FGenericApplication Interface
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
@@ -149,8 +147,6 @@ public:
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
-
-public:
 
     /**
      * @brief Retrieves the engine-level FWindowsWindow corresponding to the given HWND.

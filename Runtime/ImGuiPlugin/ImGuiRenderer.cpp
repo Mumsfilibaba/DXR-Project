@@ -1,7 +1,7 @@
 #include "ImGuiRenderer.h"
 #include "ImGuiExtensions.h"
 #include "ImGuiPlugin.h"
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Containers/Array.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -653,8 +653,6 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
 
 void FImGuiRenderer::OnDestroyWindow(ImGuiViewport* Viewport)
 {
-    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
-    CHECK(ViewportData != nullptr);
     Viewport->RendererUserData = nullptr;
 }
 

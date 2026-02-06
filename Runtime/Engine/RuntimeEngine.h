@@ -7,12 +7,12 @@ public:
     FRuntimeEngine();
     virtual ~FRuntimeEngine();
 
-	// FEngine Interface
+    // FEngine Interface
     virtual bool Init() override final;
-	virtual void Release() override final;
-	virtual void RenderFrame() override final;
+    virtual void Release() override final;
+    virtual void RenderFrame() override final;
 
 private:
-	TSharedPtr<class FRuntimeConsoleWidget> ConsoleWidget;
-	TSharedPtr<class FFrameProfilerWidget>  ProfilerWidget;
+    TSharedPtr<class FRuntimeConsoleWidget> ConsoleWidget;
+    TSharedPtr<class FFrameProfilerWidget>  ProfilerWidget;
 };

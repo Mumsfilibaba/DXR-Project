@@ -269,11 +269,14 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        if (Material->HasAlphaMask())
+        if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
             CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
             CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+        }
 
+        if (Material->HasAlphaMask())
+        {
             if (Material->IsPackedMaterial())
             {
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
@@ -283,27 +286,16 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
                 CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 0);
             }
         }
-        else if (Material->HasHeightMap())
+
+        if (Material->HasHeightMap())
         {
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-            CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
             CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
         }
 
         for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
         {
             FSceneStaticMesh* StaticMesh = MeshReference.StaticMesh;
-            if (Material->HasAlphaMask() || Material->IsDoubleSided())
-            {
-                FRHIBuffer* VertexBuffers[] =
-                {
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
-                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
-                };
-                
-                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
-            }
-            else if (Material->HasHeightMap())
+            if (Material->HasHeightMap())
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
@@ -313,6 +305,16 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
+            }
+            else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+            {
+                FRHIBuffer* VertexBuffers[] =
+                {
+                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::Positions),
+                    StaticMesh->GetMesh()->GetVertexBuffer(EVertexStream::TexCoords),
+                };
+                
+                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
             }
             else
             {

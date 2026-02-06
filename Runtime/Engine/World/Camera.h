@@ -11,7 +11,7 @@ public:
     void Move(float x, float y, float z);
     void Rotate(float Pitch, float Yaw, float Roll);
     
-    // Note: FieldOfView in degrees 
+    // NOTE: FieldOfView in degrees 
     void SetFieldOfView(float InFieldOfView);
     void SetPosition(float x, float y, float z);
     void SetRotation(float Pitch, float Yaw, float Roll);

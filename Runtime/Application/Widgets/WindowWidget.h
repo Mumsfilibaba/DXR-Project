@@ -13,8 +13,8 @@ DECLARE_DELEGATE(FOnWindowResized, const FIntVector2&);
 /** @brief Delegate called when the window is closed. */
 DECLARE_DELEGATE(FOnWindowClosed);
 
-/** @brief Delegate called when the window activation state changes. */
-DECLARE_DELEGATE(FOnWindowActivationChanged);
+/** @brief Delegate called when the window focus state changes. */
+DECLARE_DELEGATE(FOnWindowFocusChanged);
 
 class APPLICATION_API FWindowWidget : public FWidget
 {
@@ -100,6 +100,13 @@ public:
     void SetOnWindowResized(const FOnWindowResized& InOnWindowResized);
 
     /**
+     * @brief Sets a delegate to be called when the window focus is changed.
+     * 
+     * @param InOnWindowFocusChanged The delegate to set.
+     */
+    void SetOnWindowFocusChanged(const FOnWindowFocusChanged& InOnWindowFocusChanged);
+
+    /**
      * @brief Called when the platform window is destroyed.
      * 
      * This function is called from the FApplication when the platform window is destroyed.
@@ -114,7 +121,7 @@ public:
      * The behavior may vary depending on the platform, but generally, the function is called when the window loses or gains focus.
      * @param bIsActive True if the window is now active; false if it is inactive.
      */
-    void OnWindowActivationChanged(bool bIsActive);
+    void OnWindowFocusChanged(bool bIsActive);
 
     /**
      * @brief Called when the platform window is resized.
@@ -369,7 +376,7 @@ private:
     FOnWindowClosed            OnWindowClosedDelegate;
     FOnWindowMoved             OnWindowMovedDelegate;
     FOnWindowResized           OnWindowResizedDelegate;
-    FOnWindowActivationChanged OnWindowActivationChangedDelegate;
+    FOnWindowFocusChanged      OnWindowFocusChangedDelegate;
     FIntVector2                CachedPosition;
     FIntVector2                CachedSize;
     EWindowStyleFlags          StyleFlags;

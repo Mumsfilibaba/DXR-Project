@@ -18,7 +18,7 @@ FRendererSettingsWidget::FRendererSettingsWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRendererSettingsWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FRendererSettingsWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -27,7 +27,7 @@ FRendererSettingsWidget::~FRendererSettingsWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

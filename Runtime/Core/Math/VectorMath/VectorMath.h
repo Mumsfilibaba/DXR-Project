@@ -14,34 +14,40 @@
 
     #if PLATFORM_SUPPORT_SSE4_2_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-        #include "Core/Math/VectorMath/VectorMathSSE4_2.h"
-        typedef FVectorMathSSE4_2 FPlatformVectorMath;
+        #include "Core/Math/VectorMath/PlatformVectorMathSSE4_2.h"
+        typedef FPlatformVectorMathSSE4_2 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE4_1_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-        #include "Core/Math/VectorMath/VectorMathSSE4_1.h"
-        typedef FVectorMathSSE4_1 FPlatformVectorMath;
+        #include "Core/Math/VectorMath/PlatformVectorMathSSE4_1.h"
+        typedef FPlatformVectorMathSSE4_1 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSSE3_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-        #include "Core/Math/VectorMath/VectorMathSSSE3.h"
-        typedef FVectorMathSSSE3 FPlatformVectorMath;
+        #include "Core/Math/VectorMath/PlatformVectorMathSSSE3.h"
+        typedef FPlatformVectorMathSSSE3 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE3_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-        #include "Core/Math/VectorMath/VectorMathSSE3.h"
-        typedef FVectorMathSSE3 FPlatformVectorMath;
+        #include "Core/Math/VectorMath/PlatformVectorMathSSE3.h"
+        typedef FPlatformVectorMathSSE3 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE2_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-        #include "Core/Math/VectorMath/VectorMathSSE2.h"
-        typedef FVectorMathSSE2 FPlatformVectorMath;
+        #include "Core/Math/VectorMath/PlatformVectorMathSSE2.h"
+        typedef FPlatformVectorMathSSE2 FPlatformVectorMath;
     #else
-        #include "Core/Math/VectorMath/VectorMathSSE.h"
-        typedef FVectorMathSSE FPlatformVectorMath;
+        #include "Core/Math/VectorMath/PlatformVectorMathSSE.h"
+        typedef FPlatformVectorMathSSE FPlatformVectorMath;
     #endif
+#elif PLATFORM_ARCHITECTURE_ARM64 && PLATFORM_SUPPORT_NEON_INTRIN
+    #define USE_VECTOR_MATH (1)
+    #define USE_INT_VECTOR_MATH (1)
+
+    #include "Core/Math/VectorMath/PlatformVectorMathNEON.h"
+    typedef FPlatformVectorMathNEON FPlatformVectorMath;
 #else
     #define USE_VECTOR_MATH (0)
 
     // TODO: Add fallback when we have no SSE intrinsics
-    #include "Core/Math/VectorMath/GenericVectorMath.h"
-    typedef FGenericVectorMath FPlatformVectorMath;
+    #include "Core/Math/VectorMath/GenericPlatformVectorMath.h"
+    typedef FGenericPlatformVectorMath FPlatformVectorMath;
 #endif
 
 struct FVectorMath : public FPlatformVectorMath
@@ -171,10 +177,8 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAbs(FFloat128 Vector) noexcept
     {
-        static constexpr int32 Mask = ~(1 << 31);
-
-        FInt128 Mask_128 = VectorSetInt1(Mask);
-        return VectorAnd(Vector, VectorIntToFloat(Mask_128));
+        // abs(x) = andnot(signMask, x)
+        return VectorAndNot(VectorSignMask(), Vector);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorCross(FFloat128 VectorA, FFloat128 VectorB) noexcept
@@ -214,12 +218,12 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE FFloat128 VECTORCALL VectorClamp(FFloat128 Value, FFloat128 MinValue, FFloat128 MaxValue) noexcept
     {
-        return VectorMin(MinValue, VectorMax(MaxValue, Value));
+        return VectorMax(MinValue, VectorMin(MaxValue, Value));
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorClampInt(FInt128 Value, FInt128 MinValue, FInt128 MaxValue) noexcept
     {
-        return VectorMinInt(MinValue, VectorMaxInt(MaxValue, Value));
+        return VectorMaxInt(MinValue, VectorMinInt(MaxValue, Value));
     }
 
     // ---------------------------------------------------------------------------------------------

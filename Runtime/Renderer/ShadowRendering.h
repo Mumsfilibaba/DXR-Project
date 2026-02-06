@@ -4,6 +4,7 @@
 #include "Engine/World/World.h"
 #include "Renderer/RenderPass.h"
 #include "Renderer/FrameResources.h"
+#include "Renderer/Scene/SceneStaticMesh.h"
 
 #define NUM_FRUSTUM_PLANES (6)
 
@@ -89,8 +90,8 @@ MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
 
 struct FShadowPerObjectHLSL
 {
-    // 0-64
-    FMatrix4 WorldMatrix;
+    // 0-112
+    FTransformBufferHLSL Transform;
 };
 
 MARK_AS_REALLOCATABLE(FShadowPerObjectHLSL);

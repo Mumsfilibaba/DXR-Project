@@ -11,7 +11,9 @@ FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQu
     , QueueType(InQueueType)
     , WaitSemaphores()
     , WaitStages()
+    , WaitSemaphoreValues()
     , SignalSemaphores()
+    , SignalSemaphoreValues()
     , AvailableCommandPools()
     , CommandPools()
     , CommandPoolsCS()
@@ -65,7 +67,7 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
         delete CommandPool;
         return nullptr;
     }
-        
+
     CommandPools.Add(CommandPool);
     return CommandPool;
 }
@@ -89,10 +91,12 @@ bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuff
     SubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     SubmitInfo.pNext = nullptr;
 
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitSemaphoreValues.Size(), "The size of WaitSemaphores and WaitSemaphoreValues must be the same");
+    VULKAN_ERROR_COND(SignalSemaphores.Size() == SignalSemaphoreValues.Size(), "The size of SignalSemaphores and SignalSemaphoreValues must be the same");
+
     if (!WaitSemaphores.IsEmpty())
     {
-        VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
-        
         SubmitInfo.waitSemaphoreCount = WaitSemaphores.Size();
         SubmitInfo.pWaitSemaphores    = WaitSemaphores.Data();
         SubmitInfo.pWaitDstStageMask  = WaitStages.Data();
@@ -137,6 +141,41 @@ bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuff
         SubmitInfo.pCommandBuffers    = nullptr;
     }
 
+    bool bHasTimelineSemaphores = false;
+    for (uint64 Value : WaitSemaphoreValues)
+    {
+        if (Value != 0)
+        {
+            bHasTimelineSemaphores = true;
+            break;
+        }
+    }
+    if (!bHasTimelineSemaphores)
+    {
+        for (uint64 Value : SignalSemaphoreValues)
+        {
+            if (Value != 0)
+            {
+                bHasTimelineSemaphores = true;
+                break;
+            }
+        }
+    }
+
+    VkTimelineSemaphoreSubmitInfo TimelineSubmitInfo = {};
+    if (bHasTimelineSemaphores)
+    {
+        TimelineSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+        TimelineSubmitInfo.pNext = nullptr;
+
+        TimelineSubmitInfo.waitSemaphoreValueCount   = WaitSemaphoreValues.Size();
+        TimelineSubmitInfo.pWaitSemaphoreValues      = WaitSemaphoreValues.IsEmpty() ? nullptr : WaitSemaphoreValues.Data();
+        TimelineSubmitInfo.signalSemaphoreValueCount = SignalSemaphoreValues.Size();
+        TimelineSubmitInfo.pSignalSemaphoreValues    = SignalSemaphoreValues.IsEmpty() ? nullptr : SignalSemaphoreValues.Data();
+
+        SubmitInfo.pNext = &TimelineSubmitInfo;
+    }
+
     VkFence SignalFence = Fence ? Fence->GetVkFence() : VK_NULL_HANDLE;
     VkResult Result = vkQueueSubmit(Queue, 1, &SubmitInfo, SignalFence);
     if (VULKAN_FAILED(Result))
@@ -147,8 +186,10 @@ bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuff
 
     WaitSemaphores.Clear();
     WaitStages.Clear();
+    WaitSemaphoreValues.Clear();
 
     SignalSemaphores.Clear();
+    SignalSemaphoreValues.Clear();
     return true;
 }
 
@@ -156,12 +197,32 @@ void FVulkanQueue::AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags 
 {
     WaitSemaphores.Add(Semaphore);
     WaitStages.Add(WaitStage);
+    WaitSemaphoreValues.Add(0);
     VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitStages.Size(), "WaitSemaphores and WaitStages must be the same size");
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitSemaphoreValues.Size(), "WaitSemaphores and WaitSemaphoreValues must be the same size");
+}
+
+void FVulkanQueue::AddWaitTimelineSemaphore(VkSemaphore Semaphore, uint64 Value, VkPipelineStageFlags WaitStage)
+{
+    WaitSemaphores.Add(Semaphore);
+    WaitStages.Add(WaitStage);
+    WaitSemaphoreValues.Add(Value);
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitStages.Size(), "WaitSemaphores and WaitStages must be the same size");
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitSemaphoreValues.Size(), "WaitSemaphores and WaitSemaphoreValues must be the same size");
 }
 
 void FVulkanQueue::AddSignalSemaphore(VkSemaphore Semaphore)
 {
     SignalSemaphores.Add(Semaphore);
+    SignalSemaphoreValues.Add(0);
+    VULKAN_ERROR_COND(SignalSemaphores.Size() == SignalSemaphoreValues.Size(), "SignalSemaphores and SignalSemaphoreValues must be the same size");
+}
+
+void FVulkanQueue::AddSignalTimelineSemaphore(VkSemaphore Semaphore, uint64 Value)
+{
+    SignalSemaphores.Add(Semaphore);
+    SignalSemaphoreValues.Add(Value);
+    VULKAN_ERROR_COND(SignalSemaphores.Size() == SignalSemaphoreValues.Size(), "SignalSemaphores and SignalSemaphoreValues must be the same size");
 }
 
 void FVulkanQueue::WaitForCompletion()
@@ -182,6 +243,7 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
     if (!WaitSemaphores.IsEmpty())
     {
         VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
+        VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitSemaphoreValues.Size(), "The size of WaitSemaphores and WaitSemaphoreValues must be the same");
         
         SubmitInfo.waitSemaphoreCount = WaitSemaphores.Size();
         SubmitInfo.pWaitSemaphores    = WaitSemaphores.Data();
@@ -194,6 +256,28 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
         SubmitInfo.pWaitDstStageMask  = nullptr;
     }
 
+    bool bHasTimelineSemaphores = false;
+    for (uint64 Value : WaitSemaphoreValues)
+    {
+        if (Value != 0)
+        {
+            bHasTimelineSemaphores = true;
+            break;
+        }
+    }
+
+    VkTimelineSemaphoreSubmitInfo TimelineSubmitInfo = {};
+    if (bHasTimelineSemaphores)
+    {
+        TimelineSubmitInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+        TimelineSubmitInfo.pNext = nullptr;
+        TimelineSubmitInfo.waitSemaphoreValueCount   = WaitSemaphoreValues.Size();
+        TimelineSubmitInfo.pWaitSemaphoreValues      = WaitSemaphoreValues.IsEmpty() ? nullptr : WaitSemaphoreValues.Data();
+        TimelineSubmitInfo.signalSemaphoreValueCount = 0;
+        TimelineSubmitInfo.pSignalSemaphoreValues    = nullptr;
+        SubmitInfo.pNext = &TimelineSubmitInfo;
+    }
+
     VkResult Result = vkQueueSubmit(Queue, 1, &SubmitInfo, VK_NULL_HANDLE);
     if (VULKAN_FAILED(Result))
     {
@@ -203,8 +287,10 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
 
     WaitSemaphores.Clear();
     WaitStages.Clear();
+    WaitSemaphoreValues.Clear();
 
     SignalSemaphores.Clear();
+    SignalSemaphoreValues.Clear();
 
     WaitForCompletion();
     return true;
@@ -228,9 +314,9 @@ FVulkanCommandSubmission::~FVulkanCommandSubmission()
 
 void FVulkanCommandSubmission::AcquireFence()
 {
-	FVulkanFenceManager& FenceManager = Device->GetFenceManager();
-	Fence = FenceManager.ObtainFence();
-	CHECK(Fence != nullptr);
+    FVulkanFenceManager& FenceManager = Device->GetFenceManager();
+    Fence = FenceManager.ObtainFence();
+    CHECK(Fence != nullptr);
 }
 
 void FVulkanCommandSubmission::Submit()

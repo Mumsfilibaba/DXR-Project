@@ -56,22 +56,22 @@ bool FRendererModule::Initialize()
 
 void FRendererModule::Release()
 {
-	// Release GPU profiler
-	FGPUProfiler::Get().Release();
+    // Release GPU profiler
+    FGPUProfiler::Get().Release();
 
-	if (Renderer)
-	{
-		delete Renderer;
-		Renderer = nullptr;
-	}
+    if (Renderer)
+    {
+        delete Renderer;
+        Renderer = nullptr;
+    }
 }
 
 void FRendererModule::BeginFrame()
 {
-	if (Renderer)
-	{
-		Renderer->BeginFrame();
-	}
+    if (Renderer)
+    {
+        Renderer->BeginFrame();
+    }
 }
 
 void FRendererModule::Tick()
@@ -85,10 +85,10 @@ void FRendererModule::Tick()
 
 void FRendererModule::EndFrame()
 {
-	if (Renderer)
-	{
+    if (Renderer)
+    {
         Renderer->EndFrame();
-	}
+    }
 }
 
 void FRendererModule::RenderSceneView(const FSceneRenderView& SceneRenderView)
@@ -101,34 +101,64 @@ void FRendererModule::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
 void FRendererModule::RenderUI()
 {
-	if (Renderer)
-	{
-		Renderer->RenderUI();
-	}
+    if (Renderer)
+    {
+        Renderer->RenderUI();
+    }
 }
 
-void FRendererModule::PrepareSwapChain(FRHISwapChainRef SwapChain)
-{
-	if (Renderer)
-	{
-		Renderer->PrepareSwapChain(SwapChain);
-	}
+void FRendererModule::RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) 
+{ 
+#if EDITOR_BUILD 
+    if (Renderer) 
+    { 
+        Renderer->RequestEditorObjectPick(static_cast<FScene*>(Scene), PixelX, PixelY); 
+    } 
+#else 
+    UNREFERENCED_VARIABLE(Scene); 
+    UNREFERENCED_VARIABLE(PixelX); 
+    UNREFERENCED_VARIABLE(PixelY); 
+#endif 
+} 
+ 
+bool FRendererModule::PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID) 
+{ 
+#if EDITOR_BUILD 
+    if (Renderer) 
+    { 
+        return Renderer->PollEditorObjectPickResult(static_cast<FScene*>(Scene), OutObjectID); 
+    } 
+ 
+    return false; 
+#else 
+    UNREFERENCED_VARIABLE(Scene); 
+    OutObjectID = 0; 
+    return false; 
+#endif 
+} 
+ 
+void FRendererModule::PrepareSwapChain(FRHISwapChainRef SwapChain) 
+{ 
+    if (Renderer)
+    {
+        Renderer->PrepareSwapChain(SwapChain);
+    }
 }
 
 void FRendererModule::PresentSwapChain(FRHISwapChainRef SwapChain)
 {
-	if (Renderer)
-	{
-		Renderer->PresentSwapChain(SwapChain);
-	}
+    if (Renderer)
+    {
+        Renderer->PresentSwapChain(SwapChain);
+    }
 }
 
 void FRendererModule::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height)
 {
-	if (Renderer)
-	{
-		Renderer->ResizeSwapChain(SwapChain, Width, Height);
-	}
+    if (Renderer)
+    {
+        Renderer->ResizeSwapChain(SwapChain, Width, Height);
+    }
 }
 
 IScene* FRendererModule::CreateScene(FWorld* World)

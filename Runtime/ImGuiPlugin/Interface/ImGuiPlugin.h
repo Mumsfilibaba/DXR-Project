@@ -62,11 +62,16 @@ struct IImguiPlugin : public FModuleInterface
 
     virtual bool UpdateFontAtlas() = 0;
 
-    virtual void Tick(float Delta) = 0;
+    virtual void NewFrame(float DeltaTime) = 0;
+    virtual void Tick(float DeltaTime) = 0;
     virtual void Draw(FRHICommandList& CommandList) = 0;
 
-    virtual FDelegateHandle AddDelegate(const FImGuiDelegate& Delegate) = 0;
-    virtual void RemoveDelegate(FDelegateHandle DelegateHandle) = 0;
+    virtual FDelegateHandle AddBeginFrameDelegate(const FImGuiDelegate& Delegate) = 0;
+    virtual FDelegateHandle AddDrawDelegate(const FImGuiDelegate& Delegate) = 0;
+    virtual FDelegateHandle AddEndFrameDelegate(const FImGuiDelegate& Delegate) = 0;
+    virtual void RemoveBeginFrameDelegate(FDelegateHandle DelegateHandle) = 0;
+    virtual void RemoveDrawDelegate(FDelegateHandle DelegateHandle) = 0;
+    virtual void RemoveEndFrameDelegate(FDelegateHandle DelegateHandle) = 0;
 
     virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) = 0;
 

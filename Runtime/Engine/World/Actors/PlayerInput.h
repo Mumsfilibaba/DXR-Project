@@ -136,8 +136,8 @@ public:
         return KeyState.bIsDown && !KeyState.bPreviousState;
     }
 
-    FIntVector2 GetCursorPosition()   const;
     FKeyState   GetKeyState(FKey Key) const;
+    FIntVector2 GetCursorPosition() const;
     FAxisState  GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 
     TSharedPtr<ICursor> GetCursorInterface() const 
@@ -149,13 +149,10 @@ private:
     void ClearEvents();
 
     TSharedPtr<ICursor>       CursorInterface;
-
     TArray<FKeyState>         KeyStates;
     TArray<FAxisState>        AxisStates;
-
     TArray<FActionKeyMapping> ActionKeyMappings;
     TArray<FAxisMapping>      AxisMappings;
     TArray<FAxisKeyMapping>   AxisKeyMappings;
-
     TArray<FInputComponent*>  ActiveInputComponents;
 };

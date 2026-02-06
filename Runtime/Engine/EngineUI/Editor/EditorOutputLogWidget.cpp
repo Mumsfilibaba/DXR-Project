@@ -1,7 +1,8 @@
-#include "Engine/EngineUI/Editor/EditorOutputLogWidget.h"
-#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
-#include <imgui.h>
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "Engine/EngineUI/Editor/EditorOutputLogWidget.h"
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 
 FEditorOutputLogWidget::FEditorOutputLogWidget()
     : IOutputDevice()
@@ -24,7 +25,7 @@ FEditorOutputLogWidget::FEditorOutputLogWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorOutputLogWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorOutputLogWidget::Draw));
     }
 
     SearchFilterBuffer.Fill(0);
@@ -42,7 +43,7 @@ FEditorOutputLogWidget::~FEditorOutputLogWidget()
 
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 
@@ -70,44 +71,121 @@ void FEditorOutputLogWidget::Log(ELogSeverity Severity, const FString& Message)
     }
 }
 
-int32 FEditorOutputLogWidget::FindSubstringCaseInsensitive(const char* Haystack, const char* Needle)
+void FEditorOutputLogWidget::Draw()
 {
-    if (!Haystack || !Needle || Needle[0] == 0)
+    if (!bVisible)
     {
-        return -1;
+        return;
     }
 
-    for (int32 i = 0; Haystack[i] != 0; ++i)
+    ImGuiStyle& Style = ImGui::GetStyle();
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 0.0f));
+
+    const ImGuiWindowFlags OutputLogFlags = ImGuiWindowFlags_NoCollapse;
+    if (ImGui::Begin("Output Log", &bVisible, OutputLogFlags))
     {
-        int32 j = 0;
-        while (Needle[j] != 0)
+        const float OuterPadX        = 4.0f;
+        const float OuterPadTop      = 10.0f;
+        const float OuterPadBottom   = 4.0f;
+        const float GapBetweenPanels = 6.0f;
+        const float OutputRounding = 4.0f;
+        const float HeaderRowHeight  = ImGui::GetFrameHeight();
+        const float HeaderHeight     = HeaderRowHeight + GapBetweenPanels;
+
+        const ImVec2 ContentMin    = ImGui::GetWindowContentRegionMin();
+        const ImVec2 ContentMax    = ImGui::GetWindowContentRegionMax();
+        const float  ContentWidth  = (ContentMax.x - ContentMin.x);
+        const float  ContentHeight = (ContentMax.y - ContentMin.y);
+
+        float ChildWidth = ContentWidth - OuterPadX * 2.0f;
+        if (ChildWidth < 1.0f)
         {
-            const unsigned char A0 = (unsigned char)Haystack[i + j];
-            const unsigned char B0 = (unsigned char)Needle[j];
-
-            if (Haystack[i + j] == 0)
-            {
-                break;
-            }
-
-            const char A = (char)tolower(A0);
-            const char B = (char)tolower(B0);
-
-            if (A != B)
-            {
-                break;
-            }
-
-            ++j;
+            ChildWidth = 1.0f;
         }
 
-        if (Needle[j] == 0)
+        const float HeaderX = ContentMin.x + OuterPadX;
+        const float HeaderY = ContentMin.y + OuterPadTop;
+
+        ImGui::SetCursorPos(ImVec2(HeaderX, HeaderY));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(36, 36, 36, 255));
+
+        const ImGuiWindowFlags OutputLogHeaderFlags = ImGuiWindowFlags_NoScrollbar;
+
+        if (ImGui::BeginChild("##OutputLogHeader", ImVec2(ChildWidth, HeaderHeight), true, OutputLogHeaderFlags))
         {
-            return i;
+            DrawFilterBar();
         }
+
+        ImGui::EndChild();
+
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(3);
+
+        const float OutputX = HeaderX;
+        const float OutputY = HeaderY + HeaderHeight;
+
+        ImGui::SetCursorPos(ImVec2(OutputX, OutputY));
+
+        float OutputHeight = (ContentMin.y + ContentHeight) - OutputY - OuterPadBottom;
+        if (OutputHeight < 1.0f)
+        {
+            OutputHeight = 1.0f;
+        }
+
+        // -------------------------------------------------------------------------------------
+        // Log view
+        // -------------------------------------------------------------------------------------
+
+        const ImU32  OutputBgU32 = IM_COL32(26, 26, 26, 255);
+        const ImVec4 OutputBg    = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
+
+        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, OutputRounding);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, OutputBgU32);
+        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, OutputBg);
+
+        const ImGuiWindowFlags OuterLogFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+
+        if (ImGui::BeginChild("##OutputLogOuter", ImVec2(ChildWidth, OutputHeight), true, OuterLogFlags))
+        {
+            DrawLogListRichText();
+        }
+
+        ImGui::EndChild();
+
+        const ImVec2 LogOuterMin = ImGui::GetItemRectMin();
+        const ImVec2 LogOuterMax = ImGui::GetItemRectMax();
+
+        if (RichTextCtx.bHasSelection && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            const ImVec2 MousePos = ImGui::GetIO().MousePos;
+
+            const bool bMouseInLogOuter =
+                MousePos.x >= LogOuterMin.x &&
+                MousePos.x <= LogOuterMax.x &&
+                MousePos.y >= LogOuterMin.y &&
+                MousePos.y <= LogOuterMax.y;
+
+            if (!bMouseInLogOuter)
+            {
+                RichTextCtx.bHasSelection = false;
+                RichTextCtx.bSelecting    = false;
+            }
+        }
+
+        ImGui::PopStyleColor(2);
+        ImGui::PopStyleVar(2);
     }
 
-    return -1;
+    ImGui::End();
+
+    ImGui::PopStyleVar(2);
 }
 
 void FEditorOutputLogWidget::DrawFilterBar()
@@ -124,7 +202,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     const float MaxSearchWidth = AvailableX * 0.25f;
 
     float SearchWidth = MaxSearchWidth;
-    EditorWidgets::EditorSearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
+    EditorWidgets::DrawSearchField("##LogSearch", "Search Log", SearchFilterBuffer.Data(), SearchFilterBuffer.Size(), SearchWidth, true);
 
     float SearchBarHeight = ImGui::GetItemRectSize().y;
     if (SearchBarHeight <= 0.0f)
@@ -135,24 +213,24 @@ void FEditorOutputLogWidget::DrawFilterBar()
     ImGui::SameLine(0.0f, GapX);
 
     // -------------------------------------------------------------------------------------------
-    // Filter button (your existing style)
+    // Filter button
     // -------------------------------------------------------------------------------------------
 
-    const float IconSizePx       = 18.0f;
-    const float ArrowIconSizePx  = 14.0f;
-    const float IconTextGap      = 6.0f;
-    const float TextArrowGap     = 6.0f;
-    const float ButtonRoundingPx = 6.0f;
+    const float IconSize       = 18.0f;
+    const float ArrowIconSize  = 14.0f;
+    const float IconTextGap    = 6.0f;
+    const float TextArrowGap   = 6.0f;
+    const float ButtonRounding = 6.0f;
 
     const auto DrawFilterButton = [&]() -> bool
     {
         ImGui::PushFont(EditorFonts::SegoeUI_22);
 
-        const char* Label = "Filter";
+        const CHAR* Label = "Filter";
 
         const ImVec2 TextSize     = ImGui::CalcTextSize(Label);
         const float  ButtonHeight = SearchBarHeight;
-        const float  ButtonWidth  = IconSizePx + IconTextGap + TextSize.x + TextArrowGap + ArrowIconSizePx + Style.FramePadding.x * 2.0f;
+        const float  ButtonWidth  = IconSize + IconTextGap + TextSize.x + TextArrowGap + ArrowIconSize + Style.FramePadding.x * 2.0f;
         const ImVec2 ButtonSize   = ImVec2(ButtonWidth, ButtonHeight);
 
         const bool bPressed = ImGui::InvisibleButton("##FilterButton", ButtonSize);
@@ -163,7 +241,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
         const ImVec2 Max = ImGui::GetItemRectMax();
 
         const float Alpha01  = (Style.Alpha < 0.0f) ? 0.0f : (Style.Alpha > 1.0f ? 1.0f : Style.Alpha);
-        const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+        const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
 
         const ImU32 BgIdle  = IM_COL32(36, 36, 36, Alpha255);
         const ImU32 BgHover = IM_COL32(56, 56, 56, Alpha255);
@@ -171,11 +249,11 @@ void FEditorOutputLogWidget::DrawFilterBar()
         const ImU32 White   = IM_COL32(255, 255, 255, Alpha255);
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
-        DrawList->AddRectFilled(Min, Max, BgColor, ButtonRoundingPx);
+        DrawList->AddRectFilled(Min, Max, BgColor, ButtonRounding);
 
-        const float  LeftIconY   = Min.y + (ButtonHeight - IconSizePx) * 0.5f;
+        const float  LeftIconY   = Min.y + (ButtonHeight - IconSize) * 0.5f;
         const ImVec2 LeftIconMin = ImVec2(Min.x + Style.FramePadding.x, LeftIconY);
-        const ImVec2 LeftIconMax = ImVec2(LeftIconMin.x + IconSizePx, LeftIconMin.y + IconSizePx);
+        const ImVec2 LeftIconMax = ImVec2(LeftIconMin.x + IconSize, LeftIconMin.y + IconSize);
 
         if (EditorIcons::FilterIcon)
         {
@@ -188,9 +266,9 @@ void FEditorOutputLogWidget::DrawFilterBar()
         DrawList->AddText(EditorFonts::SegoeUI_22, EditorFonts::SegoeUI_22->FontSize, ImVec2(TextX, TextY), White, Label);
 
         const float  RightIconX   = TextX + TextSize.x + TextArrowGap;
-        const float  RightIconY   = Min.y + (ButtonHeight - ArrowIconSizePx) * 0.5f;
+        const float  RightIconY   = Min.y + (ButtonHeight - ArrowIconSize) * 0.5f;
         const ImVec2 RightIconMin = ImVec2(RightIconX, RightIconY);
-        const ImVec2 RightIconMax = ImVec2(RightIconMin.x + ArrowIconSizePx, RightIconMin.y + ArrowIconSizePx);
+        const ImVec2 RightIconMax = ImVec2(RightIconMin.x + ArrowIconSize, RightIconMin.y + ArrowIconSize);
 
         if (EditorIcons::DownArrowIcon)
         {
@@ -207,7 +285,7 @@ void FEditorOutputLogWidget::DrawFilterBar()
     }
 
     // -------------------------------------------------------------------------------------------
-    // Popup menu (unchanged)
+    // Popup menu
     // -------------------------------------------------------------------------------------------
 
     const ImVec2 ButtonMin = ImGui::GetItemRectMin();
@@ -228,19 +306,19 @@ void FEditorOutputLogWidget::DrawFilterBar()
 
     if (ImGui::BeginPopup("LogFilterMenu"))
     {
-        EditorWidgets::EditorMenuLabeledSeparator("Verbosity", 1.0f, 4.0f);
+        EditorWidgets::MenuLabeledSeparator("Verbosity", 1.0f, 4.0f);
 
-        if (EditorWidgets::EditorMenuItem("Messages", nullptr, bFilterInfo))
+        if (EditorWidgets::MenuItem("Messages", nullptr, bFilterInfo))
         {
             bFilterInfo = !bFilterInfo;
         }
 
-        if (EditorWidgets::EditorMenuItem("Warnings", nullptr, bFilterWarning))
+        if (EditorWidgets::MenuItem("Warnings", nullptr, bFilterWarning))
         {
             bFilterWarning = !bFilterWarning;
         }
 
-        if (EditorWidgets::EditorMenuItem("Errors", nullptr, bFilterError))
+        if (EditorWidgets::MenuItem("Errors", nullptr, bFilterError))
         {
             bFilterError = !bFilterError;
         }
@@ -280,7 +358,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     };
 
     const bool  bHasSearch = (SearchFilterBuffer[0] != 0);
-    const char* Search     = SearchFilterBuffer.Data();
+    const CHAR* Search     = SearchFilterBuffer.Data();
 
     RichTextCtx.bAutoScroll = bAutoScroll;
 
@@ -293,13 +371,13 @@ void FEditorOutputLogWidget::DrawLogListRichText()
     const ImU32 DefaultTextU32   = ImGui::GetColorU32(ImGuiCol_Text);
     const ImU32 WarningTextU32   = IM_COL32(255, 255, 0, 255);
     const ImU32 ErrorTextU32     = IM_COL32(255, 0, 0, 255);
-	const ImU32 HighlightBgU32   = IM_COL32(139, 194, 74, 255);
-	const ImU32 HighlightTextU32 = IM_COL32(0, 0, 0, 255);
+    const ImU32 HighlightBgU32   = IM_COL32(13, 59, 105, 255);
+    const ImU32 HighlightTextU32 = IM_COL32(192, 192, 192, 255);
 
     ImGui::PushFont(EditorFonts::Consola_16);
     ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f));
 
-    if (EditorWidgets::BeginRichTextView("##OutputLogRichText", ImVec2(-1.0f, -1.0f), RichTextCtx))
+    if (EditorWidgets::BeginRichTextView("##OutputLogRichText", ImVec2(-1.0f, -1.0f), RichTextCtx, 0, false))
     {
         for (int32 i = 0; i < LocalMessages.Size(); ++i)
         {
@@ -310,7 +388,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
                 continue;
             }
 
-            const char* Line = *Msg.Message;
+            const CHAR* Line = *Msg.Message;
             if (!Line)
             {
                 continue;
@@ -331,12 +409,12 @@ void FEditorOutputLogWidget::DrawLogListRichText()
                 LineColor = ErrorTextU32;
             }
 
-            EditorWidgets::RichTextLineBegin(RichTextCtx);
+            EditorWidgets::RichTextNewLine(RichTextCtx);
 
             if (bHasSearch)
             {
-                const int32 MatchStart = FindSubstringCaseInsensitive(Line, Search);
-                const int32 MatchLen   = (int32)strlen(Search);
+                const int32 MatchStart = FStringView(Line).Find(Search, EStringCaseType::NoCase);
+                const int32 MatchLen   = static_cast<int32>(FCString::Strlen(Search));
 
                 if (MatchStart >= 0 && MatchLen > 0)
                 {
@@ -363,7 +441,7 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
                     EditorWidgets::RichTextAddTextBg(RichTextCtx, *Match, HighlightTextU32, HighlightBgU32);
 
-                    const int32 LineLen     = (int32)strlen(Line);
+                    const int32 LineLen     = static_cast<int32>(FCString::Strlen(Line));
                     const int32 SuffixStart = MatchStart + MatchLen;
 
                     if (SuffixStart < LineLen)
@@ -387,8 +465,33 @@ void FEditorOutputLogWidget::DrawLogListRichText()
             {
                 EditorWidgets::RichTextAddText(RichTextCtx, Line, LineColor);
             }
+        }
 
-            EditorWidgets::RichTextLineEnd(RichTextCtx);
+        if (EditorWidgets::BeginPopupContextWindow("OutputLogContextMenu"))
+        {
+            EditorWidgets::MenuLabeledSeparator("Output Log");
+
+            if (EditorWidgets::MenuItem("Select All", nullptr, false, true))
+            {
+                EditorWidgets::RichTextSelectAll(RichTextCtx);
+            }
+
+            if (EditorWidgets::MenuItem("Copy", nullptr, false, RichTextCtx.bHasSelection))
+            {
+                const FString Selected = EditorWidgets::GetSelectedRichText(RichTextCtx);
+                if (!Selected.IsEmpty())
+                {
+                    ImGui::SetClipboardText(*Selected);
+                }
+            }
+
+            if (EditorWidgets::MenuItem("Clear log", nullptr, false, true))
+            {
+                SCOPED_LOCK(MessagesCS);
+                Messages.Clear();
+            }
+            
+            EditorWidgets::EndPopupContext();
         }
 
         EditorWidgets::EndRichTextView(RichTextCtx);
@@ -396,101 +499,4 @@ void FEditorOutputLogWidget::DrawLogListRichText()
 
     ImGui::PopStyleColor();
     ImGui::PopFont();
-}
-
-void FEditorOutputLogWidget::Draw()
-{
-    if (!bVisible)
-    {
-        return;
-    }
-
-    ImGuiStyle& Style = ImGui::GetStyle();
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(Style.ItemSpacing.x, 0.0f));
-
-    const ImGuiWindowFlags OutputLogFlags = ImGuiWindowFlags_NoCollapse;
-    if (ImGui::Begin("Output Log", &bVisible, OutputLogFlags))
-    {
-        const float OuterPadX        = 4.0f;
-        const float OuterPadTop      = 10.0f;
-        const float OuterPadBottom   = 4.0f;
-        const float GapBetweenPanels = 6.0f;
-        const float OutputRoundingPx = 4.0f;
-        const float HeaderRowH       = ImGui::GetFrameHeight();
-        const float HeaderHeight     = HeaderRowH + GapBetweenPanels;
-
-        const ImVec2 ContentMin = ImGui::GetWindowContentRegionMin();
-        const ImVec2 ContentMax = ImGui::GetWindowContentRegionMax();
-        const float  ContentW   = (ContentMax.x - ContentMin.x);
-        const float  ContentH   = (ContentMax.y - ContentMin.y);
-
-        float ChildWidth = ContentW - OuterPadX * 2.0f;
-        if (ChildWidth < 1.0f)
-        {
-            ChildWidth = 1.0f;
-        }
-
-        const float HeaderX = ContentMin.x + OuterPadX;
-        const float HeaderY = ContentMin.y + OuterPadTop;
-
-        ImGui::SetCursorPos(ImVec2(HeaderX, HeaderY));
-
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(36, 36, 36, 255));
-
-        const ImGuiWindowFlags OutputLogHeaderFlags = ImGuiWindowFlags_NoScrollbar;
-
-        if (ImGui::BeginChild("##OutputLogHeader", ImVec2(ChildWidth, HeaderHeight), true, OutputLogHeaderFlags))
-        {
-            DrawFilterBar();
-        }
-
-        ImGui::EndChild();
-
-        ImGui::PopStyleColor();
-        ImGui::PopStyleVar(3);
-
-        const float OutputX = HeaderX;
-        const float OutputY = HeaderY + HeaderHeight;
-
-        ImGui::SetCursorPos(ImVec2(OutputX, OutputY));
-
-        float OutputHeight = (ContentMin.y + ContentH) - OutputY - OuterPadBottom;
-        if (OutputHeight < 1.0f)
-        {
-            OutputHeight = 1.0f;
-        }
-
-        // -------------------------------------------------------------------------------------
-        // Log view (RichTextView replaces the old Text list)
-        // -------------------------------------------------------------------------------------
-
-        const ImU32  OutputBgU32 = IM_COL32(26, 26, 26, 255);
-        const ImVec4 OutputBg    = ImVec4(26.0f / 255.0f, 26.0f / 255.0f, 26.0f / 255.0f, 1.0f);
-
-        ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, OutputRoundingPx);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, OutputBgU32);
-        ImGui::PushStyleColor(ImGuiCol_ScrollbarBg, OutputBg);
-
-        const ImGuiWindowFlags OuterLogFlags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-
-        if (ImGui::BeginChild("##OutputLogOuter", ImVec2(ChildWidth, OutputHeight), true, OuterLogFlags))
-        {
-            DrawLogListRichText();
-        }
-
-        ImGui::EndChild();
-
-        ImGui::PopStyleColor(2);
-        ImGui::PopStyleVar(2);
-    }
-
-    ImGui::End();
-
-    ImGui::PopStyleVar(2);
 }

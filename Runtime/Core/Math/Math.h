@@ -1,10 +1,9 @@
 #pragma once
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/NumericLimits.h"
-#include <algorithm>
-#include <cmath>
+#include "Core/Platform/PlatformMath.h"
 
-struct Math
+struct Math : public FPlatformMath
 {
     // -------------------------------------------------------------------------------------------
     // Constants
@@ -16,51 +15,50 @@ struct Math
         // Fundamental Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float PI             = 3.14159265358979323846f;   // π
-        static constexpr float E              = 2.71828182845904523536f;   // Euler’s number
-
-        static constexpr float HalfPI         = PI * 0.5f;                 // π / 2
-        static constexpr float TwoPI          = PI * 2.0f;                 // 2π
-        static constexpr float QuarterPI      = PI * 0.25f;                // π / 4
+        static constexpr float PI        = 3.14159265358979323846f;   // π
+        static constexpr float E         = 2.71828182845904523536f;   // Euler’s number
+        static constexpr float HalfPI    = PI * 0.5f;                 // π / 2
+        static constexpr float TwoPI     = PI * 2.0f;                 // 2π
+        static constexpr float QuarterPI = PI * 0.25f;                // π / 4
 
         // -------------------------------------------------------------------------------------------
         // Degree / Radian Conversions
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float RadToDeg       = 180.0f / PI;               // Radians → degrees
-        static constexpr float Deg2Rad        = PI / 180.0f;               // Degrees → radians
+        static constexpr float RadToDeg = 180.0f / PI; // Radians → degrees
+        static constexpr float Deg2Rad  = PI / 180.0f; // Degrees → radians
 
         // -------------------------------------------------------------------------------------------
         // Inverse Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float InvPI          = 1.0f / PI;                 // 1/π
-        static constexpr float InvTwoPI       = 1.0f / TwoPI;              // 1/(2π)
+        static constexpr float InvPI    = 1.0f / PI;    // 1/π
+        static constexpr float InvTwoPI = 1.0f / TwoPI; // 1/(2π)
 
         // -------------------------------------------------------------------------------------------
         // Root Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float Sqrt2          = 1.41421356237f;            // √2
-        static constexpr float Sqrt3          = 1.73205080757f;            // √3
-        static constexpr float SqrtPI         = 1.77245385091f;            // √π
-        static constexpr float InvSqrtPI      = 0.56418958355f;            // 1/√π
-        static constexpr float InvSqrt2       = 0.70710678118f;            // 1/√2
+        static constexpr float Sqrt2     = 1.41421356237f; // √2
+        static constexpr float Sqrt3     = 1.73205080757f; // √3
+        static constexpr float SqrtPI    = 1.77245385091f; // √π
+        static constexpr float InvSqrtPI = 0.56418958355f; // 1/√π
+        static constexpr float InvSqrt2  = 0.70710678118f; // 1/√2
 
         // -------------------------------------------------------------------------------------------
         // Logarithmic / Exponential Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float Ln2            = 0.69314718056f;            // ln(2)
-        static constexpr float Ln10           = 2.30258509300f;            // ln(10)
-        static constexpr float Log2E          = 1.44269504089f;            // log₂(e)
-        static constexpr float Log10E         = 0.43429448190f;            // log₁₀(e)
+        static constexpr float Ln2    = 0.69314718056f; // ln(2)
+        static constexpr float Ln10   = 2.30258509300f; // ln(10)
+        static constexpr float Log2E  = 1.44269504089f; // log₂(e)
+        static constexpr float Log10E = 0.43429448190f; // log₁₀(e)
 
         // -------------------------------------------------------------------------------------------
         // Miscellaneous Constants
         // -------------------------------------------------------------------------------------------
 
-        static constexpr float GoldenRatio    = 1.61803398875f;            // φ (golden ratio)
+        static constexpr float GoldenRatio = 1.61803398875f; // φ (golden ratio)
 
         // -------------------------------------------------------------------------------------------
         // Tolerances / Numeric Limits
@@ -77,131 +75,24 @@ public:
     // Standard Math (roots, rounding, trig, log)
     // -------------------------------------------------------------------------------------------
 
-    /** @brief Returns the square root of the given value. */
-    template<typename T>
-    static FORCEINLINE T Sqrt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::sqrt(Value);
-    }
-
-    /** @brief Returns the absolute value of the given number. */
-    template<typename T>
-    static FORCEINLINE constexpr T Abs(T Value) requires(TIsArithmetic<T>::Value)
-    {
-        return std::abs(Value);
-    }
-
-    /** @brief Rounds a floating-point value to the nearest integer (floating result). */
-    template<typename T>
-    static FORCEINLINE T Round(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::round(Value);
-    }
-
-    /** @brief Rounds a floating-point value to the nearest integer (integer result). */
-    template<typename T>
-    static FORCEINLINE int32 RoundToInt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<int32>(std::round(Value));
-    }
-
-    /** @brief Floors a floating-point value to the next lowest integer (floating result). */
-    template<typename T>
-    static FORCEINLINE T Floor(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::floor(Value));
-    }
-
-    /** @brief Floors a floating-point value to the next lowest integer (integer result). */
-    template<typename T>
-    static FORCEINLINE int32 FloorToInt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<int32>(std::floor(Value));
-    }
-
-    /** @brief Ceils a floating-point value to the next highest integer (floating result). */
-    template<typename T>
-    static FORCEINLINE T Ceil(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::ceil(Value));
-    }
-
-    /** @brief Ceils a floating-point value to the next highest integer (integer result). */
-    template<typename T>
-    static FORCEINLINE int32 CeilToInt(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<int32>(std::ceil(Value));
-    }
-
-    /** @brief Returns the base-2 logarithm of the given value. */
-    template<typename T>
-    static FORCEINLINE T Log2(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::log2(Value));
-    }
-
-    /** @brief Returns the arcsine (in radians) of the given value. */
-    template<typename T>
-    static FORCEINLINE T Asin(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::asin(Value));
-    }
-
-    /** @brief Returns the arccosine (in radians) of the given value. */
-    template<typename T>
-    static FORCEINLINE T Acos(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::acos(Value));
-    }
-
-    /** @brief Returns the arctangent of Y/X in radians. */
-    template<typename T>
-    static FORCEINLINE T Atan2(T Y, T X) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::atan2(Y, X));
-    }
-
-    /** @brief Returns the sine of the given angle in radians. */
-    template<typename T>
-    static FORCEINLINE T Sin(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::sin(Value));
-    }
-
-    /** @brief Returns the cosine of the given angle in radians. */
-    template<typename T>
-    static FORCEINLINE T Cos(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::cos(Value));
-    }
-
-    /** @brief Returns the tangent of the given angle in radians. */
-    template<typename T>
-    static FORCEINLINE T Tan(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::tan(Value));
-    }
-
-    /** @brief Returns the floating-point remainder of Value / Divider. */
-    template<typename T>
-    static FORCEINLINE T FMod(T Value, T Divider) requires(TIsFloatingPoint<T>::Value)
-    {
-        return static_cast<T>(std::fmod(Value, Divider));
-    }
-
-    /** @brief Returns true if the given value is NaN (Not-a-Number). */
-    template<typename T>
-    static FORCEINLINE bool IsNaN(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::isnan(Value);
-    }
-
-    /** @brief Returns true if the given value is infinite. */
-    template<typename T>
-    static FORCEINLINE bool IsInfinity(T Value) requires(TIsFloatingPoint<T>::Value)
-    {
-        return std::isinf(Value);
-    }
+    using FPlatformMath::Sqrt;
+    using FPlatformMath::Abs;
+    using FPlatformMath::Round;
+    using FPlatformMath::RoundToInt;
+    using FPlatformMath::Floor;
+    using FPlatformMath::FloorToInt;
+    using FPlatformMath::Ceil;
+    using FPlatformMath::CeilToInt;
+    using FPlatformMath::Log2;
+    using FPlatformMath::Asin;
+    using FPlatformMath::Acos;
+    using FPlatformMath::Atan2;
+    using FPlatformMath::Sin;
+    using FPlatformMath::Cos;
+    using FPlatformMath::Tan;
+    using FPlatformMath::FMod;
+    using FPlatformMath::IsNaN;
+    using FPlatformMath::IsInfinity;
 
 public:
 
@@ -374,6 +265,71 @@ public:
     // -------------------------------------------------------------------------------------------
     // Bit / Numeric Helpers
     // -------------------------------------------------------------------------------------------
+
+    /** @brief Reinterprets a float as its uint32 bit pattern (avoids aliasing UB). */
+    static FORCEINLINE uint32 FloatToBits(float Value) noexcept
+    {
+        static_assert(sizeof(float) == sizeof(uint32));
+        uint32 Bits = 0;
+        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
+        return Bits;
+    }
+
+    /** @brief Reinterprets a uint32 bit pattern as a float (avoids aliasing UB). */
+    static FORCEINLINE float BitsToFloat(uint32 Bits) noexcept
+    {
+        float Value = 0.0f;
+        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    }
+
+    /** @brief Reinterprets an int32 as its uint32 bit pattern (avoids aliasing UB). */
+    static FORCEINLINE uint32 IntToBits(int32 Value) noexcept
+    {
+        static_assert(sizeof(int32) == sizeof(uint32));
+        uint32 Bits = 0;
+        FMemory::Memcpy(&Bits, &Value, sizeof(Bits));
+        return Bits;
+    }
+
+    /** @brief Reinterprets a uint32 bit pattern as an int32 (avoids aliasing UB). */
+    static FORCEINLINE int32 BitsToInt(uint32 Bits) noexcept
+    {
+        int32 Value = 0;
+        FMemory::Memcpy(&Value, &Bits, sizeof(Value));
+        return Value;
+    }
+
+    /** @brief Adds two int32 values with wrap-around semantics (avoids signed overflow UB). */
+    static FORCEINLINE int32 AddWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint32 UA = IntToBits(A);
+        const uint32 UB = IntToBits(B);
+        return BitsToInt(UA + UB);
+    }
+
+    /** @brief Subtracts two int32 values with wrap-around semantics (avoids signed overflow UB). */
+    static FORCEINLINE int32 SubWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint32 UA = IntToBits(A);
+        const uint32 UB = IntToBits(B);
+        return BitsToInt(UA - UB);
+    }
+
+    /** @brief Multiplies two int32 values with wrap-around semantics (avoids signed overflow UB). */
+    static FORCEINLINE int32 MulWrapInt32(int32 A, int32 B) noexcept
+    {
+        const uint64 UA = static_cast<uint64>(IntToBits(A));
+        const uint64 UB = static_cast<uint64>(IntToBits(B));
+        const uint32 Lo = static_cast<uint32>(UA * UB);
+        return BitsToInt(Lo);
+    }
+
+    /** @brief Returns 0xFFFFFFFF for true, otherwise 0. */
+    static FORCEINLINE uint32 BoolMask(bool bValue) noexcept
+    {
+        return bValue ? 0xFFFFFFFFu : 0u;
+    }
 
     /** @brief Returns the maximum representable value for the given bit width. */
     template<const uint64 NumBits>

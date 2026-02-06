@@ -8,6 +8,7 @@ class FEditorViewportWidget;
 class FEditorSceneHierarchyWidget;
 class FEditorPropertiesWidget;
 class FEditorContentBrowserWidget;
+class FEditorGuizmoWidget;
 
 class ENGINE_API FEditorEngine : public FEngine
 {
@@ -32,6 +33,7 @@ public:
     const TSharedPtr<FEditorSceneHierarchyWidget>& GetSceneHierarchyWidget() const { return SceneHierarchyWidget; }
     const TSharedPtr<FEditorPropertiesWidget>&     GetPropertiesWidget() const { return PropertiesWidget; }
     const TSharedPtr<FEditorContentBrowserWidget>& GetContentBrowserWidget() const { return ContentBrowserWidget; }
+    const TSharedPtr<FEditorGuizmoWidget>&         GetGuizmoWidget() const { return GuizmoWidget; }
 
     void SetSelectedActor(FActor* InActor);
     void SetSelectedLight(FLight* InLight);
@@ -53,13 +55,14 @@ private:
     FLightProbe* SelectedLightProbe;
 
     // Editor Interface
-    TSharedPtr<FEditorDockspaceWidget>         DockspaceWidget;
-    TSharedPtr<FEditorFooterWidget>            FooterWidget;
-    TSharedPtr<FEditorOutputLogWidget>         OutputLogWidget;
-    TSharedPtr<FEditorViewportWidget>          ViewportWidget;
-    TSharedPtr<FEditorSceneHierarchyWidget>    SceneHierarchyWidget;
-    TSharedPtr<FEditorPropertiesWidget>        PropertiesWidget;
-    TSharedPtr<FEditorContentBrowserWidget>    ContentBrowserWidget;
-    FRHITextureRef                             ViewportImage;
-    FIntVector2                                ViewportImageSize;
+    TSharedPtr<FEditorDockspaceWidget>      DockspaceWidget;
+    TSharedPtr<FEditorFooterWidget>         FooterWidget;
+    TSharedPtr<FEditorOutputLogWidget>      OutputLogWidget;
+    TSharedPtr<FEditorViewportWidget>       ViewportWidget;
+    TSharedPtr<FEditorSceneHierarchyWidget> SceneHierarchyWidget;
+    TSharedPtr<FEditorPropertiesWidget>     PropertiesWidget;
+    TSharedPtr<FEditorContentBrowserWidget> ContentBrowserWidget;
+    TSharedPtr<FEditorGuizmoWidget>         GuizmoWidget;
+    FRHITextureRef                          ViewportImage;
+    FIntVector2                             ViewportImageSize;
 };

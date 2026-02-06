@@ -44,7 +44,7 @@ void FMacConsoleOutputDevice::CreateConsole()
             [Font retain];
         }
         
-        // Init the textcolor (Note: This needs to be made before the attributes array is created)
+        // Init the textcolor (NOTE: This needs to be made before the attributes array is created)
         InternalSetConsoleColor(EConsoleColor::White);
         
         // Init the backgroundcolor

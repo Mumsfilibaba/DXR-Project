@@ -4,6 +4,7 @@
 FWidget::FWidget()
     : TSharedFromThis<FWidget>()
     , Visibility(EVisibility::Visible)
+    , ActivationPolicy(EWidgetActivationPolicy::DoNotAutoFocusOnWindowActivate)
     , ContentRectangle()
     , ParentWidget()
 {

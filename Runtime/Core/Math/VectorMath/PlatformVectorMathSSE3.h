@@ -1,6 +1,6 @@
 #pragma once
 #if PLATFORM_SUPPORT_SSE3_INTRIN
-#include "Core/Math/VectorMath/VectorMathSSE2.h"
+#include "Core/Math/VectorMath/PlatformVectorMathSSE2.h"
 
 #if PLATFORM_WINDOWS
     #include <pmmintrin.h> // SSE3
@@ -10,7 +10,7 @@
     #error "No valid platform. This code requires SSE3 support on Windows or macOS."
 #endif
 
-struct FVectorMathSSE3 : public FVectorMathSSE2
+struct FPlatformVectorMathSSE3 : public FPlatformVectorMathSSE2
 {
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {

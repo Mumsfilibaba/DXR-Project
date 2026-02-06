@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/Spinlock.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/StaticArray.h"
@@ -144,7 +144,7 @@ private:
     ~FFrameProfiler();
 
     FFrameProfilerFunctionInfo       CPUFrameTime;
-    FStopwatch                       Clock;
+    FElapsedTime                       Clock;
     int32                            CurrentFps;
     int32                            Fps;
     bool                             bEnabled;

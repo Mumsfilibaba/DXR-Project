@@ -1,6 +1,7 @@
 #pragma once
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/AsyncTask.h"
+#include "Core/Containers/Queue.h"
 #include "Application/Events.h"
 #include "Application/InputHandler.h"
 #include "Engine/World/Actors/Actor.h"
@@ -20,6 +21,9 @@
 #include "Renderer/DebugRendering.h"
 #include "Renderer/TemporalAA.h"
 #include "Renderer/PostProcessing.h"
+#if EDITOR_BUILD
+#include "Renderer/SelectionOutlinePass.h"
+#endif
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
@@ -28,6 +32,11 @@
 
 class FViewportWidget;
 class FSceneRenderer;
+
+#if EDITOR_BUILD
+class FEditorNoJitterDepthPass;
+class FEditorSelectionIDPass;
+#endif
 
 struct FCameraHLSL
 {
@@ -133,11 +142,14 @@ public:
     void RenderSceneView(const FSceneRenderView& SceneRenderView);
     void RenderUI();
 
-    void EndFrame();
-
-    void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight);
-    void PrepareSwapChain(FRHISwapChainRef SwapChain);
-    void PresentSwapChain(FRHISwapChainRef SwapChain);
+    void EndFrame(); 
+ 
+    void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY); 
+    bool PollEditorObjectPickResult(FScene* Scene, uint32& OutObjectID); 
+ 
+    void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight); 
+    void PrepareSwapChain(FRHISwapChainRef SwapChain); 
+    void PresentSwapChain(FRHISwapChainRef SwapChain); 
 
     void ResizeResources(uint32 InWidth, uint32 InHeight);
 
@@ -166,11 +178,41 @@ public:
         return FrameCounter;
     }
 
-private:
-    bool InitShadingImage();
+    FRHITexture* GetSelectionMaskTexture() const
+    {
+#if EDITOR_BUILD
+        return SelectionOutlinePass ? SelectionOutlinePass->GetSelectionMask() : nullptr;
+#else
+        return nullptr;
+#endif
+    }
 
-    // RenderPasses and Resources
-    FFrameResources             Resources;
+    FRHITexture* GetSelectionDilatedMaskTexture() const
+    {
+#if EDITOR_BUILD
+        return SelectionOutlinePass ? SelectionOutlinePass->GetDilatedMask() : nullptr;
+#else
+        return nullptr;
+#endif
+    }
+
+    FRHITexture* GetSelectionRingTexture() const
+    {
+#if EDITOR_BUILD
+        return SelectionOutlinePass ? SelectionOutlinePass->GetRingMask() : nullptr;
+#else
+        return nullptr;
+#endif
+    }
+
+private: 
+    bool InitShadingImage(); 
+#if EDITOR_BUILD
+    void ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene);
+#endif
+ 
+    // RenderPasses and Resources 
+    FFrameResources             Resources; 
     FFrameCounterState          FrameCounter;
 
     FCameraHLSL                 CameraBuffer;
@@ -187,9 +229,17 @@ private:
     FScreenSpaceOcclusionPass*  ScreenSpaceOcclusionPass;
     FSkyboxRenderPass*          SkyboxRenderPass;
     FTemporalAA*                TemporalAA;
+#if EDITOR_BUILD
+    FSelectionOutlinePass*      SelectionOutlinePass;
+    FEditorNoJitterDepthPass*   EditorNoJitterDepthPass;
+    FEditorSelectionIDPass*     EditorSelectionIDPass;
+#endif
     FForwardPass*               ForwardPass;
     FFXAAPass*                  FXAAPass;
     FTonemapPass*               TonemapPass;
+#if EDITOR_BUILD
+    FFinalCompositePass*        FinalCompositePass;
+#endif
     FLightProbeRenderer*        LightProbeRenderer;
     FDebugRenderer*             DebugRenderer;
     FRayTracer                  RayTracer;
@@ -207,6 +257,50 @@ private:
     TArray<FRHISwapChainRef>     SwapChainsToPrepare;
     TArray<FRHISwapChainRef>     SwapChainsToPresent;
     TArray<FSwapChainResizeInfo> SwapChainsToResize;
+
+#if EDITOR_BUILD
+    struct FEditorObjectPickRequest
+    {
+        FScene* Scene = nullptr;
+        uint32  PixelX = 0;
+        uint32  PixelY = 0;
+    };
+
+    struct FEditorObjectPickInFlight
+    {
+        FScene*         Scene = nullptr;
+
+        FRHIBufferRef   ReadbackBuffer;
+        FRHIGpuFenceRef Fence;
+
+        uint32          SampleRadius = 0;
+        uint32          PixelX       = 0;
+        uint32          PixelY       = 0;
+        uint32          TexWidth     = 0;
+        uint32          TexHeight    = 0;
+
+        // Normal window (around PixelX/PixelY).
+        uint32          NormalBaseOffset     = 0;
+        uint32          NormalRowStrideBytes = 0;
+        uint32          NormalWidth          = 0;
+        uint32          NormalHeight         = 0;
+        uint32          NormalCenterX        = 0;
+        uint32          NormalCenterY        = 0;
+
+        // Optional flipped-Y window.
+        uint32          bHasFlippedWindow : 1 = 0;
+        uint32          FlippedBaseOffset     = 0;
+        uint32          FlippedRowStrideBytes = 0;
+        uint32          FlippedWidth          = 0;
+        uint32          FlippedHeight         = 0;
+        uint32          FlippedCenterX        = 0;
+        uint32          FlippedCenterY        = 0;
+    };
+
+    static constexpr uint32 MaxInFlightObjectPicks = 4;
+    TQueue<FEditorObjectPickRequest, EQueueType::MPSC> PendingObjectPicks;
+    TArray<FEditorObjectPickInFlight>                  InFlightObjectPicks;
+#endif
 
     // Widgets
     TSharedPtr<FTextureDebugWidget>     TextureDebugger;

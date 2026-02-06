@@ -2,16 +2,93 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Color.h"
 #include "Core/Containers/UniquePtr.h"
-#include <imgui.h>
+#include "ImGuiPlugin/ImGuiCore.h"
+
+struct FImGuiTexture;
+
+enum class EVector3ControlType : uint8
+{
+    Default,
+    Position,
+    RotationDegrees,
+    Scale,
+};
 
 struct PopupAnchor
 {
-    ImVec2 Min              = ImVec2(0.0f, 0.0f);
-    ImVec2 Max              = ImVec2(0.0f, 0.0f);
-    bool   bRequestPosition = false;
+    ImVec2 Min = ImVec2(0.0f, 0.0f);
+    ImVec2 Max = ImVec2(0.0f, 0.0f);
+    
+    bool bRequestPosition = false;
 };
 
-struct EditorStyleVars
+struct RichTextSpan
+{
+    FString Text;
+
+    ImU32 TextColor       = IM_COL32(255, 255, 255, 255);
+    ImU32 BackgroundColor = 0;
+    bool  bHasBackground  = false;
+};
+
+struct RichTextLine
+{
+    TArray<RichTextSpan> Spans;
+    int32 TotalChars = 0;
+};
+
+struct RichTextSelectionPoint
+{
+    int32 Line   = 0;
+    int32 Column = 0;
+};
+
+struct RichTextViewContext
+{
+    void ClearForNewFrame()
+    {
+        Lines.Clear();
+        bActive = false;
+    }
+
+    TArray<RichTextLine>   Lines;
+    RichTextSelectionPoint SelStart;
+    RichTextSelectionPoint SelEnd;
+
+    ImGuiID ViewId          = 0;
+    ImVec2  Padding         = ImVec2(8.0f, 4.0f);
+    ImVec2  ContentStart    = ImVec2(0, 0);
+    float   LineHeight      = 0.0f;
+    float   CharWidth       = 0.0f;
+    bool    bAutoScroll     = true;
+    bool    bScrollToBottom = false;
+    bool    bSelecting      = false;
+    bool    bHasSelection   = false;
+    bool    bActive         = false;
+};
+
+struct ErrorWindowContext
+{
+    TArray<FString> Entries;
+    FString         Title;
+    FString         HeaderText;
+
+    bool bVisible = false;
+};
+
+struct ConfirmDialogContext
+{
+    FString Title;
+    FString Message;
+
+    bool bVisible = false;
+};
+
+// -----------------------------------------------------------------------------------------
+// Style-vars
+// -----------------------------------------------------------------------------------------
+
+struct ENGINE_API EditorStyleVars
 {
     static float  MainMenuBarHeight;
 
@@ -19,6 +96,7 @@ struct EditorStyleVars
     static float  InputFieldBorderThickness;
     static float  InputFieldBorderRounding;
     static ImU32  InputFieldBorderColor;
+    static ImVec4 InputFieldSelectionColor;
     
     static ImVec2 SceneHierarchyItemSpacing;
     static ImVec2 SceneHierarchyWindowPadding;
@@ -30,6 +108,10 @@ struct EditorStyleVars
     static ImVec2 PropertiesCollapsingFramePadding;
     static float  PropertiesCollapsingFrameRounding;
 };
+
+// -----------------------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------------------
 
 struct ENGINE_API EditorHelpers
 {
@@ -43,82 +125,34 @@ struct ENGINE_API EditorHelpers
 
         return ImGui::GetColorU32(BrighterColor);
     }
+
+    static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBufSize);
 };
 
-enum class EVector3ControlType : uint8
-{
-    Default,
-    Position,
-    RotationDegrees,
-    Scale,
-};
-
-struct FRichTextSpan
-{
-    FString Text;
-    
-    ImU32 TextColor       = IM_COL32(255, 255, 255, 255);
-    bool  bHasBackground  = false;
-    ImU32 BackgroundColor = 0;
-};
-
-struct FRichTextLine
-{
-    TArray<FRichTextSpan> Spans;
-    int32 TotalChars = 0;
-};
-
-struct FRichTextSelectionPoint
-{
-    int32 Line   = 0;
-    int32 Column = 0;
-};
-
-struct FRichTextViewContext
-{
-    void ClearForNewFrame()
-    {
-        Lines.Clear();
-        bActive = false;
-    }
-
-    bool    bAutoScroll     = true;
-    bool    bScrollToBottom = false;
-    bool    bSelecting      = false;
-    bool    bHasSelection   = false;
-    bool    bActive         = false;
-    float   LineHeight      = 0.0f;
-    float   CharWidth       = 0.0f;
-    ImVec2  ContentStart    = ImVec2(0, 0);
-    ImVec2  Padding         = ImVec2(8.0f, 4.0f);
-    ImGuiID ViewId          = 0;
-
-    FRichTextSelectionPoint SelStart;
-    FRichTextSelectionPoint SelEnd;
-    TArray<FRichTextLine>   Lines;
-
-};
+// -----------------------------------------------------------------------------------------
+// Widgets
+// -----------------------------------------------------------------------------------------
 
 struct ENGINE_API EditorWidgets
 {
     // -----------------------------------------------------------------------------------------
-    // Menu
+    // Inputs
     // -----------------------------------------------------------------------------------------
 
     static bool DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float Speed, const FVector3* InRevertValue, EVector3ControlType InType);
-    static bool DrawFloatProperty(const char* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const char* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
-    static bool DrawCheckboxProperty(const char* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
-    static void DrawTextProperty(const char* Label, const char* ValueText);
-    static void DrawReadOnlyFloat3Property(const char* Label, const FVector3& Value);
+    static bool DrawFloatProperty(const CHAR* Label, float& InOutValue, float Speed, float MinValue, float MaxValue, const CHAR* Format, bool bUseSlider, const float* InRevertValue, bool bEnabled = true);
+    static bool DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, const bool* InRevertValue, bool bEnabled = true);
+    static void DrawTextProperty(const CHAR* Label, const CHAR* ValueText);
+    static void DrawReadOnlyFloat3Property(const CHAR* Label, const FVector3& Value);
 
-    static bool DrawColor3Property(const char* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
+    static bool DrawColor3Property(const CHAR* Label, float* InOutColor, const float* InRevertColor, bool bEnabled, ImGuiColorEditFlags Flags);
  
-    static FORCEINLINE bool DrawColor3Property(const char* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FFloatColor& InOutColor, const FFloatColor& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.RGBA, InRevertColor.RGBA, bEnabled, Flags);
     }
 
-    static FORCEINLINE bool DrawColor3Property(const char* Label, FVector3& InOutColor, const FVector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
+    static FORCEINLINE bool DrawColor3Property(const CHAR* Label, FVector3& InOutColor, const FVector3& InRevertColor, bool bEnabled = true, ImGuiColorEditFlags Flags = ImGuiColorEditFlags_None)
     {
         return DrawColor3Property(Label, InOutColor.XYZ, InRevertColor.XYZ, bEnabled, Flags);
     }
@@ -137,50 +171,78 @@ struct ENGINE_API EditorWidgets
     // Search
     // -----------------------------------------------------------------------------------------
 
-    static bool EditorSearchField(const char* InId, const char* InHint, char* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+    static bool DrawSearchField(const CHAR* InId, const CHAR* InHint, CHAR* InOutBuffer, int32 InBufferSize, float InWidth = -1.0f, bool bDrawBorder = true);
+    static void DrawTextWithSearchHighlight(ImDrawList* DrawList, const ImVec2& TextPos, const CHAR* Text, const CHAR* FilterText, ImU32 BaseTextU32, float HighlightPadX = 1.0f, float HighlightPadY = 1.0f, const ImVec2* ClampMin = nullptr, const ImVec2* ClampMax = nullptr);
 
     // -----------------------------------------------------------------------------------------
-    // Menu
+    // Popup
     // -----------------------------------------------------------------------------------------
 
-    static void EditorMenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
-    static void EditorMenuLabeledSeparator(const char* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
-    static bool EditorMenuItem(const char* Label, const char* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
-    static void EditorDrawMenuButton(const char* Label, const char* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
-    static bool EditorBeginMenuPopup(const char* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
-    static void EditorResetMenuPopup();
+    static bool BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Anchor, float MinWidth = 180.0f);
+    static bool BeginPopupContextWindow(const CHAR* PopupId, ImGuiPopupFlags Flags = ImGuiPopupFlags_MouseButtonRight);
+    static bool BeginPopupContextItem(const CHAR* PopupId);
+    
+    static void MenuSeparator(float Thickness = 1.0f, float PaddingY = 4.0f);
+    static void MenuLabeledSeparator(const CHAR* Label, float Thickness = 1.0f, float PaddingY = 4.0f);
+    static bool MenuItem(const CHAR* Label, const CHAR* Shortcut = nullptr, bool bSelected = false, bool bEnabled = true, bool bDrawBorder = false);
+    static void MenuButton(const CHAR* Label, const CHAR* PopupId, bool bAnyPopupOpen, float ButtonHeight, PopupAnchor& OutAnchor, bool bDrawBorder = false);
+    
+    static void EndMenuPopup();
+    static void EndPopupContext();
 
     // -----------------------------------------------------------------------------------------
     // Property Table
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginPropertyTable(const char* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
+    static bool BeginPropertyTable(const CHAR* TableId, float LabelColumnWidth = 200.0f, float RevertColumnWidth = 20.0f);
     static void EndPropertyTable();
-    static void PropertyRowLabel(const char* Label);
+    static void PropertyRowLabel(const CHAR* Label);
     static void PropertySeparatorRow(float PaddingY = 4.0f);
 
     // -----------------------------------------------------------------------------------------
     // Rich Text View
     // -----------------------------------------------------------------------------------------
 
-    static bool BeginRichTextView(const char* InId, const ImVec2& InSize, FRichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0);
-    static void RichTextLineBegin(FRichTextViewContext& InOutContext);
-    static void RichTextAddText(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor);
-    static void RichTextAddTextBg(FRichTextViewContext& InOutContext, const char* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
-    static void RichTextLineEnd(FRichTextViewContext& InOutContext);
-    static void EndRichTextView(FRichTextViewContext& InOutContext);
+    static bool BeginRichTextView(const CHAR* InId, const ImVec2& InSize, RichTextViewContext& InOutContext, ImGuiWindowFlags InFlags = 0, bool bWithContextMenu = true);
+    static void RichTextSelectAll(RichTextViewContext& InOutContext);
+    static void RichTextNewLine(RichTextViewContext& InOutContext);
+    static void RichTextAddText(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor);
+    static void RichTextAddTextBg(RichTextViewContext& InOutContext, const CHAR* InText, ImU32 InTextColor, ImU32 InBackgroundColor);
+    static void EndRichTextView(RichTextViewContext& InOutContext);
+
+    static FString GetSelectedRichText(const RichTextViewContext& InContext);
+
+    // -----------------------------------------------------------------------------------------
+    // Buttons
+    // -----------------------------------------------------------------------------------------
+
+    static bool DrawDialogButton(const CHAR* Label, const ImVec2& Size);
+    static bool DrawButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
+
+    // -----------------------------------------------------------------------------------------
+    // Error handling
+    // -----------------------------------------------------------------------------------------
+
+    static void DrawErrorWindow(ErrorWindowContext& InOutContext);
+
+    // -----------------------------------------------------------------------------------------
+    // Confirmation dialog
+    // -----------------------------------------------------------------------------------------
+
+    static bool DrawConfirmDialog(ConfirmDialogContext& InOutContext);
 
     // -----------------------------------------------------------------------------------------
     // Other
     // -----------------------------------------------------------------------------------------
 
-    static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
-    static void EditorDrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
+    static void DrawCheckMark(ImDrawList* DrawList, ImVec2 Position, ImU32 Color, float CheckMarkSize);
 };
 
-struct FImGuiTexture;
+// -----------------------------------------------------------------------------------------
+// Icons
+// -----------------------------------------------------------------------------------------
 
-struct EditorIcons
+struct ENGINE_API EditorIcons
 {
     static ImTextureID UndoIcon;
     static ImTextureID SearchIcon;
@@ -188,10 +250,13 @@ struct EditorIcons
     static ImTextureID UnlockedIcon;
     static ImTextureID FolderIcon;
     static ImTextureID FolderSmallIcon;
+    static ImTextureID FolderSmall2Icon;
     static ImTextureID FolderOpenSmallIcon;
     static ImTextureID DocumentIcon;
     static ImTextureID DocumentSmallIcon;
     static ImTextureID CheckmarkIcon;
+    static ImTextureID ForbiddenIcon;
+    static ImTextureID CircledCheckmarkIcon;
     static ImTextureID NextIcon;
     static ImTextureID PreviousIcon;
     static ImTextureID CloseIcon;
@@ -205,7 +270,11 @@ struct EditorIcons
     static void Release();
 };
 
-struct EditorFonts
+// -----------------------------------------------------------------------------------------
+// Fonts
+// -----------------------------------------------------------------------------------------
+
+struct ENGINE_API EditorFonts
 {
     static ImFont* DefaultFont;
     static ImFont* SegoeUI_18;

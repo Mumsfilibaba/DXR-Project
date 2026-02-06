@@ -2,6 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Math/Matrix3x4.h"
 #include "RHI/RHITypes.h"
 #include "Renderer/Scene/SceneObject.h"
 
@@ -13,8 +14,17 @@ class FRHIRayTracingGeometry;
 
 struct FTransformBufferHLSL
 {
-    FMatrix4 Transform;
-    FMatrix4 TransformInv;
+    // Row-major float3x4 affine transform.
+    // Shaders treat positions as column vectors: result = Transform * float4(Position, 1).
+    FMatrix3x4 Transform;
+
+    // Inverse-transpose for normal/tangent transforms (w=0 so translation is ignored).
+    FMatrix3x4 TransformInvT;
+
+    uint32 ObjectID = 0;
+    uint32 Padding0 = 0;
+    uint32 Padding1 = 0;
+    uint32 Padding2 = 0;
 };
 
 MARK_AS_REALLOCATABLE(FTransformBufferHLSL);

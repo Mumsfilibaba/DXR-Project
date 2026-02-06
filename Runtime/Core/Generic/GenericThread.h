@@ -11,10 +11,10 @@ class CORE_API FGenericThread
 {
 public:
 
-    // Creates a new thread
+    /** @brief Creates a new thread */
     static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
-    // Returns the thread-object for the current thread
+    /** @return Returns the thread-object for the current thread */
     static FGenericThread* GetThread();
 
 public:
@@ -36,14 +36,14 @@ public:
 
     /** @brief Waits for the thread to finish */
     virtual void WaitForCompletion() { }
-    
+
     /** @return Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }
 
     /** @return Returns the name of the thread */
     const FString& GetName() const
     {
-        return ThreadName;
+        return Name;
     }
 
     /** @return Returns a pointer to the interface currently running on the thread */
@@ -58,8 +58,8 @@ protected:
     // Returns and allocates a TLS slot for the local thread pointer
     static uint32 AllocTLSSlot();
 
+    FString    Name;
     FRunnable* Runnable;
-    FString    ThreadName;
 
     // Slot-Index for storing the current threads pointer
     static uint32 TLSSlot;

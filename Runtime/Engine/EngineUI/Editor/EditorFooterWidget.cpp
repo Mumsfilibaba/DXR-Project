@@ -3,12 +3,22 @@
 #include "Application/Application.h"
 #include "Engine/EngineUI/Editor/EditorFooterWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include <imgui.h>
 
 FEditorFooterWidget::FEditorFooterWidget(const TSharedPtr<IOutputDevice>& InOutputDevice)
     : OutputDevice(InOutputDevice)
     , Candidates()
+    , SelectedCandidateIndex(InvalidIndex)
+    , HistoryIndex(InvalidIndex)
+    , LastCursorPosition(0)
+    , PendingCursorPosition(0)
+    , bCandidateSelectionChanged(false)
+    , bRequestCursorPosition(false)
+    , bRequestInputFocus(false)
+    , bUpdateCursorPosition(false)
+    , bScrollToBottom(false)
+    , bCandidatesOverlayOpen(false)
 {
     if (FApplication::IsInitialized())
     {
@@ -32,7 +42,6 @@ void FEditorFooterWidget::Draw()
     const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
     ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(36, 36, 36, 255));
-
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(6.0f, 6.0f));
 
     const ImGuiWindowFlags ConsoleWindowFlags =
@@ -54,7 +63,6 @@ void FEditorFooterWidget::Draw()
 
     if (ImGui::BeginChild("Console", ImVec2(0.0f, GetHeight()), ConsoleChildWindowFlags, ConsoleWindowFlags))
     {
-        // Draw input
         const ImGuiInputTextFlags ConsoleInputFlags =
             ImGuiInputTextFlags_EnterReturnsTrue |
             ImGuiInputTextFlags_CallbackCompletion |
@@ -72,6 +80,13 @@ void FEditorFooterWidget::Draw()
         const float InputFieldWidth = 512.0f;
         ImGui::SetNextItemWidth(InputFieldWidth);
 
+        const bool bWantsInputFocus = bRequestInputFocus;
+        if (bRequestInputFocus)
+        {
+            ImGui::SetKeyboardFocusHere();
+            bRequestInputFocus = false;
+        }
+
         const ImVec2 BasePadding   = EditorStyleVars::InputFieldFramePadding;
         const float  InputRounding = 4.0f;
 
@@ -79,11 +94,19 @@ void FEditorFooterWidget::Draw()
         const ImU32  BorderColorNormal  = IM_COL32(51, 51, 51, 255);
         const ImU32  BorderColorHovered = IM_COL32(74, 74, 74, 255);
         const ImU32  BorderColorActive  = IM_COL32(9, 92, 176, 255);
-        const ImVec4 TextColor          = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+        const ImVec4 HintTextInactive   = ImVec4(77.0f / 255.0f, 77.0f / 255.0f, 77.0f / 255.0f, 1.0f);
+        const ImVec4 HintTextActive     = ImVec4(99.0f / 255.0f, 99.0f / 255.0f, 99.0f / 255.0f, 1.0f);
+        const ImVec4 InputTextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         const ImVec2 InputStart = ImGui::GetCursorScreenPos();
-        const float  InputH     = ImGui::GetFontSize() + BasePadding.y * 2.0f;
-        const ImVec2 InputEnd   = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputH);
+        const float  InputHeight = ImGui::GetFontSize() + BasePadding.y * 2.0f;
+        const ImVec2 InputEnd    = ImVec2(InputStart.x + InputFieldWidth, InputStart.y + InputHeight);
+
+        const ImGuiID ConsoleInputId  = ImGui::GetID("##ConsoleInput");
+        const bool    bInputWasActive = ImGui::GetActiveID() == ConsoleInputId;
+        const bool    bInputClicked   = ImGui::IsMouseHoveringRect(InputStart, InputEnd, true) && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+        const bool    bUseActiveHint  = bInputWasActive || bWantsInputFocus || bInputClicked;
+        const ImVec4  HintTextColor   = bUseActiveHint ? HintTextActive : HintTextInactive;
 
         ImDrawList* DrawList = ImGui::GetWindowDrawList();
         DrawList->AddRectFilled(InputStart, InputEnd, BgColor, InputRounding);
@@ -95,17 +118,18 @@ void FEditorFooterWidget::Draw()
         ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0, 0, 0, 0));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0, 0, 0, 0));
-        ImGui::PushStyleColor(ImGuiCol_Text, TextColor);
-        ImGui::PushStyleColor(ImGuiCol_TextDisabled, TextColor);
+        ImGui::PushStyleColor(ImGuiCol_Text, InputTextColor);
+        ImGui::PushStyleColor(ImGuiCol_TextDisabled, HintTextColor);
+        ImGui::PushStyleColor(ImGuiCol_TextSelectedBg, EditorStyleVars::InputFieldSelectionColor);
 
         const bool bDidEnterInput = ImGui::InputTextWithHint("##ConsoleInput", "Console Input", TextBuffer.Data(), TextBuffer.Size(), ConsoleInputFlags, InputCallback, this);
 
-        ImGui::PopStyleColor(5);
+        ImGui::PopStyleColor(6);
         ImGui::PopStyleVar(3);
 
-        // Cache input rect in absolute screen coords, this is later used to draw the candidate window
-        InputRectMin        = ImGui::GetItemRectMin();
-        InputRectMax        = ImGui::GetItemRectMax();
+        InputRectMin = ImGui::GetItemRectMin();
+        InputRectMax = ImGui::GetItemRectMax();
+        
         bIsInputFieldActive = ImGui::IsItemActive();
 
         {
@@ -113,16 +137,14 @@ void FEditorFooterWidget::Draw()
             const bool bHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
             const ImU32 BorderColor = bActive ? BorderColorActive : (bHovered ? BorderColorHovered : BorderColorNormal);
-            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, InputRounding, 0, EditorStyleVars::InputFieldBorderThickness);
+            DrawList->AddRect(InputRectMin, InputRectMax, BorderColor, InputRounding, ImDrawListFlags_AntiAliasedLines, EditorStyleVars::InputFieldBorderThickness);
         }
 
-        // Ensure that the input is propagated correctly
         if (InputHandler)
         {
             InputHandler->bConsoleToggled = bIsInputFieldActive;
         }
 
-        // If we have candidates, we'll show overlay after ending this window
         bShowCandidatesOverlay = !Candidates.IsEmpty();
 
         if (bDidEnterInput)
@@ -158,7 +180,63 @@ void FEditorFooterWidget::Draw()
     // Candidates overlay window
     // -------------------------------------------------------------------------------------------
 
+    if (!bShowCandidatesOverlay)
+    {
+        bCandidatesOverlayOpen = false;
+    }
+
     if (bIsInputFieldActive && bShowCandidatesOverlay)
+    {
+        bCandidatesOverlayOpen = true;
+    }
+
+    bool bMouseInsideOverlayRect = false;
+
+    float OverlayMaxNameWidth = 0.0f;
+    ImVec2 OverlayWindowSize  = ImVec2(0.0f, 0.0f);
+    ImVec2 OverlayWindowPos   = ImVec2(0.0f, 0.0f);
+
+    if (bShowCandidatesOverlay)
+    {
+        const ImGuiStyle& Style = ImGui::GetStyle();
+
+        const float  RowHeight      = 20.0f;
+        const int32  MaxVisibleRows = 20;
+        const float  PanelOffsetY   = 4.0f;
+        const float  Scale          = FrameBufferScale.x;
+        const float  TotalHeight    = RowHeight * MaxVisibleRows;
+        const ImVec2 WindowPadding  = ImVec2(10.0f * Scale, 4.0f * Scale);
+
+        Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
+        {
+            OverlayMaxNameWidth = Math::Max(OverlayMaxNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
+        });
+
+        const float  ReservedScrollbarWidth = Style.ScrollbarSize;
+        const float  ExtraRightPadding      = 6.0f * Scale;
+        const float  TotalWidth             = OverlayMaxNameWidth + (WindowPadding.x * 2.0f) + ReservedScrollbarWidth + ExtraRightPadding;
+
+        OverlayWindowSize = ImVec2(TotalWidth, TotalHeight);
+        OverlayWindowPos  = ImVec2(InputRectMin.x, InputRectMin.y - PanelOffsetY);
+
+        const ImVec2 OverlayMin = ImVec2(OverlayWindowPos.x, OverlayWindowPos.y - OverlayWindowSize.y);
+        const ImVec2 OverlayMax = ImVec2(OverlayWindowPos.x + OverlayWindowSize.x, OverlayWindowPos.y);
+
+        bMouseInsideOverlayRect = ImGui::IsMouseHoveringRect(OverlayMin, OverlayMax, false);
+
+        if (bCandidatesOverlayOpen && bMouseInsideOverlayRect && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        {
+            bCandidatesOverlayOpen = true;
+        }
+
+        const bool bMouseInsideInput = ImGui::IsMouseHoveringRect(InputRectMin, InputRectMax, false);
+        if (!bIsInputFieldActive && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !bMouseInsideOverlayRect && !bMouseInsideInput)
+        {
+            bCandidatesOverlayOpen = false;
+        }
+    }
+
+    if (bShowCandidatesOverlay && (bIsInputFieldActive || bCandidatesOverlayOpen))
     {
         const ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -226,37 +304,7 @@ void FEditorFooterWidget::Draw()
         {
             ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.0f, 0.5f));
 
-            const auto FindSubstringCaseInsensitive = [](const char* Haystack, const char* Needle) -> int32
-            {
-                if (!Haystack || !Needle || Needle[0] == 0)
-                {
-                    return -1;
-                }
-
-                for (int32 i = 0; Haystack[i] != 0; ++i)
-                {
-                    int32 j = 0;
-                    while (Needle[j] != 0)
-                    {
-                        const char A = static_cast<char>(tolower(static_cast<unsigned char>(Haystack[i + j])));
-                        const char B = static_cast<char>(tolower(static_cast<unsigned char>(Needle[j])));
-
-                        if (Haystack[i + j] == 0 || A != B)
-                        {
-                            break;
-                        }
-
-                        ++j;
-                    }
-
-                    if (Needle[j] == 0)
-                    {
-                        return i;
-                    }
-                }
-
-                return -1;
-            };
+            const bool bHasVerticalScrollbar = ImGui::GetScrollMaxY() > 0.0f;
 
             const auto DrawCandidateTooltip = [&](const TPair<IConsoleObject*, FString>& Candidate, const ImRect& InItemRect)
             {
@@ -274,7 +322,7 @@ void FEditorFooterWidget::Draw()
                 ImGui::PushStyleColor(ImGuiCol_Border, TooltipBorder);
                 ImGui::PushStyleColor(ImGuiCol_Separator, TooltipBorder);
 
-                const float TooltipOffsetX  = 10.0f * Scale;
+                const float TooltipOffsetX  = (10.0f * Scale) + (bHasVerticalScrollbar ? Style.ScrollbarSize : 0.0f);
                 const float TooltipMaxWidth = 420.0f * Scale;
 
                 ImGui::SetNextWindowPos(ImVec2(InItemRect.Max.x + TooltipOffsetX, InItemRect.Min.y), ImGuiCond_Always);
@@ -292,7 +340,7 @@ void FEditorFooterWidget::Draw()
 
                 if (IConsoleVariable* Var = Candidate.First->AsVariable())
                 {
-                    const char* TypeText = "Variable";
+                    const CHAR* TypeText = "Variable";
                     if (Var->IsVariableBool())
                     {
                         TypeText = "Bool";
@@ -323,11 +371,11 @@ void FEditorFooterWidget::Draw()
                     ImGui::TextUnformatted("Type: Command");
                 }
 
-                const char* HelpString = Candidate.First->GetHelpString();
+                const CHAR* HelpString = Candidate.First->GetHelpString();
                 if (HelpString && HelpString[0] != 0)
                 {
                     ImGui::PushStyleColor(ImGuiCol_Text, TooltipTextWhite);
-                    
+
                     ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + TooltipMaxWidth - 20.0f * Scale);
                     ImGui::TextUnformatted(HelpString);
                     ImGui::PopTextWrapPos();
@@ -344,6 +392,7 @@ void FEditorFooterWidget::Draw()
             };
 
             const float ContentWidth = ImGui::GetContentRegionAvail().x;
+            int32 ClickedCandidateIndex = InvalidIndex;
             for (int32 CandidateIndex = 0; CandidateIndex < Candidates.Size(); ++CandidateIndex)
             {
                 const TPair<IConsoleObject*, FString>& Candidate = Candidates[CandidateIndex];
@@ -352,7 +401,11 @@ void FEditorFooterWidget::Draw()
                 ImGui::PushID(CandidateIndex);
 
                 const ImVec2 SelectableSize(ContentWidth, RowHeight);
-                ImGui::Selectable("##CandidateSelectable", bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
+                const bool bCandidateClicked = ImGui::Selectable("##CandidateSelectable", bIsActiveIndex, ImGuiSelectableFlags_None, SelectableSize);
+                if (bCandidateClicked)
+                {
+                    ClickedCandidateIndex = CandidateIndex;
+                }
 
                 const bool bIsSelectableVisible = ImGuiExtensions::IsItemFullyVisible();
 
@@ -360,16 +413,16 @@ void FEditorFooterWidget::Draw()
                 const ImVec2 TextStart   = ImVec2(ItemRect.Min.x + 6.0f * Scale, ItemRect.Min.y + (RowHeight - ImGui::GetTextLineHeight()) * 0.5f);
                 const ImU32  BaseTextU32 = ImGui::GetColorU32(bIsActiveIndex ? TextSelectedColor : TextNormalColor);
 
-                const char* NameText   = *Candidate.Second;
-                const char* FilterText = CandidateFilter.IsEmpty() ? nullptr : *CandidateFilter;
+                const CHAR* NameText   = *Candidate.Second;
+                const CHAR* FilterText = CandidateFilter.IsEmpty() ? nullptr : *CandidateFilter;
 
                 int32 MatchStart = -1;
                 int32 MatchLen   = 0;
 
                 if (FilterText && FilterText[0] != 0)
                 {
-                    MatchStart = FindSubstringCaseInsensitive(NameText, FilterText);
-                    MatchLen   = static_cast<int32>(strlen(FilterText));
+                    MatchStart = FStringView(NameText).Find(FilterText, EStringCaseType::NoCase);
+                    MatchLen   = static_cast<int32>(FCString::Strlen(FilterText));
                 }
 
                 ImDrawList* DrawList = ImGui::GetWindowDrawList();
@@ -415,6 +468,13 @@ void FEditorFooterWidget::Draw()
                 ImGui::PopID();
             }
 
+            if (ClickedCandidateIndex != InvalidIndex)
+            {
+                ApplyCandidateToBuffer(ClickedCandidateIndex);
+                bRequestInputFocus = true;
+                InvalidateCandidates();
+            }
+
             ImGui::PopStyleVar(); // SelectableTextAlign
         }
 
@@ -425,6 +485,60 @@ void FEditorFooterWidget::Draw()
     }
 
     ImGui::PopFont();
+}
+
+void FEditorFooterWidget::ApplyCandidateToBuffer(int32 CandidateIndex)
+{
+    if (!Candidates.IsValidIndex(CandidateIndex))
+    {
+        return;
+    }
+
+    const CHAR* Buffer = TextBuffer.Data();
+    const int32 BufferLength = FCString::Strlen(Buffer);
+
+    int32 CursorPos = LastCursorPosition;
+    if (CursorPos < 0)
+    {
+        CursorPos = 0;
+    }
+    else if (CursorPos > BufferLength)
+    {
+        CursorPos = BufferLength;
+    }
+
+    const CHAR* WordEnd   = Buffer + CursorPos;
+    const CHAR* WordStart = WordEnd;
+
+    while (WordStart > Buffer)
+    {
+        const CHAR CurrentChar = WordStart[-1];
+        if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
+        {
+            break;
+        }
+
+        WordStart--;
+    }
+
+    const int32 WordLength = static_cast<int32>(WordEnd - WordStart);
+    if (WordLength <= 0)
+    {
+        return;
+    }
+
+    const FString Prefix(Buffer, static_cast<int32>(WordStart - Buffer));
+    const FString Suffix(WordEnd);
+
+    const FString& CandidateText = Candidates[CandidateIndex].Second;
+    const FString NewBuffer = Prefix + CandidateText + Suffix;
+
+    const int32 CopyLen = Math::Min(TextBuffer.Size(), NewBuffer.Size());
+    FCString::Strncpy(TextBuffer.Data(), *NewBuffer, CopyLen);
+    TextBuffer[TextBuffer.Size() - 1] = 0;
+
+    PendingCursorPosition = Prefix.Size() + CandidateText.Size();
+    bRequestCursorPosition = true;
 }
 
 void FEditorFooterWidget::InvalidateCandidates()
@@ -438,7 +552,21 @@ void FEditorFooterWidget::InvalidateCandidates()
 
 int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* CallbackData)
 {
-    if (bUpdateCursorPosition)
+    if (bRequestCursorPosition)
+    {
+        CallbackData->CursorPos = PendingCursorPosition;
+        if (CallbackData->CursorPos < 0)
+        {
+            CallbackData->CursorPos = 0;
+        }
+        else if (CallbackData->CursorPos > CallbackData->BufTextLen)
+        {
+            CallbackData->CursorPos = CallbackData->BufTextLen;
+        }
+
+        bRequestCursorPosition = false;
+    }
+    else if (bUpdateCursorPosition)
     {
         CallbackData->CursorPos = CallbackData->BufTextLen;
         bUpdateCursorPosition = false;
@@ -449,12 +577,12 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
         // This callback is called whenever we edit the text in the InputText field
         case ImGuiInputTextFlags_CallbackEdit:
         {
-            const char* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
-            const char* WordStart = WordEnd;
+            const CHAR* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const CHAR* WordStart = WordEnd;
 
             while (WordStart > CallbackData->Buf)
             {
-                const char CurrentChar = WordStart[-1];
+                const CHAR CurrentChar = WordStart[-1];
                 if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                 {
                     break;
@@ -487,14 +615,14 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
         // This callback is called when we press TAB when the console InputText field has keyboard- focus
         case ImGuiInputTextFlags_CallbackCompletion:
         {
-            const char* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
-            const char* WordStart = WordEnd;
+            const CHAR* WordEnd   = CallbackData->Buf + CallbackData->CursorPos;
+            const CHAR* WordStart = WordEnd;
 
             if (CallbackData->BufTextLen > 0)
             {
                 while (WordStart > CallbackData->Buf)
                 {
-                    const char CurrentChar = WordStart[-1];
+                    const CHAR CurrentChar = WordStart[-1];
                     if (CurrentChar == ' ' || CurrentChar == '\t' || CurrentChar == ',' || CurrentChar == ';')
                     {
                         break;
@@ -592,7 +720,7 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
                 if (PrevHistoryIndex != HistoryIndex)
                 {
                     // If the history-index is invalid, then we clear the input-text field
-                    const char* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
+                    const CHAR* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
                     CallbackData->DeleteChars(0, CallbackData->BufTextLen);
                     CallbackData->InsertChars(0, HistoryStr);
                 }
@@ -635,6 +763,8 @@ int32 FEditorFooterWidget::InputTextCallback(ImGuiInputTextCallbackData* Callbac
             break;
         }
     }
+
+    LastCursorPosition = CallbackData->CursorPos;
 
     return 0;
 }

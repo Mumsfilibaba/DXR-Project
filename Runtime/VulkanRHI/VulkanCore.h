@@ -22,6 +22,8 @@
     #error Vulkan version must be 1.3 or above
 #endif
 
+#include "VulkanRHI/VulkanLoader.h"
+
 #if !RELEASE_BUILD
     #define VULKAN_ERROR_CRITICAL(...) \
         do \
@@ -887,10 +889,10 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R32G32B32A32_Uint:     return VK_FORMAT_R32G32B32A32_UINT;
         case EFormat::R32G32B32A32_Sint:     return VK_FORMAT_R32G32B32A32_SINT;
 
-		case EFormat::R32G32B32_Typeless: return VK_FORMAT_R32G32B32_SFLOAT;
-		case EFormat::R32G32B32_Float:    return VK_FORMAT_R32G32B32_SFLOAT;
-		case EFormat::R32G32B32_Uint:     return VK_FORMAT_R32G32B32_UINT;
-		case EFormat::R32G32B32_Sint:     return VK_FORMAT_R32G32B32_SINT;
+        case EFormat::R32G32B32_Typeless: return VK_FORMAT_R32G32B32_SFLOAT;
+        case EFormat::R32G32B32_Float:    return VK_FORMAT_R32G32B32_SFLOAT;
+        case EFormat::R32G32B32_Uint:     return VK_FORMAT_R32G32B32_UINT;
+        case EFormat::R32G32B32_Sint:     return VK_FORMAT_R32G32B32_SINT;
 
         case EFormat::R16G16B16A16_Typeless: return VK_FORMAT_R16G16B16A16_SFLOAT;
         case EFormat::R16G16B16A16_Float:    return VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -899,10 +901,10 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R16G16B16A16_Snorm:    return VK_FORMAT_R16G16B16A16_SNORM;
         case EFormat::R16G16B16A16_Sint:     return VK_FORMAT_R16G16B16A16_SINT;
 
-		case EFormat::R32G32_Typeless: return VK_FORMAT_R32G32_SFLOAT;
-		case EFormat::R32G32_Float:    return VK_FORMAT_R32G32_SFLOAT;
-		case EFormat::R32G32_Uint:     return VK_FORMAT_R32G32_UINT;
-		case EFormat::R32G32_Sint:     return VK_FORMAT_R32G32_SINT;
+        case EFormat::R32G32_Typeless: return VK_FORMAT_R32G32_SFLOAT;
+        case EFormat::R32G32_Float:    return VK_FORMAT_R32G32_SFLOAT;
+        case EFormat::R32G32_Uint:     return VK_FORMAT_R32G32_UINT;
+        case EFormat::R32G32_Sint:     return VK_FORMAT_R32G32_SINT;
 
         case EFormat::R10G10B10A2_Typeless: return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
         case EFormat::R10G10B10A2_Unorm:    return VK_FORMAT_A2B10G10R10_UNORM_PACK32;
@@ -931,11 +933,11 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R16G16_Snorm:    return VK_FORMAT_R16G16_SNORM;
         case EFormat::R16G16_Sint:     return VK_FORMAT_R16G16_SINT;
 
-		case EFormat::R32_Typeless: return VK_FORMAT_D32_SFLOAT;
-		case EFormat::D32_Float:    return VK_FORMAT_D32_SFLOAT;
-		case EFormat::R32_Float:    return VK_FORMAT_R32_SFLOAT;
-		case EFormat::R32_Uint:     return VK_FORMAT_R32_UINT;
-		case EFormat::R32_Sint:     return VK_FORMAT_R32_SINT;
+        case EFormat::R32_Typeless: return VK_FORMAT_D32_SFLOAT;
+        case EFormat::D32_Float:    return VK_FORMAT_D32_SFLOAT;
+        case EFormat::R32_Float:    return VK_FORMAT_R32_SFLOAT;
+        case EFormat::R32_Uint:     return VK_FORMAT_R32_UINT;
+        case EFormat::R32_Sint:     return VK_FORMAT_R32_SINT;
 
         case EFormat::R24G8_Typeless: return VK_FORMAT_D24_UNORM_S8_UINT;
 
@@ -943,11 +945,11 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R24_Unorm_X8_Typeless: return VK_FORMAT_X8_D24_UNORM_PACK32;
         case EFormat::X24_Typeless_G8_Uint:  return VK_FORMAT_UNDEFINED;
 
-		case EFormat::R8G8_Typeless: return VK_FORMAT_R8G8_UNORM;
-		case EFormat::R8G8_Unorm:    return VK_FORMAT_R8G8_UNORM;
-		case EFormat::R8G8_Uint:     return VK_FORMAT_R8G8_UINT;
-		case EFormat::R8G8_Snorm:    return VK_FORMAT_R8G8_SNORM;
-		case EFormat::R8G8_Sint:     return VK_FORMAT_R8G8_SINT;
+        case EFormat::R8G8_Typeless: return VK_FORMAT_R8G8_UNORM;
+        case EFormat::R8G8_Unorm:    return VK_FORMAT_R8G8_UNORM;
+        case EFormat::R8G8_Uint:     return VK_FORMAT_R8G8_UINT;
+        case EFormat::R8G8_Snorm:    return VK_FORMAT_R8G8_SNORM;
+        case EFormat::R8G8_Sint:     return VK_FORMAT_R8G8_SINT;
 
         case EFormat::R16_Typeless: return VK_FORMAT_R16_SFLOAT;
         case EFormat::R16_Float:    return VK_FORMAT_R16_SFLOAT;
@@ -963,27 +965,27 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R8_Snorm:    return VK_FORMAT_R8_SNORM;
         case EFormat::R8_Sint:     return VK_FORMAT_R8_SINT;
 
-		case EFormat::BC1_Typeless:   return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
-		case EFormat::BC1_UNorm:      return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
-		case EFormat::BC1_UNorm_SRGB: return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
-		case EFormat::BC2_Typeless:   return VK_FORMAT_BC2_UNORM_BLOCK;
-		case EFormat::BC2_UNorm:      return VK_FORMAT_BC2_UNORM_BLOCK;
-		case EFormat::BC2_UNorm_SRGB: return VK_FORMAT_BC2_SRGB_BLOCK;
-		case EFormat::BC3_Typeless:   return VK_FORMAT_BC3_UNORM_BLOCK;
-		case EFormat::BC3_UNorm:      return VK_FORMAT_BC3_UNORM_BLOCK;
-		case EFormat::BC3_UNorm_SRGB: return VK_FORMAT_BC3_SRGB_BLOCK;
-		case EFormat::BC4_Typeless:   return VK_FORMAT_BC4_UNORM_BLOCK;
-		case EFormat::BC4_UNorm:      return VK_FORMAT_BC4_UNORM_BLOCK;
-		case EFormat::BC4_SNorm:      return VK_FORMAT_BC4_SNORM_BLOCK;
-		case EFormat::BC5_Typeless:   return VK_FORMAT_BC5_UNORM_BLOCK;
-		case EFormat::BC5_UNorm:      return VK_FORMAT_BC5_UNORM_BLOCK;
-		case EFormat::BC5_SNorm:      return VK_FORMAT_BC5_SNORM_BLOCK;
-		case EFormat::BC6H_Typeless:  return VK_FORMAT_BC6H_UFLOAT_BLOCK;
-		case EFormat::BC6H_UF16:      return VK_FORMAT_BC6H_UFLOAT_BLOCK;
-		case EFormat::BC6H_SF16:      return VK_FORMAT_BC6H_SFLOAT_BLOCK;
-		case EFormat::BC7_Typeless:   return VK_FORMAT_BC7_UNORM_BLOCK;
-		case EFormat::BC7_UNorm:      return VK_FORMAT_BC7_UNORM_BLOCK;
-		case EFormat::BC7_UNorm_SRGB: return VK_FORMAT_BC7_SRGB_BLOCK;
+        case EFormat::BC1_Typeless:   return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+        case EFormat::BC1_UNorm:      return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+        case EFormat::BC1_UNorm_SRGB: return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
+        case EFormat::BC2_Typeless:   return VK_FORMAT_BC2_UNORM_BLOCK;
+        case EFormat::BC2_UNorm:      return VK_FORMAT_BC2_UNORM_BLOCK;
+        case EFormat::BC2_UNorm_SRGB: return VK_FORMAT_BC2_SRGB_BLOCK;
+        case EFormat::BC3_Typeless:   return VK_FORMAT_BC3_UNORM_BLOCK;
+        case EFormat::BC3_UNorm:      return VK_FORMAT_BC3_UNORM_BLOCK;
+        case EFormat::BC3_UNorm_SRGB: return VK_FORMAT_BC3_SRGB_BLOCK;
+        case EFormat::BC4_Typeless:   return VK_FORMAT_BC4_UNORM_BLOCK;
+        case EFormat::BC4_UNorm:      return VK_FORMAT_BC4_UNORM_BLOCK;
+        case EFormat::BC4_SNorm:      return VK_FORMAT_BC4_SNORM_BLOCK;
+        case EFormat::BC5_Typeless:   return VK_FORMAT_BC5_UNORM_BLOCK;
+        case EFormat::BC5_UNorm:      return VK_FORMAT_BC5_UNORM_BLOCK;
+        case EFormat::BC5_SNorm:      return VK_FORMAT_BC5_SNORM_BLOCK;
+        case EFormat::BC6H_Typeless:  return VK_FORMAT_BC6H_UFLOAT_BLOCK;
+        case EFormat::BC6H_UF16:      return VK_FORMAT_BC6H_UFLOAT_BLOCK;
+        case EFormat::BC6H_SF16:      return VK_FORMAT_BC6H_SFLOAT_BLOCK;
+        case EFormat::BC7_Typeless:   return VK_FORMAT_BC7_UNORM_BLOCK;
+        case EFormat::BC7_UNorm:      return VK_FORMAT_BC7_UNORM_BLOCK;
+        case EFormat::BC7_UNorm_SRGB: return VK_FORMAT_BC7_SRGB_BLOCK;
 
         default: return VK_FORMAT_UNDEFINED;
     }

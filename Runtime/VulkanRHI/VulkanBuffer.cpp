@@ -101,7 +101,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         return false;
     }
     
-	// NOTE: We might need to call:
+    // NOTE: We might need to call:
     //   vkInvalidateMappedMemoryRanges before reading (host <- device)
     //   vkFlushMappedMemoryRanges after writing(device <- host), if you ever write.
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
@@ -111,7 +111,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     }
     else if (Info.IsReadBack())
     {
-		MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
     
     // Allocate memory based on the buffer
@@ -171,3 +171,60 @@ FString FVulkanBuffer::GetDebugName() const
 {
     return DebugName;
 }
+
+void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
+{
+    if (!MemoryAllocation.IsValid())
+    {
+        return nullptr;
+    }
+
+    if (!Info.IsDynamic() && !Info.IsReadBack())
+    {
+        VULKAN_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
+        return nullptr;
+    }
+
+    CHECK(Offset <= Info.Size);
+    uint64 MapSize = Size;
+    if (MapSize == UINT64_MAX)
+    {
+        MapSize = Info.Size - Offset;
+    }
+
+    FVulkanDevice* VulkanDevice = GetDevice();
+    FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
+    uint8* Mapped = reinterpret_cast<uint8*>(MemoryManager.Map(MemoryAllocation));
+    if (!Mapped)
+    {
+        return nullptr;
+    }
+
+    if (Info.IsReadBack())
+    {
+        VkMappedMemoryRange Range = {};
+        Range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+        Range.pNext  = nullptr;
+        Range.memory = MemoryAllocation.Memory;
+        Range.offset = MemoryAllocation.Offset + Offset;
+        Range.size   = MapSize;
+        vkInvalidateMappedMemoryRanges(VulkanDevice->GetVkDevice(), 1, &Range);
+    }
+
+    return Mapped + Offset;
+}
+
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+void FVulkanBuffer::Unmap(uint64 Offset, uint64 Size)
+{
+    if (!MemoryAllocation.IsValid())
+    {
+        return;
+    }
+
+    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
+    MemoryManager.Unmap(MemoryAllocation);
+}
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

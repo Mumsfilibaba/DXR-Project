@@ -162,6 +162,62 @@ void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)
     }
 }
 
+uint32 FScene::GetOrCreateObjectID(FActor* Actor)
+{
+    if (!Actor)
+    {
+        return 0;
+    }
+
+    if (uint32* ExistingID = ActorToObjectID.Find(Actor))
+    {
+        return *ExistingID;
+    }
+
+    const uint32 NewID = NextObjectID;
+    NextObjectID++;
+
+    // Ensure 0 stays reserved for background.
+    if (NextObjectID == 0)
+    {
+        NextObjectID = 1;
+    }
+
+    ActorToObjectID.Add(Actor, NewID);
+    ObjectIDToActor.Add(NewID, Actor);
+    return NewID;
+}
+
+uint32 FScene::GetObjectID(FActor* Actor) const
+{
+    if (!Actor)
+    {
+        return 0;
+    }
+
+    if (const uint32* ExistingID = ActorToObjectID.Find(Actor))
+    {
+        return *ExistingID;
+    }
+
+    return 0;
+}
+
+FActor* FScene::GetActorByObjectID(uint32 ObjectID) const
+{
+    if (ObjectID == 0)
+    {
+        return nullptr;
+    }
+
+    if (FActor* const* ExistingActor = ObjectIDToActor.Find(ObjectID))
+    {
+        return *ExistingActor;
+    }
+
+    return nullptr;
+}
+
 void FScene::SyncSceneAndWorld()
 {
     TRACE_SCOPE("SyncSceneAndWorld");

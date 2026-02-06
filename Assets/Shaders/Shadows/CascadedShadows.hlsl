@@ -44,7 +44,7 @@ struct FPerCascade
 
 // Per-object
 SHADER_CONSTANT_BLOCK_BEGIN
-    float4x4 WorldModelMatrix;
+    FTransform Transform;
 SHADER_CONSTANT_BLOCK_END
 
 #if SHADER_LANG == SHADER_LANG_MSL
@@ -116,7 +116,8 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
     Output.TexCoord = Input.TexCoord;
 #endif
 
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.WorldModelMatrix);
+    const float3 WorldPositionWS = TransformPositionWS(Constants.Transform, Input.Position);
+    const float4 WorldPosition   = float4(WorldPositionWS, 1.0f);
 
 // Geometry shader instancing
 #if ENABLE_CASCADE_GS_INSTANCING

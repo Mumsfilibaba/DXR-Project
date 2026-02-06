@@ -5,8 +5,8 @@
 
 FRuntimeEngine::FRuntimeEngine()
     : FEngine()
-	, ConsoleWidget(nullptr)
-	, ProfilerWidget(nullptr)
+    , ConsoleWidget(nullptr)
+    , ProfilerWidget(nullptr)
 {
 }
 
@@ -21,38 +21,45 @@ bool FRuntimeEngine::Init()
         return false;
     }
 
-	if (IImguiPlugin::IsEnabled())
-	{
-		ProfilerWidget = MakeSharedPtr<FFrameProfilerWidget>();
-		ConsoleWidget  = MakeSharedPtr<FRuntimeConsoleWidget>();
-	}
+    if (IImguiPlugin::IsEnabled())
+    {
+        ProfilerWidget = MakeSharedPtr<FFrameProfilerWidget>();
+        ConsoleWidget  = MakeSharedPtr<FRuntimeConsoleWidget>();
+    }
 
-	return true;
+    // Make sure we have focus on the engine viewport
+    if (TSharedPtr<FViewportWidget> Viewport =  FEngine::GetViewportWidget())
+    {
+        Viewport->SetActivationPolicy(EWidgetActivationPolicy::AutoFocusOnWindowActivate);
+        FApplication::Get().SetFocusWidget(FEngine::GetViewportWidget());
+    }
+
+    return true;
 }
 
 void FRuntimeEngine::Release()
 {
-	if (IImguiPlugin::IsEnabled())
-	{
-		ProfilerWidget.Reset();
-		ConsoleWidget.Reset();
-	}
+    if (IImguiPlugin::IsEnabled())
+    {
+        ProfilerWidget.Reset();
+        ConsoleWidget.Reset();
+    }
 
-	FEngine::Release();
+    FEngine::Release();
 }
 
 void FRuntimeEngine::RenderFrame()
 {
-	TRACE_FUNCTION_SCOPE();
+    TRACE_FUNCTION_SCOPE();
 
-	// Render directly to the BackBuffer
-	FSceneRenderView RenderView;
-	RenderView.Scene        = GetWorld()->GetSceneInterface();
-	RenderView.RenderTarget = GetSceneViewport()->GetRHISwapChain()->GetBackBuffer();
+    // Render directly to the BackBuffer
+    FSceneRenderView RenderView;
+    RenderView.Scene        = GetWorld()->GetSceneInterface();
+    RenderView.RenderTarget = GetSceneViewport()->GetRHISwapChain()->GetBackBuffer();
 
-	IRendererModule* RendererModule = IRendererModule::Get();
-	RendererModule->RenderSceneView(RenderView);
+    IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->RenderSceneView(RenderView);
 
-	// Render the rest
-	FEngine::RenderFrame();
+    // Render the rest
+    FEngine::RenderFrame();
 }

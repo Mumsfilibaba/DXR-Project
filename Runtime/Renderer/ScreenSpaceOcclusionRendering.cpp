@@ -149,6 +149,8 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
 
     TRACE_SCOPE("SSAO");
 
+    GPU_TRACE_SCOPE(CommandList, "SSAO");
+
     struct FSSAOSettingsHLSL
     {
         // 0-16

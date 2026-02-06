@@ -1,8 +1,11 @@
 #pragma once
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12RefCounted.h"
+#include "RHI/RHIFence.h"
+#include "Core/Threading/Atomic/AtomicBool.h"
 
-typedef TSharedRef<class FD3D12Fence> FD3D12FenceRef;
+typedef TSharedRef<class FD3D12Fence>    FD3D12FenceRef;
+typedef TSharedRef<class FD3D12GpuFence> FD3D12GpuFenceRef;
 
 class FD3D12Fence : public FD3D12DeviceChild, public FD3D12RefCounted
 {
@@ -12,7 +15,7 @@ public:
 
     bool Initialize(uint64 InitialValue);
 
-    bool WaitForValue(uint64 Value);
+    bool WaitForValue(uint64 Value, uint32 TimeoutMs = INFINITE);
 
     uint64 GetCompletedValue() const
     {
@@ -101,4 +104,27 @@ private:
     mutable uint64 LastCompletedValue;
     uint64         CurrentValue;
     uint64         LastSignaledValue;
+};
+
+class FD3D12GpuFence final : public FRHIGpuFence, public FD3D12DeviceChild
+{
+public:
+    explicit FD3D12GpuFence(FD3D12Device* InDevice);
+    virtual ~FD3D12GpuFence() = default;
+
+    bool Initialize();
+    void Signal(ED3D12CommandQueueType QueueType);
+
+    // FRHIGpuFence Interface
+    virtual bool IsSignaled() const override final;
+    virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
+    virtual void SetDebugName(const FString& InName) override final;
+    virtual FString GetDebugName() const override final;
+
+private:
+    FD3D12FenceRef Fence;
+    uint64         CurrentValue;
+    uint64         TargetValue;
+    FAtomicBool    bHasPendingSignal;
+    FString        DebugName;
 };

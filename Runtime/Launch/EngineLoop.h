@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 
 class FEngineLoop
 {
@@ -23,7 +23,7 @@ public:
     void Release();
 
 private:
-    FStopwatch FrameTimer;
+    FElapsedTime FrameTimer;
 };
 
 extern FEngineLoop GEngineLoop;

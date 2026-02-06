@@ -4,6 +4,7 @@
 #include "ColorSpaceTransforms.hlsli"
 #include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
+#include "ParallaxMapping.hlsli"
 
 // Per Frame Buffers
 
@@ -93,10 +94,10 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
     
-    float3 Normal = normalize(mul(float4(Input.Normal, 0.0), Constants.TransformBuffer.Transform).xyz);
+    float3 Normal = normalize(TransformDirectionWS(Constants.TransformBuffer, Input.Normal));
     Output.Normal = Normal;
     
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), Constants.TransformBuffer.Transform).xyz);
+    float3 Tangent = normalize(TransformDirectionWS(Constants.TransformBuffer, Input.Tangent));
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent = Tangent;
     
@@ -105,15 +106,15 @@ FVSOutput VSMain(FVSInput Input)
 
     Output.TexCoord = Input.TexCoord;
 
-    float4 WorldPosition = mul(float4(Input.Position, 1.0), Constants.TransformBuffer.Transform);
-    Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
-    Output.WorldPosition = WorldPosition.xyz;
+    const float3 WorldPosition3 = TransformPositionWS(Constants.TransformBuffer, Input.Position);
+    Output.Position      = mul(float4(WorldPosition3, 1.0), CameraBuffer.ViewProjection);
+    Output.WorldPosition = WorldPosition3;
 
     float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
     TangentSpace          = transpose(TangentSpace);
     
     Output.TangentViewPos  = mul(CameraBuffer.PositionWS, TangentSpace);
-    Output.TangentPosition = mul(WorldPosition.xyz, TangentSpace);
+    Output.TangentPosition = mul(WorldPosition3, TangentSpace);
 
     return Output;
 }
@@ -130,46 +131,6 @@ struct FPSInput
     bool   bIsFrontFace    : SV_IsFrontFace;
 };
 
-static const float HEIGHT_SCALE = 0.03;
-
-float SampleHeightMap(float2 TexCoords)
-{
-    return 1.0 - HeightMap.Sample(MaterialSampler, TexCoords).r;
-}
-
-float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
-{
-    const float MinLayers = 32;
-    const float MaxLayers = 64;
-
-    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0, 0.0, 1.0), ViewDir)));
-    float LayerDepth = 1.0 / NumLayers;
-    
-    float2 P = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
-    float2 DeltaTexCoords = P / NumLayers;
-
-    float2 CurrentTexCoords     = TexCoords;
-    float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
-    
-    float CurrentLayerDepth = 0.0;
-    while (CurrentLayerDepth < CurrentDepthMapValue)
-    {
-        CurrentTexCoords     -= DeltaTexCoords;
-        CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
-        CurrentLayerDepth    += LayerDepth;
-    }
-
-    float2 PrevTexCoords = CurrentTexCoords + DeltaTexCoords;
-
-    float AfterDepth  = CurrentDepthMapValue - CurrentLayerDepth;
-    float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
-
-    float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
-    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0 - Weight);
-
-    return FinalTexCoords;
-}
-
 float4 PSMain(FPSInput Input) : SV_Target0
 {
     float2 TexCoords = Input.TexCoord;
@@ -177,9 +138,14 @@ float4 PSMain(FPSInput Input) : SV_Target0
 #if 0 
     if (MaterialBuffer.EnableHeight != 0)
     {
+        const float2 TexCoordsDx = ddx(TexCoords);
+        const float2 TexCoordsDy = ddy(TexCoords);
+
         float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
-        TexCoords      = ParallaxMapping(TexCoords, ViewDir);
-        if (TexCoords.x > 1.0 || TexCoords.y > 1.0 || TexCoords.x < 0.0 || TexCoords.y < 0.0)
+
+        uint bParallaxDiscard = 0;
+        TexCoords = ParallaxMapUV(HeightMap, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+        if (bParallaxDiscard != 0)
         {
             discard;
         }

@@ -9,7 +9,7 @@ FWindowWidget::FWindowWidget()
     , OnWindowClosedDelegate()
     , OnWindowMovedDelegate()
     , OnWindowResizedDelegate()
-    , OnWindowActivationChangedDelegate()
+    , OnWindowFocusChangedDelegate()
     , CachedPosition()
     , CachedSize()
     , Overlay()
@@ -32,11 +32,13 @@ void FWindowWidget::Initialize(const FInitializer& Initializer)
     StyleFlags         = Initializer.StyleFlags;
     ParentWindowWidget = Initializer.ParentWindow;
     bActivateOnShow    = Initializer.bActivateOnShow;
+
+    // Windows should always receive focus, if the OS puts focus on the platform-window
+    FWidget::SetActivationPolicy(EWidgetActivationPolicy::AutoFocusOnWindowActivate);
 }
 
 void FWindowWidget::Tick(const FRectangle& AssignedBounds)
 {
-    // Update the current bounds
     SetContentRectangle(AssignedBounds);
 
     if (Content)
@@ -93,6 +95,11 @@ void FWindowWidget::SetOnWindowResized(const FOnWindowResized& InOnWindowResized
     OnWindowResizedDelegate = InOnWindowResized;
 }
 
+void FWindowWidget::SetOnWindowFocusChanged(const FOnWindowFocusChanged& InOnWindowFocusChanged)
+{
+    OnWindowFocusChangedDelegate = InOnWindowFocusChanged;
+}
+
 void FWindowWidget::OnWindowDestroyed()
 {
     if (PlatformWindow)
@@ -103,19 +110,17 @@ void FWindowWidget::OnWindowDestroyed()
     OnWindowClosedDelegate.ExecuteIfBound();
 }
 
-void FWindowWidget::OnWindowActivationChanged(bool)
+void FWindowWidget::OnWindowFocusChanged(bool)
 {
-    OnWindowActivationChangedDelegate.ExecuteIfBound();
+    OnWindowFocusChangedDelegate.ExecuteIfBound();
 }
 
 void FWindowWidget::OnWindowMoved(const FIntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
-        // Set the cached position
         SetPosition(InPosition);
 
-        // Notify that this window was resized
         OnWindowMovedDelegate.ExecuteIfBound(InPosition);
     }
 }
@@ -124,10 +129,8 @@ void FWindowWidget::OnWindowResize(const FIntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
-        // Set the cached size
         SetSize(InSize);
 
-        // Notify that this window got resized
         OnWindowResizedDelegate.ExecuteIfBound(InSize);
     }
 }
@@ -136,13 +139,10 @@ void FWindowWidget::MoveTo(const FIntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
-        // Set the cached position
         SetPosition(InPosition);
 
-        // Notify that this window was resized
         OnWindowMovedDelegate.ExecuteIfBound(InPosition);
 
-        // Set the actual size of the platform window
         if (PlatformWindow)
         {
             PlatformWindow->SetWindowPos(InPosition.X, InPosition.Y);
@@ -154,13 +154,10 @@ void FWindowWidget::Resize(const FIntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
-        // Set the cached size
         SetSize(InSize);
 
-        // Notify that this window got resized
         OnWindowResizedDelegate.ExecuteIfBound(InSize);
 
-        // Set the actual size of the platform window
         if (PlatformWindow)
         {
             FWindowShape WindowShape(InSize.X, InSize.Y);
@@ -314,17 +311,14 @@ void FWindowWidget::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatfo
     
     if (PlatformWindow)
     {
-        // Cache the size and position
         FWindowShape WindowShape;
         PlatformWindow->GetWindowShape(WindowShape);
 
         CachedSize     = FIntVector2(WindowShape.Width, WindowShape.Height);
         CachedPosition = WindowShape.Position;
         
-        // Cache the title
         PlatformWindow->GetTitle(Title);
         
-        // Cache the style
         StyleFlags = PlatformWindow->GetStyle();
     }
 }

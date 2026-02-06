@@ -2,10 +2,10 @@
 #include "Engine/World/Components/StaticMeshComponent.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Core/Containers/StaticArray.h"
+#include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
-#include <imgui.h>
-#include <imgui_internal.h>
 
 FEditorPropertiesWidget::FEditorPropertiesWidget(FEditorEngine* InEditorEngine)
     : EditorEngine(InEditorEngine)
@@ -14,7 +14,7 @@ FEditorPropertiesWidget::FEditorPropertiesWidget(FEditorEngine* InEditorEngine)
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FEditorPropertiesWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorPropertiesWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -23,7 +23,7 @@ FEditorPropertiesWidget::~FEditorPropertiesWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 
@@ -65,19 +65,19 @@ void FEditorPropertiesWidget::DrawWindowContents()
         return;
     }
 
-    const auto DrawLabelWithSeperator = [](const char* InLabel)
+    const auto DrawLabelWithSeperator = [](const CHAR* InLabel)
     {
-        static constexpr uint32 LabelLength = 256;
-        char Label[LabelLength];
-        FCString::Snprintf(Label, LabelLength, "%s", InLabel);
+        static constexpr int32 LabelLength = 256;
+        TStaticArray<CHAR, LabelLength> Label{};
+        FCString::Snprintf(Label.Data(), static_cast<int32>(Label.Size()), "%s", InLabel);
 
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextBorderSize, 4.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_SeparatorTextAlign, ImVec2(0.1f, 0.5f));
-        ImGui::SeparatorText(Label);
+        ImGui::SeparatorText(Label.Data());
         ImGui::PopStyleVar(2);
     };
 
-    const auto DrawCollapsingHeader = [](const char* Label, ImGuiTreeNodeFlags Flags)
+    const auto DrawCollapsingHeader = [](const CHAR* Label, ImGuiTreeNodeFlags Flags, const bool bDrawBottomBorder)
     {
         ImGuiStyle& Style = ImGui::GetStyle();
 
@@ -102,7 +102,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             {
                 const float IconSize = 16.0f;
                 const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
-                const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+                const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
                 const ImU32 Tint     = IM_COL32(101, 101, 101, Alpha255);
                 const ImU32 CoverCol = ImGui::ColorConvertFloat4ToU32(HeaderBg);
 
@@ -124,6 +124,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         ImGui::PopStyleVar(3);
         ImGui::PopStyleColor(3);
 
+        // Only add the bottom border when collapsed (same as before) AND when it's not the last header
         if (!bResult)
         {
             ImGuiWindow* Window = ImGui::GetCurrentWindow();
@@ -133,10 +134,13 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 const float Y         = Math::Ceil(HeaderMax.y) - 0.5f;
 
                 const float Alpha01  = Math::Clamp(Style.Alpha, 0.0f, 1.0f);
-                const int32 Alpha255 = (int32)(Alpha01 * 255.0f);
+                const int32 Alpha255 = static_cast<int32>(Alpha01 * 255.0f);
                 const ImU32 Color    = IM_COL32(26, 26, 26, Alpha255);
 
-                Window->DrawList->AddLine(ImVec2(HeaderMin.x, Y), ImVec2(HeaderMax.x, Y), Color, Thickness);
+                if (bDrawBottomBorder)
+                {
+                    Window->DrawList->AddLine(ImVec2(HeaderMin.x, Y), ImVec2(HeaderMax.x, Y), Color, Thickness);
+                }
 
                 const ImVec2 Cursor = ImGui::GetCursorScreenPos();
                 ImGui::SetCursorScreenPos(ImVec2(Cursor.x, HeaderMax.y + Thickness * 0.5f));
@@ -150,8 +154,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
     static constexpr float RevertColumnWidth = 28.0f;
 
     // ------------------------------------------------------------
-    // Actor properties
+    // Actor
     // ------------------------------------------------------------
+
     if (SelectedActor)
     {
         ImGui::PushID(SelectedActor);
@@ -159,7 +164,10 @@ void FEditorPropertiesWidget::DrawWindowContents()
         const FString& ActorName = SelectedActor->GetName();
         DrawLabelWithSeperator(ActorName.IsEmpty() ? "Actor" : *ActorName);
 
-        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+        FStaticMeshComponent* MeshComponent = SelectedActor->GetComponentOfType<FStaticMeshComponent>();
+        
+        const bool bHasMeshComponent = MeshComponent != nullptr;
+        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, bHasMeshComponent))
         {
             if (EditorWidgets::BeginPropertyTable("##ActorTransformTable", LabelColumnWidth, RevertColumnWidth))
             {
@@ -205,9 +213,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
         }
 
         // MeshComponent
-        if (FStaticMeshComponent* MeshComponent = SelectedActor->GetComponentOfType<FStaticMeshComponent>())
+        if (bHasMeshComponent)
         {
-            if (DrawCollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_DefaultOpen))
+            if (DrawCollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_DefaultOpen, false))
             {
                 if (EditorWidgets::BeginPropertyTable("##MeshComponentMaterialTable", LabelColumnWidth, RevertColumnWidth))
                 {
@@ -258,6 +266,32 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         }
                     }
 
+                    // Parallax height scale
+                    if (MeshComponent->GetMaterial()->HasHeightMap())
+                    {
+                        float ParallaxHeightScale = MaterialInfo.ParallaxHeightScale;
+                        const float ParallaxHeightScale0 = 0.03f;
+
+                        if (EditorWidgets::DrawFloatProperty("Parallax Height Scale", ParallaxHeightScale, 0.001f, 0.0f, 0.2f, "%.3f", true, &ParallaxHeightScale0))
+                        {
+                            MeshComponent->GetMaterial()->SetParallaxHeightScale(ParallaxHeightScale);
+                        }
+
+                        float ParallaxMinLayers = MaterialInfo.ParallaxMinLayers;
+                        const float ParallaxMinLayers0 = 32.0f;
+                        if (EditorWidgets::DrawFloatProperty("Parallax Min Layers", ParallaxMinLayers, 1.0f, 1.0f, 128.0f, "%.0f", true, &ParallaxMinLayers0))
+                        {
+                            MeshComponent->GetMaterial()->SetParallaxLayers(ParallaxMinLayers, MeshComponent->GetMaterial()->GetParallaxMaxLayers());
+                        }
+
+                        float ParallaxMaxLayers = MaterialInfo.ParallaxMaxLayers;
+                        const float ParallaxMaxLayers0 = 64.0f;
+                        if (EditorWidgets::DrawFloatProperty("Parallax Max Layers", ParallaxMaxLayers, 1.0f, 1.0f, 256.0f, "%.0f", true, &ParallaxMaxLayers0))
+                        {
+                            MeshComponent->GetMaterial()->SetParallaxLayers(MeshComponent->GetMaterial()->GetParallaxMinLayers(), ParallaxMaxLayers);
+                        }
+                    }
+
                     EditorWidgets::EndPropertyTable();
                 }
             }
@@ -268,8 +302,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
     }
 
     // ------------------------------------------------------------
-    // Light properties
+    // Lights
     // ------------------------------------------------------------
+
     if (SelectedLight)
     {
         ImGui::PushID(SelectedLight);
@@ -279,7 +314,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         {
             DrawLabelWithSeperator("PointLight");
 
-            if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
+            if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen, true))
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
                 {
@@ -303,7 +338,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
             }
 
-            if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+            if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, true))
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightTransformTable", LabelColumnWidth, RevertColumnWidth))
                 {
@@ -319,7 +354,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
             }
 
-            if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
+            if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen, false))
             {
                 if (EditorWidgets::BeginPropertyTable("##PointLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
                 {
@@ -355,7 +390,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
         {
             DrawLabelWithSeperator("DirectionalLight");
 
-            if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen))
+            if (DrawCollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen, true))
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightSettingsTable", LabelColumnWidth, RevertColumnWidth))
                 {
@@ -379,7 +414,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
             }
 
-            if (DrawCollapsingHeader("Direction", ImGuiTreeNodeFlags_DefaultOpen))
+            if (DrawCollapsingHeader("Direction", ImGuiTreeNodeFlags_DefaultOpen, true))
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightDirectionTable", LabelColumnWidth, RevertColumnWidth))
                 {
@@ -409,7 +444,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 }
             }
 
-            if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen))
+            if (DrawCollapsingHeader("Shadows", ImGuiTreeNodeFlags_DefaultOpen, false))
             {
                 if (EditorWidgets::BeginPropertyTable("##DirLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
                 {
@@ -475,22 +510,23 @@ void FEditorPropertiesWidget::DrawWindowContents()
     }
 
     // ------------------------------------------------------------
-    // Camera properties
+    // Camera
     // ------------------------------------------------------------
+
     if (SelectedCamera)
     {
         ImGui::PushID(SelectedCamera);
 
         DrawLabelWithSeperator("Camera");
 
-        if (DrawCollapsingHeader("Projection", ImGuiTreeNodeFlags_DefaultOpen))
+        if (DrawCollapsingHeader("Projection", ImGuiTreeNodeFlags_DefaultOpen, true))
         {
             if (EditorWidgets::BeginPropertyTable("##CameraProjectionTable", LabelColumnWidth, RevertColumnWidth))
             {
                 {
-                    char ViewportText[64];
-                    FCString::Snprintf(ViewportText, 64, "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
-                    EditorWidgets::DrawTextProperty("Viewport size", ViewportText);
+                    TStaticArray<CHAR, 64> ViewportText{};
+                    FCString::Snprintf(ViewportText.Data(), static_cast<int32>(ViewportText.Size()), "%.1f x %.1f", SelectedCamera->GetWidth(), SelectedCamera->GetHeight());
+                    EditorWidgets::DrawTextProperty("Viewport size", ViewportText.Data());
                 }
 
                 {
@@ -507,7 +543,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             }
         }
 
-        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, false))
         {
             if (EditorWidgets::BeginPropertyTable("##CameraTransformTable", LabelColumnWidth, RevertColumnWidth))
             {
@@ -538,15 +574,16 @@ void FEditorPropertiesWidget::DrawWindowContents()
     }
 
     // ------------------------------------------------------------
-    // Light-Probe properties
+    // Light-Probe
     // ------------------------------------------------------------
+
     if (SelectedLightProbe)
     {
         ImGui::PushID(SelectedLightProbe);
 
         DrawLabelWithSeperator("Light Probe");
 
-        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+        if (DrawCollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen, true))
         {
             if (EditorWidgets::BeginPropertyTable("##ProbeTransformTable", LabelColumnWidth, RevertColumnWidth))
             {
@@ -562,7 +599,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
             }
         }
 
-        if (DrawCollapsingHeader("Box Projection", ImGuiTreeNodeFlags_DefaultOpen))
+        if (DrawCollapsingHeader("Box Projection", ImGuiTreeNodeFlags_DefaultOpen, false))
         {
             if (EditorWidgets::BeginPropertyTable("##ProbeBoxProjectionTable", LabelColumnWidth, RevertColumnWidth))
             {

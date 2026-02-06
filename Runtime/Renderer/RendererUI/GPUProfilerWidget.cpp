@@ -1,4 +1,4 @@
-#include "Core/Time/Stopwatch.h"
+#include "Core/Time/ElapsedTime.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -15,7 +15,7 @@ FGPUProfilerWidget::FGPUProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FGPUProfilerWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FGPUProfilerWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
@@ -24,7 +24,7 @@ FGPUProfilerWidget::~FGPUProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+        IImguiPlugin::Get().RemoveDrawDelegate(ImGuiDelegateHandle);
     }
 }
 

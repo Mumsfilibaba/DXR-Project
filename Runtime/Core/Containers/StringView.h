@@ -355,9 +355,10 @@ public:
      * @brief Find the position of the first occurrence of the start of the search-string
      * @param InString String to search
      * @param Position Position to start search at
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
      * @return Returns the position of the first character in the search-string
      */
-    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = InvalidIndex) const
+    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position, EStringCaseType CaseType) const
     {
         const SizeType CurrentLength = Length();
         if (!CurrentLength)
@@ -377,20 +378,35 @@ public:
         }
 
         const SizeType SearchLength = FCStringType::Strlen(InString);
-        for (; Index < CurrentLength; Index++)
+        if (SearchLength == 0)
         {
-            SizeType SearchIndex = 0;
-            for (; SearchIndex < SearchLength; ++SearchIndex)
+            return Index;
+        }
+
+        if (SearchLength > CurrentLength || Index > (CurrentLength - SearchLength))
+        {
+            return InvalidIndex;
+        }
+
+        for (; Index <= (CurrentLength - SearchLength); ++Index)
+        {
+            if (CaseType == EStringCaseType::CaseSensitive)
             {
-                if (ViewStart[Index + SearchIndex] != InString[SearchIndex])
+                if (FCStringType::Strncmp(ViewStart + Index, InString, SearchLength) == 0)
                 {
-                    break;
+                    return Index;
                 }
             }
-
-            if (SearchIndex == SearchLength)
+            else if (CaseType == EStringCaseType::NoCase)
             {
-                return Index;
+                if (FCStringType::Strnicmp(ViewStart + Index, InString, SearchLength) == 0)
+                {
+                    return Index;
+                }
+            }
+            else
+            {
+                return InvalidIndex;
             }
         }
 
@@ -403,10 +419,46 @@ public:
      * @param Position Position to start search at
      * @return Returns the position of the first character in the search-string
      */
+    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, SizeType Position = InvalidIndex) const
+    {
+        return Find(InString, Position, EStringCaseType::CaseSensitive);
+    }
+
+    /**
+     * @brief Find the position of the first occurrence of the start of the search-string
+     * @param InString String to search
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
+     */
+    NODISCARD FORCEINLINE SizeType Find(const CharType* InString, EStringCaseType CaseType, SizeType Position = InvalidIndex) const
+    {
+        return Find(InString, Position, CaseType);
+    }
+
+    /**
+     * @brief Find the position of the first occurrence of the start of the search-string
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
+     */
     template<typename StringType>
     NODISCARD FORCEINLINE SizeType Find(const StringType& InString, SizeType Position = InvalidIndex) const requires(TIsTStringType<StringType>::Value)
     {
         return Find(InString.Data(), Position);
+    }
+
+    /**
+     * @brief Find the position of the first occurrence of the start of the search-string
+     * @param InString String to search
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
+     */
+    template<typename StringType>
+    NODISCARD FORCEINLINE SizeType Find(const StringType& InString, EStringCaseType CaseType, SizeType Position = InvalidIndex) const requires(TIsTStringType<StringType>::Value)
+    {
+        return Find(InString.Data(), CaseType, Position);
     }
 
     /**
@@ -476,9 +528,10 @@ public:
      * @brief Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
      * @param InString String to search
      * @param Position Position to start search at
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
      * @return Returns the position of the first character in the search-string
      */
-    NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position = InvalidIndex) const
+    NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position, EStringCaseType CaseType) const
     {
         const SizeType CurrentLength = Length();
         if (!CurrentLength)
@@ -497,20 +550,36 @@ public:
         }
 
         const SizeType SearchLength = FCStringType::Strlen(InString);
-        for (SizeType Index = Position - SearchLength; Index >= 0; Index--)
+        if (SearchLength == 0)
         {
-            SizeType SearchIndex = 0;
-            for (; SearchIndex < SearchLength; ++SearchIndex)
+            return Position;
+        }
+
+        if (SearchLength > Position)
+        {
+            return InvalidIndex;
+        }
+
+        for (SizeType Index = Position - SearchLength; Index >= 0; --Index)
+        {
+            bool bMatch = false;
+            if (CaseType == EStringCaseType::CaseSensitive)
             {
-                if (ViewStart[Index + SearchIndex] != InString[SearchIndex])
-                {
-                    break;
-                }
+                bMatch = FCStringType::Strncmp(ViewStart + Index, InString, SearchLength) == 0;
+            }
+            else if (CaseType == EStringCaseType::NoCase)
+            {
+                bMatch = FCStringType::Strnicmp(ViewStart + Index, InString, SearchLength) == 0;
             }
 
-            if (SearchIndex == SearchLength)
+            if (bMatch)
             {
                 return Index;
+            }
+
+            if (Index == 0)
+            {
+                break;
             }
         }
 
@@ -523,10 +592,46 @@ public:
      * @param Position Position to start search at
      * @return Returns the position of the first character in the search-string
      */
+    NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, SizeType Position = InvalidIndex) const
+    {
+        return FindLast(InString, Position, EStringCaseType::CaseSensitive);
+    }
+
+    /**
+     * @brief Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString String to search
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
+     */
+    NODISCARD FORCEINLINE SizeType FindLast(const CharType* InString, EStringCaseType CaseType, SizeType Position = InvalidIndex) const
+    {
+        return FindLast(InString, Position, CaseType);
+    }
+
+    /**
+     * @brief Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
+     */
     template<typename StringType>
     NODISCARD FORCEINLINE SizeType FindLast(const StringType& InString, SizeType Position = InvalidIndex) const requires(TIsTStringType<StringType>::Value)
     {
         return FindLast(InString.Data(), Position);
+    }
+
+    /**
+     * @brief Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString String to search
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
+     */
+    template<typename StringType>
+    NODISCARD FORCEINLINE SizeType FindLast(const StringType& InString, EStringCaseType CaseType, SizeType Position = InvalidIndex) const requires(TIsTStringType<StringType>::Value)
+    {
+        return FindLast(InString.Data(), CaseType, Position);
     }
 
     /**
@@ -606,6 +711,18 @@ public:
     }
 
     /**
+     * @brief Check if the search-string exists within the view
+     * @param InString String to search for
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
+     * @param Position Position to start to search at
+     * @return Returns true if the string is found
+     */
+    NODISCARD FORCEINLINE bool Contains(const CharType* InString, EStringCaseType CaseType, SizeType Position = InvalidIndex) const
+    {
+        return Find(InString, CaseType, Position) != InvalidIndex;
+    }
+
+    /**
      * @brief Check if the search-string exists within the view. The string is of a string-type.
      * @param InString String to search for
      * @param Position Position to start to search at
@@ -615,6 +732,19 @@ public:
     NODISCARD FORCEINLINE bool Contains(const StringType& InString, SizeType Position = InvalidIndex) const requires(TIsTStringType<StringType>::Value)
     {
         return Find(InString, Position) != InvalidIndex;
+    }
+
+    /**
+     * @brief Check if the search-string exists within the view. The string is of a string-type.
+     * @param InString String to search for
+     * @param CaseType Enum that decides if the search should be case-sensitive or not
+     * @param Position Position to start to search at
+     * @return Returns true if the string is found
+     */
+    template<typename StringType>
+    NODISCARD FORCEINLINE bool Contains(const StringType& InString, EStringCaseType CaseType, SizeType Position = InvalidIndex) const requires(TIsTStringType<StringType>::Value)
+    {
+        return Find(InString, CaseType, Position) != InvalidIndex;
     }
 
     /**
@@ -631,6 +761,36 @@ public:
     /**
      * @brief Check if string begins with a string
      * @param InString String to test for
+     * @param InLength Length of the string to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string begins with InString
+     */
+    NODISCARD FORCEINLINE bool StartsWith(const CharType* InString, SizeType InLength, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const
+    {
+        if (!InString)
+        {
+            return false;
+        }
+
+        const SizeType CurrentLength = Length();
+        if (InLength > 0 && CurrentLength >= InLength)
+        {
+            if (SearchType == EStringCaseType::CaseSensitive)
+            {
+                return FCStringType::Strncmp(ViewStart, InString, InLength) == 0;
+            }
+            else if (SearchType == EStringCaseType::NoCase)
+            {
+                return FCStringType::Strnicmp(ViewStart, InString, InLength) == 0;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @brief Check if string begins with a string
+     * @param InString String to test for
      * @param SearchType Type of search to perform, case-sensitive or not
      * @return Returns true if the string begins with InString
      */
@@ -641,16 +801,46 @@ public:
             return false;
         }
 
-        const SizeType SuffixLength = FCStringType::Strlen(InString);
-        if (SuffixLength > 0)
+        return StartsWith(InString, FCStringType::Strlen(InString), SearchType);
+    }
+
+    /**
+     * @brief Check if string begins with a string
+     * @param InString String to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string begins with InString
+     */
+    template<typename StringType>
+    NODISCARD FORCEINLINE bool StartsWith(const StringType& InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const requires(TIsTStringType<StringType>::Value)
+    {
+        return StartsWith(InString.Data(), InString.Length(), SearchType);
+    }
+
+    /**
+     * @brief Check if string ends with a string
+     * @param InString String to test for
+     * @param InLength Length of the string to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string ends with InString
+     */
+    NODISCARD FORCEINLINE bool EndsWith(const CharType* InString, SizeType InLength, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const
+    {
+        if (!InString)
         {
+            return false;
+        }
+
+        const SizeType CurrentLength = Length();
+        if (InLength > 0 && CurrentLength >= InLength)
+        {
+            const CharType* StringData = ViewStart + (CurrentLength - InLength);
             if (SearchType == EStringCaseType::CaseSensitive)
             {
-                return FCStringType::Strncmp(ViewStart, InString, SuffixLength) == 0;
+                return FCStringType::Strncmp(StringData, InString, InLength) == 0;
             }
             else if (SearchType == EStringCaseType::NoCase)
             {
-                return FCStringType::Strnicmp(ViewStart, InString, SuffixLength) == 0;
+                return FCStringType::Strnicmp(StringData, InString, InLength) == 0;
             }
         }
 
@@ -670,22 +860,19 @@ public:
             return false;
         }
 
-        const SizeType CurrentLength = Length();
-        const SizeType SuffixLength  = FCStringType::Strlen(InString);
-        if (SuffixLength > 0 && CurrentLength >= SuffixLength)
-        {
-            const CharType* StringData = ViewStart + (CurrentLength - SuffixLength);
-            if (SearchType == EStringCaseType::CaseSensitive)
-            {
-                return FCStringType::Strncmp(StringData, InString, SuffixLength) == 0;
-            }
-            else if (SearchType == EStringCaseType::NoCase)
-            {
-                return FCStringType::Strnicmp(StringData, InString, SuffixLength) == 0;
-            }
-        }
+        return EndsWith(InString, FCStringType::Strlen(InString), SearchType);
+    }
 
-        return false;
+    /**
+     * @brief Check if string ends with a string
+     * @param InString String to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string ends with InString
+     */
+    template<typename StringType>
+    NODISCARD FORCEINLINE bool EndsWith(const StringType& InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const requires(TIsTStringType<StringType>::Value)
+    {
+        return EndsWith(InString.Data(), InString.Length(), SearchType);
     }
 
     /**

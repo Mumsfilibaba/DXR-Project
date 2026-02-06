@@ -1,5 +1,6 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
+#include "ParallaxMapping.hlsli"
 
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)
@@ -11,6 +12,10 @@
 
 #ifndef ENABLE_PACKED_MATERIAL_TEXTURE
     #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
+#endif
+
+#ifndef USE_UNJITTERED_CAMERA
+    #define USE_UNJITTERED_CAMERA (0)
 #endif
 
 // PerObject Constants
@@ -68,20 +73,24 @@ FVSOutput VSMain(FVSInput Input)
     FVSOutput Output;
 
     // Position
-    const float4 PositionWS = mul(float4(Input.Position, 1.0), Constants.Transform.Transform);
+    const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position);
+    const float4 PositionWS  = float4(PositionWS3, 1.0);
+#if USE_UNJITTERED_CAMERA
+    Output.Position = mul(PositionWS, CameraBuffer.ViewProjectionUnjittered);
+#else
     Output.Position = mul(PositionWS, CameraBuffer.ViewProjection);
+#endif
 
     // Normal
 #if ENABLE_PARALLAX_MAPPING
-    const float4x4 TransformInv = Constants.Transform.TransformInv;  
-    float3 Normal  = normalize(mul(float4(Input.Normal, 0.0), TransformInv).xyz);
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0), TransformInv).xyz);
+    float3 Normal  = normalize(TransformDirectionInvT(Constants.Transform, Input.Normal));
+    float3 Tangent = normalize(TransformDirectionInvT(Constants.Transform, Input.Tangent));
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
     float3 Bitangent = normalize(cross(Tangent, Normal));
 
     const float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
     Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.PositionWS);
-    Output.TangentPosition = mul(TangentSpace, PositionWS.xyz);
+    Output.TangentPosition = mul(TangentSpace, PositionWS3);
 #endif
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
@@ -102,49 +111,6 @@ struct FPSInput
 #endif
 };
 
-#if ENABLE_PARALLAX_MAPPING
-
-// TODO: We probably do not want any constants like this, it should be a constantbuffer or something similar
-static const float HEIGHT_SCALE = 0.03f;
-
-float SampleHeightMap(float2 TexCoords)
-{
-    return 1.0 - HeightTex.Sample(MaterialSampler, TexCoords);
-}
-
-float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
-{
-    const float MinLayers = 32;
-    const float MaxLayers = 64;
-
-    float NumLayers  = lerp(MaxLayers, MinLayers, abs(dot(float3(0.0, 0.0, 1.0), ViewDir)));
-    float LayerDepth = 1.0 / NumLayers;
-    
-    float2 P              = ViewDir.xy / ViewDir.z * HEIGHT_SCALE;
-    float2 DeltaTexCoords = P / NumLayers;
-
-    float2 CurrentTexCoords     = TexCoords;
-    float  CurrentDepthMapValue = SampleHeightMap(CurrentTexCoords);
-    
-    float CurrentLayerDepth	= 0.0;
-    while (CurrentLayerDepth < CurrentDepthMapValue)
-    {
-        CurrentTexCoords     -= DeltaTexCoords;
-        CurrentDepthMapValue  = SampleHeightMap(CurrentTexCoords);
-        CurrentLayerDepth    += LayerDepth;
-    }
-
-    float2 PrevTexCoords = CurrentTexCoords + DeltaTexCoords;
-
-    float AfterDepth  = CurrentDepthMapValue - CurrentLayerDepth;
-    float BeforeDepth = SampleHeightMap(PrevTexCoords) - CurrentLayerDepth + LayerDepth;
-
-    float  Weight         = AfterDepth / (AfterDepth - BeforeDepth);
-    float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0 - Weight);
-    return FinalTexCoords;
-}
-#endif
-
 void PSMain(FPSInput Input)
 {
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
@@ -153,10 +119,14 @@ void PSMain(FPSInput Input)
 #if ENABLE_PARALLAX_MAPPING
     TexCoords.y = 1.0 - TexCoords.y;
 
-    float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
-    TexCoords = ParallaxMapping(TexCoords, ViewDir);
+    const float2 TexCoordsDx = ddx(TexCoords);
+    const float2 TexCoordsDy = ddy(TexCoords);
 
-    if (TexCoords.x > 1.0 || TexCoords.y > 1.0 || TexCoords.x < 0.0 || TexCoords.y < 0.0)
+    float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
+
+    uint bParallaxDiscard = 0;
+    TexCoords = ParallaxMapUV(HeightTex, MaterialSampler, TexCoords, ViewDir, TexCoordsDx, TexCoordsDy, MaterialBuffer.ParallaxHeightScale, MaterialBuffer.ParallaxMinLayers, MaterialBuffer.ParallaxMaxLayers, bParallaxDiscard);
+    if (bParallaxDiscard != 0)
     {
         discard;
     }

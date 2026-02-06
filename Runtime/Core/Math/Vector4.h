@@ -92,7 +92,7 @@ public:
         if (LengthSqrd != 0.0f)
         {
             FFloat128 RcpLength_128 = FVectorMath::VectorRecipSqrt(XYZWSqrd_128);
-            FFloat128 Result_128    = FVectorMath::VectorMul(XYZWSqrd_128, RcpLength_128);
+            FFloat128 Result_128    = FVectorMath::VectorMul(XYZW_128, RcpLength_128);
             FVectorMath::VectorStore(Result_128, XYZW);
         }
     #endif
@@ -106,6 +106,61 @@ public:
     {
         FVector4 Result(*this);
         Result.Normalize();
+        return Result;
+    }
+
+
+    /**
+     * @brief Normalizes this vector using only the XYZ components (W is set to zero).
+     * @note Equivalent to setting W=0 and normalizing the resulting 3D direction.
+     */
+    inline void NormalizeXYZ() noexcept
+    {
+#if !USE_VECTOR_MATH
+        const float LengthSqrd = (X * X) + (Y * Y) + (Z * Z);
+
+        // Always treat the result as a direction
+        W = 0.0f;
+
+        if (LengthSqrd != 0.0f)
+        {
+            const float RcpLength = 1.0f / Math::Sqrt(LengthSqrd);
+            X *= RcpLength;
+            Y *= RcpLength;
+            Z *= RcpLength;
+        }
+#else
+        FFloat128 XYZW_128 = FVectorMath::VectorLoad(XYZW);
+
+        // Mask out W so it does not contribute to length, and becomes 0 in the result.
+        FInt128   Mask_128 = FVectorMath::VectorSetInt(~0, ~0, ~0, 0);
+        FFloat128 XYZ0_128 = FVectorMath::VectorAnd(XYZW_128, FVectorMath::VectorIntToFloat(Mask_128));
+
+        FFloat128 LenSq_128 = FVectorMath::VectorDot(XYZ0_128, XYZ0_128);
+
+        const float LengthSqrd = FVectorMath::VectorGetX(LenSq_128);
+        if (LengthSqrd != 0.0f)
+        {
+            FFloat128 RcpLength_128 = FVectorMath::VectorRecipSqrt(LenSq_128);
+            FFloat128 Result_128    = FVectorMath::VectorMul(XYZ0_128, RcpLength_128);
+            FVectorMath::VectorStore(Result_128, XYZW);
+        }
+        else
+        {
+            // Keep XYZ as-is, but still force W to 0 for direction semantics.
+            W = 0.0f;
+        }
+#endif
+    }
+
+    /**
+     * @brief Returns a normalized version of this vector using only XYZ (W is set to zero).
+     * @return A normalized copy of this vector (XYZ normalized, W = 0).
+     */
+    FORCEINLINE FVector4 GetNormalizedXYZ() const noexcept
+    {
+        FVector4 Result(*this);
+        Result.NormalizeXYZ();
         return Result;
     }
 

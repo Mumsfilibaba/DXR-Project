@@ -1,6 +1,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Platform/PlatformSystemClipboard.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Application.h"
 #include "Application/Widgets/ViewportWidget.h"
@@ -53,23 +54,23 @@ static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags
 
 static const char* GetImGuiViewportPlatformTitle(const ImGuiViewport* InViewport)
 {
-	if (!InViewport)
-	{
-		return "ImGui Window";
-	}
+    if (!InViewport)
+    {
+        return "ImGui Window";
+    }
 
-	if (InViewport == ImGui::GetMainViewport())
-	{
-		return "ImGui Main Viewport";
-	}
+    if (InViewport == ImGui::GetMainViewport())
+    {
+        return "ImGui Main Viewport";
+    }
 
-	const ImGuiViewportP* ViewportP = reinterpret_cast<const ImGuiViewportP*>(InViewport);
-	if (ViewportP && ViewportP->Window && ViewportP->Window->Name && ViewportP->Window->Name[0] != '\0')
-	{
-		return ViewportP->Window->Name;
-	}
+    const ImGuiViewportP* ViewportP = reinterpret_cast<const ImGuiViewportP*>(InViewport);
+    if (ViewportP && ViewportP->Window && ViewportP->Window->Name && ViewportP->Window->Name[0] != '\0')
+    {
+        return ViewportP->Window->Name;
+    }
 
-	return "ImGui Window";
+    return "ImGui Window";
 }
 
 FImGuiPlugin* GImGuiPlugin = nullptr;
@@ -126,7 +127,23 @@ bool FImGuiPlugin::Load()
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
-   
+
+    PluginImGuiIO->SetClipboardTextFn = [](void* UserData, const char* Text)
+    {
+        UNREFERENCED_VARIABLE(UserData);
+        FPlatformSystemClipboard::SetText(FString(Text));
+    };
+
+    PluginImGuiIO->GetClipboardTextFn = [](void* UserData) -> const char*
+    {
+        FImGuiPlugin* Context = reinterpret_cast<FImGuiPlugin*>(UserData);
+        Context->ClipboardText.Clear();
+        FPlatformSystemClipboard::GetText(Context->ClipboardText);
+        return *Context->ClipboardText;
+    };
+
+    PluginImGuiIO->ClipboardUserData = this;
+
     // Register platform interface (will be coupled with a renderer interface)
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
     
@@ -134,10 +151,10 @@ bool FImGuiPlugin::Load()
     // We have support for multiple Viewports, but we may not always want to utilize it
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
-	
+    
     // Configure viewports and docking in editor builds
     PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    PluginImGuiIO->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
@@ -383,14 +400,14 @@ bool FImGuiPlugin::Unload()
     // Reset the backend pointer ...
     PluginImGuiIO->BackendPlatformUserData = nullptr;
     PluginImGuiIO->BackendRendererUserData = nullptr;
-    
+
     // ... then destroy the context, this needs to happen in this order to avoid any asserts
     ImGui::DestroyContext(PluginImGuiContext);
     
-    // Release the renderer here since the renderer could call functions withing the DestroyContext function
+    // Release the renderer here since the renderer could call functions within the DestroyContext function
     // if there is still an open window.
     ReleaseRHI();
-    
+
     // Reset the global instance
     GImGuiPlugin = nullptr;
 
@@ -399,7 +416,6 @@ bool FImGuiPlugin::Unload()
     PluginImGuiContext = nullptr;
     return true;
 }
-
 
 bool FImGuiPlugin::InitializeRHI()
 {
@@ -434,21 +450,22 @@ bool FImGuiPlugin::UpdateFontAtlas()
     }
 }
 
-void FImGuiPlugin::Tick(float Delta)
+void FImGuiPlugin::NewFrame(float DeltaTime)
 {
     CHECK(MainWindow != nullptr);
     TSharedRef<FGenericWindow> PlatformWindow = MainWindow->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
 
-    PluginImGuiIO->DeltaTime               = Delta / 1000.0f;
+    PluginImGuiIO->DeltaTime               = DeltaTime;
     PluginImGuiIO->DisplaySize             = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
     PluginImGuiIO->FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
     PluginImGuiIO->DisplayFramebufferScale = ImVec2(PluginImGuiIO->FontGlobalScale, PluginImGuiIO->FontGlobalScale);
 
-    TSharedPtr<FWindowWidget>  ForegroundWindow         = FApplication::Get().GetFocusWindow();
+    TSharedPtr<FWindowWidget>  ForegroundWindow = FApplication::Get().GetFocusWindow();
     TSharedRef<FGenericWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
-    
+
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
+
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || PlatformWindow->IsChildWindow(PlatformForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
     {
@@ -503,15 +520,15 @@ void FImGuiPlugin::Tick(float Delta)
             ECursor Cursor = ECursor::Arrow;
             switch (ImguiCursor)
             {
-            case ImGuiMouseCursor_Arrow:      Cursor = ECursor::Arrow;      break;
-            case ImGuiMouseCursor_TextInput:  Cursor = ECursor::TextInput;  break;
-            case ImGuiMouseCursor_ResizeAll:  Cursor = ECursor::ResizeAll;  break;
-            case ImGuiMouseCursor_ResizeEW:   Cursor = ECursor::ResizeEW;   break;
-            case ImGuiMouseCursor_ResizeNS:   Cursor = ECursor::ResizeNS;   break;
-            case ImGuiMouseCursor_ResizeNESW: Cursor = ECursor::ResizeNESW; break;
-            case ImGuiMouseCursor_ResizeNWSE: Cursor = ECursor::ResizeNWSE; break;
-            case ImGuiMouseCursor_Hand:       Cursor = ECursor::Hand;       break;
-            case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
+                case ImGuiMouseCursor_Arrow:      Cursor = ECursor::Arrow;      break;
+                case ImGuiMouseCursor_TextInput:  Cursor = ECursor::TextInput;  break;
+                case ImGuiMouseCursor_ResizeAll:  Cursor = ECursor::ResizeAll;  break;
+                case ImGuiMouseCursor_ResizeEW:   Cursor = ECursor::ResizeEW;   break;
+                case ImGuiMouseCursor_ResizeNS:   Cursor = ECursor::ResizeNS;   break;
+                case ImGuiMouseCursor_ResizeNESW: Cursor = ECursor::ResizeNESW; break;
+                case ImGuiMouseCursor_ResizeNWSE: Cursor = ECursor::ResizeNWSE; break;
+                case ImGuiMouseCursor_Hand:       Cursor = ECursor::Hand;       break;
+                case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
 
             FApplication::Get().SetCursor(Cursor);
@@ -523,13 +540,25 @@ void FImGuiPlugin::Tick(float Delta)
     {
         PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasGamepad;
     }
+}
+
+void FImGuiPlugin::Tick(float DeltaTime)
+{
+    // New Frame
+    {
+        TRACE_SCOPE("ImGui New Frame");
+        NewFrame(DeltaTime);
+    }
 
     // Draw all ImGui widgets
     {
         TRACE_SCOPE("ImGui Callbacks");
 
+        // New frame
         ImGui::NewFrame();
+        BeginFrameDelegates.Broadcast();
 
+        // Draw
     #ifndef RELEASE_BUILD
         bool bShowDemoWindow = CVarImGuiShowDemoWindow.GetValue();
         if (bShowDemoWindow)
@@ -547,6 +576,8 @@ void FImGuiPlugin::Tick(float Delta)
         DrawDelegates.Broadcast();
     #endif
 
+        // End frame
+        EndFrameDelegates.Broadcast();
         ImGui::EndFrame();
     }
 }
@@ -559,14 +590,34 @@ void FImGuiPlugin::Draw(FRHICommandList& CommandList)
     }
 }
 
-FDelegateHandle FImGuiPlugin::AddDelegate(const FImGuiDelegate& Delegate)
+FDelegateHandle FImGuiPlugin::AddDrawDelegate(const FImGuiDelegate& Delegate)
 {
     return DrawDelegates.Add(Delegate);
 }
 
-void FImGuiPlugin::RemoveDelegate(FDelegateHandle DelegateHandle)
+void FImGuiPlugin::RemoveDrawDelegate(FDelegateHandle DelegateHandle)
 {
     DrawDelegates.Unbind(DelegateHandle);
+}
+
+FDelegateHandle FImGuiPlugin::AddBeginFrameDelegate(const FImGuiDelegate& Delegate)
+{
+    return BeginFrameDelegates.Add(Delegate);
+}
+
+void FImGuiPlugin::RemoveBeginFrameDelegate(FDelegateHandle DelegateHandle)
+{
+    BeginFrameDelegates.Unbind(DelegateHandle);
+}
+
+FDelegateHandle FImGuiPlugin::AddEndFrameDelegate(const FImGuiDelegate& Delegate)
+{
+    return EndFrameDelegates.Add(Delegate);
+}
+
+void FImGuiPlugin::RemoveEndFrameDelegate(FDelegateHandle DelegateHandle)
+{
+    EndFrameDelegates.Unbind(DelegateHandle);
 }
 
 void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport)

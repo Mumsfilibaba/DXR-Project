@@ -200,7 +200,6 @@ FEventResponse FSceneViewport::OnFocusLost()
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
-        // NOTE: Just reset the states
         PlayerController->GetPlayerInput()->ClearInputStates();
     }
 

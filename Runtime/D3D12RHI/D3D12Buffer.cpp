@@ -10,7 +10,6 @@ FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBuffe
 
 FD3D12Buffer::~FD3D12Buffer()
 {
-    // NOTE: Left empty for debugging purposes
 }
 
 bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
@@ -33,7 +32,15 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
 
     D3D12_HEAP_TYPE       D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
     D3D12_RESOURCE_STATES D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
-    if (Info.IsDynamic())
+
+    if (Info.IsReadBack())
+    {
+        // Readback resources must be placed in a READBACK heap and are only valid as copy destinations.
+        D3D12HeapType      = D3D12_HEAP_TYPE_READBACK;
+        D3D12InitialState  = D3D12_RESOURCE_STATE_COPY_DEST;
+        ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    }
+    else if (Info.IsDynamic())
     {
         D3D12HeapType     = D3D12_HEAP_TYPE_UPLOAD;
         D3D12InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -54,7 +61,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
 
             if (Info.IsConstantBuffer())
             {
-                View = new FD3D12ConstantBufferView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap());
+                ConstantBufferView = new FD3D12ConstantBufferView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap());
                 if (!CreateCBV())
                 {
                     return false;
@@ -112,6 +119,52 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     return true;
 }
 
+void* FD3D12Buffer::Map(uint64 Offset, uint64 Size)
+{
+    if (!Resource)
+    {
+        return nullptr;
+    }
+
+    if (!Info.IsDynamic() && !Info.IsReadBack())
+    {
+        D3D12_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
+        return nullptr;
+    }
+
+    const uint64 BufferSize = Resource->GetSize();
+    CHECK(Offset <= BufferSize);
+
+    uint64 MapSize = Size;
+    if (MapSize == UINT64_MAX)
+    {
+        MapSize = BufferSize - Offset;
+    }
+
+    D3D12_RANGE ReadRange = {};
+    ReadRange.Begin = Offset;
+    ReadRange.End   = Offset + MapSize;
+
+    uint8* MappedData = reinterpret_cast<uint8*>(Resource->MapRange(0, &ReadRange));
+    if (!MappedData)
+    {
+        return nullptr;
+    }
+
+    return MappedData + Offset;
+}
+
+void FD3D12Buffer::Unmap(uint64 /* Offset */, uint64 /* Size */)
+{
+    if (!Resource)
+    {
+        return;
+    }
+
+    // We generally use these mappings for readback or full-buffer writes; keep it simple here.
+    Resource->UnmapRange(0, nullptr);
+}
+
 void FD3D12Buffer::SetDebugName(const FString& InName)
 {
     if (Resource)
@@ -147,19 +200,19 @@ bool FD3D12Buffer::CreateCBV()
     D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
     FMemory::Memzero(&ViewDesc);
 
-	ViewDesc.SizeInBytes = Math::AlignUp<uint32>(static_cast<uint32>(Resource->GetSize()), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    ViewDesc.SizeInBytes = Math::AlignUp<uint32>(static_cast<uint32>(Resource->GetSize()), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     ViewDesc.BufferLocation = Resource->GetGPUVirtualAddress();
 
-    if (FD3D12_CPU_DESCRIPTOR_HANDLE(0) == View->GetOfflineHandle())
+    if (FD3D12_CPU_DESCRIPTOR_HANDLE(0) == ConstantBufferView->GetOfflineHandle())
     {
-        if (!View->AllocateHandle())
+        if (!ConstantBufferView->AllocateHandle())
         {
             D3D12_ERROR_CRITICAL("Failed to allocate ConstantBuffer Descriptor");
             return false;
         }
     }
 
-    if (!View->CreateView(Resource.Get(), ViewDesc))
+    if (!ConstantBufferView->CreateView(Resource.Get(), ViewDesc))
     {
         D3D12_ERROR_CRITICAL("Failed to Create ConstantBufferView");
         return false;

@@ -144,7 +144,7 @@ public:
 
         for (int32 Index = 0; Index < 2; ++Index)
         {
-            float Diff = reinterpret_cast<const float*>(this)[Index] - reinterpret_cast<const float*>(&Other)[Index];
+            float Diff = XY[Index] - Other.XY[Index];
             if (Math::Abs(Diff) > Threshold)
             {
                 return false;

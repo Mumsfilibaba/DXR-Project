@@ -43,6 +43,7 @@ public:
     virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final;
     virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
     virtual FRHIQuery* CreateQuery(EQueryType InQueryType) override final;
+    virtual FRHIGpuFence* CreateFence() override final;
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
     virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult) override final;
@@ -111,6 +112,8 @@ public:
     virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc) override final;
     virtual void CopyTexture(FRHITexture* Dst, FRHITexture* Src) override final;
     virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) override final;
+    virtual void CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) override final;
+    virtual void WriteFence(FRHIGpuFence* Fence) override final;
     virtual void DiscardContents(class FRHITexture* Texture) override final;
 
     virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo) override final;

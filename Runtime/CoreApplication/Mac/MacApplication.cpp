@@ -55,8 +55,7 @@ TSharedPtr<FGenericApplication> FMacApplication::Create()
     // Create the cursor interface
     TSharedPtr<FMacCursor> Cursor = MakeSharedPtr<FMacCursor>();
 
-    // Create a new MacApplication instance. The global MacApplication pointer is initialized inside of the
-    // FMacApplication constructor, and later on destroyed in the destructor.
+    // Create a new MacApplication instance. The global MacApplication pointer is initialized inside of the FMacApplication constructor
     TSharedPtr<FMacApplication> NewMacApplication = MakeSharedPtr<FMacApplication>(Cursor);
     return NewMacApplication;
 }
@@ -89,11 +88,14 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         
         CHECK(FPlatformThreadMisc::IsMainThread());
 
+        /* ---------------------------------------------------------------------------------------------------------- */
         // We need to map input from the macOS specific key-codes etc. which needs to be initialized somewhere
         // and this seems like the best place to do this, however we might need to move this if the input-mapping
         // is necessary somewhere else at an earlier point than at the MacApplication initalization time.
+        /* ---------------------------------------------------------------------------------------------------------- */
         FPlatformInputMapper::Initialize();
         
+        /* ---------------------------------------------------------------------------------------------------------- */
         // Initialize the default macOS menu programmatically.
         //
         // Since this application does not use a NIB (Interface Builder) file, which typically contains
@@ -118,6 +120,7 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         // By manually creating and configuring the menu bar we ensure that the application integrates
         // properly with macOS conventions and provides a familiar user experience, even without using
         // a NIB file.
+        /* ---------------------------------------------------------------------------------------------------------- */
         
         // Initialize the default macOS menu
         NSMenu*     MenuBar     = [NSMenu new];

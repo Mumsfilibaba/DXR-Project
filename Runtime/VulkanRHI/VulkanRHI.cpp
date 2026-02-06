@@ -2,6 +2,7 @@
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanQuery.h"
+#include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanPipelineState.h"
 #include "VulkanRHI/VulkanBuffer.h"
@@ -169,13 +170,13 @@ bool FVulkanRHI::Initialize()
     // Vulkan 1.1 Optional
     DeviceCreateInfo.OptionalFeatures11.multiview                          = VK_TRUE;
 
-    // Vulkan 1.2 Required
-    DeviceCreateInfo.RequiredFeatures12.hostQueryReset                     = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures12.bufferDeviceAddress                = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer                  = VK_TRUE;
-    // Vulkan 1.2 Optional
-    DeviceCreateInfo.OptionalFeatures12.timelineSemaphore                  = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures12.descriptorIndexing                 = VK_TRUE;
+    // Vulkan 1.2 Required 
+    DeviceCreateInfo.RequiredFeatures12.hostQueryReset                     = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures12.bufferDeviceAddress                = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer                  = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures12.timelineSemaphore                  = VK_TRUE; 
+    // Vulkan 1.2 Optional 
+    DeviceCreateInfo.OptionalFeatures12.descriptorIndexing                 = VK_TRUE; 
 
     // Vulkan 1.3 Required
     DeviceCreateInfo.RequiredFeatures13.dynamicRendering                   = VK_TRUE;
@@ -326,6 +327,18 @@ FRHISwapChain* FVulkanRHI::CreateSwapChain(const FRHISwapChainInfo& InSwapChainI
 FRHIQuery* FVulkanRHI::CreateQuery(EQueryType InQueryType)
 {
     return new FVulkanQuery(Device, InQueryType);
+}
+
+FRHIGpuFence* FVulkanRHI::CreateFence()
+{
+    FVulkanGpuFence* NewFence = new FVulkanGpuFence(Device);
+    if (!NewFence->Initialize())
+    {
+        delete NewFence;
+        return nullptr;
+    }
+
+    return NewFence;
 }
 
 FRHIRayTracingScene* FVulkanRHI::CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
