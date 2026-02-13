@@ -21,17 +21,8 @@
 #ifndef ENABLE_CASCADE_GS_INSTANCING
     #define ENABLE_CASCADE_GS_INSTANCING 0
 #endif
-#ifndef ENABLE_CASCADE_VIEW_INSTANCING
-    #define ENABLE_CASCADE_VIEW_INSTANCING 0
-#endif
-#if !ENABLE_CASCADE_VS_INSTANCING && !ENABLE_CASCADE_GS_INSTANCING && !ENABLE_CASCADE_VIEW_INSTANCING
+#if !ENABLE_CASCADE_VS_INSTANCING && !ENABLE_CASCADE_GS_INSTANCING
     #define ENABLE_CASCADE_MULTI_PASS 1
-#endif
-
-// NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
-// and have the RenderTargetArrayIndex inside the PSO to be set to BaseLayer which then gets offset by using SV_RenderTargetArrayIndex
-#if ENABLE_CASCADE_VIEW_INSTANCING && SHADER_LANG == SHADER_LANG_HLSL
-    #define ENABLE_VIEW_INSTANCING_WORK_AROUND 1
 #endif
 
 struct FPerCascade
@@ -54,6 +45,21 @@ SHADER_CONSTANT_BLOCK_END
 #endif
 
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
+StructuredBuffer<FCascadeSplit>    CascadeSplitBuffer  : register(t1);
+
+// Directional light
+#if SHADER_LANG == SHADER_LANG_MSL
+    ConstantBuffer<FDirectionalLight> LightBuffer : register(b3);
+#else
+    ConstantBuffer<FDirectionalLight> LightBuffer : register(b2);
+#endif
+
+// Cascade generation info (used for cascade resolution / texel scaling)
+#if SHADER_LANG == SHADER_LANG_MSL
+    ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b4);
+#else
+    ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b3);
+#endif
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     // MaterialBuffer
@@ -77,13 +83,10 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 struct FVSInput
 {
     float3 Position : POSITION0;
+    float3 Normal   : NORMAL0;
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
-#endif
-// For view-instancing
-#if ENABLE_CASCADE_VIEW_INSTANCING
-    uint ViewID : SV_ViewID;
 #endif
 // For vertex-shader instancing
 #if ENABLE_CASCADE_VS_INSTANCING
@@ -103,7 +106,7 @@ struct FVSCascadeOutput
     float4 Position : SV_Position;
 #endif
 // For vertex-shader instancing, we write directly what layer we want to write to
-#if ENABLE_CASCADE_VS_INSTANCING || ENABLE_VIEW_INSTANCING_WORK_AROUND
+#if ENABLE_CASCADE_VS_INSTANCING
     uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;
 #endif
 };
@@ -116,7 +119,8 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
     Output.TexCoord = Input.TexCoord;
 #endif
 
-    const float3 WorldPositionWS = TransformPositionWS(Constants.Transform, Input.Position);
+    float3 WorldPositionWS = TransformPositionWS(Constants.Transform, Input.Position);
+
     const float4 WorldPosition   = float4(WorldPositionWS, 1.0f);
 
 // Geometry shader instancing
@@ -124,19 +128,15 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
     Output.WorldPosition = WorldPosition;
 #else
 
-// View-instancing
-#if ENABLE_CASCADE_VIEW_INSTANCING
-    const int CascadeIndex = min(Input.ViewID, MAX_CASCADES - 1);
 // Vertex-shader instancing
-#elif ENABLE_CASCADE_VS_INSTANCING
+#if ENABLE_CASCADE_VS_INSTANCING
     const int CascadeIndex = min(Input.InstanceID, MAX_CASCADES - 1);
 // Regular multi-pass
 #elif ENABLE_CASCADE_MULTI_PASS
     const int CascadeIndex = min(PerCascadeBuffer.CascadeIndex, MAX_CASCADES - 1);
 #endif
 
-// Work-around using HLSL (Otherwise it does not work on NVIDIA hardware)
-#if ENABLE_CASCADE_VS_INSTANCING || ENABLE_VIEW_INSTANCING_WORK_AROUND
+#if ENABLE_CASCADE_VS_INSTANCING
     Output.RenderTargetArrayIndex = CascadeIndex;
 #endif
 

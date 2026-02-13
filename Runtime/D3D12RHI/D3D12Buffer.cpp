@@ -1,15 +1,31 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12Buffer.h"
 
-FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo)
+FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState)
     : FRHIBuffer(InBufferInfo)
     , FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
 {
+    EnableResourceStateTracking(InInitialState);
 }
 
 FD3D12Buffer::~FD3D12Buffer()
 {
+}
+
+void FD3D12Buffer::EnableResourceStateTracking(EResourceAccess InitialState)
+{
+    if (!ResourceState)
+    {
+        ResourceState = MakeUniquePtr<FD3D12ResourceState>();
+    }
+
+    ResourceState->Enable(ConvertResourceState(InitialState), 1, 1);
+}
+
+void FD3D12Buffer::DisableResourceStateTracking()
+{
+    ResourceState.Reset();
 }
 
 bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)

@@ -234,7 +234,7 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
         BackBuffers.Resize(NumBackBuffers);
         for (FD3D12TextureRef& Texture : BackBuffers)
         {
-            Texture = new FD3D12Texture(GetDevice(), BackBufferInfo);
+            Texture = new FD3D12Texture(GetDevice(), BackBufferInfo, EResourceAccess::Present);
         }
     }
 
@@ -244,7 +244,7 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
     }
     else
     {
-        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo);
+        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo, EResourceAccess::Present);
     }
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
@@ -259,12 +259,20 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
 
         BackBuffers[Index]->SetResource(new FD3D12Resource(GetDevice(), BackBufferResource));
         BackBuffers[Index]->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
+        if (FD3D12ResourceState* State = BackBuffers[Index]->GetResourceState())
+        {
+            State->SetState(D3D12_RESOURCE_STATE_PRESENT, true);
+        }
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
     if (FD3D12Texture* CurrentBackbuffer = BackBufferProxy->GetCurrentBackBufferTexture())
     {
+        if (FD3D12ResourceState* State = BackBufferProxy->GetResourceState())
+        {
+            State->SetState(D3D12_RESOURCE_STATE_PRESENT, true);
+        }
         return true;
     }
     else

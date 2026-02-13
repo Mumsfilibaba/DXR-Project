@@ -58,7 +58,7 @@ void ReductionMainInital(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_Gr
 	[unroll]
 	for(uint i = NUM_THREADS_TOTAL / 2; i > 0; i >>= 1)
     {
-        if (NUM_THREADS_TOTAL < i)
+        if (GroupThreadIndex < i)
         {
             GroupMinZ[GroupThreadIndex] = min(GroupMinZ[GroupThreadIndex], GroupMinZ[GroupThreadIndex + i]);
             GroupMaxZ[GroupThreadIndex] = max(GroupMaxZ[GroupThreadIndex], GroupMaxZ[GroupThreadIndex + i]);

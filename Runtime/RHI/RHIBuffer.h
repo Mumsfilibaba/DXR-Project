@@ -58,7 +58,7 @@ public:
  
     virtual void SetDebugName(const FString& InName) = 0; 
     virtual FString GetDebugName() const = 0; 
- 
+
     const FRHIBufferInfo& GetInfo() const 
     { 
         return Info; 

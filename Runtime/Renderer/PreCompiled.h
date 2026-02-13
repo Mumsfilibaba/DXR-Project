@@ -13,7 +13,6 @@
 
 #include "Renderer/RendererUI/GPUProfilerWidget.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
-#include "Renderer/RendererUI/RendererSettingsWidget.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"
 
 #include "Renderer/DebugRendering.h"

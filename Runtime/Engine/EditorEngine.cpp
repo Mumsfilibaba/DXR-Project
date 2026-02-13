@@ -4,6 +4,7 @@
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
+#include "Engine/EngineUI/Editor/EditorRendererSettingsWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
@@ -45,6 +46,7 @@ bool FEditorEngine::Init()
         SceneHierarchyWidget = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
         FooterWidget         = MakeSharedPtr<FEditorFooterWidget>(OutputLogWidget);
         PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
+        RendererSettingsWidget = MakeSharedPtr<FEditorRendererSettingsWidget>();
         ContentBrowserWidget = MakeSharedPtr<FEditorContentBrowserWidget>();
         GuizmoWidget         = MakeSharedPtr<FEditorGuizmoWidget>(this);
         
@@ -81,6 +83,7 @@ void FEditorEngine::Release()
         FooterWidget.Reset();
         ViewportWidget.Reset();
         PropertiesWidget.Reset();
+        RendererSettingsWidget.Reset();
         ContentBrowserWidget.Reset();
         GuizmoWidget.Reset();
     }
@@ -132,6 +135,7 @@ void FEditorEngine::RenderFrame()
     FSceneRenderView RenderView;
     RenderView.Scene        = GetWorld()->GetSceneInterface();
     RenderView.RenderTarget = ViewportImage.Get();
+    RenderView.DebugView    = ViewportWidget ? ViewportWidget->GetDebugView() : FSceneRenderView::EDebugView::None;
 
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->RenderSceneView(RenderView);

@@ -22,12 +22,14 @@ public:
 
     virtual FRHITexture* CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final
     {
-        return new FNullRHITexture(InTextureInfo);
+        FNullRHITexture* Texture = new FNullRHITexture(InTextureInfo, InInitialState, true);
+        return Texture;
     }
 
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final
     {
-        return new FNullRHIBuffer(InBufferInfo);
+        FNullRHIBuffer* Buffer = new FNullRHIBuffer(InBufferInfo, InInitialState, true);
+        return Buffer;
     }
 
     virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final

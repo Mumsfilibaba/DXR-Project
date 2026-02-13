@@ -296,20 +296,62 @@ struct IRHICommandContext
      */
     virtual void SetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
 
-    /**
+    /** 
      * @brief Transition the ResourceState of a Texture resource.
      * @param Texture Texture to transition ResourceState for
      * @param TextureTransition Part of the texture to transition
      */
     virtual void TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) = 0;
 
-    /**
+    /** 
      * @brief Transition the ResourceState of a Buffer resource
      * @param Buffer Buffer to transition ResourceState for
      * @param BeforeState State that the Buffer had before the transition
      * @param AfterState State that the Buffer have after the transition
      */
     virtual void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
+
+    /**
+     * @brief Ensure a Texture is in the required state using tracked state.
+     * @param Texture Texture to transition as needed
+     * @param RequiredState Required resource state and subresource info
+     */
+    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) = 0;
+
+    /**
+     * @brief Ensure a Buffer is in the required state using tracked state.
+     * @param Buffer Buffer to transition as needed
+     * @param RequiredState Required resource state
+     */
+    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) = 0;
+
+    /**
+     * @brief Enable resource state tracking for a texture.
+     * @param Texture Texture to enable tracking for
+     * @param InitialState Current known state of the texture
+     */
+    virtual void EnableResourceStateTracking(FRHITexture* Texture, EResourceAccess InitialState) = 0;
+
+    /**
+     * @brief Disable resource state tracking for a texture and transition to a known state.
+     * @param Texture Texture to disable tracking for
+     * @param TargetState State to transition the texture into before disabling
+     */
+    virtual void DisableResourceStateTracking(FRHITexture* Texture, EResourceAccess TargetState) = 0;
+
+    /**
+     * @brief Enable resource state tracking for a buffer.
+     * @param Buffer Buffer to enable tracking for
+     * @param InitialState Current known state of the buffer
+     */
+    virtual void EnableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess InitialState) = 0;
+
+    /**
+     * @brief Disable resource state tracking for a buffer and transition to a known state.
+     * @param Buffer Buffer to disable tracking for
+     * @param TargetState State to transition the buffer into before disabling
+     */
+    virtual void DisableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess TargetState) = 0;
 
     /**
      * @brief Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState.

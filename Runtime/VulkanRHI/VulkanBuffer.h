@@ -1,6 +1,8 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanResourceState.h"
+#include "Core/Containers/UniquePtr.h"
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 
@@ -13,7 +15,7 @@ public:
     }
 
 public:
-    FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc);
+    FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common);
     ~FVulkanBuffer();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
@@ -26,10 +28,19 @@ public:
     virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
     virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
 
+    // Resource State Tracking
     VkBuffer GetVkBuffer() const
     {
         return Buffer;
     }
+
+    FVulkanBufferState* GetBufferState() const
+    {
+        return BufferState.Get();
+    }
+
+    void EnableResourceStateTracking(EResourceAccess InitialState);
+    void DisableResourceStateTracking();
 
     VkDeviceMemory GetVkDeviceMemory() const
     {
@@ -51,4 +62,5 @@ protected:
     FVulkanMemoryAllocation MemoryAllocation;
     VkDeviceSize            RequiredAlignment;
     FString                 DebugName;
+    TUniquePtr<FVulkanBufferState> BufferState;
 };

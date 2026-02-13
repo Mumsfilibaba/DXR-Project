@@ -792,6 +792,114 @@ DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
     EResourceAccess AfterState;
 };
 
+DECLARE_RHICOMMAND(FRHICommandRequireTextureState)
+{
+    FORCEINLINE FRHICommandRequireTextureState(FRHITexture* InTexture, const FRHIRequiredTextureState& InRequiredState)
+        : Texture(InTexture)
+        , RequiredState(InRequiredState)
+    {
+        CHECK(Texture != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RequireTextureState(Texture, RequiredState);
+    }
+
+    FRHITexture*              Texture;
+    FRHIRequiredTextureState  RequiredState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandRequireBufferState)
+{
+    FORCEINLINE FRHICommandRequireBufferState(FRHIBuffer* InBuffer, EResourceAccess InRequiredState)
+        : Buffer(InBuffer)
+        , RequiredState(InRequiredState)
+    {
+        CHECK(Buffer != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RequireBufferState(Buffer, RequiredState);
+    }
+
+    FRHIBuffer*     Buffer;
+    EResourceAccess RequiredState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandEnableTextureStateTracking)
+{
+    FORCEINLINE FRHICommandEnableTextureStateTracking(FRHITexture* InTexture, EResourceAccess InInitialState)
+        : Texture(InTexture)
+        , InitialState(InInitialState)
+    {
+        CHECK(Texture != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.EnableResourceStateTracking(Texture, InitialState);
+    }
+
+    FRHITexture*     Texture;
+    EResourceAccess  InitialState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDisableTextureStateTracking)
+{
+    FORCEINLINE FRHICommandDisableTextureStateTracking(FRHITexture* InTexture, EResourceAccess InTargetState)
+        : Texture(InTexture)
+        , TargetState(InTargetState)
+    {
+        CHECK(Texture != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DisableResourceStateTracking(Texture, TargetState);
+    }
+
+    FRHITexture*     Texture;
+    EResourceAccess  TargetState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandEnableBufferStateTracking)
+{
+    FORCEINLINE FRHICommandEnableBufferStateTracking(FRHIBuffer* InBuffer, EResourceAccess InInitialState)
+        : Buffer(InBuffer)
+        , InitialState(InInitialState)
+    {
+        CHECK(Buffer != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.EnableResourceStateTracking(Buffer, InitialState);
+    }
+
+    FRHIBuffer*     Buffer;
+    EResourceAccess InitialState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandDisableBufferStateTracking)
+{
+    FORCEINLINE FRHICommandDisableBufferStateTracking(FRHIBuffer* InBuffer, EResourceAccess InTargetState)
+        : Buffer(InBuffer)
+        , TargetState(InTargetState)
+    {
+        CHECK(Buffer != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.DisableResourceStateTracking(Buffer, TargetState);
+    }
+
+    FRHIBuffer*     Buffer;
+    EResourceAccess TargetState;
+};
+
 DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
 {
     FORCEINLINE FRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)

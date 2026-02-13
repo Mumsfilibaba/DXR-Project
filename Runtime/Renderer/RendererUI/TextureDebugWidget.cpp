@@ -64,33 +64,41 @@ void FTextureDebugWidget::Draw()
             {
                 if (FImGuiTexture* CurrImage = &DebugTextures[ImageIndex])
                 {
-                    const float TexWidth       = float(CurrImage->Texture->GetWidth());
-                    const float TexHeight      = float(CurrImage->Texture->GetHeight());
-                    const float AspectRatio    = TexHeight / TexWidth;
-                    const float InvAspectRatio = TexWidth / TexHeight;
-
-                    float ImageWidth  = 0.0f;
-                    float ImageHeight = 0.0f;
-                    if (TexWidth > TexHeight)
+                    FRHITexture* Texture = CurrImage->GetTexture();
+                    if (!Texture)
                     {
-                        ImageWidth  = Math::Max(MinImageSize, Math::Min(TexWidth, float(Width)));
-                        ImageHeight = Math::Max(MinImageSize, ImageWidth * AspectRatio);
+                        // Skip drawing if the texture is unavailable.
                     }
                     else
                     {
-                        ImageHeight = Math::Max(MinImageSize, Math::Min(TexHeight, float(Height)));
-                        ImageWidth  = Math::Max(MinImageSize, ImageHeight * InvAspectRatio);
-                    }
+                        const float TexWidth       = float(Texture->GetWidth());
+                        const float TexHeight      = float(Texture->GetHeight());
+                        const float AspectRatio    = TexHeight / TexWidth;
+                        const float InvAspectRatio = TexWidth / TexHeight;
 
-                    {
-                        const ImVec2 ImageSize     = ImVec2(ImageWidth, ImageHeight);
-                        const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
-                        const ImVec2 NewPosition   = ImVec2((ContentRegion.x - ImageSize.x) * 0.5f, (ContentRegion.y - ImageSize.y) * 0.5f);
-                        ImGui::SetCursorPos(NewPosition);
-                    }
+                        float ImageWidth  = 0.0f;
+                        float ImageHeight = 0.0f;
+                        if (TexWidth > TexHeight)
+                        {
+                            ImageWidth  = Math::Max(MinImageSize, Math::Min(TexWidth, float(Width)));
+                            ImageHeight = Math::Max(MinImageSize, ImageWidth * AspectRatio);
+                        }
+                        else
+                        {
+                            ImageHeight = Math::Max(MinImageSize, Math::Min(TexHeight, float(Height)));
+                            ImageWidth  = Math::Max(MinImageSize, ImageHeight * InvAspectRatio);
+                        }
 
-                    CurrImage->bEnableLinearSampler = false;
-                    ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+                        {
+                            const ImVec2 ImageSize     = ImVec2(ImageWidth, ImageHeight);
+                            const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
+                            const ImVec2 NewPosition   = ImVec2((ContentRegion.x - ImageSize.x) * 0.5f, (ContentRegion.y - ImageSize.y) * 0.5f);
+                            ImGui::SetCursorPos(NewPosition);
+                        }
+
+                        CurrImage->bEnableLinearSampler = false;
+                        ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+                    }
                 }
             }
             
@@ -126,7 +134,14 @@ void FTextureDebugWidget::Draw()
 
                     FImGuiTexture* CurrImage = &DebugTextures[Index];
 
-                    const float ImageRatio = float(CurrImage->Texture->GetWidth()) / float(CurrImage->Texture->GetHeight());
+                    FRHITexture* Texture = CurrImage->GetTexture();
+                    if (!Texture)
+                    {
+                        ImGui::PopID();
+                        continue;
+                    }
+
+                    const float ImageRatio = float(Texture->GetWidth()) / float(Texture->GetHeight());
 
                     ImVec2 Size    = ImVec2(MenuImageSize * ImageRatio, MenuImageSize);
                     ImVec2 Uv0     = ImVec2(0.0f, 0.0f);
@@ -144,7 +159,7 @@ void FTextureDebugWidget::Draw()
 
                     if (ImGui::IsItemHovered())
                     {
-                        ImGui::SetTooltip("%s", *CurrImage->Texture->GetDebugName());
+                        ImGui::SetTooltip("%s", *Texture->GetDebugName());
                     }
 
                     ImGui::Separator();
@@ -162,7 +177,7 @@ void FTextureDebugWidget::Draw()
     }
 }
 
-void FTextureDebugWidget::AddTextureForDebugging(const FRHIShaderResourceViewRef& TextureView, const FRHITextureRef& Texture, EResourceAccess ResourceState)
+void FTextureDebugWidget::AddTextureForDebugging(const FRHIShaderResourceViewRef& TextureView, const FRHITextureRef& Texture)
 {
     if (!TextureView || !Texture)
     {
@@ -170,14 +185,5 @@ void FTextureDebugWidget::AddTextureForDebugging(const FRHIShaderResourceViewRef
         return;
     }
 
-    for (const FImGuiTexture& CurrImage : DebugTextures)
-    {
-        if (CurrImage.Texture == Texture && CurrImage.ResourceState != ResourceState)
-        {
-            LOG_ERROR("TextureDebugger require all texture views to be added with the same resource state");
-            return;
-        }
-    }
-
-    DebugTextures.Emplace(TextureView, Texture, ResourceState);
+    DebugTextures.Emplace(TextureView);
 }

@@ -105,7 +105,7 @@ bool FMetalSwapChain::Initialize()
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
 
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), Info.Width, Info.Height, 1, 1, Flags);
-    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferInfo);
+    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferInfo, EResourceAccess::Present);
     BackBuffer->SetSwapChain(this);
     return true;
 }

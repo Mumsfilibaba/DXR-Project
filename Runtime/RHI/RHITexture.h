@@ -99,6 +99,7 @@ struct FRHITextureInfo
         , NumMipLevels(InNumMipLevels)
         , NumSamples(InNumSamples)
         , ClearValue(InClearValue)
+        , bEnableResourceStateTracking(true)
     {
     }
 
@@ -139,6 +140,7 @@ struct FRHITextureInfo
     uint32             NumSamples     = 0;
     FIntVector3        Extent         = { };
     FClearValue        ClearValue     = { };
+    bool               bEnableResourceStateTracking = true;
 };
 
 class FRHITexture : public FRHIResource
@@ -207,10 +209,20 @@ public:
     {
         return Info.NumArraySlices;
     }
+
+    uint32 GetTrackingArraySlices() const
+    {
+        return IsTextureCube(Info.Dimension) ? (Info.NumArraySlices * RHI_NUM_CUBE_FACES) : Info.NumArraySlices;
+    }
     
     uint32 GetNumMipLevels() const
     {
         return Info.NumMipLevels;
+    }
+
+    uint32 GetTrackingSubresourceCount() const
+    {
+        return GetNumMipLevels() * GetTrackingArraySlices();
     }
     
     uint32 GetNumSamples() const

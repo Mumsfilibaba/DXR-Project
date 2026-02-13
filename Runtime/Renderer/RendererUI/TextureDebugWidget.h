@@ -13,7 +13,7 @@ public:
     void Draw();
 
      /** @brief Add image for debug drawing */
-    void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess ResourceState);
+    void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image);
 
     void ClearImages()
     {

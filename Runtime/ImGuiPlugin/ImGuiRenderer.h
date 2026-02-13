@@ -60,7 +60,13 @@ private:
     void PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture);
     void ResetTexturesShaderResourceUsage(FRHICommandList& CommandList);
 
-    TArray<const FImGuiTexture*> RenderedTextures;
+    struct FRenderedImGuiTexture
+    {
+        FRHITexture*   Texture       = nullptr;
+        EResourceAccess PreviousState = EResourceAccess::Common;
+    };
+
+    TArray<FRenderedImGuiTexture> RenderedTextures;
     FRHITextureRef               FontAtlas;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;

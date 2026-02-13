@@ -14,7 +14,7 @@ FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene, FDirectionalLigh
     , ShadowNearPlane(0.0f)
     , ShadowFarPlane(0.0f)
     , ShadowBias(0.0f)
-    , LightArea(0.05f)
+    , LightArea(0.5f)
 {
     ShadowMatrix.SetIdentity();
 }

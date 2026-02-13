@@ -23,7 +23,7 @@ FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
 	return nullptr;
 }
 
-FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
+FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState)
     : FRHITexture(InTextureInfo)
     , FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
@@ -32,12 +32,31 @@ FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTe
     , RenderTargetViews()
     , DepthStencilViews()
 {
+    if (InTextureInfo.bEnableResourceStateTracking)
+    {
+        EnableResourceStateTracking(InInitialState);
+    }
 }
 
 FD3D12Texture::~FD3D12Texture()
 {
     DestroyDepthStencilViews();
     DestroyRenderTargetViews();
+}
+
+void FD3D12Texture::EnableResourceStateTracking(EResourceAccess InitialState)
+{
+    if (!ResourceState)
+    {
+        ResourceState = MakeUniquePtr<FD3D12ResourceState>();
+    }
+
+    ResourceState->Enable(ConvertResourceState(InitialState), GetNumMipLevels(), GetTrackingArraySlices());
+}
+
+void FD3D12Texture::DisableResourceStateTracking()
+{
+    ResourceState.Reset();
 }
 
 bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
@@ -549,8 +568,8 @@ FString FD3D12Texture::GetDebugName() const
     return "";
 }
 
-FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo)
-    : FD3D12Texture(InDevice, InTextureInfo)
+FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState)
+    : FD3D12Texture(InDevice, InTextureInfo, InInitialState)
     , SwapChain(InSwapChain)
 {
 }

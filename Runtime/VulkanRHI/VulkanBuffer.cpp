@@ -5,7 +5,7 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 
-FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
+FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc, EResourceAccess InInitialState)
     : FRHIBuffer(InBufferDesc)
     , FVulkanDeviceChild(InDevice)
     , Buffer(VK_NULL_HANDLE)
@@ -13,6 +13,7 @@ FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBu
     , RequiredAlignment(0)
     , DebugName()
 {
+    EnableResourceStateTracking(InInitialState);
 }
 
 FVulkanBuffer::~FVulkanBuffer()
@@ -212,6 +213,24 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
     }
 
     return Mapped + Offset;
+}
+
+void FVulkanBuffer::EnableResourceStateTracking(EResourceAccess InitialState)
+{
+    if (!BufferState)
+    {
+        BufferState = MakeUniquePtr<FVulkanBufferState>();
+    }
+
+    FVulkanBufferState::FBufferState State;
+    State.Access = ConvertResourceStateToAccessFlags(InitialState);
+    State.Stage  = ConvertResourceStateToPipelineStageFlags(InitialState);
+    BufferState->Enable(State);
+}
+
+void FVulkanBuffer::DisableResourceStateTracking()
+{
+    BufferState.Reset();
 }
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

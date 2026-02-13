@@ -11,7 +11,7 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     , Rotation(0.0f, 0.0f, 0.0f)
     , ShadowPositionOffset(200.0f)
     , CascadeSplitLambda(0.95f)
-    , LightArea(0.05f)
+    , LightArea(0.5f)
 {
 }
 

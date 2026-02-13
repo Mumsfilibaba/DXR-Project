@@ -21,6 +21,7 @@
 #include "Renderer/DebugRendering.h"
 #include "Renderer/TemporalAA.h"
 #include "Renderer/PostProcessing.h"
+#include "Renderer/DebugViewPass.h"
 #if EDITOR_BUILD
 #include "Renderer/SelectionOutlinePass.h"
 #endif
@@ -28,7 +29,6 @@
 #include "Renderer/RendererUI/TextureDebugWidget.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
 #include "Renderer/RendererUI/GPUProfilerWidget.h"
-#include "Renderer/RendererUI/RendererSettingsWidget.h"
 
 class FViewportWidget;
 class FSceneRenderer;
@@ -153,9 +153,9 @@ public:
 
     void ResizeResources(uint32 InWidth, uint32 InHeight);
 
-    void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess ResourceState)
+    void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image)
     {
-        TextureDebugger->AddTextureForDebugging(ImageView, Image, ResourceState);
+        TextureDebugger->AddTextureForDebugging(ImageView, Image);
     }
 
     TSharedPtr<FTextureDebugWidget> GetTextureDebugger() const
@@ -237,6 +237,7 @@ private:
     FForwardPass*               ForwardPass;
     FFXAAPass*                  FXAAPass;
     FTonemapPass*               TonemapPass;
+    FDebugViewPass*             DebugViewPass;
 #if EDITOR_BUILD
     FFinalCompositePass*        FinalCompositePass;
 #endif
@@ -303,8 +304,7 @@ private:
 #endif
 
     // Widgets
-    TSharedPtr<FTextureDebugWidget>     TextureDebugger;
-    TSharedPtr<FRendererInfoWidget>     InfoWindow;
-    TSharedPtr<FGPUProfilerWidget>      GPUProfilerWindow;
-    TSharedPtr<FRendererSettingsWidget> SettingsWindow;
+    TSharedPtr<FTextureDebugWidget> TextureDebugger;
+    TSharedPtr<FRendererInfoWidget> InfoWindow;
+    TSharedPtr<FGPUProfilerWidget>  GPUProfilerWindow;
 };

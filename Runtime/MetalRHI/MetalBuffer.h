@@ -10,7 +10,7 @@ typedef TSharedRef<class FMetalBuffer> FMetalBufferRef;
 class FMetalBuffer : public FRHIBuffer, public FMetalDeviceChild
 {
 public:
-    FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferInfo& InBufferInfo);
+    FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState = EResourceAccess::Common);
     ~FMetalBuffer();
 
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);

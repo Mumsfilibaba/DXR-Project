@@ -9,12 +9,13 @@ SHADER_CONSTANT_BLOCK_BEGIN
     int   TonemappingType;
     int   OutputSRGB;
     float ReinhardIntensity;
-    float Padding0;
+    float ExposureEV100;
 SHADER_CONSTANT_BLOCK_END
 
 float4 TonemappingPS(float2 TexCoord : TEXCOORD0) : SV_TARGET
 {
     float3 Color = FinalImage.Sample(PointSampler, TexCoord).rgb;
+    Color *= exp2(-Constants.ExposureEV100);
 
     switch (Constants.TonemappingType)
     {

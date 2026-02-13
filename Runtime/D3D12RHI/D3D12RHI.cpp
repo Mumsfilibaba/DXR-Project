@@ -299,7 +299,7 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
 
 FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InTextureInfo);
+    FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InTextureInfo, InInitialState);
     if (!NewTexture->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
@@ -312,7 +312,7 @@ FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERes
 
 FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    TSharedRef<FD3D12Buffer> NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
+    TSharedRef<FD3D12Buffer> NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo, InInitialState);
     if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;

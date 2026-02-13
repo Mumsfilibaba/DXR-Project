@@ -391,6 +391,30 @@ void FMetalCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess 
 {
 }
 
+void FMetalCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
+{
+}
+
+void FMetalCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
+{
+}
+
+void FMetalCommandContext::EnableResourceStateTracking(FRHITexture* Texture, EResourceAccess InitialState)
+{
+}
+
+void FMetalCommandContext::DisableResourceStateTracking(FRHITexture* Texture, EResourceAccess TargetState)
+{
+}
+
+void FMetalCommandContext::EnableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess InitialState)
+{
+}
+
+void FMetalCommandContext::DisableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess TargetState)
+{
+}
+
 void FMetalCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
 }

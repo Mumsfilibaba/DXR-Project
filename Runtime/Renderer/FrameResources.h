@@ -129,8 +129,14 @@ struct FCascadeGenerationInfoHLSL
     // 112-128
     float LightNearPlane;
     float LightFarPlane;
-    int32 Padding0;
-    int32 Padding1;
+    float MaxPenumbraWorld;
+    float MaxSearchDistanceWorld;
+
+    // 128-144
+    float Padding0;
+    float Padding1;
+    float Padding2;
+    float Padding3;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
@@ -177,6 +183,7 @@ struct FFrameResources
     bool Initialize();
     void Release();
     void BuildLightBuffers(FRHICommandList& CommandList, FScene* Scene);
+    bool UpdateCascadeSizeFromCVar();
 
     // Limits
     const uint32 MaxPointLights       = 256;
@@ -244,6 +251,7 @@ struct FFrameResources
 
     FCascadeGenerationInfoHLSL CascadeGenerationData;
     bool                       CascadeGenerationDataDirty;
+    bool                       CascadeSizeDirty;
     FRHIBufferRef              CascadeGenerationDataBuffer;
 
     FRHITextureRef            ShadowCascades;

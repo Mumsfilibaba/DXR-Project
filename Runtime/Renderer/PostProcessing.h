@@ -18,7 +18,7 @@ struct FTonemapInfoHLSL
     ETonemappingType TonemappingType;
     int32            bOutputSRGB;
     float            ReinhardIntensity;
-    float            Padding0;
+    float            ExposureEV100;
 };
 
 MARK_AS_REALLOCATABLE(FTonemapInfoHLSL);

@@ -345,6 +345,36 @@ public:
         EmplaceCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
     }
 
+    FORCEINLINE void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) noexcept
+    {
+        EmplaceCommand<FRHICommandRequireTextureState>(Texture, RequiredState);
+    }
+
+    FORCEINLINE void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) noexcept
+    {
+        EmplaceCommand<FRHICommandRequireBufferState>(Buffer, RequiredState);
+    }
+
+    FORCEINLINE void EnableResourceStateTracking(FRHITexture* Texture, EResourceAccess InitialState) noexcept
+    {
+        EmplaceCommand<FRHICommandEnableTextureStateTracking>(Texture, InitialState);
+    }
+
+    FORCEINLINE void DisableResourceStateTracking(FRHITexture* Texture, EResourceAccess TargetState) noexcept
+    {
+        EmplaceCommand<FRHICommandDisableTextureStateTracking>(Texture, TargetState);
+    }
+
+    FORCEINLINE void EnableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess InitialState) noexcept
+    {
+        EmplaceCommand<FRHICommandEnableBufferStateTracking>(Buffer, InitialState);
+    }
+
+    FORCEINLINE void DisableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess TargetState) noexcept
+    {
+        EmplaceCommand<FRHICommandDisableBufferStateTracking>(Buffer, TargetState);
+    }
+
     FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture) noexcept
     {
         EmplaceCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);

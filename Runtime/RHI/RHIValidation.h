@@ -122,6 +122,12 @@ public:
     
     virtual void TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
     virtual void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) override final;
+    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) override final;
+    virtual void EnableResourceStateTracking(FRHITexture* Texture, EResourceAccess InitialState) override final;
+    virtual void DisableResourceStateTracking(FRHITexture* Texture, EResourceAccess TargetState) override final;
+    virtual void EnableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess InitialState) override final;
+    virtual void DisableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess TargetState) override final;
     virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
     virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
 

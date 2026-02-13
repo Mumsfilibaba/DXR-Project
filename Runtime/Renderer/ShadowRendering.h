@@ -25,10 +25,9 @@ enum class ECascadeRenderPassType : uint8
     MultiPass,
     SinglePass,
     GeometryShaderSinglePass,
-    ViewInstancingSinglePass,
 
     First = MultiPass,
-    Last = ViewInstancingSinglePass,
+    Last = GeometryShaderSinglePass,
 };
 
 struct FCascadeMatricesHLSL
@@ -71,6 +70,8 @@ struct FCascadeSplitHLSL
 
     // 144-160
     FVector3 CascadeCameraPosition;
+    // Reference world-space texel size for this cascade computed using the full camera clip range
+    // (independent of tight-frustum depth min/max). Used for stable PCSS clamping in ShadowMaskGen.hlsl.
     float    Padding0;
 };
 
@@ -250,7 +251,7 @@ public:
 
     bool Initialize(FFrameResources& Resources);
     bool CreateResources(FFrameResources& Resources);
-    void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
+    void Execute(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
 
 private:
     template<ECascadeRenderPassType RenderPassType>
@@ -258,15 +259,34 @@ private:
 
     TMap<FCascadedShadowsShaderCombination, FGraphicsPipelineStateInstance> MaterialPSOs;
     FRHIBufferRef PerCascadeBuffer;
+
 };
 
 struct FDirectionalShadowSettingsHLSL
 {
     // 0-16
-    float  FilterSize;
-    float  MaxFilterSize;
+    float  PCFFilterWorld;
+    float  PCFMinFilterRadiusTexels;
     uint32 ShadowMapSize;
     uint32 FrameIndex;
+
+    // 16-32 (PCSS tuning)
+    float  PCSSRadiusScale;
+    float  PCSSBlockerSearchScale;
+    float  PCSSMinFilterRadiusTexels;
+    float  PCSSPadding0;
+
+    // 32-48
+    float  PCSSBlockerSamplingClump;
+    float  PCSSMaxPenumbraWorld;
+    float  PCSSMaxSearchDistanceWorld;
+    float  PCSSMinFilterMaxAngularDiameter;
+
+    // 48-64
+    float  PCSSBlockerSearchAngularDiameter;
+    float  Padding1;
+    float  Padding2;
+    float  Padding3;
 };
 
 MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
@@ -279,9 +299,10 @@ enum ECSMFilterMode : uint8
 
 enum ECSMFilterFunction : uint8
 {
-    Grid        = 0,
-    PoissonDisk = 1,
-    VogelDisk   = 2,
+    // NOTE: Value 0 used to be Grid; it is treated as Poisson for backwards compatibility.
+    PoissonDisk              = 1,
+    VogelDisk                = 2,
+    InterleavedGradientNoise = 3,
 };
 
 struct FShadowMaskShaderCombination
@@ -330,6 +351,9 @@ struct FShadowMaskShaderCombination
 
             // Number of samples (Valid for poisson- and vogel-disk)
             uint8 NumSamples : 8;
+
+            // Number of samples for PCSS blocker search
+            uint8 NumBlockerSamples : 8;
         };
 
         uint64 Hash;

@@ -6,6 +6,7 @@
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
+#include "Engine/EngineUI/Editor/EditorRendererSettingsWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiCore.h"
@@ -159,6 +160,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
     ImGui::DockBuilderDockWindow("Viewport", Ids.DockCenterTop);
     ImGui::DockBuilderDockWindow("Scene Hierarchy", Ids.DockRightTop);
     ImGui::DockBuilderDockWindow("Properties", Ids.DockRightBottom);
+    ImGui::DockBuilderDockWindow("Renderer Settings", Ids.DockRightBottom);
     ImGui::DockBuilderDockWindow("Output Log", Ids.DockCenterBottom);
     ImGui::DockBuilderDockWindow("Content Browser", Ids.DockCenterBottom);
 
@@ -336,6 +338,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
                     else
                     {
                         EditorWidgets::MenuItem("Properties", nullptr, false, false);
+                    }
+
+                    if (FEditorRendererSettingsWidget* RendererSettingsWidget = EditorEngine->GetRendererSettingsWidget().Get())
+                    {
+                        bool bVisible = RendererSettingsWidget->IsVisible();
+                        if (EditorWidgets::MenuItem("Renderer Settings", nullptr, bVisible))
+                        {
+                            RendererSettingsWidget->SetVisible(!bVisible);
+                        }
+                    }
+                    else
+                    {
+                        EditorWidgets::MenuItem("Renderer Settings", nullptr, false, false);
                     }
 
                     if (FEditorContentBrowserWidget* ContentBrowserWidget = EditorEngine->GetContentBrowserWidget().Get())

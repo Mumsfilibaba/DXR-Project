@@ -42,6 +42,8 @@ struct FCascadeSplit
 
     // 144-160
     float3 CascadeCameraPosition;
+    // Reference world-space texel size for this cascade computed using the full camera clip range
+    // (independent of tight-frustum depth min/max). Used for stable PCSS clamping.
     float  Padding0;
 };
 
@@ -67,8 +69,14 @@ struct FCascadeGenerationInfo
     // 112-128
     float LightNearPlane;
     float LightFarPlane;
-    int   Padding0;
-    int   Padding1;
+    float MaxPenumbraWorld;
+    float MaxSearchDistanceWorld;
+
+    // 128-144
+    float Padding0;
+    float Padding1;
+    float Padding2;
+    float Padding3;
 };
 
 struct FDirectionalLight

@@ -7,9 +7,10 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class FNullRHIBuffer : public FRHIBuffer
 {
 public:
-    FNullRHIBuffer(const FRHIBufferInfo& InBufferInfo)
+    FNullRHIBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState = EResourceAccess::Common)
         : FRHIBuffer(InBufferInfo)
     {
+        (void)InInitialState;
     }
 
     virtual void* GetRHINativeHandle() const override final
@@ -55,11 +56,12 @@ struct FNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
 class FNullRHITexture : public FRHITexture
 {
 public:
-    FNullRHITexture(const FRHITextureInfo& InTextureInfo)
+    FNullRHITexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common)
         : FRHITexture(InTextureInfo)
         , ShaderResourceView(new FNullRHIShaderResourceView(this))
         , UnorderedAccessView(new FNullRHIUnorderedAccessView(this))
     {
+        (void)InInitialState;
     }
 
     virtual void* GetRHINativeHandle() const override final { return nullptr; }
@@ -118,7 +120,7 @@ public:
         , BackBuffer(nullptr)
     { 
         FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(Info.ColorFormat, Info.Width, Info.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
-        BackBuffer = new FNullRHITexture(BackBufferInfo);
+        BackBuffer = new FNullRHITexture(BackBufferInfo, EResourceAccess::Present);
     }
 
     bool Resize(uint32 InWidth, uint32 InHeight)

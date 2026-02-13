@@ -258,7 +258,7 @@ void FVulkanRHI::EndFrame()
 
 FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), InTextureInfo);
+    FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), InTextureInfo, InInitialState);
     if (!NewTexture->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
@@ -271,7 +271,7 @@ FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERe
 
 FRHIBuffer* FVulkanRHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    FVulkanBufferRef NewBuffer = new FVulkanBuffer(GetDevice(), InBufferInfo);
+    FVulkanBufferRef NewBuffer = new FVulkanBuffer(GetDevice(), InBufferInfo, InInitialState);
     if (!NewBuffer->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
     {
         return nullptr;

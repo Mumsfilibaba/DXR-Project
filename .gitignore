@@ -18,6 +18,10 @@ imgui.ini
 /ThirdParty/bin/
 /ThirdParty/bin-int/
 
+# Shader compilation temp outputs
+_tmp_*.dxil
+_delete_test.tmp
+
 #VS Packages
 packages/
 

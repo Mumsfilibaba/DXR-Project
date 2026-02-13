@@ -27,6 +27,22 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     if (GenerationInfo.bEnableTightFrustum)
     {
         MinMaxDepth = saturate(MinMaxDepthTex[uint2(0, 0)]);
+        if (MinMaxDepth.x > MinMaxDepth.y)
+        {
+            MinMaxDepth = float2(0.0, 1.0);
+        }
+
+        // Stabilize against sub-pixel jitter / small rasterization changes:
+        // - Quantize min depth down and max depth up (keeps the range conservative).
+        const float DepthQuant = 1024.0;
+        MinMaxDepth.x = saturate(floor(MinMaxDepth.x * DepthQuant) / DepthQuant);
+        MinMaxDepth.y = saturate(ceil(MinMaxDepth.y * DepthQuant) / DepthQuant);
+
+        // Add a small conservative padding to reduce temporal "breathing" and prevent
+        // extremely tight ranges that can cause out-of-frustum sampling artifacts.
+        const float DepthPad = 2.0 / DepthQuant;
+        MinMaxDepth.x = saturate(MinMaxDepth.x - DepthPad);
+        MinMaxDepth.y = saturate(MinMaxDepth.y + DepthPad);
     }
 
     float NearPlane = CameraBuffer.NearPlane;
@@ -36,6 +52,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float MaxDepth = NearPlane + ClipRange * MinMaxDepth.y;
     
     float CascadeSplits[NUM_SHADOW_CASCADES];
+    float CascadeSplitsReference[NUM_SHADOW_CASCADES];
     
     // Calculate split depths based on view camera frustum
     // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
@@ -55,8 +72,30 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
     }
 
+    // Also calculate a reference set of splits using the full camera clip range (independent of tight-frustum min/max depth).
+    // This is used for stable "texel -> world" conversions for filtering limits so that enabling tight frustum does not
+    // change the perceived penumbra size as shadow-map density increases.
+    {
+        const float ReferenceMinDepth = NearPlane;
+        const float ReferenceMaxDepth = CameraBuffer.FarPlane;
+
+        const float Range = ReferenceMaxDepth - ReferenceMinDepth;
+        const float Ratio = ReferenceMaxDepth / max(ReferenceMinDepth, 0.01);
+
+        [unroll]
+        for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+        {
+            float Percentage   = (Index + 1) / float(NUM_SHADOW_CASCADES);
+            float LogScale     = ReferenceMinDepth * pow(abs(Ratio), Percentage);
+            float UniformScale = ReferenceMinDepth + Range * Percentage;
+            float Distance     = GenerationInfo.CascadeSplitLambda * (LogScale - UniformScale) + UniformScale;
+
+            CascadeSplitsReference[Index] = (Distance - NearPlane) / ClipRange;
+        }
+    }
+
     // Calculate position of light frustum in world-space
-    float3 FrustumCornersWS[8] =
+    float3 FullFrustumCornersWS[8] =
     {
         float3(-1.0,  1.0, 0.0),
         float3( 1.0,  1.0, 0.0),
@@ -72,8 +111,20 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         [unroll]
         for (int Index = 0; Index < 8; ++Index)
         {
-            float4 Corner = mul(float4(FrustumCornersWS[Index], 1.0), CameraBuffer.ViewProjectionInvUnjittered);
-            FrustumCornersWS[Index] = Corner.xyz / Corner.w;
+            float4 Corner = mul(float4(FullFrustumCornersWS[Index], 1.0), CameraBuffer.ViewProjectionInvUnjittered);
+            FullFrustumCornersWS[Index] = Corner.xyz / Corner.w;
+        }
+    }
+
+    float3 FrustumCornersWS[8];
+    float3 ReferenceFrustumCornersWS[8];
+
+    {
+        [unroll]
+        for (int Index = 0; Index < 8; ++Index)
+        {
+            FrustumCornersWS[Index]          = FullFrustumCornersWS[Index];
+            ReferenceFrustumCornersWS[Index] = FullFrustumCornersWS[Index];
         }
     }
 
@@ -95,6 +146,23 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
     }
 
+    // Slice the reference frustum corners using the full clip-range splits (independent of tight depth range).
+    const float ReferenceSplitDist     = CascadeSplitsReference[CascadeIndex];
+    const float ReferencePrevSplitDist = (CascadeIndex == 0) ? 0.0 : CascadeSplitsReference[CascadeIndex - 1];
+
+    {
+        [unroll]
+        for (int Index = 0; Index < 4; ++Index)
+        {
+            float3 CornerRay     = ReferenceFrustumCornersWS[Index + 4] - ReferenceFrustumCornersWS[Index];
+            float3 NearCornerRay = CornerRay * ReferencePrevSplitDist;
+            float3 FarCornerRay  = CornerRay * ReferenceSplitDist;
+
+            ReferenceFrustumCornersWS[Index + 4] = ReferenceFrustumCornersWS[Index] + FarCornerRay;
+            ReferenceFrustumCornersWS[Index]     = ReferenceFrustumCornersWS[Index] + NearCornerRay;
+        }
+    }
+
     // Calculate the center of this frustum view slice
     float3 FrustumCenter = 0.0;
 
@@ -106,6 +174,18 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
 
         FrustumCenter /= 8.0;
+    }
+
+    float3 ReferenceFrustumCenter = 0.0;
+
+    {
+        [unroll]
+        for (int Index = 0; Index < 8; ++Index)
+        {
+            ReferenceFrustumCenter += ReferenceFrustumCornersWS[Index];
+        }
+
+        ReferenceFrustumCenter /= 8.0;
     }
 
     // Calculate the radius of the sphere that currounds the frustum
@@ -122,13 +202,41 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         SphereRadius = ceil(SphereRadius * 16.0) / 16.0;
     }
 
+    float ReferenceSphereRadius = 0.0;
+
+    {
+        [unroll]
+        for (int Index = 0; Index < 8; ++Index)
+        {
+            const float Distance = length(ReferenceFrustumCornersWS[Index] - ReferenceFrustumCenter);
+            ReferenceSphereRadius = max(ReferenceSphereRadius, Distance);
+        }
+
+        ReferenceSphereRadius = ceil(ReferenceSphereRadius * 16.0) / 16.0;
+    }
+
     // Cache the shadow-map size
     const float CascadeResolution = GenerationInfo.CascadeResolution;
+    const float ReferenceWorldTexelSize = (2.0 * ReferenceSphereRadius) / max(CascadeResolution, 1.0);
 
     // Calculate the extents for this cascade...
     float3 MaxExtents     =  SphereRadius;
     float3 MinExtents     = -MaxExtents;
     float3 CascadeExtents =  MaxExtents - MinExtents;
+
+    // Expand tight frustum to account for the maximum PCSS kernel footprint (guard band).
+    {
+        float MaxKernelWorld = max(GenerationInfo.MaxPenumbraWorld, GenerationInfo.MaxSearchDistanceWorld);
+        if (GenerationInfo.bEnableTightFrustum && MaxKernelWorld > 0.0)
+        {
+            // Prevent guard bands from exploding the cascade when very large kernels are requested.
+            const float MaxGuardBand = max(MaxExtents.x, MaxExtents.y) * 0.5;
+            MaxKernelWorld = min(MaxKernelWorld, MaxGuardBand);
+            MaxExtents.xy += MaxKernelWorld;
+            MinExtents.xy -= MaxKernelWorld;
+            CascadeExtents = MaxExtents - MinExtents;
+        }
+    }
 
     // We use a specific extent in the z-direction, this is in order to prevent that some
     // objects are not visibe in the shadow-map and that are "behind" the camera.
@@ -272,7 +380,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         
         // We might want the position for the cascade
         Split.CascadeCameraPosition = ShadowEyePos;
-        Split.Padding0              = SphereRadius;
+        Split.Padding0              = ReferenceWorldTexelSize;
 
         SplitBuffer[CascadeIndex] = Split;
     }

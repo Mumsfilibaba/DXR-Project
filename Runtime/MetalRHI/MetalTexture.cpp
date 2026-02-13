@@ -3,13 +3,14 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo)
+FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState)
     : FRHITexture(InTextureInfo)
     , FMetalDeviceChild(InDeviceContext)
     , Texture(nil)
     , SwapChain(nullptr)
     , ShaderResourceView(nullptr)
 {
+    (void)InInitialState;
 }
 
 FMetalTexture::~FMetalTexture()

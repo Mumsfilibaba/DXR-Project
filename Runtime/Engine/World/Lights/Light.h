@@ -14,7 +14,7 @@ public:
     // Set color of a light
     void SetColor(const FVector3& InColor);
 
-    // Set intensity of the light
+    // Set intensity of the light (Directional: lux, Point: lumens)
     void SetIntensity(float InIntensity);
 
     // Set near-plane for shadows

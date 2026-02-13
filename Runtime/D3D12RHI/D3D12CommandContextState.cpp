@@ -439,6 +439,7 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
     {
         FD3D12RootSignature* RootSignature        = InGraphicsPipelineState      ? InGraphicsPipelineState->GetRootSignature()      : nullptr;
         FD3D12RootSignature* CurrentRootSignature = CurrentGraphicsPipelineState ? CurrentGraphicsPipelineState->GetRootSignature() : nullptr;
+
         if (CurrentRootSignature != RootSignature)
         {
             GraphicsState.bBindRootSignature = true;
@@ -446,6 +447,7 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
 
         D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology        = InGraphicsPipelineState      ? InGraphicsPipelineState->GetD3D12PrimitiveTopology()      : D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
         D3D12_PRIMITIVE_TOPOLOGY CurrentPrimitiveTopology = CurrentGraphicsPipelineState ? CurrentGraphicsPipelineState->GetD3D12PrimitiveTopology() : D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
         if (CurrentPrimitiveTopology != PrimitiveTopology)
         {
             GraphicsState.bBindPrimitiveTopology = true;
@@ -475,7 +477,7 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
             }
         }
 
-        GraphicsState.PipelineState = MakeSharedRef<FD3D12GraphicsPipelineState>(InGraphicsPipelineState);
+        GraphicsState.PipelineState      = MakeSharedRef<FD3D12GraphicsPipelineState>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
     }
 }
@@ -487,6 +489,7 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
     {
         FD3D12RootSignature* RootSignature        = InComputePipelineState      ? InComputePipelineState->GetRootSignature()      : nullptr;
         FD3D12RootSignature* CurrentRootSignature = CurrentComputePipelineState ? CurrentComputePipelineState->GetRootSignature() : nullptr;
+
         if (CurrentRootSignature != RootSignature)
         {
             ComputeState.bBindRootSignature = true;

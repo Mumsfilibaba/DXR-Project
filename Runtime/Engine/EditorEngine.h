@@ -7,6 +7,7 @@ class FEditorOutputLogWidget;
 class FEditorViewportWidget;
 class FEditorSceneHierarchyWidget;
 class FEditorPropertiesWidget;
+class FEditorRendererSettingsWidget;
 class FEditorContentBrowserWidget;
 class FEditorGuizmoWidget;
 
@@ -32,6 +33,7 @@ public:
     const TSharedPtr<FEditorViewportWidget>&       GetEditorViewportWidget() const { return ViewportWidget; }
     const TSharedPtr<FEditorSceneHierarchyWidget>& GetSceneHierarchyWidget() const { return SceneHierarchyWidget; }
     const TSharedPtr<FEditorPropertiesWidget>&     GetPropertiesWidget() const { return PropertiesWidget; }
+    const TSharedPtr<FEditorRendererSettingsWidget>& GetRendererSettingsWidget() const { return RendererSettingsWidget; }
     const TSharedPtr<FEditorContentBrowserWidget>& GetContentBrowserWidget() const { return ContentBrowserWidget; }
     const TSharedPtr<FEditorGuizmoWidget>&         GetGuizmoWidget() const { return GuizmoWidget; }
 
@@ -61,6 +63,7 @@ private:
     TSharedPtr<FEditorViewportWidget>       ViewportWidget;
     TSharedPtr<FEditorSceneHierarchyWidget> SceneHierarchyWidget;
     TSharedPtr<FEditorPropertiesWidget>     PropertiesWidget;
+    TSharedPtr<FEditorRendererSettingsWidget> RendererSettingsWidget;
     TSharedPtr<FEditorContentBrowserWidget> ContentBrowserWidget;
     TSharedPtr<FEditorGuizmoWidget>         GuizmoWidget;
     FRHITextureRef                          ViewportImage;

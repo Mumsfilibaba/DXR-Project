@@ -5,12 +5,27 @@
 
 class FWorld;
 class FRHITexture;
+
 typedef TSharedRef<class FRHISwapChain> FRHISwapChainRef;
 
 struct FSceneRenderView
 {
+    enum class EDebugView : uint8
+    {
+        None = 0,
+        ShadowMask,
+        GBufferAlbedo,
+        GBufferNormal,
+        GBufferMaterial,
+        GBufferVelocity,
+        SSAO,
+        Depth,
+        ShadowCascades,
+    };
+
     IScene*      Scene        = nullptr;
     FRHITexture* RenderTarget = nullptr;
+    EDebugView   DebugView    = EDebugView::None;
 };
 
 struct IRendererModule : public FModuleInterface

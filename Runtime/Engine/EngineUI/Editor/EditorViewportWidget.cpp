@@ -1,8 +1,10 @@
 #include "Application/Application.h"
+#include "Core/Math/Math.h"
 #include "RHI/RHIResources.h" 
 #include "Engine/Engine.h" 
 #include "Engine/EngineUI/Editor/EditorGuizmo.h" 
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h" 
+#include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "ImGuiPlugin/ImGuiCore.h" 
 #include "ImGuiPlugin/ImGuiRenderer.h" 
 #include "RendererCore/Interfaces/IRendererModule.h" 
@@ -13,6 +15,7 @@ FEditorViewportWidget::FEditorViewportWidget()
     , ImGuiDelegateHandle()
     , bVisible(true)
     , bViewportInputActive(false)
+    , DebugView(FSceneRenderView::EDebugView::None)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -68,6 +71,74 @@ void FEditorViewportWidget::Draw()
 
             bViewportInputActive = false;
         }
+
+        // ---------------------------------------------------------------------
+        // Viewport toolbar
+        // ---------------------------------------------------------------------
+
+        {
+            const ImGuiWindowFlags ToolbarFlags =
+                ImGuiWindowFlags_NoScrollbar |
+                ImGuiWindowFlags_NoScrollWithMouse |
+                ImGuiWindowFlags_NoBackground;
+
+            const float ToolbarHeight = ImGui::GetFrameHeight() + ImGui::GetStyle().FramePadding.y * 2.0f;
+
+            if (ImGui::BeginChild("##ViewportToolbar", ImVec2(0.0f, ToolbarHeight), false, ToolbarFlags))
+            {
+                static const CHAR* DebugViewItems[] =
+                {
+                    "Lit",
+                    "Shadow Mask",
+                    "GBuffer: Albedo",
+                    "GBuffer: Normal",
+                    "GBuffer: Material",
+                    "GBuffer: Velocity",
+                    "SSAO",
+                    "Depth",
+                    "Shadow Cascades (2x2)",
+                };
+
+                static const FSceneRenderView::EDebugView DebugViewValues[] =
+                {
+                    FSceneRenderView::EDebugView::None,
+                    FSceneRenderView::EDebugView::ShadowMask,
+                    FSceneRenderView::EDebugView::GBufferAlbedo,
+                    FSceneRenderView::EDebugView::GBufferNormal,
+                    FSceneRenderView::EDebugView::GBufferMaterial,
+                    FSceneRenderView::EDebugView::GBufferVelocity,
+                    FSceneRenderView::EDebugView::SSAO,
+                    FSceneRenderView::EDebugView::Depth,
+                    FSceneRenderView::EDebugView::ShadowCascades,
+                };
+
+                constexpr int32 ItemCount = static_cast<int32>(sizeof(DebugViewItems) / sizeof(DebugViewItems[0]));
+
+                int32 DebugViewIndex = 0;
+                for (int32 Index = 0; Index < ItemCount; ++Index)
+                {
+                    if (DebugViewValues[Index] == DebugView)
+                    {
+                        DebugViewIndex = Index;
+                        break;
+                    }
+                }
+
+                if (EditorWidgets::BeginPropertyTable("##ViewportDebugTable", 120.0f, 24.0f))
+                {
+                    if (EditorWidgets::DrawComboProperty("Debug view", DebugViewIndex, DebugViewItems, ItemCount, nullptr))
+                    {
+                        DebugView = DebugViewValues[Math::Clamp(DebugViewIndex, 0, ItemCount - 1)];
+                    }
+
+                    EditorWidgets::EndPropertyTable();
+                }
+            }
+
+            ImGui::EndChild();
+        }
+
+        ImGui::Separator();
 
         // Update the relative viewport position
         const ImVec2 ContentPos = ImGui::GetCursorScreenPos();
@@ -138,8 +209,9 @@ void FEditorViewportWidget::Draw()
                     {
                         if (IRendererModule* RendererModule = IRendererModule::Get())
                         {
-                            const uint32 RenderWidth  = ViewportImage.Texture ? ViewportImage.Texture->GetWidth() : static_cast<uint32>(ContentSize.x);
-                            const uint32 RenderHeight = ViewportImage.Texture ? ViewportImage.Texture->GetHeight() : static_cast<uint32>(ContentSize.y);
+                            FRHITexture* ViewportTexture = ViewportImage.GetTexture();
+                            const uint32 RenderWidth  = ViewportTexture ? ViewportTexture->GetWidth() : static_cast<uint32>(ContentSize.x);
+                            const uint32 RenderHeight = ViewportTexture ? ViewportTexture->GetHeight() : static_cast<uint32>(ContentSize.y);
 
                             const float SafeW = ImageSize.x > 0.0f ? ImageSize.x : 1.0f;
                             const float SafeH = ImageSize.y > 0.0f ? ImageSize.y : 1.0f;
@@ -188,9 +260,7 @@ void FEditorViewportWidget::SetViewportImage(FRHITextureRef InViewportImage)
 {
     if (InViewportImage)
     {
-        ViewportImage.Texture              = InViewportImage;
-        ViewportImage.View                 = MakeSharedRef<FRHIShaderResourceView>(InViewportImage->GetShaderResourceView());
-        ViewportImage.ResourceState        = EResourceAccess::RenderTarget;
+        ViewportImage = FImGuiTexture(InViewportImage);
         ViewportImage.bEnableLinearSampler = false;
         ViewportImage.bEnableBlending      = false;
     }
@@ -210,4 +280,9 @@ FIntVector2 FEditorViewportWidget::GetViewportSize() const
     }
 
     return FIntVector2(1920, 1080);
+}
+
+FSceneRenderView::EDebugView FEditorViewportWidget::GetDebugView() const
+{
+    return DebugView;
 }

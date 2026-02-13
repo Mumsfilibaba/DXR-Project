@@ -64,11 +64,19 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
     InCommandContext->Flush();
 
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
-    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
+    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo, EResourceAccess::Present);
     if (!BackBuffer)
     {
         VULKAN_ERROR_CRITICAL("Failed to create BackBuffer");
         return false;
+    }
+    if (FVulkanImageLayoutState* State = BackBuffer->GetImageLayoutState())
+    {
+        FVulkanImageLayoutState::FImageState PresentState;
+        PresentState.Layout = ConvertResourceStateToImageLayout(EResourceAccess::Present);
+        PresentState.Access = ConvertResourceStateToAccessFlags(EResourceAccess::Present);
+        PresentState.Stage  = ConvertResourceStateToPipelineStageFlags(EResourceAccess::Present);
+        State->SetState(PresentState, true);
     }
 
     return true;
@@ -227,9 +235,17 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
             }
 
             // Create image texture-wrapper
-            if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferInfo))
+            if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferInfo, EResourceAccess::Present))
             {
                 BackBuffers[i] = NewTexture;
+                if (FVulkanImageLayoutState* State = BackBuffers[i]->GetImageLayoutState())
+                {
+                    FVulkanImageLayoutState::FImageState PresentState;
+                    PresentState.Layout = ConvertResourceStateToImageLayout(EResourceAccess::Present);
+                    PresentState.Access = ConvertResourceStateToAccessFlags(EResourceAccess::Present);
+                    PresentState.Stage  = ConvertResourceStateToPipelineStageFlags(EResourceAccess::Present);
+                    State->SetState(PresentState, true);
+                }
             }
             else
             {
@@ -278,7 +294,16 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
-        BackBuffers[Index++]->SetVkImage(Image);
+        FVulkanTexture* BackBufferTexture = BackBuffers[Index++].Get();
+        BackBufferTexture->SetVkImage(Image);
+        if (FVulkanImageLayoutState* State = BackBufferTexture->GetImageLayoutState())
+        {
+            FVulkanImageLayoutState::FImageState PresentState;
+            PresentState.Layout = ConvertResourceStateToImageLayout(EResourceAccess::Present);
+            PresentState.Access = ConvertResourceStateToAccessFlags(EResourceAccess::Present);
+            PresentState.Stage  = ConvertResourceStateToPipelineStageFlags(EResourceAccess::Present);
+            State->SetState(PresentState, true);
+        }
     }
 
     InCommandContext->SplitCommandBuffer(false, false);

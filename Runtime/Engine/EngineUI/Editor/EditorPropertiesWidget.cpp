@@ -329,7 +329,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Intensity = Point->GetIntensity();
                     const float Intensity0 = 1.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
+                    if (EditorWidgets::DrawFloatProperty("Intensity (Lumen)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
                     {
                         Point->SetIntensity(Intensity);
                     }
@@ -405,7 +405,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Intensity = Dir->GetIntensity();
                     const float Intensity0 = 1.0f;
 
-                    if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
+                    if (EditorWidgets::DrawFloatProperty("Intensity (Lux)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
                     {
                         Dir->SetIntensity(Intensity);
                     }
@@ -489,9 +489,9 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     }
 
                     float LightArea = Dir->GetLightArea();
-                    const float LightArea0 = 0.05f;
+                    const float LightArea0 = 0.5f;
 
-                    if (EditorWidgets::DrawFloatProperty("Light area", LightArea, 0.01f, 0.0f, 1.0f, "%.2f", true, &LightArea0))
+                    if (EditorWidgets::DrawFloatProperty("Angular diameter (deg)", LightArea, 0.05f, 0.0f, 10.0f, "%.2f", true, &LightArea0))
                     {
                         Dir->SetLightArea(LightArea);
                     }

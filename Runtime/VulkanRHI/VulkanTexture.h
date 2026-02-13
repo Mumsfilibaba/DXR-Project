@@ -1,7 +1,9 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/UniquePtr.h"
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanResourceViews.h"
+#include "VulkanRHI/VulkanResourceState.h"
 #include "VulkanRHI/VulkanMemory.h"
 
 class FVulkanSwapChain;
@@ -25,7 +27,7 @@ public:
     static FVulkanTexture* Cast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
 
 public:
-    FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
+    FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
     virtual ~FVulkanTexture();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
@@ -58,6 +60,14 @@ public:
     {
         return CreateInfo.format;
     }
+
+    FVulkanImageLayoutState* GetImageLayoutState() const
+    {
+        return ImageLayoutState.Get();
+    }
+
+    void EnableResourceStateTracking(EResourceAccess InitialState);
+    void DisableResourceStateTracking();
     
     // TODO: Solve in a cleaner way and remove this function
     void Resize(uint32 InWidth, uint32 InHeight)
@@ -74,6 +84,7 @@ protected:
 
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
+    TUniquePtr<FVulkanImageLayoutState> ImageLayoutState;
 
     TArray<FVulkanResourceView*> ImageViews;
     TMap<FVulkanHashableImageView, FVulkanResourceView*> ImageViewMap;
@@ -82,7 +93,7 @@ protected:
 class FVulkanBackBufferTexture : public FVulkanTexture
 {
 public:
-    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
+    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
     virtual ~FVulkanBackBufferTexture();
 
     void ResizeBackBuffer(int32 InWidth, int32 InHeight);

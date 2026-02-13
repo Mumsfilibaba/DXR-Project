@@ -1240,6 +1240,8 @@ void FVulkanCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITe
 
     const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
     const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
+    FVulkanImageLayoutState* ImageState = VulkanTexture->GetImageLayoutState();
+    const bool bTrackState = ImageState && ImageState->IsEnabled();
 
     if (NewLayout != PreviousLayout)
     {
@@ -1296,6 +1298,80 @@ void FVulkanCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITe
         CHECK(!IsInsideRenderPass());
         BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
     }
+
+    if (bTrackState)
+    {
+        FVulkanImageLayoutState::FImageState NewState;
+        NewState.Layout = NewLayout;
+        NewState.Access = ConvertResourceStateToAccessFlags(TextureTransition.AfterState);
+        NewState.Stage  = ConvertResourceStateToPipelineStageFlags(TextureTransition.AfterState);
+
+        if (ImageState->IsSubresourceTrackingEnabled())
+        {
+            const uint32 MipCount = ImageState->GetSubresourceMipCount();
+            const uint32 ArrayCount = ImageState->GetSubresourceArrayCount();
+            const bool bIsCube = IsTextureCube(VulkanTexture->GetDimension());
+            const uint32 CubeArrayCount = bIsCube ? (ArrayCount / RHI_NUM_CUBE_FACES) : ArrayCount;
+
+            auto UpdateSubresource = [&](uint32 MipLevel, uint32 ArraySlice)
+            {
+                ImageState->UpdateSubresourceState(NewState, MipLevel, ArraySlice);
+            };
+
+            auto UpdateArraySlice = [&](uint32 MipLevel, uint32 ArraySlice)
+            {
+                if (bIsCube)
+                {
+                    const uint32 BaseArrayLayer = ArraySlice * RHI_NUM_CUBE_FACES;
+                    for (uint32 Face = 0; Face < RHI_NUM_CUBE_FACES; ++Face)
+                    {
+                        UpdateSubresource(MipLevel, BaseArrayLayer + Face);
+                    }
+                }
+                else
+                {
+                    UpdateSubresource(MipLevel, ArraySlice);
+                }
+            };
+
+            if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS && TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES)
+            {
+                for (uint32 ArraySlice = 0; ArraySlice < ArrayCount; ++ArraySlice)
+                {
+                    for (uint32 MipLevel = 0; MipLevel < MipCount; ++MipLevel)
+                    {
+                        UpdateSubresource(MipLevel, ArraySlice);
+                    }
+                }
+                ImageState->SetState(NewState);
+            }
+            else if (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES)
+            {
+                CHECK(TextureTransition.MipLevel < MipCount);
+                for (uint32 ArraySlice = 0; ArraySlice < ArrayCount; ++ArraySlice)
+                {
+                    UpdateSubresource(TextureTransition.MipLevel, ArraySlice);
+                }
+            }
+            else if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)
+            {
+                CHECK(TextureTransition.ArraySlice < CubeArrayCount);
+                for (uint32 MipLevel = 0; MipLevel < MipCount; ++MipLevel)
+                {
+                    UpdateArraySlice(MipLevel, TextureTransition.ArraySlice);
+                }
+            }
+            else
+            {
+                CHECK(TextureTransition.ArraySlice < CubeArrayCount);
+                UpdateArraySlice(TextureTransition.MipLevel, TextureTransition.ArraySlice);
+            }
+        }
+        else
+        {
+            ImageState->SetState(NewState);
+        }
+    }
 }
 
 void FVulkanCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)   
@@ -1317,6 +1393,234 @@ void FVulkanCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess
 
     CHECK(!IsInsideRenderPass());
     BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
+
+    if (FVulkanBufferState* BufferState = VulkanBuffer->GetBufferState())
+    {
+        if (BufferState->IsEnabled())
+        {
+            FVulkanBufferState::FBufferState NewState;
+            NewState.Access = ConvertResourceStateToAccessFlags(AfterState);
+            NewState.Stage  = ConvertResourceStateToPipelineStageFlags(AfterState);
+            BufferState->SetState(NewState);
+        }
+    }
+}
+
+void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
+{
+    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
+    CHECK(VulkanTexture != nullptr);
+
+    FVulkanImageLayoutState* ImageState = VulkanTexture->GetImageLayoutState();
+    CHECK(ImageState && ImageState->IsEnabled());
+
+    FVulkanImageLayoutState::FImageState Required;
+    Required.Layout = ConvertResourceStateToImageLayout(RequiredState.RequiredState);
+    Required.Access = ConvertResourceStateToAccessFlags(RequiredState.RequiredState);
+    Required.Stage  = ConvertResourceStateToPipelineStageFlags(RequiredState.RequiredState);
+
+    auto IsSameState = [](const FVulkanImageLayoutState::FImageState& A, const FVulkanImageLayoutState::FImageState& B)
+    {
+        return A.Layout == B.Layout && A.Access == B.Access && A.Stage == B.Stage;
+    };
+
+    CHECK(!IsInsideRenderPass());
+
+    if (!ImageState->IsSubresourceTrackingEnabled())
+    {
+        const FVulkanImageLayoutState::FImageState& BeforeState = ImageState->GetState();
+        if (!IsSameState(BeforeState, Required))
+        {
+            VkImageMemoryBarrier2 ImageBarrier = {};
+            ImageBarrier.sType                       = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            ImageBarrier.newLayout                   = Required.Layout;
+            ImageBarrier.oldLayout                   = BeforeState.Layout;
+            ImageBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+            ImageBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+            ImageBarrier.image                       = VulkanTexture->GetVkImage();
+            ImageBarrier.srcAccessMask               = BeforeState.Access;
+            ImageBarrier.dstAccessMask               = Required.Access;
+            ImageBarrier.srcStageMask                = BeforeState.Stage;
+            ImageBarrier.dstStageMask                = Required.Stage;
+            ImageBarrier.subresourceRange.aspectMask = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
+            ImageBarrier.subresourceRange.baseMipLevel = 0;
+            ImageBarrier.subresourceRange.levelCount   = VK_REMAINING_MIP_LEVELS;
+            ImageBarrier.subresourceRange.baseArrayLayer = 0;
+            ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+
+            BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
+            ImageState->SetState(Required);
+        }
+        return;
+    }
+
+    const uint32 MipCount = ImageState->GetSubresourceMipCount();
+    const uint32 ArrayCount = ImageState->GetSubresourceArrayCount();
+    const bool bIsCube = IsTextureCube(VulkanTexture->GetDimension());
+    const uint32 CubeArrayCount = bIsCube ? (ArrayCount / RHI_NUM_CUBE_FACES) : ArrayCount;
+
+    auto TransitionSubresource = [&](uint32 MipLevel, uint32 ArraySlice)
+    {
+        CHECK(MipLevel < MipCount);
+        CHECK(ArraySlice < ArrayCount);
+
+        const FVulkanImageLayoutState::FImageState& BeforeState = ImageState->GetSubresourceState(MipLevel, ArraySlice);
+        if (IsSameState(BeforeState, Required))
+        {
+            return;
+        }
+
+        VkImageMemoryBarrier2 ImageBarrier = {};
+        ImageBarrier.sType                       = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+        ImageBarrier.newLayout                   = Required.Layout;
+        ImageBarrier.oldLayout                   = BeforeState.Layout;
+        ImageBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.image                       = VulkanTexture->GetVkImage();
+        ImageBarrier.srcAccessMask               = BeforeState.Access;
+        ImageBarrier.dstAccessMask               = Required.Access;
+        ImageBarrier.srcStageMask                = BeforeState.Stage;
+        ImageBarrier.dstStageMask                = Required.Stage;
+        ImageBarrier.subresourceRange.aspectMask = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
+        ImageBarrier.subresourceRange.baseMipLevel = MipLevel;
+        ImageBarrier.subresourceRange.levelCount   = 1;
+        ImageBarrier.subresourceRange.baseArrayLayer = ArraySlice;
+        ImageBarrier.subresourceRange.layerCount     = 1;
+
+        BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
+        ImageState->UpdateSubresourceState(Required, MipLevel, ArraySlice);
+    };
+
+    auto TransitionArraySlice = [&](uint32 MipLevel, uint32 ArraySlice)
+    {
+        if (bIsCube)
+        {
+            const uint32 BaseArrayLayer = ArraySlice * RHI_NUM_CUBE_FACES;
+            for (uint32 Face = 0; Face < RHI_NUM_CUBE_FACES; ++Face)
+            {
+                TransitionSubresource(MipLevel, BaseArrayLayer + Face);
+            }
+        }
+        else
+        {
+            TransitionSubresource(MipLevel, ArraySlice);
+        }
+    };
+
+    if (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS && RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES)
+    {
+        for (uint32 ArraySlice = 0; ArraySlice < ArrayCount; ++ArraySlice)
+        {
+            for (uint32 MipLevel = 0; MipLevel < MipCount; ++MipLevel)
+            {
+                TransitionSubresource(MipLevel, ArraySlice);
+            }
+        }
+        ImageState->SetState(Required);
+        return;
+    }
+
+    if (RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES)
+    {
+        CHECK(RequiredState.MipLevel < MipCount);
+        for (uint32 ArraySlice = 0; ArraySlice < ArrayCount; ++ArraySlice)
+        {
+            TransitionSubresource(RequiredState.MipLevel, ArraySlice);
+        }
+        return;
+    }
+
+    if (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)
+    {
+        CHECK(RequiredState.ArraySlice < CubeArrayCount);
+        for (uint32 MipLevel = 0; MipLevel < MipCount; ++MipLevel)
+        {
+            TransitionArraySlice(MipLevel, RequiredState.ArraySlice);
+        }
+        return;
+    }
+
+    CHECK(RequiredState.ArraySlice < CubeArrayCount);
+    TransitionArraySlice(RequiredState.MipLevel, RequiredState.ArraySlice);
+}
+
+void FVulkanCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
+{
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
+    CHECK(VulkanBuffer != nullptr);
+
+    FVulkanBufferState* BufferState = VulkanBuffer->GetBufferState();
+    CHECK(BufferState && BufferState->IsEnabled());
+
+    FVulkanBufferState::FBufferState Required;
+    Required.Access = ConvertResourceStateToAccessFlags(RequiredState);
+    Required.Stage  = ConvertResourceStateToPipelineStageFlags(RequiredState);
+
+    const FVulkanBufferState::FBufferState& BeforeState = BufferState->GetState();
+    if (BeforeState.Access == Required.Access && BeforeState.Stage == Required.Stage)
+    {
+        return;
+    }
+
+    VkBufferMemoryBarrier2 BufferBarrier = {};
+    BufferBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+    BufferBarrier.srcAccessMask       = BeforeState.Access;
+    BufferBarrier.dstAccessMask       = Required.Access;
+    BufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    BufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    BufferBarrier.srcStageMask        = BeforeState.Stage;
+    BufferBarrier.dstStageMask        = Required.Stage;
+    BufferBarrier.buffer              = VulkanBuffer->GetVkBuffer();
+    BufferBarrier.offset              = 0;
+    BufferBarrier.size                = VK_WHOLE_SIZE;
+
+    CHECK(!IsInsideRenderPass());
+    BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
+    BufferState->SetState(Required);
+}
+
+void FVulkanCommandContext::EnableResourceStateTracking(FRHITexture* Texture, EResourceAccess InitialState)
+{
+    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
+    CHECK(VulkanTexture != nullptr);
+    VulkanTexture->EnableResourceStateTracking(InitialState);
+}
+
+void FVulkanCommandContext::DisableResourceStateTracking(FRHITexture* Texture, EResourceAccess TargetState)
+{
+    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
+    CHECK(VulkanTexture != nullptr);
+
+    FVulkanImageLayoutState* ImageState = VulkanTexture->GetImageLayoutState();
+    if (!ImageState || !ImageState->IsEnabled())
+    {
+        return;
+    }
+
+    RequireTextureState(Texture, FRHIRequiredTextureState::Make(TargetState));
+    VulkanTexture->DisableResourceStateTracking();
+}
+
+void FVulkanCommandContext::EnableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess InitialState)
+{
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
+    CHECK(VulkanBuffer != nullptr);
+    VulkanBuffer->EnableResourceStateTracking(InitialState);
+}
+
+void FVulkanCommandContext::DisableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess TargetState)
+{
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
+    CHECK(VulkanBuffer != nullptr);
+
+    FVulkanBufferState* BufferState = VulkanBuffer->GetBufferState();
+    if (!BufferState || !BufferState->IsEnabled())
+    {
+        return;
+    }
+
+    RequireBufferState(Buffer, TargetState);
+    VulkanBuffer->DisableResourceStateTracking();
 }
 
 void FVulkanCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)

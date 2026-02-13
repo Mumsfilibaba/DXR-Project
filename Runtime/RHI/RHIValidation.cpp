@@ -1280,6 +1280,96 @@ void FRHIValidationCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourc
     RealContext->TransitionBuffer(Buffer, BeforeState, AfterState);
 }
 
+void FRHIValidationCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
+{
+    if (!Texture)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireTextureState when Texture is nullptr");
+        return;
+    }
+
+    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireTextureState when inside a render-pass");
+        return;
+    }
+
+    RealContext->RequireTextureState(Texture, RequiredState);
+}
+
+void FRHIValidationCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
+{
+    if (!Buffer)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireBufferState when Buffer is nullptr");
+        return;
+    }
+
+    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireBufferState when inside a render-pass");
+        return;
+    }
+
+    RealContext->RequireBufferState(Buffer, RequiredState);
+}
+
+void FRHIValidationCommandContext::EnableResourceStateTracking(FRHITexture* Texture, EResourceAccess InitialState)
+{
+    if (!Texture)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call EnableResourceStateTracking when Texture is nullptr");
+        return;
+    }
+
+    RealContext->EnableResourceStateTracking(Texture, InitialState);
+}
+
+void FRHIValidationCommandContext::DisableResourceStateTracking(FRHITexture* Texture, EResourceAccess TargetState)
+{
+    if (!Texture)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call DisableResourceStateTracking when Texture is nullptr");
+        return;
+    }
+
+    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call DisableResourceStateTracking when inside a render-pass");
+        return;
+    }
+
+    RealContext->DisableResourceStateTracking(Texture, TargetState);
+}
+
+void FRHIValidationCommandContext::EnableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess InitialState)
+{
+    if (!Buffer)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call EnableResourceStateTracking when Buffer is nullptr");
+        return;
+    }
+
+    RealContext->EnableResourceStateTracking(Buffer, InitialState);
+}
+
+void FRHIValidationCommandContext::DisableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess TargetState)
+{
+    if (!Buffer)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call DisableResourceStateTracking when Buffer is nullptr");
+        return;
+    }
+
+    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call DisableResourceStateTracking when inside a render-pass");
+        return;
+    }
+
+    RealContext->DisableResourceStateTracking(Buffer, TargetState);
+}
+
 void FRHIValidationCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     if (!Texture)

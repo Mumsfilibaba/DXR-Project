@@ -63,7 +63,7 @@ bool FMetalRHI::Initialize()
 
 FRHITexture* FMetalRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    FMetalTextureRef NewTexture = new FMetalTexture(GetDeviceContext(), InTextureInfo);
+    FMetalTextureRef NewTexture = new FMetalTexture(GetDeviceContext(), InTextureInfo, InInitialState);
     if (!NewTexture->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -76,7 +76,7 @@ FRHITexture* FMetalRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERes
 
 FRHIBuffer* FMetalRHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    FMetalBufferRef NewBuffer = new FMetalBuffer(GetDeviceContext(), InBufferInfo);
+    FMetalBufferRef NewBuffer = new FMetalBuffer(GetDeviceContext(), InBufferInfo, InInitialState);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
     {
         return nullptr;

@@ -1,6 +1,8 @@
 #pragma once
 #include "RHI/RHIResources.h"
+#include "Core/Containers/UniquePtr.h"
 #include "D3D12RHI/D3D12Resource.h"
+#include "D3D12RHI/D3D12ResourceState.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 
 class FD3D12SwapChain;
@@ -15,7 +17,7 @@ public:
     static FD3D12Texture* Cast(FRHITexture* Texture);
 
 public:
-    FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
+    FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
     virtual ~FD3D12Texture();
 
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
@@ -44,6 +46,14 @@ public:
         return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; 
     }
 
+    FD3D12ResourceState* GetResourceState() const
+    {
+        return ResourceState.Get();
+    }
+
+    void EnableResourceStateTracking(EResourceAccess InitialState);
+    void DisableResourceStateTracking();
+
     void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView)
     { 
         ShaderResourceView = InShaderResourceView; 
@@ -59,14 +69,15 @@ public:
         Resource = InResource; 
         RenderTargetViews.Clear();
         DepthStencilViews.Clear();
-		RenderTargetViewMap.Clear();
-		DepthStencilViewMap.Clear();
+        RenderTargetViewMap.Clear();
+        DepthStencilViewMap.Clear();
     }
 
 protected:
-    FD3D12ResourceRef            Resource;
-    FD3D12ShaderResourceViewRef  ShaderResourceView;
-    FD3D12UnorderedAccessViewRef UnorderedAccessView;
+    FD3D12ResourceRef               Resource;
+    FD3D12ShaderResourceViewRef     ShaderResourceView;
+    FD3D12UnorderedAccessViewRef    UnorderedAccessView;
+    TUniquePtr<FD3D12ResourceState> ResourceState;
 
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
@@ -77,7 +88,7 @@ protected:
 class FD3D12BackBufferTexture : public FD3D12Texture
 {
 public:
-    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
+    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
     virtual ~FD3D12BackBufferTexture();
 
     // FRHITexture Interface
@@ -88,6 +99,7 @@ public:
     }
 
     void Resize(uint32 InWidth, uint32 InHeight);
+
     FD3D12Texture* GetCurrentBackBufferTexture() const;
 
     FD3D12SwapChain* GetSwapChain() const
