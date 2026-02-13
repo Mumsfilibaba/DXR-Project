@@ -6,7 +6,7 @@
 
 class FD3D12CommandContext;
 
-class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild
+class FD3D12Buffer : public FRHIBuffer, public FD3D12BaseResource
 {
 public:
     static FORCEINLINE FD3D12Buffer* Cast(FRHIBuffer* Buffer)
@@ -21,13 +21,13 @@ public:
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
     // FRHIBuffer Interface 
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); } 
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(ResourceStorage.GetResource()); } 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); } 
     virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final; 
     virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final; 
     virtual void SetDebugName(const FString& InName) override final; 
     virtual FString GetDebugName() const override final; 
- 
+
     void SetResource(FD3D12Resource* InResource); 
     
     FD3D12ConstantBufferView* GetConstantBufferView() const
@@ -35,14 +35,8 @@ public:
         return ConstantBufferView.Get();
     }
 
-    FD3D12Resource* GetResource() const 
-    {
-        return Resource.Get();
-    }
-
 private:
-    bool CreateCBV();
+    bool CreateConstantBufferView();
 
-    FD3D12ResourceRef           Resource;
     FD3D12ConstantBufferViewRef ConstantBufferView;
 };

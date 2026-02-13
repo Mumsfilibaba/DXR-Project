@@ -6,8 +6,8 @@
 
 FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
-    , ResultBuffer(nullptr)
-    , ScratchBuffer(nullptr)
+    , ResultResourceStorage()
+    , ScratchResourceStorage()
 {
 }
 
@@ -54,76 +54,68 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
-    uint64 CurrentSize = ResultBuffer ? ResultBuffer->GetWidth() : 0;
+    uint64 CurrentSize = ResultResourceStorage.GetSize();
     if (CurrentSize < PreBuildInfo.ResultDataMaxSizeInBytes)
     {
-        D3D12_RESOURCE_DESC Desc = {};
-        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format             = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width              = PreBuildInfo.ResultDataMaxSizeInBytes;
-        Desc.Height             = 1;
-        Desc.DepthOrArraySize   = 1;
-        Desc.MipLevels          = 1;
-        Desc.Alignment          = 0;
-        Desc.SampleDesc.Count   = 1;
-        Desc.SampleDesc.Quality = 0;
-
-        FD3D12ResourceRef Buffer = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
-        if (!Buffer->Initialize(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
+        FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
+        if (!Allocator)
         {
-            DEBUG_BREAK();
             return false;
         }
-        else
+
+        FD3D12ResourceAllocationRequest Request{};
+        Request.Size = PreBuildInfo.ResultDataMaxSizeInBytes;
+        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+        Request.ResourceType = ED3D12ResourceType::Buffer;
+        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+        Request.InitialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Request.FencePoint = {0, CmdContext.GetQueueType()};
+
+        if (!Allocator->TryAllocate(Request, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
         {
-            ResultBuffer = Buffer;
+            return false;
         }
     }
 
     const uint64 RequiredSize = Math::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
-    CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
+    CurrentSize = ScratchResourceStorage.GetSize();
     if (CurrentSize < RequiredSize)
     {
-        D3D12_RESOURCE_DESC Desc = {};
-        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format             = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width              = RequiredSize;
-        Desc.Height             = 1;
-        Desc.DepthOrArraySize   = 1;
-        Desc.MipLevels          = 1;
-        Desc.Alignment          = 0;
-        Desc.SampleDesc.Count   = 1;
-        Desc.SampleDesc.Quality = 0;
-
-        FD3D12ResourceRef Buffer = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
-        if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
+        FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
+        if (!Allocator)
         {
-            DEBUG_BREAK();
             return false;
         }
-        else
+
+        FD3D12ResourceAllocationRequest Request{};
+        Request.Size = RequiredSize;
+        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+        Request.ResourceType = ED3D12ResourceType::Buffer;
+        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+        Request.InitialState = D3D12_RESOURCE_STATE_COMMON;
+        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Request.FencePoint = {0, CmdContext.GetQueueType()};
+
+        if (!Allocator->TryAllocate(Request, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
         {
-            ScratchBuffer = Buffer;
+            return false;
         }
 
-        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
     AccelerationStructureDesc.Inputs                           = Inputs;
-    AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
-    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
+    AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGpuVirtualAddress();
+    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGpuVirtualAddress();
 
     CmdContext.GetResourceBarrierBatcher().FlushBarriers();
 
     FD3D12CommandList& CommandList = CmdContext.GetCommandList();
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
-    CmdContext.GetResourceBarrierBatcher().AddUnorderedAccessBarrier(ResultBuffer.Get());
+    CmdContext.GetResourceBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
     return true;
 }
 
@@ -177,37 +169,33 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
-    uint64 CurrentSize = ResultBuffer ? ResultBuffer->GetWidth() : 0;
+    uint64 CurrentSize = ResultResourceStorage.GetSize();
     if (CurrentSize < PreBuildInfo.ResultDataMaxSizeInBytes)
     {
-        D3D12_RESOURCE_DESC Desc = {};
-        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format             = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width              = PreBuildInfo.ResultDataMaxSizeInBytes;
-        Desc.Height             = 1;
-        Desc.DepthOrArraySize   = 1;
-        Desc.MipLevels          = 1;
-        Desc.Alignment          = 0;
-        Desc.SampleDesc.Count   = 1;
-        Desc.SampleDesc.Quality = 0;
-
-        FD3D12ResourceRef Buffer = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
-        if (!Buffer->Initialize(D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr))
+        FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
+        if (!Allocator)
         {
-            DEBUG_BREAK();
             return false;
         }
-        else
+
+        FD3D12ResourceAllocationRequest Request{};
+        Request.Size = PreBuildInfo.ResultDataMaxSizeInBytes;
+        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+        Request.ResourceType = ED3D12ResourceType::Buffer;
+        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+        Request.InitialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
+        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Request.FencePoint = {0, CmdContext.GetQueueType()};
+
+        if (!Allocator->TryAllocate(Request, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
         {
-            ResultBuffer = Buffer;
+            return false;
         }
 
         D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = {};
         SrvDesc.ViewDimension                            = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        SrvDesc.RaytracingAccelerationStructure.Location = ResultBuffer->GetGPUVirtualAddress();
+        SrvDesc.RaytracingAccelerationStructure.Location = ResultResourceStorage.GetGpuVirtualAddress();
 
         View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
         if (!View->AllocateHandle())
@@ -222,34 +210,30 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     }
 
     const uint64 RequiredSize = Math::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
-    CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
+    CurrentSize = ScratchResourceStorage.GetSize();
     if (CurrentSize < RequiredSize)
     {
-        D3D12_RESOURCE_DESC Desc = {};
-        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-        Desc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Desc.Format             = DXGI_FORMAT_UNKNOWN;
-        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        Desc.Width              = RequiredSize;
-        Desc.Height             = 1;
-        Desc.DepthOrArraySize   = 1;
-        Desc.MipLevels          = 1;
-        Desc.Alignment          = 0;
-        Desc.SampleDesc.Count   = 1;
-        Desc.SampleDesc.Quality = 0;
-
-        FD3D12ResourceRef Buffer = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
-        if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
+        FD3D12BufferAllocator* Allocator = GetDevice()->GetBufferAllocator();
+        if (!Allocator)
         {
-            DEBUG_BREAK();
             return false;
         }
-        else
+
+        FD3D12ResourceAllocationRequest Request{};
+        Request.Size = RequiredSize;
+        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
+        Request.ResourceType = ED3D12ResourceType::Buffer;
+        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+        Request.InitialState = D3D12_RESOURCE_STATE_COMMON;
+        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        Request.FencePoint = {0, CmdContext.GetQueueType()};
+
+        if (!Allocator->TryAllocate(Request, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
         {
-            ScratchBuffer = Buffer;
+            return false;
         }
 
-        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
     TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(BuildInfo.NumInstances);
@@ -281,8 +265,8 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        FD3D12ResourceRef Buffer = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
-        if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
+        FD3D12ResourceRef Buffer;
+        if (!GetDevice()->CreateCommittedResource(Desc, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, nullptr, Buffer))
         {
             DEBUG_BREAK();
             return false;
@@ -302,13 +286,13 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
     AccelerationStructureDesc.Inputs                           = Inputs;
     AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
-    AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
-    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
+    AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGpuVirtualAddress();
+    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGpuVirtualAddress();
 
     if (BuildInfo.bUpdate)
     {
         CHECK((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
-        AccelerationStructureDesc.SourceAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
+        AccelerationStructureDesc.SourceAccelerationStructureData = ResultResourceStorage.GetGpuVirtualAddress();
     }
 
     CmdContext.GetResourceBarrierBatcher().FlushBarriers();
@@ -316,7 +300,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     FD3D12CommandList& CommandList = CmdContext.GetCommandList();
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
-    CmdContext.GetResourceBarrierBatcher().AddUnorderedAccessBarrier(ResultBuffer.Get());
+    CmdContext.GetResourceBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
 
     Instances.Reset(BuildInfo.Instances, BuildInfo.NumInstances);
     return true;
@@ -394,8 +378,8 @@ bool FD3D12RayTracingScene::BuildBindingTable(
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
-        FD3D12ResourceRef Buffer = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
-        if (!Buffer->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
+        FD3D12ResourceRef Buffer;
+        if (!GetDevice()->CreateCommittedResource(Desc, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, nullptr, Buffer))
         {
             DEBUG_BREAK();
             return false;

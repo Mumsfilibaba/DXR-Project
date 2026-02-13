@@ -1,8 +1,8 @@
 #pragma once
+#include "Core/Threading/Atomic/AtomicBool.h"
+#include "RHI/RHIFence.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12RefCounted.h"
-#include "RHI/RHIFence.h"
-#include "Core/Threading/Atomic/AtomicBool.h"
 
 typedef TSharedRef<class FD3D12Fence>    FD3D12FenceRef;
 typedef TSharedRef<class FD3D12GpuFence> FD3D12GpuFenceRef;

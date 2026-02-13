@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "RHI/RHIRayTracing.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
+#include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 
@@ -56,22 +57,22 @@ public:
 
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
-        return ResultBuffer->GetGPUVirtualAddress();
+        return ResultResourceStorage.GetGpuVirtualAddress();
     }
 
     FD3D12Resource* GetResource() const
     {
-        return ResultBuffer.Get();
+        return ResultResourceStorage.GetResource();
     }
 
     FD3D12Resource* GetScratchBuffer() const
     {
-        return ScratchBuffer.Get();
+        return ScratchResourceStorage.GetResource();
     }
 
 protected:
-    FD3D12ResourceRef ResultBuffer;
-    FD3D12ResourceRef ScratchBuffer;
+    FD3D12ResourceStorage ResultResourceStorage;
+    FD3D12ResourceStorage ScratchResourceStorage;
 };
 
 class FD3D12RayTracingGeometry : public FRHIRayTracingGeometry, public FD3D12AccelerationStructure

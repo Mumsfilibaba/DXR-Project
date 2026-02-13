@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Query.h"
@@ -27,6 +28,7 @@ FD3D12Query::FD3D12Query(FD3D12Device* InDevice, EQueryType InQueryType)
 FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager* InQueryHeapManager)
     : FD3D12DeviceChild(InDevice)
     , ReadResource(nullptr)
+    , ReadbackResourceStorage()
     , QueryHeap(nullptr)
     , QueryAllocations()
     , QueryHeapType()
@@ -34,6 +36,11 @@ FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager*
     , NumQueries(0)
     , QueryHeapManager(InQueryHeapManager)
 {
+}
+
+FD3D12QueryHeap::~FD3D12QueryHeap()
+{
+    ReadbackResourceStorage.ReleaseResource();
 }
 
 bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
@@ -64,15 +71,25 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    FD3D12ResourceRef NewResource = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);
-    if (!NewResource->Initialize(D3D12_RESOURCE_STATE_COPY_DEST, nullptr))
+    FD3D12ResourceAllocationRequest Request{};
+    Request.Size = Desc.Width;
+    Request.Alignment = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
+    Request.ResourceType = ED3D12ResourceType::Buffer;
+    Request.HeapType = D3D12_HEAP_TYPE_READBACK;
+    Request.InitialState = D3D12_RESOURCE_STATE_COPY_DEST;
+    Request.ResourceFlags = D3D12_RESOURCE_FLAG_NONE;
+    Request.bHasResourceDesc = true;
+    Request.ResourceDesc = Desc;
+    Request.bPersistent = true;
+
+    if (!GetDevice()->GetBufferAllocator()->TryAllocate(Request, ReadbackResourceStorage) || ReadbackResourceStorage.GetResource() == nullptr)
     {
         D3D12_ERROR_CRITICAL("Failed to create Query Readback resource");
         return false;
     }
 
     QueryHeap     = NewQueryHeap;
-    ReadResource  = NewResource;
+    ReadResource  = ReadbackResourceStorage.GetResource();
     QueryHeapType = InQueryHeapType;
     NumQueries    = QueryHeapDesc.Count;
 

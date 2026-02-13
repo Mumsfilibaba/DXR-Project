@@ -53,7 +53,7 @@ class FD3D12QueryHeap : public FD3D12DeviceChild
 {
 public:
     FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager* InQueryHeapManager);
-    ~FD3D12QueryHeap() = default;
+    ~FD3D12QueryHeap();
 
     bool Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType);
     FD3D12QueryAllocation AllocateQueries(uint64* Results);
@@ -83,6 +83,7 @@ public:
     
 private:
     FD3D12ResourceRef             ReadResource;
+    FD3D12ResourceStorage         ReadbackResourceStorage;
     TComPtr<ID3D12QueryHeap>      QueryHeap;
     FD3D12QueryHeapManager*       QueryHeapManager;
     TArray<FD3D12QueryAllocation> QueryAllocations;

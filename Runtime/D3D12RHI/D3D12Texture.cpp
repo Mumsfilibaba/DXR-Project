@@ -1,4 +1,5 @@
 #include "D3D12RHI/D3D12Texture.h"
+#include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12RHI.h"
 
@@ -25,8 +26,7 @@ FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
 
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
-    , FD3D12DeviceChild(InDevice)
-    , Resource(nullptr)
+    , FD3D12BaseResource(InDevice)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
     , RenderTargetViews()
@@ -100,14 +100,20 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         }
     }
 
-    FD3D12ResourceRef NewResource = new FD3D12Resource(GetDevice(), ResourceDesc, D3D12_HEAP_TYPE_DEFAULT);
-    if (!NewResource->Initialize(D3D12_RESOURCE_STATE_COMMON, bSupportClearValue ? &ClearValue : nullptr))
+    FD3D12ResourceAllocationRequest Request{};
+    Request.Size             = 0;
+    Request.Alignment        = 0;
+    Request.ResourceType     = ED3D12ResourceType::Texture;
+    Request.HeapType         = D3D12_HEAP_TYPE_DEFAULT;
+    Request.InitialState     = D3D12_RESOURCE_STATE_COMMON;
+    Request.ResourceFlags    = ResourceDesc.Flags;
+    Request.ClearValue       = bSupportClearValue ? &ClearValue : nullptr;
+    Request.bHasResourceDesc = true;
+    Request.ResourceDesc     = ResourceDesc;
+
+    if (!GetDevice()->GetTextureAllocator()->TryAllocate(Request, ResourceStorage) || ResourceStorage.GetResource() == nullptr)
     {
         return false;
-    }
-    else
-    {
-        Resource = NewResource;
     }
 
     {
@@ -212,8 +218,9 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
         // Transfer all mip levels
-        uint32 Width = Info.Extent.X;
+        uint32 Width  = Info.Extent.X;
         uint32 Height = Info.Extent.Y;
+
         for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
         {
             // TODO: This does not feel optimal
@@ -232,7 +239,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
             FTextureRegion2D TextureRegion(Width, Height);
             InCommandContext->UpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
 
-			Width = Math::Max(1u, Width >> 1);
+			Width  = Math::Max(1u, Width >> 1);
 			Height = Math::Max(1u, Height >> 1);
         }
 
@@ -262,7 +269,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_NONE)
     {
-        D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", *Resource->GetDebugName());
+        D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", *ResourceStorage.GetResource()->GetDebugName());
         return nullptr;
     }
 
@@ -399,7 +406,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_NONE)
     {
-        D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", *Resource->GetDebugName());
+        D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", *ResourceStorage.GetResource()->GetDebugName());
         return nullptr;
     }
 
@@ -533,17 +540,17 @@ void FD3D12Texture::DestroyDepthStencilViews()
 
 void FD3D12Texture::SetDebugName(const FString& InName)
 {
-    if (Resource)
+    if (ResourceStorage.GetResource())
     {
-        Resource->SetDebugName(InName);
+        ResourceStorage.GetResource()->SetDebugName(InName);
     }
 }
 
 FString FD3D12Texture::GetDebugName() const
 {
-    if (Resource)
+    if (ResourceStorage.GetResource())
     {
-        return Resource->GetDebugName();
+        return ResourceStorage.GetResource()->GetDebugName();
     }
 
     return "";

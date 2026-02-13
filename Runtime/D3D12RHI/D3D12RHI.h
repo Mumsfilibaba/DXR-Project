@@ -34,8 +34,8 @@ public:
     bool Initialize();
 
     // FRHI Interface
-    virtual void BeginFrame() override final { }
-    virtual void EndFrame() override final { }
+    virtual void BeginFrame() override final;
+    virtual void EndFrame() override final;
 
     virtual FRHITexture* CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final;

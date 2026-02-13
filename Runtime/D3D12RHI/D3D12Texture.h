@@ -9,7 +9,7 @@ class FD3D12CommandContext;
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
-class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild
+class FD3D12Texture : public FRHITexture, public FD3D12BaseResource
 {
 public:
     static FD3D12Texture* Cast(FRHITexture* Texture);
@@ -21,7 +21,7 @@ public:
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetResource()); }
+    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(ResourceStorage.GetResource()); }
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
@@ -34,14 +34,9 @@ public:
     void DestroyRenderTargetViews();
     void DestroyDepthStencilViews();
 
-    FD3D12Resource* GetResource() const 
-    { 
-        return Resource.Get(); 
-    }
-
     DXGI_FORMAT GetDXGIFormat() const 
     { 
-        return Resource ? Resource->GetDesc().Format : DXGI_FORMAT_UNKNOWN; 
+        return ResourceStorage.GetResource() ? ResourceStorage.GetResource()->GetDesc().Format : DXGI_FORMAT_UNKNOWN; 
     }
 
     void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView)
@@ -56,7 +51,14 @@ public:
     
     void SetResource(FD3D12Resource* InResource) 
     { 
-        Resource = InResource; 
+        ResourceStorage.ReleaseResource();
+        
+        if (InResource)
+        {
+            FD3D12ResourceRef ResourceRef = InResource;
+            ResourceStorage.SetResource(ResourceRef);
+        }
+
         RenderTargetViews.Clear();
         DepthStencilViews.Clear();
 		RenderTargetViewMap.Clear();
@@ -64,12 +66,11 @@ public:
     }
 
 protected:
-    FD3D12ResourceRef            Resource;
-    FD3D12ShaderResourceViewRef  ShaderResourceView;
-    FD3D12UnorderedAccessViewRef UnorderedAccessView;
-
+    FD3D12ShaderResourceViewRef       ShaderResourceView;
+    FD3D12UnorderedAccessViewRef      UnorderedAccessView;
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
+
     TMap<FD3D12HashableTextureView, FD3D12RenderTargetViewRef> RenderTargetViewMap;
     TMap<FD3D12HashableTextureView, FD3D12DepthStencilViewRef> DepthStencilViewMap;
 };

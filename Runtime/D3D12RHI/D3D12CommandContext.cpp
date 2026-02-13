@@ -392,18 +392,26 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     }
     else
     {
-        FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(BufferRegion.Size, 1);
-        if (!Allocation.Resource || !Allocation.Memory)
+        FD3D12ResourceAllocationRequest Request{};
+        Request.Size                  = BufferRegion.Size;
+        Request.Alignment             = 1;
+        Request.ResourceType          = ED3D12ResourceType::Buffer;
+        Request.HeapType              = D3D12_HEAP_TYPE_UPLOAD;
+        Request.InitialState          = D3D12_RESOURCE_STATE_GENERIC_READ;
+        Request.ResourceFlags         = D3D12_RESOURCE_FLAG_NONE;
+        Request.FencePoint.QueueType  = GetQueueType();
+        Request.FencePoint.FenceValue = GetDevice()->GetQueue(GetQueueType())->GetFenceManager().GetCurrentValue() + 1;
+
+        FD3D12ResourceStorage ResourceStorage;
+        if (!GetDevice()->GetStagingBufferAllocator()->TryAllocate(Request, ResourceStorage) || ResourceStorage.GetResource() == nullptr || ResourceStorage.GetMappedBaseAddress() == nullptr)
         {
             D3D12_ERROR_CRITICAL("Upload allocation failed");
             return;
         }
 
-        FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
+        FMemory::Memcpy(ResourceStorage.GetMappedBaseAddress(), SrcData, BufferRegion.Size);
 
-        GetCommandList()->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource.Get(), Allocation.ResourceOffset, BufferRegion.Size);
-
-        FD3D12RHI::Get()->DeferDeletion(Allocation.Resource.Get());
+        GetCommandList()->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, ResourceStorage.GetResource()->GetD3D12Resource(), ResourceStorage.GetResourceOffset(), BufferRegion.Size);
     }
 }
 
@@ -798,23 +806,38 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     const uint64 Alignment   = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
     const uint64 AlignedSize = Math::AlignUp<uint64>(RequiredSize, Alignment);
 
-    FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(AlignedSize, Alignment);
-    CHECK(Allocation.Memory   != nullptr);
-    CHECK(Allocation.Resource != nullptr);
+    FD3D12ResourceAllocationRequest Request{};
+    Request.Size                  = AlignedSize;
+    Request.Alignment             = Alignment;
+    Request.ResourceType          = ED3D12ResourceType::Buffer;
+    Request.HeapType              = D3D12_HEAP_TYPE_UPLOAD;
+    Request.InitialState          = D3D12_RESOURCE_STATE_GENERIC_READ;
+    Request.ResourceFlags         = D3D12_RESOURCE_FLAG_NONE;
+    Request.FencePoint.QueueType  = GetQueueType();
+    Request.FencePoint.FenceValue = GetDevice()->GetQueue(GetQueueType())->GetFenceManager().GetCurrentValue() + 1;
 
+    FD3D12ResourceStorage ResourceStorage;
+    if (!GetDevice()->GetStagingBufferAllocator()->TryAllocate(Request, ResourceStorage) || ResourceStorage.GetMappedBaseAddress() == nullptr || ResourceStorage.GetResource() == nullptr)
+    {
+        D3D12_ERROR_CRITICAL("Upload allocation failed");
+        return;
+    }
+
+    uint8* WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
+    
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     for (uint64 y = 0; y < NumRows; y++)
     {
-        FMemory::Memcpy(Allocation.Memory, Source, SrcRowPitch);
-        Allocation.Memory += PlacedSubresourceFootprint.Footprint.RowPitch;
-        Source            += SrcRowPitch;
+        FMemory::Memcpy(WritePtr, Source, SrcRowPitch);
+        WritePtr += PlacedSubresourceFootprint.Footprint.RowPitch;
+        Source   += SrcRowPitch;
     }
 
     // Copy to Dest
     D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
-    SourceLocation.pResource                          = Allocation.Resource.Get();
+    SourceLocation.pResource                          = ResourceStorage.GetResource()->GetD3D12Resource();
     SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-    SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
+    SourceLocation.PlacedFootprint.Offset             = ResourceStorage.GetResourceOffset();
     SourceLocation.PlacedFootprint.Footprint.Format   = Desc.Format;
     SourceLocation.PlacedFootprint.Footprint.Width    = TextureRegion.Width;
     SourceLocation.PlacedFootprint.Footprint.Height   = TextureRegion.Height;
@@ -832,7 +855,6 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
 
     GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
 
-    FD3D12RHI::Get()->DeferDeletion(Allocation.Resource.Get());
 }
 
 void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo)

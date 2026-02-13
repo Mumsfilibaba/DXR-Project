@@ -16,6 +16,7 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Loader.h"
+#include "D3D12RHI/D3D12ResidencyManager.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D12RHIModule, D3D12RHI);
 
@@ -152,6 +153,32 @@ bool FD3D12RHI::Initialize()
     }
 
     return true;
+}
+
+void FD3D12RHI::BeginFrame()
+{
+    if (!Device)
+    {
+        return;
+    }
+
+    if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
+    {
+        ResidencyManager->Tick();
+    }
+}
+
+void FD3D12RHI::EndFrame()
+{
+    if (!Device)
+    {
+        return;
+    }
+
+    if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
+    {
+        ResidencyManager->EvictIfNeeded(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
+    }
 }
 
 bool FD3D12RHI::InitializeDeviceFeatureSupport()

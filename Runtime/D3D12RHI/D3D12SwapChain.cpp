@@ -257,7 +257,10 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
             return false;
         }
 
-        BackBuffers[Index]->SetResource(new FD3D12Resource(GetDevice(), BackBufferResource));
+        FD3D12ResourceRef WrappedResource = new FD3D12Resource(GetDevice(), BackBufferResource);
+        WrappedResource->DisableDeferDeletion();
+        WrappedResource->InitializeFromNative(D3D12_RESOURCE_STATE_PRESENT);
+        BackBuffers[Index]->SetResource(WrappedResource.Get());
         BackBuffers[Index]->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
 
