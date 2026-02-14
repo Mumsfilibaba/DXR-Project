@@ -17,7 +17,7 @@ public:
     static FD3D12Texture* Cast(FRHITexture* Texture);
 
 public:
-    FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
+    FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12Texture();
 
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
@@ -28,8 +28,12 @@ public:
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
+
+    void EnableStateTracking(EResourceAccess InitialState);
+    void DisableStateTracking(FD3D12CommandContext* CommandContext = nullptr);
 
     FD3D12RenderTargetView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
     FD3D12DepthStencilView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
@@ -51,9 +55,6 @@ public:
         return ResourceState.Get();
     }
 
-    void EnableResourceStateTracking(EResourceAccess InitialState);
-    void DisableResourceStateTracking();
-
     void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView)
     { 
         ShaderResourceView = InShaderResourceView; 
@@ -74,11 +75,10 @@ public:
     }
 
 protected:
-    FD3D12ResourceRef               Resource;
-    FD3D12ShaderResourceViewRef     ShaderResourceView;
-    FD3D12UnorderedAccessViewRef    UnorderedAccessView;
-    TUniquePtr<FD3D12ResourceState> ResourceState;
-
+    FD3D12ResourceRef                 Resource;
+    FD3D12ShaderResourceViewRef       ShaderResourceView;
+    FD3D12UnorderedAccessViewRef      UnorderedAccessView;
+    TUniquePtr<FD3D12ResourceState>   ResourceState;
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
     TMap<FD3D12HashableTextureView, FD3D12RenderTargetViewRef> RenderTargetViewMap;
@@ -88,15 +88,11 @@ protected:
 class FD3D12BackBufferTexture : public FD3D12Texture
 {
 public:
-    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
+    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12BackBufferTexture();
 
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override final
-    {
-        FD3D12Texture* CurrentBackBuffer = GetCurrentBackBufferTexture();
-        return CurrentBackBuffer ? reinterpret_cast<void*>(CurrentBackBuffer->GetResource()) : nullptr;
-    }
+    virtual void* GetRHINativeHandle() const override final;
 
     void Resize(uint32 InWidth, uint32 InHeight);
 

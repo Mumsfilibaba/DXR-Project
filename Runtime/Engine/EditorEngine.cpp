@@ -194,6 +194,7 @@ bool FEditorEngine::CreateViewportRenderTarget()
 
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(RenderSettings::GetBackBufferFormat(), Size.X, Size.Y, 1, 1, UsageFlags);
+    TextureInfo.bEnableResourceStateTracking = true;
 
     FRHITextureRef NewViewportImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::RenderTarget);
     if (NewViewportImage)

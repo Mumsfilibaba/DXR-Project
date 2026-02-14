@@ -13,7 +13,7 @@ FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBu
     , RequiredAlignment(0)
     , DebugName()
 {
-    EnableResourceStateTracking(InInitialState);
+    (void)InInitialState;
 }
 
 FVulkanBuffer::~FVulkanBuffer()
@@ -215,21 +215,25 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
     return Mapped + Offset;
 }
 
-void FVulkanBuffer::EnableResourceStateTracking(EResourceAccess InitialState)
+void FVulkanBuffer::EnableStateTracking(EResourceAccess InitialState)
+{
+    const VkAccessFlags2 Access = ConvertResourceStateToAccessFlags(InitialState);
+    const VkPipelineStageFlags2 Stage = ConvertResourceStateToPipelineStageFlags(InitialState);
+    BufferState = MakeUniquePtr<FVulkanBufferState>(Access, Stage);
+}
+
+void FVulkanBuffer::DisableStateTracking(FVulkanCommandContext* CommandContext)
 {
     if (!BufferState)
     {
-        BufferState = MakeUniquePtr<FVulkanBufferState>();
+        return;
     }
 
-    FVulkanBufferState::FBufferState State;
-    State.Access = ConvertResourceStateToAccessFlags(InitialState);
-    State.Stage  = ConvertResourceStateToPipelineStageFlags(InitialState);
-    BufferState->Enable(State);
-}
+    if (CommandContext)
+    {
+        CommandContext->RequireBufferState(this, EResourceAccess::Common);
+    }
 
-void FVulkanBuffer::DisableResourceStateTracking()
-{
     BufferState.Reset();
 }
 

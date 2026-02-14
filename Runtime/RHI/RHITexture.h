@@ -132,14 +132,14 @@ struct FRHITextureInfo
 
     bool operator==(const FRHITextureInfo& Other) const noexcept = default;
 
-    ETextureDimension  Dimension      = ETextureDimension::None;
-    EFormat            Format         = EFormat::Unknown;
-    ETextureUsageFlags UsageFlags     = ETextureUsageFlags::None;
-    uint32             NumArraySlices = 0;
-    uint32             NumMipLevels   = 0;
-    uint32             NumSamples     = 0;
-    FIntVector3        Extent         = { };
-    FClearValue        ClearValue     = { };
+    ETextureDimension  Dimension                    = ETextureDimension::None;
+    EFormat            Format                       = EFormat::Unknown;
+    ETextureUsageFlags UsageFlags                   = ETextureUsageFlags::None;
+    uint32             NumArraySlices               = 0;
+    uint32             NumMipLevels                 = 0;
+    uint32             NumSamples                   = 0;
+    FIntVector3        Extent                       = { };
+    FClearValue        ClearValue                   = { };
     bool               bEnableResourceStateTracking = true;
 };
 
@@ -156,7 +156,6 @@ public:
     
     // Returns the native handle for this resource
     virtual void* GetRHINativeHandle() const { return nullptr; }
-
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
@@ -209,22 +208,12 @@ public:
     {
         return Info.NumArraySlices;
     }
-
-    uint32 GetTrackingArraySlices() const
-    {
-        return IsTextureCube(Info.Dimension) ? (Info.NumArraySlices * RHI_NUM_CUBE_FACES) : Info.NumArraySlices;
-    }
     
     uint32 GetNumMipLevels() const
     {
         return Info.NumMipLevels;
     }
-
-    uint32 GetTrackingSubresourceCount() const
-    {
-        return GetNumMipLevels() * GetTrackingArraySlices();
-    }
-    
+   
     uint32 GetNumSamples() const
     {
         return Info.NumSamples;

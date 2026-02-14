@@ -62,8 +62,7 @@ private:
 
     struct FRenderedImGuiTexture
     {
-        FRHITexture*   Texture       = nullptr;
-        EResourceAccess PreviousState = EResourceAccess::Common;
+        FRHITexture* Texture = nullptr;
     };
 
     TArray<FRenderedImGuiTexture> RenderedTextures;

@@ -83,11 +83,11 @@ StructuredBuffer<FCascadeSplit>    CascadeSplitBuffer  : register(t1);
 struct FVSInput
 {
     float3 Position : POSITION0;
-    float3 Normal   : NORMAL0;
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
 // For vertex-shader instancing
 #if ENABLE_CASCADE_VS_INSTANCING
     uint InstanceID : SV_InstanceID;
@@ -99,12 +99,14 @@ struct FVSCascadeOutput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
 // For geometry-shader instancing we output the worldposition to GS otherwise we want to output final position directly
 #if ENABLE_CASCADE_GS_INSTANCING
     float4 WorldPosition : POSITION0;
 #else
     float4 Position : SV_Position;
 #endif
+
 // For vertex-shader instancing, we write directly what layer we want to write to
 #if ENABLE_CASCADE_VS_INSTANCING
     uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;

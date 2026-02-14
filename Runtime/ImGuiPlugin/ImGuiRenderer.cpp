@@ -252,25 +252,25 @@ bool FImGuiRenderer::UpdateFontAtlas()
         FontAtlas.Reset();
     }
 
-	// Build texture atlas
-	uint8* Pixels = nullptr;
-	int32  Width  = 0;
-	int32  Height = 0;
+    // Build texture atlas
+    uint8* Pixels = nullptr;
+    int32  Width  = 0;
+    int32  Height = 0;
 
-	// Ensure the default font is in the atlas
+    // Ensure the default font is in the atlas
     ImGuiIO& State = ImGui::GetIO();
-	State.Fonts->Build();
-	State.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
+    State.Fonts->Build();
+    State.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-	FontAtlas = FTextureFactory::Get().LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
-	if (!FontAtlas)
-	{
-		return false;
-	}
-	else
-	{
-		FontAtlas->SetDebugName("ImGui FontTexture");
-	}
+    FontAtlas = FTextureFactory::Get().LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
+    if (!FontAtlas)
+    {
+        return false;
+    }
+    else
+    {
+        FontAtlas->SetDebugName("ImGui FontTexture");
+    }
 
     // TODO: We need to uncomment below, but this requires changes to the renderer loop so keep avoiding this for now. 
     // State.Fonts->SetTexID((ImTextureID)FontAtlas.Get());
@@ -473,7 +473,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                         CommandList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                     }
 
-                    CommandList.SetShaderResourceView(PShader.Get(), DrawableTexture->View.Get(), 0);
+                    CommandList.SetShaderResourceView(PShader.Get(), DrawableTexture->ShaderResourceView.Get(), 0);
                 }
                 else
                 {
@@ -575,56 +575,54 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
 
 void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData)
 {
-	for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
-	{
-		const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
-		for (int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; ++CmdIndex)
-		{
-			const ImDrawCmd* DrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
-			if (const ImTextureID TextureID = DrawCommand->GetTexID())
-			{
-				const FImGuiTexture* DrawableTexture = reinterpret_cast<const FImGuiTexture*>(TextureID);
-				PrepareTextureForShaderResourceUsage(CommandList, DrawableTexture);
-			}
-		}
-	}
+    for (int32 i = 0; i < DrawData->CmdListsCount; ++i)
+    {
+        const ImDrawList* DrawCmdList = DrawData->CmdLists[i];
+        for (int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; ++CmdIndex)
+        {
+            const ImDrawCmd* DrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
+            if (const ImTextureID TextureID = DrawCommand->GetTexID())
+            {
+                const FImGuiTexture* DrawableTexture = reinterpret_cast<const FImGuiTexture*>(TextureID);
+                PrepareTextureForShaderResourceUsage(CommandList, DrawableTexture);
+            }
+        }
+    }
 }
 
 void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture)
 {
-	if (!InTexture)
-	{
-		return;
-	}
+    if (!InTexture)
+    {
+        return;
+    }
 
-	// A texture can be used multiple times with ImGui, and we only want to perform a transition once
-	for (const FImGuiTexture* CurrentTexture : RenderedTextures)
-	{
-		if (CurrentTexture->Texture == InTexture->Texture)
-		{
-			return;
-		}
-	}
+    // A texture can be used multiple times with ImGui, and we only want to perform a transition once
+    FRHITexture* Texture = InTexture->GetTexture();
+    if (!Texture)
+    {
+        return;
+    }
 
-	if (InTexture->ResourceState != EResourceAccess::PixelShaderResource)
-	{
-		CommandList.TransitionTexture(InTexture->Texture.Get(), FRHITextureTransition::Make(InTexture->ResourceState, EResourceAccess::PixelShaderResource));
-	}
+    for (const FRenderedImGuiTexture& CurrentTexture : RenderedTextures)
+    {
+        if (CurrentTexture.Texture == Texture)
+        {
+            return;
+        }
+    }
 
-	RenderedTextures.Emplace(InTexture);
+    CommandList.RequireTextureState(Texture, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+
+    FRenderedImGuiTexture NewEntry;
+    NewEntry.Texture = Texture;
+    RenderedTextures.Emplace(NewEntry);
 }
 
 void FImGuiRenderer::ResetTexturesShaderResourceUsage(FRHICommandList& CommandList)
 {
-	for (const FImGuiTexture* CurrentTexture : RenderedTextures)
-	{
-		if (CurrentTexture->ResourceState != EResourceAccess::PixelShaderResource)
-		{
-			CommandList.TransitionTexture(CurrentTexture->Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, CurrentTexture->ResourceState));
-		}
-	}
-
-	RenderedTextures.Clear();
+    (void)CommandList;
+    RenderedTextures.Clear();
 }
 
 void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)

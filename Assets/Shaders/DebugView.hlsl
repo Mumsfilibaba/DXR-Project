@@ -36,8 +36,8 @@ SHADER_CONSTANT_BLOCK_END
 
 float3 VisualizeDepth(float Depth)
 {
-    float ViewZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
-    float Depth01 = saturate(ViewZ / max(CameraBuffer.FarPlane, 0.0001));
+    float LinearDepth = DepthToLinear(CameraBuffer.NearPlane, CameraBuffer.FarPlane, Depth);
+    float Depth01 = saturate((LinearDepth - CameraBuffer.NearPlane) / max(CameraBuffer.FarPlane - CameraBuffer.NearPlane, 0.0001));
     return (1.0 - Depth01).xxx;
 }
 
@@ -79,9 +79,28 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     }
     else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADES)
     {
-        const float2 QuadUV = frac(TexCoord * 2.0);
-        const uint X = (TexCoord.x >= 0.5) ? 1 : 0;
-        const uint Y = (TexCoord.y >= 0.5) ? 1 : 0;
+        const float Aspect = CameraBuffer.ViewportWidth / max(CameraBuffer.ViewportHeight, 1.0);
+        float2 SquareUV = TexCoord;
+        if (Aspect > 1.0)
+        {
+            const float Scale = 1.0 / Aspect;
+            SquareUV.x = (SquareUV.x - 0.5) * Scale + 0.5;
+        }
+        else if (Aspect < 1.0)
+        {
+            const float Scale = Aspect;
+            SquareUV.y = (SquareUV.y - 0.5) * Scale + 0.5;
+        }
+
+        // Outside the square area -> black
+        if (any(SquareUV < 0.0) || any(SquareUV > 1.0))
+        {
+            return float4(0.0, 0.0, 0.0, 1.0);
+        }
+
+        const float2 QuadUV = frac(SquareUV * 2.0);
+        const uint X = (SquareUV.x >= 0.5) ? 1 : 0;
+        const uint Y = (SquareUV.y >= 0.5) ? 1 : 0;
         const uint CascadeIndex = Y * 2 + X;
 
         const float Depth = ShadowCascades.SampleLevel(PointSampler, float3(QuadUV, CascadeIndex), 0).r;

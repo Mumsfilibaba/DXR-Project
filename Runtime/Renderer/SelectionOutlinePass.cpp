@@ -84,6 +84,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     const FClearValue ClearValue(EFormat::R8_Unorm, 0.0f, 0.0f, 0.0f, 1.0f);
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Unorm, Width, Height, 1, 1, Usage, ClearValue);
+    TextureInfo.bEnableResourceStateTracking = true;
 
     SelectionMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
     if (!SelectionMask)
@@ -142,6 +143,7 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
     BufferInfo.Stride = sizeof(uint32);
     BufferInfo.Size   = uint64(BufferInfo.Stride) * MaxSelectedIDs;
     BufferInfo.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::Default;
+    BufferInfo.bEnableResourceStateTracking = true;
 
     SelectedIDsBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::PixelShaderResource, nullptr);
     if (!SelectedIDsBuffer)

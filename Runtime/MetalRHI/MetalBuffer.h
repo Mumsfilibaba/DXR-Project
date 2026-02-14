@@ -10,22 +10,18 @@ typedef TSharedRef<class FMetalBuffer> FMetalBufferRef;
 class FMetalBuffer : public FRHIBuffer, public FMetalDeviceChild
 {
 public:
-    FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState = EResourceAccess::Common);
+    FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferInfo& InBufferInfo);
     ~FMetalBuffer();
 
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
 
-public:
-
     // FRHIBuffer Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-    
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }    
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
-    
-public:
+
     FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
     { 
         return Buffer; 

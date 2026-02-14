@@ -1241,7 +1241,7 @@ void FVulkanCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITe
     const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
     const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
     FVulkanImageLayoutState* ImageState = VulkanTexture->GetImageLayoutState();
-    const bool bTrackState = ImageState && ImageState->IsEnabled();
+    const bool bTrackState = ImageState != nullptr;
 
     if (NewLayout != PreviousLayout)
     {
@@ -1396,13 +1396,9 @@ void FVulkanCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess
 
     if (FVulkanBufferState* BufferState = VulkanBuffer->GetBufferState())
     {
-        if (BufferState->IsEnabled())
-        {
-            FVulkanBufferState::FBufferState NewState;
-            NewState.Access = ConvertResourceStateToAccessFlags(AfterState);
-            NewState.Stage  = ConvertResourceStateToPipelineStageFlags(AfterState);
-            BufferState->SetState(NewState);
-        }
+        const VkAccessFlags2 Access = ConvertResourceStateToAccessFlags(AfterState);
+        const VkPipelineStageFlags2 Stage = ConvertResourceStateToPipelineStageFlags(AfterState);
+        BufferState->SetState(Access, Stage);
     }
 }
 
@@ -1412,7 +1408,7 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
     CHECK(VulkanTexture != nullptr);
 
     FVulkanImageLayoutState* ImageState = VulkanTexture->GetImageLayoutState();
-    CHECK(ImageState && ImageState->IsEnabled());
+    CHECK(ImageState);
 
     FVulkanImageLayoutState::FImageState Required;
     Required.Layout = ConvertResourceStateToImageLayout(RequiredState.RequiredState);
@@ -1550,77 +1546,77 @@ void FVulkanCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAcce
     CHECK(VulkanBuffer != nullptr);
 
     FVulkanBufferState* BufferState = VulkanBuffer->GetBufferState();
-    CHECK(BufferState && BufferState->IsEnabled());
+    CHECK(BufferState);
 
-    FVulkanBufferState::FBufferState Required;
-    Required.Access = ConvertResourceStateToAccessFlags(RequiredState);
-    Required.Stage  = ConvertResourceStateToPipelineStageFlags(RequiredState);
+    const VkAccessFlags2 RequiredAccess = ConvertResourceStateToAccessFlags(RequiredState);
+    const VkPipelineStageFlags2 RequiredStage = ConvertResourceStateToPipelineStageFlags(RequiredState);
 
-    const FVulkanBufferState::FBufferState& BeforeState = BufferState->GetState();
-    if (BeforeState.Access == Required.Access && BeforeState.Stage == Required.Stage)
+    const VkAccessFlags2 BeforeAccess = BufferState->GetAccess();
+    const VkPipelineStageFlags2 BeforeStage = BufferState->GetStage();
+    if (BeforeAccess == RequiredAccess && BeforeStage == RequiredStage)
     {
         return;
     }
 
     VkBufferMemoryBarrier2 BufferBarrier = {};
     BufferBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
-    BufferBarrier.srcAccessMask       = BeforeState.Access;
-    BufferBarrier.dstAccessMask       = Required.Access;
+    BufferBarrier.srcAccessMask       = BeforeAccess;
+    BufferBarrier.dstAccessMask       = RequiredAccess;
     BufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     BufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    BufferBarrier.srcStageMask        = BeforeState.Stage;
-    BufferBarrier.dstStageMask        = Required.Stage;
+    BufferBarrier.srcStageMask        = BeforeStage;
+    BufferBarrier.dstStageMask        = RequiredStage;
     BufferBarrier.buffer              = VulkanBuffer->GetVkBuffer();
     BufferBarrier.offset              = 0;
     BufferBarrier.size                = VK_WHOLE_SIZE;
 
     CHECK(!IsInsideRenderPass());
     BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
-    BufferState->SetState(Required);
+    BufferState->SetState(RequiredAccess, RequiredStage);
 }
 
 void FVulkanCommandContext::EnableResourceStateTracking(FRHITexture* Texture, EResourceAccess InitialState)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
     CHECK(VulkanTexture != nullptr);
-    VulkanTexture->EnableResourceStateTracking(InitialState);
+    VulkanTexture->EnableStateTracking(InitialState);
 }
 
 void FVulkanCommandContext::DisableResourceStateTracking(FRHITexture* Texture, EResourceAccess TargetState)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
     CHECK(VulkanTexture != nullptr);
+    (void)TargetState;
 
     FVulkanImageLayoutState* ImageState = VulkanTexture->GetImageLayoutState();
-    if (!ImageState || !ImageState->IsEnabled())
+    if (!ImageState)
     {
         return;
     }
 
-    RequireTextureState(Texture, FRHIRequiredTextureState::Make(TargetState));
-    VulkanTexture->DisableResourceStateTracking();
+    VulkanTexture->DisableStateTracking(this);
 }
 
 void FVulkanCommandContext::EnableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess InitialState)
 {
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
     CHECK(VulkanBuffer != nullptr);
-    VulkanBuffer->EnableResourceStateTracking(InitialState);
+    VulkanBuffer->EnableStateTracking(InitialState);
 }
 
 void FVulkanCommandContext::DisableResourceStateTracking(FRHIBuffer* Buffer, EResourceAccess TargetState)
 {
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
     CHECK(VulkanBuffer != nullptr);
+    (void)TargetState;
 
     FVulkanBufferState* BufferState = VulkanBuffer->GetBufferState();
-    if (!BufferState || !BufferState->IsEnabled())
+    if (!BufferState)
     {
         return;
     }
 
-    RequireBufferState(Buffer, TargetState);
-    VulkanBuffer->DisableResourceStateTracking();
+    VulkanBuffer->DisableStateTracking(this);
 }
 
 void FVulkanCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)

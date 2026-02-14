@@ -27,7 +27,7 @@ public:
     static FVulkanTexture* Cast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
 
 public:
-    FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
+    FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanTexture();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
@@ -38,8 +38,12 @@ public:
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
+
+    void EnableStateTracking(EResourceAccess InitialState);
+    void DisableStateTracking(FVulkanCommandContext* CommandContext = nullptr);
 
     FVulkanResourceView* GetOrCreateImageView(const FVulkanHashableImageView& RenderTargetView);
     void DestroyImageViews();
@@ -65,9 +69,6 @@ public:
     {
         return ImageLayoutState.Get();
     }
-
-    void EnableResourceStateTracking(EResourceAccess InitialState);
-    void DisableResourceStateTracking();
     
     // TODO: Solve in a cleaner way and remove this function
     void Resize(uint32 InWidth, uint32 InHeight)
@@ -77,23 +78,21 @@ public:
     }
 
 protected:
-    FString                 DebugName;
-    VkImage                 Image;
-    FVulkanMemoryAllocation MemoryAllocation;
-    VkImageCreateInfo       CreateInfo;
-
-    FVulkanShaderResourceViewRef  ShaderResourceView;
-    FVulkanUnorderedAccessViewRef UnorderedAccessView;
+    VkImage                             Image;
+    FVulkanMemoryAllocation             MemoryAllocation;
+    VkImageCreateInfo                   CreateInfo;
+    FVulkanShaderResourceViewRef        ShaderResourceView;
+    FVulkanUnorderedAccessViewRef       UnorderedAccessView;
     TUniquePtr<FVulkanImageLayoutState> ImageLayoutState;
-
-    TArray<FVulkanResourceView*> ImageViews;
+    TArray<FVulkanResourceView*>        ImageViews;
+    FString                             DebugName;
     TMap<FVulkanHashableImageView, FVulkanResourceView*> ImageViewMap;
 };
 
 class FVulkanBackBufferTexture : public FVulkanTexture
 {
 public:
-    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
+    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanBackBufferTexture();
 
     void ResizeBackBuffer(int32 InWidth, int32 InHeight);

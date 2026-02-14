@@ -86,7 +86,7 @@ FVulkanTexture* FVulkanTexture::Cast(FVulkanCommandContext* InCommandContext, FR
     return VulkanTexture;
 }
 
-FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState)
+FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
     , FVulkanDeviceChild(InDevice)
     , DebugName()
@@ -98,10 +98,6 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& I
     , ImageViews()
     , ImageViewMap()
 {
-    if (InTextureInfo.bEnableResourceStateTracking)
-    {
-        EnableResourceStateTracking(InInitialState);
-    }
 }
 
 FVulkanTexture::~FVulkanTexture()
@@ -499,29 +495,43 @@ FString FVulkanTexture::GetDebugName() const
     return DebugName;
 }
 
-void FVulkanTexture::EnableResourceStateTracking(EResourceAccess InitialState)
+void FVulkanTexture::EnableStateTracking(EResourceAccess InitialState)
 {
     if (!ImageLayoutState)
     {
-        ImageLayoutState = MakeUniquePtr<FVulkanImageLayoutState>();
+        FVulkanImageLayoutState::FImageState State;
+        State.Layout = ConvertResourceStateToImageLayout(InitialState);
+        State.Access = ConvertResourceStateToAccessFlags(InitialState);
+        State.Stage  = ConvertResourceStateToPipelineStageFlags(InitialState);
+
+        uint32 ArrayCount = GetNumArraySlices();
+        if (IsTextureCube(GetDimension()))
+        {
+            ArrayCount *= RHI_NUM_CUBE_FACES;
+        }
+
+        ImageLayoutState = MakeUniquePtr<FVulkanImageLayoutState>(State, GetNumMipLevels(), ArrayCount);
     }
-
-    FVulkanImageLayoutState::FImageState State;
-    State.Layout = ConvertResourceStateToImageLayout(InitialState);
-    State.Access = ConvertResourceStateToAccessFlags(InitialState);
-    State.Stage  = ConvertResourceStateToPipelineStageFlags(InitialState);
-
-    ImageLayoutState->Enable(State, GetNumMipLevels(), GetTrackingArraySlices());
 }
 
-void FVulkanTexture::DisableResourceStateTracking()
+void FVulkanTexture::DisableStateTracking(FVulkanCommandContext* CommandContext)
 {
+    if (!ImageLayoutState)
+    {
+        return;
+    }
+
+    if (CommandContext)
+    {
+        CommandContext->RequireTextureState(this, FRHIRequiredTextureState::Make(EResourceAccess::Common));
+    }
+
     ImageLayoutState.Reset();
 }
 
 
-FVulkanBackBufferTexture::FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState)
-    : FVulkanTexture(InDevice, InTextureInfo, InInitialState)
+FVulkanBackBufferTexture::FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo)
+    : FVulkanTexture(InDevice, InTextureInfo)
     , SwapChain(InSwapChain)
 {
 }

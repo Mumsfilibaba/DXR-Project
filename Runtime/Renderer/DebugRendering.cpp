@@ -77,6 +77,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
     VBInfo.Stride = sizeof(FVertex);
     VBInfo.Size   = SphereMesh.Vertices.SizeInBytes();
     VBInfo.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+    VBInfo.bEnableResourceStateTracking = true;
 
     SphereVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::Common, SphereMesh.Vertices.Data());
 
@@ -98,6 +99,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
     IBInfo.Stride = sizeof(uint16);
     IBInfo.Size   = SphereMeshSmallIndicies.SizeInBytes();
     IBInfo.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+    IBInfo.bEnableResourceStateTracking = true;
 
     SphereIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::Common, SphereMeshSmallIndicies.Data());
     if (!SphereIndexBuffer)

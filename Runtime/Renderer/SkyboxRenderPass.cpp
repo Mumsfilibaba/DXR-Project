@@ -67,6 +67,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     VBInfo.Size   = SkyboxVertices.SizeInBytes();
     VBInfo.Stride = SkyboxVertices.Stride();
     VBInfo.Flags  = EBufferFlags::Default | EBufferFlags::VertexBuffer;
+    VBInfo.bEnableResourceStateTracking = true;
 
     SkyboxVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
@@ -83,6 +84,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     IBInfo.Stride = GetStrideFromIndexFormat(SkyboxIndexFormat);
     IBInfo.Size   = SkyboxIndexCount * IBInfo.Stride;
     IBInfo.Flags  = EBufferFlags::Default | EBufferFlags::IndexBuffer;
+    IBInfo.bEnableResourceStateTracking = true;
 
     SkyboxIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
         reinterpret_cast<void*>(SkyboxIndicies16.Data()) :

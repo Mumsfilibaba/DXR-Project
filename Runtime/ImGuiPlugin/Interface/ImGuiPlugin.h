@@ -17,25 +17,25 @@ struct FImGuiTexture
     FImGuiTexture() = default;
 
     FImGuiTexture(const FRHITextureRef& InImage)
-        : View(MakeSharedRef<FRHIShaderResourceView>(InImage ? InImage->GetShaderResourceView() : nullptr))
+        : ShaderResourceView(MakeSharedRef<FRHIShaderResourceView>(InImage ? InImage->GetShaderResourceView() : nullptr))
         , bEnableBlending(false)
         , bEnableLinearSampler(false)
     {
     }
 
     FImGuiTexture(const FRHIShaderResourceViewRef& InImageView)
-        : View(InImageView)
-		, bEnableBlending(false)
-		, bEnableLinearSampler(false)
+        : ShaderResourceView(InImageView)
+        , bEnableBlending(false)
+        , bEnableLinearSampler(false)
     {
     }
 
     FRHITexture* GetTexture() const
     {
-        return View ? static_cast<FRHITexture*>(View->GetResource()) : nullptr;
+        return ShaderResourceView ? static_cast<FRHITexture*>(ShaderResourceView->GetResource()) : nullptr;
     }
 
-    FRHIShaderResourceViewRef View = nullptr;
+    FRHIShaderResourceViewRef ShaderResourceView   = nullptr;
     bool                      bEnableBlending      = false;
     bool                      bEnableLinearSampler = false;
 };

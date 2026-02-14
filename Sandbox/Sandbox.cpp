@@ -19,8 +19,8 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_LIGHT_SANDBOX (1)
-#define LOAD_SPONZA (0)
+#define LOAD_LIGHT_SANDBOX (0)
+#define LOAD_SPONZA (1)
 #define LOAD_BISTRO (0)
 #define LOAD_SUN_TEMPLE (0)
 #define LOAD_EMERALD_SQUARE (0)

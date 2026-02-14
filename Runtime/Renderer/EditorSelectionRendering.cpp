@@ -206,6 +206,8 @@ bool FEditorNoJitterDepthPass::CreateResources(FFrameResources& FrameResources, 
     const FClearValue        DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
+    TextureInfo.bEnableResourceStateTracking = true;
+
     FrameResources.EditorNoJitterDepth = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
     if (!FrameResources.EditorNoJitterDepth)
     {
@@ -528,6 +530,8 @@ bool FEditorSelectionIDPass::CreateResources(FFrameResources& FrameResources, ui
     const FClearValue        ClearValue(FGlobalTextureFormats::ObjectIDFormat, 0.0f, 0.0f, 0.0f, 0.0f);
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ObjectIDFormat, Width, Height, 1, 1, Usage, ClearValue);
+    TextureInfo.bEnableResourceStateTracking = true;
+    
     FrameResources.EditorObjectID_NoJitter = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
     if (!FrameResources.EditorObjectID_NoJitter)
     {

@@ -234,7 +234,11 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
         BackBuffers.Resize(NumBackBuffers);
         for (FD3D12TextureRef& Texture : BackBuffers)
         {
-            Texture = new FD3D12Texture(GetDevice(), BackBufferInfo, EResourceAccess::Present);
+            Texture = new FD3D12Texture(GetDevice(), BackBufferInfo);
+            if (BackBufferInfo.bEnableResourceStateTracking)
+            {
+                Texture->EnableStateTracking(EResourceAccess::Present);
+            }
         }
     }
 
@@ -244,7 +248,11 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
     }
     else
     {
-        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo, EResourceAccess::Present);
+        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo);
+        if (BackBufferInfo.bEnableResourceStateTracking)
+        {
+            BackBufferProxy->EnableStateTracking(EResourceAccess::Present);
+        }
     }
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
@@ -259,9 +267,10 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
 
         BackBuffers[Index]->SetResource(new FD3D12Resource(GetDevice(), BackBufferResource));
         BackBuffers[Index]->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
-        if (FD3D12ResourceState* State = BackBuffers[Index]->GetResourceState())
+
+        if (FD3D12ResourceState* ResourceState = BackBuffers[Index]->GetResourceState())
         {
-            State->SetState(D3D12_RESOURCE_STATE_PRESENT, true);
+            ResourceState->SetState(D3D12_RESOURCE_STATE_PRESENT);
         }
     }
 
@@ -269,10 +278,11 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
 
     if (FD3D12Texture* CurrentBackbuffer = BackBufferProxy->GetCurrentBackBufferTexture())
     {
-        if (FD3D12ResourceState* State = BackBufferProxy->GetResourceState())
+        if (FD3D12ResourceState* ResourceState = BackBufferProxy->GetResourceState())
         {
-            State->SetState(D3D12_RESOURCE_STATE_PRESENT, true);
+            ResourceState->SetState(D3D12_RESOURCE_STATE_PRESENT);
         }
+
         return true;
     }
     else

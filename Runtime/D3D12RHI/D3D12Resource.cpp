@@ -7,10 +7,16 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , Resource(InNativeResource)
     , HeapType(D3D12_HEAP_TYPE_DEFAULT)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
-    , Desc(InNativeResource->GetDesc())
+    , Desc()
     , Address(0)
     , NumSubresources(0)
 {
+    if (InNativeResource)
+    {
+        Desc = InNativeResource->GetDesc();
+    }
+
+    CalculateSubresourceCount();
 }
 
 FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
@@ -41,10 +47,7 @@ bool FD3D12Resource::Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_
         }
 
         ResourceState = InitialState;
-        
-        // TODO: Fix proper plane-count
-        const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
-        NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
+        CalculateSubresourceCount();
         return true;
     }
     else if (Result == E_OUTOFMEMORY)
@@ -80,6 +83,14 @@ void FD3D12Resource::UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Rang
     Resource->Unmap(SubresourceIndex, Range);
 }
 
+void FD3D12Resource::CalculateSubresourceCount()
+{
+    // TODO: Fix proper plane-count
+    const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
+    NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
+    CHECK(NumSubresources != 0);
+}
+
 void FD3D12Resource::SetDebugName(const FString& Name)
 {
     if (Resource)
@@ -90,7 +101,7 @@ void FD3D12Resource::SetDebugName(const FString& Name)
             D3D12_ERROR("Failed to set resource name");
         }
 
-        // Calling SetName as well since NVIDIA Nsight does not recognize the name otherwise
+        // NOTE: Calling SetName as well since NVIDIA Nsight does not seem to recognize the name otherwise
         FStringWide WideName = CharToWide(Name);
         Result = Resource->SetName(*WideName);
         if (FAILED(Result))
@@ -105,6 +116,7 @@ FString FD3D12Resource::GetDebugName() const
     if (Resource)
     {
         UINT NameLength = 0;
+
         HRESULT Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
         if (Result == DXGI_ERROR_NOT_FOUND)
         {

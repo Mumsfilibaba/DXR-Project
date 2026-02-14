@@ -118,17 +118,17 @@ void FD3D12Queue::RecycleCommandList(FD3D12CommandList* InCommandList)
 
 FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandList(FD3D12CommandList* InCommandList, bool bWaitForCompletion)
 {
-	if (!InCommandList)
-	{
-		// Still return a sync point on the current fence value for symmetry.
-		const uint64 FenceValue = FenceManager.SignalGPU(QueueType);
-		if (bWaitForCompletion)
-		{
-			FenceManager.WaitForFence(FenceValue);
-		}
+    if (!InCommandList)
+    {
+        // Still return a sync point on the current fence value for symmetry.
+        const uint64 FenceValue = FenceManager.SignalGPU(QueueType);
+        if (bWaitForCompletion)
+        {
+            FenceManager.WaitForFence(FenceValue);
+        }
 
-		return FD3D12FenceSyncPoint(FenceManager.GetFence(), FenceValue);
-	}
+        return FD3D12FenceSyncPoint(FenceManager.GetFence(), FenceValue);
+    }
 
     ID3D12CommandList* CommandList = InCommandList->GetCommandList();
     CommandQueue->ExecuteCommandLists(1, &CommandList);
@@ -144,9 +144,9 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandList(FD3D12CommandList* InComman
 
 FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* InCommandLists, uint32 NumCommandLists, bool bWaitForCompletion)
 {
-	if (!InCommandLists || NumCommandLists == 0)
-	{
-	    // Still return a sync point on the current fence value for symmetry.
+    if (!InCommandLists || NumCommandLists == 0)
+    {
+        // Still return a sync point on the current fence value for symmetry.
         const uint64 FenceValue = FenceManager.SignalGPU(QueueType);
         if (bWaitForCompletion)
         {

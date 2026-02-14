@@ -49,12 +49,6 @@ static TAutoConsoleVariable<bool> CVarCSMEnableGeometryShaderInstancing(
     true,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarCSMEnableViewInstancing(
-    "Renderer.CSM.EnableViewInstancing",
-    "Enables view-instancing for cascade rendering, enabling single-pass cascade drawing, which creates less overhead on the CPU",
-    false,
-    EConsoleVariableFlags::Default);
-
 static TAutoConsoleVariable<bool> CVarCSMEnableDepthClipping(
     "Renderer.CSM.EnableDepthClipping",
     "Enables depth-clipping for cascade rendering.",
@@ -69,20 +63,80 @@ static TAutoConsoleVariable<int32> CVarCSMFilterMode(
 
 static TAutoConsoleVariable<int32> CVarCSMFilterFunction(
     "Renderer.CSM.FilterFunction",
-    "Select function to use to filer Cascaded Shadow Maps. 0: Grid 1: Poisson Disk 2: Vogel Disk",
+    "Select distribution to use when filtering Cascaded Shadow Maps. 0/1: Poisson Disk 2: Vogel Disk 3: Interleaved Gradient Noise",
     1,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<int32> CVarCSMFilterSize(
-    "Renderer.CSM.FilterSize",
-    "Size of the filter for the Cascaded Shadow Maps",
-    256,
+static TAutoConsoleVariable<bool> CVarCSMStableIGN(
+    "Renderer.CSM.IGN.StableBetweenFrames",
+    "When enabled, interleaved gradient noise is stable between frames (FrameIndex = 0)",
+    true,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<int32> CVarCSMMaxFilterSize(
-    "Renderer.CSM.MaxFilterSize",
-    "Maximum size of the filter for the Cascaded Shadow Maps",
-    512,
+static TAutoConsoleVariable<float> CVarCSMPCFFilterWorld(
+    "Renderer.CSM.PCF.FilterWorld",
+    "PCF filter size (world units)",
+    0.10f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCFMinFilterRadiusTexels(
+    "Renderer.CSM.PCF.MinFilterRadiusTexels",
+    "Minimum PCF filter radius (in texels, converted to world units)",
+    1.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSRadiusScale(
+    "Renderer.CSM.PCSS.RadiusScale",
+    "PCSS penumbra scale",
+    1.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSBlockerSearchScale(
+    "Renderer.CSM.PCSS.BlockerSearchScale",
+    "PCSS blocker search scale",
+    1.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSMinFilterRadiusTexels(
+    "Renderer.CSM.PCSS.MinFilterRadiusTexels",
+    "Minimum PCSS filter radius (in texels, converted to world units)",
+    1.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSBlockerSamplingClump(
+    "Renderer.CSM.PCSS.BlockerSamplingClump",
+    "PCSS blocker sampling clump",
+    0.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSMaxPenumbraWorld(
+    "Renderer.CSM.PCSS.MaxPenumbraWorld",
+    "Maximum PCSS penumbra size (world units, 0 disables)",
+    0.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSMaxSearchDistanceWorld(
+    "Renderer.CSM.PCSS.MaxSearchDistanceWorld",
+    "Maximum PCSS blocker search distance (world units, 0 disables)",
+    0.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSMinFilterMaxAngularDiameter(
+    "Renderer.CSM.PCSS.MinFilterMaxAngularDiameter",
+    "PCSS min filter clamp angular diameter (degrees, 0 disables)",
+    0.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSBlockerSearchAngularDiameter(
+    "Renderer.CSM.PCSS.BlockerSearchAngularDiameter",
+    "PCSS blocker search angular diameter (degrees, 0 uses light angular diameter)",
+    0.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<int32> CVarCSMPCSSNumBlockerSamples(
+    "Renderer.CSM.PCSS.NumBlockerSamples",
+    "Number of samples for PCSS blocker search",
+    32,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMNumPoissonDiscSamples(
@@ -337,6 +391,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
     PerShadowMapBufferInfo.Stride = sizeof(FPerShadowMapHLSL);
     PerShadowMapBufferInfo.Size   = sizeof(FPerShadowMapHLSL);
     PerShadowMapBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    PerShadowMapBufferInfo.bEnableResourceStateTracking = true;
 
     PerShadowMapBuffer = FRHI::Get()->CreateBuffer(PerShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
@@ -353,6 +408,7 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
     SinglePassShadowMapBufferInfo.Stride = sizeof(FSinglePassPointLightBufferHLSL);
     SinglePassShadowMapBufferInfo.Size   = sizeof(FSinglePassPointLightBufferHLSL);
     SinglePassShadowMapBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    SinglePassShadowMapBufferInfo.bEnableResourceStateTracking = true;
 
     SinglePassShadowMapBuffer = FRHI::Get()->CreateBuffer(SinglePassShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
     if (!SinglePassShadowMapBuffer)
@@ -374,8 +430,9 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(FGlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
+    PointLightInfo.bEnableResourceStateTracking = true;
+    
     Resources.PointLightShadowMaps = FRHI::Get()->CreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
-
     if (Resources.PointLightShadowMaps)
     {
         Resources.PointLightShadowMaps->SetDebugName("PointLight ShadowMaps");
@@ -729,6 +786,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     CascadeMatrixBufferInfo.Stride = sizeof(FCascadeMatricesHLSL);
     CascadeMatrixBufferInfo.Size   = CascadeMatrixBufferInfo.Stride * NUM_SHADOW_CASCADES;
     CascadeMatrixBufferInfo.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
+    CascadeMatrixBufferInfo.bEnableResourceStateTracking = true;
 
     Resources.CascadeMatrixBuffer = FRHI::Get()->CreateBuffer(CascadeMatrixBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeMatrixBuffer)
@@ -761,6 +819,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     CascadeSplitsBufferInfo.Stride = sizeof(FCascadeSplitHLSL);
     CascadeSplitsBufferInfo.Size   = CascadeSplitsBufferInfo.Stride * NUM_SHADOW_CASCADES;
     CascadeSplitsBufferInfo.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
+    CascadeSplitsBufferInfo.bEnableResourceStateTracking = true;
 
     Resources.CascadeSplitsBuffer = FRHI::Get()->CreateBuffer(CascadeSplitsBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeSplitsBuffer)
@@ -872,26 +931,19 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         {
             ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(1)");
             ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
         }
         else if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
         {
             ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(0)");
             ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(1)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
-        }
-        else if (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
-        {
-            ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(1)");
         }
         else
         {
             ShaderDefines.Emplace("ENABLE_CASCADE_VS_INSTANCING", "(0)");
             ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
         }
+
+        ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
 
         FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
@@ -1027,13 +1079,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         PSOInfo.VertexShader                   = NewPipelineStateInstance.VertexShader.Get();
         PSOInfo.PixelShader                    = NewPipelineStateInstance.PixelShader.Get();
 
-        if (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
-        {
-            PSOInfo.ViewInstancingState.StartRenderTargetArrayIndex = 0;
-            PSOInfo.ViewInstancingState.NumArraySlices              = NUM_SHADOW_CASCADES;
-            PSOInfo.ViewInstancingState.bEnableViewInstancing       = true;
-        }
-        else if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
+        if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
         {
             PSOInfo.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
@@ -1069,6 +1115,7 @@ bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
     PerCascadeBufferInfo.Stride = sizeof(FPerCascadeHLSL);
     PerCascadeBufferInfo.Size   = sizeof(FPerCascadeHLSL);
     PerCascadeBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    PerCascadeBufferInfo.bEnableResourceStateTracking = true;
 
     PerCascadeBuffer = FRHI::Get()->CreateBuffer(PerCascadeBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerCascadeBuffer)
@@ -1090,8 +1137,9 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
     FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(FGlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
+    CascadeInfo.bEnableResourceStateTracking = true;
+    
     Resources.ShadowCascades = FRHI::Get()->CreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
-
     if (Resources.ShadowCascades)
     {
         const FString DebugName = FString::CreateFormatted("Shadow Map Cascades");
@@ -1119,15 +1167,12 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
     return true;
 }
 
-void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
+void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
     const auto GetRenderMapRenderPassType = []() -> ECascadeRenderPassType
     {
-        constexpr uint32 MinViewInstanceCount = 4;
-
         const bool bUseVSInstancing   = RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader && CVarCSMEnableSinglePassRendering.GetValue();
         const bool bUseGSInstancing   = !bUseVSInstancing && RHIDeviceFeatureSupport::bSupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
-        const bool bUseViewInstancing = !bUseGSInstancing && RHIDeviceFeatureSupport::bSupportsViewInstancing && RHIDeviceFeatureSupport::MaxViewInstanceCount >= MinViewInstanceCount && CVarCSMEnableViewInstancing.GetValue();
 
         if (bUseVSInstancing)
         {
@@ -1136,10 +1181,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         else if (bUseGSInstancing)
         {
             return ECascadeRenderPassType::GeometryShaderSinglePass;
-        }
-        else if (bUseViewInstancing)
-        {
-            return ECascadeRenderPassType::ViewInstancingSinglePass;
         }
         else
         {
@@ -1166,10 +1207,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         {
             Execute<ECascadeRenderPassType::GeometryShaderSinglePass>(CommandList, Resources, Scene);
         }
-        else if (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
-        {
-            Execute<ECascadeRenderPassType::ViewInstancingSinglePass>(CommandList, Resources, Scene);
-        }
         else if (RenderPassType == ECascadeRenderPassType::MultiPass)
         {
             Execute<ECascadeRenderPassType::MultiPass>(CommandList, Resources, Scene);
@@ -1184,13 +1221,10 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 template<ECascadeRenderPassType RenderPassType>
 void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene)
 {
+    constexpr bool bIsSinglePass = RenderPassType == ECascadeRenderPassType::SinglePass || RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass;
+
     // PerObject Structs
     FShadowPerObjectHLSL ShadowPerObjectBuffer;
-
-    constexpr bool bIsSinglePass = 
-        RenderPassType == ECascadeRenderPassType::SinglePass ||
-        RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass ||
-        RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass;
 
     FSceneDirectionalLight* SceneDirectionalLight = Scene->DirectionalLight;
     if constexpr (bIsSinglePass)
@@ -1199,14 +1233,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowCascades.Get());
         RenderPass.DepthStencilView.ArrayIndex     = 0;
         RenderPass.DepthStencilView.NumArraySlices = NUM_SHADOW_CASCADES;
-
-        // Setup view-instancing
-        if constexpr (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
-        {
-            RenderPass.ViewInstancingState.StartRenderTargetArrayIndex = 0;
-            RenderPass.ViewInstancingState.NumArraySlices              = NUM_SHADOW_CASCADES;
-            RenderPass.ViewInstancingState.bEnableViewInstancing       = true;
-        }
 
         CommandList.BeginRenderPass(RenderPass);
 
@@ -1442,6 +1468,7 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
     SettingsBufferInfo.Stride = sizeof(FDirectionalShadowSettingsHLSL);
     SettingsBufferInfo.Size   = sizeof(FDirectionalShadowSettingsHLSL);
     SettingsBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    SettingsBufferInfo.bEnableResourceStateTracking = true;
 
     ShadowSettingsBuffer = FRHI::Get()->CreateBuffer(SettingsBufferInfo, EResourceAccess::ConstantBuffer);
     if (!ShadowSettingsBuffer)
@@ -1461,9 +1488,10 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
-    FRHITextureInfo ShadowMaskInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
-    Resources.DirectionalShadowMask = FRHI::Get()->CreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
+    FRHITextureInfo ShadowMaskInfo  = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
+    ShadowMaskInfo.bEnableResourceStateTracking = true;
 
+    Resources.DirectionalShadowMask = FRHI::Get()->CreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
     if (Resources.DirectionalShadowMask)
     {
         Resources.DirectionalShadowMask->SetDebugName("Directional Shadow Mask 0");
@@ -1474,8 +1502,9 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
     }
 
     FRHITextureInfo CascadeIndexBufferInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
-    Resources.CascadeIndexBuffer = FRHI::Get()->CreateTexture(CascadeIndexBufferInfo, EResourceAccess::NonPixelShaderResource);
+    CascadeIndexBufferInfo.bEnableResourceStateTracking = true;
 
+    Resources.CascadeIndexBuffer = FRHI::Get()->CreateTexture(CascadeIndexBufferInfo, EResourceAccess::NonPixelShaderResource);
     if (Resources.CascadeIndexBuffer)
     {
         Resources.CascadeIndexBuffer->SetDebugName("Cascade Index Debug Buffer");
@@ -1500,10 +1529,24 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     FDirectionalShadowSettingsHLSL ShadowSettings;
     FMemory::Memzero(&ShadowSettings);
 
-    ShadowSettings.FilterSize    = Math::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
-    ShadowSettings.MaxFilterSize = Math::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
+    ShadowSettings.PCFFilterWorld          = Math::Max<float>(CVarCSMPCFFilterWorld.GetValue(), 0.0f);
+    ShadowSettings.PCFMinFilterRadiusTexels = Math::Max<float>(CVarCSMPCFMinFilterRadiusTexels.GetValue(), 0.0f);
     ShadowSettings.ShadowMapSize = Resources.ShadowCascades->GetWidth();
-    ShadowSettings.FrameIndex    = GetRenderer()->GetFrameCounter().GetFrameIndex();
+    {
+        const uint32 FrameIndex = GetRenderer()->GetFrameCounter().GetFrameIndex();
+        const int32  RawFilterFunction = Math::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 3);
+        const bool   bStableIgn = (RawFilterFunction >= 3) && CVarCSMStableIGN.GetValue();
+        ShadowSettings.FrameIndex = bStableIgn ? 0u : FrameIndex;
+    }
+
+    ShadowSettings.PCSSRadiusScale                = Math::Max<float>(CVarCSMPCSSRadiusScale.GetValue(), 0.0f);
+    ShadowSettings.PCSSBlockerSearchScale         = Math::Max<float>(CVarCSMPCSSBlockerSearchScale.GetValue(), 0.0f);
+    ShadowSettings.PCSSMinFilterRadiusTexels      = Math::Max<float>(CVarCSMPCSSMinFilterRadiusTexels.GetValue(), 0.0f);
+    ShadowSettings.PCSSBlockerSamplingClump       = Math::Max<float>(CVarCSMPCSSBlockerSamplingClump.GetValue(), 0.0f);
+    ShadowSettings.PCSSMaxPenumbraWorld           = Math::Max<float>(CVarCSMPCSSMaxPenumbraWorld.GetValue(), 0.0f);
+    ShadowSettings.PCSSMaxSearchDistanceWorld     = Math::Max<float>(CVarCSMPCSSMaxSearchDistanceWorld.GetValue(), 0.0f);
+    ShadowSettings.PCSSMinFilterMaxAngularDiameter = Math::Max<float>(CVarCSMPCSSMinFilterMaxAngularDiameter.GetValue(), 0.0f);
+    ShadowSettings.PCSSBlockerSearchAngularDiameter = Math::Max<float>(CVarCSMPCSSBlockerSearchAngularDiameter.GetValue(), 0.0f);
 
     CommandList.TransitionBuffer(ShadowSettingsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(ShadowSettingsBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalShadowSettingsHLSL)), &ShadowSettings);
@@ -1577,32 +1620,32 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     FString DebugName = "ShadowMask PSO (";
 
     // Filter function
-    if (Combination.FilterFunction == ECSMFilterFunction::Grid)
+    if (Combination.FilterFunction == ECSMFilterFunction::PoissonDisk)
     {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "1");
-        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
-        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
-        DebugName += "Grid ";
-    }
-    else if (Combination.FilterFunction == ECSMFilterFunction::PoissonDisk)
-    {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
         Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "1");
         Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
+        Defines.Emplace("FILTER_FUNCTION_INTERLEAVED_GRADIENT_NOISE", "0");
         DebugName += "Poisson-Disk ";
     }
     else if (Combination.FilterFunction == ECSMFilterFunction::VogelDisk)
     {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
         Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
         Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "1");
+        Defines.Emplace("FILTER_FUNCTION_INTERLEAVED_GRADIENT_NOISE", "0");
         DebugName += "Vogel-Disk ";
+    }
+    else if (Combination.FilterFunction == ECSMFilterFunction::InterleavedGradientNoise)
+    {
+        Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
+        Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
+        Defines.Emplace("FILTER_FUNCTION_INTERLEAVED_GRADIENT_NOISE", "1");
+        DebugName += "IGN ";
     }
     else
     {
-        Defines.Emplace("FILTER_FUNCTION_GRID", "0");
         Defines.Emplace("FILTER_FUNCTION_POISSON_DISK", "0");
         Defines.Emplace("FILTER_FUNCTION_VOGEL_DISK", "0");
+        Defines.Emplace("FILTER_FUNCTION_INTERLEAVED_GRADIENT_NOISE", "0");
     }
 
     // Filter mode
@@ -1669,26 +1712,32 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     }
 
     // Number of samples
-    if (Combination.NumSamples <= 16)
+    auto QuantizePoissonSamples = [](uint32 Samples) -> uint32
     {
-        Defines.Emplace("NUM_SAMPLES", "16");
-        DebugName += " NumSamples=16";
-    }
-    else if (Combination.NumSamples <= 32)
+        if (Samples <= 16) { return 16; }
+        if (Samples <= 32) { return 32; }
+        if (Samples <= 64) { return 64; }
+        return 128;
+    };
+
+    uint32 NumSamples = Combination.NumSamples;
+    if (Combination.FilterFunction == ECSMFilterFunction::PoissonDisk)
     {
-        Defines.Emplace("NUM_SAMPLES", "32");
-        DebugName += " NumSamples=32";
+        NumSamples = QuantizePoissonSamples(NumSamples);
     }
-    else if (Combination.NumSamples <= 64)
+    else
     {
-        Defines.Emplace("NUM_SAMPLES", "64");
-        DebugName += " NumSamples=64";
+        NumSamples = Math::Clamp<uint32>(NumSamples, 1, 255);
     }
-    else if (Combination.NumSamples <= 128)
-    {
-        Defines.Emplace("NUM_SAMPLES", "128");
-        DebugName += " NumSamples=128";
-    }
+
+    const FString NumSamplesString = TTypeToString<int32>::ToString(static_cast<int32>(NumSamples));
+    Defines.Emplace("NUM_SAMPLES", NumSamplesString);
+    DebugName += " NumSamples=" + NumSamplesString;
+
+    const uint32 NumBlockerSamples = QuantizePoissonSamples(Combination.NumBlockerSamples);
+    const FString NumBlockerSamplesString = TTypeToString<int32>::ToString(static_cast<int32>(NumBlockerSamples));
+    Defines.Emplace("NUM_BLOCKER_SAMPLES", NumBlockerSamplesString);
+    DebugName += " BlockerSamples=" + NumBlockerSamplesString;
 
     DebugName += ")";
 
@@ -1729,11 +1778,28 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
 
 void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination)
 {
-    OutCombination.FilterMode                   = static_cast<ECSMFilterMode>(Math::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, 1));
-    OutCombination.FilterFunction               = static_cast<ECSMFilterFunction>(Math::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 2));
+    OutCombination.FilterMode = static_cast<ECSMFilterMode>(Math::Clamp<int32>(CVarCSMFilterMode.GetValue(), 0, 1));
+    
+    {
+        const int32 RawFilterFunction = Math::Clamp<int32>(CVarCSMFilterFunction.GetValue(), 0, 3);
+        if (RawFilterFunction <= 1)
+        {
+            OutCombination.FilterFunction = ECSMFilterFunction::PoissonDisk;
+        }
+        else if (RawFilterFunction == 2)
+        {
+            OutCombination.FilterFunction = ECSMFilterFunction::VogelDisk;
+        }
+        else
+        {
+            OutCombination.FilterFunction = ECSMFilterFunction::InterleavedGradientNoise;
+        }
+    }
+
     OutCombination.bDebugMode                   = CVarCSMDebugCascades.GetValue();
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
     OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
-    OutCombination.NumSamples                   = CVarCSMNumPoissonDiscSamples.GetValue();
+    OutCombination.NumSamples                   = Math::Clamp<uint32>(CVarCSMNumPoissonDiscSamples.GetValue(), 1, 255);
+    OutCombination.NumBlockerSamples            = Math::Clamp<uint32>(CVarCSMPCSSNumBlockerSamples.GetValue(), 1, 128);
 }

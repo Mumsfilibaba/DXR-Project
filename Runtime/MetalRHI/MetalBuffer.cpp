@@ -3,12 +3,11 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FMetalBuffer::FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState)
+FMetalBuffer::FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferInfo& InBufferInfo)
     : FRHIBuffer(InBufferInfo)
     , FMetalDeviceChild(DeviceContext)
     , Buffer(nil)
 {
-    (void)InInitialState;
 }
 
 FMetalBuffer::~FMetalBuffer()

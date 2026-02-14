@@ -26,7 +26,6 @@
 #include "Renderer/SelectionOutlinePass.h"
 #endif
 #include "Renderer/Scene/Scene.h"
-#include "Renderer/RendererUI/TextureDebugWidget.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
 #include "Renderer/RendererUI/GPUProfilerWidget.h"
 
@@ -152,16 +151,6 @@ public:
     void PresentSwapChain(FRHISwapChainRef SwapChain); 
 
     void ResizeResources(uint32 InWidth, uint32 InHeight);
-
-    void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image)
-    {
-        TextureDebugger->AddTextureForDebugging(ImageView, Image);
-    }
-
-    TSharedPtr<FTextureDebugWidget> GetTextureDebugger() const
-    {
-        return TextureDebugger;
-    }
 
     uint32 GetRenderWidth() const
     {
@@ -304,7 +293,6 @@ private:
 #endif
 
     // Widgets
-    TSharedPtr<FTextureDebugWidget> TextureDebugger;
     TSharedPtr<FRendererInfoWidget> InfoWindow;
     TSharedPtr<FGPUProfilerWidget>  GPUProfilerWindow;
 };

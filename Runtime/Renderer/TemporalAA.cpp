@@ -65,6 +65,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
 
     FRHISamplerStateInfo SamplerInfo = FRHISamplerStateInfo::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
     LinearSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+
     if (!LinearSampler)
     {
         DEBUG_BREAK();
@@ -109,12 +110,6 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 
     CommandList.TransitionTexture(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
 
-    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[0]->GetShaderResourceView()),
-        TAAHistoryBuffers[0], EResourceAccess::NonPixelShaderResource);
-
-    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[1]->GetShaderResourceView()),
-        TAAHistoryBuffers[1], EResourceAccess::NonPixelShaderResource);
-
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End TemporalAA");
 }
 
@@ -122,6 +117,7 @@ bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 
 {
     // TAA History-Buffer
     FRHITextureInfo TAABufferInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture);
+    TAABufferInfo.bEnableResourceStateTracking = true;
 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)

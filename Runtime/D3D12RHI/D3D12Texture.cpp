@@ -1,5 +1,6 @@
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12SwapChain.h"
+#include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12RHI.h"
 
 FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
@@ -23,7 +24,7 @@ FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
 	return nullptr;
 }
 
-FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState)
+FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
     , FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
@@ -32,10 +33,6 @@ FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTe
     , RenderTargetViews()
     , DepthStencilViews()
 {
-    if (InTextureInfo.bEnableResourceStateTracking)
-    {
-        EnableResourceStateTracking(InInitialState);
-    }
 }
 
 FD3D12Texture::~FD3D12Texture()
@@ -44,18 +41,37 @@ FD3D12Texture::~FD3D12Texture()
     DestroyRenderTargetViews();
 }
 
-void FD3D12Texture::EnableResourceStateTracking(EResourceAccess InitialState)
+void FD3D12Texture::EnableStateTracking(EResourceAccess InitialState)
 {
     if (!ResourceState)
     {
-        ResourceState = MakeUniquePtr<FD3D12ResourceState>();
-    }
+        const uint32 MipCount = GetNumMipLevels();
+        uint32 ArrayCount = 1;
+        if (!Info.IsTexture3D())
+        {
+            ArrayCount = GetNumArraySlices();
+            if (Info.IsTextureCube() || Info.IsTextureCubeArray())
+            {
+                ArrayCount *= RHI_NUM_CUBE_FACES;
+            }
+        }
 
-    ResourceState->Enable(ConvertResourceState(InitialState), GetNumMipLevels(), GetTrackingArraySlices());
+        ResourceState = MakeUniquePtr<FD3D12ResourceState>(ConvertResourceState(InitialState), MipCount, ArrayCount);
+    }
 }
 
-void FD3D12Texture::DisableResourceStateTracking()
+void FD3D12Texture::DisableStateTracking(FD3D12CommandContext* CommandContext)
 {
+    if (!ResourceState)
+    {
+        return;
+    }
+
+    if (CommandContext)
+    {
+        CommandContext->RequireTextureState(this, FRHIRequiredTextureState::Make(EResourceAccess::Common));
+    }
+
     ResourceState.Reset();
 }
 
@@ -568,8 +584,8 @@ FString FD3D12Texture::GetDebugName() const
     return "";
 }
 
-FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState)
-    : FD3D12Texture(InDevice, InTextureInfo, InInitialState)
+FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo)
+    : FD3D12Texture(InDevice, InTextureInfo)
     , SwapChain(InSwapChain)
 {
 }
@@ -577,6 +593,12 @@ FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12S
 FD3D12BackBufferTexture::~FD3D12BackBufferTexture()
 {
     SwapChain = nullptr;
+}
+
+void* FD3D12BackBufferTexture::GetRHINativeHandle() const
+{
+    FD3D12Texture* CurrentBackBuffer = GetCurrentBackBufferTexture();
+    return CurrentBackBuffer ? reinterpret_cast<void*>(CurrentBackBuffer->GetResource()) : nullptr;
 }
 
 void FD3D12BackBufferTexture::Resize(uint32 InWidth, uint32 InHeight)

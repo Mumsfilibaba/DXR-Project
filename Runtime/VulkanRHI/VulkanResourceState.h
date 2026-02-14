@@ -5,8 +5,6 @@
 class FVulkanImageLayoutState
 {
 public:
-    FVulkanImageLayoutState() = default;
-
     struct FImageState
     {
         VkImageLayout         Layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -14,14 +12,19 @@ public:
         VkPipelineStageFlags2 Stage  = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
     };
 
-    void Enable(const FImageState& InitialState, uint32 MipCount, uint32 ArrayCount)
+    FVulkanImageLayoutState()
+        : State()
+        , NumMipLevels(0)
+        , NumArraySlices(0)
     {
-        bEnabled = true;
-        State = InitialState;
-        SubresourceMipCount = MipCount;
-        SubresourceArrayCount = ArrayCount;
+    }
 
-        const uint32 SubresourceCount = MipCount * ArrayCount;
+    FVulkanImageLayoutState(const FImageState& InitialState, uint32 InNumMipLevels, uint32 InNumArraySlices)
+        : State(InitialState)
+        , NumMipLevels(InNumMipLevels)
+        , NumArraySlices(InNumArraySlices)
+    {
+        const uint32 SubresourceCount = InNumMipLevels * InNumArraySlices;
         if (SubresourceCount > 0)
         {
             SubresourceStates.Resize(SubresourceCount);
@@ -32,20 +35,15 @@ public:
         }
     }
 
-    void Disable()
+    const FImageState& GetState() const
     {
-        bEnabled = false;
-        SubresourceStates.Clear();
-        SubresourceMipCount = 0;
-        SubresourceArrayCount = 0;
+        return State;
     }
-
-    bool IsEnabled() const { return bEnabled; }
-    const FImageState& GetState() const { return State; }
 
     void SetState(const FImageState& NewState)
     {
         State = NewState;
+
         if (IsSubresourceTrackingEnabled())
         {
             const uint32 SubresourceCount = SubresourceStates.Size();
@@ -58,13 +56,13 @@ public:
 
     void UpdateSubresourceState(const FImageState& NewState, uint32 MipLevel, uint32 ArraySlice)
     {
-        if (!bEnabled || !IsSubresourceTrackingEnabled())
+        if (!IsSubresourceTrackingEnabled())
         {
             return;
         }
 
-        CHECK(MipLevel < SubresourceMipCount);
-        CHECK(ArraySlice < SubresourceArrayCount);
+        CHECK(MipLevel < NumMipLevels);
+        CHECK(ArraySlice < NumArraySlices);
 
         const uint32 Index = GetSubresourceIndex(MipLevel, ArraySlice);
         SubresourceStates[Index] = NewState;
@@ -72,8 +70,8 @@ public:
 
     const FImageState& GetSubresourceState(uint32 MipLevel, uint32 ArraySlice) const
     {
-        CHECK(MipLevel < SubresourceMipCount);
-        CHECK(ArraySlice < SubresourceArrayCount);
+        CHECK(MipLevel < NumMipLevels);
+        CHECK(ArraySlice < NumArraySlices);
 
         const uint32 Index = GetSubresourceIndex(MipLevel, ArraySlice);
         return SubresourceStates[Index];
@@ -81,57 +79,57 @@ public:
 
     bool IsSubresourceTrackingEnabled() const
     {
-        return bEnabled && SubresourceStates.Size() > 0;
+        return SubresourceStates.Size() > 0;
     }
 
-    uint32 GetSubresourceMipCount() const { return SubresourceMipCount; }
-    uint32 GetSubresourceArrayCount() const { return SubresourceArrayCount; }
+    uint32 GetSubresourceMipCount() const
+    {
+        return NumMipLevels;
+    }
+
+    uint32 GetSubresourceArrayCount() const
+    {
+        return NumArraySlices;
+    }
 
 private:
     uint32 GetSubresourceIndex(uint32 MipLevel, uint32 ArraySlice) const
     {
-        return MipLevel + ArraySlice * SubresourceMipCount;
+        return MipLevel + ArraySlice * NumMipLevels;
     }
 
-    bool bEnabled = false;
-    FImageState State = {};
-
-    uint32 SubresourceMipCount = 0;
-    uint32 SubresourceArrayCount = 0;
+    FImageState         State;
+    uint32              NumMipLevels;
+    uint32              NumArraySlices;
     TArray<FImageState> SubresourceStates;
 };
 
 class FVulkanBufferState
 {
 public:
-    FVulkanBufferState() = default;
-
-    struct FBufferState
+    FVulkanBufferState(VkAccessFlags2 InAccess, VkPipelineStageFlags2 InStage)
+        : Access(InAccess)
+        , Stage(InStage)
     {
-        VkAccessFlags2        Access = VK_ACCESS_2_NONE;
-        VkPipelineStageFlags2 Stage  = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-    };
-
-    void Enable(const FBufferState& InitialState)
-    {
-        bEnabled = true;
-        State = InitialState;
     }
 
-    void Disable()
+    VkAccessFlags2 GetAccess() const
     {
-        bEnabled = false;
+        return Access;
     }
 
-    bool IsEnabled() const { return bEnabled; }
-    const FBufferState& GetState() const { return State; }
-
-    void SetState(const FBufferState& NewState)
+    VkPipelineStageFlags2 GetStage() const
     {
-        State = NewState;
+        return Stage;
+    }
+
+    void SetState(VkAccessFlags2 InAccess, VkPipelineStageFlags2 InStage)
+    {
+        Access = InAccess;
+        Stage  = InStage;
     }
 
 private:
-    bool bEnabled = false;
-    FBufferState State = {};
+    VkAccessFlags2        Access = VK_ACCESS_2_NONE;
+    VkPipelineStageFlags2 Stage  = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
 };

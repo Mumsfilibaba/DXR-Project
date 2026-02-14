@@ -5,6 +5,7 @@
 #include "Core/Containers/UniquePtr.h"
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
+class FVulkanCommandContext;
 
 class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
 {
@@ -28,6 +29,9 @@ public:
     virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
     virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
 
+    void EnableStateTracking(EResourceAccess InitialState);
+    void DisableStateTracking(FVulkanCommandContext* CommandContext = nullptr);
+
     // Resource State Tracking
     VkBuffer GetVkBuffer() const
     {
@@ -38,9 +42,6 @@ public:
     {
         return BufferState.Get();
     }
-
-    void EnableResourceStateTracking(EResourceAccess InitialState);
-    void DisableResourceStateTracking();
 
     VkDeviceMemory GetVkDeviceMemory() const
     {
@@ -58,9 +59,9 @@ public:
     }
 
 protected:
-    VkBuffer                Buffer;
-    FVulkanMemoryAllocation MemoryAllocation;
-    VkDeviceSize            RequiredAlignment;
-    FString                 DebugName;
+    VkBuffer                       Buffer;
+    FVulkanMemoryAllocation        MemoryAllocation;
+    VkDeviceSize                   RequiredAlignment;
+    FString                        DebugName;
     TUniquePtr<FVulkanBufferState> BufferState;
 };

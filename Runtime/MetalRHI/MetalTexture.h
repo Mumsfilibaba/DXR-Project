@@ -13,7 +13,7 @@ typedef TSharedRef<class FMetalTexture> FMetalTextureRef;
 class FMetalTexture : public FRHITexture, public FMetalDeviceChild
 {
 public:
-    FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common);
+    FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo);
     virtual ~FMetalTexture();
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
@@ -24,6 +24,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
@@ -46,7 +47,7 @@ public:
     }
 
 protected:
-    id<MTLTexture>  Texture;
+    id<MTLTexture>   Texture;
     FMetalSwapChain* SwapChain;
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
 };

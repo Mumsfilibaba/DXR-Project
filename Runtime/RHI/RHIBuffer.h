@@ -35,9 +35,10 @@ struct FRHIBufferInfo
     NODISCARD constexpr bool IsIndexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
     NODISCARD constexpr bool IsUnorderedAccessBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::UnorderedAccessBuffer); }
 
-    EBufferFlags Flags = EBufferFlags::None;
-    uint32 Stride = 0;
-    uint64 Size   = 0;
+    uint64       Size   = 0;
+    uint32       Stride = 0;
+    EBufferFlags Flags  = EBufferFlags::None;
+    bool         bEnableResourceStateTracking = true;
 };
 
 class FRHIBuffer : public FRHIResource 

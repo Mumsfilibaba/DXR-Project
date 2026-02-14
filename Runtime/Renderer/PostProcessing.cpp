@@ -25,6 +25,12 @@ static TAutoConsoleVariable<float> CVarTonemappingReinhardIntensity(
     1.0f,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<float> CVarTonemappingEV100(
+    "Renderer.Tonemapping.EV100",
+    "Exposure in EV100 (applied as exp2(-EV100) during tonemapping)",
+    0.0f,
+    EConsoleVariableFlags::Default);
+
 FTonemapPass::FTonemapPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , TonemapPSO_Linear(nullptr)
@@ -157,6 +163,7 @@ bool FTonemapPass::CreateResources(FFrameResources& FrameResources, uint32 Width
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     const FClearValue ClearValue(FGlobalTextureFormats::FinalTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
+    TextureInfo.bEnableResourceStateTracking = true;
 
     FrameResources.TonemappedTarget = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
     if (!FrameResources.TonemappedTarget)
@@ -210,7 +217,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     const bool bNeedsTransition = !OutputTarget->GetInfo().IsPresentable();
     if (bNeedsTransition)
     {
-        CommandList.TransitionTexture(OutputTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+        CommandList.RequireTextureState(OutputTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
     }
 
     FRHIBeginRenderPassInfo RenderPass;
@@ -230,7 +237,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     TonemapInfo.TonemappingType   = GetTonemappingFunctionCVar();
     TonemapInfo.bOutputSRGB       = bOutputSRGB ? 1 : 0;
     TonemapInfo.ReinhardIntensity = Math::Clamp<float>(CVarTonemappingReinhardIntensity.GetValue(), 0.1f, 10.0f);
-    TonemapInfo.Padding0          = 0.0f;
+    TonemapInfo.ExposureEV100     = Math::Clamp<float>(CVarTonemappingEV100.GetValue(), -10.0f, 20.0f);
 
     constexpr uint32 NumConstants = sizeof(FTonemapInfoHLSL) / sizeof(uint32);
     CommandList.SetShaderConstants(TonemapShader.Get(), &TonemapInfo, NumConstants);
@@ -241,7 +248,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     if (bNeedsTransition)
     {
-        CommandList.TransitionTexture(OutputTarget, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.RequireTextureState(OutputTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Tonemapping");
@@ -349,7 +356,8 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
 
 void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources)
 {
-    if (!FrameResources.TonemappedTarget)
+    FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
+    if (!FrameResources.TonemappedTarget || !RenderTarget)
     {
         return;
     }
@@ -369,9 +377,15 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
+    const bool bNeedsTransition = !RenderTarget->GetInfo().IsPresentable();
+    if (bNeedsTransition)
+    {
+        CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+    }
+
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::DontCare);
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(RenderTarget, EAttachmentLoadAction::DontCare);
 
     CommandList.BeginRenderPass(RenderPass);
 
@@ -445,6 +459,11 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
     CommandList.DrawInstanced(3, 1, 0, 0);
 
     CommandList.EndRenderPass();
+
+    if (bNeedsTransition)
+    {
+        CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Final Composite");
 }
@@ -621,9 +640,21 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
     FScissorRegion ScissorRegion(Settings.Width, Settings.Height, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
+    FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
+    if (!RenderTarget)
+    {
+        return;
+    }
+
+    const bool bNeedsTransition = !RenderTarget->GetInfo().IsPresentable();
+    if (bNeedsTransition)
+    {
+        CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+    }
+
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(RenderTarget, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     CommandList.BeginRenderPass(RenderPass);
@@ -647,6 +678,11 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
     CommandList.DrawInstanced(3, 1, 0, 0);
 
     CommandList.EndRenderPass();
+
+    if (bNeedsTransition)
+    {
+        CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End FXAA");
 }

@@ -27,5 +27,5 @@ public:
 
 private:
     mutable FAtomicInt32 StrongReferences;
-    mutable FAtomicInt32 State;
+    mutable FAtomicInt32 AliveState;
 };
