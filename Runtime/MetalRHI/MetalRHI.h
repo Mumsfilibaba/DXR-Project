@@ -35,8 +35,6 @@ public:
 
     bool Initialize();
 
-public:
-
     // FRHI Interface
     virtual void BeginFrame() override final { }
     virtual void EndFrame() override final { }
@@ -125,7 +123,6 @@ public:
         return nullptr;
     }
 
-public:
     FMetalDeviceContext* GetMetalDeviceContext() const
     {
         return DeviceContext;

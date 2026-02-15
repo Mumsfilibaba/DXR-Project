@@ -1,35 +1,21 @@
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Device.h"
 
-FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice)
+FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEnableResidency, uint64 TargetBudgetBytes)
     : Device(InDevice)
-    , Adapter(nullptr)
-    , TargetBudget(0)
+    , Adapter(Device ? Device->GetAdapter()->GetDXGIAdapter3() : nullptr)
+    , TargetBudget(TargetBudgetBytes)
     , CurrentFrame(0)
-    , bEnable(false)
+    , bEnable(bEnableResidency)
 {
 }
 
 FD3D12ResidencyManager::~FD3D12ResidencyManager()
 {
-    Shutdown();
-}
-
-bool FD3D12ResidencyManager::Initialize(bool bEnableResidency, uint64 TargetBudgetBytes)
-{
-    Adapter      = Device ? Device->GetAdapter()->GetDXGIAdapter3() : nullptr;
-    bEnable      = bEnableResidency;
-    TargetBudget = TargetBudgetBytes;
-    CurrentFrame = 0;
-    Tracked.Clear();
-    return true;
-}
-
-void FD3D12ResidencyManager::Shutdown()
-{
     SCOPED_LOCK(Mutex);
+
+    TrackedIndexByPageable.Clear();
     Tracked.Clear(true);
-    Device = nullptr;
     Adapter = nullptr;
     bEnable = false;
     TargetBudget = 0;
@@ -54,23 +40,30 @@ int32 FD3D12ResidencyManager::FindTrackedIndexByPageable(ID3D12Pageable* InPagea
         return -1;
     }
 
-    for (int32 Index = 0; Index < Tracked.Size(); ++Index)
+    const int32* FoundIndex = TrackedIndexByPageable.Find(InPageable);
+    if (!FoundIndex)
     {
-        const FD3D12ResidencyTrackedPageable& Entry = Tracked[Index];
-        if (Entry.bAllocated && Entry.Pageable == InPageable)
-        {
-            return Index;
-        }
+        return -1;
     }
 
-    return -1;
+    const int32 Index = *FoundIndex;
+    if (Index < 0 || Index >= Tracked.Size())
+    {
+        return -1;
+    }
+
+    const FD3D12ResidencyTrackedPageable& Entry = Tracked[Index];
+    if (!Entry.bAllocated || Entry.Pageable != InPageable)
+    {
+        return -1;
+    }
+
+    return Index;
 }
 
 bool FD3D12ResidencyManager::IsValidHandle(const FD3D12ResidencyHandle& Handle) const
 {
-    return Handle.Slot < static_cast<uint32>(Tracked.Size())
-        && Tracked[Handle.Slot].bAllocated
-        && Tracked[Handle.Slot].Generation == Handle.Generation;
+    return Handle.Slot < static_cast<uint32>(Tracked.Size()) && Tracked[Handle.Slot].bAllocated && Tracked[Handle.Slot].Generation == Handle.Generation;
 }
 
 uint64 FD3D12ResidencyManager::GetCurrentUsage() const
@@ -83,6 +76,7 @@ uint64 FD3D12ResidencyManager::GetCurrentUsage() const
             Usage += Entry.SizeBytes;
         }
     }
+
     return Usage;
 }
 
@@ -103,6 +97,7 @@ FD3D12ResidencyHandle FD3D12ResidencyManager::RegisterPageable(ID3D12Pageable* I
         Entry.bAlwaysResident = InIsAlwaysResident;
         Entry.bIsResident     = true;
         Entry.LastUsedFrame   = CurrentFrame;
+        TrackedIndexByPageable[InPageable] = ExistingIndex;
         return { static_cast<uint32>(ExistingIndex), Entry.Generation };
     }
 
@@ -127,18 +122,22 @@ FD3D12ResidencyHandle FD3D12ResidencyManager::RegisterPageable(ID3D12Pageable* I
         Entry.bIsResident     = true;
         Entry.bAllocated      = true;
         Tracked.Add(Entry);
+
         const uint32 Slot = static_cast<uint32>(Tracked.Size() - 1);
+        TrackedIndexByPageable[InPageable] = static_cast<int32>(Slot);
         return { Slot, Tracked[Slot].Generation };
     }
 
     FD3D12ResidencyTrackedPageable& FreeEntry = Tracked[FreeIndex];
-    ++FreeEntry.Generation;
     FreeEntry.Pageable        = InPageable;
     FreeEntry.SizeBytes       = InSizeBytes;
     FreeEntry.LastUsedFrame   = CurrentFrame;
     FreeEntry.bAlwaysResident = InIsAlwaysResident;
     FreeEntry.bIsResident     = true;
     FreeEntry.bAllocated      = true;
+    ++FreeEntry.Generation;
+    TrackedIndexByPageable[InPageable] = FreeIndex;
+
     return { static_cast<uint32>(FreeIndex), FreeEntry.Generation };
 }
 
@@ -150,18 +149,23 @@ void FD3D12ResidencyManager::UnregisterPageable(const FD3D12ResidencyHandle& Han
     }
 
     SCOPED_LOCK(Mutex);
+
     if (!IsValidHandle(Handle))
     {
         return;
     }
 
     FD3D12ResidencyTrackedPageable& Entry = Tracked[Handle.Slot];
-    Entry.Pageable = nullptr;
-    Entry.SizeBytes = 0;
-    Entry.LastUsedFrame = CurrentFrame;
+    if (Entry.Pageable)
+    {
+        TrackedIndexByPageable.Remove(Entry.Pageable);
+    }
+    Entry.Pageable        = nullptr;
+    Entry.SizeBytes       = 0;
+    Entry.LastUsedFrame   = CurrentFrame;
     Entry.bAlwaysResident = false;
-    Entry.bIsResident = false;
-    Entry.bAllocated = false;
+    Entry.bIsResident     = false;
+    Entry.bAllocated      = false;
     ++Entry.Generation;
 }
 
@@ -173,6 +177,7 @@ void FD3D12ResidencyManager::UnregisterPageable(ID3D12Pageable* InPageable)
     }
 
     SCOPED_LOCK(Mutex);
+
     const int32 Index = FindTrackedIndexByPageable(InPageable);
     if (Index < 0)
     {
@@ -180,12 +185,13 @@ void FD3D12ResidencyManager::UnregisterPageable(ID3D12Pageable* InPageable)
     }
 
     FD3D12ResidencyTrackedPageable& Entry = Tracked[Index];
-    Entry.Pageable = nullptr;
-    Entry.SizeBytes = 0;
-    Entry.LastUsedFrame = CurrentFrame;
+    TrackedIndexByPageable.Remove(InPageable);
+    Entry.Pageable        = nullptr;
+    Entry.SizeBytes       = 0;
+    Entry.LastUsedFrame   = CurrentFrame;
     Entry.bAlwaysResident = false;
-    Entry.bIsResident = false;
-    Entry.bAllocated = false;
+    Entry.bIsResident     = false;
+    Entry.bAllocated      = false;
     ++Entry.Generation;
 }
 
@@ -197,6 +203,7 @@ void FD3D12ResidencyManager::TouchPageable(const FD3D12ResidencyHandle& Handle)
     }
 
     SCOPED_LOCK(Mutex);
+
     if (IsValidHandle(Handle))
     {
         Tracked[Handle.Slot].LastUsedFrame = CurrentFrame;
@@ -268,8 +275,8 @@ void FD3D12ResidencyManager::EvictIfNeeded(ID3D12CommandQueue* InQueue)
     }
 
     SCOPED_LOCK(Mutex);
+    
     uint64 Usage = GetCurrentUsage();
-
     while (Usage > Budget)
     {
         int32 OldestIndex = -1;
@@ -296,6 +303,7 @@ void FD3D12ResidencyManager::EvictIfNeeded(ID3D12CommandQueue* InQueue)
         }
 
         FD3D12ResidencyTrackedPageable& Victim = Tracked[OldestIndex];
+        
         ID3D12Pageable* Pageables[] = { Victim.Pageable };
         if (FAILED(Device->GetD3D12Device()->Evict(1, Pageables)))
         {

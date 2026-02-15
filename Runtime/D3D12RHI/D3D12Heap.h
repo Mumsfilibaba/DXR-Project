@@ -10,8 +10,7 @@ public:
     FD3D12Heap(FD3D12Device* InDevice);
     ~FD3D12Heap();
 
-    void SetNative(const TComPtr<ID3D12Heap>& InNativeHeap);
-    FORCEINLINE void SetHeap(const TComPtr<ID3D12Heap>& InNativeHeap) { SetNative(InNativeHeap); }
+    void SetHeap(const TComPtr<ID3D12Heap>& InNativeHeap);
     void SetDebugName(const FString& Name);
 
     FORCEINLINE void DisableDeferDeletion() { bDeferDeletion = false; }

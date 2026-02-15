@@ -27,6 +27,12 @@ public:
         return GD3D12RHI; 
     }
 
+    template<typename... ArgTypes>
+    static void DeferDeletion(ArgTypes&&... Args)
+    {
+        Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
+    }
+
 public:
     FD3D12RHI();
     ~FD3D12RHI();
@@ -80,13 +86,6 @@ public:
     virtual void* GetNativeDirectCommandQueue() override final;
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
-
-    template<typename... ArgTypes>
-    void DeferDeletion(ArgTypes&&... Args)
-    {
-        TScopedLock Lock(DeletionQueueCS);
-        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
-    }
     
     void ProcessPendingCommandSubmissions();
     void SubmitCommands(FD3D12CommandSubmission* CommandSubmission, bool bFlushDeletionQueue);
@@ -107,6 +106,13 @@ public:
     }
 
 private:
+    template<typename... ArgTypes>
+    void DeferDeletionInternal(ArgTypes&&... Args)
+    {
+        TScopedLock Lock(DeletionQueueCS);
+        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
+    }
+
     bool InitializeDeviceFeatureSupport();
     
     typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef>  FSamplerStateMap;

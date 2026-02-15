@@ -67,7 +67,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     bool bAllocated = false;
     if (Info.IsDynamic())
     {
-        bAllocated = GetDevice()->GetUploadHeapAllocator()->TryAllocate(Request, ResourceStorage);
+        bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(Request.Size, Request.Alignment, ResourceStorage) != nullptr;
     }
     else
     {

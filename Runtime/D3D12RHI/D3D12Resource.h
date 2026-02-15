@@ -64,7 +64,7 @@ enum class ED3D12ResourceType : uint8
 };
 
 
-enum class ED3D12ResourceStorageOwnerType : uint8
+enum class ED3D12AllocatorType : uint8
 {
     None,
     LinearAllocator,
@@ -92,7 +92,7 @@ struct FD3D12PoolAllocatorAllocationData
     uint32 PageIndex            = UINT32_MAX;
     uint64 Offset               = 0;
     uint64 Size                 = 0;
-    bool   bCommittedAllocation = false;
+    bool   bIsStandalone        = false;
     bool   bBackedByHeap        = false;
     FD3D12Heap* BackingHeap     = nullptr;
 };
@@ -144,122 +144,112 @@ public:
     virtual void OnRelocation(FD3D12BaseResource* Resource) = 0;
 };
 
-class FD3D12ResourceStorage : public FNonCopyable
+class FD3D12ResourceStorage : public FD3D12DeviceChild, public FNonCopyable
 {
 public:
-    FD3D12ResourceStorage();
-    FD3D12ResourceStorage(FD3D12ResourceStorage&& Other) noexcept;
-    FD3D12ResourceStorage& operator=(FD3D12ResourceStorage&& Other) noexcept;
+    FD3D12ResourceStorage(FD3D12Device* InDevice);
     ~FD3D12ResourceStorage();
 
-    void CopyFrom(const FD3D12ResourceStorage& Other);
-
-    FORCEINLINE bool IsValid() const { return Resource != nullptr; }
-
-    void InitializeAsStandalone(
-        const FD3D12ResourceRef& InResource,
-        ED3D12ResourceKind InResourceKind,
-        D3D12_HEAP_TYPE InHeapType,
-        ED3D12HeapUsage InHeapUsage,
-        ED3D12ResourceLifetime InLifetime,
-        uint64 InSize,
-        uint64 InAlignment);
-
-    void InitializeAsPlaced(
-        const FD3D12ResourceRef& InResource,
-        const FD3D12HeapRef& InHeap,
-        uint64 InHeapOffset,
-        ED3D12ResourceKind InResourceKind,
-        D3D12_HEAP_TYPE InHeapType,
-        ED3D12HeapUsage InHeapUsage,
-        ED3D12ResourceLifetime InLifetime,
-        uint64 InSize,
-        uint64 InAlignment);
-
-    void InitializeAsSuballocated(
-        const FD3D12ResourceRef& InResource,
-        uint64 InResourceOffset,
-        D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress,
-        void* InMappedPtr,
-        ED3D12ResourceKind InResourceKind,
-        D3D12_HEAP_TYPE InHeapType,
-        ED3D12HeapUsage InHeapUsage,
-        ED3D12ResourceLifetime InLifetime,
-        uint64 InSize,
-        uint64 InAlignment,
-        void* InOwner,
-        ED3D12ResourceStorageOwnerType InOwnerType,
-        uint64 InRetireFenceValue);
-
+    void InitStandalone(const FD3D12ResourceRef& InResource);
+    
+    void Swap(FD3D12ResourceStorage& Other);
     void ReleaseResource();
     void Reset();
 
-    FORCEINLINE FD3D12Resource* GetResource() const { return Resource.Get(); }
-    FORCEINLINE FD3D12Heap* GetHeap() const
-    {
-        switch (OwnerType)
-        {
-        case ED3D12ResourceStorageOwnerType::PoolAllocator:
-        case ED3D12ResourceStorageOwnerType::TextureAllocator:
-            return AllocationData.Pool.BackingHeap;
-        case ED3D12ResourceStorageOwnerType::BuddyAllocator:
-            return AllocationData.Buddy.BackingHeap;
-        case ED3D12ResourceStorageOwnerType::MultiBuddyAllocator:
-            return AllocationData.MultiBuddy.BackingHeap;
-        default:
-            break;
-        }
+    FORCEINLINE bool IsValid() const { return Resource != nullptr; }
 
-        if (OwnerType == ED3D12ResourceStorageOwnerType::None)
-        {
-            return AllocationData.Pool.BackingHeap;
-        }
+    FORCEINLINE void*                        GetMappedBaseAddress() const { return MappedBaseAddress; }
+    FORCEINLINE uint64                       GetSize()              const { return Size; }
+    FORCEINLINE uint64                       GetResourceOffset()    const { return ResourceOffset; }
+    FORCEINLINE uint64                       GetGpuVirtualAddress() const { return GpuVirtualAddress; }
+    FORCEINLINE const FD3D12ResidencyHandle& GetResidencyHandle()   const { return ResidencyHandle; }
+    FORCEINLINE void*                        GetAllocator()         const { return AllocatorPointers.AsVoid; }
+    FORCEINLINE ED3D12AllocatorType          GetAllocatorType()     const { return AllocatorType; }
+    FORCEINLINE FD3D12Resource*              GetResource()          const { return Resource.Get(); }
 
-        return nullptr;
-    }
-
-    FORCEINLINE void* GetMappedBaseAddress() const { return MappedBaseAddress; }
-    FORCEINLINE uint64 GetSize() const { return Size; }
-    FORCEINLINE uint64 GetResourceOffset() const { return ResourceOffset; }
-    FORCEINLINE uint64 GetGpuVirtualAddress() const { return GpuVirtualAddress; }
-    FORCEINLINE const FD3D12ResidencyHandle& GetResidencyHandle() const { return ResidencyHandle; }
-    FORCEINLINE void* GetOwner() const { return OwnerPointers.AsVoid; }
-    FORCEINLINE ED3D12ResourceStorageOwnerType GetOwnerType() const { return OwnerType; }
-
-    FORCEINLINE const FD3D12LinearAllocatorAllocationData& GetLinearAllocationData() const { return AllocationData.Linear; }
-    FORCEINLINE const FD3D12PoolAllocatorAllocationData& GetPoolAllocationData() const { return AllocationData.Pool; }
-    FORCEINLINE const FD3D12BuddyAllocatorAllocationData& GetBuddyAllocationData() const { return AllocationData.Buddy; }
+    FORCEINLINE const FD3D12LinearAllocatorAllocationData&     GetLinearAllocationData()     const { return AllocationData.Linear; }
+    FORCEINLINE const FD3D12PoolAllocatorAllocationData&       GetPoolAllocationData()       const { return AllocationData.Pool; }
+    FORCEINLINE const FD3D12BuddyAllocatorAllocationData&      GetBuddyAllocationData()      const { return AllocationData.Buddy; }
     FORCEINLINE const FD3D12MultiBuddyAllocatorAllocationData& GetMultiBuddyAllocationData() const { return AllocationData.MultiBuddy; }
-    FORCEINLINE const FD3D12BucketAllocatorAllocationData& GetBucketAllocationData() const { return AllocationData.Bucket; }
-    FORCEINLINE const FD3D12BufferAllocatorAllocationData& GetBufferAllocatorData() const { return AllocationData.BufferAllocator; }
-    FORCEINLINE const FD3D12TextureAllocatorAllocationData& GetTextureAllocatorData() const { return AllocationData.TextureAllocator; }
+    FORCEINLINE const FD3D12BucketAllocatorAllocationData&     GetBucketAllocationData()     const { return AllocationData.Bucket; }
+    FORCEINLINE const FD3D12BufferAllocatorAllocationData&     GetBufferAllocatorData()      const { return AllocationData.BufferAllocator; }
+    FORCEINLINE const FD3D12TextureAllocatorAllocationData&    GetTextureAllocatorData()     const { return AllocationData.TextureAllocator; }
 
-    FORCEINLINE void SetResource(const FD3D12ResourceRef& InResource) { Resource = InResource; }
-    FORCEINLINE void SetSize(uint64 InSize) { Size = InSize; }
-    FORCEINLINE void SetSubrangeInfo(uint64 InResourceOffset, D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress, void* InMappedPtr)
-    {
-        ResourceOffset = InResourceOffset;
-        GpuVirtualAddress = InGpuVirtualAddress;
-        MappedBaseAddress = InMappedPtr;
-    }
-
-    FORCEINLINE void SetHeap(const FD3D12HeapRef& InHeap)
-    {
-        FD3D12Heap* Heap = InHeap.Get();
-        AllocationData.Pool.BackingHeap = Heap;
-        AllocationData.Buddy.BackingHeap = Heap;
-        AllocationData.MultiBuddy.BackingHeap = Heap;
-    }
-
-    FORCEINLINE void SetOwner(void* InOwner, ED3D12ResourceStorageOwnerType InOwnerType)
-    {
-        OwnerPointers.AsVoid = InOwner;
-        OwnerType = InOwnerType;
-    }
+    FORCEINLINE void SetResource(const FD3D12ResourceRef& InResource)                    { Resource = InResource; }
+    FORCEINLINE void SetSize(uint64 InSize)                                              { Size = InSize; }
+    FORCEINLINE void SetResourceOffset(uint64 InResourceOffset)                          { ResourceOffset = InResourceOffset; }
+    FORCEINLINE void SetGpuVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress) { GpuVirtualAddress = InGpuVirtualAddress; }
+    FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
 
     FORCEINLINE void SetResidencyHandle(const FD3D12ResidencyHandle& InResidencyHandle)
     {
         ResidencyHandle = InResidencyHandle;
+    }
+
+    FORCEINLINE void ResetAllocator()
+    {
+        AllocatorPointers.AsVoid = nullptr;
+        AllocatorType = ED3D12AllocatorType::None;
+    }
+
+    FORCEINLINE void SetLinearAllocator(FD3D12LinearAllocator* InAllocator)
+    {
+        AllocatorPointers.LinearAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::LinearAllocator;
+    }
+
+    FORCEINLINE void SetDynamicConstantsAllocator(FD3D12DynamicConstantsAllocator* InAllocator)
+    {
+        AllocatorPointers.DynamicConstantsAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::DynamicConstantsAllocator;
+    }
+
+    FORCEINLINE void SetUploadHeapAllocator(FD3D12UploadHeapAllocator* InAllocator)
+    {
+        AllocatorPointers.UploadHeapAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::UploadHeapAllocator;
+    }
+
+    FORCEINLINE void SetBufferAllocatorPool(FD3D12BufferAllocatorPool* InAllocator)
+    {
+        AllocatorPointers.BufferAllocatorPool = InAllocator;
+        AllocatorType = ED3D12AllocatorType::BufferAllocatorPool;
+    }
+
+    FORCEINLINE void SetBufferAllocator(FD3D12BufferAllocator* InAllocator)
+    {
+        AllocatorPointers.BufferAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::BufferAllocator;
+    }
+
+    FORCEINLINE void SetTextureAllocator(FD3D12TextureAllocator* InAllocator)
+    {
+        AllocatorPointers.TextureAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::TextureAllocator;
+    }
+
+    FORCEINLINE void SetBuddyAllocator(FD3D12BuddyAllocator* InAllocator)
+    {
+        AllocatorPointers.BuddyAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::BuddyAllocator;
+    }
+
+    FORCEINLINE void SetMultiBuddyAllocator(FD3D12MultiBuddyAllocator* InAllocator)
+    {
+        AllocatorPointers.MultiBuddyAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::MultiBuddyAllocator;
+    }
+
+    FORCEINLINE void SetBucketAllocator(FD3D12BucketAllocator* InAllocator)
+    {
+        AllocatorPointers.BucketAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::BucketAllocator;
+    }
+
+    FORCEINLINE void SetPoolAllocator(FD3D12PoolAllocator* InAllocator)
+    {
+        AllocatorPointers.PoolAllocator = InAllocator;
+        AllocatorType = ED3D12AllocatorType::PoolAllocator;
     }
 
     FORCEINLINE void SetLinearAllocationData(const FD3D12LinearAllocatorAllocationData& InData) { AllocationData.Linear = InData; }
@@ -271,8 +261,7 @@ public:
     FORCEINLINE void SetTextureAllocatorData(const FD3D12TextureAllocatorAllocationData& InData) { AllocationData.TextureAllocator = InData; }
 
 private:
-    void MoveFrom(FD3D12ResourceStorage&& Other) noexcept;
-    void ClearOwner();
+    void ClearAllocator();
 
     union FAllocatorData
     {
@@ -288,7 +277,7 @@ private:
         ~FAllocatorData() {}
     } AllocationData;
 
-    union FOwnerPointers
+    union FAllocatorPointers
     {
         FD3D12LinearAllocator*           LinearAllocator;
         FD3D12DynamicConstantsAllocator* DynamicConstantsAllocator;
@@ -302,11 +291,11 @@ private:
         FD3D12PoolAllocator*             PoolAllocator;
         void*                            AsVoid;
 
-        FOwnerPointers()
+        FAllocatorPointers()
             : AsVoid(nullptr)
         {
         }
-    } OwnerPointers;
+    } AllocatorPointers;
 
     FD3D12ResourceRef         Resource;
     uint64                    ResourceOffset;
@@ -314,7 +303,7 @@ private:
     void*                     MappedBaseAddress;
     uint64                    Size;
     FD3D12ResidencyHandle     ResidencyHandle;
-    ED3D12ResourceStorageOwnerType OwnerType;
+    ED3D12AllocatorType       AllocatorType;
 };
 
 class FD3D12Resource : public FD3D12DeviceChild, public FD3D12RefCounted

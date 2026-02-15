@@ -971,7 +971,6 @@ void FD3D12RHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-
 FString FD3D12RHI::GetAdapterName() const 
 { 
     CHECK(Adapter != nullptr);

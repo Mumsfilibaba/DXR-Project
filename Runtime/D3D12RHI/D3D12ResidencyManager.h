@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
 #include "D3D12RHI/D3D12Core.h"
 
@@ -19,11 +20,8 @@ class FD3D12ResidencyManager
     };
 
 public:
-    FD3D12ResidencyManager(FD3D12Device* InDevice);
+    FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEnableResidency = false, uint64 TargetBudgetBytes = 0);
     ~FD3D12ResidencyManager();
-
-    bool Initialize(bool bEnableResidency, uint64 TargetBudgetBytes);
-    void Shutdown();
 
     void Tick();
 
@@ -49,5 +47,6 @@ private:
     uint64                                 CurrentFrame;
     bool                                   bEnable;
     TArray<FD3D12ResidencyTrackedPageable> Tracked;
+    TMap<ID3D12Pageable*, int32>           TrackedIndexByPageable;
     FCriticalSection                       Mutex;
 };

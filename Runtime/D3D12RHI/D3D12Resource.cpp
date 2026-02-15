@@ -139,9 +139,9 @@ FD3D12Resource::~FD3D12Resource()
 
 void FD3D12Resource::ReleaseResource()
 {
-    if (bDeferDeletion && FD3D12RHI::Get())
+    if (bDeferDeletion)
     {
-        FD3D12RHI::Get()->DeferDeletion(this);
+        FD3D12RHI::DeferDeletion(this);
         return;
     }
     
@@ -149,41 +149,18 @@ void FD3D12Resource::ReleaseResource()
     Resource.Reset();
 }
 
-FD3D12ResourceStorage::FD3D12ResourceStorage()
-    : Resource(nullptr)
+FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
+    , Resource(nullptr)
     , ResourceOffset(0)
     , GpuVirtualAddress(0)
     , MappedBaseAddress(nullptr)
     , Size(0)
     , ResidencyHandle()
-    , OwnerType(ED3D12ResourceStorageOwnerType::None)
+    , AllocatorType(ED3D12AllocatorType::None)
 {
     FMemory::Memzero(&AllocationData, sizeof(AllocationData));
-    ClearOwner();
-}
-
-FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12ResourceStorage&& Other) noexcept
-    : Resource(nullptr)
-    , ResourceOffset(0)
-    , GpuVirtualAddress(0)
-    , MappedBaseAddress(nullptr)
-    , Size(0)
-    , ResidencyHandle()
-    , OwnerType(ED3D12ResourceStorageOwnerType::None)
-{
-    FMemory::Memzero(&AllocationData, sizeof(AllocationData));
-    ClearOwner();
-    MoveFrom(Move(Other));
-}
-
-FD3D12ResourceStorage& FD3D12ResourceStorage::operator=(FD3D12ResourceStorage&& Other) noexcept
-{
-    if (this != &Other)
-    {
-        ReleaseResource();
-        MoveFrom(Move(Other));
-    }
-    return *this;
+    ClearAllocator();
 }
 
 FD3D12ResourceStorage::~FD3D12ResourceStorage()
@@ -191,24 +168,51 @@ FD3D12ResourceStorage::~FD3D12ResourceStorage()
     ReleaseResource();
 }
 
-void FD3D12ResourceStorage::CopyFrom(const FD3D12ResourceStorage& Other)
+void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
 {
     if (this == &Other)
     {
         return;
     }
 
-    ReleaseResource();
+    CHECK(GetDevice() == Other.GetDevice());
 
+    FD3D12ResourceRef TempResource = Resource;
     Resource = Other.Resource;
+    Other.Resource = TempResource;
+
+    const uint64 TempResourceOffset = ResourceOffset;
     ResourceOffset = Other.ResourceOffset;
+    Other.ResourceOffset = TempResourceOffset;
+
+    const D3D12_GPU_VIRTUAL_ADDRESS TempGpuVirtualAddress = GpuVirtualAddress;
     GpuVirtualAddress = Other.GpuVirtualAddress;
+    Other.GpuVirtualAddress = TempGpuVirtualAddress;
+
+    void* const TempMappedBaseAddress = MappedBaseAddress;
     MappedBaseAddress = Other.MappedBaseAddress;
+    Other.MappedBaseAddress = TempMappedBaseAddress;
+
+    const uint64 TempSize = Size;
     Size = Other.Size;
+    Other.Size = TempSize;
+
+    const FD3D12ResidencyHandle TempResidencyHandle = ResidencyHandle;
     ResidencyHandle = Other.ResidencyHandle;
-    OwnerType = Other.OwnerType;
-    OwnerPointers.AsVoid = Other.OwnerPointers.AsVoid;
+    Other.ResidencyHandle = TempResidencyHandle;
+
+    const ED3D12AllocatorType TempAllocatorType = AllocatorType;
+    AllocatorType = Other.AllocatorType;
+    Other.AllocatorType = TempAllocatorType;
+
+    uint8 TempAllocationData[sizeof(AllocationData)];
+    FMemory::Memcpy(TempAllocationData, &AllocationData, sizeof(AllocationData));
     FMemory::Memcpy(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
+    FMemory::Memcpy(&Other.AllocationData, TempAllocationData, sizeof(AllocationData));
+
+    void* const TempAllocatorPointer = AllocatorPointers.AsVoid;
+    AllocatorPointers.AsVoid = Other.AllocatorPointers.AsVoid;
+    Other.AllocatorPointers.AsVoid = TempAllocatorPointer;
 }
 
 void FD3D12ResourceStorage::Reset()
@@ -220,47 +224,47 @@ void FD3D12ResourceStorage::Reset()
     Size = 0;
     ResidencyHandle = {};
     FMemory::Memzero(&AllocationData, sizeof(AllocationData));
-    ClearOwner();
+    ClearAllocator();
 }
 
 void FD3D12ResourceStorage::ReleaseResource()
 {
-    if (OwnerPointers.AsVoid == nullptr)
+    if (AllocatorPointers.AsVoid == nullptr)
     {
         return;
     }
 
-    switch (OwnerType)
+    switch (AllocatorType)
     {
-    case ED3D12ResourceStorageOwnerType::LinearAllocator:
-        OwnerPointers.LinearAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::LinearAllocator:
+        AllocatorPointers.LinearAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::DynamicConstantsAllocator:
-        OwnerPointers.DynamicConstantsAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::DynamicConstantsAllocator:
+        AllocatorPointers.DynamicConstantsAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::UploadHeapAllocator:
-        OwnerPointers.UploadHeapAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::UploadHeapAllocator:
+        AllocatorPointers.UploadHeapAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::BufferAllocatorPool:
-        OwnerPointers.BufferAllocatorPool->Deallocate(*this);
+    case ED3D12AllocatorType::BufferAllocatorPool:
+        AllocatorPointers.BufferAllocatorPool->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::BufferAllocator:
-        OwnerPointers.BufferAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::BufferAllocator:
+        AllocatorPointers.BufferAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::TextureAllocator:
-        OwnerPointers.TextureAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::TextureAllocator:
+        AllocatorPointers.TextureAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::BuddyAllocator:
-        OwnerPointers.BuddyAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::BuddyAllocator:
+        AllocatorPointers.BuddyAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::MultiBuddyAllocator:
-        OwnerPointers.MultiBuddyAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::MultiBuddyAllocator:
+        AllocatorPointers.MultiBuddyAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::BucketAllocator:
-        OwnerPointers.BucketAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::BucketAllocator:
+        AllocatorPointers.BucketAllocator->Deallocate(*this);
         break;
-    case ED3D12ResourceStorageOwnerType::PoolAllocator:
-        OwnerPointers.PoolAllocator->Deallocate(*this);
+    case ED3D12AllocatorType::PoolAllocator:
+        AllocatorPointers.PoolAllocator->Deallocate(*this);
         break;
     default:
         break;
@@ -269,111 +273,24 @@ void FD3D12ResourceStorage::ReleaseResource()
     Reset();
 }
 
-void FD3D12ResourceStorage::InitializeAsStandalone(
-    const FD3D12ResourceRef& InResource,
-    ED3D12ResourceKind InResourceKind,
-    D3D12_HEAP_TYPE InHeapType,
-    ED3D12HeapUsage InHeapUsage,
-    ED3D12ResourceLifetime InLifetime,
-    uint64 InSize,
-    uint64 InAlignment)
+void FD3D12ResourceStorage::InitStandalone(const FD3D12ResourceRef& InResource)
 {
-    UNREFERENCED_VARIABLE(InResourceKind);
-    UNREFERENCED_VARIABLE(InHeapType);
-    UNREFERENCED_VARIABLE(InHeapUsage);
-    UNREFERENCED_VARIABLE(InLifetime);
-    UNREFERENCED_VARIABLE(InAlignment);
-
     Reset();
     Resource = InResource;
-    Size = InSize;
     ResourceOffset = 0;
     GpuVirtualAddress = InResource ? InResource->GetGPUVirtualAddress() : 0;
     MappedBaseAddress = nullptr;
 }
 
-void FD3D12ResourceStorage::InitializeAsPlaced(
-    const FD3D12ResourceRef& InResource,
-    const FD3D12HeapRef& InHeap,
-    uint64 InHeapOffset,
-    ED3D12ResourceKind InResourceKind,
-    D3D12_HEAP_TYPE InHeapType,
-    ED3D12HeapUsage InHeapUsage,
-    ED3D12ResourceLifetime InLifetime,
-    uint64 InSize,
-    uint64 InAlignment)
+void FD3D12ResourceStorage::ClearAllocator()
 {
-    UNREFERENCED_VARIABLE(InHeapOffset);
-    UNREFERENCED_VARIABLE(InResourceKind);
-    UNREFERENCED_VARIABLE(InHeapType);
-    UNREFERENCED_VARIABLE(InHeapUsage);
-    UNREFERENCED_VARIABLE(InLifetime);
-    UNREFERENCED_VARIABLE(InAlignment);
-
-    Reset();
-    Resource = InResource;
-    SetHeap(InHeap);
-    Size = InSize;
-    ResourceOffset = 0;
-    GpuVirtualAddress = InResource ? InResource->GetGPUVirtualAddress() : 0;
-    MappedBaseAddress = nullptr;
-}
-
-void FD3D12ResourceStorage::InitializeAsSuballocated(
-    const FD3D12ResourceRef& InResource,
-    uint64 InResourceOffset,
-    D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress,
-    void* InMappedPtr,
-    ED3D12ResourceKind InResourceKind,
-    D3D12_HEAP_TYPE InHeapType,
-    ED3D12HeapUsage InHeapUsage,
-    ED3D12ResourceLifetime InLifetime,
-    uint64 InSize,
-    uint64 InAlignment,
-    void* InOwner,
-    ED3D12ResourceStorageOwnerType InOwnerType,
-    uint64 InRetireFenceValue)
-{
-    UNREFERENCED_VARIABLE(InResourceKind);
-    UNREFERENCED_VARIABLE(InHeapType);
-    UNREFERENCED_VARIABLE(InHeapUsage);
-    UNREFERENCED_VARIABLE(InLifetime);
-    UNREFERENCED_VARIABLE(InAlignment);
-    UNREFERENCED_VARIABLE(InRetireFenceValue);
-
-    Reset();
-    Resource = InResource;
-    ResourceOffset = InResourceOffset;
-    GpuVirtualAddress = InGpuVirtualAddress;
-    MappedBaseAddress = InMappedPtr;
-    Size = InSize;
-    SetOwner(InOwner, InOwnerType);
-}
-
-void FD3D12ResourceStorage::MoveFrom(FD3D12ResourceStorage&& Other) noexcept
-{
-    Resource = Move(Other.Resource);
-    ResourceOffset = Other.ResourceOffset;
-    GpuVirtualAddress = Other.GpuVirtualAddress;
-    MappedBaseAddress = Other.MappedBaseAddress;
-    Size = Other.Size;
-    ResidencyHandle = Other.ResidencyHandle;
-    OwnerType = Other.OwnerType;
-    OwnerPointers.AsVoid = Other.OwnerPointers.AsVoid;
-    FMemory::Memcpy(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
-
-    Other.Reset();
-}
-
-void FD3D12ResourceStorage::ClearOwner()
-{
-    OwnerPointers.AsVoid = nullptr;
-    OwnerType = ED3D12ResourceStorageOwnerType::None;
+    AllocatorPointers.AsVoid = nullptr;
+    AllocatorType = ED3D12AllocatorType::None;
 }
 
 FD3D12BaseResource::FD3D12BaseResource(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
-    , ResourceStorage()
+    , ResourceStorage(InDevice)
 {
 }
 

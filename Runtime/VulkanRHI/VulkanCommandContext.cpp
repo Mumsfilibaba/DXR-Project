@@ -920,7 +920,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
         BarrierBatcher.FlushBarriers();
 
         GetCommandBuffer()->CopyBuffer(Allocation.Buffer->GetVkBuffer(), VulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
-        FVulkanRHI::Get()->DeferDeletion(Allocation.Buffer.Get());
+        FVulkanRHI::DeferDeletion(Allocation.Buffer.Get());
     }
 }
 
@@ -964,7 +964,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     BarrierBatcher.FlushBarriers();
 
     GetCommandBuffer()->CopyBufferToImage(Allocation.Buffer->GetVkBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
-    FVulkanRHI::Get()->DeferDeletion(Allocation.Buffer.Get());
+    FVulkanRHI::DeferDeletion(Allocation.Buffer.Get());
 }
 
 void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)

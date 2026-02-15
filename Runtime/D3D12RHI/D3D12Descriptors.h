@@ -16,10 +16,12 @@ class FD3D12DescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
 public:
     FD3D12DescriptorHeap(FD3D12Device* InDevice, ID3D12DescriptorHeap* InHeap, D3D12_DESCRIPTOR_HEAP_TYPE InType, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags, uint32 InNumDescriptors);
     FD3D12DescriptorHeap(FD3D12DescriptorHeap* InHeap, uint32 InHandleOffset, uint32 InNumDescriptors);
-
+    ~FD3D12DescriptorHeap() = default;
+    
     D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int32 Index) const { return FD3D12_CPU_DESCRIPTOR_HANDLE(StartHandleCPU, Index, HandleIncrementSize); }
     D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int32 Index) const { return FD3D12_GPU_DESCRIPTOR_HANDLE(StartHandleGPU, Index, HandleIncrementSize); }
-    uint32 GetNumDescriptors() const { return NumDescriptors; }
+    
+    uint32 GetNumDescriptors()      const { return NumDescriptors; }
     uint32 GetHandleIncrementSize() const { return HandleIncrementSize; }
 
     ID3D12DescriptorHeap* GetD3D12Heap() const
@@ -124,15 +126,15 @@ private:
             FreeList.Emplace(Start, End);
         }
 
-        FD3D12DescriptorHeapRef Heap;
+        FD3D12DescriptorHeapRef       Heap;
         TArray<FD3D12DescriptorRange> FreeList;
     };
 
     D3D12_DESCRIPTOR_HEAP_TYPE const Type;
-    uint32 DescriptorSize;
-    uint32 NumTotalDescriptors;
-    TArray<FOfflineHeap> Heaps;
-    FCriticalSection HeapsCS;
+    uint32                           DescriptorSize;
+    uint32                           NumTotalDescriptors;
+    TArray<FOfflineHeap>             Heaps;
+    FCriticalSection                 HeapsCS;
 };
 
 struct FD3D12OnlineDescriptorBlock

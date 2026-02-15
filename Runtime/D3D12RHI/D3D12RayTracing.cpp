@@ -6,8 +6,8 @@
 
 FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
-    , ResultResourceStorage()
-    , ScratchResourceStorage()
+    , ResultResourceStorage(InDevice)
+    , ScratchResourceStorage(InDevice)
 {
 }
 

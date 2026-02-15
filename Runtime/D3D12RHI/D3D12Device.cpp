@@ -619,7 +619,6 @@ FD3D12Device::~FD3D12Device()
 
     if (StagingBufferAllocator)
     {
-        StagingBufferAllocator->Shutdown();
         delete StagingBufferAllocator;
         StagingBufferAllocator = nullptr;
     }
@@ -633,7 +632,6 @@ FD3D12Device::~FD3D12Device()
 
     if (BufferAllocator)
     {
-        BufferAllocator->Shutdown();
         delete BufferAllocator;
         BufferAllocator = nullptr;
     }
@@ -654,7 +652,6 @@ FD3D12Device::~FD3D12Device()
 
     if (ResidencyManager)
     {
-        ResidencyManager->Shutdown();
         delete ResidencyManager;
         ResidencyManager = nullptr;
     }
@@ -806,12 +803,11 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    ResidencyManager = new FD3D12ResidencyManager(this);
-    ResidencyManager->Initialize(false, 0);
+    ResidencyManager = new FD3D12ResidencyManager(this, false, 0);
 
     {
-        FD3D12UploadHeapAllocator* UploadHeap = new FD3D12UploadHeapAllocator(this);
-        if (!UploadHeap->Initialize(64ull * 1024ull * 1024ull, 256))
+        FD3D12UploadHeapAllocator* UploadHeap = new FD3D12UploadHeapAllocator(this, 64ull * 1024ull * 1024ull, 256);
+        if (!UploadHeap->Initialize())
         {
             return false;
         }
@@ -819,11 +815,7 @@ bool FD3D12Device::Initialize()
     }
 
     {
-        FD3D12LinearAllocator* StagingAllocator = new FD3D12LinearAllocator(this);
-        if (!StagingAllocator->Initialize(16ull * 1024ull * 1024ull, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, UploadHeapAllocator))
-        {
-            return false;
-        }
+        FD3D12LinearAllocator* StagingAllocator = new FD3D12LinearAllocator(this, 16ull * 1024ull * 1024ull, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
         StagingBufferAllocator = StagingAllocator;
     }
 
@@ -837,8 +829,8 @@ bool FD3D12Device::Initialize()
     }
 
     {
-        FD3D12BufferAllocator* Buffers = new FD3D12BufferAllocator(this);
-        if (!Buffers->Initialize(256ull * 1024ull * 1024ull, 256, 64ull * 1024ull * 1024ull))
+        FD3D12BufferAllocator* Buffers = new FD3D12BufferAllocator(this, 256ull * 1024ull * 1024ull, 256, 64ull * 1024ull * 1024ull);
+        if (!Buffers->Initialize())
         {
             return false;
         }
@@ -1141,6 +1133,7 @@ bool FD3D12Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D1
     FD3D12ResourceRef Resource = new FD3D12Resource(this, Desc, HeapType);
     Resource->SetResource(NativeResource);
     Resource->InitializeFromNative(InitialState);
+    
     OutResource = Resource;
     return true;
 }
@@ -1170,6 +1163,7 @@ bool FD3D12Device::CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D
     FD3D12ResourceRef Resource = new FD3D12Resource(this, Desc, Heap->GetHeapType());
     Resource->SetResource(NativeResource);
     Resource->InitializeFromNative(InitialState);
+
     OutResource = Resource;
     return true;
 }
@@ -1185,7 +1179,7 @@ bool FD3D12Device::CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHea
     }
 
     FD3D12HeapRef Heap = new FD3D12Heap(this);
-    Heap->SetNative(NativeHeap);
+    Heap->SetHeap(NativeHeap);
 
     if (Desc.Properties.Type == D3D12_HEAP_TYPE_DEFAULT)
     {

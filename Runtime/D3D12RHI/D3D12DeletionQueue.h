@@ -66,14 +66,44 @@ struct FD3D12DeferredObject
         InHeap->AddRef();
     }
 
-    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12ResourceStorage& InResourceStorage)
+    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12BuddyAllocatorAllocationData& InAllocationData)
         : Type(EType::AllocatorBlock)
     {
         CHECK(InAllocator != nullptr);
-        AllocatorBlock.AllocatorType = InAllocatorType;
-        AllocatorBlock.Allocator = InAllocator;
-        AllocatorBlock.ResourceStorage.CopyFrom(InResourceStorage);
-        AllocatorBlock.ResourceStorage.SetOwner(nullptr, ED3D12ResourceStorageOwnerType::None);
+
+        AllocatorBlock.AllocatorType       = InAllocatorType;
+        AllocatorBlock.Allocator           = InAllocator;
+        AllocatorBlock.BuddyAllocationData = InAllocationData;
+    }
+
+    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12MultiBuddyAllocatorAllocationData& InAllocationData)
+        : Type(EType::AllocatorBlock)
+    {
+        CHECK(InAllocator != nullptr);
+
+        AllocatorBlock.AllocatorType            = InAllocatorType;
+        AllocatorBlock.Allocator                = InAllocator;
+        AllocatorBlock.MultiBuddyAllocationData = InAllocationData;
+    }
+
+    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12PoolAllocatorAllocationData& InAllocationData)
+        : Type(EType::AllocatorBlock)
+    {
+        CHECK(InAllocator != nullptr);
+
+        AllocatorBlock.AllocatorType      = InAllocatorType;
+        AllocatorBlock.Allocator          = InAllocator;
+        AllocatorBlock.PoolAllocationData = InAllocationData;
+    }
+
+    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12BucketAllocatorAllocationData& InAllocationData)
+        : Type(EType::AllocatorBlock)
+    {
+        CHECK(InAllocator != nullptr);
+
+        AllocatorBlock.AllocatorType        = InAllocatorType;
+        AllocatorBlock.Allocator            = InAllocator;
+        AllocatorBlock.BucketAllocationData = InAllocationData;
     }
 
     EType const Type;
@@ -85,9 +115,12 @@ struct FD3D12DeferredObject
 
     struct FAllocatorBlockData
     {
-        ED3D12DeferredAllocatorType AllocatorType = ED3D12DeferredAllocatorType::Pool;
-        void*                       Allocator     = nullptr;
-        FD3D12ResourceStorage       ResourceStorage;
+        ED3D12DeferredAllocatorType             AllocatorType            = ED3D12DeferredAllocatorType::Pool;
+        void*                                   Allocator                = nullptr;
+        FD3D12BuddyAllocatorAllocationData      BuddyAllocationData      = {};
+        FD3D12MultiBuddyAllocatorAllocationData MultiBuddyAllocationData = {};
+        FD3D12PoolAllocatorAllocationData       PoolAllocationData       = {};
+        FD3D12BucketAllocatorAllocationData     BucketAllocationData     = {};
     } AllocatorBlock;
 
     FRHIResource*   RHIResource = nullptr;

@@ -164,45 +164,33 @@ public:
 
     bool Initialize();
 
-    bool CreateCommittedResource(
-        const D3D12_RESOURCE_DESC& Desc, 
-        D3D12_HEAP_TYPE            HeapType,
-        D3D12_RESOURCE_STATES      InitialState, 
-        const D3D12_CLEAR_VALUE*   ClearValue, 
-        FD3D12ResourceRef&         OutResource);
-    
-    bool CreatePlacedResource(
-        FD3D12Heap*                Heap, 
-        uint64                     Offset, 
-        const D3D12_RESOURCE_DESC& Desc, 
-        D3D12_RESOURCE_STATES      InitialState, 
-        const D3D12_CLEAR_VALUE*   ClearValue, 
-        FD3D12ResourceRef&         OutResource);
-    
+    bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
+    bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHeap);
 
     int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    ID3D12CommandQueue*            GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
-    FD3D12Queue*                   GetQueue(ED3D12CommandQueueType QueueType);
-    FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
-    FD3D12RootSignatureManager&    GetRootSignatureManager() { return *RootSignatureManager; }
-    FD3D12PipelineStateManager&    GetPipelineStateManager() { return *PipelineStateManager; }
-    FD3D12OnlineDescriptorHeap&    GetGlobalResourceHeap() { return *GlobalResourceHeap; }
-    FD3D12OnlineDescriptorHeap&    GetGlobalSamplerHeap() { return *GlobalSamplerHeap; }
-    FD3D12QueryHeapManager*        GetQueryHeapManager(EQueryType QueryType);
-    FD3D12OfflineDescriptorHeap&   GetResourceOfflineDescriptorHeap() { return *ResourceOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap&   GetRenderTargetOfflineDescriptorHeap() { return *RenderTargetOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap&   GetDepthStencilOfflineDescriptorHeap() { return *DepthStencilOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap&   GetSamplerOfflineDescriptorHeap() { return *SamplerOfflineDescriptorHeap; }
-    FD3D12DefaultDescriptors&      GetDefaultDescriptors() { return DefaultDescriptors; }
+    ID3D12CommandQueue*              GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
+    FD3D12Queue*                     GetQueue(ED3D12CommandQueueType QueueType);
+    FD3D12CommandAllocatorManager*   GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
+    FD3D12QueryHeapManager*          GetQueryHeapManager(EQueryType QueryType);
 
-    FD3D12ResidencyManager*           GetResidencyManager() const { return ResidencyManager; }
-    FD3D12LinearAllocator*            GetStagingBufferAllocator() const { return StagingBufferAllocator; }
-    FD3D12DynamicConstantsAllocator*  GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
-    FD3D12BufferAllocator*            GetBufferAllocator() const { return BufferAllocator; }
-    FD3D12TextureAllocator*           GetTextureAllocator() const { return TextureAllocator; }
-    FD3D12UploadHeapAllocator*        GetUploadHeapAllocator() const { return UploadHeapAllocator; }
+    FD3D12RootSignatureManager&      GetRootSignatureManager()              const { return *RootSignatureManager; }
+    FD3D12PipelineStateManager&      GetPipelineStateManager()              const { return *PipelineStateManager; }
+    FD3D12OnlineDescriptorHeap&      GetGlobalResourceHeap()                const { return *GlobalResourceHeap; }
+    FD3D12OnlineDescriptorHeap&      GetGlobalSamplerHeap()                 const { return *GlobalSamplerHeap; }
+    FD3D12OfflineDescriptorHeap&     GetResourceOfflineDescriptorHeap()     const { return *ResourceOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap&     GetRenderTargetOfflineDescriptorHeap() const { return *RenderTargetOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap&     GetDepthStencilOfflineDescriptorHeap() const { return *DepthStencilOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap&     GetSamplerOfflineDescriptorHeap()      const { return *SamplerOfflineDescriptorHeap; }
+    const FD3D12DefaultDescriptors&  GetDefaultDescriptors()                const { return DefaultDescriptors; }
+
+    FD3D12ResidencyManager*          GetResidencyManager()          const { return ResidencyManager; }
+    FD3D12LinearAllocator*           GetStagingBufferAllocator()    const { return StagingBufferAllocator; }
+    FD3D12DynamicConstantsAllocator* GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
+    FD3D12BufferAllocator*           GetBufferAllocator()           const { return BufferAllocator; }
+    FD3D12TextureAllocator*          GetTextureAllocator()          const { return TextureAllocator; }
+    FD3D12UploadHeapAllocator*       GetUploadHeapAllocator()       const { return UploadHeapAllocator; }
 
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
 
@@ -253,40 +241,40 @@ private:
     bool CreateDefaultResources();
     void QueryDeviceFeatureSupport();
 
-    FD3D12Adapter* const              Adapter;
+    FD3D12Adapter* const             Adapter;
 
-    FD3D12OnlineDescriptorHeap*       GlobalResourceHeap;
-    FD3D12OnlineDescriptorHeap*       GlobalSamplerHeap;
-    FD3D12OfflineDescriptorHeap*      ResourceOfflineDescriptorHeap;
-    FD3D12OfflineDescriptorHeap*      RenderTargetOfflineDescriptorHeap;
-    FD3D12OfflineDescriptorHeap*      DepthStencilOfflineDescriptorHeap;
-    FD3D12OfflineDescriptorHeap*      SamplerOfflineDescriptorHeap;
+    FD3D12OnlineDescriptorHeap*      GlobalResourceHeap;
+    FD3D12OnlineDescriptorHeap*      GlobalSamplerHeap;
+    FD3D12OfflineDescriptorHeap*     ResourceOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*     RenderTargetOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*     DepthStencilOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*     SamplerOfflineDescriptorHeap;
 
-    FD3D12RootSignatureManager*       RootSignatureManager;
-    FD3D12PipelineStateManager*       PipelineStateManager;
-    FD3D12ResidencyManager*           ResidencyManager;
-    FD3D12LinearAllocator*            StagingBufferAllocator;
-    FD3D12DynamicConstantsAllocator*  DynamicConstantsAllocator;
-    FD3D12BufferAllocator*            BufferAllocator;
-    FD3D12TextureAllocator*           TextureAllocator;
-    FD3D12UploadHeapAllocator*        UploadHeapAllocator;
+    FD3D12RootSignatureManager*      RootSignatureManager;
+    FD3D12PipelineStateManager*      PipelineStateManager;
+    FD3D12ResidencyManager*          ResidencyManager;
+    FD3D12LinearAllocator*           StagingBufferAllocator;
+    FD3D12DynamicConstantsAllocator* DynamicConstantsAllocator;
+    FD3D12BufferAllocator*           BufferAllocator;
+    FD3D12TextureAllocator*          TextureAllocator;
+    FD3D12UploadHeapAllocator*       UploadHeapAllocator;
 
-    FD3D12Queue*                      DirectQueue;
-    FD3D12Queue*                      CopyQueue;
-    FD3D12Queue*                      ComputeQueue;
-    FD3D12CommandAllocatorManager*    DirectCommandAllocatorManager;
-    FD3D12CommandAllocatorManager*    CopyCommandAllocatorManager;
-    FD3D12CommandAllocatorManager*    ComputeCommandAllocatorManager;
+    FD3D12Queue*                     DirectQueue;
+    FD3D12Queue*                     CopyQueue;
+    FD3D12Queue*                     ComputeQueue;
+    FD3D12CommandAllocatorManager*   DirectCommandAllocatorManager;
+    FD3D12CommandAllocatorManager*   CopyCommandAllocatorManager;
+    FD3D12CommandAllocatorManager*   ComputeCommandAllocatorManager;
 
-    FD3D12QueryHeapManager*           TimingQueryHeapManager;
-    FD3D12QueryHeapManager*           OcclusionQueryHeapManager;
+    FD3D12QueryHeapManager*          TimingQueryHeapManager;
+    FD3D12QueryHeapManager*          OcclusionQueryHeapManager;
 
-    FD3D12DefaultDescriptors          DefaultDescriptors;
+    FD3D12DefaultDescriptors         DefaultDescriptors;
 
-    D3D_FEATURE_LEVEL                 MinFeatureLevel;
-    D3D_FEATURE_LEVEL                 ActiveFeatureLevel;
-    uint32                            NodeMask;
-    uint32                            NodeCount;
+    D3D_FEATURE_LEVEL                MinFeatureLevel;
+    D3D_FEATURE_LEVEL                ActiveFeatureLevel;
+    uint32                           NodeMask;
+    uint32                           NodeCount;
 
     TComPtr<ID3D12Device>  D3D12Device;
 #if WIN10_BUILD_14393

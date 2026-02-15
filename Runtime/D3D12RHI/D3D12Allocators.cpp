@@ -3,64 +3,20 @@
 #include "D3D12RHI/D3D12DeletionQueue.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RHI.h"
-#include "D3D12RHI/D3D12ResidencyManager.h"
 
-namespace
-{
-static uint64 AlignUpValue(uint64 Value, uint64 Alignment)
-{
-    if (Alignment <= 1)
-    {
-        return Value;
-    }
-
-    const uint64 Mask = Alignment - 1;
-    return (Value + Mask) & ~Mask;
-}
-
-static D3D12_RESOURCE_DESC CreateBufferDesc(uint64 Size, D3D12_RESOURCE_FLAGS Flags = D3D12_RESOURCE_FLAG_NONE)
-{
-    D3D12_RESOURCE_DESC Desc = {};
-    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = Flags;
-    Desc.Format             = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = Size;
-    Desc.Height             = 1;
-    Desc.DepthOrArraySize   = 1;
-    Desc.MipLevels          = 1;
-    Desc.Alignment          = 0;
-    Desc.SampleDesc.Count   = 1;
-    Desc.SampleDesc.Quality = 0;
-    return Desc;
-}
-
-static FD3D12ResidencyHandle RegisterResidency(FD3D12Device* Device, ID3D12Pageable* Pageable, uint64 SizeBytes)
-{
-    if (!Device || !Pageable)
-    {
-        return {};
-    }
-
-    if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
-    {
-        FD3D12ResidencyHandle Handle = ResidencyManager->RegisterPageable(Pageable, SizeBytes, false);
-        ResidencyManager->TouchPageable(Handle);
-        return Handle;
-    }
-
-    return {};
-}
-} // namespace
-
-FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice)
+FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy)
     : FD3D12DeviceChild(InDevice)
-    , PageSizeBytes(0)
-    , MinBlockBytes(256)
-    , HeapType(D3D12_HEAP_TYPE_DEFAULT)
-    , InitialState(D3D12_RESOURCE_STATE_COMMON)
-    , bBackWithHeap(false)
-    , NextPageIndex(1)
+    , PageSizeBytes(InPageSizeBytes)
+    , MinBlockBytes(Math::Max<uint64>(InMinBlockBytes, 256ull))
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , AllocationStrategy(InAllocationStrategy)
+    , BackingHeap(nullptr)
+    , BackingResource(nullptr)
+    , FreeOffsets()
+    , MappedBaseAddress(nullptr)
+    , BaseGpuVirtualAddress(0)
+    , AllocatorCS()
 {
 }
 
@@ -69,33 +25,35 @@ FD3D12BuddyAllocator::~FD3D12BuddyAllocator()
     Shutdown();
 }
 
-bool FD3D12BuddyAllocator::Initialize(uint64 InPageSizeBytes, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, bool bInBackWithHeap)
+bool FD3D12BuddyAllocator::Initialize()
 {
-    PageSizeBytes = InPageSizeBytes;
-    MinBlockBytes = Math::Max<uint64>(InMinBlockBytes, 256);
-    HeapType = InHeapType;
-    InitialState = InInitialState;
-    bBackWithHeap = bInBackWithHeap;
-    NextPageIndex = 1;
-    Pages.Clear();
-    return true;
+    SCOPED_LOCK(AllocatorCS);
+    Shutdown();
+    return CreateBackingAllocation();
 }
 
 void FD3D12BuddyAllocator::Shutdown()
 {
-    SCOPED_LOCK(PagesCS);
-    Pages.Clear(true);
+    BackingResource = nullptr;
+    BackingHeap     = nullptr;
+
+    FreeOffsets.Clear();
+
+    MappedBaseAddress     = nullptr;
+    BaseGpuVirtualAddress = 0;
 }
 
 uint32 FD3D12BuddyAllocator::GetOrderForSize(uint64 Size) const
 {
-    uint32 Order = 0;
+    uint32 Order     = 0;
     uint64 BlockSize = MinBlockBytes;
+    
     while (BlockSize < Size)
     {
         BlockSize <<= 1;
         ++Order;
     }
+
     return Order;
 }
 
@@ -104,13 +62,14 @@ uint64 FD3D12BuddyAllocator::GetOrderBlockSize(uint32 Order) const
     return MinBlockBytes << Order;
 }
 
-bool FD3D12BuddyAllocator::AllocateFromPage(FPage& Page, uint64 Size, uint64 Alignment, uint64& OutOffset, uint32& OutOrder)
+bool FD3D12BuddyAllocator::AllocateFromAllocator(uint64 Size, uint64 Alignment, uint64& OutOffset, uint32& OutOrder)
 {
     const uint64 RequestedSize = Math::Max(Size, Alignment);
-    const uint32 TargetOrder = GetOrderForSize(RequestedSize);
-    for (uint32 CurrentOrder = TargetOrder; CurrentOrder < static_cast<uint32>(Page.FreeOffsets.Size()); ++CurrentOrder)
+    const uint32 TargetOrder   = GetOrderForSize(RequestedSize);
+
+    for (uint32 CurrentOrder = TargetOrder; CurrentOrder < static_cast<uint32>(FreeOffsets.Size()); ++CurrentOrder)
     {
-        TArray<uint64>& CurrentList = Page.FreeOffsets[CurrentOrder];
+        TArray<uint64>& CurrentList = FreeOffsets[CurrentOrder];
         if (CurrentList.IsEmpty())
         {
             continue;
@@ -119,32 +78,38 @@ bool FD3D12BuddyAllocator::AllocateFromPage(FPage& Page, uint64 Size, uint64 Ali
         const int32 LastIndex = CurrentList.Size() - 1;
         uint64 BlockOffset = CurrentList[LastIndex];
         CurrentList.Pop();
+
         while (CurrentOrder > TargetOrder)
         {
             --CurrentOrder;
             const uint64 SplitBlockSize = GetOrderBlockSize(CurrentOrder);
-            Page.FreeOffsets[CurrentOrder].Add(BlockOffset + SplitBlockSize);
+            FreeOffsets[CurrentOrder].Add(BlockOffset + SplitBlockSize);
         }
 
         OutOffset = BlockOffset;
-        OutOrder = TargetOrder;
+        OutOrder  = TargetOrder;
         return true;
     }
 
     return false;
 }
 
-void FD3D12BuddyAllocator::FreeToPage(FPage& Page, uint64 Offset, uint32 Order)
+void FD3D12BuddyAllocator::FreeToAllocator(uint64 Offset, uint32 Order)
 {
-    const uint32 MaxOrder = static_cast<uint32>(Page.FreeOffsets.Size() - 1);
-    uint64 CurrentOffset = Offset;
-    uint32 CurrentOrder = Order;
+    if (FreeOffsets.IsEmpty())
+    {
+        return;
+    }
+
+    const uint32 MaxOrder = static_cast<uint32>(FreeOffsets.Size() - 1);
+    uint64 CurrentOffset  = Offset;
+    uint32 CurrentOrder   = Order;
 
     while (CurrentOrder < MaxOrder)
     {
-        const uint64 BlockSize = GetOrderBlockSize(CurrentOrder);
+        const uint64 BlockSize   = GetOrderBlockSize(CurrentOrder);
         const uint64 BuddyOffset = CurrentOffset ^ BlockSize;
-        TArray<uint64>& FreeList = Page.FreeOffsets[CurrentOrder];
+        TArray<uint64>& FreeList = FreeOffsets[CurrentOrder];
 
         int32 BuddyIndex = -1;
         for (int32 Index = 0; Index < FreeList.Size(); ++Index)
@@ -166,22 +131,23 @@ void FD3D12BuddyAllocator::FreeToPage(FPage& Page, uint64 Offset, uint32 Order)
         ++CurrentOrder;
     }
 
-    Page.FreeOffsets[CurrentOrder].Add(CurrentOffset);
+    FreeOffsets[CurrentOrder].Add(CurrentOffset);
 }
 
-bool FD3D12BuddyAllocator::CreatePage(FPage& OutPage, uint64 RequestedSize)
+bool FD3D12BuddyAllocator::CreateBackingAllocation()
 {
     if (!GetDevice())
     {
         return false;
     }
 
-    uint64 TargetSize = Math::Max(PageSizeBytes, AlignUpValue(RequestedSize, MinBlockBytes));
-    uint64 PageSize = MinBlockBytes;
-    while (PageSize < TargetSize)
+    uint64 BackingSize = MinBlockBytes;
+    while (BackingSize < PageSizeBytes)
     {
-        PageSize <<= 1;
+        BackingSize <<= 1;
     }
+
+    PageSizeBytes = BackingSize;
 
     D3D12_HEAP_DESC HeapDesc = {};
     HeapDesc.Properties.Type                 = HeapType;
@@ -189,7 +155,7 @@ bool FD3D12BuddyAllocator::CreatePage(FPage& OutPage, uint64 RequestedSize)
     HeapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
     HeapDesc.Properties.VisibleNodeMask      = 1;
     HeapDesc.Properties.CreationNodeMask     = 1;
-    HeapDesc.SizeInBytes                     = PageSize;
+    HeapDesc.SizeInBytes                     = PageSizeBytes;
     HeapDesc.Alignment                       = 0;
     HeapDesc.Flags                           = D3D12_HEAP_FLAG_NONE;
 
@@ -200,147 +166,128 @@ bool FD3D12BuddyAllocator::CreatePage(FPage& OutPage, uint64 RequestedSize)
     }
 
     FD3D12ResourceRef NewResource;
-    if (!bBackWithHeap)
+    if (AllocationStrategy == EAllocationStrategy::SuballocatedResource)
     {
-        const D3D12_RESOURCE_DESC Desc = CreateBufferDesc(PageSize, D3D12_RESOURCE_FLAG_NONE);
+        D3D12_RESOURCE_DESC Desc = {};
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = PageSizeBytes;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
         if (!GetDevice()->CreatePlacedResource(NewHeap.Get(), 0, Desc, InitialState, nullptr, NewResource))
         {
             return false;
         }
     }
 
-    OutPage.Heap = NewHeap;
-    OutPage.Resource = NewResource;
-    OutPage.Size = PageSize;
-    OutPage.PageIndex = NextPageIndex++;
-    OutPage.MappedBaseAddress = nullptr;
-    OutPage.BaseGpuVirtualAddress = 0;
+    BackingHeap           = NewHeap;
+    BackingResource       = NewResource;
+    MappedBaseAddress     = nullptr;
+    BaseGpuVirtualAddress = 0;
 
-    if (NewResource)
+    if (BackingResource)
     {
-        OutPage.BaseGpuVirtualAddress = NewResource->GetGPUVirtualAddress();
+        BaseGpuVirtualAddress = BackingResource->GetGPUVirtualAddress();
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
         {
-            OutPage.MappedBaseAddress = static_cast<uint8*>(NewResource->MapRange(0, nullptr));
+            MappedBaseAddress = static_cast<uint8*>(BackingResource->MapRange(0, nullptr));
         }
     }
 
-    OutPage.ResidencyHandle = NewHeap ? NewHeap->GetResidencyHandle() : FD3D12ResidencyHandle{};
+    const uint32 MaxOrder = GetOrderForSize(PageSizeBytes);
+    FreeOffsets.Resize(MaxOrder + 1);
+    FreeOffsets[MaxOrder].Add(0);
 
-    const uint32 MaxOrder = GetOrderForSize(PageSize);
-    OutPage.FreeOffsets.Resize(MaxOrder + 1);
-    OutPage.FreeOffsets[MaxOrder].Add(0);
     return true;
 }
 
 bool FD3D12BuddyAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Request, FD3D12ResourceStorage& OutStorage)
 {
-    if (!GetDevice() || Request.Size == 0)
+    if (!GetDevice() || Request.Size == 0 || FreeOffsets.IsEmpty())
     {
         return false;
     }
 
-    const uint64 Alignment = Request.Alignment ? Request.Alignment : MinBlockBytes;
-    const uint64 AllocationSize = AlignUpValue(Math::Max(Request.Size, Alignment), MinBlockBytes);
+    const uint64 Alignment      = Request.Alignment ? Request.Alignment : MinBlockBytes;
+    const uint64 AllocationSize = Math::AlignUp<uint64>(Math::Max(Request.Size, Alignment), MinBlockBytes);
 
-    SCOPED_LOCK(PagesCS);
+    SCOPED_LOCK(AllocatorCS);
 
     uint64 Offset = 0;
-    uint32 Order = 0;
-    FPage* SelectedPage = nullptr;
-    for (FPage& Page : Pages)
-    {
-        if (AllocateFromPage(Page, AllocationSize, Alignment, Offset, Order))
-        {
-            SelectedPage = &Page;
-            break;
-        }
-    }
+    uint32 Order  = 0;
 
-    if (!SelectedPage)
+    if (!AllocateFromAllocator(AllocationSize, Alignment, Offset, Order))
     {
-        FPage NewPage;
-        if (!CreatePage(NewPage, AllocationSize))
-        {
-            return false;
-        }
-
-        Pages.Add(NewPage);
-        SelectedPage = &Pages.LastElement();
-        if (!AllocateFromPage(*SelectedPage, AllocationSize, Alignment, Offset, Order))
-        {
-            return false;
-        }
+        return false;
     }
 
     const uint64 BlockSize = GetOrderBlockSize(Order);
-
     OutStorage.Reset();
     OutStorage.SetSize(BlockSize);
-    OutStorage.SetResidencyHandle(SelectedPage->ResidencyHandle);
 
-    if (SelectedPage->Resource)
+    if (BackingResource)
     {
-        OutStorage.SetResource(SelectedPage->Resource);
-        OutStorage.SetSubrangeInfo(
-            Offset,
-            SelectedPage->BaseGpuVirtualAddress + Offset,
-            SelectedPage->MappedBaseAddress ? (SelectedPage->MappedBaseAddress + Offset) : nullptr);
+        OutStorage.SetResource(BackingResource);
+        OutStorage.SetResourceOffset(Offset);
+        OutStorage.SetGpuVirtualAddress(BaseGpuVirtualAddress + Offset);
+        OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + Offset) : nullptr);
+    }
+    else
+    {
+        OutStorage.SetResourceOffset(Offset);
+        OutStorage.SetGpuVirtualAddress(0);
+        OutStorage.SetMappedBaseAddress(nullptr);
     }
 
     FD3D12BuddyAllocatorAllocationData AllocationData = {};
-    AllocationData.PageIndex = SelectedPage->PageIndex;
-    AllocationData.Order = Order;
-    AllocationData.Offset = Offset;
-    AllocationData.bBackedByHeap = bBackWithHeap;
-    AllocationData.BackingHeap = SelectedPage->Heap.Get();
+    AllocationData.PageIndex     = 0;
+    AllocationData.Order         = Order;
+    AllocationData.Offset        = Offset;
+    AllocationData.bBackedByHeap = (AllocationStrategy == EAllocationStrategy::SuballocatedHeap);
+    AllocationData.BackingHeap   = BackingHeap.Get();
+    
     OutStorage.SetBuddyAllocationData(AllocationData);
-    OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::BuddyAllocator);
+    OutStorage.SetBuddyAllocator(this);
     return true;
 }
 
 void FD3D12BuddyAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    if (!Storage.IsValid())
+    const FD3D12BuddyAllocatorAllocationData AllocationData = Storage.GetBuddyAllocationData();
+    if (AllocationData.PageIndex == UINT32_MAX)
     {
         return;
     }
 
-    if (FD3D12RHI::Get())
-    {
-        FD3D12RHI::Get()->DeferDeletion(ED3D12DeferredAllocatorType::Buddy, this, Storage);
-        return;
-    }
-
-    ReturnBlockToAllocator(Storage);
+    FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Buddy, this, AllocationData);
 }
 
-void FD3D12BuddyAllocator::ReturnBlockToAllocator(const FD3D12ResourceStorage& Storage)
+void FD3D12BuddyAllocator::RecycleAllocation(const FD3D12BuddyAllocatorAllocationData& AllocationData)
 {
-    const FD3D12BuddyAllocatorAllocationData Data = Storage.GetBuddyAllocationData();
-    if (Data.PageIndex == UINT32_MAX)
+    if (AllocationData.PageIndex == UINT32_MAX)
     {
         return;
     }
 
-    SCOPED_LOCK(PagesCS);
-    for (FPage& Page : Pages)
-    {
-        if (Page.PageIndex == Data.PageIndex)
-        {
-            FreeToPage(Page, Data.Offset, Data.Order);
-            return;
-        }
-    }
+    SCOPED_LOCK(AllocatorCS);
+    FreeToAllocator(AllocationData.Offset, AllocationData.Order);
 }
 
-FD3D12MultiBuddyAllocator::FD3D12MultiBuddyAllocator(FD3D12Device* InDevice)
+FD3D12MultiBuddyAllocator::FD3D12MultiBuddyAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy)
     : FD3D12DeviceChild(InDevice)
-    , PageSizeBytes(0)
-    , MinBlockBytes(0)
-    , HeapType(D3D12_HEAP_TYPE_DEFAULT)
-    , InitialState(D3D12_RESOURCE_STATE_COMMON)
-    , bBackWithHeap(false)
+    , PageSizeBytes(InPageSizeBytes)
+    , MinBlockBytes(InMinBlockBytes)
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , AllocationStrategy(InAllocationStrategy)
+    , Allocators()
+    , AllocatorsCS()
 {
 }
 
@@ -349,13 +296,8 @@ FD3D12MultiBuddyAllocator::~FD3D12MultiBuddyAllocator()
     Shutdown();
 }
 
-bool FD3D12MultiBuddyAllocator::Initialize(uint64 InPageSizeBytes, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, bool bInBackWithHeap)
+bool FD3D12MultiBuddyAllocator::Initialize()
 {
-    PageSizeBytes = InPageSizeBytes;
-    MinBlockBytes = InMinBlockBytes;
-    HeapType = InHeapType;
-    InitialState = InInitialState;
-    bBackWithHeap = bInBackWithHeap;
     Shutdown();
     return CreateAllocator();
 }
@@ -367,13 +309,14 @@ void FD3D12MultiBuddyAllocator::Shutdown()
     {
         delete Allocator;
     }
+
     Allocators.Clear();
 }
 
 bool FD3D12MultiBuddyAllocator::CreateAllocator()
 {
-    FD3D12BuddyAllocator* Allocator = new FD3D12BuddyAllocator(GetDevice());
-    if (!Allocator->Initialize(PageSizeBytes, MinBlockBytes, HeapType, InitialState, bBackWithHeap))
+    FD3D12BuddyAllocator* Allocator = new FD3D12BuddyAllocator(GetDevice(), PageSizeBytes, MinBlockBytes, HeapType, InitialState, AllocationStrategy);
+    if (!Allocator->Initialize())
     {
         delete Allocator;
         return false;
@@ -392,15 +335,17 @@ bool FD3D12MultiBuddyAllocator::TryAllocate(const FD3D12ResourceAllocationReques
         if (Allocators[Index]->TryAllocate(Request, OutStorage))
         {
             const FD3D12BuddyAllocatorAllocationData BuddyData = OutStorage.GetBuddyAllocationData();
+
             FD3D12MultiBuddyAllocatorAllocationData Data = {};
             Data.BuddyAllocatorIndex = Index;
-            Data.PageIndex = BuddyData.PageIndex;
-            Data.Order = BuddyData.Order;
-            Data.Offset = BuddyData.Offset;
-            Data.bBackedByHeap = BuddyData.bBackedByHeap;
-            Data.BackingHeap = BuddyData.BackingHeap;
+            Data.PageIndex           = BuddyData.PageIndex;
+            Data.Order               = BuddyData.Order;
+            Data.Offset              = BuddyData.Offset;
+            Data.bBackedByHeap       = BuddyData.bBackedByHeap;
+            Data.BackingHeap         = BuddyData.BackingHeap;
+
             OutStorage.SetMultiBuddyAllocationData(Data);
-            OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::MultiBuddyAllocator);
+            OutStorage.SetMultiBuddyAllocator(this);
             return true;
         }
     }
@@ -419,109 +364,90 @@ bool FD3D12MultiBuddyAllocator::TryAllocate(const FD3D12ResourceAllocationReques
     const FD3D12BuddyAllocatorAllocationData BuddyData = OutStorage.GetBuddyAllocationData();
     FD3D12MultiBuddyAllocatorAllocationData Data = {};
     Data.BuddyAllocatorIndex = Index;
-    Data.PageIndex = BuddyData.PageIndex;
-    Data.Order = BuddyData.Order;
-    Data.Offset = BuddyData.Offset;
-    Data.bBackedByHeap = BuddyData.bBackedByHeap;
-    Data.BackingHeap = BuddyData.BackingHeap;
+    Data.PageIndex           = BuddyData.PageIndex;
+    Data.Order               = BuddyData.Order;
+    Data.Offset              = BuddyData.Offset;
+    Data.bBackedByHeap       = BuddyData.bBackedByHeap;
+    Data.BackingHeap         = BuddyData.BackingHeap;
+
     OutStorage.SetMultiBuddyAllocationData(Data);
-    OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::MultiBuddyAllocator);
+    OutStorage.SetMultiBuddyAllocator(this);
     return true;
 }
 
 void FD3D12MultiBuddyAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    const FD3D12MultiBuddyAllocatorAllocationData MultiData = Storage.GetMultiBuddyAllocationData();
-    if (MultiData.BuddyAllocatorIndex == UINT32_MAX)
+    const FD3D12MultiBuddyAllocatorAllocationData AllocationData = Storage.GetMultiBuddyAllocationData();
+    if (AllocationData.BuddyAllocatorIndex == UINT32_MAX)
+    {
+        return;
+    }
+
+    FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::MultiBuddy, this, AllocationData);
+}
+
+void FD3D12MultiBuddyAllocator::RecycleAllocation(const FD3D12MultiBuddyAllocatorAllocationData& AllocationData)
+{
+    if (AllocationData.BuddyAllocatorIndex == UINT32_MAX)
     {
         return;
     }
 
     SCOPED_LOCK(AllocatorsCS);
-    if (MultiData.BuddyAllocatorIndex >= static_cast<uint32>(Allocators.Size()))
+    if (AllocationData.BuddyAllocatorIndex >= static_cast<uint32>(Allocators.Size()))
     {
         return;
     }
 
-    FD3D12BuddyAllocator* Allocator = Allocators[MultiData.BuddyAllocatorIndex];
+    FD3D12BuddyAllocator* Allocator = Allocators[AllocationData.BuddyAllocatorIndex];
+    if (!Allocator)
+    {
+        return;
+    }
 
-    FD3D12ResourceStorage DeferredResourceStorage;
-    DeferredResourceStorage.CopyFrom(Storage);
     FD3D12BuddyAllocatorAllocationData BuddyData = {};
-    BuddyData.PageIndex = MultiData.PageIndex;
-    BuddyData.Order = MultiData.Order;
-    BuddyData.Offset = MultiData.Offset;
-    BuddyData.bBackedByHeap = MultiData.bBackedByHeap;
-    BuddyData.BackingHeap = MultiData.BackingHeap;
-    DeferredResourceStorage.SetBuddyAllocationData(BuddyData);
-    DeferredResourceStorage.SetOwner(nullptr, ED3D12ResourceStorageOwnerType::None);
-
-    if (FD3D12RHI::Get())
-    {
-        FD3D12RHI::Get()->DeferDeletion(ED3D12DeferredAllocatorType::Buddy, Allocator, DeferredResourceStorage);
-    }
-    else
-    {
-        Allocator->ReturnBlockToAllocator(DeferredResourceStorage);
-    }
+    BuddyData.PageIndex     = AllocationData.PageIndex;
+    BuddyData.Order         = AllocationData.Order;
+    BuddyData.Offset        = AllocationData.Offset;
+    BuddyData.bBackedByHeap = AllocationData.bBackedByHeap;
+    BuddyData.BackingHeap   = AllocationData.BackingHeap;
+    Allocator->RecycleAllocation(BuddyData);
 }
 
-FD3D12PoolAllocator::FD3D12PoolAllocator(FD3D12Device* InDevice)
+FD3D12PoolAllocatorPage::FD3D12PoolAllocatorPage(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy)
     : FD3D12DeviceChild(InDevice)
-    , PageSizeBytes(0)
-    , Alignment(256)
-    , MaxResourceSize(0)
-    , HeapType(D3D12_HEAP_TYPE_DEFAULT)
-    , InitialState(D3D12_RESOURCE_STATE_COMMON)
-    , bBackWithHeap(false)
-    , NextPageIndex(1)
-    , FragmentedBytes(0)
+    , PageSizeBytes(InPageSizeBytes)
+    , Alignment(Math::Max<uint64>(InAlignment, 16ull))
+    , UsedBytes(0)
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , AllocationStrategy(InAllocationStrategy)
+    , BackingHeap(nullptr)
+    , BackingResource(nullptr)
+    , MappedBaseAddress(nullptr)
+    , BaseGpuVirtualAddress(0)
+    , FreeRanges()
 {
 }
 
-FD3D12PoolAllocator::~FD3D12PoolAllocator()
+FD3D12PoolAllocatorPage::~FD3D12PoolAllocatorPage()
 {
-    Shutdown();
 }
 
-bool FD3D12PoolAllocator::Initialize(uint64 InPageSizeBytes, uint64 InAlignment, uint64 InMaxResourceSize, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, bool bInBackWithHeap)
-{
-    PageSizeBytes = InPageSizeBytes;
-    Alignment = Math::Max<uint64>(InAlignment, 16);
-    MaxResourceSize = InMaxResourceSize;
-    HeapType = InHeapType;
-    InitialState = InInitialState;
-    bBackWithHeap = bInBackWithHeap;
-    NextPageIndex = 1;
-    FragmentedBytes = 0;
-    DefragRecords.Clear();
-    Pages.Clear();
-    return true;
-}
-
-void FD3D12PoolAllocator::Shutdown()
-{
-    SCOPED_LOCK(PagesCS);
-    Pages.Clear(true);
-    DefragRecords.Clear();
-    FragmentedBytes = 0;
-}
-
-bool FD3D12PoolAllocator::CreatePage(uint64 MinimumSize, FPage& OutPage)
+bool FD3D12PoolAllocatorPage::Initialize()
 {
     if (!GetDevice())
     {
         return false;
     }
 
-    const uint64 PageSize = Math::Max(PageSizeBytes, AlignUpValue(MinimumSize, Alignment));
     D3D12_HEAP_DESC HeapDesc = {};
     HeapDesc.Properties.Type                 = HeapType;
     HeapDesc.Properties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapDesc.Properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
     HeapDesc.Properties.VisibleNodeMask      = 1;
     HeapDesc.Properties.CreationNodeMask     = 1;
-    HeapDesc.SizeInBytes                     = PageSize;
+    HeapDesc.SizeInBytes                     = PageSizeBytes;
     HeapDesc.Alignment                       = 0;
     HeapDesc.Flags                           = D3D12_HEAP_FLAG_NONE;
 
@@ -532,82 +458,128 @@ bool FD3D12PoolAllocator::CreatePage(uint64 MinimumSize, FPage& OutPage)
     }
 
     FD3D12ResourceRef NewResource;
-    if (!bBackWithHeap)
+    if (AllocationStrategy == EAllocationStrategy::SuballocatedResource)
     {
-        const D3D12_RESOURCE_DESC Desc = CreateBufferDesc(PageSize);
+        D3D12_RESOURCE_DESC Desc = {};
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = PageSizeBytes;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
         if (!GetDevice()->CreatePlacedResource(NewHeap.Get(), 0, Desc, InitialState, nullptr, NewResource))
         {
             return false;
         }
     }
 
-    OutPage.Heap = NewHeap;
-    OutPage.Resource = NewResource;
-    OutPage.MappedBaseAddress = nullptr;
-    OutPage.BaseGpuVirtualAddress = 0;
-    OutPage.Size = PageSize;
-    OutPage.UsedBytes = 0;
-    OutPage.PageIndex = NextPageIndex++;
-    OutPage.FreeRanges.Clear();
-    OutPage.FreeRanges.Add({0, PageSize});
+    BackingHeap           = NewHeap;
+    BackingResource       = NewResource;
+    MappedBaseAddress     = nullptr;
+    BaseGpuVirtualAddress = 0;
+    UsedBytes             = 0;
 
-    if (NewResource)
+    if (BackingResource)
     {
-        OutPage.BaseGpuVirtualAddress = NewResource->GetGPUVirtualAddress();
+        BaseGpuVirtualAddress = BackingResource->GetGPUVirtualAddress();
         if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
         {
-            OutPage.MappedBaseAddress = static_cast<uint8*>(NewResource->MapRange(0, nullptr));
+            MappedBaseAddress = static_cast<uint8*>(BackingResource->MapRange(0, nullptr));
         }
     }
 
-    OutPage.ResidencyHandle = NewHeap ? NewHeap->GetResidencyHandle() : FD3D12ResidencyHandle{};
+    FreeRanges.Clear();
+    FreeRanges.Add({0, PageSizeBytes});
 
     return true;
 }
 
-bool FD3D12PoolAllocator::AllocateFromPage(FPage& Page, uint64 Size, uint64 InAlignment, uint64& OutOffset)
+bool FD3D12PoolAllocatorPage::TryAllocate(uint64 Size, uint64 InAlignment, uint32 InPageIndex, FD3D12ResourceStorage& OutStorage)
 {
-    for (int32 Index = 0; Index < Page.FreeRanges.Size(); ++Index)
+    for (int32 Index = 0; Index < FreeRanges.Size(); ++Index)
     {
-        const FFreeRange Range = Page.FreeRanges[Index];
-        const uint64 AlignedOffset = AlignUpValue(Range.Offset, InAlignment);
-        const uint64 Padding = AlignedOffset - Range.Offset;
-        const uint64 RequiredSize = Padding + Size;
+        const FFreeRange Range = FreeRanges[Index];
+        
+        const uint64 UsedAlignment = Math::Max<uint64>(InAlignment, Alignment);
+        const uint64 AlignedOffset = Math::AlignUp<uint64>(Range.Offset, UsedAlignment);
+        const uint64 Padding       = AlignedOffset - Range.Offset;
+        const uint64 RequiredSize  = Padding + Size;
 
         if (Range.Size < RequiredSize)
         {
             continue;
         }
 
-        OutOffset = AlignedOffset;
-
         const uint64 TailSize = Range.Size - RequiredSize;
         if (Padding > 0)
         {
-            Page.FreeRanges[Index].Size = Padding;
+            FreeRanges[Index].Size = Padding;
             if (TailSize > 0)
             {
-                Page.FreeRanges.Add({AlignedOffset + Size, TailSize});
+                FreeRanges.Add({AlignedOffset + Size, TailSize});
             }
         }
         else if (TailSize > 0)
         {
-            Page.FreeRanges[Index].Offset = AlignedOffset + Size;
-            Page.FreeRanges[Index].Size = TailSize;
+            FreeRanges[Index].Offset = AlignedOffset + Size;
+            FreeRanges[Index].Size   = TailSize;
         }
         else
         {
-            Page.FreeRanges.RemoveAtSwap(Index);
+            FreeRanges.RemoveAtSwap(Index);
         }
 
-        Page.UsedBytes += Size;
+        UsedBytes += Size;
+
+        OutStorage.Reset();
+        OutStorage.SetSize(Size);
+
+        if (BackingResource)
+        {
+            OutStorage.SetResource(BackingResource);
+            OutStorage.SetGpuVirtualAddress(BackingResource->GetGPUVirtualAddress() + AlignedOffset);
+        }
+        else
+        {
+            OutStorage.SetGpuVirtualAddress(0);
+        }
+
+        OutStorage.SetResourceOffset(AlignedOffset);
+        OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + AlignedOffset) : nullptr);
+
+        FD3D12PoolAllocatorAllocationData AllocationData = {};
+        AllocationData.PageIndex     = InPageIndex;
+        AllocationData.Offset        = AlignedOffset;
+        AllocationData.Size          = Size;
+        AllocationData.bIsStandalone = false;
+        AllocationData.bBackedByHeap = (AllocationStrategy == EAllocationStrategy::SuballocatedHeap);
+        AllocationData.BackingHeap   = BackingHeap.Get();
+        OutStorage.SetPoolAllocationData(AllocationData);
+
         return true;
     }
 
     return false;
 }
 
-void FD3D12PoolAllocator::CoalesceFreeRanges(TArray<FFreeRange>& FreeRanges)
+void FD3D12PoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 Size)
+{
+    if (Size == 0)
+    {
+        return;
+    }
+
+    FreeRanges.Add({Offset, Size});
+    UsedBytes = UsedBytes > Size ? (UsedBytes - Size) : 0;
+    CoalesceFreeRanges();
+}
+
+void FD3D12PoolAllocatorPage::CoalesceFreeRanges()
 {
     if (FreeRanges.IsEmpty())
     {
@@ -622,7 +594,8 @@ void FD3D12PoolAllocator::CoalesceFreeRanges(TArray<FFreeRange>& FreeRanges)
     for (int32 Index = 0; Index + 1 < FreeRanges.Size();)
     {
         FFreeRange& Current = FreeRanges[Index];
-        FFreeRange& Next = FreeRanges[Index + 1];
+        FFreeRange& Next    = FreeRanges[Index + 1];
+
         if (Current.Offset + Current.Size == Next.Offset)
         {
             Current.Size += Next.Size;
@@ -635,17 +608,78 @@ void FD3D12PoolAllocator::CoalesceFreeRanges(TArray<FFreeRange>& FreeRanges)
     }
 }
 
+FD3D12PoolAllocator::FD3D12PoolAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InMaxResourceSize, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy)
+    : FD3D12DeviceChild(InDevice)
+    , PageSizeBytes(InPageSizeBytes)
+    , Alignment(Math::Max<uint64>(InAlignment, 16ull))
+    , MaxResourceSize(InMaxResourceSize)
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , AllocationStrategy(InAllocationStrategy)
+    , FragmentedBytes(0)
+    , DefragRecords()
+    , Pages()
+    , PagesCS()
+{
+}
+
+FD3D12PoolAllocator::~FD3D12PoolAllocator()
+{
+    Shutdown();
+}
+
+void FD3D12PoolAllocator::Shutdown()
+{
+    SCOPED_LOCK(PagesCS);
+
+    for (FD3D12PoolAllocatorPage* Page : Pages)
+    {
+        delete Page;
+    }
+
+    Pages.Clear();
+    DefragRecords.Clear();
+    FragmentedBytes = 0;
+}
+
+FD3D12PoolAllocatorPage* FD3D12PoolAllocator::CreatePage(uint64 MinimumSize, uint32& OutPageIndex)
+{
+    OutPageIndex = UINT32_MAX;
+
+    if (!GetDevice())
+    {
+        return nullptr;
+    }
+
+    const uint64 RequiredSize   = Math::AlignUp<uint64>(MinimumSize, Alignment);
+    const uint64 ActualPageSize = Math::Max(PageSizeBytes, RequiredSize);
+
+    FD3D12PoolAllocatorPage* NewPage = new FD3D12PoolAllocatorPage(GetDevice(), ActualPageSize, Alignment, HeapType, InitialState, AllocationStrategy);
+    if (!NewPage->Initialize())
+    {
+        delete NewPage;
+        return nullptr;
+    }
+
+    OutPageIndex = static_cast<uint32>(Pages.Size());
+    Pages.Add(NewPage);
+
+    return NewPage;
+}
+
 void FD3D12PoolAllocator::ComputeTLSFIndices(uint64 Size, uint32& OutFL, uint32& OutSL) const
 {
     OutFL = 0;
     OutSL = 0;
+
     if (Size == 0)
     {
         return;
     }
 
+    uint64 Temp       = Size;
     uint32 FirstLevel = 0;
-    uint64 Temp = Size;
+
     while (Temp > 1)
     {
         Temp >>= 1;
@@ -653,9 +687,11 @@ void FD3D12PoolAllocator::ComputeTLSFIndices(uint64 Size, uint32& OutFL, uint32&
     }
 
     OutFL = Math::Min<uint32>(FirstLevel, TLSFFirstLevelCount - 1);
-    const uint64 RangeBase = 1ull << OutFL;
+
+    const uint64 RangeBase     = 1ull << OutFL;
     const uint64 OffsetInRange = Size - RangeBase;
-    const uint64 SL = (OffsetInRange * TLSFSecondLevelCount) / RangeBase;
+    const uint64 SL            = (OffsetInRange * TLSFSecondLevelCount) / RangeBase;
+
     OutSL = Math::Min<uint32>(static_cast<uint32>(SL), TLSFSecondLevelCount - 1);
 }
 
@@ -663,8 +699,8 @@ void FD3D12PoolAllocator::AddDefragRecord(uint32 PageIndex, uint64 Offset, uint6
 {
     FDefragRecord Record = {};
     Record.PageIndex = PageIndex;
-    Record.Offset = Offset;
-    Record.Size = Size;
+    Record.Offset    = Offset;
+    Record.Size      = Size;
     DefragRecords.Add(Record);
 }
 
@@ -676,11 +712,30 @@ bool FD3D12PoolAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Req
     }
 
     const uint64 UsedAlignment = Request.Alignment ? Request.Alignment : Alignment;
-    const uint64 SizeAligned = AlignUpValue(Request.Size, UsedAlignment);
+    const uint64 SizeAligned   = Math::AlignUp<uint64>(Request.Size, UsedAlignment);
 
     if (SizeAligned > MaxResourceSize && Request.bAllowCommittedFallback)
     {
-        D3D12_RESOURCE_DESC Desc = Request.bHasResourceDesc ? Request.ResourceDesc : CreateBufferDesc(SizeAligned, Request.ResourceFlags);
+        D3D12_RESOURCE_DESC Desc = {};
+        if (Request.bHasResourceDesc)
+        {
+            Desc = Request.ResourceDesc;
+        }
+        else
+        {
+            Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+            Desc.Flags              = Request.ResourceFlags;
+            Desc.Format             = DXGI_FORMAT_UNKNOWN;
+            Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            Desc.Width              = SizeAligned;
+            Desc.Height             = 1;
+            Desc.DepthOrArraySize   = 1;
+            Desc.MipLevels          = 1;
+            Desc.Alignment          = 0;
+            Desc.SampleDesc.Count   = 1;
+            Desc.SampleDesc.Quality = 0;
+        }
+
         FD3D12ResourceRef NewResource;
         if (!GetDevice()->CreateCommittedResource(Desc, HeapType, Request.InitialState, Request.ClearValue, NewResource))
         {
@@ -693,218 +748,237 @@ bool FD3D12PoolAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Req
             MappedBaseAddress = NewResource->MapRange(0, nullptr);
         }
 
-        OutStorage.InitializeAsStandalone(NewResource, ED3D12ResourceKind::Unknown, HeapType, ED3D12HeapUsage::Any, ED3D12ResourceLifetime::Default, SizeAligned, UsedAlignment);
-        OutStorage.SetSubrangeInfo(0, NewResource->GetGPUVirtualAddress(), MappedBaseAddress);
+        OutStorage.InitStandalone(NewResource);
+        OutStorage.SetSize(SizeAligned);
+        OutStorage.SetResourceOffset(0);
+        OutStorage.SetGpuVirtualAddress(NewResource->GetGPUVirtualAddress());
+        OutStorage.SetMappedBaseAddress(MappedBaseAddress);
 
         FD3D12PoolAllocatorAllocationData AllocationData = {};
-        AllocationData.PageIndex = UINT32_MAX;
-        AllocationData.Offset = 0;
-        AllocationData.Size = SizeAligned;
-        AllocationData.bCommittedAllocation = true;
+        AllocationData.PageIndex     = UINT32_MAX;
+        AllocationData.Offset        = 0;
+        AllocationData.Size          = SizeAligned;
+        AllocationData.bIsStandalone = true;
         AllocationData.bBackedByHeap = false;
-        AllocationData.BackingHeap = nullptr;
-        OutStorage.SetPoolAllocationData(AllocationData);
-        OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::PoolAllocator);
+        AllocationData.BackingHeap   = nullptr;
 
-        if (HeapType == D3D12_HEAP_TYPE_DEFAULT)
-        {
-            OutStorage.SetResidencyHandle(RegisterResidency(GetDevice(), NewResource->GetD3D12Resource(), SizeAligned));
-        }
+        OutStorage.SetPoolAllocationData(AllocationData);
+        OutStorage.SetPoolAllocator(this);
 
         return true;
     }
 
     SCOPED_LOCK(PagesCS);
 
-    uint64 Offset = 0;
-    FPage* SelectedPage = nullptr;
-    for (FPage& Page : Pages)
+    for (uint32 PageIndex = 0; PageIndex < static_cast<uint32>(Pages.Size()); ++PageIndex)
     {
-        if (AllocateFromPage(Page, SizeAligned, UsedAlignment, Offset))
+        FD3D12PoolAllocatorPage* Page = Pages[PageIndex];
+        if (Page && Page->TryAllocate(SizeAligned, UsedAlignment, PageIndex, OutStorage))
         {
-            SelectedPage = &Page;
-            break;
+            OutStorage.SetPoolAllocator(this);
+            return true;
         }
     }
 
-    if (!SelectedPage)
+    uint32 NewPageIndex = UINT32_MAX;
+    FD3D12PoolAllocatorPage* NewPage = CreatePage(SizeAligned, NewPageIndex);
+    if (!NewPage)
     {
-        FPage NewPage;
-        if (!CreatePage(SizeAligned, NewPage))
-        {
-            return false;
-        }
-
-        Pages.Add(NewPage);
-        SelectedPage = &Pages.LastElement();
-        if (!AllocateFromPage(*SelectedPage, SizeAligned, UsedAlignment, Offset))
-        {
-            return false;
-        }
+        return false;
     }
 
-    OutStorage.Reset();
-    OutStorage.SetSize(SizeAligned);
-    OutStorage.SetResidencyHandle(SelectedPage->ResidencyHandle);
-
-    if (SelectedPage->Resource)
+    if (!NewPage->TryAllocate(SizeAligned, UsedAlignment, NewPageIndex, OutStorage))
     {
-        OutStorage.SetResource(SelectedPage->Resource);
-        OutStorage.SetSubrangeInfo(
-            Offset,
-            SelectedPage->BaseGpuVirtualAddress + Offset,
-            SelectedPage->MappedBaseAddress ? (SelectedPage->MappedBaseAddress + Offset) : nullptr);
+        return false;
     }
 
-    FD3D12PoolAllocatorAllocationData AllocationData = {};
-    AllocationData.PageIndex = SelectedPage->PageIndex;
-    AllocationData.Offset = Offset;
-    AllocationData.Size = SizeAligned;
-    AllocationData.bCommittedAllocation = false;
-    AllocationData.bBackedByHeap = bBackWithHeap;
-    AllocationData.BackingHeap = SelectedPage->Heap.Get();
-    OutStorage.SetPoolAllocationData(AllocationData);
-    OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::PoolAllocator);
+    OutStorage.SetPoolAllocator(this);
     return true;
 }
 
 void FD3D12PoolAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
     const FD3D12PoolAllocatorAllocationData Data = Storage.GetPoolAllocationData();
-    if (Data.bCommittedAllocation)
+    if (Data.bIsStandalone)
     {
-        if (Storage.GetResource() && FD3D12RHI::Get())
+        if (Storage.GetResource())
         {
-            FD3D12RHI::Get()->DeferDeletion(Storage.GetResource());
+            FD3D12RHI::DeferDeletion(Storage.GetResource());
         }
+
         return;
     }
 
-    if (Data.bBackedByHeap && Storage.GetResource() && FD3D12RHI::Get())
+    if (Data.bBackedByHeap && Storage.GetResource())
     {
-        FD3D12RHI::Get()->DeferDeletion(Storage.GetResource());
+        FD3D12RHI::DeferDeletion(Storage.GetResource());
     }
 
-    if (FD3D12RHI::Get())
-    {
-        FD3D12RHI::Get()->DeferDeletion(ED3D12DeferredAllocatorType::Pool, this, Storage);
-    }
-    else
-    {
-        ReturnBlockToAllocator(Storage);
-    }
+    FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, this, Data);
 }
 
-void FD3D12PoolAllocator::ReturnBlockToAllocator(const FD3D12ResourceStorage& Storage)
+void FD3D12PoolAllocator::RecycleAllocation(const FD3D12PoolAllocatorAllocationData& Data)
 {
-    const FD3D12PoolAllocatorAllocationData Data = Storage.GetPoolAllocationData();
-    if (Data.bCommittedAllocation || Data.PageIndex == UINT32_MAX || Data.Size == 0)
+    if (Data.bIsStandalone || Data.PageIndex == UINT32_MAX || Data.Size == 0)
     {
         return;
     }
 
     SCOPED_LOCK(PagesCS);
-    for (FPage& Page : Pages)
+    if (Data.PageIndex >= static_cast<uint32>(Pages.Size()))
     {
-        if (Page.PageIndex != Data.PageIndex)
-        {
-            continue;
-        }
-
-        Page.FreeRanges.Add({Data.Offset, Data.Size});
-        Page.UsedBytes = Page.UsedBytes > Data.Size ? (Page.UsedBytes - Data.Size) : 0;
-        CoalesceFreeRanges(Page.FreeRanges);
-        break;
+        return;
     }
+
+    FD3D12PoolAllocatorPage* Page = Pages[Data.PageIndex];
+    if (!Page)
+    {
+        return;
+    }
+    Page->RecycleAllocation(Data.Offset, Data.Size);
 
     DefragRecords.Clear();
     FragmentedBytes = 0;
-    for (const FPage& Page : Pages)
+
+    for (uint32 PageIndex = 0; PageIndex < static_cast<uint32>(Pages.Size()); ++PageIndex)
     {
-        if (Page.FreeRanges.Size() <= 1)
+        const FD3D12PoolAllocatorPage* CurrentPage = Pages[PageIndex];
+        if (!CurrentPage || CurrentPage->GetFreeRanges().Size() <= 1)
         {
             continue;
         }
 
-        for (const FFreeRange& Range : Page.FreeRanges)
+        for (const FD3D12PoolAllocatorPage::FFreeRange& Range : CurrentPage->GetFreeRanges())
         {
             FragmentedBytes += Range.Size;
-            AddDefragRecord(Page.PageIndex, Range.Offset, Range.Size);
+            AddDefragRecord(PageIndex, Range.Offset, Range.Size);
         }
     }
 }
 
-FD3D12BucketAllocator::FD3D12BucketAllocator(FD3D12Device* InDevice)
+FD3D12BucketAllocator::FD3D12BucketAllocator(FD3D12Device* InDevice, const TArray<uint64>& InBucketSizes, uint64 InPageSizeBytes, uint64 InAlignment, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState)
     : FD3D12DeviceChild(InDevice)
-    , PageSizeBytes(0)
-    , Alignment(256)
-    , HeapType(D3D12_HEAP_TYPE_UPLOAD)
-    , InitialState(D3D12_RESOURCE_STATE_GENERIC_READ)
+    , PageSizeBytes(InPageSizeBytes)
+    , Alignment(Math::Max<uint64>(InAlignment, 16ull))
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , Buckets()
+    , BucketsCS()
 {
-}
-
-FD3D12BucketAllocator::~FD3D12BucketAllocator()
-{
-    Shutdown();
-}
-
-bool FD3D12BucketAllocator::Initialize(const TArray<uint64>& InBucketSizes, uint64 InPageSizeBytes, uint64 InAlignment, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState)
-{
-    PageSizeBytes = InPageSizeBytes;
-    Alignment = InAlignment;
-    HeapType = InHeapType;
-    InitialState = InInitialState;
-    Buckets.Clear();
-
     for (uint64 BucketSize : InBucketSizes)
     {
         FBucket& Bucket = Buckets.Emplace();
-        Bucket.BlockSize = BucketSize;
-        Bucket.Pool = new FD3D12PoolAllocator(GetDevice());
-        if (!Bucket.Pool->Initialize(PageSizeBytes, Alignment, BucketSize, HeapType, InitialState, false))
-        {
-            delete Bucket.Pool;
-            Bucket.Pool = nullptr;
-            Buckets.Pop();
-            Shutdown();
-            return false;
-        }
+        Bucket.BlockSize         = Math::Max<uint64>(BucketSize, Alignment);
+        Bucket.BackingResource   = nullptr;
+        Bucket.MappedBaseAddress = nullptr;
+        Bucket.FreeBlocks.Clear();
     }
 
     Buckets.SortWithPredicate([](const FBucket& A, const FBucket& B)
     {
         return A.BlockSize < B.BlockSize;
     });
+}
+
+FD3D12BucketAllocator::~FD3D12BucketAllocator()
+{
+    SCOPED_LOCK(BucketsCS);
+    Buckets.Clear();
+}
+
+bool FD3D12BucketAllocator::CreateBucketResource(uint32 BucketIndex, FBucket& Bucket)
+{
+    if (!GetDevice())
+    {
+        return false;
+    }
+
+    if (Bucket.BackingResource)
+    {
+        return true;
+    }
+
+    const uint64 BlocksPerResource = Math::Max<uint64>(1, PageSizeBytes / Bucket.BlockSize);
+    const uint64 ResourceSize      = BlocksPerResource * Bucket.BlockSize;
+
+    D3D12_RESOURCE_DESC Desc = {};
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.Width              = ResourceSize;
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.MipLevels          = 1;
+    Desc.Alignment          = 0;
+    Desc.SampleDesc.Count   = 1;
+    Desc.SampleDesc.Quality = 0;
+
+    FD3D12ResourceRef Resource;
+    if (!GetDevice()->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
+    {
+        return false;
+    }
+
+    Bucket.BackingResource = Resource;
+    Bucket.MappedBaseAddress = nullptr;
+
+    if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
+    {
+        Bucket.MappedBaseAddress = static_cast<uint8*>(Resource->MapRange(0, nullptr));
+    }
+
+    for (uint64 BlockIndex = 0; BlockIndex < BlocksPerResource; ++BlockIndex)
+    {
+        FD3D12BucketAllocatorAllocationData Block = {};
+        Block.BucketIndex = BucketIndex;
+        Block.SlotIndex   = 0;
+        Block.Offset      = BlockIndex * Bucket.BlockSize;
+        Block.Size        = Bucket.BlockSize;
+        Bucket.FreeBlocks.Add(Block);
+    }
 
     return true;
 }
 
-void FD3D12BucketAllocator::Shutdown()
-{
-    for (FBucket& Bucket : Buckets)
-    {
-        if (Bucket.Pool)
-        {
-            Bucket.Pool->Shutdown();
-            delete Bucket.Pool;
-            Bucket.Pool = nullptr;
-        }
-    }
-    Buckets.Clear();
-}
-
 bool FD3D12BucketAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Request, FD3D12ResourceStorage& OutStorage)
 {
-    for (FBucket& Bucket : Buckets)
+    SCOPED_LOCK(BucketsCS);
+    for (uint32 BucketIndex = 0; BucketIndex < static_cast<uint32>(Buckets.Size()); ++BucketIndex)
     {
-        if (Request.Size <= Bucket.BlockSize)
+        FBucket& Bucket = Buckets[BucketIndex];
+        if (Request.Size > Bucket.BlockSize)
         {
-            if (!Bucket.Pool)
-            {
-                return false;
-            }
-            return Bucket.Pool->TryAllocate(Request, OutStorage);
+            continue;
         }
+
+        if (Bucket.FreeBlocks.IsEmpty() && !CreateBucketResource(BucketIndex, Bucket))
+        {
+            return false;
+        }
+
+        if (Bucket.FreeBlocks.IsEmpty())
+        {
+            return false;
+        }
+
+        const int32 LastIndex = Bucket.FreeBlocks.Size() - 1;
+        FD3D12BucketAllocatorAllocationData AllocationData = Bucket.FreeBlocks[LastIndex];
+        Bucket.FreeBlocks.Pop();
+
+        OutStorage.Reset();
+        OutStorage.SetResource(Bucket.BackingResource);
+        OutStorage.SetResourceOffset(AllocationData.Offset);
+        OutStorage.SetGpuVirtualAddress(Bucket.BackingResource ? (Bucket.BackingResource->GetGPUVirtualAddress() + AllocationData.Offset) : 0);
+        OutStorage.SetMappedBaseAddress(Bucket.MappedBaseAddress ? (Bucket.MappedBaseAddress + AllocationData.Offset) : nullptr);
+        OutStorage.SetSize(Bucket.BlockSize);
+
+        AllocationData.BucketIndex = BucketIndex;
+        AllocationData.SlotIndex   = 0;
+        AllocationData.Size        = Bucket.BlockSize;
+        OutStorage.SetBucketAllocationData(AllocationData);
+        OutStorage.SetBucketAllocator(this);
+        return true;
     }
 
     return false;
@@ -912,45 +986,49 @@ bool FD3D12BucketAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& R
 
 void FD3D12BucketAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    const uint64 AllocationSize = Storage.GetSize();
-    for (FBucket& Bucket : Buckets)
+    const FD3D12BucketAllocatorAllocationData AllocationData = Storage.GetBucketAllocationData();
+    if (AllocationData.BucketIndex == UINT32_MAX || AllocationData.Size == 0)
     {
-        if (AllocationSize <= Bucket.BlockSize)
-        {
-            if (Bucket.Pool)
-            {
-                Bucket.Pool->Deallocate(Storage);
-            }
-            return;
-        }
+        return;
     }
+
+    FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Bucket, this, AllocationData);
 }
 
-void FD3D12BucketAllocator::ReturnBlockToAllocator(const FD3D12ResourceStorage& Storage)
+void FD3D12BucketAllocator::RecycleAllocation(const FD3D12BucketAllocatorAllocationData& Data)
 {
-    const uint64 AllocationSize = Storage.GetSize();
-    for (FBucket& Bucket : Buckets)
+    if (Data.BucketIndex == UINT32_MAX || Data.Size == 0)
     {
-        if (AllocationSize <= Bucket.BlockSize)
-        {
-            if (Bucket.Pool)
-            {
-                Bucket.Pool->ReturnBlockToAllocator(Storage);
-            }
-            return;
-        }
+        return;
     }
+
+    SCOPED_LOCK(BucketsCS);
+    if (Data.BucketIndex >= static_cast<uint32>(Buckets.Size()))
+    {
+        return;
+    }
+
+    FBucket& Bucket = Buckets[Data.BucketIndex];
+    if (!Bucket.BackingResource)
+    {
+        return;
+    }
+
+    FD3D12BucketAllocatorAllocationData AllocationData = Data;
+    AllocationData.SlotIndex = 0;
+    AllocationData.Size      = Bucket.BlockSize;
+    Bucket.FreeBlocks.Add(AllocationData);
 }
 
-FD3D12UploadHeapAllocator::FD3D12UploadHeapAllocator(FD3D12Device* InDevice)
+FD3D12UploadHeapAllocator::FD3D12UploadHeapAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InSmallAllocationThreshold, uint64 InLargeAllocationThreshold)
     : FD3D12DeviceChild(InDevice)
-    , PageSizeBytes(0)
-    , DefaultAlignment(256)
-    , SmallAllocationThreshold(64ull * 1024ull)
-    , LargeAllocationThreshold(2ull * 1024ull * 1024ull)
-    , SmallAllocator(InDevice)
-    , LargeAllocator(InDevice)
-    , ConstantsAllocator(InDevice)
+    , PageSizeBytes(InPageSizeBytes)
+    , DefaultAlignment(InAlignment)
+    , SmallAllocationThreshold(InSmallAllocationThreshold)
+    , LargeAllocationThreshold(InLargeAllocationThreshold)
+    , SmallAllocator(nullptr)
+    , LargeAllocator(nullptr)
+    , ConstantsAllocator(nullptr)
 {
 }
 
@@ -959,54 +1037,79 @@ FD3D12UploadHeapAllocator::~FD3D12UploadHeapAllocator()
     Shutdown();
 }
 
-bool FD3D12UploadHeapAllocator::Initialize(uint64 InPageSizeBytes, uint64 InAlignment, uint64 InSmallAllocationThreshold, uint64 InLargeAllocationThreshold)
+bool FD3D12UploadHeapAllocator::Initialize()
 {
-    PageSizeBytes = InPageSizeBytes;
-    DefaultAlignment = InAlignment;
-    SmallAllocationThreshold = InSmallAllocationThreshold;
-    LargeAllocationThreshold = InLargeAllocationThreshold;
+    Shutdown();
 
-    if (!SmallAllocator.Initialize(PageSizeBytes, DefaultAlignment, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, false))
+    SmallAllocator = new FD3D12MultiBuddyAllocator(GetDevice(), PageSizeBytes, DefaultAlignment, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, EAllocationStrategy::SuballocatedResource);
+    if (!SmallAllocator || !SmallAllocator->Initialize())
     {
+        Shutdown();
         return false;
     }
 
-    if (!LargeAllocator.Initialize(PageSizeBytes, DefaultAlignment, LargeAllocationThreshold, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, false))
+    LargeAllocator = new FD3D12PoolAllocator( GetDevice(), PageSizeBytes, DefaultAlignment, LargeAllocationThreshold, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, EAllocationStrategy::SuballocatedResource);
+    if (!LargeAllocator)
     {
+        Shutdown();
         return false;
     }
 
-    return ConstantsAllocator.Initialize(PageSizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, false);
+    ConstantsAllocator = new FD3D12MultiBuddyAllocator(GetDevice(), PageSizeBytes, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, EAllocationStrategy::SuballocatedResource);
+    if (!ConstantsAllocator || !ConstantsAllocator->Initialize())
+    {
+        Shutdown();
+        return false;
+    }
+
+    return true;
 }
 
 void FD3D12UploadHeapAllocator::Shutdown()
 {
-    ConstantsAllocator.Shutdown();
-    LargeAllocator.Shutdown();
-    SmallAllocator.Shutdown();
+    if (ConstantsAllocator)
+    {
+        ConstantsAllocator->Shutdown();
+        delete ConstantsAllocator;
+        ConstantsAllocator = nullptr;
+    }
+
+    if (LargeAllocator)
+    {
+        LargeAllocator->Shutdown();
+        delete LargeAllocator;
+        LargeAllocator = nullptr;
+    }
+
+    if (SmallAllocator)
+    {
+        SmallAllocator->Shutdown();
+        delete SmallAllocator;
+        SmallAllocator = nullptr;
+    }
 }
 
 void* FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
 {
     FD3D12ResourceAllocationRequest Request = {};
-    Request.ResourceType = ED3D12ResourceType::Buffer;
-    Request.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-    Request.InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-    Request.ResourceFlags = D3D12_RESOURCE_FLAG_NONE;
-    Request.Size = Size;
-    Request.Alignment = Alignment ? Alignment : DefaultAlignment;
+    Request.ResourceType            = ED3D12ResourceType::Buffer;
+    Request.HeapType                = D3D12_HEAP_TYPE_UPLOAD;
+    Request.InitialState            = D3D12_RESOURCE_STATE_GENERIC_READ;
+    Request.ResourceFlags           = D3D12_RESOURCE_FLAG_NONE;
+    Request.Size                    = Size;
+    Request.Alignment               = Alignment ? Alignment : DefaultAlignment;
     Request.bAllowCommittedFallback = true;
 
     if (Size <= SmallAllocationThreshold)
     {
-        if (!SmallAllocator.TryAllocate(Request, OutStorage))
+        if (!SmallAllocator || !SmallAllocator->TryAllocate(Request, OutStorage))
         {
             return nullptr;
         }
     }
     else
     {
-        if (!LargeAllocator.TryAllocate(Request, OutStorage))
+        if (!LargeAllocator || !LargeAllocator->TryAllocate(Request, OutStorage))
         {
             return nullptr;
         }
@@ -1018,15 +1121,15 @@ void* FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 Alignment, FD3D12R
 void* FD3D12UploadHeapAllocator::AllocateConstants(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
 {
     FD3D12ResourceAllocationRequest Request = {};
-    Request.ResourceType = ED3D12ResourceType::Buffer;
-    Request.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-    Request.InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
-    Request.ResourceFlags = D3D12_RESOURCE_FLAG_NONE;
-    Request.Size = Size;
-    Request.Alignment = Alignment ? Alignment : D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+    Request.ResourceType            = ED3D12ResourceType::Buffer;
+    Request.HeapType                = D3D12_HEAP_TYPE_UPLOAD;
+    Request.InitialState            = D3D12_RESOURCE_STATE_GENERIC_READ;
+    Request.ResourceFlags           = D3D12_RESOURCE_FLAG_NONE;
+    Request.Size                    = Size;
+    Request.Alignment               = Alignment ? Alignment : D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
     Request.bAllowCommittedFallback = true;
 
-    if (!ConstantsAllocator.TryAllocate(Request, OutStorage))
+    if (!ConstantsAllocator || !ConstantsAllocator->TryAllocate(Request, OutStorage))
     {
         return nullptr;
     }
@@ -1034,97 +1137,82 @@ void* FD3D12UploadHeapAllocator::AllocateConstants(uint64 Size, uint64 Alignment
     return OutStorage.GetMappedBaseAddress();
 }
 
-bool FD3D12UploadHeapAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Request, FD3D12ResourceStorage& OutStorage)
-{
-    return Allocate(Request.Size, Request.Alignment, OutStorage) != nullptr;
-}
-
 void FD3D12UploadHeapAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    if (Storage.GetOwnerType() == ED3D12ResourceStorageOwnerType::PoolAllocator)
+    if (Storage.GetAllocatorType() == ED3D12AllocatorType::PoolAllocator)
     {
-        FD3D12ResourceStorage CopiedResourceStorage;
-        CopiedResourceStorage.CopyFrom(Storage);
-        CopiedResourceStorage.SetOwner(&LargeAllocator, ED3D12ResourceStorageOwnerType::PoolAllocator);
-        LargeAllocator.Deallocate(CopiedResourceStorage);
-        CopiedResourceStorage.SetOwner(nullptr, ED3D12ResourceStorageOwnerType::None);
-        return;
-    }
-
-    if (Storage.GetOwnerType() == ED3D12ResourceStorageOwnerType::MultiBuddyAllocator)
-    {
-        FD3D12ResourceStorage CopiedResourceStorage;
-        CopiedResourceStorage.CopyFrom(Storage);
-        CopiedResourceStorage.SetOwner(&SmallAllocator, ED3D12ResourceStorageOwnerType::MultiBuddyAllocator);
-        SmallAllocator.Deallocate(CopiedResourceStorage);
-        CopiedResourceStorage.SetOwner(nullptr, ED3D12ResourceStorageOwnerType::None);
-        return;
-    }
-
-    if (Storage.GetResource() && FD3D12RHI::Get())
-    {
-        FD3D12RHI::Get()->DeferDeletion(Storage.GetResource());
-    }
-}
-
-FD3D12LinearAllocator::FD3D12LinearAllocator(FD3D12Device* InDevice)
-    : FD3D12DeviceChild(InDevice)
-    , PageSizeBytes(0)
-    , HeapType(D3D12_HEAP_TYPE_UPLOAD)
-    , InitialState(D3D12_RESOURCE_STATE_GENERIC_READ)
-    , NextPageIndex(1)
-    , UploadHeapAllocator(nullptr)
-{
-}
-
-FD3D12LinearAllocator::~FD3D12LinearAllocator()
-{
-    Shutdown();
-}
-
-bool FD3D12LinearAllocator::Initialize(uint64 InPageSizeBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, FD3D12UploadHeapAllocator* InUploadHeapAllocator)
-{
-    PageSizeBytes = InPageSizeBytes;
-    HeapType = InHeapType;
-    InitialState = InInitialState;
-    UploadHeapAllocator = InUploadHeapAllocator;
-    NextPageIndex = 1;
-    Pages.Clear();
-    return true;
-}
-
-void FD3D12LinearAllocator::Shutdown()
-{
-    SCOPED_LOCK(PagesCS);
-    for (FPage& Page : Pages)
-    {
-        RetirePage(Page);
-    }
-    Pages.Clear();
-}
-
-bool FD3D12LinearAllocator::CreatePage(FPage& OutPage)
-{
-    OutPage = {};
-    OutPage.PageIndex = NextPageIndex++;
-
-    if (HeapType == D3D12_HEAP_TYPE_UPLOAD && UploadHeapAllocator)
-    {
-        if (UploadHeapAllocator->Allocate(PageSizeBytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, OutPage.BackingResourceStorage) == nullptr)
+        if (!LargeAllocator)
         {
-            return false;
+            return;
         }
-        return true;
+
+        LargeAllocator->Deallocate(Storage);
+        return;
     }
 
-    if (!GetDevice())
+    if (Storage.GetAllocatorType() == ED3D12AllocatorType::MultiBuddyAllocator)
+    {
+        if (!SmallAllocator)
+        {
+            return;
+        }
+
+        SmallAllocator->Deallocate(Storage);
+        return;
+    }
+
+    if (Storage.GetResource())
+    {
+        FD3D12RHI::DeferDeletion(Storage.GetResource());
+    }
+}
+
+FD3D12LinearAllocator::FD3D12LinearAllocatorPage::FD3D12LinearAllocatorPage(FD3D12Device* InDevice, uint64 InPageSizeBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, uint32 InPageIndex)
+    : Device(InDevice)
+    , PageSizeBytes(InPageSizeBytes)
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , CurrentOffset(0)
+    , ActiveAllocations(0)
+    , PageIndex(InPageIndex)
+    , BackingResourceStorage(InDevice)
+{
+}
+
+bool FD3D12LinearAllocator::FD3D12LinearAllocatorPage::Initialize()
+{
+    if (!Device)
     {
         return false;
     }
 
+    if (HeapType == D3D12_HEAP_TYPE_UPLOAD)
+    {
+        FD3D12UploadHeapAllocator* UploadHeapAllocator = Device->GetUploadHeapAllocator();
+        if (!UploadHeapAllocator)
+        {
+            return false;
+        }
+
+        UploadHeapAllocator->Allocate(PageSizeBytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, BackingResourceStorage);
+        return BackingResourceStorage.GetResource() != nullptr;
+    }
+
+    D3D12_RESOURCE_DESC Desc = {};
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.Width              = PageSizeBytes;
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.MipLevels          = 1;
+    Desc.Alignment          = 0;
+    Desc.SampleDesc.Count   = 1;
+    Desc.SampleDesc.Quality = 0;
+
     FD3D12ResourceRef Resource;
-    const D3D12_RESOURCE_DESC Desc = CreateBufferDesc(PageSizeBytes);
-    if (!GetDevice()->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
+    if (!Device->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
     {
         return false;
     }
@@ -1135,25 +1223,97 @@ bool FD3D12LinearAllocator::CreatePage(FPage& OutPage)
         MappedBaseAddress = Resource->MapRange(0, nullptr);
     }
 
-    OutPage.BackingResourceStorage.InitializeAsStandalone(Resource, ED3D12ResourceKind::Buffer, HeapType, ED3D12HeapUsage::BufferOnly, ED3D12ResourceLifetime::Transient, PageSizeBytes, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
-    OutPage.BackingResourceStorage.SetSubrangeInfo(0, Resource->GetGPUVirtualAddress(), MappedBaseAddress);
+    BackingResourceStorage.InitStandalone(Resource);
+    BackingResourceStorage.SetSize(PageSizeBytes);
+    BackingResourceStorage.SetResourceOffset(0);
+    BackingResourceStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
+    BackingResourceStorage.SetMappedBaseAddress(MappedBaseAddress);
     return true;
 }
 
-void FD3D12LinearAllocator::RetirePage(FPage& Page)
+bool FD3D12LinearAllocator::FD3D12LinearAllocatorPage::TryAllocate(uint64 Size, uint64 Alignment, uint64& OutOffset)
 {
-    if (Page.BackingResourceStorage.GetOwner() != nullptr)
+    const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16ull);
+    const uint64 AlignedOffset = Math::AlignUp<uint64>(CurrentOffset, UsedAlignment);
+    if (AlignedOffset + Size > PageSizeBytes)
     {
-        Page.BackingResourceStorage.ReleaseResource();
-    }
-    else if (Page.BackingResourceStorage.GetResource() && FD3D12RHI::Get())
-    {
-        FD3D12RHI::Get()->DeferDeletion(Page.BackingResourceStorage.GetResource());
+        return false;
     }
 
-    Page.BackingResourceStorage = FD3D12ResourceStorage{};
-    Page.CurrentOffset = 0;
-    Page.ActiveAllocations = 0;
+    OutOffset = AlignedOffset;
+    CurrentOffset = AlignedOffset + Size;
+    ++ActiveAllocations;
+    return true;
+}
+
+void FD3D12LinearAllocator::FD3D12LinearAllocatorPage::ReleaseAllocation()
+{
+    if (ActiveAllocations > 0)
+    {
+        --ActiveAllocations;
+    }
+}
+
+void FD3D12LinearAllocator::FD3D12LinearAllocatorPage::Reset()
+{
+    BackingResourceStorage.Reset();
+    CurrentOffset = 0;
+    ActiveAllocations = 0;
+}
+
+FD3D12LinearAllocator::FD3D12LinearAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState)
+    : FD3D12DeviceChild(InDevice)
+    , PageSizeBytes(InPageSizeBytes)
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , NextPageIndex(1)
+    , Pages()
+    , PagesCS()
+{
+}
+
+FD3D12LinearAllocator::~FD3D12LinearAllocator()
+{
+    SCOPED_LOCK(PagesCS);
+    for (FD3D12LinearAllocatorPage* Page : Pages)
+    {
+        RetirePage(Page);
+        delete Page;
+    }
+
+    Pages.Clear();
+}
+
+FD3D12LinearAllocator::FD3D12LinearAllocatorPage* FD3D12LinearAllocator::CreatePage()
+{
+    FD3D12LinearAllocatorPage* NewPage = new FD3D12LinearAllocatorPage(GetDevice(), PageSizeBytes, HeapType, InitialState, NextPageIndex++);
+    if (!NewPage->Initialize())
+    {
+        delete NewPage;
+        return nullptr;
+    }
+
+    return NewPage;
+}
+
+void FD3D12LinearAllocator::RetirePage(FD3D12LinearAllocatorPage* Page)
+{
+    if (!Page)
+    {
+        return;
+    }
+
+    FD3D12ResourceStorage& BackingResourceStorage = Page->GetBackingResourceStorage();
+    if (BackingResourceStorage.GetAllocator() != nullptr)
+    {
+        BackingResourceStorage.ReleaseResource();
+    }
+    else if (BackingResourceStorage.GetResource())
+    {
+        FD3D12RHI::DeferDeletion(BackingResourceStorage.GetResource());
+    }
+
+    Page->Reset();
 }
 
 void* FD3D12LinearAllocator::Allocate(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
@@ -1163,13 +1323,25 @@ void* FD3D12LinearAllocator::Allocate(uint64 Size, uint64 Alignment, FD3D12Resou
         return nullptr;
     }
 
-    const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16);
-    const uint64 SizeAligned = AlignUpValue(Size, UsedAlignment);
+    const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16ull);
+    const uint64 SizeAligned = Math::AlignUp<uint64>(Size, UsedAlignment);
 
     if (SizeAligned > PageSizeBytes)
     {
         FD3D12ResourceRef Resource;
-        const D3D12_RESOURCE_DESC Desc = CreateBufferDesc(SizeAligned);
+
+        D3D12_RESOURCE_DESC Desc = {};
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = SizeAligned;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
         if (!GetDevice()->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
         {
             return nullptr;
@@ -1181,77 +1353,87 @@ void* FD3D12LinearAllocator::Allocate(uint64 Size, uint64 Alignment, FD3D12Resou
             MappedBaseAddress = Resource->MapRange(0, nullptr);
         }
 
-        OutStorage.InitializeAsStandalone(Resource, ED3D12ResourceKind::Buffer, HeapType, ED3D12HeapUsage::BufferOnly, ED3D12ResourceLifetime::Transient, SizeAligned, UsedAlignment);
-        OutStorage.SetSubrangeInfo(0, Resource->GetGPUVirtualAddress(), MappedBaseAddress);
-        OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::LinearAllocator);
+        OutStorage.InitStandalone(Resource);
+        OutStorage.SetSize(SizeAligned);
+        OutStorage.SetResourceOffset(0);
+        OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
+        OutStorage.SetMappedBaseAddress(MappedBaseAddress);
+        OutStorage.SetLinearAllocator(this);
 
         FD3D12LinearAllocatorAllocationData AllocationData = {};
-        AllocationData.PageIndex = UINT32_MAX;
-        AllocationData.PageOffset = 0;
-        AllocationData.AllocationSize = SizeAligned;
+        AllocationData.PageIndex         = UINT32_MAX;
+        AllocationData.PageOffset        = 0;
+        AllocationData.AllocationSize    = SizeAligned;
         AllocationData.bDirectAllocation = true;
+
         OutStorage.SetLinearAllocationData(AllocationData);
         return OutStorage.GetMappedBaseAddress();
     }
 
     SCOPED_LOCK(PagesCS);
 
-    FPage* SelectedPage = nullptr;
+    FD3D12LinearAllocatorPage* SelectedPage = nullptr;
     uint64 AllocationOffset = 0;
-    for (FPage& Page : Pages)
+
+    for (FD3D12LinearAllocatorPage* Page : Pages)
     {
-        const uint64 AlignedOffset = AlignUpValue(Page.CurrentOffset, UsedAlignment);
-        if (AlignedOffset + SizeAligned <= PageSizeBytes)
+        if (!Page)
         {
-            SelectedPage = &Page;
-            AllocationOffset = AlignedOffset;
+            continue;
+        }
+
+        if (Page->TryAllocate(SizeAligned, UsedAlignment, AllocationOffset))
+        {
+            SelectedPage = Page;
             break;
         }
     }
 
     if (!SelectedPage)
     {
-        FPage NewPage;
-        if (!CreatePage(NewPage))
+        SelectedPage = CreatePage();
+        if (!SelectedPage)
         {
             return nullptr;
         }
 
-        Pages.Add(Move(NewPage));
-        SelectedPage = &Pages.LastElement();
-        AllocationOffset = 0;
+        if (!SelectedPage->TryAllocate(SizeAligned, UsedAlignment, AllocationOffset))
+        {
+            delete SelectedPage;
+            return nullptr;
+        }
+
+        Pages.Add(SelectedPage);
     }
 
-    const uint64 PageResourceOffset = SelectedPage->BackingResourceStorage.GetResourceOffset() + AllocationOffset;
-    const D3D12_GPU_VIRTUAL_ADDRESS PageGpuAddress = SelectedPage->BackingResourceStorage.GetGpuVirtualAddress() + AllocationOffset;
-    uint8* MappedBase = static_cast<uint8*>(SelectedPage->BackingResourceStorage.GetMappedBaseAddress());
+    const FD3D12ResourceStorage& BackingStorage = SelectedPage->GetBackingResourceStorage();
+    const uint64 PageResourceOffset = BackingStorage.GetResourceOffset() + AllocationOffset;
+    const D3D12_GPU_VIRTUAL_ADDRESS BaseGpuAddress = BackingStorage.GetGpuVirtualAddress();
+    const D3D12_GPU_VIRTUAL_ADDRESS PageGpuAddress = BaseGpuAddress ? (BaseGpuAddress + AllocationOffset) : 0;
+    uint8* MappedBase = static_cast<uint8*>(BackingStorage.GetMappedBaseAddress());
 
     OutStorage.Reset();
-    if (FD3D12Resource* PageResource = SelectedPage->BackingResourceStorage.GetResource())
+
+    if (FD3D12Resource* PageResource = BackingStorage.GetResource())
     {
         FD3D12ResourceRef ResourceRef = PageResource;
         OutStorage.SetResource(ResourceRef);
     }
-    OutStorage.SetSubrangeInfo(PageResourceOffset, PageGpuAddress, MappedBase ? (MappedBase + AllocationOffset) : nullptr);
+
+    OutStorage.SetResourceOffset(PageResourceOffset);
+    OutStorage.SetGpuVirtualAddress(PageGpuAddress);
+    OutStorage.SetMappedBaseAddress(MappedBase ? (MappedBase + AllocationOffset) : nullptr);
     OutStorage.SetSize(SizeAligned);
-    OutStorage.SetResidencyHandle(SelectedPage->BackingResourceStorage.GetResidencyHandle());
-    OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::LinearAllocator);
+    OutStorage.SetLinearAllocator(this);
 
     FD3D12LinearAllocatorAllocationData AllocationData = {};
-    AllocationData.PageIndex = SelectedPage->PageIndex;
-    AllocationData.PageOffset = AllocationOffset;
-    AllocationData.AllocationSize = SizeAligned;
+    AllocationData.PageIndex         = SelectedPage->GetPageIndex();
+    AllocationData.PageOffset        = AllocationOffset;
+    AllocationData.AllocationSize    = SizeAligned;
     AllocationData.bDirectAllocation = false;
     OutStorage.SetLinearAllocationData(AllocationData);
 
-    SelectedPage->CurrentOffset = AllocationOffset + SizeAligned;
-    SelectedPage->ActiveAllocations += 1;
     return OutStorage.GetMappedBaseAddress();
-}
-
-bool FD3D12LinearAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Request, FD3D12ResourceStorage& OutStorage)
-{
-    return Allocate(Request.Size, Request.Alignment, OutStorage) != nullptr || (OutStorage.IsValid() && OutStorage.GetMappedBaseAddress() == nullptr);
 }
 
 void FD3D12LinearAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
@@ -1260,39 +1442,39 @@ void FD3D12LinearAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 
     if (Data.bDirectAllocation)
     {
-        if (Storage.GetResource() && FD3D12RHI::Get())
+        if (Storage.GetResource())
         {
-            FD3D12RHI::Get()->DeferDeletion(Storage.GetResource());
+            FD3D12RHI::DeferDeletion(Storage.GetResource());
         }
+
         return;
     }
 
     SCOPED_LOCK(PagesCS);
+
     for (int32 Index = 0; Index < Pages.Size(); ++Index)
     {
-        FPage& Page = Pages[Index];
-        if (Page.PageIndex != Data.PageIndex)
+        FD3D12LinearAllocatorPage* Page = Pages[Index];
+        if (!Page || Page->GetPageIndex() != Data.PageIndex)
         {
             continue;
         }
 
-        if (Page.ActiveAllocations > 0)
-        {
-            --Page.ActiveAllocations;
-        }
-
-        if (Page.ActiveAllocations == 0)
+        Page->ReleaseAllocation();
+        if (Page->GetActiveAllocations() == 0)
         {
             RetirePage(Page);
+            delete Page;
             Pages.RemoveAtSwap(Index);
         }
+
         return;
     }
 }
 
 FD3D12DynamicConstantsAllocator::FD3D12DynamicConstantsAllocator(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
-    , LinearAllocator(InDevice)
+    , LinearAllocator(nullptr)
 {
 }
 
@@ -1303,54 +1485,78 @@ FD3D12DynamicConstantsAllocator::~FD3D12DynamicConstantsAllocator()
 
 bool FD3D12DynamicConstantsAllocator::Initialize(uint64 InPageSizeBytes, FD3D12UploadHeapAllocator* InUploadHeapAllocator)
 {
-    return LinearAllocator.Initialize(InPageSizeBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, InUploadHeapAllocator);
+    UNREFERENCED_VARIABLE(InUploadHeapAllocator);
+
+    Shutdown();
+    LinearAllocator = new FD3D12LinearAllocator(GetDevice(), InPageSizeBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+    return LinearAllocator != nullptr;
 }
 
 void FD3D12DynamicConstantsAllocator::Shutdown()
 {
-    LinearAllocator.Shutdown();
+    if (LinearAllocator)
+    {
+        delete LinearAllocator;
+        LinearAllocator = nullptr;
+    }
 }
 
 void* FD3D12DynamicConstantsAllocator::Allocate(uint64 Size, FD3D12ResourceStorage& OutStorage)
 {
-    return LinearAllocator.Allocate(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, OutStorage);
-}
+    if (!LinearAllocator)
+    {
+        return nullptr;
+    }
 
-bool FD3D12DynamicConstantsAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Request, FD3D12ResourceStorage& OutStorage)
-{
-    return Allocate(Request.Size, OutStorage) != nullptr || OutStorage.IsValid();
+    return LinearAllocator->Allocate(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT, OutStorage);
 }
 
 void FD3D12DynamicConstantsAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    LinearAllocator.Deallocate(Storage);
+    if (LinearAllocator)
+    {
+        LinearAllocator->Deallocate(Storage);
+    }
 }
 
-FD3D12BufferAllocatorPool::FD3D12BufferAllocatorPool(FD3D12Device* InDevice)
+FD3D12BufferAllocatorPool::FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D12_HEAP_TYPE InHeapType, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize, D3D12_RESOURCE_STATES InInitialState)
     : FD3D12DeviceChild(InDevice)
-    , HeapType(D3D12_HEAP_TYPE_DEFAULT)
-    , InitialState(D3D12_RESOURCE_STATE_COMMON)
-    , MaxSuballocationSize(0)
-    , MultiBuddyAllocator(InDevice)
+    , HeapType(InHeapType)
+    , InitialState(InInitialState)
+    , PageSizeBytes(InPageSizeBytes)
+    , MinBlockBytes(InMinBlockBytes)
+    , MaxSuballocationSize(InMaxSuballocationSize)
+    , MultiBuddyAllocator(nullptr)
 {
 }
 
 FD3D12BufferAllocatorPool::~FD3D12BufferAllocatorPool()
 {
-    Shutdown();
+    ReleaseAllocator();
 }
 
-bool FD3D12BufferAllocatorPool::Initialize(D3D12_HEAP_TYPE InHeapType, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize, D3D12_RESOURCE_STATES InInitialState)
+bool FD3D12BufferAllocatorPool::Initialize()
 {
-    HeapType = InHeapType;
-    InitialState = InInitialState;
-    MaxSuballocationSize = InMaxSuballocationSize;
-    return MultiBuddyAllocator.Initialize(InPageSizeBytes, InMinBlockBytes, HeapType, InitialState, false);
+    ReleaseAllocator();
+
+    MultiBuddyAllocator = new FD3D12MultiBuddyAllocator(GetDevice(), PageSizeBytes, MinBlockBytes, HeapType, InitialState, EAllocationStrategy::SuballocatedResource);
+    if (!MultiBuddyAllocator || !MultiBuddyAllocator->Initialize())
+    {
+        ReleaseAllocator();
+        return false;
+    }
+
+    return true;
 }
 
-void FD3D12BufferAllocatorPool::Shutdown()
+void FD3D12BufferAllocatorPool::ReleaseAllocator()
 {
-    MultiBuddyAllocator.Shutdown();
+    if (MultiBuddyAllocator)
+    {
+        MultiBuddyAllocator->Shutdown();
+        delete MultiBuddyAllocator;
+        MultiBuddyAllocator = nullptr;
+    }
 }
 
 bool FD3D12BufferAllocatorPool::Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const
@@ -1366,7 +1572,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         return false;
     }
 
-    const uint64 Size = ResourceDesc.Width;
+    const uint64 Size      = ResourceDesc.Width;
     const uint64 Alignment = InAlignment ? InAlignment : 16;
 
     if (Size > MaxSuballocationSize)
@@ -1383,29 +1589,32 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
             MappedBaseAddress = Resource->MapRange(0, nullptr);
         }
 
-        OutStorage.InitializeAsStandalone(Resource, ED3D12ResourceKind::Buffer, InHeapType, ED3D12HeapUsage::BufferOnly, ED3D12ResourceLifetime::Default, Size, Alignment);
-        OutStorage.SetSubrangeInfo(0, Resource->GetGPUVirtualAddress(), MappedBaseAddress);
+        OutStorage.InitStandalone(Resource);
+        OutStorage.SetSize(Size);
+        OutStorage.SetResourceOffset(0);
+        OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
+        OutStorage.SetMappedBaseAddress(MappedBaseAddress);
 
         FD3D12PoolAllocatorAllocationData AllocationData = {};
-        AllocationData.PageIndex = UINT32_MAX;
-        AllocationData.Size = Size;
-        AllocationData.bCommittedAllocation = true;
+        AllocationData.PageIndex     = UINT32_MAX;
+        AllocationData.Size          = Size;
+        AllocationData.bIsStandalone = true;
+        
         OutStorage.SetPoolAllocationData(AllocationData);
-
         return true;
     }
 
     FD3D12ResourceAllocationRequest Request = {};
-    Request.ResourceType = ED3D12ResourceType::Buffer;
-    Request.HeapType = InHeapType;
-    Request.InitialState = InInitialState;
-    Request.ResourceFlags = ResourceDesc.Flags;
-    Request.Size = Size;
-    Request.Alignment = Alignment;
+    Request.ResourceType     = ED3D12ResourceType::Buffer;
+    Request.HeapType         = InHeapType;
+    Request.InitialState     = InInitialState;
+    Request.ResourceFlags    = ResourceDesc.Flags;
+    Request.Size             = Size;
+    Request.Alignment        = Alignment;
     Request.bHasResourceDesc = true;
-    Request.ResourceDesc = ResourceDesc;
+    Request.ResourceDesc     = ResourceDesc;
 
-    if (!MultiBuddyAllocator.TryAllocate(Request, OutStorage))
+    if (!MultiBuddyAllocator || !MultiBuddyAllocator->TryAllocate(Request, OutStorage))
     {
         return false;
     }
@@ -1415,50 +1624,65 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
 
 bool FD3D12BufferAllocatorPool::TryAllocate(const FD3D12ResourceAllocationRequest& Request, FD3D12ResourceStorage& OutStorage)
 {
-    const D3D12_RESOURCE_DESC Desc = Request.bHasResourceDesc ? Request.ResourceDesc : CreateBufferDesc(Request.Size, Request.ResourceFlags);
+    D3D12_RESOURCE_DESC Desc = {};
+    if (Request.bHasResourceDesc)
+    {
+        Desc = Request.ResourceDesc;
+    }
+    else
+    {
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = Request.ResourceFlags;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = Request.Size;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
+    }
+
     return TryAllocate(Request.HeapType, Desc, EBufferFlags::None, Request.InitialState, Request.Alignment, OutStorage);
 }
 
 void FD3D12BufferAllocatorPool::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    if (Storage.GetOwnerType() == ED3D12ResourceStorageOwnerType::MultiBuddyAllocator && Storage.GetOwner())
+    if (Storage.GetAllocatorType() == ED3D12AllocatorType::MultiBuddyAllocator && Storage.GetAllocator())
     {
-        static_cast<FD3D12MultiBuddyAllocator*>(Storage.GetOwner())->Deallocate(Storage);
+        static_cast<FD3D12MultiBuddyAllocator*>(Storage.GetAllocator())->Deallocate(Storage);
         return;
     }
 
-    if (Storage.GetOwnerType() == ED3D12ResourceStorageOwnerType::PoolAllocator && Storage.GetOwner())
+    if (Storage.GetAllocatorType() == ED3D12AllocatorType::PoolAllocator && Storage.GetAllocator())
     {
-        static_cast<FD3D12PoolAllocator*>(Storage.GetOwner())->Deallocate(Storage);
+        static_cast<FD3D12PoolAllocator*>(Storage.GetAllocator())->Deallocate(Storage);
         return;
     }
 
-    if (Storage.GetResource() && FD3D12RHI::Get())
+    if (Storage.GetResource())
     {
-        FD3D12RHI::Get()->DeferDeletion(Storage.GetResource());
+        FD3D12RHI::DeferDeletion(Storage.GetResource());
     }
 }
 
-FD3D12BufferAllocator::FD3D12BufferAllocator(FD3D12Device* InDevice)
+FD3D12BufferAllocator::FD3D12BufferAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize)
     : FD3D12DeviceChild(InDevice)
-    , PageSizeBytes(0)
-    , MinBlockBytes(0)
-    , MaxSuballocationSize(0)
+    , PageSizeBytes(InPageSizeBytes)
+    , MinBlockBytes(InMinBlockBytes)
+    , MaxSuballocationSize(InMaxSuballocationSize)
 {
 }
 
 FD3D12BufferAllocator::~FD3D12BufferAllocator()
 {
-    Shutdown();
+    ReleasePools();
 }
 
-bool FD3D12BufferAllocator::Initialize(uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize)
+bool FD3D12BufferAllocator::Initialize()
 {
-    PageSizeBytes = InPageSizeBytes;
-    MinBlockBytes = InMinBlockBytes;
-    MaxSuballocationSize = InMaxSuballocationSize;
-
-    Shutdown();
+    ReleasePools();
 
     const D3D12_HEAP_TYPE HeapTypes[] =
     {
@@ -1476,11 +1700,11 @@ bool FD3D12BufferAllocator::Initialize(uint64 InPageSizeBytes, uint64 InMinBlock
 
     for (uint32 Index = 0; Index < ARRAY_COUNT(HeapTypes); ++Index)
     {
-        FD3D12BufferAllocatorPool* Pool = new FD3D12BufferAllocatorPool(GetDevice());
-        if (!Pool->Initialize(HeapTypes[Index], PageSizeBytes, MinBlockBytes, MaxSuballocationSize, InitialStates[Index]))
+        FD3D12BufferAllocatorPool* Pool = new FD3D12BufferAllocatorPool(GetDevice(), HeapTypes[Index], PageSizeBytes, MinBlockBytes, MaxSuballocationSize, InitialStates[Index]);
+        if (!Pool->Initialize())
         {
             delete Pool;
-            Shutdown();
+            ReleasePools();
             return false;
         }
 
@@ -1490,13 +1714,14 @@ bool FD3D12BufferAllocator::Initialize(uint64 InPageSizeBytes, uint64 InMinBlock
     return true;
 }
 
-void FD3D12BufferAllocator::Shutdown()
+void FD3D12BufferAllocator::ReleasePools()
 {
     SCOPED_LOCK(PoolsCS);
     for (FD3D12BufferAllocatorPool* Pool : Pools)
     {
         delete Pool;
     }
+
     Pools.Clear();
 }
 
@@ -1517,8 +1742,8 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
         }
     }
 
-    FD3D12BufferAllocatorPool* NewPool = new FD3D12BufferAllocatorPool(GetDevice());
-    if (!NewPool->Initialize(InHeapType, PageSizeBytes, MinBlockBytes, MaxSuballocationSize, InitialState))
+    FD3D12BufferAllocatorPool* NewPool = new FD3D12BufferAllocatorPool(GetDevice(), InHeapType, PageSizeBytes, MinBlockBytes, MaxSuballocationSize, InitialState);
+    if (!NewPool->Initialize())
     {
         delete NewPool;
         return false;
@@ -1530,33 +1755,52 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
 
 bool FD3D12BufferAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& Request, FD3D12ResourceStorage& OutStorage)
 {
-    D3D12_RESOURCE_DESC Desc = Request.bHasResourceDesc ? Request.ResourceDesc : CreateBufferDesc(Request.Size, Request.ResourceFlags);
+    D3D12_RESOURCE_DESC Desc = {};
+    if (Request.bHasResourceDesc)
+    {
+        Desc = Request.ResourceDesc;
+    }
+    else
+    {
+        Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        Desc.Flags              = Request.ResourceFlags;
+        Desc.Format             = DXGI_FORMAT_UNKNOWN;
+        Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        Desc.Width              = Request.Size;
+        Desc.Height             = 1;
+        Desc.DepthOrArraySize   = 1;
+        Desc.MipLevels          = 1;
+        Desc.Alignment          = 0;
+        Desc.SampleDesc.Count   = 1;
+        Desc.SampleDesc.Quality = 0;
+    }
+
     return TryAllocate(Request.HeapType, Desc, EBufferFlags::None, Request.InitialState, Request.Alignment, OutStorage);
 }
 
 void FD3D12BufferAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    if (Storage.GetOwnerType() == ED3D12ResourceStorageOwnerType::BufferAllocatorPool && Storage.GetOwner())
+    if (Storage.GetAllocatorType() == ED3D12AllocatorType::BufferAllocatorPool && Storage.GetAllocator())
     {
-        static_cast<FD3D12BufferAllocatorPool*>(Storage.GetOwner())->Deallocate(Storage);
+        static_cast<FD3D12BufferAllocatorPool*>(Storage.GetAllocator())->Deallocate(Storage);
         return;
     }
 
-    if (Storage.GetOwnerType() == ED3D12ResourceStorageOwnerType::MultiBuddyAllocator && Storage.GetOwner())
+    if (Storage.GetAllocatorType() == ED3D12AllocatorType::MultiBuddyAllocator && Storage.GetAllocator())
     {
-        static_cast<FD3D12MultiBuddyAllocator*>(Storage.GetOwner())->Deallocate(Storage);
+        static_cast<FD3D12MultiBuddyAllocator*>(Storage.GetAllocator())->Deallocate(Storage);
         return;
     }
 
-    if (Storage.GetOwnerType() == ED3D12ResourceStorageOwnerType::PoolAllocator && Storage.GetOwner())
+    if (Storage.GetAllocatorType() == ED3D12AllocatorType::PoolAllocator && Storage.GetAllocator())
     {
-        static_cast<FD3D12PoolAllocator*>(Storage.GetOwner())->Deallocate(Storage);
+        static_cast<FD3D12PoolAllocator*>(Storage.GetAllocator())->Deallocate(Storage);
         return;
     }
 
-    if (Storage.GetResource() && FD3D12RHI::Get())
+    if (Storage.GetResource())
     {
-        FD3D12RHI::Get()->DeferDeletion(Storage.GetResource());
+        FD3D12RHI::DeferDeletion(Storage.GetResource());
     }
 }
 
@@ -1575,20 +1819,23 @@ FD3D12TextureAllocator::~FD3D12TextureAllocator()
 bool FD3D12TextureAllocator::Initialize(uint64 InDefaultPageSizeBytes, uint64 InCommittedThreshold)
 {
     DefaultPageSizeBytes = InDefaultPageSizeBytes;
-    CommittedThreshold = InCommittedThreshold;
+    CommittedThreshold   = InCommittedThreshold;
     Pools.Clear();
+
     auto CreatePool = [this](ETexturePoolClass PoolClass, uint64 PoolAlignment) -> bool
     {
         FPool& Entry = Pools.Emplace();
         Entry.PoolClass = PoolClass;
-        Entry.Pool = new FD3D12PoolAllocator(GetDevice());
-        if (!Entry.Pool->Initialize(DefaultPageSizeBytes, PoolAlignment, CommittedThreshold, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, true))
+
+        Entry.Pool = new FD3D12PoolAllocator(GetDevice(), DefaultPageSizeBytes, PoolAlignment, CommittedThreshold, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_COMMON, EAllocationStrategy::SuballocatedHeap);
+        if (!Entry.Pool)
         {
             delete Entry.Pool;
             Entry.Pool = nullptr;
             Pools.Pop();
             return false;
         }
+
         return true;
     };
 
@@ -1615,6 +1862,7 @@ void FD3D12TextureAllocator::Shutdown()
             Pool.Pool = nullptr;
         }
     }
+
     Pools.Clear();
 }
 
@@ -1626,7 +1874,8 @@ FD3D12TextureAllocator::ETexturePoolClass FD3D12TextureAllocator::ClassifyTextur
     }
 
     const bool bIsRTDS = (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-    const bool bIsUAV = (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0;
+    const bool bIsUAV  = (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0;
+
     if (bIsRTDS)
     {
         return ETexturePoolClass::RenderTargetDepthStencil;
@@ -1658,16 +1907,19 @@ bool FD3D12TextureAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& 
             return false;
         }
 
-        OutStorage.InitializeAsStandalone(NewResource, ED3D12ResourceKind::Texture, D3D12_HEAP_TYPE_DEFAULT, ED3D12HeapUsage::TextureOnly, ED3D12ResourceLifetime::Default, AllocationInfo.SizeInBytes, AllocationInfo.Alignment);
-        OutStorage.SetSubrangeInfo(0, NewResource->GetGPUVirtualAddress(), nullptr);
-        OutStorage.SetOwner(this, ED3D12ResourceStorageOwnerType::TextureAllocator);
-        OutStorage.SetResidencyHandle(RegisterResidency(GetDevice(), NewResource->GetD3D12Resource(), AllocationInfo.SizeInBytes));
+        OutStorage.InitStandalone(NewResource);
+        OutStorage.SetSize(AllocationInfo.SizeInBytes);
+        OutStorage.SetResourceOffset(0);
+        OutStorage.SetGpuVirtualAddress(NewResource->GetGPUVirtualAddress());
+        OutStorage.SetMappedBaseAddress(nullptr);
+        OutStorage.SetTextureAllocator(this);
         return true;
     }
 
     SCOPED_LOCK(PoolsCS);
 
     const ETexturePoolClass PoolClass = ClassifyTexture(Desc, AllocationInfo.SizeInBytes, AllocationInfo.Alignment);
+
     int32 PoolIndex = -1;
     for (int32 Index = 0; Index < Pools.Size(); ++Index)
     {
@@ -1684,20 +1936,20 @@ bool FD3D12TextureAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& 
     }
 
     FD3D12ResourceAllocationRequest BlockRequest = {};
-    BlockRequest.ResourceType = ED3D12ResourceType::Texture;
-    BlockRequest.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-    BlockRequest.InitialState = Request.InitialState;
-    BlockRequest.Size = AllocationInfo.SizeInBytes;
-    BlockRequest.Alignment = AllocationInfo.Alignment;
+    BlockRequest.ResourceType            = ED3D12ResourceType::Texture;
+    BlockRequest.HeapType                = D3D12_HEAP_TYPE_DEFAULT;
+    BlockRequest.InitialState            = Request.InitialState;
+    BlockRequest.Size                    = AllocationInfo.SizeInBytes;
+    BlockRequest.Alignment               = AllocationInfo.Alignment;
     BlockRequest.bAllowCommittedFallback = false;
 
-    FD3D12ResourceStorage BlockResourceStorage;
+    FD3D12ResourceStorage BlockResourceStorage(GetDevice());
     if (!Pools[PoolIndex].Pool || !Pools[PoolIndex].Pool->TryAllocate(BlockRequest, BlockResourceStorage))
     {
         return false;
     }
 
-    FD3D12Heap* Heap = BlockResourceStorage.GetHeap();
+    FD3D12Heap* Heap = BlockResourceStorage.GetPoolAllocationData().BackingHeap;
     if (!Heap)
     {
         BlockResourceStorage.ReleaseResource();
@@ -1711,17 +1963,19 @@ bool FD3D12TextureAllocator::TryAllocate(const FD3D12ResourceAllocationRequest& 
         return false;
     }
 
-    OutStorage = Move(BlockResourceStorage);
+    OutStorage.Swap(BlockResourceStorage);
     OutStorage.SetResource(NewResource);
-    OutStorage.SetSubrangeInfo(0, NewResource->GetGPUVirtualAddress(), nullptr);
+    OutStorage.SetResourceOffset(0);
+    OutStorage.SetGpuVirtualAddress(NewResource->GetGPUVirtualAddress());
+    OutStorage.SetMappedBaseAddress(nullptr);
     OutStorage.SetSize(AllocationInfo.SizeInBytes);
     return true;
 }
 
 void FD3D12TextureAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
-    if (Storage.GetResource() && FD3D12RHI::Get())
+    if (Storage.GetResource())
     {
-        FD3D12RHI::Get()->DeferDeletion(Storage.GetResource());
+        FD3D12RHI::DeferDeletion(Storage.GetResource());
     }
 }

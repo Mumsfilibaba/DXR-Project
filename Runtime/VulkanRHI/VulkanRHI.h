@@ -23,6 +23,12 @@ public:
         return GVulkanRHI;
     }
 
+    template<typename... ArgTypes>
+    static void DeferDeletion(ArgTypes&&... Args)
+    {
+        Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
+    }
+
 public:
     FVulkanRHI();
     ~FVulkanRHI();
@@ -77,13 +83,6 @@ public:
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
 
-    template<typename... ArgTypes>
-    void DeferDeletion(ArgTypes&&... Args)
-    {
-        TScopedLock Lock(DeletionQueueCS);
-        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
-    }
-
     void ProcessPendingCommandSubmissions();
     void SubmitCommands(FVulkanCommandSubmission* CommandSubmission, bool bFlushDeletionQueue);
 
@@ -108,6 +107,13 @@ public:
     }
 
 private:
+    template<typename... ArgTypes>
+    void DeferDeletionInternal(ArgTypes&&... Args)
+    {
+        TScopedLock Lock(DeletionQueueCS);
+        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
+    }
+
     typedef TQueue<FVulkanCommandSubmission*, EQueueType::MPSC>         FCommandSubmissionQueue;
     typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
 

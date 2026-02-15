@@ -11,7 +11,7 @@ FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice)
 {
 }
 
-void FD3D12Heap::SetNative(const TComPtr<ID3D12Heap>& InNativeHeap)
+void FD3D12Heap::SetHeap(const TComPtr<ID3D12Heap>& InNativeHeap)
 {
     Heap = InNativeHeap;
     Desc = Heap ? Heap->GetDesc() : D3D12_HEAP_DESC{};
@@ -43,9 +43,9 @@ FD3D12Heap::~FD3D12Heap()
 
 void FD3D12Heap::ReleaseResource()
 {
-    if (bDeferDeletion && FD3D12RHI::Get())
+    if (bDeferDeletion)
     {
-        FD3D12RHI::Get()->DeferDeletion(this);
+        FD3D12RHI::DeferDeletion(this);
         return;
     }
     

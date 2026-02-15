@@ -16,6 +16,7 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
                 delete Item.RHIResource;
                 break;
             }
+            
             case FD3D12DeferredObject::EType::Resource:
             {
                 CHECK(Item.Resource != nullptr);
@@ -26,25 +27,31 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
                         ResidencyManager->UnregisterPageable(Item.Resource->GetD3D12Resource());
                     }
                 }
+
                 Item.Resource->Release();
                 break;
             }
+
             case FD3D12DeferredObject::EType::D3DResource:
             {
                 CHECK(Item.D3DResource != nullptr);
                 Item.D3DResource->Release();
                 break;
             }
+
             case FD3D12DeferredObject::EType::OnlineDescriptorBlock:
             {
                 CHECK(Item.OnlineDescriptorBlock.Heap != nullptr);
+
                 FD3D12OnlineDescriptorHeap* Heap = Item.OnlineDescriptorBlock.Heap;
                 Heap->RecycleBlock(Item.OnlineDescriptorBlock.Block);
                 break;
             }
+
             case FD3D12DeferredObject::EType::Heap:
             {
                 CHECK(Item.D3D12Heap != nullptr);
+
                 if (FD3D12Device* Device = Item.D3D12Heap->GetDevice())
                 {
                     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
@@ -60,24 +67,31 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
                         }
                     }
                 }
+
                 Item.D3D12Heap->Release();
                 break;
             }
+
             case FD3D12DeferredObject::EType::AllocatorBlock:
             {
                 CHECK(Item.AllocatorBlock.Allocator != nullptr);
+
                 switch (Item.AllocatorBlock.AllocatorType)
                 {
                 case ED3D12DeferredAllocatorType::Pool:
-                    static_cast<FD3D12PoolAllocator*>(Item.AllocatorBlock.Allocator)->ReturnBlockToAllocator(Item.AllocatorBlock.ResourceStorage);
+                    static_cast<FD3D12PoolAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.PoolAllocationData);
                     break;
                 case ED3D12DeferredAllocatorType::Buddy:
-                    static_cast<FD3D12BuddyAllocator*>(Item.AllocatorBlock.Allocator)->ReturnBlockToAllocator(Item.AllocatorBlock.ResourceStorage);
+                    static_cast<FD3D12BuddyAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.BuddyAllocationData);
+                    break;
+                case ED3D12DeferredAllocatorType::MultiBuddy:
+                    static_cast<FD3D12MultiBuddyAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.MultiBuddyAllocationData);
                     break;
                 case ED3D12DeferredAllocatorType::Bucket:
-                    static_cast<FD3D12BucketAllocator*>(Item.AllocatorBlock.Allocator)->ReturnBlockToAllocator(Item.AllocatorBlock.ResourceStorage);
+                    static_cast<FD3D12BucketAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.BucketAllocationData);
                     break;
                 }
+
                 break;
             }
         }

@@ -392,18 +392,8 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     }
     else
     {
-        FD3D12ResourceAllocationRequest Request{};
-        Request.Size                  = BufferRegion.Size;
-        Request.Alignment             = 1;
-        Request.ResourceType          = ED3D12ResourceType::Buffer;
-        Request.HeapType              = D3D12_HEAP_TYPE_UPLOAD;
-        Request.InitialState          = D3D12_RESOURCE_STATE_GENERIC_READ;
-        Request.ResourceFlags         = D3D12_RESOURCE_FLAG_NONE;
-        Request.FencePoint.QueueType  = GetQueueType();
-        Request.FencePoint.FenceValue = GetDevice()->GetQueue(GetQueueType())->GetFenceManager().GetCurrentValue() + 1;
-
-        FD3D12ResourceStorage ResourceStorage;
-        if (!GetDevice()->GetStagingBufferAllocator()->TryAllocate(Request, ResourceStorage) || ResourceStorage.GetResource() == nullptr || ResourceStorage.GetMappedBaseAddress() == nullptr)
+        FD3D12ResourceStorage ResourceStorage(GetDevice());
+        if (GetDevice()->GetStagingBufferAllocator()->Allocate(BufferRegion.Size, 1, ResourceStorage) == nullptr || ResourceStorage.GetResource() == nullptr || ResourceStorage.GetMappedBaseAddress() == nullptr)
         {
             D3D12_ERROR_CRITICAL("Upload allocation failed");
             return;
@@ -806,18 +796,8 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     const uint64 Alignment   = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
     const uint64 AlignedSize = Math::AlignUp<uint64>(RequiredSize, Alignment);
 
-    FD3D12ResourceAllocationRequest Request{};
-    Request.Size                  = AlignedSize;
-    Request.Alignment             = Alignment;
-    Request.ResourceType          = ED3D12ResourceType::Buffer;
-    Request.HeapType              = D3D12_HEAP_TYPE_UPLOAD;
-    Request.InitialState          = D3D12_RESOURCE_STATE_GENERIC_READ;
-    Request.ResourceFlags         = D3D12_RESOURCE_FLAG_NONE;
-    Request.FencePoint.QueueType  = GetQueueType();
-    Request.FencePoint.FenceValue = GetDevice()->GetQueue(GetQueueType())->GetFenceManager().GetCurrentValue() + 1;
-
-    FD3D12ResourceStorage ResourceStorage;
-    if (!GetDevice()->GetStagingBufferAllocator()->TryAllocate(Request, ResourceStorage) || ResourceStorage.GetMappedBaseAddress() == nullptr || ResourceStorage.GetResource() == nullptr)
+    FD3D12ResourceStorage ResourceStorage(GetDevice());
+    if (GetDevice()->GetStagingBufferAllocator()->Allocate(AlignedSize, Alignment, ResourceStorage) == nullptr || ResourceStorage.GetMappedBaseAddress() == nullptr || ResourceStorage.GetResource() == nullptr)
     {
         D3D12_ERROR_CRITICAL("Upload allocation failed");
         return;
