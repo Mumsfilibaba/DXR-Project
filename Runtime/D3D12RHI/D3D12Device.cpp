@@ -51,6 +51,26 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
     "Number of descriptors in each Sampler OnlineDescriptorHeap", 
     1024);
 
+static TAutoConsoleVariable<int32> CVarUploadHeapSmallAllocationThreshold(
+    "D3D12RHI.UploadHeapSmallAllocationThreshold",
+    "Allocation size threshold for the upload small allocator path (bytes)",
+    64 * 1024);
+
+static TAutoConsoleVariable<int32> CVarUploadHeapLargeAllocationThreshold(
+    "D3D12RHI.UploadHeapLargeAllocationThreshold",
+    "Max suballocation size before upload allocations become standalone (bytes)",
+    2 * 1024 * 1024);
+
+static TAutoConsoleVariable<int32> CVarTextureAllocatorDefaultPageSize(
+    "D3D12RHI.TextureAllocatorDefaultPageSize",
+    "Default page size for pooled texture allocator pages (bytes)",
+    256 * 1024 * 1024);
+
+static TAutoConsoleVariable<int32> CVarTextureAllocatorCommittedThreshold(
+    "D3D12RHI.TextureAllocatorCommittedThreshold",
+    "Size threshold for committed texture allocations (bytes)",
+    128 * 1024 * 1024);
+
 // -------------------------------------------------------------------------------------------
 // D3D12 Feature Support
 // -------------------------------------------------------------------------------------------
@@ -638,7 +658,6 @@ FD3D12Device::~FD3D12Device()
 
     if (TextureAllocator)
     {
-        TextureAllocator->Shutdown();
         delete TextureAllocator;
         TextureAllocator = nullptr;
     }
@@ -806,7 +825,10 @@ bool FD3D12Device::Initialize()
     ResidencyManager = new FD3D12ResidencyManager(this, false, 0);
 
     {
-        FD3D12UploadHeapAllocator* UploadHeap = new FD3D12UploadHeapAllocator(this, 64ull * 1024ull * 1024ull, 256);
+        const uint64 UploadHeapSmallThreshold = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapSmallAllocationThreshold.GetValue()));
+        const uint64 UploadHeapLargeThreshold = Math::Max<uint64>(UploadHeapSmallThreshold, static_cast<uint64>(CVarUploadHeapLargeAllocationThreshold.GetValue()));
+
+        FD3D12UploadHeapAllocator* UploadHeap = new FD3D12UploadHeapAllocator(this, 64ull * 1024ull * 1024ull, 256, UploadHeapSmallThreshold, UploadHeapLargeThreshold);
         if (!UploadHeap->Initialize())
         {
             return false;
@@ -838,8 +860,11 @@ bool FD3D12Device::Initialize()
     }
 
     {
-        FD3D12TextureAllocator* Textures = new FD3D12TextureAllocator(this);
-        if (!Textures->Initialize(256ull * 1024ull * 1024ull, 128ull * 1024ull * 1024ull))
+        const uint64 TextureAllocatorDefaultPageSize = Math::Max<uint64>(1ull, static_cast<uint64>(CVarTextureAllocatorDefaultPageSize.GetValue()));
+        const uint64 TextureAllocatorCommittedThreshold = Math::Max<uint64>(1ull, static_cast<uint64>(CVarTextureAllocatorCommittedThreshold.GetValue()));
+
+        FD3D12TextureAllocator* Textures = new FD3D12TextureAllocator(this, TextureAllocatorDefaultPageSize, TextureAllocatorCommittedThreshold);
+        if (!Textures->Initialize())
         {
             return false;
         }

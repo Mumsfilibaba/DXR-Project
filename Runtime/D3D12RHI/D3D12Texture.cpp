@@ -100,18 +100,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         }
     }
 
-    FD3D12ResourceAllocationRequest Request{};
-    Request.Size             = 0;
-    Request.Alignment        = 0;
-    Request.ResourceType     = ED3D12ResourceType::Texture;
-    Request.HeapType         = D3D12_HEAP_TYPE_DEFAULT;
-    Request.InitialState     = D3D12_RESOURCE_STATE_COMMON;
-    Request.ResourceFlags    = ResourceDesc.Flags;
-    Request.ClearValue       = bSupportClearValue ? &ClearValue : nullptr;
-    Request.bHasResourceDesc = true;
-    Request.ResourceDesc     = ResourceDesc;
-
-    if (!GetDevice()->GetTextureAllocator()->TryAllocate(Request, ResourceStorage) || ResourceStorage.GetResource() == nullptr)
+    if (!GetDevice()->GetTextureAllocator()->TryAllocate(ResourceDesc, D3D12_RESOURCE_STATE_COMMON, bSupportClearValue ? &ClearValue : nullptr, ResourceStorage) || ResourceStorage.GetResource() == nullptr)
     {
         return false;
     }

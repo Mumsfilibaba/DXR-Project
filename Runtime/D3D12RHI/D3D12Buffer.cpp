@@ -52,26 +52,14 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
     }
 
-    FD3D12ResourceAllocationRequest Request{};
-    Request.Size = AlignedSize;
-    Request.Alignment = Alignment;
-    Request.ResourceType = ED3D12ResourceType::Buffer;
-    Request.HeapType = D3D12HeapType;
-    Request.InitialState = D3D12InitialState;
-    Request.ResourceFlags = ResourceDesc.Flags;
-    Request.bHasResourceDesc = true;
-    Request.ResourceDesc = ResourceDesc;
-    Request.bPersistent = Info.IsReadBack();
-    Request.FencePoint.QueueType = InCommandContext ? InCommandContext->GetQueueType() : ED3D12CommandQueueType::Direct;
-
     bool bAllocated = false;
     if (Info.IsDynamic())
     {
-        bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(Request.Size, Request.Alignment, ResourceStorage) != nullptr;
+        bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(AlignedSize, Alignment, ResourceStorage) != nullptr;
     }
     else
     {
-        bAllocated = GetDevice()->GetBufferAllocator()->TryAllocate(Request, ResourceStorage);
+        bAllocated = GetDevice()->GetBufferAllocator()->TryAllocate(D3D12HeapType, ResourceDesc, D3D12InitialState, Alignment, ResourceStorage);
     }
 
     if (!bAllocated || ResourceStorage.GetResource() == nullptr)

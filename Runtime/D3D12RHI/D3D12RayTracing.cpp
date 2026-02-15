@@ -63,16 +63,20 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
             return false;
         }
 
-        FD3D12ResourceAllocationRequest Request{};
-        Request.Size = PreBuildInfo.ResultDataMaxSizeInBytes;
-        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
-        Request.ResourceType = ED3D12ResourceType::Buffer;
-        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        Request.InitialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Request.FencePoint = {0, CmdContext.GetQueueType()};
+        D3D12_RESOURCE_DESC ResourceDesc = {};
+        ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        ResourceDesc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
+        ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        ResourceDesc.Width              = PreBuildInfo.ResultDataMaxSizeInBytes;
+        ResourceDesc.Height             = 1;
+        ResourceDesc.DepthOrArraySize   = 1;
+        ResourceDesc.MipLevels          = 1;
+        ResourceDesc.Alignment          = 0;
+        ResourceDesc.SampleDesc.Count   = 1;
+        ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(Request, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -88,16 +92,20 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
             return false;
         }
 
-        FD3D12ResourceAllocationRequest Request{};
-        Request.Size = RequiredSize;
-        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
-        Request.ResourceType = ED3D12ResourceType::Buffer;
-        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        Request.InitialState = D3D12_RESOURCE_STATE_COMMON;
-        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Request.FencePoint = {0, CmdContext.GetQueueType()};
+        D3D12_RESOURCE_DESC ResourceDesc = {};
+        ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        ResourceDesc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
+        ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        ResourceDesc.Width              = RequiredSize;
+        ResourceDesc.Height             = 1;
+        ResourceDesc.DepthOrArraySize   = 1;
+        ResourceDesc.MipLevels          = 1;
+        ResourceDesc.Alignment          = 0;
+        ResourceDesc.SampleDesc.Count   = 1;
+        ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(Request, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -178,16 +186,20 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
             return false;
         }
 
-        FD3D12ResourceAllocationRequest Request{};
-        Request.Size = PreBuildInfo.ResultDataMaxSizeInBytes;
-        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
-        Request.ResourceType = ED3D12ResourceType::Buffer;
-        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        Request.InitialState = D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Request.FencePoint = {0, CmdContext.GetQueueType()};
+        D3D12_RESOURCE_DESC ResourceDesc = {};
+        ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        ResourceDesc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
+        ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        ResourceDesc.Width              = PreBuildInfo.ResultDataMaxSizeInBytes;
+        ResourceDesc.Height             = 1;
+        ResourceDesc.DepthOrArraySize   = 1;
+        ResourceDesc.MipLevels          = 1;
+        ResourceDesc.Alignment          = 0;
+        ResourceDesc.SampleDesc.Count   = 1;
+        ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(Request, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -219,16 +231,20 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
             return false;
         }
 
-        FD3D12ResourceAllocationRequest Request{};
-        Request.Size = RequiredSize;
-        Request.Alignment = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT;
-        Request.ResourceType = ED3D12ResourceType::Buffer;
-        Request.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        Request.InitialState = D3D12_RESOURCE_STATE_COMMON;
-        Request.ResourceFlags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-        Request.FencePoint = {0, CmdContext.GetQueueType()};
+        D3D12_RESOURCE_DESC ResourceDesc = {};
+        ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+        ResourceDesc.Flags              = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
+        ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        ResourceDesc.Width              = RequiredSize;
+        ResourceDesc.Height             = 1;
+        ResourceDesc.DepthOrArraySize   = 1;
+        ResourceDesc.MipLevels          = 1;
+        ResourceDesc.Alignment          = 0;
+        ResourceDesc.SampleDesc.Count   = 1;
+        ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(Request, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
         {
             return false;
         }

@@ -21,48 +21,11 @@ class FD3D12BucketAllocator;
 class FD3D12PoolAllocator;
 class FD3D12BaseResource;
 
-enum class ED3D12PlacementKind : uint8
-{
-    Unknown,
-    Committed,
-    Placed,
-    Reserved
-};
-
-enum class ED3D12ResourceKind : uint8
-{
-    Unknown,
-    Buffer,
-    Texture
-};
-
-enum class ED3D12ViewKind : uint8
-{
-    Unknown,
-    WholeResource,
-    Subrange
-};
-
-enum class ED3D12HeapUsage : uint8
-{
-    Any,
-    BufferOnly,
-    TextureOnly,
-    RenderTargetDepthStencil
-};
-
 enum class ED3D12ResourceLifetime : uint8
 {
     Default,
     Transient
 };
-
-enum class ED3D12ResourceType : uint8
-{
-    Buffer,
-    Texture
-};
-
 
 enum class ED3D12AllocatorType : uint8
 {
