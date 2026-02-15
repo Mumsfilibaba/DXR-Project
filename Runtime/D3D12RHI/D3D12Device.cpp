@@ -725,6 +725,19 @@ FD3D12Device::~FD3D12Device()
 #endif
 }
 
+void FD3D12Device::BeginFrame()
+{
+    if (StagingBufferAllocator)
+    {
+        StagingBufferAllocator->BeginFrame();
+    }
+
+    if (DynamicConstantsAllocator)
+    {
+        DynamicConstantsAllocator->BeginFrame();
+    }
+}
+
 bool FD3D12Device::Initialize()
 {
     if (!CreateDevice())

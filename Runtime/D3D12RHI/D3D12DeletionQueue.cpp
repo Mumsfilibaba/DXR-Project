@@ -84,9 +84,6 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
                 case ED3D12DeferredAllocatorType::Buddy:
                     static_cast<FD3D12BuddyAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.BuddyAllocationData);
                     break;
-                case ED3D12DeferredAllocatorType::MultiBuddy:
-                    static_cast<FD3D12MultiBuddyAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.MultiBuddyAllocationData);
-                    break;
                 case ED3D12DeferredAllocatorType::Bucket:
                     static_cast<FD3D12BucketAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.BucketAllocationData);
                     break;

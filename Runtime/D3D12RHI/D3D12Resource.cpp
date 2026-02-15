@@ -236,14 +236,8 @@ void FD3D12ResourceStorage::ReleaseResource()
 
     switch (AllocatorType)
     {
-    case ED3D12AllocatorType::LinearAllocator:
-        AllocatorPointers.LinearAllocator->Deallocate(*this);
-        break;
     case ED3D12AllocatorType::DynamicConstantsAllocator:
         AllocatorPointers.DynamicConstantsAllocator->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::UploadHeapAllocator:
-        AllocatorPointers.UploadHeapAllocator->Deallocate(*this);
         break;
     case ED3D12AllocatorType::BufferAllocatorPool:
         AllocatorPointers.BufferAllocatorPool->Deallocate(*this);
@@ -256,9 +250,6 @@ void FD3D12ResourceStorage::ReleaseResource()
         break;
     case ED3D12AllocatorType::BuddyAllocator:
         AllocatorPointers.BuddyAllocator->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::MultiBuddyAllocator:
-        AllocatorPointers.MultiBuddyAllocator->Deallocate(*this);
         break;
     case ED3D12AllocatorType::BucketAllocator:
         AllocatorPointers.BucketAllocator->Deallocate(*this);

@@ -14,7 +14,6 @@ enum class ED3D12DeferredAllocatorType : uint8
 {
     Pool,
     Buddy,
-    MultiBuddy,
     Bucket
 };
 
@@ -45,11 +44,7 @@ public:
 private:
     uint32 GetOrderForSize(uint64 Size) const;
     uint64 GetOrderBlockSize(uint32 Order) const;
-    bool AllocateFromAllocator(uint64 Size, uint64 Alignment, uint64& OutOffset, uint32& OutOrder);
-    void FreeToAllocator(uint64 Offset, uint32 Order);
-    bool CreateBackingAllocation();
 
-private:
     uint64                    PageSizeBytes;
     uint64                    MinBlockBytes;
     D3D12_HEAP_TYPE           HeapType;
@@ -73,8 +68,6 @@ public:
     void Shutdown();
 
     bool TryAllocate(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
-    void Deallocate(const FD3D12ResourceStorage& Storage);
-    void RecycleAllocation(const FD3D12MultiBuddyAllocatorAllocationData& AllocationData);
 
 private:
     bool CreateAllocator();
@@ -216,23 +209,21 @@ class FD3D12UploadHeapAllocator : public FD3D12DeviceChild
 public:
     FD3D12UploadHeapAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InSmallAllocationThreshold = 64ull * 1024ull, uint64 InLargeAllocationThreshold = 2ull * 1024ull * 1024ull);
     ~FD3D12UploadHeapAllocator();
+    
+    void* Allocate(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
+    void* AllocateConstants(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
 
     bool Initialize();
     void Shutdown();
 
-    void* Allocate(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
-    void* AllocateConstants(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
-
-    void Deallocate(const FD3D12ResourceStorage& Storage);
-
 private:
-    uint64                     PageSizeBytes;
-    uint64                     DefaultAlignment;
-    uint64                     SmallAllocationThreshold;
-    uint64                     LargeAllocationThreshold;
-    FD3D12MultiBuddyAllocator* SmallAllocator;
-    FD3D12PoolAllocator*       LargeAllocator;
-    FD3D12MultiBuddyAllocator* ConstantsAllocator;
+    uint64                    PageSizeBytes;
+    uint64                    DefaultAlignment;
+    uint64                    SmallAllocationThreshold;
+    uint64                    LargeAllocationThreshold;
+    FD3D12MultiBuddyAllocator SmallAllocator;
+    FD3D12PoolAllocator       LargeAllocator;
+    FD3D12MultiBuddyAllocator ConstantsAllocator;
 };
 
 class FD3D12LinearAllocatorPage : public FD3D12DeviceChild
@@ -242,14 +233,35 @@ public:
     ~FD3D12LinearAllocatorPage() = default;
 
     bool Initialize();
+
     bool TryAllocate(uint64 Size, uint64 Alignment, uint64& OutOffset);
     void ReleaseAllocation();
     void Reset();
 
-    uint32 GetPageIndex() const { return PageIndex; }
-    uint32 GetActiveAllocations() const { return ActiveAllocations; }
-    FD3D12ResourceStorage& GetBackingResourceStorage() { return BackingResourceStorage; }
-    const FD3D12ResourceStorage& GetBackingResourceStorage() const { return BackingResourceStorage; }
+    bool IsExhausted() const
+    {
+        return CurrentOffset >= PageSizeBytes;
+    }
+
+    uint32 GetPageIndex() const
+    {
+        return PageIndex;
+    }
+
+    uint32 GetActiveAllocations() const
+    {
+        return ActiveAllocations;
+    }
+
+    FD3D12ResourceStorage& GetBackingResourceStorage()
+    {
+        return BackingResourceStorage;
+    }
+
+    const FD3D12ResourceStorage& GetBackingResourceStorage() const
+    {
+        return BackingResourceStorage;
+    }
 
 private:
     uint64                PageSizeBytes;
@@ -269,18 +281,18 @@ public:
     ~FD3D12LinearAllocator();
 
     void* Allocate(uint64 Size, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
-    void Deallocate(const FD3D12ResourceStorage& Storage);
+    void BeginFrame();
 
 private:
     FD3D12LinearAllocatorPage* CreatePage();
     void RetirePage(FD3D12LinearAllocatorPage* Page);
 
-private:
     uint64                             PageSizeBytes;
     D3D12_HEAP_TYPE                    HeapType;
     D3D12_RESOURCE_STATES              InitialState;
     uint32                             NextPageIndex;
     TArray<FD3D12LinearAllocatorPage*> Pages;
+    TArray<FD3D12LinearAllocatorPage*> FullPages;
     FCriticalSection                   PagesCS;
 };
 
@@ -290,11 +302,12 @@ public:
     FD3D12DynamicConstantsAllocator(FD3D12Device* InDevice);
     ~FD3D12DynamicConstantsAllocator();
 
-    bool Initialize(uint64 InPageSizeBytes, FD3D12UploadHeapAllocator* InUploadHeapAllocator);
-    void Shutdown();
-
     void* Allocate(uint64 Size, FD3D12ResourceStorage& OutStorage);
     void Deallocate(const FD3D12ResourceStorage& Storage);
+
+    bool Initialize(uint64 InPageSizeBytes, FD3D12UploadHeapAllocator* InUploadHeapAllocator);
+    void Shutdown();
+    void BeginFrame();
 
 private:
     FD3D12LinearAllocator* LinearAllocator;
@@ -307,10 +320,10 @@ public:
     ~FD3D12BufferAllocatorPool();
 
     bool Initialize();
-
-    bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
+    
     bool TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
     void Deallocate(const FD3D12ResourceStorage& Storage);
+    bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
 private:
     void ReleaseAllocator();
@@ -370,8 +383,8 @@ private:
     ETexturePoolClass ClassifyTexture(const D3D12_RESOURCE_DESC& Desc, uint64 Size, uint64 Alignment) const;
     void ReleasePools();
 
-    uint64             CommittedThreshold;
-    uint64             DefaultPageSizeBytes;
+    uint64               CommittedThreshold;
+    uint64               DefaultPageSizeBytes;
     FD3D12PoolAllocator* Pools[TexturePoolClassCount];
-    FCriticalSection   PoolsCS;
+    FCriticalSection     PoolsCS;
 };

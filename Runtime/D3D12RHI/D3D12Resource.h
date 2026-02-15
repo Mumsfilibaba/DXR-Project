@@ -9,14 +9,11 @@
 
 typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 
-class FD3D12LinearAllocator;
 class FD3D12DynamicConstantsAllocator;
-class FD3D12UploadHeapAllocator;
 class FD3D12BufferAllocatorPool;
 class FD3D12BufferAllocator;
 class FD3D12TextureAllocator;
 class FD3D12BuddyAllocator;
-class FD3D12MultiBuddyAllocator;
 class FD3D12BucketAllocator;
 class FD3D12PoolAllocator;
 class FD3D12BaseResource;
@@ -30,14 +27,11 @@ enum class ED3D12ResourceLifetime : uint8
 enum class ED3D12AllocatorType : uint8
 {
     None,
-    LinearAllocator,
     DynamicConstantsAllocator,
-    UploadHeapAllocator,
     BufferAllocatorPool,
     BufferAllocator,
     TextureAllocator,
     BuddyAllocator,
-    MultiBuddyAllocator,
     BucketAllocator,
     PoolAllocator
 };
@@ -62,22 +56,10 @@ struct FD3D12PoolAllocatorAllocationData
 
 struct FD3D12BuddyAllocatorAllocationData
 {
-    uint32 AllocatorIndex = 0;
-    uint32 PageIndex      = UINT32_MAX;
-    uint32 Order          = 0;
-    uint64 Offset         = 0;
-    bool   bBackedByHeap  = false;
+    uint32 Order            = 0;
+    uint64 Offset           = 0;
+    bool   bBackedByHeap    = false;
     FD3D12Heap* BackingHeap = nullptr;
-};
-
-struct FD3D12MultiBuddyAllocatorAllocationData
-{
-    uint32 BuddyAllocatorIndex = UINT32_MAX;
-    uint32 PageIndex           = UINT32_MAX;
-    uint32 Order               = 0;
-    uint64 Offset              = 0;
-    bool   bBackedByHeap       = false;
-    FD3D12Heap* BackingHeap    = nullptr;
 };
 
 struct FD3D12BucketAllocatorAllocationData
@@ -133,7 +115,6 @@ public:
     FORCEINLINE const FD3D12LinearAllocatorAllocationData&     GetLinearAllocationData()     const { return AllocationData.Linear; }
     FORCEINLINE const FD3D12PoolAllocatorAllocationData&       GetPoolAllocationData()       const { return AllocationData.Pool; }
     FORCEINLINE const FD3D12BuddyAllocatorAllocationData&      GetBuddyAllocationData()      const { return AllocationData.Buddy; }
-    FORCEINLINE const FD3D12MultiBuddyAllocatorAllocationData& GetMultiBuddyAllocationData() const { return AllocationData.MultiBuddy; }
     FORCEINLINE const FD3D12BucketAllocatorAllocationData&     GetBucketAllocationData()     const { return AllocationData.Bucket; }
     FORCEINLINE const FD3D12BufferAllocatorAllocationData&     GetBufferAllocatorData()      const { return AllocationData.BufferAllocator; }
     FORCEINLINE const FD3D12TextureAllocatorAllocationData&    GetTextureAllocatorData()     const { return AllocationData.TextureAllocator; }
@@ -155,22 +136,10 @@ public:
         AllocatorType = ED3D12AllocatorType::None;
     }
 
-    FORCEINLINE void SetLinearAllocator(FD3D12LinearAllocator* InAllocator)
-    {
-        AllocatorPointers.LinearAllocator = InAllocator;
-        AllocatorType = ED3D12AllocatorType::LinearAllocator;
-    }
-
     FORCEINLINE void SetDynamicConstantsAllocator(FD3D12DynamicConstantsAllocator* InAllocator)
     {
         AllocatorPointers.DynamicConstantsAllocator = InAllocator;
         AllocatorType = ED3D12AllocatorType::DynamicConstantsAllocator;
-    }
-
-    FORCEINLINE void SetUploadHeapAllocator(FD3D12UploadHeapAllocator* InAllocator)
-    {
-        AllocatorPointers.UploadHeapAllocator = InAllocator;
-        AllocatorType = ED3D12AllocatorType::UploadHeapAllocator;
     }
 
     FORCEINLINE void SetBufferAllocatorPool(FD3D12BufferAllocatorPool* InAllocator)
@@ -197,12 +166,6 @@ public:
         AllocatorType = ED3D12AllocatorType::BuddyAllocator;
     }
 
-    FORCEINLINE void SetMultiBuddyAllocator(FD3D12MultiBuddyAllocator* InAllocator)
-    {
-        AllocatorPointers.MultiBuddyAllocator = InAllocator;
-        AllocatorType = ED3D12AllocatorType::MultiBuddyAllocator;
-    }
-
     FORCEINLINE void SetBucketAllocator(FD3D12BucketAllocator* InAllocator)
     {
         AllocatorPointers.BucketAllocator = InAllocator;
@@ -218,7 +181,6 @@ public:
     FORCEINLINE void SetLinearAllocationData(const FD3D12LinearAllocatorAllocationData& InData) { AllocationData.Linear = InData; }
     FORCEINLINE void SetPoolAllocationData(const FD3D12PoolAllocatorAllocationData& InData) { AllocationData.Pool = InData; }
     FORCEINLINE void SetBuddyAllocationData(const FD3D12BuddyAllocatorAllocationData& InData) { AllocationData.Buddy = InData; }
-    FORCEINLINE void SetMultiBuddyAllocationData(const FD3D12MultiBuddyAllocatorAllocationData& InData) { AllocationData.MultiBuddy = InData; }
     FORCEINLINE void SetBucketAllocationData(const FD3D12BucketAllocatorAllocationData& InData) { AllocationData.Bucket = InData; }
     FORCEINLINE void SetBufferAllocatorData(const FD3D12BufferAllocatorAllocationData& InData) { AllocationData.BufferAllocator = InData; }
     FORCEINLINE void SetTextureAllocatorData(const FD3D12TextureAllocatorAllocationData& InData) { AllocationData.TextureAllocator = InData; }
@@ -231,7 +193,6 @@ private:
         FD3D12LinearAllocatorAllocationData       Linear;
         FD3D12PoolAllocatorAllocationData         Pool;
         FD3D12BuddyAllocatorAllocationData        Buddy;
-        FD3D12MultiBuddyAllocatorAllocationData   MultiBuddy;
         FD3D12BucketAllocatorAllocationData       Bucket;
         FD3D12BufferAllocatorAllocationData       BufferAllocator;
         FD3D12TextureAllocatorAllocationData      TextureAllocator;
@@ -242,14 +203,11 @@ private:
 
     union FAllocatorPointers
     {
-        FD3D12LinearAllocator*           LinearAllocator;
         FD3D12DynamicConstantsAllocator* DynamicConstantsAllocator;
-        FD3D12UploadHeapAllocator*       UploadHeapAllocator;
         FD3D12BufferAllocatorPool*       BufferAllocatorPool;
         FD3D12BufferAllocator*           BufferAllocator;
         FD3D12TextureAllocator*          TextureAllocator;
         FD3D12BuddyAllocator*            BuddyAllocator;
-        FD3D12MultiBuddyAllocator*       MultiBuddyAllocator;
         FD3D12BucketAllocator*           BucketAllocator;
         FD3D12PoolAllocator*             PoolAllocator;
         void*                            AsVoid;

@@ -162,6 +162,8 @@ void FD3D12RHI::BeginFrame()
         return;
     }
 
+    Device->BeginFrame();
+
     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
     {
         ResidencyManager->Tick();
