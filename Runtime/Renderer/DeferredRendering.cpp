@@ -33,167 +33,169 @@ FDepthPrePass::~FDepthPrePass()
 void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
-
-    FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(MaterialFlags);
-    if (!CachedPrePassPSO)
+    if (MaterialPSOs.Find(MaterialFlags))
     {
-        TArray<uint8>         ShaderCode;
-        TArray<FShaderDefine> ShaderDefines;
+        return;
+    }
 
-        if (Material->HasHeightMap())
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-        }
+    TArray<uint8>         ShaderCode;
+    TArray<FShaderDefine> ShaderDefines;
 
-        if (Material->HasPackedDiffuseAlpha())
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
-        }
+    ShaderDefines.Emplace("USE_UNJITTERED_CAMERA", "(0)");
 
-        if (Material->HasAlphaMask())
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
-        }
+    if (Material->HasHeightMap())
+    {
+        ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
+    }
+    else
+    {
+        ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
+    }
 
-        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
+    if (Material->HasPackedDiffuseAlpha())
+    {
+        ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
+    }
+    else
+    {
+        ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
+    }
+
+    if (Material->HasAlphaMask())
+    {
+        ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
+    }
+    else
+    {
+        ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
+    }
+
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    FGraphicsPipelineStateInstance NewPipelineInstance;
+    NewPipelineInstance.VertexShader = FRHI::Get()->CreateVertexShader(ShaderCode);
+    if (!NewPipelineInstance.VertexShader)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    const bool bWantPixelShader = Material->HasHeightMap() || Material->HasPackedDiffuseAlpha() || Material->HasAlphaMask();
+    if (bWantPixelShader)
+    {
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return;
         }
 
-        FGraphicsPipelineStateInstance NewPipelineInstance;
-        NewPipelineInstance.VertexShader = FRHI::Get()->CreateVertexShader(ShaderCode);
-        if (!NewPipelineInstance.VertexShader)
+        NewPipelineInstance.PixelShader = FRHI::Get()->CreatePixelShader(ShaderCode);
+        if (!NewPipelineInstance.PixelShader)
         {
             DEBUG_BREAK();
             return;
         }
-
-        const bool bWantPixelShader = Material->HasHeightMap() || Material->HasPackedDiffuseAlpha() || Material->HasAlphaMask();
-        if (bWantPixelShader)
-        {
-            CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            NewPipelineInstance.PixelShader = FRHI::Get()->CreatePixelShader(ShaderCode);
-            if (!NewPipelineInstance.PixelShader)
-            {
-                DEBUG_BREAK();
-                return;
-            }
-        }
-
-        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
-        DepthStencilStateInitializer.bDepthEnable      = true;
-        DepthStencilStateInitializer.bDepthWriteEnable = true;
-
-        NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
-        if (!NewPipelineInstance.DepthStencilState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        FRHIRasterizerStateInfo RasterizerStateInfo;
-        if (Material->IsDoubleSided())
-        {
-            RasterizerStateInfo.CullMode = ECullMode::None;
-        }
-        else
-        {
-            RasterizerStateInfo.CullMode = ECullMode::Back;
-        }
-
-        NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
-        if (!NewPipelineInstance.RasterizerState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        FRHIBlendStateInfo BlendStateInfo;
-        NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
-        if (!NewPipelineInstance.BlendState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (Material->HasHeightMap())
-        {
-            NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
-        }
-        else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
-        {
-            TArray<FRHIInputElementInfo> InputElements =
-            {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
-                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
-            };
-
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
-            if (!NewPipelineInstance.InputLayout)
-            {
-                DEBUG_BREAK();
-                return;
-            }
-        }
-        else
-        {
-            TArray<FRHIInputElementInfo> InputElements =
-            {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
-            };
-
-            NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
-            if (!NewPipelineInstance.InputLayout)
-            {
-                DEBUG_BREAK();
-                return;
-            }
-        }
-
-        FRHIGraphicsPipelineStateInfo PSOInfo;
-        PSOInfo.InputLayout                                = NewPipelineInstance.InputLayout.Get();
-        PSOInfo.BlendState                                 = NewPipelineInstance.BlendState.Get();
-        PSOInfo.DepthStencilState                          = NewPipelineInstance.DepthStencilState.Get();
-        PSOInfo.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
-        PSOInfo.VertexShader                               = NewPipelineInstance.VertexShader.Get();
-        PSOInfo.PixelShader                                = NewPipelineInstance.PixelShader.Get();
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
-
-        NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
-        if (!NewPipelineInstance.PipelineState)
-        {
-            DEBUG_BREAK();
-            return;
-        }
-        else
-        {
-            const FString DebugName = FString::CreateFormatted("PrePass PipelineState %d", MaterialFlags);
-            NewPipelineInstance.PipelineState->SetDebugName(DebugName);
-        }
-
-        MaterialPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
     }
+
+    FRHIDepthStencilStateInfo DepthStencilStateInitializer;
+    DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
+    DepthStencilStateInitializer.bDepthEnable      = true;
+    DepthStencilStateInitializer.bDepthWriteEnable = true;
+
+    NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+    if (!NewPipelineInstance.DepthStencilState)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    FRHIRasterizerStateInfo RasterizerStateInfo;
+    if (Material->IsDoubleSided())
+    {
+        RasterizerStateInfo.CullMode = ECullMode::None;
+    }
+    else
+    {
+        RasterizerStateInfo.CullMode = ECullMode::Back;
+    }
+
+    NewPipelineInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
+    if (!NewPipelineInstance.RasterizerState)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    FRHIBlendStateInfo BlendStateInfo;
+    NewPipelineInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    if (!NewPipelineInstance.BlendState)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    if (Material->HasHeightMap())
+    {
+        NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
+    }
+    else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+    {
+        TArray<FRHIInputElementInfo> InputElements =
+        {
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+            { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
+        };
+
+        NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
+        if (!NewPipelineInstance.InputLayout)
+        {
+            DEBUG_BREAK();
+            return;
+        }
+    }
+    else
+    {
+        TArray<FRHIInputElementInfo> InputElements =
+        {
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
+        };
+
+        NewPipelineInstance.InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
+        if (!NewPipelineInstance.InputLayout)
+        {
+            DEBUG_BREAK();
+            return;
+        }
+    }
+
+    FRHIGraphicsPipelineStateInfo PSOInfo;
+    PSOInfo.InputLayout                                = NewPipelineInstance.InputLayout.Get();
+    PSOInfo.BlendState                                 = NewPipelineInstance.BlendState.Get();
+    PSOInfo.DepthStencilState                          = NewPipelineInstance.DepthStencilState.Get();
+    PSOInfo.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
+    PSOInfo.VertexShader                               = NewPipelineInstance.VertexShader.Get();
+    PSOInfo.PixelShader                                = NewPipelineInstance.PixelShader.Get();
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
+
+    NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    if (!NewPipelineInstance.PipelineState)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+    else
+    {
+        const FString DebugName = FString::CreateFormatted("PrePass PSO %d", MaterialFlags);
+        NewPipelineInstance.PipelineState->SetDebugName(DebugName);
+    }
+
+    MaterialPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
 }
 
 bool FDepthPrePass::Initialize(FFrameResources& FrameResources)
@@ -227,16 +229,21 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
     return true;
 }
 
-void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
+void FDepthPrePass::ExecuteInternal(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene, FRHITexture* DepthTarget, const char* PassName)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Pre-Pass");
+    if (!DepthTarget)
+    {
+        return;
+    }
 
-    TRACE_SCOPE("Depth Pre-Pass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, PassName);
 
-    GPU_TRACE_SCOPE(CommandList, "Depth Pre-Pass");
+    TRACE_SCOPE(PassName);
+
+    GPU_TRACE_SCOPE(CommandList, PassName);
 
     FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get());
+    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTarget);
 
     CommandList.BeginRenderPass(RenderPass);
 
@@ -340,6 +347,11 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
     CommandList.EndRenderPass();
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Pre-Pass");
+}
+
+void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
+{
+    ExecuteInternal(CommandList, FrameResources, Scene, FrameResources.GBuffer[GBufferIndex_Depth].Get(), "Depth Pre-Pass");
 }
 
 FDeferredBasePass::FDeferredBasePass(FSceneRenderer* InRenderer)
@@ -1220,6 +1232,20 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
         }
     }
 
+    FRHITextureInfo HistoryInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32_Float, 1, 1, 1, 1, Usage);
+    HistoryInfo.bEnableResourceStateTracking = true;
+
+    FrameResources.CSMMinMaxDepthHistory = FRHI::Get()->CreateTexture(HistoryInfo, EResourceAccess::UnorderedAccess);
+    if (FrameResources.CSMMinMaxDepthHistory)
+    {
+        FrameResources.CSMMinMaxDepthHistory->SetDebugName("CSM MinMax Depth History");
+        FrameResources.bCSMMinMaxHistoryInitialized = false;
+    }
+    else
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -1243,14 +1269,17 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     ReductionConstants.NearPlane     = Camera->GetNearPlane();
     ReductionConstants.FarPlane      = Camera->GetFarPlane();
 
+    FRHITexture* DepthSource = FrameResources.GBuffer[GBufferIndex_Depth].Get();
+    const EResourceAccess DepthBefore = EResourceAccess::DepthWrite;
+
     // Perform the first reduction
-    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTexture(DepthSource, FRHITextureTransition::Make(DepthBefore, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
-    CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), DepthSource->GetShaderResourceView(), 0);
     CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
 
     constexpr uint32 NumConstants = sizeof(FReductionConstants) / sizeof(uint32);
@@ -1261,7 +1290,7 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
+    CommandList.TransitionTexture(DepthSource, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, DepthBefore));
 
     // Perform the other reductions
     CommandList.SetComputePipelineState(ReduceDepthPSO.Get());

@@ -133,10 +133,10 @@ struct FCascadeGenerationInfoHLSL
     float MaxSearchDistanceWorld;
 
     // 128-144
-    float Padding0;
-    float Padding1;
-    float Padding2;
-    float Padding3;
+    float TightFrustumShrinkFactor;
+    float TightFrustumStableExtents;
+    float TightFrustumDepthQuant;
+    float TightFrustumForceSphereFit;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
@@ -220,6 +220,10 @@ struct FFrameResources
     FRHITextureRef FinalTarget;
     FRHITextureRef TonemappedTarget;
     FRHITextureRef GBuffer[GBuffer_NumBuffers];
+
+    // Persistent min/max depth history for tight-frustum stabilization.
+    FRHITextureRef CSMMinMaxDepthHistory;
+    bool           bCSMMinMaxHistoryInitialized = false;
 
 #if EDITOR_BUILD
     // Editor-only: non-jittered depth + ObjectID buffers (used for stable selection outlines and picking).

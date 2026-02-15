@@ -8,6 +8,7 @@
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
@@ -106,7 +107,15 @@ void FEditorEngine::Tick(float DeltaTime)
                 IScene* Scene       = LocalWorld->GetSceneInterface();
                 FActor* PickedActor = Scene ? Scene->GetActorByObjectID(PickedObjectID) : nullptr;
 
-                LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickedObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
+#if EDITOR_BUILD
+                if (IConsoleVariable* CVarEditorPickDebug = FConsoleManager::Get().FindConsoleVariable("Editor.Pick.Debug"))
+                {
+                    if (CVarEditorPickDebug->GetBool())
+                    {
+                        LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickedObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
+                    }
+                }
+#endif
 
                 if (PickedActor)
                 {

@@ -73,10 +73,10 @@ struct FCascadeGenerationInfo
     float MaxSearchDistanceWorld;
 
     // 128-144
-    float Padding0;
-    float Padding1;
-    float Padding2;
-    float Padding3;
+    float TightFrustumShrinkFactor;
+    float TightFrustumStableExtents;
+    float TightFrustumDepthQuant;
+    float TightFrustumForceSphereFit;
 };
 
 struct FDirectionalLight

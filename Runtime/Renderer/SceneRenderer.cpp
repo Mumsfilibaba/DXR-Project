@@ -724,8 +724,11 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         BasePass->Execute(CommandList, Resources, CurrentScene);
     }
 
+    const bool bEnableShadows    = CVarShadowsEnabled.GetValue();
+    const bool bEnableSunShadows = CVarSunShadowsEnabled.GetValue();
+
     // Depth Reduce
-    if (CVarCSMTightFrustum.GetValue())
+    if (CVarCSMTightFrustum.GetValue() && bEnableShadows && bEnableSunShadows)
     {
         DepthReducePass->Execute(CommandList, Resources, CurrentScene);
     }
@@ -757,9 +760,6 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     CommandList.RequireTextureState(Resources.SSAOBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
 
     // Render Shadows
-    const bool bEnableShadows    = CVarShadowsEnabled.GetValue();
-    const bool bEnableSunShadows = CVarSunShadowsEnabled.GetValue();
-
     if (bEnableShadows)
     {
         // Point Lights
@@ -893,7 +893,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
             }
         }
 
-        EditorNoJitterDepthPass->Execute(CommandList, Resources, CurrentScene); 
+        EditorNoJitterDepthPass->Execute(CommandList, Resources, CurrentScene);
         EditorSelectionIDPass->Execute(CommandList, Resources, CurrentScene); 
  
         ProcessEditorObjectPickRequests(CommandList, Resources, CurrentScene); 

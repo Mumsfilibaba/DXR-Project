@@ -1,4 +1,5 @@
 #include "Core/Math/Frustum.h"
+#include "Core/Math/Vector4.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
@@ -858,6 +859,16 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
     CommandList.TransitionBuffer(Resources.CascadeMatrixBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
     CommandList.TransitionBuffer(Resources.CascadeSplitsBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
+    if (Resources.CSMMinMaxDepthHistory)
+    {
+        CommandList.RequireTextureState(Resources.CSMMinMaxDepthHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+        if (!Resources.bCSMMinMaxHistoryInitialized && Resources.CascadeGenerationData.bEnableTightFrustum)
+        {
+            CommandList.ClearUnorderedAccessView(Resources.CSMMinMaxDepthHistory->GetUnorderedAccessView(), FVector4(-1.0f, -1.0f, 0.0f, 0.0f));
+            Resources.bCSMMinMaxHistoryInitialized = true;
+        }
+    }
+
     CommandList.SetComputePipelineState(CascadeGen.Get());
 
     CommandList.SetConstantBuffer(CascadeGenShader.Get(), Resources.CameraBuffer.Get(), 0);
@@ -865,6 +876,10 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeMatrixBufferUAV.Get(), 0);
     CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeSplitsBufferUAV.Get(), 1);
+    if (Resources.CSMMinMaxDepthHistory)
+    {
+        CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CSMMinMaxDepthHistory->GetUnorderedAccessView(), 2);
+    }
 
     CommandList.SetShaderResourceView(CascadeGenShader.Get(), Resources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
 

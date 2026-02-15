@@ -11,6 +11,7 @@ ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b1);
 
 RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
 RWStructuredBuffer<FCascadeSplit> SplitBuffer : register(u1);
+RWTexture2D<float2> MinMaxDepthHistory : register(u2);
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
 
@@ -34,7 +35,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
         // Stabilize against sub-pixel jitter / small rasterization changes:
         // - Quantize min depth down and max depth up (keeps the range conservative).
-        const float DepthQuant = 1024.0;
+        const float DepthQuant = max(GenerationInfo.TightFrustumDepthQuant, 1.0);
         MinMaxDepth.x = saturate(floor(MinMaxDepth.x * DepthQuant) / DepthQuant);
         MinMaxDepth.y = saturate(ceil(MinMaxDepth.y * DepthQuant) / DepthQuant);
 
@@ -43,6 +44,24 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         const float DepthPad = 2.0 / DepthQuant;
         MinMaxDepth.x = saturate(MinMaxDepth.x - DepthPad);
         MinMaxDepth.y = saturate(MinMaxDepth.y + DepthPad);
+
+        // Apply hysteresis to reduce temporal popping: expand immediately, shrink slowly.
+        float2 PrevMinMax = MinMaxDepthHistory[uint2(0, 0)];
+        if (PrevMinMax.x < 0.0 || PrevMinMax.y < 0.0 || PrevMinMax.x > PrevMinMax.y)
+        {
+            PrevMinMax = MinMaxDepth;
+        }
+
+        const float ShrinkFactor = saturate(GenerationInfo.TightFrustumShrinkFactor);
+        float2 SmoothedMinMax;
+        SmoothedMinMax.x = (MinMaxDepth.x < PrevMinMax.x) ? MinMaxDepth.x : lerp(PrevMinMax.x, MinMaxDepth.x, ShrinkFactor);
+        SmoothedMinMax.y = (MinMaxDepth.y > PrevMinMax.y) ? MinMaxDepth.y : lerp(PrevMinMax.y, MinMaxDepth.y, ShrinkFactor);
+        MinMaxDepth = SmoothedMinMax;
+
+        if (DispatchThreadID.x == 0)
+        {
+            MinMaxDepthHistory[uint2(0, 0)] = MinMaxDepth;
+        }
     }
 
     float NearPlane = CameraBuffer.NearPlane;
@@ -215,29 +234,6 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         ReferenceSphereRadius = ceil(ReferenceSphereRadius * 16.0) / 16.0;
     }
 
-    // Cache the shadow-map size
-    const float CascadeResolution = GenerationInfo.CascadeResolution;
-    const float ReferenceWorldTexelSize = (2.0 * ReferenceSphereRadius) / max(CascadeResolution, 1.0);
-
-    // Calculate the extents for this cascade...
-    float3 MaxExtents     =  SphereRadius;
-    float3 MinExtents     = -MaxExtents;
-    float3 CascadeExtents =  MaxExtents - MinExtents;
-
-    // Expand tight frustum to account for the maximum PCSS kernel footprint (guard band).
-    {
-        float MaxKernelWorld = max(GenerationInfo.MaxPenumbraWorld, GenerationInfo.MaxSearchDistanceWorld);
-        if (GenerationInfo.bEnableTightFrustum && MaxKernelWorld > 0.0)
-        {
-            // Prevent guard bands from exploding the cascade when very large kernels are requested.
-            const float MaxGuardBand = max(MaxExtents.x, MaxExtents.y) * 0.5;
-            MaxKernelWorld = min(MaxKernelWorld, MaxGuardBand);
-            MaxExtents.xy += MaxKernelWorld;
-            MinExtents.xy -= MaxKernelWorld;
-            CascadeExtents = MaxExtents - MinExtents;
-        }
-    }
-
     // We use a specific extent in the z-direction, this is in order to prevent that some
     // objects are not visibe in the shadow-map and that are "behind" the camera.
 #if 1
@@ -267,6 +263,82 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
     float4x4 View    = FMatrix::InvRotationTranslation(LightRotation, ShadowEyePos);
     float4x4 InvView = float4x4(float4(LightRotation[0], 0.0), float4(LightRotation[1], 0.0), float4(LightRotation[2], 0.0), float4(ShadowEyePos, 1.0));
+
+    // Cache the shadow-map size
+    const float CascadeResolution = GenerationInfo.CascadeResolution;
+    const float ReferenceWorldTexelSize = (2.0 * ReferenceSphereRadius) / max(CascadeResolution, 1.0);
+
+    const bool bUseTightAABB = (GenerationInfo.bEnableTightFrustum != 0) && (GenerationInfo.TightFrustumForceSphereFit <= 0.5);
+    const bool bStableExtents = (GenerationInfo.bEnableStableCascades != 0) && (GenerationInfo.TightFrustumStableExtents > 0.5);
+
+    float3 MinExtents;
+    float3 MaxExtents;
+
+    if (bUseTightAABB)
+    {
+        float3 LSMin = float3(1e9, 1e9, 1e9);
+        float3 LSMax = float3(-1e9, -1e9, -1e9);
+
+        [unroll]
+        for (int Index = 0; Index < 8; ++Index)
+        {
+            float3 CornerLS = mul(float4(FrustumCornersWS[Index], 1.0), View).xyz;
+            LSMin = min(LSMin, CornerLS);
+            LSMax = max(LSMax, CornerLS);
+        }
+
+        float3 RefLSMin = LSMin;
+        float3 RefLSMax = LSMax;
+
+        if (bStableExtents)
+        {
+            RefLSMin = float3(1e9, 1e9, 1e9);
+            RefLSMax = float3(-1e9, -1e9, -1e9);
+
+            [unroll]
+            for (int Index = 0; Index < 8; ++Index)
+            {
+                float3 CornerLS = mul(float4(ReferenceFrustumCornersWS[Index], 1.0), View).xyz;
+                RefLSMin = min(RefLSMin, CornerLS);
+                RefLSMax = max(RefLSMax, CornerLS);
+            }
+        }
+
+        const float2 MinXY = bStableExtents ? RefLSMin.xy : LSMin.xy;
+        const float2 MaxXY = bStableExtents ? RefLSMax.xy : LSMax.xy;
+
+        MinExtents = float3(MinXY, LSMin.z);
+        MaxExtents = float3(MaxXY, LSMax.z);
+    }
+    else
+    {
+        float StableRadius = SphereRadius;
+        if (GenerationInfo.bEnableTightFrustum && bStableExtents)
+        {
+            StableRadius = ReferenceSphereRadius;
+        }
+
+        MaxExtents = float3(StableRadius, StableRadius, SphereRadius);
+        MinExtents = float3(-StableRadius, -StableRadius, -SphereRadius);
+    }
+
+    float3 CascadeExtents = MaxExtents - MinExtents;
+
+    // Expand tight frustum to account for the maximum PCSS kernel footprint (guard band).
+    {
+        float MaxKernelWorld = max(GenerationInfo.MaxPenumbraWorld, GenerationInfo.MaxSearchDistanceWorld);
+        if (GenerationInfo.bEnableTightFrustum && MaxKernelWorld > 0.0)
+        {
+            // Prevent guard bands from exploding the cascade when very large kernels are requested.
+            const float MaxAbsX = max(abs(MinExtents.x), abs(MaxExtents.x));
+            const float MaxAbsY = max(abs(MinExtents.y), abs(MaxExtents.y));
+            const float MaxGuardBand = max(MaxAbsX, MaxAbsY) * 0.5;
+            MaxKernelWorld = min(MaxKernelWorld, MaxGuardBand);
+            MaxExtents.xy += MaxKernelWorld;
+            MinExtents.xy -= MaxKernelWorld;
+            CascadeExtents = MaxExtents - MinExtents;
+        }
+    }
 
     // Create the projection
     float4x4 Projection = FMatrix::OrthographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, LightNearPlane, LightFarPlane);

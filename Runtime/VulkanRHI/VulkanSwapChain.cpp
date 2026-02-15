@@ -157,6 +157,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
 
 	uint32 CreateWidth  = InWidth;
 	uint32 CreateHeight = InHeight;
+    
 	if (!ValidateSurfaceAndSize(InCommandContext, CreateWidth, CreateHeight))
 	{
 		VULKAN_WARNING("Surface not ready or zero-sized.");

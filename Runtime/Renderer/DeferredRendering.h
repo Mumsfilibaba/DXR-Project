@@ -19,6 +19,8 @@ public:
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
+    void ExecuteInternal(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene, FRHITexture* DepthTarget, const char* PassName);
+
     TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
 };
 

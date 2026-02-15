@@ -12,6 +12,26 @@ static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Specifies the resolution of each Shadow Cascade",
     2048);
 
+static TAutoConsoleVariable<float> CVarCSMTightFrustumShrink(
+    "Renderer.CSM.TightFrustum.ShrinkLerp",
+    "How quickly the tight-frustum depth range shrinks toward the current min/max (0 = never shrink, 1 = immediate). Expansion is immediate.",
+    0.2f);
+
+static TAutoConsoleVariable<bool> CVarCSMTightFrustumStableExtents(
+    "Renderer.CSM.TightFrustum.StableExtents",
+    "When enabled, tight-frustum cascades keep stable XY extents based on the reference frustum to prevent temporal shimmering during camera movement.",
+    true);
+
+static TAutoConsoleVariable<float> CVarCSMTightFrustumDepthQuant(
+    "Renderer.CSM.TightFrustum.DepthQuant",
+    "Quantization steps used for tight-frustum min/max depth snapping (higher = finer, lower = more stable).",
+    1024.0f);
+
+static TAutoConsoleVariable<bool> CVarCSMTightFrustumForceSphereFit(
+    "Renderer.CSM.TightFrustum.ForceSphereFit",
+    "Force sphere-based cascade fitting even when tight frustum is enabled (for comparison).",
+    false);
+
 static TAutoConsoleVariable<int32> CVarPointLightShadowMapSize(
     "Renderer.Shadows.PointLightShadowMapSize",
     "Specifies the resolution of each Shadow Cascade",
@@ -248,6 +268,11 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
             CascadeGenerationData.bEnableStableCascades = true;
         }
 
+        if (!CascadeGenerationData.bEnableTightFrustum)
+        {
+            bCSMMinMaxHistoryInitialized = false;
+        }
+
         if (IConsoleVariable* CVarMaxPenumbraWorld = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCSS.MaxPenumbraWorld"))
         {
             CascadeGenerationData.MaxPenumbraWorld = Math::Max<float>(CVarMaxPenumbraWorld->GetFloat(), 0.0f);
@@ -264,6 +289,42 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         else
         {
             CascadeGenerationData.MaxSearchDistanceWorld = 0.0f;
+        }
+
+        if (IConsoleVariable* CVarTightFrustumShrink = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum.ShrinkLerp"))
+        {
+            CascadeGenerationData.TightFrustumShrinkFactor = Math::Clamp<float>(CVarTightFrustumShrink->GetFloat(), 0.0f, 1.0f);
+        }
+        else
+        {
+            CascadeGenerationData.TightFrustumShrinkFactor = 1.0f;
+        }
+
+        if (IConsoleVariable* CVarStableExtents = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum.StableExtents"))
+        {
+            CascadeGenerationData.TightFrustumStableExtents = CVarStableExtents->GetBool() ? 1.0f : 0.0f;
+        }
+        else
+        {
+            CascadeGenerationData.TightFrustumStableExtents = 1.0f;
+        }
+
+        if (IConsoleVariable* CVarDepthQuant = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum.DepthQuant"))
+        {
+            CascadeGenerationData.TightFrustumDepthQuant = Math::Clamp<float>(CVarDepthQuant->GetFloat(), 1.0f, 8192.0f);
+        }
+        else
+        {
+            CascadeGenerationData.TightFrustumDepthQuant = 1024.0f;
+        }
+
+        if (IConsoleVariable* CVarForceSphere = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum.ForceSphereFit"))
+        {
+            CascadeGenerationData.TightFrustumForceSphereFit = CVarForceSphere->GetBool() ? 1.0f : 0.0f;
+        }
+        else
+        {
+            CascadeGenerationData.TightFrustumForceSphereFit = 0.0f;
         }
 
         CascadeGenerationDataDirty = true;
@@ -482,6 +543,9 @@ void FFrameResources::Release()
     {
         Buffer.Reset();
     }
+
+    CSMMinMaxDepthHistory.Reset();
+    bCSMMinMaxHistoryInitialized = false;
 
 #if EDITOR_BUILD
     EditorNoJitterDepth.Reset();
