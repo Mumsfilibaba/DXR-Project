@@ -10,7 +10,7 @@
 static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Renderer.CSM.CascadeSize",
     "Specifies the resolution of each Shadow Cascade",
-    2048);
+    1024);
 
 static TAutoConsoleVariable<float> CVarCSMTightFrustumShrink(
     "Renderer.CSM.TightFrustum.ShrinkLerp",
@@ -272,6 +272,10 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         {
             bCSMMinMaxHistoryInitialized = false;
         }
+        if (!CascadeGenerationData.bEnableStableCascades || !CascadeGenerationData.bEnableTightFrustum)
+        {
+            bCSMCascadeHistoryInitialized = false;
+        }
 
         if (IConsoleVariable* CVarMaxPenumbraWorld = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCSS.MaxPenumbraWorld"))
         {
@@ -325,6 +329,33 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         else
         {
             CascadeGenerationData.TightFrustumForceSphereFit = 0.0f;
+        }
+
+        if (IConsoleVariable* CVarFilterMode = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))
+        {
+            CascadeGenerationData.FilterMode = Math::Clamp<int32>(CVarFilterMode->GetInt(), 0, 1);
+        }
+        else
+        {
+            CascadeGenerationData.FilterMode = 0;
+        }
+
+        if (IConsoleVariable* CVarPCFFilterWorld = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCF.FilterWorld"))
+        {
+            CascadeGenerationData.PCFFilterWorld = Math::Max<float>(CVarPCFFilterWorld->GetFloat(), 0.0f);
+        }
+        else
+        {
+            CascadeGenerationData.PCFFilterWorld = 0.0f;
+        }
+
+        if (IConsoleVariable* CVarPCFMinFilterRadius = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCF.MinFilterRadiusTexels"))
+        {
+            CascadeGenerationData.PCFMinFilterRadiusTexels = Math::Max<float>(CVarPCFMinFilterRadius->GetFloat(), 0.0f);
+        }
+        else
+        {
+            CascadeGenerationData.PCFMinFilterRadiusTexels = 0.0f;
         }
 
         CascadeGenerationDataDirty = true;
@@ -546,6 +577,11 @@ void FFrameResources::Release()
 
     CSMMinMaxDepthHistory.Reset();
     bCSMMinMaxHistoryInitialized = false;
+    bCSMCascadeHistoryInitialized = false;
+    CascadeSnapHistoryBuffer.Reset();
+    CascadeSnapHistoryBufferUAV.Reset();
+    CascadeExtentsHistoryBuffer.Reset();
+    CascadeExtentsHistoryBufferUAV.Reset();
 
 #if EDITOR_BUILD
     EditorNoJitterDepth.Reset();
@@ -564,6 +600,11 @@ void FFrameResources::Release()
     RTMeshToHitGroupIndex.Clear();
 
     DirectionalShadowMask.Reset();
+    ShadowMaskRaw.Reset();
+    ShadowDebugBuffer.Reset();
+    ShadowMaskHistory[0].Reset();
+    ShadowMaskHistory[1].Reset();
+    bShadowMaskHistoryInitialized = false;
     CascadeIndexBuffer.Reset();
 
     PointLightsPosRadBuffer.Reset();

@@ -109,7 +109,6 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureBool("Renderer.Feature.SunShadows");
 
     // Cascaded shadow maps
-    CaptureBool("Renderer.Debug.DrawCascades");
     CaptureBool("Renderer.CSM.EnableSinglePassRendering");
     CaptureBool("Renderer.CSM.EnableGeometryShaderInstancing");
     CaptureBool("Renderer.CSM.EnableDepthClipping");
@@ -442,19 +441,6 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
 
     int32 ActiveFilterMode = 0;
     int32 ActiveFilterFunctionRawValue = 1;
-
-    // Draw cascades
-    if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
-    {
-        bool bValue  = CVarDrawCascades->GetBool();
-        bool bValue0 = false;
-
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.Debug.DrawCascades", bValue0);
-        if (EditorWidgets::DrawCheckboxProperty("Draw cascades", bValue, RevertPtr))
-        {
-            CVarDrawCascades->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
-        }
-    }
 
     // Enable single-pass shadow map rendering
     if (IConsoleVariable* CVarEnableSinglePassRendering = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableSinglePassRendering"))

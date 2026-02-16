@@ -21,6 +21,14 @@ struct FSceneRenderView
         SSAO,
         Depth,
         ShadowCascades,
+        ShadowCascadeIndex,
+        ShadowCascadeTransition,
+        ShadowFilterMargin,
+        ShadowPCSSRadiusClamp,
+        ShadowCascadeUpdated,
+        ShadowContainment,
+        ShadowCascadeFallback,
+        ShadowCascadeOverlay,
     };
 
     IScene*      Scene        = nullptr;

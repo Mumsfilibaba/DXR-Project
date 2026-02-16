@@ -176,6 +176,7 @@ void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderVie
     RequirePixel(FrameResources.SSAOBuffer.Get());
     RequirePixel(FrameResources.ShadowCascades.Get());
     RequirePixel(FrameResources.CascadeIndexBuffer.Get());
+    RequirePixel(FrameResources.ShadowDebugBuffer.Get());
 
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
@@ -197,6 +198,7 @@ void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderVie
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.SSAOBuffer->GetShaderResourceView(), 6);
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ShadowCascades->GetShaderResourceView(), 7);
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 8);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ShadowDebugBuffer->GetShaderResourceView(), 9);
 
     CommandList.SetConstantBuffer(DebugPixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
@@ -230,6 +232,7 @@ void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderVie
     RequireNonPixel(FrameResources.SSAOBuffer.Get());
     RequireNonPixel(FrameResources.ShadowCascades.Get());
     RequireNonPixel(FrameResources.CascadeIndexBuffer.Get());
+    RequireNonPixel(FrameResources.ShadowDebugBuffer.Get());
 
     if (bNeedsTransition)
     {

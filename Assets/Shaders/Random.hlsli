@@ -100,4 +100,37 @@ float3 CranleyPatterssonRotation(float3 Value, inout uint Seed)
     return Value;
 }
 
+// Integer hash helpers for stable, deterministic sampling patterns.
+uint HashUint(uint v)
+{
+    v ^= v >> 16;
+    v *= 0x7feb352d;
+    v ^= v >> 15;
+    v *= 0x846ca68b;
+    v ^= v >> 16;
+    return v;
+}
+
+uint HashCombine(uint a, uint b)
+{
+    return HashUint(a ^ (b + 0x9e3779b9u + (a << 6) + (a >> 2)));
+}
+
+uint Hash3(uint3 v)
+{
+    return HashCombine(HashCombine(v.x, v.y), v.z);
+}
+
+float HashToFloat(uint v)
+{
+    return float(v) * (1.0 / 4294967296.0);
+}
+
+float2 HashToFloat2(uint v)
+{
+    const uint h0 = HashUint(v);
+    const uint h1 = HashUint(v ^ 0x68bc21ebu);
+    return float2(HashToFloat(h0), HashToFloat(h1));
+}
+
 #endif

@@ -137,6 +137,12 @@ struct FCascadeGenerationInfoHLSL
     float TightFrustumStableExtents;
     float TightFrustumDepthQuant;
     float TightFrustumForceSphereFit;
+
+    // 144-160
+    int32 FilterMode;
+    float PCFFilterWorld;
+    float PCFMinFilterRadiusTexels;
+    float Padding0;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
@@ -224,6 +230,11 @@ struct FFrameResources
     // Persistent min/max depth history for tight-frustum stabilization.
     FRHITextureRef CSMMinMaxDepthHistory;
     bool           bCSMMinMaxHistoryInitialized = false;
+    bool           bCSMCascadeHistoryInitialized = false;
+    FRHIBufferRef  CascadeSnapHistoryBuffer;
+    FRHIUnorderedAccessViewRef CascadeSnapHistoryBufferUAV;
+    FRHIBufferRef  CascadeExtentsHistoryBuffer;
+    FRHIUnorderedAccessViewRef CascadeExtentsHistoryBufferUAV;
 
 #if EDITOR_BUILD
     // Editor-only: non-jittered depth + ObjectID buffers (used for stable selection outlines and picking).
@@ -261,6 +272,10 @@ struct FFrameResources
     FRHITextureRef            ShadowCascades;
     FRHIShaderResourceViewRef ShadowCascadesSRVs[NUM_SHADOW_CASCADES];
     FRHITextureRef            DirectionalShadowMask;
+    FRHITextureRef            ShadowMaskRaw;
+    FRHITextureRef            ShadowDebugBuffer;
+    FRHITextureRef            ShadowMaskHistory[2];
+    bool                      bShadowMaskHistoryInitialized = false;
     FRHITextureRef            CascadeIndexBuffer;
 
     FRHIBufferRef              CascadeMatrixBuffer;

@@ -152,7 +152,7 @@ static TAutoConsoleVariable<bool> CVarCSMTightFrustum(
 static FAutoConsoleCommand CVarFreezeRendering(
     "Renderer.FreezeRendering",
     "Freezes the updating of Frustum culling",
-    FConsoleCommandDelegate::CreateLambda([]()
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         GFreezeRendering = !GFreezeRendering;
     }));
@@ -172,6 +172,7 @@ FSceneRenderer::FSceneRenderer()
     , CascadeGenerationPass(nullptr)
     , CascadedShadowsRenderPass(nullptr)
     , ShadowMaskRenderPass(nullptr)
+    , ShadowMaskHistoryPass(nullptr)
     , ScreenSpaceOcclusionPass(nullptr)
     , SkyboxRenderPass(nullptr)
     , TemporalAA(nullptr)
@@ -212,6 +213,7 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(CascadeGenerationPass);
     SAFE_DELETE(CascadedShadowsRenderPass);
     SAFE_DELETE(ShadowMaskRenderPass);
+    SAFE_DELETE(ShadowMaskHistoryPass);
     SAFE_DELETE(ScreenSpaceOcclusionPass);
     SAFE_DELETE(SkyboxRenderPass);
     SAFE_DELETE(TemporalAA);
@@ -438,6 +440,12 @@ bool FSceneRenderer::InitializeRenderPasses()
 
     ShadowMaskRenderPass = new FShadowMaskRenderPass(this);
     if (!ShadowMaskRenderPass->Initialize(Resources))
+    {
+        return false;
+    }
+
+    ShadowMaskHistoryPass = new FShadowMaskHistoryPass(this);
+    if (!ShadowMaskHistoryPass->Initialize(Resources))
     {
         return false;
     }
@@ -797,12 +805,49 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     const bool bEnableShadowMask = CVarShadowMaskEnabled.GetValue();
     if (bEnableShadows && bEnableShadowMask && bEnableSunShadows)
     {
-        ShadowMaskRenderPass->Execute(CommandList, Resources);
+        uint32 ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::None);
+        switch (SceneRenderView.DebugView)
+        {
+        case FSceneRenderView::EDebugView::ShadowCascadeIndex:      ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeIndex); break;
+        case FSceneRenderView::EDebugView::ShadowCascadeTransition: ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeTransition); break;
+        case FSceneRenderView::EDebugView::ShadowFilterMargin:      ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::FilterMargin); break;
+        case FSceneRenderView::EDebugView::ShadowPCSSRadiusClamp:   ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::PCSSRadiusClamp); break;
+        case FSceneRenderView::EDebugView::ShadowCascadeUpdated:    ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeUpdated); break;
+        case FSceneRenderView::EDebugView::ShadowContainment:       ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::Containment); break;
+        case FSceneRenderView::EDebugView::ShadowCascadeFallback:   ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeFallback); break;
+        default: break;
+        }
+
+        bool bUseShadowHistory = false;
+        if (IConsoleVariable* CVarShadowHistory = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.ShadowHistory"))
+        {
+            bUseShadowHistory = CVarShadowHistory->GetBool();
+        }
+
+        bool bIsPCSS = false;
+        if (IConsoleVariable* CVarFilterMode = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))
+        {
+            bIsPCSS = (CVarFilterMode->GetInt() == 1);
+        }
+
+        bUseShadowHistory = bUseShadowHistory && bIsPCSS;
+        if (!bUseShadowHistory)
+        {
+            Resources.bShadowMaskHistoryInitialized = false;
+        }
+
+        ShadowMaskRenderPass->Execute(CommandList, Resources, ShadowDebugMode, bUseShadowHistory);
+        if (bUseShadowHistory)
+        {
+            ShadowMaskHistoryPass->Execute(CommandList, Resources);
+        }
     }
     else
     {
         CommandList.RequireTextureState(Resources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
         CommandList.RequireTextureState(Resources.CascadeIndexBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+
+        Resources.bShadowMaskHistoryInitialized = false;
 
         const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         CommandList.ClearUnorderedAccessView(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
@@ -810,8 +855,21 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.ClearUnorderedAccessView(Resources.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
 
+        if (Resources.ShadowDebugBuffer)
+        {
+            CommandList.RequireTextureState(Resources.ShadowDebugBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+            CommandList.ClearUnorderedAccessView(Resources.ShadowDebugBuffer->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 0.0f, 0.0f));
+            CommandList.RequireTextureState(Resources.ShadowDebugBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        }
+
         CommandList.RequireTextureState(Resources.CascadeIndexBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
         CommandList.RequireTextureState(Resources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    }
+
+    const bool bDrawCascadesOverlay = (SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay);
+    if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
+    {
+        CVarDrawCascades->SetAsBool(bDrawCascadesOverlay, EConsoleVariableFlags::SetByCode);
     }
 
     // Main LightPass
@@ -902,7 +960,8 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     } 
 #endif 
 
-    if (SceneRenderView.DebugView != FSceneRenderView::EDebugView::None)
+    if (SceneRenderView.DebugView != FSceneRenderView::EDebugView::None
+        && SceneRenderView.DebugView != FSceneRenderView::EDebugView::ShadowCascadeOverlay)
     {
         DebugViewPass->Execute(CommandList, SceneRenderView, Resources, SceneRenderView.DebugView);
     }

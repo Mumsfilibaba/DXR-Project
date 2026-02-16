@@ -97,6 +97,14 @@ void FEditorViewportWidget::Draw()
                     "SSAO",
                     "Depth",
                     "Shadow Cascades (2x2)",
+                    "Shadow: Cascade Index",
+                    "Shadow: Transition",
+                    "Shadow: Filter Margin",
+                    "Shadow: PCSS Clamp",
+                    "Shadow: Cascade Updated",
+                    "Shadow: Containment",
+                    "Shadow: Cascade Fallback",
+                    "Shadow: Cascade Overlay",
                 };
 
                 static const FSceneRenderView::EDebugView DebugViewValues[] =
@@ -110,6 +118,14 @@ void FEditorViewportWidget::Draw()
                     FSceneRenderView::EDebugView::SSAO,
                     FSceneRenderView::EDebugView::Depth,
                     FSceneRenderView::EDebugView::ShadowCascades,
+                    FSceneRenderView::EDebugView::ShadowCascadeIndex,
+                    FSceneRenderView::EDebugView::ShadowCascadeTransition,
+                    FSceneRenderView::EDebugView::ShadowFilterMargin,
+                    FSceneRenderView::EDebugView::ShadowPCSSRadiusClamp,
+                    FSceneRenderView::EDebugView::ShadowCascadeUpdated,
+                    FSceneRenderView::EDebugView::ShadowContainment,
+                    FSceneRenderView::EDebugView::ShadowCascadeFallback,
+                    FSceneRenderView::EDebugView::ShadowCascadeOverlay,
                 };
 
                 constexpr int32 ItemCount = static_cast<int32>(sizeof(DebugViewItems) / sizeof(DebugViewItems[0]));

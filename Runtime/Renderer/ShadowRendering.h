@@ -72,7 +72,25 @@ struct FCascadeSplitHLSL
     FVector3 CascadeCameraPosition;
     // Reference world-space texel size for this cascade computed using the full camera clip range
     // (independent of tight-frustum depth min/max). Used for stable PCSS clamping in ShadowMaskGen.hlsl.
-    float    Padding0;
+    float    RefWorldTexelSize;
+
+    // 160-176
+    float    PCFMarginTexels;
+    float    PCSSMarginTexels;
+    float    MaxPCSSRadiusTexels;
+    float    MaxPCSSRadiusWorld;
+
+    // 176-192
+    float    MaxPCSSSearchWorld;
+    float    TransitionWidthViewZ;
+    float    TransitionMarginTexels;
+    float    CascadeUpdatedThisFrame;
+
+    // 192-208
+    float    Padding1;
+    float    Padding2;
+    float    Padding3;
+    float    Padding4;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeSplitHLSL);
@@ -287,6 +305,12 @@ struct FDirectionalShadowSettingsHLSL
     float  Padding1;
     float  Padding2;
     float  Padding3;
+
+    // 64-80
+    uint32 ShadowDebugMode;
+    uint32 ShadowDebugPadding0;
+    uint32 ShadowDebugPadding1;
+    uint32 ShadowDebugPadding2;
 };
 
 MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
@@ -303,6 +327,18 @@ enum ECSMFilterFunction : uint8
     PoissonDisk              = 1,
     VogelDisk                = 2,
     InterleavedGradientNoise = 3,
+};
+
+enum class EShadowDebugMode : uint32
+{
+    None = 0,
+    CascadeIndex,
+    CascadeTransition,
+    FilterMargin,
+    PCSSRadiusClamp,
+    CascadeUpdated,
+    Containment,
+    CascadeFallback,
 };
 
 struct FShadowMaskShaderCombination
@@ -349,6 +385,9 @@ struct FShadowMaskShaderCombination
             // BlendBetween cascades
             bool bBlendCascades : 1;
 
+            // Allow per-tap cascade fallback sampling
+            bool bCascadeFallback : 1;
+
             // Number of samples (Valid for poisson- and vogel-disk)
             uint8 NumSamples : 8;
 
@@ -370,11 +409,27 @@ public:
 
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height);
-    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, uint32 ShadowDebugMode, bool bUseHistory);
     bool RetrievePipelineState(const FShadowMaskShaderCombination& Combination, FComputePipelineStateInstance& OutPSO);
     void RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination);
 
 private:
     TMap<FShadowMaskShaderCombination, FComputePipelineStateInstance> PipelineStates;
     FRHIBufferRef ShadowSettingsBuffer;
+};
+
+class FShadowMaskHistoryPass : public FRenderPass
+{
+public:
+    FShadowMaskHistoryPass(FSceneRenderer* InRenderer);
+    virtual ~FShadowMaskHistoryPass();
+
+    bool Initialize(FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
+
+private:
+    FRHIComputePipelineStateRef HistoryPSO;
+    FRHIComputeShaderRef        HistoryShader;
+    FRHISamplerStateRef         LinearSampler;
+    uint32                      CurrentHistoryIndex = 0;
 };

@@ -12,8 +12,12 @@ ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b1);
 RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
 RWStructuredBuffer<FCascadeSplit> SplitBuffer : register(u1);
 RWTexture2D<float2> MinMaxDepthHistory : register(u2);
+RWStructuredBuffer<float4> CascadeSnapHistory : register(u3);
+RWStructuredBuffer<float4> CascadeExtentsHistory : register(u4);
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
+
+groupshared float2 gMinMaxDepth;
 
 [numthreads(NUM_THREADS, 1, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
@@ -27,36 +31,43 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     [branch]
     if (GenerationInfo.bEnableTightFrustum)
     {
-        MinMaxDepth = saturate(MinMaxDepthTex[uint2(0, 0)]);
-        if (MinMaxDepth.x > MinMaxDepth.y)
+        if (DispatchThreadID.x == 0)
         {
-            MinMaxDepth = float2(0.0, 1.0);
+            float2 LocalMinMax = saturate(MinMaxDepthTex[uint2(0, 0)]);
+            if (LocalMinMax.x > LocalMinMax.y)
+            {
+                LocalMinMax = float2(0.0, 1.0);
+            }
+
+            // Stabilize against sub-pixel jitter / small rasterization changes:
+            // - Quantize min depth down and max depth up (keeps the range conservative).
+            const float DepthQuant = max(GenerationInfo.TightFrustumDepthQuant, 1.0);
+            LocalMinMax.x = saturate(floor(LocalMinMax.x * DepthQuant) / DepthQuant);
+            LocalMinMax.y = saturate(ceil(LocalMinMax.y * DepthQuant) / DepthQuant);
+
+            // Add a small conservative padding to reduce temporal "breathing" and prevent
+            // extremely tight ranges that can cause out-of-frustum sampling artifacts.
+            const float DepthPad = 2.0 / DepthQuant;
+            LocalMinMax.x = saturate(LocalMinMax.x - DepthPad);
+            LocalMinMax.y = saturate(LocalMinMax.y + DepthPad);
+
+            // Apply hysteresis to reduce temporal popping: expand immediately, shrink slowly.
+            float2 PrevMinMax = MinMaxDepthHistory[uint2(0, 0)];
+            if (PrevMinMax.x < 0.0 || PrevMinMax.y < 0.0 || PrevMinMax.x > PrevMinMax.y)
+            {
+                PrevMinMax = LocalMinMax;
+            }
+
+            const float ShrinkFactor = saturate(GenerationInfo.TightFrustumShrinkFactor);
+            float2 SmoothedMinMax;
+            SmoothedMinMax.x = (LocalMinMax.x < PrevMinMax.x) ? LocalMinMax.x : lerp(PrevMinMax.x, LocalMinMax.x, ShrinkFactor);
+            SmoothedMinMax.y = (LocalMinMax.y > PrevMinMax.y) ? LocalMinMax.y : lerp(PrevMinMax.y, LocalMinMax.y, ShrinkFactor);
+            gMinMaxDepth = SmoothedMinMax;
         }
 
-        // Stabilize against sub-pixel jitter / small rasterization changes:
-        // - Quantize min depth down and max depth up (keeps the range conservative).
-        const float DepthQuant = max(GenerationInfo.TightFrustumDepthQuant, 1.0);
-        MinMaxDepth.x = saturate(floor(MinMaxDepth.x * DepthQuant) / DepthQuant);
-        MinMaxDepth.y = saturate(ceil(MinMaxDepth.y * DepthQuant) / DepthQuant);
-
-        // Add a small conservative padding to reduce temporal "breathing" and prevent
-        // extremely tight ranges that can cause out-of-frustum sampling artifacts.
-        const float DepthPad = 2.0 / DepthQuant;
-        MinMaxDepth.x = saturate(MinMaxDepth.x - DepthPad);
-        MinMaxDepth.y = saturate(MinMaxDepth.y + DepthPad);
-
-        // Apply hysteresis to reduce temporal popping: expand immediately, shrink slowly.
-        float2 PrevMinMax = MinMaxDepthHistory[uint2(0, 0)];
-        if (PrevMinMax.x < 0.0 || PrevMinMax.y < 0.0 || PrevMinMax.x > PrevMinMax.y)
-        {
-            PrevMinMax = MinMaxDepth;
-        }
-
-        const float ShrinkFactor = saturate(GenerationInfo.TightFrustumShrinkFactor);
-        float2 SmoothedMinMax;
-        SmoothedMinMax.x = (MinMaxDepth.x < PrevMinMax.x) ? MinMaxDepth.x : lerp(PrevMinMax.x, MinMaxDepth.x, ShrinkFactor);
-        SmoothedMinMax.y = (MinMaxDepth.y > PrevMinMax.y) ? MinMaxDepth.y : lerp(PrevMinMax.y, MinMaxDepth.y, ShrinkFactor);
-        MinMaxDepth = SmoothedMinMax;
+        GroupMemoryBarrierWithGroupSync();
+        MinMaxDepth = gMinMaxDepth;
+        GroupMemoryBarrierWithGroupSync();
 
         if (DispatchThreadID.x == 0)
         {
@@ -149,8 +160,8 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
     // Use min between MinMaxDepth to protect against cases where the lowest is 1.0 
     // and highest 0.0. This can happen when nothing is rendered in the prepass.
-    float SplitDist     = CascadeSplits[CascadeIndex];
-    float PrevSplitDist = (CascadeIndex == 0) ? min(MinMaxDepth.x, MinMaxDepth.y) : CascadeSplits[CascadeIndex - 1];
+    float SplitDist     = CascadeSplitsReference[CascadeIndex];
+    float PrevSplitDist = (CascadeIndex == 0) ? 0.0 : CascadeSplitsReference[CascadeIndex - 1];
 
     {
         [unroll]
@@ -252,8 +263,11 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     // Create the position for the shadow rendering
     float3 ShadowEyePos = FrustumCenter - LightDirection * LightPositionOffset;
 
-    // Constant upvector in order to keep the cascades stable
-    float3 LightUp = float3(0.0, 1.0, 0.0);
+    // Robust up-vector selection to avoid degeneracy near world-up
+    const float3 WorldUp = float3(0.0, 1.0, 0.0);
+    const float3 AltUp   = float3(0.0, 0.0, 1.0);
+    const float  UpDot   = abs(dot(LightDirection, WorldUp));
+    float3 LightUp = (UpDot > 0.99) ? AltUp : WorldUp;
     
     // Create the view matrix and it's inverse
     float3x3 LightRotation;
@@ -322,45 +336,88 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         MinExtents = float3(-StableRadius, -StableRadius, -SphereRadius);
     }
 
+    // Apply hysteresis to tight-frustum XY extents: expand immediately, shrink slowly.
+    if (GenerationInfo.bEnableTightFrustum && bUseTightAABB)
+    {
+        float4 PrevExtents = CascadeExtentsHistory[CascadeIndex];
+        const bool bPrevValid = (PrevExtents.z > PrevExtents.x) && (PrevExtents.w > PrevExtents.y);
+        if (!bPrevValid)
+        {
+            PrevExtents = float4(MinExtents.xy, MaxExtents.xy);
+        }
+
+        const float ShrinkFactor = saturate(GenerationInfo.TightFrustumShrinkFactor);
+        float2 NewMin = lerp(PrevExtents.xy, MinExtents.xy, ShrinkFactor);
+        float2 NewMax = lerp(PrevExtents.zw, MaxExtents.xy, ShrinkFactor);
+
+        // Expand immediately (component-wise), shrink slowly.
+        NewMin = min(NewMin, MinExtents.xy);
+        NewMax = max(NewMax, MaxExtents.xy);
+
+        MinExtents.xy = NewMin;
+        MaxExtents.xy = NewMax;
+
+        CascadeExtentsHistory[CascadeIndex] = float4(NewMin, NewMax);
+    }
+
     float3 CascadeExtents = MaxExtents - MinExtents;
 
-    // Expand tight frustum to account for the maximum PCSS kernel footprint (guard band).
+    // Derived PCF/PCSS margins (in texels)
+    const float RefTexelSize = max(ReferenceWorldTexelSize, 1e-6);
+    const float PCFRadiusTexels = max(GenerationInfo.PCFMinFilterRadiusTexels, (GenerationInfo.PCFFilterWorld / RefTexelSize) * 0.5);
+    const float PCFMarginTexels = ceil(PCFRadiusTexels) + 1.0;
+
+    const float BasePCSS = CascadeResolution / 32.0;
+    const uint CascadeShift = (1u << CascadeIndex);
+    const float CascadeScale = rcp(float(CascadeShift));
+    const float MaxPCSSRadiusTexels = clamp(BasePCSS * CascadeScale, 4.0, 64.0);
+    const float PCSSMarginTexels = MaxPCSSRadiusTexels + 3.0;
+
+    const bool bUsePCSS = (GenerationInfo.FilterMode != 0);
+    const float SelectedMarginTexels = bUsePCSS ? PCSSMarginTexels : PCFMarginTexels;
+    float MarginWorld = SelectedMarginTexels * RefTexelSize;
+
+    // Expand extents to account for kernel footprint (guard band).
+    if (MarginWorld > 0.0)
     {
-        float MaxKernelWorld = max(GenerationInfo.MaxPenumbraWorld, GenerationInfo.MaxSearchDistanceWorld);
-        if (GenerationInfo.bEnableTightFrustum && MaxKernelWorld > 0.0)
+        // Prevent guard bands from exploding the cascade when very large kernels are requested.
+        const float MaxAbsX = max(abs(MinExtents.x), abs(MaxExtents.x));
+        const float MaxAbsY = max(abs(MinExtents.y), abs(MaxExtents.y));
+        const float MaxGuardBand = max(MaxAbsX, MaxAbsY) * 0.5;
+        MarginWorld = min(MarginWorld, MaxGuardBand);
+        MaxExtents.xy += MarginWorld;
+        MinExtents.xy -= MarginWorld;
+        CascadeExtents = MaxExtents - MinExtents;
+    }
+
+    float CascadeUpdatedThisFrame = 1.0;
+
+    // Stabilize cascades by snapping extents in light-space
+    [branch]
+    if (GenerationInfo.bEnableStableCascades)
+    {
+        const float2 ExtentXY = MaxExtents.xy - MinExtents.xy;
+        const float2 TexelSizeLS = ExtentXY / max(CascadeResolution, 1.0);
+        const float2 Center = 0.5 * (MinExtents.xy + MaxExtents.xy);
+        const float2 CenterSnapped = floor(Center / TexelSizeLS) * TexelSizeLS;
+
+        const float2 PrevCenter = CascadeSnapHistory[CascadeIndex].xy;
+        const bool bPrevValid = all(PrevCenter > -1e8);
+        if (bPrevValid)
         {
-            // Prevent guard bands from exploding the cascade when very large kernels are requested.
-            const float MaxAbsX = max(abs(MinExtents.x), abs(MaxExtents.x));
-            const float MaxAbsY = max(abs(MinExtents.y), abs(MaxExtents.y));
-            const float MaxGuardBand = max(MaxAbsX, MaxAbsY) * 0.5;
-            MaxKernelWorld = min(MaxKernelWorld, MaxGuardBand);
-            MaxExtents.xy += MaxKernelWorld;
-            MinExtents.xy -= MaxKernelWorld;
-            CascadeExtents = MaxExtents - MinExtents;
+            const float2 Delta = abs(CenterSnapped - PrevCenter);
+            const float2 Threshold = TexelSizeLS * 0.5;
+            CascadeUpdatedThisFrame = any(Delta > Threshold) ? 1.0 : 0.0;
         }
+
+        CascadeSnapHistory[CascadeIndex] = float4(CenterSnapped, 0.0, 0.0);
+
+        MinExtents.xy = CenterSnapped - 0.5 * ExtentXY;
+        MaxExtents.xy = CenterSnapped + 0.5 * ExtentXY;
     }
 
     // Create the projection
     float4x4 Projection = FMatrix::OrthographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, LightNearPlane, LightFarPlane);
-    
-    // Stabilize cascades
-    [branch]
-    if (GenerationInfo.bEnableStableCascades)
-    {
-        // Create a temportary view-projection matrix used to stabilize the cascades
-        float4x4 ShadowViewProj = mul(View, Projection);
-
-        const float ShadowTexelSize = 2.0 / CascadeResolution;
-
-        float3 ShadowOrigin = mul(float4(0.0, 0.0, 0.0, 1.0), ShadowViewProj).xyz;
-        ShadowOrigin = ShadowOrigin * CascadeResolution * 0.5;
-
-        float3 RoundedOrigin = floor(ShadowOrigin);
-        float3 RoundedOffset = (RoundedOrigin - ShadowOrigin) * ShadowTexelSize;
-
-        Projection[3][0] += RoundedOffset.x;
-        Projection[3][1] += RoundedOffset.y;
-    }
 
     // Create the final view-projection matrix after we have stabilized the projection matrix
     float4x4 ViewProjection = mul(View, Projection);
@@ -452,7 +509,19 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         
         // We might want the position for the cascade
         Split.CascadeCameraPosition = ShadowEyePos;
-        Split.Padding0              = ReferenceWorldTexelSize;
+        Split.RefWorldTexelSize     = ReferenceWorldTexelSize;
+        Split.PCFMarginTexels       = PCFMarginTexels;
+        Split.PCSSMarginTexels      = PCSSMarginTexels;
+        Split.MaxPCSSRadiusTexels   = MaxPCSSRadiusTexels;
+        Split.MaxPCSSRadiusWorld    = MaxPCSSRadiusTexels * ReferenceWorldTexelSize;
+        Split.MaxPCSSSearchWorld    = Split.MaxPCSSRadiusWorld;
+        Split.TransitionWidthViewZ  = 2.0 * (SelectedMarginTexels * ReferenceWorldTexelSize);
+        Split.TransitionMarginTexels = SelectedMarginTexels;
+        Split.CascadeUpdatedThisFrame = CascadeUpdatedThisFrame;
+        Split.Padding1 = 0.0;
+        Split.Padding2 = 0.0;
+        Split.Padding3 = 0.0;
+        Split.Padding4 = 0.0;
 
         SplitBuffer[CascadeIndex] = Split;
     }

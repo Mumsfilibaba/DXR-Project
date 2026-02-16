@@ -11,6 +11,14 @@
 #define DEBUG_VIEW_SSAO              6
 #define DEBUG_VIEW_DEPTH             7
 #define DEBUG_VIEW_SHADOW_CASCADES   8
+#define DEBUG_VIEW_SHADOW_CASCADE_INDEX      9
+#define DEBUG_VIEW_SHADOW_CASCADE_TRANSITION 10
+#define DEBUG_VIEW_SHADOW_FILTER_MARGIN      11
+#define DEBUG_VIEW_SHADOW_PCSS_RADIUS_CLAMP  12
+#define DEBUG_VIEW_SHADOW_CASCADE_UPDATED    13
+#define DEBUG_VIEW_SHADOW_CONTAINMENT        14
+#define DEBUG_VIEW_SHADOW_CASCADE_FALLBACK   15
+#define DEBUG_VIEW_SHADOW_CASCADE_OVERLAY    16
 
 Texture2D<float4> GBufferAlbedo   : register(t0);
 Texture2D<float4> GBufferNormal   : register(t1);
@@ -21,6 +29,7 @@ Texture2D<float>  ShadowMask      : register(t5);
 Texture2D<float>  SSAOBuffer      : register(t6);
 Texture2DArray<float> ShadowCascades : register(t7);
 Texture2D<uint>   CascadeIndexBuffer : register(t8);
+Texture2D<float4> ShadowDebugBuffer : register(t9);
 
 SamplerState LinearSampler : register(s0);
 SamplerState PointSampler  : register(s1);
@@ -105,6 +114,38 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
 
         const float Depth = ShadowCascades.SampleLevel(PointSampler, float3(QuadUV, CascadeIndex), 0).r;
         Color = (1.0 - Depth).xxx;
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADE_INDEX)
+    {
+        const float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, TexCoord, 0).r;
+        const float CascadeF = saturate(DebugValue) * max(float(NUM_SHADOW_CASCADES - 1), 1.0);
+        const uint CascadeIndex = (uint)(CascadeF + 0.5);
+
+        if (CascadeIndex == 0)
+        {
+            Color = float3(1.0, 0.0, 0.0);
+        }
+        else if (CascadeIndex == 1)
+        {
+            Color = float3(0.0, 1.0, 0.0);
+        }
+        else if (CascadeIndex == 2)
+        {
+            Color = float3(0.0, 0.0, 1.0);
+        }
+        else if (CascadeIndex == 3)
+        {
+            Color = float3(1.0, 1.0, 0.0);
+        }
+        else
+        {
+            Color = 1.0;
+        }
+    }
+    else if (Constants.DebugMode >= DEBUG_VIEW_SHADOW_CASCADE_TRANSITION && Constants.DebugMode <= DEBUG_VIEW_SHADOW_CASCADE_FALLBACK)
+    {
+        const float3 DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, TexCoord, 0).rgb;
+        Color = DebugValue;
     }
     else
     {
