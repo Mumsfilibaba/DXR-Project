@@ -10,9 +10,10 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     , Direction(-FVector3::Up)
     , Rotation(0.0f, 0.0f, 0.0f)
     , ShadowPositionOffset(200.0f)
-    , CascadeSplitLambda(0.95f)
+    , CascadeSplitLambda(0.60f)
     , LightArea(0.5f)
 {
+    ShadowBias = 0.0005f;
 }
 
 FDirectionalLight::~FDirectionalLight()

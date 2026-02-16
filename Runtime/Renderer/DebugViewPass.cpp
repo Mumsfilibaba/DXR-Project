@@ -1,4 +1,5 @@
 #include "Renderer/DebugViewPass.h"
+#include "Core/Math/Math.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
@@ -120,6 +121,16 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
 
 void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView)
 {
+    ExecuteInternal(CommandList, SceneRenderView, FrameResources, DebugView, 0, 0, 0, 0, true);
+}
+
+void FDebugViewPass::ExecuteOverlay(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView, int32 X, int32 Y, int32 Width, int32 Height)
+{
+    ExecuteInternal(CommandList, SceneRenderView, FrameResources, DebugView, X, Y, Width, Height, false);
+}
+
+void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView, int32 X, int32 Y, int32 Width, int32 Height, bool bClearTarget)
+{
     if (DebugView == FSceneRenderView::EDebugView::None)
     {
         return;
@@ -137,13 +148,26 @@ void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderVie
 
     GPU_TRACE_SCOPE(CommandList, "DebugView");
 
-    const float RenderWidth  = static_cast<float>(FrameResources.CurrentRenderWidth);
-    const float RenderHeight = static_cast<float>(FrameResources.CurrentRenderHeight);
+    const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetWidth());
+    const int32 TargetHeight = static_cast<int32>(RenderTarget->GetHeight());
 
-    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    const int32 ViewX = Math::Clamp(X, 0, TargetWidth);
+    const int32 ViewY = Math::Clamp(Y, 0, TargetHeight);
+    int32 ViewWidth = Width > 0 ? Width : TargetWidth;
+    int32 ViewHeight = Height > 0 ? Height : TargetHeight;
+
+    ViewWidth = Math::Clamp(ViewWidth, 0, TargetWidth - ViewX);
+    ViewHeight = Math::Clamp(ViewHeight, 0, TargetHeight - ViewY);
+
+    if (ViewWidth <= 0 || ViewHeight <= 0)
+    {
+        return;
+    }
+
+    FViewportRegion ViewportRegion(static_cast<float>(ViewWidth), static_cast<float>(ViewHeight), static_cast<float>(ViewX), static_cast<float>(ViewY), 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
 
-    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    FScissorRegion ScissorRegion(ViewWidth, ViewHeight, ViewX, ViewY);
     CommandList.SetScissorRect(ScissorRegion);
 
     const bool bNeedsTransition = !RenderTarget->GetInfo().IsPresentable();
@@ -179,8 +203,8 @@ void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderVie
     RequirePixel(FrameResources.ShadowDebugBuffer.Get());
 
     FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(RenderTarget, EAttachmentLoadAction::Clear);
+    RenderPass.NumRenderTargets = 1;
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(RenderTarget, bClearTarget ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     CommandList.BeginRenderPass(RenderPass);
@@ -217,8 +241,8 @@ void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderVie
 
     Constants.DebugMode = static_cast<int32>(DebugView);
     Constants.ShadowMapSize = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetWidth()) : 0;
-    Constants.OutputWidth = RenderTarget ? static_cast<int32>(RenderTarget->GetWidth()) : 0;
-    Constants.OutputHeight = RenderTarget ? static_cast<int32>(RenderTarget->GetHeight()) : 0;
+    Constants.OutputWidth = ViewWidth;
+    Constants.OutputHeight = ViewHeight;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(DebugPixelShader.Get(), &Constants, NumConstants);

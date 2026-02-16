@@ -140,6 +140,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
     Ids.DockRight        = 0;
     Ids.DockRightTop     = 0;
     Ids.DockRightBottom  = 0;
+    Ids.DockLeftTop      = 0;
     Ids.DockCenter       = 0;
     Ids.DockCenterTop    = 0;
     Ids.DockCenterBottom = 0;
@@ -154,13 +155,14 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
 
     ImGui::DockBuilderSplitNode(Ids.Dockspace, ImGuiDir_Right, 0.22f, &Ids.DockRight, &Ids.DockCenter);
     ImGui::DockBuilderSplitNode(Ids.DockCenter, ImGuiDir_Down, 0.28f, &Ids.DockCenterBottom, &Ids.DockCenterTop);
+    ImGui::DockBuilderSplitNode(Ids.DockCenterTop, ImGuiDir_Left, 0.24f, &Ids.DockLeftTop, &Ids.DockCenterTop);
     ImGui::DockBuilderSplitNode(Ids.DockRight, ImGuiDir_Up, 0.55f, &Ids.DockRightTop, &Ids.DockRightBottom);
 
     // Assign windows to the Dockspace items
     ImGui::DockBuilderDockWindow("Viewport", Ids.DockCenterTop);
     ImGui::DockBuilderDockWindow("Scene Hierarchy", Ids.DockRightTop);
     ImGui::DockBuilderDockWindow("Properties", Ids.DockRightBottom);
-    ImGui::DockBuilderDockWindow("Renderer Settings", Ids.DockRightBottom);
+    ImGui::DockBuilderDockWindow("Renderer Settings", Ids.DockLeftTop);
     ImGui::DockBuilderDockWindow("Output Log", Ids.DockCenterBottom);
     ImGui::DockBuilderDockWindow("Content Browser", Ids.DockCenterBottom);
 

@@ -136,7 +136,7 @@ struct FCascadeGenerationInfoHLSL
     float TightFrustumShrinkFactor;
     float TightFrustumStableExtents;
     float TightFrustumDepthQuant;
-    float TightFrustumForceSphereFit;
+    float CascadeFitAABB;
 
     // 144-160
     int32 FilterMode;

@@ -16,6 +16,7 @@ FEditorViewportWidget::FEditorViewportWidget()
     , bVisible(true)
     , bViewportInputActive(false)
     , DebugView(FSceneRenderView::EDebugView::None)
+    , SecondaryDebugView(FSceneRenderView::EDebugView::None)
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -140,14 +141,42 @@ void FEditorViewportWidget::Draw()
                     }
                 }
 
-                if (EditorWidgets::BeginPropertyTable("##ViewportDebugTable", 120.0f, 24.0f))
+                int32 SecondaryDebugViewIndex = 0;
+                for (int32 Index = 0; Index < ItemCount; ++Index)
                 {
-                    if (EditorWidgets::DrawComboProperty("Debug view", DebugViewIndex, DebugViewItems, ItemCount, nullptr))
+                    if (DebugViewValues[Index] == SecondaryDebugView)
+                    {
+                        SecondaryDebugViewIndex = Index;
+                        break;
+                    }
+                }
+
+                const ImGuiTableFlags DebugTableFlags =
+                    ImGuiTableFlags_SizingFixedFit |
+                    ImGuiTableFlags_NoPadOuterX |
+                    ImGuiTableFlags_NoSavedSettings;
+
+                if (ImGui::BeginTable("##ViewportDebugRow", 4, DebugTableFlags))
+                {
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted("Debug view");
+                    ImGui::TableNextColumn();
+                    ImGui::SetNextItemWidth(180.0f);
+                    if (ImGui::Combo("##ViewportDebugViewPrimary", &DebugViewIndex, DebugViewItems, ItemCount))
                     {
                         DebugView = DebugViewValues[Math::Clamp(DebugViewIndex, 0, ItemCount - 1)];
                     }
 
-                    EditorWidgets::EndPropertyTable();
+                    ImGui::TableNextColumn();
+                    ImGui::TextUnformatted("Secondary");
+                    ImGui::TableNextColumn();
+                    ImGui::SetNextItemWidth(180.0f);
+                    if (ImGui::Combo("##ViewportDebugViewSecondary", &SecondaryDebugViewIndex, DebugViewItems, ItemCount))
+                    {
+                        SecondaryDebugView = DebugViewValues[Math::Clamp(SecondaryDebugViewIndex, 0, ItemCount - 1)];
+                    }
+
+                    ImGui::EndTable();
                 }
             }
 
@@ -301,4 +330,9 @@ FIntVector2 FEditorViewportWidget::GetViewportSize() const
 FSceneRenderView::EDebugView FEditorViewportWidget::GetDebugView() const
 {
     return DebugView;
+}
+
+FSceneRenderView::EDebugView FEditorViewportWidget::GetSecondaryDebugView() const
+{
+    return SecondaryDebugView;
 }

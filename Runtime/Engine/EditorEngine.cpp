@@ -145,6 +145,7 @@ void FEditorEngine::RenderFrame()
     RenderView.Scene        = GetWorld()->GetSceneInterface();
     RenderView.RenderTarget = ViewportImage.Get();
     RenderView.DebugView    = ViewportWidget ? ViewportWidget->GetDebugView() : FSceneRenderView::EDebugView::None;
+    RenderView.SecondaryDebugView = ViewportWidget ? ViewportWidget->GetSecondaryDebugView() : FSceneRenderView::EDebugView::None;
 
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->RenderSceneView(RenderView);

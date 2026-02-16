@@ -31,9 +31,10 @@ struct FSceneRenderView
         ShadowCascadeOverlay,
     };
 
-    IScene*      Scene        = nullptr;
-    FRHITexture* RenderTarget = nullptr;
-    EDebugView   DebugView    = EDebugView::None;
+    IScene*      Scene              = nullptr;
+    FRHITexture* RenderTarget       = nullptr;
+    EDebugView   DebugView          = EDebugView::None;
+    EDebugView   SecondaryDebugView = EDebugView::None;
 };
 
 struct IRendererModule : public FModuleInterface

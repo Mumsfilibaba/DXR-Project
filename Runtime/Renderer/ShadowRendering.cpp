@@ -41,7 +41,7 @@ static TAutoConsoleVariable<bool> CVarCSMStableCascades(
 static TAutoConsoleVariable<bool> CVarCSMAdaptiveSplitRange(
     "Renderer.CSM.AdaptiveSplitRange",
     "Adapt cascade split range based on scene depth (may introduce split movement)",
-    false,
+    true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMEnableSinglePassRendering(
@@ -59,13 +59,13 @@ static TAutoConsoleVariable<bool> CVarCSMEnableGeometryShaderInstancing(
 static TAutoConsoleVariable<int32> CVarCSMFilterMode(
     "Renderer.CSM.FilterMode",
     "Select mode when filer Cascaded Shadow Maps. 0: Percentage Closer Filtering (PCF) 1: Percentage Closer Soft Shadows (PCSS)",
-    0,
+    1,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMFilterFunction(
     "Renderer.CSM.FilterFunction",
     "Select distribution to use when filtering Cascaded Shadow Maps. 0/1: Poisson Disk 2: Vogel Disk 3: Interleaved Gradient Noise",
-    1,
+    3,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMStableIGN(
@@ -77,25 +77,25 @@ static TAutoConsoleVariable<bool> CVarCSMStableIGN(
 static TAutoConsoleVariable<float> CVarCSMPCFFilterWorld(
     "Renderer.CSM.PCF.FilterWorld",
     "PCF filter size (world units)",
-    0.10f,
+    0.05f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCFMinFilterRadiusTexels(
     "Renderer.CSM.PCF.MinFilterRadiusTexels",
     "Minimum PCF filter radius (in texels, converted to world units)",
-    1.0f,
+    0.5f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMShadowPancaking(
     "Renderer.CSM.ShadowPancaking",
     "Enable shadow pancaking (depth clamp) to reduce depth range",
-    false,
+    true,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMMaxShadowDistance(
     "Renderer.CSM.MaxShadowDistance",
     "Maximum camera distance covered by CSM (0 disables)",
-    0.0f,
+    1000.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMMaxShadowDistanceFade(
@@ -113,7 +113,7 @@ static TAutoConsoleVariable<float> CVarCSMPCSSRadiusScale(
 static TAutoConsoleVariable<float> CVarCSMPCSSBlockerSearchScale(
     "Renderer.CSM.PCSS.BlockerSearchScale",
     "PCSS blocker search scale",
-    1.0f,
+    0.5f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSMinFilterRadiusTexels(
@@ -125,37 +125,37 @@ static TAutoConsoleVariable<float> CVarCSMPCSSMinFilterRadiusTexels(
 static TAutoConsoleVariable<float> CVarCSMPCSSBlockerSamplingClump(
     "Renderer.CSM.PCSS.BlockerSamplingClump",
     "PCSS blocker sampling clump",
-    0.0f,
+    4.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSMaxPenumbraWorld(
     "Renderer.CSM.PCSS.MaxPenumbraWorld",
     "Maximum PCSS penumbra size (world units, 0 disables)",
-    0.0f,
+    6.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSMaxSearchDistanceWorld(
     "Renderer.CSM.PCSS.MaxSearchDistanceWorld",
     "Maximum PCSS blocker search distance (world units, 0 disables)",
-    0.0f,
+    1.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSMinFilterMaxAngularDiameter(
     "Renderer.CSM.PCSS.MinFilterMaxAngularDiameter",
     "PCSS min filter clamp angular diameter (degrees, 0 disables)",
-    0.0f,
+    1.5f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSBlockerSearchAngularDiameter(
     "Renderer.CSM.PCSS.BlockerSearchAngularDiameter",
     "PCSS blocker search angular diameter (degrees, 0 uses light angular diameter)",
-    0.0f,
+    1.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMPCSSNumBlockerSamples(
     "Renderer.CSM.PCSS.NumBlockerSamples",
     "Number of samples for PCSS blocker search",
-    32,
+    64,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMNumPoissonDiscSamples(
@@ -191,7 +191,7 @@ static TAutoConsoleVariable<bool> CVarCSMShadowHistory(
 static TAutoConsoleVariable<bool> CVarCSMCascadeFallback(
     "Renderer.CSM.CascadeFallback",
     "Enables per-tap cascade fallback sampling (debug/safety)",
-    false,
+    true,
     EConsoleVariableFlags::Default);
 
 FPointLightRenderPass::FPointLightRenderPass(FSceneRenderer* InRenderer)

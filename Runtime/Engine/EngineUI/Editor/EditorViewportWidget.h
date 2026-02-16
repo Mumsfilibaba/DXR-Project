@@ -17,6 +17,7 @@ public:
     
     FIntVector2 GetViewportSize() const;
     FSceneRenderView::EDebugView GetDebugView() const;
+    FSceneRenderView::EDebugView GetSecondaryDebugView() const;
 
     void SetVisible(bool bInVisible)
     {
@@ -36,4 +37,5 @@ private:
     bool                        bVisible;
     bool                        bViewportInputActive;
     FSceneRenderView::EDebugView DebugView;
+    FSceneRenderView::EDebugView SecondaryDebugView;
 };

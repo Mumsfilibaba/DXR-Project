@@ -980,6 +980,23 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 #endif
     }
 
+    if (SceneRenderView.SecondaryDebugView != FSceneRenderView::EDebugView::None)
+    {
+        FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
+        if (RenderTarget)
+        {
+            const int32 TargetWidth = static_cast<int32>(RenderTarget->GetWidth());
+            const int32 TargetHeight = static_cast<int32>(RenderTarget->GetHeight());
+
+            const int32 OverlayWidth = Math::Max(TargetWidth / 2, 1);
+            const int32 OverlayHeight = Math::Max(TargetHeight / 2, 1);
+            const int32 OverlayX = TargetWidth - OverlayWidth;
+            const int32 OverlayY = 0;
+
+            DebugViewPass->ExecuteOverlay(CommandList, SceneRenderView, Resources, SceneRenderView.SecondaryDebugView, OverlayX, OverlayY, OverlayWidth, OverlayHeight);
+        }
+    }
+
 } 
  
 #if EDITOR_BUILD

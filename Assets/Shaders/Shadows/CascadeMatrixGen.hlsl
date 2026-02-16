@@ -84,7 +84,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         CameraFar = MaxShadowDistance;
     }
 
-    const float CameraRange   = max(CameraBuffer.FarPlane - CameraNear, 1e-6);
+    const float CameraRange   = max(CameraFar - CameraNear, 1e-6);
     const float ClipRange     = max(CameraFar - CameraNear, 1e-6);
     const float NearPlane     = CameraNear;
 
@@ -93,6 +93,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     MinDepth = clamp(MinDepth, CameraNear, CameraFar);
     MaxDepth = clamp(MaxDepth, MinDepth, CameraFar);
     
+    const bool bAdaptiveSplitRange = (GenerationInfo.AdaptiveSplitRangeEnabled > 0.5);
     float CascadeSplits[NUM_SHADOW_CASCADES];
     float CascadeSplitsReference[NUM_SHADOW_CASCADES];
     
@@ -114,12 +115,12 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
     }
 
-    // Also calculate a reference set of splits using the full camera clip range (independent of tight-frustum min/max depth).
-    // This is used for stable "texel -> world" conversions for filtering limits so that enabling tight frustum does not
-    // change the perceived penumbra size as shadow-map density increases.
+    // Also calculate a reference set of splits.
+    // When adaptive split range is enabled, use the adaptive min/max to keep reference coverage tight.
+    // Otherwise, use the full camera clip range for stable penumbra behavior.
     {
-        const float ReferenceMinDepth = NearPlane;
-        const float ReferenceMaxDepth = CameraFar;
+        const float ReferenceMinDepth = bAdaptiveSplitRange ? MinDepth : NearPlane;
+        const float ReferenceMaxDepth = bAdaptiveSplitRange ? MaxDepth : CameraFar;
 
         const float Range = ReferenceMaxDepth - ReferenceMinDepth;
         const float Ratio = ReferenceMaxDepth / max(ReferenceMinDepth, 0.01);
@@ -137,24 +138,35 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     }
 
     // Calculate position of light frustum in world-space
-    float3 FullFrustumCornersWS[8] =
-    {
-        float3(-1.0,  1.0, 0.0),
-        float3( 1.0,  1.0, 0.0),
-        float3( 1.0, -1.0, 0.0),
-        float3(-1.0, -1.0, 0.0),
-        float3(-1.0,  1.0, 1.0),
-        float3( 1.0,  1.0, 1.0),
-        float3( 1.0, -1.0, 1.0),
-        float3(-1.0, -1.0, 1.0),
-    };
+    float3 FullFrustumCornersWS[8];
 
     {
-        [unroll]
-        for (int Index = 0; Index < 8; ++Index)
+        // Build world-space frustum corners using the clamped CameraFar (MaxShadowDistance).
+        // This ensures max shadow distance actually affects cascade coverage.
+        const float2 CornerXY[4] =
         {
-            float4 Corner = mul(float4(FullFrustumCornersWS[Index], 1.0), CameraBuffer.ViewProjectionInvUnjittered);
-            FullFrustumCornersWS[Index] = Corner.xyz / Corner.w;
+            float2(-1.0,  1.0),
+            float2( 1.0,  1.0),
+            float2( 1.0, -1.0),
+            float2(-1.0, -1.0),
+        };
+
+        [unroll]
+        for (int Index = 0; Index < 4; ++Index)
+        {
+            const float2 XY = CornerXY[Index];
+            float4 CornerVS = mul(float4(XY.x, XY.y, 1.0, 1.0), CameraBuffer.ProjectionInvUnjittered);
+            CornerVS.xyz /= max(CornerVS.w, 1e-6);
+
+            const float3 DirVS = normalize(CornerVS.xyz);
+            const float3 NearVS = DirVS * CameraNear;
+            const float3 FarVS  = DirVS * CameraFar;
+
+            float4 NearWS = mul(float4(NearVS, 1.0), CameraBuffer.ViewInv);
+            float4 FarWS  = mul(float4(FarVS, 1.0), CameraBuffer.ViewInv);
+
+            FullFrustumCornersWS[Index]     = NearWS.xyz / max(NearWS.w, 1e-6);
+            FullFrustumCornersWS[Index + 4] = FarWS.xyz / max(FarWS.w, 1e-6);
         }
     }
 
@@ -173,7 +185,6 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     // Use min between MinMaxDepth to protect against cases where the lowest is 1.0 
     // and highest 0.0. This can happen when nothing is rendered in the prepass.
     const float AdaptiveNear = (MinDepth - NearPlane) / max(ClipRange, 1e-6);
-    const bool bAdaptiveSplitRange = (GenerationInfo.AdaptiveSplitRangeEnabled > 0.5);
     float SplitDist     = bAdaptiveSplitRange ? CascadeSplits[CascadeIndex] : CascadeSplitsReference[CascadeIndex];
     float PrevSplitDist = (CascadeIndex == 0) ? (bAdaptiveSplitRange ? AdaptiveNear : 0.0) : (bAdaptiveSplitRange ? CascadeSplits[CascadeIndex - 1] : CascadeSplitsReference[CascadeIndex - 1]);
 
@@ -263,7 +274,8 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float3 LightDirection = normalize(GenerationInfo.LightDirection);
     
     // Create the position for the shadow rendering
-    float3 ShadowEyePos = FrustumCenter;
+    // Optional offset along the light direction (positive pushes the eye "upstream").
+    float3 ShadowEyePos = FrustumCenter - LightDirection * GenerationInfo.LightPositionOffset;
 
     // Robust up-vector selection to avoid degeneracy near world-up
     const float3 WorldUp = float3(0.0, 1.0, 0.0);
@@ -284,7 +296,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     const float CascadeResolution = GenerationInfo.CascadeResolution;
     const float ReferenceWorldTexelSize = (2.0 * ReferenceSphereRadius) / max(CascadeResolution, 1.0);
 
-    const bool bUseTightAABB = (GenerationInfo.bEnableTightFrustum != 0) && (GenerationInfo.TightFrustumForceSphereFit <= 0.5);
+    const bool bUseTightAABB = (GenerationInfo.bEnableTightFrustum != 0) && (GenerationInfo.CascadeFitAABB > 0.5);
     const bool bStableExtents = (GenerationInfo.bEnableStableCascades != 0) && (GenerationInfo.TightFrustumStableExtents > 0.5);
 
     float3 MinExtents;
@@ -432,7 +444,18 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     }
 
     const float SliceDepth = max(SliceLSMax.z - SliceLSMin.z, 0.0);
-    const float ZPadding = max(max(ReferenceWorldTexelSize * 16.0, SliceDepth * 0.05), 0.05);
+    const bool bShadowPancaking = (GenerationInfo.ShadowPancakingEnabled > 0.5);
+    float ZPadding = 0.0;
+    if (bShadowPancaking)
+    {
+        // Tighter padding to improve depth precision when pancaking is enabled.
+        const float MinPad = max(ReferenceWorldTexelSize * 2.0, 0.01);
+        ZPadding = max(max(MinPad, SliceDepth * 0.01), 0.01);
+    }
+    else
+    {
+        ZPadding = max(max(ReferenceWorldTexelSize * 16.0, SliceDepth * 0.05), 0.05);
+    }
     float LightNearPlane = SliceLSMin.z - ZPadding;
     float LightFarPlane  = SliceLSMax.z + ZPadding;
 

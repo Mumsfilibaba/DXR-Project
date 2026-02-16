@@ -88,7 +88,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     }
     else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADES)
     {
-        float2 ViewportSize = float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+        float2 ViewportSize = float2(Constants.OutputWidth, Constants.OutputHeight);
 
         const float2 Pixel = TexCoord * ViewportSize;
         const float MinDim = min(ViewportSize.x, ViewportSize.y);

@@ -27,9 +27,9 @@ static TAutoConsoleVariable<float> CVarCSMTightFrustumDepthQuant(
     "Quantization steps used for tight-frustum min/max depth snapping (higher = finer, lower = more stable).",
     1024.0f);
 
-static TAutoConsoleVariable<bool> CVarCSMTightFrustumForceSphereFit(
-    "Renderer.CSM.TightFrustum.ForceSphereFit",
-    "Force sphere-based cascade fitting even when tight frustum is enabled (for comparison).",
+static TAutoConsoleVariable<bool> CVarCSMCascadeFitAABB(
+    "Renderer.CSM.CascadeFitAABB",
+    "Use a tight AABB fit for cascades when tight frustum is enabled (default is sphere fit).",
     false);
 
 static TAutoConsoleVariable<int32> CVarPointLightShadowMapSize(
@@ -241,7 +241,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
         // Update HLSL data
         CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->GetCascadeSplitLambda();
-        CascadeGenerationData.LightPositionOffset = 0.0f;
+        CascadeGenerationData.LightPositionOffset = DirectionalLight->GetShadowPositionOffset();
         CascadeGenerationData.LightNearPlane      = 0.0f;
         CascadeGenerationData.LightFarPlane       = 0.0f;
         CascadeGenerationData.LightUp             = DirectionalLightData.UpVector;
@@ -348,13 +348,13 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
             CascadeGenerationData.TightFrustumDepthQuant = 1024.0f;
         }
 
-        if (IConsoleVariable* CVarForceSphere = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum.ForceSphereFit"))
+        if (IConsoleVariable* CVarCascadeFitAABB = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeFitAABB"))
         {
-            CascadeGenerationData.TightFrustumForceSphereFit = CVarForceSphere->GetBool() ? 1.0f : 0.0f;
+            CascadeGenerationData.CascadeFitAABB = CVarCascadeFitAABB->GetBool() ? 1.0f : 0.0f;
         }
         else
         {
-            CascadeGenerationData.TightFrustumForceSphereFit = 0.0f;
+            CascadeGenerationData.CascadeFitAABB = 0.0f;
         }
 
         if (IConsoleVariable* CVarFilterMode = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))

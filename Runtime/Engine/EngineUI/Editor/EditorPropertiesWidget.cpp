@@ -449,7 +449,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                 if (EditorWidgets::BeginPropertyTable("##DirLightShadowsTable", LabelColumnWidth, RevertColumnWidth))
                 {
                     float ShadowBias = Dir->GetShadowBias();
-                    const float ShadowBias0 = 0.005f;
+                    const float ShadowBias0 = 0.0005f;
                     
                     if (EditorWidgets::DrawFloatProperty("Shadow-bias", ShadowBias, 0.0001f, 0.0001f, 0.1f, "%.4f", true, &ShadowBias0))
                     {
@@ -457,7 +457,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     }
 
                     float Lambda = Dir->GetCascadeSplitLambda();
-                    const float Lambda0 = 0.95f;
+                    const float Lambda0 = 0.60f;
                     
                     if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0))
                     {
@@ -517,7 +517,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
 
                 {
                     float NearPlane = SelectedCamera->GetNearPlane();
-                    const float NearPlane0 = 0.01f;
+                    const float NearPlane0 = 0.05f;
 
                     if (EditorWidgets::DrawFloatProperty("Near Plane", NearPlane, 0.001f, 0.001f, 1000.0f, "%.3f", true, &NearPlane0))
                     {
