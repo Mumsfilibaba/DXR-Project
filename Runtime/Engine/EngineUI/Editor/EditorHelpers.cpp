@@ -2275,7 +2275,7 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
     // -----------------------------------------------------------------------------------------
 
     const ImVec4 PopupBg       = ImVec4(56.0f / 255.0f, 56.0f / 255.0f, 56.0f / 255.0f, 1.0f);
-    const ImVec4 PopupBorder   = ImVec4(63.0f / 255.0f, 63.0f / 255.0f, 63.0f / 255.0f, 1.0f);
+    const ImVec4 PopupBorder   = ImVec4(69.0f / 255.0f, 69.0f / 255.0f, 69.0f / 255.0f, 1.0f);
     const ImVec4 TextColor     = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
     const ImVec4 ShortcutColor = ImVec4(175.0f / 255.0f, 175.0f / 255.0f, 175.0f / 255.0f, 1.0f);
     const ImVec4 HoverBlue     = ImVec4(0.0f / 255.0f, 112.0f / 255.0f, 224.0f / 255.0f, 1.0f);
@@ -2290,7 +2290,7 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
     // -----------------------------------------------------------------------------------------
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 1.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, PopupPadY));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
@@ -2323,17 +2323,7 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
     ImGui::SetNextWindowSizeConstraints(ImVec2(FinalMinWidth, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
     const bool bOpen = ImGui::BeginPopup(PopupId);
-    if (bOpen)
-    {
-        ImDrawList* DrawList = ImGui::GetWindowDrawList();
-
-        const ImVec2 WinPos  = ImGui::GetWindowPos();
-        const ImVec2 WinSize = ImGui::GetWindowSize();
-        const ImVec2 Min     = ImVec2(WinPos.x + 1.0f, WinPos.y + 1.0f);
-        const ImVec2 Max     = ImVec2(WinPos.x + WinSize.x - 1.0f, WinPos.y + WinSize.y - 1.0f);
-        DrawList->AddRect(Min, Max, IM_COL32(50, 50, 50, 255), 0.0f, ImDrawListFlags_AntiAliasedLines, 1.0f);
-    }
-    else
+    if (!bOpen)
     {
         PopMenuPopupStyle();
     }
@@ -2343,6 +2333,16 @@ bool EditorWidgets::BeginMenuPopup(const CHAR* PopupId, const PopupAnchor& Ancho
 
 void EditorWidgets::EndMenuPopup()
 {
+    ImDrawList* DrawList = ImGui::GetWindowDrawList();
+
+    const ImVec2 WinPos  = ImGui::GetWindowPos();
+    const ImVec2 WinSize = ImGui::GetWindowSize();
+    constexpr float BorderThickness = 2.0f;
+    const float Inset = BorderThickness * 0.5f;
+    const ImVec2 Min  = ImVec2(WinPos.x + Inset, WinPos.y + Inset);
+    const ImVec2 Max  = ImVec2(WinPos.x + WinSize.x - Inset, WinPos.y + WinSize.y - Inset);
+    DrawList->AddRect(Min, Max, IM_COL32(69, 69, 69, 255), 0.0f, ImDrawFlags_None, BorderThickness);
+
     PopMenuPopupStyle();
     ImGui::EndPopup();
 }
