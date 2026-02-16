@@ -71,6 +71,11 @@ static TAutoConsoleVariable<int32> CVarTextureAllocatorCommittedThreshold(
     "Size threshold for committed texture allocations (bytes)",
     128 * 1024 * 1024);
 
+static TAutoConsoleVariable<int32> CVarDynamicConstantsAllocatorPageSize(
+    "D3D12RHI.DynamicConstantsAllocatorPageSize",
+    "Page size for the dynamic constants linear allocator (bytes)",
+    4 * 1024 * 1024);
+
 // -------------------------------------------------------------------------------------------
 // D3D12 Feature Support
 // -------------------------------------------------------------------------------------------
@@ -645,7 +650,6 @@ FD3D12Device::~FD3D12Device()
 
     if (DynamicConstantsAllocator)
     {
-        DynamicConstantsAllocator->Shutdown();
         delete DynamicConstantsAllocator;
         DynamicConstantsAllocator = nullptr;
     }
@@ -664,7 +668,7 @@ FD3D12Device::~FD3D12Device()
 
     if (UploadHeapAllocator)
     {
-        UploadHeapAllocator->Shutdown();
+        UploadHeapAllocator->Destroy();
         delete UploadHeapAllocator;
         UploadHeapAllocator = nullptr;
     }
@@ -855,8 +859,9 @@ bool FD3D12Device::Initialize()
     }
 
     {
-        FD3D12DynamicConstantsAllocator* ConstantsAllocator = new FD3D12DynamicConstantsAllocator(this);
-        if (!ConstantsAllocator->Initialize(4ull * 1024ull * 1024ull, UploadHeapAllocator))
+        const uint64 DynamicConstantsPageSize = Math::Max<uint64>(1ull, static_cast<uint64>(CVarDynamicConstantsAllocatorPageSize.GetValue()));
+        FD3D12DynamicConstantsAllocator* ConstantsAllocator = new FD3D12DynamicConstantsAllocator(this, DynamicConstantsPageSize);
+        if (!ConstantsAllocator)
         {
             return false;
         }

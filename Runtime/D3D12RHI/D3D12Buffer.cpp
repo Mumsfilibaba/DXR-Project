@@ -200,7 +200,7 @@ void FD3D12Buffer::SetResource(FD3D12Resource* InResource)
     if (InResource)
     {
         FD3D12ResourceRef ResourceRef = InResource;
-        ResourceStorage.SetResource(ResourceRef);
+        ResourceStorage.InitStandalone(ResourceRef);
     }
 
     if (Info.IsConstantBuffer())

@@ -158,9 +158,10 @@ FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
     , Size(0)
     , ResidencyHandle()
     , AllocatorType(ED3D12AllocatorType::None)
+    , StorageType(EResourceStorageType::Unknown)
 {
     FMemory::Memzero(&AllocationData, sizeof(AllocationData));
-    ClearAllocator();
+    ResetAllocator();
 }
 
 FD3D12ResourceStorage::~FD3D12ResourceStorage()
@@ -205,6 +206,10 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
     AllocatorType = Other.AllocatorType;
     Other.AllocatorType = TempAllocatorType;
 
+    const EResourceStorageType TempStorageType = StorageType;
+    StorageType = Other.StorageType;
+    Other.StorageType = TempStorageType;
+
     uint8 TempAllocationData[sizeof(AllocationData)];
     FMemory::Memcpy(TempAllocationData, &AllocationData, sizeof(AllocationData));
     FMemory::Memcpy(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
@@ -224,41 +229,55 @@ void FD3D12ResourceStorage::Reset()
     Size = 0;
     ResidencyHandle = {};
     FMemory::Memzero(&AllocationData, sizeof(AllocationData));
-    ClearAllocator();
+    ResetAllocator();
+    StorageType = EResourceStorageType::Unknown;
 }
 
 void FD3D12ResourceStorage::ReleaseResource()
 {
-    if (AllocatorPointers.AsVoid == nullptr)
+    if (StorageType == EResourceStorageType::Unknown)
     {
+        if (Resource)
+        {
+            FD3D12RHI::DeferDeletion(Resource.Get());
+        }
+
+        Reset();
         return;
     }
 
-    switch (AllocatorType)
+    if (StorageType == EResourceStorageType::Standalone)
     {
-    case ED3D12AllocatorType::DynamicConstantsAllocator:
-        AllocatorPointers.DynamicConstantsAllocator->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::BufferAllocatorPool:
-        AllocatorPointers.BufferAllocatorPool->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::BufferAllocator:
-        AllocatorPointers.BufferAllocator->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::TextureAllocator:
-        AllocatorPointers.TextureAllocator->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::BuddyAllocator:
-        AllocatorPointers.BuddyAllocator->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::BucketAllocator:
-        AllocatorPointers.BucketAllocator->Deallocate(*this);
-        break;
-    case ED3D12AllocatorType::PoolAllocator:
-        AllocatorPointers.PoolAllocator->Deallocate(*this);
-        break;
-    default:
-        break;
+        if (Resource)
+        {
+            FD3D12RHI::DeferDeletion(Resource.Get());
+        }
+
+        Reset();
+        return;
+    }
+
+    if (AllocatorPointers.AsVoid != nullptr)
+    {
+        switch (AllocatorType)
+        {
+        case ED3D12AllocatorType::BuddyAllocator:
+            AllocatorPointers.BuddyAllocator->Deallocate(*this);
+            break;
+        case ED3D12AllocatorType::BucketAllocator:
+            AllocatorPointers.BucketAllocator->Deallocate(*this);
+            break;
+        case ED3D12AllocatorType::PoolAllocator:
+            AllocatorPointers.PoolAllocator->Deallocate(*this);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (StorageType == EResourceStorageType::SuballocatedHeap && Resource)
+    {
+        FD3D12RHI::DeferDeletion(Resource.Get());
     }
 
     Reset();
@@ -271,9 +290,10 @@ void FD3D12ResourceStorage::InitStandalone(const FD3D12ResourceRef& InResource)
     ResourceOffset = 0;
     GpuVirtualAddress = InResource ? InResource->GetGPUVirtualAddress() : 0;
     MappedBaseAddress = nullptr;
+    StorageType = EResourceStorageType::Standalone;
 }
 
-void FD3D12ResourceStorage::ClearAllocator()
+void FD3D12ResourceStorage::ResetAllocator()
 {
     AllocatorPointers.AsVoid = nullptr;
     AllocatorType = ED3D12AllocatorType::None;

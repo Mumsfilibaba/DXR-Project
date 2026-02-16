@@ -57,7 +57,7 @@ public:
         if (InResource)
         {
             FD3D12ResourceRef ResourceRef = InResource;
-            ResourceStorage.SetResource(ResourceRef);
+            ResourceStorage.InitStandalone(ResourceRef);
         }
 
         RenderTargetViews.Clear();

@@ -9,10 +9,6 @@
 
 typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 
-class FD3D12DynamicConstantsAllocator;
-class FD3D12BufferAllocatorPool;
-class FD3D12BufferAllocator;
-class FD3D12TextureAllocator;
 class FD3D12BuddyAllocator;
 class FD3D12BucketAllocator;
 class FD3D12PoolAllocator;
@@ -27,31 +23,24 @@ enum class ED3D12ResourceLifetime : uint8
 enum class ED3D12AllocatorType : uint8
 {
     None,
-    DynamicConstantsAllocator,
-    BufferAllocatorPool,
-    BufferAllocator,
-    TextureAllocator,
     BuddyAllocator,
     BucketAllocator,
     PoolAllocator
 };
 
-struct FD3D12LinearAllocatorAllocationData
+enum class EResourceStorageType : uint8
 {
-    uint32 PageIndex         = UINT32_MAX;
-    uint64 PageOffset        = 0;
-    uint64 AllocationSize    = 0;
-    bool   bDirectAllocation = false;
+    Unknown,
+    Standalone,
+    SuballocatedHeap,
+    SuballocatedResource
 };
 
 struct FD3D12PoolAllocatorAllocationData
 {
-    uint32 PageIndex            = UINT32_MAX;
-    uint64 Offset               = 0;
-    uint64 Size                 = 0;
-    bool   bIsStandalone        = false;
-    bool   bBackedByHeap        = false;
-    FD3D12Heap* BackingHeap     = nullptr;
+    uint32 PageIndex = UINT32_MAX;
+    uint64 Offset    = 0;
+    uint64 Size      = 0;
 };
 
 struct FD3D12BuddyAllocatorAllocationData
@@ -70,25 +59,6 @@ struct FD3D12BucketAllocatorAllocationData
     uint64 Size        = 0;
 };
 
-struct FD3D12BufferAllocatorAllocationData
-{
-    uint32 PoolIndex          = UINT32_MAX;
-    bool bCommittedAllocation = false;
-};
-
-struct FD3D12TextureAllocatorAllocationData
-{
-    uint32 PoolIndex = UINT32_MAX;
-    uint32 PoolClass = 0;
-};
-
-class ID3D12ResourceRelocationListener
-{
-public:
-    virtual ~ID3D12ResourceRelocationListener() = default;
-    virtual void OnRelocation(FD3D12BaseResource* Resource) = 0;
-};
-
 class FD3D12ResourceStorage : public FD3D12DeviceChild, public FNonCopyable
 {
 public:
@@ -100,8 +70,9 @@ public:
     void Swap(FD3D12ResourceStorage& Other);
     void ReleaseResource();
     void Reset();
+    void ResetAllocator();
 
-    FORCEINLINE bool IsValid() const { return Resource != nullptr; }
+    FORCEINLINE bool IsValid() const { return StorageType != EResourceStorageType::Unknown; }
 
     FORCEINLINE void*                        GetMappedBaseAddress() const { return MappedBaseAddress; }
     FORCEINLINE uint64                       GetSize()              const { return Size; }
@@ -110,54 +81,23 @@ public:
     FORCEINLINE const FD3D12ResidencyHandle& GetResidencyHandle()   const { return ResidencyHandle; }
     FORCEINLINE void*                        GetAllocator()         const { return AllocatorPointers.AsVoid; }
     FORCEINLINE ED3D12AllocatorType          GetAllocatorType()     const { return AllocatorType; }
+    FORCEINLINE EResourceStorageType         GetStorageType()       const { return StorageType; }
     FORCEINLINE FD3D12Resource*              GetResource()          const { return Resource.Get(); }
 
-    FORCEINLINE const FD3D12LinearAllocatorAllocationData&     GetLinearAllocationData()     const { return AllocationData.Linear; }
-    FORCEINLINE const FD3D12PoolAllocatorAllocationData&       GetPoolAllocationData()       const { return AllocationData.Pool; }
-    FORCEINLINE const FD3D12BuddyAllocatorAllocationData&      GetBuddyAllocationData()      const { return AllocationData.Buddy; }
-    FORCEINLINE const FD3D12BucketAllocatorAllocationData&     GetBucketAllocationData()     const { return AllocationData.Bucket; }
-    FORCEINLINE const FD3D12BufferAllocatorAllocationData&     GetBufferAllocatorData()      const { return AllocationData.BufferAllocator; }
-    FORCEINLINE const FD3D12TextureAllocatorAllocationData&    GetTextureAllocatorData()     const { return AllocationData.TextureAllocator; }
+    FORCEINLINE const FD3D12PoolAllocatorAllocationData&   GetPoolAllocationData()   const { return AllocationData.Pool; }
+    FORCEINLINE const FD3D12BuddyAllocatorAllocationData&  GetBuddyAllocationData()  const { return AllocationData.Buddy; }
+    FORCEINLINE const FD3D12BucketAllocatorAllocationData& GetBucketAllocationData() const { return AllocationData.Bucket; }
 
     FORCEINLINE void SetResource(const FD3D12ResourceRef& InResource)                    { Resource = InResource; }
     FORCEINLINE void SetSize(uint64 InSize)                                              { Size = InSize; }
     FORCEINLINE void SetResourceOffset(uint64 InResourceOffset)                          { ResourceOffset = InResourceOffset; }
     FORCEINLINE void SetGpuVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress) { GpuVirtualAddress = InGpuVirtualAddress; }
     FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
+    FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                   { StorageType = InStorageType; }
 
     FORCEINLINE void SetResidencyHandle(const FD3D12ResidencyHandle& InResidencyHandle)
     {
         ResidencyHandle = InResidencyHandle;
-    }
-
-    FORCEINLINE void ResetAllocator()
-    {
-        AllocatorPointers.AsVoid = nullptr;
-        AllocatorType = ED3D12AllocatorType::None;
-    }
-
-    FORCEINLINE void SetDynamicConstantsAllocator(FD3D12DynamicConstantsAllocator* InAllocator)
-    {
-        AllocatorPointers.DynamicConstantsAllocator = InAllocator;
-        AllocatorType = ED3D12AllocatorType::DynamicConstantsAllocator;
-    }
-
-    FORCEINLINE void SetBufferAllocatorPool(FD3D12BufferAllocatorPool* InAllocator)
-    {
-        AllocatorPointers.BufferAllocatorPool = InAllocator;
-        AllocatorType = ED3D12AllocatorType::BufferAllocatorPool;
-    }
-
-    FORCEINLINE void SetBufferAllocator(FD3D12BufferAllocator* InAllocator)
-    {
-        AllocatorPointers.BufferAllocator = InAllocator;
-        AllocatorType = ED3D12AllocatorType::BufferAllocator;
-    }
-
-    FORCEINLINE void SetTextureAllocator(FD3D12TextureAllocator* InAllocator)
-    {
-        AllocatorPointers.TextureAllocator = InAllocator;
-        AllocatorType = ED3D12AllocatorType::TextureAllocator;
     }
 
     FORCEINLINE void SetBuddyAllocator(FD3D12BuddyAllocator* InAllocator)
@@ -178,44 +118,33 @@ public:
         AllocatorType = ED3D12AllocatorType::PoolAllocator;
     }
 
-    FORCEINLINE void SetLinearAllocationData(const FD3D12LinearAllocatorAllocationData& InData) { AllocationData.Linear = InData; }
-    FORCEINLINE void SetPoolAllocationData(const FD3D12PoolAllocatorAllocationData& InData) { AllocationData.Pool = InData; }
-    FORCEINLINE void SetBuddyAllocationData(const FD3D12BuddyAllocatorAllocationData& InData) { AllocationData.Buddy = InData; }
+    FORCEINLINE void SetPoolAllocationData(const FD3D12PoolAllocatorAllocationData& InData)     { AllocationData.Pool = InData; }
+    FORCEINLINE void SetBuddyAllocationData(const FD3D12BuddyAllocatorAllocationData& InData)   { AllocationData.Buddy = InData; }
     FORCEINLINE void SetBucketAllocationData(const FD3D12BucketAllocatorAllocationData& InData) { AllocationData.Bucket = InData; }
-    FORCEINLINE void SetBufferAllocatorData(const FD3D12BufferAllocatorAllocationData& InData) { AllocationData.BufferAllocator = InData; }
-    FORCEINLINE void SetTextureAllocatorData(const FD3D12TextureAllocatorAllocationData& InData) { AllocationData.TextureAllocator = InData; }
 
 private:
-    void ClearAllocator();
 
     union FAllocatorData
     {
-        FD3D12LinearAllocatorAllocationData       Linear;
-        FD3D12PoolAllocatorAllocationData         Pool;
-        FD3D12BuddyAllocatorAllocationData        Buddy;
-        FD3D12BucketAllocatorAllocationData       Bucket;
-        FD3D12BufferAllocatorAllocationData       BufferAllocator;
-        FD3D12TextureAllocatorAllocationData      TextureAllocator;
+        FD3D12PoolAllocatorAllocationData   Pool;
+        FD3D12BuddyAllocatorAllocationData  Buddy;
+        FD3D12BucketAllocatorAllocationData Bucket;
 
         FAllocatorData() {}
-        ~FAllocatorData() {}
     } AllocationData;
 
     union FAllocatorPointers
     {
-        FD3D12DynamicConstantsAllocator* DynamicConstantsAllocator;
-        FD3D12BufferAllocatorPool*       BufferAllocatorPool;
-        FD3D12BufferAllocator*           BufferAllocator;
-        FD3D12TextureAllocator*          TextureAllocator;
-        FD3D12BuddyAllocator*            BuddyAllocator;
-        FD3D12BucketAllocator*           BucketAllocator;
-        FD3D12PoolAllocator*             PoolAllocator;
-        void*                            AsVoid;
+        FD3D12BuddyAllocator*  BuddyAllocator;
+        FD3D12BucketAllocator* BucketAllocator;
+        FD3D12PoolAllocator*   PoolAllocator;
+        void*                  AsVoid;
 
         FAllocatorPointers()
             : AsVoid(nullptr)
         {
         }
+
     } AllocatorPointers;
 
     FD3D12ResourceRef         Resource;
@@ -225,6 +154,7 @@ private:
     uint64                    Size;
     FD3D12ResidencyHandle     ResidencyHandle;
     ED3D12AllocatorType       AllocatorType;
+    EResourceStorageType      StorageType;
 };
 
 class FD3D12Resource : public FD3D12DeviceChild, public FD3D12RefCounted
@@ -245,20 +175,24 @@ public:
 
     void DisableDeferDeletion() { bDeferDeletion = false; }
 
-    // Texture accessors
+    // Texture Accessors
     uint64 GetWidth()  const { return Desc.Width; }
     uint64 GetHeight() const { return Desc.Height; }
     uint64 GetDepth()  const { return Desc.DepthOrArraySize; }
 
-    // Buffer accessors
-    uint64 GetSize() const { return Desc.Width; }
+    // Buffer Accessors
+    uint64                    GetSize()              const { return Desc.Width; }
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return Address; }
     
-    D3D12_HEAP_TYPE GetHeapType() const { return HeapType; }
-    D3D12_RESOURCE_STATES GetState() const { return ResourceState; }
+    // Resource Accessors
+    D3D12_HEAP_TYPE          GetHeapType()  const { return HeapType; }
+    D3D12_RESOURCE_STATES    GetState()     const { return ResourceState; }
     D3D12_RESOURCE_DIMENSION GetDimension() const { return Desc.Dimension; }
 
-    uint32 GetNumSubresources() const { return NumSubresources; }
+    uint32 GetNumSubresources() const 
+    {
+        return NumSubresources;
+    }
 
     ID3D12Resource* GetD3D12Resource() const 
     { 
@@ -280,6 +214,12 @@ private:
     D3D12_GPU_VIRTUAL_ADDRESS Address;
     uint32                    NumSubresources;
     bool                      bDeferDeletion = true;
+};
+
+struct ID3D12ResourceRelocationListener
+{
+    virtual ~ID3D12ResourceRelocationListener() = default;
+    virtual void OnRelocation(FD3D12BaseResource* Resource) = 0;
 };
 
 class FD3D12BaseResource : public FD3D12DeviceChild
