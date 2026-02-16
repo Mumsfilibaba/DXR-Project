@@ -77,9 +77,9 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
 	const uint32 Width  = Resources.CurrentRenderWidth;
 	const uint32 Height = Resources.CurrentRenderHeight;
 
-    FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
+    FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
     RTOutputInfo.bEnableResourceStateTracking = true;
-    
+
     Resources.RTOutput = FRHI::Get()->CreateTexture(RTOutputInfo, EResourceAccess::UnorderedAccess);
     if (!Resources.RTOutput)
     {

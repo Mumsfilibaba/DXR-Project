@@ -142,7 +142,13 @@ struct FCascadeGenerationInfoHLSL
     int32 FilterMode;
     float PCFFilterWorld;
     float PCFMinFilterRadiusTexels;
+    float AdaptiveSplitRangeEnabled;
+
+    // 160-176
+    float MaxShadowDistance;
+    float ShadowPancakingEnabled;
     float Padding0;
+    float Padding1;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
@@ -164,7 +170,7 @@ struct FLightProbeInfoHLSL
 
 MARK_AS_REALLOCATABLE(FLightProbeInfoHLSL);
 
-struct FGlobalTextureFormats
+struct GlobalTextureFormats
 {
     static constexpr EFormat DepthBufferFormat  = EFormat::D32_Float;
     static constexpr EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
@@ -228,12 +234,12 @@ struct FFrameResources
     FRHITextureRef GBuffer[GBuffer_NumBuffers];
 
     // Persistent min/max depth history for tight-frustum stabilization.
-    FRHITextureRef CSMMinMaxDepthHistory;
-    bool           bCSMMinMaxHistoryInitialized = false;
-    bool           bCSMCascadeHistoryInitialized = false;
-    FRHIBufferRef  CascadeSnapHistoryBuffer;
+    FRHITextureRef             CSMMinMaxDepthHistory;
+    bool                       bCSMMinMaxHistoryInitialized = false;
+    bool                       bCSMCascadeHistoryInitialized = false;
+    FRHIBufferRef              CascadeSnapHistoryBuffer;
     FRHIUnorderedAccessViewRef CascadeSnapHistoryBufferUAV;
-    FRHIBufferRef  CascadeExtentsHistoryBuffer;
+    FRHIBufferRef              CascadeExtentsHistoryBuffer;
     FRHIUnorderedAccessViewRef CascadeExtentsHistoryBufferUAV;
 
 #if EDITOR_BUILD
@@ -247,11 +253,10 @@ struct FFrameResources
     FRHITextureRef ReducedDepthBuffer[NumReducedDepthBuffers];
 
     // PointLights
-    TArray<FVector4>            PointLightsPosRad;
-    TArray<FPointLightDataHLSL> PointLightsData;
-    FRHIBufferRef               PointLightsBuffer;
-    FRHIBufferRef               PointLightsPosRadBuffer;
-
+    TArray<FVector4>                         PointLightsPosRad;
+    TArray<FPointLightDataHLSL>              PointLightsData;
+    FRHIBufferRef                            PointLightsBuffer;
+    FRHIBufferRef                            PointLightsPosRadBuffer;
     TArray<FVector4>                         ShadowCastingPointLightsPosRad;
     TArray<FShadowCastingPointLightDataHLSL> ShadowCastingPointLightsData;
     FRHIBufferRef                            ShadowCastingPointLightsBuffer;

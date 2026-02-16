@@ -100,7 +100,13 @@ struct FCascadeGenerationInfo
     int   FilterMode;
     float PCFFilterWorld;
     float PCFMinFilterRadiusTexels;
+    float AdaptiveSplitRangeEnabled;
+
+    // 160-176
+    float MaxShadowDistance;
+    float ShadowPancakingEnabled;
     float Padding0;
+    float Padding1;
 };
 
 struct FDirectionalLight

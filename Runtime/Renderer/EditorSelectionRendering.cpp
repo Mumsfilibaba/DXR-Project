@@ -173,7 +173,7 @@ void FEditorNoJitterDepthPass::InitializePipelineState(FMaterial* Material, cons
     PSOInfo.RasterizerState                            = NewPipelineInstance.RasterizerState.Get();
     PSOInfo.VertexShader                               = NewPipelineInstance.VertexShader.Get();
     PSOInfo.PixelShader                                = NewPipelineInstance.PixelShader.Get();
-    PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::DepthBufferFormat;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat = GlobalTextureFormats::DepthBufferFormat;
 
     NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!NewPipelineInstance.PipelineState)
@@ -203,9 +203,9 @@ bool FEditorNoJitterDepthPass::CreateResources(FFrameResources& FrameResources, 
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue        DepthClearValue(FGlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
+    const FClearValue        DepthClearValue(GlobalTextureFormats::DepthBufferFormat, 1.0f, 0);
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
     TextureInfo.bEnableResourceStateTracking = true;
 
     FrameResources.EditorNoJitterDepth = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
@@ -495,9 +495,9 @@ void FEditorSelectionIDPass::InitializePipelineState(FMaterial* Material, const 
     PSOInfo.RasterizerState                                = NewPipelineInstance.RasterizerState.Get();
     PSOInfo.VertexShader                                   = NewPipelineInstance.VertexShader.Get();
     PSOInfo.PixelShader                                    = NewPipelineInstance.PixelShader.Get();
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::ObjectIDFormat;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::ObjectIDFormat;
     PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = GlobalTextureFormats::DepthBufferFormat;
 
     NewPipelineInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!NewPipelineInstance.PipelineState)
@@ -527,11 +527,11 @@ bool FEditorSelectionIDPass::CreateResources(FFrameResources& FrameResources, ui
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue        ClearValue(FGlobalTextureFormats::ObjectIDFormat, 0.0f, 0.0f, 0.0f, 0.0f);
+    const FClearValue        ClearValue(GlobalTextureFormats::ObjectIDFormat, 0.0f, 0.0f, 0.0f, 0.0f);
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ObjectIDFormat, Width, Height, 1, 1, Usage, ClearValue);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::ObjectIDFormat, Width, Height, 1, 1, Usage, ClearValue);
     TextureInfo.bEnableResourceStateTracking = true;
-    
+
     FrameResources.EditorObjectID_NoJitter = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
     if (!FrameResources.EditorObjectID_NoJitter)
     {

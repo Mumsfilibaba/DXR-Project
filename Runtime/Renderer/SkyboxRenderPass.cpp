@@ -195,9 +195,9 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     PSOInfo.RasterizerState                                = RasterizerState.Get();
     PSOInfo.VertexShader                                   = SkyboxVertexShader.Get();
     PSOInfo.PixelShader                                    = SkyboxPixelShader.Get();
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::FinalTargetFormat;
     PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = GlobalTextureFormats::DepthBufferFormat;
 
     PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!PipelineState)

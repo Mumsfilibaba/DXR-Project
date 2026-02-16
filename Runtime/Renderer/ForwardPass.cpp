@@ -101,9 +101,9 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     PSOInfo.DepthStencilState                              = DepthStencilState.Get();
     PSOInfo.BlendState                                     = BlendState.Get();
     PSOInfo.RasterizerState                                = RasterizerState.Get();
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::FinalTargetFormat;
     PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = GlobalTextureFormats::DepthBufferFormat;
     PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
     PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);

@@ -736,7 +736,13 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     const bool bEnableSunShadows = CVarSunShadowsEnabled.GetValue();
 
     // Depth Reduce
-    if (CVarCSMTightFrustum.GetValue() && bEnableShadows && bEnableSunShadows)
+    bool bAdaptiveSplitRange = false;
+    if (IConsoleVariable* CVarAdaptiveSplitRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.AdaptiveSplitRange"))
+    {
+        bAdaptiveSplitRange = CVarAdaptiveSplitRange->GetBool();
+    }
+
+    if ((CVarCSMTightFrustum.GetValue() || bAdaptiveSplitRange) && bEnableShadows && bEnableSunShadows)
     {
         DepthReducePass->Execute(CommandList, Resources, CurrentScene);
     }
@@ -823,14 +829,6 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         {
             bUseShadowHistory = CVarShadowHistory->GetBool();
         }
-
-        bool bIsPCSS = false;
-        if (IConsoleVariable* CVarFilterMode = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))
-        {
-            bIsPCSS = (CVarFilterMode->GetInt() == 1);
-        }
-
-        bUseShadowHistory = bUseShadowHistory && bIsPCSS;
         if (!bUseShadowHistory)
         {
             Resources.bShadowMaskHistoryInitialized = false;

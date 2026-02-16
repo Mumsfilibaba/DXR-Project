@@ -46,6 +46,21 @@ void FCamera::SetFieldOfView(float InFieldOfView)
     FieldOfView = InFieldOfView;
 }
 
+void FCamera::SetNearPlane(float InNearPlane)
+{
+    NearPlane = Math::Max(InNearPlane, 0.001f);
+    if (FarPlane <= NearPlane + 0.01f)
+    {
+        FarPlane = NearPlane + 0.01f;
+    }
+}
+
+void FCamera::SetFarPlane(float InFarPlane)
+{
+    const float MinFarPlane = NearPlane + 0.01f;
+    FarPlane = Math::Max(InFarPlane, MinFarPlane);
+}
+
 void FCamera::SetPosition(float x, float y, float z)
 {
     Position = FVector3(x, y, z);

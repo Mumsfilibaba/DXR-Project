@@ -98,7 +98,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
     // Linear output
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::FinalTargetFormat;
     DebugPSO_Linear = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!DebugPSO_Linear)
     {
@@ -210,12 +210,15 @@ void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderVie
     struct FDebugViewConstants
     {
         int32 DebugMode = 0;
-        int32 Padding0  = 0;
-        int32 Padding1  = 0;
-        int32 Padding2  = 0;
+        int32 ShadowMapSize = 0;
+        int32 OutputWidth  = 0;
+        int32 OutputHeight = 0;
     } Constants;
 
     Constants.DebugMode = static_cast<int32>(DebugView);
+    Constants.ShadowMapSize = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetWidth()) : 0;
+    Constants.OutputWidth = RenderTarget ? static_cast<int32>(RenderTarget->GetWidth()) : 0;
+    Constants.OutputHeight = RenderTarget ? static_cast<int32>(RenderTarget->GetHeight()) : 0;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(DebugPixelShader.Get(), &Constants, NumConstants);

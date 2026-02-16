@@ -241,9 +241,9 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
         // Update HLSL data
         CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->GetCascadeSplitLambda();
-        CascadeGenerationData.LightPositionOffset = DirectionalLight->GetShadowPositionOffset();
-        CascadeGenerationData.LightNearPlane      = DirectionalLight->GetShadowNearPlane();
-        CascadeGenerationData.LightFarPlane       = DirectionalLight->GetShadowFarPlane();
+        CascadeGenerationData.LightPositionOffset = 0.0f;
+        CascadeGenerationData.LightNearPlane      = 0.0f;
+        CascadeGenerationData.LightFarPlane       = 0.0f;
         CascadeGenerationData.LightUp             = DirectionalLightData.UpVector;
         CascadeGenerationData.LightDirection      = DirectionalLightData.Direction;
         CascadeGenerationData.ShadowMatrix        = DirectionalLightData.ShadowMatrix;
@@ -268,7 +268,33 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
             CascadeGenerationData.bEnableStableCascades = true;
         }
 
-        if (!CascadeGenerationData.bEnableTightFrustum)
+        bool bAdaptiveSplitRange = false;
+        if (IConsoleVariable* CVarAdaptiveSplitRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.AdaptiveSplitRange"))
+        {
+            bAdaptiveSplitRange = CVarAdaptiveSplitRange->GetBool();
+        }
+        CascadeGenerationData.AdaptiveSplitRangeEnabled = bAdaptiveSplitRange ? 1.0f : 0.0f;
+
+        if (IConsoleVariable* CVarMaxShadowDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxShadowDistance"))
+        {
+            CascadeGenerationData.MaxShadowDistance = Math::Max<float>(CVarMaxShadowDistance->GetFloat(), 0.0f);
+        }
+        else
+        {
+            CascadeGenerationData.MaxShadowDistance = 0.0f;
+        }
+        if (IConsoleVariable* CVarShadowPancaking = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.ShadowPancaking"))
+        {
+            CascadeGenerationData.ShadowPancakingEnabled = CVarShadowPancaking->GetBool() ? 1.0f : 0.0f;
+        }
+        else
+        {
+            CascadeGenerationData.ShadowPancakingEnabled = 0.0f;
+        }
+        CascadeGenerationData.Padding0 = 0.0f;
+        CascadeGenerationData.Padding1 = 0.0f;
+
+        if (!CascadeGenerationData.bEnableTightFrustum && !bAdaptiveSplitRange)
         {
             bCSMMinMaxHistoryInitialized = false;
         }

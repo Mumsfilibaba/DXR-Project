@@ -464,30 +464,6 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         Dir->SetCascadeSplitLambda(Lambda);
                     }
 
-                    float Offset = Dir->GetShadowPositionOffset();
-                    const float Offset0 = 200.0f;
-                    
-                    if (EditorWidgets::DrawFloatProperty("Cascade Position Offset", Offset, 1.0f, 0.0f, 1000.0f, "%.1f", true, &Offset0))
-                    {
-                        Dir->SetShadowPositionOffset(Offset);
-                    }
-
-                    float ShadowNearPlane = Dir->GetShadowNearPlane();
-                    const float ShadowNearPlane0 = 120.0f;
-                    
-                    if (EditorWidgets::DrawFloatProperty("Shadow near-plane", ShadowNearPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowNearPlane0))
-                    {
-                        Dir->SetShadowNearPlane(ShadowNearPlane);
-                    }
-
-                    float ShadowFarPlane = Dir->GetShadowFarPlane();
-                    const float ShadowFarPlane0 = 250.0f;
-                    
-                    if (EditorWidgets::DrawFloatProperty("Shadow far-plane", ShadowFarPlane, 1.0f, 0.0f, 1000.0f, "%.1f", true, &ShadowFarPlane0))
-                    {
-                        Dir->SetShadowFarPlane(ShadowFarPlane);
-                    }
-
                     float LightArea = Dir->GetLightArea();
                     const float LightArea0 = 0.5f;
 
@@ -536,6 +512,26 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     if (EditorWidgets::DrawFloatProperty("Field Of View", FieldOfView, 0.1f, 40.0f, 120.0f, "%.1f", true, &FieldOfView0))
                     {
                         SelectedCamera->SetFieldOfView(FieldOfView);
+                    }
+                }
+
+                {
+                    float NearPlane = SelectedCamera->GetNearPlane();
+                    const float NearPlane0 = 0.01f;
+
+                    if (EditorWidgets::DrawFloatProperty("Near Plane", NearPlane, 0.001f, 0.001f, 1000.0f, "%.3f", true, &NearPlane0))
+                    {
+                        SelectedCamera->SetNearPlane(NearPlane);
+                    }
+                }
+
+                {
+                    float FarPlane = SelectedCamera->GetFarPlane();
+                    const float FarPlane0 = 200.0f;
+
+                    if (EditorWidgets::DrawFloatProperty("Far Plane", FarPlane, 1.0f, 1.0f, 100000.0f, "%.1f", true, &FarPlane0))
+                    {
+                        SelectedCamera->SetFarPlane(FarPlane);
                     }
                 }
 

@@ -28,8 +28,9 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     // Get the minimum and maximum depth of the scene
     float2 MinMaxDepth = float2(0.0, 1.0);
 
+    const bool bUseMinMaxDepth = (GenerationInfo.bEnableTightFrustum != 0) || (GenerationInfo.AdaptiveSplitRangeEnabled > 0.5);
     [branch]
-    if (GenerationInfo.bEnableTightFrustum)
+    if (bUseMinMaxDepth)
     {
         if (DispatchThreadID.x == 0)
         {
@@ -75,11 +76,22 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
     }
 
-    float NearPlane = CameraBuffer.NearPlane;
-    float ClipRange = CameraBuffer.FarPlane - NearPlane;
+    float CameraNear = CameraBuffer.NearPlane;
+    float CameraFar  = CameraBuffer.FarPlane;
+    const float MaxShadowDistance = GenerationInfo.MaxShadowDistance;
+    if (MaxShadowDistance > CameraNear && MaxShadowDistance < CameraFar)
+    {
+        CameraFar = MaxShadowDistance;
+    }
 
-    float MinDepth = NearPlane + ClipRange * MinMaxDepth.x;
-    float MaxDepth = NearPlane + ClipRange * MinMaxDepth.y;
+    const float CameraRange   = max(CameraBuffer.FarPlane - CameraNear, 1e-6);
+    const float ClipRange     = max(CameraFar - CameraNear, 1e-6);
+    const float NearPlane     = CameraNear;
+
+    float MinDepth = CameraNear + CameraRange * MinMaxDepth.x;
+    float MaxDepth = CameraNear + CameraRange * MinMaxDepth.y;
+    MinDepth = clamp(MinDepth, CameraNear, CameraFar);
+    MaxDepth = clamp(MaxDepth, MinDepth, CameraFar);
     
     float CascadeSplits[NUM_SHADOW_CASCADES];
     float CascadeSplitsReference[NUM_SHADOW_CASCADES];
@@ -107,7 +119,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     // change the perceived penumbra size as shadow-map density increases.
     {
         const float ReferenceMinDepth = NearPlane;
-        const float ReferenceMaxDepth = CameraBuffer.FarPlane;
+        const float ReferenceMaxDepth = CameraFar;
 
         const float Range = ReferenceMaxDepth - ReferenceMinDepth;
         const float Ratio = ReferenceMaxDepth / max(ReferenceMinDepth, 0.01);
@@ -160,8 +172,10 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
     // Use min between MinMaxDepth to protect against cases where the lowest is 1.0 
     // and highest 0.0. This can happen when nothing is rendered in the prepass.
-    float SplitDist     = CascadeSplitsReference[CascadeIndex];
-    float PrevSplitDist = (CascadeIndex == 0) ? 0.0 : CascadeSplitsReference[CascadeIndex - 1];
+    const float AdaptiveNear = (MinDepth - NearPlane) / max(ClipRange, 1e-6);
+    const bool bAdaptiveSplitRange = (GenerationInfo.AdaptiveSplitRangeEnabled > 0.5);
+    float SplitDist     = bAdaptiveSplitRange ? CascadeSplits[CascadeIndex] : CascadeSplitsReference[CascadeIndex];
+    float PrevSplitDist = (CascadeIndex == 0) ? (bAdaptiveSplitRange ? AdaptiveNear : 0.0) : (bAdaptiveSplitRange ? CascadeSplits[CascadeIndex - 1] : CascadeSplitsReference[CascadeIndex - 1]);
 
     {
         [unroll]
@@ -245,23 +259,11 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         ReferenceSphereRadius = ceil(ReferenceSphereRadius * 16.0) / 16.0;
     }
 
-    // We use a specific extent in the z-direction, this is in order to prevent that some
-    // objects are not visibe in the shadow-map and that are "behind" the camera.
-#if 1
-    float LightNearPlane      = GenerationInfo.LightNearPlane;
-    float LightFarPlane       = GenerationInfo.LightFarPlane;
-    float LightPositionOffset = GenerationInfo.LightPositionOffset;
-#else
-    float LightNearPlane      = 0.0;
-    float LightFarPlane       = CascadeExtents.z;
-    float LightPositionOffset = -MinExtents.z;
-#endif
-
     // Setup Shadow-View
     float3 LightDirection = normalize(GenerationInfo.LightDirection);
     
     // Create the position for the shadow rendering
-    float3 ShadowEyePos = FrustumCenter - LightDirection * LightPositionOffset;
+    float3 ShadowEyePos = FrustumCenter;
 
     // Robust up-vector selection to avoid degeneracy near world-up
     const float3 WorldUp = float3(0.0, 1.0, 0.0);
@@ -287,6 +289,19 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
     float3 MinExtents;
     float3 MaxExtents;
+
+    float3 SliceLSMin = float3(1e9, 1e9, 1e9);
+    float3 SliceLSMax = float3(-1e9, -1e9, -1e9);
+
+    {
+        [unroll]
+        for (int Index = 0; Index < 8; ++Index)
+        {
+            float3 CornerLS = mul(float4(FrustumCornersWS[Index], 1.0), View).xyz;
+            SliceLSMin = min(SliceLSMin, CornerLS);
+            SliceLSMax = max(SliceLSMax, CornerLS);
+        }
+    }
 
     if (bUseTightAABB)
     {
@@ -414,6 +429,16 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 
         MinExtents.xy = CenterSnapped - 0.5 * ExtentXY;
         MaxExtents.xy = CenterSnapped + 0.5 * ExtentXY;
+    }
+
+    const float SliceDepth = max(SliceLSMax.z - SliceLSMin.z, 0.0);
+    const float ZPadding = max(max(ReferenceWorldTexelSize * 16.0, SliceDepth * 0.05), 0.05);
+    float LightNearPlane = SliceLSMin.z - ZPadding;
+    float LightFarPlane  = SliceLSMax.z + ZPadding;
+
+    if (LightFarPlane <= LightNearPlane)
+    {
+        LightFarPlane = LightNearPlane + 1.0;
     }
 
     // Create the projection

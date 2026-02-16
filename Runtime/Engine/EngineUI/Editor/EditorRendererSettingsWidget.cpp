@@ -111,7 +111,6 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     // Cascaded shadow maps
     CaptureBool("Renderer.CSM.EnableSinglePassRendering");
     CaptureBool("Renderer.CSM.EnableGeometryShaderInstancing");
-    CaptureBool("Renderer.CSM.EnableDepthClipping");
     CaptureBool("Renderer.CSM.RotateSamples");
     CaptureBool("Renderer.CSM.BlendCascades");
     CaptureBool("Renderer.CSM.TightFrustum");
@@ -126,6 +125,9 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureBool("Renderer.CSM.IGN.StableBetweenFrames");
     CaptureFloat("Renderer.CSM.PCF.FilterWorld");
     CaptureFloat("Renderer.CSM.PCF.MinFilterRadiusTexels");
+    CaptureBool("Renderer.CSM.ShadowPancaking");
+    CaptureFloat("Renderer.CSM.MaxShadowDistance");
+    CaptureFloat("Renderer.CSM.MaxShadowDistanceFade");
 
     CaptureFloat("Renderer.CSM.PCSS.RadiusScale");
     CaptureFloat("Renderer.CSM.PCSS.BlockerSearchScale");
@@ -468,19 +470,6 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    // Enable depth-clipping
-    if (IConsoleVariable* CVarCSMEnableDepthClipping = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableDepthClipping"))
-    {
-        bool bValue  = CVarCSMEnableDepthClipping->GetBool();
-        bool bValue0 = false;
-
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.EnableDepthClipping", bValue0);
-        if (EditorWidgets::DrawCheckboxProperty("Enable depth-clipping", bValue, RevertPtr))
-        {
-            CVarCSMEnableDepthClipping->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
-        }
-    }
-
     // Rotate samples
     if (IConsoleVariable* CVarEnableRotateSamples = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.RotateSamples"))
     {
@@ -530,6 +519,58 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         if (EditorWidgets::DrawCheckboxProperty("Enable Stable Cascades", bValue, RevertPtr))
         {
             CVarCSMStableCascades->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    // Adaptive Split Range
+    if (IConsoleVariable* CVarAdaptiveSplitRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.AdaptiveSplitRange"))
+    {
+        bool bValue  = CVarAdaptiveSplitRange->GetBool();
+        bool bValue0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.AdaptiveSplitRange", bValue0);
+        if (EditorWidgets::DrawCheckboxProperty("Adaptive Split Range", bValue, RevertPtr))
+        {
+            CVarAdaptiveSplitRange->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    // Max shadow distance
+    if (IConsoleVariable* CVarMaxShadowDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxShadowDistance"))
+    {
+        float Value  = CVarMaxShadowDistance->GetFloat();
+        float Value0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.CSM.MaxShadowDistance", Value0);
+        if (EditorWidgets::DrawFloatProperty("Max Shadow Distance", Value, 1.0f, 0.0f, 100000.0f, "%.1f", true, RevertPtr))
+        {
+            CVarMaxShadowDistance->SetAsFloat(Value, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    // Max shadow distance fade
+    if (IConsoleVariable* CVarMaxShadowDistanceFade = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxShadowDistanceFade"))
+    {
+        float Value  = CVarMaxShadowDistanceFade->GetFloat();
+        float Value0 = 50.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.CSM.MaxShadowDistanceFade", Value0);
+        if (EditorWidgets::DrawFloatProperty("Max Shadow Distance Fade", Value, 1.0f, 0.0f, 100000.0f, "%.1f", true, RevertPtr))
+        {
+            CVarMaxShadowDistanceFade->SetAsFloat(Value, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    // Shadow pancaking
+    if (IConsoleVariable* CVarShadowPancaking = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.ShadowPancaking"))
+    {
+        bool bValue  = CVarShadowPancaking->GetBool();
+        bool bValue0 = false;
+
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.ShadowPancaking", bValue0);
+        if (EditorWidgets::DrawCheckboxProperty("Enable Shadow Pancaking", bValue, RevertPtr))
+        {
+            CVarShadowPancaking->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
         }
     }
 

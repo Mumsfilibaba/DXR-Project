@@ -127,7 +127,7 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
     PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
     // Linear output (float HDR->LDR target)
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::FinalTargetFormat;
     TonemapPSO_Linear = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!TonemapPSO_Linear)
     {
@@ -161,8 +161,8 @@ bool FTonemapPass::CreateResources(FFrameResources& FrameResources, uint32 Width
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    const FClearValue ClearValue(FGlobalTextureFormats::FinalTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
+    const FClearValue ClearValue(GlobalTextureFormats::FinalTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
     TextureInfo.bEnableResourceStateTracking = true;
 
     FrameResources.TonemappedTarget = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);

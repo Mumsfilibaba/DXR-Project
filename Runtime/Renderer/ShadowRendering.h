@@ -248,6 +248,9 @@ struct FCascadedShadowsShaderCombination
             // True if depth-clipping should be enabled
             bool bEnableDepthClipping;
 
+            // Enable shadow pancaking
+            bool bShadowPancaking;
+
             // Material-flags
             uint32 MaterialFlags;
         };
@@ -302,8 +305,8 @@ struct FDirectionalShadowSettingsHLSL
 
     // 48-64
     float  PCSSBlockerSearchAngularDiameter;
-    float  Padding1;
-    float  Padding2;
+    float  ShadowMaxDistance;
+    float  ShadowMaxDistanceFade;
     float  Padding3;
 
     // 64-80

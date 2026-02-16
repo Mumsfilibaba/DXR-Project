@@ -38,6 +38,12 @@ static TAutoConsoleVariable<bool> CVarCSMStableCascades(
     true,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<bool> CVarCSMAdaptiveSplitRange(
+    "Renderer.CSM.AdaptiveSplitRange",
+    "Adapt cascade split range based on scene depth (may introduce split movement)",
+    false,
+    EConsoleVariableFlags::Default);
+
 static TAutoConsoleVariable<bool> CVarCSMEnableSinglePassRendering(
     "Renderer.CSM.EnableSinglePassRendering",
     "Enables instancing for cascade rendering via VertexShaders, enabling a single-pass for rendering a full cube-map, which creates less overhead on the CPU",
@@ -48,12 +54,6 @@ static TAutoConsoleVariable<bool> CVarCSMEnableGeometryShaderInstancing(
     "Renderer.CSM.EnableGeometryShaderInstancing",
     "Enables instancing in a geometry shader, enabling single-pass cascade drawing, which creates less overhead on the CPU",
     true,
-    EConsoleVariableFlags::Default);
-
-static TAutoConsoleVariable<bool> CVarCSMEnableDepthClipping(
-    "Renderer.CSM.EnableDepthClipping",
-    "Enables depth-clipping for cascade rendering.",
-    false,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMFilterMode(
@@ -84,6 +84,24 @@ static TAutoConsoleVariable<float> CVarCSMPCFMinFilterRadiusTexels(
     "Renderer.CSM.PCF.MinFilterRadiusTexels",
     "Minimum PCF filter radius (in texels, converted to world units)",
     1.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarCSMShadowPancaking(
+    "Renderer.CSM.ShadowPancaking",
+    "Enable shadow pancaking (depth clamp) to reduce depth range",
+    false,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMMaxShadowDistance(
+    "Renderer.CSM.MaxShadowDistance",
+    "Maximum camera distance covered by CSM (0 disables)",
+    0.0f,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<float> CVarCSMMaxShadowDistanceFade(
+    "Renderer.CSM.MaxShadowDistanceFade",
+    "Fade band (world units) for CSM max distance (0 = hard cutoff)",
+    50.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSRadiusScale(
@@ -166,7 +184,7 @@ static TAutoConsoleVariable<bool> CVarCSMSelectCascadeFromProjection(
 
 static TAutoConsoleVariable<bool> CVarCSMShadowHistory(
     "Renderer.CSM.ShadowHistory",
-    "Enables shadow mask history filtering (recommended for PCSS)",
+    "Enables shadow mask history filtering (recommended for PCF/PCSS at low sample counts)",
     true,
     EConsoleVariableFlags::Default);
 
@@ -368,7 +386,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         PSOInfo.VertexShader                               = NewPipelineStateInstance.VertexShader.Get();
         PSOInfo.PixelShader                                = NewPipelineStateInstance.PixelShader.Get();
         PSOInfo.RasterizerOutputFormats.NumRenderTargets   = 0;
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = GlobalTextureFormats::ShadowMapFormat;
 
         if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
@@ -439,10 +457,10 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 
 bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 {
-    const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
+    const FClearValue DepthClearValue(GlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
 
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(FGlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
+    FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(GlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
     PointLightInfo.bEnableResourceStateTracking = true;
     
     Resources.PointLightShadowMaps = FRHI::Get()->CreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
@@ -920,7 +938,9 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
     if (Resources.CSMMinMaxDepthHistory)
     {
         CommandList.RequireTextureState(Resources.CSMMinMaxDepthHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
-        if (!Resources.bCSMMinMaxHistoryInitialized && Resources.CascadeGenerationData.bEnableTightFrustum)
+        if (!Resources.bCSMMinMaxHistoryInitialized
+            && (Resources.CascadeGenerationData.bEnableTightFrustum
+                || Resources.CascadeGenerationData.AdaptiveSplitRangeEnabled > 0.5f))
         {
             CommandList.ClearUnorderedAccessView(Resources.CSMMinMaxDepthHistory->GetUnorderedAccessView(), FVector4(-1.0f, -1.0f, 0.0f, 0.0f));
             Resources.bCSMMinMaxHistoryInitialized = true;
@@ -1005,7 +1025,9 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 {
     FCascadedShadowsShaderCombination ShaderCombination;
     ShaderCombination.RenderPassType       = RenderPassType;
-    ShaderCombination.bEnableDepthClipping = CVarCSMEnableDepthClipping.GetValue();
+    // Pancaking relies on depth clamping, which requires depth clipping to be disabled.
+    ShaderCombination.bEnableDepthClipping = !CVarCSMShadowPancaking.GetValue();
+    ShaderCombination.bShadowPancaking     = CVarCSMShadowPancaking.GetValue();
     ShaderCombination.MaterialFlags        = static_cast<uint32>(Material->GetMaterialFlags());
 
     FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(ShaderCombination);
@@ -1058,6 +1080,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
+        ShaderDefines.Emplace("ENABLE_SHADOW_PANCAKING", ShaderCombination.bShadowPancaking ? "(1)" : "(0)");
 
         FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
@@ -1198,7 +1221,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             PSOInfo.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = FGlobalTextureFormats::ShadowMapFormat;
+        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = GlobalTextureFormats::ShadowMapFormat;
         PSOInfo.RasterizerOutputFormats.NumRenderTargets   = 0;
 
         NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
@@ -1249,8 +1272,8 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
 
-    const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
-    FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(FGlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
+    const FClearValue DepthClearValue(GlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
+    FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(GlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
     CascadeInfo.bEnableResourceStateTracking = true;
     
     Resources.ShadowCascades = FRHI::Get()->CreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
@@ -1375,10 +1398,12 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             if constexpr (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
             {
                 CommandList.SetShaderResourceView(Instance->GeometryShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
+                CommandList.SetShaderResourceView(Instance->GeometryShader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
             }
             else
             {
                 CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
+                CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
             }
 
             // If this material require a pixel-shader, bind necessary pixel-shader resources
@@ -1500,6 +1525,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerCascadeBuffer.Get(), 0);
                 CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
+                CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
 
                 for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
                 {
@@ -1602,7 +1628,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
-    FRHITextureInfo ShadowMaskInfo  = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
+    FRHITextureInfo ShadowMaskInfo  = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
     ShadowMaskInfo.bEnableResourceStateTracking = true;
 
     Resources.ShadowMaskRaw = FRHI::Get()->CreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
@@ -1638,7 +1664,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
         }
     }
 
-    FRHITextureInfo ShadowDebugInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Flags);
+    FRHITextureInfo ShadowDebugInfo = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Flags);
     ShadowDebugInfo.bEnableResourceStateTracking = true;
 
     Resources.ShadowDebugBuffer = FRHI::Get()->CreateTexture(ShadowDebugInfo, EResourceAccess::NonPixelShaderResource);
@@ -1699,6 +1725,8 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     ShadowSettings.PCSSMaxSearchDistanceWorld     = Math::Max<float>(CVarCSMPCSSMaxSearchDistanceWorld.GetValue(), 0.0f);
     ShadowSettings.PCSSMinFilterMaxAngularDiameter = Math::Max<float>(CVarCSMPCSSMinFilterMaxAngularDiameter.GetValue(), 0.0f);
     ShadowSettings.PCSSBlockerSearchAngularDiameter = Math::Max<float>(CVarCSMPCSSBlockerSearchAngularDiameter.GetValue(), 0.0f);
+    ShadowSettings.ShadowMaxDistance              = Math::Max<float>(CVarCSMMaxShadowDistance.GetValue(), 0.0f);
+    ShadowSettings.ShadowMaxDistanceFade          = Math::Max<float>(CVarCSMMaxShadowDistanceFade.GetValue(), 0.0f);
     ShadowSettings.ShadowDebugMode = ShadowDebugMode;
     ShadowSettings.ShadowDebugPadding0 = 0;
     ShadowSettings.ShadowDebugPadding1 = 0;

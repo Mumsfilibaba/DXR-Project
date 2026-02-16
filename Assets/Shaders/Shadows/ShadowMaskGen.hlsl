@@ -105,8 +105,8 @@ struct FDirectionalShadowSettings
     float PCSSMaxSearchDistanceWorld;
     float PCSSMinFilterMaxAngularDiameter;
     float PCSSBlockerSearchAngularDiameter;
-    float Padding1;
-    float Padding2;
+    float ShadowMaxDistance;
+    float ShadowMaxDistanceFade;
     float Padding3;
 
     uint  ShadowDebugMode;
@@ -173,20 +173,13 @@ float2 ConcentricSampleDisk(float2 U)
     return R * float2(cos(Theta), sin(Theta));
 }
 
-uint StableShadowSeed(float3 PositionWS, float2 ShadowUV, uint CascadeIndex)
+uint StableShadowSeed(float3 PositionWS)
 {
-    const float RefWorldTexelSize = max(ShadowSplitsBuffer[CascadeIndex].RefWorldTexelSize, 1e-6);
-    const float QuantStep = clamp(RefWorldTexelSize * 0.5, 0.01, 0.25);
+    // Use cascade-0 reference for stable, cascade-independent sampling.
+    const float RefWorldTexelSize = max(ShadowSplitsBuffer[0].RefWorldTexelSize, 1e-6);
+    const float QuantStep = clamp(RefWorldTexelSize * 0.25, 0.005, 0.1);
     int3 Q = int3(floor(PositionWS / QuantStep));
-    uint Seed = Hash3(asuint(Q));
-
-    // Add a light-space component so the seed varies even when world quantization is coarse.
-    const float2 UVTexel = ShadowUV * max(float(SettingsBuffer.ShadowMapSize), 1.0);
-    int2 QUV = int2(floor(UVTexel * 0.5)); // 2x2 texel blocks for stability
-    uint UVSeed = HashCombine(asuint(QUV.x), asuint(QUV.y));
-    Seed = HashCombine(Seed, UVSeed);
-    Seed = HashCombine(Seed, CascadeIndex * 0x9e3779b9u + 0x7f4a7c15u);
-    return Seed;
+    return Hash3(asuint(Q));
 }
 
 float2 GenerateIGNDiskSample(uint SampleIndex, uint SampleCount, uint StableSeed)
@@ -599,7 +592,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     const float ShadowBiasWorld = BiasDepth / max(abs(CascadeSplit.Scale.z), 1e-6);
     FilterSetup.ShadowBiasWorld = ShadowBiasWorld;
     FilterSetup.Pixel          = 0;
-    FilterSetup.StableSeed     = StableShadowSeed(PositionWS, BiasedShadowPosition.xy, CascadeIndex);
+    FilterSetup.StableSeed     = StableShadowSeed(PositionWS);
     FilterSetup.Padding0       = 0;
     
 #if ROTATE_SAMPLES
@@ -631,8 +624,10 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
         MinRadiusWorld *= MinFilterScale;
     }
 
-    float MaxPenumbraWorld = max(CascadeSplit.MaxPCSSRadiusWorld, MinRadiusWorld);
-    float MaxSearchRadiusWorld = max(CascadeSplit.MaxPCSSSearchWorld, MinRadiusWorld);
+    const float MaxPenumbraWorldRef = max(ShadowSplitsBuffer[0].MaxPCSSRadiusWorld, MinRadiusWorld);
+    const float MaxSearchRadiusWorldRef = max(ShadowSplitsBuffer[0].MaxPCSSSearchWorld, MinRadiusWorld);
+    float MaxPenumbraWorld = MaxPenumbraWorldRef;
+    float MaxSearchRadiusWorld = MaxSearchRadiusWorldRef;
     if (SettingsBuffer.PCSSMaxPenumbraWorld > 0.0)
     {
         MaxPenumbraWorld = min(MaxPenumbraWorld, SettingsBuffer.PCSSMaxPenumbraWorld);
@@ -775,11 +770,7 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
     float DebugContainment = 1.0;
 
     {
-        const float4 Offsets = CascadeSplit.Offsets;
-        const float4 Scale   = CascadeSplit.Scale;
-
-        float3 CascadePosition  = ProjectionPosition + Offsets.xyz;
-        CascadePosition *= Scale.xyz;
+        float3 CascadePosition = ComputeCascadeUVWFromMatrix(CascadeIndex, PositionWS);
         float3 CascadeAbs = abs(CascadePosition * 2.0 - 1.0);
 
         DistToEdge = 1.0 - max(max(CascadeAbs.x, CascadeAbs.y), CascadeAbs.z);
@@ -791,11 +782,13 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
 #if ENABLE_CASCADE_BLENDING && !ENABLE_FIRST_CASCADE_ONLY
     if (CascadeIndex != (NUM_SHADOW_CASCADES - 1))
     {
+        const FCascadeSplit NextSplitData = ShadowSplitsBuffer[CascadeIndex + 1];
         float NextSplit  = CascadeSplit.Split;
-        const float TransitionWidth = max(CascadeSplit.TransitionWidthViewZ, 1e-6);
+        const float TransitionWidth = max(max(CascadeSplit.TransitionWidthViewZ, NextSplitData.TransitionWidthViewZ), 1e-6);
         float FadeFactor = (NextSplit - ViewPosZ) / TransitionWidth;
 
-        const float EdgeWidth = (CascadeSplit.TransitionMarginTexels / max(float(SettingsBuffer.ShadowMapSize), 1.0)) * 2.0;
+        const float EdgeMarginTexels = max(CascadeSplit.TransitionMarginTexels, NextSplitData.TransitionMarginTexels);
+        const float EdgeWidth = (EdgeMarginTexels / max(float(SettingsBuffer.ShadowMapSize), 1.0)) * 2.0;
         const float EdgeFade = DistToEdge / max(EdgeWidth, 1e-6);
         const float BlendFactor = min(FadeFactor, EdgeFade);
 
@@ -813,6 +806,22 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
         }
     }
 #endif
+
+    // Optional fade-out beyond max shadow distance.
+    if (SettingsBuffer.ShadowMaxDistance > 0.0)
+    {
+        float Fade = 1.0;
+        const float FadeBand = max(SettingsBuffer.ShadowMaxDistanceFade, 0.0);
+        if (FadeBand > 0.0)
+        {
+            Fade = saturate((SettingsBuffer.ShadowMaxDistance - ViewPosZ) / FadeBand);
+        }
+        else
+        {
+            Fade = (ViewPosZ <= SettingsBuffer.ShadowMaxDistance) ? 1.0 : 0.0;
+        }
+        ShadowAmount = lerp(1.0, ShadowAmount, Fade);
+    }
 
     if (SettingsBuffer.ShadowDebugMode == SHADOW_DEBUG_CASCADE_INDEX)
     {

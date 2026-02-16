@@ -38,9 +38,9 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
     int DebugMode;
-    int Padding0;
-    int Padding1;
-    int Padding2;
+    int ShadowMapSize;
+    int OutputWidth;
+    int OutputHeight;
 SHADER_CONSTANT_BLOCK_END
 
 float3 VisualizeDepth(float Depth)
@@ -88,29 +88,37 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     }
     else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADES)
     {
-        const float Aspect = CameraBuffer.ViewportWidth / max(CameraBuffer.ViewportHeight, 1.0);
-        float2 SquareUV = TexCoord;
-        if (Aspect > 1.0)
-        {
-            const float Scale = 1.0 / Aspect;
-            SquareUV.x = (SquareUV.x - 0.5) * Scale + 0.5;
-        }
-        else if (Aspect < 1.0)
-        {
-            const float Scale = Aspect;
-            SquareUV.y = (SquareUV.y - 0.5) * Scale + 0.5;
-        }
+        float2 ViewportSize = float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
 
-        // Outside the square area -> black
-        if (any(SquareUV < 0.0) || any(SquareUV > 1.0))
+        const float2 Pixel = TexCoord * ViewportSize;
+        const float MinDim = min(ViewportSize.x, ViewportSize.y);
+        const float QuadSize = floor(MinDim * 0.5);
+        const float2 GridSize = float2(QuadSize * 2.0, QuadSize * 2.0);
+        const float2 GridMin = 0.5 * (ViewportSize - GridSize);
+
+        if (QuadSize < 1.0)
         {
             return float4(0.0, 0.0, 0.0, 1.0);
         }
 
-        const float2 QuadUV = frac(SquareUV * 2.0);
-        const uint X = (SquareUV.x >= 0.5) ? 1 : 0;
-        const uint Y = (SquareUV.y >= 0.5) ? 1 : 0;
+        // Outside the square grid -> black
+        if (any(Pixel < GridMin) || any(Pixel >= (GridMin + GridSize)))
+        {
+            return float4(0.0, 0.0, 0.0, 1.0);
+        }
+
+        const float2 Local = Pixel - GridMin;
+        const uint X = (Local.x >= QuadSize) ? 1 : 0;
+        const uint Y = (Local.y >= QuadSize) ? 1 : 0;
         const uint CascadeIndex = Y * 2 + X;
+
+        if (CascadeIndex >= NUM_SHADOW_CASCADES)
+        {
+            return float4(0.0, 0.0, 0.0, 1.0);
+        }
+
+        const float2 QuadPixel = Local - float2(float(X), float(Y)) * QuadSize;
+        const float2 QuadUV = (QuadPixel + 0.5) / QuadSize;
 
         const float Depth = ShadowCascades.SampleLevel(PointSampler, float3(QuadUV, CascadeIndex), 0).r;
         Color = (1.0 - Depth).xxx;

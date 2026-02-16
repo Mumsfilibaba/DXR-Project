@@ -6,6 +6,7 @@
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/World/World.h>
+#include <Engine/World/Camera.h>
 #include <Engine/World/Lights/PointLight.h>
 #include <Engine/World/Lights/DirectionalLight.h>
 #include <Engine/World/Lights/SkyLight.h>
@@ -19,11 +20,11 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_LIGHT_SANDBOX (1)
+#define LOAD_LIGHT_SANDBOX (0)
 #define LOAD_SPONZA (0)
 #define LOAD_BISTRO (0)
 #define LOAD_SUN_TEMPLE (0)
-#define LOAD_EMERALD_SQUARE (0)
+#define LOAD_EMERALD_SQUARE (1)
 
 #define ENABLE_LIGHT_TEST (0)
 #define ENABLE_SPHERES_TEST (0)
@@ -547,6 +548,12 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     // Add Camera
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
+        if (FCamera* Camera = Player->GetCamera())
+        {
+            Camera->SetNearPlane(0.05f);
+            Camera->SetFarPlane(200.0f);
+        }
+
         // Add camera to the world
         InWorld->AddCamera(Player->GetCamera());
         InWorld->AddActor(Player);
@@ -738,6 +745,12 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     // Add Camera
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
+        if (FCamera* Camera = Player->GetCamera())
+        {
+            Camera->SetNearPlane(0.1f);
+            Camera->SetFarPlane(1200.0f);
+        }
+
         // Add camera to the world
         InWorld->AddCamera(Player->GetCamera());
         InWorld->AddActor(Player);
@@ -808,6 +821,12 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     // Add Camera
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
+        if (FCamera* Camera = Player->GetCamera())
+        {
+            Camera->SetNearPlane(0.1f);
+            Camera->SetFarPlane(1000.0f);
+        }
+
         // Add camera to the world
         InWorld->AddCamera(Player->GetCamera());
         InWorld->AddActor(Player);
@@ -918,6 +937,12 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     // Add Camera
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
+        if (FCamera* Camera = Player->GetCamera())
+        {
+            Camera->SetNearPlane(0.1f);
+            Camera->SetFarPlane(1500.0f);
+        }
+
         // Add camera to the world
         InWorld->AddCamera(Player->GetCamera());
         InWorld->AddActor(Player);
@@ -1137,6 +1162,12 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
         Player->SetName("PlayerController");
+
+        if (FCamera* Camera = Player->GetCamera())
+        {
+            Camera->SetNearPlane(0.1f);
+            Camera->SetFarPlane(150.0f);
+        }
 
         // Add camera to the world
         InWorld->AddCamera(Player->GetCamera());
