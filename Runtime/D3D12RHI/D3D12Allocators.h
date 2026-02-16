@@ -320,6 +320,9 @@ private:
 class FD3D12BufferAllocatorPool : public FD3D12DeviceChild
 {
 public:
+    static D3D12_RESOURCE_STATES GetInitialResourceStateForHeapType(D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES RequestedInitialState);
+    
+public:
     FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D12_HEAP_TYPE InHeapType, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize, D3D12_RESOURCE_STATES InInitialState);
     ~FD3D12BufferAllocatorPool();
 
@@ -331,12 +334,12 @@ public:
 private:
     void Destroy();
 
-    D3D12_HEAP_TYPE            HeapType;
-    D3D12_RESOURCE_STATES      InitialState;
-    uint64                     PageSizeBytes;
-    uint64                     MinBlockBytes;
-    uint64                     MaxSuballocationSize;
-    FD3D12MultiBuddyAllocator  MultiBuddyAllocator;
+    D3D12_HEAP_TYPE           HeapType;
+    D3D12_RESOURCE_STATES     InitialState;
+    uint64                    PageSizeBytes;
+    uint64                    MinBlockBytes;
+    uint64                    MaxSuballocationSize;
+    FD3D12MultiBuddyAllocator MultiBuddyAllocator;
 };
 
 class FD3D12BufferAllocator : public FD3D12DeviceChild

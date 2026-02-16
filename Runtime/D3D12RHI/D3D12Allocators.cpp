@@ -4,6 +4,20 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RHI.h"
 
+static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& ResourceDesc)
+{
+    D3D12_RESOURCE_DESC Result = ResourceDesc;
+
+    if (GD3D12SupportTightAlignment)
+    {
+        // Tight-alignment resources must use Alignment=0 for Create/GetResourceAllocationInfo.
+        Result.Flags    |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
+        Result.Alignment = 0;
+    }
+
+    return Result;
+}
+
 FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InBackingStorageSize, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags)
     : FD3D12DeviceChild(InDevice)
     , BackingStorageSize(InBackingStorageSize)
@@ -11,7 +25,7 @@ FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InBack
     , HeapType(InHeapType)
     , InitialState(InInitialState)
     , AllocationStrategy(InAllocationStrategy)
-    , ResourceFlags(InResourceFlags)
+    , ResourceFlags(GD3D12SupportTightAlignment ? (InResourceFlags | D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) : InResourceFlags)
     , BackingHeap(nullptr)
     , BackingResource(nullptr)
     , FreeOffsets()
@@ -76,6 +90,8 @@ bool FD3D12BuddyAllocator::Initialize()
         Desc.Alignment          = 0;
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
+
+        Desc = ApplyTightAlignmentFlag(Desc);
 
         FD3D12ResourceRef NewResource;
         if (!GetDevice()->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, NewResource))
@@ -242,8 +258,9 @@ void FD3D12BuddyAllocator::RecycleAllocation(const FD3D12BuddyAllocatorAllocatio
     }
 
     const uint32 MaxOrder = static_cast<uint32>(FreeOffsets.Size() - 1);
-    uint64 CurrentOffset  = AllocationData.Offset;
-    uint32 CurrentOrder   = AllocationData.Order;
+
+    uint64 CurrentOffset = AllocationData.Offset;
+    uint32 CurrentOrder  = AllocationData.Order;
 
     while (CurrentOrder < MaxOrder)
     {
@@ -353,9 +370,17 @@ bool FD3D12MultiBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment
 
     for (FD3D12BuddyAllocator* Allocator : Allocators)
     {
-        if (Allocator &&
-            Allocator->Supports(HeapType, InitialState, AllocationStrategy, InResourceFlags) &&
-            Allocator->TryAllocate(SizeInBytes, Alignment, OutStorage))
+        if (!Allocator)
+        {
+            continue;
+        }
+
+        if (!Allocator->Supports(HeapType, InitialState, AllocationStrategy, InResourceFlags))
+        {
+            continue;
+        }
+
+        if (Allocator->TryAllocate(SizeInBytes, Alignment, OutStorage))
         {
             return true;
         }
@@ -439,6 +464,8 @@ bool FD3D12PoolAllocatorPage::Initialize()
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
+        Desc = ApplyTightAlignmentFlag(Desc);
+
         FD3D12ResourceRef NewResource;
         if (!GetDevice()->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, NewResource))
         {
@@ -459,7 +486,6 @@ bool FD3D12PoolAllocatorPage::Initialize()
 
     FreeRanges.Clear();
     FreeRanges.Add({0, PageSizeBytes});
-
     return true;
 }
 
@@ -483,6 +509,7 @@ bool FD3D12PoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignment
         if (Padding > 0)
         {
             FreeRanges[Index].Size = Padding;
+
             if (TailSize > 0)
             {
                 FreeRanges.Add({AlignedOffset + SizeInBytes, TailSize});
@@ -519,11 +546,11 @@ bool FD3D12PoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignment
         OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + AlignedOffset) : nullptr);
 
         FD3D12PoolAllocatorAllocationData AllocationData = {};
-        AllocationData.PageIndex          = InPageIndex;
-        AllocationData.Offset             = AlignedOffset;
-        AllocationData.Size               = SizeInBytes;
-        OutStorage.SetPoolAllocationData(AllocationData);
+        AllocationData.PageIndex = InPageIndex;
+        AllocationData.Offset    = AlignedOffset;
+        AllocationData.Size      = SizeInBytes;
 
+        OutStorage.SetPoolAllocationData(AllocationData);
         return true;
     }
 
@@ -579,7 +606,7 @@ FD3D12PoolAllocator::FD3D12PoolAllocator(FD3D12Device* InDevice, uint64 InPageSi
     , HeapType(InHeapType)
     , InitialState(InInitialState)
     , AllocationStrategy(InAllocationStrategy)
-    , ResourceFlags(InResourceFlags)
+    , ResourceFlags(GD3D12SupportTightAlignment ? (InResourceFlags | D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) : InResourceFlags)
     , FragmentedBytes(0)
     , DefragRecords()
     , Pages()
@@ -705,19 +732,21 @@ void FD3D12PoolAllocator::AddDefragRecord(uint32 PageIndex, uint64 Offset, uint6
 
 bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, uint64 InAlignment, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage)
 {
-    if (!Supports(HeapType, InInitialState, AllocationStrategy, ResourceDesc, ResourceDesc.Flags))
+    D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
+
+    if (!Supports(HeapType, InInitialState, AllocationStrategy, AllocationDesc, AllocationDesc.Flags))
     {
         return false;
     }
 
     uint64 SizeInBytes = 0;
-    if (ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    if (AllocationDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
     {
-        SizeInBytes = ResourceDesc.Width;
+        SizeInBytes = AllocationDesc.Width;
     }
     else
     {
-        const D3D12_RESOURCE_ALLOCATION_INFO AllocationInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &ResourceDesc);
+        const D3D12_RESOURCE_ALLOCATION_INFO AllocationInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &AllocationDesc);
         SizeInBytes = AllocationInfo.SizeInBytes;
     }
 
@@ -731,7 +760,7 @@ bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D
 
     if (SizeAligned > MaxResourceSize)
     {
-        D3D12_RESOURCE_DESC Desc = ResourceDesc;
+        D3D12_RESOURCE_DESC Desc = AllocationDesc;
         if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER && Desc.Width == 0)
         {
             Desc.Width = SizeAligned;
@@ -919,13 +948,15 @@ bool FD3D12BucketAllocator::CreateBucketResource(uint32 BucketIndex, FBucket& Bu
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
+    Desc = ApplyTightAlignmentFlag(Desc);
+
     FD3D12ResourceRef Resource;
     if (!GetDevice()->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
     {
         return false;
     }
 
-    Bucket.BackingResource = Resource;
+    Bucket.BackingResource   = Resource;
     Bucket.MappedBaseAddress = nullptr;
 
     if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
@@ -940,6 +971,7 @@ bool FD3D12BucketAllocator::CreateBucketResource(uint32 BucketIndex, FBucket& Bu
         Block.SlotIndex   = 0;
         Block.Offset      = BlockIndex * Bucket.BlockSize;
         Block.Size        = Bucket.BlockSize;
+
         Bucket.FreeBlocks.Add(Block);
     }
 
@@ -1105,6 +1137,8 @@ void* FD3D12UploadHeapAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, 
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
+        Desc = ApplyTightAlignmentFlag(Desc);
+
         if (!LargeAllocator.TryAllocate(Desc, D3D12_RESOURCE_STATE_GENERIC_READ, UsedAlignment, nullptr, OutStorage))
         {
             return nullptr;
@@ -1159,6 +1193,8 @@ bool FD3D12LinearAllocatorPage::Initialize()
     Desc.Alignment          = 0;
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
+
+    Desc = ApplyTightAlignmentFlag(Desc);
 
     FD3D12ResourceRef Resource;
     if (!CurrentDevice->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
@@ -1282,6 +1318,8 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
         Desc.SampleDesc.Count   = 1;
         Desc.SampleDesc.Quality = 0;
 
+        Desc = ApplyTightAlignmentFlag(Desc);
+
         if (!GetDevice()->CreateCommittedResource(Desc, HeapType, InitialState, nullptr, Resource))
         {
             return nullptr;
@@ -1387,6 +1425,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
 void FD3D12LinearAllocator::BeginFrame()
 {
     SCOPED_LOCK(PagesCS);
+
     for (int32 Index = FullPages.Size() - 1; Index >= 0; --Index)
     {
         FD3D12LinearAllocatorPage* Page = FullPages[Index];
@@ -1472,6 +1511,31 @@ void FD3D12BufferAllocatorPool::Destroy()
     MultiBuddyAllocator.Destroy();
 }
 
+D3D12_RESOURCE_STATES FD3D12BufferAllocatorPool::GetInitialResourceStateForHeapType(D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES RequestedInitialState)
+{
+    switch (HeapType)
+    {
+    case D3D12_HEAP_TYPE_UPLOAD:
+        if (RequestedInitialState != D3D12_RESOURCE_STATE_GENERIC_READ)
+        {
+            D3D12_WARNING("Invalid initial state (0x%llX) for upload heap. Forcing D3D12_RESOURCE_STATE_GENERIC_READ.", static_cast<unsigned long long>(RequestedInitialState));
+            return D3D12_RESOURCE_STATE_GENERIC_READ;
+        }
+        break;
+    case D3D12_HEAP_TYPE_READBACK:
+        if (RequestedInitialState != D3D12_RESOURCE_STATE_COPY_DEST)
+        {
+            D3D12_WARNING("Invalid initial state (0x%llX) for readback heap. Forcing D3D12_RESOURCE_STATE_COPY_DEST.", static_cast<unsigned long long>(RequestedInitialState));
+            return D3D12_RESOURCE_STATE_COPY_DEST;
+        }
+        break;
+    default:
+        break;
+    }
+
+    return RequestedInitialState;
+}
+
 bool FD3D12BufferAllocatorPool::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const
 {
     if (ResourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER)
@@ -1484,18 +1548,21 @@ bool FD3D12BufferAllocatorPool::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOU
 
 bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, uint64 InAlignment, FD3D12ResourceStorage& OutStorage)
 {
-    if (!Supports(InHeapType, InInitialState, ResourceDesc))
+    D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
+
+    const D3D12_RESOURCE_STATES EffectiveInitialState = GetInitialResourceStateForHeapType(InHeapType, InInitialState);
+    if (!Supports(InHeapType, EffectiveInitialState, AllocationDesc))
     {
         return false;
     }
 
-    const uint64 SizeInBytes   = ResourceDesc.Width;
+    const uint64 SizeInBytes   = AllocationDesc.Width;
     const uint64 UsedAlignment = InAlignment ? InAlignment : 16;
 
     if (SizeInBytes > MaxSuballocationSize)
     {
         FD3D12ResourceRef Resource;
-        if (!GetDevice()->CreateCommittedResource(ResourceDesc, InHeapType, InInitialState, nullptr, Resource))
+        if (!GetDevice()->CreateCommittedResource(AllocationDesc, InHeapType, EffectiveInitialState, nullptr, Resource))
         {
             return false;
         }
@@ -1514,7 +1581,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         return true;
     }
 
-    if (!MultiBuddyAllocator.TryAllocate(SizeInBytes, UsedAlignment, OutStorage, ResourceDesc.Flags))
+    if (!MultiBuddyAllocator.TryAllocate(SizeInBytes, UsedAlignment, OutStorage, AllocationDesc.Flags))
     {
         return false;
     }
@@ -1607,7 +1674,10 @@ void FD3D12BufferAllocator::ReleasePools()
 
 bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
 {
-    if (!Supports(InHeapType, InitialState, ResourceDesc))
+    D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
+
+    const D3D12_RESOURCE_STATES EffectiveInitialState = FD3D12BufferAllocatorPool::GetInitialResourceStateForHeapType(InHeapType, InitialState);
+    if (!Supports(InHeapType, EffectiveInitialState, AllocationDesc))
     {
         return false;
     }
@@ -1616,18 +1686,18 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
 
     for (FD3D12BufferAllocatorPool* Pool : Pools)
     {
-        if (!Pool->Supports(InHeapType, InitialState, ResourceDesc))
+        if (!Pool->Supports(InHeapType, EffectiveInitialState, AllocationDesc))
         {
             continue;
         }
 
-        if (Pool->TryAllocate(InHeapType, ResourceDesc, InitialState, Alignment, OutStorage))
+        if (Pool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage))
         {
             return true;
         }
     }
 
-    FD3D12BufferAllocatorPool* NewPool = new FD3D12BufferAllocatorPool(GetDevice(), InHeapType, PageSizeBytes, MinBlockBytes, MaxSuballocationSize, InitialState);
+    FD3D12BufferAllocatorPool* NewPool = new FD3D12BufferAllocatorPool(GetDevice(), InHeapType, PageSizeBytes, MinBlockBytes, MaxSuballocationSize, EffectiveInitialState);
     if (!NewPool->Initialize())
     {
         delete NewPool;
@@ -1635,7 +1705,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
     }
 
     Pools.Add(NewPool);
-    return NewPool->TryAllocate(InHeapType, ResourceDesc, InitialState, Alignment, OutStorage);
+    return NewPool->TryAllocate(InHeapType, AllocationDesc, EffectiveInitialState, Alignment, OutStorage);
 }
 
 FD3D12TextureAllocator::FD3D12TextureAllocator(FD3D12Device* InDevice, uint64 InDefaultPageSizeBytes, uint64 InCommittedThreshold)
@@ -1838,8 +1908,10 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
         return false;
     }
 
-    D3D12_RESOURCE_DESC AllocationDesc = ResourceDesc;
-    if (CanUseSmallResourcePlacementAlignment(ResourceDesc))
+    D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
+
+    const bool bUseTightAlignment = (AllocationDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0;
+    if (!bUseTightAlignment && CanUseSmallResourcePlacementAlignment(AllocationDesc))
     {
         AllocationDesc.Alignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
     }
@@ -1920,4 +1992,3 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     OutStorage.SetSize(AllocationInfo.SizeInBytes);
     return true;
 }
-
