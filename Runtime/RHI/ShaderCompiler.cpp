@@ -323,7 +323,7 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
         }
 
         // Read the full file as a text-file
-        if (!FFileHelpers::ReadTextFile(File.Get(), Text))
+        if (!FileUtils::ReadTextFile(File.Get(), Text))
         {
             LOG_ERROR("[FShaderCompiler]: Failed to read file '%s'", *Filename);
             return false;

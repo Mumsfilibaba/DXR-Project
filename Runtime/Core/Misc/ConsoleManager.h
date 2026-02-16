@@ -5,7 +5,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Delegates/MulticastDelegate.h"
 
-DECLARE_DELEGATE(FConsoleCommandDelegate);
+DECLARE_DELEGATE(FConsoleCommandDelegate, FStringView);
 DECLARE_DELEGATE(FConsoleVariableDelegate, struct IConsoleVariable*);
 
 struct IOutputDevice;
@@ -41,7 +41,7 @@ struct IConsoleCommand : public IConsoleObject
     /**
      * @brief Execute the ConsoleCommand
      */
-    virtual void Execute() = 0;
+    virtual void Execute(FStringView Args) = 0;
 };
 
 
@@ -308,6 +308,19 @@ public:
      * @param OutCandidates Array to store the console-objects that matches the candidate-name
      */
     void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates);
+
+    /**
+     * @brief Retrieve all console objects (name + pointer).
+     * @param OutObjects Array to store name/object pairs
+     */
+    void GetConsoleObjects(TArray<TPair<FString, IConsoleObject*>>& OutObjects) const;
+
+    /**
+     * @brief Dump all console variable values to the output device
+     * @param OutputDevice Output device to write the dump to
+     * @param Key Optional substring filter for console variable names
+     */
+    void DumpConsoleVariableValues(IOutputDevice& OutputDevice, const CHAR* Key = nullptr);
 
     /**
      * @brief Clears the console history

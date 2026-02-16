@@ -22,7 +22,7 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
         }
 
         // Read the full file
-        if (!FFileHelpers::ReadFile(File.Get(), InputStream))
+        if (!FileUtils::ReadFile(File.Get(), InputStream))
         {
             return false;
         }

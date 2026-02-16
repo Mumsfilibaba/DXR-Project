@@ -72,7 +72,7 @@ void FAssetRegistry::LoadRegistryFile()
         }
 
         // Read the full file
-        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
+        if (!FileUtils::ReadTextFile(File.Get(), FileContents))
         {
             return;
         }
@@ -147,7 +147,7 @@ void FAssetRegistry::UpdateRegistryFile()
         }
 
         // Write the full file
-        if (!FFileHelpers::WriteTextFile(File.Get(), FileContents))
+        if (!FileUtils::WriteTextFile(File.Get(), FileContents))
         {
             return;
         }

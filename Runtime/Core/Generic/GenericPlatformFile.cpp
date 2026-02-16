@@ -1,6 +1,13 @@
 #include "Core/Generic/GenericPlatformFile.h"
 
-bool FFileHelpers::ReadFile(IFileHandle* File, FByteInputStream& OutData)
+FString FileUtils::NormalizeFilepath(const FString& Filepath)
+{
+    FString Result = Filepath;
+    Result.ReplaceAll('\\', '/');
+    return Result;
+}
+
+bool FileUtils::ReadFile(IFileHandle* File, FByteInputStream& OutData)
 {
     CHECK(File != nullptr);
 
@@ -20,7 +27,7 @@ bool FFileHelpers::ReadFile(IFileHandle* File, FByteInputStream& OutData)
     }
 }
 
-bool FFileHelpers::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
+bool FileUtils::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
 {
     CHECK(File != nullptr);
 
@@ -40,7 +47,7 @@ bool FFileHelpers::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
     }
 }
 
-bool FFileHelpers::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
+bool FileUtils::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
 {
     CHECK(File != nullptr);
 
@@ -63,7 +70,7 @@ bool FFileHelpers::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
     }
 }
 
-bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Size)
+bool FileUtils::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Size)
 {
     CHECK(File != nullptr);
 
@@ -78,20 +85,27 @@ bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Siz
     }
 }
 
-FString FFileHelpers::ExtractFilepath(const FString& Filepath)
+FString FileUtils::ExtractPath(const FString& Filepath)
 {
-    int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::InvalidIndex)
-    {
-        LastSlash = Filepath.Length();
-    }
-    
-    return FString(*Filepath, LastSlash);
+    return ExtractFilepath(Filepath);
 }
 
-FString FFileHelpers::ExtractFilename(const FString& Filepath)
+FString FileUtils::ExtractFilepath(const FString& Filepath)
 {
-    int32 LastSlash = Filepath.FindLastChar('/');
+    const FString Normalized = NormalizeFilepath(Filepath);
+    int32 LastSlash = Normalized.FindLastChar('/');
+    if (LastSlash == FString::InvalidIndex)
+    {
+        LastSlash = Normalized.Length();
+    }
+    
+    return FString(*Normalized, LastSlash);
+}
+
+FString FileUtils::ExtractFilename(const FString& Filepath)
+{
+    const FString Normalized = NormalizeFilepath(Filepath);
+    int32 LastSlash = Normalized.FindLastChar('/');
     if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = 0;
@@ -101,13 +115,14 @@ FString FFileHelpers::ExtractFilename(const FString& Filepath)
         LastSlash++;
     }
     
-    int32 NewLength = Filepath.Length() - LastSlash;
-    return FString(*Filepath + LastSlash, NewLength);
+    int32 NewLength = Normalized.Length() - LastSlash;
+    return FString(*Normalized + LastSlash, NewLength);
 }
     
-FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
+FString FileUtils::ExtractFilenameWithoutExtension(const FString& Filepath)
 {
-    int32 LastSlash = Filepath.FindLastChar('/');
+    const FString Normalized = NormalizeFilepath(Filepath);
+    int32 LastSlash = Normalized.FindLastChar('/');
     if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = 0;
@@ -117,12 +132,12 @@ FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
         LastSlash++;
     }
     
-    int32 ExtensionPos = Filepath.FindLastChar('.');
+    int32 ExtensionPos = Normalized.FindLastChar('.');
     if (ExtensionPos == FString::InvalidIndex)
     {
-        ExtensionPos = FCString::Strlen(*Filepath + LastSlash);
+        ExtensionPos = FCString::Strlen(*Normalized + LastSlash);
     }
     
     int32 NewLength = ExtensionPos - LastSlash;
-    return FString(*Filepath + LastSlash, NewLength);
+    return FString(*Normalized + LastSlash, NewLength);
 }

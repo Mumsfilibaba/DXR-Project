@@ -10,19 +10,6 @@
 
 #define INVALID_MATERIAL_INDEX (-1)
 
-static FString ExtractPath(const FString& FullFilePath)
-{
-    auto Pos = FullFilePath.FindLastChar('/');
-    if (Pos != FString::InvalidIndex)
-    {
-        return FullFilePath.SubString(0, Pos);
-    }
-    else
-    {
-        return FullFilePath;
-    }
-}
-
 static FMatrix4 FBXConvertMatrix(const ofbx::DMatrix& Matrix)
 {
     FMatrix4 Result;
@@ -60,9 +47,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
         CHAR StringBuffer[256];
         MaterialTexture->getRelativeFileName().toString(StringBuffer);
 
-        // Make sure that correct slashes are used
-        FString Filename = Path + '/' + StringBuffer;
-        Filename.ReplaceAll('\\', '/');
+        FString Filename = FileUtils::NormalizeFilepath(Path + '/' + StringBuffer);
 
         return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     }
@@ -121,7 +106,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     OutModelInfo.Materials.Reserve(MaterialCount);
 
     // Convert data
-    const FString Path = ExtractPath(Filename);
+    const FString Path = FileUtils::ExtractPath(Filename);
 
     // Get the global settings
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();

@@ -56,12 +56,18 @@ static void ToggleFullScreenFunc()
 static FAutoConsoleCommand CVarExit(
     "Engine.Exit",
     "Exits the engine",
-    FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
+    {
+        ExitEngineFunc();
+    }));
 
 static FAutoConsoleCommand CVarToggleFullscreen(
     "Engine.ToggleFullscreen",
     "Toggles fullscreen on the main Viewport",
-    FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
+    {
+        ToggleFullScreenFunc();
+    }));
 
 static TAutoConsoleVariable<int32> CVarViewportWidth(
     "Engine.ViewportWidth",

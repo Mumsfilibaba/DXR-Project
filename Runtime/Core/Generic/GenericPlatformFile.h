@@ -148,9 +148,12 @@ struct CORE_API FGenericPlatformFile
     }
 };
 
-class CORE_API FFileHelpers
+class CORE_API FileUtils
 {
 public:
+    // Normalizes slashes to use forward slashes.
+    static FString NormalizeFilepath(const FString& Filepath);
+
     static bool ReadFile(IFileHandle* File, FByteInputStream& OutData);
     static bool ReadFile(IFileHandle* File, TArray<uint8>& OutData);
     static bool ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText);
@@ -164,6 +167,9 @@ public:
     {
         return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
     }
+
+    // Returns the Path to the file (Excluding the filename)
+    static FString ExtractPath(const FString& Filepath);
 
     // Returns the Path to the file (Excluding the filename)
     static FString ExtractFilepath(const FString& Filepath);

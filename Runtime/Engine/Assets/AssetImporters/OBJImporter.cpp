@@ -19,8 +19,8 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
     // Extract just the name of the file
     const FString Filename            = FString(InFilename);
-    const FString MTLFiledir          = FFileHelpers::ExtractFilepath(Filename);
-    const FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(Filename);
+    const FString MTLFiledir          = FileUtils::ExtractFilepath(Filename);
+    const FString FilenameWithoutPath = FileUtils::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, *Filename, *MTLFiledir, true, false))

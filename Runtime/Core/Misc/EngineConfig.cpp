@@ -230,7 +230,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
         }
 
         // Read the full file
-        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
+        if (!FileUtils::ReadTextFile(File.Get(), FileContents))
         {
             return nullptr;
         }
