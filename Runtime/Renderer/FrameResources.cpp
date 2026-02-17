@@ -301,6 +301,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         {
             bCSMMinMaxHistoryInitialized = false;
         }
+        
         if (!CascadeGenerationData.bEnableStableCascades || !CascadeGenerationData.bEnableTightFrustum)
         {
             bCSMCascadeHistoryInitialized = false;
