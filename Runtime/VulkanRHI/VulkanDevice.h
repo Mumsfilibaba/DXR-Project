@@ -34,6 +34,7 @@ extern VULKANRHI_API bool   GVulkanAllowGeometryShaders;
 extern VULKANRHI_API bool   GVulkanAllowResetCommandBuffers;
 
 extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
+extern VULKANRHI_API bool   GVulkanSupportsDepthClamp;
 extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;
 extern VULKANRHI_API bool   GVulkanSupportsConservativeRasterization;
 extern VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl;

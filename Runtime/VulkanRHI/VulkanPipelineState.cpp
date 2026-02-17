@@ -87,7 +87,7 @@ FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateIn
     , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
-    
+
     CreateInfo.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     CreateInfo.depthTestEnable       = InInfo.bDepthEnable;
     CreateInfo.depthWriteEnable      = InInfo.bDepthWriteEnable;
@@ -98,7 +98,7 @@ FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateIn
     CreateInfo.back                  = ConvertStencilState(InInfo.BackFace);
     CreateInfo.minDepthBounds        = 0.0f;
     CreateInfo.maxDepthBounds        = 1.0f;
-    
+
     CreateInfo.front.compareMask = CreateInfo.back.compareMask = InInfo.StencilReadMask;
     CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInfo.StencilWriteMask;
 }
@@ -113,7 +113,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     , Info(InInfo)
 {
     FMemory::Memzero(&CreateInfo);
-    
+
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     CreateInfo.rasterizerDiscardEnable = VK_FALSE;
     CreateInfo.polygonMode             = ConvertFillMode(InInfo.FillMode);
@@ -128,8 +128,8 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     // NOTE: we are forced to disable this since there are not really any equivalent in D3D12
     // The feature described in the spec, is always enabled in D3D12, and the only controllable
     // aspect in D3D12 is DepthClip, which is disabled when 'depthClampEnable' is set to true.
-    CreateInfo.depthClampEnable = VK_FALSE;
-    
+    CreateInfo.depthClampEnable = (!InInfo.bDepthClipEnable && GVulkanSupportsDepthClamp) ? VK_TRUE : VK_FALSE;
+
     // NOTE: This extension is the only way to get parity with D3D12, see the above comment for more information
 #if VK_EXT_depth_clip_enable
     FMemory::Memzero(&DepthClipStateCreateInfo);
@@ -141,16 +141,18 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     {
         // NOTE: Since this feature is always enabled in D3D12, for now, we do the same in Vulkan
         // since the Depth-clipping is now controlled by a separate value as in D3D12
-        CreateInfo.depthClampEnable = VK_TRUE;
+        CreateInfo.depthClampEnable = GVulkanSupportsDepthClamp ? VK_TRUE : VK_FALSE;
     }
 #endif
-    
+
 #if VK_EXT_conservative_rasterization
     if (GVulkanSupportsConservativeRasterization)
     {
         FMemory::Memzero(&ConservativeStateCreateInfo);
-        ConservativeStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
-        
+
+        ConservativeStateCreateInfo.sType                            = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT;
+        ConservativeStateCreateInfo.extraPrimitiveOverestimationSize = 0.0f;
+
         if (InInfo.bEnableConservativeRaster)
         {
             ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT;
@@ -159,19 +161,26 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
         {
             ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT;
         }
-
-        const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& ConservativeRasterizationProperties = GetDevice()->GetPhysicalDevice()->GetConservativeRasterizationProperties();
-        ConservativeStateCreateInfo.extraPrimitiveOverestimationSize = ConservativeRasterizationProperties.maxExtraPrimitiveOverestimationSize;
     }
 #endif
 
     // Helper for checking for extensions
     FVulkanStructChain CreateInfoChain(CreateInfo);
+
 #if VK_EXT_depth_clip_enable
-    CreateInfoChain.AddNext(DepthClipStateCreateInfo);
+    const bool bUseDepthClipExt = GVulkanSupportsDepthClip;
+    if (bUseDepthClipExt)
+    {
+        CreateInfoChain.AddNext(DepthClipStateCreateInfo);
+    }
 #endif
+
 #if VK_EXT_conservative_rasterization
-    CreateInfoChain.AddNext(ConservativeStateCreateInfo);
+    const bool bUseConservativeExt = GVulkanSupportsConservativeRasterization;
+    if (bUseConservativeExt)
+    {
+        CreateInfoChain.AddNext(ConservativeStateCreateInfo);
+    }
 #endif
 }
 

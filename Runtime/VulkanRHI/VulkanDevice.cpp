@@ -22,6 +22,7 @@ VULKANRHI_API bool   GVulkanAllowGeometryShaders                = true;
 VULKANRHI_API bool   GVulkanAllowResetCommandBuffers            = false;
 
 VULKANRHI_API bool   GVulkanSupportsDepthClip                   = false;
+VULKANRHI_API bool   GVulkanSupportsDepthClamp                  = false;
 VULKANRHI_API bool   GVulkanSupportsNullDescriptors             = false;
 VULKANRHI_API bool   GVulkanSupportsConservativeRasterization   = false;
 VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl        = false;
@@ -890,6 +891,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     GVulkanSupportsSparseResidency2D      = (CoreDeviceFeatures10.sparseResidencyImage2D == VK_TRUE);
     GVulkanSupportsSparseResidency3D      = (CoreDeviceFeatures10.sparseResidencyImage3D == VK_TRUE);
     GVulkanSupportsSparseResidencyAliased = (CoreDeviceFeatures10.sparseResidencyAliased == VK_TRUE);
+    GVulkanSupportsDepthClamp             = (CoreDeviceFeatures10.depthClamp == VK_TRUE);
 
 #if VK_KHR_robustness2
     if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME) && AvailableDeviceRobustness2Features.nullDescriptor)
@@ -1026,6 +1028,10 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     EnableDeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     EnableDeviceFeatures2.features = InDeviceCreateInfo.RequiredFeatures;
     EnableOptionalFeatures(EnableDeviceFeatures2.features, InDeviceCreateInfo.OptionalFeatures, InDeviceCreateInfo.RequiredFeatures);
+    if (InDeviceCreateInfo.RequiredFeatures.depthClamp || InDeviceCreateInfo.OptionalFeatures.depthClamp)
+    {
+        EnableDeviceFeatures2.features.depthClamp = AvailableDeviceFeatures2.features.depthClamp ? VK_TRUE : VK_FALSE;
+    }
 
     VkPhysicalDeviceVulkan11Features EnableDeviceFeatures11 = InDeviceCreateInfo.RequiredFeatures11;
     EnableDeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;

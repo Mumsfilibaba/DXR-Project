@@ -160,6 +160,8 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures.depthBiasClamp                       = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
+    // Enable if supported by the device
+    DeviceCreateInfo.OptionalFeatures.depthClamp                            = VK_TRUE;
     // Vulkan 1.0 Optional
     DeviceCreateInfo.OptionalFeatures.geometryShader                       = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.multiDrawIndirect                    = VK_TRUE;
