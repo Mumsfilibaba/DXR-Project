@@ -595,8 +595,11 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-        CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+        if (Material->HasAlphaMask() || Material->HasHeightMap())
+        {
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
+            CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+        }
 
         if (Material->HasAlphaMask())
         {

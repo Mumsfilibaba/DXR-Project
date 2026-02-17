@@ -455,7 +455,6 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
 
         CommandList.SetShaderResourceView(MaskShader.Get(), ObjectIDTexture->GetShaderResourceView(), 0);
         CommandList.SetShaderResourceView(MaskShader.Get(), SelectedIDsSRV.Get(), 1);
-        CommandList.SetSamplerState(MaskShader.Get(), LinearClampSampler, 0);
 
         Constants.Direction[0] = 0;
         Constants.Direction[1] = 0;
@@ -490,7 +489,6 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.SetGraphicsPipelineState(ErodePSO.Get());
 
             CommandList.SetShaderResourceView(ErodeShader.Get(), SelectionMask->GetShaderResourceView(), 2);
-            CommandList.SetSamplerState(ErodeShader.Get(), LinearClampSampler, 0);
 
             Constants.Direction[0] = 1;
             Constants.Direction[1] = 0;
@@ -520,7 +518,6 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.SetGraphicsPipelineState(ErodePSO.Get());
 
             CommandList.SetShaderResourceView(ErodeShader.Get(), ErosionTemp->GetShaderResourceView(), 2);
-            CommandList.SetSamplerState(ErodeShader.Get(), LinearClampSampler, 0);
 
             Constants.Direction[0] = 0;
             Constants.Direction[1] = 1;
@@ -555,7 +552,6 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.SetGraphicsPipelineState(DilatePSO.Get());
 
         CommandList.SetShaderResourceView(DilateShader.Get(), SelectionMask->GetShaderResourceView(), 2);
-        CommandList.SetSamplerState(DilateShader.Get(), LinearClampSampler, 0);
 
         Constants.Direction[0] = 1;
         Constants.Direction[1] = 0;
@@ -588,7 +584,6 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.SetGraphicsPipelineState(DilatePSO.Get());
 
         CommandList.SetShaderResourceView(DilateShader.Get(), DilationTemp->GetShaderResourceView(), 2);
-        CommandList.SetSamplerState(DilateShader.Get(), LinearClampSampler, 0);
 
         Constants.Direction[0] = 0;
         Constants.Direction[1] = 1;

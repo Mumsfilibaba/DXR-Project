@@ -605,7 +605,10 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 if (Instance->PixelShader)
                 {
                     CommandList.SetConstantBuffer(Instance->PixelShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
-                    CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                    if (Material->HasAlphaMask() || Material->HasHeightMap())
+                    {
+                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                    }
     
                     if (Material->HasAlphaMask())
                     {
@@ -721,7 +724,10 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     if (Instance->PixelShader)
                     {
                         CommandList.SetConstantBuffer(Instance->PixelShader.Get(), PerShadowMapBuffer.Get(), 0);
-                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                        if (Material->HasAlphaMask() || Material->HasHeightMap())
+                        {
+                            CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                        }
 
                         if (Material->HasAlphaMask())
                         {
@@ -1420,12 +1426,10 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             if constexpr (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
             {
                 CommandList.SetShaderResourceView(Instance->GeometryShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
-                CommandList.SetShaderResourceView(Instance->GeometryShader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
             }
             else
             {
                 CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
-                CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
             }
 
             // If this material require a pixel-shader, bind necessary pixel-shader resources
@@ -1547,7 +1551,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerCascadeBuffer.Get(), 0);
                 CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
-                CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
 
                 for (const FMeshBatch::FMeshReference& MeshReference : Batch.MeshReferences)
                 {
@@ -1803,8 +1806,6 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.ShadowDebugBuffer->GetUnorderedAccessView(), 2);
     }
 
-    CommandList.SetSamplerState(PipelineStateInstance.Shader.Get(), Resources.ShadowSamplerPointCmp.Get(), 0);
-    CommandList.SetSamplerState(PipelineStateInstance.Shader.Get(), Resources.ShadowSamplerLinearCmp.Get(), 1);
     CommandList.SetSamplerState(PipelineStateInstance.Shader.Get(), Resources.ShadowSamplerPoint.Get(), 2);
 
     constexpr uint32 NumThreads = 16;
