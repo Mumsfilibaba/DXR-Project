@@ -1186,7 +1186,10 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
     if (FrameResources.CSMMinMaxDepthHistory)
     {
         FrameResources.CSMMinMaxDepthHistory->SetDebugName("CSM MinMax Depth History");
-        FrameResources.bCSMMinMaxHistoryInitialized = false;
+        
+        // Reset the history on resize
+        FrameResources.bCSMMinMaxHistoryInitialized  = false;
+        FrameResources.bCSMCascadeHistoryInitialized = false; 
     }
     else
     {

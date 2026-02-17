@@ -838,6 +838,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     FRHIShaderResourceViewInfo SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeMatrixBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+
     if (!Resources.CascadeMatrixBufferSRV)
     {
         DEBUG_BREAK();
@@ -846,6 +847,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     FRHIUnorderedAccessViewInfo UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeMatrixBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+
     if (!Resources.CascadeMatrixBufferUAV)
     {
         DEBUG_BREAK();
@@ -871,6 +873,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+    
     if (!Resources.CascadeSplitsBufferSRV)
     {
         DEBUG_BREAK();
@@ -879,6 +882,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSplitsBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+
     if (!Resources.CascadeSplitsBufferUAV)
     {
         DEBUG_BREAK();
@@ -897,7 +901,10 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         DEBUG_BREAK();
         return false;
     }
-    Resources.CascadeSnapHistoryBuffer->SetDebugName("Cascade Snap History Buffer");
+    else
+    {
+        Resources.CascadeSnapHistoryBuffer->SetDebugName("Cascade Snap History Buffer");
+    }
 
     Resources.CascadeExtentsHistoryBuffer = FRHI::Get()->CreateBuffer(CascadeHistoryInfo, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeExtentsHistoryBuffer)
@@ -905,10 +912,14 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         DEBUG_BREAK();
         return false;
     }
-    Resources.CascadeExtentsHistoryBuffer->SetDebugName("Cascade Extents History Buffer");
+    else
+    {
+        Resources.CascadeExtentsHistoryBuffer->SetDebugName("Cascade Extents History Buffer");
+    }
 
     UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeSnapHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSnapHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+    
     if (!Resources.CascadeSnapHistoryBufferUAV)
     {
         DEBUG_BREAK();
@@ -917,6 +928,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
 
     UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeExtentsHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeExtentsHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+    
     if (!Resources.CascadeExtentsHistoryBufferUAV)
     {
         DEBUG_BREAK();
@@ -932,10 +944,12 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.TransitionBuffer(Resources.CascadeMatrixBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
     CommandList.TransitionBuffer(Resources.CascadeSplitsBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+    
     if (Resources.CascadeSnapHistoryBuffer)
     {
         CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
     }
+
     if (Resources.CascadeExtentsHistoryBuffer)
     {
         CommandList.TransitionBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
@@ -944,34 +958,33 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
     if (Resources.CSMMinMaxDepthHistory)
     {
         CommandList.RequireTextureState(Resources.CSMMinMaxDepthHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
-        if (!Resources.bCSMMinMaxHistoryInitialized
-            && (Resources.CascadeGenerationData.bEnableTightFrustum
-                || Resources.CascadeGenerationData.AdaptiveSplitRangeEnabled > 0.5f))
+        
+        if (!Resources.bCSMMinMaxHistoryInitialized)
         {
-            CommandList.ClearUnorderedAccessView(Resources.CSMMinMaxDepthHistory->GetUnorderedAccessView(), FVector4(-1.0f, -1.0f, 0.0f, 0.0f));
+            CommandList.ClearUnorderedAccessViewFloat(Resources.CSMMinMaxDepthHistory->GetUnorderedAccessView(), FVector4(-1.0f, -1.0f, 0.0f, 0.0f));
             Resources.bCSMMinMaxHistoryInitialized = true;
         }
     }
 
     if (!Resources.bCSMCascadeHistoryInitialized)
     {
-        const FVector4 InvalidCenter(-1.0e9f, -1.0e9f, -1.0e9f, -1.0e9f);
-        const FVector4 InvalidExtents(-1.0f, -1.0f, -1.0f, -1.0f);
+        const FVector4 InvalidCenter  = FVector4(-1.0f, -1.0f, -1.0f, -1.0f);
+        const FVector4 InvalidExtents = FVector4(-1.0f, -1.0f, -1.0f, -1.0f);
 
-        TArray<FVector4> SnapHistory(NUM_SHADOW_CASCADES, InvalidCenter);
-        TArray<FVector4> ExtentsHistory(NUM_SHADOW_CASCADES, InvalidExtents);
+        TArray<FVector4> SnapHistory    = TArray<FVector4>(NUM_SHADOW_CASCADES, InvalidCenter);
+        TArray<FVector4> ExtentsHistory = TArray<FVector4>(NUM_SHADOW_CASCADES, InvalidExtents);
 
         if (Resources.CascadeSnapHistoryBuffer)
         {
             CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopyDest);
-            CommandList.UpdateBuffer(Resources.CascadeSnapHistoryBuffer.Get(), FBufferRegion(0, sizeof(FVector4) * NUM_SHADOW_CASCADES), SnapHistory.Data());
+            CommandList.UpdateBuffer(Resources.CascadeSnapHistoryBuffer.Get(), FBufferRegion(0, ExtentsHistory.SizeInBytes()), SnapHistory.Data());
             CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::UnorderedAccess);
         }
 
         if (Resources.CascadeExtentsHistoryBuffer)
         {
             CommandList.TransitionBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopyDest);
-            CommandList.UpdateBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), FBufferRegion(0, sizeof(FVector4) * NUM_SHADOW_CASCADES), ExtentsHistory.Data());
+            CommandList.UpdateBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), FBufferRegion(0, ExtentsHistory.SizeInBytes()), ExtentsHistory.Data());
             CommandList.TransitionBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::UnorderedAccess);
         }
 
@@ -985,14 +998,17 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeMatrixBufferUAV.Get(), 0);
     CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeSplitsBufferUAV.Get(), 1);
+
     if (Resources.CSMMinMaxDepthHistory)
     {
         CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CSMMinMaxDepthHistory->GetUnorderedAccessView(), 2);
     }
+
     if (Resources.CascadeSnapHistoryBufferUAV)
     {
         CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeSnapHistoryBufferUAV.Get(), 3);
     }
+    
     if (Resources.CascadeExtentsHistoryBufferUAV)
     {
         CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeExtentsHistoryBufferUAV.Get(), 4);
@@ -1004,6 +1020,7 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.TransitionBuffer(Resources.CascadeMatrixBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
     CommandList.TransitionBuffer(Resources.CascadeSplitsBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+
     if (Resources.CascadeSnapHistoryBuffer)
     {
         CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
@@ -1031,8 +1048,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 {
     FCascadedShadowsShaderCombination ShaderCombination;
     ShaderCombination.RenderPassType       = RenderPassType;
-    // Pancaking relies on depth clamping, which requires depth clipping to be disabled.
-    ShaderCombination.bEnableDepthClipping = !CVarCSMShadowPancaking.GetValue();
+    ShaderCombination.bEnableDepthClipping = !CVarCSMShadowPancaking.GetValue(); // Pancaking relies on depth clamping, which requires depth clipping to be disabled.
     ShaderCombination.bShadowPancaking     = CVarCSMShadowPancaking.GetValue();
     ShaderCombination.MaterialFlags        = static_cast<uint32>(Material->GetMaterialFlags());
 
@@ -2052,6 +2068,7 @@ bool FShadowMaskHistoryPass::Initialize(FFrameResources& FrameResources)
 
         FRHIComputePipelineStateInfo PSOInfo;
         PSOInfo.Shader = HistoryShader.Get();
+
         HistoryPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
         if (!HistoryPSO)
         {
@@ -2069,7 +2086,7 @@ bool FShadowMaskHistoryPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    CurrentHistoryIndex = 0;
+    CurrentHistoryIndex                          = 0;
     FrameResources.bShadowMaskHistoryInitialized = false;
     return true;
 }
@@ -2087,9 +2104,11 @@ void FShadowMaskHistoryPass::Execute(FRHICommandList& CommandList, FFrameResourc
     {
         CommandList.RequireTextureState(FrameResources.ShadowMaskHistory[0].Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
         CommandList.RequireTextureState(FrameResources.ShadowMaskHistory[1].Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+        
         const FVector4 ClearValue(1.0f, 1.0f, 1.0f, 1.0f);
-        CommandList.ClearUnorderedAccessView(FrameResources.ShadowMaskHistory[0]->GetUnorderedAccessView(), ClearValue);
-        CommandList.ClearUnorderedAccessView(FrameResources.ShadowMaskHistory[1]->GetUnorderedAccessView(), ClearValue);
+        CommandList.ClearUnorderedAccessViewFloat(FrameResources.ShadowMaskHistory[0]->GetUnorderedAccessView(), ClearValue);
+        CommandList.ClearUnorderedAccessViewFloat(FrameResources.ShadowMaskHistory[1]->GetUnorderedAccessView(), ClearValue);
+        
         FrameResources.bShadowMaskHistoryInitialized = true;
         CurrentHistoryIndex = 0;
     }

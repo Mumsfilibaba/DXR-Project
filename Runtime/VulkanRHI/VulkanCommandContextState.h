@@ -150,13 +150,13 @@ private:
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
-        FVulkanPipelineLayout* CurrentLayout;
+        FVulkanPipelineLayout*          CurrentLayout;
         FVulkanGraphicsPipelineStateRef PipelineState;
-        FRHIViewInstancingState ViewInstancingState;
+        FRHIViewInstancingState         ViewInstancingState;
 
         TMap<FVulkanGraphicsPipelineState*, FVulkanDescriptorState*> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;
-        
+
         float BlendFactor[4];
 
         VkViewport Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
@@ -187,12 +187,12 @@ private:
         {
         }
 
-        FVulkanPipelineLayout* CurrentLayout;
+        FVulkanPipelineLayout*         CurrentLayout;
         FVulkanComputePipelineStateRef PipelineState;
 
         TMap<FVulkanComputePipelineState*, FVulkanDescriptorState*> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;
-        
+
         bool bBindPipelineState : 1;
         bool bBindPushConstants : 1;
     } ComputeState;

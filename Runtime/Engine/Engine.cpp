@@ -189,11 +189,6 @@ bool FEngine::CreateSceneViewport()
     }
 
     EngineViewportWidget->SetViewportInterface(SceneViewport);
-
-    // Communicate the render resolution to the renderer
-    FRHISwapChainRef SwapChain = SceneViewport->GetRHISwapChain();
-    RenderSettings::ChangeRenderResolution(SwapChain->GetWidth(), SwapChain->GetHeight());
-
     return true;
 }
 
@@ -213,10 +208,6 @@ void FEngine::OnEngineWindowResized(const FIntVector2& NewScreenSize)
 
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->ResizeSwapChain(SceneViewport->GetRHISwapChain(), NewScreenSize.X, NewScreenSize.Y);
-
-#ifndef EDITOR_BUILD
-    RenderSettings::ChangeRenderResolution(NewScreenSize.X, NewScreenSize.Y);
-#endif
 }
 
 bool FEngine::Init()

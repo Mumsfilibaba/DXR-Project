@@ -235,12 +235,12 @@ struct FFrameResources
 
     // Persistent min/max depth history for tight-frustum stabilization.
     FRHITextureRef             CSMMinMaxDepthHistory;
-    bool                       bCSMMinMaxHistoryInitialized = false;
-    bool                       bCSMCascadeHistoryInitialized = false;
     FRHIBufferRef              CascadeSnapHistoryBuffer;
     FRHIUnorderedAccessViewRef CascadeSnapHistoryBufferUAV;
     FRHIBufferRef              CascadeExtentsHistoryBuffer;
     FRHIUnorderedAccessViewRef CascadeExtentsHistoryBufferUAV;
+    bool                       bCSMMinMaxHistoryInitialized  = false;
+    bool                       bCSMCascadeHistoryInitialized = false;
 
 #if EDITOR_BUILD
     // Editor-only: non-jittered depth + ObjectID buffers (used for stable selection outlines and picking).
@@ -266,13 +266,13 @@ struct FFrameResources
     // DirectionalLight NOTE: Only one directional light
     FDirectionalLightDataHLSL DirectionalLightData;
     FRHIBufferRef             DirectionalLightDataBuffer;
-    bool                      DirectionalLightDataDirty;
     float                     CascadeSplitLambda;
+    bool                      bDirectionalLightDataDirty;
 
     FCascadeGenerationInfoHLSL CascadeGenerationData;
-    bool                       CascadeGenerationDataDirty;
-    bool                       CascadeSizeDirty;
     FRHIBufferRef              CascadeGenerationDataBuffer;
+    bool                       bCascadeGenerationDataDirty;
+    bool                       bCascadeSizeDirty;
 
     FRHITextureRef            ShadowCascades;
     FRHIShaderResourceViewRef ShadowCascadesSRVs[NUM_SHADOW_CASCADES];
@@ -280,8 +280,8 @@ struct FFrameResources
     FRHITextureRef            ShadowMaskRaw;
     FRHITextureRef            ShadowDebugBuffer;
     FRHITextureRef            ShadowMaskHistory[2];
-    bool                      bShadowMaskHistoryInitialized = false;
     FRHITextureRef            CascadeIndexBuffer;
+    bool                      bShadowMaskHistoryInitialized = false;
 
     FRHIBufferRef              CascadeMatrixBuffer;
     FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;

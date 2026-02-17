@@ -372,8 +372,9 @@ bool FVulkanShader::InitializeShaderLayout()
 
             const FString BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
 
-            const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
-            if (bIsUAV)
+            // Prefer SPIR-V decorations to detect read/write storage buffers.
+            const bool bNonWritable = spvc_compiler_has_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationNonWritable) != 0;
+            if (!bNonWritable)
             {
                 Binding.BindingType = VulkanBindingType_StorageBufferReadWrite;
             }

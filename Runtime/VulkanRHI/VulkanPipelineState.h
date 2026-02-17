@@ -116,6 +116,11 @@ public:
 
     void SetDebugName(const FString& InName);
 
+    const CHAR* GetPipelineName() const 
+    {
+        return *DebugName;
+    }
+
     VkPipeline GetVkPipeline() const
     {
         return Pipeline;
@@ -154,7 +159,7 @@ public:
     {
         return ViewInstancingState;
     }
-    
+
 private:
     FRHIViewInstancingState ViewInstancingState;
 };
@@ -169,7 +174,7 @@ public:
 
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }
-    
+
     virtual void SetDebugName(const FString& InName) override final
     {
         FVulkanPipeline::SetDebugName(InName);
@@ -210,7 +215,7 @@ public:
     bool CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
     bool CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
     bool SaveCacheData();
-    
+
     VkPipelineCache GetVkPipelineCache() const
     {
         return PipelineCache;

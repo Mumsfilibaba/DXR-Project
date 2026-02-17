@@ -317,8 +317,8 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
     {
         GraphicsState.VBCache.VertexBuffers[VertexBufferSlot]       = Buffer;
         GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot] = Offset;
-        GraphicsState.VBCache.NumVertexBuffers = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
-        GraphicsState.bBindVertexBuffers       = true;
+        GraphicsState.VBCache.NumVertexBuffers                      = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
+        GraphicsState.bBindVertexBuffers                            = true;
     }
 }
 
@@ -366,36 +366,50 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
 void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
-    
+
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
+    const CHAR* PipelineName = nullptr;
     if (ShaderStage == ShaderVisibility_Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
+        PipelineName    = ComputeState.PipelineState ? ComputeState.PipelineState->GetPipelineName() : nullptr;
     }
     else
     {
         Layout          = GraphicsState.CurrentLayout;
         DescriptorState = GraphicsState.CurrentDescriptorState;
+        PipelineName    = GraphicsState.PipelineState ? GraphicsState.PipelineState->GetPipelineName() : nullptr;
     }
-    
+
     if (!Layout || !DescriptorState)
     {
         VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
-        DEBUG_BREAK();
         return;
     }
-    
+
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_SRV, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
+        if (ShaderResourceView)
+        {
+            if (PipelineName)
+            {
+                VULKAN_WARNING("SetSRV failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName);
+            }
+            else
+            {
+                VULKAN_WARNING("SetSRV failed: No descriptor binding for ResourceIndex %u (Stage=%s)", ResourceIndex, ToString(ShaderStage));
+            }
+        }
+
         return;
     }
-    
+
     DescriptorState->SetSRV(ShaderResourceView, DescriptorSetIndex, BindingIndex);
 }
 
@@ -406,29 +420,43 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAcc
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
+    const CHAR* PipelineName = nullptr;
     if (ShaderStage == ShaderVisibility_Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
+        PipelineName    = ComputeState.PipelineState ? ComputeState.PipelineState->GetPipelineName() : nullptr;
     }
     else
     {
         Layout          = GraphicsState.CurrentLayout;
         DescriptorState = GraphicsState.CurrentDescriptorState;
+        PipelineName    = GraphicsState.PipelineState ? GraphicsState.PipelineState->GetPipelineName() : nullptr;
     }
-    
+
     if (!Layout || !DescriptorState)
     {
         VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
-        DEBUG_BREAK();
         return;
     }
-    
+
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UAV, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
+        if (UnorderedAccessView)
+        {
+            if (PipelineName)
+            {
+                VULKAN_WARNING("SetUAV failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName);
+            }
+            else
+            {
+                VULKAN_WARNING("SetUAV failed: No descriptor binding for ResourceIndex %u (Stage=%s)", ResourceIndex, ToString(ShaderStage));
+            }
+        }
+
         return;
     }
     
@@ -438,36 +466,50 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAcc
 void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
-    
+
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
+    const CHAR* PipelineName = nullptr;
     if (ShaderStage == ShaderVisibility_Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
+        PipelineName    = ComputeState.PipelineState ? ComputeState.PipelineState->GetPipelineName() : nullptr;
     }
     else
     {
         Layout          = GraphicsState.CurrentLayout;
         DescriptorState = GraphicsState.CurrentDescriptorState;
+        PipelineName    = GraphicsState.PipelineState ? GraphicsState.PipelineState->GetPipelineName() : nullptr;
     }
-    
+
     if (!Layout || !DescriptorState)
     {
         VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
-        DEBUG_BREAK();
         return;
     }
-    
+
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UniformBuffer, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
+        if (UniformBuffer)
+        {
+            if (PipelineName)
+            {
+                VULKAN_WARNING("SetUniformBuffer failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName);
+            }
+            else
+            {
+                VULKAN_WARNING("SetUniformBuffer failed: No descriptor binding for ResourceIndex %u (Stage=%s)", ResourceIndex, ToString(ShaderStage));
+            }
+        }
+
         return;
     }
-    
+
     DescriptorState->SetUniformBuffer(UniformBuffer, DescriptorSetIndex, BindingIndex);
 }
 
@@ -478,31 +520,45 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, E
     FVulkanPipelineLayout*  Layout          = nullptr;
     FVulkanDescriptorState* DescriptorState = nullptr;
 
+    const CHAR* PipelineName = nullptr;
     if (ShaderStage == ShaderVisibility_Compute)
     {
         Layout          = ComputeState.CurrentLayout;
         DescriptorState = ComputeState.CurrentDescriptorState;
+        PipelineName    = ComputeState.PipelineState ? ComputeState.PipelineState->GetPipelineName() : nullptr;
     }
     else
     {
         Layout          = GraphicsState.CurrentLayout;
         DescriptorState = GraphicsState.CurrentDescriptorState;
+        PipelineName    = GraphicsState.PipelineState ? GraphicsState.PipelineState->GetPipelineName() : nullptr;
     }
-    
+
     if (!Layout || !DescriptorState)
     {
-        VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
-        DEBUG_BREAK();
+        VULKAN_WARNING("Binding a Sampler without having a PipelineState set, this does not have any effect");
         return;
     }
-    
+
     uint32 BindingIndex;
     uint32 DescriptorSetIndex;
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_Sampler, SamplerIndex, DescriptorSetIndex, BindingIndex))
     {
+        if (SamplerState)
+        {
+            if (PipelineName)
+            {
+                VULKAN_WARNING("SetSampler failed: No descriptor binding for SamplerIndex %u (Stage=%s, PipelineName=%s)", SamplerIndex, ToString(ShaderStage), PipelineName);
+            }
+            else
+            {
+                VULKAN_WARNING("SetSampler failed: No descriptor binding for SamplerIndex %u (Stage=%s)", SamplerIndex, ToString(ShaderStage));
+            }
+        }
+
         return;
     }
-    
+
     DescriptorState->SetSampler(SamplerState, DescriptorSetIndex, BindingIndex);
 }

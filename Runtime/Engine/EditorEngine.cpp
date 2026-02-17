@@ -107,7 +107,7 @@ void FEditorEngine::Tick(float DeltaTime)
                 IScene* Scene       = LocalWorld->GetSceneInterface();
                 FActor* PickedActor = Scene ? Scene->GetActorByObjectID(PickedObjectID) : nullptr;
 
-#if EDITOR_BUILD
+            #if EDITOR_BUILD
                 if (IConsoleVariable* CVarEditorPickDebug = FConsoleManager::Get().FindConsoleVariable("Editor.Pick.Debug"))
                 {
                     if (CVarEditorPickDebug->GetBool())
@@ -115,7 +115,7 @@ void FEditorEngine::Tick(float DeltaTime)
                         LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickedObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
                     }
                 }
-#endif
+            #endif
 
                 if (PickedActor)
                 {
@@ -142,9 +142,9 @@ void FEditorEngine::RenderFrame()
 
     // Render to a separate render-target
     FSceneRenderView RenderView;
-    RenderView.Scene        = GetWorld()->GetSceneInterface();
-    RenderView.RenderTarget = ViewportImage.Get();
-    RenderView.DebugView    = ViewportWidget ? ViewportWidget->GetDebugView() : FSceneRenderView::EDebugView::None;
+    RenderView.Scene              = GetWorld()->GetSceneInterface();
+    RenderView.RenderTarget       = ViewportImage.Get();
+    RenderView.DebugView          = ViewportWidget ? ViewportWidget->GetDebugView() : FSceneRenderView::EDebugView::None;
     RenderView.SecondaryDebugView = ViewportWidget ? ViewportWidget->GetSecondaryDebugView() : FSceneRenderView::EDebugView::None;
 
     IRendererModule* RendererModule = IRendererModule::Get();
@@ -209,12 +209,12 @@ bool FEditorEngine::CreateViewportRenderTarget()
     FRHITextureRef NewViewportImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::RenderTarget);
     if (NewViewportImage)
     {
+        // Create a new viewport image
         ViewportImage = NewViewportImage;
         ViewportImage->SetDebugName("Editor Viewport Image");
 
+        // Update the viewport wiget so that imgui can draw it
         ViewportWidget->SetViewportImage(ViewportImage);
-
-        RenderSettings::ChangeRenderResolution(Size.X, Size.Y);
 
         ViewportImageSize = Size;
         return true;

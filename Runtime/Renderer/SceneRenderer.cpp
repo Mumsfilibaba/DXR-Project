@@ -574,6 +574,16 @@ void FSceneRenderer::BeginFrame()
 
 void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 {
+    // Ensure render resolution matches the actual render target size
+    if (SceneRenderView.RenderTarget)
+    {
+        const uint32 TargetWidth  = SceneRenderView.RenderTarget->GetWidth();
+        const uint32 TargetHeight = SceneRenderView.RenderTarget->GetHeight();
+
+        RenderSettings::ChangeRenderResolution(TargetWidth, TargetHeight);
+    }
+
+    // Resize the renderer resources
     if (RenderSettings::NeedsResize())
     {
         ResizeResources(RenderSettings::GetRenderWidth(), RenderSettings::GetRenderHeight());
@@ -586,7 +596,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     Resources.BuildLightBuffers(CommandList, CurrentScene);
 
     // Recreate cascade resources when the cascade size changes.
-    if (Resources.CascadeSizeDirty)
+    if (Resources.bCascadeSizeDirty)
     {
         if (!CascadedShadowsRenderPass || !CascadedShadowsRenderPass->CreateResources(Resources))
         {
@@ -594,7 +604,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
             return;
         }
 
-        Resources.CascadeSizeDirty = false;
+        Resources.bCascadeSizeDirty = false;
     }
 
     // Update camera-buffer
@@ -662,18 +672,15 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     // Compile material PSOs
     for (FMaterial* Material : CurrentScene->Materials)
     {
-        // TODO: Only do this once?
         DepthPrePass->InitializePipelineState(Material, Resources);
 
     #if EDITOR_BUILD
         EditorNoJitterDepthPass->InitializePipelineState(Material, Resources);
         EditorSelectionIDPass->InitializePipelineState(Material, Resources);
     #endif
-        
-        BasePass->InitializePipelineState(Material, Resources);
-        
-        PointLightRenderPass->InitializePipelineState(Material, Resources);
 
+        BasePass->InitializePipelineState(Material, Resources);
+        PointLightRenderPass->InitializePipelineState(Material, Resources);
         CascadedShadowsRenderPass->InitializePipelineState(Material, Resources);
 
         if (Material->IsBufferDirty())
@@ -768,7 +775,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
     else
     {
-        CommandList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 1.0f, 1.0f));
+        CommandList.ClearUnorderedAccessViewFloat(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
     CommandList.RequireTextureState(Resources.SSAOBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
@@ -860,15 +867,15 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         Resources.bShadowMaskHistoryInitialized = false;
 
         const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        CommandList.ClearUnorderedAccessView(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
+        CommandList.ClearUnorderedAccessViewFloat(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
 
         const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        CommandList.ClearUnorderedAccessView(Resources.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
+        CommandList.ClearUnorderedAccessViewFloat(Resources.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
 
         if (Resources.ShadowDebugBuffer)
         {
             CommandList.RequireTextureState(Resources.ShadowDebugBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
-            CommandList.ClearUnorderedAccessView(Resources.ShadowDebugBuffer->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 0.0f, 0.0f));
+            CommandList.ClearUnorderedAccessViewFloat(Resources.ShadowDebugBuffer->GetUnorderedAccessView(), FVector4(0.0f, 0.0f, 0.0f, 0.0f));
             CommandList.RequireTextureState(Resources.ShadowDebugBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
         }
 
@@ -1533,7 +1540,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
             return;
         }
 
-#if EDITOR_BUILD
+    #if EDITOR_BUILD
         if (!EditorNoJitterDepthPass->CreateResources(Resources, InWidth, InHeight))
         {
             DEBUG_BREAK();
@@ -1545,7 +1552,7 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
             DEBUG_BREAK();
             return;
         }
-#endif
+    #endif
 
         if (!TonemapPass->CreateResources(Resources, InWidth, InHeight))
         {
@@ -1553,19 +1560,19 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
             return;
         }
 
-#if EDITOR_BUILD
+    #if EDITOR_BUILD
         if (!SelectionOutlinePass->CreateResources(InWidth, InHeight))
         {
             DEBUG_BREAK();
             return;
         }
-#endif
+    #endif
 
-        LOG_INFO("Changed render-resolution. From: w=%d h=%d, To: w=%d h=%d", 
-            Resources.CurrentRenderWidth, Resources.CurrentRenderHeight, InWidth, InHeight);
-        
+        LOG_INFO("Changed render-resolution. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentRenderWidth, Resources.CurrentRenderHeight, InWidth, InHeight);
+
         Resources.CurrentRenderWidth  = InWidth;
         Resources.CurrentRenderHeight = InHeight;
+
         RenderSettings::OnDidChangeRenderResolution(InWidth, InHeight);
     }
 }

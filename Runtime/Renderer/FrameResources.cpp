@@ -58,8 +58,8 @@ bool FFrameResources::UpdateCascadeSizeFromCVar()
     const int32 NewCascadeSize = ClampTextureSize(512, 4096, CVarCSMCascadeSize.GetValue());
     if (NewCascadeSize != CascadeSize)
     {
-        CascadeSize = NewCascadeSize;
-        CascadeSizeDirty = true;
+        CascadeSize       = NewCascadeSize;
+        bCascadeSizeDirty = true;
         return true;
     }
 
@@ -67,10 +67,10 @@ bool FFrameResources::UpdateCascadeSizeFromCVar()
 }
 
 FFrameResources::FFrameResources()
-    : DirectionalLightDataDirty(true)
+    : bDirectionalLightDataDirty(true)
     , CascadeSplitLambda(0.0f)
-    , CascadeGenerationDataDirty(true)
-    , CascadeSizeDirty(false)
+    , bCascadeGenerationDataDirty(true)
+    , bCascadeSizeDirty(false)
 {
 }
 
@@ -237,7 +237,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         DirectionalLightData.LightSize     = DirectionalLight->GetLightArea();
         DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
         DirectionalLightData.ShadowMatrix  = DirectionalLightData.ShadowMatrix.GetTranspose();
-        DirectionalLightDataDirty = true;
+        bDirectionalLightDataDirty         = true;
 
         // Update HLSL data
         CascadeGenerationData.CascadeSplitLambda  = DirectionalLight->GetCascadeSplitLambda();
@@ -273,6 +273,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         {
             bAdaptiveSplitRange = CVarAdaptiveSplitRange->GetBool();
         }
+
         CascadeGenerationData.AdaptiveSplitRangeEnabled = bAdaptiveSplitRange ? 1.0f : 0.0f;
 
         if (IConsoleVariable* CVarMaxShadowDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxShadowDistance"))
@@ -283,6 +284,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         {
             CascadeGenerationData.MaxShadowDistance = 0.0f;
         }
+
         if (IConsoleVariable* CVarShadowPancaking = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.ShadowPancaking"))
         {
             CascadeGenerationData.ShadowPancakingEnabled = CVarShadowPancaking->GetBool() ? 1.0f : 0.0f;
@@ -291,6 +293,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         {
             CascadeGenerationData.ShadowPancakingEnabled = 0.0f;
         }
+        
         CascadeGenerationData.Padding0 = 0.0f;
         CascadeGenerationData.Padding1 = 0.0f;
 
@@ -384,7 +387,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
             CascadeGenerationData.PCFMinFilterRadiusTexels = 0.0f;
         }
 
-        CascadeGenerationDataDirty = true;
+        bCascadeGenerationDataDirty = true;
     }
 
     // Update PointLights
@@ -394,11 +397,13 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
         // Pre-multiply light intensity (PointLight intensity is expressed in lumens -> convert to candela)
         FVector3 Color = PointLight->GetColor();
+        
         const float LuminousIntensity = PointLight->GetIntensity() * (1.0f / (4.0f * Math::Constants::PI));
         Color = Color * LuminousIntensity;
 
         const float Radius = PointLight->GetShadowFarPlane();
-        FVector3 Position = PointLight->GetPosition();
+
+        FVector3 Position          = PointLight->GetPosition();
         FVector4 PositionAndRadius = FVector4(Position, Radius);
 
         if (PointLight->IsShadowCaster())
@@ -530,16 +535,16 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     CommandList.TransitionBuffer(LightProbeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
 
     // Directional-Light
-    if (DirectionalLightDataDirty)
+    if (bDirectionalLightDataDirty)
     {
         CommandList.UpdateBuffer(DirectionalLightDataBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalLightDataHLSL)), &DirectionalLightData);
-        DirectionalLightDataDirty = false;
+        bDirectionalLightDataDirty = false;
     }
 
-    if (CascadeGenerationDataDirty)
+    if (bCascadeGenerationDataDirty)
     {
         CommandList.UpdateBuffer(CascadeGenerationDataBuffer.Get(), FBufferRegion(0, sizeof(FCascadeGenerationInfoHLSL)), &CascadeGenerationData);
-        CascadeGenerationDataDirty = false;
+        bCascadeGenerationDataDirty = false;
     }
 
     // Point-Lights
@@ -601,9 +606,10 @@ void FFrameResources::Release()
         Buffer.Reset();
     }
 
-    CSMMinMaxDepthHistory.Reset();
-    bCSMMinMaxHistoryInitialized = false;
+    bCSMMinMaxHistoryInitialized  = false;
     bCSMCascadeHistoryInitialized = false;
+
+    CSMMinMaxDepthHistory.Reset();
     CascadeSnapHistoryBuffer.Reset();
     CascadeSnapHistoryBufferUAV.Reset();
     CascadeExtentsHistoryBuffer.Reset();
@@ -630,8 +636,9 @@ void FFrameResources::Release()
     ShadowDebugBuffer.Reset();
     ShadowMaskHistory[0].Reset();
     ShadowMaskHistory[1].Reset();
-    bShadowMaskHistoryInitialized = false;
     CascadeIndexBuffer.Reset();
+
+    bShadowMaskHistoryInitialized = false;
 
     PointLightsPosRadBuffer.Reset();
     PointLightsBuffer.Reset();
