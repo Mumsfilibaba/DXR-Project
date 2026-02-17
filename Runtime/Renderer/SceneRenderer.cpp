@@ -7,7 +7,7 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #if EDITOR_BUILD
-    #include "Engine/EditorEngine.h"
+#include "Engine/EditorEngine.h"
 #endif
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Lights/PointLight.h"
@@ -811,30 +811,42 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     const bool bEnableShadowMask = CVarShadowMaskEnabled.GetValue();
     if (bEnableShadows && bEnableShadowMask && bEnableSunShadows)
     {
-        uint32 ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::None);
-        switch (SceneRenderView.DebugView)
+        const auto ResolveShadowDebugMode = [](FSceneRenderView::EDebugView InView) -> EShadowDebugMode
         {
-        case FSceneRenderView::EDebugView::ShadowCascadeIndex:      ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeIndex); break;
-        case FSceneRenderView::EDebugView::ShadowCascadeTransition: ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeTransition); break;
-        case FSceneRenderView::EDebugView::ShadowFilterMargin:      ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::FilterMargin); break;
-        case FSceneRenderView::EDebugView::ShadowPCSSRadiusClamp:   ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::PCSSRadiusClamp); break;
-        case FSceneRenderView::EDebugView::ShadowCascadeUpdated:    ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeUpdated); break;
-        case FSceneRenderView::EDebugView::ShadowContainment:       ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::Containment); break;
-        case FSceneRenderView::EDebugView::ShadowCascadeFallback:   ShadowDebugMode = static_cast<uint32>(EShadowDebugMode::CascadeFallback); break;
-        default: break;
+            switch (InView)
+            {
+            case FSceneRenderView::EDebugView::ShadowCascadeIndex:      return EShadowDebugMode::CascadeIndex;
+            case FSceneRenderView::EDebugView::ShadowCascadeTransition: return EShadowDebugMode::CascadeTransition;
+            case FSceneRenderView::EDebugView::ShadowFilterMargin:      return EShadowDebugMode::FilterMargin;
+            case FSceneRenderView::EDebugView::ShadowPCSSRadiusClamp:   return EShadowDebugMode::PCSSRadiusClamp;
+            case FSceneRenderView::EDebugView::ShadowCascadeUpdated:    return EShadowDebugMode::CascadeUpdated;
+            case FSceneRenderView::EDebugView::ShadowContainment:       return EShadowDebugMode::Containment;
+            case FSceneRenderView::EDebugView::ShadowCascadeFallback:   return EShadowDebugMode::CascadeFallback;
+            default:                                                    return EShadowDebugMode::None;
+            }
+        };
+
+        EShadowDebugMode ShadowDebug = ResolveShadowDebugMode(SceneRenderView.DebugView);
+        if (ShadowDebug == EShadowDebugMode::None)
+        {
+            ShadowDebug = ResolveShadowDebugMode(SceneRenderView.SecondaryDebugView);
         }
+
 
         bool bUseShadowHistory = false;
         if (IConsoleVariable* CVarShadowHistory = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.ShadowHistory"))
         {
             bUseShadowHistory = CVarShadowHistory->GetBool();
         }
+
         if (!bUseShadowHistory)
         {
             Resources.bShadowMaskHistoryInitialized = false;
         }
 
+        const uint32 ShadowDebugMode = static_cast<uint32>(ShadowDebug);
         ShadowMaskRenderPass->Execute(CommandList, Resources, ShadowDebugMode, bUseShadowHistory);
+
         if (bUseShadowHistory)
         {
             ShadowMaskHistoryPass->Execute(CommandList, Resources);
@@ -864,10 +876,20 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         CommandList.RequireTextureState(Resources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
     }
 
-    const bool bDrawCascadesOverlay = (SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay);
-    if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
+    const bool bDrawCascadesOverlayMain = (SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay);
+    const bool bDrawCascadesOverlayAny  = bDrawCascadesOverlayMain || (SceneRenderView.SecondaryDebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay);
+
+    if (IConsoleVariable* CVarDebugData = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.DebugData"))
     {
-        CVarDrawCascades->SetAsBool(bDrawCascadesOverlay, EConsoleVariableFlags::SetByCode);
+        CVarDebugData->SetAsBool(bDrawCascadesOverlayAny, EConsoleVariableFlags::SetByCode);
+    }
+
+    if (bDrawCascadesOverlayMain)
+    {
+        if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
+        {
+            CVarDrawCascades->SetAsBool(false, EConsoleVariableFlags::SetByCode);
+        }
     }
 
     // Main LightPass
@@ -958,45 +980,83 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     } 
 #endif 
 
-    if (SceneRenderView.DebugView != FSceneRenderView::EDebugView::None
-        && SceneRenderView.DebugView != FSceneRenderView::EDebugView::ShadowCascadeOverlay)
+    if (IConsoleVariable* CVarDrawTileDebug = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawTiledLightning"))
     {
-        DebugViewPass->Execute(CommandList, SceneRenderView, Resources, SceneRenderView.DebugView);
+        const bool bTileDebug = (SceneRenderView.DebugView == FSceneRenderView::EDebugView::TileOccupancy);
+        CVarDrawTileDebug->SetAsBool(bTileDebug, EConsoleVariableFlags::SetByCode);
     }
-    else
-    {
-        // FXAA
-        if (CVarEnableFXAA.GetValue())
-        {
-            FXAAPass->Execute(CommandList, SceneRenderView, Resources);
-        }
 
-        // Perform ToneMapping and output to BackBuffer
+    const bool bMainUsesDebugPass =
+        SceneRenderView.DebugView != FSceneRenderView::EDebugView::None &&
+        SceneRenderView.DebugView != FSceneRenderView::EDebugView::ShadowCascadeOverlay &&
+        SceneRenderView.DebugView != FSceneRenderView::EDebugView::TileOccupancy;
+
+    const bool bMainUsesOverlay   = SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay;
+    const bool bHasSecondaryDebug = SceneRenderView.SecondaryDebugView != FSceneRenderView::EDebugView::None;
+    const bool bUsesDebugOutput   = bMainUsesDebugPass || bMainUsesOverlay;
+
+    FSceneRenderView DebugViewRender = SceneRenderView;
+
 #if EDITOR_BUILD
-        TonemapPass->Execute(CommandList, Resources, Resources.TonemappedTarget.Get(), false);
-        FinalCompositePass->Execute(CommandList, SceneRenderView, Resources);
-#else
-        TonemapPass->Execute(CommandList, Resources, SceneRenderView.RenderTarget, true);
+    FRHITexture* DebugOutputTarget = nullptr;
+    if (bUsesDebugOutput && Resources.FinalTarget)
+    {
+        DebugOutputTarget            = Resources.FinalTarget.Get();
+        DebugViewRender.RenderTarget = DebugOutputTarget;
+    }
 #endif
+
+    // FXAA
+    if (CVarEnableFXAA.GetValue())
+    {
+        FXAAPass->Execute(CommandList, SceneRenderView, Resources);
     }
 
-    if (SceneRenderView.SecondaryDebugView != FSceneRenderView::EDebugView::None)
+    // Perform ToneMapping and output to BackBuffer
+#if EDITOR_BUILD
+    TonemapPass->Execute(CommandList, Resources, Resources.TonemappedTarget.Get(), false);
+#else
+    TonemapPass->Execute(CommandList, Resources, SceneRenderView.RenderTarget, true);
+#endif
+
+    if (bMainUsesDebugPass)
+    {
+        DebugViewPass->Execute(CommandList, DebugViewRender, Resources, SceneRenderView.DebugView);
+    }
+
+    if (bMainUsesOverlay)
+    {
+        FRHITexture* RenderTarget = DebugViewRender.RenderTarget;
+        if (RenderTarget)
+        {
+            const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetWidth());
+            const int32 TargetHeight = static_cast<int32>(RenderTarget->GetHeight());
+
+            DebugViewPass->ExecuteOverlay(CommandList, DebugViewRender, Resources, SceneRenderView.DebugView, 0, 0, TargetWidth, TargetHeight);
+        }
+    }
+
+    // Composite the grid and selection outline
+#if EDITOR_BUILD
+    FRHITexture* CompositeInput = DebugOutputTarget ? DebugOutputTarget : Resources.TonemappedTarget.Get();
+    FinalCompositePass->Execute(CommandList, SceneRenderView, Resources, CompositeInput);
+#endif
+
+    if (bHasSecondaryDebug)
     {
         FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
         if (RenderTarget)
         {
-            const int32 TargetWidth = static_cast<int32>(RenderTarget->GetWidth());
-            const int32 TargetHeight = static_cast<int32>(RenderTarget->GetHeight());
-
-            const int32 OverlayWidth = Math::Max(TargetWidth / 2, 1);
+            const int32 TargetWidth   = static_cast<int32>(RenderTarget->GetWidth());
+            const int32 TargetHeight  = static_cast<int32>(RenderTarget->GetHeight());
+            const int32 OverlayWidth  = Math::Max(TargetWidth / 2, 1);
             const int32 OverlayHeight = Math::Max(TargetHeight / 2, 1);
-            const int32 OverlayX = TargetWidth - OverlayWidth;
-            const int32 OverlayY = 0;
+            const int32 OverlayX      = TargetWidth - OverlayWidth;
+            const int32 OverlayY      = 0;
 
             DebugViewPass->ExecuteOverlay(CommandList, SceneRenderView, Resources, SceneRenderView.SecondaryDebugView, OverlayX, OverlayY, OverlayWidth, OverlayHeight);
         }
     }
-
 } 
  
 #if EDITOR_BUILD
@@ -1021,15 +1081,16 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
 
     const uint32 TexWidth  = InResources.EditorObjectID_NoJitter->GetWidth();
     const uint32 TexHeight = InResources.EditorObjectID_NoJitter->GetHeight();
+
     if (TexWidth == 0 || TexHeight == 0)
     {
         return;
     }
 
-    const uint32 PixelX = Math::Min(Request.PixelX, TexWidth - 1);
-    const uint32 PixelY = Math::Min(Request.PixelY, TexHeight - 1);
-
+    const uint32 PixelX        = Math::Min(Request.PixelX, TexWidth - 1);
+    const uint32 PixelY        = Math::Min(Request.PixelY, TexHeight - 1);
     const uint32 BytesPerPixel = GetByteStrideFromFormat(InResources.EditorObjectID_NoJitter->GetFormat());
+
     if (BytesPerPixel == 0)
     {
         // Unsupported format; skip pick.
@@ -1094,8 +1155,9 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
     ReadbackInfo.Size   = bTryFlipY ? (FlippedBaseOffset + FlippedRequiredSize) : NormalRequiredSize;
     ReadbackInfo.bEnableResourceStateTracking = true;
 
-    FRHIBufferRef    ReadbackBuffer = FRHI::Get()->CreateBuffer(ReadbackInfo, EResourceAccess::CopyDest, nullptr);
-    FRHIGpuFenceRef  Fence          = FRHI::Get()->CreateFence();
+    FRHIBufferRef   ReadbackBuffer = FRHI::Get()->CreateBuffer(ReadbackInfo, EResourceAccess::CopyDest, nullptr);
+    FRHIGpuFenceRef Fence          = FRHI::Get()->CreateFence();
+
     if (!(ReadbackBuffer && Fence))
     {
         return;
@@ -1115,6 +1177,7 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
 
     // Copy a rectangular neighborhood into a readback buffer.
     // We do one copy per row to control destination row stride across backends and keep D3D12 offsets 512-byte aligned.
+
     for (uint32 Row = 0; Row < RegionHeight; ++Row)
     {
         const uint64 DstOffset = NormalRowStrideBytes * uint64(Row);
@@ -1155,6 +1218,7 @@ void FSceneRenderer::ProcessEditorObjectPickRequests(FRHICommandList& InCommandL
     InFlight.FlippedHeight         = FlippedRegionHeight;
     InFlight.FlippedCenterX        = FlippedCenterLocalX;
     InFlight.FlippedCenterY        = FlippedCenterLocalY;
+
     InFlightObjectPicks.Add(Move(InFlight));
 }
 #endif
@@ -1201,7 +1265,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
                 {
                     const uint8* Base = reinterpret_cast<const uint8*>(Data);
 
-                    auto ReadPixel = [&](uint32 WindowBaseOffsetBytes, uint32 RowPitch, uint32 Width, uint32 Height, uint32 X, uint32 Y) -> uint32
+                    const auto ReadPixel = [&](uint32 WindowBaseOffsetBytes, uint32 RowPitch, uint32 Width, uint32 Height, uint32 X, uint32 Y) -> uint32
                     {
                         if (Width == 0 || Height == 0 || X >= Width || Y >= Height)
                         {
@@ -1217,7 +1281,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
                         return *reinterpret_cast<const uint32*>(Base + Offset);
                     };
 
-                    auto ChooseFromWindow = [&](uint32 WindowBaseOffsetBytes, uint32 RowPitch, uint32 Width, uint32 Height, uint32 CenterX, uint32 CenterY) -> uint32
+                    const auto ChooseFromWindow = [&](uint32 WindowBaseOffsetBytes, uint32 RowPitch, uint32 Width, uint32 Height, uint32 CenterX, uint32 CenterY) -> uint32
                     {
                         uint32 ResultID = ReadPixel(WindowBaseOffsetBytes, RowPitch, Width, Height, CenterX, CenterY);
 
@@ -1241,8 +1305,8 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
                                         continue;
                                     }
 
-                                    const int32 Dx = int32(X) - int32(CenterX);
-                                    const int32 Dy = int32(Y) - int32(CenterY);
+                                    const int32 Dx    = int32(X) - int32(CenterX);
+                                    const int32 Dy    = int32(Y) - int32(CenterY);
                                     const int32 Dist2 = Dx * Dx + Dy * Dy;
 
                                     if (Dist2 < BestDist2)
@@ -1297,7 +1361,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
                             InFlight.FlippedCenterX,
                             InFlight.FlippedCenterY) : 0u;
 
-                        auto ComputeStats = [&](uint32 BaseOffset, uint32 RowPitch, uint32 Width, uint32 Height, uint32& OutNonZero)
+                        const auto ComputeStats = [&](uint32 BaseOffset, uint32 RowPitch, uint32 Width, uint32 Height, uint32& OutNonZero)
                         {
                             OutNonZero = 0;
 

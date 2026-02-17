@@ -514,6 +514,9 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
     FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
     CHECK(VulkanUnorderedAccessView != nullptr);
     
+    CHECK(!IsInsideRenderPass());
+    BarrierBatcher.FlushBarriers();
+
     VkClearColorValue VulkanClearColor;
     FMemory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
 

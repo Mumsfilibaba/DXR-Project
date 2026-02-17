@@ -108,19 +108,20 @@ void FEditorViewportWidget::Draw()
                     { "GBuffer: Velocity", FSceneRenderView::EDebugView::GBufferVelocity },
                     { "SSAO", FSceneRenderView::EDebugView::SSAO },
                     { "Depth", FSceneRenderView::EDebugView::Depth },
+                    { "Tile Occupancy", FSceneRenderView::EDebugView::TileOccupancy },
                 };
 
                 static const FDebugItem ShadowDebugItems[] =
                 {
-                    { "Shadow Cascades (2x2)", FSceneRenderView::EDebugView::ShadowCascades },
-                    { "Shadow: Cascade Index", FSceneRenderView::EDebugView::ShadowCascadeIndex },
-                    { "Shadow: Transition", FSceneRenderView::EDebugView::ShadowCascadeTransition },
-                    { "Shadow: Filter Margin", FSceneRenderView::EDebugView::ShadowFilterMargin },
-                    { "Shadow: PCSS Clamp", FSceneRenderView::EDebugView::ShadowPCSSRadiusClamp },
-                    { "Shadow: Cascade Updated", FSceneRenderView::EDebugView::ShadowCascadeUpdated },
-                    { "Shadow: Containment", FSceneRenderView::EDebugView::ShadowContainment },
-                    { "Shadow: Cascade Fallback", FSceneRenderView::EDebugView::ShadowCascadeFallback },
-                    { "Shadow: Cascade Overlay", FSceneRenderView::EDebugView::ShadowCascadeOverlay },
+                    { "CSM Cascades (2x2)", FSceneRenderView::EDebugView::ShadowCascades },
+                    { "CSM Cascade Index", FSceneRenderView::EDebugView::ShadowCascadeIndex },
+                    { "CSM Transition", FSceneRenderView::EDebugView::ShadowCascadeTransition },
+                    { "CSM Filter Margin", FSceneRenderView::EDebugView::ShadowFilterMargin },
+                    { "CSM PCSS Clamp", FSceneRenderView::EDebugView::ShadowPCSSRadiusClamp },
+                    { "CSM Cascade Updated", FSceneRenderView::EDebugView::ShadowCascadeUpdated },
+                    { "CSM Containment", FSceneRenderView::EDebugView::ShadowContainment },
+                    { "CSM Cascade Fallback", FSceneRenderView::EDebugView::ShadowCascadeFallback },
+                    { "CSM Cascade Overlay", FSceneRenderView::EDebugView::ShadowCascadeOverlay },
                 };
 
                 const auto FindDebugLabel = [&](FSceneRenderView::EDebugView InView) -> const CHAR*
@@ -263,10 +264,10 @@ void FEditorViewportWidget::Draw()
                     DrawList->AddRectFilled(RectMin, RectMax, Background, 0.0f);
 
                     const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
+                    const float  CircleX   = RectMin.x + MenuIndentX + 6.0f;
+                    const float  LabelX    = CircleX + LabelGapFromCircle;
+                    const float  LabelY    = RectMin.y + (RowHeight - LabelSize.y) * 0.5f;
 
-                    const float CircleX = RectMin.x + MenuIndentX + 6.0f;
-                    const float LabelX  = CircleX + LabelGapFromCircle;
-                    const float LabelY  = RectMin.y + (RowHeight - LabelSize.y) * 0.5f;
                     DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
 
                     const float  ArrowSize = 12.0f;
@@ -373,18 +374,15 @@ void FEditorViewportWidget::Draw()
 
                 const CHAR* MenuLabelText = BuildClampedLabel(CurrentLabel, MaxTextWidth, MenuLabel);
 
-                const ImVec2 LabelSize = ImGui::CalcTextSize(MenuLabelText);
-
-                const ImVec2 ChildPos   = ImGui::GetWindowPos();
-                const ImVec2 ChildSize  = ImGui::GetWindowSize();
-                const ImVec2 ContentMin = ImGui::GetWindowContentRegionMin();
-                const ImVec2 ContentMax = ImGui::GetWindowContentRegionMax();
-
-                const float ContentWidth  = ContentMax.x - ContentMin.x;
-                const float ContentHeight = ContentMax.y - ContentMin.y;
-
-                const float CursorX = ContentMin.x + Math::Max(0.0f, ContentWidth - ButtonWidth - RightPadding);
-                const float CursorY = ContentMin.y + 6.0f;
+                const ImVec2 LabelSize     = ImGui::CalcTextSize(MenuLabelText);
+                const ImVec2 ChildPos      = ImGui::GetWindowPos();
+                const ImVec2 ChildSize     = ImGui::GetWindowSize();
+                const ImVec2 ContentMin    = ImGui::GetWindowContentRegionMin();
+                const ImVec2 ContentMax    = ImGui::GetWindowContentRegionMax();
+                const float  ContentWidth  = ContentMax.x - ContentMin.x;
+                const float  ContentHeight = ContentMax.y - ContentMin.y;
+                const float  CursorX       = ContentMin.x + Math::Max(0.0f, ContentWidth - ButtonWidth - RightPadding);
+                const float  CursorY       = ContentMin.y + 6.0f;
 
                 ImGui::SetCursorScreenPos(ImVec2(ChildPos.x + CursorX, ChildPos.y + CursorY));
 
@@ -394,6 +392,7 @@ void FEditorViewportWidget::Draw()
                 const float SubmenuOverlap       = 0.0f;
 
                 const ImGuiPopupFlags PopupQueryFlags = ImGuiPopupFlags_AnyPopupLevel;
+
                 const bool bViewPopupOpen      = ImGui::IsPopupOpen(ViewMenuPopupId, PopupQueryFlags);
                 const bool bShadowPopupOpen    = ImGui::IsPopupOpen(ShadowMenuPopupId, PopupQueryFlags);
                 const bool bSecondaryPopupOpen = ImGui::IsPopupOpen(SecondaryMenuPopupId, PopupQueryFlags);
@@ -427,6 +426,7 @@ void FEditorViewportWidget::Draw()
 
                     const float TextY = Min.y + (ButtonHeightLocal - LabelSize.y) * 0.5f;
                     const float TextX = Min.x + ImGui::GetStyle().FramePadding.x;
+
                     DrawList->AddText(ImVec2(TextX, TextY), ImGui::GetColorU32(ImGuiCol_Text), Label);
 
                     const float  ArrowX   = Max.x - ImGui::GetStyle().FramePadding.x - ArrowIconSize;
@@ -485,13 +485,12 @@ void FEditorViewportWidget::Draw()
                         ImDrawList* DrawList = ImGui::GetWindowDrawList();
                         DrawList->AddRectFilled(Anchor.Min, Anchor.Max, ImGui::GetColorU32(ImGuiCol_HeaderActive), 0.0f);
 
-                        const float RowHeight = Anchor.Max.y - Anchor.Min.y;
-                        const float MenuIndentX = 20.0f;
-
-                        const ImVec2 LabelSize = ImGui::CalcTextSize(Label);
-                        const float CircleX = Anchor.Min.x + MenuIndentX + 6.0f;
-                        const float LabelX  = CircleX + LabelGapFromCircle;
-                        const float LabelY  = Anchor.Min.y + (RowHeight - LabelSize.y) * 0.5f;
+                        const float  RowHeight   = Anchor.Max.y - Anchor.Min.y;
+                        const float  MenuIndentX = 20.0f;
+                        const ImVec2 LabelSize   = ImGui::CalcTextSize(Label);
+                        const float  CircleX     = Anchor.Min.x + MenuIndentX + 6.0f;
+                        const float  LabelX      = CircleX + LabelGapFromCircle;
+                        const float  LabelY      = Anchor.Min.y + (RowHeight - LabelSize.y) * 0.5f;
 
                         DrawList->AddText(ImVec2(LabelX, LabelY), ImGui::GetColorU32(ImGuiCol_Text), Label);
 
@@ -542,11 +541,9 @@ void FEditorViewportWidget::Draw()
                             }
 
                             const float BridgeMaxX = Math::Max(ShadowPopupAnchor.Min.x + 4.0f, ShadowAnchor.Max.x);
-                            const bool  bShadowBridgeHovered = ImGui::IsMouseHoveringRect(
-                                ShadowAnchor.Min,
-                                ImVec2(BridgeMaxX, ShadowAnchor.Max.y),
-                                false);
-                            const bool bShadowKeepOpen = bShadowPopupHovered || bShadowHovered || bShadowBridgeHovered;
+
+                            const bool bShadowBridgeHovered = ImGui::IsMouseHoveringRect(ShadowAnchor.Min, ImVec2(BridgeMaxX, ShadowAnchor.Max.y), false);
+                            const bool bShadowKeepOpen      = bShadowPopupHovered || bShadowHovered || bShadowBridgeHovered;
 
                             if (!bShadowKeepOpen)
                             {
@@ -566,6 +563,7 @@ void FEditorViewportWidget::Draw()
                         PopupAnchor SecondaryAnchor;
 
                         bool bSecondaryHovered = false;
+
                         const bool bSecondaryPressed = DrawSubmenuRow("Secondary View", SecondaryAnchor, bSecondaryHovered, bSecondaryPopupOpen);
                         bAnyMainRowHovered |= bSecondaryHovered;
 
@@ -593,9 +591,16 @@ void FEditorViewportWidget::Draw()
 
                             for (const FDebugItem& Item : BaseViewItems)
                             {
-                                if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == Item.View, true, true, nullptr))
+                                const bool bIsLitEntry = (Item.View == FSceneRenderView::EDebugView::None);
+                                if (Item.View == FSceneRenderView::EDebugView::TileOccupancy)
                                 {
-                                    SecondaryDebugView = Item.View;
+                                    continue;
+                                }
+
+                                const FSceneRenderView::EDebugView TargetView = bIsLitEntry ? FSceneRenderView::EDebugView::Lit : Item.View;
+                                if (DrawRadioMenuItem(Item.Label, SecondaryDebugView == TargetView, true, true, nullptr))
+                                {
+                                    SecondaryDebugView = TargetView;
                                     bRequestClosePopup = true;
                                 }
                             }
@@ -610,11 +615,9 @@ void FEditorViewportWidget::Draw()
                             }
 
                             const float BridgeMaxX = Math::Max(SecondaryPopupAnchor.Min.x + 4.0f, SecondaryAnchor.Max.x);
-                            const bool  bSecondaryBridgeHovered = ImGui::IsMouseHoveringRect(
-                                SecondaryAnchor.Min,
-                                ImVec2(BridgeMaxX, SecondaryAnchor.Max.y),
-                                false);
-                            const bool bSecondaryKeepOpen = bSecondaryPopupHovered || bSecondaryHovered || bSecondaryBridgeHovered;
+
+                            const bool bSecondaryBridgeHovered = ImGui::IsMouseHoveringRect(SecondaryAnchor.Min, ImVec2(BridgeMaxX, SecondaryAnchor.Max.y), false);
+                            const bool bSecondaryKeepOpen      = bSecondaryPopupHovered || bSecondaryHovered || bSecondaryBridgeHovered;
 
                             if (!bSecondaryKeepOpen)
                             {
@@ -718,6 +721,7 @@ void FEditorViewportWidget::Draw()
                         if (IRendererModule* RendererModule = IRendererModule::Get())
                         {
                             FRHITexture* ViewportTexture = ViewportImage.GetTexture();
+
                             const uint32 RenderWidth  = ViewportTexture ? ViewportTexture->GetWidth() : static_cast<uint32>(ContentSize.x);
                             const uint32 RenderHeight = ViewportTexture ? ViewportTexture->GetHeight() : static_cast<uint32>(ContentSize.y);
 

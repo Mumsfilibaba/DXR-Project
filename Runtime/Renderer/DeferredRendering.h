@@ -55,8 +55,6 @@ private:
     FRHIComputeShaderRef        TiledLightShader;
     FRHIComputePipelineStateRef TiledLightPassPSO_TileDebug;
     FRHIComputeShaderRef        TiledLightShader_TileDebug;
-    FRHIComputePipelineStateRef TiledLightPassPSO_CascadeDebug;
-    FRHIComputeShaderRef        TiledLightShader_CascadeDebug;
 };
 
 class FDepthReducePass : public FRenderPass
@@ -72,7 +70,6 @@ public:
 private:
     FRHIComputePipelineStateRef ReduceDepthInitalPSO;
     FRHIComputeShaderRef        ReduceDepthInitalShader;
-
     FRHIComputePipelineStateRef ReduceDepthPSO;
     FRHIComputeShaderRef        ReduceDepthShader;
 };

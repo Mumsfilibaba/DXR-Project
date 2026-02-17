@@ -29,6 +29,8 @@ struct FSceneRenderView
         ShadowContainment,
         ShadowCascadeFallback,
         ShadowCascadeOverlay,
+        Lit,
+        TileOccupancy,
     };
 
     IScene*      Scene              = nullptr;

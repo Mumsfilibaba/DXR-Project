@@ -718,8 +718,6 @@ FTiledLightPass::FTiledLightPass(FSceneRenderer* InRenderer)
     , TiledLightShader(nullptr)
     , TiledLightPassPSO_TileDebug(nullptr)
     , TiledLightShader_TileDebug(nullptr)
-    , TiledLightPassPSO_CascadeDebug(nullptr)
-    , TiledLightShader_CascadeDebug(nullptr)
 {
 }
 
@@ -729,8 +727,6 @@ FTiledLightPass::~FTiledLightPass()
     TiledLightShader.Reset();
     TiledLightPassPSO_TileDebug.Reset();
     TiledLightShader_TileDebug.Reset();
-    TiledLightPassPSO_CascadeDebug.Reset();
-    TiledLightShader_CascadeDebug.Reset();
 }
 
 bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
@@ -911,39 +907,6 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         TiledLightPassPSO_TileDebug->SetDebugName("DeferredLightPass PipelineState Tile-Debug");
     }
 
-    // Tiled lightning Cascade debugging
-    Defines =
-    {
-        { "DRAW_CASCADE_DEBUG", "(1)" }
-    };
-
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    TiledLightShader_CascadeDebug = FRHI::Get()->CreateComputeShader(ShaderCode);
-    if (!TiledLightShader_CascadeDebug)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    DeferredLightPassPSOInfo.Shader = TiledLightShader_CascadeDebug.Get();
-
-    TiledLightPassPSO_CascadeDebug = FRHI::Get()->CreateComputePipelineState(DeferredLightPassPSOInfo);
-    if (!TiledLightPassPSO_CascadeDebug)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        TiledLightPassPSO_CascadeDebug->SetDebugName("DeferredLightPass PipelineState Cascade-Debug");
-    }
-
     return true;
 }
 
@@ -979,22 +942,11 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
 
     GPU_TRACE_SCOPE(CommandList, "Light Pass");
 
-    bool bDrawCascades = false;
-    if (IConsoleVariable* CVarDrawCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.Debug.DrawCascades"))
-    {
-        bDrawCascades = CVarDrawCascades->GetBool();
-    }
-
     FRHIComputeShader* LightPassShader;
     if (CVarDrawTileDebug.GetValue())
     {
         LightPassShader = TiledLightShader_TileDebug.Get();
         CommandList.SetComputePipelineState(TiledLightPassPSO_TileDebug.Get());
-    }
-    else if (bDrawCascades)
-    {
-        LightPassShader = TiledLightShader_CascadeDebug.Get();
-        CommandList.SetComputePipelineState(TiledLightPassPSO_CascadeDebug.Get());
     }
     else
     {
@@ -1034,11 +986,6 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.DirectionalShadowMask->GetShaderResourceView(), 10);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.PointLightShadowMaps->GetShaderResourceView(), 11);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 12);
-
-    if (bDrawCascades)
-    {
-        CommandList.SetShaderResourceView(LightPassShader, FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 13);
-    }
 
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.PointLightsBuffer.Get(), 1);
@@ -1269,10 +1216,10 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     ReductionConstants.NearPlane     = Camera->GetNearPlane();
     ReductionConstants.FarPlane      = Camera->GetFarPlane();
 
-    FRHITexture* DepthSource = FrameResources.GBuffer[GBufferIndex_Depth].Get();
     const EResourceAccess DepthBefore = EResourceAccess::DepthWrite;
 
     // Perform the first reduction
+    FRHITexture* DepthSource = FrameResources.GBuffer[GBufferIndex_Depth].Get();
     CommandList.TransitionTexture(DepthSource, FRHITextureTransition::Make(DepthBefore, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));

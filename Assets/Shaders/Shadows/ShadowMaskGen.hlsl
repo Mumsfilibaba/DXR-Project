@@ -834,14 +834,14 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
     else if (SettingsBuffer.ShadowDebugMode == SHADOW_DEBUG_FILTER_MARGIN)
     {
     #if FILTER_MODE_PCSS
-        DebugValue = saturate(CascadeSplit.PCSSMarginTexels / 64.0);
+        DebugValue = saturate(CascadeSplit.PCSSMarginTexels / 8.0);
     #else
-        DebugValue = saturate(CascadeSplit.PCFMarginTexels / 64.0);
+        DebugValue = saturate(CascadeSplit.PCFMarginTexels / 8.0);
     #endif
     }
     else if (SettingsBuffer.ShadowDebugMode == SHADOW_DEBUG_PCSS_RADIUS_CLAMP)
     {
-        DebugValue = saturate(1.0 - DebugPCSSClamp);
+        DebugValue = saturate((1.0 - DebugPCSSClamp) * 4.0);
     }
     else if (SettingsBuffer.ShadowDebugMode == SHADOW_DEBUG_CASCADE_UPDATED)
     {

@@ -354,10 +354,11 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
     return true;
 }
 
-void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources)
+void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FRHITexture* InputSceneColor)
 {
     FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
-    if (!FrameResources.TonemappedTarget || !RenderTarget)
+    FRHITexture* SceneColor = InputSceneColor ? InputSceneColor : FrameResources.TonemappedTarget.Get();
+    if (!SceneColor || !RenderTarget)
     {
         return;
     }
@@ -391,7 +392,7 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
 
     CommandList.SetGraphicsPipelineState(CompositePSO.Get());
 
-    CommandList.SetShaderResourceView(CompositeShader.Get(), FrameResources.TonemappedTarget->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(CompositeShader.Get(), SceneColor->GetShaderResourceView(), 0);
     CommandList.SetConstantBuffer(CompositeShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
     const FSelectionOutlineSettings OutlineSettings = GetSelectionOutlineSettings();

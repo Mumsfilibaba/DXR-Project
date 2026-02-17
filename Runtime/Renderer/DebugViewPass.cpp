@@ -97,9 +97,9 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
     PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
     PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
+    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::FinalTargetFormat;
 
     // Linear output
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::FinalTargetFormat;
     DebugPSO_Linear = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!DebugPSO_Linear)
     {
@@ -109,6 +109,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
 
     // BackBuffer output
     PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+
     DebugPSO_BackBuffer = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
     if (!DebugPSO_BackBuffer)
     {
@@ -121,15 +122,15 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
 
 void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView)
 {
-    ExecuteInternal(CommandList, SceneRenderView, FrameResources, DebugView, 0, 0, 0, 0, true);
+    ExecuteInternal(CommandList, SceneRenderView, FrameResources, DebugView, 0, 0, 0, 0, true, true);
 }
 
 void FDebugViewPass::ExecuteOverlay(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView, int32 X, int32 Y, int32 Width, int32 Height)
 {
-    ExecuteInternal(CommandList, SceneRenderView, FrameResources, DebugView, X, Y, Width, Height, false);
+    ExecuteInternal(CommandList, SceneRenderView, FrameResources, DebugView, X, Y, Width, Height, false, true);
 }
 
-void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView, int32 X, int32 Y, int32 Width, int32 Height, bool bClearTarget)
+void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView, int32 X, int32 Y, int32 Width, int32 Height, bool bClearTarget, bool bPreferTonemapped)
 {
     if (DebugView == FSceneRenderView::EDebugView::None)
     {
@@ -150,13 +151,13 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetWidth());
     const int32 TargetHeight = static_cast<int32>(RenderTarget->GetHeight());
+    const int32 ViewX        = Math::Clamp(X, 0, TargetWidth);
+    const int32 ViewY        = Math::Clamp(Y, 0, TargetHeight);
 
-    const int32 ViewX = Math::Clamp(X, 0, TargetWidth);
-    const int32 ViewY = Math::Clamp(Y, 0, TargetHeight);
-    int32 ViewWidth = Width > 0 ? Width : TargetWidth;
+    int32 ViewWidth  = Width > 0 ? Width : TargetWidth;
     int32 ViewHeight = Height > 0 ? Height : TargetHeight;
 
-    ViewWidth = Math::Clamp(ViewWidth, 0, TargetWidth - ViewX);
+    ViewWidth  = Math::Clamp(ViewWidth, 0, TargetWidth - ViewX);
     ViewHeight = Math::Clamp(ViewHeight, 0, TargetHeight - ViewY);
 
     if (ViewWidth <= 0 || ViewHeight <= 0)
@@ -176,7 +177,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
     }
 
-    auto RequirePixel = [&CommandList](FRHITexture* Texture)
+    const auto RequirePixel = [&CommandList](FRHITexture* Texture)
     {
         if (Texture)
         {
@@ -184,7 +185,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         }
     };
 
-    auto RequireNonPixel = [&CommandList](FRHITexture* Texture)
+    const auto RequireNonPixel = [&CommandList](FRHITexture* Texture)
     {
         if (Texture)
         {
@@ -192,15 +193,33 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         }
     };
 
-    RequirePixel(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
-    RequirePixel(FrameResources.GBuffer[GBufferIndex_Normal].Get());
-    RequirePixel(FrameResources.GBuffer[GBufferIndex_Material].Get());
-    RequirePixel(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
-    RequirePixel(FrameResources.DirectionalShadowMask.Get());
-    RequirePixel(FrameResources.SSAOBuffer.Get());
-    RequirePixel(FrameResources.ShadowCascades.Get());
-    RequirePixel(FrameResources.CascadeIndexBuffer.Get());
-    RequirePixel(FrameResources.ShadowDebugBuffer.Get());
+    const auto RequirePixelIfNotRT = [&](FRHITexture* Texture)
+    {
+        if (Texture && Texture != RenderTarget)
+        {
+            RequirePixel(Texture);
+        }
+    };
+
+    const auto RequireNonPixelIfNotRT = [&](FRHITexture* Texture)
+    {
+        if (Texture && Texture != RenderTarget)
+        {
+            RequireNonPixel(Texture);
+        }
+    };
+
+    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
+    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Normal].Get());
+    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Material].Get());
+    RequirePixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
+    RequirePixelIfNotRT(FrameResources.DirectionalShadowMask.Get());
+    RequirePixelIfNotRT(FrameResources.SSAOBuffer.Get());
+    RequirePixelIfNotRT(FrameResources.ShadowCascades.Get());
+    RequirePixelIfNotRT(FrameResources.CascadeIndexBuffer.Get());
+    RequirePixelIfNotRT(FrameResources.ShadowDebugBuffer.Get());
+    RequirePixelIfNotRT(FrameResources.TonemappedTarget.Get());
+    RequirePixelIfNotRT(FrameResources.FinalTarget.Get());
 
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets = 1;
@@ -209,8 +228,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     CommandList.BeginRenderPass(RenderPass);
 
-    const FRHIGraphicsPipelineStateRef& PSO =
-        (RenderTarget->GetFormat() == RenderSettings::GetBackBufferFormat()) ? DebugPSO_BackBuffer : DebugPSO_Linear;
+    const FRHIGraphicsPipelineStateRef& PSO = RenderTarget->GetFormat() == RenderSettings::GetBackBufferFormat() ? DebugPSO_BackBuffer : DebugPSO_Linear;
     CommandList.SetGraphicsPipelineState(PSO.Get());
 
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
@@ -224,6 +242,21 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 8);
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ShadowDebugBuffer->GetShaderResourceView(), 9);
 
+    FRHITexture* LitSourceTexture = nullptr;
+    if (bPreferTonemapped && FrameResources.TonemappedTarget)
+    {
+        LitSourceTexture = FrameResources.TonemappedTarget.Get();
+    }
+    else
+    {
+        LitSourceTexture = FrameResources.FinalTarget.Get();
+    }
+
+    if (LitSourceTexture)
+    {
+        CommandList.SetShaderResourceView(DebugPixelShader.Get(), LitSourceTexture->GetShaderResourceView(), 10);
+    }
+
     CommandList.SetConstantBuffer(DebugPixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
     FRHISamplerState* PointSampler  = FrameResources.GBufferSampler.Get();
@@ -233,16 +266,26 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     struct FDebugViewConstants
     {
-        int32 DebugMode = 0;
-        int32 ShadowMapSize = 0;
-        int32 OutputWidth  = 0;
-        int32 OutputHeight = 0;
+        int32 DebugMode          = 0;
+        int32 ShadowMapSize      = 0;
+        int32 OutputWidth        = 0;
+        int32 OutputHeight       = 0;
+        int32 ViewX              = 0;
+        int32 ViewY              = 0;
+        int32 TargetWidth        = 0;
+        int32 TargetHeight       = 0;
+        int32 OutputIsBackBuffer = 0;
     } Constants;
 
-    Constants.DebugMode = static_cast<int32>(DebugView);
-    Constants.ShadowMapSize = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetWidth()) : 0;
-    Constants.OutputWidth = ViewWidth;
-    Constants.OutputHeight = ViewHeight;
+    Constants.DebugMode          = static_cast<int32>(DebugView);
+    Constants.ShadowMapSize      = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetWidth()) : 0;
+    Constants.OutputWidth        = ViewWidth;
+    Constants.OutputHeight       = ViewHeight;
+    Constants.ViewX              = ViewX;
+    Constants.ViewY              = ViewY;
+    Constants.TargetWidth        = TargetWidth;
+    Constants.TargetHeight       = TargetHeight;
+    Constants.OutputIsBackBuffer = (RenderTarget->GetFormat() == RenderSettings::GetBackBufferFormat()) ? 1 : 0;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(DebugPixelShader.Get(), &Constants, NumConstants);
@@ -251,15 +294,17 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     CommandList.EndRenderPass();
 
-    RequireNonPixel(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
-    RequireNonPixel(FrameResources.GBuffer[GBufferIndex_Normal].Get());
-    RequireNonPixel(FrameResources.GBuffer[GBufferIndex_Material].Get());
-    RequireNonPixel(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
-    RequireNonPixel(FrameResources.DirectionalShadowMask.Get());
-    RequireNonPixel(FrameResources.SSAOBuffer.Get());
-    RequireNonPixel(FrameResources.ShadowCascades.Get());
-    RequireNonPixel(FrameResources.CascadeIndexBuffer.Get());
-    RequireNonPixel(FrameResources.ShadowDebugBuffer.Get());
+    RequireNonPixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
+    RequireNonPixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Normal].Get());
+    RequireNonPixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Material].Get());
+    RequireNonPixelIfNotRT(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
+    RequireNonPixelIfNotRT(FrameResources.DirectionalShadowMask.Get());
+    RequireNonPixelIfNotRT(FrameResources.SSAOBuffer.Get());
+    RequireNonPixelIfNotRT(FrameResources.ShadowCascades.Get());
+    RequireNonPixelIfNotRT(FrameResources.CascadeIndexBuffer.Get());
+    RequireNonPixelIfNotRT(FrameResources.ShadowDebugBuffer.Get());
+    RequireNonPixelIfNotRT(FrameResources.TonemappedTarget.Get());
+    RequireNonPixelIfNotRT(FrameResources.FinalTarget.Get());
 
     if (bNeedsTransition)
     {

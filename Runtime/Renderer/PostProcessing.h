@@ -41,15 +41,15 @@ private:
 
 struct FFinalCompositeInfoHLSL
 {
-    int32  bEnableSelectionOutline;
-    int32  bEnableGrid;
-    float  OutlineAlpha;
-    float  GridPlaneY;
+    int32    bEnableSelectionOutline;
+    int32    bEnableGrid;
+    float    OutlineAlpha;
+    float    GridPlaneY;
 
-    float  GridMinorSize;
-    float  GridMajorSize;
-    float  GridMinorWidth;
-    float  GridMajorWidth;
+    float    GridMinorSize;
+    float    GridMajorSize;
+    float    GridMinorWidth;
+    float    GridMajorWidth;
 
     FVector3 OutlineColor;
     float    GridFadeDistance;
@@ -76,7 +76,7 @@ public:
     virtual ~FFinalCompositePass();
 
     bool Initialize(const FFrameResources& FrameResources);
-    void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FRHITexture* InputSceneColor);
 
 private:
     FRHIGraphicsPipelineStateRef CompositePSO;

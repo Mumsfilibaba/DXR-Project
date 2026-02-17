@@ -1,7 +1,7 @@
 #ifndef MATRICES_HLSLI
 #define MATRICES_HLSLI
 
-struct FMatrix
+struct Matrix
 {
     // Left handed
     static float4x4 OrthographicProjection(float Left, float Right, float Bottom, float Top, float Near, float Far)

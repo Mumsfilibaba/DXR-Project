@@ -23,12 +23,6 @@
     #define DRAW_TILE_OCCUPANCY 0
 #endif
 
-// Cascade Debug
-#ifdef DRAW_CASCADE_DEBUG
-    #define DRAW_SHADOW_CASCADE 1
-#else
-    #define DRAW_SHADOW_CASCADE 0
-#endif
 
 // Enable Box-Projection for Light-Probes
 #ifndef ENABLE_LIGHT_PROBE_BOX_PROJECTION
@@ -64,10 +58,6 @@ TextureCubeArray<float> PointLightShadowMaps : register(t11);
 // SSAOBuffer
 Texture2D<float> SSAOBuffer : register(t12);
 
-// Shadow Cascade Data - (Debug data)
-#if DRAW_SHADOW_CASCADE
-Texture2D<uint> CascadeIndexBuffer : register(t13);
-#endif
 
 // Samplers
 SamplerState LUTSampler : register(s0);
@@ -539,29 +529,6 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         }
     }
     
-    FinalColor = FinalColor * Tint.rgb;
-
-#elif DRAW_SHADOW_CASCADE
-    const uint CascadeIndex = CascadeIndexBuffer[Pixel];
-
-    float4 Tint = 1.0;
-    if (CascadeIndex == 0)
-    {
-        Tint = float4(1.0, 0.0, 0.0, 1.0);
-    }
-    else if (CascadeIndex == 1)
-    {
-        Tint = float4(0.0, 1.0, 0.0, 1.0);
-    }
-    else if (CascadeIndex == 2)
-    {
-        Tint = float4(0.0, 0.0, 1.0, 1.0);
-    }
-    else if (CascadeIndex == 3)
-    {
-        Tint = float4(1.0, 1.0, 0.0, 1.0);
-    }
-
     FinalColor = FinalColor * Tint.rgb;
 #endif
     

@@ -32,6 +32,12 @@ static TAutoConsoleVariable<bool> CVarCSMDebugCascades(
     false,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<bool> CVarCSMDebugData(
+    "Renderer.CSM.DebugData",
+    "Enables CSM debug outputs (cascade index buffer).",
+    false,
+    EConsoleVariableFlags::Default);
+
 static TAutoConsoleVariable<bool> CVarCSMStableCascades(
     "Renderer.CSM.StableCascades",
     "Set to true to enable stable cascades when generating shadow cascade matrices",
@@ -1753,7 +1759,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         return;
     }
 
-    if (CVarCSMDebugCascades.GetValue())
+    if (CVarCSMDebugData.GetValue())
     {
         CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
     }
@@ -1772,7 +1778,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), ShadowMaskTarget->GetUnorderedAccessView(), 0);
 
-    if (CVarCSMDebugCascades.GetValue())
+    if (CVarCSMDebugData.GetValue())
     {
         CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
     }
@@ -1791,7 +1797,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTexture(ShadowMaskTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-    if (CVarCSMDebugCascades.GetValue())
+    if (CVarCSMDebugData.GetValue())
     {
         CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
     }
@@ -2004,7 +2010,7 @@ void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskSha
         }
     }
 
-    OutCombination.bDebugMode                   = CVarCSMDebugCascades.GetValue();
+    OutCombination.bDebugMode                   = CVarCSMDebugData.GetValue();
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bCascadeFallback             = CVarCSMCascadeFallback.GetValue();
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
@@ -2084,8 +2090,6 @@ void FShadowMaskHistoryPass::Execute(FRHICommandList& CommandList, FFrameResourc
         const FVector4 ClearValue(1.0f, 1.0f, 1.0f, 1.0f);
         CommandList.ClearUnorderedAccessView(FrameResources.ShadowMaskHistory[0]->GetUnorderedAccessView(), ClearValue);
         CommandList.ClearUnorderedAccessView(FrameResources.ShadowMaskHistory[1]->GetUnorderedAccessView(), ClearValue);
-        CommandList.TransitionTexture(FrameResources.ShadowMaskHistory[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-        CommandList.TransitionTexture(FrameResources.ShadowMaskHistory[1].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
         FrameResources.bShadowMaskHistoryInitialized = true;
         CurrentHistoryIndex = 0;
     }
@@ -2093,8 +2097,9 @@ void FShadowMaskHistoryPass::Execute(FRHICommandList& CommandList, FFrameResourc
     FRHITextureRef WriteHistory = FrameResources.ShadowMaskHistory[CurrentHistoryIndex];
     FRHITextureRef ReadHistory  = FrameResources.ShadowMaskHistory[1 - CurrentHistoryIndex];
 
-    CommandList.TransitionTexture(FrameResources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
-    CommandList.TransitionTexture(WriteHistory.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.RequireTextureState(FrameResources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+    CommandList.RequireTextureState(WriteHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+    CommandList.RequireTextureState(ReadHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
 
     CommandList.SetComputePipelineState(HistoryPSO.Get());
 
@@ -2115,8 +2120,8 @@ void FShadowMaskHistoryPass::Execute(FRHICommandList& CommandList, FFrameResourc
     const uint32 ThreadsY = Math::DivideByMultiple(FrameResources.DirectionalShadowMask->GetHeight(), NumThreads);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTexture(FrameResources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTexture(WriteHistory.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
+    CommandList.RequireTextureState(FrameResources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    CommandList.RequireTextureState(WriteHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
 
     CurrentHistoryIndex = 1 - CurrentHistoryIndex;
 

@@ -1,5 +1,6 @@
 #include "Structs.hlsli"
 #include "Helpers.hlsli"
+#include "ColorSpaceTransforms.hlsli"
 
 // Debug view modes (must match FSceneRenderView::EDebugView)
 #define DEBUG_VIEW_NONE              0
@@ -19,6 +20,8 @@
 #define DEBUG_VIEW_SHADOW_CONTAINMENT        14
 #define DEBUG_VIEW_SHADOW_CASCADE_FALLBACK   15
 #define DEBUG_VIEW_SHADOW_CASCADE_OVERLAY    16
+#define DEBUG_VIEW_LIT                       17
+#define DEBUG_VIEW_TILE_OCCUPANCY            18
 
 Texture2D<float4> GBufferAlbedo   : register(t0);
 Texture2D<float4> GBufferNormal   : register(t1);
@@ -30,6 +33,7 @@ Texture2D<float>  SSAOBuffer      : register(t6);
 Texture2DArray<float> ShadowCascades : register(t7);
 Texture2D<uint>   CascadeIndexBuffer : register(t8);
 Texture2D<float4> ShadowDebugBuffer : register(t9);
+Texture2D<float4> LitSceneBuffer : register(t10);
 
 SamplerState LinearSampler : register(s0);
 SamplerState PointSampler  : register(s1);
@@ -41,6 +45,11 @@ SHADER_CONSTANT_BLOCK_BEGIN
     int ShadowMapSize;
     int OutputWidth;
     int OutputHeight;
+    int ViewX;
+    int ViewY;
+    int TargetWidth;
+    int TargetHeight;
+    int OutputIsBackBuffer;
 SHADER_CONSTANT_BLOCK_END
 
 float3 VisualizeDepth(float Depth)
@@ -50,46 +59,61 @@ float3 VisualizeDepth(float Depth)
     return (1.0 - Depth01).xxx;
 }
 
+float3 DebugRamp(float Value)
+{
+    const float V = pow(saturate(Value), 0.35);
+    return lerp(float3(0.05, 0.05, 0.05), float3(1.0, 0.85, 0.2), V);
+}
+
+float3 CascadeIndexToColor(uint CascadeIndex)
+{
+    if (CascadeIndex == 0) { return float3(1.0, 0.0, 0.0); }
+    if (CascadeIndex == 1) { return float3(0.0, 1.0, 0.0); }
+    if (CascadeIndex == 2) { return float3(0.0, 0.0, 1.0); }
+    if (CascadeIndex == 3) { return float3(1.0, 1.0, 0.0); }
+    return float3(1.0, 1.0, 1.0);
+}
+
 float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
 {
     float3 Color = 0.0;
+    const float2 FullTexCoord = TexCoord;
 
     if (Constants.DebugMode == DEBUG_VIEW_SHADOW_MASK)
     {
-        const float Mask = ShadowMask.SampleLevel(PointSampler, TexCoord, 0).r;
+        const float Mask = ShadowMask.SampleLevel(PointSampler, FullTexCoord, 0).r;
         Color = Mask.xxx;
     }
     else if (Constants.DebugMode == DEBUG_VIEW_GBUFFER_ALBEDO)
     {
-        Color = GBufferAlbedo.SampleLevel(LinearSampler, TexCoord, 0).rgb;
+        Color = GBufferAlbedo.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
     }
     else if (Constants.DebugMode == DEBUG_VIEW_GBUFFER_NORMAL)
     {
-        Color = GBufferNormal.SampleLevel(LinearSampler, TexCoord, 0).rgb;
+        Color = GBufferNormal.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
     }
     else if (Constants.DebugMode == DEBUG_VIEW_GBUFFER_MATERIAL)
     {
-        Color = GBufferMaterial.SampleLevel(LinearSampler, TexCoord, 0).rgb;
+        Color = GBufferMaterial.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
     }
     else if (Constants.DebugMode == DEBUG_VIEW_GBUFFER_VELOCITY)
     {
-        float2 Vel = GBufferVelocity.SampleLevel(PointSampler, TexCoord, 0).rg;
+        float2 Vel = GBufferVelocity.SampleLevel(PointSampler, FullTexCoord, 0).rg;
         Color = float3(Vel * 0.5 + 0.5, 0.0);
     }
     else if (Constants.DebugMode == DEBUG_VIEW_SSAO)
     {
-        const float AO = SSAOBuffer.SampleLevel(PointSampler, TexCoord, 0).r;
+        const float AO = SSAOBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
         Color = AO.xxx;
     }
     else if (Constants.DebugMode == DEBUG_VIEW_DEPTH)
     {
-        const float Depth = GBufferDepth.SampleLevel(PointSampler, TexCoord, 0).r;
+        const float Depth = GBufferDepth.SampleLevel(PointSampler, FullTexCoord, 0).r;
         Color = VisualizeDepth(Depth);
     }
     else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADES)
     {
-        float2 ViewportSize = float2(Constants.OutputWidth, Constants.OutputHeight);
-
+        const float2 ViewportSize = float2(Constants.OutputWidth, Constants.OutputHeight);
         const float2 Pixel = TexCoord * ViewportSize;
         const float MinDim = min(ViewportSize.x, ViewportSize.y);
         const float QuadSize = floor(MinDim * 0.5);
@@ -125,7 +149,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
     }
     else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADE_INDEX)
     {
-        const float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, TexCoord, 0).r;
+        const float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
         const float CascadeF = saturate(DebugValue) * max(float(NUM_SHADOW_CASCADES - 1), 1.0);
         const uint CascadeIndex = (uint)(CascadeF + 0.5);
 
@@ -150,14 +174,61 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
             Color = 1.0;
         }
     }
-    else if (Constants.DebugMode >= DEBUG_VIEW_SHADOW_CASCADE_TRANSITION && Constants.DebugMode <= DEBUG_VIEW_SHADOW_CASCADE_FALLBACK)
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADE_TRANSITION)
     {
-        const float3 DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, TexCoord, 0).rgb;
-        Color = DebugValue;
+        const float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        Color = DebugValue.xxx;
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_FILTER_MARGIN)
+    {
+        float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        DebugValue = saturate(DebugValue * 8.0);
+        Color = DebugRamp(DebugValue);
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_PCSS_RADIUS_CLAMP)
+    {
+        float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        DebugValue = saturate(DebugValue * 4.0);
+        Color = lerp(float3(0.05, 0.05, 0.05), float3(1.0, 0.35, 0.1), pow(DebugValue, 0.5));
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADE_UPDATED)
+    {
+        const float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        Color = (DebugValue > 0.5) ? float3(0.2, 1.0, 0.2) : float3(0.05, 0.05, 0.05);
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CONTAINMENT)
+    {
+        const float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        Color = (DebugValue > 0.5) ? float3(0.2, 0.9, 0.2) : float3(0.9, 0.2, 0.2);
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADE_FALLBACK)
+    {
+        const float DebugValue = ShadowDebugBuffer.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        Color = (DebugValue > 0.5) ? float3(0.9, 0.2, 0.9) : float3(0.05, 0.05, 0.05);
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADE_OVERLAY)
+    {
+        const float2 FullSize = float2(Constants.TargetWidth, Constants.TargetHeight);
+        const uint2 Pixel = (uint2)min(max(TexCoord * FullSize, 0.0), FullSize - 1.0);
+        const uint CascadeIndex = CascadeIndexBuffer.Load(int3(Pixel, 0));
+        const float3 OverlayColor = CascadeIndexToColor(CascadeIndex);
+        const float Depth = GBufferDepth.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        const float3 LitColor = LitSceneBuffer.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
+        const float Mask = (Depth >= 0.9999) ? 0.0 : 1.0;
+        Color = lerp(LitColor, OverlayColor, 0.55 * Mask);
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_LIT)
+    {
+        Color = LitSceneBuffer.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
     }
     else
     {
         Color = 0.0;
+    }
+
+    if (Constants.OutputIsBackBuffer != 0)
+    {
+        Color = LinearToSRGB(Color);
     }
 
     return float4(Color, 1.0);
