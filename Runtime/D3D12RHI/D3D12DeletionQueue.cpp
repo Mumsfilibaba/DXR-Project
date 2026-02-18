@@ -33,8 +33,8 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
 
             case FD3D12DeferredObject::EType::D3DHeap:
             {
-                CHECK(Item.NativeHeap.Heap != nullptr);
-                Item.NativeHeap.Heap->Release();
+                CHECK(Item.D3DHeap != nullptr);
+                Item.D3DHeap->Release();
                 break;
             }
 

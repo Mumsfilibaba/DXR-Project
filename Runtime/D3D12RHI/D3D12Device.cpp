@@ -1158,14 +1158,14 @@ bool FD3D12Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D1
     HeapProperties.VisibleNodeMask      = NodeMask ? NodeMask : 1;
     HeapProperties.CreationNodeMask     = NodeMask ? NodeMask : 1;
 
-    TComPtr<ID3D12Resource> NativeResource;
+    TComPtr<ID3D12Resource> NewResource;
     const HRESULT Result = GetD3D12Device()->CreateCommittedResource(
         &HeapProperties,
         D3D12_HEAP_FLAG_NONE,
         &Desc,
         InitialState,
         ClearValue,
-        IID_PPV_ARGS(&NativeResource));
+        IID_PPV_ARGS(&NewResource));
 
     if (FAILED(Result))
     {
@@ -1173,11 +1173,7 @@ bool FD3D12Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D1
         return false;
     }
 
-    FD3D12ResourceRef Resource = new FD3D12Resource(this, Desc, HeapType);
-    Resource->SetResource(NativeResource);
-    Resource->InitializeFromNative(InitialState);
-    
-    OutResource = Resource;
+    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), HeapType, InitialState);
     return true;
 }
 
@@ -1188,14 +1184,14 @@ bool FD3D12Device::CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D
         return false;
     }
 
-    TComPtr<ID3D12Resource> NativeResource;
+    TComPtr<ID3D12Resource> NewResource;
     const HRESULT Result = GetD3D12Device()->CreatePlacedResource(
         Heap->GetD3D12Heap(),
         Offset,
         &Desc,
         InitialState,
         ClearValue,
-        IID_PPV_ARGS(&NativeResource));
+        IID_PPV_ARGS(&NewResource));
 
     if (FAILED(Result))
     {
@@ -1203,35 +1199,24 @@ bool FD3D12Device::CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D
         return false;
     }
 
-    FD3D12ResourceRef Resource = new FD3D12Resource(this, Desc, Heap->GetHeapType());
-    Resource->SetResource(NativeResource);
-    Resource->InitializeFromNative(InitialState);
-
-    OutResource = Resource;
+    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), Heap->GetHeapType(), InitialState);
     return true;
 }
 
 bool FD3D12Device::CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHeap)
 {
-    TComPtr<ID3D12Heap> NativeHeap;
-    const HRESULT Result = GetD3D12Device()->CreateHeap(&Desc, IID_PPV_ARGS(&NativeHeap));
+    TComPtr<ID3D12Heap> NewHeap;
+    const HRESULT Result = GetD3D12Device()->CreateHeap(&Desc, IID_PPV_ARGS(&NewHeap));
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12Device] CreateHeap failed");
         return false;
     }
 
-    FD3D12HeapRef Heap = new FD3D12Heap(this);
-    Heap->SetHeap(NativeHeap);
-
+    FD3D12HeapRef Heap = new FD3D12Heap(this, NewHeap.ReleaseOwnership());
     if (Desc.Properties.Type == D3D12_HEAP_TYPE_DEFAULT)
     {
-        if (FD3D12ResidencyManager* LocalResidencyManager = GetResidencyManager())
-        {
-            const FD3D12ResidencyHandle ResidencyHandle = LocalResidencyManager->RegisterPageable(NativeHeap.Get(), Desc.SizeInBytes, false);
-            LocalResidencyManager->TouchPageable(ResidencyHandle);
-            Heap->SetResidencyHandle(ResidencyHandle);
-        }
+        Heap->StartResidencyTracking();
     }
 
     OutHeap = Heap;

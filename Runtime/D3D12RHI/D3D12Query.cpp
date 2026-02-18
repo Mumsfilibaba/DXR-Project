@@ -27,7 +27,6 @@ FD3D12Query::FD3D12Query(FD3D12Device* InDevice, EQueryType InQueryType)
 
 FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager* InQueryHeapManager)
     : FD3D12DeviceChild(InDevice)
-    , ReadResource(nullptr)
     , ReadbackResourceStorage(InDevice)
     , QueryHeap(nullptr)
     , QueryAllocations()
@@ -78,7 +77,6 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
     }
 
     QueryHeap     = NewQueryHeap;
-    ReadResource  = ReadbackResourceStorage.GetResource();
     QueryHeapType = InQueryHeapType;
     NumQueries    = QueryHeapDesc.Count;
 
@@ -111,12 +109,12 @@ void FD3D12QueryHeap::ResolveQueries(FD3D12CommandList& CommandList)
     }
 
     const uint32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
-    CommandList->ResolveQueryData(QueryHeap.Get(), QueryType, 0, NumUsedQueries, ReadResource->GetD3D12Resource(), 0);
+    CommandList->ResolveQueryData(QueryHeap.Get(), QueryType, 0, NumUsedQueries, ReadbackResourceStorage.GetResource()->GetD3D12Resource(), 0);
 }
 
 void FD3D12QueryHeap::ReadBackResults(FD3D12Queue& Queue)
 {
-    void* Data = ReadResource->MapRange(0, nullptr);
+    void* Data = ReadbackResourceStorage.GetResource()->MapRange(0, nullptr);
     if (!Data)
     {
         D3D12_ERROR_CRITICAL("Failed to read query results");
@@ -145,7 +143,7 @@ void FD3D12QueryHeap::ReadBackResults(FD3D12Queue& Queue)
         }
     }
 
-    ReadResource->UnmapRange(0, nullptr);
+    ReadbackResourceStorage.GetResource()->UnmapRange(0, nullptr);
 
     // Reset this heap for future use
     CurrentQueryIndex = 0;
@@ -171,7 +169,7 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
     }
 
     const FString ResourceName = InName + "ReadBack Resource";
-    ReadResource->SetDebugName(ResourceName);
+    ReadbackResourceStorage.GetResource()->SetDebugName(ResourceName);
 }
 
 FD3D12QueryAllocator::FD3D12QueryAllocator(FD3D12Device* InDevice, FD3D12CommandContext& InContext, EQueryType InQueryType)

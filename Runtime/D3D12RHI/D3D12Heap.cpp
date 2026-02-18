@@ -2,20 +2,14 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 
-FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice)
+FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice, ID3D12Heap* InHeap)
     : FD3D12RefCounted()
     , FD3D12DeviceChild(InDevice)
-    , Heap(nullptr)
-    , Desc()
+    , Heap(InHeap)
+    , Desc(InHeap ? InHeap->GetDesc() : D3D12_HEAP_DESC{})
     , ResidencyHandle()
     , bShouldDeferredRelease(true)
 {
-}
-
-void FD3D12Heap::SetHeap(const TComPtr<ID3D12Heap>& InNativeHeap)
-{
-    Heap = InNativeHeap;
-    Desc = Heap ? Heap->GetDesc() : D3D12_HEAP_DESC{};
 }
 
 void FD3D12Heap::SetDebugName(const FString& Name)
@@ -39,27 +33,29 @@ void FD3D12Heap::SetDebugName(const FString& Name)
 
 FD3D12Heap::~FD3D12Heap()
 {
-    ReleaseResource();
+    EndResidencyTracking();
 }
 
-void FD3D12Heap::ReleaseResource()
+void FD3D12Heap::StartResidencyTracking()
 {
-    if (Heap)
+    if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
     {
-        if (FD3D12Device* LocalDevice = GetDevice())
-        {
-            if (FD3D12ResidencyManager* ResidencyManager = LocalDevice->GetResidencyManager())
-            {
-                if (ResidencyHandle.IsValid())
-                {
-                    ResidencyManager->UnregisterPageable(ResidencyHandle);
-                }
-            }
-        }
+        ResidencyHandle = ResidencyManager->RegisterPageable(Heap.Get(), Desc.SizeInBytes, false);
+        ResidencyManager->TouchPageable(ResidencyHandle);
     }
+}
 
-    ResidencyHandle = {};
-    Heap.Reset();
+void FD3D12Heap::EndResidencyTracking()
+{
+    if (ResidencyHandle.IsValid())
+    {
+        if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
+        {
+            ResidencyManager->UnregisterPageable(ResidencyHandle);
+        }
+
+        ResidencyHandle = {};
+    }
 }
 
 void FD3D12Heap::DeferredRelease()

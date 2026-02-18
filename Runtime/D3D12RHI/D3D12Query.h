@@ -68,7 +68,7 @@ public:
 
     FD3D12Resource* GetReadResource() const
     {
-        return ReadResource.Get();
+        return ReadbackResourceStorage.GetResource();
     }
 
     FD3D12QueryHeapManager* GetQueryHeapManager() const
@@ -82,7 +82,6 @@ public:
     }
     
 private:
-    FD3D12ResourceRef             ReadResource;
     FD3D12ResourceStorage         ReadbackResourceStorage;
     TComPtr<ID3D12QueryHeap>      QueryHeap;
     FD3D12QueryHeapManager*       QueryHeapManager;

@@ -45,8 +45,8 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
         return false;
     }
 
+    Desc         = InDesc;
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
-    Desc = InDesc;
 
     GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, GetOfflineHandle());
     return true;
@@ -68,17 +68,17 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
         return false;
     }
 
+    Desc         = InDesc;
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
-    Desc = InDesc;
 
-    ID3D12Resource* NativeResource = nullptr;
+    ID3D12Resource* D3DResource = nullptr;
     if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) == 0);
-        NativeResource = ViewResource->GetD3D12Resource();
+        D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateShaderResourceView(NativeResource, &Desc, GetOfflineHandle());
+    GetDevice()->GetD3D12Device()->CreateShaderResourceView(D3DResource, &Desc, GetOfflineHandle());
     return true;
 }
 
@@ -99,24 +99,24 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
         return false;
     }
 
-    ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
-    CounterResource = InCounterResource;
-    Desc = InDesc;
+    Desc            = InDesc;
+    CounterResource = MakeSharedRef<FD3D12Resource>(InCounterResource);
+    ViewResource    = MakeSharedRef<FD3D12Resource>(InResource);
 
-    ID3D12Resource* NativeCounterResource = nullptr;
+    ID3D12Resource* D3DCounterResource = nullptr;
     if (CounterResource)
     {
-        NativeCounterResource = CounterResource->GetD3D12Resource();
+        D3DCounterResource = CounterResource->GetD3D12Resource();
     }
 
-    ID3D12Resource* NativeResource = nullptr;
+    ID3D12Resource* D3DResource = nullptr;
     if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0);
-        NativeResource = ViewResource->GetD3D12Resource();
+        D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, GetOfflineHandle());
+    GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(D3DResource, D3DCounterResource, &Desc, GetOfflineHandle());
     return true;
 }
 
@@ -135,17 +135,17 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
         return false;
     }
 
+    Desc         = InDesc;
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
-    Desc = InDesc;
 
-    ID3D12Resource* NativeResource = nullptr;
+    ID3D12Resource* D3DResource = nullptr;
     if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) != 0);
-        NativeResource = ViewResource->GetD3D12Resource();
+        D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateRenderTargetView(NativeResource, &Desc, GetOfflineHandle());
+    GetDevice()->GetD3D12Device()->CreateRenderTargetView(D3DResource, &Desc, GetOfflineHandle());
     return true;
 }
 
@@ -164,16 +164,16 @@ bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_
         return false;
     }
 
+    Desc         = InDesc;
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
-    Desc = InDesc;
     
-    ID3D12Resource* NativeResource = nullptr;
+    ID3D12Resource* D3DResource = nullptr;
     if (ViewResource)
     {
         CHECK((InResource->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) != 0);
-        NativeResource = ViewResource->GetD3D12Resource();
+        D3DResource = ViewResource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateDepthStencilView(NativeResource, &Desc, GetOfflineHandle());
+    GetDevice()->GetD3D12Device()->CreateDepthStencilView(D3DResource, &Desc, GetOfflineHandle());
     return true;
 }

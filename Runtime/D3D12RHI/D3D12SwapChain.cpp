@@ -48,44 +48,44 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
     // Ensure that the CommandContext used is the same that we created the viewport with.
     // The limitation is really just that we use the same ID3D12CommandQueue that we used for 
     // creation since the presentation is queued up on the command-queue.
+    
     CHECK(CommandContext == InCommandContext);
 
     // Save the flags
     Flags = GetDevice()->GetAdapter()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
-    const uint32      NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
-    const DXGI_FORMAT NativeFormat        = ConvertFormat(Info.ColorFormat);
-
     RECT ClientRect;
     GetClientRect(Hwnd, &ClientRect);
-
+    
     if (Info.Width == 0)
     {
         Info.Width = uint16(ClientRect.right - ClientRect.left);
     }
-
+    
     if (Info.Height == 0)
     {
         Info.Height = uint16(ClientRect.bottom - ClientRect.top);
     }
-
+    
     if (!Info.Width)
     {
         D3D12_ERROR_CRITICAL("SwapChain width of zero is not supported");
         return false;
     }
-
+    
     if (!Info.Height)
     {
         D3D12_ERROR_CRITICAL("SwapChain height of zero is not supported");
         return false;
     }
 
+    const uint32 NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
+
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
     SwapChainDesc.Width              = Info.Width;
     SwapChainDesc.Height             = Info.Height;
-    SwapChainDesc.Format             = NativeFormat;
+    SwapChainDesc.Format             = ConvertFormat(Info.ColorFormat);
     SwapChainDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     SwapChainDesc.BufferCount        = NumSwapChainBuffers;
     SwapChainDesc.SampleDesc.Count   = 1;
@@ -257,9 +257,8 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
             return false;
         }
 
-        FD3D12ResourceRef WrappedResource = new FD3D12Resource(GetDevice(), BackBufferResource);
+        FD3D12ResourceRef WrappedResource = new FD3D12Resource(GetDevice(), BackBufferResource.ReleaseOwnership(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PRESENT);
         WrappedResource->DisableDeferredRelease();
-        WrappedResource->InitializeFromNative(D3D12_RESOURCE_STATE_PRESENT);
         BackBuffers[Index]->SetResource(WrappedResource.Get());
         BackBuffers[Index]->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }

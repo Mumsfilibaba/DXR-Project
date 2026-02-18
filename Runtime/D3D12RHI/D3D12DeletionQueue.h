@@ -46,8 +46,8 @@ struct FD3D12DeferredObject
         : Type(EType::D3DHeap)
     {
         CHECK(InHeap != nullptr);
-        NativeHeap.Heap = InHeap;
-        InHeap->AddRef();
+        D3DHeap = InHeap;
+        D3DHeap->AddRef();
     }
 
     FD3D12DeferredObject(FD3D12Resource* InResource)
@@ -63,7 +63,8 @@ struct FD3D12DeferredObject
     {
         CHECK(InHeap != nullptr);
         CHECK(InBlock != nullptr);
-        OnlineDescriptorBlock.Heap = InHeap;
+
+        OnlineDescriptorBlock.Heap  = InHeap;
         OnlineDescriptorBlock.Block = InBlock;
     }
 
@@ -122,13 +123,9 @@ struct FD3D12DeferredObject
         void*                               Allocator            = nullptr;
     } AllocatorBlock;
 
-    struct FNativeHeapData
-    {
-        ID3D12Heap* Heap = nullptr;
-    } NativeHeap;
-
     FRHIResource*   RHIResource = nullptr;
     FD3D12Resource* Resource    = nullptr;
+    ID3D12Heap*     D3DHeap     = nullptr;
     ID3D12Resource* D3DResource = nullptr;
     FD3D12Heap*     D3D12Heap   = nullptr;
 };

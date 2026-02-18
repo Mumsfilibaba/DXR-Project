@@ -7,13 +7,15 @@ typedef TSharedRef<class FD3D12Heap> FD3D12HeapRef;
 class FD3D12Heap : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
-    FD3D12Heap(FD3D12Device* InDevice);
+    FD3D12Heap(FD3D12Device* InDevice, ID3D12Heap* InHeap);
     ~FD3D12Heap();
 
-    void SetHeap(const TComPtr<ID3D12Heap>& InNativeHeap);
     void SetDebugName(const FString& Name);
 
     void DeferredRelease();
+
+    void StartResidencyTracking();
+    void EndResidencyTracking();
 
     void DisableDeferredRelease() { bShouldDeferredRelease = false; }
     bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
@@ -43,16 +45,9 @@ public:
         return ResidencyHandle;
     }
 
-    FORCEINLINE void SetResidencyHandle(const FD3D12ResidencyHandle& InResidencyHandle)
-    {
-        ResidencyHandle = InResidencyHandle;
-    }
-
 private:
-    void ReleaseResource();
-
     TComPtr<ID3D12Heap>   Heap;
-    D3D12_HEAP_DESC       Desc = {};
-    FD3D12ResidencyHandle ResidencyHandle = {};
-    bool                  bShouldDeferredRelease = true;
+    D3D12_HEAP_DESC       Desc;
+    FD3D12ResidencyHandle ResidencyHandle;
+    bool                  bShouldDeferredRelease;
 };

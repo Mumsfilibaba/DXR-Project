@@ -160,12 +160,9 @@ private:
 class FD3D12Resource : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
-    FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
-    FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
+    FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState);
     ~FD3D12Resource();
 
-    void SetResource(const TComPtr<ID3D12Resource>& InNativeResource);
-    void InitializeFromNative(D3D12_RESOURCE_STATES InitialState);
     void SetResourceState(D3D12_RESOURCE_STATES InState) { ResourceState = InState; }
     void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
     void UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
@@ -174,6 +171,9 @@ public:
     FString GetDebugName() const;
 
     void DeferredRelease();
+
+    void StartResidencyTracking();
+    void EndResidencyTracking();
 
     void DisableDeferredRelease() { bShouldDeferredRelease = false; }
     bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
@@ -207,6 +207,11 @@ public:
         return Desc;
     }
 
+    const FD3D12ResidencyHandle& GetResidencyHandle() const
+    {
+        return ResidencyHandle;
+    }
+
 private:
     TComPtr<ID3D12Resource>   Resource;
     D3D12_RESOURCE_STATES     ResourceState;
@@ -214,6 +219,7 @@ private:
     D3D12_RESOURCE_DESC       Desc;
     D3D12_GPU_VIRTUAL_ADDRESS Address;
     uint32                    NumSubresources;
+    FD3D12ResidencyHandle     ResidencyHandle;
     bool                      bShouldDeferredRelease;
 };
 

@@ -2,61 +2,29 @@
 #include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12ResidencyManager.h"
 
-FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource)
+FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState)
     : FD3D12RefCounted()
     , FD3D12DeviceChild(InDevice)
-    , Resource(InNativeResource)
-    , HeapType(D3D12_HEAP_TYPE_DEFAULT)
-    , ResourceState(D3D12_RESOURCE_STATE_COMMON)
-    , Desc(InNativeResource ? InNativeResource->GetDesc() : D3D12_RESOURCE_DESC{})
-    , Address(0)
-    , NumSubresources(0)
-    , bShouldDeferredRelease(true)
-{
-}
-
-FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType)
-    : FD3D12RefCounted()
-    , FD3D12DeviceChild(InDevice)
-    , Resource(nullptr)
+    , Resource(InResource)
     , HeapType(InHeapType)
-    , ResourceState(D3D12_RESOURCE_STATE_COMMON)
-    , Desc(InDesc)
+    , ResourceState(InInitialState)
+    , Desc(InResource ? InResource->GetDesc() : D3D12_RESOURCE_DESC{})
     , Address(0)
     , NumSubresources(0)
     , bShouldDeferredRelease(true)
 {
-}
-
-void FD3D12Resource::SetResource(const TComPtr<ID3D12Resource>& InNativeResource)
-{
-    Resource        = InNativeResource;
-    Desc            = Resource ? Resource->GetDesc() : D3D12_RESOURCE_DESC{};
-    Address         = 0;
-    NumSubresources = 0;
-}
-
-void FD3D12Resource::InitializeFromNative(D3D12_RESOURCE_STATES InitialState)
-{
-    if (!Resource)
+    if (Resource)
     {
-        return;
-    }
+        if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            Address = Resource->GetGPUVirtualAddress();
+        }
 
-    if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-    {
-        Address = Resource->GetGPUVirtualAddress();
+        const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
+        NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
     }
-    else
-    {
-        Address = 0;
-    }
-
-    ResourceState = InitialState;
-
-    const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
-    NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
 }
 
 void* FD3D12Resource::MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range)
@@ -136,7 +104,30 @@ FString FD3D12Resource::GetDebugName() const
 
 FD3D12Resource::~FD3D12Resource()
 {
-    ReleaseResource();
+    EndResidencyTracking();
+}
+
+void FD3D12Resource::StartResidencyTracking()
+{
+    if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
+    {
+        const D3D12_RESOURCE_ALLOCATION_INFO AllocationInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &Desc);
+        ResidencyHandle = ResidencyManager->RegisterPageable(Resource.Get(), AllocationInfo.SizeInBytes, false);
+        ResidencyManager->TouchPageable(ResidencyHandle);
+    }
+}
+
+void FD3D12Resource::EndResidencyTracking()
+{
+    if (ResidencyHandle.IsValid())
+    {
+        if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
+        {
+            ResidencyManager->UnregisterPageable(ResidencyHandle);
+        }
+
+        ResidencyHandle = {};
+    }
 }
 
 void FD3D12Resource::DeferredRelease()
