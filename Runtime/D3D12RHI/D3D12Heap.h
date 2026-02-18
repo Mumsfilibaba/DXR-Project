@@ -13,7 +13,10 @@ public:
     void SetHeap(const TComPtr<ID3D12Heap>& InNativeHeap);
     void SetDebugName(const FString& Name);
 
-    FORCEINLINE void DisableDeferDeletion() { bDeferDeletion = false; }
+    void DeferredRelease();
+
+    void DisableDeferredRelease() { bShouldDeferredRelease = false; }
+    bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
 
     FORCEINLINE D3D12_HEAP_TYPE GetHeapType() const
     {
@@ -51,5 +54,5 @@ private:
     TComPtr<ID3D12Heap>   Heap;
     D3D12_HEAP_DESC       Desc = {};
     FD3D12ResidencyHandle ResidencyHandle = {};
-    bool                  bDeferDeletion = true;
+    bool                  bShouldDeferredRelease = true;
 };

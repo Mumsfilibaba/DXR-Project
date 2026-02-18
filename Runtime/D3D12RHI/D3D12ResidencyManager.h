@@ -27,7 +27,6 @@ public:
 
     FD3D12ResidencyHandle RegisterPageable(ID3D12Pageable* InPageable, uint64 InSizeBytes, bool InIsAlwaysResident);
     void UnregisterPageable(const FD3D12ResidencyHandle& Handle);
-    void UnregisterPageable(ID3D12Pageable* InPageable);
 
     void TouchPageable(const FD3D12ResidencyHandle& Handle);
     void TouchPageable(ID3D12Pageable* InPageable);

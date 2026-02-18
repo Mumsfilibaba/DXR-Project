@@ -12,6 +12,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , Desc(InNativeResource ? InNativeResource->GetDesc() : D3D12_RESOURCE_DESC{})
     , Address(0)
     , NumSubresources(0)
+    , bShouldDeferredRelease(true)
 {
 }
 
@@ -24,14 +25,15 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC
     , Desc(InDesc)
     , Address(0)
     , NumSubresources(0)
+    , bShouldDeferredRelease(true)
 {
 }
 
 void FD3D12Resource::SetResource(const TComPtr<ID3D12Resource>& InNativeResource)
 {
-    Resource = InNativeResource;
-    Desc = Resource ? Resource->GetDesc() : D3D12_RESOURCE_DESC{};
-    Address = 0;
+    Resource        = InNativeResource;
+    Desc            = Resource ? Resource->GetDesc() : D3D12_RESOURCE_DESC{};
+    Address         = 0;
     NumSubresources = 0;
 }
 
@@ -137,16 +139,9 @@ FD3D12Resource::~FD3D12Resource()
     ReleaseResource();
 }
 
-void FD3D12Resource::ReleaseResource()
+void FD3D12Resource::DeferredRelease()
 {
-    if (bDeferDeletion)
-    {
-        FD3D12RHI::DeferDeletion(this);
-        return;
-    }
-    
-    // Immediate deletion
-    Resource.Reset();
+    FD3D12RHI::DeferDeletion(this);
 }
 
 FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
@@ -161,7 +156,6 @@ FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
     , StorageType(EResourceStorageType::Unknown)
 {
     FMemory::Memzero(&AllocationData, sizeof(AllocationData));
-    ResetAllocator();
 }
 
 FD3D12ResourceStorage::~FD3D12ResourceStorage()
@@ -178,36 +172,36 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
 
     CHECK(GetDevice() == Other.GetDevice());
 
-    FD3D12ResourceRef TempResource = Resource;
-    Resource = Other.Resource;
+    FD3D12Resource* TempResource = Resource;
+    Resource       = Other.Resource;
     Other.Resource = TempResource;
 
     const uint64 TempResourceOffset = ResourceOffset;
-    ResourceOffset = Other.ResourceOffset;
+    ResourceOffset       = Other.ResourceOffset;
     Other.ResourceOffset = TempResourceOffset;
 
     const D3D12_GPU_VIRTUAL_ADDRESS TempGpuVirtualAddress = GpuVirtualAddress;
-    GpuVirtualAddress = Other.GpuVirtualAddress;
+    GpuVirtualAddress       = Other.GpuVirtualAddress;
     Other.GpuVirtualAddress = TempGpuVirtualAddress;
 
     void* const TempMappedBaseAddress = MappedBaseAddress;
-    MappedBaseAddress = Other.MappedBaseAddress;
+    MappedBaseAddress       = Other.MappedBaseAddress;
     Other.MappedBaseAddress = TempMappedBaseAddress;
 
     const uint64 TempSize = Size;
-    Size = Other.Size;
+    Size       = Other.Size;
     Other.Size = TempSize;
 
     const FD3D12ResidencyHandle TempResidencyHandle = ResidencyHandle;
-    ResidencyHandle = Other.ResidencyHandle;
+    ResidencyHandle       = Other.ResidencyHandle;
     Other.ResidencyHandle = TempResidencyHandle;
 
     const ED3D12AllocatorType TempAllocatorType = AllocatorType;
-    AllocatorType = Other.AllocatorType;
+    AllocatorType       = Other.AllocatorType;
     Other.AllocatorType = TempAllocatorType;
 
     const EResourceStorageType TempStorageType = StorageType;
-    StorageType = Other.StorageType;
+    StorageType       = Other.StorageType;
     Other.StorageType = TempStorageType;
 
     uint8 TempAllocationData[sizeof(AllocationData)];
@@ -216,41 +210,42 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
     FMemory::Memcpy(&Other.AllocationData, TempAllocationData, sizeof(AllocationData));
 
     void* const TempAllocatorPointer = AllocatorPointers.AsVoid;
-    AllocatorPointers.AsVoid = Other.AllocatorPointers.AsVoid;
+    AllocatorPointers.AsVoid       = Other.AllocatorPointers.AsVoid;
     Other.AllocatorPointers.AsVoid = TempAllocatorPointer;
 }
 
 void FD3D12ResourceStorage::Reset()
 {
-    Resource = nullptr;
-    ResourceOffset = 0;
-    GpuVirtualAddress = 0;
-    MappedBaseAddress = nullptr;
-    Size = 0;
-    ResidencyHandle = {};
     FMemory::Memzero(&AllocationData, sizeof(AllocationData));
     ResetAllocator();
-    StorageType = EResourceStorageType::Unknown;
+
+    if (Resource)
+    {
+        Resource->Release();
+        Resource = nullptr;
+    }
+
+    ResourceOffset    = 0;
+    GpuVirtualAddress = 0;
+    MappedBaseAddress = nullptr;
+    Size              = 0;
+    ResidencyHandle   = {};
+    StorageType       = EResourceStorageType::Unknown;
 }
 
 void FD3D12ResourceStorage::ReleaseResource()
 {
     if (StorageType == EResourceStorageType::Unknown)
     {
-        if (Resource)
-        {
-            FD3D12RHI::DeferDeletion(Resource.Get());
-        }
-
         Reset();
         return;
     }
 
     if (StorageType == EResourceStorageType::Standalone)
     {
-        if (Resource)
+        if (Resource && Resource->ShouldDeferredRelease())
         {
-            FD3D12RHI::DeferDeletion(Resource.Get());
+            Resource->DeferredRelease();
         }
 
         Reset();
@@ -275,28 +270,50 @@ void FD3D12ResourceStorage::ReleaseResource()
         }
     }
 
-    if (StorageType == EResourceStorageType::SuballocatedHeap && Resource)
+    // For SuballocatedHeap, we own the placed resource
+    if (StorageType == EResourceStorageType::SuballocatedHeap && Resource && Resource->ShouldDeferredRelease())
     {
-        FD3D12RHI::DeferDeletion(Resource.Get());
+        Resource->DeferredRelease();
     }
 
     Reset();
 }
 
-void FD3D12ResourceStorage::InitStandalone(const FD3D12ResourceRef& InResource)
+void FD3D12ResourceStorage::SetResource(FD3D12Resource* InResource)
+{
+    if (InResource)
+    {
+        InResource->AddRef();
+    }
+
+    if (Resource)
+    {
+        Resource->Release();
+    }
+
+    Resource = InResource;
+}
+
+void FD3D12ResourceStorage::InitStandalone(FD3D12Resource* InResource)
 {
     Reset();
-    Resource = InResource;
-    ResourceOffset = 0;
+
+    if (InResource)
+    {
+        InResource->AddRef();
+    }
+
+    Resource          = InResource;
+    ResourceOffset    = 0;
     GpuVirtualAddress = InResource ? InResource->GetGPUVirtualAddress() : 0;
     MappedBaseAddress = nullptr;
-    StorageType = EResourceStorageType::Standalone;
+    StorageType       = EResourceStorageType::Standalone;
 }
 
 void FD3D12ResourceStorage::ResetAllocator()
 {
     AllocatorPointers.AsVoid = nullptr;
-    AllocatorType = ED3D12AllocatorType::None;
+    AllocatorType            = ED3D12AllocatorType::None;
 }
 
 FD3D12BaseResource::FD3D12BaseResource(FD3D12Device* InDevice)
@@ -336,6 +353,7 @@ void FD3D12BaseResource::NotifyRelocation()
 {
     // Notify all listeners that the resource was reallocated (underlying resource/allocation changed)
     TScopedLock Lock(ListenersCS);
+
     for (ID3D12ResourceRelocationListener* Listener : Listeners)
     {
         if (Listener)

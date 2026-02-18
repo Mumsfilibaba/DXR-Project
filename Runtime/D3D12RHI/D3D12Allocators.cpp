@@ -217,7 +217,7 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
 
     if (BackingResource)
     {
-        OutStorage.SetResource(BackingResource);
+        OutStorage.SetResource(BackingResource.Get());
         OutStorage.SetResourceOffset(Offset);
         OutStorage.SetGpuVirtualAddress(BackingResource->GetGPUVirtualAddress() + Offset);
         OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + Offset) : nullptr);
@@ -532,7 +532,7 @@ bool FD3D12PoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignment
 
         if (BackingResource)
         {
-            OutStorage.SetResource(BackingResource);
+            OutStorage.SetResource(BackingResource.Get());
             OutStorage.SetGpuVirtualAddress(BackingResource->GetGPUVirtualAddress() + AlignedOffset);
             OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
         }
@@ -778,7 +778,7 @@ bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D
             MappedBaseAddress = NewResource->MapRange(0, nullptr);
         }
 
-        OutStorage.InitStandalone(NewResource);
+        OutStorage.InitStandalone(NewResource.Get());
         OutStorage.SetSize(SizeAligned);
         OutStorage.SetResourceOffset(0);
         OutStorage.SetGpuVirtualAddress(NewResource->GetGPUVirtualAddress());
@@ -1005,7 +1005,7 @@ bool FD3D12BucketAllocator::TryAllocate(uint64 SizeInBytes, FD3D12ResourceStorag
         Bucket.FreeBlocks.Pop();
 
         OutStorage.Reset();
-        OutStorage.SetResource(Bucket.BackingResource);
+        OutStorage.SetResource(Bucket.BackingResource.Get());
         OutStorage.SetResourceOffset(AllocationData.Offset);
         OutStorage.SetGpuVirtualAddress(Bucket.BackingResource ? (Bucket.BackingResource->GetGPUVirtualAddress() + AllocationData.Offset) : 0);
         OutStorage.SetMappedBaseAddress(Bucket.MappedBaseAddress ? (Bucket.MappedBaseAddress + AllocationData.Offset) : nullptr);
@@ -1208,7 +1208,7 @@ bool FD3D12LinearAllocatorPage::Initialize()
         MappedBaseAddress = Resource->MapRange(0, nullptr);
     }
 
-    BackingResourceStorage.InitStandalone(Resource);
+    BackingResourceStorage.InitStandalone(Resource.Get());
     BackingResourceStorage.SetSize(PageSizeBytes);
     BackingResourceStorage.SetResourceOffset(0);
     BackingResourceStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
@@ -1331,7 +1331,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
             MappedBaseAddress = Resource->MapRange(0, nullptr);
         }
 
-        OutStorage.InitStandalone(Resource);
+        OutStorage.InitStandalone(Resource.Get());
         OutStorage.SetSize(SizeAligned);
         OutStorage.SetResourceOffset(0);
         OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
@@ -1396,8 +1396,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
 
     if (FD3D12Resource* PageResource = BackingStorage.GetResource())
     {
-        FD3D12ResourceRef ResourceRef = PageResource;
-        OutStorage.SetResource(ResourceRef);
+        OutStorage.SetResource(PageResource);
     }
 
     OutStorage.SetResourceOffset(PageResourceOffset);
@@ -1573,7 +1572,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
             MappedBaseAddress = Resource->MapRange(0, nullptr);
         }
 
-        OutStorage.InitStandalone(Resource);
+        OutStorage.InitStandalone(Resource.Get());
         OutStorage.SetSize(SizeInBytes);
         OutStorage.SetResourceOffset(0);
         OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
@@ -1935,7 +1934,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
             return false;
         }
 
-        OutStorage.InitStandalone(NewResource);
+        OutStorage.InitStandalone(NewResource.Get());
         OutStorage.SetSize(AllocationInfo.SizeInBytes);
         return true;
     }
@@ -1984,7 +1983,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     }
 
     OutStorage.Swap(PoolResourceStorage);
-    OutStorage.SetResource(NewResource);
+    OutStorage.SetResource(NewResource.Get());
     OutStorage.SetResourceOffset(0);
     OutStorage.SetGpuVirtualAddress(0);
     OutStorage.SetMappedBaseAddress(nullptr);

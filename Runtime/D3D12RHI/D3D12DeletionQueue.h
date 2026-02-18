@@ -7,9 +7,9 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Allocators.h"
 
+class FD3D12Heap;
 class FD3D12OnlineDescriptorHeap;
 struct FD3D12OnlineDescriptorBlock;
-class FD3D12Heap;
 
 struct FD3D12DeferredObject
 {
@@ -19,11 +19,12 @@ struct FD3D12DeferredObject
     enum class EType
     {
         D3DResource           = 1,
-        Resource              = 2,
-        RHIResource           = 3,
-        OnlineDescriptorBlock = 4,
-        Heap                  = 5,
-        AllocatorBlock        = 6,
+        D3DHeap               = 2,
+        Resource              = 3,
+        RHIResource           = 4,
+        OnlineDescriptorBlock = 5,
+        Heap                  = 6,
+        AllocatorBlock        = 7,
     };
 
     FD3D12DeferredObject(FRHIResource* InResource)
@@ -39,6 +40,14 @@ struct FD3D12DeferredObject
         CHECK(InResource != nullptr);
         D3DResource = InResource;
         InResource->AddRef();
+    }
+
+    FD3D12DeferredObject(ID3D12Heap* InHeap)
+        : Type(EType::D3DHeap)
+    {
+        CHECK(InHeap != nullptr);
+        NativeHeap.Heap = InHeap;
+        InHeap->AddRef();
     }
 
     FD3D12DeferredObject(FD3D12Resource* InResource)
@@ -97,6 +106,7 @@ struct FD3D12DeferredObject
     }
 
     EType const Type;
+
     struct FOnlineDescriptorBlockData
     {
         FD3D12OnlineDescriptorHeap*  Heap  = nullptr;
@@ -106,11 +116,16 @@ struct FD3D12DeferredObject
     struct FAllocatorBlockData
     {
         ED3D12DeferredAllocatorType         AllocatorType        = ED3D12DeferredAllocatorType::Pool;
-        void*                               Allocator            = nullptr;
         FD3D12BuddyAllocatorAllocationData  BuddyAllocationData  = {};
         FD3D12PoolAllocatorAllocationData   PoolAllocationData   = {};
         FD3D12BucketAllocatorAllocationData BucketAllocationData = {};
+        void*                               Allocator            = nullptr;
     } AllocatorBlock;
+
+    struct FNativeHeapData
+    {
+        ID3D12Heap* Heap = nullptr;
+    } NativeHeap;
 
     FRHIResource*   RHIResource = nullptr;
     FD3D12Resource* Resource    = nullptr;

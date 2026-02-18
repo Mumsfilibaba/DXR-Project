@@ -1,5 +1,6 @@
 #include "D3D12RHI/D3D12Heap.h"
 #include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12ResidencyManager.h"
 
 FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice)
     : FD3D12RefCounted()
@@ -7,7 +8,7 @@ FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice)
     , Heap(nullptr)
     , Desc()
     , ResidencyHandle()
-    , bDeferDeletion(true)
+    , bShouldDeferredRelease(true)
 {
 }
 
@@ -43,12 +44,25 @@ FD3D12Heap::~FD3D12Heap()
 
 void FD3D12Heap::ReleaseResource()
 {
-    if (bDeferDeletion)
+    if (Heap)
     {
-        FD3D12RHI::DeferDeletion(this);
-        return;
+        if (FD3D12Device* LocalDevice = GetDevice())
+        {
+            if (FD3D12ResidencyManager* ResidencyManager = LocalDevice->GetResidencyManager())
+            {
+                if (ResidencyHandle.IsValid())
+                {
+                    ResidencyManager->UnregisterPageable(ResidencyHandle);
+                }
+            }
+        }
     }
-    
-    // Immediate deletion
+
+    ResidencyHandle = {};
     Heap.Reset();
+}
+
+void FD3D12Heap::DeferredRelease()
+{
+    FD3D12RHI::DeferDeletion(this);
 }

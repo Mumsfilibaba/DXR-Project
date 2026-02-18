@@ -20,14 +20,6 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
             case FD3D12DeferredObject::EType::Resource:
             {
                 CHECK(Item.Resource != nullptr);
-                if (FD3D12Device* Device = Item.Resource->GetDevice())
-                {
-                    if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
-                    {
-                        ResidencyManager->UnregisterPageable(Item.Resource->GetD3D12Resource());
-                    }
-                }
-
                 Item.Resource->Release();
                 break;
             }
@@ -36,6 +28,13 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
             {
                 CHECK(Item.D3DResource != nullptr);
                 Item.D3DResource->Release();
+                break;
+            }
+
+            case FD3D12DeferredObject::EType::D3DHeap:
+            {
+                CHECK(Item.NativeHeap.Heap != nullptr);
+                Item.NativeHeap.Heap->Release();
                 break;
             }
 
@@ -51,23 +50,6 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
             case FD3D12DeferredObject::EType::Heap:
             {
                 CHECK(Item.D3D12Heap != nullptr);
-
-                if (FD3D12Device* Device = Item.D3D12Heap->GetDevice())
-                {
-                    if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
-                    {
-                        const FD3D12ResidencyHandle& ResidencyHandle = Item.D3D12Heap->GetResidencyHandle();
-                        if (ResidencyHandle.IsValid())
-                        {
-                            ResidencyManager->UnregisterPageable(ResidencyHandle);
-                        }
-                        else
-                        {
-                            ResidencyManager->UnregisterPageable(Item.D3D12Heap->GetD3D12Heap());
-                        }
-                    }
-                }
-
                 Item.D3D12Heap->Release();
                 break;
             }

@@ -160,32 +160,7 @@ void FD3D12ResidencyManager::UnregisterPageable(const FD3D12ResidencyHandle& Han
     {
         TrackedIndexByPageable.Remove(Entry.Pageable);
     }
-    Entry.Pageable        = nullptr;
-    Entry.SizeBytes       = 0;
-    Entry.LastUsedFrame   = CurrentFrame;
-    Entry.bAlwaysResident = false;
-    Entry.bIsResident     = false;
-    Entry.bAllocated      = false;
-    ++Entry.Generation;
-}
-
-void FD3D12ResidencyManager::UnregisterPageable(ID3D12Pageable* InPageable)
-{
-    if (!bEnable || !InPageable)
-    {
-        return;
-    }
-
-    SCOPED_LOCK(Mutex);
-
-    const int32 Index = FindTrackedIndexByPageable(InPageable);
-    if (Index < 0)
-    {
-        return;
-    }
-
-    FD3D12ResidencyTrackedPageable& Entry = Tracked[Index];
-    TrackedIndexByPageable.Remove(InPageable);
+    
     Entry.Pageable        = nullptr;
     Entry.SizeBytes       = 0;
     Entry.LastUsedFrame   = CurrentFrame;

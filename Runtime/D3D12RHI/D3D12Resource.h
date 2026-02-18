@@ -65,12 +65,13 @@ public:
     FD3D12ResourceStorage(FD3D12Device* InDevice);
     ~FD3D12ResourceStorage();
 
-    void InitStandalone(const FD3D12ResourceRef& InResource);
+    void InitStandalone(FD3D12Resource* InResource);
     
     void Swap(FD3D12ResourceStorage& Other);
     void ReleaseResource();
     void Reset();
     void ResetAllocator();
+    void SetResource(FD3D12Resource* InResource);
 
     FORCEINLINE bool IsValid() const { return StorageType != EResourceStorageType::Unknown; }
 
@@ -82,18 +83,17 @@ public:
     FORCEINLINE void*                        GetAllocator()         const { return AllocatorPointers.AsVoid; }
     FORCEINLINE ED3D12AllocatorType          GetAllocatorType()     const { return AllocatorType; }
     FORCEINLINE EResourceStorageType         GetStorageType()       const { return StorageType; }
-    FORCEINLINE FD3D12Resource*              GetResource()          const { return Resource.Get(); }
+    FORCEINLINE FD3D12Resource*              GetResource()          const { return Resource; }
 
     FORCEINLINE const FD3D12PoolAllocatorAllocationData&   GetPoolAllocationData()   const { return AllocationData.Pool; }
     FORCEINLINE const FD3D12BuddyAllocatorAllocationData&  GetBuddyAllocationData()  const { return AllocationData.Buddy; }
     FORCEINLINE const FD3D12BucketAllocatorAllocationData& GetBucketAllocationData() const { return AllocationData.Bucket; }
 
-    FORCEINLINE void SetResource(const FD3D12ResourceRef& InResource)                    { Resource = InResource; }
     FORCEINLINE void SetSize(uint64 InSize)                                              { Size = InSize; }
     FORCEINLINE void SetResourceOffset(uint64 InResourceOffset)                          { ResourceOffset = InResourceOffset; }
     FORCEINLINE void SetGpuVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress) { GpuVirtualAddress = InGpuVirtualAddress; }
     FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
-    FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                   { StorageType = InStorageType; }
+    FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                  { StorageType = InStorageType; }
 
     FORCEINLINE void SetResidencyHandle(const FD3D12ResidencyHandle& InResidencyHandle)
     {
@@ -147,7 +147,7 @@ private:
 
     } AllocatorPointers;
 
-    FD3D12ResourceRef         Resource;
+    FD3D12Resource*           Resource;
     uint64                    ResourceOffset;
     D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress;
     void*                     MappedBaseAddress;
@@ -173,7 +173,10 @@ public:
     void SetDebugName(const FString& Name);
     FString GetDebugName() const;
 
-    void DisableDeferDeletion() { bDeferDeletion = false; }
+    void DeferredRelease();
+
+    void DisableDeferredRelease() { bShouldDeferredRelease = false; }
+    bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
 
     // Texture Accessors
     uint64 GetWidth()  const { return Desc.Width; }
@@ -205,15 +208,13 @@ public:
     }
 
 private:
-    void ReleaseResource();
-
     TComPtr<ID3D12Resource>   Resource;
     D3D12_RESOURCE_STATES     ResourceState;
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_DESC       Desc;
     D3D12_GPU_VIRTUAL_ADDRESS Address;
     uint32                    NumSubresources;
-    bool                      bDeferDeletion = true;
+    bool                      bShouldDeferredRelease;
 };
 
 struct ID3D12ResourceRelocationListener
