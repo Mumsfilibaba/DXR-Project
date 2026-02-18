@@ -73,7 +73,8 @@ public:
     void ResetAllocator();
     void SetResource(FD3D12Resource* InResource);
 
-    FORCEINLINE bool IsValid() const { return StorageType != EResourceStorageType::Unknown; }
+    FORCEINLINE bool IsValid()          const { return StorageType != EResourceStorageType::Unknown; }
+    FORCEINLINE bool IsPlacedResource() const { return StorageType == EResourceStorageType::SuballocatedHeap; }
 
     FORCEINLINE void*                        GetMappedBaseAddress() const { return MappedBaseAddress; }
     FORCEINLINE uint64                       GetSize()              const { return Size; }

@@ -1,5 +1,6 @@
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12Allocators.h"
+#include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12RHI.h"
 
@@ -94,7 +95,8 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         }
     }
 
-    if (!GetDevice()->GetTextureAllocator()->TryAllocate(ResourceDesc, D3D12_RESOURCE_STATE_COMMON, bSupportClearValue ? &ClearValue : nullptr, ResourceStorage) || ResourceStorage.GetResource() == nullptr)
+    const bool bAllocated = GetDevice()->GetTextureAllocator()->TryAllocate(ResourceDesc, D3D12_RESOURCE_STATE_COMMON, bSupportClearValue ? &ClearValue : nullptr, ResourceStorage);
+    if (!bAllocated || ResourceStorage.GetResource() == nullptr)
     {
         return false;
     }
@@ -228,6 +230,64 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
 
         // NOTE: Transition into InitialAccess
         InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        InCommandContext->FinishContext();
+    }
+    else if (ResourceStorage.IsPlacedResource() && bSupportClearValue)
+    {
+        InCommandContext->StartContext();
+
+        if (Info.IsRenderTarget())
+        {
+            InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::RenderTarget));
+            InCommandContext->GetResourceBarrierBatcher().FlushBarriers();
+
+            FRHIRenderTargetView RTView;
+            RTView.Texture        = this;
+            RTView.ClearValue     = Info.ClearValue.IsColorValue() ? Info.ClearValue.AsColor() : FFloatColor();
+            RTView.ArrayIndex     = 0;
+            RTView.NumArraySlices = ResourceDesc.DepthOrArraySize;
+            RTView.Format         = Info.Format;
+            RTView.MipLevel       = 0;
+            RTView.LoadAction     = EAttachmentLoadAction::Clear;
+            RTView.StoreAction    = EAttachmentStoreAction::Store;
+
+            FD3D12RenderTargetView* D3D12RTV = GetOrCreateRenderTargetView(RTView);
+            CHECK(D3D12RTV != nullptr);
+
+            const float ClearColor[4] = { ClearValue.Color[0], ClearValue.Color[1], ClearValue.Color[2], ClearValue.Color[3] };
+            InCommandContext->GetCommandList()->ClearRenderTargetView(D3D12RTV->GetOfflineHandle(), ClearColor, 0, nullptr);
+
+            if (InInitialAccess != EResourceAccess::RenderTarget)
+            {
+                InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::RenderTarget, InInitialAccess));
+            }
+        }
+        else if (Info.IsDepthStencil())
+        {
+            InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::DepthWrite));
+            InCommandContext->GetResourceBarrierBatcher().FlushBarriers();
+
+            FRHIDepthStencilView DSView;
+            DSView.Texture        = this;
+            DSView.ClearValue     = Info.ClearValue.IsDepthStencilValue() ? Info.ClearValue.AsDepthStencil() : FDepthStencilValue();
+            DSView.ArrayIndex     = 0;
+            DSView.NumArraySlices = ResourceDesc.DepthOrArraySize;
+            DSView.Format         = Info.ClearValue.Format != EFormat::Unknown ? Info.ClearValue.Format : Info.Format;
+            DSView.MipLevel       = 0;
+            DSView.LoadAction     = EAttachmentLoadAction::Clear;
+            DSView.StoreAction    = EAttachmentStoreAction::Store;
+
+            FD3D12DepthStencilView* D3D12DSV = GetOrCreateDepthStencilView(DSView);
+            CHECK(D3D12DSV != nullptr);
+
+            InCommandContext->GetCommandList()->ClearDepthStencilView(D3D12DSV->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, ClearValue.DepthStencil.Depth, static_cast<uint8>(ClearValue.DepthStencil.Stencil), 0, nullptr);
+
+            if (InInitialAccess != EResourceAccess::DepthWrite)
+            {
+                InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::DepthWrite, InInitialAccess));
+            }
+        }
+
         InCommandContext->FinishContext();
     }
     else if (InInitialAccess != EResourceAccess::Common)
