@@ -311,13 +311,13 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     // Gather ShaderModules
     VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    ShaderStageCreateInfo.pName = "main";
-    
+
     TArray<VkPipelineShaderStageCreateInfo> ShaderStages;
-    if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Vertex]->GetOrCreateShaderModule(PipelineLayout))
+    if (FVulkanShaderModuleRef ShaderModule = Shaders[ShaderVisibility_Vertex]->GetOrCreateShaderModule(PipelineLayout))
     {
         ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
         ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+        ShaderStageCreateInfo.pName  = Shaders[ShaderVisibility_Vertex]->GetEntryPoint();
         ShaderStages.Add(ShaderStageCreateInfo);
     }
     else
@@ -328,10 +328,11 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     
     if (Shaders[ShaderVisibility_Hull])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Hull]->GetOrCreateShaderModule(PipelineLayout))
+        if (FVulkanShaderModuleRef ShaderModule = Shaders[ShaderVisibility_Hull]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = Shaders[ShaderVisibility_Hull]->GetEntryPoint();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -342,10 +343,11 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     }
     if (Shaders[ShaderVisibility_Domain])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Domain]->GetOrCreateShaderModule(PipelineLayout))
+        if (FVulkanShaderModuleRef ShaderModule = Shaders[ShaderVisibility_Domain]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = Shaders[ShaderVisibility_Domain]->GetEntryPoint();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -356,10 +358,11 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     }
     if (Shaders[ShaderVisibility_Geometry])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Geometry]->GetOrCreateShaderModule(PipelineLayout))
+        if (FVulkanShaderModuleRef ShaderModule = Shaders[ShaderVisibility_Geometry]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_GEOMETRY_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = Shaders[ShaderVisibility_Geometry]->GetEntryPoint();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -370,10 +373,11 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     }
     if (Shaders[ShaderVisibility_Pixel])
     {
-        if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Pixel]->GetOrCreateShaderModule(PipelineLayout))
+        if (FVulkanShaderModuleRef ShaderModule = Shaders[ShaderVisibility_Pixel]->GetOrCreateShaderModule(PipelineLayout))
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = Shaders[ShaderVisibility_Pixel]->GetEntryPoint();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -557,7 +561,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo&
     VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
-    ShaderStageCreateInfo.pName  = "main";
+    ShaderStageCreateInfo.pName  = VulkanComputeShader->GetEntryPoint();
     
     // PipelineLayout
     FVulkanPipelineLayoutInfo LayoutInfo;
@@ -572,7 +576,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo&
         return false;
     }
 
-    if (TSharedRef<FVulkanShaderModule> ShaderModule = VulkanComputeShader->GetOrCreateShaderModule(PipelineLayout))
+    if (FVulkanShaderModuleRef ShaderModule = VulkanComputeShader->GetOrCreateShaderModule(PipelineLayout))
     {
         ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
     }

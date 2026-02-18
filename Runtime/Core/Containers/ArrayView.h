@@ -403,6 +403,9 @@ struct TIsContiguousContainer<TArrayView<T>>
     inline static constexpr bool Value = true;
 };
 
+template<typename T>
+using TConstArrayView = TArrayView<const T>;
+
 /**
  * @brief Creates an array view from a contiguous container.
  * @tparam ContainerType The type of the container.

@@ -16,8 +16,7 @@ static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType, const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
 {
     if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {

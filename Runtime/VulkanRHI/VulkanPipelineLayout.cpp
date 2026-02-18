@@ -189,6 +189,24 @@ bool FVulkanPipelineLayout::GetDescriptorSetIndex(EShaderVisibility ShaderStage,
     }
 }
 
+bool FVulkanPipelineLayout::GetDescriptorType(uint32 DescriptorSetIndex, uint32 BindingIndex, VkDescriptorType& OutDescriptorType) const
+{
+    if (!SetLayoutRemappings.IsValidIndex(static_cast<int32>(DescriptorSetIndex)))
+    {
+        return false;
+    }
+
+    const FVulkanDescriptorRemappingInfo& RemappingInfo = SetLayoutRemappings[DescriptorSetIndex];
+    if (!RemappingInfo.RemappingInfo.IsValidIndex(static_cast<int32>(BindingIndex)))
+    {
+        return false;
+    }
+
+    const EVulkanBindingType BindingType = RemappingInfo.RemappingInfo[BindingIndex].BindingType;
+    OutDescriptorType = GetDescriptorTypeFromBindingType(BindingType);
+    return true;
+}
+
 void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo& LayoutInfo)
 {
     CHECK(LayoutInfo.SetLayoutInfos.Size() == LayoutInfo.SetLayoutRemappings.Size());
@@ -231,6 +249,8 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             case VulkanBindingType_StorageImage:
+                StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
+                break;
             case VulkanBindingType_StorageBufferReadWrite:
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;

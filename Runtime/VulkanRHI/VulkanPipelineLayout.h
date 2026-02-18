@@ -205,6 +205,7 @@ public:
 
     bool GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding);
     bool GetDescriptorSetIndex(EShaderVisibility ShaderStage, uint32& OutDescriptorSetIndex);
+    bool GetDescriptorType(uint32 DescriptorSetIndex, uint32 BindingIndex, VkDescriptorType& OutDescriptorType) const;
 
     VkPipelineLayout GetVkPipelineLayout() const
     {

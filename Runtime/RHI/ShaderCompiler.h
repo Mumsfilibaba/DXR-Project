@@ -49,15 +49,15 @@ struct FShaderCompileInfo;
 class RHI_API FShaderCompiler
 {
 public:
-    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
+    static EShaderOutputLanguage GetCurrentRHIOutputLanguage();
 
     static bool Create(const FString& InAssetPath);
     static void Destroy();
 
     static FORCEINLINE FShaderCompiler& Get()
     {
-        CHECK(GShaderCompiler != nullptr);
-        return *GShaderCompiler;
+        CHECK(ShaderCompiler != nullptr);
+        return *ShaderCompiler;
     }
 
 public:
@@ -70,17 +70,16 @@ private:
 
     bool Initialize();
     bool Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource);
-    bool RecompileSpirv(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
+
     FString CreateArgString(const TArrayView<LPCWSTR> Args);
 
     void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
     FString               AssetPath;
 
-    static FShaderCompiler* GShaderCompiler;
+    static FShaderCompiler* ShaderCompiler;
 };
 
 struct FShaderCompileInfo
@@ -96,7 +95,7 @@ struct FShaderCompileInfo
     }
     
     FShaderCompileInfo(const FString& InEntryPoint, EShaderModel InShaderModel, EShaderStage InShaderStage, 
-        const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>(), EShaderOutputLanguage InOutputLanguage = FShaderCompiler::GetOutputLanguageBasedOnRHI())
+        const TArrayView<FShaderDefine>& InDefines = TArrayView<FShaderDefine>(), EShaderOutputLanguage InOutputLanguage = FShaderCompiler::GetCurrentRHIOutputLanguage())
         : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
         , OutputLanguage(InOutputLanguage)

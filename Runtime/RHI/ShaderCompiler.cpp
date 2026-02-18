@@ -22,11 +22,6 @@ static TAutoConsoleVariable<bool> CVarVerboseLogging(
     "Enable verbose logging in the ShaderCompiler",
     false);
 
-static TAutoConsoleVariable<bool> CVarRecompileSPIRV(
-    "RHI.ShaderCompiler.RecompileSPIRV",
-    "When outputting SPIR-V force a recompile (This seems to solve some weird matrix issues)",
-    true);
-
 static TAutoConsoleVariable<bool> CVarRecompileDebugOutputGLSL(
     "RHI.ShaderCompiler.DebugOutputGLSL",
     "When recompiling the SPIR-V, we use GLSL as a intermediate language in order to workaround a matrix issue, if this CVar is true we output that GLSL to a file.",
@@ -111,38 +106,12 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
             return L"6_6";
         case EShaderModel::SM_6_7:
             return L"6_7";
-		case EShaderModel::SM_6_8:
-			return L"6_8";
-		case EShaderModel::SM_6_9:
-			return L"6_9";
+        case EShaderModel::SM_6_8:
+            return L"6_8";
+        case EShaderModel::SM_6_9:
+            return L"6_9";
         default:
             return L"0_0";
-    }
-}
-
-static glslang_stage_t GetGlslangStage(EShaderStage ShaderStage)
-{
-    switch (ShaderStage)
-    {
-        // Graphics
-        case EShaderStage::Vertex:
-            return GLSLANG_STAGE_VERTEX;
-        case EShaderStage::Hull:
-            return GLSLANG_STAGE_TESSCONTROL;
-        case EShaderStage::Domain:
-            return GLSLANG_STAGE_TESSEVALUATION;
-        case EShaderStage::Geometry:
-            return GLSLANG_STAGE_GEOMETRY;
-        case EShaderStage::Pixel:
-            return GLSLANG_STAGE_FRAGMENT;
-
-        // Compute
-        case EShaderStage::Compute:
-            return GLSLANG_STAGE_COMPUTE;
-
-        // Other
-        default:
-            return glslang_stage_t(-1);
     }
 }
 
@@ -216,7 +185,7 @@ private:
     int32  References;
 };
 
-FShaderCompiler* FShaderCompiler::GShaderCompiler = nullptr;
+FShaderCompiler* FShaderCompiler::ShaderCompiler = nullptr;
 
 FShaderCompiler::FShaderCompiler(const FString& InAssetPath)
     : DXCLib(nullptr)
@@ -227,7 +196,6 @@ FShaderCompiler::FShaderCompiler(const FString& InAssetPath)
 
 FShaderCompiler::~FShaderCompiler()
 {
-    // Destroy DXC
     if (DXCLib)
     {
         FPlatformLibrary::FreeDynamicLib(DXCLib);
@@ -235,20 +203,17 @@ FShaderCompiler::~FShaderCompiler()
     }
 
     DxcCreateInstanceFunc = nullptr;
-    
-    // Destroy GLslang
-    glslang_finalize_process();
 }
 
 bool FShaderCompiler::Create(const FString& InAssetPath)
 {
-    CHECK(GShaderCompiler == nullptr);
+    CHECK(ShaderCompiler == nullptr);
 
-    GShaderCompiler = new FShaderCompiler(InAssetPath);
-    if (!GShaderCompiler->Initialize())
+    ShaderCompiler = new FShaderCompiler(InAssetPath);
+    if (!ShaderCompiler->Initialize())
     {
-        delete GShaderCompiler;
-        GShaderCompiler = nullptr;
+        delete ShaderCompiler;
+        ShaderCompiler = nullptr;
         return false;
     }
 
@@ -257,14 +222,14 @@ bool FShaderCompiler::Create(const FString& InAssetPath)
 
 void FShaderCompiler::Destroy()
 {
-    if (GShaderCompiler)
+    if (ShaderCompiler)
     {
-        delete GShaderCompiler;
-        GShaderCompiler = nullptr;
+        delete ShaderCompiler;
+        ShaderCompiler = nullptr;
     }
 }
 
-EShaderOutputLanguage FShaderCompiler::GetOutputLanguageBasedOnRHI()
+EShaderOutputLanguage FShaderCompiler::GetCurrentRHIOutputLanguage()
 {
     if (FRHI::IsInitialized())
     {
@@ -279,7 +244,6 @@ EShaderOutputLanguage FShaderCompiler::GetOutputLanguageBasedOnRHI()
         }
     }
 
-    // Return HLSL for NullRHI and D3D12RHI
     return EShaderOutputLanguage::HLSL;
 }
 
@@ -300,21 +264,16 @@ bool FShaderCompiler::Initialize()
         return false;
     }
 
-    // Init GLslang
-    glslang_initialize_process();
     return true;
 }
 
 bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
-    // Add asset-path to the filename
     const FString FilePath = AssetPath + '/' + Filename;
-    
-    // Store the ShaderFile in this array
+
     TArray<CHAR> Text;
 
     {
-        // Open the file
         FFileHandleRef File = FPlatformFile::OpenForRead(FilePath);
         if (!File)
         {
@@ -322,7 +281,6 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
             return false;
         }
 
-        // Read the full file as a text-file
         if (!FileUtils::ReadTextFile(File.Get(), Text))
         {
             LOG_ERROR("[FShaderCompiler]: Failed to read file '%s'", *Filename);
@@ -330,7 +288,6 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
         }
     }
 
-    // Compile the source
     const FString Source(Text.Data(), Text.Size());
     return Compile(Source, FilePath, CompileInfo, OutByteCode);
 }
@@ -368,7 +325,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    // Add compile arguments
+    // Compile arguments
     TArray<LPCWSTR> CompileArgs =
     {
         L"-HV 2021",     // Use HLSL 2021
@@ -450,7 +407,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     // Helper for building arguments for compilation and preprocessing
     const auto BuildArguments = [&](const FString& FilePath, const FString& EntryPoint, const FShaderCompileInfo& CompileInfo)
     {
-        // Retrieve the shader target
         const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
         const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
 
@@ -458,11 +414,9 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         WCHAR TargetProfile[BufferLength];
         FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
-        // Use the asset-folder as base for the shader-files
         const FStringWide WideFilePath   = CharToWide(FilePath);
         const FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
-        // Build the arguments for the preprocessing step
         TComPtr<IDxcCompilerArgs> CompileArguments;
         HRESULT hr = Utils->BuildArguments(*WideFilePath, *WideEntrypoint, TargetProfile, CompileArgs.Data(), CompileArgs.Size(), DxcDefines.Data(), DxcDefines.Size(), &CompileArguments);
         if (FAILED(hr))
@@ -475,7 +429,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         }
     };
 
-    // Retrieve the pre-processing compiler arguments
+    // Preprocess shader source
     TComPtr<IDxcCompilerArgs> PreProcessorArguments = BuildArguments(FilePath, CompileInfo.EntryPoint, CompileInfo);
     if (!PreProcessorArguments)
     {
@@ -493,7 +447,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         PreProcessorArguments->AddArguments(PreProcessArgs, 2);
     }
 
-    // Preprocess shader source
     DxcBuffer SourceBuffer;
     SourceBuffer.Ptr      = ShaderSource.Data();
     SourceBuffer.Size     = ShaderSource.Size();
@@ -508,7 +461,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    // Check the compilation result
     HRESULT PreProcessResult;
     if (FAILED(PreprocessResult->GetStatus(&PreProcessResult)))
     {
@@ -516,10 +468,8 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    // If the error encountered an error
     if (FAILED(PreProcessResult))
     {
-        // Retrieve errors
         TComPtr<IDxcBlobUtf8> PrintBlob;
         PreprocessResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
 
@@ -543,11 +493,9 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    // NOTE: Entrypoint needs to always be main when compiling SPIRV, this is due to the fact that the GLSL code cannot handle any
-    // other name at the moment (GLSL being used when we change bindings for Vulkan).
-    const FString EntryPoint = CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV ? "main" : CompileInfo.EntryPoint;
+    const FString& EntryPoint = CompileInfo.EntryPoint;
 
-    // Handle language selection
+    // SPIR-V specific arguments
     FString Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), static_cast<int32>(PreprocessedBlob->GetBufferSize()));
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
@@ -555,21 +503,11 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         CompileArgs.Emplace(L"-spirv");
         CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
         CompileArgs.Emplace(L"-fspv-reduce-load-size");
-        // CompileArgs.Emplace(L"-fspv-use-unknown-image-format");        
-
-        // NOTE: Change the entrypoint to be 'main', since this is always the entrypoint when we need to compile the
-        // SPIRV into GLSL, and back to SPIRV. This happens when we change any bindings for resources.
-        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
-        {
-            if (!PatchHLSLForSpirv(CompileInfo.EntryPoint, Source))
-            {
-                LOG_ERROR_CRITICAL("[FShaderCompiler]: Failed to patch HLSL for the SPIR-V backend");
-                return false;
-            }
-        }
+        //CompileArgs.Emplace(L"-fspv-use-unknown-image-format");
+        CompileArgs.Emplace(L"-fspv-reflect"); // This forces a google extension that we have to strip out later in the VulkanRHI backend
     }
 
-    // Build the arguments for the compiler
+    // Compile shader
     TComPtr<IDxcCompilerArgs> CompileArguments = BuildArguments(FilePath, EntryPoint, CompileInfo);
     if (!CompileArguments)
     {
@@ -577,11 +515,9 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    // Convert preprocessed source to DxcBuffer
     SourceBuffer.Ptr  = Source.Data();
     SourceBuffer.Size = Source.Size();
 
-    // Compile shader
     TComPtr<IDxcResult> Result;
     hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), IncludeHandler.Get(), IID_PPV_ARGS(&Result));
     if (FAILED(hr))
@@ -590,7 +526,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    // Check the compilation result
     HRESULT CompilationResult;
     if (FAILED(Result->GetStatus(&CompilationResult)))
     {
@@ -598,10 +533,8 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    // If the error encountered an error
     if (FAILED(CompilationResult))
     {
-        // Retrieve errors
         TComPtr<IDxcBlobUtf8> PrintBlob;
         Result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
 
@@ -619,7 +552,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
     if (bVerboseLogging)
     {
-        // Retrieve errors
         TComPtr<IDxcBlobUtf8> PrintBlob;
         Result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
 
@@ -654,17 +586,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
             LOG_INFO("[FShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
         }
 
-        // TODO: Investigate why we need to recompile our SPIR-V when compiled from HLSL directly
-        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
-        {
-            const bool bRecompileSPIRV = CVarRecompileSPIRV.GetValue();
-            if (bRecompileSPIRV && !RecompileSpirv(FilePath, CompileInfo, OutByteCode))
-            {
-                DEBUG_BREAK();
-                return false;
-            }
-        }
-        else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
         {
             if (!ConvertSpirvToMetalShader(FilePath, CompileInfo, OutByteCode))
             {
@@ -704,280 +626,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     return true;
 }
 
-bool FShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource)
-{
-    // Find the actual entrypoint, and change it to a specific spirv one. This is done since
-    // the current version of DXC available on macOS does not support the compiler argument
-    // that does this for us, therefor we now replace the entrypoint ourselves.
-    int32 Position = FString::InvalidIndex;
-    while (true)
-    {
-        Position = OutSource.Find(Entrypoint, Position);
-        if (Position == FString::InvalidIndex)
-        {
-            return false;
-        }
-
-        const int32 BracketPosition = OutSource.FindChar('(', Position);
-        if (BracketPosition == FString::InvalidIndex)
-        {
-            return false;
-        }
-
-        // Create a view of the entrypoint name to ensure that we found the whole thing
-        // this is done in order to support entry-points with spaces etc. between bracket
-        // and actual entrypoint name.
-        const int32 EntrypointLength = BracketPosition - Position;
-        FStringView CurrentEntrypoint(OutSource.Data(), EntrypointLength, Position);
-        CurrentEntrypoint.TrimInline();
-        
-        // If we actually found the entrypoint, we can exit the loop and replace the entrypoint
-        if (Entrypoint.Equals(CurrentEntrypoint))
-        {
-            OutSource.Remove(Position, Entrypoint.Size());
-            OutSource.Insert("main", Position);
-            break;
-        }
-
-        // Search for the next name
-        Position++;
-    }
-    
-    return true;
-}
-
-bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
-{
-    if (OutByteCode.IsEmpty())
-    {
-        LOG_ERROR("[FShaderCompiler]: No SPIR-V code supplied");
-        return false;
-    }
-    
-    if (OutByteCode.Size() % sizeof(uint32) != 0)
-    {
-        LOG_ERROR("[FShaderCompiler]: SPIR-V code needs to be aligned to 4 bytes, ensure that valid SPIR-V code is supplied");
-        return false;
-    }
-    
-    spvc_context Context = nullptr;
-    spvc_result Result = spvc_context_create(&Context);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to create SpvcContext");
-        return false;
-    }
-
-    spvc_context_set_error_callback(Context, [](void*, const CHAR* Error)
-    {
-        LOG_ERROR("[SPIRV-Cross Error] %s", Error);
-    }, nullptr);
-
-    // The code size needs to be aligned to the element-size
-    spvc_parsed_ir ParsedCode = nullptr;
-    const int32 SpirvCodeSize = OutByteCode.Size() / sizeof(uint32);
-    Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), SpirvCodeSize, &ParsedCode);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to parse Spirv");
-        return false;
-    }
-
-    spvc_compiler Compiler = nullptr;
-    Result = spvc_context_create_compiler(Context, SPVC_BACKEND_GLSL, ParsedCode, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &Compiler);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to create SPIR-V compiler");
-        return false;
-    }
-
-    // Compile the code to GLSL -> SPIR-V
-    spvc_compiler_options Options = nullptr;
-    spvc_compiler_create_compiler_options(Compiler, &Options);
-    
-    spvc_compiler_options_set_uint(Options, SPVC_COMPILER_OPTION_GLSL_VERSION, 460);
-    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_FALSE);
-    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_FALSE);
-    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_VULKAN_SEMANTICS, SPVC_TRUE);
-    spvc_compiler_install_compiler_options(Compiler, Options);
-
-    // Convert the shader stage to glslang-enum
-    const glslang_stage_t GlslangStage = GetGlslangStage(CompileInfo.ShaderStage);
-    
-    // This is a work-around to enable gl_Layer from vertex-shaders
-    if (GlslangStage == GLSLANG_STAGE_VERTEX && RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader)
-    {
-        spvc_compiler_require_extension(Compiler, "GL_ARB_shader_viewport_layer_array");
-    }
-
-    // Compile the GLSL code
-    const CHAR* NewSource = nullptr;
-    Result = spvc_compiler_compile(Compiler, &NewSource);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("[FShaderCompiler]: Failed to compile changes into GLSL");
-        return false;
-    }
-
-    // Create a new array (1 extra byte for a null-terminator)
-    const uint32 SourceLength = FCString::Strlen(NewSource);
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(NewSource), (SourceLength + 1) * sizeof(uint8));
-    NewShader[SourceLength] = 0;
-
-    // Dump the metal file to disk
-    if (!FilePath.IsEmpty() && CVarRecompileDebugOutputGLSL.GetValue())
-    {
-        FString Filename;
-        
-        // Remove the hlsl part
-        int32 Position = FilePath.FindLast(".hlsl");
-        if (Position != FString::InvalidIndex)
-        {
-            Filename = FilePath.SubString(0, Position);
-        }
-        else
-        {
-            Filename = FilePath;
-        }
-        
-        // Add the shader-stage and entrypoint to the name
-        Filename = Filename + "_" + ToString(CompileInfo.ShaderStage) + "_" + CompileInfo.EntryPoint;
-        
-        // If we have defines we create a seperate file for this set of defines, so that we can debug these files
-        if (!CompileInfo.Defines.IsEmpty())
-        {
-            FString Defines;
-            for (const FShaderDefine& Define : CompileInfo.Defines)
-            {
-                Defines += Define.Define;
-                Defines += Define.Value;
-            }
-            
-            const uint32 DefineCRC = CRC32::Generate(Defines.Data(), Defines.SizeInBytes());
-            Filename = Filename + "_" + TTypeToString<uint32>::ToString(DefineCRC) + ".glsl";
-        }
-        else
-        {
-            Filename = Filename + ".glsl";
-        }
-
-        if (!DumpContentToFile(NewShader, Filename))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-    
-    // Now we can destroy the context
-    spvc_context_destroy(Context);
-
-    // Compile the GLSL to SPIRV
-    glslang_input_t Input;
-    Input.language                          = GLSLANG_SOURCE_GLSL;
-    Input.stage                             = GlslangStage;
-    Input.client                            = GLSLANG_CLIENT_VULKAN;
-    Input.client_version                    = GLSLANG_TARGET_VULKAN_1_2;
-    Input.target_language                   = GLSLANG_TARGET_SPV;
-    Input.target_language_version           = GLSLANG_TARGET_SPV_1_5;
-    Input.code                              = reinterpret_cast<CHAR*>(NewShader.Data());
-    Input.default_version                   = 110;
-    Input.default_profile                   = GLSLANG_NO_PROFILE;
-    Input.force_default_version_and_profile = false;
-    Input.forward_compatible                = false;
-    Input.messages                          = GLSLANG_MSG_DEFAULT_BIT;
-    Input.resource                          = glslang_default_resource();
-
-    glslang_shader_t* Shader = glslang_shader_create(&Input);
-    if (!glslang_shader_preprocess(Shader, &Input))
-    {
-        const CHAR* InfoLog      = glslang_shader_get_info_log(Shader);
-        const CHAR* InfoDebugLog = glslang_shader_get_info_debug_log(Shader);
-        
-        LOG_ERROR("GLSL preprocessing failed");
-        LOG_ERROR("    %s", InfoLog);
-        LOG_ERROR("    %s", InfoDebugLog);
-        
-        glslang_shader_delete(Shader);
-        
-        DEBUG_BREAK();
-        return false;
-    }
-
-    if (!glslang_shader_parse(Shader, &Input))
-    {
-        const CHAR* InfoLog      = glslang_shader_get_info_log(Shader);
-        const CHAR* InfoDebugLog = glslang_shader_get_info_debug_log(Shader);
-        
-        LOG_ERROR("GLSL parsing failed");
-        LOG_ERROR("    %s", InfoLog);
-        LOG_ERROR("    %s", InfoDebugLog);
-        LOG_ERROR("    %s", glslang_shader_get_preprocessed_code(Shader));
-
-        glslang_shader_delete(Shader);
-        
-        DEBUG_BREAK();
-        return false;
-    }
-
-    glslang_program_t* Program = glslang_program_create();
-    glslang_program_add_shader(Program, Shader);
-
-    if (!glslang_program_link(Program, GLSLANG_MSG_SPV_RULES_BIT | GLSLANG_MSG_VULKAN_RULES_BIT))
-    {
-        const CHAR* InfoLog      = glslang_program_get_info_log(Program);
-        const CHAR* InfoDebugLog = glslang_program_get_info_debug_log(Program);
-        
-        LOG_ERROR("GLSL linking failed");
-        LOG_ERROR("    %s", InfoLog);
-        LOG_ERROR("    %s", InfoDebugLog);
-        
-        glslang_program_delete(Program);
-        glslang_shader_delete(Shader);
-        
-        DEBUG_BREAK();
-        return false;
-    }
-
-    // Retrieve the SPIRV shader code
-    glslang_spv_options_t SpvOptions;
-    FMemory::Memzero(&SpvOptions);
-
-    SpvOptions.validate            = true;
-    SpvOptions.generate_debug_info = true;
-
-    if (CompileInfo.bOptimize)
-    {
-        SpvOptions.optimize_size = true;
-    }
-    else
-    {
-        SpvOptions.disable_optimizer = true;
-    }
-    
-    glslang_program_SPIRV_generate_with_options(Program, GlslangStage, &SpvOptions);
-
-    // Get the size and allocate enough room in the vector
-    const uint64 ProgramSize = glslang_program_SPIRV_get_size(Program);
-    
-    // Transfer the SPIRV code into our format
-    TArray<uint8> NewCode;
-    NewCode.Resize(static_cast<int32>(ProgramSize) * sizeof(uint32));
-
-    glslang_program_SPIRV_get(Program, reinterpret_cast<uint32*>(NewCode.Data()));
-    OutByteCode = Move(NewCode);
-    
-    // Print any messages from linking
-    if (const CHAR* SpirvMessages = glslang_program_SPIRV_get_messages(Program))
-    {
-        LOG_INFO("%s", SpirvMessages);
-    }
-
-    // Cleanup
-    glslang_program_delete(Program);
-    glslang_shader_delete(Shader);
-    return true;
-}
-
 bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     if (OutByteCode.IsEmpty() || CompileInfo.EntryPoint.IsEmpty())
@@ -986,6 +634,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     }
 
     spvc_context Context = nullptr;
+
     spvc_result Result = spvc_context_create(&Context);
     if (Result != SPVC_SUCCESS)
     {
@@ -1003,7 +652,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
     CHECK(OutByteCode.Size() % ElementSize == 0);
     const uint32 WordCount = OutByteCode.Size() / ElementSize;
-    
+
     spvc_parsed_ir ParsedCode = nullptr;
     Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), WordCount, &ParsedCode);
     if (Result != SPVC_SUCCESS)

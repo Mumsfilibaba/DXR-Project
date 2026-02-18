@@ -1,4 +1,5 @@
 #include "VulkanRHI/VulkanCommandContextState.h"
+#include "VulkanRHI/VulkanCore.h"
 
 FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
     : FVulkanDeviceChild(InDevice)
@@ -397,16 +398,23 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourc
     {
         if (ShaderResourceView)
         {
-            if (PipelineName)
-            {
-                VULKAN_WARNING("SetSRV failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName);
-            }
-            else
-            {
-                VULKAN_WARNING("SetSRV failed: No descriptor binding for ResourceIndex %u (Stage=%s)", ResourceIndex, ToString(ShaderStage));
-            }
+            VULKAN_WARNING("SetSRV failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName ? PipelineName : "<Unknown>");
         }
 
+        return;
+    }
+
+    VkDescriptorType DescriptorType;
+    if (!Layout->GetDescriptorType(DescriptorSetIndex, BindingIndex, DescriptorType))
+    {
+        VULKAN_ERROR_CRITICAL("SetSRV failed to query descriptor type for SRV[%u] (Stage=%s, Set=%u, Binding=%u, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), DescriptorSetIndex, BindingIndex, PipelineName ? PipelineName : "<Unknown>");
+        return;
+    }
+
+    const bool bTypeMatchesSRV = DescriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || DescriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || DescriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    if (!bTypeMatchesSRV)
+    {
+        VULKAN_ERROR_CRITICAL("SetSRV type mismatch for SRV[%u] (Stage=%s, Set=%u, Binding=%u, DescriptorType=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), DescriptorSetIndex, BindingIndex, ToString(DescriptorType), PipelineName ? PipelineName : "<Unknown>");
         return;
     }
 
@@ -447,16 +455,23 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAcc
     {
         if (UnorderedAccessView)
         {
-            if (PipelineName)
-            {
-                VULKAN_WARNING("SetUAV failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName);
-            }
-            else
-            {
-                VULKAN_WARNING("SetUAV failed: No descriptor binding for ResourceIndex %u (Stage=%s)", ResourceIndex, ToString(ShaderStage));
-            }
+            VULKAN_WARNING("SetUAV failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName ? PipelineName : "<Unknown>");
         }
 
+        return;
+    }
+
+    VkDescriptorType DescriptorType;
+    if (!Layout->GetDescriptorType(DescriptorSetIndex, BindingIndex, DescriptorType))
+    {
+        VULKAN_ERROR_CRITICAL("SetUAV failed to query descriptor type for UAV[%u] (Stage=%s, Set=%u, Binding=%u, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), DescriptorSetIndex, BindingIndex, PipelineName ? PipelineName : "<Unknown>");
+        return;
+    }
+
+    const bool bTypeMatchesUAV = DescriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE || DescriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    if (!bTypeMatchesUAV)
+    {
+        VULKAN_ERROR_CRITICAL("SetUAV type mismatch for UAV[%u] (Stage=%s, Set=%u, Binding=%u, DescriptorType=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), DescriptorSetIndex, BindingIndex, ToString(DescriptorType), PipelineName ? PipelineName : "<Unknown>");
         return;
     }
     
@@ -497,14 +512,7 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, 
     {
         if (UniformBuffer)
         {
-            if (PipelineName)
-            {
-                VULKAN_WARNING("SetUniformBuffer failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName);
-            }
-            else
-            {
-                VULKAN_WARNING("SetUniformBuffer failed: No descriptor binding for ResourceIndex %u (Stage=%s)", ResourceIndex, ToString(ShaderStage));
-            }
+            VULKAN_WARNING("SetUniformBuffer failed: No descriptor binding for ResourceIndex %u (Stage=%s, PipelineName=%s)", ResourceIndex, ToString(ShaderStage), PipelineName ? PipelineName : "<Unknown>");
         }
 
         return;
@@ -547,14 +555,7 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, E
     {
         if (SamplerState)
         {
-            if (PipelineName)
-            {
-                VULKAN_WARNING("SetSampler failed: No descriptor binding for SamplerIndex %u (Stage=%s, PipelineName=%s)", SamplerIndex, ToString(ShaderStage), PipelineName);
-            }
-            else
-            {
-                VULKAN_WARNING("SetSampler failed: No descriptor binding for SamplerIndex %u (Stage=%s)", SamplerIndex, ToString(ShaderStage));
-            }
+            VULKAN_WARNING("SetSampler failed: No descriptor binding for SamplerIndex %u (Stage=%s, PipelineName=%s)", SamplerIndex, ToString(ShaderStage), PipelineName ? PipelineName : "<Unknown>");
         }
 
         return;

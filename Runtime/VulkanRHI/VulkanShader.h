@@ -6,6 +6,7 @@
 #include "VulkanRHI/VulkanRefCounted.h"
 
 typedef TSharedRef<class FVulkanShader>              FVulkanShaderRef;
+typedef TSharedRef<class FVulkanShaderModule>        FVulkanShaderModuleRef;
 typedef TSharedRef<class FVulkanVertexShader>        FVulkanVertexShaderRef;
 typedef TSharedRef<class FVulkanHullShader>          FVulkanHullShaderRef;
 typedef TSharedRef<class FVulkanDomainShader>        FVulkanDomainShaderRef;
@@ -17,6 +18,8 @@ typedef TSharedRef<class FVulkanRayGenShader>        FVulkanRayGenShaderRef;
 typedef TSharedRef<class FVulkanRayAnyHitShader>     FVulkanRayAnyHitShaderRef;
 typedef TSharedRef<class FVulkanRayClosestHitShader> FVulkanRayClosestHitShaderRef;
 typedef TSharedRef<class FVulkanRayMissShader>       FVulkanRayMissShaderRef;
+
+typedef TArray<uint32> FSpirvArray;
 
 enum EShaderVisibility : uint32
 {
@@ -110,23 +113,23 @@ struct FVulkanShaderInfo
     struct FBindingOffsets
     {
         uint32 DescriptorSetOffset = UINT32_MAX;
-        uint32 BindingOffset = UINT32_MAX;
+        uint32 BindingOffset       = UINT32_MAX;
     };
     
     struct FResourceBinding
     {
         EVulkanBindingType BindingType;
-        uint8 BindingIndex;
-        uint8 OriginalBindingIndex;
-        FString DebugName;
+        uint8              BindingIndex;
+        uint8              OriginalBindingIndex;
+        FString            DebugName;
     };
     
-    TArray<FBindingOffsets> BindingOffsets;
+    TArray<FBindingOffsets>  BindingOffsets;
     TArray<FResourceBinding> ResourceBindings;
-    uint32 NumPushConstants;
+    uint32                   NumPushConstants;
 };
 
-class FVulkanShaderModule : public FVulkanRefCounted
+class FVulkanShaderModule : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanShaderModule(FVulkanDevice* InDevice, VkShaderModule InShaderModule);
@@ -138,17 +141,8 @@ public:
     }
 
 private:
-    static FVulkanDevice* GetDevice()
-    {
-        CHECK(StaticDevice != nullptr);
-        return StaticDevice;
-    }
-
     VkShaderModule ShaderModule;
-    static FVulkanDevice* StaticDevice;
 };
-
-typedef TArray<uint32> FSpirvArray;
 
 class FVulkanShader : public FVulkanDeviceChild
 {
@@ -158,8 +152,10 @@ public:
 
     bool Initialize(const TArray<uint8>& InCode);
 
-    TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
+    FVulkanShaderModuleRef GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
     bool PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex);
+    bool StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords);
+    bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, FString* OutErrorMessage);
 
     EShaderVisibility GetShaderVisibility() const
     {
@@ -171,15 +167,20 @@ public:
         return ShaderInfo;
     }
 
+    const CHAR* GetEntryPoint() const
+    {
+        return *EntryPoint;
+    }
+
 protected:
     bool InitializeShaderLayout();
-    
-    FSpirvArray       SpirvCode;
-    FVulkanShaderInfo ShaderInfo;
-    EShaderVisibility ShaderVisibility;
-    
-    TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
-    FCriticalSection ShaderModulesCS;
+
+    FSpirvArray                          SpirvCode;
+    FString                              EntryPoint;
+    FVulkanShaderInfo                    ShaderInfo;
+    EShaderVisibility                    ShaderVisibility;
+    TMap<uint32, FVulkanShaderModuleRef> ShaderModules;
+    FCriticalSection                     ShaderModulesCS;
 };
 
 class FVulkanVertexShader : public FRHIVertexShader, public FVulkanShader
