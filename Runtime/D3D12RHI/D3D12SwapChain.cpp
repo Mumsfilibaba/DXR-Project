@@ -1,6 +1,12 @@
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12SwapChain.h"
+
+static TAutoConsoleVariable<int32> CVarSwapChainBackBufferCount(
+    "D3D12RHI.SwapChainBackBufferCount",
+    "Number of swap chain back buffers",
+    D3D12_NUM_BACK_BUFFERS);
 
 FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainInfo& InSwapChainInfo)
     : FD3D12DeviceChild(InDevice)
@@ -80,7 +86,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
         return false;
     }
 
-    const uint32 NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
+    const uint32 NumSwapChainBuffers = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
     SwapChainDesc.Width              = Info.Width;

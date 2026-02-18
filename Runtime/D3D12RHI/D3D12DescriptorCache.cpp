@@ -6,6 +6,11 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 
+static TAutoConsoleVariable<int32> CVarSamplerDescriptorCacheSize(
+    "D3D12RHI.SamplerDescriptorCacheSize",
+    "Number of entries in the sampler descriptor LRU cache",
+    256);
+
 FD3D12LocalDescriptorHeap::FD3D12LocalDescriptorHeap(FD3D12Device* InDevice, FD3D12CommandContext& InContext, bool bInSamplers)
     : FD3D12DeviceChild(InDevice)
     , Context(InContext)
@@ -86,7 +91,7 @@ FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice, FD3D12Comma
     : FD3D12DeviceChild(InDevice)
     , Context(InContext)
     , DefaultDescriptors(InDevice->GetDefaultDescriptors())
-    , SamplerCache(256)
+    , SamplerCache(Math::Max<int32>(16, CVarSamplerDescriptorCacheSize.GetValue()))
     , ResourceHeap(InDevice, InContext, false)
     , SamplerHeap(InDevice, InContext, true)
 {

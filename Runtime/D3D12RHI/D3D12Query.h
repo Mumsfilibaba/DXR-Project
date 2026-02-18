@@ -55,7 +55,7 @@ public:
     FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager* InQueryHeapManager);
     ~FD3D12QueryHeap();
 
-    bool Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType);
+    bool Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 InNumQueries);
     FD3D12QueryAllocation AllocateQueries(uint64* Results);
     void ResolveQueries(FD3D12CommandList& CommandList);
     void ReadBackResults(FD3D12Queue& Queue);
@@ -110,7 +110,7 @@ private:
 class FD3D12QueryHeapManager : public FD3D12DeviceChild
 {
 public:
-    FD3D12QueryHeapManager(FD3D12Device* InDevice, EQueryType InQueryType);
+    FD3D12QueryHeapManager(FD3D12Device* InDevice, EQueryType InQueryType, int32 InQueriesPerHeap);
     ~FD3D12QueryHeapManager();
 
     FD3D12QueryHeap* ObtainQueryHeap();
@@ -121,8 +121,14 @@ public:
         return QueryType;
     }
 
+    int32 GetQueriesPerHeap() const
+    {
+        return QueriesPerHeap;
+    }
+
 private:
     EQueryType               QueryType;
+    int32                    QueriesPerHeap;
     TQueue<FD3D12QueryHeap*> AvailableQueryHeaps;
     TArray<FD3D12QueryHeap*> QueryHeaps;
     FCriticalSection         QueryHeapsCS;

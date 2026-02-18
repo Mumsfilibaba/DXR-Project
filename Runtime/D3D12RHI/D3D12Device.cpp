@@ -76,6 +76,51 @@ static TAutoConsoleVariable<int32> CVarDynamicConstantsAllocatorPageSize(
     "Page size for the dynamic constants linear allocator (bytes)",
     4 * 1024 * 1024);
 
+static TAutoConsoleVariable<bool> CVarEnableResidencyTracking(
+    "D3D12RHI.EnableResidencyTracking",
+    "Enables GPU memory residency tracking and eviction management",
+    true);
+
+static TAutoConsoleVariable<int32> CVarResidencyTargetBudget(
+    "D3D12RHI.ResidencyTargetBudget",
+    "Override target budget for residency eviction in MB (0 = use adapter-reported budget)",
+    0);
+
+static TAutoConsoleVariable<int32> CVarUploadHeapPageSize(
+    "D3D12RHI.UploadHeapPageSize",
+    "Page size for the upload heap allocator in KB",
+    64 * 1024);
+
+static TAutoConsoleVariable<int32> CVarStagingBufferPageSize(
+    "D3D12RHI.StagingBufferPageSize",
+    "Page size for the staging buffer linear allocator in KB",
+    16 * 1024);
+
+static TAutoConsoleVariable<int32> CVarBufferAllocatorPageSize(
+    "D3D12RHI.BufferAllocatorPageSize",
+    "Page size for the buffer buddy allocator in MB",
+    256);
+
+static TAutoConsoleVariable<int32> CVarBufferAllocatorMaxSuballocationSize(
+    "D3D12RHI.BufferAllocatorMaxSuballocationSize",
+    "Max suballocation size before buffer allocations become committed resources in MB",
+    64);
+
+static TAutoConsoleVariable<int32> CVarNumTimestampQueriesPerHeap(
+    "D3D12RHI.NumTimestampQueriesPerHeap",
+    "Number of timestamp queries in each timestamp query heap",
+    D3D12_DEFAULT_QUERY_COUNT);
+
+static TAutoConsoleVariable<int32> CVarNumOcclusionQueriesPerHeap(
+    "D3D12RHI.NumOcclusionQueriesPerHeap",
+    "Number of occlusion queries in each occlusion query heap",
+    D3D12_DEFAULT_QUERY_COUNT);
+
+static TAutoConsoleVariable<FString> CVarDeviceRemovedDumpFilePath(
+    "D3D12RHI.DeviceRemovedDumpFilePath",
+    "File path for DRED device removed dump output",
+    "D3D12DeviceRemovedDump.txt");
+
 // -------------------------------------------------------------------------------------------
 // D3D12 Feature Support
 // -------------------------------------------------------------------------------------------
@@ -185,7 +230,10 @@ static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
     }
 }
 
-static const CHAR* GDeviceRemovedDumpFile = "D3D12DeviceRemovedDump.txt";
+static const CHAR* GetDeviceRemovedDumpFilePath()
+{
+    return *CVarDeviceRemovedDumpFilePath.GetValue();
+}
 
 void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 {
@@ -214,7 +262,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         return;
     }
 
-    FFileHandleRef File = FPlatformFile::OpenForWrite(GDeviceRemovedDumpFile);
+    FFileHandleRef File = FPlatformFile::OpenForWrite(GetDeviceRemovedDumpFilePath());
     if (File)
     {
         Message += '\n';
@@ -598,8 +646,8 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
 
     // Create QueryHeapManagers
-    TimingQueryHeapManager    = new FD3D12QueryHeapManager(this, EQueryType::Timestamp);
-    OcclusionQueryHeapManager = new FD3D12QueryHeapManager(this, EQueryType::Occlusion);
+    TimingQueryHeapManager    = new FD3D12QueryHeapManager(this, EQueryType::Timestamp, CVarNumTimestampQueriesPerHeap.GetValue());
+    OcclusionQueryHeapManager = new FD3D12QueryHeapManager(this, EQueryType::Occlusion, CVarNumOcclusionQueriesPerHeap.GetValue());
 }
 
 FD3D12Device::~FD3D12Device()
@@ -839,13 +887,17 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    ResidencyManager = new FD3D12ResidencyManager(this, false, 0);
+    {
+        const uint64 ResidencyBudgetBytes = static_cast<uint64>(Math::Max<int32>(0, CVarResidencyTargetBudget.GetValue())) * 1024ull * 1024ull;
+        ResidencyManager = new FD3D12ResidencyManager(this, CVarEnableResidencyTracking.GetValue(), ResidencyBudgetBytes);
+    }
 
     {
-        const uint64 UploadHeapSmallThreshold = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapSmallAllocationThreshold.GetValue()));
-        const uint64 UploadHeapLargeThreshold = Math::Max<uint64>(UploadHeapSmallThreshold, static_cast<uint64>(CVarUploadHeapLargeAllocationThreshold.GetValue()));
+        const uint64 UploadHeapPageSizeBytes   = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapPageSize.GetValue())) * 1024ull;
+        const uint64 UploadHeapSmallThreshold  = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapSmallAllocationThreshold.GetValue()));
+        const uint64 UploadHeapLargeThreshold  = Math::Max<uint64>(UploadHeapSmallThreshold, static_cast<uint64>(CVarUploadHeapLargeAllocationThreshold.GetValue()));
 
-        FD3D12UploadHeapAllocator* UploadHeap = new FD3D12UploadHeapAllocator(this, 64ull * 1024ull * 1024ull, 256, UploadHeapSmallThreshold, UploadHeapLargeThreshold);
+        FD3D12UploadHeapAllocator* UploadHeap = new FD3D12UploadHeapAllocator(this, UploadHeapPageSizeBytes, 256, UploadHeapSmallThreshold, UploadHeapLargeThreshold);
         if (!UploadHeap->Initialize())
         {
             return false;
@@ -854,7 +906,8 @@ bool FD3D12Device::Initialize()
     }
 
     {
-        FD3D12LinearAllocator* StagingAllocator = new FD3D12LinearAllocator(this, 16ull * 1024ull * 1024ull, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
+        const uint64 StagingPageSizeBytes = Math::Max<uint64>(1ull, static_cast<uint64>(CVarStagingBufferPageSize.GetValue())) * 1024ull;
+        FD3D12LinearAllocator* StagingAllocator = new FD3D12LinearAllocator(this, StagingPageSizeBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
         StagingBufferAllocator = StagingAllocator;
     }
 
@@ -869,7 +922,9 @@ bool FD3D12Device::Initialize()
     }
 
     {
-        FD3D12BufferAllocator* Buffers = new FD3D12BufferAllocator(this, 256ull * 1024ull * 1024ull, 256, 64ull * 1024ull * 1024ull);
+        const uint64 BufferPageSizeBytes    = Math::Max<uint64>(1ull, static_cast<uint64>(CVarBufferAllocatorPageSize.GetValue())) * 1024ull * 1024ull;
+        const uint64 BufferMaxSuballocBytes = Math::Max<uint64>(1ull, static_cast<uint64>(CVarBufferAllocatorMaxSuballocationSize.GetValue())) * 1024ull * 1024ull;
+        FD3D12BufferAllocator* Buffers = new FD3D12BufferAllocator(this, BufferPageSizeBytes, 256, BufferMaxSuballocBytes);
         if (!Buffers->Initialize())
         {
             return false;
@@ -1213,13 +1268,7 @@ bool FD3D12Device::CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHea
         return false;
     }
 
-    FD3D12HeapRef Heap = new FD3D12Heap(this, NewHeap.ReleaseOwnership());
-    if (Desc.Properties.Type == D3D12_HEAP_TYPE_DEFAULT)
-    {
-        Heap->StartResidencyTracking();
-    }
-
-    OutHeap = Heap;
+    OutHeap = new FD3D12Heap(this, NewHeap.ReleaseOwnership());
     return true;
 }
 

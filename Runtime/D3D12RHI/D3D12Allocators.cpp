@@ -74,6 +74,7 @@ bool FD3D12BuddyAllocator::Initialize()
             return false;
         }
 
+        NewHeap->StartResidencyTracking();
         BackingHeap = NewHeap;
     }
     else
@@ -119,12 +120,16 @@ bool FD3D12BuddyAllocator::Initialize()
 
 void FD3D12BuddyAllocator::Destroy()
 {
-    BackingResource = nullptr;
-    BackingHeap     = nullptr;
+    if (BackingHeap)
+    {
+        BackingHeap->EndResidencyTracking();
+        BackingHeap = nullptr;
+    }
+
+    BackingResource   = nullptr;
+    MappedBaseAddress = nullptr;
 
     FreeOffsets.Clear();
-
-    MappedBaseAddress = nullptr;
 }
 
 bool FD3D12BuddyAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags) const
@@ -419,6 +424,10 @@ FD3D12PoolAllocatorPage::FD3D12PoolAllocatorPage(FD3D12Device* InDevice, uint64 
 
 FD3D12PoolAllocatorPage::~FD3D12PoolAllocatorPage()
 {
+    if (BackingHeap)
+    {
+        BackingHeap->EndResidencyTracking();
+    }
 }
 
 bool FD3D12PoolAllocatorPage::Initialize()
@@ -447,6 +456,7 @@ bool FD3D12PoolAllocatorPage::Initialize()
             return false;
         }
 
+        NewHeap->StartResidencyTracking();
         BackingHeap = NewHeap;
     }
     else

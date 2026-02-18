@@ -5,11 +5,6 @@
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Queue.h"
 
-static TAutoConsoleVariable<int32> CVarNumTimestampQueriesPerHeap(
-    "D3D12RHI.NumTimestampQueriesPerHeap",
-    "The number of Timestamp Queries in each QueryHeap",
-    D3D12_DEFAULT_QUERY_COUNT,
-    EConsoleVariableFlags::Default);
 
 static uint64 ToNanoseconds(uint64 Timestamp, uint64 Frequency)
 {
@@ -42,11 +37,11 @@ FD3D12QueryHeap::~FD3D12QueryHeap()
     ReadbackResourceStorage.ReleaseResource();
 }
 
-bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
+bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 InNumQueries)
 {
     D3D12_QUERY_HEAP_DESC QueryHeapDesc = {};
     QueryHeapDesc.Type     = InQueryHeapType;
-    QueryHeapDesc.Count    = CVarNumTimestampQueriesPerHeap.GetValue();
+    QueryHeapDesc.Count    = Math::Max<int32>(1, InNumQueries);
     QueryHeapDesc.NodeMask = GetDevice()->GetNodeMask();
 
     TComPtr<ID3D12QueryHeap> NewQueryHeap;
@@ -215,9 +210,10 @@ void FD3D12QueryAllocator::PrepareForNewCommandList()
     }
 }
 
-FD3D12QueryHeapManager::FD3D12QueryHeapManager(FD3D12Device* InDevice, EQueryType InQueryType)
+FD3D12QueryHeapManager::FD3D12QueryHeapManager(FD3D12Device* InDevice, EQueryType InQueryType, int32 InQueriesPerHeap)
     : FD3D12DeviceChild(InDevice)
     , QueryType(InQueryType)
+    , QueriesPerHeap(Math::Max<int32>(1, InQueriesPerHeap))
     , AvailableQueryHeaps()
     , QueryHeaps()
     , QueryHeapsCS()
@@ -249,7 +245,7 @@ FD3D12QueryHeap* FD3D12QueryHeapManager::ObtainQueryHeap()
 
     const D3D12_QUERY_HEAP_TYPE QueryHeapType = ToQueryHeapType(QueryType);
     QueryHeap = new FD3D12QueryHeap(GetDevice(), this);
-    if (!QueryHeap->Initialize(QueryHeapType))
+    if (!QueryHeap->Initialize(QueryHeapType, QueriesPerHeap))
     {
         DEBUG_BREAK();
         delete QueryHeap;
