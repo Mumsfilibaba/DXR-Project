@@ -56,9 +56,11 @@ public:
     ~FD3D12QueryHeap();
 
     bool Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 InNumQueries);
+
     FD3D12QueryAllocation AllocateQueries(uint64* Results);
     void ResolveQueries(FD3D12CommandList& CommandList);
     void ReadBackResults(FD3D12Queue& Queue);
+    
     void SetDebugName(const FString& InName);
 
     ID3D12QueryHeap* GetD3D12QueryHeap() const

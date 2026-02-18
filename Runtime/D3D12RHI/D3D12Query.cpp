@@ -1,5 +1,4 @@
 #include "Core/Misc/ConsoleManager.h"
-#include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Query.h"
@@ -65,11 +64,14 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 In
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    if (!GetDevice()->GetBufferAllocator()->TryAllocate(D3D12_HEAP_TYPE_READBACK, Desc, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, ReadbackResourceStorage) || ReadbackResourceStorage.GetResource() == nullptr)
+    FD3D12ResourceRef ReadbackResource;
+    if (!GetDevice()->CreateCommittedResource(Desc, D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, ReadbackResource))
     {
         D3D12_ERROR_CRITICAL("Failed to create Query Readback resource");
         return false;
     }
+
+    ReadbackResourceStorage.InitStandalone(ReadbackResource.Get());
 
     QueryHeap     = NewQueryHeap;
     QueryHeapType = InQueryHeapType;

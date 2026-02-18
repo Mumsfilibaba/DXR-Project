@@ -104,7 +104,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     }
     else
     {
-        if (InInitialAccess != EResourceAccess::Common && Info.IsDynamic())
+        if (InInitialAccess != EResourceAccess::Common && D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT)
         {
             InCommandContext->StartContext();
             InCommandContext->TransitionBuffer(this, EResourceAccess::Common, InInitialAccess);

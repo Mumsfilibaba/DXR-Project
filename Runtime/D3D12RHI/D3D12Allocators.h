@@ -323,27 +323,31 @@ public:
     static D3D12_RESOURCE_STATES GetInitialResourceStateForHeapType(D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES RequestedInitialState);
     
 public:
-    FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D12_HEAP_TYPE InHeapType, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize, D3D12_RESOURCE_STATES InInitialState);
+    FD3D12BufferAllocatorPool(FD3D12Device* InDevice, D3D12_HEAP_TYPE InHeapType, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy);
     ~FD3D12BufferAllocatorPool();
 
     bool Initialize();
     
     bool TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
-    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const;
+    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
 private:
     void Destroy();
 
-    D3D12_HEAP_TYPE           HeapType;
-    D3D12_RESOURCE_STATES     InitialState;
-    uint64                    PageSizeBytes;
-    uint64                    MinBlockBytes;
-    uint64                    MaxSuballocationSize;
-    FD3D12MultiBuddyAllocator MultiBuddyAllocator;
+    D3D12_HEAP_TYPE            HeapType;
+    D3D12_RESOURCE_STATES      InitialState;
+    EAllocationStrategy        AllocationStrategy;
+    uint64                     PageSizeBytes;
+    uint64                     MinBlockBytes;
+    uint64                     MaxSuballocationSize;
+    FD3D12MultiBuddyAllocator  MultiBuddyAllocator;
 };
 
 class FD3D12BufferAllocator : public FD3D12DeviceChild
 {
+public:
+    static EAllocationStrategy GetAllocationStrategy(D3D12_HEAP_TYPE HeapType);
+
 public:
     FD3D12BufferAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize);
     ~FD3D12BufferAllocator();
