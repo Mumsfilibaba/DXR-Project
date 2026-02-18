@@ -14,9 +14,6 @@ typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild
 {
 public:
-    static FD3D12Texture* Cast(FRHITexture* Texture);
-
-public:
     FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12Texture();
 

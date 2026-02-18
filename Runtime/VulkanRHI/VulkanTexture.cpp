@@ -49,43 +49,6 @@ uint64 VulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 W
     }
 }
 
-FVulkanTexture* FVulkanTexture::Cast(FRHITexture* Texture)
-{
-    FVulkanTexture* VulkanTexture = nullptr;
-    if (Texture)
-    {
-        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
-        {
-            VulkanTexture = static_cast<FVulkanBackBufferTexture*>(Texture);
-        }
-        else
-        {
-            VulkanTexture = static_cast<FVulkanTexture*>(Texture);
-        }
-    }
-    
-    return VulkanTexture;
-}
-
-FVulkanTexture* FVulkanTexture::Cast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture)
-{
-    FVulkanTexture* VulkanTexture = nullptr;
-    if (Texture)
-    {
-        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
-        {
-            FVulkanBackBufferTexture* BackBuffer = static_cast<FVulkanBackBufferTexture*>(Texture);
-            VulkanTexture = BackBuffer->GetCurrentBackBufferTexture(InCommandContext);
-        }
-        else
-        {
-            VulkanTexture = static_cast<FVulkanTexture*>(Texture);
-        }
-    }
-
-    return VulkanTexture;
-}
-
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
     , FVulkanDeviceChild(InDevice)

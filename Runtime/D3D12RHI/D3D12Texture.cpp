@@ -3,27 +3,6 @@
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12RHI.h"
 
-FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
-{
-	if (Texture)
-	{
-		FD3D12Texture* D3D12Texture = nullptr;
-		if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
-		{
-			FD3D12BackBufferTexture* BackBuffer = static_cast<FD3D12BackBufferTexture*>(Texture);
-			D3D12Texture = BackBuffer->GetCurrentBackBufferTexture();
-		}
-		else
-		{
-			D3D12Texture = static_cast<FD3D12Texture*>(Texture);
-		}
-
-		return D3D12Texture;
-	}
-
-	return nullptr;
-}
-
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
     , FD3D12DeviceChild(InDevice)

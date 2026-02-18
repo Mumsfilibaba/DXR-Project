@@ -10,12 +10,6 @@ class FVulkanCommandContext;
 class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
 {
 public:
-    static FORCEINLINE FVulkanBuffer* Cast(FRHIBuffer* Buffer)
-    {
-        return static_cast<FVulkanBuffer*>(Buffer);
-    }
-
-public:
     FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common);
     ~FVulkanBuffer();
 

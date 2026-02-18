@@ -255,7 +255,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(BuildInfo.NumInstances);
     for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
-        FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(BuildInfo.Instances[Instance].Geometry);
+        FD3D12RayTracingGeometry* D3D12Geometry = FD3D12RHI::ResourceCast(BuildInfo.Instances[Instance].Geometry);
         FMemory::Memcpy(&InstanceDescs[Instance].Transform, &BuildInfo.Instances[Instance].Transform, sizeof(FMatrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
@@ -513,7 +513,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (FRHIBuffer* ConstantBuffer : Resources.ConstantBuffers)
         {
-            FD3D12Buffer* D3D12ConstantBuffer = static_cast<FD3D12Buffer*>(ConstantBuffer);
+            FD3D12Buffer* D3D12ConstantBuffer = FD3D12RHI::ResourceCast(ConstantBuffer);
             ResourceHandles[CPUResourceIndex++] = D3D12ConstantBuffer->GetConstantBufferView()->GetOfflineHandle();
         }
     }
@@ -531,7 +531,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (FRHIShaderResourceView* ShaderResourceView : Resources.ShaderResourceViews)
         {
-            FD3D12ShaderResourceView* DxShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
+            FD3D12ShaderResourceView* DxShaderResourceView = FD3D12RHI::ResourceCast(ShaderResourceView);
             ResourceHandles[CPUResourceIndex++] = DxShaderResourceView->GetOfflineHandle();
         }
     }
@@ -549,7 +549,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (FRHIUnorderedAccessView* UnorderedAccessView : Resources.UnorderedAccessViews)
         {
-            FD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
+            FD3D12UnorderedAccessView* DxUnorderedAccessView = FD3D12RHI::ResourceCast(UnorderedAccessView);
             ResourceHandles[CPUResourceIndex++] = DxUnorderedAccessView->GetOfflineHandle();
         }
     }
@@ -567,7 +567,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         for (FRHISamplerState* Sampler : Resources.SamplerStates)
         {
-            FD3D12SamplerState* DxSampler = static_cast<FD3D12SamplerState*>(Sampler);
+            FD3D12SamplerState* DxSampler = FD3D12RHI::ResourceCast(Sampler);
             SamplerHandles[CPUSamplerIndex++] = DxSampler->GetOfflineHandle();
         }
     }

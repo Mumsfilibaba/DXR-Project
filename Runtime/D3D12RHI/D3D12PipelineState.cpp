@@ -175,7 +175,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     FD3D12GraphicsPipelineStream PipelineStream;
 
     // InputLayout
-    FD3D12InputLayout* D3D12InputLayout = static_cast<FD3D12InputLayout*>(Info.InputLayout);
+    FD3D12InputLayout* D3D12InputLayout = FD3D12RHI::ResourceCast(Info.InputLayout);
     if (D3D12InputLayout)
     {
         PipelineStream.InputLayout = D3D12InputLayout->GetDesc();
@@ -192,7 +192,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // VertexShader
     {
-        if (FD3D12VertexShader* D3D12VertexShader = static_cast<FD3D12VertexShader*>(Info.VertexShader))
+        if (FD3D12VertexShader* D3D12VertexShader = FD3D12RHI::ResourceCast(Info.VertexShader))
         {
             if (D3D12VertexShader->HasRootSignature())
             {
@@ -214,7 +214,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // HullShader
     {
         D3D12_SHADER_BYTECODE& HullShaderCode = PipelineStream.HullShaderCode;
-        if (FD3D12HullShader* D3D12HullShader = static_cast<FD3D12HullShader*>(Info.HullShader))
+        if (FD3D12HullShader* D3D12HullShader = FD3D12RHI::ResourceCast(Info.HullShader))
         {
             if (D3D12HullShader->HasRootSignature())
             {
@@ -235,7 +235,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // DomainShader
     {
         D3D12_SHADER_BYTECODE& DomainShaderCode = PipelineStream.DomainShaderCode;
-        if (FD3D12DomainShader* D3D12DomainShader = static_cast<FD3D12DomainShader*>(Info.DomainShader))
+        if (FD3D12DomainShader* D3D12DomainShader = FD3D12RHI::ResourceCast(Info.DomainShader))
         {
             if (D3D12DomainShader->HasRootSignature())
             {
@@ -256,7 +256,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // GeometryShader
     {
         D3D12_SHADER_BYTECODE& GeometryShaderCode = PipelineStream.GeometryShaderCode;
-        if (FD3D12GeometryShader* D3D12GeometryShader = static_cast<FD3D12GeometryShader*>(Info.GeometryShader))
+        if (FD3D12GeometryShader* D3D12GeometryShader = FD3D12RHI::ResourceCast(Info.GeometryShader))
         {
             if (D3D12GeometryShader->HasRootSignature())
             {
@@ -277,7 +277,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // PixelShader
     {
         D3D12_SHADER_BYTECODE& PixelShaderCode = PipelineStream.PixelShaderCode;
-        if (FD3D12PixelShader* D3D12PixelShader = static_cast<FD3D12PixelShader*>(Info.PixelShader))
+        if (FD3D12PixelShader* D3D12PixelShader = FD3D12RHI::ResourceCast(Info.PixelShader))
         {
             if (D3D12PixelShader->HasRootSignature())
             {
@@ -310,7 +310,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     }
 
     // RasterizerState
-    FD3D12RasterizerState* D3D12RasterizerState = static_cast<FD3D12RasterizerState*>(Info.RasterizerState);
+    FD3D12RasterizerState* D3D12RasterizerState = FD3D12RHI::ResourceCast(Info.RasterizerState);
     if (D3D12RasterizerState)
     {
         D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
@@ -323,7 +323,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     }
 
     // DepthStencilState
-    FD3D12DepthStencilState* D3D12DepthStencilState = static_cast<FD3D12DepthStencilState*>(Info.DepthStencilState);
+    FD3D12DepthStencilState* D3D12DepthStencilState = FD3D12RHI::ResourceCast(Info.DepthStencilState);
     if (D3D12DepthStencilState)
     {
         D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
@@ -336,7 +336,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     }
 
     // BlendState
-    FD3D12BlendState* D3D12BlendState = static_cast<FD3D12BlendState*>(Info.BlendState);
+    FD3D12BlendState* D3D12BlendState = FD3D12RHI::ResourceCast(Info.BlendState);
     if (D3D12BlendState)
     {
         D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
@@ -766,7 +766,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all RayGen-Shaders
     for (FRHIRayGenShader* RayGen : Initializer.RayGenShaders)
     {
-        FD3D12RayGenShader* D3D12RayGen = static_cast<FD3D12RayGenShader*>(RayGen);
+        FD3D12RayGenShader* D3D12RayGen = FD3D12RHI::ResourceCast(RayGen);
         Shaders.Emplace(D3D12RayGen);
 
         FD3D12RootSignatureLayout RayGenLocalResourceCounts;
@@ -835,7 +835,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all AnyHit shaders
     for (FRHIRayAnyHitShader* AnyHit : AnyHitShaders)
     {
-        FD3D12RayAnyHitShader* D3D12AnyHit = static_cast<FD3D12RayAnyHitShader*>(AnyHit);
+        FD3D12RayAnyHitShader* D3D12AnyHit = FD3D12RHI::ResourceCast(AnyHit);
         Shaders.Emplace(D3D12AnyHit);
 
         FD3D12RootSignatureLayout AnyHitLocalResourceCounts;
@@ -858,7 +858,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all ClosestHit shaders
     for (FRHIRayClosestHitShader* ClosestHit : ClosestHitShaders)
     {
-        FD3D12RayClosestHitShader* D3D12ClosestHit = static_cast<FD3D12RayClosestHitShader*>(ClosestHit);
+        FD3D12RayClosestHitShader* D3D12ClosestHit = FD3D12RHI::ResourceCast(ClosestHit);
         Shaders.Emplace(D3D12ClosestHit);
 
         FD3D12RootSignatureLayout ClosestHitLocalResourceCounts;
@@ -881,7 +881,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all Miss shaders
     for (FRHIRayMissShader* Miss : Initializer.MissShaders)
     {
-        FD3D12RayMissShader* D3D12MissShader = static_cast<FD3D12RayMissShader*>(Miss);
+        FD3D12RayMissShader* D3D12MissShader = FD3D12RHI::ResourceCast(Miss);
         Shaders.Emplace(D3D12MissShader);
 
         FD3D12RootSignatureLayout MissLocalResourceCounts;

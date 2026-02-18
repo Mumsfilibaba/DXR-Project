@@ -360,6 +360,43 @@ VkImageLayout FVulkanRHI::ResourceStateToImageLayout(EResourceAccess ResourceSta
     }
 }
 
+FVulkanTexture* FVulkanRHI::ResourceCast(FRHITexture* Texture)
+{
+    FVulkanTexture* VulkanTexture = nullptr;
+    if (Texture)
+    {
+        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
+        {
+            VulkanTexture = static_cast<FVulkanBackBufferTexture*>(Texture);
+        }
+        else
+        {
+            VulkanTexture = static_cast<FVulkanTexture*>(Texture);
+        }
+    }
+
+    return VulkanTexture;
+}
+
+FVulkanTexture* FVulkanRHI::ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture)
+{
+    FVulkanTexture* VulkanTexture = nullptr;
+    if (Texture)
+    {
+        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
+        {
+            FVulkanBackBufferTexture* BackBuffer = static_cast<FVulkanBackBufferTexture*>(Texture);
+            VulkanTexture = BackBuffer->GetCurrentBackBufferTexture(InCommandContext);
+        }
+        else
+        {
+            VulkanTexture = static_cast<FVulkanTexture*>(Texture);
+        }
+    }
+
+    return VulkanTexture;
+}
+
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
     , Instance()
@@ -1033,7 +1070,7 @@ bool FVulkanRHI::QueryUAVFormatSupport(EFormat Format) const
 
 bool FVulkanRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult)
 {
-    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    FVulkanQuery* VulkanQuery = ResourceCast(Query);
     if (!VulkanQuery)
     {
         return false;

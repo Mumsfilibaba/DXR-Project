@@ -11,12 +11,6 @@ class FD3D12CommandContext;
 class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild
 {
 public:
-    static FORCEINLINE FD3D12Buffer* Cast(FRHIBuffer* Buffer)
-    {
-        return static_cast<FD3D12Buffer*>(Buffer);
-    }
-
-public:
     FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo);
     ~FD3D12Buffer();
 

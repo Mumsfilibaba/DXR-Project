@@ -10,6 +10,7 @@
 #include "D3D12RHI/D3D12SamplerState.h"
 #include "D3D12RHI/D3D12Shader.h"
 #include "D3D12RHI/D3D12RayTracing.h"
+#include "D3D12RHI/D3D12TypeTraits.h"
 
 class FD3D12CommandContext;
 
@@ -21,7 +22,32 @@ struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
 class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
-    static FD3D12RHI* Get() 
+
+    /**
+     * @brief Casts an RHI texture to its D3D12 implementation type, handling back buffer logic.
+     * @param Texture The RHI texture pointer to cast
+     * @return Pointer to the D3D12 texture, or nullptr if Texture is nullptr
+     *
+     * This function handles special cases for presentable textures (back buffers) by resolving
+     * to the current back buffer texture. For regular textures, it performs a simple cast.
+     */
+    static FD3D12Texture* ResourceCast(FRHITexture* Texture);
+
+    /**
+     * @brief Casts an RHI resource to its D3D12 implementation type using type traits.
+     * @param Resource The RHI resource pointer to cast
+     * @return Pointer to the D3D12 implementation type, or nullptr if Resource is nullptr
+     *
+     * This template function automatically deduces the D3D12 type from the RHI type using TD3D12RHIResourceType.
+     * Works for all RHI resource types except Texture (which has a special overload for back buffer handling).
+     */
+    template<typename TRHIType>
+    static FORCEINLINE typename TAddPointer<typename TD3D12RHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
+    {
+        return static_cast<typename TAddPointer<typename TD3D12RHIResourceType<TRHIType>::Type>::Type>(Resource);
+    }
+
+    static FORCEINLINE FD3D12RHI* Get()
     {
         CHECK(D3D12RHI != nullptr);
         return D3D12RHI; 

@@ -8,6 +8,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
+#include "VulkanRHI/VulkanTypeTraits.h"
 
 struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 {
@@ -47,7 +48,43 @@ public:
      */
     static VkImageLayout ResourceStateToImageLayout(EResourceAccess ResourceState);
 
-    static FVulkanRHI* Get()
+    /**
+     * @brief Casts an RHI texture to its Vulkan implementation type, handling back buffer logic.
+     * @param Texture The RHI texture pointer to cast
+     * @return Pointer to the Vulkan texture, or nullptr if Texture is nullptr
+     *
+     * This function handles special cases for presentable textures (back buffers). For regular textures,
+     * it performs a simple cast. For back buffers, it returns the back buffer texture directly.
+     */
+    static FVulkanTexture* ResourceCast(FRHITexture* Texture);
+
+    /**
+     * @brief Casts an RHI texture to its Vulkan implementation type with command context, handling back buffer logic.
+     * @param InCommandContext The Vulkan command context used to resolve the current back buffer
+     * @param Texture The RHI texture pointer to cast
+     * @return Pointer to the Vulkan texture, or nullptr if Texture is nullptr
+     *
+     * This function handles special cases for presentable textures (back buffers) by resolving
+     * to the current back buffer texture using the provided command context. For regular textures,
+     * it performs a simple cast.
+     */
+    static FVulkanTexture* ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
+
+    /**
+     * @brief Casts an RHI resource to its Vulkan implementation type using type traits.
+     * @param Resource The RHI resource pointer to cast
+     * @return Pointer to the Vulkan implementation type, or nullptr if Resource is nullptr
+     *
+     * This template function automatically deduces the Vulkan type from the RHI type using TVulkanRHIResourceType.
+     * Works for all RHI resource types except Texture (which has special overloads for back buffer handling).
+     */
+    template<typename TRHIType>
+    static FORCEINLINE typename TAddPointer<typename TVulkanRHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
+    {
+        return static_cast<typename TAddPointer<typename TVulkanRHIResourceType<TRHIType>::Type>::Type>(Resource);
+    }
+
+    static FORCEINLINE FVulkanRHI* Get()
     {
         CHECK(VulkanRHI != nullptr);
         return VulkanRHI;
