@@ -24,10 +24,12 @@ public:
     // FRHIBuffer Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkBuffer()); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
+
     virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
     virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
+
+    virtual void SetDebugName(const FString& InName) override final;
+    virtual FString GetDebugName() const override final;
 
     void EnableStateTracking(EResourceAccess InitialState);
     void DisableStateTracking(FVulkanCommandContext* CommandContext = nullptr);

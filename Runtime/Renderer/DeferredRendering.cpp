@@ -1189,7 +1189,7 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
         
         // Reset the history on resize
         FrameResources.bCSMMinMaxHistoryInitialized  = false;
-        FrameResources.bCSMCascadeHistoryInitialized = false; 
+        FrameResources.bCSMCascadeHistoryInitialized = false;
     }
     else
     {

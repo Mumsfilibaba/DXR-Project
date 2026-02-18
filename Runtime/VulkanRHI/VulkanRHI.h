@@ -17,10 +17,40 @@ struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 class VULKANRHI_API FVulkanRHI : public FRHI
 {
 public:
+
+    /**
+     * @brief Converts an EResourceAccess state to Vulkan pipeline stage flags, checking runtime device features.
+     * @param ResourceState The resource access state to convert
+     * @return VkPipelineStageFlags2 containing the appropriate pipeline stages based on enabled device features
+     *
+     * This function checks runtime device features to build the correct pipeline stage flags.
+     */
+    static VkPipelineStageFlags2 ResourceStateToPipelineStageFlags(EResourceAccess ResourceState);
+
+    /**
+     * @brief Converts an EResourceAccess state to Vulkan access flags, checking runtime device features.
+     * @param ResourceState The resource access state to convert
+     * @return VkAccessFlags2 containing the appropriate access flags based on enabled device features
+     *
+     * This function checks runtime device features to return the correct access flags, ensuring they match 
+     * the pipeline stage flags returned by ResourceStateToPipelineStageFlags.
+     */
+    static VkAccessFlags2 ResourceStateToAccessFlags(EResourceAccess ResourceState);
+
+    /**
+     * @brief Converts an EResourceAccess state to Vulkan image layout, checking runtime device features.
+     * @param ResourceState The resource access state to convert
+     * @return VkImageLayout containing the appropriate image layout based on enabled device features
+     *
+     * This function checks runtime device features to return the correct image layout, ensuring layouts 
+     * are only used when the required features are enabled.
+     */
+    static VkImageLayout ResourceStateToImageLayout(EResourceAccess ResourceState);
+
     static FVulkanRHI* Get()
     {
-        CHECK(GVulkanRHI != nullptr);
-        return GVulkanRHI;
+        CHECK(VulkanRHI != nullptr);
+        return VulkanRHI;
     }
 
 public:
@@ -122,5 +152,5 @@ private:
     FCriticalSection              SamplerStateMapCS;
     FCommandSubmissionQueue       PendingSubmissions;
 
-    static FVulkanRHI* GVulkanRHI;
+    static FVulkanRHI* VulkanRHI;
 };

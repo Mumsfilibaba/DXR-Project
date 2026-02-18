@@ -184,10 +184,10 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
-	if (Info.IsShadingRateTexture())
-	{
-		ImageCreateInfo.usage |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
-	}
+    if (Info.IsShadingRateTexture())
+    {
+        ImageCreateInfo.usage |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
+    }
 
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
     if (VULKAN_FAILED(Result))
@@ -222,8 +222,8 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
             ViewInfo.TextureSRV.FirstMipLevel   = 0;
             ViewInfo.TextureSRV.NumMips         = static_cast<uint8>(Info.NumMipLevels);
             ViewInfo.TextureSRV.MinLODClamp     = 0.0f;
-			ViewInfo.TextureSRV.FirstArraySlice = 0;
-			ViewInfo.TextureSRV.NumSlices       = 1;
+            ViewInfo.TextureSRV.FirstArraySlice = 0;
+            ViewInfo.TextureSRV.NumSlices       = 1;
         }
         else if (Info.IsTexture2DArray() || Info.IsTextureCubeArray() || Info.IsTexture3D())
         {
@@ -273,6 +273,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     }
     
     CHECK(InCommandContext != nullptr);
+
     if (InInitialData)
     {
         // TODO: Support other types than texture 2D
@@ -285,10 +286,10 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = Image;
-		ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-		ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-		ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-		ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
@@ -319,8 +320,8 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
             FTextureRegion2D TextureRegion(Width, Height);
             InCommandContext->UpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
 
-			Width  = Math::Max(1u, Width >> 1);
-			Height = Math::Max(1u, Height >> 1);
+            Width  = Math::Max(1u, Width >> 1);
+            Height = Math::Max(1u, Height >> 1);
         }
 
         // NOTE: Transition into InitialAccess
@@ -329,28 +330,103 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     }
     else
     {
-        // NOTE: Transition the texture into the expected ImageLayout
         InCommandContext->StartContext();
 
-        VkImageMemoryBarrier2 ImageBarrier = {};
-        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-        ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageBarrier.newLayout                       = ConvertResourceStateToImageLayout(InInitialAccess);
-        ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.image                           = Image;
-		ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-		ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE;
-		ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-		ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
-        ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
-        ImageBarrier.subresourceRange.baseArrayLayer = 0;
-        ImageBarrier.subresourceRange.baseMipLevel   = 0;
-        ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-        ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+        const VkImageLayout FinalLayout = FVulkanRHI::ResourceStateToImageLayout(InInitialAccess);
 
-        InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        const bool bNeedsClear = (Info.IsRenderTarget() || Info.IsDepthStencil() || Info.IsUnorderedAccessTexture()) && !MemoryAllocation.bIsDedicated;
+        if (bNeedsClear)
+        {
+            // Transition to TRANSFER_DST so we can clear, then clear, then transition to initial access.
+            VkImageMemoryBarrier2 ImageBarrier = {};
+            ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+            ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+            ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+            ImageBarrier.image                           = Image;
+            ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+            ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+            ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+            ImageBarrier.subresourceRange.baseArrayLayer = 0;
+            ImageBarrier.subresourceRange.baseMipLevel   = 0;
+            ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+            ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+            InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+            InCommandContext->GetBarrierBatcher().FlushBarriers();
+
+            VkImageSubresourceRange SubresourceRange = {};
+            SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+            SubresourceRange.baseMipLevel   = 0;
+            SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+            SubresourceRange.baseArrayLayer = 0;
+            SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+
+            if (Info.IsRenderTarget())
+            {
+                VkClearColorValue ClearColor = {};
+                ClearColor.float32[0] = 0.0f;
+                ClearColor.float32[1] = 0.0f;
+                ClearColor.float32[2] = 0.0f;
+                ClearColor.float32[3] = 1.0f;
+
+                InCommandContext->GetCommandBuffer()->ClearColorImage(Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &ClearColor, 1, &SubresourceRange);
+            }
+            else if (Info.IsDepthStencil())
+            {
+                VkClearDepthStencilValue DepthStencilValue = {};
+                DepthStencilValue.depth   = 1.0f;
+                DepthStencilValue.stencil = 0;
+
+                InCommandContext->GetCommandBuffer()->ClearDepthStencilImage(Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &DepthStencilValue, 1, &SubresourceRange);
+            }
+            else if (Info.IsUnorderedAccessTexture())
+            {
+                VkClearColorValue ClearColor = {};
+                ClearColor.float32[0] = 0.0f;
+                ClearColor.float32[1] = 0.0f;
+                ClearColor.float32[2] = 0.0f;
+                ClearColor.float32[3] = 0.0f;
+
+                InCommandContext->GetCommandBuffer()->ClearColorImage(Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &ClearColor, 1, &SubresourceRange);
+            }
+
+            ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            ImageBarrier.newLayout     = FinalLayout;
+            ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            ImageBarrier.dstAccessMask = FVulkanRHI::ResourceStateToAccessFlags(InInitialAccess);
+            ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            ImageBarrier.dstStageMask  = FVulkanRHI::ResourceStateToPipelineStageFlags(InInitialAccess);
+
+            InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        }
+        else
+        {
+            VkImageMemoryBarrier2 ImageBarrier = {};
+            ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+            ImageBarrier.newLayout                       = FinalLayout;
+            ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+            ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+            ImageBarrier.image                           = Image;
+            ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+            ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE;
+            ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+            ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+            ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+            ImageBarrier.subresourceRange.baseArrayLayer = 0;
+            ImageBarrier.subresourceRange.baseMipLevel   = 0;
+            ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+            ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+            InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        }
+
         InCommandContext->FinishContext();
+        InCommandContext->GetCommandQueue().WaitForCompletion();
     }
     
     return true;
@@ -500,9 +576,9 @@ void FVulkanTexture::EnableStateTracking(EResourceAccess InitialState)
     if (!ImageLayoutState)
     {
         FVulkanImageLayoutState::FImageState State;
-        State.Layout = ConvertResourceStateToImageLayout(InitialState);
-        State.Access = ConvertResourceStateToAccessFlags(InitialState);
-        State.Stage  = ConvertResourceStateToPipelineStageFlags(InitialState);
+        State.Layout = FVulkanRHI::ResourceStateToImageLayout(InitialState);
+        State.Access = FVulkanRHI::ResourceStateToAccessFlags(InitialState);
+        State.Stage  = FVulkanRHI::ResourceStateToPipelineStageFlags(InitialState);
 
         uint32 ArrayCount = GetNumArraySlices();
         if (IsTextureCube(GetDimension()))

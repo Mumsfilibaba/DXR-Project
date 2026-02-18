@@ -12,7 +12,7 @@ FVulkanUploadBuffer::FVulkanUploadBuffer(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , Buffer(VK_NULL_HANDLE)
     , MemoryAllocation()
-	, MappedMemory(nullptr)
+    , MappedMemory(nullptr)
 {
 }
 

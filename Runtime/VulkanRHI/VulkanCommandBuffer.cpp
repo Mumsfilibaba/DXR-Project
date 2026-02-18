@@ -43,15 +43,15 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
 bool FVulkanCommandBuffer::Reset()
 {
     VkResult Result = CommandBuffer.ResetCommandBuffer(0);
-	if (VULKAN_FAILED(Result))
-	{
-		VULKAN_ERROR_CRITICAL("Failed to reset CommandBuffer");
-		return false;
-	}
-	else
-	{
-		return true;
-	}
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to reset CommandBuffer");
+        return false;
+    }
+    else
+    {
+        return true;
+    }
 }
 
 bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
@@ -129,24 +129,24 @@ bool FVulkanCommandPool::Initialize(VkCommandPoolCreateFlags InFlags)
 
 bool FVulkanCommandPool::Reset(VkCommandPoolResetFlags InFlags)
 {
-	VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, InFlags);
-	if (VULKAN_FAILED(Result))
-	{
-		VULKAN_ERROR_CRITICAL("vkResetCommandPool Failed");
-		return false;
-	}
+    VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, InFlags);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("vkResetCommandPool Failed");
+        return false;
+    }
 
     if (!AllowCommandBufferReset())
     {
-		for (FVulkanCommandBuffer* CommandBuffer : RecycledCommandBuffers)
-		{
+        for (FVulkanCommandBuffer* CommandBuffer : RecycledCommandBuffers)
+        {
             AvailableCommandBuffers.Enqueue(CommandBuffer);
-		}
+        }
 
         RecycledCommandBuffers.Clear();
     }
 
-	return true;
+    return true;
 }
 
 void FVulkanCommandPool::DestroyBuffers()
@@ -179,7 +179,7 @@ FVulkanCommandBuffer* FVulkanCommandPool::GetOrCreateBuffer()
     }
     else
     {
-		AvailableCommandBuffers.Dequeue(CommandBuffer);
+        AvailableCommandBuffers.Dequeue(CommandBuffer);
         CHECK(CommandBuffer != nullptr);
         
         if (AllowCommandBufferReset())

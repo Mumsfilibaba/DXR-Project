@@ -35,15 +35,15 @@ namespace VulkanInternal
             return vkAllocateCommandBuffers(Device, AllocateInfo, &CommandBuffer);
         }
 
-		FORCEINLINE void FreeCommandBuffer(VkDevice Device, VkCommandPool CommandPool)
-		{
-			vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
-		}
+        FORCEINLINE void FreeCommandBuffer(VkDevice Device, VkCommandPool CommandPool)
+        {
+            vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
+        }
 
-		FORCEINLINE VkResult ResetCommandBuffer(VkCommandBufferResetFlags Flags)
-		{
-			return vkResetCommandBuffer(CommandBuffer, Flags);
-		}
+        FORCEINLINE VkResult ResetCommandBuffer(VkCommandBufferResetFlags Flags)
+        {
+            return vkResetCommandBuffer(CommandBuffer, Flags);
+        }
 
         FORCEINLINE VkResult BeginCommandBuffer(const VkCommandBufferBeginInfo* BeginInfo)
         {

@@ -575,11 +575,11 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
         bUseDedicatedAllocation = true;
     }
 
-	// Here we can override the use of dedicated allocations with a global Vulkan setting
-	if (!GVulkanAllowDedicatedAllocations)
-	{
-		bUseDedicatedAllocation = false;
-	}
+    // Here we can override the use of dedicated allocations with a global Vulkan setting
+    if (!GVulkanAllowDedicatedAllocations)
+    {
+        bUseDedicatedAllocation = false;
+    }
 
     // Find the correct type of memory index
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, PropertyFlags);

@@ -24,7 +24,7 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);
 
-FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
+FD3D12RHI* FD3D12RHI::D3D12RHI = nullptr;
 
 FRHI* FD3D12RHIModule::CreateRHI()
 {
@@ -44,9 +44,9 @@ FD3D12RHI::FD3D12RHI()
     , Device(nullptr)
     , DirectCommandContext(nullptr)
 {
-    if (!GD3D12RHI)
+    if (!D3D12RHI)
     {
-        GD3D12RHI = this;
+        D3D12RHI = this;
     }
 }
 
@@ -109,9 +109,9 @@ FD3D12RHI::~FD3D12RHI()
 
     D3D12Loader::Release();
 
-    if (GD3D12RHI == this)
+    if (D3D12RHI == this)
     {
-        GD3D12RHI = nullptr;
+        D3D12RHI = nullptr;
     }
 }
 

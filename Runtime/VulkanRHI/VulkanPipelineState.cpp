@@ -14,7 +14,7 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
 
 FVulkanInputLayout::FVulkanInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
     : FRHIInputLayout()
-	, InputElements(InInputElements)
+    , InputElements(InInputElements)
     , VertexInputBindingDescriptions()
     , VertexInputAttributeDescriptions()
     , CreateInfo{}

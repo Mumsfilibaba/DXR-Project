@@ -123,6 +123,27 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         return false;
     }
     
+    // Clear non-dedicated buffers to zero to prevent reading undefined memory from shared allocations.
+    if (!InInitialData && !MemoryAllocation.bIsDedicated)
+    {
+        InCommandContext->StartContext();
+        
+        InCommandContext->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+        InCommandContext->GetBarrierBatcher().FlushBarriers();
+        
+        // Fill buffer with zeros
+        InCommandContext->GetCommandBuffer()->FillBuffer(Buffer, 0, Info.Size, 0);
+        
+        // Transition to initial access state
+        if (InInitialAccess != EResourceAccess::CopyDest)
+        {
+            InCommandContext->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+        }
+        
+        InCommandContext->FinishContext();
+        InCommandContext->GetCommandQueue().WaitForCompletion();
+    }
+    
     if (InInitialData)
     {
         if (Info.IsDynamic())
@@ -187,6 +208,7 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
     }
 
     CHECK(Offset <= Info.Size);
+    
     uint64 MapSize = Size;
     if (MapSize == UINT64_MAX)
     {
@@ -194,8 +216,8 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
     }
 
     FVulkanDevice* VulkanDevice = GetDevice();
-    FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
-    uint8* Mapped = reinterpret_cast<uint8*>(MemoryManager.Map(MemoryAllocation));
+
+    uint8* Mapped = reinterpret_cast<uint8*>(VulkanDevice->GetMemoryManager().Map(MemoryAllocation));
     if (!Mapped)
     {
         return nullptr;
@@ -209,6 +231,7 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
         Range.memory = MemoryAllocation.Memory;
         Range.offset = MemoryAllocation.Offset + Offset;
         Range.size   = MapSize;
+
         vkInvalidateMappedMemoryRanges(VulkanDevice->GetVkDevice(), 1, &Range);
     }
 
@@ -217,8 +240,9 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
 
 void FVulkanBuffer::EnableStateTracking(EResourceAccess InitialState)
 {
-    const VkAccessFlags2 Access = ConvertResourceStateToAccessFlags(InitialState);
-    const VkPipelineStageFlags2 Stage = ConvertResourceStateToPipelineStageFlags(InitialState);
+    const VkAccessFlags2        Access = FVulkanRHI::ResourceStateToAccessFlags(InitialState);
+    const VkPipelineStageFlags2 Stage  = FVulkanRHI::ResourceStateToPipelineStageFlags(InitialState);
+
     BufferState = MakeUniquePtr<FVulkanBufferState>(Access, Stage);
 }
 

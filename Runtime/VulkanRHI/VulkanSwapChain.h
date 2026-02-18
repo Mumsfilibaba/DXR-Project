@@ -51,8 +51,8 @@ public:
     }
 
 private:
-	bool RecreateSurface(FVulkanCommandContext* InCommandContext);
-	bool ValidateSurfaceAndSize(FVulkanCommandContext* InCommandContext, uint32& OutW, uint32& OutH);
+    bool RecreateSurface(FVulkanCommandContext* InCommandContext);
+    bool ValidateSurfaceAndSize(FVulkanCommandContext* InCommandContext, uint32& OutW, uint32& OutH);
     bool CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
     void DestroySwapChain(FVulkanCommandContext* InCommandContext);
     VkResult AcquireNextImage(FVulkanCommandContext* InCommandContext);

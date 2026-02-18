@@ -11,12 +11,12 @@ typedef TSharedRef<class FVulkanSwapChainResource> FVulkanSwapChainResourceRef;
 
 inline bool IsUndefinedExtent(const VkSurfaceCapabilitiesKHR& Capabilities)
 {
-	return Capabilities.currentExtent.width == UINT32_MAX || Capabilities.currentExtent.height == UINT32_MAX;
+    return Capabilities.currentExtent.width == UINT32_MAX || Capabilities.currentExtent.height == UINT32_MAX;
 }
 
 inline bool IsExtentZero(const VkExtent2D& Extent)
 {
-	return Extent.width == 0 && Extent.height == 0;
+    return Extent.width == 0 && Extent.height == 0;
 }
 
 struct FVulkanSwapChainCreateInfo

@@ -143,10 +143,10 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         const uint32 NumViews = Math::Min<uint32>(Key.ViewInstancingState.NumArraySlices, MaxArraySlices);
         for (uint32 Index = 0; Index < NumViews; Index++)
         {
-		    const uint32 BitIndex = Key.ViewInstancingState.StartRenderTargetArrayIndex + Index;
-		    CHECK(BitIndex < 32);
-		    ViewMask |= (1u << BitIndex);
-	    }
+            const uint32 BitIndex = Key.ViewInstancingState.StartRenderTargetArrayIndex + Index;
+            CHECK(BitIndex < 32);
+            ViewMask |= (1u << BitIndex);
+        }
 
         CorrelationMask = ViewMask;
 

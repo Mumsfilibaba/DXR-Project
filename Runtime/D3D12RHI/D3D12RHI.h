@@ -23,8 +23,8 @@ class D3D12RHI_API FD3D12RHI : public FRHI
 public:
     static FD3D12RHI* Get() 
     {
-        CHECK(GD3D12RHI != nullptr);
-        return GD3D12RHI; 
+        CHECK(D3D12RHI != nullptr);
+        return D3D12RHI; 
     }
 
 public:
@@ -121,5 +121,5 @@ private:
     FSamplerStateMap             SamplerStateMap;
     FCriticalSection             SamplerStateMapCS;
 
-    static FD3D12RHI* GD3D12RHI;
+    static FD3D12RHI* D3D12RHI;
 };

@@ -23,6 +23,7 @@ class FVulkanPhysicalDevice;
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool   GVulkanForceBinding;
 extern VULKANRHI_API bool   GVulkanForceDedicatedAllocations;
 extern VULKANRHI_API bool   GVulkanForceDedicatedImageAllocations;
@@ -52,16 +53,19 @@ extern VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount;
 // -------------------------------------------------------------------------------------------
 // Programmable sample positions (VK_EXT_sample_locations)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool GVulkanSupportsSampleLocations;
 
 // -------------------------------------------------------------------------------------------
 // Programmable sample positions (VK_EXT_fragment_shader_interlock)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool GVulkanSupportsFragmentShaderInterlock;
 
 // -------------------------------------------------------------------------------------------
 // Ray Tracing (VK_KHR_ray_tracing_pipeline, VK_KHR_ray_query)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool GVulkanSupportsRayTracingPipeline; 
 extern VULKANRHI_API bool GVulkanSupportsRayQuery;
 extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
@@ -69,12 +73,22 @@ extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
 // -------------------------------------------------------------------------------------------
 // Variable Rate Shading (VK_KHR_fragment_shading_rate)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate;
+extern VULKANRHI_API bool   GVulkanFragmentDensityFeatureEnabled;
 extern VULKANRHI_API uint32 GVulkanShadingRateTileSize;
+
+// -------------------------------------------------------------------------------------------
+// Shader Stage Features
+// -------------------------------------------------------------------------------------------
+
+extern VULKANRHI_API bool GVulkanGeometryShaderFeatureEnabled;
+extern VULKANRHI_API bool GVulkanTessellationShaderFeatureEnabled;
 
 // -------------------------------------------------------------------------------------------
 // Mesh shaders (VK_EXT_mesh_shader)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool   GVulkanSupportsMeshShaders;
 extern VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices;
 extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
@@ -83,6 +97,7 @@ extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages;
@@ -107,10 +122,10 @@ struct FVulkanDeviceCreateInfo
     VkPhysicalDeviceVulkan12Features RequiredFeatures12 = {};
     VkPhysicalDeviceVulkan13Features RequiredFeatures13 = {};
 
-	VkPhysicalDeviceFeatures         OptionalFeatures   = {};
-	VkPhysicalDeviceVulkan11Features OptionalFeatures11 = {};
-	VkPhysicalDeviceVulkan12Features OptionalFeatures12 = {};
-	VkPhysicalDeviceVulkan13Features OptionalFeatures13 = {};
+    VkPhysicalDeviceFeatures         OptionalFeatures   = {};
+    VkPhysicalDeviceVulkan11Features OptionalFeatures11 = {};
+    VkPhysicalDeviceVulkan12Features OptionalFeatures12 = {};
+    VkPhysicalDeviceVulkan13Features OptionalFeatures13 = {};
 };
 
 struct FVulkanQueueFamilyIndices
@@ -131,72 +146,72 @@ struct FVulkanQueueFamilyIndices
 
 struct FVulkanDefaultResources
 {
-	FVulkanDefaultResources()
-		: NullBuffer(VK_NULL_HANDLE)
-		, NullImage(VK_NULL_HANDLE)
-		, NullImageView(VK_NULL_HANDLE)
-		, NullSampler(VK_NULL_HANDLE)
-	{
-	}
+    FVulkanDefaultResources()
+        : NullBuffer(VK_NULL_HANDLE)
+        , NullImage(VK_NULL_HANDLE)
+        , NullImageView(VK_NULL_HANDLE)
+        , NullSampler(VK_NULL_HANDLE)
+    {
+    }
 
-	~FVulkanDefaultResources()
-	{
-		CHECK(NullBuffer == VK_NULL_HANDLE);
-		CHECK(NullImage == VK_NULL_HANDLE);
-		CHECK(NullImageView == VK_NULL_HANDLE);
-		CHECK(NullSampler == VK_NULL_HANDLE);
-	}
+    ~FVulkanDefaultResources()
+    {
+        CHECK(NullBuffer == VK_NULL_HANDLE);
+        CHECK(NullImage == VK_NULL_HANDLE);
+        CHECK(NullImageView == VK_NULL_HANDLE);
+        CHECK(NullSampler == VK_NULL_HANDLE);
+    }
 
-	bool Initialize(FVulkanDevice& Device);
-	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
-	void Release(FVulkanDevice& Device);
+    bool Initialize(FVulkanDevice& Device);
+    bool InitializeNullBufferAndImage(FVulkanDevice& Device);
+    void Release(FVulkanDevice& Device);
 
-	// Null-Buffer
-	VkBuffer                NullBuffer;
-	FVulkanMemoryAllocation NullBufferMemory;
+    // Null-Buffer
+    VkBuffer                NullBuffer;
+    FVulkanMemoryAllocation NullBufferMemory;
 
-	// Null-Image
-	VkImage                 NullImage;
-	VkImageView             NullImageView;
-	FVulkanMemoryAllocation NullImageMemory;
+    // Null-Image
+    VkImage                 NullImage;
+    VkImageView             NullImageView;
+    FVulkanMemoryAllocation NullImageMemory;
 
-	// NullSampler
-	VkSampler               NullSampler;
+    // NullSampler
+    VkSampler               NullSampler;
 };
 
 struct FVulkanHashableSamplerCreateInfo
 {
-	bool operator==(const FVulkanHashableSamplerCreateInfo& Other) const
-	{
-		return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
-	}
+    bool operator==(const FVulkanHashableSamplerCreateInfo& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
+    }
 
-	bool operator!=(const FVulkanHashableSamplerCreateInfo& Other) const
-	{
-		return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
-	}
+    bool operator!=(const FVulkanHashableSamplerCreateInfo& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
+    }
 
-	friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)
-	{
-		return CRC32::Generate(&Value, sizeof(Value));
-	}
+    friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)
+    {
+        return CRC32::Generate(&Value, sizeof(Value));
+    }
 
-	VkSamplerCreateFlags Flags;
-	VkFilter             MagFilter;
-	VkFilter             MinFilter;
-	VkSamplerMipmapMode  MipmapMode;
-	VkSamplerAddressMode AddressModeU;
-	VkSamplerAddressMode AddressModeV;
-	VkSamplerAddressMode AddressModeW;
-	float                MipLodBias;
-	VkBool32             AnisotropyEnable;
-	float                MaxAnisotropy;
-	VkBool32             CompareEnable;
-	VkCompareOp          CompareOp;
-	float                MinLod;
-	float                MaxLod;
-	VkBorderColor        BorderColor;
-	VkBool32             UnnormalizedCoordinates;
+    VkSamplerCreateFlags Flags;
+    VkFilter             MagFilter;
+    VkFilter             MinFilter;
+    VkSamplerMipmapMode  MipmapMode;
+    VkSamplerAddressMode AddressModeU;
+    VkSamplerAddressMode AddressModeV;
+    VkSamplerAddressMode AddressModeW;
+    float                MipLodBias;
+    VkBool32             AnisotropyEnable;
+    float                MaxAnisotropy;
+    VkBool32             CompareEnable;
+    VkCompareOp          CompareOp;
+    float                MinLod;
+    float                MaxLod;
+    VkBorderColor        BorderColor;
+    VkBool32             UnnormalizedCoordinates;
 };
 
 class FVulkanPhysicalDevice

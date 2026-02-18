@@ -10,8 +10,8 @@ FVulkanFenceManager::FVulkanFenceManager(FVulkanDevice* InDevice)
 
 FVulkanFenceManager::~FVulkanFenceManager()
 {
-	SCOPED_LOCK(FencesCS);
-	SCOPED_LOCK(AvailableFencesCS);
+    SCOPED_LOCK(FencesCS);
+    SCOPED_LOCK(AvailableFencesCS);
 
     for (FVulkanFence* Fence : Fences)
     {
@@ -32,17 +32,17 @@ FVulkanFence* FVulkanFenceManager::ObtainFence()
     }
     else
     {
-		FVulkanFence* NewFence = new FVulkanFence(GetDevice());
-		if (!NewFence->Initialize(false))
-		{
-			DEBUG_BREAK();
-			delete NewFence;
-			return nullptr;
-		}
+        FVulkanFence* NewFence = new FVulkanFence(GetDevice());
+        if (!NewFence->Initialize(false))
+        {
+            DEBUG_BREAK();
+            delete NewFence;
+            return nullptr;
+        }
         else
         {
             SCOPED_LOCK(FencesCS);
-		    Fences.Add(NewFence);
+            Fences.Add(NewFence);
             Fence = NewFence;
         }
     }

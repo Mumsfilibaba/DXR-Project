@@ -236,18 +236,18 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
 
 void FVulkanDescriptorState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
-	CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
+    CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
 
-	if (UniformBuffer)
-	{
-		const VkDeviceSize Range = UniformBuffer->GetInfo().Size;
-		FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
-		DSBuilder.WriteUniformBuffer(BindingIndex, UniformBuffer->GetVkBuffer(), 0, Range);
-	}
-	else
-	{
-		ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
-	}
+    if (UniformBuffer)
+    {
+        const VkDeviceSize Range = UniformBuffer->GetInfo().Size;
+        FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
+        DSBuilder.WriteUniformBuffer(BindingIndex, UniformBuffer->GetVkBuffer(), 0, Range);
+    }
+    else
+    {
+        ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
+    }
 }
 
 void FVulkanDescriptorState::SetSampler(FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex)
