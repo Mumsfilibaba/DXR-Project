@@ -22,11 +22,6 @@ static TAutoConsoleVariable<bool> CVarVerboseLogging(
     "Enable verbose logging in the ShaderCompiler",
     false);
 
-static TAutoConsoleVariable<bool> CVarRecompileDebugOutputGLSL(
-    "RHI.ShaderCompiler.DebugOutputGLSL",
-    "When recompiling the SPIR-V, we use GLSL as a intermediate language in order to workaround a matrix issue, if this CVar is true we output that GLSL to a file.",
-    false);
-
 enum class EDXCPart
 {
     Container               = DXC_FOURCC('D', 'X', 'B', 'C'),
