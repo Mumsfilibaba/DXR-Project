@@ -122,6 +122,10 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         return false;
     }
     
+    TrackedState.SetState(
+        ConvertResourceStateToAccessFlags(InInitialAccess),
+        ConvertResourceStateToPipelineStageFlags(InInitialAccess));
+
     if (InInitialData)
     {
         if (Info.IsDynamic())
@@ -144,14 +148,14 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         {
             InCommandContext->StartContext();
 
-            InCommandContext->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
-                InCommandContext->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+                InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
             InCommandContext->FinishContext();

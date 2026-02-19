@@ -120,8 +120,10 @@ public:
     virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo) override final;
     virtual void SetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) override final;
     
-    virtual void TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
-    virtual void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
+    virtual void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) override final;
+    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) override final;
     virtual void UnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
     virtual void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
 

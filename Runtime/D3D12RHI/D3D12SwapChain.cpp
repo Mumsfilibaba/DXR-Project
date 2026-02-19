@@ -255,17 +255,19 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
-        TComPtr<ID3D12Resource> BackBufferResource;
-        HRESULT Result = SwapChain->GetBuffer(Index, IID_PPV_ARGS(&BackBufferResource));
+        TComPtr<ID3D12Resource> D3DBackBufferResource;
+
+        HRESULT Result = SwapChain->GetBuffer(Index, IID_PPV_ARGS(&D3DBackBufferResource));
         if (FAILED(Result))
         {
             D3D12_INFO("[FD3D12SwapChain]: GetBuffer(%u) Failed", Index);
             return false;
         }
 
-        FD3D12ResourceRef WrappedResource = new FD3D12Resource(GetDevice(), BackBufferResource.ReleaseOwnership(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PRESENT);
-        WrappedResource->DisableDeferredRelease();
-        BackBuffers[Index]->SetResource(WrappedResource.Get());
+        FD3D12ResourceRef BackBufferResource = new FD3D12Resource(GetDevice(), D3DBackBufferResource.ReleaseOwnership(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PRESENT);
+        BackBufferResource->DisableDeferredRelease();
+        
+        BackBuffers[Index]->SetResource(BackBufferResource.Get());
         BackBuffers[Index]->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
 

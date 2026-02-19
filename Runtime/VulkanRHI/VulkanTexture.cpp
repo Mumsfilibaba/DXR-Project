@@ -324,7 +324,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         }
 
         // NOTE: Transition into InitialAccess
-        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
         InCommandContext->FinishContext();
     }
     else
@@ -352,7 +352,12 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
         InCommandContext->FinishContext();
     }
-    
+
+    const VkImageLayout InitialLayout = ConvertResourceStateToImageLayout(InInitialAccess);
+    const uint32 NumSubresources = ImageCreateInfo.mipLevels * ImageCreateInfo.arrayLayers;
+    TrackedState.SetImageLayout(InitialLayout);
+    TrackedState.Initialize(Math::Max(NumSubresources, 1u));
+
     return true;
 }
 

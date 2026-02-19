@@ -974,8 +974,8 @@ struct FRHITextureTransition
 
     EResourceAccess BeforeState = EResourceAccess::Common;
     EResourceAccess AfterState  = EResourceAccess::Common;
-    uint32 MipLevel   = RHI_ALL_MIP_LEVELS;
-    uint32 ArraySlice = RHI_ALL_ARRAY_SLICES;
+    uint32          MipLevel    = RHI_ALL_MIP_LEVELS;
+    uint32          ArraySlice  = RHI_ALL_ARRAY_SLICES;
 };
 
 struct FRHIBufferTransition
@@ -988,3 +988,22 @@ struct FRHIBufferTransition
     EResourceAccess BeforeState = EResourceAccess::Common;
     EResourceAccess AfterState  = EResourceAccess::Common;
 };
+
+struct FRHIRequiredTextureState
+{
+    NODISCARD static constexpr FRHIRequiredTextureState Make(EResourceAccess State) noexcept
+    {
+        return FRHIRequiredTextureState{ State, RHI_ALL_MIP_LEVELS, RHI_ALL_ARRAY_SLICES };
+    }
+
+    NODISCARD static constexpr FRHIRequiredTextureState MakePartial(
+        EResourceAccess State, uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
+    {
+        return FRHIRequiredTextureState{ State, MipLevel, ArraySlice };
+    }
+
+    EResourceAccess State      = EResourceAccess::Common;
+    uint32          MipLevel   = RHI_ALL_MIP_LEVELS;
+    uint32          ArraySlice = RHI_ALL_ARRAY_SLICES;
+};
+

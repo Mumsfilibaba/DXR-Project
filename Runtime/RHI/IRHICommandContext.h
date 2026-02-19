@@ -301,7 +301,7 @@ struct IRHICommandContext
      * @param Texture Texture to transition ResourceState for
      * @param TextureTransition Part of the texture to transition
      */
-    virtual void TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) = 0;
+    virtual void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) = 0;
 
     /**
      * @brief Transition the ResourceState of a Buffer resource
@@ -309,7 +309,21 @@ struct IRHICommandContext
      * @param BeforeState State that the Buffer had before the transition
      * @param AfterState State that the Buffer have after the transition
      */
-    virtual void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
+    virtual void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
+
+    /**
+     * @brief Ensure a Texture resource is in the required state. The before-state is inferred from the tracked state.
+     * @param Texture Texture to transition
+     * @param RequiredState The state the texture must be in
+     */
+    virtual void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) = 0;
+
+    /**
+     * @brief Ensure a Buffer resource is in the required state. The before-state is inferred from the tracked state.
+     * @param Buffer Buffer to transition
+     * @param RequiredState The state the buffer must be in
+     */
+    virtual void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) = 0;
 
     /**
      * @brief Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState.

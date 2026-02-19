@@ -352,17 +352,17 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     }
 
     // Directional-Light
-    CommandList.TransitionBuffer(DirectionalLightDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBuffer(CascadeGenerationDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(DirectionalLightDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(CascadeGenerationDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
 
     // Point-Lights
-    CommandList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-    CommandList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(PointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(PointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
 
     // Light-Probes
-    CommandList.TransitionBuffer(LightProbeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(LightProbeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
 
     // Directional-Light
     if (DirectionalLightDataDirty)
@@ -397,17 +397,17 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     }
 
     // Directional-Light
-    CommandList.TransitionBuffer(DirectionalLightDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBuffer(CascadeGenerationDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(DirectionalLightDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(CascadeGenerationDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
     // Point-Lights
-    CommandList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-    CommandList.TransitionBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(PointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(PointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(ShadowCastingPointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
     // Light-Probes
-    CommandList.TransitionBuffer(LightProbeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(LightProbeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Update Lights");
 }

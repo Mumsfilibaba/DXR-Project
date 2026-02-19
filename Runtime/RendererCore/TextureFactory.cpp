@@ -308,8 +308,8 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
     // Schedule work on the GPU
     {
         FRHICommandList CommandList;
-        CommandList.TransitionTexture(Source, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
-        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::UnorderedAccess));
+        CommandList.TransitionTextureState(Source, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::UnorderedAccess));
 
         CommandList.SetComputePipelineState(PanoramaPSO.Get());
 
@@ -333,20 +333,20 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         const uint32 ThreadsY = Math::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
         CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
-        CommandList.TransitionTexture(Source, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Source, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
 
         if (!bDestSupportUAV)
         {
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
-            CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
+            CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+            CommandList.TransitionTextureState(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
             CommandList.CopyTexture(Dest, StagingTexture.Get());
 
-            CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::PixelShaderResource));
+            CommandList.TransitionTextureState(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::PixelShaderResource));
         }
         else
         {
-            CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+            CommandList.TransitionTextureState(Dest, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
         }
 
         if (bGenerateMips)
@@ -461,16 +461,16 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     // Copy the texture over to the staging-resource
     if (!bDestSupportUAV)
     {
-        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopySource));
-        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
+        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopySource));
+        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
         CommandList.CopyTexture(StagingTexture.Get(), Texture);
 
-        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
     }
     else
     {
-        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
     }
 
     // Determine which compute-shader and pipeline-state to use
@@ -517,7 +517,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         for (uint32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
         {
             const uint32 CurrentMipLevel = FirstMipLevelThisBatch + MipIndex;
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess, CurrentMipLevel + 1));
+            CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess, CurrentMipLevel + 1));
             CommandList.SetUnorderedAccessView(ComputeShader.Get(), UnorderedAccessViews[CurrentMipLevel].Get(), MipIndex);
         }
 
@@ -537,7 +537,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         for (uint32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
         {
             const uint32 CurrentMipLevel = FirstMipLevelThisBatch + MipIndex;
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 1));
+            CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 1));
         }
 
         // Bind null UAVs for all other bindings
@@ -555,16 +555,16 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     // Copy the staging-resource to the texture
     if (!bDestSupportUAV)
     {
-        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::CopySource));
-        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::CopyDest));
+        CommandList.TransitionTextureState(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::CopySource));
+        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::CopyDest));
 
         CommandList.CopyTexture(Texture, StagingTexture.Get());
 
-        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
     }
     else
     {
-        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Texture, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
     }
 
     return true;
@@ -619,8 +619,8 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
         }
     }
 
-    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.TransitionTextureState(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(SpecularCubeMapFilter_PSO.Get());
     
@@ -666,8 +666,8 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
         Roughness += RoughnessDelta;
     }
 
-    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
-    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
     return true;
 }
 
@@ -710,8 +710,8 @@ bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITex
         return false;
     }
 
-    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
-    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.TransitionTextureState(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(DiffuseCubeMapFilter_PSO.Get());
 
@@ -730,7 +730,7 @@ bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITex
 
     CommandList.UnorderedAccessTextureBarrier(DstCubeMap);
 
-    CommandList.TransitionTexture(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
-    CommandList.TransitionTexture(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
     return true;
 }

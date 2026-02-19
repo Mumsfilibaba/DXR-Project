@@ -383,11 +383,19 @@ void FMetalCommandContext::SetRayTracingBindings(FRHIRayTracingScene* RayTracing
 {
 }
 
-void FMetalCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
+void FMetalCommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
 }
 
-void FMetalCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FMetalCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
+{
+}
+
+void FMetalCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
+{
+}
+
+void FMetalCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
 {
 }
 

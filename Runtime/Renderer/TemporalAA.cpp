@@ -83,7 +83,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     GPU_TRACE_SCOPE(CommandList, "TemporalAA");
 
     FRHITextureRef CurrentBuffer = TAAHistoryBuffers[CurrentBufferIndex];
-    CommandList.TransitionTexture(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CurrentBufferIndex = (CurrentBufferIndex + 1) % 2;
 
@@ -107,7 +107,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     const uint32 ThreadsY = Math::DivideByMultiple(CurrentBuffer->GetHeight(), NumThreads);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTexture(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
 
     GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[0]->GetShaderResourceView()),
         TAAHistoryBuffers[0], EResourceAccess::NonPixelShaderResource);

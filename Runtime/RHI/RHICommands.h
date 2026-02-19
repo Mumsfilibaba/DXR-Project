@@ -754,9 +754,9 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
     uint32                            NumHitGroupResources;
 };
 
-DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
+DECLARE_RHICOMMAND(FRHICommandTransitionTextureState)
 {
-    FORCEINLINE FRHICommandTransitionTexture(FRHITexture* InTexture, const FRHITextureTransition& InTextureTransition)
+    FORCEINLINE FRHICommandTransitionTextureState(FRHITexture* InTexture, const FRHITextureTransition& InTextureTransition)
         : Texture(InTexture)
         , TextureTransition(InTextureTransition)
     {
@@ -765,16 +765,16 @@ DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.TransitionTexture(Texture, TextureTransition);
+        CommandContext.TransitionTextureState(Texture, TextureTransition);
     }
 
     FRHITexture*          Texture;
     FRHITextureTransition TextureTransition;
 };
 
-DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
+DECLARE_RHICOMMAND(FRHICommandTransitionBufferState)
 {
-    FORCEINLINE FRHICommandTransitionBuffer(FRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
+    FORCEINLINE FRHICommandTransitionBufferState(FRHIBuffer* InBuffer, EResourceAccess InBeforeState, EResourceAccess InAfterState)
         : Buffer(InBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
@@ -784,12 +784,48 @@ DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.TransitionBuffer(Buffer, BeforeState, AfterState);
+        CommandContext.TransitionBufferState(Buffer, BeforeState, AfterState);
     }
 
     FRHIBuffer*     Buffer;
     EResourceAccess BeforeState;
     EResourceAccess AfterState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandRequireTextureState)
+{
+    FORCEINLINE FRHICommandRequireTextureState(FRHITexture* InTexture, const FRHIRequiredTextureState& InRequiredState)
+        : Texture(InTexture)
+        , RequiredState(InRequiredState)
+    {
+        CHECK(Texture != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RequireTextureState(Texture, RequiredState);
+    }
+
+    FRHITexture*           Texture;
+    FRHIRequiredTextureState RequiredState;
+};
+
+DECLARE_RHICOMMAND(FRHICommandRequireBufferState)
+{
+    FORCEINLINE FRHICommandRequireBufferState(FRHIBuffer* InBuffer, EResourceAccess InRequiredState)
+        : Buffer(InBuffer)
+        , RequiredState(InRequiredState)
+    {
+        CHECK(Buffer != nullptr);
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RequireBufferState(Buffer, RequiredState);
+    }
+
+    FRHIBuffer*     Buffer;
+    EResourceAccess RequiredState;
 };
 
 DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)

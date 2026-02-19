@@ -6,6 +6,7 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12RefCounted.h"
 #include "D3D12RHI/D3D12Heap.h"
+#include "D3D12RHI/D3D12ResourceState.h"
 
 typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 
@@ -45,10 +46,8 @@ struct FD3D12PoolAllocatorAllocationData
 
 struct FD3D12BuddyAllocatorAllocationData
 {
-    uint32      Order         = 0;
-    uint64      Offset        = 0;
-    bool        bBackedByHeap = false;
-    FD3D12Heap* BackingHeap   = nullptr;
+    uint32 Order  = 0;
+    uint64 Offset = 0;
 };
 
 struct FD3D12BucketAllocatorAllocationData
@@ -168,11 +167,10 @@ public:
     FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState);
     ~FD3D12Resource();
 
-    void SetResourceState(D3D12_RESOURCE_STATES InState) { ResourceState = InState; }
     void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
-    void UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
+    void  UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
 
-    void SetDebugName(const FString& Name);
+    void    SetDebugName(const FString& Name);
     FString GetDebugName() const;
 
     void DeferredRelease();
@@ -194,8 +192,10 @@ public:
     
     // Resource Accessors
     D3D12_HEAP_TYPE          GetHeapType()  const { return HeapType; }
-    D3D12_RESOURCE_STATES    GetState()     const { return ResourceState; }
     D3D12_RESOURCE_DIMENSION GetDimension() const { return Desc.Dimension; }
+
+    FD3D12ResourceState&       GetTrackedState()       { return TrackedState; }
+    const FD3D12ResourceState& GetTrackedState() const { return TrackedState; }
 
     uint32 GetNumSubresources() const 
     {
@@ -218,8 +218,10 @@ public:
     }
 
 private:
+    void InitializeStateTracking(D3D12_RESOURCE_STATES InitialState);
+
     TComPtr<ID3D12Resource>   Resource;
-    D3D12_RESOURCE_STATES     ResourceState;
+    FD3D12ResourceState       TrackedState;
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_DESC       Desc;
     D3D12_GPU_VIRTUAL_ADDRESS Address;

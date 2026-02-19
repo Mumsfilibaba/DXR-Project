@@ -49,9 +49,9 @@ void FMaterial::BuildBuffer(FRHICommandList& CommandList)
     MaterialData.ParallaxMinLayers   = MaterialInfo.ParallaxMinLayers;
     MaterialData.ParallaxMaxLayers   = MaterialInfo.ParallaxMaxLayers;
 
-    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(MaterialBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(MaterialBuffer.Get(), FBufferRegion(0, sizeof(FMaterialHLSL)), &MaterialData);
-    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBufferState(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     bMaterialBufferIsDirty = false;
 }
 

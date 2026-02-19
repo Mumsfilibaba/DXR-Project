@@ -837,7 +837,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
             continue;
         }
 
-        FD3D12BaseResource* Owner = Move.Owner;
+        FD3D12BaseResource*    Owner   = Move.Owner;
         FD3D12ResourceStorage& Storage = Owner->GetResourceStorage();
 
         FD3D12Resource* OldResource = Storage.GetResource();
@@ -859,6 +859,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
             {
                 OldResource->DeferredRelease();
             }
+
             OldResource->Release();
         }
 
@@ -876,7 +877,6 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
     }
 
     FResourceBarrierBatcher& BarrierBatcher = InCommandContext->GetResourceBarrierBatcher();
-
     for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
     {
         FD3D12PoolAllocator::FDefragCandidate Candidate = {};
@@ -911,7 +911,8 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
         }
 
         const D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
-        const D3D12_RESOURCE_STATES CurrentState = OldResource->GetState();
+        CHECK(OldResource->GetTrackedState().AreAllSubresourcesSameState());
+        const D3D12_RESOURCE_STATES CurrentState = OldResource->GetTrackedState().GetResourceState();
 
         FD3D12ResourceRef NewResource;
         if (!CreatePlacedResource(NewHeap, NewAllocationData.Offset, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, NewResource))
@@ -922,23 +923,30 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
         if (CurrentState != D3D12_RESOURCE_STATE_COPY_SOURCE)
         {
             BarrierBatcher.AddTransitionBarrier(OldResource, CurrentState, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            OldResource->GetTrackedState().SetResourceState(D3D12_RESOURCE_STATE_COPY_SOURCE);
         }
+
         BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
         BarrierBatcher.FlushBarriers();
+        
+        NewResource->GetTrackedState().SetResourceState(D3D12_RESOURCE_STATE_COPY_DEST);
 
         InCommandContext->GetCommandList()->CopyResource(NewResource->GetD3D12Resource(), OldResource->GetD3D12Resource());
 
         if (CurrentState != D3D12_RESOURCE_STATE_COPY_SOURCE)
         {
             BarrierBatcher.AddTransitionBarrier(OldResource, D3D12_RESOURCE_STATE_COPY_SOURCE, CurrentState);
+            OldResource->GetTrackedState().SetResourceState(CurrentState);
         }
+
         if (CurrentState != D3D12_RESOURCE_STATE_COPY_DEST)
         {
             BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, CurrentState);
         }
+
         BarrierBatcher.FlushBarriers();
 
-        NewResource->SetResourceState(CurrentState);
+        NewResource->GetTrackedState().SetResourceState(CurrentState);
 
         FPendingDefragMove PendingMove = {};
         PendingMove.Owner                = Candidate.Owner;

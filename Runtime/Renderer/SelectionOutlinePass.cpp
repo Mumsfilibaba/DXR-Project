@@ -400,9 +400,9 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         IDs[Index] = SelectedIDs[Index];
     }
 
-    CommandList.TransitionBuffer(SelectedIDsBuffer.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(SelectedIDsBuffer.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(SelectedIDsBuffer.Get(), FBufferRegion(0, sizeof(IDs)), IDs);
-    CommandList.TransitionBuffer(SelectedIDsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionBufferState(SelectedIDsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
     struct FSelectionOutlineConstantsHLSL
     {
@@ -439,7 +439,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     // Pass 1: SelectedMask (ObjectID -> 0/1)
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTexture(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
         FRHIBeginRenderPassInfo RenderPass;
@@ -466,7 +466,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTexture(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
 
     // ---------------------------------------------------------------------------
     // Pass 2: Erosion (min filter) to pull outline closer to the object
@@ -475,7 +475,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     if (InnerRadius > 0)
     {
         // Horizontal erosion
-        CommandList.TransitionTexture(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+        CommandList.TransitionTextureState(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
             FRHIBeginRenderPassInfo RenderPass;
@@ -502,10 +502,10 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.EndRenderPass();
         }
 
-        CommandList.TransitionTexture(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
 
         // Vertical erosion
-        CommandList.TransitionTexture(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+        CommandList.TransitionTextureState(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
             FRHIBeginRenderPassInfo RenderPass;
@@ -532,7 +532,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.EndRenderPass();
         }
 
-        CommandList.TransitionTexture(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
         InnerMaskTexture = ErodedMask.Get();
     }
 
@@ -540,7 +540,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     // Pass 3: Horizontal dilation
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTexture(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
         FRHIBeginRenderPassInfo RenderPass;
@@ -567,13 +567,13 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTexture(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
 
     // ---------------------------------------------------------------------------
     // Pass 4: Vertical dilation
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTexture(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
         FRHIBeginRenderPassInfo RenderPass;
@@ -600,13 +600,13 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTexture(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
 
     // ---------------------------------------------------------------------------
     // Pass 5: Resolve ring mask (Outer - Inner) with optional smoothing
     // ---------------------------------------------------------------------------
 
-    CommandList.TransitionTexture(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
         FRHIBeginRenderPassInfo RenderPass;
@@ -634,7 +634,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.EndRenderPass();
     }
 
-    CommandList.TransitionTexture(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTextureState(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Selection Outline");
 }

@@ -335,14 +335,24 @@ public:
         EmplaceCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
-    FORCEINLINE void TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) noexcept
+    FORCEINLINE void TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) noexcept
     {
-        EmplaceCommand<FRHICommandTransitionTexture>(Texture, TextureTransition);
+        EmplaceCommand<FRHICommandTransitionTextureState>(Texture, TextureTransition);
     }
 
-    FORCEINLINE void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    FORCEINLINE void TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
     {
-        EmplaceCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
+        EmplaceCommand<FRHICommandTransitionBufferState>(Buffer, BeforeState, AfterState);
+    }
+
+    FORCEINLINE void RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState) noexcept
+    {
+        EmplaceCommand<FRHICommandRequireTextureState>(Texture, RequiredState);
+    }
+
+    FORCEINLINE void RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState) noexcept
+    {
+        EmplaceCommand<FRHICommandRequireBufferState>(Buffer, RequiredState);
     }
 
     FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture) noexcept

@@ -1246,38 +1246,72 @@ void FRHIValidationCommandContext::SetRayTracingBindings(FRHIRayTracingScene* Ra
     RealContext->SetRayTracingBindings(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
 }
 
-void FRHIValidationCommandContext::TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
+void FRHIValidationCommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
     if (!Texture)
     {
-        RHI_VALIDATION_ERROR("Invalid to call TransitionTexture when Texture is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call TransitionTextureState when Texture is nullptr");
         return;
     }
 
 	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
 	{
-		RHI_VALIDATION_ERROR("Invalid to call TransitionTexture when inside a render-pass");
+		RHI_VALIDATION_ERROR("Invalid to call TransitionTextureState when inside a render-pass");
 		return;
 	}
 
-    RealContext->TransitionTexture(Texture, TextureTransition);
+    RealContext->TransitionTextureState(Texture, TextureTransition);
 }
 
-void FRHIValidationCommandContext::TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FRHIValidationCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     if (!Buffer)
     {
-        RHI_VALIDATION_ERROR("Invalid to call TransitionBuffer when Buffer is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call TransitionBufferState when Buffer is nullptr");
         return;
     }
 
 	if (ContextPhase == ECommandContextPhase::InsideRenderPass)
 	{
-		RHI_VALIDATION_ERROR("Invalid to call TransitionBuffer when inside a render-pass");
+		RHI_VALIDATION_ERROR("Invalid to call TransitionBufferState when inside a render-pass");
 		return;
 	}
 
-    RealContext->TransitionBuffer(Buffer, BeforeState, AfterState);
+    RealContext->TransitionBufferState(Buffer, BeforeState, AfterState);
+}
+
+void FRHIValidationCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
+{
+    if (!Texture)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireTextureState when Texture is nullptr");
+        return;
+    }
+
+    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireTextureState when inside a render-pass");
+        return;
+    }
+
+    RealContext->RequireTextureState(Texture, RequiredState);
+}
+
+void FRHIValidationCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
+{
+    if (!Buffer)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireBufferState when Buffer is nullptr");
+        return;
+    }
+
+    if (ContextPhase == ECommandContextPhase::InsideRenderPass)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call RequireBufferState when inside a render-pass");
+        return;
+    }
+
+    RealContext->RequireBufferState(Buffer, RequiredState);
 }
 
 void FRHIValidationCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)

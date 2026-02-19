@@ -3,6 +3,7 @@
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanResourceState.h"
 
 class FVulkanSwapChain;
 class FVulkanCommandContext;
@@ -67,11 +68,15 @@ public:
         Info.Extent.Y = InHeight;
     }
 
+    FVulkanImageState&       GetTrackedState()       { return TrackedState; }
+    const FVulkanImageState& GetTrackedState() const { return TrackedState; }
+
 protected:
     FString                 DebugName;
     VkImage                 Image;
     FVulkanMemoryAllocation MemoryAllocation;
     VkImageCreateInfo       CreateInfo;
+    FVulkanImageState       TrackedState;
 
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;

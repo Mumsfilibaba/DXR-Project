@@ -90,13 +90,13 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         {
             InCommandContext->StartContext();
 
-            InCommandContext->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
-                InCommandContext->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+                InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
             InCommandContext->FinishContext();
@@ -107,7 +107,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         if (InInitialAccess != EResourceAccess::Common && D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT)
         {
             InCommandContext->StartContext();
-            InCommandContext->TransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
+            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, InInitialAccess);
             InCommandContext->FinishContext();
         }
     }

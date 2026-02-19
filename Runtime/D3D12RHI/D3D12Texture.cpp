@@ -207,7 +207,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     {
         // TODO: Support other types than texture 2D
         InCommandContext->StartContext();
-        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
+        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
         // Transfer all mip levels
         uint32 Width  = Info.Extent.X;
@@ -236,7 +236,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         }
 
         // NOTE: Transition into InitialAccess
-        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
+        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
         InCommandContext->FinishContext();
     }
     else if (ResourceStorage.IsPlacedResource() && bSupportClearValue)
@@ -245,7 +245,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
 
         if (Info.IsRenderTarget())
         {
-            InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::RenderTarget));
+            InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::RenderTarget));
             InCommandContext->GetResourceBarrierBatcher().FlushBarriers();
 
             FRHIRenderTargetView RTView;
@@ -266,12 +266,12 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
 
             if (InInitialAccess != EResourceAccess::RenderTarget)
             {
-                InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::RenderTarget, InInitialAccess));
+                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::RenderTarget, InInitialAccess));
             }
         }
         else if (Info.IsDepthStencil())
         {
-            InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::DepthWrite));
+            InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::DepthWrite));
             InCommandContext->GetResourceBarrierBatcher().FlushBarriers();
 
             FRHIDepthStencilView DSView;
@@ -291,7 +291,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
 
             if (InInitialAccess != EResourceAccess::DepthWrite)
             {
-                InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::DepthWrite, InInitialAccess));
+                InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::DepthWrite, InInitialAccess));
             }
         }
 
@@ -300,7 +300,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     else if (InInitialAccess != EResourceAccess::Common)
     {
         InCommandContext->StartContext();
-        InCommandContext->TransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, InInitialAccess));
+        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, InInitialAccess));
         InCommandContext->FinishContext();
     }
 

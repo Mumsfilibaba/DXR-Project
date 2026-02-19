@@ -317,7 +317,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
 void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
 {
     FRHITexture* BackBuffer = ViewportData.SwapChain->GetBackBuffer();
-    CommandList.TransitionTexture(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
 
     PrepareDrawData(CommandList, DrawData);
 
@@ -328,7 +328,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTexture(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
+    CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
 }
 
 void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData)
@@ -385,8 +385,8 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         }
     }
 
-    CommandList.TransitionBuffer(ViewportData->VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
-    CommandList.TransitionBuffer(ViewportData->IndexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(ViewportData->VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+    CommandList.TransitionBufferState(ViewportData->IndexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
 
     uint64 VertexOffset = 0;
     uint64 IndexOffset  = 0;
@@ -401,8 +401,8 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
         IndexOffset  += DrawCmdList->IdxBuffer.Size;
     }
 
-    CommandList.TransitionBuffer(ViewportData->VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
-    CommandList.TransitionBuffer(ViewportData->IndexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+    CommandList.TransitionBufferState(ViewportData->VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+    CommandList.TransitionBufferState(ViewportData->IndexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
 }
 
 void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData)
@@ -608,7 +608,7 @@ void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& Comma
 
 	if (InTexture->ResourceState != EResourceAccess::PixelShaderResource)
 	{
-		CommandList.TransitionTexture(InTexture->Texture.Get(), FRHITextureTransition::Make(InTexture->ResourceState, EResourceAccess::PixelShaderResource));
+		CommandList.TransitionTextureState(InTexture->Texture.Get(), FRHITextureTransition::Make(InTexture->ResourceState, EResourceAccess::PixelShaderResource));
 	}
 
 	RenderedTextures.Emplace(InTexture);
@@ -620,7 +620,7 @@ void FImGuiRenderer::ResetTexturesShaderResourceUsage(FRHICommandList& CommandLi
 	{
 		if (CurrentTexture->ResourceState != EResourceAccess::PixelShaderResource)
 		{
-			CommandList.TransitionTexture(CurrentTexture->Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, CurrentTexture->ResourceState));
+			CommandList.TransitionTextureState(CurrentTexture->Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, CurrentTexture->ResourceState));
 		}
 	}
 

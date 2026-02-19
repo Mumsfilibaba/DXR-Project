@@ -1,6 +1,7 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanResourceState.h"
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 
@@ -48,9 +49,13 @@ public:
         return RequiredAlignment;
     }
 
+    FVulkanBufferState&       GetTrackedState()       { return TrackedState; }
+    const FVulkanBufferState& GetTrackedState() const { return TrackedState; }
+
 protected:
     VkBuffer                Buffer;
     FVulkanMemoryAllocation MemoryAllocation;
     VkDeviceSize            RequiredAlignment;
+    FVulkanBufferState      TrackedState;
     FString                 DebugName;
 };

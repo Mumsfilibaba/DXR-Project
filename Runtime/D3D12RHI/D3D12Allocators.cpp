@@ -237,10 +237,8 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
     }
 
     FD3D12BuddyAllocatorAllocationData AllocationData = {};
-    AllocationData.Order         = Order;
-    AllocationData.Offset        = Offset;
-    AllocationData.bBackedByHeap = (AllocationStrategy == EAllocationStrategy::SuballocatedHeap);
-    AllocationData.BackingHeap   = BackingHeap.Get();
+    AllocationData.Order  = Order;
+    AllocationData.Offset = Offset;
     
     OutStorage.SetBuddyAllocationData(AllocationData);
     OutStorage.SetBuddyAllocator(this);
@@ -1810,11 +1808,14 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
 
     if (OutStorage.GetStorageType() == EResourceStorageType::SuballocatedHeap)
     {
+        FD3D12BuddyAllocator* BuddyAllocator = static_cast<FD3D12BuddyAllocator*>(OutStorage.GetAllocator());
+        FD3D12Heap* BackingHeap = BuddyAllocator->GetBackingHeap();
+        CHECK(BackingHeap != nullptr);
+
         const FD3D12BuddyAllocatorAllocationData& BuddyData = OutStorage.GetBuddyAllocationData();
-        CHECK(BuddyData.BackingHeap != nullptr);
 
         FD3D12ResourceRef PlacedResource;
-        if (!GetDevice()->CreatePlacedResource(BuddyData.BackingHeap, BuddyData.Offset, AllocationDesc, EffectiveInitialState, nullptr, PlacedResource))
+        if (!GetDevice()->CreatePlacedResource(BackingHeap, BuddyData.Offset, AllocationDesc, EffectiveInitialState, nullptr, PlacedResource))
         {
             return false;
         }

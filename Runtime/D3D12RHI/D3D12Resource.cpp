@@ -9,12 +9,13 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     , FD3D12DeviceChild(InDevice)
     , Resource(InResource)
     , HeapType(InHeapType)
-    , ResourceState(InInitialState)
     , Desc(InResource ? InResource->GetDesc() : D3D12_RESOURCE_DESC{})
     , Address(0)
     , NumSubresources(0)
     , bShouldDeferredRelease(true)
 {
+    TrackedState.SetResourceState(InInitialState);
+
     if (Resource)
     {
         if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
@@ -25,6 +26,17 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
         const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
         NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
     }
+
+    if (HeapType == D3D12_HEAP_TYPE_DEFAULT)
+    {
+        InitializeStateTracking(InInitialState);
+    }
+}
+
+void FD3D12Resource::InitializeStateTracking(D3D12_RESOURCE_STATES InitialState)
+{
+    TrackedState.Initialize(Math::Max(NumSubresources, 1u));
+    TrackedState.SetResourceState(InitialState);
 }
 
 void* FD3D12Resource::MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range)

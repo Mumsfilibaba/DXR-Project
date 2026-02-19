@@ -210,7 +210,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     const bool bNeedsTransition = !OutputTarget->GetInfo().IsPresentable();
     if (bNeedsTransition)
     {
-        CommandList.TransitionTexture(OutputTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
+        CommandList.TransitionTextureState(OutputTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
     }
 
     FRHIBeginRenderPassInfo RenderPass;
@@ -241,7 +241,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     if (bNeedsTransition)
     {
-        CommandList.TransitionTexture(OutputTarget, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(OutputTarget, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Tonemapping");
