@@ -156,10 +156,10 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerInitializer;
-    RasterizerInitializer.CullMode = ECullMode::None;
+    FRHIRasterizerStateDesc RasterizerDesc;
+    RasterizerDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -176,12 +176,12 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-    DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-    DepthStencilStateInitializer.bDepthEnable      = true;
-    DepthStencilStateInitializer.bDepthWriteEnable = false;
+    FRHIDepthStencilStateDesc DepthStencilStateDesc;
+    DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilStateDesc.bDepthEnable      = true;
+    DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -227,12 +227,12 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);

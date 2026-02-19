@@ -239,15 +239,15 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 
 bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
 {
-    FRHIGeometryAccelerationStructureBuildDesc BuildInfo;
-    BuildInfo.VertexBuffer = VertexBuffer.Get();
-    BuildInfo.NumVertices  = VertexCount;
-    BuildInfo.IndexBuffer  = IndexBuffer.Get();
-    BuildInfo.NumIndices   = IndexCount;
-    BuildInfo.IndexFormat  = IndexFormat;
-    BuildInfo.bUpdate      = true;
+    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.VertexBuffer = VertexBuffer.Get();
+    BuildDesc.NumVertices  = VertexCount;
+    BuildDesc.IndexBuffer  = IndexBuffer.Get();
+    BuildDesc.NumIndices   = IndexCount;
+    BuildDesc.IndexFormat  = IndexFormat;
+    BuildDesc.bUpdate      = true;
 
-    CommandList.BuildGeometryAccelerationStructure(RTGeometry.Get(), BuildInfo);
+    CommandList.BuildGeometryAccelerationStructure(RTGeometry.Get(), BuildDesc);
     return true;
 }
 

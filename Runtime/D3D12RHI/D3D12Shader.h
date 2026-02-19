@@ -6,14 +6,14 @@
 #include "D3D12RHI/D3D12Constants.h"
 #include <d3d12shader.h>
 
-typedef TSharedRef<class FD3D12Shader>              FD3D12ShaderRef;
+typedef TSharedRef<class FD3D12Shader>                 FD3D12ShaderRef;
 typedef TSharedRef<class FD3D12VertexShaderRHI>        FD3D12VertexShaderRHIRef;
 typedef TSharedRef<class FD3D12HullShaderRHI>          FD3D12HullShaderRHIRef;
 typedef TSharedRef<class FD3D12DomainShaderRHI>        FD3D12DomainShaderRHIRef;
 typedef TSharedRef<class FD3D12GeometryShaderRHI>      FD3D12GeometryShaderRHIRef;
 typedef TSharedRef<class FD3D12PixelShaderRHI>         FD3D12PixelShaderRHIRef;
 typedef TSharedRef<class FD3D12ComputeShaderRHI>       FD3D12ComputeShaderRHIRef;
-typedef TSharedRef<class FD3D12RayTracingShader>    FD3D12RayTracingShaderRef;
+typedef TSharedRef<class FD3D12RayTracingShader>       FD3D12RayTracingShaderRef;
 typedef TSharedRef<class FD3D12RayGenShaderRHI>        FD3D12RayGenShaderRHIRef;
 typedef TSharedRef<class FD3D12RayAnyHitShaderRHI>     FD3D12RayAnyHitShaderRHIRef;
 typedef TSharedRef<class FD3D12RayClosestHitShaderRHI> FD3D12RayClosestHitShaderRHIRef;
@@ -103,18 +103,18 @@ enum ED3D12BindingType : uint8
     D3D12BindingType_Count = D3D12BindingType_Sampler + 1,
 };
 
-struct FD3D12ShaderInfo
+struct FD3D12ShaderBindingDesc
 {   
     struct FResourceBinding
     {
-        FString DebugName;
+        FString           DebugName;
         ED3D12BindingType BindingType;
-        uint8 BindingIndex;
-        uint8 OriginalBindingIndex;
+        uint8             BindingIndex;
+        uint8             OriginalBindingIndex;
     };
     
     TArray<FResourceBinding> ResourceBindings;
-    uint32 NumPushConstants;
+    uint32                   NumPushConstants;
 };
 
 class FD3D12Shader : public FD3D12DeviceChild
@@ -125,10 +125,10 @@ public:
 
 	virtual bool Initialize(const TArray<uint8>& InCode);
 
-    const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
-    const FShaderResourceCount& GetLocalRayTracingResourceCount() const { return LocalRayTracingResourceCount; }
-    const D3D12_SHADER_BYTECODE& GetByteCode() const { return ByteCode; }
-    EShaderVisibility GetShaderVisibility() const { return ShaderVisibility; }
+    const FShaderResourceCount&  GetResourceCount()                const { return ResourceCount; }
+    const FShaderResourceCount&  GetLocalRayTracingResourceCount() const { return LocalRayTracingResourceCount; }
+    const D3D12_SHADER_BYTECODE& GetByteCode()                     const { return ByteCode; }
+    EShaderVisibility            GetShaderVisibility()             const { return ShaderVisibility; }
 
     bool HasRootSignature() const { return bContainsRootSignature; }
     

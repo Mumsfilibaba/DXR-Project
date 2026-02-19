@@ -125,12 +125,12 @@ struct FRHISceneAccelerationStructureDesc
     bool operator==(const FRHISceneAccelerationStructureDesc& Other) const noexcept = default;
     
     TArray<FRHIGeometryAccelerationStructureInstance> Instances;
-    EAccelerationStructureBuildFlags       Flags = EAccelerationStructureBuildFlags::None;
+    EAccelerationStructureBuildFlags                  Flags = EAccelerationStructureBuildFlags::None;
 };
 
 class FRHIGeometryAccelerationStructure : public FRHIResource
-{
-protected: 
+{ 
+public:
     explicit FRHIGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
         : FRHIResource()
         , Flags(InGeometryDesc.Flags)
@@ -139,10 +139,9 @@ protected:
 
     virtual ~FRHIGeometryAccelerationStructure() = default;
 
-public:
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
-    virtual void SetDebugName(const FString& InName) { }
+    virtual void    SetDebugName(const FString& InName) { }
     virtual FString GetDebugName() const { return FString(); }
 
     EAccelerationStructureBuildFlags GetFlags() const 
@@ -156,7 +155,7 @@ protected:
 
 class FRHISceneAccelerationStructure : public FRHIResource
 {
-protected:
+public:
     explicit FRHISceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
         : FRHIResource()
         , Flags(InSceneDesc.Flags)
@@ -165,13 +164,11 @@ protected:
 
     virtual ~FRHISceneAccelerationStructure() = default;
 
-public:
-    virtual void* GetRHINativeHandle() const { return nullptr; }
-
+    virtual void*                   GetRHINativeHandle()    const { return nullptr; }
+    virtual FRHIDescriptorHandle    GetBindlessHandle()     const { return FRHIDescriptorHandle(); }
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    virtual void SetDebugName(const FString& InName) { }
+    virtual void    SetDebugName(const FString& InName) { }
     virtual FString GetDebugName() const { return FString(); }
 
     EAccelerationStructureBuildFlags GetFlags() const 

@@ -19,24 +19,24 @@ FD3D12GeometryAccelerationStructureRHI::FD3D12GeometryAccelerationStructureRHI(F
 {
 }
 
-bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildInfo)
+bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
-    VertexBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildInfo.VertexBuffer);
-    IndexBuffer  = MakeSharedRef<FD3D12BufferRHI>(BuildInfo.IndexBuffer);
+    VertexBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.VertexBuffer);
+    IndexBuffer  = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.IndexBuffer);
 
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc = {};
     GeometryDesc.Type                                 = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
     GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetResource()->GetGPUVirtualAddress();
     GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetDesc().Stride;
     GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
-    GeometryDesc.Triangles.VertexCount                = BuildInfo.NumVertices;
+    GeometryDesc.Triangles.VertexCount                = BuildDesc.NumVertices;
     GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
     if (IndexBuffer)
     {
-        GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(BuildInfo.IndexFormat);
+        GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(BuildDesc.IndexFormat);
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetResource()->GetGPUVirtualAddress();
-        GeometryDesc.Triangles.IndexCount  = BuildInfo.NumIndices;
+        GeometryDesc.Triangles.IndexCount  = BuildDesc.NumIndices;
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
@@ -46,7 +46,7 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     Inputs.Type           = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
     Inputs.Flags          = ConvertAccelerationStructureBuildFlags(GetFlags());
 
-    if (BuildInfo.bUpdate)
+    if (BuildDesc.bUpdate)
     {
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
@@ -160,15 +160,15 @@ FD3D12SceneAccelerationStructureRHI::FD3D12SceneAccelerationStructureRHI(FD3D12D
 {
 }
 
-bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildInfo)
+bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildDesc)
 {
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs = {};
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs    = BuildInfo.NumInstances;
+    Inputs.NumDescs    = BuildDesc.NumInstances;
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
     
-    if (BuildInfo.bUpdate)
+    if (BuildDesc.bUpdate)
     {
         CHECK((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
@@ -252,17 +252,17 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
         CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(BuildInfo.NumInstances);
+    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(BuildDesc.NumInstances);
     for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
-        FD3D12GeometryAccelerationStructureRHI* D3D12Geometry = FD3D12RHI::ResourceCast(BuildInfo.Instances[Instance].Geometry);
-        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &BuildInfo.Instances[Instance].Transform, sizeof(FMatrix3x4));
+        FD3D12GeometryAccelerationStructureRHI* D3D12Geometry = FD3D12RHI::ResourceCast(BuildDesc.Instances[Instance].Geometry);
+        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &BuildDesc.Instances[Instance].Transform, sizeof(FMatrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
-        InstanceDescs[Instance].InstanceID                          = BuildInfo.Instances[Instance].InstanceIndex;
-        InstanceDescs[Instance].Flags                               = ConvertRayTracingInstanceFlags(BuildInfo.Instances[Instance].Flags);
-        InstanceDescs[Instance].InstanceMask                        = BuildInfo.Instances[Instance].Mask;
-        InstanceDescs[Instance].InstanceContributionToHitGroupIndex = BuildInfo.Instances[Instance].HitGroupIndex;
+        InstanceDescs[Instance].InstanceID                          = BuildDesc.Instances[Instance].InstanceIndex;
+        InstanceDescs[Instance].Flags                               = ConvertRayTracingInstanceFlags(BuildDesc.Instances[Instance].Flags);
+        InstanceDescs[Instance].InstanceMask                        = BuildDesc.Instances[Instance].Mask;
+        InstanceDescs[Instance].InstanceContributionToHitGroupIndex = BuildDesc.Instances[Instance].HitGroupIndex;
     }
 
     CurrentSize = InstanceBuffer ? InstanceBuffer->GetWidth() : 0;
@@ -305,7 +305,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
 
-    if (BuildInfo.bUpdate)
+    if (BuildDesc.bUpdate)
     {
         CHECK((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
         AccelerationStructureDesc.SourceAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
@@ -318,7 +318,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
 
     CmdContext.GetResourceBarrierBatcher().AddUnorderedAccessBarrier(ResultBuffer.Get());
 
-    Instances.Reset(BuildInfo.Instances, BuildInfo.NumInstances);
+    Instances.Reset(BuildDesc.Instances, BuildDesc.NumInstances);
     return true;
 }
 

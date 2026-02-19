@@ -34,36 +34,36 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
     VkBufferCreateInfo BufferCreateInfo = {};
-    BufferCreateDesc.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    BufferCreateDesc.pNext                 = nullptr;
-    BufferCreateDesc.flags                 = 0;
-    BufferCreateDesc.pQueueFamilyIndices   = nullptr;
-    BufferCreateDesc.queueFamilyIndexCount = 0;
-    BufferCreateDesc.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
-    BufferCreateDesc.size                  = Desc.Size;
+    BufferCreateInfo.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    BufferCreateInfo.pNext                 = nullptr;
+    BufferCreateInfo.flags                 = 0;
+    BufferCreateInfo.pQueueFamilyIndices   = nullptr;
+    BufferCreateInfo.queueFamilyIndexCount = 0;
+    BufferCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
+    BufferCreateInfo.size                  = Desc.Size;
 
     const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetProperties();
     RequiredAlignment = 1u;
     
     // TODO: Look into abstracting these flags
-    BufferCreateDesc.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     
     // VK_KHR_buffer_device_address (Core in 1.2)
     VkMemoryAllocateFlags AllocateFlags = 0;
     if (Desc.IsDefault())
     {
         AllocateFlags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
-        BufferCreateDesc.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+        BufferCreateInfo.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     }
 
     const bool bIsRayTracingSupported = GVulkanSupportsAccelerationStructures;
     if (Desc.IsVertexBuffer())
     {
-        BufferCreateDesc.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        BufferCreateInfo.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
         if (bIsRayTracingSupported)
         {
-            BufferCreateDesc.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+            BufferCreateInfo.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
         }
     #endif
 
@@ -71,11 +71,11 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     }
     if (Desc.IsIndexBuffer())
     {
-        BufferCreateDesc.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        BufferCreateInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
         if (bIsRayTracingSupported)
         {
-            BufferCreateDesc.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+            BufferCreateInfo.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
         }
     #endif
 
@@ -83,17 +83,17 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     }
     if (Desc.IsConstantBuffer())
     {
-        BufferCreateDesc.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        BufferCreateInfo.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
     }
     if (Desc.IsUnorderedAccessBuffer() || Desc.IsShaderResourceBuffer())
     {
-        BufferCreateDesc.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        BufferCreateInfo.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
     
     // Setup the proper size
-    BufferCreateDesc.size = Math::AlignUp(BufferCreateDesc.size, RequiredAlignment);
+    BufferCreateInfo.size = Math::AlignUp(BufferCreateInfo.size, RequiredAlignment);
 
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     if (VULKAN_FAILED(Result))

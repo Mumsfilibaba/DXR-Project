@@ -50,6 +50,8 @@ public:
     {
     }
 
+    virtual ~FRHIBuffer() = default;
+
     virtual void* GetRHINativeHandle() const = 0; 
     virtual FRHIDescriptorHandle GetBindlessHandle() const = 0; 
  

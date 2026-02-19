@@ -16,37 +16,37 @@ FVulkanSamplerStateRHI::~FVulkanSamplerStateRHI()
 bool FVulkanSamplerStateRHI::Initialize()
 {
     VkSamplerCreateInfo SamplerCreateInfo = {};
-    SamplerCreateDesc.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    SamplerCreateDesc.magFilter               = ConvertSamplerFilterToMagFilter(Desc.Filter);
-    SamplerCreateDesc.minFilter               = ConvertSamplerFilterToMinFilter(Desc.Filter);
-    SamplerCreateDesc.mipmapMode              = ConvertSamplerFilterToMipmapMode(Desc.Filter);
-    SamplerCreateDesc.addressModeU            = ConvertSamplerMode(Desc.AddressU);
-    SamplerCreateDesc.addressModeV            = ConvertSamplerMode(Desc.AddressV);
-    SamplerCreateDesc.addressModeW            = ConvertSamplerMode(Desc.AddressW);
-    SamplerCreateDesc.mipLodBias              = Desc.MipLODBias;
-    SamplerCreateDesc.anisotropyEnable        = IsAnisotropySampler(Desc.Filter);
-    SamplerCreateDesc.maxAnisotropy           = Desc.MaxAnisotropy;
-    SamplerCreateDesc.compareEnable           = IsComparisonSampler(Desc.Filter);
-    SamplerCreateDesc.compareOp               = ConvertComparisonFunc(Desc.ComparisonFunc);
-    SamplerCreateDesc.minLod                  = Desc.MinLOD;
-    SamplerCreateDesc.maxLod                  = Desc.MaxLOD;
-    SamplerCreateDesc.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-    SamplerCreateDesc.unnormalizedCoordinates = false;
+    SamplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    SamplerCreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(Desc.Filter);
+    SamplerCreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(Desc.Filter);
+    SamplerCreateInfo.mipmapMode              = ConvertSamplerFilterToMipmapMode(Desc.Filter);
+    SamplerCreateInfo.addressModeU            = ConvertSamplerMode(Desc.AddressU);
+    SamplerCreateInfo.addressModeV            = ConvertSamplerMode(Desc.AddressV);
+    SamplerCreateInfo.addressModeW            = ConvertSamplerMode(Desc.AddressW);
+    SamplerCreateInfo.mipLodBias              = Desc.MipLODBias;
+    SamplerCreateInfo.anisotropyEnable        = IsAnisotropySampler(Desc.Filter);
+    SamplerCreateInfo.maxAnisotropy           = Desc.MaxAnisotropy;
+    SamplerCreateInfo.compareEnable           = IsComparisonSampler(Desc.Filter);
+    SamplerCreateInfo.compareOp               = ConvertComparisonFunc(Desc.ComparisonFunc);
+    SamplerCreateInfo.minLod                  = Desc.MinLOD;
+    SamplerCreateInfo.maxLod                  = Desc.MaxLOD;
+    SamplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    SamplerCreateInfo.unnormalizedCoordinates = false;
     
     // If anisotropy isn't enabled, force 1.0f. If it is, clamp to at least 1.0f.
-    if (!SamplerCreateDesc.anisotropyEnable)
+    if (!SamplerCreateInfo.anisotropyEnable)
     {
-        SamplerCreateDesc.maxAnisotropy = 1.0f;
+        SamplerCreateInfo.maxAnisotropy = 1.0f;
     }
     else
     {
-        SamplerCreateDesc.maxAnisotropy = Math::Max(1.0f, SamplerCreateDesc.maxAnisotropy);
+        SamplerCreateInfo.maxAnisotropy = Math::Max(1.0f, SamplerCreateInfo.maxAnisotropy);
     }
     
     // Ensure LOD range is sane
-    if (SamplerCreateDesc.maxLod < SamplerCreateDesc.minLod)
+    if (SamplerCreateInfo.maxLod < SamplerCreateInfo.minLod)
     {
-        Math::Swap(SamplerCreateDesc.minLod, SamplerCreateDesc.maxLod);
+        Math::Swap(SamplerCreateInfo.minLod, SamplerCreateInfo.maxLod);
     }
 
     if (!GetDevice()->FindOrCreateSampler(SamplerCreateInfo, Sampler))

@@ -71,7 +71,7 @@ bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Ot
     return true;
 }
 
-FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& RootSignatureInfo)
+FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& RootSignatureLayout)
     : Desc()
     , RootParameters()
     , DescriptorRanges()
@@ -88,13 +88,13 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     };
 
     // NOTE: This can crash if the pipeline is using to many tables, max is 64
-    const uint32 Space = (RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal) ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
+    const uint32 Space = (RootSignatureLayout.Type == ERootSignatureType::RayTracingLocal) ? D3D12_SHADER_REGISTER_SPACE_RT_LOCAL : 0;
     
     for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
     {
         bool bIsStageUsed = true;
 
-        const FShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[ShaderStage];
+        const FShaderResourceCount& ResourceCounts = RootSignatureLayout.ResourceCounts[ShaderStage];
         if (ResourceCounts.Ranges.NumCBVs > 0)
         {
             CHECK(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGES);
@@ -164,11 +164,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     Desc.NumStaticSamplers = 0;
     Desc.pStaticSamplers   = nullptr;
 
-    if (RootSignatureInfo.bAllowInputAssembler)
+    if (RootSignatureLayout.bAllowInputAssembler)
     {
         Desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
     }
-    else if (RootSignatureInfo.Type == ERootSignatureType::RayTracingLocal)
+    else if (RootSignatureLayout.Type == ERootSignatureType::RayTracingLocal)
     {
         Desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
     }
@@ -266,9 +266,9 @@ FD3D12RootSignature::FD3D12RootSignature(FD3D12Device* InDevice)
     }
 }
 
-bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureLayout& RootSignatureInfo)
+bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureLayout& RootSignatureLayout)
 {
-    FD3D12RootSignatureDescHelper Desc(RootSignatureInfo);
+    FD3D12RootSignatureDescHelper Desc(RootSignatureLayout);
     return Initialize(Desc.GetDesc());
 }
 

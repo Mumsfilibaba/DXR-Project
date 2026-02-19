@@ -282,7 +282,7 @@ struct IRHICommandContext
      * @param RayTracingScene Top-level acceleration-structure to build or update
      * @param BuildDesc A structure containing information about the build
      */
-    virtual void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildInfo) = 0;
+    virtual void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc) = 0;
 
     /**
      * @brief Builds the Bottom-Level Acceleration-Structure for ray tracing

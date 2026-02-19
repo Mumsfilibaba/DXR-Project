@@ -444,12 +444,12 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTexture(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassDesc RenderPass;
-        RenderPass.NumRenderTargets = 1;
-        RenderPass.RenderTargets[0] = FRHIRenderTargetView(SelectionMask.Get(), EAttachmentLoadAction::Clear);
-        RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        FRHIBeginRenderPassDesc RenderPassDesc;
+        RenderPassDesc.NumRenderTargets = 1;
+        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(SelectionMask.Get(), EAttachmentLoadAction::Clear);
+        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        CommandList.BeginRenderPass(RenderPass);
+        CommandList.BeginRenderPass(RenderPassDesc);
 
         CommandList.SetGraphicsPipelineState(MaskPSO.Get());
 
@@ -479,12 +479,12 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.TransitionTexture(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
-            FRHIBeginRenderPassDesc RenderPass;
-            RenderPass.NumRenderTargets = 1;
-            RenderPass.RenderTargets[0] = FRHIRenderTargetView(ErosionTemp.Get(), EAttachmentLoadAction::Clear);
-            RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+            FRHIBeginRenderPassDesc RenderPassDesc;
+            RenderPassDesc.NumRenderTargets = 1;
+            RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(ErosionTemp.Get(), EAttachmentLoadAction::Clear);
+            RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-            CommandList.BeginRenderPass(RenderPass);
+            CommandList.BeginRenderPass(RenderPassDesc);
 
             CommandList.SetGraphicsPipelineState(ErodePSO.Get());
 
@@ -508,12 +508,12 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.TransitionTexture(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
-            FRHIBeginRenderPassDesc RenderPass;
-            RenderPass.NumRenderTargets = 1;
-            RenderPass.RenderTargets[0] = FRHIRenderTargetView(ErodedMask.Get(), EAttachmentLoadAction::Clear);
-            RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+            FRHIBeginRenderPassDesc RenderPassDesc;
+            RenderPassDesc.NumRenderTargets = 1;
+            RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(ErodedMask.Get(), EAttachmentLoadAction::Clear);
+            RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-            CommandList.BeginRenderPass(RenderPass);
+            CommandList.BeginRenderPass(RenderPassDesc);
 
             CommandList.SetGraphicsPipelineState(ErodePSO.Get());
 
@@ -542,12 +542,12 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTexture(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassDesc RenderPass;
-        RenderPass.NumRenderTargets = 1;
-        RenderPass.RenderTargets[0] = FRHIRenderTargetView(DilationTemp.Get(), EAttachmentLoadAction::Clear);
-        RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        FRHIBeginRenderPassDesc RenderPassDesc;
+        RenderPassDesc.NumRenderTargets = 1;
+        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(DilationTemp.Get(), EAttachmentLoadAction::Clear);
+        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        CommandList.BeginRenderPass(RenderPass);
+        CommandList.BeginRenderPass(RenderPassDesc);
 
         CommandList.SetGraphicsPipelineState(DilatePSO.Get());
 
@@ -574,12 +574,12 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTexture(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassDesc RenderPass;
-        RenderPass.NumRenderTargets = 1;
-        RenderPass.RenderTargets[0] = FRHIRenderTargetView(DilatedMask.Get(), EAttachmentLoadAction::Clear);
-        RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        FRHIBeginRenderPassDesc RenderPassDesc;
+        RenderPassDesc.NumRenderTargets = 1;
+        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(DilatedMask.Get(), EAttachmentLoadAction::Clear);
+        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        CommandList.BeginRenderPass(RenderPass);
+        CommandList.BeginRenderPass(RenderPassDesc);
 
         CommandList.SetGraphicsPipelineState(DilatePSO.Get());
 
@@ -606,12 +606,12 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTexture(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassDesc RenderPass;
-        RenderPass.NumRenderTargets = 1;
-        RenderPass.RenderTargets[0] = FRHIRenderTargetView(RingMask.Get(), EAttachmentLoadAction::Clear);
-        RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        FRHIBeginRenderPassDesc RenderPassDesc;
+        RenderPassDesc.NumRenderTargets = 1;
+        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RingMask.Get(), EAttachmentLoadAction::Clear);
+        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-        CommandList.BeginRenderPass(RenderPass);
+        CommandList.BeginRenderPass(RenderPassDesc);
 
         CommandList.SetGraphicsPipelineState(ResolvePSO.Get());
 

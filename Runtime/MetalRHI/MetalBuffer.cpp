@@ -20,7 +20,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     SCOPED_AUTORELEASE_POOL();
     
     MTLResourceOptions ResourceOptions = MTLResourceHazardTrackingModeDefault;
-    if (Info.IsDynamic())
+    if (Desc.IsDynamic())
     {
         ResourceOptions |= MTLResourceStorageModeShared | MTLResourceCPUCacheModeDefaultCache;
     }
@@ -29,8 +29,8 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
         ResourceOptions |= MTLResourceStorageModePrivate | MTLResourceCPUCacheModeWriteCombined;
     }
     
-    const uint64 Alignment   = Info.IsConstantBuffer() ? kConstantBufferAlignment : kBufferAlignment;
-    const uint64 AlignedSize = Math::AlignUp(Info.Size, Alignment);
+    const uint64 Alignment   = Desc.IsConstantBuffer() ? kConstantBufferAlignment : kBufferAlignment;
+    const uint64 AlignedSize = Math::AlignUp(Desc.Size, Alignment);
     
     id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
     CHECK(Device != nil);
@@ -47,16 +47,16 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     // Upload the data
     if (InInitialData)
     {
-        if (Info.IsDynamic())
+        if (Desc.IsDynamic())
         {
-            FMemory::Memcpy(NewBuffer.contents, InInitialData, Info.Size);
+            FMemory::Memcpy(NewBuffer.contents, InInitialData, Desc.Size);
         }
         else
         {
             @autoreleasepool
             {
-                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:Info.Size options:MTLResourceCPUCacheModeDefaultCache];
-                FMemory::Memcpy(StagingBuffer.contents, InInitialData, Info.Size);
+                id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:Desc.Size options:MTLResourceCPUCacheModeDefaultCache];
+                FMemory::Memcpy(StagingBuffer.contents, InInitialData, Desc.Size);
                 
                 id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
                 id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
@@ -66,7 +66,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
                                sourceOffset:0
                                    toBuffer:NewBuffer
                           destinationOffset:0
-                                       size:Info.Size];
+                                       size:Desc.Size];
                 
                 [CopyEncoder endEncoding];
 

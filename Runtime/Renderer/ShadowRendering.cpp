@@ -342,12 +342,12 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable      = true;
-        DepthStencilStateInitializer.bDepthWriteEnable = true;
+        FRHIDepthStencilStateDesc DepthStencilStateDesc;
+        DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateDesc.bDepthEnable      = true;
+        DepthStencilStateDesc.bDepthWriteEnable = true;
 
-        NewPipelineStateInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+        NewPipelineStateInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
         if (!NewPipelineStateInstance.DepthStencilState)
         {
             DEBUG_BREAK();
@@ -559,15 +559,15 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.UpdateBuffer(SinglePassShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FSinglePassPointLightBufferHLSL)), &SinglePassPointLightBuffer);
             CommandList.TransitionBuffer(SinglePassShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-            FRHIBeginRenderPassDesc RenderPass;
-            RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
-            RenderPass.DepthStencilView.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES);
-            RenderPass.DepthStencilView.NumArraySlices = RHI_NUM_CUBE_FACES;
-            RenderPass.DepthStencilView.LoadAction     = EAttachmentLoadAction::Clear;
-            RenderPass.DepthStencilView.StoreAction    = EAttachmentStoreAction::Store;
-            RenderPass.DepthStencilView.ClearValue     = FDepthStencilValue(1.0f, 0);
+            FRHIBeginRenderPassDesc RenderPassDesc;
+            RenderPassDesc.DepthStencilView                = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
+            RenderPassDesc.DepthStencilView.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES);
+            RenderPassDesc.DepthStencilView.NumArraySlices = RHI_NUM_CUBE_FACES;
+            RenderPassDesc.DepthStencilView.LoadAction     = EAttachmentLoadAction::Clear;
+            RenderPassDesc.DepthStencilView.StoreAction    = EAttachmentStoreAction::Store;
+            RenderPassDesc.DepthStencilView.ClearValue     = FDepthStencilValue(1.0f, 0);
 
-            CommandList.BeginRenderPass(RenderPass);
+            CommandList.BeginRenderPass(RenderPassDesc);
 
             const uint32 PointLightShadowSize = Resources.PointLightShadowSize;
             FViewportRegion ViewportRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 0.0f, 0.0f, 1.0f);
@@ -689,13 +689,13 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
                 const uint32 ArrayIndex = (LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
-                FRHIBeginRenderPassDesc RenderPass;
-                RenderPass.DepthStencilView             = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
-                RenderPass.DepthStencilView.LoadAction  = EAttachmentLoadAction::Clear;
-                RenderPass.DepthStencilView.StoreAction = EAttachmentStoreAction::Store;
-                RenderPass.DepthStencilView.ClearValue  = FDepthStencilValue(1.0f, 0);
+                FRHIBeginRenderPassDesc RenderPassDesc;
+                RenderPassDesc.DepthStencilView             = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
+                RenderPassDesc.DepthStencilView.LoadAction  = EAttachmentLoadAction::Clear;
+                RenderPassDesc.DepthStencilView.StoreAction = EAttachmentStoreAction::Store;
+                RenderPassDesc.DepthStencilView.ClearValue  = FDepthStencilValue(1.0f, 0);
 
-                CommandList.BeginRenderPass(RenderPass);
+                CommandList.BeginRenderPass(RenderPassDesc);
 
                 const uint32 PointLightShadowSize = Resources.PointLightShadowSize;
                 FViewportRegion ViewportRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 0.0f, 0.0f, 1.0f);
@@ -878,7 +878,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+    Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
     
     if (!Resources.CascadeSplitsBufferSRV)
     {
@@ -923,7 +923,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeExtentsHistoryBuffer->SetDebugName("Cascade Extents History Buffer");
     }
 
-    UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeSnapHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeSnapHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSnapHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
     
     if (!Resources.CascadeSnapHistoryBufferUAV)
@@ -1185,12 +1185,12 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             return nullptr;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable      = true;
-        DepthStencilStateInitializer.bDepthWriteEnable = true;
+        FRHIDepthStencilStateDesc DepthStencilStateDesc;
+        DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateDesc.bDepthEnable      = true;
+        DepthStencilStateDesc.bDepthWriteEnable = true;
 
-        NewPipelineStateInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+        NewPipelineStateInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
         if (!NewPipelineStateInstance.DepthStencilState)
         {
             DEBUG_BREAK();
@@ -1394,12 +1394,12 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     FSceneDirectionalLight* SceneDirectionalLight = Scene->DirectionalLight;
     if constexpr (bIsSinglePass)
     {
-        FRHIBeginRenderPassDesc RenderPass;
-        RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowCascades.Get());
-        RenderPass.DepthStencilView.ArrayIndex     = 0;
-        RenderPass.DepthStencilView.NumArraySlices = NUM_SHADOW_CASCADES;
+        FRHIBeginRenderPassDesc RenderPassDesc;
+        RenderPassDesc.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowCascades.Get());
+        RenderPassDesc.DepthStencilView.ArrayIndex     = 0;
+        RenderPassDesc.DepthStencilView.NumArraySlices = NUM_SHADOW_CASCADES;
 
-        CommandList.BeginRenderPass(RenderPass);
+        CommandList.BeginRenderPass(RenderPassDesc);
 
         const float CascadeSize = static_cast<float>(Resources.CascadeSize);
         FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1508,11 +1508,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
             CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-            FRHIBeginRenderPassDesc RenderPass;
-            RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowCascades.Get());
-            RenderPass.DepthStencilView.ArrayIndex = static_cast<uint16>(Index);
+            FRHIBeginRenderPassDesc RenderPassDesc;
+            RenderPassDesc.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowCascades.Get());
+            RenderPassDesc.DepthStencilView.ArrayIndex = static_cast<uint16>(Index);
 
-            CommandList.BeginRenderPass(RenderPass);
+            CommandList.BeginRenderPass(RenderPassDesc);
 
             const float CascadeSize = static_cast<float>(Resources.CascadeSize);
             FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
@@ -1689,10 +1689,10 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
         }
     }
 
-    FRHITextureDesc ShadowDebugInfo = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Flags);
-    ShadowDebugInfo.bEnableResourceStateTracking = true;
+    FRHITextureDesc ShadowDebugDesc = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Flags);
+    ShadowDebugDesc.bEnableResourceStateTracking = true;
 
-    Resources.ShadowDebugBuffer = FRHI::Get()->CreateTexture(ShadowDebugInfo, EResourceAccess::NonPixelShaderResource);
+    Resources.ShadowDebugBuffer = FRHI::Get()->CreateTexture(ShadowDebugDesc, EResourceAccess::NonPixelShaderResource);
     if (Resources.ShadowDebugBuffer)
     {
         Resources.ShadowDebugBuffer->SetDebugName("Shadow Debug Buffer");

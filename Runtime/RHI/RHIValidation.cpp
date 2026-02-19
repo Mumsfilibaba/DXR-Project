@@ -272,36 +272,36 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureDesc& InTextureDesc,
 	return RealRHI->CreateTexture(InTextureDesc, InInitialState, InInitialData);
 }
 
-FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferInfo, EResourceAccess InitialState, const void* InitialData)
+FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferDesc, EResourceAccess InitialState, const void* InitialData)
 {
     // -------------------------------------------------------------------------------------------
     // Basic sanity
     // -------------------------------------------------------------------------------------------
-    if (BufferInfo.Size == 0)
+    if (BufferDesc.Size == 0)
     {
         RHI_VALIDATION_ERROR("CreateBuffer: Buffer size must be greater than zero. (parameter 'Size' was 0 bytes)");
         return nullptr;
     }
 
-    if (BufferInfo.Flags == EBufferFlags::None)
+    if (BufferDesc.Flags == EBufferFlags::None)
     {
         RHI_VALIDATION_ERROR("CreateBuffer: Buffer flags must be specified. (parameter 'Flags' was EBufferFlags::None)");
         return nullptr;
     }
 
-    if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxBufferSize)
+    if (BufferDesc.Size > RHIDeviceFeatureSupport::MaxBufferSize)
     {
 		RHI_VALIDATION_ERROR("CreateBuffer: The buffer size (%llu bytes) exceeds device feature support. (MaxBufferSize=%llu)",
-			static_cast<uint64>(BufferInfo.Size), static_cast<uint64>(RHIDeviceFeatureSupport::MaxBufferSize));
+			static_cast<uint64>(BufferDesc.Size), static_cast<uint64>(RHIDeviceFeatureSupport::MaxBufferSize));
         return nullptr;
     }
 
     // -------------------------------------------------------------------------------------------
     // Memory flags: require exactly one of Default/Dynamic/ReadBack
     // -------------------------------------------------------------------------------------------
-    const bool bMemoryDefault  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Default);
-    const bool bMemoryDynamic  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Dynamic);
-    const bool bMemoryReadBack = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::ReadBack);
+    const bool bMemoryDefault  = IsEnumFlagSet(BufferDesc.Flags, EBufferFlags::Default);
+    const bool bMemoryDynamic  = IsEnumFlagSet(BufferDesc.Flags, EBufferFlags::Dynamic);
+    const bool bMemoryReadBack = IsEnumFlagSet(BufferDesc.Flags, EBufferFlags::ReadBack);
 
     const int32 StorageFlagCount = (bMemoryDefault ? 1 : 0) + (bMemoryDynamic ? 1 : 0) + (bMemoryReadBack ? 1 : 0);
     if (StorageFlagCount != 1)
@@ -311,11 +311,11 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferInfo, EReso
         return nullptr;
     }
 
-    const bool bIsConstantBuffer        = BufferInfo.IsConstantBuffer();
-    const bool bIsShaderResourceBuffer  = BufferInfo.IsShaderResourceBuffer();
-    const bool bIsVertexBuffer          = BufferInfo.IsVertexBuffer();
-    const bool bIsIndexBuffer           = BufferInfo.IsIndexBuffer();
-    const bool bIsUnorderedAccessBuffer = BufferInfo.IsUnorderedAccessBuffer();
+    const bool bIsConstantBuffer        = BufferDesc.IsConstantBuffer();
+    const bool bIsShaderResourceBuffer  = BufferDesc.IsShaderResourceBuffer();
+    const bool bIsVertexBuffer          = BufferDesc.IsVertexBuffer();
+    const bool bIsIndexBuffer           = BufferDesc.IsIndexBuffer();
+    const bool bIsUnorderedAccessBuffer = BufferDesc.IsUnorderedAccessBuffer();
 
     // -------------------------------------------------------------------------------------------
     // Constant buffer rules
@@ -329,10 +329,10 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferInfo, EReso
             return nullptr;
         }
 
-        if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxConstantBufferSize)
+        if (BufferDesc.Size > RHIDeviceFeatureSupport::MaxConstantBufferSize)
         {
             RHI_VALIDATION_ERROR("CreateBuffer: size (%llu bytes) exceeds device feature support. (MaxConstantBufferSize=%u)", 
-                static_cast<uint64>(BufferInfo.Size), RHIDeviceFeatureSupport::MaxConstantBufferSize);
+                static_cast<uint64>(BufferDesc.Size), RHIDeviceFeatureSupport::MaxConstantBufferSize);
             return nullptr;
         }
     }
@@ -342,24 +342,24 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferInfo, EReso
     // -------------------------------------------------------------------------------------------
     if (bIsVertexBuffer || bIsIndexBuffer)
     {
-        if (BufferInfo.Stride == 0)
+        if (BufferDesc.Stride == 0)
         {
             RHI_VALIDATION_ERROR("CreateBuffer: %s requires a non-zero Stride. (Stride=0)", bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer");
             return nullptr;
         }
 
-        if ((BufferInfo.Size % BufferInfo.Stride) != 0ull)
+        if ((BufferDesc.Size % BufferDesc.Stride) != 0ull)
         {
             RHI_VALIDATION_ERROR("CreateBuffer: %s size must be a multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
-                bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer", static_cast<uint64>(BufferInfo.Size), BufferInfo.Stride);
+                bIsVertexBuffer ? "VertexBuffer" : "IndexBuffer", static_cast<uint64>(BufferDesc.Size), BufferDesc.Stride);
             return nullptr;
         }
 
         if (bIsIndexBuffer)
         {
-            if (!(BufferInfo.Stride == 2u || BufferInfo.Stride == 4u))
+            if (!(BufferDesc.Stride == 2u || BufferDesc.Stride == 4u))
             {
-                RHI_VALIDATION_ERROR("CreateBuffer: IndexBuffer stride must be 2 or 4 bytes (uint16 or uint32). (Stride=%u)", BufferInfo.Stride);
+                RHI_VALIDATION_ERROR("CreateBuffer: IndexBuffer stride must be 2 or 4 bytes (uint16 or uint32). (Stride=%u)", BufferDesc.Stride);
                 return nullptr;
             }
         }
@@ -376,41 +376,41 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferInfo, EReso
     // -------------------------------------------------------------------------------------------
     if (bIsShaderResourceBuffer || bIsUnorderedAccessBuffer)
     {
-        if (BufferInfo.Size > RHIDeviceFeatureSupport::MaxStorageBufferSize)
+        if (BufferDesc.Size > RHIDeviceFeatureSupport::MaxStorageBufferSize)
         {
 			RHI_VALIDATION_ERROR("CreateBuffer: %s size exceeds device feature support. (Size=%llu, MaxStorageBufferSize=%llu)",
-				bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer", static_cast<uint64>(BufferInfo.Size),
+				bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer", static_cast<uint64>(BufferDesc.Size),
 				static_cast<uint64>(RHIDeviceFeatureSupport::MaxStorageBufferSize));
             return nullptr;
         }
 
-        if (BufferInfo.Stride > 0)
+        if (BufferDesc.Stride > 0)
         {
             // Structured: enforce stride window and size divisibility
             const uint32 MinStride = RHIDeviceFeatureSupport::StructuredBufferMinStride;
             const uint32 MaxStride = RHIDeviceFeatureSupport::StructuredBufferMaxStride;
 
-            if (BufferInfo.Stride < MinStride || BufferInfo.Stride > MaxStride)
+            if (BufferDesc.Stride < MinStride || BufferDesc.Stride > MaxStride)
             {
                 RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer stride is outside device feature support. (Stride=%u, Allowed range: [%u, %u])", 
-                    BufferInfo.Stride, MinStride, MaxStride);
+                    BufferDesc.Stride, MinStride, MaxStride);
                 return nullptr;
             }
 
-            if ((BufferInfo.Size % BufferInfo.Stride) != 0ull)
+            if ((BufferDesc.Size % BufferDesc.Stride) != 0ull)
             {
                 RHI_VALIDATION_ERROR("CreateBuffer: StructuredBuffer size must be an integer multiple of Stride to satisfy device feature support. (Size=%llu, Stride=%u)",
-                    static_cast<uint64>(BufferInfo.Size), BufferInfo.Stride);
+                    static_cast<uint64>(BufferDesc.Size), BufferDesc.Stride);
                 return nullptr;
             }
         }
         else
         {
             const uint64 RequiredAlignment = static_cast<uint64>(RHIDeviceFeatureSupport::RawBufferRequiredAlignment);
-            if ((BufferInfo.Size % RequiredAlignment) != 0ull)
+            if ((BufferDesc.Size % RequiredAlignment) != 0ull)
             {
                 RHI_VALIDATION_ERROR("CreateBuffer: RWBuffer size must be aligned to satisfy device feature support. (Size=%llu, RequiredAlignment=%llu)",
-                    static_cast<uint64>(BufferInfo.Size), static_cast<uint64>(RequiredAlignment));
+                    static_cast<uint64>(BufferDesc.Size), static_cast<uint64>(RequiredAlignment));
                 return nullptr;
             }
         }
@@ -424,7 +424,7 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferInfo, EReso
         }
     }
 
-    return RealRHI->CreateBuffer(BufferInfo, InitialState, InitialData);
+    return RealRHI->CreateBuffer(BufferDesc, InitialState, InitialData);
 }
 
 FRHISamplerState* FRHIValidation::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
@@ -546,7 +546,7 @@ FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIUno
 		}
 
 		const FRHITextureDesc& TextureDesc = InDesc.TextureUAV.Texture->GetDesc();
-		if (!TextureInfo.IsUnorderedAccessTexture())
+		if (!TextureDesc.IsUnorderedAccessTexture())
 		{
 			RHI_VALIDATION_ERROR("Texture must have a the ETextureUsageFlags::UnorderedAccessTexture to used with a UnorderedAccessView");
 			return nullptr;

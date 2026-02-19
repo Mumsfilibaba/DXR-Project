@@ -80,7 +80,7 @@ public:
     FD3D12GeometryAccelerationStructureRHI(FD3D12Device* InDevice, const FRHIGeometryAccelerationStructureDesc& InGeometryDesc);
     virtual ~FD3D12GeometryAccelerationStructureRHI() = default;
     
-    bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildInfo);
+    bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
 
     // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
@@ -108,7 +108,7 @@ public:
     FD3D12SceneAccelerationStructureRHI(FD3D12Device* InDevice, const FRHISceneAccelerationStructureDesc& InSceneDesc);
     virtual ~FD3D12SceneAccelerationStructureRHI() = default;
 
-    bool Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildInfo);
+    bool Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildDesc);
 	bool BuildBindingTable(class FD3D12CommandContext& CmdContext, FD3D12RayTracingPipelineStateRHI* PipelineState, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap,
 		const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources);
 

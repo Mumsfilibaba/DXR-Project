@@ -48,7 +48,7 @@ public:
 
     virtual FRHIDepthStencilStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
     
     id<MTLDepthStencilState> GetMTLDepthStencilState() const 
@@ -69,7 +69,7 @@ public:
 
     virtual FRHIRasterizerStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
 
     MTLTriangleFillMode FillMode;
@@ -86,7 +86,7 @@ public:
 
     virtual FRHIBlendStateDesc GetDesc() const
     {
-        return Info;
+        return Desc;
     }
 
     struct FBlendAttachment

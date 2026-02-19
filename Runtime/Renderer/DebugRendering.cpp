@@ -371,12 +371,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable      = true;
-        DepthStencilStateInitializer.bDepthWriteEnable = false;
+        FRHIDepthStencilStateDesc DepthStencilStateDesc;
+        DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateDesc.bDepthEnable      = true;
+        DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+        FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
         if (!DepthStencilState)
         {
             DEBUG_BREAK();
@@ -474,12 +474,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
-        DepthStencilStateInitializer.bDepthEnable      = true;
-        DepthStencilStateInitializer.bDepthWriteEnable = false;
+        FRHIDepthStencilStateDesc DepthStencilStateDesc;
+        DepthStencilStateDesc.DepthFunc         = EComparisonFunc::Less;
+        DepthStencilStateDesc.bDepthEnable      = true;
+        DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+        FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
         if (!DepthStencilState)
         {
             DEBUG_BREAK();
@@ -573,12 +573,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable      = true;
-        DepthStencilStateInitializer.bDepthWriteEnable = false;
+        FRHIDepthStencilStateDesc DepthStencilStateDesc;
+        DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateDesc.bDepthEnable      = true;
+        DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+        FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
         if (!DepthStencilState)
         {
             DEBUG_BREAK();
@@ -638,12 +638,12 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
     TRACE_SCOPE("AABB DebugPass");
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     CommandList.SetGraphicsPipelineState(AABB_NoDepth_PSO.Get());
     CommandList.SetConstantBuffer(AABB_VS.Get(), Resources.CameraBuffer.Get(), 0);
@@ -682,12 +682,12 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
 
     TRACE_SCOPE("PointLight DebugPass");
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     CommandList.SetGraphicsPipelineState(LightDebug_PSO.Get());
     CommandList.SetConstantBuffer(LightDebug_VS.Get(), Resources.CameraBuffer.Get(), 0);
@@ -723,12 +723,12 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
 
     TRACE_SCOPE("LightProbe DebugPass");
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     // Draw box for the light-probe
     for (FSceneLightProbe* LightProbe : Scene->LightProbes)

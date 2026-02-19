@@ -84,15 +84,13 @@ NODISCARD constexpr bool IsShaderStageRayTracing(EShaderStage ShaderStage)
 
 class FRHIShader : public FRHIResource
 {
-protected:
+public:
     explicit FRHIShader(EShaderStage InShaderStage)
         : ShaderStage(InShaderStage)
     {
     }
 
     virtual ~FRHIShader() = default;
-
-public:
 
     // Retrieves the native handle for the RHI, can also be byte-code for some backends
     virtual void* GetRHINativeHandle() { return nullptr; }

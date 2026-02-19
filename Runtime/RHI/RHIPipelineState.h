@@ -298,11 +298,11 @@ enum class EColorWriteFlags : uint8
 
 ENUM_CLASS_OPERATORS(EColorWriteFlags);
 
-struct FRenderTargetBlendInfo
+struct FRHIRenderTargetBlendDesc
 {
-    constexpr bool operator==(const FRenderTargetBlendInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHIRenderTargetBlendDesc& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRenderTargetBlendInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIRenderTargetBlendDesc& Value)
     {
         uint64 Hash = UnderlyingTypeValue(Value.SrcBlend);
         HashCombine(Hash, UnderlyingTypeValue(Value.DstBlend));
@@ -315,17 +315,17 @@ struct FRenderTargetBlendInfo
         return Hash;
     }
 
-    EBlendType SrcBlend      = EBlendType::One;
-    EBlendType DstBlend      = EBlendType::Zero;
-    EBlendOp   BlendOp       = EBlendOp::Add;
-    EBlendType SrcBlendAlpha = EBlendType::One;
-    EBlendType DstBlendAlpha = EBlendType::Zero;
-    EBlendOp   BlendOpAlpha  = EBlendOp::Add;
-    bool       bBlendEnable  = false;
+    EBlendType       SrcBlend       = EBlendType::One;
+    EBlendType       DstBlend       = EBlendType::Zero;
+    EBlendOp         BlendOp        = EBlendOp::Add;
+    EBlendType       SrcBlendAlpha  = EBlendType::One;
+    EBlendType       DstBlendAlpha  = EBlendType::Zero;
+    EBlendOp         BlendOpAlpha   = EBlendOp::Add;
+    bool             bBlendEnable   = false;
     EColorWriteFlags ColorWriteMask = EColorWriteFlags::All;
 };
 
-static_assert(TAlignmentOf<FRenderTargetBlendInfo>::Value == sizeof(uint8), "FRenderTargetBlendInfo is assumed to aligned to a uint8");
+static_assert(TAlignmentOf<FRHIRenderTargetBlendDesc>::Value == sizeof(uint8), "FRHIRenderTargetBlendDesc is assumed to aligned to a uint8");
 
 struct FRHIBlendStateDesc
 {
@@ -346,11 +346,11 @@ struct FRHIBlendStateDesc
         return Hash;
     }
 
-    FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS];
-    uint8 NumRenderTargets = 0;
-    
-    ELogicOp LogicOp = ELogicOp::NoOp;
-    bool     bLogicOpEnable = false;
+    FRHIRenderTargetBlendDesc RenderTargets[RHI_MAX_RENDER_TARGETS];
+
+    uint8    NumRenderTargets        = 0;
+    ELogicOp LogicOp                 = ELogicOp::NoOp;
+    bool     bLogicOpEnable          = false;
     bool     bAlphaToCoverageEnable  = false;
     bool     bIndependentBlendEnable = false;
 };
@@ -432,7 +432,7 @@ protected:
 public:
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
-    virtual void SetDebugName(const FString& InName) { }
+    virtual void    SetDebugName(const FString& InName) { }
     virtual FString GetDebugName() const { return ""; }
 };
 
@@ -468,23 +468,20 @@ struct FRHIMultiSampleState
 
 struct FRHIGraphicsPipelineStateDesc
 {
-    FRHIVertexShader*   VertexShader   = nullptr;
-    FRHIHullShader*     HullShader     = nullptr;
-    FRHIDomainShader*   DomainShader   = nullptr;
-    FRHIGeometryShader* GeometryShader = nullptr;
-    FRHIPixelShader*    PixelShader    = nullptr;
-
-    FRHIInputLayout*       InputLayout       = nullptr;
-    FRHIDepthStencilState* DepthStencilState = nullptr;
-    FRHIRasterizerState*   RasterizerState   = nullptr;
-    FRHIBlendState*        BlendState        = nullptr;
-    
-    FRHIMultiSampleState        MultiSampleState = { };
+    FRHIVertexShader*           VertexShader            = nullptr;
+    FRHIHullShader*             HullShader              = nullptr;
+    FRHIDomainShader*           DomainShader            = nullptr;
+    FRHIGeometryShader*         GeometryShader          = nullptr;
+    FRHIPixelShader*            PixelShader             = nullptr;
+    FRHIInputLayout*            InputLayout             = nullptr;
+    FRHIDepthStencilState*      DepthStencilState       = nullptr;
+    FRHIRasterizerState*        RasterizerState         = nullptr;
+    FRHIBlendState*             BlendState              = nullptr;
+    FRHIMultiSampleState        MultiSampleState        = { };
     FRHIGraphicsPipelineFormats RasterizerOutputFormats = { };
-    FRHIViewInstancingState     ViewInstancingState = { };
-
-    EPrimitiveTopology PrimitiveTopology = EPrimitiveTopology::TriangleList;
-    bool bPrimitiveRestartEnable = false;
+    FRHIViewInstancingState     ViewInstancingState     = { };
+    EPrimitiveTopology          PrimitiveTopology       = EPrimitiveTopology::TriangleList;
+    bool                        bPrimitiveRestartEnable = false;
 };
 
 class FRHIGraphicsPipelineState : public FRHIPipelineState
@@ -526,9 +523,9 @@ struct FRHIRayTracingHitGroupDesc
 
     bool operator==(const FRHIRayTracingHitGroupDesc& Other) const noexcept = default;
 
-    FString Name;
+    FString                       Name;
     TArray<FRHIRayTracingShader*> Shaders;
-    ERayTracingHitGroupType Type = ERayTracingHitGroupType::Unknown;
+    ERayTracingHitGroupType       Type = ERayTracingHitGroupType::Unknown;
 };
 
 struct FRHIRayTracingPipelineStateDesc
@@ -554,10 +551,9 @@ struct FRHIRayTracingPipelineStateDesc
     TArray<FRHIRayCallableShader*>     CallableShaders;
     TArray<FRHIRayMissShader*>         MissShaders;
     TArray<FRHIRayTracingHitGroupDesc> HitGroups;
-
-    uint32 MaxAttributeSizeInBytes = 0;
-    uint32 MaxPayloadSizeInBytes   = 0;
-    uint32 MaxRecursionDepth       = 1;
+    uint32                             MaxAttributeSizeInBytes = 0;
+    uint32                             MaxPayloadSizeInBytes   = 0;
+    uint32                             MaxRecursionDepth       = 1;
 };
 
 class FRHIRayTracingPipelineState : public FRHIPipelineState

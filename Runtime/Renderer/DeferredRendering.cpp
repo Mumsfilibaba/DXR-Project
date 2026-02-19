@@ -103,12 +103,12 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
     }
 
-    FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-    DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
-    DepthStencilStateInitializer.bDepthEnable      = true;
-    DepthStencilStateInitializer.bDepthWriteEnable = true;
+    FRHIDepthStencilStateDesc DepthStencilStateDesc;
+    DepthStencilStateDesc.DepthFunc         = EComparisonFunc::Less;
+    DepthStencilStateDesc.bDepthEnable      = true;
+    DepthStencilStateDesc.bDepthWriteEnable = true;
 
-    NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+    NewPipelineInstance.DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
     if (!NewPipelineInstance.DepthStencilState)
     {
         DEBUG_BREAK();
@@ -242,10 +242,10 @@ void FDepthPrePass::ExecuteInternal(FRHICommandList& CommandList, FFrameResource
 
     GPU_TRACE_SCOPE(CommandList, PassName);
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTarget);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(DepthTarget);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
@@ -603,15 +603,15 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
     const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets                     = GBuffer_NumRenderTargets;
-    RenderPass.RenderTargets[GBufferIndex_Albedo]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
-    RenderPass.RenderTargets[GBufferIndex_Normal]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[GBufferIndex_Material] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), LoadAction);
-    RenderPass.RenderTargets[GBufferIndex_Velocity] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), LoadAction);
-    RenderPass.DepthStencilView                     = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets                     = GBuffer_NumRenderTargets;
+    RenderPassDesc.RenderTargets[GBufferIndex_Albedo]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
+    RenderPassDesc.RenderTargets[GBufferIndex_Normal]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);
+    RenderPassDesc.RenderTargets[GBufferIndex_Material] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), LoadAction);
+    RenderPassDesc.RenderTargets[GBufferIndex_Velocity] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), LoadAction);
+    RenderPassDesc.DepthStencilView                     = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
@@ -918,10 +918,10 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc FinalTargetInfo = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage);
-    FinalTargetInfo.bEnableResourceStateTracking = true;
+    FRHITextureDesc FinalTargetDesc = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage);
+    FinalTargetDesc.bEnableResourceStateTracking = true;
 
-    FrameResources.FinalTarget = FRHI::Get()->CreateTexture(FinalTargetInfo, EResourceAccess::PixelShaderResource);
+    FrameResources.FinalTarget = FRHI::Get()->CreateTexture(FinalTargetDesc, EResourceAccess::PixelShaderResource);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetDebugName("Final Target");

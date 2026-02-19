@@ -306,16 +306,16 @@ FRHIQuery* FMetalRHI::CreateQuery(EQueryType InQueryType)
     return new FMetalQuery(InQueryType);
 }
 
-FRHISwapChain* FMetalRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainInfo)
+FRHISwapChain* FMetalRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainDesc)
 {
-    FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(SwapChainInfo.WindowHandle);
+    FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(SwapChainDesc.WindowHandle);
     if (!Window)
     {
         return nullptr;
     }
 
-    FRHISwapChainInfo NewViewportInfo(SwapChainInfo);
-    if (SwapChainInfo.Width == 0 || SwapChainInfo.Height == 0)
+    FRHISwapChainDesc NewViewportDesc(SwapChainDesc);
+    if (SwapChainDesc.Width == 0 || SwapChainDesc.Height == 0)
     {
         __block NSRect Frame;
         __block NSRect ContentRect;
@@ -325,11 +325,11 @@ FRHISwapChain* FMetalRHI::CreateSwapChain(const FRHISwapChainDesc& SwapChainInfo
             ContentRect = [Window contentRectForFrameRect:Window.frame];
         }, NSDefaultRunLoopMode, true);
         
-        NewViewportInfo.Width  = ContentRect.size.width;
-        NewViewportInfo.Height = ContentRect.size.height;
+        NewViewportDesc.Width  = ContentRect.size.width;
+        NewViewportDesc.Height = ContentRect.size.height;
     }
     
-    FMetalSwapChainRef NewSwapChain = new FMetalSwapChain(GetDeviceContext(), NewViewportInfo);
+    FMetalSwapChainRef NewSwapChain = new FMetalSwapChain(GetDeviceContext(), NewViewportDesc);
     if (!NewSwapChain->Initialize())
     {
         return nullptr;

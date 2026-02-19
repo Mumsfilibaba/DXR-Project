@@ -50,9 +50,9 @@ struct IRHITextureData
 {
     virtual ~IRHITextureData() = default;
 
-    virtual int64 GetMipRowPitch(uint32 MipLevel = 0) const = 0;
+    virtual int64 GetMipRowPitch(uint32 MipLevel = 0)   const = 0;
     virtual int64 GetMipSlicePitch(uint32 MipLevel = 0) const = 0;
-    virtual void* GetMipData(uint32 MipLevel = 0) const = 0;
+    virtual void* GetMipData(uint32 MipLevel = 0)       const = 0;
 };
 
 struct FRHITextureDesc
@@ -151,6 +151,8 @@ public:
         , Desc(InTextureDesc)
     {
     }
+
+    virtual ~FRHITexture() = default;
 
     virtual void*                    GetRHINativeHandle()     const { return nullptr; }
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }

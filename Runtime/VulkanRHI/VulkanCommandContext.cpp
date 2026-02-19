@@ -1213,10 +1213,10 @@ void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
     UNREFERENCED_VARIABLE(Resource);
 }
 
-void FVulkanCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* InRayTracingScene, const FRHISceneAccelerationStructureBuildDesc& InBuildInfo)
+void FVulkanCommandContext::BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* InRayTracingScene, const FRHISceneAccelerationStructureBuildDesc& InBuildDesc)
 {
     UNREFERENCED_VARIABLE(InRayTracingScene);
-    UNREFERENCED_VARIABLE(InBuildInfo);
+    UNREFERENCED_VARIABLE(InBuildDesc);
 }
 
 void FVulkanCommandContext::BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* InRayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)

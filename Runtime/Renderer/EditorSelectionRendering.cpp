@@ -231,10 +231,10 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
     TRACE_SCOPE("Editor NoJitter Depth");
     GPU_TRACE_SCOPE(CommandList, "Editor NoJitter Depth");
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.EditorNoJitterDepth.Get(), EAttachmentLoadAction::Clear);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.EditorNoJitterDepth.Get(), EAttachmentLoadAction::Clear);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);
@@ -556,13 +556,13 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
     TRACE_SCOPE("Editor SelectionID");
     GPU_TRACE_SCOPE(CommandList, "Editor SelectionID");
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.EditorObjectID_NoJitter.Get(), EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
-    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.EditorNoJitterDepth.Get(), EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(FrameResources.EditorObjectID_NoJitter.Get(), EAttachmentLoadAction::Clear);
+    RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.EditorNoJitterDepth.Get(), EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     const float RenderWidth  = float(FrameResources.CurrentRenderWidth);
     const float RenderHeight = float(FrameResources.CurrentRenderHeight);

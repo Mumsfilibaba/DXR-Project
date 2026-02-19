@@ -133,76 +133,76 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIDepthStencilStateDesc DepthStencilStateInfo;
-    DepthStencilStateInfo.bDepthEnable      = false;
-    DepthStencilStateInfo.bDepthWriteEnable = false;
+    FRHIDepthStencilStateDesc DepthStencilStateDesc;
+    DepthStencilStateDesc.bDepthEnable      = false;
+    DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInfo);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerStateInfo;
-    RasterizerStateInfo.CullMode               = ECullMode::None;
-    RasterizerStateInfo.bAntialiasedLineEnable = true;
+    FRHIRasterizerStateDesc RasterizerStateDesc;
+    RasterizerStateDesc.CullMode               = ECullMode::None;
+    RasterizerStateDesc.bAntialiasedLineEnable = true;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIBlendStateDesc BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable        = false;
-    BlendStateInfo.NumRenderTargets               = 1;
-    BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
-    BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
-    BlendStateInfo.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
-    BlendStateInfo.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
-    BlendStateInfo.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
-    BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
-    BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
+    FRHIBlendStateDesc BlendStateDesc;
+    BlendStateDesc.bIndependentBlendEnable        = false;
+    BlendStateDesc.NumRenderTargets               = 1;
+    BlendStateDesc.RenderTargets[0].bBlendEnable  = true;
+    BlendStateDesc.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
+    BlendStateDesc.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+    BlendStateDesc.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
+    BlendStateDesc.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
+    BlendStateDesc.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+    BlendStateDesc.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    BlendStateInfo.RenderTargets[0].bBlendEnable = false;
+    BlendStateDesc.RenderTargets[0].bBlendEnable = false;
 
-    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIGraphicsPipelineStateDesc PSOInfo;
-    PSOInfo.VertexShader                                   = VShader.Get();
-    PSOInfo.PixelShader                                    = PShader.Get();
-    PSOInfo.InputLayout                                    = InputLayout.Get();
-    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-    PSOInfo.BlendState                                     = BlendStateBlending.Get();
-    PSOInfo.RasterizerState                                = RasterizerState.Get();
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
-    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    FRHIGraphicsPipelineStateDesc PSODesc;
+    PSODesc.VertexShader                                   = VShader.Get();
+    PSODesc.PixelShader                                    = PShader.Get();
+    PSODesc.InputLayout                                    = InputLayout.Get();
+    PSODesc.DepthStencilState                              = DepthStencilState.Get();
+    PSODesc.BlendState                                     = BlendStateBlending.Get();
+    PSODesc.RasterizerState                                = RasterizerState.Get();
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
+    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    PSOInfo.BlendState = BlendStateNoBlending.Get();
+    PSODesc.BlendState = BlendStateNoBlending.Get();
 
-    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
     if (!PipelineStateNoBlending)
     {
         DEBUG_BREAK();

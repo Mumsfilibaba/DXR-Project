@@ -8,7 +8,7 @@
 
 typedef TSharedRef<class FD3D12SamplerStateRHI> FD3D12SamplerStateRHIRef;
 
-struct FD3D12SamplerStateRHIIdentifier
+struct FD3D12SamplerStateIdentifier
 {
     static constexpr uint16 InvalidIdentifier = 0xffff;
 
@@ -18,12 +18,12 @@ public:
         New
     };
 
-    FD3D12SamplerStateRHIIdentifier()
+    FD3D12SamplerStateIdentifier()
         : Identifier(InvalidIdentifier)
     {
     }
 
-    FD3D12SamplerStateRHIIdentifier(EGenerate Type)
+    FD3D12SamplerStateIdentifier(EGenerate Type)
         : Identifier(GenerateIdentifier())
     {
     }
@@ -38,12 +38,12 @@ public:
         return Identifier;
     }
 
-    bool operator==(const FD3D12SamplerStateRHIIdentifier& Other) const
+    bool operator==(const FD3D12SamplerStateIdentifier& Other) const
     {
         return Identifier == Other.Identifier;
     }
 
-    bool operator!=(const FD3D12SamplerStateRHIIdentifier& Other) const
+    bool operator!=(const FD3D12SamplerStateIdentifier& Other) const
     {
         return Identifier != Other.Identifier;
     }
@@ -82,7 +82,7 @@ public:
         return D3D12Desc;
     }
 
-    FD3D12SamplerStateRHIIdentifier GetUniqueID() const
+    FD3D12SamplerStateIdentifier GetUniqueID() const
     {
         return Identifier;
     }
@@ -91,5 +91,5 @@ private:
     D3D12_SAMPLER_DESC           D3D12Desc;
     FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
-    FD3D12SamplerStateRHIIdentifier Identifier;
+    FD3D12SamplerStateIdentifier Identifier;
 };

@@ -129,34 +129,32 @@ public:
     };
 
 public:
-    static FRHIShaderResourceViewDesc CreateBufferSRV(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements,
-        EBufferSRVFormat InFormat = EBufferSRVFormat::None)
+    static FRHIShaderResourceViewDesc CreateBufferSRV(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferSRVFormat InFormat = EBufferSRVFormat::None)
     {
-        FRHIShaderResourceViewDesc ViewInfo;
-        ViewInfo.Type                   = EType::BufferSRV;
-        ViewInfo.BufferSRV.Buffer       = InBuffer;
-        ViewInfo.BufferSRV.Format       = InFormat;
-        ViewInfo.BufferSRV.FirstElement = InFirstElement;
-        ViewInfo.BufferSRV.NumElements  = InNumElements;
-        return ViewInfo;
+        FRHIShaderResourceViewDesc ViewDesc;
+        ViewDesc.Type                   = EType::BufferSRV;
+        ViewDesc.BufferSRV.Buffer       = InBuffer;
+        ViewDesc.BufferSRV.Format       = InFormat;
+        ViewDesc.BufferSRV.FirstElement = InFirstElement;
+        ViewDesc.BufferSRV.NumElements  = InNumElements;
+        return ViewDesc;
     }
 
-	static FRHIShaderResourceViewDesc CreateTextureSRV(FRHITexture* InTexture, EFormat InFormat, uint8 InFirstMipLevel,
-		uint8 InNumMips, uint16 InFirstArraySlice, uint16 InNumSlices, float InMinLODClamp = 0.0f)
+	static FRHIShaderResourceViewDesc CreateTextureSRV(FRHITexture* InTexture, EFormat InFormat, uint8 InFirstMipLevel, uint8 InNumMips, uint16 InFirstArraySlice, uint16 InNumSlices, float InMinLODClamp = 0.0f)
     {
-        FRHIShaderResourceViewDesc ViewInfo;
-        ViewInfo.Type                       = EType::TextureSRV;
-        ViewInfo.TextureSRV.Texture         = InTexture;
-        ViewInfo.TextureSRV.Format          = InFormat;
-        ViewInfo.TextureSRV.MinLODClamp     = InMinLODClamp;
-        ViewInfo.TextureSRV.FirstMipLevel   = InFirstMipLevel;
-        ViewInfo.TextureSRV.NumMips         = InNumMips;
-        ViewInfo.TextureSRV.FirstArraySlice = InFirstArraySlice;
-        ViewInfo.TextureSRV.NumSlices       = InNumSlices;
-        return ViewInfo;
+        FRHIShaderResourceViewDesc ViewDesc;
+        ViewDesc.Type                       = EType::TextureSRV;
+        ViewDesc.TextureSRV.Texture         = InTexture;
+        ViewDesc.TextureSRV.Format          = InFormat;
+        ViewDesc.TextureSRV.MinLODClamp     = InMinLODClamp;
+        ViewDesc.TextureSRV.FirstMipLevel   = InFirstMipLevel;
+        ViewDesc.TextureSRV.NumMips         = InNumMips;
+        ViewDesc.TextureSRV.FirstArraySlice = InFirstArraySlice;
+        ViewDesc.TextureSRV.NumSlices       = InNumSlices;
+        return ViewDesc;
     }
 
-    NODISCARD constexpr bool IsBufferSRV() const { return Type == EType::BufferSRV; }
+    NODISCARD constexpr bool IsBufferSRV()  const { return Type == EType::BufferSRV; }
     NODISCARD constexpr bool IsTextureSRV() const { return Type == EType::TextureSRV; }
 
     EType Type = EType::Unknown;
@@ -220,28 +218,28 @@ public:
 public:
 	static FRHIUnorderedAccessViewDesc CreateBufferUAV(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferUAVFormat InFormat = EBufferUAVFormat::None)
 	{
-        FRHIUnorderedAccessViewDesc ViewInfo;
-		ViewInfo.Type                   = EType::BufferUAV;
-		ViewInfo.BufferUAV.Buffer       = InBuffer;
-		ViewInfo.BufferUAV.Format       = InFormat;
-		ViewInfo.BufferUAV.FirstElement = InFirstElement;
-		ViewInfo.BufferUAV.NumElements  = InNumElements;
-		return ViewInfo;
+        FRHIUnorderedAccessViewDesc ViewDesc;
+		ViewDesc.Type                   = EType::BufferUAV;
+		ViewDesc.BufferUAV.Buffer       = InBuffer;
+		ViewDesc.BufferUAV.Format       = InFormat;
+		ViewDesc.BufferUAV.FirstElement = InFirstElement;
+		ViewDesc.BufferUAV.NumElements  = InNumElements;
+		return ViewDesc;
 	}
 
 	static FRHIUnorderedAccessViewDesc CreateTextureUAV(FRHITexture* InTexture, EFormat InFormat, uint8 InMipLevel, uint16 InFirstArraySlice, uint16 InNumSlices)
 	{
-        FRHIUnorderedAccessViewDesc ViewInfo;
-		ViewInfo.Type                       = EType::TextureUAV;
-		ViewInfo.TextureUAV.Texture         = InTexture;
-		ViewInfo.TextureUAV.Format          = InFormat;
-		ViewInfo.TextureUAV.MipLevel        = InMipLevel;
-		ViewInfo.TextureUAV.FirstArraySlice = InFirstArraySlice;
-		ViewInfo.TextureUAV.NumSlices       = InNumSlices;
-		return ViewInfo;
+        FRHIUnorderedAccessViewDesc ViewDesc;
+		ViewDesc.Type                       = EType::TextureUAV;
+		ViewDesc.TextureUAV.Texture         = InTexture;
+		ViewDesc.TextureUAV.Format          = InFormat;
+		ViewDesc.TextureUAV.MipLevel        = InMipLevel;
+		ViewDesc.TextureUAV.FirstArraySlice = InFirstArraySlice;
+		ViewDesc.TextureUAV.NumSlices       = InNumSlices;
+		return ViewDesc;
 	}
 
-    NODISCARD constexpr bool IsBufferUAV() const { return Type == EType::BufferUAV; }
+    NODISCARD constexpr bool IsBufferUAV()  const { return Type == EType::BufferUAV; }
     NODISCARD constexpr bool IsTextureUAV() const { return Type == EType::TextureUAV; }
 
     EType Type = EType::Unknown;
@@ -254,7 +252,7 @@ public:
 
 class FRHIResourceView : public FRHIResource
 {
-protected:
+public:
     explicit FRHIResourceView(FRHIResource* InResource)
         : FRHIResource()
         , Resource(InResource)
@@ -263,7 +261,6 @@ protected:
 
     virtual ~FRHIResourceView() = default;
 
-public:
     FRHIResource* GetResource() const
     {
         return Resource;
@@ -275,7 +272,7 @@ private:
 
 class FRHIShaderResourceView : public FRHIResourceView
 {
-protected:
+public:
     explicit FRHIShaderResourceView(FRHIResource* InResource)
         : FRHIResourceView(InResource)
     {
@@ -283,13 +280,12 @@ protected:
 
     virtual ~FRHIShaderResourceView() = default;
 
-public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
 class FRHIUnorderedAccessView : public FRHIResourceView
 {
-protected:
+public:
     explicit FRHIUnorderedAccessView(FRHIResource* InResource)
         : FRHIResourceView(InResource)
     {
@@ -297,7 +293,6 @@ protected:
 
     virtual ~FRHIUnorderedAccessView() = default;
 
-public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
@@ -333,15 +328,14 @@ struct FRHIRenderTargetView
 
     bool operator==(const FRHIRenderTargetView& Other) const noexcept = default;
 
-    FRHITexture* Texture        = 0;
-    FFloatColor  ClearValue     = { };
-    uint16       ArrayIndex     = 0;
-    uint16       NumArraySlices = 0;
-    EFormat      Format         = EFormat::Unknown;
-    uint8        MipLevel       = 0;
-
-    EAttachmentLoadAction  LoadAction  = EAttachmentLoadAction::DontCare;
-    EAttachmentStoreAction StoreAction = EAttachmentStoreAction::DontCare;
+    FRHITexture*           Texture        = 0;
+    FFloatColor            ClearValue     = { };
+    uint16                 ArrayIndex     = 0;
+    uint16                 NumArraySlices = 0;
+    EFormat                Format         = EFormat::Unknown;
+    uint8                  MipLevel       = 0;
+    EAttachmentLoadAction  LoadAction     = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction StoreAction    = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIDepthStencilView
@@ -389,15 +383,14 @@ struct FRHIDepthStencilView
 
     bool operator==(const FRHIDepthStencilView& Other) const noexcept = default;
 
-    FRHITexture*       Texture        = nullptr;
-    FDepthStencilValue ClearValue     = { };
-    uint16             ArrayIndex     = 0;
-    uint16             NumArraySlices = 0;
-    EFormat            Format         = EFormat::Unknown;
-    uint8              MipLevel       = 0;
-
-    EAttachmentLoadAction  LoadAction  = EAttachmentLoadAction::DontCare;
-    EAttachmentStoreAction StoreAction = EAttachmentStoreAction::DontCare;
+    FRHITexture*           Texture        = nullptr;
+    FDepthStencilValue     ClearValue     = { };
+    uint16                 ArrayIndex     = 0;
+    uint16                 NumArraySlices = 0;
+    EFormat                Format         = EFormat::Unknown;
+    uint8                  MipLevel       = 0;
+    EAttachmentLoadAction  LoadAction     = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction StoreAction    = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIBeginRenderPassDesc
@@ -429,13 +422,10 @@ struct FRHIBeginRenderPassDesc
 
     bool operator==(const FRHIBeginRenderPassDesc& Other) const noexcept = default;
 
-    FRHIDepthStencilView DepthStencilView = { };
-
-    FRenderTargetViews RenderTargets = { };
-    uint32 NumRenderTargets = 0;
-
-    EShadingRate StaticShadingRate  = EShadingRate::VRS_1x1;
-    FRHITexture* ShadingRateTexture = nullptr;
-    
+    FRHIDepthStencilView    DepthStencilView    = { };
+    FRenderTargetViews      RenderTargets       = { };
+    uint32                  NumRenderTargets    = 0;
+    EShadingRate            StaticShadingRate   = EShadingRate::VRS_1x1;
+    FRHITexture*            ShadingRateTexture  = nullptr;
     FRHIViewInstancingState ViewInstancingState = { };
 };

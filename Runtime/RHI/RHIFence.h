@@ -11,6 +11,6 @@ public:
     virtual bool IsSignaled() const = 0; 
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const = 0; 
  
-    virtual void SetDebugName(const FString& InName) = 0; 
+    virtual void    SetDebugName(const FString& InName) = 0; 
     virtual FString GetDebugName() const = 0; 
 }; 

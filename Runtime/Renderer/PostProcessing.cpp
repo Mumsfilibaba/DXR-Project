@@ -95,10 +95,10 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerInitializer;
-    RasterizerInitializer.CullMode = ECullMode::None;
+    FRHIRasterizerStateDesc RasterizerDesc;
+    RasterizerDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -220,11 +220,11 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         CommandList.RequireTextureState(OutputTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
     }
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(OutputTarget, EAttachmentLoadAction::DontCare);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets            = 1;
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(OutputTarget, EAttachmentLoadAction::DontCare);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     const FRHIGraphicsPipelineStateRef& PSO = (OutputTarget->GetFormat() == RenderSettings::GetBackBufferFormat()) ? TonemapPSO_BackBuffer : TonemapPSO_Linear;
     CommandList.SetGraphicsPipelineState(PSO.Get());
@@ -312,10 +312,10 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerInitializer;
-    RasterizerInitializer.CullMode = ECullMode::None;
+    FRHIRasterizerStateDesc RasterizerDesc;
+    RasterizerDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -384,11 +384,11 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
         CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
     }
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(RenderTarget, EAttachmentLoadAction::DontCare);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets            = 1;
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(RenderTarget, EAttachmentLoadAction::DontCare);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     CommandList.SetGraphicsPipelineState(CompositePSO.Get());
 
@@ -531,10 +531,10 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerInitializer;
-    RasterizerInitializer.CullMode = ECullMode::None;
+    FRHIRasterizerStateDesc RasterizerDesc;
+    RasterizerDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -653,12 +653,12 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
         CommandList.RequireTextureState(RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
     }
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(RenderTarget, EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets            = 1;
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(RenderTarget, EAttachmentLoadAction::Clear);
+    RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     FRHIShaderResourceView* FinalTargetSRV = FrameResources.FinalTarget->GetShaderResourceView();
     if (CVarFXAADebug.GetValue())

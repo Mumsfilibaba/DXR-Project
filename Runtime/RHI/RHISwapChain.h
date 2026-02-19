@@ -32,7 +32,6 @@ public:
 
     virtual ~FRHISwapChain() = default;
 
-public:
     virtual FRHITexture* GetBackBuffer() const { return nullptr; };
 
     EFormat GetColorFormat() const

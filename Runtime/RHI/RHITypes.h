@@ -35,7 +35,7 @@ typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef
 typedef TSharedRef<class FRHISamplerState>            FRHISamplerStateRef;
 typedef TSharedRef<class FRHISwapChain>               FRHISwapChainRef;
 typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;
-typedef TSharedRef<class FRHIFence>                FRHIFenceRef;
+typedef TSharedRef<class FRHIFence>                   FRHIFenceRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
@@ -864,17 +864,15 @@ struct FRHIBufferCopyDesc
 
 struct FRHITextureCopyDesc
 {
-    FIntVector3 DstPosition;
-    uint32 DstArraySlice = 0;
-    uint32 DstMipSlice = 0;
-
-    FIntVector3 SrcPosition;
-    uint32 SrcArraySlice = 0;
-    uint32 SrcMipSlice = 0;
-
-    FIntVector3 Size;
-    uint32 NumArraySlices = 0;
-    uint32 NumMipLevels = 0;
+    FIntVector3 DstPosition    = {};
+    uint32      DstArraySlice  = 0;
+    uint32      DstMipSlice    = 0;
+    FIntVector3 SrcPosition    = {};
+    uint32      SrcArraySlice  = 0;
+    uint32      SrcMipSlice    = 0;
+    FIntVector3 Size           = {};
+    uint32      NumArraySlices = 0;
+    uint32      NumMipLevels   = 0;
 };
 
 struct FViewportRegion
@@ -932,9 +930,9 @@ struct FRHISceneAccelerationStructureBuildDesc
     {
     }
 
-    const FRHIGeometryAccelerationStructureInstance* Instances = nullptr;
-    uint32 NumInstances = 0;
-    bool   bUpdate      = false;
+    const FRHIGeometryAccelerationStructureInstance* Instances    = nullptr;
+    uint32                                           NumInstances = 0;
+    bool                                             bUpdate      = false;
 };
 
 struct FRHIGeometryAccelerationStructureBuildDesc

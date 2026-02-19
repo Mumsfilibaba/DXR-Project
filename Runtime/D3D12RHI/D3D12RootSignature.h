@@ -33,7 +33,7 @@ struct FD3D12RootSignatureLayout
 class FD3D12RootSignatureDescHelper
 {
 public:
-    FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& RootSignatureInfo);
+    FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& RootSignatureLayout);
 
     const uint32 GetRootSignatureCost() const { return RootSignatureCost; }
     const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const { return Desc; }
@@ -71,7 +71,7 @@ public:
 
     static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
     
-    bool Initialize(const FD3D12RootSignatureLayout& RootSignatureInfo);
+    bool Initialize(const FD3D12RootSignatureLayout& RootSignatureLayout);
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 

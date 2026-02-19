@@ -42,10 +42,10 @@ bool FTextureCompressor::Initialize()
         return false;
     }
 
-    FRHIComputePipelineStateDesc PSOInfo;
-    PSOInfo.Shader = BC6HCompressionShader.Get();
+    FRHIComputePipelineStateDesc PSODesc;
+    PSODesc.Shader = BC6HCompressionShader.Get();
 
-    BC6HCompressionPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    BC6HCompressionPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
     if (!BC6HCompressionPSO)
     {
         DEBUG_BREAK();
@@ -71,10 +71,10 @@ bool FTextureCompressor::Initialize()
         return false;
     }
 
-    FRHIComputePipelineStateDesc BlockCompressionBC6H_PSOInfo;
-    BlockCompressionBC6H_PSOInfo.Shader = BC6HCompressionCubeShader.Get();
+    FRHIComputePipelineStateDesc BlockCompressionBC6H_PSODesc;
+    BlockCompressionBC6H_PSODesc.Shader = BC6HCompressionCubeShader.Get();
 
-    BC6HCompressionCubePSO = FRHI::Get()->CreateComputePipelineState(BlockCompressionBC6H_PSOInfo);
+    BC6HCompressionCubePSO = FRHI::Get()->CreateComputePipelineState(BlockCompressionBC6H_PSODesc);
     if (!BC6HCompressionCubePSO)
     {
         DEBUG_BREAK();

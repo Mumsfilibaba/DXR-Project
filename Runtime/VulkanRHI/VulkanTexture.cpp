@@ -432,7 +432,7 @@ FVulkanResourceView* FVulkanTextureRHI::GetOrCreateImageView(const FVulkanHashab
 
     if (ExistingView)
     {
-        const FVulkanResourceView::FImageView& ExistingImageViewDesc = ExistingView->GetImageViewDesc();
+        const FVulkanResourceView::FImageView& ExistingImageViewDesc = ExistingView->GetImageViewInfo();
         if (ExistingImageViewDesc.Format != VulkanFormat)
         {
             VULKAN_WARNING("A ImageView for this subresource already exists with another format");
@@ -514,9 +514,9 @@ void FVulkanTextureRHI::SetVkImage(VkImage InImage)
     Image = InImage;
 
     // NOTE: Use the format in the description to set the native format if it is not set yet this should only happen for BackBuffers
-    if (CreateDesc.format == VK_FORMAT_UNDEFINED)
+    if (CreateInfo.format == VK_FORMAT_UNDEFINED)
     {
-        CreateDesc.format = ConvertFormat(Desc.Format);
+        CreateInfo.format = ConvertFormat(Desc.Format);
     }
 }
 

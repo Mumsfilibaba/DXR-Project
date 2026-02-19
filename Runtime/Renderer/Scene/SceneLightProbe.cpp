@@ -60,10 +60,10 @@ void FSceneLightProbe::FilterStaticCubeMaps()
     const uint32 SpecularIrradianceMiplevels = Math::Max<uint32>(static_cast<uint32>(Math::Log2(static_cast<float>(SpecularCubeMapSize))), 1);
 
     const ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc SpecularCubeMapInfo = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1, TextureFlags);
-    SpecularCubeMapInfo.bEnableResourceStateTracking = true;
+    FRHITextureDesc SpecularCubeMapDesc = FRHITextureDesc::CreateTextureCube(TempCubeMapFormat, SpecularCubeMapSize, SpecularIrradianceMiplevels, 1, TextureFlags);
+    SpecularCubeMapDesc.bEnableResourceStateTracking = true;
 
-    FRHITextureRef TempSpecularCubeMap = FRHI::Get()->CreateTexture(SpecularCubeMapInfo, EResourceAccess::PixelShaderResource);
+    FRHITextureRef TempSpecularCubeMap = FRHI::Get()->CreateTexture(SpecularCubeMapDesc, EResourceAccess::PixelShaderResource);
     if (!TempSpecularCubeMap)
     {
         DEBUG_BREAK();

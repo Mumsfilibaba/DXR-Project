@@ -26,7 +26,7 @@ FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceCont
     : FRHIDepthStencilState()
     , FMetalDeviceChild(DeviceContext)
     , DepthStencilState(nullptr)
-    , Info(InDesc)
+    , Desc(InDesc)
 {
 }
 

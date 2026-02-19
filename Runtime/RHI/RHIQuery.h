@@ -14,13 +14,13 @@ NODISCARD constexpr const CHAR* ToString(EQueryType QueryType)
     {
         case EQueryType::Timestamp: return "Timestamp";
         case EQueryType::Occlusion: return "Occlusion";
-        default: return "Unknown EQueryType";
+        default:                    return "Unknown EQueryType";
     }
 }
 
 class FRHIQuery : public FRHIResource
 {
-protected:
+public:
     FRHIQuery(EQueryType InQuery)
         : FRHIResource()
         , Query(InQuery)
@@ -29,7 +29,6 @@ protected:
 
     virtual ~FRHIQuery() = default;
 
-public:
     EQueryType GetType() const
     {
         return Query;

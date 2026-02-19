@@ -24,8 +24,8 @@
 @end
 
 
-FMetalSwapChain::FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainDesc& SwapChainInfo)
-    : FRHISwapChain(SwapChainInfo)
+FMetalSwapChain::FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainDesc& SwapChainDesc)
+    : FRHISwapChain(SwapChainDesc)
     , FMetalDeviceChild(InDeviceContext)
     , BackBuffer(nullptr)
     , MetalView(nullptr)

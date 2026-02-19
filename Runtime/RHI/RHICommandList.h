@@ -319,9 +319,9 @@ public:
         EmplaceCommand<FRHICommandDiscardContents>(Texture);
     }
 
-    FORCEINLINE void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildInfo) noexcept
+    FORCEINLINE void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildDesc) noexcept
     {
-        EmplaceCommand<FRHICommandBuildSceneAccelerationStructure>(RayTracingScene, BuildInfo);
+        EmplaceCommand<FRHICommandBuildSceneAccelerationStructure>(RayTracingScene, BuildDesc);
     }
 
     FORCEINLINE void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) noexcept

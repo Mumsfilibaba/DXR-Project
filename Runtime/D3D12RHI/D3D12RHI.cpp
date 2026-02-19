@@ -396,15 +396,15 @@ FRHISamplerState* FD3D12RHI::CreateSamplerState(const FRHISamplerStateDesc& InSa
 
 FRHISceneAccelerationStructure* FD3D12RHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
 {
-    FRHISceneAccelerationStructureBuildDesc BuildInfo;
-    BuildInfo.Instances    = InSceneDesc.Instances.Data();
-    BuildInfo.NumInstances = InSceneDesc.Instances.Size();
-    BuildInfo.bUpdate      = false;
+    FRHISceneAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.Instances    = InSceneDesc.Instances.Data();
+    BuildDesc.NumInstances = InSceneDesc.Instances.Size();
+    BuildDesc.bUpdate      = false;
 
     DirectCommandContext->StartContext();
 
     TSharedRef<FD3D12SceneAccelerationStructureRHI> D3D12Scene = new FD3D12SceneAccelerationStructureRHI(GetDevice(), InSceneDesc);
-    if (!D3D12Scene->Build(*DirectCommandContext, BuildInfo))
+    if (!D3D12Scene->Build(*DirectCommandContext, BuildDesc))
     {
         DEBUG_BREAK();
         D3D12Scene.Reset();
@@ -416,18 +416,18 @@ FRHISceneAccelerationStructure* FD3D12RHI::CreateSceneAccelerationStructure(cons
 
 FRHIGeometryAccelerationStructure* FD3D12RHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
-    FRHIGeometryAccelerationStructureBuildDesc BuildInfo;
-    BuildInfo.VertexBuffer = InGeometryDesc.VertexBuffer;
-    BuildInfo.NumVertices  = InGeometryDesc.NumVertices;
-    BuildInfo.IndexBuffer  = InGeometryDesc.IndexBuffer;
-    BuildInfo.NumIndices   = InGeometryDesc.NumIndices;
-    BuildInfo.IndexFormat  = InGeometryDesc.IndexFormat;
-    BuildInfo.bUpdate      = false;
+    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.VertexBuffer = InGeometryDesc.VertexBuffer;
+    BuildDesc.NumVertices  = InGeometryDesc.NumVertices;
+    BuildDesc.IndexBuffer  = InGeometryDesc.IndexBuffer;
+    BuildDesc.NumIndices   = InGeometryDesc.NumIndices;
+    BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
+    BuildDesc.bUpdate      = false;
 
     DirectCommandContext->StartContext();
 
     TSharedRef<FD3D12GeometryAccelerationStructureRHI> D3D12Geometry = new FD3D12GeometryAccelerationStructureRHI(GetDevice(), InGeometryDesc);
-    if (!D3D12Geometry->Build(*DirectCommandContext, BuildInfo))
+    if (!D3D12Geometry->Build(*DirectCommandContext, BuildDesc))
     {
         DEBUG_BREAK();
         D3D12Geometry.Reset();
