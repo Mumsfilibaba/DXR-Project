@@ -83,6 +83,7 @@ public:
     using FPlatformMath::FloorToInt;
     using FPlatformMath::Ceil;
     using FPlatformMath::CeilToInt;
+    using FPlatformMath::Exp;
     using FPlatformMath::Log2;
     using FPlatformMath::Asin;
     using FPlatformMath::Acos;

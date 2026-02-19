@@ -101,6 +101,16 @@ struct FGenericPlatformMath
         return static_cast<int32>(::ceil(Value));
     }
 
+    static FORCEINLINE float Exp(float Value)
+    {
+        return ::expf(Value);
+    }
+
+    static FORCEINLINE double Exp(double Value)
+    {
+        return ::exp(Value);
+    }
+
     static FORCEINLINE float Log2(float Value)
     {
         return ::log2f(Value);

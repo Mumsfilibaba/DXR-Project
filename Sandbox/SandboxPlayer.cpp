@@ -147,8 +147,9 @@ void FSandboxPlayerController::Tick(float DeltaTime)
         CameraAcceleration.Y = -Acceleration;
     }
 
-    const float Deacceleration = -5.0f;
-    CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * DeltaTime;
+    const float DampingRate   = 5.0f;
+    const float DampingFactor = Math::Exp(-DampingRate * DeltaTime);
+    CameraSpeed = CameraSpeed * DampingFactor;
     CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
 
     const FVector3 Speed = CameraSpeed * DeltaTime;
