@@ -227,5 +227,6 @@ bool FD3D12Buffer::CreateConstantBufferView()
         return false;
     }
 
+    ConstantBufferView->RegisterWithResource(this);
     return true;
 }

@@ -45,10 +45,10 @@ struct FD3D12PoolAllocatorAllocationData
 
 struct FD3D12BuddyAllocatorAllocationData
 {
-    uint32 Order            = 0;
-    uint64 Offset           = 0;
-    bool   bBackedByHeap    = false;
-    FD3D12Heap* BackingHeap = nullptr;
+    uint32      Order         = 0;
+    uint64      Offset        = 0;
+    bool        bBackedByHeap = false;
+    FD3D12Heap* BackingHeap   = nullptr;
 };
 
 struct FD3D12BucketAllocatorAllocationData
@@ -82,9 +82,11 @@ public:
     FORCEINLINE uint64                       GetGpuVirtualAddress() const { return GpuVirtualAddress; }
     FORCEINLINE const FD3D12ResidencyHandle& GetResidencyHandle()   const { return ResidencyHandle; }
     FORCEINLINE void*                        GetAllocator()         const { return AllocatorPointers.AsVoid; }
+    FORCEINLINE FD3D12PoolAllocator*         GetPoolAllocator()     const { return (AllocatorType == ED3D12AllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr; }
     FORCEINLINE ED3D12AllocatorType          GetAllocatorType()     const { return AllocatorType; }
     FORCEINLINE EResourceStorageType         GetStorageType()       const { return StorageType; }
     FORCEINLINE FD3D12Resource*              GetResource()          const { return Resource; }
+    FORCEINLINE FD3D12BaseResource*          GetOwner()             const { return Owner; }
 
     FORCEINLINE const FD3D12PoolAllocatorAllocationData&   GetPoolAllocationData()   const { return AllocationData.Pool; }
     FORCEINLINE const FD3D12BuddyAllocatorAllocationData&  GetBuddyAllocationData()  const { return AllocationData.Buddy; }
@@ -95,6 +97,7 @@ public:
     FORCEINLINE void SetGpuVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress) { GpuVirtualAddress = InGpuVirtualAddress; }
     FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
     FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                  { StorageType = InStorageType; }
+    FORCEINLINE void SetOwner(FD3D12BaseResource* InOwner)                              { Owner = InOwner; }
 
     FORCEINLINE void SetResidencyHandle(const FD3D12ResidencyHandle& InResidencyHandle)
     {
@@ -149,6 +152,7 @@ private:
     } AllocatorPointers;
 
     FD3D12Resource*           Resource;
+    FD3D12BaseResource*       Owner;
     uint64                    ResourceOffset;
     D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress;
     void*                     MappedBaseAddress;
@@ -235,11 +239,14 @@ class FD3D12BaseResource : public FD3D12DeviceChild
 public:
     FD3D12BaseResource(FD3D12Device* InDevice);
     virtual ~FD3D12BaseResource();
-
+    
     void AddListener(ID3D12ResourceRelocationListener* Listener);
     void RemoveListener(ID3D12ResourceRelocationListener* Listener);
 
     void NotifyRelocation();
+
+    FD3D12ResourceStorage&       GetResourceStorage()       { return ResourceStorage; }
+    const FD3D12ResourceStorage& GetResourceStorage() const { return ResourceStorage; }
 
     FD3D12Resource* GetResource() 
     {

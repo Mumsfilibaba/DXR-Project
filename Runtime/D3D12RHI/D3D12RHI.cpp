@@ -157,12 +157,17 @@ bool FD3D12RHI::Initialize()
 
 void FD3D12RHI::BeginFrame()
 {
+    BeginFrame(nullptr);
+}
+
+void FD3D12RHI::BeginFrame(FD3D12CommandContext* InCommandContext)
+{
     if (!Device)
     {
         return;
     }
 
-    Device->BeginFrame();
+    Device->BeginFrame(InCommandContext);
 
     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
     {

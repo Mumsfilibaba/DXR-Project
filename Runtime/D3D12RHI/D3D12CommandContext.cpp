@@ -332,7 +332,7 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
 
 void FD3D12CommandContext::BeginFrame()
 {
-    FD3D12RHI::Get()->BeginFrame();
+    FD3D12RHI::Get()->BeginFrame(this);
 }
 
 void FD3D12CommandContext::EndFrame()

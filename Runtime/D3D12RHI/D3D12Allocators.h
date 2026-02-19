@@ -105,6 +105,13 @@ public:
         uint64 Size   = 0;
     };
 
+    struct FLiveAllocation
+    {
+        uint64              Offset = 0;
+        uint64              Size   = 0;
+        FD3D12BaseResource* Owner  = nullptr;
+    };
+
 public:
     FD3D12PoolAllocatorPage(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags = D3D12_RESOURCE_FLAG_NONE);
     ~FD3D12PoolAllocatorPage();
@@ -112,7 +119,11 @@ public:
     bool Initialize();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FD3D12ResourceStorage& OutStorage);
+    bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FD3D12PoolAllocatorAllocationData& OutData);
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
+
+    void RegisterOwner(uint64 Offset, FD3D12BaseResource* Owner);
+    void UnregisterOwner(uint64 Offset);
 
     bool IsEmpty() const { return UsedBytes == 0; }
 
@@ -136,6 +147,11 @@ public:
         return FreeRanges;
     }
 
+    const TArray<FLiveAllocation>& GetLiveAllocations() const
+    {
+        return LiveAllocations;
+    }
+
 private:
     void CoalesceFreeRanges();
 
@@ -151,6 +167,7 @@ private:
     uint8*                    MappedBaseAddress;
     D3D12_GPU_VIRTUAL_ADDRESS BaseGpuVirtualAddress;
     TArray<FFreeRange>        FreeRanges;
+    TArray<FLiveAllocation>   LiveAllocations;
 };
 
 class FD3D12PoolAllocator : public FD3D12DeviceChild
@@ -158,11 +175,13 @@ class FD3D12PoolAllocator : public FD3D12DeviceChild
     static constexpr uint32 TLSFFirstLevelCount  = 32;
     static constexpr uint32 TLSFSecondLevelCount = 8;
 
-    struct FDefragRecord
+public:
+    struct FDefragCandidate
     {
-        uint32 PageIndex = UINT32_MAX;
-        uint64 Offset    = 0;
-        uint64 Size      = 0;
+        FD3D12BaseResource*               Owner       = nullptr;
+        uint32                            PageIndex   = UINT32_MAX;
+        uint64                            Offset      = 0;
+        uint64                            Size        = 0;
     };
 
 public:
@@ -178,6 +197,10 @@ public:
     void Deallocate(const FD3D12ResourceStorage& Storage);
     void RecycleAllocation(const FD3D12PoolAllocatorAllocationData& AllocationData);
     
+    void RegisterAllocationOwner(const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner);
+    bool GetDefragCandidate(FDefragCandidate& OutCandidate) const;
+    bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 ExcludePageIndex, FD3D12PoolAllocatorAllocationData& OutData);
+
     FD3D12Heap* GetBackingHeap(uint32 PageIndex);
 
     uint64 GetFragmentedBytes() const
@@ -185,10 +208,13 @@ public:
         return FragmentedBytes;
     }
 
+    D3D12_RESOURCE_STATES GetInitialState() const { return InitialState; }
+    uint64 GetAlignment() const { return Alignment; }
+
 private:
     FD3D12PoolAllocatorPage* CreatePage(uint64 MinimumSize, uint32& OutPageIndex);
     void ComputeTLSFIndices(uint64 SizeInBytes, uint32& OutFL, uint32& OutSL) const;
-    void AddDefragRecord(uint32 PageIndex, uint64 Offset, uint64 SizeInBytes);
+    void RebuildFragmentationData();
 
     uint64                           PageSizeBytes;
     uint64                           Alignment;
@@ -198,9 +224,8 @@ private:
     EAllocationStrategy              AllocationStrategy;
     D3D12_RESOURCE_FLAGS             ResourceFlags;
     uint64                           FragmentedBytes;
-    TArray<FDefragRecord>            DefragRecords;
     TArray<FD3D12PoolAllocatorPage*> Pages;
-    FCriticalSection                 PagesCS;
+    mutable FCriticalSection         PagesCS;
 };
 
 class FD3D12BucketAllocator : public FD3D12DeviceChild
@@ -400,6 +425,9 @@ public:
     
     bool TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
+
+    void RegisterAllocationOwner(FD3D12PoolAllocator* Allocator, const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner);
+    bool GetDefragCandidate(FD3D12PoolAllocator::FDefragCandidate& OutCandidate, FD3D12PoolAllocator*& OutAllocator);
 
 private:
     ETexturePoolClass ClassifyTexture(const D3D12_RESOURCE_DESC& Desc, uint64 Alignment) const;

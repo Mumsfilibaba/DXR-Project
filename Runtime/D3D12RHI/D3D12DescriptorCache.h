@@ -113,11 +113,13 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
         {
             auto& StageViews = ResourceViews[Index];
             FMemory::Memzero(&StageViews, sizeof(StageViews));
+            FMemory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumBuffers[Index] = 0;
         }
     }
 
     FD3D12ConstantBufferView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint32 ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
     uint8 NumBuffers[ShaderVisibility_Count];
 };
 
@@ -136,11 +138,13 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
         {
             auto& StageViews = ResourceViews[Index];
             FMemory::Memzero(&StageViews, sizeof(StageViews));
+            FMemory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumViews[Index] = 0;
         }
     }
 
     FD3D12ShaderResourceView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+    uint32 ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
     uint8 NumViews[ShaderVisibility_Count];
 };
 
@@ -159,11 +163,13 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
         {
             auto& StageViews = ResourceViews[Index];
             FMemory::Memzero(&StageViews, sizeof(StageViews));
+            FMemory::Memzero(&ViewVersions[Index], sizeof(ViewVersions[Index]));
             NumViews[Index] = 0;
         }
     }
 
     FD3D12UnorderedAccessView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+    uint32 ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
     uint8 NumViews[ShaderVisibility_Count];
 };
 

@@ -589,6 +589,57 @@ bool FD3D12PoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignment
         AllocationData.Size      = SizeInBytes;
 
         OutStorage.SetPoolAllocationData(AllocationData);
+
+        FLiveAllocation LiveAlloc = {};
+        LiveAlloc.Offset = AlignedOffset;
+        LiveAlloc.Size   = SizeInBytes;
+        LiveAllocations.Add(LiveAlloc);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool FD3D12PoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FD3D12PoolAllocatorAllocationData& OutData)
+{
+    for (int32 Index = 0; Index < FreeRanges.Size(); ++Index)
+    {
+        const FFreeRange Range = FreeRanges[Index];
+
+        const uint64 UsedAlignment = Math::Max<uint64>(InAlignment, Alignment);
+        const uint64 AlignedOffset = Math::AlignUp<uint64>(Range.Offset, UsedAlignment);
+        const uint64 Padding       = AlignedOffset - Range.Offset;
+        const uint64 RequiredSize  = Padding + SizeInBytes;
+
+        if (Range.Size < RequiredSize)
+        {
+            continue;
+        }
+
+        const uint64 TailSize = Range.Size - RequiredSize;
+        if (Padding > 0)
+        {
+            FreeRanges[Index].Size = Padding;
+            if (TailSize > 0)
+            {
+                FreeRanges.Add({AlignedOffset + SizeInBytes, TailSize});
+            }
+        }
+        else if (TailSize > 0)
+        {
+            FreeRanges[Index].Offset = AlignedOffset + SizeInBytes;
+            FreeRanges[Index].Size   = TailSize;
+        }
+        else
+        {
+            FreeRanges.RemoveAtSwap(Index);
+        }
+
+        UsedBytes += SizeInBytes;
+
+        OutData.Offset = AlignedOffset;
+        OutData.Size   = SizeInBytes;
         return true;
     }
 
@@ -602,9 +653,40 @@ void FD3D12PoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInByte
         return;
     }
 
+    UnregisterOwner(Offset);
+
     FreeRanges.Add({Offset, SizeInBytes});
     UsedBytes = UsedBytes > SizeInBytes ? (UsedBytes - SizeInBytes) : 0;
     CoalesceFreeRanges();
+}
+
+void FD3D12PoolAllocatorPage::RegisterOwner(uint64 Offset, FD3D12BaseResource* Owner)
+{
+    for (FLiveAllocation& Alloc : LiveAllocations)
+    {
+        if (Alloc.Offset == Offset)
+        {
+            Alloc.Owner = Owner;
+            return;
+        }
+    }
+
+    FLiveAllocation NewAlloc = {};
+    NewAlloc.Offset = Offset;
+    NewAlloc.Owner  = Owner;
+    LiveAllocations.Add(NewAlloc);
+}
+
+void FD3D12PoolAllocatorPage::UnregisterOwner(uint64 Offset)
+{
+    for (int32 Index = 0; Index < LiveAllocations.Size(); ++Index)
+    {
+        if (LiveAllocations[Index].Offset == Offset)
+        {
+            LiveAllocations.RemoveAtSwap(Index);
+            return;
+        }
+    }
 }
 
 void FD3D12PoolAllocatorPage::CoalesceFreeRanges()
@@ -646,7 +728,6 @@ FD3D12PoolAllocator::FD3D12PoolAllocator(FD3D12Device* InDevice, uint64 InPageSi
     , AllocationStrategy(InAllocationStrategy)
     , ResourceFlags(GD3D12SupportTightAlignment ? (InResourceFlags | D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) : InResourceFlags)
     , FragmentedBytes(0)
-    , DefragRecords()
     , Pages()
     , PagesCS()
 {
@@ -673,7 +754,6 @@ void FD3D12PoolAllocator::Destroy()
     }
 
     Pages.Clear();
-    DefragRecords.Clear();
     FragmentedBytes = 0;
 }
 
@@ -779,14 +859,114 @@ void FD3D12PoolAllocator::ComputeTLSFIndices(uint64 SizeInBytes, uint32& OutFL, 
     OutSL = Math::Min<uint32>(static_cast<uint32>(SL), TLSFSecondLevelCount - 1);
 }
 
-void FD3D12PoolAllocator::AddDefragRecord(uint32 PageIndex, uint64 Offset, uint64 SizeInBytes)
+void FD3D12PoolAllocator::RebuildFragmentationData()
 {
-    FDefragRecord Record = {};
-    Record.PageIndex = PageIndex;
-    Record.Offset    = Offset;
-    Record.Size      = SizeInBytes;
+    FragmentedBytes = 0;
 
-    DefragRecords.Add(Record);
+    for (uint32 PageIndex = 0; PageIndex < static_cast<uint32>(Pages.Size()); ++PageIndex)
+    {
+        const FD3D12PoolAllocatorPage* CurrentPage = Pages[PageIndex];
+        if (!CurrentPage || CurrentPage->GetFreeRanges().Size() <= 1)
+        {
+            continue;
+        }
+
+        for (const FD3D12PoolAllocatorPage::FFreeRange& Range : CurrentPage->GetFreeRanges())
+        {
+            FragmentedBytes += Range.Size;
+        }
+    }
+}
+
+void FD3D12PoolAllocator::RegisterAllocationOwner(const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner)
+{
+    if (Data.PageIndex == UINT32_MAX || !Owner)
+    {
+        return;
+    }
+
+    SCOPED_LOCK(PagesCS);
+
+    if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+    {
+        Pages[Data.PageIndex]->RegisterOwner(Data.Offset, Owner);
+    }
+}
+
+bool FD3D12PoolAllocator::GetDefragCandidate(FDefragCandidate& OutCandidate) const
+{
+    SCOPED_LOCK(PagesCS);
+
+    if (AllocationStrategy != EAllocationStrategy::SuballocatedHeap)
+    {
+        return false;
+    }
+
+    uint32 BestPageIndex     = UINT32_MAX;
+    uint64 LowestUtilization = UINT64_MAX;
+
+    for (uint32 PageIndex = 0; PageIndex < static_cast<uint32>(Pages.Size()); ++PageIndex)
+    {
+        const FD3D12PoolAllocatorPage* Page = Pages[PageIndex];
+        if (!Page || Page->IsEmpty() || Page->GetFreeRanges().Size() <= 1)
+        {
+            continue;
+        }
+
+        const uint64 Utilization = Page->GetUsedBytes();
+        if (Utilization < LowestUtilization)
+        {
+            LowestUtilization = Utilization;
+            BestPageIndex     = PageIndex;
+        }
+    }
+
+    if (BestPageIndex == UINT32_MAX)
+    {
+        return false;
+    }
+
+    const FD3D12PoolAllocatorPage* SourcePage = Pages[BestPageIndex];
+    for (const auto& LiveAlloc : SourcePage->GetLiveAllocations())
+    {
+        if (LiveAlloc.Owner)
+        {
+            OutCandidate.Owner     = LiveAlloc.Owner;
+            OutCandidate.PageIndex = BestPageIndex;
+            OutCandidate.Offset    = LiveAlloc.Offset;
+            OutCandidate.Size      = LiveAlloc.Size;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool FD3D12PoolAllocator::TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, uint32 ExcludePageIndex, FD3D12PoolAllocatorAllocationData& OutData)
+{
+    SCOPED_LOCK(PagesCS);
+
+    for (uint32 PageIndex = 0; PageIndex < static_cast<uint32>(Pages.Size()); ++PageIndex)
+    {
+        if (PageIndex == ExcludePageIndex)
+        {
+            continue;
+        }
+
+        FD3D12PoolAllocatorPage* Page = Pages[PageIndex];
+        if (!Page)
+        {
+            continue;
+        }
+
+        if (Page->TryAllocateForDefrag(SizeInBytes, InAlignment, OutData))
+        {
+            OutData.PageIndex = PageIndex;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InInitialState, uint64 InAlignment, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage)
@@ -921,24 +1101,7 @@ void FD3D12PoolAllocator::RecycleAllocation(const FD3D12PoolAllocatorAllocationD
     }
 
     Page->RecycleAllocation(Data.Offset, Data.Size);
-
-    DefragRecords.Clear();
-    FragmentedBytes = 0;
-
-    for (uint32 PageIndex = 0; PageIndex < static_cast<uint32>(Pages.Size()); ++PageIndex)
-    {
-        const FD3D12PoolAllocatorPage* CurrentPage = Pages[PageIndex];
-        if (!CurrentPage || CurrentPage->GetFreeRanges().Size() <= 1)
-        {
-            continue;
-        }
-
-        for (const FD3D12PoolAllocatorPage::FFreeRange& Range : CurrentPage->GetFreeRanges())
-        {
-            FragmentedBytes += Range.Size;
-            AddDefragRecord(PageIndex, Range.Offset, Range.Size);
-        }
-    }
+    RebuildFragmentationData();
 }
 
 FD3D12Heap* FD3D12PoolAllocator::GetBackingHeap(uint32 PageIndex)
@@ -1876,6 +2039,39 @@ void FD3D12TextureAllocator::CleanUp()
             Pools[Index]->CleanUp();
         }
     }
+}
+
+void FD3D12TextureAllocator::RegisterAllocationOwner(FD3D12PoolAllocator* Allocator, const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner)
+{
+    if (Allocator)
+    {
+        Allocator->RegisterAllocationOwner(Data, Owner);
+    }
+}
+
+bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12PoolAllocator::FDefragCandidate& OutCandidate, FD3D12PoolAllocator*& OutAllocator)
+{
+    SCOPED_LOCK(PoolsCS);
+
+    uint64 MostFragmented = 0;
+    FD3D12PoolAllocator* BestPool = nullptr;
+
+    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    {
+        if (Pools[Index] && Pools[Index]->GetFragmentedBytes() > MostFragmented)
+        {
+            MostFragmented = Pools[Index]->GetFragmentedBytes();
+            BestPool       = Pools[Index];
+        }
+    }
+
+    if (BestPool && BestPool->GetDefragCandidate(OutCandidate))
+    {
+        OutAllocator = BestPool;
+        return true;
+    }
+
+    return false;
 }
 
 bool FD3D12TextureAllocator::Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const

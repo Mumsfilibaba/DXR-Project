@@ -12,6 +12,8 @@
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
+#include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/D3D12RHI.h"
 
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
@@ -120,6 +122,11 @@ static TAutoConsoleVariable<FString> CVarDeviceRemovedDumpFilePath(
     "D3D12RHI.DeviceRemovedDumpFilePath",
     "File path for DRED device removed dump output",
     "D3D12DeviceRemovedDump.txt");
+
+static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
+    "D3D12RHI.MaxDefragMovesPerFrame",
+    "Maximum number of resource defragmentation moves per frame (0 to disable)",
+    4);
 
 // -------------------------------------------------------------------------------------------
 // D3D12 Feature Support
@@ -777,7 +784,7 @@ FD3D12Device::~FD3D12Device()
 #endif
 }
 
-void FD3D12Device::BeginFrame()
+void FD3D12Device::BeginFrame(FD3D12CommandContext* InCommandContext)
 {
     if (StagingBufferAllocator)
     {
@@ -802,6 +809,148 @@ void FD3D12Device::BeginFrame()
     if (TextureAllocator)
     {
         TextureAllocator->CleanUp();
+    }
+
+    DefragmentAllocations(InCommandContext);
+}
+
+void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
+{
+    const int32 MaxMovesPerFrame = CVarMaxDefragMovesPerFrame.GetValue();
+    if (MaxMovesPerFrame <= 0 || !TextureAllocator)
+    {
+        return;
+    }
+
+    CHECK(InCommandContext != nullptr);
+    CHECK(InCommandContext->IsRecording());
+
+    FD3D12FenceManager& FenceManager = DirectQueue->GetFenceManager();
+    const uint64 CompletedFenceValue = FenceManager.GetFence()->GetCompletedValue();
+
+    // 1. Process completed defrag moves
+    for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
+    {
+        FPendingDefragMove& Move = PendingDefragMoves[Index];
+        if (CompletedFenceValue <= Move.FenceValueAtCreation)
+        {
+            continue;
+        }
+
+        FD3D12BaseResource* Owner = Move.Owner;
+        FD3D12ResourceStorage& Storage = Owner->GetResourceStorage();
+
+        FD3D12Resource* OldResource = Storage.GetResource();
+        if (OldResource)
+        {
+            OldResource->AddRef();
+        }
+
+        Storage.SetResource(Move.NewResource);
+        Storage.SetResourceOffset(0);
+        Storage.SetGpuVirtualAddress(0);
+        Storage.SetPoolAllocationData(Move.NewAllocationData);
+
+        Owner->NotifyRelocation();
+
+        if (OldResource)
+        {
+            if (OldResource->ShouldDeferredRelease())
+            {
+                OldResource->DeferredRelease();
+            }
+            OldResource->Release();
+        }
+
+        FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, Move.Allocator, Move.OldAllocationData);
+
+        Move.NewResource->Release();
+        PendingDefragMoves.RemoveAtSwap(Index);
+    }
+
+    // 2. Initiate new defrag moves (up to max per frame minus pending)
+    int32 MovesAvailable = MaxMovesPerFrame - PendingDefragMoves.Size();
+    if (MovesAvailable <= 0)
+    {
+        return;
+    }
+
+    FResourceBarrierBatcher& BarrierBatcher = InCommandContext->GetResourceBarrierBatcher();
+
+    for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
+    {
+        FD3D12PoolAllocator::FDefragCandidate Candidate = {};
+        FD3D12PoolAllocator* SourceAllocator = nullptr;
+
+        if (!TextureAllocator->GetDefragCandidate(Candidate, SourceAllocator))
+        {
+            break;
+        }
+
+        if (!Candidate.Owner || !SourceAllocator)
+        {
+            break;
+        }
+
+        FD3D12PoolAllocatorAllocationData NewAllocationData = {};
+        if (!SourceAllocator->TryAllocateForDefrag(Candidate.Size, SourceAllocator->GetAlignment(), Candidate.PageIndex, NewAllocationData))
+        {
+            break;
+        }
+
+        FD3D12Heap* NewHeap = SourceAllocator->GetBackingHeap(NewAllocationData.PageIndex);
+        if (!NewHeap)
+        {
+            break;
+        }
+
+        FD3D12Resource* OldResource = Candidate.Owner->GetResource();
+        if (!OldResource)
+        {
+            break;
+        }
+
+        const D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+        const D3D12_RESOURCE_STATES CurrentState = OldResource->GetState();
+
+        FD3D12ResourceRef NewResource;
+        if (!CreatePlacedResource(NewHeap, NewAllocationData.Offset, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, NewResource))
+        {
+            break;
+        }
+
+        if (CurrentState != D3D12_RESOURCE_STATE_COPY_SOURCE)
+        {
+            BarrierBatcher.AddTransitionBarrier(OldResource, CurrentState, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        }
+        BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+        BarrierBatcher.FlushBarriers();
+
+        InCommandContext->GetCommandList()->CopyResource(NewResource->GetD3D12Resource(), OldResource->GetD3D12Resource());
+
+        if (CurrentState != D3D12_RESOURCE_STATE_COPY_SOURCE)
+        {
+            BarrierBatcher.AddTransitionBarrier(OldResource, D3D12_RESOURCE_STATE_COPY_SOURCE, CurrentState);
+        }
+        if (CurrentState != D3D12_RESOURCE_STATE_COPY_DEST)
+        {
+            BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, CurrentState);
+        }
+        BarrierBatcher.FlushBarriers();
+
+        NewResource->SetResourceState(CurrentState);
+
+        FPendingDefragMove PendingMove = {};
+        PendingMove.Owner                = Candidate.Owner;
+        PendingMove.NewResource          = NewResource.Get();
+        PendingMove.Allocator            = SourceAllocator;
+        PendingMove.OldAllocationData    = { Candidate.PageIndex, Candidate.Offset, Candidate.Size };
+        PendingMove.NewAllocationData    = NewAllocationData;
+        PendingMove.ResourceState        = CurrentState;
+        PendingMove.FenceValueAtCreation = FenceManager.GetLastSignaledValue();
+
+        NewResource->AddRef();
+        PendingDefragMoves.Add(PendingMove);
     }
 }
 

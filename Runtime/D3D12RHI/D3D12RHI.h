@@ -43,6 +43,8 @@ public:
     virtual void BeginFrame() override final;
     virtual void EndFrame() override final;
 
+    void BeginFrame(FD3D12CommandContext* InCommandContext);
+
     virtual FRHITexture* CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final;
     virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final;

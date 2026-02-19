@@ -138,6 +138,7 @@ void FD3D12Resource::DeferredRelease()
 FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
+    , Owner(nullptr)
     , ResourceOffset(0)
     , GpuVirtualAddress(0)
     , MappedBaseAddress(nullptr)
@@ -311,6 +312,7 @@ FD3D12BaseResource::FD3D12BaseResource(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , ResourceStorage(InDevice)
 {
+    ResourceStorage.SetOwner(this);
 }
 
 FD3D12BaseResource::~FD3D12BaseResource()

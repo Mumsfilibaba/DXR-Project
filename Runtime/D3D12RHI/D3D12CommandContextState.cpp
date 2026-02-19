@@ -284,6 +284,61 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
 
     CommonState.DescriptorCache.SetDescriptorHeaps();
 
+    // Check for stale view versions (views recreated due to resource relocation)
+    for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
+    {
+        if (!CommonState.ConstantBufferCache.IsDirty(CurrentStage))
+        {
+            auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
+            for (uint32 Index = 0; Index < NumCBVs[CurrentStage]; Index++)
+            {
+                if (FD3D12ConstantBufferView* View = CBVCache[Index])
+                {
+                    if (View->GetDescriptorVersion() != CommonState.ConstantBufferCache.ViewVersions[CurrentStage][Index])
+                    {
+                        CommonState.ConstantBufferCache.ViewVersions[CurrentStage][Index] = View->GetDescriptorVersion();
+                        CommonState.ConstantBufferCache.bDirty[CurrentStage] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!CommonState.ShaderResourceViewCache.IsDirty(CurrentStage))
+        {
+            auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[CurrentStage];
+            for (uint32 Index = 0; Index < NumSRVs[CurrentStage]; Index++)
+            {
+                if (FD3D12ShaderResourceView* View = SRVCache[Index])
+                {
+                    if (View->GetDescriptorVersion() != CommonState.ShaderResourceViewCache.ViewVersions[CurrentStage][Index])
+                    {
+                        CommonState.ShaderResourceViewCache.ViewVersions[CurrentStage][Index] = View->GetDescriptorVersion();
+                        CommonState.ShaderResourceViewCache.bDirty[CurrentStage] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!CommonState.UnorderedAccessViewCache.IsDirty(CurrentStage))
+        {
+            auto& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[CurrentStage];
+            for (uint32 Index = 0; Index < NumUAVs[CurrentStage]; Index++)
+            {
+                if (FD3D12UnorderedAccessView* View = UAVCache[Index])
+                {
+                    if (View->GetDescriptorVersion() != CommonState.UnorderedAccessViewCache.ViewVersions[CurrentStage][Index])
+                    {
+                        CommonState.UnorderedAccessViewCache.ViewVersions[CurrentStage][Index] = View->GetDescriptorVersion();
+                        CommonState.UnorderedAccessViewCache.bDirty[CurrentStage] = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     const uint32 StartHandleOffset = CommonState.DescriptorCache.GetResourceHeap().AllocateHandles(NumResourceDescriptors);
     uint32 DescriptorHandleOffset = StartHandleOffset;
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
@@ -633,6 +688,7 @@ void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceView* ShaderResourceV
     if (SRVCache[ResourceIndex] != ShaderResourceView)
     {
         SRVCache[ResourceIndex] = ShaderResourceView;
+        CommonState.ShaderResourceViewCache.ViewVersions[ShaderStage][ResourceIndex] = ShaderResourceView ? ShaderResourceView->GetDescriptorVersion() : 0;
         CommonState.ShaderResourceViewCache.NumViews[ShaderStage] = Math::Max<uint8>(CommonState.ShaderResourceViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.ShaderResourceViewCache.bDirty[ShaderStage] = true;
     }
@@ -644,6 +700,7 @@ void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessView* UnorderedAcces
     if (UAVCache[ResourceIndex] != UnorderedAccessView)
     {
         UAVCache[ResourceIndex] = UnorderedAccessView;
+        CommonState.UnorderedAccessViewCache.ViewVersions[ShaderStage][ResourceIndex] = UnorderedAccessView ? UnorderedAccessView->GetDescriptorVersion() : 0;
         CommonState.UnorderedAccessViewCache.NumViews[ShaderStage] = Math::Max<uint8>(CommonState.UnorderedAccessViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.UnorderedAccessViewCache.bDirty[ShaderStage] = true;
     }
@@ -655,6 +712,7 @@ void FD3D12CommandContextState::SetCBV(FD3D12ConstantBufferView* ConstantBufferV
     if (CBVCache[ResourceIndex] != ConstantBufferView)
     {
         CBVCache[ResourceIndex] = ConstantBufferView;
+        CommonState.ConstantBufferCache.ViewVersions[ShaderStage][ResourceIndex] = ConstantBufferView ? ConstantBufferView->GetDescriptorVersion() : 0;
         CommonState.ConstantBufferCache.NumBuffers[ShaderStage] = Math::Max<uint8>(CommonState.ConstantBufferCache.NumBuffers[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.ConstantBufferCache.bDirty[ShaderStage] = true;
     }

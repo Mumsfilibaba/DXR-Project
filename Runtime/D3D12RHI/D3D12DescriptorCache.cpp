@@ -229,27 +229,6 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
 
         Cache.bDirty[ShaderStage] = false;
     }
-    else
-    {
-        for (EShaderVisibility i = ShaderVisibility_All; i <= ShaderVisibility_Count; i = EShaderVisibility(i + 1))
-        {
-            for (EShaderVisibility j = ShaderVisibility_All; j <= ShaderVisibility_Count; j = EShaderVisibility(j + 1))
-            {
-                if (i != j)
-                {
-                    D3D12_GPU_DESCRIPTOR_HANDLE Handle0 = ConstantBufferCache.Handles[i];
-                    D3D12_GPU_DESCRIPTOR_HANDLE Handle1 = ConstantBufferCache.Handles[j];
-                    if (Handle0.ptr == Handle1.ptr)
-                    {
-                        if (Handle0.ptr != 0)
-                        {
-                            DEBUG_BREAK();
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     D3D12_GPU_DESCRIPTOR_HANDLE GPUDescriptorHandle = ConstantBufferCache.Handles[ShaderStage];
     CHECK(GPUDescriptorHandle.ptr != 0);

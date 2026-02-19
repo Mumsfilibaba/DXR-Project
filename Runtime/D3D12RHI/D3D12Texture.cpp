@@ -101,6 +101,11 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         return false;
     }
 
+    if (FD3D12PoolAllocator* PoolAllocator = ResourceStorage.GetPoolAllocator())
+    {
+        GetDevice()->GetTextureAllocator()->RegisterAllocationOwner(PoolAllocator, ResourceStorage.GetPoolAllocationData(), this);
+    }
+
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc = {};
         ViewDesc.Format                  = D3D12CastShaderResourceFormat(ResourceDesc.Format);
@@ -164,6 +169,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
             return false;
         }
 
+        DefaultSRV->RegisterWithResource(this);
         ShaderResourceView = DefaultSRV;
     }
 
@@ -191,6 +197,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
                 return false;
             }
 
+            DefaultUAV->RegisterWithResource(this);
             UnorderedAccessView = DefaultUAV;
         }
     }
@@ -418,6 +425,8 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
         return nullptr;
     }
 
+    D3D12View->RegisterWithResource(this);
+
     if (RenderTargetView.NumArraySlices > 1)
     {
         FD3D12HashableTextureView HashableView;
@@ -549,6 +558,8 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     {
         return nullptr;
     }
+
+    D3D12View->RegisterWithResource(this);
 
     if (DepthStencilView.NumArraySlices > 1)
     {

@@ -156,6 +156,19 @@ struct FD3D12DefaultDescriptors
     FD3D12SamplerStateRef        DefaultSampler;
 };
 
+class FD3D12CommandContext;
+
+struct FPendingDefragMove
+{
+    FD3D12BaseResource*               Owner;
+    FD3D12Resource*                   NewResource;
+    FD3D12PoolAllocator*              Allocator;
+    FD3D12PoolAllocatorAllocationData OldAllocationData;
+    FD3D12PoolAllocatorAllocationData NewAllocationData;
+    D3D12_RESOURCE_STATES             ResourceState;
+    uint64                            FenceValueAtCreation;
+};
+
 class FD3D12Device
 {
 public:
@@ -163,7 +176,7 @@ public:
     ~FD3D12Device();
 
     bool Initialize();
-    void BeginFrame();
+    void BeginFrame(FD3D12CommandContext* InCommandContext);
 
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
@@ -241,6 +254,7 @@ private:
     bool CreateCommandQueues();
     bool CreateDefaultResources();
     void QueryDeviceFeatureSupport();
+    void DefragmentAllocations(FD3D12CommandContext* InCommandContext);
 
     FD3D12Adapter* const             Adapter;
 
@@ -271,6 +285,7 @@ private:
     FD3D12QueryHeapManager*          OcclusionQueryHeapManager;
 
     FD3D12DefaultDescriptors         DefaultDescriptors;
+    TArray<FPendingDefragMove>       PendingDefragMoves;
 
     D3D_FEATURE_LEVEL                MinFeatureLevel;
     D3D_FEATURE_LEVEL                ActiveFeatureLevel;
