@@ -386,9 +386,6 @@ void FD3D12MultiBuddyAllocator::CleanUp()
 {
     SCOPED_LOCK(AllocatorsCS);
 
-    const int32 TotalBefore = Allocators.Size();
-    int32 Freed = 0;
-
     for (int32 Index = Allocators.Size() - 1; Index >= 0; --Index)
     {
         FD3D12BuddyAllocator* Allocator = Allocators[Index];
@@ -396,11 +393,8 @@ void FD3D12MultiBuddyAllocator::CleanUp()
         {
             delete Allocator;
             Allocators.RemoveAtSwap(Index);
-            ++Freed;
         }
     }
-
-    D3D12_INFO("[MultiBuddyAllocator::CleanUp] HeapType=%d: Freed %d/%d buddy allocators, %d remaining", static_cast<int32>(HeapType), Freed, TotalBefore, Allocators.Size());
 }
 
 bool FD3D12MultiBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage, D3D12_RESOURCE_FLAGS InResourceFlags)
@@ -687,9 +681,6 @@ void FD3D12PoolAllocator::CleanUp()
 {
     SCOPED_LOCK(PagesCS);
 
-    const int32 TotalBefore = Pages.Size();
-    int32 Freed = 0;
-
     for (int32 Index = Pages.Size() - 1; Index >= 0; --Index)
     {
         FD3D12PoolAllocatorPage* Page = Pages[Index];
@@ -697,7 +688,6 @@ void FD3D12PoolAllocator::CleanUp()
         {
             delete Page;
             Pages[Index] = nullptr;
-            ++Freed;
         }
     }
 
@@ -706,7 +696,6 @@ void FD3D12PoolAllocator::CleanUp()
         Pages.Pop();
     }
 
-    D3D12_INFO("[PoolAllocator::CleanUp] HeapType=%d: Freed %d/%d pages, %d remaining", static_cast<int32>(HeapType), Freed, TotalBefore, Pages.Size());
 }
 
 bool FD3D12PoolAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_FLAGS InResourceFlags) const
@@ -1183,7 +1172,6 @@ void FD3D12UploadHeapAllocator::Destroy()
 
 void FD3D12UploadHeapAllocator::CleanUp()
 {
-    D3D12_INFO("[UploadHeapAllocator::CleanUp] Cleaning up sub-allocators...");
     SmallAllocator.CleanUp();
     LargeAllocator.CleanUp();
     ConstantsAllocator.CleanUp();
@@ -1503,9 +1491,6 @@ void FD3D12LinearAllocator::CleanUp()
 {
     SCOPED_LOCK(PagesCS);
 
-    const int32 FullPagesBefore = FullPages.Size();
-    int32 Retired = 0;
-
     for (int32 Index = FullPages.Size() - 1; Index >= 0; --Index)
     {
         FD3D12LinearAllocatorPage* Page = FullPages[Index];
@@ -1527,10 +1512,7 @@ void FD3D12LinearAllocator::CleanUp()
         }
 
         FullPages.RemoveAtSwap(Index);
-        ++Retired;
     }
-
-    D3D12_INFO("[LinearAllocator::CleanUp] HeapType=%d: Retired %d/%d full pages, %d active pages, %d full pages remaining", static_cast<int32>(HeapType), Retired, FullPagesBefore, Pages.Size(), FullPages.Size());
 }
 
 FD3D12DynamicConstantsAllocator::FD3D12DynamicConstantsAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes)
@@ -1580,7 +1562,6 @@ bool FD3D12BufferAllocatorPool::Initialize()
 
 void FD3D12BufferAllocatorPool::CleanUp()
 {
-    D3D12_INFO("[BufferAllocatorPool::CleanUp] HeapType=%d: Cleaning up buddy allocator...", static_cast<int32>(HeapType));
     MultiBuddyAllocator.CleanUp();
 }
 
@@ -1744,8 +1725,6 @@ void FD3D12BufferAllocator::CleanUp()
 {
     SCOPED_LOCK(PoolsCS);
 
-    D3D12_INFO("[BufferAllocator::CleanUp] %d pool(s)...", Pools.Size());
-
     for (FD3D12BufferAllocatorPool* Pool : Pools)
     {
         if (Pool)
@@ -1889,8 +1868,6 @@ void FD3D12TextureAllocator::Destroy()
 void FD3D12TextureAllocator::CleanUp()
 {
     SCOPED_LOCK(PoolsCS);
-
-    D3D12_INFO("[TextureAllocator::CleanUp] %u pool class(es)...", TexturePoolClassCount);
 
     for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
     {
