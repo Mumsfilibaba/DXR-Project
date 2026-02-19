@@ -37,6 +37,8 @@ public:
     void Deallocate(const FD3D12ResourceStorage& Storage);
     void RecycleAllocation(const FD3D12BuddyAllocatorAllocationData& AllocationData);
 
+    bool IsEmpty() const;
+
     bool IsBackedByHeap() const
     {
         return AllocationStrategy == EAllocationStrategy::SuballocatedHeap;
@@ -56,17 +58,17 @@ private:
     uint32 GetOrderForSize(uint64 SizeInBytes) const;
     uint64 GetOrderBlockSize(uint32 Order) const;
 
-    uint64                 BackingStorageSize;
-    uint64                 MinBlockBytes;
-    D3D12_HEAP_TYPE        HeapType;
-    D3D12_RESOURCE_STATES  InitialState;
-    EAllocationStrategy    AllocationStrategy;
-    D3D12_RESOURCE_FLAGS   ResourceFlags;
-    FD3D12HeapRef          BackingHeap;
-    FD3D12ResourceRef      BackingResource;
-    TArray<TArray<uint64>> FreeOffsets;
-    uint8*                 MappedBaseAddress;
-    FCriticalSection       AllocatorCS;
+    uint64                   BackingStorageSize;
+    uint64                   MinBlockBytes;
+    D3D12_HEAP_TYPE          HeapType;
+    D3D12_RESOURCE_STATES    InitialState;
+    EAllocationStrategy      AllocationStrategy;
+    D3D12_RESOURCE_FLAGS     ResourceFlags;
+    FD3D12HeapRef            BackingHeap;
+    FD3D12ResourceRef        BackingResource;
+    TArray<TArray<uint64>>   FreeOffsets;
+    uint8*                   MappedBaseAddress;
+    mutable FCriticalSection AllocatorCS;
 };
 
 class FD3D12MultiBuddyAllocator : public FD3D12DeviceChild
@@ -77,9 +79,10 @@ public:
 
     bool Initialize();
     void Destroy();
-    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags) const;
-
+    void CleanUp();
+    
     bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage, D3D12_RESOURCE_FLAGS InResourceFlags = D3D12_RESOURCE_FLAG_NONE);
+    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags) const;
 
 private:
     bool CreateAllocator(D3D12_RESOURCE_FLAGS InResourceFlags);
@@ -110,6 +113,8 @@ public:
 
     bool TryAllocate(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FD3D12ResourceStorage& OutStorage);
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
+
+    bool IsEmpty() const { return UsedBytes == 0; }
 
     FD3D12Heap* GetBackingHeap() const
     {
@@ -166,9 +171,10 @@ public:
 
     bool Initialize();
     void Destroy();
-    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_FLAGS InResourceFlags) const;
-
+    void CleanUp();
+    
     bool TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage);
+    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_FLAGS InResourceFlags) const;
     void Deallocate(const FD3D12ResourceStorage& Storage);
     void RecycleAllocation(const FD3D12PoolAllocatorAllocationData& AllocationData);
     
@@ -237,6 +243,7 @@ public:
 
     bool Initialize();
     void Destroy();
+    void CleanUp();
 
 private:
     uint64                    PageSizeBytes;
@@ -290,7 +297,7 @@ public:
     ~FD3D12LinearAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
-    void BeginFrame();
+    void CleanUp();
 
 private:
     FD3D12LinearAllocatorPage* CreatePage();
@@ -311,7 +318,7 @@ public:
     ~FD3D12DynamicConstantsAllocator() = default;
 
     void* Allocate(uint64 SizeInBytes, FD3D12ResourceStorage& OutStorage);
-    void BeginFrame();
+    void CleanUp();
 
 private:
     FD3D12LinearAllocator LinearAllocator;
@@ -327,6 +334,7 @@ public:
     ~FD3D12BufferAllocatorPool();
 
     bool Initialize();
+    void CleanUp();
     
     bool TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc) const;
@@ -354,9 +362,10 @@ public:
 
     bool Initialize();
     void Destroy();
-    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const;
-
+    void CleanUp();
+    
     bool TryAllocate(D3D12_HEAP_TYPE HeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
+    bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
 private:
     void ReleasePools();
@@ -387,9 +396,10 @@ public:
 
     bool Initialize();
     void Destroy();
-    bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
-
+    void CleanUp();
+    
     bool TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage);
+    bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
 private:
     ETexturePoolClass ClassifyTexture(const D3D12_RESOURCE_DESC& Desc, uint64 Alignment) const;

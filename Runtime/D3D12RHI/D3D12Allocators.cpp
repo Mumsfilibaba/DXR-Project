@@ -296,6 +296,19 @@ void FD3D12BuddyAllocator::RecycleAllocation(const FD3D12BuddyAllocatorAllocatio
     FreeOffsets[CurrentOrder].Add(CurrentOffset);
 }
 
+bool FD3D12BuddyAllocator::IsEmpty() const
+{
+    SCOPED_LOCK(AllocatorCS);
+
+    if (FreeOffsets.IsEmpty())
+    {
+        return true;
+    }
+
+    const uint32 MaxOrder = static_cast<uint32>(FreeOffsets.Size() - 1);
+    return FreeOffsets[MaxOrder].Size() == 1 && FreeOffsets[MaxOrder][0] == 0;
+}
+
 FD3D12MultiBuddyAllocator::FD3D12MultiBuddyAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy)
     : FD3D12DeviceChild(InDevice)
     , PageSizeBytes(InPageSizeBytes)
@@ -367,6 +380,27 @@ bool FD3D12MultiBuddyAllocator::CreateAllocator(D3D12_RESOURCE_FLAGS InResourceF
 
     Allocators.Add(Allocator);
     return true;
+}
+
+void FD3D12MultiBuddyAllocator::CleanUp()
+{
+    SCOPED_LOCK(AllocatorsCS);
+
+    const int32 TotalBefore = Allocators.Size();
+    int32 Freed = 0;
+
+    for (int32 Index = Allocators.Size() - 1; Index >= 0; --Index)
+    {
+        FD3D12BuddyAllocator* Allocator = Allocators[Index];
+        if (Allocator && Allocator->IsEmpty())
+        {
+            delete Allocator;
+            Allocators.RemoveAtSwap(Index);
+            ++Freed;
+        }
+    }
+
+    D3D12_INFO("[MultiBuddyAllocator::CleanUp] HeapType=%d: Freed %d/%d buddy allocators, %d remaining", static_cast<int32>(HeapType), Freed, TotalBefore, Allocators.Size());
 }
 
 bool FD3D12MultiBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage, D3D12_RESOURCE_FLAGS InResourceFlags)
@@ -647,6 +681,32 @@ void FD3D12PoolAllocator::Destroy()
     Pages.Clear();
     DefragRecords.Clear();
     FragmentedBytes = 0;
+}
+
+void FD3D12PoolAllocator::CleanUp()
+{
+    SCOPED_LOCK(PagesCS);
+
+    const int32 TotalBefore = Pages.Size();
+    int32 Freed = 0;
+
+    for (int32 Index = Pages.Size() - 1; Index >= 0; --Index)
+    {
+        FD3D12PoolAllocatorPage* Page = Pages[Index];
+        if (Page && Page->IsEmpty())
+        {
+            delete Page;
+            Pages[Index] = nullptr;
+            ++Freed;
+        }
+    }
+
+    while (!Pages.IsEmpty() && Pages[Pages.Size() - 1] == nullptr)
+    {
+        Pages.Pop();
+    }
+
+    D3D12_INFO("[PoolAllocator::CleanUp] HeapType=%d: Freed %d/%d pages, %d remaining", static_cast<int32>(HeapType), Freed, TotalBefore, Pages.Size());
 }
 
 bool FD3D12PoolAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_FLAGS InResourceFlags) const
@@ -1121,6 +1181,14 @@ void FD3D12UploadHeapAllocator::Destroy()
     SmallAllocator.Destroy();
 }
 
+void FD3D12UploadHeapAllocator::CleanUp()
+{
+    D3D12_INFO("[UploadHeapAllocator::CleanUp] Cleaning up sub-allocators...");
+    SmallAllocator.CleanUp();
+    LargeAllocator.CleanUp();
+    ConstantsAllocator.CleanUp();
+}
+
 void* FD3D12UploadHeapAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
 {
     const uint64 UsedAlignment = Alignment ? Alignment : DefaultAlignment;
@@ -1243,7 +1311,7 @@ bool FD3D12LinearAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 Alignment
 
 void FD3D12LinearAllocatorPage::Reset()
 {
-    BackingResourceStorage.Reset();
+    BackingResourceStorage.ReleaseResource();
     CurrentOffset = 0;
 }
 
@@ -1431,9 +1499,12 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
     return OutStorage.GetMappedBaseAddress();
 }
 
-void FD3D12LinearAllocator::BeginFrame()
+void FD3D12LinearAllocator::CleanUp()
 {
     SCOPED_LOCK(PagesCS);
+
+    const int32 FullPagesBefore = FullPages.Size();
+    int32 Retired = 0;
 
     for (int32 Index = FullPages.Size() - 1; Index >= 0; --Index)
     {
@@ -1442,18 +1513,6 @@ void FD3D12LinearAllocator::BeginFrame()
         {
             FullPages.RemoveAtSwap(Index);
             continue;
-        }
-
-        FD3D12ResourceStorage& BackingStorage = Page->GetBackingResourceStorage();
-
-        FD3D12Resource* BackingResource = BackingStorage.GetResource();
-        if (BackingResource)
-        {
-            const int32 StableRefCount = BackingStorage.GetAllocator() ? 2 : 1;
-            if (BackingResource->GetRefCount() > StableRefCount)
-            {
-                continue;
-            }
         }
 
         RetirePage(Page);
@@ -1468,7 +1527,10 @@ void FD3D12LinearAllocator::BeginFrame()
         }
 
         FullPages.RemoveAtSwap(Index);
+        ++Retired;
     }
+
+    D3D12_INFO("[LinearAllocator::CleanUp] HeapType=%d: Retired %d/%d full pages, %d active pages, %d full pages remaining", static_cast<int32>(HeapType), Retired, FullPagesBefore, Pages.Size(), FullPages.Size());
 }
 
 FD3D12DynamicConstantsAllocator::FD3D12DynamicConstantsAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes)
@@ -1477,9 +1539,9 @@ FD3D12DynamicConstantsAllocator::FD3D12DynamicConstantsAllocator(FD3D12Device* I
 {
 }
 
-void FD3D12DynamicConstantsAllocator::BeginFrame()
+void FD3D12DynamicConstantsAllocator::CleanUp()
 {
-    LinearAllocator.BeginFrame();
+    LinearAllocator.CleanUp();
 }
 
 void* FD3D12DynamicConstantsAllocator::Allocate(uint64 SizeInBytes, FD3D12ResourceStorage& OutStorage)
@@ -1514,6 +1576,12 @@ bool FD3D12BufferAllocatorPool::Initialize()
     }
 
     return true;
+}
+
+void FD3D12BufferAllocatorPool::CleanUp()
+{
+    D3D12_INFO("[BufferAllocatorPool::CleanUp] HeapType=%d: Cleaning up buddy allocator...", static_cast<int32>(HeapType));
+    MultiBuddyAllocator.CleanUp();
 }
 
 void FD3D12BufferAllocatorPool::Destroy()
@@ -1672,6 +1740,21 @@ void FD3D12BufferAllocator::Destroy()
     ReleasePools();
 }
 
+void FD3D12BufferAllocator::CleanUp()
+{
+    SCOPED_LOCK(PoolsCS);
+
+    D3D12_INFO("[BufferAllocator::CleanUp] %d pool(s)...", Pools.Size());
+
+    for (FD3D12BufferAllocatorPool* Pool : Pools)
+    {
+        if (Pool)
+        {
+            Pool->CleanUp();
+        }
+    }
+}
+
 bool FD3D12BufferAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const
 {
     if (ResourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER)
@@ -1801,6 +1884,21 @@ void FD3D12TextureAllocator::Destroy()
 {
     SCOPED_LOCK(PoolsCS);
     ReleasePools();
+}
+
+void FD3D12TextureAllocator::CleanUp()
+{
+    SCOPED_LOCK(PoolsCS);
+
+    D3D12_INFO("[TextureAllocator::CleanUp] %u pool class(es)...", TexturePoolClassCount);
+
+    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    {
+        if (Pools[Index])
+        {
+            Pools[Index]->CleanUp();
+        }
+    }
 }
 
 bool FD3D12TextureAllocator::Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const

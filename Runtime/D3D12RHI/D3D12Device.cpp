@@ -779,14 +779,31 @@ FD3D12Device::~FD3D12Device()
 
 void FD3D12Device::BeginFrame()
 {
+    D3D12_INFO("[FD3D12Device::BeginFrame] Called");
+
     if (StagingBufferAllocator)
     {
-        StagingBufferAllocator->BeginFrame();
+        StagingBufferAllocator->CleanUp();
     }
 
     if (DynamicConstantsAllocator)
     {
-        DynamicConstantsAllocator->BeginFrame();
+        DynamicConstantsAllocator->CleanUp();
+    }
+
+    if (UploadHeapAllocator)
+    {
+        UploadHeapAllocator->CleanUp();
+    }
+
+    if (BufferAllocator)
+    {
+        BufferAllocator->CleanUp();
+    }
+
+    if (TextureAllocator)
+    {
+        TextureAllocator->CleanUp();
     }
 }
 

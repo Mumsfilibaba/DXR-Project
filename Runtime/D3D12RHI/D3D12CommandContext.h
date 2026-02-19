@@ -39,8 +39,8 @@ public:
     ~FD3D12CommandContext();
 
     // IRHICommandContext Interface
-    virtual void BeginFrame() override final { }
-    virtual void EndFrame() override final { }
+    virtual void BeginFrame() override final;
+    virtual void EndFrame() override final;
 
     virtual void StartContext() override final;
     virtual void FinishContext() override final;

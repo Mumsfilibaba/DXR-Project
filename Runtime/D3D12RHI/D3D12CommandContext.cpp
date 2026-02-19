@@ -330,6 +330,16 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
     ObtainCommandList();
 }
 
+void FD3D12CommandContext::BeginFrame()
+{
+    FD3D12RHI::Get()->BeginFrame();
+}
+
+void FD3D12CommandContext::EndFrame()
+{
+    FD3D12RHI::Get()->EndFrame();
+}
+
 void FD3D12CommandContext::StartContext()
 {
     // TODO: Remove lock, the command context itself should only be used from a single thread

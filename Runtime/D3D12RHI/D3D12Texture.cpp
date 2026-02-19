@@ -599,6 +599,7 @@ FString FD3D12Texture::GetDebugName() const
     return "";
 }
 
+
 FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo)
     : FD3D12Texture(InDevice, InTextureInfo)
     , SwapChain(InSwapChain)
