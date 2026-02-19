@@ -59,15 +59,15 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIRayTracingPipelineStateInitializer PSOInfo;
-    PSOInfo.RayGenShaders           = { RayGenShader.Get() };
-    PSOInfo.MissShaders             = { RayMissShader.Get() };
-    PSOInfo.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
-    PSOInfo.MaxRecursionDepth       = 4;
-    PSOInfo.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
-    PSOInfo.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
+    FRHIRayTracingPipelineStateDesc PSODesc;
+    PSODesc.RayGenShaders           = { RayGenShader.Get() };
+    PSODesc.MissShaders             = { RayMissShader.Get() };
+    PSODesc.HitGroups               = { FRHIRayTracingHitGroupDesc("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };
+    PSODesc.MaxRecursionDepth       = 4;
+    PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
+    PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
 
-    Pipeline = FRHI::Get()->CreateRayTracingPipelineState(PSOInfo);
+    Pipeline = FRHI::Get()->CreateRayTracingPipelineState(PSODesc);
     if (!Pipeline)
     {
         DEBUG_BREAK();
@@ -77,10 +77,10 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
 	const uint32 Width  = Resources.CurrentRenderWidth;
 	const uint32 Height = Resources.CurrentRenderHeight;
 
-    FRHITextureInfo RTOutputInfo = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
-    RTOutputInfo.bEnableResourceStateTracking = true;
+    FRHITextureDesc RTOutputDesc = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
+    RTOutputDesc.bEnableResourceStateTracking = true;
 
-    Resources.RTOutput = FRHI::Get()->CreateTexture(RTOutputInfo, EResourceAccess::UnorderedAccess);
+    Resources.RTOutput = FRHI::Get()->CreateTexture(RTOutputDesc, EResourceAccess::UnorderedAccess);
     if (!Resources.RTOutput)
     {
         DEBUG_BREAK();
@@ -155,7 +155,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
             Resources.RTHitGroupResources.Emplace(HitGroupResources);
         }
 
-        FRHIRayTracingGeometryInstance Instance;
+        FRHIGeometryAccelerationStructureInstance Instance;
         Instance.Geometry      = StaticMesh->GetRayTracingGeometry();
         Instance.Flags         = ERayTracingInstanceFlags::None;
         Instance.HitGroupIndex = HitGroupIndex;
@@ -167,16 +167,16 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     if (!Resources.RTScene)
     {
-        FRHIRayTracingSceneInfo SceneInfo(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
-        Resources.RTScene = FRHI::Get()->CreateRayTracingScene(SceneInfo);
+        FRHISceneAccelerationStructureDesc SceneDesc(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
+        Resources.RTScene = FRHI::Get()->CreateSceneAccelerationStructure(SceneDesc);
     }
     else
     {
-        FRayTracingSceneBuildInfo BuildScene;
+        FRHISceneAccelerationStructureBuildDesc BuildScene;
         BuildScene.Instances    = Resources.RTGeometryInstances.Data();
         BuildScene.NumInstances = Resources.RTGeometryInstances.Size();
         BuildScene.bUpdate      = false;
-        CommandList.BuildRayTracingScene(Resources.RTScene.Get(), BuildScene);
+        CommandList.BuildSceneAccelerationStructure(Resources.RTScene.Get(), BuildScene);
     }
 
     Resources.GlobalResources.Reset();

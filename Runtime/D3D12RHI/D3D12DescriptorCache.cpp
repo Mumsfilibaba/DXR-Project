@@ -279,7 +279,7 @@ void FD3D12DescriptorCache::SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12
         auto& SRVCache = Cache.ResourceViews[ShaderStage];
         for (uint32 Index = 0; Index < NumSRVs; Index++)
         {
-            if (FD3D12ShaderResourceView* ShaderResourceView = SRVCache[Index])
+            if (FD3D12ShaderResourceViewRHI* ShaderResourceView = SRVCache[Index])
             {
                 OfflineHandles[Index] = ShaderResourceView->GetOfflineHandle();
             }
@@ -339,7 +339,7 @@ void FD3D12DescriptorCache::SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D1
         auto& UAVCache = Cache.ResourceViews[ShaderStage];
         for (uint32 Index = 0; Index < NumUAVs; Index++)
         {
-            if (FD3D12UnorderedAccessView* UnorderedAccessView = UAVCache[Index])
+            if (FD3D12UnorderedAccessViewRHI* UnorderedAccessView = UAVCache[Index])
             {
                 OfflineHandles[Index] = UnorderedAccessView->GetOfflineHandle();
             }
@@ -399,7 +399,7 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
         auto& SamplerStates = Cache.SamplerStates[ShaderStage];
         for (uint32 Index = 0; Index < NumSamplers; Index++)
         {
-            if (FD3D12SamplerState* SamplerState = SamplerStates[Index])
+            if (FD3D12SamplerStateRHI* SamplerState = SamplerStates[Index])
             {
                 UniqueTable.UniqueIDs[Index] = SamplerState->GetUniqueID().Identifier;
             }
@@ -415,7 +415,7 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
             D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
             for (uint32 Index = 0; Index < NumSamplers; Index++)
             {
-                if (FD3D12SamplerState* SamplerState = SamplerStates[Index])
+                if (FD3D12SamplerStateRHI* SamplerState = SamplerStates[Index])
                 {
                     OfflineHandles[Index] = SamplerState->GetOfflineHandle();
                 }

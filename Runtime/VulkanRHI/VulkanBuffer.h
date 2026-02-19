@@ -4,14 +4,14 @@
 #include "VulkanRHI/VulkanResourceState.h"
 #include "Core/Containers/UniquePtr.h"
 
-typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
+typedef TSharedRef<class FVulkanBufferRHI> FVulkanBufferRHIRef;
 class FVulkanCommandContext;
 
-class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
+class FVulkanBufferRHI : public FRHIBuffer, public FVulkanDeviceChild
 {
 public:
-    FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common);
-    ~FVulkanBuffer();
+    FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common);
+    ~FVulkanBufferRHI();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 

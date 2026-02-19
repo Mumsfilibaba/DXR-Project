@@ -5,26 +5,26 @@
 #include "D3D12RHI/D3D12ResourceState.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 
-class FD3D12SwapChain;
+class FD3D12SwapChainRHI;
 class FD3D12CommandContext;
 
-typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
+typedef TSharedRef<class FD3D12TextureRHI>           FD3D12TextureRHIRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
-class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild
+class FD3D12TextureRHI : public FRHITexture, public FD3D12DeviceChild
 {
 public:
-    FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
-    virtual ~FD3D12Texture();
+    FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc& InTextureDesc);
+    virtual ~FD3D12TextureRHI();
 
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetResource()); }
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual void*                    GetRHINativeHandle()     const override { return reinterpret_cast<void*>(GetResource()); }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
@@ -52,12 +52,12 @@ public:
         return ResourceState.Get();
     }
 
-    void SetShaderResourceView(FD3D12ShaderResourceView* InShaderResourceView)
+    void SetShaderResourceView(FD3D12ShaderResourceViewRHI* InShaderResourceView)
     { 
         ShaderResourceView = InShaderResourceView; 
     }
     
-    void SetUnorderedAccessView(FD3D12UnorderedAccessView* InUnorderedAccessView) 
+    void SetUnorderedAccessView(FD3D12UnorderedAccessViewRHI* InUnorderedAccessView) 
     { 
         UnorderedAccessView = InUnorderedAccessView; 
     }
@@ -73,8 +73,8 @@ public:
 
 protected:
     FD3D12ResourceRef                 Resource;
-    FD3D12ShaderResourceViewRef       ShaderResourceView;
-    FD3D12UnorderedAccessViewRef      UnorderedAccessView;
+    FD3D12ShaderResourceViewRHIRef    ShaderResourceView;
+    FD3D12UnorderedAccessViewRHIRef   UnorderedAccessView;
     TUniquePtr<FD3D12ResourceState>   ResourceState;
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
@@ -82,10 +82,10 @@ protected:
     TMap<FD3D12HashableTextureView, FD3D12DepthStencilViewRef> DepthStencilViewMap;
 };
 
-class FD3D12BackBufferTexture : public FD3D12Texture
+class FD3D12BackBufferTexture : public FD3D12TextureRHI
 {
 public:
-    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
+    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc);
     virtual ~FD3D12BackBufferTexture();
 
     // FRHITexture Interface
@@ -93,18 +93,18 @@ public:
 
     void Resize(uint32 InWidth, uint32 InHeight);
 
-    FD3D12Texture* GetCurrentBackBufferTexture() const;
+    FD3D12TextureRHI* GetCurrentBackBufferTexture() const;
 
-    FD3D12SwapChain* GetSwapChain() const
+    FD3D12SwapChainRHI* GetSwapChain() const
     { 
         return SwapChain;
     }
 
-    void SetSwapChain(FD3D12SwapChain* InSwapChain)
+    void SetSwapChain(FD3D12SwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
     }
 
 private:
-    FD3D12SwapChain* SwapChain;
+    FD3D12SwapChainRHI* SwapChain;
 };

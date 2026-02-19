@@ -171,9 +171,9 @@ public:
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
-    FORCEINLINE void BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo) noexcept
+    FORCEINLINE void BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc) noexcept
     {
-        EmplaceCommand<FRHICommandBeginRenderPass>(BeginRenderPassInfo);
+        EmplaceCommand<FRHICommandBeginRenderPass>(BeginRenderPassDesc);
     }
 
     FORCEINLINE void EndRenderPass() noexcept
@@ -289,9 +289,9 @@ public:
         EmplaceCommand<FRHICommandResolveTexture>(Dst, Src);
     }
 
-    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo) noexcept
+    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& InCopyDesc) noexcept
     {
-        EmplaceCommand<FRHICommandCopyBuffer>(Dst, Src, CopyInfo);
+        EmplaceCommand<FRHICommandCopyBuffer>(Dst, Src, InCopyDesc);
     }
 
     FORCEINLINE void CopyTexture(FRHITexture* Dst, FRHITexture* Src) noexcept
@@ -299,9 +299,9 @@ public:
         EmplaceCommand<FRHICommandCopyTexture>(Dst, Src);
     }
 
-    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyTextureInfo) noexcept
+    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& InCopyDesc) noexcept
     {
-        EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
+        EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, InCopyDesc);
     }
 
     FORCEINLINE void CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) noexcept
@@ -309,7 +309,7 @@ public:
         EmplaceCommand<FRHICommandCopyTextureRegionToBuffer>(Dst, DstOffset, Src, SrcRegion, SrcMipLevel);
     }
 
-    FORCEINLINE void WriteFence(FRHIGpuFence* Fence) noexcept
+    FORCEINLINE void WriteFence(FRHIFence* Fence) noexcept
     {
         EmplaceCommand<FRHICommandWriteFence>(Fence);
     }
@@ -319,18 +319,18 @@ public:
         EmplaceCommand<FRHICommandDiscardContents>(Texture);
     }
 
-    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo) noexcept
+    FORCEINLINE void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildInfo) noexcept
     {
-        EmplaceCommand<FRHICommandBuildRayTracingScene>(RayTracingScene, BuildInfo);
+        EmplaceCommand<FRHICommandBuildSceneAccelerationStructure>(RayTracingScene, BuildInfo);
     }
 
-    FORCEINLINE void BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo) noexcept
+    FORCEINLINE void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) noexcept
     {
-        EmplaceCommand<FRHICommandBuildRayTracingGeometry>(RayTracingGeometry, BuildInfo);
+        EmplaceCommand<FRHICommandBuildGeometryAccelerationStructure>(RayTracingGeometry, BuildDesc);
     }
 
     // TODO: Refactor
-    FORCEINLINE void SetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) noexcept
+    FORCEINLINE void SetRayTracingBindings(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) noexcept
     {
         EmplaceCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
@@ -415,7 +415,7 @@ public:
         RHIStatistics::NumDispatchCalls++;
     }
 
-    FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
+    FORCEINLINE void DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
     {
         EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
     }

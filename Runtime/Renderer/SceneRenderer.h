@@ -262,7 +262,7 @@ private:
         FScene*         Scene = nullptr;
 
         FRHIBufferRef   ReadbackBuffer;
-        FRHIGpuFenceRef Fence;
+        FRHIFenceRef Fence;
 
         uint32          SampleRadius = 0;
         uint32          PixelX       = 0;

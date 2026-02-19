@@ -25,12 +25,12 @@ FMaterial::~FMaterial()
 
 void FMaterial::Initialize()
 {
-    FRHIBufferInfo BufferInfo;
-    BufferInfo.Stride = sizeof(FMaterialHLSL);
-    BufferInfo.Size   = sizeof(FMaterialHLSL);
-    BufferInfo.Flags  = EBufferFlags::Default | EBufferFlags::ConstantBuffer;
+    FRHIBufferDesc BufferDesc;
+    BufferDesc.Stride = sizeof(FMaterialHLSL);
+    BufferDesc.Size   = sizeof(FMaterialHLSL);
+    BufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::ConstantBuffer;
 
-    MaterialBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    MaterialBuffer = FRHI::Get()->CreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetDebugName("MaterialBuffer");

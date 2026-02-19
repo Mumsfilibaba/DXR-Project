@@ -8,11 +8,11 @@
 
 class FD3D12CommandContext;
 
-class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild
+class FD3D12BufferRHI : public FRHIBuffer, public FD3D12DeviceChild
 {
 public:
-    FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo);
-    ~FD3D12Buffer();
+    FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc);
+    ~FD3D12BufferRHI();
 
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 

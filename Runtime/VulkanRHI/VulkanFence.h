@@ -34,15 +34,15 @@ private:
     mutable FAtomicInt64 References;
 };
 
-class FVulkanGpuFence final : public FRHIGpuFence, public FVulkanDeviceChild
+class FVulkanFenceRHI final : public FRHIFence, public FVulkanDeviceChild
 {
 public:
-    explicit FVulkanGpuFence(FVulkanDevice* InDevice);
-    virtual ~FVulkanGpuFence();
+    explicit FVulkanFenceRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanFenceRHI();
 
     bool Initialize();
 
-    // FRHIGpuFence Interface
+    // FRHIFence Interface
     virtual bool IsSignaled() const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
     virtual void SetDebugName(const FString& InName) override final;

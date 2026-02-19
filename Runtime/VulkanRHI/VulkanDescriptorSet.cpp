@@ -166,7 +166,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
     }
 }
 
-void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceView* ShaderResourceView, uint32 DescriptorSetIndex, uint32 BindingIndex)
+void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
     CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
 
@@ -200,7 +200,7 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceView* ShaderResourceVie
     }
 }
 
-void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex)
+void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
     CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
     
@@ -234,13 +234,13 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
     }
 }
 
-void FVulkanDescriptorState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex)
+void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
     CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
 
     if (UniformBuffer)
     {
-        const VkDeviceSize Range = UniformBuffer->GetInfo().Size;
+        const VkDeviceSize Range = UniformBuffer->GetDesc().Size;
         FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
         DSBuilder.WriteUniformBuffer(BindingIndex, UniformBuffer->GetVkBuffer(), 0, Range);
     }
@@ -250,7 +250,7 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, uint
     }
 }
 
-void FVulkanDescriptorState::SetSampler(FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex)
+void FVulkanDescriptorState::SetSampler(FVulkanSamplerStateRHI* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
     CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
 

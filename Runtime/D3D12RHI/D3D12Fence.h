@@ -5,7 +5,7 @@
 #include "Core/Threading/Atomic/AtomicBool.h"
 
 typedef TSharedRef<class FD3D12Fence>    FD3D12FenceRef;
-typedef TSharedRef<class FD3D12GpuFence> FD3D12GpuFenceRef;
+typedef TSharedRef<class FD3D12FenceRHI> FD3D12FenceRHIRef;
 
 class FD3D12Fence : public FD3D12DeviceChild, public FD3D12RefCounted
 {
@@ -106,16 +106,16 @@ private:
     uint64         LastSignaledValue;
 };
 
-class FD3D12GpuFence final : public FRHIGpuFence, public FD3D12DeviceChild
+class FD3D12FenceRHI final : public FRHIFence, public FD3D12DeviceChild
 {
 public:
-    explicit FD3D12GpuFence(FD3D12Device* InDevice);
-    virtual ~FD3D12GpuFence() = default;
+    explicit FD3D12FenceRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12FenceRHI() = default;
 
     bool Initialize();
     void Signal(ED3D12CommandQueueType QueueType);
 
-    // FRHIGpuFence Interface
+    // FRHIFence Interface
     virtual bool IsSignaled() const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
     virtual void SetDebugName(const FString& InName) override final;

@@ -10,10 +10,9 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "PipelineCache.d3d12psocache");
 
-FD3D12InputLayout::FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+FD3D12InputLayoutRHI::FD3D12InputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements)
     : FRHIInputLayout()
     , InputElements(InInputElements)
-    , Desc()
     , SemanticNames()
     , ElementDesc()
     , Hash(0)
@@ -23,7 +22,7 @@ FD3D12InputLayout::FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInput
     SemanticNames.Reserve(NumElements);
 
     uint64 CalculatedHash = 0;
-    for (const FRHIInputElementInfo& Element : InInputElements)
+    for (const FRHIInputElementDesc& Element : InInputElements)
     {
         D3D12_INPUT_ELEMENT_DESC InputElementDesc;
         FMemory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
@@ -53,94 +52,94 @@ FD3D12InputLayout::FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInput
         ElementDesc.Emplace(InputElementDesc);
     }
 
-    Desc.NumElements = ElementDesc.Size();
-    Desc.pInputElementDescs = ElementDesc.Data();
+    D3D12Desc.NumElements = ElementDesc.Size();
+    D3D12Desc.pInputElementDescs = ElementDesc.Data();
 
     Hash = CalculatedHash;
 }
 
-FD3D12InputLayout::~FD3D12InputLayout()
+FD3D12InputLayoutRHI::~FD3D12InputLayoutRHI()
 {
 }
 
-FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
+FD3D12DepthStencilStateRHI::FD3D12DepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc)
     : FRHIDepthStencilState()
-    , Info(InInfo)
+    , Desc(InDesc)
     , Hash(0)
 {
-    FMemory::Memzero(&Desc);
+    FMemory::Memzero(&D3D12Desc);
 
-    Desc.DepthFunc        = ConvertComparisonFunc(InInfo.DepthFunc);
-    Desc.DepthEnable      = InInfo.bDepthEnable;
-    Desc.DepthWriteMask   = InInfo.bDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
-    Desc.StencilEnable    = InInfo.bStencilEnable;
-    Desc.StencilReadMask  = static_cast<uint8>(InInfo.StencilReadMask);
-    Desc.StencilWriteMask = static_cast<uint8>(InInfo.StencilWriteMask);
-    Desc.FrontFace        = ConvertStencilState(InInfo.FrontFace);
-    Desc.BackFace         = ConvertStencilState(InInfo.BackFace);
+    D3D12Desc.DepthFunc        = ConvertComparisonFunc(InDesc.DepthFunc);
+    D3D12Desc.DepthEnable      = InDesc.bDepthEnable;
+    D3D12Desc.DepthWriteMask   = InDesc.bDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    D3D12Desc.StencilEnable    = InDesc.bStencilEnable;
+    D3D12Desc.StencilReadMask  = static_cast<uint8>(InDesc.StencilReadMask);
+    D3D12Desc.StencilWriteMask = static_cast<uint8>(InDesc.StencilWriteMask);
+    D3D12Desc.FrontFace        = ConvertStencilState(InDesc.FrontFace);
+    D3D12Desc.BackFace         = ConvertStencilState(InDesc.BackFace);
 
-    Hash = CRC32::Generate(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
+    Hash = CRC32::Generate(&D3D12Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
 }
 
-FD3D12DepthStencilState::~FD3D12DepthStencilState()
+FD3D12DepthStencilStateRHI::~FD3D12DepthStencilStateRHI()
 {
 }
 
-FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInfo& Info)
+FD3D12RasterizerStateRHI::FD3D12RasterizerStateRHI(const FRHIRasterizerStateDesc& InDesc)
     : FRHIRasterizerState()
-    , Info(Info)
+    , Desc(InDesc)
     , Hash(0)
 {
-    FMemory::Memzero(&Desc);
+    FMemory::Memzero(&D3D12Desc);
 
-    Desc.AntialiasedLineEnable = Info.bAntialiasedLineEnable;
-    Desc.CullMode              = ConvertCullMode(Info.CullMode);
-    Desc.DepthBias             = static_cast<int32>(Info.DepthBias);
-    Desc.DepthBiasClamp        = Info.DepthBiasClamp;
-    Desc.DepthClipEnable       = Info.bDepthClipEnable;
-    Desc.SlopeScaledDepthBias  = Info.SlopeScaledDepthBias;
-    Desc.FillMode              = ConvertFillMode(Info.FillMode);
-    Desc.ForcedSampleCount     = Info.ForcedSampleCount;
-    Desc.FrontCounterClockwise = Info.bFrontCounterClockwise;
-    Desc.MultisampleEnable     = Info.bMultisampleEnable;
-    Desc.ConservativeRaster    = Info.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+    D3D12Desc.AntialiasedLineEnable = InDesc.bAntialiasedLineEnable;
+    D3D12Desc.CullMode              = ConvertCullMode(InDesc.CullMode);
+    D3D12Desc.DepthBias             = static_cast<int32>(InDesc.DepthBias);
+    D3D12Desc.DepthBiasClamp        = InDesc.DepthBiasClamp;
+    D3D12Desc.DepthClipEnable       = InDesc.bDepthClipEnable;
+    D3D12Desc.SlopeScaledDepthBias  = InDesc.SlopeScaledDepthBias;
+    D3D12Desc.FillMode              = ConvertFillMode(InDesc.FillMode);
+    D3D12Desc.ForcedSampleCount     = InDesc.ForcedSampleCount;
+    D3D12Desc.FrontCounterClockwise = InDesc.bFrontCounterClockwise;
+    D3D12Desc.MultisampleEnable     = InDesc.bMultisampleEnable;
+    D3D12Desc.ConservativeRaster    = InDesc.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
-    Hash = CRC32::Generate(&Desc, sizeof(D3D12_RASTERIZER_DESC));
+    Hash = CRC32::Generate(&D3D12Desc, sizeof(D3D12_RASTERIZER_DESC));
 }
 
-FD3D12RasterizerState::~FD3D12RasterizerState()
+FD3D12RasterizerStateRHI::~FD3D12RasterizerStateRHI()
 {
 }
 
-FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInfo& InInfo)
+FD3D12BlendStateRHI::FD3D12BlendStateRHI(const FRHIBlendStateDesc& InDesc)
     : FRHIBlendState()
-    , Info(InInfo)
+    , Desc(InDesc)
     , Hash(0)
 {
-    FMemory::Memzero(&Desc);
+    FMemory::Memzero(&D3D12Desc);
 
-    Desc.AlphaToCoverageEnable   = InInfo.bAlphaToCoverageEnable;
-    Desc.IndependentBlendEnable  = InInfo.bIndependentBlendEnable;
+    D3D12Desc.AlphaToCoverageEnable   = InDesc.bAlphaToCoverageEnable;
+    D3D12Desc.IndependentBlendEnable  = InDesc.bIndependentBlendEnable;
 
-    const D3D12_LOGIC_OP LogicOp = ConvertLogicOp(InInfo.LogicOp);
-    for (int32 Index = 0; Index < InInfo.NumRenderTargets; Index++)
+    const D3D12_LOGIC_OP LogicOp = ConvertLogicOp(InDesc.LogicOp);
+    for (int32 Index = 0; Index < InDesc.NumRenderTargets; Index++)
     {
-        Desc.RenderTarget[Index].BlendEnable           = InInfo.RenderTargets[Index].bBlendEnable;
-        Desc.RenderTarget[Index].BlendOp               = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOp);
-        Desc.RenderTarget[Index].BlendOpAlpha          = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOpAlpha);
-        Desc.RenderTarget[Index].DestBlend             = ConvertBlend(InInfo.RenderTargets[Index].DstBlend);
-        Desc.RenderTarget[Index].DestBlendAlpha        = ConvertBlend(InInfo.RenderTargets[Index].DstBlendAlpha);
-        Desc.RenderTarget[Index].SrcBlend              = ConvertBlend(InInfo.RenderTargets[Index].SrcBlend);
-        Desc.RenderTarget[Index].SrcBlendAlpha         = ConvertBlend(InInfo.RenderTargets[Index].SrcBlendAlpha);
-        Desc.RenderTarget[Index].RenderTargetWriteMask = ConvertColorWriteFlags(InInfo.RenderTargets[Index].ColorWriteMask);
-        Desc.RenderTarget[Index].LogicOp               = LogicOp;
-        Desc.RenderTarget[Index].LogicOpEnable         = InInfo.bLogicOpEnable;
+        D3D12Desc.RenderTarget[Index].BlendEnable           = InDesc.RenderTargets[Index].bBlendEnable;
+        D3D12Desc.RenderTarget[Index].BlendOp               = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
+        D3D12Desc.RenderTarget[Index].BlendOpAlpha          = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
+        D3D12Desc.RenderTarget[Index].DestBlend             = ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
+        D3D12Desc.RenderTarget[Index].DestBlendAlpha        = ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
+        D3D12Desc.RenderTarget[Index].SrcBlend              = ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
+        D3D12Desc.RenderTarget[Index].SrcBlendAlpha         = ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
+        D3D12Desc.RenderTarget[Index].RenderTargetWriteMask = ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
+        D3D12Desc.RenderTarget[Index].LogicOp               = LogicOp;
+        D3D12Desc.RenderTarget[Index].LogicOpEnable         = InDesc.bLogicOpEnable;
     }
 
-    Hash = CRC32::Generate(&Desc, sizeof(D3D12_BLEND_DESC));
+    Hash = CRC32::Generate(&D3D12Desc, sizeof(D3D12_BLEND_DESC));
 }
 
-FD3D12BlendState::~FD3D12BlendState()
+FD3D12BlendStateRHI::~FD3D12BlendStateRHI()
 {
 }
 
@@ -160,22 +159,22 @@ void FD3D12PipelineState::SetDebugName(const FString& InName)
     DebugName = InName;
 }
 
-FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
+FD3D12GraphicsPipelineStateRHI::FD3D12GraphicsPipelineStateRHI(FD3D12Device* InDevice)
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)
 {
 }
 
-FD3D12GraphicsPipelineState::~FD3D12GraphicsPipelineState()
+FD3D12GraphicsPipelineStateRHI::~FD3D12GraphicsPipelineStateRHI()
 {
 }
 
-bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo& Info)
+bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateDesc& Desc)
 {
     FD3D12GraphicsPipelineStream PipelineStream;
 
     // InputLayout
-    FD3D12InputLayout* D3D12InputLayout = FD3D12RHI::ResourceCast(Info.InputLayout);
+    FD3D12InputLayoutRHI* D3D12InputLayout = FD3D12RHI::ResourceCast(Desc.InputLayout);
     if (D3D12InputLayout)
     {
         PipelineStream.InputLayout = D3D12InputLayout->GetDesc();
@@ -192,7 +191,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // VertexShader
     {
-        if (FD3D12VertexShader* D3D12VertexShader = FD3D12RHI::ResourceCast(Info.VertexShader))
+        if (FD3D12VertexShaderRHI* D3D12VertexShader = FD3D12RHI::ResourceCast(Desc.VertexShader))
         {
             if (D3D12VertexShader->HasRootSignature())
             {
@@ -202,7 +201,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
             D3D12_SHADER_BYTECODE& VertexShaderCode = PipelineStream.VertexShaderCode;
             VertexShaderCode = D3D12VertexShader->GetByteCode();
             BaseShaders.Emplace(D3D12VertexShader);
-            VertexShader = MakeSharedRef<FD3D12VertexShader>(D3D12VertexShader);
+            VertexShader = MakeSharedRef<FD3D12VertexShaderRHI>(D3D12VertexShader);
         }
         else
         {
@@ -214,7 +213,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // HullShader
     {
         D3D12_SHADER_BYTECODE& HullShaderCode = PipelineStream.HullShaderCode;
-        if (FD3D12HullShader* D3D12HullShader = FD3D12RHI::ResourceCast(Info.HullShader))
+        if (FD3D12HullShaderRHI* D3D12HullShader = FD3D12RHI::ResourceCast(Desc.HullShader))
         {
             if (D3D12HullShader->HasRootSignature())
             {
@@ -223,7 +222,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
             HullShaderCode = D3D12HullShader->GetByteCode();
             BaseShaders.Emplace(D3D12HullShader);
-            HullShader = MakeSharedRef<FD3D12HullShader>(D3D12HullShader);
+            HullShader = MakeSharedRef<FD3D12HullShaderRHI>(D3D12HullShader);
         }
         else
         {
@@ -235,7 +234,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // DomainShader
     {
         D3D12_SHADER_BYTECODE& DomainShaderCode = PipelineStream.DomainShaderCode;
-        if (FD3D12DomainShader* D3D12DomainShader = FD3D12RHI::ResourceCast(Info.DomainShader))
+        if (FD3D12DomainShaderRHI* D3D12DomainShader = FD3D12RHI::ResourceCast(Desc.DomainShader))
         {
             if (D3D12DomainShader->HasRootSignature())
             {
@@ -244,7 +243,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
             DomainShaderCode = D3D12DomainShader->GetByteCode();
             BaseShaders.Emplace(D3D12DomainShader);
-            DomainShader = MakeSharedRef<FD3D12DomainShader>(D3D12DomainShader);
+            DomainShader = MakeSharedRef<FD3D12DomainShaderRHI>(D3D12DomainShader);
         }
         else
         {
@@ -256,7 +255,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // GeometryShader
     {
         D3D12_SHADER_BYTECODE& GeometryShaderCode = PipelineStream.GeometryShaderCode;
-        if (FD3D12GeometryShader* D3D12GeometryShader = FD3D12RHI::ResourceCast(Info.GeometryShader))
+        if (FD3D12GeometryShaderRHI* D3D12GeometryShader = FD3D12RHI::ResourceCast(Desc.GeometryShader))
         {
             if (D3D12GeometryShader->HasRootSignature())
             {
@@ -265,7 +264,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
             GeometryShaderCode = D3D12GeometryShader->GetByteCode();
             BaseShaders.Emplace(D3D12GeometryShader);
-            GeometryShader = MakeSharedRef<FD3D12GeometryShader>(D3D12GeometryShader);
+            GeometryShader = MakeSharedRef<FD3D12GeometryShaderRHI>(D3D12GeometryShader);
         }
         else
         {
@@ -277,7 +276,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     // PixelShader
     {
         D3D12_SHADER_BYTECODE& PixelShaderCode = PipelineStream.PixelShaderCode;
-        if (FD3D12PixelShader* D3D12PixelShader = FD3D12RHI::ResourceCast(Info.PixelShader))
+        if (FD3D12PixelShaderRHI* D3D12PixelShader = FD3D12RHI::ResourceCast(Desc.PixelShader))
         {
             if (D3D12PixelShader->HasRootSignature())
             {
@@ -286,7 +285,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
             PixelShaderCode = D3D12PixelShader->GetByteCode();
             BaseShaders.Emplace(D3D12PixelShader);
-            PixelShader = MakeSharedRef<FD3D12PixelShader>(D3D12PixelShader);
+            PixelShader = MakeSharedRef<FD3D12PixelShaderRHI>(D3D12PixelShader);
         }
         else
         {
@@ -297,20 +296,20 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // RenderTarget
     {
-        D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
-        RenderTargetInfo.NumRenderTargets = Info.RasterizerOutputFormats.NumRenderTargets;
+        D3D12_RT_FORMAT_ARRAY& RenderTargetFormatArray = PipelineStream.RenderTargetFormatArray;
+        RenderTargetFormatArray.NumRenderTargets = Desc.RasterizerOutputFormats.NumRenderTargets;
 
-        for (uint32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
+        for (uint32 Index = 0; Index < RenderTargetFormatArray.NumRenderTargets; Index++)
         {
-            RenderTargetInfo.RTFormats[Index] = ConvertFormat(Info.RasterizerOutputFormats.RenderTargetFormats[Index]);
+            RenderTargetFormatArray.RTFormats[Index] = ConvertFormat(Desc.RasterizerOutputFormats.RenderTargetFormats[Index]);
         }
 
         // DepthStencil
-        PipelineStream.DepthBufferFormat = ConvertFormat(Info.RasterizerOutputFormats.DepthStencilFormat);
+        PipelineStream.DepthBufferFormat = ConvertFormat(Desc.RasterizerOutputFormats.DepthStencilFormat);
     }
 
     // RasterizerState
-    FD3D12RasterizerState* D3D12RasterizerState = FD3D12RHI::ResourceCast(Info.RasterizerState);
+    FD3D12RasterizerStateRHI* D3D12RasterizerState = FD3D12RHI::ResourceCast(Desc.RasterizerState);
     if (D3D12RasterizerState)
     {
         D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
@@ -323,7 +322,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     }
 
     // DepthStencilState
-    FD3D12DepthStencilState* D3D12DepthStencilState = FD3D12RHI::ResourceCast(Info.DepthStencilState);
+    FD3D12DepthStencilStateRHI* D3D12DepthStencilState = FD3D12RHI::ResourceCast(Desc.DepthStencilState);
     if (D3D12DepthStencilState)
     {
         D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
@@ -336,7 +335,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     }
 
     // BlendState
-    FD3D12BlendState* D3D12BlendState = FD3D12RHI::ResourceCast(Info.BlendState);
+    FD3D12BlendStateRHI* D3D12BlendState = FD3D12RHI::ResourceCast(Desc.BlendState);
     if (D3D12BlendState)
     {
         D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
@@ -350,20 +349,20 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // Topology
     {
-        PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(Info.PrimitiveTopology);
-        PrimitiveTopology = ConvertPrimitiveTopology(Info.PrimitiveTopology);
+        PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(Desc.PrimitiveTopology);
+        PrimitiveTopology = ConvertPrimitiveTopology(Desc.PrimitiveTopology);
     }
 
     // IndexBufferStripCutValue
     {
-        PipelineStream.IndexBufferStripCutValue = Info.bPrimitiveRestartEnable ? D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF : D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
+        PipelineStream.IndexBufferStripCutValue = Desc.bPrimitiveRestartEnable ? D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF : D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
     }
 
     // MSAA
     {
         DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
-        SamplerDesc.Count   = Info.MultiSampleState.SampleCount;
-        SamplerDesc.Quality = Info.MultiSampleState.SampleQuality;
+        SamplerDesc.Count   = Desc.MultiSampleState.SampleCount;
+        SamplerDesc.Quality = Desc.MultiSampleState.SampleQuality;
     }
 
     // RootSignature
@@ -413,13 +412,13 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
 
-    if (Info.ViewInstancingState.bEnableViewInstancing)
+    if (Desc.ViewInstancingState.bEnableViewInstancing)
     {
-        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Info.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Desc.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             // NOTE: This does not work on NVIDIA for some reason, only way to work around this is by using the SV_RenderTargetArrayIndex
-            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Info.ViewInstancingState.StartRenderTargetArrayIndex;
+            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Desc.ViewInstancingState.StartRenderTargetArrayIndex;
             ViewInstanceDesc.ViewInstanceLocations[Index].ViewportArrayIndex = 0;
         }
 
@@ -448,7 +447,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
         PipelineKey.PrimitiveTopologyType    = PipelineStream.PrimitiveTopologyType;
         PipelineKey.IndexBufferStripCutValue = PipelineStream.IndexBufferStripCutValue;
         PipelineKey.DepthBufferFormat        = PipelineStream.DepthBufferFormat;
-        PipelineKey.RenderTargetInfo         = PipelineStream.RenderTargetInfo;
+        PipelineKey.RenderTargetFormatArray  = PipelineStream.RenderTargetFormatArray;
         PipelineKey.ViewInstancingHash       = ViewInstanceDesc.GenerateHash();
         PipelineKey.InputLayoutHash          = D3D12InputLayout ? D3D12InputLayout->GetHash() : 0;
         PipelineKey.RasterizerHash           = D3D12RasterizerState->GetHash();
@@ -489,18 +488,18 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     return true;
 }
 
-FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader)
+FD3D12ComputePipelineStateRHI::FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShaderRHI>& InShader)
     : FRHIComputePipelineState()
     , FD3D12PipelineState(InDevice)
     , Shader(InShader)
 {
 }
 
-FD3D12ComputePipelineState::~FD3D12ComputePipelineState()
+FD3D12ComputePipelineStateRHI::~FD3D12ComputePipelineStateRHI()
 {
 }
 
-bool FD3D12ComputePipelineState::Initialize()
+bool FD3D12ComputePipelineStateRHI::Initialize()
 {
     FD3D12ComputePipelineStream PipelineStream;
     PipelineStream.ComputeShader = Shader->GetByteCode();
@@ -746,17 +745,17 @@ struct FD3D12RayTracingPipelineStateStream
     TArray<D3D12_STATE_SUBOBJECT>          SubObjects;
 };
 
-FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDevice)
+FD3D12RayTracingPipelineStateRHI::FD3D12RayTracingPipelineStateRHI(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , StateObject(nullptr)
 {
 }
 
-FD3D12RayTracingPipelineState::~FD3D12RayTracingPipelineState()
+FD3D12RayTracingPipelineStateRHI::~FD3D12RayTracingPipelineStateRHI()
 {
 }
 
-bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer)
+bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineStateDesc& Initializer)
 {
     FD3D12RayTracingPipelineStateStream PipelineStream;
     TArray<FD3D12Shader*> Shaders;
@@ -766,7 +765,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all RayGen-Shaders
     for (FRHIRayGenShader* RayGen : Initializer.RayGenShaders)
     {
-        FD3D12RayGenShader* D3D12RayGen = FD3D12RHI::ResourceCast(RayGen);
+        FD3D12RayGenShaderRHI* D3D12RayGen = FD3D12RHI::ResourceCast(RayGen);
         Shaders.Emplace(D3D12RayGen);
 
         FD3D12RootSignatureLayout RayGenLocalResourceCounts;
@@ -795,7 +794,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     TArray<FRHIRayAnyHitShader*>     AnyHitShaders;
     TArray<FRHIRayClosestHitShader*> ClosestHitShaders;
 
-    for (const FRHIRayTracingHitGroupInfo& HitGroup : Initializer.HitGroups)
+    for (const FRHIRayTracingHitGroupDesc& HitGroup : Initializer.HitGroups)
     {
         HitGroupName.Clear();
         ClosestHitName.Clear();
@@ -835,7 +834,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all AnyHit shaders
     for (FRHIRayAnyHitShader* AnyHit : AnyHitShaders)
     {
-        FD3D12RayAnyHitShader* D3D12AnyHit = FD3D12RHI::ResourceCast(AnyHit);
+        FD3D12RayAnyHitShaderRHI* D3D12AnyHit = FD3D12RHI::ResourceCast(AnyHit);
         Shaders.Emplace(D3D12AnyHit);
 
         FD3D12RootSignatureLayout AnyHitLocalResourceCounts;
@@ -858,7 +857,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all ClosestHit shaders
     for (FRHIRayClosestHitShader* ClosestHit : ClosestHitShaders)
     {
-        FD3D12RayClosestHitShader* D3D12ClosestHit = FD3D12RHI::ResourceCast(ClosestHit);
+        FD3D12RayClosestHitShaderRHI* D3D12ClosestHit = FD3D12RHI::ResourceCast(ClosestHit);
         Shaders.Emplace(D3D12ClosestHit);
 
         FD3D12RootSignatureLayout ClosestHitLocalResourceCounts;
@@ -881,7 +880,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     // Collect and add all Miss shaders
     for (FRHIRayMissShader* Miss : Initializer.MissShaders)
     {
-        FD3D12RayMissShader* D3D12MissShader = FD3D12RHI::ResourceCast(Miss);
+        FD3D12RayMissShaderRHI* D3D12MissShader = FD3D12RHI::ResourceCast(Miss);
         Shaders.Emplace(D3D12MissShader);
 
         FD3D12RootSignatureLayout MissLocalResourceCounts;
@@ -955,7 +954,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     return true;
 }
 
-void* FD3D12RayTracingPipelineState::GetShaderIdentifier(const FString& ExportName)
+void* FD3D12RayTracingPipelineStateRHI::GetShaderIdentifier(const FString& ExportName)
 {
     if (FD3D12RayTracingShaderIdentifier* MapItem = ShaderIdentifiers.Find(ExportName))
     {

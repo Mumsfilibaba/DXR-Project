@@ -11,7 +11,7 @@ class FD3D12CommandContext;
 class FD3D12Queue;
 
 typedef TSharedRef<FD3D12QueryHeap>    FD3D12QueryHeapRef;
-typedef TSharedRef<struct FD3D12Query> FD3D12QueryRef;
+typedef TSharedRef<struct FD3D12QueryRHI> FD3D12QueryRHIRef;
 
 struct FD3D12QueryAllocation
 {
@@ -39,10 +39,10 @@ struct FD3D12QueryAllocation
     uint64*          Results;
 };
 
-struct FD3D12Query : public FRHIQuery, public FD3D12DeviceChild
+struct FD3D12QueryRHI : public FRHIQuery, public FD3D12DeviceChild
 {
-    FD3D12Query(FD3D12Device* InDevice, EQueryType InQueryType);
-    virtual ~FD3D12Query() = default;
+    FD3D12QueryRHI(FD3D12Device* InDevice, EQueryType InQueryType);
+    virtual ~FD3D12QueryRHI() = default;
 
     // QueryAllocation should only used on RHI Thread
     FD3D12QueryAllocation QueryAllocation;

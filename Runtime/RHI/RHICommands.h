@@ -181,17 +181,17 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 
 DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 {
-    FRHICommandBeginRenderPass(const FRHIBeginRenderPassInfo& InBeginRenderPassInfo)
-        : BeginRenderPassInfo(InBeginRenderPassInfo)
+    FRHICommandBeginRenderPass(const FRHIBeginRenderPassDesc& InBeginRenderPassDesc)
+        : BeginRenderPassDesc(InBeginRenderPassDesc)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BeginRenderPass(BeginRenderPassInfo);
+        CommandContext.BeginRenderPass(BeginRenderPassDesc);
     }
 
-    FRHIBeginRenderPassInfo BeginRenderPassInfo;
+    FRHIBeginRenderPassDesc BeginRenderPassDesc;
 };
 
 DECLARE_RHICOMMAND(FRHICommandEndRenderPass)
@@ -259,7 +259,7 @@ DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
         {
             if (Buffer)
             {
-                CHECK(Buffer->GetInfo().IsVertexBuffer());
+                CHECK(Buffer->GetDesc().IsVertexBuffer());
             }
         }
     }
@@ -281,7 +281,7 @@ DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
     { 
         if (InIndexBuffer)
         {
-            CHECK(InIndexBuffer->GetInfo().IsIndexBuffer());
+            CHECK(InIndexBuffer->GetDesc().IsIndexBuffer());
         }
     }
 
@@ -429,7 +429,7 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
     {
         if (ConstantBuffer)
         {
-            CHECK(ConstantBuffer->GetInfo().IsConstantBuffer());
+            CHECK(ConstantBuffer->GetDesc().IsConstantBuffer());
         }
     }
 
@@ -454,7 +454,7 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
         {
             if (Buffer)
             {
-                CHECK(Buffer->GetInfo().IsConstantBuffer());
+                CHECK(Buffer->GetDesc().IsConstantBuffer());
             }
         }
     }
@@ -573,21 +573,21 @@ DECLARE_RHICOMMAND(FRHICommandResolveTexture)
 
 DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 {
-    FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FBufferCopyInfo& InCopyBufferInfo)
+    FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FRHIBufferCopyDesc& InCopyDesc)
         : Dst(InDst)
         , Src(InSrc)
-        , CopyBufferInfo(InCopyBufferInfo)
+        , CopyDesc(InCopyDesc)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.CopyBuffer(Dst, Src, CopyBufferInfo);
+        CommandContext.CopyBuffer(Dst, Src, CopyDesc);
     }
 
     FRHIBuffer*     Dst;
     FRHIBuffer*     Src;
-    FBufferCopyInfo CopyBufferInfo;
+    FRHIBufferCopyDesc CopyDesc;
 };
 
 DECLARE_RHICOMMAND(FRHICommandCopyTexture)
@@ -609,21 +609,21 @@ DECLARE_RHICOMMAND(FRHICommandCopyTexture)
 
 DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 {
-    FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FTextureCopyInfo& InCopyInfo)
+    FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FRHITextureCopyDesc& InCopyDesc)
         : Dst(InDst)
         , Src(InSrc)
-        , CopyInfo(InCopyInfo)
+        , CopyDesc(InCopyDesc)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.CopyTextureRegion(Dst, Src, CopyInfo);
+        CommandContext.CopyTextureRegion(Dst, Src, CopyDesc);
     }
 
     FRHITexture*     Dst;
     FRHITexture*     Src;
-    FTextureCopyInfo CopyInfo;
+    FRHITextureCopyDesc CopyDesc;
 };
 
 DECLARE_RHICOMMAND(FRHICommandCopyTextureRegionToBuffer)
@@ -651,7 +651,7 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegionToBuffer)
 
 DECLARE_RHICOMMAND(FRHICommandWriteFence)
 {
-    FORCEINLINE FRHICommandWriteFence(FRHIGpuFence* InFence)
+    FORCEINLINE FRHICommandWriteFence(FRHIFence* InFence)
         : Fence(InFence)
     {
         CHECK(Fence != nullptr);
@@ -662,7 +662,7 @@ DECLARE_RHICOMMAND(FRHICommandWriteFence)
         CommandContext.WriteFence(Fence);
     }
 
-    FRHIGpuFence* Fence;
+    FRHIFence* Fence;
 };
 
 DECLARE_RHICOMMAND(FRHICommandDiscardContents)
@@ -680,50 +680,50 @@ DECLARE_RHICOMMAND(FRHICommandDiscardContents)
     FRHITexture* Texture;
 };
 
-DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
+DECLARE_RHICOMMAND(FRHICommandBuildSceneAccelerationStructure)
 {
-    FORCEINLINE FRHICommandBuildRayTracingScene(FRHIRayTracingScene* InRayTracingScene, const FRayTracingSceneBuildInfo& InBuildInfo)
+    FORCEINLINE FRHICommandBuildSceneAccelerationStructure(FRHISceneAccelerationStructure* InRayTracingScene, const FRHISceneAccelerationStructureBuildDesc& InBuildDesc)
         : RayTracingScene(InRayTracingScene)
-        , BuildInfo(InBuildInfo)
+        , BuildDesc(InBuildDesc)
     {
         CHECK(RayTracingScene != nullptr);
-        CHECK(!BuildInfo.bUpdate || (BuildInfo.bUpdate && IsEnumFlagSet(RayTracingScene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
+        CHECK(!BuildDesc.bUpdate || (BuildDesc.bUpdate && IsEnumFlagSet(RayTracingScene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BuildRayTracingScene(RayTracingScene, BuildInfo);
+        CommandContext.BuildSceneAccelerationStructure(RayTracingScene, BuildDesc);
     }
 
-    FRHIRayTracingScene*      RayTracingScene;
-    FRayTracingSceneBuildInfo BuildInfo;
+    FRHISceneAccelerationStructure*      RayTracingScene;
+    FRHISceneAccelerationStructureBuildDesc BuildDesc;
 };
 
-DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
+DECLARE_RHICOMMAND(FRHICommandBuildGeometryAccelerationStructure)
 {
-    FORCEINLINE FRHICommandBuildRayTracingGeometry(FRHIRayTracingGeometry* InRayTracingGeometry, const FRayTracingGeometryBuildInfo& InBuildInfo)
+    FORCEINLINE FRHICommandBuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* InRayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& InBuildDesc)
         : RayTracingGeometry(InRayTracingGeometry)
-        , BuildInfo(InBuildInfo)
+        , BuildDesc(InBuildDesc)
     { 
         CHECK(RayTracingGeometry != nullptr);
-        CHECK(!BuildInfo.bUpdate || (BuildInfo.bUpdate && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
-        CHECK(BuildInfo.VertexBuffer && BuildInfo.VertexBuffer->GetInfo().IsVertexBuffer());
-        CHECK(BuildInfo.IndexBuffer  && BuildInfo.IndexBuffer->GetInfo().IsIndexBuffer());
+        CHECK(!BuildDesc.bUpdate || (BuildDesc.bUpdate && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
+        CHECK(BuildDesc.VertexBuffer && BuildDesc.VertexBuffer->GetDesc().IsVertexBuffer());
+        CHECK(BuildDesc.IndexBuffer  && BuildDesc.IndexBuffer->GetDesc().IsIndexBuffer());
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.BuildRayTracingGeometry(RayTracingGeometry, BuildInfo);
+        CommandContext.BuildGeometryAccelerationStructure(RayTracingGeometry, BuildDesc);
     }
 
-    FRHIRayTracingGeometry*      RayTracingGeometry;
-    FRayTracingGeometryBuildInfo BuildInfo;
+    FRHIGeometryAccelerationStructure*      RayTracingGeometry;
+    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
 {
     FORCEINLINE FRHICommandSetRayTracingBindings(
-        FRHIRayTracingScene*              InRayTracingScene,
+        FRHISceneAccelerationStructure*              InRayTracingScene,
         FRHIRayTracingPipelineState*      InPipelineState,
         const FRayTracingShaderResources* InGlobalResource,
         const FRayTracingShaderResources* InRayGenLocalResources,
@@ -745,7 +745,7 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
         CommandContext.SetRayTracingBindings(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
-    FRHIRayTracingScene*              RayTracingScene;
+    FRHISceneAccelerationStructure*              RayTracingScene;
     FRHIRayTracingPipelineState*      PipelineState;
     const FRayTracingShaderResources* GlobalResource;
     const FRayTracingShaderResources* RayGenLocalResources;
@@ -1038,7 +1038,7 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
 
 DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 {
-    FORCEINLINE FRHICommandDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
+    FORCEINLINE FRHICommandDispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
         : Scene(InScene)
         , PipelineState(InPipelineState)
         , Width(InWidth)
@@ -1053,7 +1053,7 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
         CommandContext.DispatchRays(Scene, PipelineState, Width, Height, Depth);
     }
 
-    FRHIRayTracingScene*         Scene;
+    FRHISceneAccelerationStructure*         Scene;
     FRHIRayTracingPipelineState* PipelineState;
     uint32                       Width;
     uint32                       Height;

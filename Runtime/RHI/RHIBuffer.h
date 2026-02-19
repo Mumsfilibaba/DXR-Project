@@ -23,16 +23,16 @@ enum class EBufferFlags : uint16
 
 ENUM_CLASS_OPERATORS(EBufferFlags);
 
-struct FRHIBufferInfo
+struct FRHIBufferDesc
 {
-    NODISCARD constexpr bool IsDefault() const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
-    NODISCARD constexpr bool IsDynamic() const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
+    NODISCARD constexpr bool IsDefault()  const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
+    NODISCARD constexpr bool IsDynamic()  const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
     NODISCARD constexpr bool IsReadBack() const { return IsEnumFlagSet(Flags, EBufferFlags::ReadBack); }
     
-    NODISCARD constexpr bool IsConstantBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer); }
-    NODISCARD constexpr bool IsShaderResourceBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer); }
-    NODISCARD constexpr bool IsVertexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::VertexBuffer); }
-    NODISCARD constexpr bool IsIndexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
+    NODISCARD constexpr bool IsConstantBuffer()        const { return IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer); }
+    NODISCARD constexpr bool IsShaderResourceBuffer()  const { return IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer); }
+    NODISCARD constexpr bool IsVertexBuffer()          const { return IsEnumFlagSet(Flags, EBufferFlags::VertexBuffer); }
+    NODISCARD constexpr bool IsIndexBuffer()           const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
     NODISCARD constexpr bool IsUnorderedAccessBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::UnorderedAccessBuffer); }
 
     uint64       Size   = 0;
@@ -43,30 +43,29 @@ struct FRHIBufferInfo
 
 class FRHIBuffer : public FRHIResource 
 { 
-protected: 
-    explicit FRHIBuffer(const FRHIBufferInfo& InBufferInfo) 
+public: 
+    explicit FRHIBuffer(const FRHIBufferDesc& InBufferDesc) 
         : FRHIResource()
-        , Info(InBufferInfo)
+        , Desc(InBufferDesc)
     {
     }
 
-public: 
     virtual void* GetRHINativeHandle() const = 0; 
     virtual FRHIDescriptorHandle GetBindlessHandle() const = 0; 
  
-    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) { return nullptr; } 
-    virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) { } 
+    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX)   { return nullptr; } 
+    virtual void  Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) { } 
  
-    virtual void SetDebugName(const FString& InName) = 0; 
+    virtual void    SetDebugName(const FString& InName) = 0; 
     virtual FString GetDebugName() const = 0; 
 
-    const FRHIBufferInfo& GetInfo() const 
+    const FRHIBufferDesc& GetDesc() const 
     { 
-        return Info; 
-    } 
+        return Desc; 
+    }
 
 protected: 
-    FRHIBufferInfo Info; 
+    FRHIBufferDesc Desc; 
 }; 
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

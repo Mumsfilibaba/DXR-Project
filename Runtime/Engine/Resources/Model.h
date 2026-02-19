@@ -55,7 +55,7 @@ public:
         return IndexBufferSRV.Get();
     }
     
-    FRHIRayTracingGeometry* GetRayTracingGeometry() const
+    FRHIGeometryAccelerationStructure* GetRayTracingGeometry() const
     {
         return RTGeometry.Get();
     }
@@ -114,7 +114,7 @@ private:
     FRHIShaderResourceViewRef VertexTexCoordBufferSRV;
     FRHIBufferRef             IndexBuffer;
     FRHIShaderResourceViewRef IndexBufferSRV;
-    FRHIRayTracingGeometryRef RTGeometry;
+    FRHIGeometryAccelerationStructureRef RTGeometry;
     EIndexFormat              IndexFormat;
     int32                     IndexCount;
     int32                     VertexCount;

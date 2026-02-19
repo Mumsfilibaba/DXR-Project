@@ -4,17 +4,17 @@
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanMemory.h"
 
-typedef TSharedRef<class FVulkanRayTracingGeometry> FVulkanRayTracingGeometryRef; 
+typedef TSharedRef<class FVulkanGeometryAccelerationStructureRHI> FVulkanGeometryAccelerationStructureRHIRef; 
 
-class FVulkanRayTracingGeometry : public FRHIRayTracingGeometry, public FVulkanDeviceChild
+class FVulkanGeometryAccelerationStructureRHI : public FRHIGeometryAccelerationStructure, public FVulkanDeviceChild
 {
 public:
-    FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo);
-    ~FVulkanRayTracingGeometry();
+    FVulkanGeometryAccelerationStructureRHI(FVulkanDevice* InDevice, const FRHIGeometryAccelerationStructureDesc& InGeometryDesc);
+    ~FVulkanGeometryAccelerationStructureRHI();
     
-    bool Build(FVulkanCommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo);
+    bool Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
     
-    // FRHIRayTracingGeometry Interface
+    // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(Geometry); }
 
     virtual void SetDebugName(const FString& InName) override final;
@@ -32,7 +32,7 @@ private:
     FVulkanMemoryAllocation    GeometryMemory;
     VkBuffer                   ScratchBuffer;
     FVulkanMemoryAllocation    ScratchMemory;
-    FVulkanBufferRef           VertexBuffer;
-    FVulkanBufferRef           IndexBuffer;
+    FVulkanBufferRHIRef           VertexBuffer;
+    FVulkanBufferRHIRef           IndexBuffer;
     FString                    DebugName;
 };

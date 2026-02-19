@@ -6,9 +6,9 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RefCounted.h"
 
-typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
+typedef TSharedRef<class FD3D12SamplerStateRHI> FD3D12SamplerStateRHIRef;
 
-struct FD3D12SamplerStateIdentifier
+struct FD3D12SamplerStateRHIIdentifier
 {
     static constexpr uint16 InvalidIdentifier = 0xffff;
 
@@ -18,12 +18,12 @@ public:
         New
     };
 
-    FD3D12SamplerStateIdentifier()
+    FD3D12SamplerStateRHIIdentifier()
         : Identifier(InvalidIdentifier)
     {
     }
 
-    FD3D12SamplerStateIdentifier(EGenerate Type)
+    FD3D12SamplerStateRHIIdentifier(EGenerate Type)
         : Identifier(GenerateIdentifier())
     {
     }
@@ -38,12 +38,12 @@ public:
         return Identifier;
     }
 
-    bool operator==(const FD3D12SamplerStateIdentifier& Other) const
+    bool operator==(const FD3D12SamplerStateRHIIdentifier& Other) const
     {
         return Identifier == Other.Identifier;
     }
 
-    bool operator!=(const FD3D12SamplerStateIdentifier& Other) const
+    bool operator!=(const FD3D12SamplerStateRHIIdentifier& Other) const
     {
         return Identifier != Other.Identifier;
     }
@@ -62,11 +62,11 @@ private:
 };
 
 
-class FD3D12SamplerState : public FRHISamplerState, public FD3D12DeviceChild
+class FD3D12SamplerStateRHI : public FRHISamplerState, public FD3D12DeviceChild
 {
 public:
-    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateInfo& InSamplerInfo);
-    virtual ~FD3D12SamplerState();
+    FD3D12SamplerStateRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateDesc& InSamplerDesc);
+    virtual ~FD3D12SamplerStateRHI();
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
@@ -79,17 +79,17 @@ public:
 
     const D3D12_SAMPLER_DESC& GetDesc() const 
     { 
-        return Desc;
+        return D3D12Desc;
     }
 
-    FD3D12SamplerStateIdentifier GetUniqueID() const
+    FD3D12SamplerStateRHIIdentifier GetUniqueID() const
     {
         return Identifier;
     }
 
 private:
-    D3D12_SAMPLER_DESC           Desc;
+    D3D12_SAMPLER_DESC           D3D12Desc;
     FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
-    FD3D12SamplerStateIdentifier Identifier;
+    FD3D12SamplerStateRHIIdentifier Identifier;
 };

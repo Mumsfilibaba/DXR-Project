@@ -140,8 +140,8 @@ uint64 FD3D12FenceManager::GetCompletedValue() const
     return LastCompletedValue;
 }
 
-FD3D12GpuFence::FD3D12GpuFence(FD3D12Device* InDevice)
-    : FRHIGpuFence()
+FD3D12FenceRHI::FD3D12FenceRHI(FD3D12Device* InDevice)
+    : FRHIFence()
     , FD3D12DeviceChild(InDevice)
     , Fence(nullptr)
     , CurrentValue(0)
@@ -151,7 +151,7 @@ FD3D12GpuFence::FD3D12GpuFence(FD3D12Device* InDevice)
 {
 }
 
-bool FD3D12GpuFence::Initialize()
+bool FD3D12FenceRHI::Initialize()
 {
     FD3D12FenceRef NewFence = new FD3D12Fence(GetDevice());
     if (!(NewFence && NewFence->Initialize(0)))
@@ -163,7 +163,7 @@ bool FD3D12GpuFence::Initialize()
     return true;
 }
 
-void FD3D12GpuFence::Signal(ED3D12CommandQueueType QueueType)
+void FD3D12FenceRHI::Signal(ED3D12CommandQueueType QueueType)
 {
     CHECK(Fence != nullptr);
 
@@ -177,11 +177,11 @@ void FD3D12GpuFence::Signal(ED3D12CommandQueueType QueueType)
     HRESULT Result = CommandQueue->Signal(Fence->GetD3D12Fence(), TargetValue);
     if (FAILED(Result))
     {
-        D3D12_ERROR_CRITICAL("[FD3D12GpuFence]: Failed to signal Fence on the GPU");
+        D3D12_ERROR_CRITICAL("[FD3D12FenceRHI]: Failed to signal Fence on the GPU");
     }
 }
 
-bool FD3D12GpuFence::IsSignaled() const
+bool FD3D12FenceRHI::IsSignaled() const
 {
     CHECK(Fence != nullptr);
 
@@ -194,7 +194,7 @@ bool FD3D12GpuFence::IsSignaled() const
     return TargetValue <= Fence->GetCompletedValue();
 }
 
-bool FD3D12GpuFence::Wait(uint64 TimeoutNs) const
+bool FD3D12FenceRHI::Wait(uint64 TimeoutNs) const
 {
     CHECK(Fence != nullptr);
 
@@ -220,7 +220,7 @@ bool FD3D12GpuFence::Wait(uint64 TimeoutNs) const
     return Fence->WaitForValue(TargetValue, TimeoutMs);
 }
 
-void FD3D12GpuFence::SetDebugName(const FString& InName)
+void FD3D12FenceRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
     if (Fence)
@@ -229,7 +229,7 @@ void FD3D12GpuFence::SetDebugName(const FString& InName)
     }
 }
 
-FString FD3D12GpuFence::GetDebugName() const
+FString FD3D12FenceRHI::GetDebugName() const
 {
     return DebugName;
 }

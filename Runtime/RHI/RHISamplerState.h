@@ -75,22 +75,22 @@ NODISCARD constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
     }
 }
 
-struct FRHISamplerStateInfo
+struct FRHISamplerStateDesc
 {
-    NODISCARD static FRHISamplerStateInfo Create(ESamplerMode InSamplerMode, ESamplerFilter InFilter)
+    NODISCARD static FRHISamplerStateDesc Create(ESamplerMode InSamplerMode, ESamplerFilter InFilter)
     {
-        FRHISamplerStateInfo SamplerInfo;
-        SamplerInfo.AddressU       = InSamplerMode;
-        SamplerInfo.AddressV       = InSamplerMode;
-        SamplerInfo.AddressW       = InSamplerMode;
-        SamplerInfo.Filter         = InFilter;
-        SamplerInfo.ComparisonFunc = EComparisonFunc::Unknown;
-        SamplerInfo.MaxAnisotropy  = 1;
-        SamplerInfo.MipLODBias     = 0.0f;
-        SamplerInfo.MinLOD         = TNumericLimits<float>::Lowest();
-        SamplerInfo.MaxLOD         = TNumericLimits<float>::Max();
-        SamplerInfo.BorderColor    = { };
-        return SamplerInfo;
+        FRHISamplerStateDesc SamplerDesc;
+        SamplerDesc.AddressU       = InSamplerMode;
+        SamplerDesc.AddressV       = InSamplerMode;
+        SamplerDesc.AddressW       = InSamplerMode;
+        SamplerDesc.Filter         = InFilter;
+        SamplerDesc.ComparisonFunc = EComparisonFunc::Unknown;
+        SamplerDesc.MaxAnisotropy  = 1;
+        SamplerDesc.MipLODBias     = 0.0f;
+        SamplerDesc.MinLOD         = TNumericLimits<float>::Lowest();
+        SamplerDesc.MaxLOD         = TNumericLimits<float>::Max();
+        SamplerDesc.BorderColor    = { };
+        return SamplerDesc;
     }
 
     NODISCARD constexpr bool IsComparisonSampler() const noexcept
@@ -98,9 +98,9 @@ struct FRHISamplerStateInfo
         return Filter >= ESamplerFilter::Comparison_MinMagMipPoint && Filter <= ESamplerFilter::Comparison_Anisotropic;
     }
 
-    bool operator==(const FRHISamplerStateInfo& Other) const noexcept = default;
+    bool operator==(const FRHISamplerStateDesc& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRHISamplerStateInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHISamplerStateDesc& Value)
     {
         uint64 Hash = UnderlyingTypeValue(Value.AddressU);
         HashCombine(Hash, UnderlyingTypeValue(Value.AddressV));
@@ -129,22 +129,21 @@ struct FRHISamplerStateInfo
 
 class FRHISamplerState : public FRHIResource
 {
-protected:
-    explicit FRHISamplerState(const FRHISamplerStateInfo& InSamplerInfo)
-        : Info(InSamplerInfo)
+public:
+    explicit FRHISamplerState(const FRHISamplerStateDesc& InSamplerDesc)
+        : Desc(InSamplerDesc)
     {
     }
 
     virtual ~FRHISamplerState() = default;
 
-public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    const FRHISamplerStateInfo& GetInfo() const
+    const FRHISamplerStateDesc& GetDesc() const
     {
-        return Info;
+        return Desc;
     }
 
 protected:
-    FRHISamplerStateInfo Info;
+    FRHISamplerStateDesc Desc;
 };

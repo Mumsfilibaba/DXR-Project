@@ -17,7 +17,7 @@ typedef TSharedRef<class FMetalSwapChain> FMetalSwapChainRef;
 class FMetalSwapChain : public FRHISwapChain, public FMetalDeviceChild
 {
 public:
-    FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainInfo& SwapChainInfo);
+    FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainDesc& SwapChainInfo);
     ~FMetalSwapChain();
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }

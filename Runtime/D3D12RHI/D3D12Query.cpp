@@ -16,7 +16,7 @@ static uint64 ToNanoseconds(uint64 Timestamp, uint64 Frequency)
     return static_cast<uint64>(static_cast<double>(Timestamp) * NanosecondScale);
 }
 
-FD3D12Query::FD3D12Query(FD3D12Device* InDevice, EQueryType InQueryType)
+FD3D12QueryRHI::FD3D12QueryRHI(FD3D12Device* InDevice, EQueryType InQueryType)
     : FD3D12DeviceChild(InDevice)
     , FRHIQuery(InQueryType)
     , QueryAllocation()
@@ -47,7 +47,7 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType)
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateQueryHeap(&QueryHeapDesc, IID_PPV_ARGS(&NewQueryHeap));
     if (FAILED(Result))
     {
-        D3D12_ERROR_CRITICAL("[FD3D12Query]: FAILED to create Query Heap");
+        D3D12_ERROR_CRITICAL("[FD3D12QueryRHI]: FAILED to create Query Heap");
         return false;
     }
 

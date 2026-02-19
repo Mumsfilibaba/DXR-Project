@@ -3,14 +3,14 @@
 #include "RHI/RHIResources.h"
 
 class FRHISwapChain;
-class FRHIRayTracingGeometry;
-class FRHIRayTracingScene;
+class FRHIGeometryAccelerationStructure;
+class FRHISceneAccelerationStructure;
 class FRHIQuery;
 class FRHIShader;
 class FRHIRayTracingPipelineState;
-class FRHIGpuFence;
+class FRHIFence;
 struct FRayTracingShaderResources;
-struct FRHIRayTracingGeometryInstance;
+struct FRHIGeometryAccelerationStructureInstance;
 struct FRHITextureTransition;
 
 enum class ECommandContextPhase
@@ -83,9 +83,9 @@ struct IRHICommandContext
 
     /**
      * @brief Begins a new RenderPass
-     * @param BeginRenderPassInfo Description of RenderTargets and DepthStencils to bind for drawing
+     * @param BeginRenderPassDesc Description of RenderTargets and DepthStencils to bind for drawing
      */
-    virtual void BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo) = 0;
+    virtual void BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc) = 0;
 
     /**
      * @brief Ends the current RenderPass
@@ -239,7 +239,7 @@ struct IRHICommandContext
      * @param Src Source buffer to copy from
      * @param CopyDesc Information about the copy operation
      */
-    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc) = 0;
+    virtual void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc) = 0;
 
     /**
      * @brief Copies the entire contents of one texture to another, which require the size and formats to be the same
@@ -254,7 +254,7 @@ struct IRHICommandContext
      * @param Src Source texture
      * @param CopyDesc Information about the copy operation
      */
-    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) = 0;
+    virtual void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& InCopyDesc) = 0;
 
     /**
      * @brief Copies a 2D region from a texture to a buffer (typically readback).
@@ -269,7 +269,7 @@ struct IRHICommandContext
     /**
      * @brief Splits the command stream and signals the provided fence after all prior GPU work is complete.
      */
-    virtual void WriteFence(FRHIGpuFence* Fence) = 0;
+    virtual void WriteFence(FRHIFence* Fence) = 0;
 
     /**
      * @brief Signal the driver that the contents can be discarded
@@ -280,21 +280,21 @@ struct IRHICommandContext
     /**
      * @brief Builds the Top-Level Acceleration-Structure for ray tracing
      * @param RayTracingScene Top-level acceleration-structure to build or update
-     * @param BuildInfo A structure containing information about the build
+     * @param BuildDesc A structure containing information about the build
      */
-    virtual void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo) = 0;
+    virtual void BuildSceneAccelerationStructure(FRHISceneAccelerationStructure* RayTracingScene, const FRHISceneAccelerationStructureBuildDesc& BuildInfo) = 0;
 
     /**
      * @brief Builds the Bottom-Level Acceleration-Structure for ray tracing
      * @param RayTracingGeometry Bottom-level acceleration-structure to build or update
-     * @param BuildInfo A structure containing information about the build
+     * @param BuildDesc A structure containing information about the build
      */
-    virtual void BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo) = 0;
+    virtual void BuildGeometryAccelerationStructure(FRHIGeometryAccelerationStructure* RayTracingGeometry, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc) = 0;
 
     /**
      * @brief Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored
      */
-    virtual void SetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
+    virtual void SetRayTracingBindings(FRHISceneAccelerationStructure* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
 
     /** 
      * @brief Transition the ResourceState of a Texture resource.
@@ -415,7 +415,7 @@ struct IRHICommandContext
      * @param Height Dispatch height.
      * @param Depth Dispatch depth.
      */
-    virtual void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
+    virtual void DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
 
     /**
      * @brief Presents the swap-chain, swapping the back buffer to the screen.

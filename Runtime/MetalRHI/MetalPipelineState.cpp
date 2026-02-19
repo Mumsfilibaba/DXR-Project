@@ -1,6 +1,6 @@
 #include "MetalRHI/MetalPipelineState.h"
 
-FMetalInputLayout::FMetalInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+FMetalInputLayout::FMetalInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
     : FRHIInputLayout()
     , VertexDescriptor(nullptr)
 {
@@ -22,11 +22,11 @@ FMetalInputLayout::~FMetalInputLayout()
 {
 }
 
-FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInfo& InInfo)
+FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateDesc& InDesc)
     : FRHIDepthStencilState()
     , FMetalDeviceChild(DeviceContext)
     , DepthStencilState(nullptr)
-    , Info(InInitializer)
+    , Info(InDesc)
 {
 }
 
@@ -40,26 +40,26 @@ bool FMetalDepthStencilState::Initialize()
     SCOPED_AUTORELEASE_POOL();
     
     MTLDepthStencilDescriptor* Descriptor = [[MTLDepthStencilDescriptor new] autorelease];
-    Descriptor.depthWriteEnabled    = Info.bDepthEnable;
-    Descriptor.depthCompareFunction = ConvertCompareFunction(Info.DepthFunc);
+    Descriptor.depthWriteEnabled    = Desc.bDepthEnable;
+    Descriptor.depthCompareFunction = ConvertCompareFunction(Desc.DepthFunc);
     
-    if (Info.bStencilEnable)
+    if (Desc.bStencilEnable)
     {
         Descriptor.backFaceStencil                            = [[MTLStencilDescriptor new] autorelease];
-        Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(Info.BackFace.StencilFunc);
-        Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(Info.BackFace.StencilFailOp);
-        Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(Info.BackFace.StencilDepthFailOp);
-        Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(Info.BackFace.StencilDepthPassOp);
-        Descriptor.backFaceStencil.readMask                   = Info.StencilReadMask;
-        Descriptor.backFaceStencil.writeMask                  = Info.StencilWriteMask;
+        Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(Desc.BackFace.StencilFunc);
+        Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(Desc.BackFace.StencilFailOp);
+        Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(Desc.BackFace.StencilDepthFailOp);
+        Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(Desc.BackFace.StencilDepthPassOp);
+        Descriptor.backFaceStencil.readMask                   = Desc.StencilReadMask;
+        Descriptor.backFaceStencil.writeMask                  = Desc.StencilWriteMask;
         
         Descriptor.frontFaceStencil                           = [[MTLStencilDescriptor new] autorelease];
-        Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(Info.FrontFace.StencilFunc);
-        Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(Info.FrontFace.StencilFailOp);
-        Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(Info.FrontFace.StencilDepthFailOp);
-        Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(Info.FrontFace.StencilDepthPassOp);
-        Descriptor.frontFaceStencil.readMask                  = Info.StencilReadMask;
-        Descriptor.frontFaceStencil.writeMask                 = Info.StencilWriteMask;
+        Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(Desc.FrontFace.StencilFunc);
+        Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(Desc.FrontFace.StencilFailOp);
+        Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(Desc.FrontFace.StencilDepthFailOp);
+        Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(Desc.FrontFace.StencilDepthPassOp);
+        Descriptor.frontFaceStencil.readMask                  = Desc.StencilReadMask;
+        Descriptor.frontFaceStencil.writeMask                 = Desc.StencilWriteMask;
     }
     else
     {
@@ -80,11 +80,11 @@ bool FMetalDepthStencilState::Initialize()
     return true;
 }
 
-FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInfo& InInfo)
+FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateDesc& InDesc)
     : FRHIRasterizerState()
-    , FillMode(ConvertFillMode(InInfo.FillMode))
-    , FrontFaceWinding(InInfo.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
-    , Info(InInfo)
+    , FillMode(ConvertFillMode(InDesc.FillMode))
+    , FrontFaceWinding(InDesc.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
+    , Desc(InDesc)
 {
 }
 
@@ -92,20 +92,20 @@ FMetalRasterizerState::~FMetalRasterizerState()
 {
 }
 
-FMetalBlendState::FMetalBlendState(const FRHIBlendStateInfo& InInfo)
+FMetalBlendState::FMetalBlendState(const FRHIBlendStateDesc& InDesc)
     : FRHIBlendState()
-    , Info(InInfo)
+    , Desc(InDesc)
 {
-    for (int32 Index = 0; Index < InInfo.NumRenderTargets; Index++)
+    for (int32 Index = 0; Index < InDesc.NumRenderTargets; Index++)
     {
-        ColorAttachments[Index].bBlendingEnabled            = InInfo.RenderTargets[Index].bBlendEnable ? YES : NO;
-        ColorAttachments[Index].SourceColorBlendFactor      = ConvertBlend(InInfo.RenderTargets[Index].SrcBlend);
-        ColorAttachments[Index].DestinationColorBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlend);
-        ColorAttachments[Index].ColorBlendOperation         = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOp);
-        ColorAttachments[Index].SourceAlphaBlendFactor      = ConvertBlend(InInfo.RenderTargets[Index].SrcBlendAlpha);
-        ColorAttachments[Index].DestinationAlphaBlendFactor = ConvertBlend(InInfo.RenderTargets[Index].DstBlendAlpha);
-        ColorAttachments[Index].AlphaBlendOperation         = ConvertBlendOp(InInfo.RenderTargets[Index].BlendOpAlpha);
-        ColorAttachments[Index].WriteMask                   = ConvertColorWriteFlags(InInfo.RenderTargets[Index].ColorWriteMask);
+        ColorAttachments[Index].bBlendingEnabled            = InDesc.RenderTargets[Index].bBlendEnable ? YES : NO;
+        ColorAttachments[Index].SourceColorBlendFactor      = ConvertBlend(InDesc.RenderTargets[Index].SrcBlend);
+        ColorAttachments[Index].DestinationColorBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].DstBlend);
+        ColorAttachments[Index].ColorBlendOperation         = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOp);
+        ColorAttachments[Index].SourceAlphaBlendFactor      = ConvertBlend(InDesc.RenderTargets[Index].SrcBlendAlpha);
+        ColorAttachments[Index].DestinationAlphaBlendFactor = ConvertBlend(InDesc.RenderTargets[Index].DstBlendAlpha);
+        ColorAttachments[Index].AlphaBlendOperation         = ConvertBlendOp(InDesc.RenderTargets[Index].BlendOpAlpha);
+        ColorAttachments[Index].WriteMask                   = ConvertColorWriteFlags(InDesc.RenderTargets[Index].ColorWriteMask);
     }
 }
 

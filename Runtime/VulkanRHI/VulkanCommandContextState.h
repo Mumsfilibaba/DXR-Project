@@ -75,30 +75,30 @@ public:
     void ResetStateForNewCommandBuffer();
 
     void SetViewInstanceInfo(const FRHIViewInstancingState& InViewInstancingInfo);
-    void SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState);
-    void SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState);
+    void SetGraphicsPipelineState(FVulkanGraphicsPipelineStateRHI* InGraphicsPipelineState);
+    void SetComputePipelineState(FVulkanComputePipelineStateRHI* InComputePipelineState);
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
     void SetScissorRects(VkRect2D* ScissorRects, uint32 NumScissorRects);
     void SetBlendFactor(const float BlendFactor[4]);
-    void SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 VertexBufferSlot);
-    void SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexFormat);
+    void SetVertexBuffer(FVulkanBufferRHI* VertexBuffer, uint32 VertexBufferSlot);
+    void SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, VkIndexType IndexFormat);
     void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
-    void SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
+    void SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetSampler(FVulkanSamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
 
     FORCEINLINE FVulkanCommandContext& GetContext()
     {
         return Context;
     }
 
-    FORCEINLINE FVulkanGraphicsPipelineState* GetGraphicsPipelineState() const
+    FORCEINLINE FVulkanGraphicsPipelineStateRHI* GetGraphicsPipelineState() const
     {
         return GraphicsState.PipelineState.Get();
     }
 
-    FORCEINLINE FVulkanComputePipelineState* GetComputePipelineState() const
+    FORCEINLINE FVulkanComputePipelineStateRHI* GetComputePipelineState() const
     {
         return ComputeState.PipelineState.Get();
     }
@@ -151,10 +151,10 @@ private:
         }
 
         FVulkanPipelineLayout*          CurrentLayout;
-        FVulkanGraphicsPipelineStateRef PipelineState;
+        FVulkanGraphicsPipelineStateRHIRef PipelineState;
         FRHIViewInstancingState         ViewInstancingState;
 
-        TMap<FVulkanGraphicsPipelineState*, FVulkanDescriptorState*> DescriptorStates;
+        TMap<FVulkanGraphicsPipelineStateRHI*, FVulkanDescriptorState*> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;
 
         float BlendFactor[4];
@@ -188,9 +188,9 @@ private:
         }
 
         FVulkanPipelineLayout*         CurrentLayout;
-        FVulkanComputePipelineStateRef PipelineState;
+        FVulkanComputePipelineStateRHIRef PipelineState;
 
-        TMap<FVulkanComputePipelineState*, FVulkanDescriptorState*> DescriptorStates;
+        TMap<FVulkanComputePipelineStateRHI*, FVulkanDescriptorState*> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;
 
         bool bBindPipelineState : 1;

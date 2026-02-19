@@ -4,24 +4,24 @@
 #include "VulkanRHI/VulkanRefCounted.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
-typedef TSharedRef<class FVulkanInputLayout>            FVulkanVertexInputLayoutRef;
-typedef TSharedRef<class FVulkanDepthStencilState>       FVulkanDepthStencilStateRef;
-typedef TSharedRef<class FVulkanGraphicsPipelineState>   FVulkanGraphicsPipelineStateRef;
-typedef TSharedRef<class FVulkanComputePipelineState>    FVulkanComputePipelineStateRef;
-typedef TSharedRef<class FVulkanRayTracingPipelineState> FVulkanRayTracingPipelineStateRef;
+typedef TSharedRef<class FVulkanInputLayoutRHI>            FVulkanInputLayoutRHIRef;
+typedef TSharedRef<class FVulkanDepthStencilStateRHI>       FVulkanDepthStencilStateRHIRef;
+typedef TSharedRef<class FVulkanGraphicsPipelineStateRHI>   FVulkanGraphicsPipelineStateRHIRef;
+typedef TSharedRef<class FVulkanComputePipelineStateRHI>    FVulkanComputePipelineStateRHIRef;
+typedef TSharedRef<class FVulkanRayTracingPipelineStateRHI> FVulkanRayTracingPipelineStateRHIRef;
 
-class FVulkanInputLayout : public FRHIInputLayout
+class FVulkanInputLayoutRHI : public FRHIInputLayout
 {
 public:
-    FVulkanInputLayout(const TArray<FRHIInputElementInfo>& InInputElements);
-    virtual ~FVulkanInputLayout();
+    FVulkanInputLayoutRHI(const TArray<FRHIInputElementDesc>& InInputElements);
+    virtual ~FVulkanInputLayoutRHI();
 
-    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
+    virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final
     {
         return &InputElements[Index];
     }
 
-    virtual uint32 GetNumInputElementInfos() const override final
+    virtual uint32 GetNumInputElementDescs() const override final
     {
         return InputElements.Size();
     }
@@ -32,21 +32,21 @@ public:
     }
 
 private:
-    TArray<FRHIInputElementInfo>              InputElements;
+    TArray<FRHIInputElementDesc>              InputElements;
     TArray<VkVertexInputBindingDescription>   VertexInputBindingDescriptions;
     TArray<VkVertexInputAttributeDescription> VertexInputAttributeDescriptions;
     VkPipelineVertexInputStateCreateInfo      CreateInfo;
 };
 
-class FVulkanDepthStencilState : public FRHIDepthStencilState
+class FVulkanDepthStencilStateRHI : public FRHIDepthStencilState
 {
 public:
-    FVulkanDepthStencilState(const FRHIDepthStencilStateInfo& InInfo);
-    virtual ~FVulkanDepthStencilState();
+    FVulkanDepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc);
+    virtual ~FVulkanDepthStencilStateRHI();
 
-    virtual FRHIDepthStencilStateInfo GetInfo() const override final
+    virtual FRHIDepthStencilStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
 
     const VkPipelineDepthStencilStateCreateInfo& GetVkCreateInfo() const
@@ -55,19 +55,19 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateInfo Info;
+    FRHIDepthStencilStateDesc Desc;
     VkPipelineDepthStencilStateCreateInfo CreateInfo;
 };
 
-class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceChild
+class FVulkanRasterizerStateRHI : public FRHIRasterizerState, public FVulkanDeviceChild
 {
 public:
-    FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInfo& InInfo);
-    virtual ~FVulkanRasterizerState();
+    FVulkanRasterizerStateRHI(FVulkanDevice* InDevice, const FRHIRasterizerStateDesc& InDesc);
+    virtual ~FVulkanRasterizerStateRHI();
 
-    virtual FRHIRasterizerStateInfo GetInfo() const override final
+    virtual FRHIRasterizerStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
 
     const VkPipelineRasterizationStateCreateInfo& GetVkCreateInfo() const
@@ -76,7 +76,7 @@ public:
     }
     
 private:
-    FRHIRasterizerStateInfo Info;
+    FRHIRasterizerStateDesc Desc;
     VkPipelineRasterizationStateCreateInfo CreateInfo;
 #if VK_EXT_depth_clip_enable
     VkPipelineRasterizationDepthClipStateCreateInfoEXT DepthClipStateCreateInfo;
@@ -86,15 +86,15 @@ private:
 #endif
 };
 
-class FVulkanBlendState : public FRHIBlendState
+class FVulkanBlendStateRHI : public FRHIBlendState
 {
 public:
-    FVulkanBlendState(const FRHIBlendStateInfo& InInfo);
-    virtual ~FVulkanBlendState();
+    FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc);
+    virtual ~FVulkanBlendStateRHI();
 
-    virtual FRHIBlendStateInfo GetInfo() const override final
+    virtual FRHIBlendStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
 
     const VkPipelineColorBlendStateCreateInfo& GetVkCreateInfo() const
@@ -103,7 +103,7 @@ public:
     }
 
 private:
-    FRHIBlendStateInfo Info;
+    FRHIBlendStateDesc Desc;
     VkPipelineColorBlendStateCreateInfo CreateInfo;
     VkPipelineColorBlendAttachmentState BlendAttachmentStates[VULKAN_MAX_RENDER_TARGET_COUNT];
 };
@@ -139,13 +139,13 @@ protected:
     FVulkanPipelineLayout* PipelineLayout;
 };
 
-class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline
+class FVulkanGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FVulkanPipeline
 {
 public:
-    FVulkanGraphicsPipelineState(FVulkanDevice* InDevice);
-    virtual ~FVulkanGraphicsPipelineState();
+    FVulkanGraphicsPipelineStateRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanGraphicsPipelineStateRHI();
 
-    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
+    bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
     
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }
@@ -164,13 +164,13 @@ private:
     FRHIViewInstancingState ViewInstancingState;
 };
 
-class FVulkanComputePipelineState : public FRHIComputePipelineState, public FVulkanPipeline
+class FVulkanComputePipelineStateRHI : public FRHIComputePipelineState, public FVulkanPipeline
 {
 public:
-    FVulkanComputePipelineState(FVulkanDevice* InDevice);
-    virtual ~FVulkanComputePipelineState();
+    FVulkanComputePipelineStateRHI(FVulkanDevice* InDevice);
+    virtual ~FVulkanComputePipelineStateRHI();
     
-    bool Initialize(const FRHIComputePipelineStateInfo& InInfo);
+    bool Initialize(const FRHIComputePipelineStateDesc& InDesc);
 
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }
@@ -181,11 +181,11 @@ public:
     }
 };
 
-class FVulkanRayTracingPipelineState : public FRHIRayTracingPipelineState
+class FVulkanRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
 {
 public:
-    FVulkanRayTracingPipelineState() = default;
-    virtual ~FVulkanRayTracingPipelineState() = default;
+    FVulkanRayTracingPipelineStateRHI() = default;
+    virtual ~FVulkanRayTracingPipelineStateRHI() = default;
 };
 
 struct FVulkanPipelineDataHeader

@@ -297,12 +297,12 @@ struct FFrameResources
 
     // RayTracing
     FRHITextureRef         RTOutput;
-    FRHIRayTracingSceneRef RTScene;
+    FRHISceneAccelerationStructureRef RTScene;
 
     FRayTracingShaderResources             GlobalResources;
     FRayTracingShaderResources             RayGenLocalResources;
     FRayTracingShaderResources             MissLocalResources;
-    TArray<FRHIRayTracingGeometryInstance> RTGeometryInstances;
+    TArray<FRHIGeometryAccelerationStructureInstance> RTGeometryInstances;
 
     TArray<FRayTracingShaderResources>     RTHitGroupResources;
     TMap<class FMesh*, uint32>             RTMeshToHitGroupIndex;

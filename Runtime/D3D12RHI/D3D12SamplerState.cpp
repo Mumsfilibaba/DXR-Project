@@ -1,19 +1,19 @@
 #include "D3D12RHI/D3D12SamplerState.h"
 
-FAtomicInt32 FD3D12SamplerStateIdentifier::NextIdentifier = 0;
+FAtomicInt32 FD3D12SamplerStateRHIIdentifier::NextIdentifier = 0;
 
-FD3D12SamplerState::FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateInfo& InSamplerInfo)
-    : FRHISamplerState(InSamplerInfo)
+FD3D12SamplerStateRHI::FD3D12SamplerStateRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateDesc& InSamplerDesc)
+    : FRHISamplerState(InSamplerDesc)
     , FD3D12DeviceChild(InDevice)
-    , Desc()
+    , D3D12Desc()
     , OfflineHeap(InOfflineHeap)
     , Descriptor()
-    , Identifier(FD3D12SamplerStateIdentifier::EGenerate::New)
+    , Identifier(FD3D12SamplerStateRHIIdentifier::EGenerate::New)
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
-FD3D12SamplerState::~FD3D12SamplerState()
+FD3D12SamplerStateRHI::~FD3D12SamplerStateRHI()
 {
 	if (Descriptor)
 	{
@@ -22,7 +22,7 @@ FD3D12SamplerState::~FD3D12SamplerState()
     }
 }
 
-bool FD3D12SamplerState::CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
+bool FD3D12SamplerStateRHI::CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
 {
     Descriptor = OfflineHeap.Allocate();
     if (!Descriptor)
@@ -32,6 +32,6 @@ bool FD3D12SamplerState::CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
     }
 
     GetDevice()->GetD3D12Device()->CreateSampler(&InDesc, GetOfflineHandle());
-    Desc = InDesc;
+    D3D12Desc = InDesc;
     return true;
 }

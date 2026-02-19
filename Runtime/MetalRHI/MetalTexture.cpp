@@ -3,8 +3,8 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo)
-    : FRHITexture(InTextureInfo)
+FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureDesc& InTextureDesc)
+    : FRHITexture(InTextureDesc)
     , FMetalDeviceChild(InDeviceContext)
     , Texture(nil)
     , SwapChain(nullptr)

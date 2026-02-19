@@ -10,7 +10,7 @@ class FMaterial;
 class FMesh;
 class FStaticMeshComponent;
 class FRHIBuffer;
-class FRHIRayTracingGeometry;
+class FRHIGeometryAccelerationStructure;
 
 struct FTransformBufferHLSL
 {
@@ -52,7 +52,7 @@ public:
     FRHIBuffer*  GetIndexBuffer() const { return IndexBuffer; }
     EIndexFormat GetIndexFormat() const { return IndexFormat; }
 
-    FRHIRayTracingGeometry* GetRayTracingGeometry() const { return Geometry; }
+    FRHIGeometryAccelerationStructure* GetRayTracingGeometry() const { return Geometry; }
 
 private:
     // Reference to the Actor
@@ -72,7 +72,7 @@ private:
     TArray<TSharedPtr<FMaterial>> Materials;
 
     // Geometry Objects
-    FRHIRayTracingGeometry* Geometry;
+    FRHIGeometryAccelerationStructure* Geometry;
     FRHIBuffer*             VertexBuffer;
     FRHIBuffer*             IndexBuffer;
     uint32                  NumVertices;

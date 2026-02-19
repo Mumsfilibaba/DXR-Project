@@ -311,7 +311,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
 
         // Initialize standard input layout
-        TArray<FRHIInputElementInfo> InputElements;
+        TArray<FRHIInputElementDesc> InputElements;
         if (Material->SupportsPixelDiscard())
         {
             InputElements =
@@ -342,7 +342,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
+        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = true;
@@ -354,52 +354,52 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        FRHIRasterizerStateInfo RasterizerStateInfo;
+        FRHIRasterizerStateDesc RasterizerStateDesc;
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInfo.CullMode = ECullMode::None;
+            RasterizerStateDesc.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInfo.CullMode = ECullMode::Back;
+            RasterizerStateDesc.CullMode = ECullMode::Back;
         }
 
-        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
+        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();
             return nullptr;
         }
 
-        FRHIBlendStateInfo BlendStateInfo;
-        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
+        FRHIBlendStateDesc BlendStateDesc;
+        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
         if (!NewPipelineStateInstance.BlendState)
         {
             DEBUG_BREAK();
             return nullptr;
         }
 
-        FRHIGraphicsPipelineStateInfo PSOInfo;
-        PSOInfo.BlendState                                 = NewPipelineStateInstance.BlendState.Get();
-        PSOInfo.DepthStencilState                          = NewPipelineStateInstance.DepthStencilState.Get();
-        PSOInfo.bPrimitiveRestartEnable                    = false;
-        PSOInfo.InputLayout                                = NewPipelineStateInstance.InputLayout.Get();
-        PSOInfo.PrimitiveTopology                          = EPrimitiveTopology::TriangleList;
-        PSOInfo.RasterizerState                            = NewPipelineStateInstance.RasterizerState.Get();
-        PSOInfo.MultiSampleState.SampleCount               = 1;
-        PSOInfo.MultiSampleState.SampleQuality             = 0;
-        PSOInfo.MultiSampleState.SampleMask                = RHI_DEFAULT_SAMPLE_MASK;
-        PSOInfo.VertexShader                               = NewPipelineStateInstance.VertexShader.Get();
-        PSOInfo.PixelShader                                = NewPipelineStateInstance.PixelShader.Get();
-        PSOInfo.RasterizerOutputFormats.NumRenderTargets   = 0;
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = GlobalTextureFormats::ShadowMapFormat;
+        FRHIGraphicsPipelineStateDesc PSODesc;
+        PSODesc.BlendState                                 = NewPipelineStateInstance.BlendState.Get();
+        PSODesc.DepthStencilState                          = NewPipelineStateInstance.DepthStencilState.Get();
+        PSODesc.bPrimitiveRestartEnable                    = false;
+        PSODesc.InputLayout                                = NewPipelineStateInstance.InputLayout.Get();
+        PSODesc.PrimitiveTopology                          = EPrimitiveTopology::TriangleList;
+        PSODesc.RasterizerState                            = NewPipelineStateInstance.RasterizerState.Get();
+        PSODesc.MultiSampleState.SampleCount               = 1;
+        PSODesc.MultiSampleState.SampleQuality             = 0;
+        PSODesc.MultiSampleState.SampleMask                = RHI_DEFAULT_SAMPLE_MASK;
+        PSODesc.VertexShader                               = NewPipelineStateInstance.VertexShader.Get();
+        PSODesc.PixelShader                                = NewPipelineStateInstance.PixelShader.Get();
+        PSODesc.RasterizerOutputFormats.NumRenderTargets   = 0;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat = GlobalTextureFormats::ShadowMapFormat;
 
         if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
-            PSOInfo.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
+            PSODesc.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineStateInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -424,13 +424,13 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
 
 bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 {
-    FRHIBufferInfo PerShadowMapBufferInfo;
-    PerShadowMapBufferInfo.Stride = sizeof(FPerShadowMapHLSL);
-    PerShadowMapBufferInfo.Size   = sizeof(FPerShadowMapHLSL);
-    PerShadowMapBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
-    PerShadowMapBufferInfo.bEnableResourceStateTracking = true;
+    FRHIBufferDesc PerShadowMapBufferDesc;
+    PerShadowMapBufferDesc.Stride = sizeof(FPerShadowMapHLSL);
+    PerShadowMapBufferDesc.Size   = sizeof(FPerShadowMapHLSL);
+    PerShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    PerShadowMapBufferDesc.bEnableResourceStateTracking = true;
 
-    PerShadowMapBuffer = FRHI::Get()->CreateBuffer(PerShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    PerShadowMapBuffer = FRHI::Get()->CreateBuffer(PerShadowMapBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
     {
         DEBUG_BREAK();
@@ -441,13 +441,13 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
         PerShadowMapBuffer->SetDebugName("Per ShadowMap Buffer");
     }
 
-	FRHIBufferInfo SinglePassShadowMapBufferInfo;
-    SinglePassShadowMapBufferInfo.Stride = sizeof(FSinglePassPointLightBufferHLSL);
-    SinglePassShadowMapBufferInfo.Size   = sizeof(FSinglePassPointLightBufferHLSL);
-    SinglePassShadowMapBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
-    SinglePassShadowMapBufferInfo.bEnableResourceStateTracking = true;
+	FRHIBufferDesc SinglePassShadowMapBufferDesc;
+    SinglePassShadowMapBufferDesc.Stride = sizeof(FSinglePassPointLightBufferHLSL);
+    SinglePassShadowMapBufferDesc.Size   = sizeof(FSinglePassPointLightBufferHLSL);
+    SinglePassShadowMapBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    SinglePassShadowMapBufferDesc.bEnableResourceStateTracking = true;
 
-    SinglePassShadowMapBuffer = FRHI::Get()->CreateBuffer(SinglePassShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    SinglePassShadowMapBuffer = FRHI::Get()->CreateBuffer(SinglePassShadowMapBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (!SinglePassShadowMapBuffer)
     {
         DEBUG_BREAK();
@@ -466,10 +466,10 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
     const FClearValue DepthClearValue(GlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
 
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(GlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
-    PointLightInfo.bEnableResourceStateTracking = true;
+    FRHITextureDesc PointLightDesc = FRHITextureDesc::CreateTextureCubeArray(GlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
+    PointLightDesc.bEnableResourceStateTracking = true;
     
-    Resources.PointLightShadowMaps = FRHI::Get()->CreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
+    Resources.PointLightShadowMaps = FRHI::Get()->CreateTexture(PointLightDesc, EResourceAccess::PixelShaderResource);
     if (Resources.PointLightShadowMaps)
     {
         Resources.PointLightShadowMaps->SetDebugName("PointLight ShadowMaps");
@@ -559,7 +559,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.UpdateBuffer(SinglePassShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FSinglePassPointLightBufferHLSL)), &SinglePassPointLightBuffer);
             CommandList.TransitionBuffer(SinglePassShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-            FRHIBeginRenderPassInfo RenderPass;
+            FRHIBeginRenderPassDesc RenderPass;
             RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
             RenderPass.DepthStencilView.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES);
             RenderPass.DepthStencilView.NumArraySlices = RHI_NUM_CUBE_FACES;
@@ -689,7 +689,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
                 const uint32 ArrayIndex = (LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
-                FRHIBeginRenderPassInfo RenderPass;
+                FRHIBeginRenderPassDesc RenderPass;
                 RenderPass.DepthStencilView             = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
                 RenderPass.DepthStencilView.LoadAction  = EAttachmentLoadAction::Clear;
                 RenderPass.DepthStencilView.StoreAction = EAttachmentStoreAction::Store;
@@ -811,10 +811,10 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIComputePipelineStateInfo CascadeMatrixGenPSOInfo;
-    CascadeMatrixGenPSOInfo.Shader = CascadeGenShader.Get();
+    FRHIComputePipelineStateDesc CascadeMatrixGenPSODesc;
+    CascadeMatrixGenPSODesc.Shader = CascadeGenShader.Get();
 
-    CascadeGen = FRHI::Get()->CreateComputePipelineState(CascadeMatrixGenPSOInfo);
+    CascadeGen = FRHI::Get()->CreateComputePipelineState(CascadeMatrixGenPSODesc);
     if (!CascadeGen)
     {
         DEBUG_BREAK();
@@ -825,13 +825,13 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         CascadeGen->SetDebugName("CascadeGen PSO");
     }
 
-	FRHIBufferInfo CascadeMatrixBufferInfo;
-    CascadeMatrixBufferInfo.Stride = sizeof(FCascadeMatricesHLSL);
-    CascadeMatrixBufferInfo.Size   = CascadeMatrixBufferInfo.Stride * NUM_SHADOW_CASCADES;
-    CascadeMatrixBufferInfo.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
-    CascadeMatrixBufferInfo.bEnableResourceStateTracking = true;
+	FRHIBufferDesc CascadeMatrixBufferDesc;
+    CascadeMatrixBufferDesc.Stride = sizeof(FCascadeMatricesHLSL);
+    CascadeMatrixBufferDesc.Size   = CascadeMatrixBufferDesc.Stride * NUM_SHADOW_CASCADES;
+    CascadeMatrixBufferDesc.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
+    CascadeMatrixBufferDesc.bEnableResourceStateTracking = true;
 
-    Resources.CascadeMatrixBuffer = FRHI::Get()->CreateBuffer(CascadeMatrixBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
+    Resources.CascadeMatrixBuffer = FRHI::Get()->CreateBuffer(CascadeMatrixBufferDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeMatrixBuffer)
     {
         DEBUG_BREAK();
@@ -842,8 +842,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeMatrixBuffer->SetDebugName("Cascade Matrices Buffer");
     }
 
-    FRHIShaderResourceViewInfo SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+    FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeMatrixBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
 
     if (!Resources.CascadeMatrixBufferSRV)
     {
@@ -851,8 +851,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIUnorderedAccessViewInfo UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+    FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeMatrixBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
 
     if (!Resources.CascadeMatrixBufferUAV)
     {
@@ -860,13 +860,13 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-	FRHIBufferInfo CascadeSplitsBufferInfo;
-    CascadeSplitsBufferInfo.Stride = sizeof(FCascadeSplitHLSL);
-    CascadeSplitsBufferInfo.Size   = CascadeSplitsBufferInfo.Stride * NUM_SHADOW_CASCADES;
-    CascadeSplitsBufferInfo.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
-    CascadeSplitsBufferInfo.bEnableResourceStateTracking = true;
+	FRHIBufferDesc CascadeSplitsBufferDesc;
+    CascadeSplitsBufferDesc.Stride = sizeof(FCascadeSplitHLSL);
+    CascadeSplitsBufferDesc.Size   = CascadeSplitsBufferDesc.Stride * NUM_SHADOW_CASCADES;
+    CascadeSplitsBufferDesc.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
+    CascadeSplitsBufferDesc.bEnableResourceStateTracking = true;
 
-    Resources.CascadeSplitsBuffer = FRHI::Get()->CreateBuffer(CascadeSplitsBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
+    Resources.CascadeSplitsBuffer = FRHI::Get()->CreateBuffer(CascadeSplitsBufferDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeSplitsBuffer)
     {
         DEBUG_BREAK();
@@ -877,7 +877,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeSplitsBuffer->SetDebugName("Cascade SplitBuffer");
     }
 
-    SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
     Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
     
     if (!Resources.CascadeSplitsBufferSRV)
@@ -886,8 +886,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+    UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeSplitsBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
 
     if (!Resources.CascadeSplitsBufferUAV)
     {
@@ -895,13 +895,13 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIBufferInfo CascadeHistoryInfo;
-    CascadeHistoryInfo.Stride = sizeof(FVector4);
-    CascadeHistoryInfo.Size   = CascadeHistoryInfo.Stride * NUM_SHADOW_CASCADES;
-    CascadeHistoryInfo.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
-    CascadeHistoryInfo.bEnableResourceStateTracking = true;
+    FRHIBufferDesc CascadeHistoryDesc;
+    CascadeHistoryDesc.Stride = sizeof(FVector4);
+    CascadeHistoryDesc.Size   = CascadeHistoryDesc.Stride * NUM_SHADOW_CASCADES;
+    CascadeHistoryDesc.Flags  = EBufferFlags::RWBuffer | EBufferFlags::Default;
+    CascadeHistoryDesc.bEnableResourceStateTracking = true;
 
-    Resources.CascadeSnapHistoryBuffer = FRHI::Get()->CreateBuffer(CascadeHistoryInfo, EResourceAccess::UnorderedAccess, nullptr);
+    Resources.CascadeSnapHistoryBuffer = FRHI::Get()->CreateBuffer(CascadeHistoryDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeSnapHistoryBuffer)
     {
         DEBUG_BREAK();
@@ -912,7 +912,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeSnapHistoryBuffer->SetDebugName("Cascade Snap History Buffer");
     }
 
-    Resources.CascadeExtentsHistoryBuffer = FRHI::Get()->CreateBuffer(CascadeHistoryInfo, EResourceAccess::UnorderedAccess, nullptr);
+    Resources.CascadeExtentsHistoryBuffer = FRHI::Get()->CreateBuffer(CascadeHistoryDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeExtentsHistoryBuffer)
     {
         DEBUG_BREAK();
@@ -924,7 +924,7 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
     UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeSnapHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSnapHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+    Resources.CascadeSnapHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
     
     if (!Resources.CascadeSnapHistoryBufferUAV)
     {
@@ -932,8 +932,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    UAVInfo = FRHIUnorderedAccessViewInfo::CreateBufferUAV(Resources.CascadeExtentsHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeExtentsHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
+    UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeExtentsHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeExtentsHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
     
     if (!Resources.CascadeExtentsHistoryBufferUAV)
     {
@@ -1161,7 +1161,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         // Initialize standard input layout
-        TArray<FRHIInputElementInfo> InputElements;
+        TArray<FRHIInputElementDesc> InputElements;
         if (Material->SupportsPixelDiscard())
         {
             InputElements =
@@ -1185,7 +1185,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             return nullptr;
         }
 
-        FRHIDepthStencilStateInfo DepthStencilStateInitializer;
+        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
         DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
         DepthStencilStateInitializer.bDepthEnable      = true;
         DepthStencilStateInitializer.bDepthWriteEnable = true;
@@ -1197,33 +1197,33 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             return nullptr;
         }
 
-        FRHIRasterizerStateInfo RasterizerStateInfo;
-        RasterizerStateInfo.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
+        FRHIRasterizerStateDesc RasterizerStateDesc;
+        RasterizerStateDesc.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
 
         // TODO: Revisit depth-bias
-        RasterizerStateInfo.bEnableDepthBias     = true;
-        RasterizerStateInfo.DepthBias            = 1.0f;
-        RasterizerStateInfo.DepthBiasClamp       = 0.05f;
-        RasterizerStateInfo.SlopeScaledDepthBias = 1.0f;
+        RasterizerStateDesc.bEnableDepthBias     = true;
+        RasterizerStateDesc.DepthBias            = 1.0f;
+        RasterizerStateDesc.DepthBiasClamp       = 0.05f;
+        RasterizerStateDesc.SlopeScaledDepthBias = 1.0f;
 
         if (Material->IsDoubleSided())
         {
-            RasterizerStateInfo.CullMode = ECullMode::None;
+            RasterizerStateDesc.CullMode = ECullMode::None;
         }
         else
         {
-            RasterizerStateInfo.CullMode = ECullMode::Back;
+            RasterizerStateDesc.CullMode = ECullMode::Back;
         }
 
-        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
+        NewPipelineStateInstance.RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();
             return nullptr;
         }
 
-        FRHIBlendStateInfo BlendStateInfo;
-        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
+        FRHIBlendStateDesc BlendStateDesc;
+        NewPipelineStateInstance.BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
 
         if (!NewPipelineStateInstance.BlendState)
         {
@@ -1231,28 +1231,28 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             return nullptr;
         }
 
-        FRHIGraphicsPipelineStateInfo PSOInfo;
-        PSOInfo.BlendState                     = NewPipelineStateInstance.BlendState.Get();
-        PSOInfo.DepthStencilState              = NewPipelineStateInstance.DepthStencilState.Get();
-        PSOInfo.bPrimitiveRestartEnable        = false;
-        PSOInfo.InputLayout                    = NewPipelineStateInstance.InputLayout.Get();
-        PSOInfo.PrimitiveTopology              = EPrimitiveTopology::TriangleList;
-        PSOInfo.RasterizerState                = NewPipelineStateInstance.RasterizerState.Get();
-        PSOInfo.MultiSampleState.SampleCount   = 1;
-        PSOInfo.MultiSampleState.SampleQuality = 0;
-        PSOInfo.MultiSampleState.SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
-        PSOInfo.VertexShader                   = NewPipelineStateInstance.VertexShader.Get();
-        PSOInfo.PixelShader                    = NewPipelineStateInstance.PixelShader.Get();
+        FRHIGraphicsPipelineStateDesc PSODesc;
+        PSODesc.BlendState                     = NewPipelineStateInstance.BlendState.Get();
+        PSODesc.DepthStencilState              = NewPipelineStateInstance.DepthStencilState.Get();
+        PSODesc.bPrimitiveRestartEnable        = false;
+        PSODesc.InputLayout                    = NewPipelineStateInstance.InputLayout.Get();
+        PSODesc.PrimitiveTopology              = EPrimitiveTopology::TriangleList;
+        PSODesc.RasterizerState                = NewPipelineStateInstance.RasterizerState.Get();
+        PSODesc.MultiSampleState.SampleCount   = 1;
+        PSODesc.MultiSampleState.SampleQuality = 0;
+        PSODesc.MultiSampleState.SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
+        PSODesc.VertexShader                   = NewPipelineStateInstance.VertexShader.Get();
+        PSODesc.PixelShader                    = NewPipelineStateInstance.PixelShader.Get();
 
         if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
         {
-            PSOInfo.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
+            PSODesc.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat = GlobalTextureFormats::ShadowMapFormat;
-        PSOInfo.RasterizerOutputFormats.NumRenderTargets   = 0;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat = GlobalTextureFormats::ShadowMapFormat;
+        PSODesc.RasterizerOutputFormats.NumRenderTargets   = 0;
 
-        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        NewPipelineStateInstance.PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
         if (!NewPipelineStateInstance.PipelineState)
         {
             DEBUG_BREAK();
@@ -1276,13 +1276,13 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
 
 bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
 {
-	FRHIBufferInfo PerCascadeBufferInfo;
-    PerCascadeBufferInfo.Stride = sizeof(FPerCascadeHLSL);
-    PerCascadeBufferInfo.Size   = sizeof(FPerCascadeHLSL);
-    PerCascadeBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
-    PerCascadeBufferInfo.bEnableResourceStateTracking = true;
+	FRHIBufferDesc PerCascadeBufferDesc;
+    PerCascadeBufferDesc.Stride = sizeof(FPerCascadeHLSL);
+    PerCascadeBufferDesc.Size   = sizeof(FPerCascadeHLSL);
+    PerCascadeBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    PerCascadeBufferDesc.bEnableResourceStateTracking = true;
 
-    PerCascadeBuffer = FRHI::Get()->CreateBuffer(PerCascadeBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    PerCascadeBuffer = FRHI::Get()->CreateBuffer(PerCascadeBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerCascadeBuffer)
     {
         DEBUG_BREAK();
@@ -1301,7 +1301,7 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
 
     const FClearValue DepthClearValue(GlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
-    FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2DArray(GlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
+    FRHITextureDesc CascadeInfo = FRHITextureDesc::CreateTexture2DArray(GlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
     CascadeInfo.bEnableResourceStateTracking = true;
     
     Resources.ShadowCascades = FRHI::Get()->CreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
@@ -1318,10 +1318,10 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     for (uint16 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
     {
-        FRHIShaderResourceViewInfo SRVInfo = FRHIShaderResourceViewInfo::CreateTextureSRV(Resources.ShadowCascades.Get(), 
+        FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTextureSRV(Resources.ShadowCascades.Get(), 
             CastSRVFormat(Resources.ShadowCascades->GetFormat()), 0, 1, Index, 1);
 
-        Resources.ShadowCascadesSRVs[Index] = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+        Resources.ShadowCascadesSRVs[Index] = FRHI::Get()->CreateShaderResourceView(SRVDesc);
         if (!Resources.ShadowCascadesSRVs[Index])
         {
             DEBUG_BREAK();
@@ -1394,7 +1394,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     FSceneDirectionalLight* SceneDirectionalLight = Scene->DirectionalLight;
     if constexpr (bIsSinglePass)
     {
-        FRHIBeginRenderPassInfo RenderPass;
+        FRHIBeginRenderPassDesc RenderPass;
         RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowCascades.Get());
         RenderPass.DepthStencilView.ArrayIndex     = 0;
         RenderPass.DepthStencilView.NumArraySlices = NUM_SHADOW_CASCADES;
@@ -1508,7 +1508,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
             CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-            FRHIBeginRenderPassInfo RenderPass;
+            FRHIBeginRenderPassDesc RenderPass;
             RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowCascades.Get());
             RenderPass.DepthStencilView.ArrayIndex = static_cast<uint16>(Index);
 
@@ -1629,13 +1629,13 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-	FRHIBufferInfo SettingsBufferInfo;
-    SettingsBufferInfo.Stride = sizeof(FDirectionalShadowSettingsHLSL);
-    SettingsBufferInfo.Size   = sizeof(FDirectionalShadowSettingsHLSL);
-    SettingsBufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
-    SettingsBufferInfo.bEnableResourceStateTracking = true;
+	FRHIBufferDesc SettingsBufferDesc;
+    SettingsBufferDesc.Stride = sizeof(FDirectionalShadowSettingsHLSL);
+    SettingsBufferDesc.Size   = sizeof(FDirectionalShadowSettingsHLSL);
+    SettingsBufferDesc.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
+    SettingsBufferDesc.bEnableResourceStateTracking = true;
 
-    ShadowSettingsBuffer = FRHI::Get()->CreateBuffer(SettingsBufferInfo, EResourceAccess::ConstantBuffer);
+    ShadowSettingsBuffer = FRHI::Get()->CreateBuffer(SettingsBufferDesc, EResourceAccess::ConstantBuffer);
     if (!ShadowSettingsBuffer)
     {
         DEBUG_BREAK();
@@ -1653,10 +1653,10 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
-    FRHITextureInfo ShadowMaskInfo  = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
-    ShadowMaskInfo.bEnableResourceStateTracking = true;
+    FRHITextureDesc ShadowMaskDesc  = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::ShadowMaskFormat, Width, Height, 1, 1, Flags);
+    ShadowMaskDesc.bEnableResourceStateTracking = true;
 
-    Resources.ShadowMaskRaw = FRHI::Get()->CreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
+    Resources.ShadowMaskRaw = FRHI::Get()->CreateTexture(ShadowMaskDesc, EResourceAccess::NonPixelShaderResource);
     if (Resources.ShadowMaskRaw)
     {
         Resources.ShadowMaskRaw->SetDebugName("Directional Shadow Mask Raw");
@@ -1666,7 +1666,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
         return false;
     }
 
-    Resources.DirectionalShadowMask = FRHI::Get()->CreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
+    Resources.DirectionalShadowMask = FRHI::Get()->CreateTexture(ShadowMaskDesc, EResourceAccess::NonPixelShaderResource);
     if (Resources.DirectionalShadowMask)
     {
         Resources.DirectionalShadowMask->SetDebugName("Directional Shadow Mask");
@@ -1678,7 +1678,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 
     for (uint32 Index = 0; Index < 2; ++Index)
     {
-        Resources.ShadowMaskHistory[Index] = FRHI::Get()->CreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
+        Resources.ShadowMaskHistory[Index] = FRHI::Get()->CreateTexture(ShadowMaskDesc, EResourceAccess::NonPixelShaderResource);
         if (Resources.ShadowMaskHistory[Index])
         {
             Resources.ShadowMaskHistory[Index]->SetDebugName(FString::CreateFormatted("Shadow Mask History[%u]", Index));
@@ -1689,7 +1689,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
         }
     }
 
-    FRHITextureInfo ShadowDebugInfo = FRHITextureInfo::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Flags);
+    FRHITextureDesc ShadowDebugInfo = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Flags);
     ShadowDebugInfo.bEnableResourceStateTracking = true;
 
     Resources.ShadowDebugBuffer = FRHI::Get()->CreateTexture(ShadowDebugInfo, EResourceAccess::NonPixelShaderResource);
@@ -1704,10 +1704,10 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 
     Resources.bShadowMaskHistoryInitialized = false;
 
-    FRHITextureInfo CascadeIndexBufferInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
-    CascadeIndexBufferInfo.bEnableResourceStateTracking = true;
+    FRHITextureDesc CascadeIndexBufferDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
+    CascadeIndexBufferDesc.bEnableResourceStateTracking = true;
 
-    Resources.CascadeIndexBuffer = FRHI::Get()->CreateTexture(CascadeIndexBufferInfo, EResourceAccess::NonPixelShaderResource);
+    Resources.CascadeIndexBuffer = FRHI::Get()->CreateTexture(CascadeIndexBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (Resources.CascadeIndexBuffer)
     {
         Resources.CascadeIndexBuffer->SetDebugName("Cascade Index Debug Buffer");
@@ -1988,10 +1988,10 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
         return false;
     }
 
-    FRHIComputePipelineStateInfo ShadowMaskGenPSOInfo;
-    ShadowMaskGenPSOInfo.Shader = PipelineStateInstance.Shader.Get();
+    FRHIComputePipelineStateDesc ShadowMaskGenPSODesc;
+    ShadowMaskGenPSODesc.Shader = PipelineStateInstance.Shader.Get();
 
-    PipelineStateInstance.PipelineState = FRHI::Get()->CreateComputePipelineState(ShadowMaskGenPSOInfo);
+    PipelineStateInstance.PipelineState = FRHI::Get()->CreateComputePipelineState(ShadowMaskGenPSODesc);
     if (!PipelineStateInstance.PipelineState)
     {
         DEBUG_BREAK();
@@ -2067,10 +2067,10 @@ bool FShadowMaskHistoryPass::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInfo PSOInfo;
-        PSOInfo.Shader = HistoryShader.Get();
+        FRHIComputePipelineStateDesc PSODesc;
+        PSODesc.Shader = HistoryShader.Get();
 
-        HistoryPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+        HistoryPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
         if (!HistoryPSO)
         {
             DEBUG_BREAK();
@@ -2079,8 +2079,8 @@ bool FShadowMaskHistoryPass::Initialize(FFrameResources& FrameResources)
         HistoryPSO->SetDebugName("ShadowMaskHistory PSO");
     }
 
-    FRHISamplerStateInfo SamplerInfo = FRHISamplerStateInfo::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
-    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+    FRHISamplerStateDesc SamplerDesc = FRHISamplerStateDesc::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
+    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
     if (!LinearSampler)
     {
         DEBUG_BREAK();

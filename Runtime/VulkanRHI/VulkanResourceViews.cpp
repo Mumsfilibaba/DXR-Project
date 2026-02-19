@@ -176,17 +176,17 @@ void FVulkanResourceView::SetDebugName(const FString& InName)
     }
 }
 
-FVulkanShaderResourceView::FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource)
+FVulkanShaderResourceViewRHI::FVulkanShaderResourceViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
     , FVulkanResourceView(InDevice)
 {
 }
 
-bool FVulkanShaderResourceView::InitializeSRV(const FRHIShaderResourceViewInfo& InInfo)
+bool FVulkanShaderResourceViewRHI::InitializeSRV(const FRHIShaderResourceViewDesc& InDesc)
 {
-    if (InInfo.IsBufferSRV())
+    if (InDesc.IsBufferSRV())
     {
-        FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(InInfo.BufferSRV.Buffer);
+        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(InDesc.BufferSRV.Buffer);
         if (!VulkanBuffer)
         {
             VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
@@ -196,18 +196,18 @@ bool FVulkanShaderResourceView::InitializeSRV(const FRHIShaderResourceViewInfo& 
         // TODO: Use typed buffers
 
         VkDeviceSize Stride = 0;
-        if (InInfo.BufferSRV.Format == EBufferSRVFormat::None)
+        if (InDesc.BufferSRV.Format == EBufferSRVFormat::None)
         {
-            Stride = VulkanBuffer->GetInfo().Stride;
+            Stride = VulkanBuffer->GetDesc().Stride;
         }
-        else if (InInfo.BufferSRV.Format == EBufferSRVFormat::UInt32)
+        else if (InDesc.BufferSRV.Format == EBufferSRVFormat::UInt32)
         {
             Stride = sizeof(uint32);
         }
 
         const VkBuffer Buffer = VulkanBuffer->GetVkBuffer();
-        const VkDeviceSize Offset = Stride * InInfo.BufferSRV.FirstElement;
-        const VkDeviceSize Range = Stride * InInfo.BufferSRV.NumElements;
+        const VkDeviceSize Offset = Stride * InDesc.BufferSRV.FirstElement;
+        const VkDeviceSize Range = Stride * InDesc.BufferSRV.NumElements;
 
         if (!InitializeAsStructuredBufferView(Buffer, Offset, Range))
         {
@@ -216,16 +216,16 @@ bool FVulkanShaderResourceView::InitializeSRV(const FRHIShaderResourceViewInfo& 
 
         return true;
     }
-    else if (InInfo.IsTextureSRV())
+    else if (InDesc.IsTextureSRV())
     {
-        FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(InInfo.TextureSRV.Texture);
+        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InDesc.TextureSRV.Texture);
         if (!VulkanTexture)
         {
             VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
             return false;
         }
 
-        if (IsTypelessFormat(InInfo.TextureSRV.Format))
+        if (IsTypelessFormat(InDesc.TextureSRV.Format))
         {
             VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
             return false;
@@ -270,13 +270,13 @@ bool FVulkanShaderResourceView::InitializeSRV(const FRHIShaderResourceViewInfo& 
         uint32 BaseArrayLayer;
         if (IsTextureCube(VulkanTexture->GetDimension()))
         {
-            BaseArrayLayer = InInfo.TextureSRV.FirstArraySlice * RHI_NUM_CUBE_FACES;
-            LayerCount = Math::Max<uint16>(InInfo.TextureSRV.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
+            BaseArrayLayer = InDesc.TextureSRV.FirstArraySlice * RHI_NUM_CUBE_FACES;
+            LayerCount = Math::Max<uint16>(InDesc.TextureSRV.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
         }
         else
         {
-            BaseArrayLayer = InInfo.TextureSRV.FirstArraySlice;
-            LayerCount = Math::Max<uint16>(InInfo.TextureSRV.NumSlices, 1u);
+            BaseArrayLayer = InDesc.TextureSRV.FirstArraySlice;
+            LayerCount = Math::Max<uint16>(InDesc.TextureSRV.NumSlices, 1u);
         }
 
         // NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture
@@ -284,7 +284,7 @@ bool FVulkanShaderResourceView::InitializeSRV(const FRHIShaderResourceViewInfo& 
         const VkImage Image = VulkanTexture->GetVkImage();
         const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
 
-        if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InInfo.TextureSRV.FirstMipLevel, InInfo.TextureSRV.NumMips))
+        if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.TextureSRV.FirstMipLevel, InDesc.TextureSRV.NumMips))
         {
             const FString TextureDebugName = VulkanTexture->GetDebugName();
             if (!TextureDebugName.IsEmpty())
@@ -305,17 +305,17 @@ bool FVulkanShaderResourceView::InitializeSRV(const FRHIShaderResourceViewInfo& 
     }
 }
 
-FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource)
+FVulkanUnorderedAccessViewRHI::FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
     , FVulkanResourceView(InDevice)
 {
 }
 
-bool FVulkanUnorderedAccessView::InitializeUAV(const FRHIUnorderedAccessViewInfo& InInfo)
+bool FVulkanUnorderedAccessViewRHI::InitializeUAV(const FRHIUnorderedAccessViewDesc& InDesc)
 {
-    if (InInfo.IsBufferUAV())
+    if (InDesc.IsBufferUAV())
     {
-        FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(InInfo.BufferUAV.Buffer);
+        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(InDesc.BufferUAV.Buffer);
         if (!VulkanBuffer)
         {
             VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
@@ -325,18 +325,18 @@ bool FVulkanUnorderedAccessView::InitializeUAV(const FRHIUnorderedAccessViewInfo
         // TODO: Use typed buffers
 
         VkDeviceSize Stride = 0;
-        if (InInfo.BufferUAV.Format == EBufferUAVFormat::None)
+        if (InDesc.BufferUAV.Format == EBufferUAVFormat::None)
         {
-            Stride = VulkanBuffer->GetInfo().Stride;
+            Stride = VulkanBuffer->GetDesc().Stride;
         }
-        else if (InInfo.BufferUAV.Format == EBufferUAVFormat::UInt32)
+        else if (InDesc.BufferUAV.Format == EBufferUAVFormat::UInt32)
         {
             Stride = sizeof(uint32);
         }
 
         const VkBuffer Buffer = VulkanBuffer->GetVkBuffer();
-        const VkDeviceSize Offset = Stride * InInfo.BufferUAV.FirstElement;
-        const VkDeviceSize Range = Stride * InInfo.BufferUAV.NumElements;
+        const VkDeviceSize Offset = Stride * InDesc.BufferUAV.FirstElement;
+        const VkDeviceSize Range = Stride * InDesc.BufferUAV.NumElements;
 
         if (!InitializeAsStructuredBufferView(Buffer, Offset, Range))
         {
@@ -345,16 +345,16 @@ bool FVulkanUnorderedAccessView::InitializeUAV(const FRHIUnorderedAccessViewInfo
 
         return true;
     }
-    else if (InInfo.IsTextureUAV())
+    else if (InDesc.IsTextureUAV())
     {
-        FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(InInfo.TextureUAV.Texture);
+        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InDesc.TextureUAV.Texture);
         if (!VulkanTexture)
         {
             VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
             return false;
         }
 
-        if (IsTypelessFormat(InInfo.TextureUAV.Format))
+        if (IsTypelessFormat(InDesc.TextureUAV.Format))
         {
             VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
             return false;
@@ -394,13 +394,13 @@ bool FVulkanUnorderedAccessView::InitializeUAV(const FRHIUnorderedAccessViewInfo
         uint32 BaseArrayLayer;
         if (IsTextureCube(VulkanTexture->GetDimension()))
         {
-            BaseArrayLayer = InInfo.TextureUAV.FirstArraySlice * RHI_NUM_CUBE_FACES;
-            LayerCount = Math::Max<uint16>(InInfo.TextureUAV.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
+            BaseArrayLayer = InDesc.TextureUAV.FirstArraySlice * RHI_NUM_CUBE_FACES;
+            LayerCount = Math::Max<uint16>(InDesc.TextureUAV.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
         }
         else
         {
-            BaseArrayLayer = InInfo.TextureUAV.FirstArraySlice;
-            LayerCount = Math::Max<uint16>(InInfo.TextureUAV.NumSlices, 1u);
+            BaseArrayLayer = InDesc.TextureUAV.FirstArraySlice;
+            LayerCount = Math::Max<uint16>(InDesc.TextureUAV.NumSlices, 1u);
         }
 
         // NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture
@@ -408,7 +408,7 @@ bool FVulkanUnorderedAccessView::InitializeUAV(const FRHIUnorderedAccessViewInfo
         const VkImage Image = VulkanTexture->GetVkImage();
         const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
 
-        if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InInfo.TextureUAV.MipLevel, 1u))
+        if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.TextureUAV.MipLevel, 1u))
         {
             const FString TextureDebugName = VulkanTexture->GetDebugName();
             if (!TextureDebugName.IsEmpty())

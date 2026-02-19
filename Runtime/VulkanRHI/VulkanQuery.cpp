@@ -9,7 +9,7 @@ static TAutoConsoleVariable<int32> CVarVulkanQueryPoolSize(
     VULKAN_DEFAULT_QUERY_COUNT,
     EConsoleVariableFlags::Default);
 
-FVulkanQuery::FVulkanQuery(FVulkanDevice* InDevice, EQueryType InQueryType)
+FVulkanQueryRHI::FVulkanQueryRHI(FVulkanDevice* InDevice, EQueryType InQueryType)
     : FRHIQuery(InQueryType)
     , FVulkanDeviceChild(InDevice)
     , QueryAllocation()

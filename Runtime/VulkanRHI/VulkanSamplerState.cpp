@@ -1,52 +1,52 @@
 #include "VulkanRHI/VulkanSamplerState.h"
 #include "VulkanRHI/VulkanDevice.h"
 
-FVulkanSamplerState::FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateInfo& InSamplerInfo)
-    : FRHISamplerState(InSamplerInfo)
+FVulkanSamplerStateRHI::FVulkanSamplerStateRHI(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InSamplerDesc)
+    : FRHISamplerState(InSamplerDesc)
     , FVulkanDeviceChild(InDevice)
     , Sampler(VK_NULL_HANDLE)
 {
 }
 
-FVulkanSamplerState::~FVulkanSamplerState()
+FVulkanSamplerStateRHI::~FVulkanSamplerStateRHI()
 {
     Sampler = VK_NULL_HANDLE;
 }
 
-bool FVulkanSamplerState::Initialize()
+bool FVulkanSamplerStateRHI::Initialize()
 {
     VkSamplerCreateInfo SamplerCreateInfo = {};
-    SamplerCreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    SamplerCreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(Info.Filter);
-    SamplerCreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(Info.Filter);
-    SamplerCreateInfo.mipmapMode              = ConvertSamplerFilterToMipmapMode(Info.Filter);
-    SamplerCreateInfo.addressModeU            = ConvertSamplerMode(Info.AddressU);
-    SamplerCreateInfo.addressModeV            = ConvertSamplerMode(Info.AddressV);
-    SamplerCreateInfo.addressModeW            = ConvertSamplerMode(Info.AddressW);
-    SamplerCreateInfo.mipLodBias              = Info.MipLODBias;
-    SamplerCreateInfo.anisotropyEnable        = IsAnisotropySampler(Info.Filter);
-    SamplerCreateInfo.maxAnisotropy           = Info.MaxAnisotropy;
-    SamplerCreateInfo.compareEnable           = IsComparisonSampler(Info.Filter);
-    SamplerCreateInfo.compareOp               = ConvertComparisonFunc(Info.ComparisonFunc);
-    SamplerCreateInfo.minLod                  = Info.MinLOD;
-    SamplerCreateInfo.maxLod                  = Info.MaxLOD;
-    SamplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-    SamplerCreateInfo.unnormalizedCoordinates = false;
+    SamplerCreateDesc.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    SamplerCreateDesc.magFilter               = ConvertSamplerFilterToMagFilter(Desc.Filter);
+    SamplerCreateDesc.minFilter               = ConvertSamplerFilterToMinFilter(Desc.Filter);
+    SamplerCreateDesc.mipmapMode              = ConvertSamplerFilterToMipmapMode(Desc.Filter);
+    SamplerCreateDesc.addressModeU            = ConvertSamplerMode(Desc.AddressU);
+    SamplerCreateDesc.addressModeV            = ConvertSamplerMode(Desc.AddressV);
+    SamplerCreateDesc.addressModeW            = ConvertSamplerMode(Desc.AddressW);
+    SamplerCreateDesc.mipLodBias              = Desc.MipLODBias;
+    SamplerCreateDesc.anisotropyEnable        = IsAnisotropySampler(Desc.Filter);
+    SamplerCreateDesc.maxAnisotropy           = Desc.MaxAnisotropy;
+    SamplerCreateDesc.compareEnable           = IsComparisonSampler(Desc.Filter);
+    SamplerCreateDesc.compareOp               = ConvertComparisonFunc(Desc.ComparisonFunc);
+    SamplerCreateDesc.minLod                  = Desc.MinLOD;
+    SamplerCreateDesc.maxLod                  = Desc.MaxLOD;
+    SamplerCreateDesc.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    SamplerCreateDesc.unnormalizedCoordinates = false;
     
     // If anisotropy isn't enabled, force 1.0f. If it is, clamp to at least 1.0f.
-    if (!SamplerCreateInfo.anisotropyEnable)
+    if (!SamplerCreateDesc.anisotropyEnable)
     {
-        SamplerCreateInfo.maxAnisotropy = 1.0f;
+        SamplerCreateDesc.maxAnisotropy = 1.0f;
     }
     else
     {
-        SamplerCreateInfo.maxAnisotropy = Math::Max(1.0f, SamplerCreateInfo.maxAnisotropy);
+        SamplerCreateDesc.maxAnisotropy = Math::Max(1.0f, SamplerCreateDesc.maxAnisotropy);
     }
     
     // Ensure LOD range is sane
-    if (SamplerCreateInfo.maxLod < SamplerCreateInfo.minLod)
+    if (SamplerCreateDesc.maxLod < SamplerCreateDesc.minLod)
     {
-        Math::Swap(SamplerCreateInfo.minLod, SamplerCreateInfo.maxLod);
+        Math::Swap(SamplerCreateDesc.minLod, SamplerCreateDesc.maxLod);
     }
 
     if (!GetDevice()->FindOrCreateSampler(SamplerCreateInfo, Sampler))

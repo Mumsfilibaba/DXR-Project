@@ -35,7 +35,7 @@ NODISCARD constexpr const CHAR* ToString(EStencilOp StencilOp)
     }
 }
 
-struct FRHIDepthStencilStateInfo
+struct FRHIDepthStencilStateDesc
 {
     struct FStencilState
     {
@@ -56,9 +56,9 @@ struct FRHIDepthStencilStateInfo
         EComparisonFunc StencilFunc   = EComparisonFunc::Always;
     };
 
-    constexpr bool operator==(const FRHIDepthStencilStateInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHIDepthStencilStateDesc& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRHIDepthStencilStateInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIDepthStencilStateDesc& Value)
     {
         uint64 Hash = static_cast<uint64>(Value.bDepthWriteEnable);
         HashCombine(Hash, UnderlyingTypeValue(Value.DepthFunc));
@@ -88,7 +88,7 @@ protected:
     virtual ~FRHIDepthStencilState() = default;
 
 public:
-    virtual FRHIDepthStencilStateInfo GetInfo() const = 0;
+    virtual FRHIDepthStencilStateDesc GetDesc() const = 0;
 };
 
 enum class ECullMode : uint8
@@ -127,11 +127,11 @@ NODISCARD constexpr const CHAR* ToString(EFillMode FillMode)
     }
 }
 
-struct FRHIRasterizerStateInfo
+struct FRHIRasterizerStateDesc
 {
-    constexpr bool operator==(const FRHIRasterizerStateInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHIRasterizerStateDesc& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRHIRasterizerStateInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIRasterizerStateDesc& Value)
     {
         uint64 Hash = UnderlyingTypeValue(Value.FillMode);
         HashCombine(Hash, UnderlyingTypeValue(Value.CullMode));
@@ -168,7 +168,7 @@ protected:
     virtual ~FRHIRasterizerState() = default;
 
 public:
-    virtual FRHIRasterizerStateInfo GetInfo() const = 0;
+    virtual FRHIRasterizerStateDesc GetDesc() const = 0;
 };
 
 enum class EBlendType : uint8
@@ -327,11 +327,11 @@ struct FRenderTargetBlendInfo
 
 static_assert(TAlignmentOf<FRenderTargetBlendInfo>::Value == sizeof(uint8), "FRenderTargetBlendInfo is assumed to aligned to a uint8");
 
-struct FRHIBlendStateInfo
+struct FRHIBlendStateDesc
 {
-    constexpr bool operator==(const FRHIBlendStateInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHIBlendStateDesc& Other) const noexcept = default;
 
-    NODISCARD friend uint64 GetHashForType(const FRHIBlendStateInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIBlendStateDesc& Value)
     {
         uint64 Hash = 0;
         for (uint32 Index = 0; Index < Value.NumRenderTargets; ++Index)
@@ -362,7 +362,7 @@ protected:
     virtual ~FRHIBlendState() = default;
 
 public:
-    virtual FRHIBlendStateInfo GetInfo() const = 0;
+    virtual FRHIBlendStateDesc GetDesc() const = 0;
 };
 
 enum class EVertexInputClass : uint8
@@ -382,7 +382,7 @@ NODISCARD constexpr const CHAR* ToString(EVertexInputClass BlendOp)
     }
 }
 
-struct FRHIInputElementInfo
+struct FRHIInputElementDesc
 {
     /** @brief Semantic in the shader to match */
     FString Semantic;
@@ -419,8 +419,8 @@ protected:
     virtual ~FRHIInputLayout() = default;
     
 public:
-    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const = 0;
-    virtual uint32 GetNumInputElementInfos() const = 0; 
+    virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const = 0;
+    virtual uint32 GetNumInputElementDescs() const = 0; 
 };
 
 class FRHIPipelineState : public FRHIResource
@@ -466,7 +466,7 @@ struct FRHIMultiSampleState
     uint32 SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
 };
 
-struct FRHIGraphicsPipelineStateInfo
+struct FRHIGraphicsPipelineStateDesc
 {
     FRHIVertexShader*   VertexShader   = nullptr;
     FRHIHullShader*     HullShader     = nullptr;
@@ -494,7 +494,7 @@ protected:
     virtual ~FRHIGraphicsPipelineState() = default;
 };
 
-struct FRHIComputePipelineStateInfo
+struct FRHIComputePipelineStateDesc
 {
     FRHIComputeShader* Shader = nullptr;
 };
@@ -513,30 +513,30 @@ enum class ERayTracingHitGroupType : uint8
     Procedural = 2
 };
 
-struct FRHIRayTracingHitGroupInfo
+struct FRHIRayTracingHitGroupDesc
 {
-    FRHIRayTracingHitGroupInfo() noexcept = default;
+    FRHIRayTracingHitGroupDesc() noexcept = default;
 
-    FRHIRayTracingHitGroupInfo(const FString& InName, ERayTracingHitGroupType InType, TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
+    FRHIRayTracingHitGroupDesc(const FString& InName, ERayTracingHitGroupType InType, TArrayView<FRHIRayTracingShader*> InRayTracingShaders) noexcept
         : Name(InName)
         , Type(InType)
         , Shaders(InRayTracingShaders)
     {
     }
 
-    bool operator==(const FRHIRayTracingHitGroupInfo& Other) const noexcept = default;
+    bool operator==(const FRHIRayTracingHitGroupDesc& Other) const noexcept = default;
 
     FString Name;
     TArray<FRHIRayTracingShader*> Shaders;
     ERayTracingHitGroupType Type = ERayTracingHitGroupType::Unknown;
 };
 
-struct FRHIRayTracingPipelineStateInitializer
+struct FRHIRayTracingPipelineStateDesc
 {
-    FRHIRayTracingPipelineStateInitializer() noexcept  = default;
+    FRHIRayTracingPipelineStateDesc() noexcept  = default;
 
-    FRHIRayTracingPipelineStateInitializer(const TArrayView<FRHIRayGenShader*>& InRayGenShaders, const TArrayView<FRHIRayCallableShader*>& InCallableShaders,
-        const TArrayView<FRHIRayTracingHitGroupInfo>& InHitGroups, const TArrayView<FRHIRayMissShader*>& InMissShaders, uint32 InMaxAttributeSizeInBytes,
+    FRHIRayTracingPipelineStateDesc(const TArrayView<FRHIRayGenShader*>& InRayGenShaders, const TArrayView<FRHIRayCallableShader*>& InCallableShaders,
+        const TArrayView<FRHIRayTracingHitGroupDesc>& InHitGroups, const TArrayView<FRHIRayMissShader*>& InMissShaders, uint32 InMaxAttributeSizeInBytes,
         uint32 InMaxPayloadSizeInBytes, uint32 InMaxRecursionDepth) noexcept
         : RayGenShaders(InRayGenShaders)
         , CallableShaders(InCallableShaders)
@@ -548,12 +548,12 @@ struct FRHIRayTracingPipelineStateInitializer
     {
     }
 
-    bool operator==(const FRHIRayTracingPipelineStateInitializer& Other) const noexcept = default;
+    bool operator==(const FRHIRayTracingPipelineStateDesc& Other) const noexcept = default;
 
     TArray<FRHIRayGenShader*>          RayGenShaders;
     TArray<FRHIRayCallableShader*>     CallableShaders;
     TArray<FRHIRayMissShader*>         MissShaders;
-    TArray<FRHIRayTracingHitGroupInfo> HitGroups;
+    TArray<FRHIRayTracingHitGroupDesc> HitGroups;
 
     uint32 MaxAttributeSizeInBytes = 0;
     uint32 MaxPayloadSizeInBytes   = 0;

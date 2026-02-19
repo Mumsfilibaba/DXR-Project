@@ -184,12 +184,12 @@ void FVulkanCommandContextState::SetViewInstanceInfo(const FRHIViewInstancingSta
     GraphicsState.ViewInstancingState = InViewInstancingInfo;
 }
 
-void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState)
+void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelineStateRHI* InGraphicsPipelineState)
 {
-    FVulkanGraphicsPipelineState* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
+    FVulkanGraphicsPipelineStateRHI* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
     if (CurrentGraphicsPipelineState != InGraphicsPipelineState || GVulkanForceBinding)
     {
-        GraphicsState.PipelineState = MakeSharedRef<FVulkanGraphicsPipelineState>(InGraphicsPipelineState);
+        GraphicsState.PipelineState = MakeSharedRef<FVulkanGraphicsPipelineStateRHI>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
 
         if (InGraphicsPipelineState)
@@ -221,12 +221,12 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
     }
 }
 
-void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState)
+void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineStateRHI* InComputePipelineState)
 {
-    FVulkanComputePipelineState* CurrentComputePipelineState = ComputeState.PipelineState.Get();
+    FVulkanComputePipelineStateRHI* CurrentComputePipelineState = ComputeState.PipelineState.Get();
     if (CurrentComputePipelineState != InComputePipelineState || GVulkanForceBinding)
     {
-        ComputeState.PipelineState = MakeSharedRef<FVulkanComputePipelineState>(InComputePipelineState);
+        ComputeState.PipelineState = MakeSharedRef<FVulkanComputePipelineStateRHI>(InComputePipelineState);
         ComputeState.bBindPipelineState = true;
 
         if (InComputePipelineState)
@@ -293,7 +293,7 @@ void FVulkanCommandContextState::SetBlendFactor(const float BlendFactor[4])
     }
 }
 
-void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 VertexBufferSlot)
+void FVulkanCommandContextState::SetVertexBuffer(FVulkanBufferRHI* VertexBuffer, uint32 VertexBufferSlot)
 {
     CHECK(VertexBufferSlot < VULKAN_MAX_VERTEX_BUFFER_SLOTS);
     
@@ -323,7 +323,7 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
     }
 }
 
-void FVulkanCommandContextState::SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexType)
+void FVulkanCommandContextState::SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, VkIndexType IndexType)
 {
     VkBuffer     Buffer;
     VkDeviceSize Offset;
@@ -364,7 +364,7 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
     }
 }
 
-void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
@@ -421,7 +421,7 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourc
     DescriptorState->SetSRV(ShaderResourceView, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
@@ -478,7 +478,7 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAcc
     DescriptorState->SetUAV(UnorderedAccessView, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
 
@@ -521,7 +521,7 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, 
     DescriptorState->SetUniformBuffer(UniformBuffer, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
+void FVulkanCommandContextState::SetSampler(FVulkanSamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
 {
     CHECK(SamplerIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
 

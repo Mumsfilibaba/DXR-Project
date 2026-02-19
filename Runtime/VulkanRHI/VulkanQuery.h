@@ -12,7 +12,7 @@ class FVulkanQueryPoolManager;
 class FVulkanCommandBuffer;
 class FVulkanCommandContext;
 
-typedef TSharedRef<struct FVulkanQuery> FVulkanQueryRef;
+typedef TSharedRef<struct FVulkanQueryRHI> FVulkanQueryRHIRef;
 
 struct FVulkanTimingQuery
 {
@@ -52,10 +52,10 @@ struct FVulkanQueryAllocation
     uint64*           Results;
 };
 
-struct FVulkanQuery : public FRHIQuery, public FVulkanDeviceChild
+struct FVulkanQueryRHI : public FRHIQuery, public FVulkanDeviceChild
 {
-    FVulkanQuery(FVulkanDevice* InDevice, EQueryType InQueryType);
-    virtual ~FVulkanQuery() = default;
+    FVulkanQueryRHI(FVulkanDevice* InDevice, EQueryType InQueryType);
+    virtual ~FVulkanQueryRHI() = default;
 
     // QueryAllocation should only used on RHI Thread
     FVulkanQueryAllocation QueryAllocation;

@@ -20,7 +20,7 @@ public:
     FD3D12ShaderBindingTableBuilder(FD3D12Device* InDevice);
 
     void PopulateEntry(
-        FD3D12RayTracingPipelineState*    PipelineState,
+        FD3D12RayTracingPipelineStateRHI*    PipelineState,
         FD3D12RootSignature*              RootSignature,
         FD3D12OnlineDescriptorHeap*       ResourceHeap,
         FD3D12OnlineDescriptorHeap*       SamplerHeap,
@@ -74,45 +74,45 @@ protected:
     FD3D12ResourceRef ScratchBuffer;
 };
 
-class FD3D12RayTracingGeometry : public FRHIRayTracingGeometry, public FD3D12AccelerationStructure
+class FD3D12GeometryAccelerationStructureRHI : public FRHIGeometryAccelerationStructure, public FD3D12AccelerationStructure
 {
 public:
-    FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo);
-    virtual ~FD3D12RayTracingGeometry() = default;
+    FD3D12GeometryAccelerationStructureRHI(FD3D12Device* InDevice, const FRHIGeometryAccelerationStructureDesc& InGeometryDesc);
+    virtual ~FD3D12GeometryAccelerationStructureRHI() = default;
     
-    bool Build(FD3D12CommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo);
+    bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildInfo);
 
-    // FRHIRayTracingGeometry Interface
+    // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
-    FD3D12Buffer* GetVertexBuffer() const
+    FD3D12BufferRHI* GetVertexBuffer() const
     { 
         return VertexBuffer.Get();
     }
 
-    FD3D12Buffer* GetIndexBuffer() const
+    FD3D12BufferRHI* GetIndexBuffer() const
     {
         return IndexBuffer.Get();
     }
 
 private:
-    TSharedRef<FD3D12Buffer> VertexBuffer;
-    TSharedRef<FD3D12Buffer> IndexBuffer;
+    TSharedRef<FD3D12BufferRHI> VertexBuffer;
+    TSharedRef<FD3D12BufferRHI> IndexBuffer;
 };
 
-class FD3D12RayTracingScene : public FRHIRayTracingScene , public FD3D12AccelerationStructure
+class FD3D12SceneAccelerationStructureRHI : public FRHISceneAccelerationStructure , public FD3D12AccelerationStructure
 {
 public:
-    FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneInfo& InSceneInfo);
-    virtual ~FD3D12RayTracingScene() = default;
+    FD3D12SceneAccelerationStructureRHI(FD3D12Device* InDevice, const FRHISceneAccelerationStructureDesc& InSceneDesc);
+    virtual ~FD3D12SceneAccelerationStructureRHI() = default;
 
-    bool Build(FD3D12CommandContext& CmdContext, const FRayTracingSceneBuildInfo& BuildInfo);
-	bool BuildBindingTable(class FD3D12CommandContext& CmdContext, FD3D12RayTracingPipelineState* PipelineState, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap,
+    bool Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildInfo);
+	bool BuildBindingTable(class FD3D12CommandContext& CmdContext, FD3D12RayTracingPipelineStateRHI* PipelineState, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap,
 		const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources);
 
-    // FRHIRayTracingScene Interface
+    // FRHISceneAccelerationStructure Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
@@ -134,9 +134,9 @@ public:
     }
 
 private:
-    TArray<FRHIRayTracingGeometryInstance> Instances;
+    TArray<FRHIGeometryAccelerationStructureInstance> Instances;
 
-    FD3D12ShaderResourceViewRef View;
+    FD3D12ShaderResourceViewRHIRef View;
     FD3D12ResourceRef InstanceBuffer;
     FD3D12ResourceRef BindingTable;
 

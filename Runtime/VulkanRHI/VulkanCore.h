@@ -580,7 +580,7 @@ constexpr VkStencilOp ConvertStencilOp(EStencilOp StencilOp)
     return VkStencilOp(-1);
 }
 
-inline VkStencilOpState ConvertStencilState(const FRHIDepthStencilStateInfo::FStencilState& StencilState)
+inline VkStencilOpState ConvertStencilState(const FRHIDepthStencilStateDesc::FStencilState& StencilState)
 {
     return
     {

@@ -24,7 +24,7 @@
 @end
 
 
-FMetalSwapChain::FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainInfo& SwapChainInfo)
+FMetalSwapChain::FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainDesc& SwapChainInfo)
     : FRHISwapChain(SwapChainInfo)
     , FMetalDeviceChild(InDeviceContext)
     , BackBuffer(nullptr)
@@ -46,7 +46,7 @@ FMetalSwapChain::~FMetalSwapChain()
 
 bool FMetalSwapChain::Initialize()
 {
-    if (!Info.WindowHandle)
+    if (!Desc.WindowHandle)
     {
         LOG_ERROR("WindowHandle cannot be null");
         return false;
@@ -59,8 +59,8 @@ bool FMetalSwapChain::Initialize()
         SCOPED_AUTORELEASE_POOL();
 
         NSRect Frame;
-        Frame.size.width  = Info.Width;
-        Frame.size.height = Info.Height;
+        Frame.size.width  = Desc.Width;
+        Frame.size.height = Desc.Height;
         Frame.origin.x    = 0;
         Frame.origin.y    = 0;
         
@@ -86,7 +86,7 @@ bool FMetalSwapChain::Initialize()
         [MetalView setLayer:NewMetalLayer];
         [MetalView retain];
         
-        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Info.WindowHandle);
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
         [CocoaWindow setContentView:MetalView];
         [CocoaWindow makeFirstResponder:MetalView];
 
@@ -104,8 +104,8 @@ bool FMetalSwapChain::Initialize()
     // Create BackBuffer
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
 
-    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), Info.Width, Info.Height, 1, 1, Flags);
-    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferInfo, EResourceAccess::Present);
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), Desc.Width, Desc.Height, 1, 1, Flags);
+    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferDesc, EResourceAccess::Present);
     BackBuffer->SetSwapChain(this);
     return true;
 }
@@ -114,7 +114,7 @@ bool FMetalSwapChain::Resize(uint32 InWidth, uint32 InHeight)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    if (Info.Width != InWidth || Info.Height != InHeight)
+    if (Desc.Width != InWidth || Desc.Height != InHeight)
     {
         FMacThreadManager::Get().MainThreadDispatch(^
         {
@@ -125,8 +125,8 @@ bool FMetalSwapChain::Resize(uint32 InWidth, uint32 InHeight)
             }
         }, NSDefaultRunLoopMode, true);
         
-        Info.Width  = uint16(InWidth);
-        Info.Height = uint16(InHeight);
+        Desc.Width  = uint16(InWidth);
+        Desc.Height = uint16(InHeight);
     }
     
     return true;

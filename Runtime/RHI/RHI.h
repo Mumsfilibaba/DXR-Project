@@ -8,12 +8,12 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FRHI;
-class FRHIRayTracingGeometry;
-class FRHIRayTracingScene;
-class FRHIGpuFence;
+class FRHIGeometryAccelerationStructure;
+class FRHISceneAccelerationStructure;
+class FRHIFence;
 struct IRHICommandContext;
-struct FRHIRayTracingSceneInfo;
-struct FRHIRayTracingGeometryInfo;
+struct FRHISceneAccelerationStructureDesc;
+struct FRHIGeometryAccelerationStructureDesc;
 
 enum class ERHIType : uint32
 {
@@ -102,63 +102,63 @@ public:
 
     /**
      * @brief Creates a texture.
-     * @param InTextureInfo Description of the RHI texture.
+     * @param InTextureDesc Description of the RHI texture.
      * @param InInitialState Initial state of the texture.
      * @param InInitialData Initial data of the texture.
      * @return The newly created texture.
      */
-    virtual FRHITexture* CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr) = 0;
+    virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr) = 0;
 
     /**
      * @brief Creates a buffer.
-     * @param InBufferInfo Description of the RHI buffer.
+     * @param InBufferDesc Description of the RHI buffer.
      * @param InInitialState Initial state of the buffer.
      * @param InInitialData Initial data of the buffer.
      * @return The newly created buffer.
      */
-    virtual FRHIBuffer* CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState = EResourceAccess::Common, const void* InInitialData = nullptr) = 0;
+    virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState = EResourceAccess::Common, const void* InInitialData = nullptr) = 0;
 
     /**
      * @brief Creates a sampler state.
-     * @param InSamplerInfo Structure with information about the sampler state.
+     * @param InSamplerDesc Structure with information about the sampler state.
      * @return The newly created sampler state (may return an existing one with an increased reference count).
      */
-    virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) = 0;
+    virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc) = 0;
 
     /**
      * @brief Creates a new viewport.
-     * @param InSwapChainInfo Structure containing the information for the viewport.
+     * @param InSwapChainDesc Structure containing the information for the viewport.
      * @return The newly created viewport.
      */
-    virtual FRHISwapChain* CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo) = 0;
+    virtual FRHISwapChain* CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc) = 0;
 
     /**
      * @brief Creates a new ray tracing scene.
-     * @param InSceneInfo Structure containing information about the ray tracing scene.
+     * @param InSceneDesc Structure containing information about the ray tracing scene.
      * @return The newly created ray tracing scene.
      */
-    virtual FRHIRayTracingScene* CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) = 0;
+    virtual FRHISceneAccelerationStructure* CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc) = 0;
 
     /**
      * @brief Creates a new ray tracing geometry.
-     * @param InGeometryInfo Structure containing information about the ray tracing geometry.
+     * @param InGeometryDesc Structure containing information about the ray tracing geometry.
      * @return The newly created ray tracing geometry.
      */
-    virtual FRHIRayTracingGeometry* CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) = 0;
+    virtual FRHIGeometryAccelerationStructure* CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) = 0;
 
     /**
      * @brief Creates a new shader resource view for a texture.
-     * @param InInfo Structure containing information about the shader resource view.
+     * @param InDesc Structure containing information about the shader resource view.
      * @return The newly created shader resource view.
      */
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo) = 0;
+    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new unordered access view for a texture.
-     * @param InInfo Structure containing information about the unordered access view.
+     * @param InDesc Structure containing information about the unordered access view.
      * @return The newly created unordered access view.
      */
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo) = 0;
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new compute shader.
@@ -246,52 +246,52 @@ public:
 
     /**
      * @brief Creates a new depth-stencil state.
-     * @param InInfo Information about the depth-stencil state.
+     * @param InDesc Information about the depth-stencil state.
      * @return The newly created depth-stencil state.
      */
-    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo) = 0;
+    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new rasterizer state.
-     * @param InInfo Information about the rasterizer state.
+     * @param InDesc Information about the rasterizer state.
      * @return The newly created rasterizer state.
      */
-    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo) = 0;
+    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new blend state.
-     * @param InInfo Information about the blend state.
+     * @param InDesc Information about the blend state.
      * @return The newly created blend state.
      */
-    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateInfo& InInfo) = 0;
+    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new vertex layout.
      * @param InInputElements Array of InputElements.
      * @return The newly created vertex layout.
      */
-    virtual FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements) = 0;
+    virtual FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements) = 0;
 
     /**
      * @brief Creates a graphics pipeline state.
-     * @param InInfo Information about the graphics pipeline state.
+     * @param InDesc Information about the graphics pipeline state.
      * @return The newly created pipeline state.
      */
-    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo) = 0;
+    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) = 0;
 
     /**
      * @brief Creates a compute pipeline state.
-     * @param InInfo Information about the compute pipeline state.
+     * @param InDesc Information about the compute pipeline state.
      * @return The newly created pipeline state.
      */
-    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) = 0;
+    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) = 0;
 
     /**
      * @brief Creates a ray-tracing pipeline state.
-     * @param InInitializer Information about the ray-tracing pipeline state.
+     * @param InDesc Information about the ray-tracing pipeline state.
      * @return The newly created pipeline state.
      */
-    virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) = 0;
+    virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new query object.
@@ -304,7 +304,7 @@ public:
      * @brief Creates a GPU fence for GPU->CPU synchronization.
      * @return The newly created fence object.
      */
-    virtual FRHIGpuFence* CreateFence() = 0;
+    virtual FRHIFence* CreateFence() = 0;
 
     /**
      * @brief Obtains a command context.
@@ -363,10 +363,10 @@ public:
     /**
      * @brief Retrieves memory statistics from the RHI.
      * @param MemoryType The type of video memory to query.
-     * @param OutMemoryStats Variable to store the memory statistics.
+     * @param OutMemoryInfo Variable to store the memory statistics.
      * @return True if the statistics were retrieved successfully.
      */
-    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const { return false; }
+    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const { return false; }
 
     /**
      * @brief Gets the adapter name.

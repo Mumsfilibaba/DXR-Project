@@ -21,20 +21,20 @@ public:
     void ResetStateResources();
     void ResetStateForNewCommandList();
 
-    void SetGraphicsPipelineState(FD3D12GraphicsPipelineState* InGraphicsPipelineState);
-    void SetComputePipelineState(FD3D12ComputePipelineState* InComputePipelineState);
+    void SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState);
+    void SetComputePipelineState(FD3D12ComputePipelineStateRHI* InComputePipelineState);
     void SetRenderTargets(FD3D12RenderTargetView* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilView* DepthStencil);
     void SetShadingRate(EShadingRate ShadingRate);
-    void SetShadingRateImage(FD3D12Texture* ShadingRateImage);
+    void SetShadingRateImage(FD3D12TextureRHI* ShadingRateImage);
     void SetViewports(D3D12_VIEWPORT* Viewports, uint32 NumViewports);
     void SetScissorRects(D3D12_RECT* ScissorRects, uint32 NumScissorRects);
     void SetBlendFactor(const float BlendFactor[4]);
-    void SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint32 VertexBufferSlot);
-    void SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_FORMAT IndexFormat);
-    void SetSRV(FD3D12ShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetUAV(FD3D12UnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetVertexBuffer(FD3D12BufferRHI* VertexBuffer, uint32 VertexBufferSlot);
+    void SetIndexBuffer(FD3D12BufferRHI* IndexBuffer, DXGI_FORMAT IndexFormat);
+    void SetSRV(FD3D12ShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetUAV(FD3D12UnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetCBV(FD3D12ConstantBufferView* ConstantBufferView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetSampler(FD3D12SamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
+    void SetSampler(FD3D12SamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
     void SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
     FORCEINLINE FD3D12CommandContext& GetContext()
@@ -47,12 +47,12 @@ public:
         return CommonState.DescriptorCache;
     }
 
-    FORCEINLINE FD3D12GraphicsPipelineState* GetGraphicsPipelineState() const
+    FORCEINLINE FD3D12GraphicsPipelineStateRHI* GetGraphicsPipelineState() const
     {
         return GraphicsState.PipelineState.Get();
     }
 
-    FORCEINLINE FD3D12ComputePipelineState* GetComputePipelineState() const
+    FORCEINLINE FD3D12ComputePipelineStateRHI* GetComputePipelineState() const
     {
         return ComputeState.PipelineState.Get();
     }
@@ -78,7 +78,7 @@ public:
         return GraphicsState.ShadingRate;
     }
 
-    FORCEINLINE FD3D12Texture* GetShadingRateImage() const
+    FORCEINLINE FD3D12TextureRHI* GetShadingRateImage() const
     {
         return GraphicsState.ShadingRateImage;
     }
@@ -134,7 +134,7 @@ private:
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
-        FD3D12GraphicsPipelineStateRef PipelineState;
+        FD3D12GraphicsPipelineStateRHIRef PipelineState;
 
         float                   BlendFactor[4];
 
@@ -143,7 +143,7 @@ private:
         D3D12_RECT              ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
         uint32                  NumScissorRects;
 
-        FD3D12Texture*          ShadingRateImage;
+        FD3D12TextureRHI*          ShadingRateImage;
         D3D12_SHADING_RATE      ShadingRate;
 
         FD3D12RenderTargetCache RTCache;
@@ -171,7 +171,7 @@ private:
         {
         }
 
-        FD3D12ComputePipelineStateRef PipelineState;
+        FD3D12ComputePipelineStateRHIRef PipelineState;
 
         bool bBindPipelineState   : 1;
         bool bBindRootSignature   : 1;

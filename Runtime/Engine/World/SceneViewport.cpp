@@ -44,13 +44,13 @@ bool FSceneViewport::InitializeRHI()
     }
 
     const FIntVector2 WindowSize = WindowWidget->GetSize();
-    FRHISwapChainInfo SwapChainInfo;
-    SwapChainInfo.Width        = static_cast<uint16>(WindowSize.X);
-    SwapChainInfo.Height       = static_cast<uint16>(WindowSize.Y);
-    SwapChainInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
-    SwapChainInfo.ColorFormat  = RenderSettings::GetBackBufferFormat();
+    FRHISwapChainDesc SwapChainDesc;
+    SwapChainDesc.Width        = static_cast<uint16>(WindowSize.X);
+    SwapChainDesc.Height       = static_cast<uint16>(WindowSize.Y);
+    SwapChainDesc.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
+    SwapChainDesc.ColorFormat  = RenderSettings::GetBackBufferFormat();
 
-    FRHISwapChainRef NewSwapChain = FRHI::Get()->CreateSwapChain(SwapChainInfo);
+    FRHISwapChainRef NewSwapChain = FRHI::Get()->CreateSwapChain(SwapChainDesc);
     if (!NewSwapChain)
     {
         DEBUG_BREAK();

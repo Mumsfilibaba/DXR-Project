@@ -3,8 +3,8 @@
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
-typedef TSharedRef<class FVulkanShaderResourceView>  FVulkanShaderResourceViewRef;
-typedef TSharedRef<class FVulkanUnorderedAccessView> FVulkanUnorderedAccessViewRef;
+typedef TSharedRef<class FVulkanShaderResourceViewRHI>  FVulkanShaderResourceViewRHIRef;
+typedef TSharedRef<class FVulkanUnorderedAccessViewRHI> FVulkanUnorderedAccessViewRHIRef;
 
 class FVulkanResourceView : public FVulkanDeviceChild
 {
@@ -78,24 +78,24 @@ protected:
     };
 };
 
-class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanResourceView
+class FVulkanShaderResourceViewRHI : public FRHIShaderResourceView, public FVulkanResourceView
 {
 public:
-    FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
-    virtual ~FVulkanShaderResourceView() = default;
+    FVulkanShaderResourceViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    virtual ~FVulkanShaderResourceViewRHI() = default;
 
-    bool InitializeSRV(const FRHIShaderResourceViewInfo& InInfo);
+    bool InitializeSRV(const FRHIShaderResourceViewDesc& InDesc);
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 };
 
-class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanResourceView
+class FVulkanUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FVulkanResourceView
 {
 public:
-    FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);
-    virtual ~FVulkanUnorderedAccessView() = default;
+    FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    virtual ~FVulkanUnorderedAccessViewRHI() = default;
 
-    bool InitializeUAV(const FRHIUnorderedAccessViewInfo& InInfo);
+    bool InitializeUAV(const FRHIUnorderedAccessViewDesc& InDesc);
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 };

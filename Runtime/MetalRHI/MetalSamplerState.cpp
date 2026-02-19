@@ -1,8 +1,8 @@
 #include "MetalRHI/MetalSamplerState.h"
 #include "MetalRHI/MetalDeviceContext.h"
 
-FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateInfo& InSamplerInfo)
-    : FRHISamplerState(InSamplerInfo)
+FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateDesc& InSamplerDesc)
+    : FRHISamplerState(InSamplerDesc)
     , FMetalDeviceChild(InDeviceContext)
     , SamplerState(nullptr)
 {

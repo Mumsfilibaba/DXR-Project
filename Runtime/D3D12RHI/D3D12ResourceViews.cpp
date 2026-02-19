@@ -52,7 +52,7 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
     return true;
 }
 
-FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
+FD3D12ShaderResourceViewRHI::FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
     , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
@@ -60,11 +60,11 @@ FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D1
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
+bool FD3D12ShaderResourceViewRHI::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
-        D3D12_ERROR_CRITICAL("[FD3D12ShaderResourceView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12ShaderResourceViewRHI] Invalid Descriptor");
         return false;
     }
 
@@ -82,7 +82,7 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
     return true;
 }
 
-FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
+FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
     , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
@@ -91,11 +91,11 @@ FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
+bool FD3D12UnorderedAccessViewRHI::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
-        D3D12_ERROR_CRITICAL("[FD3D12UnorderedAccessView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12UnorderedAccessViewRHI] Invalid Descriptor");
         return false;
     }
 
