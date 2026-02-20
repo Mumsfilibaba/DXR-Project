@@ -479,11 +479,17 @@ void FVulkanTexture::SetVkImage(VkImage InImage)
     DestroyImageViews();
     Image = InImage;
 
-    // NOTE: Use the format in the description to set the native format if it is not set yet this should only happen for BackBuffers
     if (CreateInfo.format == VK_FORMAT_UNDEFINED)
     {
-        CreateInfo.format = ConvertFormat(Info.Format);
+        CreateInfo.format      = ConvertFormat(Info.Format);
+        CreateInfo.mipLevels   = Info.NumMipLevels;
+        CreateInfo.arrayLayers = Info.NumArraySlices;
+        CreateInfo.extent      = { Info.GetWidth(), Info.GetHeight(), Math::Max(Info.GetDepth(), 1u) };
     }
+
+    const uint32 NumSubresources = CreateInfo.mipLevels * CreateInfo.arrayLayers;
+    TrackedState.Initialize(Math::Max(NumSubresources, 1u));
+    TrackedState.SetImageLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
 
 void FVulkanTexture::SetDebugName(const FString& InName)

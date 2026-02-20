@@ -1070,55 +1070,54 @@ bool FD3D12Device::Initialize()
     }
 
     {
-        const uint64 UploadHeapPageSizeBytes   = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapPageSize.GetValue())) * 1024ull;
-        const uint64 UploadHeapSmallThreshold  = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapSmallAllocationThreshold.GetValue()));
-        const uint64 UploadHeapLargeThreshold  = Math::Max<uint64>(UploadHeapSmallThreshold, static_cast<uint64>(CVarUploadHeapLargeAllocationThreshold.GetValue()));
+        const uint64 UploadHeapPageSizeBytes  = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapPageSize.GetValue())) * 1024ull;
+        const uint64 UploadHeapSmallThreshold = Math::Max<uint64>(1ull, static_cast<uint64>(CVarUploadHeapSmallAllocationThreshold.GetValue()));
+        const uint64 UploadHeapLargeThreshold = Math::Max<uint64>(UploadHeapSmallThreshold, static_cast<uint64>(CVarUploadHeapLargeAllocationThreshold.GetValue()));
 
-        FD3D12UploadHeapAllocator* UploadHeap = new FD3D12UploadHeapAllocator(this, UploadHeapPageSizeBytes, 256, UploadHeapSmallThreshold, UploadHeapLargeThreshold);
-        if (!UploadHeap->Initialize())
+        UploadHeapAllocator = new FD3D12UploadHeapAllocator(this, UploadHeapPageSizeBytes, 256, UploadHeapSmallThreshold, UploadHeapLargeThreshold);
+        if (!UploadHeapAllocator->Initialize())
         {
             return false;
         }
-        UploadHeapAllocator = UploadHeap;
     }
 
     {
         const uint64 StagingPageSizeBytes = Math::Max<uint64>(1ull, static_cast<uint64>(CVarStagingBufferPageSize.GetValue())) * 1024ull;
-        FD3D12LinearAllocator* StagingAllocator = new FD3D12LinearAllocator(this, StagingPageSizeBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
-        StagingBufferAllocator = StagingAllocator;
+        StagingBufferAllocator = new FD3D12LinearAllocator(this, StagingPageSizeBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ);
     }
 
     {
         const uint64 DynamicConstantsPageSize = Math::Max<uint64>(1ull, static_cast<uint64>(CVarDynamicConstantsAllocatorPageSize.GetValue()));
+        
         FD3D12DynamicConstantsAllocator* ConstantsAllocator = new FD3D12DynamicConstantsAllocator(this, DynamicConstantsPageSize);
         if (!ConstantsAllocator)
         {
             return false;
         }
+
         DynamicConstantsAllocator = ConstantsAllocator;
     }
 
     {
         const uint64 BufferPageSizeBytes    = Math::Max<uint64>(1ull, static_cast<uint64>(CVarBufferAllocatorPageSize.GetValue())) * 1024ull * 1024ull;
         const uint64 BufferMaxSuballocBytes = Math::Max<uint64>(1ull, static_cast<uint64>(CVarBufferAllocatorMaxSuballocationSize.GetValue())) * 1024ull * 1024ull;
-        FD3D12BufferAllocator* Buffers = new FD3D12BufferAllocator(this, BufferPageSizeBytes, 256, BufferMaxSuballocBytes);
-        if (!Buffers->Initialize())
+        
+        BufferAllocator = new FD3D12BufferAllocator(this, BufferPageSizeBytes, 256, BufferMaxSuballocBytes);
+        if (!BufferAllocator->Initialize())
         {
             return false;
         }
-        BufferAllocator = Buffers;
     }
 
     {
-        const uint64 TextureAllocatorDefaultPageSize = Math::Max<uint64>(1ull, static_cast<uint64>(CVarTextureAllocatorDefaultPageSize.GetValue()));
+        const uint64 TextureAllocatorDefaultPageSize    = Math::Max<uint64>(1ull, static_cast<uint64>(CVarTextureAllocatorDefaultPageSize.GetValue()));
         const uint64 TextureAllocatorCommittedThreshold = Math::Max<uint64>(1ull, static_cast<uint64>(CVarTextureAllocatorCommittedThreshold.GetValue()));
 
-        FD3D12TextureAllocator* Textures = new FD3D12TextureAllocator(this, TextureAllocatorDefaultPageSize, TextureAllocatorCommittedThreshold);
-        if (!Textures->Initialize())
+        TextureAllocator = new FD3D12TextureAllocator(this, TextureAllocatorDefaultPageSize, TextureAllocatorCommittedThreshold);
+        if (!TextureAllocator->Initialize())
         {
             return false;
         }
-        TextureAllocator = Textures;
     }
 
     // Initialize default descriptors/views
