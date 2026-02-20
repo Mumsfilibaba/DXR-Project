@@ -2,6 +2,8 @@
 #include "Core/Threading/ScopedLock.h"
 #include "D3D12RHI/D3D12Queue.h"
 #include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Resource.h"
+#include "D3D12RHI/D3D12CommandContext.h"
 
 static TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
     "D3D12RHI.EnableGPUTimeout",
@@ -175,7 +177,7 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
     return FD3D12FenceSyncPoint(FenceManager.GetFence(), FenceValue);
 }
 
-FD3D12CommandSubmission::FD3D12CommandSubmission(FD3D12Device* InDevice, FD3D12Queue* InQueue)
+FD3D12Commands::FD3D12Commands(FD3D12Device* InDevice, FD3D12Queue* InQueue)
     : Queue(InQueue)
     , Device(InDevice)
     , SyncPoint()
@@ -186,7 +188,70 @@ FD3D12CommandSubmission::FD3D12CommandSubmission(FD3D12Device* InDevice, FD3D12Q
 {
 }
 
-void FD3D12CommandSubmission::Finish()
+void FD3D12Commands::PreExecute()
+{
+    FD3D12BarrierBatcher BarrierBatcher;
+
+    for (const FD3D12PendingBarrier& Pending : PendingBarriers)
+    {
+        FD3D12ResourceState& GlobalState = Pending.Resource->GetTrackedState();
+
+        if (Pending.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
+        {
+            if (GlobalState.AreAllSubresourcesSameState())
+            {
+                BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetResourceState(), Pending.DesiredState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+            }
+            else
+            {
+                const uint32 NumSubresources = GlobalState.GetNumSubresources();
+                for (uint32 i = 0; i < NumSubresources; i++)
+                {
+                    BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(i), Pending.DesiredState, i);
+                }
+            }
+        }
+        else
+        {
+            BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(Pending.Subresource), Pending.DesiredState, Pending.Subresource);
+        }
+    }
+
+    if (BarrierBatcher.HasPendingBarriers())
+    {
+        FD3D12CommandAllocator* FixupAllocator = Device->GetCommandAllocatorManager(Queue->GetQueueType())->ObtainAllocator();
+
+        FD3D12CommandList* FixupCommandList = Queue->ObtainCommandList(FixupAllocator, nullptr);
+        BarrierBatcher.FlushBarriers(*FixupCommandList);
+
+        if (!FixupCommandList->Close())
+        {
+            D3D12_ERROR_CRITICAL("Failed to close fixup CommandList");
+        }
+        else
+        {
+            CommandLists.Insert(0, FixupCommandList);
+            AddCommandAllocator(FixupAllocator);
+        }
+    }
+
+    for (auto It = PendingResourceStates.CreateIterator(); !It.IsEnd(); ++It)
+    {
+        FD3D12Resource*      Resource   = It.GetKey();
+        FD3D12ResourceState& LocalState = It.GetValue();
+        Resource->GetTrackedState() = LocalState;
+    }
+
+    PendingBarriers.Clear();
+    PendingResourceStates.Clear();
+}
+
+void FD3D12Commands::Execute()
+{
+    SyncPoint = Queue->ExecuteCommandLists(CommandLists.Data(), CommandLists.Size(), false);
+}
+
+void FD3D12Commands::Finish()
 {
     for (FD3D12QueryHeap* QueryHeap : QueryHeaps)
     {

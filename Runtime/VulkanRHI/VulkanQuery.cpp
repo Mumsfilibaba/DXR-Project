@@ -171,8 +171,9 @@ FVulkanQueryAllocation FVulkanQueryAllocator::Allocate(uint64* InResults)
     FVulkanQueryAllocation QueryAllocation = QueryPool->Allocate(InResults);
     if (!QueryAllocation.IsValid())
     {
-        Context.GetSubmissionContext().AddQueryPool(QueryPool);
-        QueryPool = QueryPoolManager->ObtainQueryPool();
+        Context.GetCommands().AddQueryPool(QueryPool);
+        
+        QueryPool       = QueryPoolManager->ObtainQueryPool();
         QueryAllocation = QueryPool->Allocate(InResults);
     }
 
@@ -183,7 +184,7 @@ void FVulkanQueryAllocator::PrepareForNewCommandBuffer()
 {
     if (QueryPool)
     {
-        Context.GetSubmissionContext().AddQueryPool(QueryPool);
+        Context.GetCommands().AddQueryPool(QueryPool);
         QueryPool = nullptr;
     }
 }

@@ -110,7 +110,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
             return false;
         }
 
-        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        CmdContext.GetBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
@@ -118,12 +118,12 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGpuVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGpuVirtualAddress();
 
-    CmdContext.GetResourceBarrierBatcher().FlushBarriers();
+    CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
 
     FD3D12CommandList& CommandList = CmdContext.GetCommandList();
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
-    CmdContext.GetResourceBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
+    CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
     return true;
 }
 
@@ -249,7 +249,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
             return false;
         }
 
-        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        CmdContext.GetBarrierBatcher().AddTransitionBarrier(ScratchResourceStorage.GetResource(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
     TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(BuildInfo.NumInstances);
@@ -292,12 +292,12 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
             InstanceBuffer = Buffer;
         }
 
-        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        CmdContext.GetBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     }
 
-    CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    CmdContext.GetBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
     CmdContext.UpdateBuffer(InstanceBuffer.Get(), FBufferRegion(0, InstanceDescs.SizeInBytes()), InstanceDescs.Data());
-    CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.GetBarrierBatcher().AddTransitionBarrier(InstanceBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
     AccelerationStructureDesc.Inputs                           = Inputs;
@@ -311,12 +311,12 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         AccelerationStructureDesc.SourceAccelerationStructureData = ResultResourceStorage.GetGpuVirtualAddress();
     }
 
-    CmdContext.GetResourceBarrierBatcher().FlushBarriers();
+    CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
 
     FD3D12CommandList& CommandList = CmdContext.GetCommandList();
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
-    CmdContext.GetResourceBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
+    CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
 
     Instances.Reset(BuildInfo.Instances, BuildInfo.NumInstances);
     return true;
@@ -405,15 +405,15 @@ bool FD3D12RayTracingScene::BuildBindingTable(
             BindingTable = Buffer;
         }
 
-        CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(BindingTable.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        CmdContext.GetBarrierBatcher().AddTransitionBarrier(BindingTable.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     }
 
     // NOTE: With resource tracking this would not be needed
-    CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(BindingTable.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    CmdContext.GetBarrierBatcher().AddTransitionBarrier(BindingTable.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
     CmdContext.UpdateBuffer(BindingTable.Get(), FBufferRegion(0, TableEntrySize), &RayGenEntry);
     CmdContext.UpdateBuffer(BindingTable.Get(), FBufferRegion(TableEntrySize, TableEntrySize), &MissEntry);
     CmdContext.UpdateBuffer(BindingTable.Get(), FBufferRegion(TableEntrySize * 2, NumHitGroupResources * TableEntrySize), HitGroupEntries);
-    CmdContext.GetResourceBarrierBatcher().AddTransitionBarrier(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    CmdContext.GetBarrierBatcher().AddTransitionBarrier(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     ShaderBindingTableBuilder.Reset();
 #if 0

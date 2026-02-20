@@ -83,8 +83,8 @@ public:
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
 
-    void ProcessPendingCommandSubmissions();
-    void SubmitCommands(FVulkanCommandSubmission* CommandSubmission, bool bFlushDeletionQueue);
+    void ProcessPendingCommands();
+    void SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQueue);
 
     FVulkanInstance* GetInstance()
     {
@@ -114,7 +114,7 @@ private:
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    typedef TQueue<FVulkanCommandSubmission*, EQueueType::MPSC>         FCommandSubmissionQueue;
+    typedef TQueue<FVulkanCommands*, EQueueType::MPSC>         FCommandsQueue;
     typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
 
     FVulkanInstance               Instance;
@@ -124,9 +124,10 @@ private:
     FVulkanCommandContext*        GraphicsCommandContext;
     TArray<FVulkanDeferredObject> DeletionQueue;
     FCriticalSection              DeletionQueueCS;
+    FCriticalSection              SubmissionCS;
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
-    FCommandSubmissionQueue       PendingSubmissions;
+    FCommandsQueue                PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;
 };

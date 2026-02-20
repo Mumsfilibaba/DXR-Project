@@ -246,7 +246,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         if (Info.IsRenderTarget())
         {
             InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::RenderTarget));
-            InCommandContext->GetResourceBarrierBatcher().FlushBarriers();
+            InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
 
             FRHIRenderTargetView RTView;
             RTView.Texture        = this;
@@ -272,7 +272,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         else if (Info.IsDepthStencil())
         {
             InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::DepthWrite));
-            InCommandContext->GetResourceBarrierBatcher().FlushBarriers();
+            InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandList());
 
             FRHIDepthStencilView DSView;
             DSView.Texture        = this;

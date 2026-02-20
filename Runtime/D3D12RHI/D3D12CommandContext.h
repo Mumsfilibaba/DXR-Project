@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/Map.h"
 #include "RHI/IRHICommandContext.h"
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12RootSignature.h"
@@ -7,20 +8,16 @@
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12CommandContextState.h"
+#include "D3D12RHI/D3D12ResourceState.h"
 
-class FD3D12CommandContext;
-
-class FResourceBarrierBatcher
+class FD3D12BarrierBatcher
 {
 public:
-    FResourceBarrierBatcher(FD3D12CommandContext& InContext);
-    ~FResourceBarrierBatcher();
-
     void AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
     void AddUnorderedAccessBarrier(FD3D12Resource* InResource);
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
-    void FlushBarriers();
+    void FlushBarriers(FD3D12CommandList& CommandList);
 
     bool HasPendingBarriers() const 
     {
@@ -28,7 +25,6 @@ public:
     }
 
 private:
-    FD3D12CommandContext&          Context;
     TArray<D3D12_RESOURCE_BARRIER> Barriers;
 };
 
@@ -122,13 +118,13 @@ public:
         return *CommandList; 
     }
 
-    FD3D12CommandSubmission& GetSubmissionContext()
+    FD3D12Commands& GetCommands()
     {
-        CHECK(CommandSubmission != nullptr);
-        return *CommandSubmission;
+        CHECK(Commands != nullptr);
+        return *Commands;
     }
 
-    FResourceBarrierBatcher& GetResourceBarrierBatcher()
+    FD3D12BarrierBatcher& GetBarrierBatcher()
     {
         return ResourceBarrierBatcher;
     }
@@ -151,21 +147,22 @@ public:
 private:
     void ConditionalSubmitCommandListOnDrawCall();
 
-    FD3D12CommandList*        CommandList;
-    FD3D12CommandAllocator*   CommandAllocator;
-    FD3D12CommandSubmission*  CommandSubmission;
-    FD3D12CommandContextState ContextState;
-    FD3D12QueryAllocator      TimingQueryAllocator;
-    FD3D12QueryAllocator      OcclusionQueryAllocator;
-    FResourceBarrierBatcher   ResourceBarrierBatcher;
-    ED3D12CommandQueueType    QueueType;
+    FD3D12ResourceState& RetrievePendingResourceState(FD3D12Resource* Resource);
+    void AddPendingBarrier(FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState, uint32 Subresource);
 
-    uint32                    NumDrawCalls;
-
-    // Keeps track of any programmatic captures currently being done
-    bool                      bIsCapturing : 1;
-    // Keeps track of the recording state of the context. I.e has StartContext been called
-    bool                      bIsRecording : 1;
+    FD3D12CommandList*                         CommandList;
+    FD3D12CommandAllocator*                    CommandAllocator;
+    FD3D12Commands*                            Commands;
+    FD3D12CommandContextState                  ContextState;
+    FD3D12QueryAllocator                       TimingQueryAllocator;
+    FD3D12QueryAllocator                       OcclusionQueryAllocator;
+    FD3D12BarrierBatcher                    ResourceBarrierBatcher;
+    TArray<FD3D12PendingBarrier>               PendingBarriers;
+    TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
+    ED3D12CommandQueueType                     QueueType;
+    uint32                                     NumDrawCalls;
+    bool                                       bIsCapturing : 1; // Keeps track of any programmatic captures currently being done
+    bool                                       bIsRecording : 1; // Keeps track of the recording state of the context. I.e has StartContext been called
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection          CommandContextCS;

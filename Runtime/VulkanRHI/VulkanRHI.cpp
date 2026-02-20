@@ -78,7 +78,7 @@ FVulkanRHI::~FVulkanRHI()
 
     while (!PendingSubmissions.IsEmpty())
     {
-        ProcessPendingCommandSubmissions();
+        ProcessPendingCommands();
     }
 
     // Flush before submitting since some objects needs the CommandContext
@@ -759,16 +759,16 @@ void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-void FVulkanRHI::ProcessPendingCommandSubmissions()
+void FVulkanRHI::ProcessPendingCommands()
 {
     bool bProcess = true;
     while (bProcess)
     {
-        FVulkanCommandSubmission* CommandSubmission = nullptr;
-        if (PendingSubmissions.Peek(CommandSubmission))
+        FVulkanCommands* Commands = nullptr;
+        if (PendingSubmissions.Peek(Commands))
         {
-            CHECK(CommandSubmission != nullptr);
-            if (!CommandSubmission->IsExecutionFinished())
+            CHECK(Commands != nullptr);
+            if (!Commands->IsExecutionFinished())
             {
                 bProcess = false;
                 break;
@@ -777,7 +777,7 @@ void FVulkanRHI::ProcessPendingCommandSubmissions()
             {
                 // If we are finished we remove the item from the queue
                 PendingSubmissions.Dequeue();
-                CommandSubmission->Finish();
+                Commands->Finish();
             }
         }
         else
@@ -787,20 +787,23 @@ void FVulkanRHI::ProcessPendingCommandSubmissions()
     }
 }
 
-void FVulkanRHI::SubmitCommands(FVulkanCommandSubmission* CommandSubmission, bool bFlushDeletionQueue)
+void FVulkanRHI::SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQueue)
 {
-    CHECK(CommandSubmission != nullptr);
+    CHECK(Commands != nullptr);
 
-    if (!CommandSubmission->IsEmpty())
+    if (!Commands->IsEmpty())
     {
+        TScopedLock SubmitLock(SubmissionCS);
+
         if (bFlushDeletionQueue)
         {
             TScopedLock Lock(DeletionQueueCS);
-            CommandSubmission->DeletionQueue = Move(DeletionQueue);
+            Commands->DeletionQueue = Move(DeletionQueue);
         }
 
-        CommandSubmission->Submit();
-        
-        PendingSubmissions.Enqueue(CommandSubmission);
+        Commands->PreExecute();
+        Commands->Execute();
+
+        PendingSubmissions.Enqueue(Commands);
     }
 }

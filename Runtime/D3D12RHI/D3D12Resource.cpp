@@ -214,8 +214,8 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
     FMemory::Memcpy(&Other.AllocationData, TempAllocationData, sizeof(AllocationData));
 
     void* const TempAllocatorPointer = AllocatorPointers.AsVoid;
-    AllocatorPointers.AsVoid       = Other.AllocatorPointers.AsVoid;
-    Other.AllocatorPointers.AsVoid = TempAllocatorPointer;
+    AllocatorPointers.AsVoid         = Other.AllocatorPointers.AsVoid;
+    Other.AllocatorPointers.AsVoid   = TempAllocatorPointer;
 }
 
 void FD3D12ResourceStorage::Reset()
@@ -329,6 +329,19 @@ FD3D12BaseResource::FD3D12BaseResource(FD3D12Device* InDevice)
 
 FD3D12BaseResource::~FD3D12BaseResource()
 {
+    {
+        TScopedLock Lock(ListenersCS);
+        for (ID3D12ResourceRelocationListener* Listener : Listeners)
+        {
+            if (Listener)
+            {
+                Listener->OnOwnerReleased();
+            }
+        }
+        
+        Listeners.Clear();
+    }
+
     ResourceStorage.ReleaseResource();
 }
 

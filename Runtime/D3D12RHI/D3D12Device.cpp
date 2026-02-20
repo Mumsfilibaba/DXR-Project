@@ -876,7 +876,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
         return;
     }
 
-    FResourceBarrierBatcher& BarrierBatcher = InCommandContext->GetResourceBarrierBatcher();
+    FD3D12BarrierBatcher& BarrierBatcher = InCommandContext->GetBarrierBatcher();
     for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
     {
         FD3D12PoolAllocator::FDefragCandidate Candidate = {};
@@ -910,7 +910,12 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
             break;
         }
 
-        const D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+        D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+        if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
+        {
+            ResourceDesc.Alignment = 0;
+        }
+
         CHECK(OldResource->GetTrackedState().AreAllSubresourcesSameState());
         const D3D12_RESOURCE_STATES CurrentState = OldResource->GetTrackedState().GetResourceState();
 
@@ -927,7 +932,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
         }
 
         BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-        BarrierBatcher.FlushBarriers();
+        BarrierBatcher.FlushBarriers(InCommandContext->GetCommandList());
         
         NewResource->GetTrackedState().SetResourceState(D3D12_RESOURCE_STATE_COPY_DEST);
 
@@ -944,7 +949,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
             BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, CurrentState);
         }
 
-        BarrierBatcher.FlushBarriers();
+        BarrierBatcher.FlushBarriers(InCommandContext->GetCommandList());
 
         NewResource->GetTrackedState().SetResourceState(CurrentState);
 

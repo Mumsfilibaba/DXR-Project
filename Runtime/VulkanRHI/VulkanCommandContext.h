@@ -1,16 +1,18 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
 #include "RHI/IRHICommandContext.h"
 #include "VulkanRHI/VulkanCommandContextState.h"
 #include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanQuery.h"
+#include "VulkanRHI/VulkanResourceState.h"
 
 class FVulkanDevice;
 class FVulkanBuffer;
-class FVulkanCommandContext;
+class FVulkanCommandBuffer;
 
-class FBarrierBatcher
+class FVulkanBarrierBatcher
 {
     struct FBatch
     {
@@ -29,13 +31,10 @@ class FBarrierBatcher
     };
 
 public:
-    FBarrierBatcher(FVulkanCommandContext& InContext);
-    ~FBarrierBatcher() = default;
-
     void AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2& InBarrier);
     void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2& InBarrier);
     void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2& InBarrier);
-    void FlushBarriers();
+    void FlushBarriers(FVulkanCommandBuffer& CommandBuffer);
     
     bool HasPendingBarriers() const
     {
@@ -43,8 +42,7 @@ public:
     }
 
 private:
-    FVulkanCommandContext& Context;
-    TArray<FBatch>         Batches;
+    TArray<FBatch> Batches;
 };
 
 class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceChild
@@ -136,8 +134,15 @@ public:
         return CommandBuffer == nullptr;
     }
 
-    FBarrierBatcher&          GetBarrierBatcher()    { return BarrierBatcher; }
-    FVulkanCommandSubmission& GetSubmissionContext() { return *CommandSubmission; }
+    FVulkanCommands& GetCommands()
+    {
+        return *Commands;
+    }
+
+    FVulkanBarrierBatcher& GetBarrierBatcher()
+    {
+        return BarrierBatcher;
+    }
     
     FVulkanQueue& GetCommandQueue() const
     {
@@ -152,22 +157,29 @@ public:
 
     FVulkanFence* GetSubmissionFence() const
     {
-        return CommandSubmission ? CommandSubmission->Fence : nullptr;
+        return Commands ? Commands->Fence : nullptr;
     }
 
 private:
     void ForceFlushCommandPool();
     FVulkanFence* SubmitCommandBuffer(bool bFlushPool);
 
-    FVulkanQueue&              Queue;
-    FVulkanCommandPool*        CommandPool;
-    FVulkanCommandBuffer*      CommandBuffer;
-    FVulkanCommandSubmission*  CommandSubmission;
-    FVulkanQueryAllocator      TimestampQueryAllocator;
-    FVulkanQueryAllocator      OcclusionQueryAllocator;
-    FBarrierBatcher            BarrierBatcher;
-    ECommandContextPhase       ContextPhase;
-    FVulkanCommandContextState ContextState;
+    FVulkanImageState&  RetrievePendingImageState(class FVulkanTexture* Texture);
+    FVulkanBufferState& RetrievePendingBufferState(class FVulkanBuffer* Buffer);
+
+    FVulkanQueue&                            Queue;
+    FVulkanCommandPool*                      CommandPool;
+    FVulkanCommandBuffer*                    CommandBuffer;
+    FVulkanCommands*                         Commands;
+    FVulkanQueryAllocator                    TimestampQueryAllocator;
+    FVulkanQueryAllocator                    OcclusionQueryAllocator;
+    FVulkanBarrierBatcher                          BarrierBatcher;
+    ECommandContextPhase                     ContextPhase;
+    FVulkanCommandContextState               ContextState;
+    TArray<FVulkanPendingImageBarrier>       PendingImageBarriers;
+    TArray<FVulkanPendingBufferBarrier>      PendingBufferBarriers;
+    TMap<FVulkanTexture*, FVulkanImageState> PendingImageStates;
+    TMap<FVulkanBuffer*, FVulkanBufferState> PendingBufferStates;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection           CommandContextCS;

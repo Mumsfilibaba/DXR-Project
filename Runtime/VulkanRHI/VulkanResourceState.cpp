@@ -1,12 +1,5 @@
 #include "VulkanRHI/VulkanResourceState.h"
 
-FVulkanImageState::FVulkanImageState()
-    : ImageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-    , NumSubresources(0)
-    , bAllSameLayout(true)
-{
-}
-
 void FVulkanImageState::Initialize(uint32 InNumSubresources)
 {
     NumSubresources = InNumSubresources;
@@ -68,12 +61,6 @@ VkImageLayout FVulkanImageState::GetImageLayout() const
 {
     CHECK(bAllSameLayout);
     return ImageLayout;
-}
-
-FVulkanBufferState::FVulkanBufferState()
-    : Access(0)
-    , Stage(0)
-{
 }
 
 void FVulkanBufferState::SetState(VkAccessFlags2 InAccess, VkPipelineStageFlags2 InStage)

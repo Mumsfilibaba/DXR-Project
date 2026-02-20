@@ -1,9 +1,11 @@
 #pragma once
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Queue.h"
+#include "Core/Containers/Map.h"
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12DeletionQueue.h"
+#include "D3D12RHI/D3D12ResourceState.h"
 
 class FD3D12Device;
 class FD3D12QueryHeap;
@@ -57,11 +59,13 @@ private:
     FCriticalSection             CommandListsCS;
 };
 
-struct FD3D12CommandSubmission
+struct FD3D12Commands
 {
-    FD3D12CommandSubmission(FD3D12Device* InDevice, FD3D12Queue* InQueue);
-    ~FD3D12CommandSubmission() = default;
+    FD3D12Commands(FD3D12Device* InDevice, FD3D12Queue* InQueue);
+    ~FD3D12Commands() = default;
 
+    void PreExecute();
+    void Execute();
     void Finish();
 
     void AddQueryHeap(FD3D12QueryHeap* InQueryHeap)
@@ -84,11 +88,13 @@ struct FD3D12CommandSubmission
         return CommandLists.IsEmpty();
     }
 
-    FD3D12Queue* const              Queue;
-    FD3D12Device* const             Device;
-    FD3D12FenceSyncPoint            SyncPoint;
-    TArray<FD3D12CommandAllocator*> CommandAllocators;
-    TArray<FD3D12CommandList*>      CommandLists;
-    TArray<FD3D12QueryHeap*>        QueryHeaps;
-    TArray<FD3D12DeferredObject>    DeletionQueue;
+    FD3D12Queue* const                         Queue;
+    FD3D12Device* const                        Device;
+    FD3D12FenceSyncPoint                       SyncPoint;
+    TArray<FD3D12CommandAllocator*>            CommandAllocators;
+    TArray<FD3D12CommandList*>                 CommandLists;
+    TArray<FD3D12QueryHeap*>                   QueryHeaps;
+    TArray<FD3D12DeferredObject>               DeletionQueue;
+    TArray<FD3D12PendingBarrier>               PendingBarriers;
+    TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
 };

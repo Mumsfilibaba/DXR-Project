@@ -1,12 +1,5 @@
 #include "D3D12RHI/D3D12ResourceState.h"
 
-FD3D12ResourceState::FD3D12ResourceState()
-    : ResourceState(D3D12_RESOURCE_STATE_COMMON)
-    , NumSubresources(0)
-    , bAllSameState(true)
-{
-}
-
 void FD3D12ResourceState::Initialize(uint32 InNumSubresources)
 {
     NumSubresources = InNumSubresources;

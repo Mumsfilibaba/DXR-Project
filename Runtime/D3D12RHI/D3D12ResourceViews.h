@@ -24,6 +24,8 @@ public:
     void RegisterWithResource(FD3D12BaseResource* InOwner);
     void UnregisterFromResource();
 
+    virtual void OnOwnerReleased() override;
+
     D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
     {
         return Descriptor.Handle;

@@ -3,6 +3,10 @@
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanFence.h"
+#include "VulkanRHI/VulkanTexture.h"
+#include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanCore.h"
+#include "VulkanRHI/VulkanCommandContext.h"
 
 FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQueueType)
     : FVulkanDeviceChild(InDevice)
@@ -296,7 +300,7 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
     return true;
 }
 
-FVulkanCommandSubmission::FVulkanCommandSubmission(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
+FVulkanCommands::FVulkanCommands(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
     : Queue(InQueue)
     , Fence(nullptr)
     , Device(InDevice)
@@ -307,26 +311,180 @@ FVulkanCommandSubmission::FVulkanCommandSubmission(FVulkanDevice* InDevice, FVul
 {
 }
 
-FVulkanCommandSubmission::~FVulkanCommandSubmission()
+FVulkanCommands::~FVulkanCommands()
 {
     CHECK(Fence == nullptr);
 }
 
-void FVulkanCommandSubmission::AcquireFence()
+void FVulkanCommands::AcquireFence()
 {
     FVulkanFenceManager& FenceManager = Device->GetFenceManager();
     Fence = FenceManager.ObtainFence();
     CHECK(Fence != nullptr);
 }
 
-void FVulkanCommandSubmission::Submit()
+void FVulkanCommands::PreExecute()
+{
+    FVulkanBarrierBatcher BarrierBatcher;
+
+    for (const FVulkanPendingImageBarrier& Pending : PendingImageBarriers)
+    {
+        FVulkanImageState& GlobalState = Pending.Texture->GetTrackedState();
+        const VkImageCreateInfo& CreateInfo = Pending.Texture->GetVkImageCreateInfo();
+        const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
+
+        if (Pending.Subresource == RHI_ALL_MIP_LEVELS)
+        {
+            if (GlobalState.AreAllSubresourcesSameLayout())
+            {
+                const VkImageLayout GlobalLayout = GlobalState.GetImageLayout();
+                if (GlobalLayout != Pending.DesiredLayout)
+                {
+                    VkImageMemoryBarrier2 Barrier = {};
+                    Barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+                    Barrier.oldLayout                       = GlobalLayout;
+                    Barrier.newLayout                       = Pending.DesiredLayout;
+                    Barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                    Barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                    Barrier.image                           = Pending.Texture->GetVkImage();
+                    Barrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+                    Barrier.dstAccessMask                   = VK_ACCESS_2_NONE;
+                    Barrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                    Barrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                    Barrier.subresourceRange.aspectMask     = AspectMask;
+                    Barrier.subresourceRange.baseArrayLayer = 0;
+                    Barrier.subresourceRange.baseMipLevel   = 0;
+                    Barrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+                    Barrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+                    BarrierBatcher.AddImageMemoryBarrier(0, Barrier);
+                }
+            }
+            else
+            {
+                const uint32 NumSubresources = GlobalState.GetNumSubresources();
+                for (uint32 i = 0; i < NumSubresources; i++)
+                {
+                    const VkImageLayout GlobalLayout = GlobalState.GetSubresourceLayout(i);
+                    if (GlobalLayout != Pending.DesiredLayout)
+                    {
+                        const uint32 MipLevel   = i % CreateInfo.mipLevels;
+                        const uint32 ArrayLayer = i / CreateInfo.mipLevels;
+
+                        VkImageMemoryBarrier2 Barrier = {};
+                        Barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+                        Barrier.oldLayout                       = GlobalLayout;
+                        Barrier.newLayout                       = Pending.DesiredLayout;
+                        Barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                        Barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                        Barrier.image                           = Pending.Texture->GetVkImage();
+                        Barrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+                        Barrier.dstAccessMask                   = VK_ACCESS_2_NONE;
+                        Barrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                        Barrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                        Barrier.subresourceRange.aspectMask     = AspectMask;
+                        Barrier.subresourceRange.baseArrayLayer = ArrayLayer;
+                        Barrier.subresourceRange.baseMipLevel   = MipLevel;
+                        Barrier.subresourceRange.layerCount     = 1;
+                        Barrier.subresourceRange.levelCount     = 1;
+                        BarrierBatcher.AddImageMemoryBarrier(0, Barrier);
+                    }
+                }
+            }
+        }
+        else
+        {
+            const VkImageLayout GlobalLayout = GlobalState.GetSubresourceLayout(Pending.Subresource);
+            if (GlobalLayout != Pending.DesiredLayout)
+            {
+                const uint32 MipLevel   = Pending.Subresource % CreateInfo.mipLevels;
+                const uint32 ArrayLayer = Pending.Subresource / CreateInfo.mipLevels;
+
+                VkImageMemoryBarrier2 Barrier = {};
+                Barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+                Barrier.oldLayout                       = GlobalLayout;
+                Barrier.newLayout                       = Pending.DesiredLayout;
+                Barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                Barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+                Barrier.image                           = Pending.Texture->GetVkImage();
+                Barrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+                Barrier.dstAccessMask                   = VK_ACCESS_2_NONE;
+                Barrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                Barrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+                Barrier.subresourceRange.aspectMask     = AspectMask;
+                Barrier.subresourceRange.baseArrayLayer = ArrayLayer;
+                Barrier.subresourceRange.baseMipLevel   = MipLevel;
+                Barrier.subresourceRange.layerCount     = 1;
+                Barrier.subresourceRange.levelCount     = 1;
+                BarrierBatcher.AddImageMemoryBarrier(0, Barrier);
+            }
+        }
+    }
+
+    for (const FVulkanPendingBufferBarrier& Pending : PendingBufferBarriers)
+    {
+        FVulkanBufferState& GlobalState = Pending.Buffer->GetTrackedState();
+
+        if (GlobalState.GetAccess() != Pending.DesiredAccess || GlobalState.GetStage() != Pending.DesiredStage)
+        {
+            VkBufferMemoryBarrier2 Barrier = {};
+            Barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+            Barrier.srcAccessMask       = GlobalState.GetAccess();
+            Barrier.dstAccessMask       = Pending.DesiredAccess;
+            Barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            Barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            Barrier.srcStageMask        = GlobalState.GetStage();
+            Barrier.dstStageMask        = Pending.DesiredStage;
+            Barrier.buffer              = Pending.Buffer->GetVkBuffer();
+            Barrier.offset              = 0;
+            Barrier.size                = VK_WHOLE_SIZE;
+            BarrierBatcher.AddBufferMemoryBarrier(0, Barrier);
+        }
+    }
+
+    if (BarrierBatcher.HasPendingBarriers())
+    {
+        FVulkanCommandPool* FixupPool = Queue.ObtainCommandPool();
+        FVulkanCommandBuffer* FixupCommandBuffer = FixupPool->GetOrCreateBuffer();
+        if (FixupCommandBuffer && FixupCommandBuffer->Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT))
+        {
+            BarrierBatcher.FlushBarriers(*FixupCommandBuffer);
+
+            if (FixupCommandBuffer->End())
+            {
+                CommandBuffers.Insert(0, FixupCommandBuffer);
+                AddCommandPool(FixupPool);
+            }
+        }
+    }
+
+    for (auto It = PendingImageStates.CreateIterator(); !It.IsEnd(); ++It)
+    {
+        FVulkanTexture*    Texture    = It.GetKey();
+        FVulkanImageState& LocalState = It.GetValue();
+        Texture->GetTrackedState() = LocalState;
+    }
+
+    for (auto It = PendingBufferStates.CreateIterator(); !It.IsEnd(); ++It)
+    {
+        FVulkanBuffer*      Buffer     = It.GetKey();
+        FVulkanBufferState& LocalState = It.GetValue();
+        Buffer->GetTrackedState() = LocalState;
+    }
+
+    PendingImageBarriers.Clear();
+    PendingBufferBarriers.Clear();
+    PendingImageStates.Clear();
+    PendingBufferStates.Clear();
+}
+
+void FVulkanCommands::Execute()
 {
     CHECK(CommandBuffers.IsEmpty() == false);
     CHECK(Fence != nullptr);
     Queue.ExecuteCommandBuffer(CommandBuffers.Data(), CommandBuffers.Size(), Fence);
 }
 
-void FVulkanCommandSubmission::Finish()
+void FVulkanCommands::Finish()
 {
     // Resolve queries
     for (FVulkanQueryPool* QueryPool : QueryPools)

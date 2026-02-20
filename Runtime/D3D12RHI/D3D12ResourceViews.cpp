@@ -41,6 +41,11 @@ void FD3D12View::UnregisterFromResource()
     }
 }
 
+void FD3D12View::OnOwnerReleased()
+{
+    OwnerResource = nullptr;
+}
+
 bool FD3D12View::AllocateHandle()
 {
     Descriptor = OfflineHeap.Allocate();

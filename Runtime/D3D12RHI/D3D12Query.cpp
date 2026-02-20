@@ -195,7 +195,7 @@ FD3D12QueryAllocation FD3D12QueryAllocator::Allocate(uint64* InResults)
     FD3D12QueryAllocation QueryAllocation = QueryHeap->AllocateQueries(InResults);
     if (!QueryAllocation.IsValid())
     {
-        Context.GetSubmissionContext().AddQueryHeap(QueryHeap);
+        Context.GetCommands().AddQueryHeap(QueryHeap);
         QueryHeap = QueryHeapManager->ObtainQueryHeap();
         QueryAllocation = QueryHeap->AllocateQueries(InResults);
     }
@@ -207,7 +207,7 @@ void FD3D12QueryAllocator::PrepareForNewCommandList()
 {
     if (QueryHeap)
     {
-        Context.GetSubmissionContext().AddQueryHeap(QueryHeap);
+        Context.GetCommands().AddQueryHeap(QueryHeap);
         QueryHeap = nullptr;
     }
 }

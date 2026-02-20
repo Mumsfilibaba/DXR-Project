@@ -1,7 +1,5 @@
 #pragma once
 #include "Core/Containers/Array.h"
-#include "Core/Platform/CriticalSection.h"
-#include "Core/Threading/ScopedLock.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12RefCounted.h"
@@ -234,6 +232,7 @@ struct ID3D12ResourceRelocationListener
 {
     virtual ~ID3D12ResourceRelocationListener() = default;
     virtual void OnRelocation(FD3D12BaseResource* Resource) = 0;
+    virtual void OnOwnerReleased() = 0;
 };
 
 class FD3D12BaseResource : public FD3D12DeviceChild

@@ -2,10 +2,12 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
+#include "Core/Containers/Map.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
 #include "VulkanRHI/VulkanFence.h"
+#include "VulkanRHI/VulkanResourceState.h"
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 
@@ -73,13 +75,14 @@ private:
     FCriticalSection             CommandPoolsCS;
 };
 
-struct FVulkanCommandSubmission
+struct FVulkanCommands
 {
-    FVulkanCommandSubmission(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
-    ~FVulkanCommandSubmission();
+    FVulkanCommands(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
+    ~FVulkanCommands();
 
     void AcquireFence();
-    void Submit();
+    void PreExecute();
+    void Execute();
     void Finish();
 
     void AddCommandPool(FVulkanCommandPool* InCommandPool)
@@ -107,11 +110,15 @@ struct FVulkanCommandSubmission
         return CommandBuffers.IsEmpty();
     }
 
-    FVulkanQueue&                 Queue;
-    FVulkanDevice* const          Device;
-    FVulkanFence*                 Fence;
-    TArray<FVulkanCommandPool*>   CommandPools;
-    TArray<FVulkanCommandBuffer*> CommandBuffers;
-    TArray<FVulkanQueryPool*>     QueryPools;
-    TArray<FVulkanDeferredObject> DeletionQueue;
+    FVulkanQueue&                            Queue;
+    FVulkanDevice* const                     Device;
+    FVulkanFence*                            Fence;
+    TArray<FVulkanCommandPool*>              CommandPools;
+    TArray<FVulkanCommandBuffer*>            CommandBuffers;
+    TArray<FVulkanQueryPool*>                QueryPools;
+    TArray<FVulkanDeferredObject>            DeletionQueue;
+    TArray<FVulkanPendingImageBarrier>       PendingImageBarriers;
+    TArray<FVulkanPendingBufferBarrier>      PendingBufferBarriers;
+    TMap<FVulkanTexture*, FVulkanImageState> PendingImageStates;
+    TMap<FVulkanBuffer*, FVulkanBufferState> PendingBufferStates;
 };
