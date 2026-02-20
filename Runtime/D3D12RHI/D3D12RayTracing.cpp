@@ -138,13 +138,13 @@ void FD3D12RayTracingGeometry::SetDebugName(const FString& InName)
 
 FString FD3D12RayTracingGeometry::GetDebugName() const
 {
+    FString DebugName;
     FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
     {
-        return D3D12Resource->GetDebugName();
+        D3D12Resource->GetDebugName(DebugName);
     }
-
-    return FString();
+    return DebugName;
 }
 
 FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneInfo& InSceneInfo)
@@ -468,13 +468,13 @@ void FD3D12RayTracingScene::SetDebugName(const FString& InName)
 
 FString FD3D12RayTracingScene::GetDebugName() const
 {
+    FString DebugName;
     FD3D12Resource* D3D12Resource = GetResource();
     if (D3D12Resource)
     {
-        return D3D12Resource->GetDebugName();
+        D3D12Resource->GetDebugName(DebugName);
     }
-
-    return FString();
+    return DebugName;
 }
 
 FD3D12ShaderBindingTableBuilder::FD3D12ShaderBindingTableBuilder(FD3D12Device* InDevice)

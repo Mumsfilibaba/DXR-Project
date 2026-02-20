@@ -16,6 +16,11 @@
 
 IMPLEMENT_ENGINE_MODULE(FVulkanRHIModule, VulkanRHI);
 
+static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
+    "VulkanRHI.MaxPendingSubmissions",
+    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    64);
+
 FRHI* FVulkanRHIModule::CreateRHI()
 {
     TUniquePtr<FVulkanRHI> NewRHI = MakeUniquePtr<FVulkanRHI>();
@@ -805,5 +810,21 @@ void FVulkanRHI::SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQu
         Commands->Execute();
 
         PendingSubmissions.Enqueue(Commands);
+
+        const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
+        while (PendingSubmissions.Size() > MaxPending)
+        {
+            FVulkanCommands* Oldest = nullptr;
+            if (PendingSubmissions.Peek(Oldest) && Oldest)
+            {
+                Oldest->Fence->Wait();
+                PendingSubmissions.Dequeue();
+                Oldest->Finish();
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 }

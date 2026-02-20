@@ -179,12 +179,12 @@ void FD3D12Buffer::SetDebugName(const FString& InName)
 
 FString FD3D12Buffer::GetDebugName() const
 {
+    FString DebugName;
     if (ResourceStorage.GetResource())
     {
-        return ResourceStorage.GetResource()->GetDebugName();
+        ResourceStorage.GetResource()->GetDebugName(DebugName);
     }
-
-    return "";
+    return DebugName;
 }
 
 void FD3D12Buffer::SetResource(FD3D12Resource* InResource)

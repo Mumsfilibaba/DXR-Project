@@ -29,7 +29,8 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(FD3D12Resource* InResource, D3D1
 
     if constexpr (GD3D12DebugResourceBarriers)
     {
-        const FString DebugName = InResource->GetDebugName();
+        FString DebugName;
+        InResource->GetDebugName(DebugName);
         D3D12_INFO("AddTransitionBarrier Resource=%s Subresource=%u Before=%s After=%s", *DebugName, SubresourceIndex, ToString(BeforeState), ToString(AfterState));
     }
 
@@ -42,7 +43,8 @@ void FD3D12BarrierBatcher::AddUnorderedAccessBarrier(FD3D12Resource* InResource)
 
     if constexpr (GD3D12DebugResourceBarriers)
     {
-        const FString DebugName = InResource->GetDebugName();
+        FString DebugName;
+        InResource->GetDebugName(DebugName);
         D3D12_INFO("AddUnorderedAccessBarrier Resource=%s", *DebugName);
     }
 

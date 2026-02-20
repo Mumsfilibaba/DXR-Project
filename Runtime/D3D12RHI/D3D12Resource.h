@@ -168,16 +168,16 @@ public:
     void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
     void  UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
 
-    void    SetDebugName(const FString& Name);
-    FString GetDebugName() const;
+    void SetDebugName(const FString& InDebugName);
+    void GetDebugName(FString& OutDebugName) const;
 
     void DeferredRelease();
 
     void StartResidencyTracking();
     void EndResidencyTracking();
 
-    void DisableDeferredRelease() { bShouldDeferredRelease = false; }
     bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
+    void DisableDeferredRelease() { bShouldDeferredRelease = false; }
 
     // Texture Accessors
     uint64 GetWidth()  const { return Desc.Width; }
@@ -189,11 +189,22 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return Address; }
     
     // Resource Accessors
-    D3D12_HEAP_TYPE          GetHeapType()  const { return HeapType; }
-    D3D12_RESOURCE_DIMENSION GetDimension() const { return Desc.Dimension; }
-
+    D3D12_RESOURCE_DIMENSION   GetDimension()    const { return Desc.Dimension; }
+    D3D12_HEAP_TYPE            GetHeapType()     const { return HeapType; }
+    const D3D12_CLEAR_VALUE&   GetClearValue()   const { return ClearValue; }
     FD3D12ResourceState&       GetTrackedState()       { return TrackedState; }
     const FD3D12ResourceState& GetTrackedState() const { return TrackedState; }
+
+    void SetClearValue(const D3D12_CLEAR_VALUE& InClearValue)
+    {
+        ClearValue     = InClearValue;
+        bHasClearValue = true;
+    }
+
+    bool HasClearValue() const
+    {
+        return bHasClearValue;
+    }
 
     uint32 GetNumSubresources() const 
     {
@@ -222,10 +233,12 @@ private:
     FD3D12ResourceState       TrackedState;
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_DESC       Desc;
+    D3D12_CLEAR_VALUE         ClearValue;
     D3D12_GPU_VIRTUAL_ADDRESS Address;
-    uint32                    NumSubresources;
     FD3D12ResidencyHandle     ResidencyHandle;
-    bool                      bShouldDeferredRelease;
+    uint32                    NumSubresources;
+    bool                      bShouldDeferredRelease : 1;
+    bool                      bHasClearValue : 1;
 };
 
 struct ID3D12ResourceRelocationListener

@@ -319,7 +319,9 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_NONE)
     {
-        D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", *ResourceStorage.GetResource()->GetDebugName());
+        FString DebugName;
+        ResourceStorage.GetResource()->GetDebugName(DebugName);
+        D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", *DebugName);
         return nullptr;
     }
 
@@ -458,7 +460,9 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_NONE)
     {
-        D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", *ResourceStorage.GetResource()->GetDebugName());
+        FString DebugName;
+        ResourceStorage.GetResource()->GetDebugName(DebugName);
+        D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", *DebugName);
         return nullptr;
     }
 
@@ -602,12 +606,12 @@ void FD3D12Texture::SetDebugName(const FString& InName)
 
 FString FD3D12Texture::GetDebugName() const
 {
+    FString DebugName;
     if (ResourceStorage.GetResource())
     {
-        return ResourceStorage.GetResource()->GetDebugName();
+        ResourceStorage.GetResource()->GetDebugName(DebugName);
     }
-
-    return "";
+    return DebugName;
 }
 
 

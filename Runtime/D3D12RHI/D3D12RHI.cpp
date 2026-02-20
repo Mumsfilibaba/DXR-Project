@@ -25,6 +25,11 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);
 
+static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
+    "D3D12RHI.MaxPendingSubmissions",
+    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    64);
+
 FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
 FRHI* FD3D12RHIModule::CreateRHI()
@@ -1065,5 +1070,21 @@ void FD3D12RHI::SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueu
         Commands->Execute();
 
         PendingSubmissions.Enqueue(Commands);
+
+        const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
+        while (PendingSubmissions.Size() > MaxPending)
+        {
+            FD3D12Commands* Oldest = nullptr;
+            if (PendingSubmissions.Peek(Oldest) && Oldest)
+            {
+                Oldest->SyncPoint.Fence->WaitForValue(Oldest->SyncPoint.FenceValue);
+                PendingSubmissions.Dequeue();
+                Oldest->Finish();
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 }

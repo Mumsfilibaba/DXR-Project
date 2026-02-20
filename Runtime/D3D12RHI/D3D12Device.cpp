@@ -919,8 +919,10 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
         CHECK(OldResource->GetTrackedState().AreAllSubresourcesSameState());
         const D3D12_RESOURCE_STATES CurrentState = OldResource->GetTrackedState().GetResourceState();
 
+        const D3D12_CLEAR_VALUE* ClearValue = OldResource->HasClearValue() ? &OldResource->GetClearValue() : nullptr;
+
         FD3D12ResourceRef NewResource;
-        if (!CreatePlacedResource(NewHeap, NewAllocationData.Offset, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, NewResource))
+        if (!CreatePlacedResource(NewHeap, NewAllocationData.Offset, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, ClearValue, NewResource))
         {
             break;
         }
@@ -1405,6 +1407,11 @@ bool FD3D12Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D1
     }
 
     OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), HeapType, InitialState);
+    if (ClearValue)
+    {
+        OutResource->SetClearValue(*ClearValue);
+    }
+
     return true;
 }
 
@@ -1431,6 +1438,11 @@ bool FD3D12Device::CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D
     }
 
     OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), Heap->GetHeapType(), InitialState);
+    if (ClearValue)
+    {
+        OutResource->SetClearValue(*ClearValue);
+    }
+    
     return true;
 }
 

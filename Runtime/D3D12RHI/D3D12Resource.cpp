@@ -13,6 +13,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     , Address(0)
     , NumSubresources(0)
     , bShouldDeferredRelease(true)
+    , bHasClearValue(false)
 {
     TrackedState.SetResourceState(InInitialState);
 
@@ -60,18 +61,19 @@ void FD3D12Resource::UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Rang
     Resource->Unmap(SubresourceIndex, Range);
 }
 
-void FD3D12Resource::SetDebugName(const FString& Name)
+void FD3D12Resource::SetDebugName(const FString& InDebugName)
 {
     if (Resource)
     {
-        HRESULT Result = Resource->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Size(), *Name);
+        HRESULT Result = Resource->SetPrivateData(WKPDID_D3DDebugObjectName, InDebugName.Size(), *InDebugName);
         if (FAILED(Result))
         {
             D3D12_ERROR("Failed to set resource name");
         }
 
         // Calling SetName as well since NVIDIA Nsight does not recognize the name otherwise
-        FStringWide WideName = CharToWide(Name);
+        FStringWide WideName = CharToWide(InDebugName);
+        
         Result = Resource->SetName(*WideName);
         if (FAILED(Result))
         {
@@ -80,38 +82,35 @@ void FD3D12Resource::SetDebugName(const FString& Name)
     }
 }
 
-FString FD3D12Resource::GetDebugName() const
+void FD3D12Resource::GetDebugName(FString& OutDebugName) const
 {
+    OutDebugName.Clear();
+
     if (Resource)
     {
         UINT NameLength = 0;
+
         HRESULT Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
         if (Result == DXGI_ERROR_NOT_FOUND)
         {
-            // We have not called SetPrivateData on this resource, so just return an empty string
-            return "";
+            return;
         }
 
         if (FAILED(Result))
         {
             D3D12_ERROR("Failed to get size of resource name");
-            return "";
+            return;
         }
 
-        FString NewName;
-        NewName.Resize(NameLength);
+        OutDebugName.Resize(NameLength);
 
-        Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, NewName.Data());
+        Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, OutDebugName.Data());
         if (FAILED(Result))
         {
             D3D12_ERROR("Failed to get resource name");
-            return "";
+            OutDebugName.Clear();
         }
-
-        return NewName;
     }
-
-    return "";
 }
 
 FD3D12Resource::~FD3D12Resource()
