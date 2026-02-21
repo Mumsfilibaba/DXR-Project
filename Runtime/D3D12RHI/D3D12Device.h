@@ -143,8 +143,8 @@ private:
 
     DXGI_ADAPTER_DESC1 AdapterDesc;
     uint32             AdapterIndex;
-    bool               bAllowTearing;
-    bool               bEnableDebugLayer;
+    bool               bAllowTearing     : 1;
+    bool               bEnableDebugLayer : 1;
 };
 
 struct FD3D12DefaultDescriptors
@@ -177,6 +177,7 @@ public:
 
     bool Initialize();
     void BeginFrame(FD3D12CommandContext* InCommandContext);
+    void CancelPendingDefragMoves(FD3D12BaseResource* Owner);
 
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);

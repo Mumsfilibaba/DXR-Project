@@ -76,13 +76,17 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
 
 void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
+    FRHITextureRef CurrentBuffer = TAAHistoryBuffers[CurrentBufferIndex];
+    if (CurrentBuffer->GetWidth() == 0 || CurrentBuffer->GetHeight() == 0)
+    {
+        return;
+    }
+
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin TemporalAA");
 
     TRACE_SCOPE("TemporalAA");
 
     GPU_TRACE_SCOPE(CommandList, "TemporalAA");
-
-    FRHITextureRef CurrentBuffer = TAAHistoryBuffers[CurrentBufferIndex];
     CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CurrentBufferIndex = (CurrentBufferIndex + 1) % 2;

@@ -1490,6 +1490,11 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 
 void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources)
 {
+    if (Resources.DirectionalShadowMask->GetWidth() == 0 || Resources.DirectionalShadowMask->GetHeight() == 0)
+    {
+        return;
+    }
+
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Render ShadowMasks");
 
     TRACE_SCOPE("Render ShadowMasks");

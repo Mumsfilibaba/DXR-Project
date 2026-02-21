@@ -49,6 +49,7 @@ bool FSceneViewport::InitializeRHI()
     SwapChainInfo.Height       = static_cast<uint16>(WindowSize.Y);
     SwapChainInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
     SwapChainInfo.ColorFormat  = RenderSettings::GetBackBufferFormat();
+    SwapChainInfo.bFramePacing = true;
 
     FRHISwapChainRef NewSwapChain = FRHI::Get()->CreateSwapChain(SwapChainInfo);
     if (!NewSwapChain)

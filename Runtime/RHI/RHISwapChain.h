@@ -15,10 +15,11 @@ struct FRHISwapChainInfo
 
     constexpr bool operator==(const FRHISwapChainInfo& Other) const noexcept = default;
 
-    void*   WindowHandle = nullptr;
-    EFormat ColorFormat  = EFormat::Unknown;
-    uint16  Width        = 0;
-    uint16  Height       = 0;
+    void*   WindowHandle  = nullptr;
+    EFormat ColorFormat   = EFormat::Unknown;
+    uint16  Width         = 0;
+    uint16  Height        = 0;
+    bool    bFramePacing  = false;
 };
 
 class FRHISwapChain : public FRHIResource

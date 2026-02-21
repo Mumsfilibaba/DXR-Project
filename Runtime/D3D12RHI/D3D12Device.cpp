@@ -312,6 +312,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 FD3D12Adapter::FD3D12Adapter()
     : AdapterIndex(0)
     , bAllowTearing(false)
+    , bEnableDebugLayer(false)
     , Factory(nullptr)
 #if WIN10_BUILD_17134
     , Factory6(nullptr)
@@ -441,9 +442,11 @@ bool FD3D12Adapter::Initialize()
         }
         else
         {
-            HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &bAllowTearing, sizeof(bAllowTearing));
+            BOOL bTearingSupported = FALSE;
+            HRESULT hResult = Factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &bTearingSupported, sizeof(bTearingSupported));
             if (SUCCEEDED(hResult))
             {
+                bAllowTearing = (bTearingSupported != FALSE);
                 if (bAllowTearing)
                 {
                     D3D12_INFO("[FD3D12Adapter]: Tearing is supported");
@@ -966,6 +969,26 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
 
         NewResource->AddRef();
         PendingDefragMoves.Add(PendingMove);
+    }
+}
+
+void FD3D12Device::CancelPendingDefragMoves(FD3D12BaseResource* Owner)
+{
+    for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
+    {
+        FPendingDefragMove& Move = PendingDefragMoves[Index];
+        if (Move.Owner == Owner)
+        {
+            FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, Move.Allocator, Move.NewAllocationData);
+
+            if (Move.NewResource->ShouldDeferredRelease())
+            {
+                Move.NewResource->DeferredRelease();
+            }
+            Move.NewResource->Release();
+
+            PendingDefragMoves.RemoveAtSwap(Index);
+        }
     }
 }
 

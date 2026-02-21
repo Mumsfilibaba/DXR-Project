@@ -1712,6 +1712,11 @@ void FVulkanCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, u
 
 void FVulkanCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
+    if (WorkGroupsX == 0 || WorkGroupsY == 0 || WorkGroupsZ == 0)
+    {
+        return;
+    }
+
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     ContextState.BindComputeState();

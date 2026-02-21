@@ -338,28 +338,13 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
 		return false;
     }
 
-    VkResult Result = VK_SUCCESS;
+    // If no image was acquired during the prepare phase, skip this present. Acquiring here would
+    // add semaphores to the queue after the command buffer was already submitted, leaving the
+    // RenderSemaphore unsignaled when vkQueuePresentKHR tries to wait on it.
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
-        Result = AcquireNextImage(InCommandContext);
-        if (Result != VK_SUCCESS)
-        {
-            VULKAN_INFO("FVulkanSwapChain::Present [AcquireNextImage] SwapChain is %s", Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" : "OutOfDate");
-
-            if (Result != VK_SUBOPTIMAL_KHR)
-            {
-			    // Try to recreate with current size (Recreate surface if needed)
-			    InCommandContext->SplitCommandBuffer(false, true);
-
-                if (!CreateSwapChain(InCommandContext, Info.Width, Info.Height))
-                {
-				    return false;
-                }
-
-                // Try once more next frame
-			    return true;
-            }
-        }
+        VULKAN_WARNING("FVulkanSwapChain::Present skipped — no image was acquired this frame");
+        return true;
     }
 
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
@@ -368,7 +353,7 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
 		VULKAN_INFO("FVulkanSwapChain::Present SemaphoreIndex=%d", SemaphoreIndex);
 	}
 
-    Result = SwapChainResource->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
+    VkResult Result = SwapChainResource->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
 		VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is %s", (Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" :
@@ -437,7 +422,12 @@ FVulkanTexture* FVulkanSwapChain::GetCurrentBackBuffer(FVulkanCommandContext* In
 				return nullptr;
 			}
 
-            return nullptr;
+            Result = AcquireNextImage(InCommandContext);
+            if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+            {
+                VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer acquire failed after recreate");
+                return nullptr;
+            }
         }
     }
     

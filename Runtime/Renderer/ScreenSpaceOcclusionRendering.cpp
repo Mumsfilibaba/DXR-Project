@@ -145,6 +145,11 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 
 void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
+    if (FrameResources.SSAOBuffer->GetWidth() == 0 || FrameResources.SSAOBuffer->GetHeight() == 0)
+    {
+        return;
+    }
+
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin SSAO");
 
     TRACE_SCOPE("SSAO");

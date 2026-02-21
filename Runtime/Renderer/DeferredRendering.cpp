@@ -955,6 +955,11 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
 
 void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
+    if (FrameResources.CurrentRenderWidth == 0 || FrameResources.CurrentRenderHeight == 0)
+    {
+        return;
+    }
+
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightPass");
 
     TRACE_SCOPE("LightPass");
@@ -1217,6 +1222,11 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
 
 void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
 {
+    if (FrameResources.ReducedDepthBuffer[0]->GetWidth() == 0 || FrameResources.ReducedDepthBuffer[0]->GetHeight() == 0)
+    {
+        return;
+    }
+
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Reduction");
 
     TRACE_SCOPE("Depth Reduction");

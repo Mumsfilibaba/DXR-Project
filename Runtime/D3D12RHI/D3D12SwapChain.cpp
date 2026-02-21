@@ -59,7 +59,10 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 
     // Save the flags
     Flags = GetDevice()->GetAdapter()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-    Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+    if (Info.bFramePacing)
+    {
+        Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+    }
 
     RECT ClientRect;
     GetClientRect(Hwnd, &ClientRect);
@@ -97,7 +100,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
     SwapChainDesc.SampleDesc.Count   = 1;
     SwapChainDesc.SampleDesc.Quality = 0;
     SwapChainDesc.Scaling            = DXGI_SCALING_STRETCH;
-    SwapChainDesc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+    SwapChainDesc.SwapEffect         = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     SwapChainDesc.AlphaMode          = DXGI_ALPHA_MODE_IGNORE;
     SwapChainDesc.Flags              = Flags;
 

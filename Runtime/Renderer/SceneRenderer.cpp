@@ -679,7 +679,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
 
 #if SUPPORT_VARIABLE_RATE_SHADING
-    if (ShadingImage && CVarEnableVariableRateShading.GetValue())
+    if (ShadingImage && CVarEnableVariableRateShading.GetValue() && ShadingImage->GetWidth() > 0 && ShadingImage->GetHeight() > 0)
     {
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin VRS Image");
         CommandList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -1356,6 +1356,16 @@ void FSceneRenderer::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth,
 {
     if (SwapChain)
     {
+        for (FSwapChainResizeInfo& Existing : SwapChainsToResize)
+        {
+            if (Existing.SwapChain == SwapChain)
+            {
+                Existing.Width  = InWidth;
+                Existing.Height = InHeight;
+                return;
+            }
+        }
+
         SwapChainsToResize.Emplace(SwapChain, InWidth, InHeight);
     }
 }

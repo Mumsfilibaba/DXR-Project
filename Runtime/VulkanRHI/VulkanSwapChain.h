@@ -8,7 +8,7 @@
 #include "VulkanRHI/VulkanSurface.h"
 #include "VulkanRHI/VulkanSwapChainResource.h"
 
-#define VULKAN_INVALID_BACK_BUFFER_INDEX (-1)
+static constexpr int32 VULKAN_INVALID_BACK_BUFFER_INDEX = -1;
 
 typedef TSharedRef<class FVulkanSwapChain> FVulkanSwapChainRef;
 

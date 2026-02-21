@@ -1509,6 +1509,11 @@ void FD3D12CommandContext::ConditionalSubmitCommandListOnDrawCall()
 
 void FD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
+    if (ThreadGroupCountX == 0 || ThreadGroupCountY == 0 || ThreadGroupCountZ == 0)
+    {
+        return;
+    }
+
     ResourceBarrierBatcher.FlushBarriers(GetCommandList());
 
     ContextState.BindComputeState();

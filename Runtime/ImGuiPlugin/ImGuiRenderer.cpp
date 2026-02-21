@@ -690,11 +690,5 @@ void FImGuiRenderer::OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
     CHECK(ViewportData != nullptr);
 
-    bool bEnableVsync = false;
-    if (IConsoleVariable* CVarVSyncEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.VerticalSync"))
-    {
-        bEnableVsync = CVarVSyncEnabled->GetBool();
-    }
-
-    RHICommandList->PresentSwapChain(ViewportData->SwapChain.Get(), bEnableVsync);
+    RHICommandList->PresentSwapChain(ViewportData->SwapChain.Get(), false);
 }

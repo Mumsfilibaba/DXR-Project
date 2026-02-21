@@ -328,6 +328,8 @@ FD3D12BaseResource::FD3D12BaseResource(FD3D12Device* InDevice)
 
 FD3D12BaseResource::~FD3D12BaseResource()
 {
+    GetDevice()->CancelPendingDefragMoves(this);
+
     {
         TScopedLock Lock(ListenersCS);
         for (ID3D12ResourceRelocationListener* Listener : Listeners)
