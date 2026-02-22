@@ -16,9 +16,9 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 #include <pix.h>
 
-static TAutoConsoleVariable<int32> CVarMaxDrawCallsPerCommandList(
-    "D3D12RHI.MaxDrawCallsPerCommandList",
-    "Number of draw-calls allowed before submitting the current CommandList to the GPU",
+static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandList(
+    "D3D12RHI.MaxCommandsPerCommandList",
+    "Number of commands allowed before submitting the current CommandList to the GPU",
     10000);
 
 static constexpr const bool GD3D12DebugResourceBarriers = false;
@@ -191,7 +191,6 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , TimingQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , QueueType(InQueueType)
-    , NumDrawCalls(0)
     , bIsCapturing(false)
     , bIsRecording(false)
     , CommandContextCS()
@@ -277,9 +276,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
 
     ResourceBarrierBatcher.FlushBarriers(GetCommandList());
 
-    // Flush Commands
-    const uint32 NumCommands = CommandList->GetNumCommands();
-    if (NumCommands > 0)
+    const uint32 RecordedCommands = CommandList->GetNumCommands();
+    if (RecordedCommands > 0)
     {
         // NOTE: This is fine since using a query requires a command to be issues
         TimingQueryAllocator.PrepareForNewCommandList();
@@ -313,9 +311,6 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
 
         FD3D12RHI::Get()->SubmitCommands(Commands, true);
         Commands = nullptr;
-
-        // Reset the number of draw-calls for the current command-list
-        NumDrawCalls = 0;
     }
     else
     {
@@ -882,7 +877,6 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     DestLocation.SubresourceIndex = MipLevel;
 
     GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
-
 }
 
 void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo)
@@ -1468,43 +1462,43 @@ void FD3D12CommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 
 void FD3D12CommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
-    ConditionalSubmitCommandListOnDrawCall();
+    ConditionalSplitCommandList();
+    ResourceBarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsStates();
     GetCommandList()->DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void FD3D12CommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
-    ConditionalSubmitCommandListOnDrawCall();
+    ConditionalSplitCommandList();
+    ResourceBarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsStates();
     GetCommandList()->DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
 void FD3D12CommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
-    ConditionalSubmitCommandListOnDrawCall();
+    ConditionalSplitCommandList();
+    ResourceBarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsStates();
     GetCommandList()->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void FD3D12CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
-    ConditionalSubmitCommandListOnDrawCall();
+    ConditionalSplitCommandList();
+    ResourceBarrierBatcher.FlushBarriers(GetCommandList());
+    ContextState.BindGraphicsStates();
     GetCommandList()->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
-void FD3D12CommandContext::ConditionalSubmitCommandListOnDrawCall()
+void FD3D12CommandContext::ConditionalSplitCommandList()
 {
-    // Split the current command-list if we have reached the maximum amount of draw-calls
-    const uint32 MaxDrawCalls = static_cast<uint32>(CVarMaxDrawCallsPerCommandList.GetValue());
-    if (NumDrawCalls >= MaxDrawCalls)
+    const uint32 MaxCommands = static_cast<uint32>(CVarMaxCommandsPerCommandList.GetValue());
+    if (CommandList->GetNumCommands() >= MaxCommands)
     {
         SplitCommandList(true, false);
     }
-    else
-    {
-        ResourceBarrierBatcher.FlushBarriers(GetCommandList());
-    }
-
-    ContextState.BindGraphicsStates();
-    NumDrawCalls++;
 }
 
 void FD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
@@ -1514,8 +1508,8 @@ void FD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroup
         return;
     }
 
+    ConditionalSplitCommandList();
     ResourceBarrierBatcher.FlushBarriers(GetCommandList());
-
     ContextState.BindComputeState();
     GetCommandList()->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
@@ -1528,6 +1522,7 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
     FD3D12RayTracingPipelineState* D3D12PipelineState = static_cast<FD3D12RayTracingPipelineState*>(PipelineState);
     CHECK(D3D12PipelineState != nullptr);
 
+    ConditionalSplitCommandList();
     ResourceBarrierBatcher.FlushBarriers(GetCommandList());
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc = {};

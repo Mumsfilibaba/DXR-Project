@@ -145,7 +145,7 @@ public:
     }
 
 private:
-    void ConditionalSubmitCommandListOnDrawCall();
+    void ConditionalSplitCommandList();
 
     FD3D12ResourceState& RetrievePendingResourceState(FD3D12Resource* Resource);
     void AddPendingBarrier(FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState, uint32 Subresource);
@@ -160,7 +160,6 @@ private:
     TArray<FD3D12PendingBarrier>               PendingBarriers;
     TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
     ED3D12CommandQueueType                     QueueType;
-    uint32                                     NumDrawCalls;
     bool                                       bIsCapturing : 1; // Keeps track of any programmatic captures currently being done
     bool                                       bIsRecording : 1; // Keeps track of the recording state of the context. I.e has StartContext been called
 

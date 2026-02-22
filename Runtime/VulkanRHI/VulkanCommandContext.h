@@ -173,7 +173,7 @@ private:
     FVulkanCommands*                         Commands;
     FVulkanQueryAllocator                    TimestampQueryAllocator;
     FVulkanQueryAllocator                    OcclusionQueryAllocator;
-    FVulkanBarrierBatcher                          BarrierBatcher;
+    FVulkanBarrierBatcher                    BarrierBatcher;
     ECommandContextPhase                     ContextPhase;
     FVulkanCommandContextState               ContextState;
     TArray<FVulkanPendingImageBarrier>       PendingImageBarriers;

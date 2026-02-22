@@ -1280,6 +1280,7 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
     CHECK(VulkanTexture != nullptr);
 
     FVulkanImageState& LocalState = RetrievePendingImageState(VulkanTexture);
+    
     const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
     const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
 
@@ -1390,6 +1391,7 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
     else
     {
         const VkImageCreateInfo& CreateInfo = VulkanTexture->GetVkImageCreateInfo();
+
         const uint32 BaseMip    = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)    ? 0 : TextureTransition.MipLevel;
         const uint32 MipCount   = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)    ? CreateInfo.mipLevels : 1;
         const uint32 BaseLayer  = (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES) ? 0 : TextureTransition.ArraySlice;
@@ -1419,7 +1421,7 @@ void FVulkanCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceA
     if (LocalState.GetAccess() == VK_ACCESS_FLAGS_2_TO_BE_DETERMINED)
     {
         FVulkanPendingBufferBarrier PendingBarrier;
-        PendingBarrier.Buffer       = VulkanBuffer;
+        PendingBarrier.Buffer        = VulkanBuffer;
         PendingBarrier.DesiredAccess = BeforeAccess;
         PendingBarrier.DesiredStage  = BeforeStage;
         PendingBufferBarriers.Add(PendingBarrier);
@@ -1444,9 +1446,7 @@ void FVulkanCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceA
     CHECK(!IsInsideRenderPass());
     BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
 
-    LocalState.SetState(
-        ConvertResourceStateToAccessFlags(AfterState),
-        ConvertResourceStateToPipelineStageFlags(AfterState));
+    LocalState.SetState(ConvertResourceStateToAccessFlags(AfterState), ConvertResourceStateToPipelineStageFlags(AfterState));
 }
 
 void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
@@ -1455,9 +1455,10 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
     CHECK(VulkanTexture != nullptr);
 
     FVulkanImageState& LocalState = RetrievePendingImageState(VulkanTexture);
-    const VkImageLayout DesiredLayout = ConvertResourceStateToImageLayout(RequiredState.State);
-    const VkAccessFlags2 DstAccess   = ConvertResourceStateToAccessFlags(RequiredState.State);
-    const VkPipelineStageFlags2 DstStage = ConvertResourceStateToPipelineStageFlags(RequiredState.State);
+
+    const VkAccessFlags2        DstAccess     = ConvertResourceStateToAccessFlags(RequiredState.State);
+    const VkPipelineStageFlags2 DstStage      = ConvertResourceStateToPipelineStageFlags(RequiredState.State);
+    const VkImageLayout         DesiredLayout = ConvertResourceStateToImageLayout(RequiredState.State);
 
     const VkImageCreateInfo& CreateInfo = VulkanTexture->GetVkImageCreateInfo();
     const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
@@ -1542,9 +1543,9 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
     }
     else
     {
-        const uint32 BaseMip   = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)   ? 0 : RequiredState.MipLevel;
-        const uint32 MipCount  = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)   ? CreateInfo.mipLevels : 1;
-        const uint32 BaseLayer = (RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES) ? 0 : RequiredState.ArraySlice;
+        const uint32 BaseMip    = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)   ? 0 : RequiredState.MipLevel;
+        const uint32 MipCount   = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)   ? CreateInfo.mipLevels : 1;
+        const uint32 BaseLayer  = (RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES) ? 0 : RequiredState.ArraySlice;
         const uint32 LayerCount = (RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES) ? CreateInfo.arrayLayers : 1;
 
         for (uint32 Layer = BaseLayer; Layer < BaseLayer + LayerCount; Layer++)
@@ -1595,8 +1596,9 @@ void FVulkanCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAcce
     CHECK(VulkanBuffer != nullptr);
 
     FVulkanBufferState& LocalState = RetrievePendingBufferState(VulkanBuffer);
-    const VkAccessFlags2 DesiredAccess = ConvertResourceStateToAccessFlags(RequiredState);
-    const VkPipelineStageFlags2 DesiredStage = ConvertResourceStateToPipelineStageFlags(RequiredState);
+    
+    const VkAccessFlags2        DesiredAccess = ConvertResourceStateToAccessFlags(RequiredState);
+    const VkPipelineStageFlags2 DesiredStage  = ConvertResourceStateToPipelineStageFlags(RequiredState);
 
     if (LocalState.GetAccess() == VK_ACCESS_FLAGS_2_TO_BE_DETERMINED)
     {
@@ -1744,6 +1746,7 @@ void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bV
     // The command pool will instead be explicitly retired at the end of FinishContext(), 
     // ensuring proper lifecycle management without leaks.
     // -------------------------------------------------------------------------------------------
+
     FinishCommandBuffer(false);
 
     FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(InSwapChain);
@@ -1753,6 +1756,7 @@ void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bV
     // Acquire or allocate a fresh command buffer so that subsequent GPU work can continue 
     // recording immediately after presenting.
     // -------------------------------------------------------------------------------------------
+
     ObtainCommandBuffer();
 }
 
