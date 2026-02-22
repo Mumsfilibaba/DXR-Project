@@ -90,4 +90,5 @@ private:
     FRHISamplerStateRef         LinearSampler;
 
     uint32 CurrentBufferIndex;
+    bool   bHistoryValid;
 };

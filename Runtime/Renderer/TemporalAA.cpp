@@ -7,6 +7,7 @@
 FTemporalAA::FTemporalAA(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , CurrentBufferIndex(0)
+    , bHistoryValid(false)
 {
 }
 
@@ -87,6 +88,29 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     TRACE_SCOPE("TemporalAA");
 
     GPU_TRACE_SCOPE(CommandList, "TemporalAA");
+
+    if (!bHistoryValid)
+    {
+        // After resize or first frame: seed both history buffers with the current
+        // FinalTarget so subsequent frames have valid history to blend with.
+        CommandList.TransitionTextureState(FrameResources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+
+        for (FRHITextureRef& HistoryBuffer : TAAHistoryBuffers)
+        {
+            CommandList.TransitionTextureState(HistoryBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::CopyDest));
+            CommandList.CopyTexture(HistoryBuffer.Get(), FrameResources.FinalTarget.Get());
+            CommandList.TransitionTextureState(HistoryBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
+        }
+
+        CommandList.TransitionTextureState(FrameResources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::UnorderedAccess));
+
+        CurrentBufferIndex = 0;
+        bHistoryValid = true;
+
+        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End TemporalAA (History Reset)");
+        return;
+    }
+
     CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CurrentBufferIndex = (CurrentBufferIndex + 1) % 2;
@@ -140,6 +164,9 @@ bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 
             return false;
         }
     }
+
+    bHistoryValid = false;
+    CurrentBufferIndex = 0;
 
     return true;
 }

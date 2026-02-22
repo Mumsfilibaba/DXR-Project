@@ -1444,6 +1444,25 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
         }
 #endif
 
+        // Resize ShadingImage if VRS is active (shader/pipeline are unchanged)
+        if (ShadingImage && RHIDeviceFeatureSupport::ShadingRateImageTileSize > 0)
+        {
+            const uint32 ShadingWidth  = InWidth / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
+            const uint32 ShadingHeight = InHeight / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
+
+            if (ShadingWidth > 0 && ShadingHeight > 0)
+            {
+                const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
+                FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, ShadingWidth, ShadingHeight, 1, 1, UsageFlags);
+
+                ShadingImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);
+                if (ShadingImage)
+                {
+                    ShadingImage->SetDebugName("Shading Rate Image");
+                }
+            }
+        }
+
         LOG_INFO("Changed render-resolution. From: w=%d h=%d, To: w=%d h=%d", 
             Resources.CurrentRenderWidth, Resources.CurrentRenderHeight, InWidth, InHeight);
         

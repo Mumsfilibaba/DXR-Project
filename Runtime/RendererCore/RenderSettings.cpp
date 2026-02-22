@@ -20,7 +20,7 @@ void RenderSettings::ChangeRenderResolution(uint32 Width, uint32 Height)
 
 void RenderSettings::OnDidChangeRenderResolution(uint32 Width, uint32 Height)
 {
-	if ((RenderWidth == Width || RenderHeight == Height) && Width > 0 && Height > 0)
+	if (RenderWidth == Width && RenderHeight == Height && Width > 0 && Height > 0)
 	{
 		bNeedsResize = false;
 	}
