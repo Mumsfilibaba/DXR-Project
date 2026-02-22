@@ -40,21 +40,19 @@ void FD3D12Heap::StartResidencyTracking()
 {
     if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
     {
-        ResidencyHandle = ResidencyManager->RegisterPageable(Heap.Get(), Desc.SizeInBytes, false);
-        ResidencyManager->TouchPageable(ResidencyHandle);
+        ResidencyHandle.Initialize(Heap.Get(), Desc.SizeInBytes);
+        ResidencyManager->BeginTrackingObject(&ResidencyHandle);
     }
 }
 
 void FD3D12Heap::EndResidencyTracking()
 {
-    if (ResidencyHandle.IsValid())
+    if (ResidencyHandle.IsInitialized())
     {
         if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
         {
-            ResidencyManager->UnregisterPageable(ResidencyHandle);
+            ResidencyManager->EndTrackingObject(&ResidencyHandle);
         }
-
-        ResidencyHandle = {};
     }
 }
 

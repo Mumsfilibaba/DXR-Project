@@ -854,7 +854,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
         Storage.SetGpuVirtualAddress(0);
         Storage.SetPoolAllocationData(Move.NewAllocationData);
 
-        Owner->NotifyRelocation();
+        Owner->ResourceRelocated(&Storage);
 
         if (OldResource)
         {

@@ -28,7 +28,7 @@ void FD3D12View::RegisterWithResource(FD3D12BaseResource* InOwner)
     OwnerResource = InOwner;
     if (OwnerResource)
     {
-        OwnerResource->AddListener(this);
+        OwnerResource->AddResourceRelocatedListener(this);
     }
 }
 
@@ -36,14 +36,19 @@ void FD3D12View::UnregisterFromResource()
 {
     if (OwnerResource)
     {
-        OwnerResource->RemoveListener(this);
+        OwnerResource->RemoveResourceRelocatedListener(this);
         OwnerResource = nullptr;
     }
 }
 
-void FD3D12View::OnOwnerReleased()
+void FD3D12View::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
-    OwnerResource = nullptr;
+    CHECK(RelocatedResource == OwnerResource);
+
+    if (!NewResourceStorage)
+    {
+        OwnerResource = nullptr;
+    }
 }
 
 bool FD3D12View::AllocateHandle()
@@ -68,14 +73,17 @@ FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D1
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void FD3D12ConstantBufferView::OnRelocation(FD3D12BaseResource* InResource)
+void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
-    FD3D12ResourceStorage& Storage = InResource->GetResourceStorage();
+    FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
-    D3D12_CONSTANT_BUFFER_VIEW_DESC NewDesc = Desc;
-    NewDesc.BufferLocation = Storage.GetGpuVirtualAddress();
+    if (NewResourceStorage)
+    {
+        D3D12_CONSTANT_BUFFER_VIEW_DESC NewDesc = Desc;
+        NewDesc.BufferLocation = NewResourceStorage->GetGpuVirtualAddress();
 
-    CreateView(Storage.GetResource(), NewDesc);
+        CreateView(NewResourceStorage->GetResource(), NewDesc);
+    }
 }
 
 bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
@@ -102,9 +110,14 @@ FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D1
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void FD3D12ShaderResourceView::OnRelocation(FD3D12BaseResource* InResource)
+void FD3D12ShaderResourceView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
-    CreateView(InResource->GetResource(), Desc);
+    FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
+
+    if (NewResourceStorage)
+    {
+        CreateView(NewResourceStorage->GetResource(), Desc);
+    }
 }
 
 bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
@@ -139,9 +152,14 @@ FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void FD3D12UnorderedAccessView::OnRelocation(FD3D12BaseResource* InResource)
+void FD3D12UnorderedAccessView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
-    CreateView(CounterResource.Get(), InResource->GetResource(), Desc);
+    FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
+
+    if (NewResourceStorage)
+    {
+        CreateView(CounterResource.Get(), NewResourceStorage->GetResource(), Desc);
+    }
 }
 
 bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
@@ -181,9 +199,14 @@ FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12Off
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void FD3D12RenderTargetView::OnRelocation(FD3D12BaseResource* InResource)
+void FD3D12RenderTargetView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
-    CreateView(InResource->GetResource(), Desc);
+    FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
+
+    if (NewResourceStorage)
+    {
+        CreateView(NewResourceStorage->GetResource(), Desc);
+    }
 }
 
 bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
@@ -216,9 +239,14 @@ FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12Off
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
-void FD3D12DepthStencilView::OnRelocation(FD3D12BaseResource* InResource)
+void FD3D12DepthStencilView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
-    CreateView(InResource->GetResource(), Desc);
+    FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
+
+    if (NewResourceStorage)
+    {
+        CreateView(NewResourceStorage->GetResource(), Desc);
+    }
 }
 
 bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)

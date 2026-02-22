@@ -77,7 +77,6 @@ public:
     FORCEINLINE uint64                       GetSize()              const { return Size; }
     FORCEINLINE uint64                       GetResourceOffset()    const { return ResourceOffset; }
     FORCEINLINE uint64                       GetGpuVirtualAddress() const { return GpuVirtualAddress; }
-    FORCEINLINE const FD3D12ResidencyHandle& GetResidencyHandle()   const { return ResidencyHandle; }
     FORCEINLINE void*                        GetAllocator()         const { return AllocatorPointers.AsVoid; }
     FORCEINLINE FD3D12PoolAllocator*         GetPoolAllocator()     const { return (AllocatorType == ED3D12AllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr; }
     FORCEINLINE ED3D12AllocatorType          GetAllocatorType()     const { return AllocatorType; }
@@ -95,11 +94,6 @@ public:
     FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
     FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                  { StorageType = InStorageType; }
     FORCEINLINE void SetOwner(FD3D12BaseResource* InOwner)                              { Owner = InOwner; }
-
-    FORCEINLINE void SetResidencyHandle(const FD3D12ResidencyHandle& InResidencyHandle)
-    {
-        ResidencyHandle = InResidencyHandle;
-    }
 
     FORCEINLINE void SetBuddyAllocator(FD3D12BuddyAllocator* InAllocator)
     {
@@ -154,7 +148,6 @@ private:
     D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress;
     void*                     MappedBaseAddress;
     uint64                    Size;
-    FD3D12ResidencyHandle     ResidencyHandle;
     ED3D12AllocatorType       AllocatorType;
     EResourceStorageType      StorageType;
 };
@@ -221,10 +214,7 @@ public:
         return Desc;
     }
 
-    const FD3D12ResidencyHandle& GetResidencyHandle() const
-    {
-        return ResidencyHandle;
-    }
+    FD3D12ResidencyHandle* GetResidencyHandle() { return &ResidencyHandle; }
 
 private:
     void InitializeStateTracking(D3D12_RESOURCE_STATES InitialState);
@@ -244,8 +234,7 @@ private:
 struct ID3D12ResourceRelocationListener
 {
     virtual ~ID3D12ResourceRelocationListener() = default;
-    virtual void OnRelocation(FD3D12BaseResource* Resource) = 0;
-    virtual void OnOwnerReleased() = 0;
+    virtual void OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) = 0;
 };
 
 class FD3D12BaseResource : public FD3D12DeviceChild
@@ -254,10 +243,10 @@ public:
     FD3D12BaseResource(FD3D12Device* InDevice);
     virtual ~FD3D12BaseResource();
     
-    void AddListener(ID3D12ResourceRelocationListener* Listener);
-    void RemoveListener(ID3D12ResourceRelocationListener* Listener);
+    void AddResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener);
+    void RemoveResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener);
 
-    void NotifyRelocation();
+    void ResourceRelocated(FD3D12ResourceStorage* NewResourceStorage);
 
     FD3D12ResourceStorage&       GetResourceStorage()       { return ResourceStorage; }
     const FD3D12ResourceStorage& GetResourceStorage() const { return ResourceStorage; }

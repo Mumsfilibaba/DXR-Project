@@ -240,17 +240,6 @@ NODISCARD constexpr D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags 
     return Result;
 }
 
-struct FD3D12ResidencyHandle
-{
-    uint32 Slot       = UINT32_MAX;
-    uint32 Generation = 0;
-
-    FORCEINLINE bool IsValid() const
-    {
-        return Slot != UINT32_MAX;
-    }
-};
-
 NODISCARD constexpr D3D12_RESOURCE_DIMENSION ConvertTextureDimension(ETextureDimension TextureDimension)
 {
     switch (TextureDimension)

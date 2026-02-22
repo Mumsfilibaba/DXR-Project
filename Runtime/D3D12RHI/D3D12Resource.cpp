@@ -123,21 +123,19 @@ void FD3D12Resource::StartResidencyTracking()
     if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
     {
         const D3D12_RESOURCE_ALLOCATION_INFO AllocationInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &Desc);
-        ResidencyHandle = ResidencyManager->RegisterPageable(Resource.Get(), AllocationInfo.SizeInBytes, false);
-        ResidencyManager->TouchPageable(ResidencyHandle);
+        ResidencyHandle.Initialize(Resource.Get(), AllocationInfo.SizeInBytes);
+        ResidencyManager->BeginTrackingObject(&ResidencyHandle);
     }
 }
 
 void FD3D12Resource::EndResidencyTracking()
 {
-    if (ResidencyHandle.IsValid())
+    if (ResidencyHandle.IsInitialized())
     {
         if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
         {
-            ResidencyManager->UnregisterPageable(ResidencyHandle);
+            ResidencyManager->EndTrackingObject(&ResidencyHandle);
         }
-
-        ResidencyHandle = {};
     }
 }
 
@@ -154,7 +152,6 @@ FD3D12ResourceStorage::FD3D12ResourceStorage(FD3D12Device* InDevice)
     , GpuVirtualAddress(0)
     , MappedBaseAddress(nullptr)
     , Size(0)
-    , ResidencyHandle()
     , AllocatorType(ED3D12AllocatorType::None)
     , StorageType(EResourceStorageType::Unknown)
 {
@@ -195,10 +192,6 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
     Size       = Other.Size;
     Other.Size = TempSize;
 
-    const FD3D12ResidencyHandle TempResidencyHandle = ResidencyHandle;
-    ResidencyHandle       = Other.ResidencyHandle;
-    Other.ResidencyHandle = TempResidencyHandle;
-
     const ED3D12AllocatorType TempAllocatorType = AllocatorType;
     AllocatorType       = Other.AllocatorType;
     Other.AllocatorType = TempAllocatorType;
@@ -232,7 +225,6 @@ void FD3D12ResourceStorage::Reset()
     GpuVirtualAddress = 0;
     MappedBaseAddress = nullptr;
     Size              = 0;
-    ResidencyHandle   = {};
     StorageType       = EResourceStorageType::Unknown;
 }
 
@@ -330,23 +322,12 @@ FD3D12BaseResource::~FD3D12BaseResource()
 {
     GetDevice()->CancelPendingDefragMoves(this);
 
-    {
-        TScopedLock Lock(ListenersCS);
-        for (ID3D12ResourceRelocationListener* Listener : Listeners)
-        {
-            if (Listener)
-            {
-                Listener->OnOwnerReleased();
-            }
-        }
-        
-        Listeners.Clear();
-    }
+    ResourceRelocated(nullptr);
 
     ResourceStorage.ReleaseResource();
 }
 
-void FD3D12BaseResource::AddListener(ID3D12ResourceRelocationListener* Listener)
+void FD3D12BaseResource::AddResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener)
 {
     if (!Listener)
     {
@@ -357,7 +338,7 @@ void FD3D12BaseResource::AddListener(ID3D12ResourceRelocationListener* Listener)
     Listeners.AddUnique(Listener);
 }
 
-void FD3D12BaseResource::RemoveListener(ID3D12ResourceRelocationListener* Listener)
+void FD3D12BaseResource::RemoveResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener)
 {
     if (!Listener)
     {
@@ -368,16 +349,20 @@ void FD3D12BaseResource::RemoveListener(ID3D12ResourceRelocationListener* Listen
     Listeners.Remove(Listener);
 }
 
-void FD3D12BaseResource::NotifyRelocation()
+void FD3D12BaseResource::ResourceRelocated(FD3D12ResourceStorage* NewResourceStorage)
 {
-    // Notify all listeners that the resource was reallocated (underlying resource/allocation changed)
     TScopedLock Lock(ListenersCS);
 
     for (ID3D12ResourceRelocationListener* Listener : Listeners)
     {
         if (Listener)
         {
-            Listener->OnRelocation(this);
+            Listener->OnResourceRelocated(this, NewResourceStorage);
         }
+    }
+
+    if (!NewResourceStorage)
+    {
+        Listeners.Clear();
     }
 }

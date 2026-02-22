@@ -189,7 +189,7 @@ void FD3D12RHI::EndFrame()
 
     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
     {
-        ResidencyManager->EvictIfNeeded(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
+        ResidencyManager->EvictIfNeeded();
     }
 }
 
