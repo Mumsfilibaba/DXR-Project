@@ -1,3 +1,4 @@
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanResourceViews.h"
@@ -6,6 +7,11 @@
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanFence.h"
+
+static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandBuffer(
+    "VulkanRHI.MaxCommandsPerCommandBuffer",
+    "Number of commands allowed before submitting the current CommandBuffer to the GPU",
+    10000);
 
 static constexpr bool GVulkanEnableNegativeViewportHeight = true;
 
@@ -288,6 +294,15 @@ void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQue
     }
     
     ObtainCommandBuffer();
+}
+
+void FVulkanCommandContext::ConditionalSplitCommandBuffer()
+{
+    const uint32 MaxCommands = static_cast<uint32>(CVarMaxCommandsPerCommandBuffer.GetValue());
+    if (CommandBuffer->GetNumCommands() >= MaxCommands)
+    {
+        SplitCommandBuffer(true, false);
+    }
 }
 
 void FVulkanCommandContext::ForceFlushCommandPool()
@@ -1280,7 +1295,7 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
     CHECK(VulkanTexture != nullptr);
 
     FVulkanImageState& LocalState = RetrievePendingImageState(VulkanTexture);
-    
+
     const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
     const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
 
@@ -1719,6 +1734,7 @@ void FVulkanCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uin
         return;
     }
 
+    ConditionalSplitCommandBuffer();
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     ContextState.BindComputeState();

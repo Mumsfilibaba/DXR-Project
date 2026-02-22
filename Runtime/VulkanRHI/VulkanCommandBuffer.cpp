@@ -16,7 +16,7 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanComma
 FVulkanCommandBuffer::~FVulkanCommandBuffer()
 {
     CommandBuffer.FreeCommandBuffer(GetDevice()->GetVkDevice(), OwnerPool->GetVkCommandPool());
-    CommandBuffer = VulkanInternal::FCommandBuffer();
+    CommandBuffer = FCommandBuffer();
 }
 
 bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)

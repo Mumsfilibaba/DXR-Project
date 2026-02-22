@@ -161,6 +161,7 @@ public:
     }
 
 private:
+    void ConditionalSplitCommandBuffer();
     void ForceFlushCommandPool();
     FVulkanFence* SubmitCommandBuffer(bool bFlushPool);
 

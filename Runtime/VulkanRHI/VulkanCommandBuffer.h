@@ -2,7 +2,9 @@
 #include "Core/Containers/Queue.h"
 #include "VulkanRHI/VulkanFence.h"
 
-namespace VulkanInternal
+class FVulkanCommandPool;
+
+class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
 {
     class FCommandBuffer : FNonCopyable
     {
@@ -30,20 +32,20 @@ namespace VulkanInternal
             CHECK(CommandBuffer == VK_NULL_HANDLE);
         }
 
-        FORCEINLINE VkResult AllocateCommandBuffer(VkDevice Device, const VkCommandBufferAllocateInfo* AllocateInfo)
+        FORCEINLINE VkResult AllocateCommandBuffer(VkDevice InDevice, const VkCommandBufferAllocateInfo* AllocateInfo)
         {
-            return vkAllocateCommandBuffers(Device, AllocateInfo, &CommandBuffer);
+            return vkAllocateCommandBuffers(InDevice, AllocateInfo, &CommandBuffer);
         }
 
-		FORCEINLINE void FreeCommandBuffer(VkDevice Device, VkCommandPool CommandPool)
-		{
-			vkFreeCommandBuffers(Device, CommandPool, 1, &CommandBuffer);
-		}
+        FORCEINLINE void FreeCommandBuffer(VkDevice InDevice, VkCommandPool InCommandPool)
+        {
+            vkFreeCommandBuffers(InDevice, InCommandPool, 1, &CommandBuffer);
+        }
 
-		FORCEINLINE VkResult ResetCommandBuffer(VkCommandBufferResetFlags Flags)
-		{
-			return vkResetCommandBuffer(CommandBuffer, Flags);
-		}
+        FORCEINLINE VkResult ResetCommandBuffer(VkCommandBufferResetFlags Flags)
+        {
+            return vkResetCommandBuffer(CommandBuffer, Flags);
+        }
 
         FORCEINLINE VkResult BeginCommandBuffer(const VkCommandBufferBeginInfo* BeginInfo)
         {
@@ -232,12 +234,7 @@ namespace VulkanInternal
     private:
         VkCommandBuffer CommandBuffer;
     };
-}
 
-class FVulkanCommandPool;
-
-class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
-{
 public:
     FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanCommandPool* InOwnerPool);
     ~FVulkanCommandBuffer();
@@ -267,18 +264,18 @@ public:
         return NumCommands;
     }
 
-    VulkanInternal::FCommandBuffer* operator->()
+    FCommandBuffer* operator->()
     {
         NumCommands++;
         return &CommandBuffer;
     }
 
 private:
-    FVulkanCommandPool*            OwnerPool;
-    VulkanInternal::FCommandBuffer CommandBuffer;
-    VkCommandBufferLevel           Level;
-    uint32                         NumCommands;
-    bool                           bIsRecording;
+    FVulkanCommandPool* OwnerPool;
+    FCommandBuffer      CommandBuffer;
+    VkCommandBufferLevel Level;
+    uint32               NumCommands;
+    bool                 bIsRecording;
 };
 
 class FVulkanCommandPool : public FVulkanDeviceChild, FNonCopyable

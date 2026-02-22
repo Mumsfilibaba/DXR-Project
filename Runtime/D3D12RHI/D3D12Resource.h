@@ -262,12 +262,7 @@ public:
     FD3D12ResourceStorage&       GetResourceStorage()       { return ResourceStorage; }
     const FD3D12ResourceStorage& GetResourceStorage() const { return ResourceStorage; }
 
-    FD3D12Resource* GetResource() 
-    {
-        return ResourceStorage.GetResource();
-    }
-
-    const FD3D12Resource* GetResource() const
+    FD3D12Resource* GetResource() const
     {
         return ResourceStorage.GetResource();
     }
