@@ -1,7 +1,10 @@
 #include "Core/Math/Math.h"
 #include "D3D12RHI/D3D12Allocators.h"
+#include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12DeletionQueue.h"
 #include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Fence.h"
+#include "D3D12RHI/D3D12Queue.h"
 #include "D3D12RHI/D3D12RHI.h"
 
 static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& ResourceDesc)
@@ -582,16 +585,13 @@ bool FD3D12PoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignment
         OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + AlignedOffset) : nullptr);
 
         FD3D12PoolAllocatorAllocationData AllocationData = {};
-        AllocationData.PageIndex = InPageIndex;
-        AllocationData.Offset    = AlignedOffset;
-        AllocationData.Size      = SizeInBytes;
+        AllocationData.Owner = &OutStorage;
+        AllocationData.PageIndex       = InPageIndex;
+        AllocationData.Offset          = AlignedOffset;
+        AllocationData.Size            = SizeInBytes;
 
         OutStorage.SetPoolAllocationData(AllocationData);
-
-        FLiveAllocation LiveAlloc = {};
-        LiveAlloc.Offset = AlignedOffset;
-        LiveAlloc.Size   = SizeInBytes;
-        LiveAllocations.Add(LiveAlloc);
+        LiveAllocations.Add(AllocationData);
 
         return true;
     }
@@ -636,8 +636,11 @@ bool FD3D12PoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 In
 
         UsedBytes += SizeInBytes;
 
+        OutData.Owner = nullptr;
         OutData.Offset = AlignedOffset;
         OutData.Size   = SizeInBytes;
+
+        LiveAllocations.Add(OutData);
         return true;
     }
 
@@ -651,37 +654,27 @@ void FD3D12PoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInByte
         return;
     }
 
-    UnregisterOwner(Offset);
+    for (int32 Index = 0; Index < LiveAllocations.Size(); ++Index)
+    {
+        if (LiveAllocations[Index].Offset == Offset)
+        {
+            LiveAllocations.RemoveAtSwap(Index);
+            break;
+        }
+    }
 
     FreeRanges.Add({Offset, SizeInBytes});
     UsedBytes = UsedBytes > SizeInBytes ? (UsedBytes - SizeInBytes) : 0;
     CoalesceFreeRanges();
 }
 
-void FD3D12PoolAllocatorPage::RegisterOwner(uint64 Offset, FD3D12GenericResource* Owner)
+void FD3D12PoolAllocatorPage::TransferOwnership(uint64 Offset, FD3D12ResourceStorage* NewStorage)
 {
-    for (FLiveAllocation& Alloc : LiveAllocations)
+    for (FD3D12PoolAllocatorAllocationData& Alloc : LiveAllocations)
     {
         if (Alloc.Offset == Offset)
         {
-            Alloc.Owner = Owner;
-            return;
-        }
-    }
-
-    FLiveAllocation NewAlloc = {};
-    NewAlloc.Offset = Offset;
-    NewAlloc.Owner  = Owner;
-    LiveAllocations.Add(NewAlloc);
-}
-
-void FD3D12PoolAllocatorPage::UnregisterOwner(uint64 Offset)
-{
-    for (int32 Index = 0; Index < LiveAllocations.Size(); ++Index)
-    {
-        if (LiveAllocations[Index].Offset == Offset)
-        {
-            LiveAllocations.RemoveAtSwap(Index);
+            Alloc.Owner = NewStorage;
             return;
         }
     }
@@ -876,22 +869,7 @@ void FD3D12PoolAllocator::RebuildFragmentationData()
     }
 }
 
-void FD3D12PoolAllocator::RegisterAllocationOwner(const FD3D12PoolAllocatorAllocationData& Data, FD3D12GenericResource* Owner)
-{
-    if (Data.PageIndex == UINT32_MAX || !Owner)
-    {
-        return;
-    }
-
-    SCOPED_LOCK(PagesCS);
-
-    if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
-    {
-        Pages[Data.PageIndex]->RegisterOwner(Data.Offset, Owner);
-    }
-}
-
-bool FD3D12PoolAllocator::GetDefragCandidate(FDefragCandidate& OutCandidate) const
+bool FD3D12PoolAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate) const
 {
     SCOPED_LOCK(PagesCS);
 
@@ -925,14 +903,11 @@ bool FD3D12PoolAllocator::GetDefragCandidate(FDefragCandidate& OutCandidate) con
     }
 
     const FD3D12PoolAllocatorPage* SourcePage = Pages[BestPageIndex];
-    for (const auto& LiveAlloc : SourcePage->GetLiveAllocations())
+    for (const FD3D12PoolAllocatorAllocationData& LiveAlloc : SourcePage->GetLiveAllocations())
     {
-        if (LiveAlloc.Owner)
+        if (LiveAlloc.Owner && LiveAlloc.Owner->GetOwner())
         {
-            OutCandidate.Owner     = LiveAlloc.Owner;
-            OutCandidate.PageIndex = BestPageIndex;
-            OutCandidate.Offset    = LiveAlloc.Offset;
-            OutCandidate.Size      = LiveAlloc.Size;
+            OutCandidate = LiveAlloc;
             return true;
         }
     }
@@ -1100,6 +1075,21 @@ void FD3D12PoolAllocator::RecycleAllocation(const FD3D12PoolAllocatorAllocationD
 
     Page->RecycleAllocation(Data.Offset, Data.Size);
     RebuildFragmentationData();
+}
+
+void FD3D12PoolAllocator::TransferOwnership(const FD3D12PoolAllocatorAllocationData& Data, FD3D12ResourceStorage* NewStorage)
+{
+    if (Data.PageIndex == UINT32_MAX)
+    {
+        return;
+    }
+
+    SCOPED_LOCK(PagesCS);
+
+    if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+    {
+        Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewStorage);
+    }
 }
 
 FD3D12Heap* FD3D12PoolAllocator::GetBackingHeap(uint32 PageIndex)
@@ -2042,15 +2032,7 @@ void FD3D12TextureAllocator::CleanUp()
     }
 }
 
-void FD3D12TextureAllocator::RegisterAllocationOwner(FD3D12PoolAllocator* Allocator, const FD3D12PoolAllocatorAllocationData& Data, FD3D12GenericResource* Owner)
-{
-    if (Allocator)
-    {
-        Allocator->RegisterAllocationOwner(Data, Owner);
-    }
-}
-
-bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12PoolAllocator::FDefragCandidate& OutCandidate, FD3D12PoolAllocator*& OutAllocator)
+bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate, FD3D12PoolAllocator*& OutAllocator)
 {
     SCOPED_LOCK(PoolsCS);
 
@@ -2295,5 +2277,182 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     OutStorage.SetMappedBaseAddress(nullptr);
     OutStorage.SetStorageType(EResourceStorageType::SuballocatedHeap);
     OutStorage.SetSize(AllocationInfo.SizeInBytes);
+
+    OutStorage.TransferOwnership(&PoolResourceStorage);
     return true;
+}
+
+void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame, FD3D12FenceManager& FenceManager)
+{
+    if (MaxMovesPerFrame <= 0)
+    {
+        return;
+    }
+
+    CHECK(InCommandContext != nullptr);
+    CHECK(InCommandContext->IsRecording());
+
+    const uint64 CompletedFenceValue = FenceManager.GetFence()->GetCompletedValue();
+
+    for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
+    {
+        FPendingDefragMove& Move = PendingDefragMoves[Index];
+        if (CompletedFenceValue <= Move.FenceValueAtCreation)
+        {
+            continue;
+        }
+
+        FD3D12ResourceStorage* Storage = Move.SourceStorage;
+        FD3D12GenericResource* Owner   = Storage->GetOwner();
+
+        FD3D12Resource* OldResource = Storage->GetResource();
+        if (OldResource)
+        {
+            OldResource->AddRef();
+        }
+
+        Storage->SetResource(Move.NewResource);
+        Storage->SetResourceOffset(0);
+        Storage->SetGpuVirtualAddress(0);
+        Storage->SetPoolAllocationData(Move.NewAllocationData);
+        Storage->TransferOwnership(nullptr);
+
+        if (Owner)
+        {
+            Owner->ResourceRelocated(Storage);
+        }
+
+        if (OldResource)
+        {
+            if (OldResource->ShouldDeferredRelease())
+            {
+                OldResource->DeferredRelease();
+            }
+
+            OldResource->Release();
+        }
+
+        FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, Move.Allocator, Move.OldAllocationData);
+
+        Move.NewResource->Release();
+        PendingDefragMoves.RemoveAtSwap(Index);
+    }
+
+    int32 MovesAvailable = MaxMovesPerFrame - PendingDefragMoves.Size();
+    if (MovesAvailable <= 0)
+    {
+        return;
+    }
+
+    FD3D12BarrierBatcher& BarrierBatcher = InCommandContext->GetBarrierBatcher();
+    for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
+    {
+        FD3D12PoolAllocatorAllocationData Candidate = {};
+        FD3D12PoolAllocator* SourceAllocator = nullptr;
+
+        if (!GetDefragCandidate(Candidate, SourceAllocator))
+        {
+            break;
+        }
+
+        if (!Candidate.Owner || !Candidate.Owner->GetOwner() || !SourceAllocator)
+        {
+            break;
+        }
+
+        FD3D12PoolAllocatorAllocationData NewAllocationData = {};
+        if (!SourceAllocator->TryAllocateForDefrag(Candidate.Size, SourceAllocator->GetAlignment(), Candidate.PageIndex, NewAllocationData))
+        {
+            break;
+        }
+
+        FD3D12Heap* NewHeap = SourceAllocator->GetBackingHeap(NewAllocationData.PageIndex);
+        if (!NewHeap)
+        {
+            break;
+        }
+
+        FD3D12Resource* OldResource = Candidate.Owner->GetResource();
+        if (!OldResource)
+        {
+            break;
+        }
+
+        D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
+        if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
+        {
+            ResourceDesc.Alignment = 0;
+        }
+
+        CHECK(OldResource->GetResourceState().AreAllSubresourcesSameState());
+        const D3D12_RESOURCE_STATES CurrentState = OldResource->GetResourceState().GetResourceState();
+
+        const D3D12_CLEAR_VALUE* ClearValue = OldResource->HasClearValue() ? &OldResource->GetClearValue() : nullptr;
+
+        FD3D12ResourceRef NewResource;
+        if (!GetDevice()->CreatePlacedResource(NewHeap, NewAllocationData.Offset, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, ClearValue, NewResource))
+        {
+            break;
+        }
+
+        if (CurrentState != D3D12_RESOURCE_STATE_COPY_SOURCE)
+        {
+            BarrierBatcher.AddTransitionBarrier(OldResource, CurrentState, D3D12_RESOURCE_STATE_COPY_SOURCE);
+            OldResource->GetResourceState().SetResourceState(D3D12_RESOURCE_STATE_COPY_SOURCE);
+        }
+
+        BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+        BarrierBatcher.FlushBarriers(InCommandContext->GetCommandList());
+        
+        NewResource->GetResourceState().SetResourceState(D3D12_RESOURCE_STATE_COPY_DEST);
+
+        InCommandContext->GetCommandList()->CopyResource(NewResource->GetD3D12Resource(), OldResource->GetD3D12Resource());
+
+        if (CurrentState != D3D12_RESOURCE_STATE_COPY_SOURCE)
+        {
+            BarrierBatcher.AddTransitionBarrier(OldResource, D3D12_RESOURCE_STATE_COPY_SOURCE, CurrentState);
+            OldResource->GetResourceState().SetResourceState(CurrentState);
+        }
+
+        if (CurrentState != D3D12_RESOURCE_STATE_COPY_DEST)
+        {
+            BarrierBatcher.AddTransitionBarrier(NewResource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, CurrentState);
+        }
+
+        BarrierBatcher.FlushBarriers(InCommandContext->GetCommandList());
+
+        NewResource->GetResourceState().SetResourceState(CurrentState);
+
+        FPendingDefragMove PendingMove = {};
+        PendingMove.SourceStorage        = Candidate.Owner;
+        PendingMove.NewResource          = NewResource.Get();
+        PendingMove.Allocator            = SourceAllocator;
+        PendingMove.OldAllocationData    = Candidate;
+        PendingMove.NewAllocationData    = NewAllocationData;
+        PendingMove.ResourceState        = CurrentState;
+        PendingMove.FenceValueAtCreation = FenceManager.GetLastSignaledValue();
+
+        NewResource->AddRef();
+        PendingDefragMoves.Add(PendingMove);
+    }
+}
+
+void FD3D12TextureAllocator::CancelPendingDefragMoves(FD3D12GenericResource* Owner)
+{
+    for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
+    {
+        FPendingDefragMove& Move = PendingDefragMoves[Index];
+        if (Move.SourceStorage && Move.SourceStorage->GetOwner() == Owner)
+        {
+            FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, Move.Allocator, Move.NewAllocationData);
+
+            if (Move.NewResource->ShouldDeferredRelease())
+            {
+                Move.NewResource->DeferredRelease();
+            }
+            Move.NewResource->Release();
+
+            PendingDefragMoves.RemoveAtSwap(Index);
+        }
+    }
 }

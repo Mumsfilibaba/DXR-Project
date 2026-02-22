@@ -158,17 +158,6 @@ struct FD3D12DefaultDescriptors
 
 class FD3D12CommandContext;
 
-struct FPendingDefragMove
-{
-    FD3D12GenericResource*               Owner;
-    FD3D12Resource*                   NewResource;
-    FD3D12PoolAllocator*              Allocator;
-    FD3D12PoolAllocatorAllocationData OldAllocationData;
-    FD3D12PoolAllocatorAllocationData NewAllocationData;
-    D3D12_RESOURCE_STATES             ResourceState;
-    uint64                            FenceValueAtCreation;
-};
-
 class FD3D12Device
 {
 public:
@@ -255,8 +244,6 @@ private:
     bool CreateCommandQueues();
     bool CreateDefaultResources();
     void QueryDeviceFeatureSupport();
-    void DefragmentAllocations(FD3D12CommandContext* InCommandContext);
-
     FD3D12Adapter* const             Adapter;
 
     FD3D12OnlineDescriptorHeap*      GlobalResourceHeap;
@@ -286,7 +273,6 @@ private:
     FD3D12QueryHeapManager*          OcclusionQueryHeapManager;
 
     FD3D12DefaultDescriptors         DefaultDescriptors;
-    TArray<FPendingDefragMove>       PendingDefragMoves;
 
     D3D_FEATURE_LEVEL                MinFeatureLevel;
     D3D_FEATURE_LEVEL                ActiveFeatureLevel;

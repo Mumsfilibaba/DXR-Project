@@ -194,7 +194,7 @@ void FD3D12Commands::PreExecute()
 
     for (const FD3D12PendingBarrier& Pending : PendingBarriers)
     {
-        FD3D12ResourceState& GlobalState = Pending.Resource->GetTrackedState();
+        FD3D12ResourceState& GlobalState = Pending.Resource->GetResourceState();
 
         if (Pending.Subresource == D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
         {
@@ -239,7 +239,7 @@ void FD3D12Commands::PreExecute()
     {
         FD3D12Resource*      Resource   = It.GetKey();
         FD3D12ResourceState& LocalState = It.GetValue();
-        Resource->GetTrackedState() = LocalState;
+        Resource->GetResourceState() = LocalState;
     }
 
     PendingBarriers.Clear();

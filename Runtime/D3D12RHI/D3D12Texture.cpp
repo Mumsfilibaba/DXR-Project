@@ -101,11 +101,6 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         return false;
     }
 
-    if (FD3D12PoolAllocator* PoolAllocator = ResourceStorage.GetPoolAllocator())
-    {
-        GetDevice()->GetTextureAllocator()->RegisterAllocationOwner(PoolAllocator, ResourceStorage.GetPoolAllocationData(), this);
-    }
-
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc = {};
         ViewDesc.Format                  = D3D12CastShaderResourceFormat(ResourceDesc.Format);

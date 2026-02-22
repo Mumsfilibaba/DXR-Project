@@ -1,25 +1,22 @@
+#include "Core/Generic/GenericThread.h"
+#include "Core/Platform/PlatformEvent.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Device.h"
-#include "Core/Generic/GenericThread.h"
-#include "Core/Generic/GenericEvent.h"
-
-// -----------------------------------------------------------------------
-// FD3D12PagingWorker
-// -----------------------------------------------------------------------
 
 FD3D12PagingWorker::FD3D12PagingWorker(ID3D12Device* InDevice)
     : Device(InDevice)
     , LastResult(S_OK)
-    , WakeEvent(FGenericEvent::Create(false))
-    , CompletionEvent(FGenericEvent::Create(false))
+    , WakeEvent(static_cast<FPlatformEvent*>(FPlatformEvent::Create(false)))
+    , CompletionEvent(static_cast<FPlatformEvent*>(FPlatformEvent::Create(false)))
     , bRunning(true)
 {
 }
 
 FD3D12PagingWorker::~FD3D12PagingWorker()
 {
-    FGenericEvent::Recycle(WakeEvent);
-    FGenericEvent::Recycle(CompletionEvent);
+    FPlatformEvent::Recycle(WakeEvent);
+    FPlatformEvent::Recycle(CompletionEvent);
+
     WakeEvent       = nullptr;
     CompletionEvent = nullptr;
 }
@@ -28,6 +25,7 @@ void FD3D12PagingWorker::RequestMakeResident(TArray<ID3D12Pageable*>&& Pageables
 {
     {
         SCOPED_LOCK(RequestMutex);
+        
         PendingPageables = Move(Pageables);
         LastResult       = S_OK;
     }
@@ -83,10 +81,6 @@ void FD3D12PagingWorker::Stop()
     WakeEvent->Trigger();
 }
 
-// -----------------------------------------------------------------------
-// FD3D12ResidencyManager
-// -----------------------------------------------------------------------
-
 FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEnableResidency, uint64 TargetBudgetBytes)
     : Device(InDevice)
     , Adapter(Device ? Device->GetAdapter()->GetDXGIAdapter3() : nullptr)
@@ -96,6 +90,8 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
     , PagingWorker(nullptr)
     , PagingThread(nullptr)
     , PagingFenceValue(0)
+    , BudgetChangeEvent(nullptr)
+    , BudgetChangeCookie(0)
 {
     if (!bEnable || !Device)
     {
@@ -115,10 +111,36 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
         PagingThread = FGenericThread::Create(PagingWorker, "D3D12 Paging Worker");
         PagingThread->Start();
     }
+
+    if (Adapter)
+    {
+        BudgetChangeEvent = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+        if (BudgetChangeEvent)
+        {
+            if (FAILED(Adapter->RegisterVideoMemoryBudgetChangeNotificationEvent(BudgetChangeEvent, &BudgetChangeCookie)))
+            {
+                CloseHandle(BudgetChangeEvent);
+                BudgetChangeEvent  = nullptr;
+                BudgetChangeCookie = 0;
+            }
+        }
+    }
 }
 
 FD3D12ResidencyManager::~FD3D12ResidencyManager()
 {
+    if (BudgetChangeCookie && Adapter)
+    {
+        Adapter->UnregisterVideoMemoryBudgetChangeNotification(BudgetChangeCookie);
+        BudgetChangeCookie = 0;
+    }
+
+    if (BudgetChangeEvent)
+    {
+        CloseHandle(BudgetChangeEvent);
+        BudgetChangeEvent = nullptr;
+    }
+
     if (PagingThread)
     {
         PagingThread->Kill(true);
@@ -149,8 +171,15 @@ void FD3D12ResidencyManager::Tick()
         return;
     }
 
-    SCOPED_LOCK(Mutex);
-    ++CurrentFrame;
+    {
+        SCOPED_LOCK(Mutex);
+        ++CurrentFrame;
+    }
+
+    if (BudgetChangeEvent && WaitForSingleObject(BudgetChangeEvent, 0) == WAIT_OBJECT_0)
+    {
+        EvictIfNeeded();
+    }
 }
 
 void FD3D12ResidencyManager::BeginTrackingObject(FD3D12ResidencyHandle* Handle)

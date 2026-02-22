@@ -4,13 +4,14 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 
-FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState)
+FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, FD3D12Heap* InHeap)
     : FD3D12RefCounted()
     , FD3D12DeviceChild(InDevice)
     , Resource(InResource)
     , HeapType(InHeapType)
     , Desc(InResource ? InResource->GetDesc() : D3D12_RESOURCE_DESC{})
     , Address(0)
+    , Heap(MakeSharedRef<FD3D12Heap>(InHeap))
     , NumSubresources(0)
     , bShouldDeferredRelease(true)
     , bHasClearValue(false)
@@ -208,6 +209,14 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
     void* const TempAllocatorPointer = AllocatorPointers.AsVoid;
     AllocatorPointers.AsVoid         = Other.AllocatorPointers.AsVoid;
     Other.AllocatorPointers.AsVoid   = TempAllocatorPointer;
+}
+
+void FD3D12ResourceStorage::TransferOwnership(FD3D12ResourceStorage* Source)
+{
+    if (AllocatorType == ED3D12AllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
+    {
+        AllocatorPointers.PoolAllocator->TransferOwnership(AllocationData.Pool, this);
+    }
 }
 
 void FD3D12ResourceStorage::Reset()

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Platform/PlatformEvent.h"
 #include "Core/Threading/Runnable.h"
 #include "D3D12RHI/D3D12Core.h"
 
@@ -8,7 +9,6 @@ struct IDXGIAdapter3;
 class FD3D12Device;
 class FD3D12ResidencyManager;
 class FGenericThread;
-class FGenericEvent;
 
 class FD3D12ResidencyHandle
 {
@@ -85,8 +85,8 @@ private:
     ID3D12Device*           Device;
     TArray<ID3D12Pageable*> PendingPageables;
     HRESULT                 LastResult;
-    FGenericEvent*          WakeEvent;
-    FGenericEvent*          CompletionEvent;
+    FPlatformEvent*         WakeEvent;
+    FPlatformEvent*         CompletionEvent;
     FCriticalSection        RequestMutex;
     bool                    bRunning;
 };
@@ -126,4 +126,6 @@ private:
     FGenericThread*                PagingThread;
     TComPtr<ID3D12Fence>           PagingFence;
     uint64                         PagingFenceValue;
+    HANDLE                         BudgetChangeEvent;
+    DWORD                          BudgetChangeCookie;
 };
