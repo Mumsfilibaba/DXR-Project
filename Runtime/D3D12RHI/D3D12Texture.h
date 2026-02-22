@@ -9,7 +9,7 @@ class FD3D12CommandContext;
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
-class FD3D12Texture : public FRHITexture, public FD3D12BaseResource
+class FD3D12Texture : public FRHITexture, public FD3D12GenericResource
 {
 public:
     static FD3D12Texture* Cast(FRHITexture* Texture);

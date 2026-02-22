@@ -6,6 +6,7 @@
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12Fence.h"
+#include "D3D12RHI/D3D12ResidencyManager.h"
 
 class FD3D12ComputePipelineState;
 
@@ -156,6 +157,16 @@ public:
         return CmdList.Get();
     }
 
+    FORCEINLINE void UpdateResidency(FD3D12ResidencyHandle* Handle)
+    {
+        ResidencySet.Insert(Handle);
+    }
+
+    FORCEINLINE FD3D12ResidencySet& GetResidencySet()
+    {
+        return ResidencySet;
+    }
+
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;
     TComPtr<ID3D12GraphicsCommandList1> CmdList1;
@@ -164,7 +175,7 @@ private:
     TComPtr<ID3D12GraphicsCommandList4> CmdList4;
     TComPtr<ID3D12GraphicsCommandList5> CmdList5;
     TComPtr<ID3D12GraphicsCommandList6> CmdList6;
-
-    uint32 NumCommands;
-    bool   bIsReady;
+    uint32                              NumCommands;
+    bool                                bIsReady;
+    FD3D12ResidencySet                  ResidencySet;
 };

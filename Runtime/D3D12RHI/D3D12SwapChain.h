@@ -17,6 +17,7 @@ public:
     FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainInfo& InSwapChainInfo);
     virtual ~FD3D12SwapChain();
 
+    // FRHISwapChain Interface
     virtual FRHITexture* GetBackBuffer() const override final { return BackBufferProxy.Get(); }
 
     bool Initialize(FD3D12CommandContext* InCommandContext);

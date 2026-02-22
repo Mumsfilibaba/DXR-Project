@@ -126,7 +126,7 @@ public:
 
     FD3D12BarrierBatcher& GetBarrierBatcher()
     {
-        return ResourceBarrierBatcher;
+        return BarrierBatcher;
     }
 
     ED3D12CommandQueueType GetQueueType() const
@@ -156,7 +156,7 @@ private:
     FD3D12CommandContextState                  ContextState;
     FD3D12QueryAllocator                       TimingQueryAllocator;
     FD3D12QueryAllocator                       OcclusionQueryAllocator;
-    FD3D12BarrierBatcher                    ResourceBarrierBatcher;
+    FD3D12BarrierBatcher                       BarrierBatcher;
     TArray<FD3D12PendingBarrier>               PendingBarriers;
     TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
     ED3D12CommandQueueType                     QueueType;

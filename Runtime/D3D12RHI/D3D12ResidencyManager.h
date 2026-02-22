@@ -1,11 +1,14 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/Runnable.h"
 #include "D3D12RHI/D3D12Core.h"
 
 struct IDXGIAdapter3;
 class FD3D12Device;
 class FD3D12ResidencyManager;
+class FGenericThread;
+class FGenericEvent;
 
 class FD3D12ResidencyHandle
 {
@@ -35,6 +38,52 @@ private:
     bool            bIsTracked    = false;
 };
 
+class FD3D12ResidencySet
+{
+public:
+    void Reset()
+    {
+        Handles.Clear();
+    }
+
+    FORCEINLINE void Insert(FD3D12ResidencyHandle* Handle)
+    {
+        if (Handle && Handle->IsInitialized())
+        {
+            Handles.AddUnique(Handle);
+        }
+    }
+
+    FORCEINLINE const TArray<FD3D12ResidencyHandle*>& GetHandles() const { return Handles; }
+    FORCEINLINE int32 GetNumHandles() const { return Handles.Size(); }
+
+private:
+    TArray<FD3D12ResidencyHandle*> Handles;
+};
+
+class FD3D12PagingWorker : public FRunnable
+{
+public:
+    FD3D12PagingWorker(ID3D12Device* InDevice);
+    ~FD3D12PagingWorker();
+
+    void RequestMakeResident(TArray<ID3D12Pageable*>&& Pageables);
+    bool WaitForCompletion();
+
+    // FRunnable
+    virtual int32 Run() override;
+    virtual void Stop() override;
+
+private:
+    ID3D12Device*            Device;
+    TArray<ID3D12Pageable*>  PendingPageables;
+    HRESULT                  LastResult;
+    FGenericEvent*           WakeEvent;
+    FGenericEvent*           CompletionEvent;
+    FCriticalSection         RequestMutex;
+    bool                     bRunning;
+};
+
 class FD3D12ResidencyManager
 {
 public:
@@ -51,8 +100,13 @@ public:
     void MakeResident(FD3D12ResidencyHandle* Handle);
     void EvictIfNeeded();
 
+    void PrepareForExecution(FD3D12ResidencySet* const* Sets, uint32 NumSets);
+
 private:
+    bool MakeResidentAsync(TArray<ID3D12Pageable*>& Pageables);
+
     uint64 GetCurrentUsage() const;
+    uint64 GetBudget() const;
 
     FD3D12Device*                    Device;
     IDXGIAdapter3*                   Adapter;
@@ -61,4 +115,9 @@ private:
     bool                             bEnable;
     TArray<FD3D12ResidencyHandle*>   TrackedObjects;
     FCriticalSection                 Mutex;
+
+    FD3D12PagingWorker*              PagingWorker;
+    FGenericThread*                  PagingThread;
+    TComPtr<ID3D12Fence>             PagingFence;
+    uint64                           PagingFenceValue;
 };

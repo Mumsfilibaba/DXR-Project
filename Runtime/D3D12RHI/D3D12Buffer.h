@@ -6,7 +6,7 @@
 
 class FD3D12CommandContext;
 
-class FD3D12Buffer : public FRHIBuffer, public FD3D12BaseResource
+class FD3D12Buffer : public FRHIBuffer, public FD3D12GenericResource
 {
 public:
     static FORCEINLINE FD3D12Buffer* Cast(FRHIBuffer* Buffer)

@@ -16,7 +16,7 @@ FD3D12View::~FD3D12View()
     InvalidateAndFreeHandle();
 }
 
-void FD3D12View::RegisterWithResource(FD3D12BaseResource* InOwner)
+void FD3D12View::RegisterWithResource(FD3D12GenericResource* InOwner)
 {
     if (InOwner == OwnerResource)
     {
@@ -41,7 +41,7 @@ void FD3D12View::UnregisterFromResource()
     }
 }
 
-void FD3D12View::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12View::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     CHECK(RelocatedResource == OwnerResource);
 
@@ -73,7 +73,7 @@ FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D1
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -110,7 +110,7 @@ FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D1
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void FD3D12ShaderResourceView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12ShaderResourceView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -152,7 +152,7 @@ FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void FD3D12UnorderedAccessView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12UnorderedAccessView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -199,7 +199,7 @@ FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12Off
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void FD3D12RenderTargetView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12RenderTargetView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -239,7 +239,7 @@ FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12Off
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
-void FD3D12DepthStencilView::OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12DepthStencilView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 

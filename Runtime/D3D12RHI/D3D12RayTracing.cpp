@@ -121,6 +121,16 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
 
     FD3D12CommandList& CommandList = CmdContext.GetCommandList();
+    CommandList.UpdateResidency(ResultResourceStorage.GetResource()->GetResidencyHandle());
+    CommandList.UpdateResidency(ScratchResourceStorage.GetResource()->GetResidencyHandle());
+    if (VertexBuffer)
+    {
+        CommandList.UpdateResidency(VertexBuffer->GetResource()->GetResidencyHandle());
+    }
+    if (IndexBuffer)
+    {
+        CommandList.UpdateResidency(IndexBuffer->GetResource()->GetResidencyHandle());
+    }
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
     CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
@@ -314,6 +324,9 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
 
     FD3D12CommandList& CommandList = CmdContext.GetCommandList();
+    CommandList.UpdateResidency(ResultResourceStorage.GetResource()->GetResidencyHandle());
+    CommandList.UpdateResidency(ScratchResourceStorage.GetResource()->GetResidencyHandle());
+    CommandList.UpdateResidency(InstanceBuffer->GetResidencyHandle());
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
     CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());

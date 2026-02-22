@@ -157,6 +157,7 @@ bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAl
 bool FD3D12CommandList::Reset(FD3D12CommandAllocator* Allocator)
 {
     bIsReady = true;
+    ResidencySet.Reset();
 
     HRESULT Result = CmdList->Reset(Allocator->GetD3D12Allocator(), nullptr);
     if (Result == DXGI_ERROR_DEVICE_REMOVED)

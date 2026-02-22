@@ -85,6 +85,7 @@ public:
 
     // FRHIRayTracingGeometry Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
+    
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
@@ -117,6 +118,7 @@ public:
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 

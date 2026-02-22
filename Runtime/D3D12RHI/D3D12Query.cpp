@@ -33,6 +33,11 @@ FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager*
 
 FD3D12QueryHeap::~FD3D12QueryHeap()
 {
+    if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
+    {
+        ResidencyManager->EndTrackingObject(&ResidencyHandle);
+    }
+
     ReadbackResourceStorage.ReleaseResource();
 }
 
@@ -77,6 +82,12 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 In
     QueryHeapType = InQueryHeapType;
     NumQueries    = QueryHeapDesc.Count;
 
+    ResidencyHandle.Initialize(QueryHeap.Get(), QueryHeapDesc.Count * sizeof(uint64));
+    if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
+    {
+        ResidencyManager->BeginTrackingObject(&ResidencyHandle);
+    }
+
     QueryAllocations.Resize(NumQueries);
     return true;
 }
@@ -104,6 +115,8 @@ void FD3D12QueryHeap::ResolveQueries(FD3D12CommandList& CommandList)
     {
         QueryType = D3D12_QUERY_TYPE_OCCLUSION;
     }
+
+    CommandList.UpdateResidency(&ResidencyHandle);
 
     const uint32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
     CommandList->ResolveQueryData(QueryHeap.Get(), QueryType, 0, NumUsedQueries, ReadbackResourceStorage.GetResource()->GetD3D12Resource(), 0);

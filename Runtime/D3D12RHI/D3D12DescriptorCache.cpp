@@ -152,6 +152,7 @@ void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetCache& Cache)
         if (FD3D12RenderTargetView* CurrentView = Cache.RenderTargetViews[Index])
         {
             RenderTargetViewHandles[Index] = CurrentView->GetOfflineHandle();
+            Context.GetCommandList().UpdateResidency(CurrentView->GetResourceResidencyHandle());
         }
         else
         {
@@ -161,6 +162,8 @@ void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetCache& Cache)
 
     if (Cache.DepthStencilView)
     {
+        Context.GetCommandList().UpdateResidency(Cache.DepthStencilView->GetResourceResidencyHandle());
+
         D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilHandle = Cache.DepthStencilView->GetOfflineHandle();
         Context.GetCommandList()->OMSetRenderTargets(Cache.NumRenderTargets, RenderTargetViewHandles, false, &DepthStencilHandle);
     }
@@ -206,6 +209,7 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
             if (FD3D12ConstantBufferView* ConstantBuffer = CBVCache[Index])
             {
                 OfflineHandles[Index] = ConstantBuffer->GetOfflineHandle();
+                Context.GetCommandList().UpdateResidency(ConstantBuffer->GetResourceResidencyHandle());
             }
             else
             {
@@ -266,6 +270,7 @@ void FD3D12DescriptorCache::SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12
             if (FD3D12ShaderResourceView* ShaderResourceView = SRVCache[Index])
             {
                 OfflineHandles[Index] = ShaderResourceView->GetOfflineHandle();
+                Context.GetCommandList().UpdateResidency(ShaderResourceView->GetResourceResidencyHandle());
             }
             else
             {
@@ -326,6 +331,7 @@ void FD3D12DescriptorCache::SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D1
             if (FD3D12UnorderedAccessView* UnorderedAccessView = UAVCache[Index])
             {
                 OfflineHandles[Index] = UnorderedAccessView->GetOfflineHandle();
+                Context.GetCommandList().UpdateResidency(UnorderedAccessView->GetResourceResidencyHandle());
             }
             else
             {

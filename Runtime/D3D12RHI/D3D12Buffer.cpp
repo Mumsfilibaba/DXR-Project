@@ -4,7 +4,7 @@
 
 FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo)
     : FRHIBuffer(InBufferInfo)
-    , FD3D12BaseResource(InDevice)
+    , FD3D12GenericResource(InDevice)
 {
 }
 

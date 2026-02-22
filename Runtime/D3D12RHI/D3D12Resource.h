@@ -11,7 +11,7 @@ typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 class FD3D12BuddyAllocator;
 class FD3D12BucketAllocator;
 class FD3D12PoolAllocator;
-class FD3D12BaseResource;
+class FD3D12GenericResource;
 
 enum class ED3D12ResourceLifetime : uint8
 {
@@ -82,7 +82,7 @@ public:
     FORCEINLINE ED3D12AllocatorType          GetAllocatorType()     const { return AllocatorType; }
     FORCEINLINE EResourceStorageType         GetStorageType()       const { return StorageType; }
     FORCEINLINE FD3D12Resource*              GetResource()          const { return Resource; }
-    FORCEINLINE FD3D12BaseResource*          GetOwner()             const { return Owner; }
+    FORCEINLINE FD3D12GenericResource*          GetOwner()             const { return Owner; }
 
     FORCEINLINE const FD3D12PoolAllocatorAllocationData&   GetPoolAllocationData()   const { return AllocationData.Pool; }
     FORCEINLINE const FD3D12BuddyAllocatorAllocationData&  GetBuddyAllocationData()  const { return AllocationData.Buddy; }
@@ -93,7 +93,7 @@ public:
     FORCEINLINE void SetGpuVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress) { GpuVirtualAddress = InGpuVirtualAddress; }
     FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
     FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                  { StorageType = InStorageType; }
-    FORCEINLINE void SetOwner(FD3D12BaseResource* InOwner)                              { Owner = InOwner; }
+    FORCEINLINE void SetOwner(FD3D12GenericResource* InOwner)                              { Owner = InOwner; }
 
     FORCEINLINE void SetBuddyAllocator(FD3D12BuddyAllocator* InAllocator)
     {
@@ -143,7 +143,7 @@ private:
     } AllocatorPointers;
 
     FD3D12Resource*           Resource;
-    FD3D12BaseResource*       Owner;
+    FD3D12GenericResource*       Owner;
     uint64                    ResourceOffset;
     D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress;
     void*                     MappedBaseAddress;
@@ -234,14 +234,14 @@ private:
 struct ID3D12ResourceRelocationListener
 {
     virtual ~ID3D12ResourceRelocationListener() = default;
-    virtual void OnResourceRelocated(FD3D12BaseResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) = 0;
+    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) = 0;
 };
 
-class FD3D12BaseResource : public FD3D12DeviceChild
+class FD3D12GenericResource : public FD3D12DeviceChild
 {
 public:
-    FD3D12BaseResource(FD3D12Device* InDevice);
-    virtual ~FD3D12BaseResource();
+    FD3D12GenericResource(FD3D12Device* InDevice);
+    virtual ~FD3D12GenericResource();
     
     void AddResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener);
     void RemoveResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener);

@@ -26,15 +26,9 @@ public:
     FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInputElements);
     virtual ~FD3D12InputLayout();
 
-    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
-    {
-        return &InputElements[Index];
-    }
-
-    virtual uint32 GetNumInputElementInfos() const override final
-    {
-        return InputElements.Size();
-    }
+    // FRHIInputLayout Interface
+    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final { return &InputElements[Index]; }
+    virtual uint32 GetNumInputElementInfos() const override final { return InputElements.Size(); }
 
     const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
     {
@@ -60,10 +54,8 @@ public:
     FD3D12DepthStencilState(const FRHIDepthStencilStateInfo& InInfo);
     virtual ~FD3D12DepthStencilState();
 
-    virtual FRHIDepthStencilStateInfo GetInfo() const override final
-    {
-        return Info;
-    }
+    // FRHIDepthStencilState Interface
+    virtual FRHIDepthStencilStateInfo GetInfo() const override final { return Info; }
 
     const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
     {
@@ -87,10 +79,8 @@ public:
     FD3D12RasterizerState(const FRHIRasterizerStateInfo& InInfo);
     virtual ~FD3D12RasterizerState();
 
-    virtual FRHIRasterizerStateInfo GetInfo() const override final
-    {
-        return Info;
-    }
+    // FRHIRasterizerState Interface
+    virtual FRHIRasterizerStateInfo GetInfo() const override final { return Info; }
 
     const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
     {
@@ -114,10 +104,8 @@ public:
     FD3D12BlendState(const FRHIBlendStateInfo& InInfo);
     virtual ~FD3D12BlendState();
 
-    virtual FRHIBlendStateInfo GetInfo() const override final
-    {
-        return Info;
-    }
+    // FRHIBlendState Interface
+    virtual FRHIBlendStateInfo GetInfo() const override final { return Info; }
 
     const D3D12_BLEND_DESC& GetD3D12Desc() const
     {

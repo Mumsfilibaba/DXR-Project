@@ -68,6 +68,7 @@ public:
     FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateInfo& InSamplerInfo);
     virtual ~FD3D12SamplerState();
 
+    // FRHISamplerState Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     bool CreateSampler(const D3D12_SAMPLER_DESC& InDesc);

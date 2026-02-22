@@ -840,7 +840,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
             continue;
         }
 
-        FD3D12BaseResource*    Owner   = Move.Owner;
+        FD3D12GenericResource*    Owner   = Move.Owner;
         FD3D12ResourceStorage& Storage = Owner->GetResourceStorage();
 
         FD3D12Resource* OldResource = Storage.GetResource();
@@ -972,7 +972,7 @@ void FD3D12Device::DefragmentAllocations(FD3D12CommandContext* InCommandContext)
     }
 }
 
-void FD3D12Device::CancelPendingDefragMoves(FD3D12BaseResource* Owner)
+void FD3D12Device::CancelPendingDefragMoves(FD3D12GenericResource* Owner)
 {
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {

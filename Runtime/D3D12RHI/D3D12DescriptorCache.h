@@ -415,16 +415,14 @@ public:
     }
 
 private:
-    FD3D12CommandContext&       Context;
+    FD3D12CommandContext&           Context;
     const FD3D12DefaultDescriptors& DefaultDescriptors;
-
-    ID3D12DescriptorHeap*       CurrentDescriptorHeaps[2] = { nullptr, nullptr };
-    FD3D12LocalDescriptorHeap   ResourceHeap;
-    FD3D12LocalDescriptorHeap   SamplerHeap;
-
-    FD3D12DescriptorHandleCache ConstantBufferCache;
-    FD3D12DescriptorHandleCache ShaderResourceViewCache;
-    FD3D12DescriptorHandleCache UnorderedAccessViewCache;
-    FD3D12DescriptorHandleCache SamplerDescriptorHandles;
-    FD3D12SamplerLookupTable    SamplerCache;
+    ID3D12DescriptorHeap*           CurrentDescriptorHeaps[2] = { nullptr, nullptr };
+    FD3D12LocalDescriptorHeap       ResourceHeap;
+    FD3D12LocalDescriptorHeap       SamplerHeap;
+    FD3D12DescriptorHandleCache     ConstantBufferCache;
+    FD3D12DescriptorHandleCache     ShaderResourceViewCache;
+    FD3D12DescriptorHandleCache     UnorderedAccessViewCache;
+    FD3D12DescriptorHandleCache     SamplerDescriptorHandles;
+    FD3D12SamplerLookupTable        SamplerCache;
 };

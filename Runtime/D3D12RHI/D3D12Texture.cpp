@@ -27,7 +27,7 @@ FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
 
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
-    , FD3D12BaseResource(InDevice)
+    , FD3D12GenericResource(InDevice)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
     , RenderTargetViews()

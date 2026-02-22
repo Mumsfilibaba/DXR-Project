@@ -109,7 +109,7 @@ public:
     {
         uint64              Offset = 0;
         uint64              Size   = 0;
-        FD3D12BaseResource* Owner  = nullptr;
+        FD3D12GenericResource* Owner  = nullptr;
     };
 
 public:
@@ -122,7 +122,7 @@ public:
     bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FD3D12PoolAllocatorAllocationData& OutData);
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
 
-    void RegisterOwner(uint64 Offset, FD3D12BaseResource* Owner);
+    void RegisterOwner(uint64 Offset, FD3D12GenericResource* Owner);
     void UnregisterOwner(uint64 Offset);
 
     bool IsEmpty() const { return UsedBytes == 0; }
@@ -178,7 +178,7 @@ class FD3D12PoolAllocator : public FD3D12DeviceChild
 public:
     struct FDefragCandidate
     {
-        FD3D12BaseResource*               Owner       = nullptr;
+        FD3D12GenericResource*               Owner       = nullptr;
         uint32                            PageIndex   = UINT32_MAX;
         uint64                            Offset      = 0;
         uint64                            Size        = 0;
@@ -197,7 +197,7 @@ public:
     void Deallocate(const FD3D12ResourceStorage& Storage);
     void RecycleAllocation(const FD3D12PoolAllocatorAllocationData& AllocationData);
     
-    void RegisterAllocationOwner(const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner);
+    void RegisterAllocationOwner(const FD3D12PoolAllocatorAllocationData& Data, FD3D12GenericResource* Owner);
     bool GetDefragCandidate(FDefragCandidate& OutCandidate) const;
     bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 ExcludePageIndex, FD3D12PoolAllocatorAllocationData& OutData);
 
@@ -426,7 +426,7 @@ public:
     bool TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
-    void RegisterAllocationOwner(FD3D12PoolAllocator* Allocator, const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner);
+    void RegisterAllocationOwner(FD3D12PoolAllocator* Allocator, const FD3D12PoolAllocatorAllocationData& Data, FD3D12GenericResource* Owner);
     bool GetDefragCandidate(FD3D12PoolAllocator::FDefragCandidate& OutCandidate, FD3D12PoolAllocator*& OutAllocator);
 
 private:

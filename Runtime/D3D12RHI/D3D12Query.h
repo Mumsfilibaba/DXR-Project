@@ -82,12 +82,18 @@ public:
     {
         return QueryHeapType;
     }
-    
+
+    FD3D12ResidencyHandle* GetResidencyHandle()
+    {
+        return &ResidencyHandle;
+    }
+
 private:
     FD3D12ResourceStorage         ReadbackResourceStorage;
     TComPtr<ID3D12QueryHeap>      QueryHeap;
     FD3D12QueryHeapManager*       QueryHeapManager;
     TArray<FD3D12QueryAllocation> QueryAllocations;
+    FD3D12ResidencyHandle         ResidencyHandle;
     D3D12_QUERY_HEAP_TYPE         QueryHeapType;
     int32                         CurrentQueryIndex;
     int32                         NumQueries;

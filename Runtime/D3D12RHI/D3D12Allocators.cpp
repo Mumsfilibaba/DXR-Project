@@ -658,7 +658,7 @@ void FD3D12PoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInByte
     CoalesceFreeRanges();
 }
 
-void FD3D12PoolAllocatorPage::RegisterOwner(uint64 Offset, FD3D12BaseResource* Owner)
+void FD3D12PoolAllocatorPage::RegisterOwner(uint64 Offset, FD3D12GenericResource* Owner)
 {
     for (FLiveAllocation& Alloc : LiveAllocations)
     {
@@ -876,7 +876,7 @@ void FD3D12PoolAllocator::RebuildFragmentationData()
     }
 }
 
-void FD3D12PoolAllocator::RegisterAllocationOwner(const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner)
+void FD3D12PoolAllocator::RegisterAllocationOwner(const FD3D12PoolAllocatorAllocationData& Data, FD3D12GenericResource* Owner)
 {
     if (Data.PageIndex == UINT32_MAX || !Owner)
     {
@@ -2042,7 +2042,7 @@ void FD3D12TextureAllocator::CleanUp()
     }
 }
 
-void FD3D12TextureAllocator::RegisterAllocationOwner(FD3D12PoolAllocator* Allocator, const FD3D12PoolAllocatorAllocationData& Data, FD3D12BaseResource* Owner)
+void FD3D12TextureAllocator::RegisterAllocationOwner(FD3D12PoolAllocator* Allocator, const FD3D12PoolAllocatorAllocationData& Data, FD3D12GenericResource* Owner)
 {
     if (Allocator)
     {
