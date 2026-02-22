@@ -54,8 +54,15 @@ public:
         }
     }
 
-    FORCEINLINE const TArray<FD3D12ResidencyHandle*>& GetHandles() const { return Handles; }
-    FORCEINLINE int32 GetNumHandles() const { return Handles.Size(); }
+    FORCEINLINE const TArray<FD3D12ResidencyHandle*>& GetHandles() const
+    {
+        return Handles;
+    }
+
+    FORCEINLINE int32 GetNumHandles() const
+    {
+        return Handles.Size();
+    }
 
 private:
     TArray<FD3D12ResidencyHandle*> Handles;
@@ -75,13 +82,13 @@ public:
     virtual void Stop() override;
 
 private:
-    ID3D12Device*            Device;
-    TArray<ID3D12Pageable*>  PendingPageables;
-    HRESULT                  LastResult;
-    FGenericEvent*           WakeEvent;
-    FGenericEvent*           CompletionEvent;
-    FCriticalSection         RequestMutex;
-    bool                     bRunning;
+    ID3D12Device*           Device;
+    TArray<ID3D12Pageable*> PendingPageables;
+    HRESULT                 LastResult;
+    FGenericEvent*          WakeEvent;
+    FGenericEvent*          CompletionEvent;
+    FCriticalSection        RequestMutex;
+    bool                    bRunning;
 };
 
 class FD3D12ResidencyManager
@@ -108,16 +115,15 @@ private:
     uint64 GetCurrentUsage() const;
     uint64 GetBudget() const;
 
-    FD3D12Device*                    Device;
-    IDXGIAdapter3*                   Adapter;
-    uint64                           TargetBudget;
-    uint64                           CurrentFrame;
-    bool                             bEnable;
-    TArray<FD3D12ResidencyHandle*>   TrackedObjects;
-    FCriticalSection                 Mutex;
-
-    FD3D12PagingWorker*              PagingWorker;
-    FGenericThread*                  PagingThread;
-    TComPtr<ID3D12Fence>             PagingFence;
-    uint64                           PagingFenceValue;
+    FD3D12Device*                  Device;
+    IDXGIAdapter3*                 Adapter;
+    uint64                         TargetBudget;
+    uint64                         CurrentFrame;
+    bool                           bEnable;
+    TArray<FD3D12ResidencyHandle*> TrackedObjects;
+    FCriticalSection               Mutex;
+    FD3D12PagingWorker*            PagingWorker;
+    FGenericThread*                PagingThread;
+    TComPtr<ID3D12Fence>           PagingFence;
+    uint64                         PagingFenceValue;
 };
