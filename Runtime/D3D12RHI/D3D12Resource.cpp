@@ -123,7 +123,13 @@ void FD3D12Resource::StartResidencyTracking()
 {
     if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
     {
-        const D3D12_RESOURCE_ALLOCATION_INFO AllocationInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &Desc);
+        D3D12_RESOURCE_DESC QueryDesc = Desc;
+        if (QueryDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT)
+        {
+            QueryDesc.Alignment = 0;
+        }
+
+        const D3D12_RESOURCE_ALLOCATION_INFO AllocationInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &QueryDesc);
         ResidencyHandle.Initialize(Resource.Get(), AllocationInfo.SizeInBytes);
         ResidencyManager->BeginTrackingObject(&ResidencyHandle);
     }
