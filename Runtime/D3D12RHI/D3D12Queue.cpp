@@ -248,9 +248,9 @@ void FD3D12Commands::PreExecute()
 
 void FD3D12Commands::Execute()
 {
+    TArray<FD3D12ResidencySet*> ResidencySets;
     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
     {
-        TArray<FD3D12ResidencySet*> ResidencySets;
         ResidencySets.Reserve(CommandLists.Size());
 
         for (FD3D12CommandList* CmdList : CommandLists)
@@ -262,6 +262,11 @@ void FD3D12Commands::Execute()
     }
 
     SyncPoint = Queue->ExecuteCommandLists(CommandLists.Data(), CommandLists.Size(), false);
+
+    if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
+    {
+        ResidencyManager->NotifySubmitted(ResidencySets.Data(), ResidencySets.Size(), SyncPoint.FenceValue);
+    }
 }
 
 void FD3D12Commands::Finish()

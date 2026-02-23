@@ -135,6 +135,7 @@ static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
 // -------------------------------------------------------------------------------------------
 // General Capability Flags
 // -------------------------------------------------------------------------------------------
+
 D3D12RHI_API bool GD3D12ForceBinding            = false;
 D3D12RHI_API bool GD3D12SupportPipelineCache    = false;
 D3D12RHI_API bool GD3D12SupportTightAlignment   = false;
@@ -145,6 +146,7 @@ D3D12RHI_API bool GD3D12SupportEnhancedBarriers = false;
 // -------------------------------------------------------------------------------------------
 // Core Feature Tiers
 // -------------------------------------------------------------------------------------------
+
 D3D12RHI_API D3D12_RESOURCE_BINDING_TIER              GD3D12ResourceBindingTier             = D3D12_RESOURCE_BINDING_TIER_1;
 D3D12RHI_API D3D12_RESOURCE_HEAP_TIER                 GD3D12ResourceHeapTier                = D3D12_RESOURCE_HEAP_TIER_1;
 D3D12RHI_API D3D12_RAYTRACING_TIER                    GD3D12RayTracingTier                  = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
@@ -163,6 +165,7 @@ D3D12RHI_API D3D_SHADER_MODEL                         GD3D12HighestShaderModel  
 // -------------------------------------------------------------------------------------------
 // Boolean Capability Flags
 // -------------------------------------------------------------------------------------------
+
 D3D12RHI_API bool GD3D12RasterizerOrderViewsSupported  = false;
 D3D12RHI_API bool GD3D12TypedUAVLoadAdditionalFormats  = false;
 D3D12RHI_API bool GD3D12DepthBoundsTestSupported       = false;
@@ -172,12 +175,14 @@ D3D12RHI_API bool GD3D12IsArchitectureCacheCoherentUMA = false;
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
+
 D3D12RHI_API uint32 GD3D12MaxSamplerDescriptorHeapSize  = 0;
 D3D12RHI_API uint32 GD3D12MaxResourceDescriptorHeapSize = 0;
 
 // -------------------------------------------------------------------------------------------
 // GPU Virtual Address / Command Capabilities
 // -------------------------------------------------------------------------------------------
+
 D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerResource    = 0;
 D3D12RHI_API uint32                           GD3D12VirtualAddressBitsPerProcess     = 0;
 D3D12RHI_API D3D12_COMMAND_LIST_SUPPORT_FLAGS GD3D12WriteBufferImmediateSupportFlags = D3D12_COMMAND_LIST_SUPPORT_FLAG_NONE;

@@ -67,7 +67,7 @@ public:
     void InitStandalone(FD3D12Resource* InResource);
     
     void Swap(FD3D12ResourceStorage& Other);
-    void TransferOwnership(FD3D12ResourceStorage* Source);
+    void UpdateOwnership();
     void ReleaseResource();
     void Reset();
     void ResetAllocator();

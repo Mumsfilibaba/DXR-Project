@@ -173,45 +173,22 @@ void FD3D12ResourceStorage::Swap(FD3D12ResourceStorage& Other)
 
     CHECK(GetDevice() == Other.GetDevice());
 
-    FD3D12Resource* TempResource = Resource;
-    Resource       = Other.Resource;
-    Other.Resource = TempResource;
+    ::Swap(Resource, Other.Resource);
+    ::Swap(ResourceOffset, Other.ResourceOffset);
+    ::Swap(GpuVirtualAddress, Other.GpuVirtualAddress);
+    ::Swap(MappedBaseAddress, Other.MappedBaseAddress);
+    ::Swap(Size, Other.Size);
+    ::Swap(AllocatorType, Other.AllocatorType);
+    ::Swap(StorageType, Other.StorageType);
+    ::Swap(AllocatorPointers.AsVoid, Other.AllocatorPointers.AsVoid);
+    
+    FMemory::Memswap(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
 
-    const uint64 TempResourceOffset = ResourceOffset;
-    ResourceOffset       = Other.ResourceOffset;
-    Other.ResourceOffset = TempResourceOffset;
-
-    const D3D12_GPU_VIRTUAL_ADDRESS TempGpuVirtualAddress = GpuVirtualAddress;
-    GpuVirtualAddress       = Other.GpuVirtualAddress;
-    Other.GpuVirtualAddress = TempGpuVirtualAddress;
-
-    void* const TempMappedBaseAddress = MappedBaseAddress;
-    MappedBaseAddress       = Other.MappedBaseAddress;
-    Other.MappedBaseAddress = TempMappedBaseAddress;
-
-    const uint64 TempSize = Size;
-    Size       = Other.Size;
-    Other.Size = TempSize;
-
-    const ED3D12AllocatorType TempAllocatorType = AllocatorType;
-    AllocatorType       = Other.AllocatorType;
-    Other.AllocatorType = TempAllocatorType;
-
-    const EResourceStorageType TempStorageType = StorageType;
-    StorageType       = Other.StorageType;
-    Other.StorageType = TempStorageType;
-
-    uint8 TempAllocationData[sizeof(AllocationData)];
-    FMemory::Memcpy(TempAllocationData, &AllocationData, sizeof(AllocationData));
-    FMemory::Memcpy(&AllocationData, &Other.AllocationData, sizeof(AllocationData));
-    FMemory::Memcpy(&Other.AllocationData, TempAllocationData, sizeof(AllocationData));
-
-    void* const TempAllocatorPointer = AllocatorPointers.AsVoid;
-    AllocatorPointers.AsVoid         = Other.AllocatorPointers.AsVoid;
-    Other.AllocatorPointers.AsVoid   = TempAllocatorPointer;
+    UpdateOwnership();
+    Other.UpdateOwnership();
 }
 
-void FD3D12ResourceStorage::TransferOwnership(FD3D12ResourceStorage* Source)
+void FD3D12ResourceStorage::UpdateOwnership()
 {
     if (AllocatorType == ED3D12AllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
     {

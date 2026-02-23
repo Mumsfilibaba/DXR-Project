@@ -1050,6 +1050,15 @@ void FD3D12PoolAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
         return;
     }
 
+    {
+        SCOPED_LOCK(PagesCS);
+
+        if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+        {
+            Pages[Data.PageIndex]->TransferOwnership(Data.Offset, nullptr);
+        }
+    }
+
     FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, this, Data);
 }
 
@@ -2277,8 +2286,6 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     OutStorage.SetMappedBaseAddress(nullptr);
     OutStorage.SetStorageType(EResourceStorageType::SuballocatedHeap);
     OutStorage.SetSize(AllocationInfo.SizeInBytes);
-
-    OutStorage.TransferOwnership(&PoolResourceStorage);
     return true;
 }
 
@@ -2315,7 +2322,7 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
         Storage->SetResourceOffset(0);
         Storage->SetGpuVirtualAddress(0);
         Storage->SetPoolAllocationData(Move.NewAllocationData);
-        Storage->TransferOwnership(nullptr);
+        Storage->UpdateOwnership();
 
         if (Owner)
         {
@@ -2332,6 +2339,7 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
             OldResource->Release();
         }
 
+        Move.Allocator->TransferOwnership(Move.OldAllocationData, nullptr);
         FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, Move.Allocator, Move.OldAllocationData);
 
         Move.NewResource->Release();
@@ -2378,13 +2386,14 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
             break;
         }
 
+        CHECK(OldResource->GetResourceState().AreAllSubresourcesSameState());
+
         D3D12_RESOURCE_DESC ResourceDesc = OldResource->GetDesc();
         if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
         {
             ResourceDesc.Alignment = 0;
         }
 
-        CHECK(OldResource->GetResourceState().AreAllSubresourcesSameState());
         const D3D12_RESOURCE_STATES CurrentState = OldResource->GetResourceState().GetResourceState();
 
         const D3D12_CLEAR_VALUE* ClearValue = OldResource->HasClearValue() ? &OldResource->GetClearValue() : nullptr;
@@ -2433,6 +2442,8 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
         PendingMove.FenceValueAtCreation = FenceManager.GetLastSignaledValue();
 
         NewResource->AddRef();
+
+        SourceAllocator->TransferOwnership(Candidate, nullptr);
         PendingDefragMoves.Add(PendingMove);
     }
 }

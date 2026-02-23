@@ -84,6 +84,7 @@ void FD3D12PagingWorker::Stop()
 FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEnableResidency, uint64 TargetBudgetBytes)
     : Device(InDevice)
     , Adapter(Device ? Device->GetAdapter()->GetDXGIAdapter3() : nullptr)
+    , GPUFence(nullptr)
     , TargetBudget(TargetBudgetBytes)
     , CurrentFrame(0)
     , bEnable(bEnableResidency)
@@ -123,6 +124,15 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
                 BudgetChangeEvent  = nullptr;
                 BudgetChangeCookie = 0;
             }
+        }
+    }
+
+    if (Device)
+    {
+        FD3D12Queue* DirectQueue = Device->GetQueue(ED3D12CommandQueueType::Direct);
+        if (DirectQueue)
+        {
+            GPUFence = DirectQueue->GetFenceManager().GetFence();
         }
     }
 }
@@ -264,6 +274,8 @@ void FD3D12ResidencyManager::EvictIfNeeded()
         return;
     }
 
+    const uint64 CompletedFenceValue = GPUFence ? GPUFence->GetCompletedValue() : UINT64_MAX;
+
     SCOPED_LOCK(Mutex);
 
     uint64 Usage = GetCurrentUsage();
@@ -275,6 +287,11 @@ void FD3D12ResidencyManager::EvictIfNeeded()
         for (FD3D12ResidencyHandle* Handle : TrackedObjects)
         {
             if (!Handle || !Handle->bIsResident || !Handle->Pageable)
+            {
+                continue;
+            }
+
+            if (Handle->LastUsedFenceValue > CompletedFenceValue)
             {
                 continue;
             }
@@ -357,6 +374,30 @@ void FD3D12ResidencyManager::PrepareForExecution(FD3D12ResidencySet* const* Sets
         else
         {
             D3D12_ERROR("[FD3D12ResidencyManager] PrepareForExecution: MakeResident failed for %d objects", ObjectsToMakeResident.Size());
+        }
+    }
+}
+
+void FD3D12ResidencyManager::NotifySubmitted(FD3D12ResidencySet* const* Sets, uint32 NumSets, uint64 FenceValue)
+{
+    if (!bEnable)
+    {
+        return;
+    }
+
+    for (uint32 SetIndex = 0; SetIndex < NumSets; ++SetIndex)
+    {
+        if (!Sets[SetIndex])
+        {
+            continue;
+        }
+
+        for (FD3D12ResidencyHandle* Handle : Sets[SetIndex]->GetHandles())
+        {
+            if (Handle && Handle->IsInitialized())
+            {
+                Handle->LastUsedFenceValue = FenceValue;
+            }
         }
     }
 }

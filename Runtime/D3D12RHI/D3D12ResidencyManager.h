@@ -7,6 +7,7 @@
 
 struct IDXGIAdapter3;
 class FD3D12Device;
+class FD3D12Fence;
 class FD3D12ResidencyManager;
 class FGenericThread;
 
@@ -31,11 +32,12 @@ public:
     FORCEINLINE uint64          GetSizeBytes() const { return SizeBytes; }
 
 private:
-    ID3D12Pageable* Pageable      = nullptr;
-    uint64          SizeBytes     = 0;
-    uint64          LastUsedFrame = 0;
-    bool            bIsResident   = true;
-    bool            bIsTracked    = false;
+    ID3D12Pageable* Pageable            = nullptr;
+    uint64          SizeBytes           = 0;
+    uint64          LastUsedFrame       = 0;
+    uint64          LastUsedFenceValue  = 0;
+    bool            bIsResident         = true;
+    bool            bIsTracked          = false;
 };
 
 class FD3D12ResidencySet
@@ -108,6 +110,7 @@ public:
     void EvictIfNeeded();
 
     void PrepareForExecution(FD3D12ResidencySet* const* Sets, uint32 NumSets);
+    void NotifySubmitted(FD3D12ResidencySet* const* Sets, uint32 NumSets, uint64 FenceValue);
 
 private:
     bool MakeResidentAsync(TArray<ID3D12Pageable*>& Pageables);
@@ -117,6 +120,7 @@ private:
 
     FD3D12Device*                  Device;
     IDXGIAdapter3*                 Adapter;
+    FD3D12Fence*                   GPUFence;
     uint64                         TargetBudget;
     uint64                         CurrentFrame;
     bool                           bEnable;
