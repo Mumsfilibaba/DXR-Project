@@ -25,6 +25,8 @@ enum class EAllocationStrategy : uint8
     SuballocatedResource
 };
 
+static constexpr uint64 D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE = 16ull;
+
 class FD3D12BuddyAllocator : public FD3D12DeviceChild
 {
 public:
@@ -395,7 +397,7 @@ class FD3D12TextureAllocator : public FD3D12DeviceChild
 {
     enum class ETexturePoolClass : uint32
     {
-        Small4K                  = 0,
+        SmallReadOnly            = 0,
         ReadOnly                 = 1,
         RenderTargetDepthStencil = 2,
         UAVOnly                  = 3,
@@ -437,6 +439,7 @@ private:
 
     uint64                     CommittedThreshold;
     uint64                     DefaultPageSizeBytes;
+    uint64                     SmallPoolAlignment;
     FD3D12PoolAllocator*       Pools[TexturePoolClassCount];
     TArray<FPendingDefragMove> PendingDefragMoves;
     FCriticalSection           PoolsCS;

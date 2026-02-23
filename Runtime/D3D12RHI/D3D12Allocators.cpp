@@ -7,6 +7,12 @@
 #include "D3D12RHI/D3D12Queue.h"
 #include "D3D12RHI/D3D12RHI.h"
 
+static constexpr uint64 D3D12_MIN_TIGHT_RESOURCE_PLACEMENT_ALIGNMENT  = 8ull;
+static constexpr uint64 D3D12_SMALL_TEXTURE_TIGHT_PLACEMENT_ALIGNMENT = 256ull;
+
+#define D3D12_LOG_TEXTURE_POOL_ALIGNMENT 0
+#define D3D12_LOG_BUFFER_POOL_ALIGNMENT 0
+
 static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& ResourceDesc)
 {
     D3D12_RESOURCE_DESC Result = ResourceDesc;
@@ -24,7 +30,7 @@ static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& Re
 FD3D12BuddyAllocator::FD3D12BuddyAllocator(FD3D12Device* InDevice, uint64 InBackingStorageSize, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags)
     : FD3D12DeviceChild(InDevice)
     , BackingStorageSize(InBackingStorageSize)
-    , MinBlockBytes(Math::Max<uint64>(InMinBlockBytes, 256ull))
+    , MinBlockBytes(Math::Max<uint64>(InMinBlockBytes, D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE))
     , HeapType(InHeapType)
     , InitialState(InInitialState)
     , AllocationStrategy(InAllocationStrategy)
@@ -1775,8 +1781,14 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         return false;
     }
 
-    const uint64 SizeInBytes   = AllocationDesc.Width;
-    const uint64 UsedAlignment = InAlignment ? InAlignment : 16;
+    const uint64 SizeInBytes = AllocationDesc.Width;
+
+    uint64 UsedAlignment = InAlignment ? InAlignment : 16;
+    if (AllocationStrategy == EAllocationStrategy::SuballocatedHeap)
+    {
+        const D3D12_RESOURCE_ALLOCATION_INFO AllocInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &AllocationDesc);
+        UsedAlignment = Math::Max<uint64>(UsedAlignment, AllocInfo.Alignment);
+    }
 
     if (SizeInBytes > MaxSuballocationSize)
     {
@@ -1797,8 +1809,23 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         OutStorage.SetResourceOffset(0);
         OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
         OutStorage.SetMappedBaseAddress(MappedBaseAddress);
+
+#if D3D12_LOG_BUFFER_POOL_ALIGNMENT
+        D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> Committed",
+            SizeInBytes, UsedAlignment, InHeapType);
+#endif
         return true;
     }
+
+#if D3D12_LOG_BUFFER_POOL_ALIGNMENT
+    {
+        static const char* StrategyNames[] = { "SuballocatedResource", "SuballocatedHeap" };
+        D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> %s (MinBlock=%llu)",
+            SizeInBytes, UsedAlignment, InHeapType,
+            StrategyNames[static_cast<uint32>(AllocationStrategy)],
+            MinBlockBytes);
+    }
+#endif
 
     if (!MultiBuddyAllocator.TryAllocate(SizeInBytes, UsedAlignment, OutStorage, AllocationDesc.Flags))
     {
@@ -1970,6 +1997,7 @@ FD3D12TextureAllocator::FD3D12TextureAllocator(FD3D12Device* InDevice, uint64 In
     : FD3D12DeviceChild(InDevice)
     , CommittedThreshold(InCommittedThreshold)
     , DefaultPageSizeBytes(InDefaultPageSizeBytes)
+    , SmallPoolAlignment(0)
 {
     for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
     {
@@ -2010,10 +2038,15 @@ bool FD3D12TextureAllocator::Initialize()
         return true;
     };
 
-    if (!CreatePool(ETexturePoolClass::Small4K, D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT) ||
-        !CreatePool(ETexturePoolClass::ReadOnly, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT) ||
-        !CreatePool(ETexturePoolClass::RenderTargetDepthStencil, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT) ||
-        !CreatePool(ETexturePoolClass::UAVOnly, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT))
+    const uint64 SmallReadOnlyAlignment = GD3D12SupportTightAlignment ? D3D12_SMALL_TEXTURE_TIGHT_PLACEMENT_ALIGNMENT : D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
+    const uint64 DefaultAlignment          = GD3D12SupportTightAlignment ? D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+
+    SmallPoolAlignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
+
+    if (!CreatePool(ETexturePoolClass::SmallReadOnly, SmallReadOnlyAlignment) ||
+        !CreatePool(ETexturePoolClass::ReadOnly, DefaultAlignment) ||
+        !CreatePool(ETexturePoolClass::RenderTargetDepthStencil, DefaultAlignment) ||
+        !CreatePool(ETexturePoolClass::UAVOnly, DefaultAlignment))
     {
         ReleasePools();
         return false;
@@ -2176,11 +2209,6 @@ bool FD3D12TextureAllocator::CanUseSmallResourcePlacementAlignment(const D3D12_R
 
 FD3D12TextureAllocator::ETexturePoolClass FD3D12TextureAllocator::ClassifyTexture(const D3D12_RESOURCE_DESC& Desc, uint64 Alignment) const
 {
-    if (Alignment == D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT)
-    {
-        return ETexturePoolClass::Small4K;
-    }
-
     const bool bIsRTDS = (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
     const bool bIsUAV  = (Desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) != 0;
 
@@ -2192,6 +2220,11 @@ FD3D12TextureAllocator::ETexturePoolClass FD3D12TextureAllocator::ClassifyTextur
     if (bIsUAV)
     {
         return ETexturePoolClass::UAVOnly;
+    }
+
+    if (Alignment <= SmallPoolAlignment)
+    {
+        return ETexturePoolClass::SmallReadOnly;
     }
 
     return ETexturePoolClass::ReadOnly;
@@ -2243,6 +2276,20 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     {
         return false;
     }
+
+#if D3D12_LOG_TEXTURE_POOL_ALIGNMENT
+    {
+        static const CHAR* PoolClassNames[] = { "SmallReadOnly", "ReadOnly", "RenderTargetDepthStencil", "UAVOnly" };
+        D3D12_INFO("[TextureAllocator] Dimension=%u %llux%u Format=%u Alignment=%llu Size=%llu -> Pool=%s (PoolAlignment=%llu)",
+            AllocationDesc.Dimension,
+            AllocationDesc.Width, AllocationDesc.Height,
+            AllocationDesc.Format,
+            AllocationInfo.Alignment,
+            AllocationInfo.SizeInBytes,
+            PoolClassNames[PoolIndex],
+            Pools[PoolIndex]->GetAlignment());
+    }
+#endif
 
     FD3D12ResourceStorage PoolResourceStorage(GetDevice());
     if (!Pools[PoolIndex]->TryAllocate(AllocationDesc, InitialState, AllocationInfo.Alignment, ClearValue, PoolResourceStorage))

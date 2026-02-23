@@ -975,7 +975,7 @@ bool FD3D12Device::Initialize()
         const uint64 BufferPageSizeBytes    = Math::Max<uint64>(1ull, static_cast<uint64>(CVarBufferAllocatorPageSize.GetValue())) * 1024ull * 1024ull;
         const uint64 BufferMaxSuballocBytes = Math::Max<uint64>(1ull, static_cast<uint64>(CVarBufferAllocatorMaxSuballocationSize.GetValue())) * 1024ull * 1024ull;
         
-        BufferAllocator = new FD3D12BufferAllocator(this, BufferPageSizeBytes, 256, BufferMaxSuballocBytes);
+        BufferAllocator = new FD3D12BufferAllocator(this, BufferPageSizeBytes, D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE, BufferMaxSuballocBytes);
         if (!BufferAllocator->Initialize())
         {
             return false;
