@@ -146,7 +146,7 @@ private:
     } AllocatorPointers;
 
     FD3D12Resource*           Resource;
-    FD3D12GenericResource*       Owner;
+    FD3D12GenericResource*    Owner;
     uint64                    ResourceOffset;
     D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress;
     void*                     MappedBaseAddress;
@@ -175,7 +175,7 @@ public:
     bool IsPlacedResource() const { return Heap != nullptr; }
 
     bool ShouldDeferredRelease() const { return bShouldDeferredRelease; }
-    void DisableDeferredRelease() { bShouldDeferredRelease = false; }
+    void DisableDeferredRelease()      { bShouldDeferredRelease = false; }
 
     // Texture Accessors
     uint64 GetWidth()  const { return Desc.Width; }
@@ -187,9 +187,9 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return Address; }
     
     // Resource Accessors
-    D3D12_RESOURCE_DIMENSION   GetDimension()    const { return Desc.Dimension; }
-    D3D12_HEAP_TYPE            GetHeapType()     const { return HeapType; }
-    const D3D12_CLEAR_VALUE&   GetClearValue()   const { return ClearValue; }
+    D3D12_RESOURCE_DIMENSION   GetDimension()     const { return Desc.Dimension; }
+    D3D12_HEAP_TYPE            GetHeapType()      const { return HeapType; }
+    const D3D12_CLEAR_VALUE&   GetClearValue()    const { return ClearValue; }
     FD3D12ResourceState&       GetResourceState()       { return TrackedState; }
     const FD3D12ResourceState& GetResourceState() const { return TrackedState; }
     FD3D12Heap*                GetHeap()          const { return Heap.Get(); }
