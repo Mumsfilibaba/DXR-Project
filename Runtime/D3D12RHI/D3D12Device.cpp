@@ -128,6 +128,11 @@ static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
     "Maximum number of resource defragmentation moves per frame (0 to disable)",
     4);
 
+static TAutoConsoleVariable<bool> CVarEnableTightAlignment(
+    "D3D12RHI.EnableTightAlignment",
+    "Enable tight alignment if supported by the device",
+    true);
+
 // -------------------------------------------------------------------------------------------
 // D3D12 Feature Support
 // -------------------------------------------------------------------------------------------
@@ -1650,8 +1655,16 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT, &TightAlignment, sizeof(TightAlignment));
         if (SUCCEEDED(hr))
         {
-            GD3D12SupportTightAlignment = (TightAlignment.SupportTier >= D3D12_TIGHT_ALIGNMENT_TIER_1);
-            D3D12_INFO("[FD3D12Device] Tight Alignment Support: %s", GD3D12SupportTightAlignment ? "true" : "false");
+            const bool bDeviceSupports = (TightAlignment.SupportTier >= D3D12_TIGHT_ALIGNMENT_TIER_1);
+            GD3D12SupportTightAlignment = bDeviceSupports && CVarEnableTightAlignment.GetValue();
+            if (bDeviceSupports && !GD3D12SupportTightAlignment)
+            {
+                D3D12_INFO("[FD3D12Device] Tight Alignment Support: disabled by CVar (device supports it)");
+            }
+            else
+            {
+                D3D12_INFO("[FD3D12Device] Tight Alignment Support: %s", GD3D12SupportTightAlignment ? "true" : "false");
+            }
         }
         else
         {

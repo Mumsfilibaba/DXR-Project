@@ -1,7 +1,13 @@
 #include "Core/Generic/GenericThread.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformEvent.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Device.h"
+
+static TAutoConsoleVariable<int32> CVarResidencyDebugBudgetMB(
+    "D3D12RHI.ResidencyDebugBudgetMB",
+    "Override residency budget in MB for debugging (0 = use actual DXGI budget)",
+    0);
 
 FD3D12PagingWorker::FD3D12PagingWorker(ID3D12Device* InDevice)
     : Device(InDevice)
@@ -442,6 +448,14 @@ bool FD3D12ResidencyManager::MakeResidentAsync(TArray<ID3D12Pageable*>& Pageable
 
 uint64 FD3D12ResidencyManager::GetBudget() const
 {
+#if !RELEASE_BUILD
+    const int32 DebugBudgetMB = CVarResidencyDebugBudgetMB.GetValue();
+    if (DebugBudgetMB > 0)
+    {
+        return static_cast<uint64>(DebugBudgetMB) * 1024ull * 1024ull;
+    }
+#endif
+
     uint64 Budget = TargetBudget;
     if (Budget == 0 && Adapter)
     {
