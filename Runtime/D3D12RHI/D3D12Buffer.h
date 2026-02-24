@@ -37,8 +37,8 @@ public:
         return ConstantBufferView.Get();
     }
 
-private:
     bool CreateConstantBufferView();
 
+private:
     FD3D12ConstantBufferViewRef ConstantBufferView;
 };

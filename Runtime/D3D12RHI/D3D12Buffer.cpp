@@ -35,19 +35,29 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
 
     if (Info.IsReadBack())
     {
-        // Readback resources must be placed in a READBACK heap and are only valid as copy destinations.
         D3D12HeapType      = D3D12_HEAP_TYPE_READBACK;
         D3D12InitialState  = D3D12_RESOURCE_STATE_COPY_DEST;
         ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
     }
-    else if (Info.IsDynamic())
+    else if (Info.IsDynamic() || Info.IsTransient())
     {
         D3D12HeapType     = D3D12_HEAP_TYPE_UPLOAD;
         D3D12InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
     bool bAllocated = false;
-    if (Info.IsDynamic())
+    if (Info.IsTransient())
+    {
+        if (Info.IsConstantBuffer())
+        {
+            bAllocated = GetDevice()->GetDynamicConstantsAllocator()->Allocate(AlignedSize, ResourceStorage) != nullptr;
+        }
+        else
+        {
+            bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(AlignedSize, Alignment, ResourceStorage) != nullptr;
+        }
+    }
+    else if (Info.IsDynamic())
     {
         bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(AlignedSize, Alignment, ResourceStorage) != nullptr;
     }
@@ -72,19 +82,26 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
 
     if (InInitialData)
     {
-        if (Info.IsDynamic())
+        if (Info.IsDynamic() || Info.IsTransient())
         {
-            FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
-
-            void* BufferData = D3D12Resource->MapRange(0, nullptr);
-            if (!BufferData)
+            void* MappedAddress = ResourceStorage.GetMappedBaseAddress();
+            if (!MappedAddress)
             {
-                D3D12_ERROR("Failed to map buffer data");
-                return false;
-            }
+                FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
+                MappedAddress = D3D12Resource->MapRange(0, nullptr);
+                if (!MappedAddress)
+                {
+                    D3D12_ERROR("Failed to map buffer data");
+                    return false;
+                }
 
-            FMemory::Memcpy(BufferData, InInitialData, Info.Size);
-            D3D12Resource->UnmapRange(0, nullptr);
+                FMemory::Memcpy(MappedAddress, InInitialData, Info.Size);
+                D3D12Resource->UnmapRange(0, nullptr);
+            }
+            else
+            {
+                FMemory::Memcpy(MappedAddress, InInitialData, Info.Size);
+            }
         }
         else
         {
@@ -93,7 +110,6 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
             InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
-            // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
                 InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
@@ -122,7 +138,7 @@ void* FD3D12Buffer::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    if (!Info.IsDynamic() && !Info.IsReadBack())
+    if (!Info.IsDynamic() && !Info.IsReadBack() && !Info.IsTransient())
     {
         D3D12_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
         return nullptr;

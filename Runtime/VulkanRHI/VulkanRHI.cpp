@@ -254,6 +254,8 @@ void FVulkanRHI::BeginFrame()
         vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
         VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
     }
+
+    Device->GetDescriptorSetCache().EvictStaleDescriptorSets(static_cast<uint64>(PendingSubmissions.Size()));
 }
 
 void FVulkanRHI::EndFrame()

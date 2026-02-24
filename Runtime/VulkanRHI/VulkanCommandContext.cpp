@@ -924,17 +924,20 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Dst);
     CHECK(VulkanBuffer != nullptr);
 
-    if (VulkanBuffer->GetInfo().IsDynamic())
+    if (VulkanBuffer->GetInfo().IsTransient())
+    {
+        FVulkanDynamicConstantsAllocation Allocation = GetDevice()->GetDynamicConstantsAllocator().Allocate(BufferRegion.Size);
+        CHECK(Allocation.MappedMemory != nullptr);
+
+        FMemory::Memcpy(Allocation.MappedMemory, SrcData, BufferRegion.Size);
+        VulkanBuffer->SetTransientAllocation(Allocation.Buffer, Allocation.Offset, BufferRegion.Size);
+    }
+    else if (VulkanBuffer->GetInfo().IsDynamic())
     {
         VkDevice       NativeDevice = GetDevice()->GetVkDevice();
         VkDeviceMemory DeviceMemory = VulkanBuffer->GetVkDeviceMemory();
         uint8*         BufferData   = nullptr;
-        
-        // Align the size
-        // TODO: Setup offset and size
-        // const VkDeviceSize AlignedSize = Math::AlignUp<VkDeviceSize>(BufferRegion.Size, 0x100);
 
-        // Map buffer memory
         VkResult Result = vkMapMemory(NativeDevice, DeviceMemory, 0, VK_WHOLE_SIZE, 0, reinterpret_cast<void**>(&BufferData));
         if (VULKAN_FAILED(Result) || !BufferData)
         {
@@ -942,10 +945,8 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
             return;
         }
 
-        // Copy over relevant data
         FMemory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
         
-        // Flush memory ranges
         VkMappedMemoryRange MappedMemoryRange = {};
         MappedMemoryRange.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         MappedMemoryRange.memory = DeviceMemory;
@@ -959,7 +960,6 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
             return;
         }
         
-        // Unmap memory
         vkUnmapMemory(NativeDevice, DeviceMemory);
     }
     else

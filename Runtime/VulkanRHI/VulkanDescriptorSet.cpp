@@ -1,4 +1,5 @@
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Math/Math.h"
 #include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
@@ -240,9 +241,12 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, uint
 
 	if (UniformBuffer)
 	{
-		const VkDeviceSize Range = UniformBuffer->GetInfo().Size;
+		const VkBuffer     Buffer = UniformBuffer->GetBindVkBuffer();
+		const VkDeviceSize Offset = UniformBuffer->GetBindOffset();
+		const VkDeviceSize Range  = UniformBuffer->GetBindRange();
+        
 		FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
-		DSBuilder.WriteUniformBuffer(BindingIndex, UniformBuffer->GetVkBuffer(), 0, Range);
+		DSBuilder.WriteUniformBuffer(BindingIndex, Buffer, Offset, Range);
 	}
 	else
 	{
@@ -372,6 +376,7 @@ FVulkanDescriptorPool::FVulkanDescriptorPool(FVulkanDevice* InDevice)
     , DescriptorPool(VK_NULL_HANDLE)
     , MaxDescriptorSets(0)
     , NumDescriptorSets(0)
+    , LiveDescriptorSets(0)
 {
 }
 
@@ -447,8 +452,10 @@ bool FVulkanDescriptorPool::AllocateDescriptorSet(const VkDescriptorSetAllocateI
 
 void FVulkanDescriptorPool::Reset()
 {
+    CHECK(LiveDescriptorSets == 0);
     vkResetDescriptorPool(GetDevice()->GetVkDevice(), DescriptorPool, 0);
-    NumDescriptorSets = MaxDescriptorSets;
+    NumDescriptorSets  = MaxDescriptorSets;
+    LiveDescriptorSets = 0;
 }
 
 FVulkanDescriptorSetCache::FCachedPool::FCachedPool(FVulkanDevice* InDevice, const FVulkanDescriptorPoolInfo& InPoolInfo)
@@ -472,7 +479,7 @@ FVulkanDescriptorSetCache::FCachedPool::~FCachedPool()
     DescriptorPools.Clear();
 }
 
-bool FVulkanDescriptorSetCache::FCachedPool::AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet)
+bool FVulkanDescriptorSetCache::FCachedPool::AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet, FVulkanDescriptorPool** OutPool)
 {
     VkDescriptorSetAllocateInfo AllocateInfo = {};
     AllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -483,18 +490,36 @@ bool FVulkanDescriptorSetCache::FCachedPool::AllocateDescriptorSet(VkDescriptorS
     {
         if (CurrentDescriptorPool->CanAllocateDescriptorSet())
         {
+            *OutPool = CurrentDescriptorPool;
             return CurrentDescriptorPool->AllocateDescriptorSet(AllocateInfo, &OutDescriptorSet);
         }
 
         DescriptorPools.Add(CurrentDescriptorPool);
+        CurrentDescriptorPool = nullptr;
     }
 
-    CurrentDescriptorPool = new FVulkanDescriptorPool(GetDevice());
-    if (!CurrentDescriptorPool->Initialize(PoolInfo))
+    // Try to recycle a pool that has no live descriptor sets
+    for (int32 Index = 0; Index < DescriptorPools.Size(); ++Index)
     {
-        return false;
+        if (DescriptorPools[Index]->CanRecycle())
+        {
+            CurrentDescriptorPool = DescriptorPools[Index];
+            DescriptorPools.RemoveAtSwap(Index);
+            CurrentDescriptorPool->Reset();
+            break;
+        }
     }
 
+    if (!CurrentDescriptorPool)
+    {
+        CurrentDescriptorPool = new FVulkanDescriptorPool(GetDevice());
+        if (!CurrentDescriptorPool->Initialize(PoolInfo))
+        {
+            return false;
+        }
+    }
+
+    *OutPool = CurrentDescriptorPool;
     return CurrentDescriptorPool->AllocateDescriptorSet(AllocateInfo, &OutDescriptorSet);
 }
 
@@ -503,6 +528,7 @@ FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice)
     , Caches()
     , DescriptorSets()
     , CacheCS()
+    , CurrentFrame(0)
 {
 }
 
@@ -520,10 +546,34 @@ FVulkanDescriptorSetCache::~FVulkanDescriptorSetCache()
     Caches.Clear();
 }
 
-void FVulkanDescriptorSetCache::ReleaseCachedDescriptorSets()
+void FVulkanDescriptorSetCache::EvictStaleDescriptorSets(uint64 InFramesInFlight)
 {
     TScopedLock Lock(CacheCS);
-    DescriptorSets.Clear();
+
+    CurrentFrame++;
+
+    const uint64 SafeFrames = Math::Max(MinUnusedFrames, InFramesInFlight + 1);
+
+    TArray<FVulkanDescriptorSetKey> StaleKeys;
+    DescriptorSets.Foreach([&](const FVulkanDescriptorSetKey& Key, const FCachedDescriptorSet& Entry)
+    {
+        if ((CurrentFrame - Entry.LastUsedFrame) > SafeFrames)
+        {
+            StaleKeys.Add(Key);
+        }
+    });
+
+    for (const FVulkanDescriptorSetKey& Key : StaleKeys)
+    {
+        FCachedDescriptorSet Evicted;
+        if (DescriptorSets.RemoveKey(Key, &Evicted))
+        {
+            if (Evicted.OwnerPool)
+            {
+                Evicted.OwnerPool->DecrementLive();
+            }
+        }
+    }
 }
 
 bool FVulkanDescriptorSetCache::FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet)
@@ -532,9 +582,10 @@ bool FVulkanDescriptorSetCache::FindOrCreateDescriptorSet(const FVulkanDescripto
 
     // Get or Create a DescriptorSet
     const FVulkanDescriptorSetKey& DSKey = DSBuilder.GetKey();
-    if (VkDescriptorSet* DescriptorSet = DescriptorSets.Find(DSKey))
+    if (FCachedDescriptorSet* Cached = DescriptorSets.Find(DSKey))
     {
-        OutDescriptorSet = *DescriptorSet;
+        Cached->LastUsedFrame = CurrentFrame;
+        OutDescriptorSet = Cached->DescriptorSet;
     }
     else
     {
@@ -555,14 +606,22 @@ bool FVulkanDescriptorSetCache::FindOrCreateDescriptorSet(const FVulkanDescripto
             return false;
         }
 
-        // Create a new DescriptorSet
-        if (!CachedPool->AllocateDescriptorSet(PoolInfo.DescriptorSetLayout, OutDescriptorSet))
+        FVulkanDescriptorPool* AllocatingPool = nullptr;
+        if (!CachedPool->AllocateDescriptorSet(PoolInfo.DescriptorSetLayout, OutDescriptorSet, &AllocatingPool))
         {
             return false;
         }
 
         CHECK(OutDescriptorSet != VK_NULL_HANDLE);
-        DescriptorSets.Add(DSKey, OutDescriptorSet);
+        CHECK(AllocatingPool != nullptr);
+
+        AllocatingPool->IncrementLive();
+
+        FCachedDescriptorSet NewEntry;
+        NewEntry.DescriptorSet = OutDescriptorSet;
+        NewEntry.LastUsedFrame = CurrentFrame;
+        NewEntry.OwnerPool     = AllocatingPool;
+        DescriptorSets.Add(DSKey, NewEntry);
 
         DSBuilder.SetDescriptorSet(OutDescriptorSet);
         DSBuilder.UpdateDescriptorSet(GetDevice()->GetVkDevice());

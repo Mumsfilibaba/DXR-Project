@@ -47,7 +47,6 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     // TODO: Look into abstracting these flags
     BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     
-    // VK_KHR_buffer_device_address (Core in 1.2)
     VkMemoryAllocateFlags AllocateFlags = 0;
     if (Info.IsDefault())
     {
@@ -101,11 +100,8 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         return false;
     }
     
-    // NOTE: We might need to call:
-    //   vkInvalidateMappedMemoryRanges before reading (host <- device)
-    //   vkFlushMappedMemoryRanges after writing(device <- host), if you ever write.
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    if (Info.IsDynamic())
+    if (Info.IsDynamic() || Info.IsTransient())
     {
         MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
@@ -128,9 +124,8 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 
     if (InInitialData)
     {
-        if (Info.IsDynamic())
+        if (Info.IsDynamic() || Info.IsTransient())
         {
-            // Map buffer
             void* BufferData = MemoryManager.Map(MemoryAllocation);
             if (!BufferData)
             {
@@ -138,10 +133,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
                 return false;
             }
 
-            // Copy over relevant data
             FMemory::Memcpy(BufferData, InInitialData, Info.Size);
-            
-            // Unmap buffer
             MemoryManager.Unmap(MemoryAllocation);
         }
         else
@@ -183,7 +175,7 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    if (!Info.IsDynamic() && !Info.IsReadBack())
+    if (!Info.IsDynamic() && !Info.IsReadBack() && !Info.IsTransient())
     {
         VULKAN_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
         return nullptr;

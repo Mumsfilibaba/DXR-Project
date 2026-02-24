@@ -18,17 +18,15 @@
     #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
 #endif
 
-// PerObject Constants
-SHADER_CONSTANT_BLOCK_BEGIN
-    FTransform Transform;
-SHADER_CONSTANT_BLOCK_END
-
 // Per Frame
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
 // Per Object
+ConstantBuffer<FTransform> TransformBuffer : register(b1);
+
+// Per Object
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
+    ConstantBuffer<FMaterial> MaterialBuffer : register(b2);
     SamplerState MaterialSampler : register(s0);
 #if ENABLE_ALPHA_MASK
     #if ENABLE_PACKED_MATERIAL_TEXTURE
@@ -70,7 +68,7 @@ FVSOutput VSMain(FVSInput Input)
 { 
     FVSOutput Output;
 
-    const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position); 
+    const float3 PositionWS3 = TransformPositionWS(TransformBuffer, Input.Position); 
     const float4 PositionWS  = float4(PositionWS3, 1.0); 
 #if USE_UNJITTERED_CAMERA
     Output.Position = mul(PositionWS, CameraBuffer.ViewProjectionUnjittered);
@@ -79,8 +77,8 @@ FVSOutput VSMain(FVSInput Input)
 #endif
   
 #if ENABLE_PARALLAX_MAPPING 
-    float3 Normal  = normalize(TransformDirectionInvT(Constants.Transform, Input.Normal));
-    float3 Tangent = normalize(TransformDirectionInvT(Constants.Transform, Input.Tangent));
+    float3 Normal  = normalize(TransformDirectionInvT(TransformBuffer, Input.Normal));
+    float3 Tangent = normalize(TransformDirectionInvT(TransformBuffer, Input.Tangent));
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
     float3 Bitangent = normalize(cross(Tangent, Normal));
 
@@ -148,5 +146,5 @@ uint PSMain(FPSInput Input) : SV_Target0
 #endif
 #endif 
  
-    return Constants.Transform.ObjectID; 
+    return TransformBuffer.ObjectID; 
 } 

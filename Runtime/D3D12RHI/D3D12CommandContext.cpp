@@ -807,11 +807,43 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 
 void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
 {
-    if (BufferRegion.Size)
+    if (!BufferRegion.Size)
     {
-        FD3D12Buffer* D3D12Destination = FD3D12Buffer::Cast(Dst);
-        CHECK(D3D12Destination != nullptr);
+        return;
+    }
 
+    FD3D12Buffer* D3D12Destination = FD3D12Buffer::Cast(Dst);
+    CHECK(D3D12Destination != nullptr);
+
+    if (D3D12Destination->GetInfo().IsTransient())
+    {
+        FD3D12ResourceStorage& Storage = D3D12Destination->GetResourceStorage();
+
+        void* MappedPtr = nullptr;
+        if (D3D12Destination->GetInfo().IsConstantBuffer())
+        {
+            MappedPtr = GetDevice()->GetDynamicConstantsAllocator()->Allocate(BufferRegion.Size, Storage);
+        }
+        else
+        {
+            MappedPtr = GetDevice()->GetUploadHeapAllocator()->Allocate(BufferRegion.Size, 16, Storage);
+        }
+
+        if (!MappedPtr)
+        {
+            D3D12_ERROR_CRITICAL("Failed to allocate transient buffer memory");
+            return;
+        }
+
+        FMemory::Memcpy(MappedPtr, SrcData, BufferRegion.Size);
+
+        if (D3D12Destination->GetInfo().IsConstantBuffer())
+        {
+            D3D12Destination->CreateConstantBufferView();
+        }
+    }
+    else
+    {
         UpdateBuffer(D3D12Destination->GetResource(), BufferRegion, SrcData);
     }
 }

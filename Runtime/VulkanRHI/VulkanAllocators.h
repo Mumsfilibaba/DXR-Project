@@ -57,3 +57,30 @@ private:
     FVulkanUploadBufferRef Buffer;
     FCriticalSection       CriticalSection;
 };
+
+struct FVulkanDynamicConstantsAllocation
+{
+    VkBuffer     Buffer = VK_NULL_HANDLE;
+    VkDeviceSize Offset = 0;
+    void*        MappedMemory = nullptr;
+};
+
+class FVulkanDynamicConstantsAllocator : public FVulkanDeviceChild
+{
+public:
+    FVulkanDynamicConstantsAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes);
+    ~FVulkanDynamicConstantsAllocator();
+
+    FVulkanDynamicConstantsAllocation Allocate(uint64 SizeInBytes);
+
+private:
+    bool AllocateNewPage();
+
+    uint64       PageSizeBytes;
+    uint64       MinAlignment;
+    VkDeviceSize CurrentOffset;
+
+    VkBuffer                Buffer;
+    FVulkanMemoryAllocation MemoryAllocation;
+    uint8*                  MappedMemory;
+};

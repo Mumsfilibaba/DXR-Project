@@ -24,13 +24,11 @@
 #endif
 
 // Per-object
-SHADER_CONSTANT_BLOCK_BEGIN
-    FTransform Transform;
-SHADER_CONSTANT_BLOCK_END
+ConstantBuffer<FTransform> TransformBuffer : register(b1);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     SamplerState MaterialSampler : register(s0);
-    ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
+    ConstantBuffer<FMaterial> MaterialBuffer : register(b2);
 
     #if ENABLE_ALPHA_MASK
         #if ENABLE_PACKED_MATERIAL_TEXTURE
@@ -101,7 +99,7 @@ FVSPointOutput Point_VSMain(FVSInput Input)
 {
     FVSPointOutput Output = (FVSPointOutput)0;
 
-    const float3 WorldPositionWS = TransformPositionWS(Constants.Transform, Input.Position);
+    const float3 WorldPositionWS = TransformPositionWS(TransformBuffer, Input.Position);
     const float4 WorldPosition   = float4(WorldPositionWS, 1.0f);
     Output.WorldPosition = WorldPosition.xyz;
 

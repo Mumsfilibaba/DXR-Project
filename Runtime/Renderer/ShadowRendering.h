@@ -88,14 +88,6 @@ struct FPerShadowMapHLSL
 
 MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
 
-struct FShadowPerObjectHLSL
-{
-    // 0-112
-    FTransformBufferHLSL Transform;
-};
-
-MARK_AS_REALLOCATABLE(FShadowPerObjectHLSL);
-
 struct FSinglePassPointLightBufferHLSL
 {
     // 0-384

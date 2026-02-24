@@ -17,6 +17,8 @@ struct FVulkanDescriptorSetKey
     {
         uint64 Type;
         uint64 Resource;
+        uint64 Offset;
+        uint64 Range;
     };
 
     FVulkanDescriptorSetKey()
@@ -36,7 +38,9 @@ struct FVulkanDescriptorSetKey
     bool operator==(const FVulkanDescriptorSetKey& Other) const
     {
         if (SetLayout != Other.SetLayout)
+        {
             return false;
+        }
         
         return Resources.Size() == Other.Resources.Size() ? 
             FMemory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
@@ -52,9 +56,9 @@ struct FVulkanDescriptorSetKey
         return Value.Hash;
     }
     
-    TArray<FBinding> Resources;
+    TArray<FBinding>      Resources;
     VkDescriptorSetLayout SetLayout;
-    uint64 Hash;
+    uint64                Hash;
 };
 
 struct FVulkanDescriptorPoolInfo
@@ -90,7 +94,9 @@ struct FVulkanDescriptorPoolInfo
     bool operator==(const FVulkanDescriptorPoolInfo& Other) const
     {
         if (DescriptorSetLayout != Other.DescriptorSetLayout)
+        {
             return false;
+        }
 
         return DescriptorSizes.Size() == Other.DescriptorSizes.Size() ? 
             FMemory::Memcmp(DescriptorSizes.Data(), Other.DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()) == 0 : false;
@@ -106,9 +112,9 @@ struct FVulkanDescriptorPoolInfo
         return Value.Hash;
     }
 
-    VkDescriptorSetLayout DescriptorSetLayout;
+    VkDescriptorSetLayout   DescriptorSetLayout;
     TArray<FDescriptorSize> DescriptorSizes;
-    uint64 Hash;
+    uint64                  Hash;
 };
 
 class FVulkanDescriptorSetBuilder
@@ -192,7 +198,9 @@ public:
     void SetDescriptorSet(VkDescriptorSet DescriptorSet)
     {
         for (int32 Index = 0; Index < NumDescriptorWrites; Index++)
+        {
             DescriptorWrites[Index].dstSet = DescriptorSet;
+        }
     }
     
     void UpdateDescriptorSet(VkDevice Device)
@@ -229,12 +237,15 @@ private:
         CHECK(pBufferInfo != nullptr);
         
         const uint64 Resource = reinterpret_cast<uint64>(Buffer);
-        if (DescriptorSetKey.Resources[Binding].Resource != Resource)
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource || DescriptorSetKey.Resources[Binding].Offset != Offset || DescriptorSetKey.Resources[Binding].Range != Range)
         {
             pBufferInfo->buffer = Buffer;
             pBufferInfo->offset = Offset;
             pBufferInfo->range  = Range;
+
             DescriptorSetKey.Resources[Binding].Resource = Resource;
+            DescriptorSetKey.Resources[Binding].Offset   = Offset;
+            DescriptorSetKey.Resources[Binding].Range    = Range;
             bKeyIsDirty = true;
         }
     }
@@ -323,15 +334,17 @@ public:
     bool AllocateDescriptorSet(const VkDescriptorSetAllocateInfo& DescriptorSetAllocateInfo, VkDescriptorSet* OutDescriptorSets);
     void Reset();
 
-    inline bool CanAllocateDescriptorSet()
-    {
-        return NumDescriptorSets > 0;
-    }
+    bool CanAllocateDescriptorSet() const { return NumDescriptorSets > 0; }
+    bool CanRecycle() const { return LiveDescriptorSets == 0; }
+
+    void IncrementLive() { LiveDescriptorSets++; }
+    void DecrementLive() { LiveDescriptorSets--; }
 
 private:
     VkDescriptorPool DescriptorPool;
     int32            MaxDescriptorSets;
     int32            NumDescriptorSets;
+    int32            LiveDescriptorSets;
 };
 
 class FVulkanDescriptorSetCache : public FVulkanDeviceChild
@@ -342,7 +355,7 @@ class FVulkanDescriptorSetCache : public FVulkanDeviceChild
         FCachedPool(FVulkanDevice* InDevice, const FVulkanDescriptorPoolInfo& InPoolInfo);
         ~FCachedPool();
 
-        bool AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet);
+        bool AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet, FVulkanDescriptorPool** OutPool);
 
     private:
         FVulkanDescriptorPool*         CurrentDescriptorPool;
@@ -350,15 +363,25 @@ class FVulkanDescriptorSetCache : public FVulkanDeviceChild
         FVulkanDescriptorPoolInfo      PoolInfo;
     };
 
+    struct FCachedDescriptorSet
+    {
+        VkDescriptorSet        DescriptorSet = VK_NULL_HANDLE;
+        uint64                 LastUsedFrame = 0;
+        FVulkanDescriptorPool* OwnerPool     = nullptr;
+    };
+
 public:
     FVulkanDescriptorSetCache(FVulkanDevice* InDevice);
     ~FVulkanDescriptorSetCache();
 
     bool FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
-    void ReleaseCachedDescriptorSets();
+    void EvictStaleDescriptorSets(uint64 InFramesInFlight);
 
 private:
-    TMap<FVulkanDescriptorPoolInfo, FCachedPool*>  Caches;
-    TMap<FVulkanDescriptorSetKey, VkDescriptorSet> DescriptorSets;
-    FCriticalSection                               CacheCS;
+    static constexpr uint64 MinUnusedFrames = 2;
+
+    TMap<FVulkanDescriptorPoolInfo, FCachedPool*>       Caches;
+    TMap<FVulkanDescriptorSetKey, FCachedDescriptorSet> DescriptorSets;
+    FCriticalSection                                    CacheCS;
+    uint64                                              CurrentFrame;
 };

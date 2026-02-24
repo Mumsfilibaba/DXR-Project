@@ -561,8 +561,10 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     PipelineLayoutManager = new FVulkanPipelineLayoutManager(this);
     RenderPassCache = new FVulkanRenderPassCache(this);
 
-    // Ensure that the upload allocator is released before we destroy the device
     UploadHeap = new FVulkanUploadHeapAllocator(this);
+
+    constexpr uint64 DynamicConstantsPageSize = 2 * 1024 * 1024;
+    DynamicConstantsAllocator = new FVulkanDynamicConstantsAllocator(this, DynamicConstantsPageSize);
 
     FenceManager = new FVulkanFenceManager(this);
     MemoryManager = new FVulkanMemoryManager(this);
@@ -601,7 +603,7 @@ FVulkanDevice::~FVulkanDevice()
     SAFE_DELETE(PipelineLayoutManager);
     SAFE_DELETE(RenderPassCache);
 
-    // Ensure that the upload allocator is released before we destroy the device
+    SAFE_DELETE(DynamicConstantsAllocator);
     SAFE_DELETE(UploadHeap);
 
     SAFE_DELETE(FenceManager);

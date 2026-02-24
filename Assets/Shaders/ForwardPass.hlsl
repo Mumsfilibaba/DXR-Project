@@ -40,11 +40,8 @@ cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5);
 
 // Per Object Buffers
-SHADER_CONSTANT_BLOCK_BEGIN
-    FTransform TransformBuffer;
-SHADER_CONSTANT_BLOCK_END
-
-ConstantBuffer<FMaterial> MaterialBuffer : register(b6);
+ConstantBuffer<FTransform> TransformBuffer : register(b1);
+ConstantBuffer<FMaterial>  MaterialBuffer : register(b6);
 
 // Per Frame Samplers
 SamplerState MaterialSampler : register(s0);
@@ -94,10 +91,10 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
     
-    float3 Normal = normalize(TransformDirectionWS(Constants.TransformBuffer, Input.Normal));
+    float3 Normal = normalize(TransformDirectionWS(TransformBuffer, Input.Normal));
     Output.Normal = Normal;
     
-    float3 Tangent = normalize(TransformDirectionWS(Constants.TransformBuffer, Input.Tangent));
+    float3 Tangent = normalize(TransformDirectionWS(TransformBuffer, Input.Tangent));
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent = Tangent;
     
@@ -106,7 +103,7 @@ FVSOutput VSMain(FVSInput Input)
 
     Output.TexCoord = Input.TexCoord;
 
-    const float3 WorldPosition3 = TransformPositionWS(Constants.TransformBuffer, Input.Position);
+    const float3 WorldPosition3 = TransformPositionWS(TransformBuffer, Input.Position);
     Output.Position      = mul(float4(WorldPosition3, 1.0), CameraBuffer.ViewProjection);
     Output.WorldPosition = WorldPosition3;
 

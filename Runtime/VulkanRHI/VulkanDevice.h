@@ -284,7 +284,8 @@ public:
     FVulkanQueryPoolManager*      GetQueryPoolManager(EQueryType QueryType);
     FVulkanRenderPassCache&       GetRenderPassCache() { return *RenderPassCache; }
     FVulkanMemoryManager&         GetMemoryManager() { return *MemoryManager; }
-    FVulkanUploadHeapAllocator&   GetUploadHeap() { return *UploadHeap; }
+    FVulkanUploadHeapAllocator&          GetUploadHeap() { return *UploadHeap; }
+    FVulkanDynamicConstantsAllocator&    GetDynamicConstantsAllocator() { return *DynamicConstantsAllocator; }
     FVulkanFenceManager&          GetFenceManager() { return *FenceManager; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
     FVulkanPipelineStateManager&  GetPipelineStateManager() { return *PipelineStateManager; }
@@ -327,6 +328,7 @@ private:
     VkDevice                             Device;
     FVulkanRenderPassCache*              RenderPassCache;
     FVulkanUploadHeapAllocator*          UploadHeap;
+    FVulkanDynamicConstantsAllocator*    DynamicConstantsAllocator;
     FVulkanMemoryManager*                MemoryManager;
     FVulkanFenceManager*                 FenceManager;
     FVulkanPipelineLayoutManager*        PipelineLayoutManager;

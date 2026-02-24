@@ -43,9 +43,7 @@ struct FPerCascade
 };
 
 // Per-object
-SHADER_CONSTANT_BLOCK_BEGIN
-    FTransform Transform;
-SHADER_CONSTANT_BLOCK_END
+ConstantBuffer<FTransform> TransformBuffer : register(b1);
 
 #if SHADER_LANG == SHADER_LANG_MSL
     ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b2);
@@ -57,7 +55,7 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     // MaterialBuffer
-    ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
+    ConstantBuffer<FMaterial> MaterialBuffer : register(b2);
     // Sampler
     SamplerState MaterialSampler : register(s0);
     // Material Textures
@@ -116,7 +114,7 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
     Output.TexCoord = Input.TexCoord;
 #endif
 
-    const float3 WorldPositionWS = TransformPositionWS(Constants.Transform, Input.Position);
+    const float3 WorldPositionWS = TransformPositionWS(TransformBuffer, Input.Position);
     const float4 WorldPosition   = float4(WorldPositionWS, 1.0f);
 
 // Geometry shader instancing

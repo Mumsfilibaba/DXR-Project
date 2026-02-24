@@ -297,17 +297,18 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& BufferInfo, EReso
     }
 
     // -------------------------------------------------------------------------------------------
-    // Memory flags: require exactly one of Default/Dynamic/ReadBack
+    // Memory flags: require exactly one of Default/Dynamic/ReadBack/Transient
     // -------------------------------------------------------------------------------------------
-    const bool bMemoryDefault  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Default);
-    const bool bMemoryDynamic  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Dynamic);
-    const bool bMemoryReadBack = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::ReadBack);
+    const bool bMemoryDefault   = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Default);
+    const bool bMemoryDynamic   = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Dynamic);
+    const bool bMemoryReadBack  = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::ReadBack);
+    const bool bMemoryTransient = IsEnumFlagSet(BufferInfo.Flags, EBufferFlags::Transient);
 
-    const int32 StorageFlagCount = (bMemoryDefault ? 1 : 0) + (bMemoryDynamic ? 1 : 0) + (bMemoryReadBack ? 1 : 0);
+    const int32 StorageFlagCount = (bMemoryDefault ? 1 : 0) + (bMemoryDynamic ? 1 : 0) + (bMemoryReadBack ? 1 : 0) + (bMemoryTransient ? 1 : 0);
     if (StorageFlagCount != 1)
     {
-        RHI_VALIDATION_ERROR("CreateBuffer: Exactly one memory flag must be set. The options are Default/Dynamic/ReadBack. (The flags set are Default=%s, Dynamic=%s, ReadBack=%s)",
-            bMemoryDefault ? "true" : "false", bMemoryDynamic ? "true" : "false", bMemoryReadBack ? "true" : "false");
+        RHI_VALIDATION_ERROR("CreateBuffer: Exactly one memory flag must be set. The options are Default/Dynamic/ReadBack/Transient. (The flags set are Default=%s, Dynamic=%s, ReadBack=%s, Transient=%s)",
+            bMemoryDefault ? "true" : "false", bMemoryDynamic ? "true" : "false", bMemoryReadBack ? "true" : "false", bMemoryTransient ? "true" : "false");
         return nullptr;
     }
 
@@ -322,10 +323,9 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferInfo& BufferInfo, EReso
     // -------------------------------------------------------------------------------------------
     if (bIsConstantBuffer)
     {
-        // Disallow ReadBack for CB (GPU-read only in practice)
         if (bMemoryReadBack)
         {
-            RHI_VALIDATION_ERROR("CreateBuffer: a buffer with ConstantBuffer usage-flag cannot use ReadBack memory. Use Default or Dynamic for GPU-accessible ConstantBuffer.");
+            RHI_VALIDATION_ERROR("CreateBuffer: a buffer with ConstantBuffer usage-flag cannot use ReadBack memory. Use Default, Dynamic, or Transient for GPU-accessible ConstantBuffer.");
             return nullptr;
         }
 

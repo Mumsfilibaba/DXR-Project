@@ -267,7 +267,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
         if (Material->HasAlphaMask() || Material->HasHeightMap())
         {
-            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
+            CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 2);
             CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
         }
 
@@ -325,8 +325,8 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
             CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat()); 
   
-            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32); 
-            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants); 
+            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
   
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0); 
         } 
@@ -591,7 +591,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
+        CommandList.SetConstantBuffer(PipelineInstance->PixelShader.Get(), Material->GetMaterialBuffer(), 2);
         CommandList.SetSamplerState(PipelineInstance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
         if (Material->HasAlphaMask())
@@ -648,12 +648,12 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
             CommandList.SetIndexBuffer(StaticMesh->GetIndexBuffer(), StaticMesh->GetIndexFormat());
 
-            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
-            CommandList.SetShaderConstants(PipelineInstance->VertexShader.Get(), &StaticMesh->GetTransformShaderData(), NumConstants);
+            CommandList.UpdateBuffer(FrameResources.TransformBuffer.Get(), FBufferRegion(0, sizeof(FTransformBufferHLSL)), &StaticMesh->GetTransformShaderData());
+            CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.TransformBuffer.Get(), 1);
 
             if (FRHIPixelShader* PixelShader = PipelineInstance->PixelShader.Get())
             {
-                CommandList.SetShaderConstants(PixelShader, &StaticMesh->GetTransformShaderData(), NumConstants);
+                CommandList.SetConstantBuffer(PixelShader, FrameResources.TransformBuffer.Get(), 1);
             }
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);

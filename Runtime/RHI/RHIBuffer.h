@@ -8,15 +8,16 @@ enum class EBufferFlags : uint16
 { 
     None = 0,
 
-    Default  = FLAG(1), // Default Device Memory
-    Dynamic  = FLAG(2), // Dynamic Memory (D3D12 UploadHeap)
-    ReadBack = FLAG(3), // Read-Back from GPU
+    Default   = FLAG(1), // Default Device Memory
+    Dynamic   = FLAG(2), // Dynamic Memory (D3D12 UploadHeap)
+    ReadBack  = FLAG(3), // Read-Back from GPU
+    Transient = FLAG(4), // Per-frame ephemeral memory, contents not preserved across frames
 
-    ConstantBuffer        = FLAG(4), // Can be used as ConstantBuffer
-    UnorderedAccessBuffer = FLAG(5), // Can be used in UnorderedAccessViews
-    ShaderResourceBuffer  = FLAG(6), // Can be used in ShaderResourceViews
-    VertexBuffer          = FLAG(7), // Can be used as VertexBuffer
-    IndexBuffer           = FLAG(8), // Can be used as IndexBuffer
+    ConstantBuffer        = FLAG(5), // Can be used as ConstantBuffer
+    UnorderedAccessBuffer = FLAG(6), // Can be used in UnorderedAccessViews
+    ShaderResourceBuffer  = FLAG(7), // Can be used in ShaderResourceViews
+    VertexBuffer          = FLAG(8), // Can be used as VertexBuffer
+    IndexBuffer           = FLAG(9), // Can be used as IndexBuffer
 
     RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer
 };
@@ -28,6 +29,7 @@ struct FRHIBufferInfo
     NODISCARD constexpr bool IsDefault() const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
     NODISCARD constexpr bool IsDynamic() const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
     NODISCARD constexpr bool IsReadBack() const { return IsEnumFlagSet(Flags, EBufferFlags::ReadBack); }
+    NODISCARD constexpr bool IsTransient() const { return IsEnumFlagSet(Flags, EBufferFlags::Transient); }
     
     NODISCARD constexpr bool IsConstantBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer); }
     NODISCARD constexpr bool IsShaderResourceBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer); }

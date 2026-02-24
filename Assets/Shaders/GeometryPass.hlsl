@@ -31,11 +31,8 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 // PerObject Samplers
 SamplerState MaterialSampler : register(s0);
 
-SHADER_CONSTANT_BLOCK_BEGIN
-    FTransform Transform;
-SHADER_CONSTANT_BLOCK_END
-
-ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
+ConstantBuffer<FTransform> TransformBuffer : register(b1);
+ConstantBuffer<FMaterial>  MaterialBuffer : register(b1);
 
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     Texture2D<float4> AlbedoAlphaMap : register(t0);
@@ -93,14 +90,14 @@ struct FVSOutput
 FVSOutput VSMain(FVSInput Input)
 {
     // Position
-    const float3 PositionWS3 = TransformPositionWS(Constants.Transform, Input.Position);
+    const float3 PositionWS3 = TransformPositionWS(TransformBuffer, Input.Position);
     const float4 PositionWS  = float4(PositionWS3, 1.0);
 
     // Normal
-    float3 Normal = normalize(TransformDirectionInvT(Constants.Transform, Input.Normal));
+    float3 Normal = normalize(TransformDirectionInvT(TransformBuffer, Input.Normal));
 
     // Tangent 
-    float3 Tangent = normalize(TransformDirectionInvT(Constants.Transform, Input.Tangent));
+    float3 Tangent = normalize(TransformDirectionInvT(TransformBuffer, Input.Tangent));
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
     
     // Bitangent 

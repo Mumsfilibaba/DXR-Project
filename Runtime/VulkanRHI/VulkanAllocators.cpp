@@ -1,12 +1,38 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
+#include "Core/Math/Math.h"
 #include "VulkanRHI/VulkanAllocators.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanRHI.h"
 
 static TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
     "VulkanRHI.MaxStagingAllocationSize",
     "The maximum size for a resource that uses a shared staging-buffer (MB)",
     8);
+
+class FVulkanRetiredConstantsPage : public FVulkanDeviceChild, public FVulkanRefCounted
+{
+public:
+    FVulkanRetiredConstantsPage(FVulkanDevice* InDevice, VkBuffer InBuffer, FVulkanMemoryAllocation InAllocation)
+        : FVulkanDeviceChild(InDevice)
+        , Buffer(InBuffer)
+        , MemoryAllocation(InAllocation)
+    {
+    }
+
+    ~FVulkanRetiredConstantsPage()
+    {
+        FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
+        MemoryManager.Unmap(MemoryAllocation);
+
+        vkDestroyBuffer(GetDevice()->GetVkDevice(), Buffer, nullptr);
+        MemoryManager.Free(MemoryAllocation);
+    }
+
+private:
+    VkBuffer                Buffer;
+    FVulkanMemoryAllocation MemoryAllocation;
+};
 
 FVulkanUploadBuffer::FVulkanUploadBuffer(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
@@ -149,6 +175,109 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
         Allocation.Offset = 0;
         Allocation.Memory = NewBuffer->GetMappedMemory();
     }
+
+    return Allocation;
+}
+
+FVulkanDynamicConstantsAllocator::FVulkanDynamicConstantsAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes)
+    : FVulkanDeviceChild(InDevice)
+    , PageSizeBytes(InPageSizeBytes)
+    , MinAlignment(InDevice->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment)
+    , CurrentOffset(0)
+    , Buffer(VK_NULL_HANDLE)
+    , MemoryAllocation()
+    , MappedMemory(nullptr)
+{
+}
+
+FVulkanDynamicConstantsAllocator::~FVulkanDynamicConstantsAllocator()
+{
+    if (MappedMemory)
+    {
+        FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
+        MemoryManager.Unmap(MemoryAllocation);
+        MappedMemory = nullptr;
+    }
+
+    if (VULKAN_CHECK_HANDLE(Buffer))
+    {
+        vkDestroyBuffer(GetDevice()->GetVkDevice(), Buffer, nullptr);
+        Buffer = VK_NULL_HANDLE;
+    }
+
+    if (MemoryAllocation.IsValid())
+    {
+        GetDevice()->GetMemoryManager().Free(MemoryAllocation);
+    }
+}
+
+bool FVulkanDynamicConstantsAllocator::AllocateNewPage()
+{
+    if (VULKAN_CHECK_HANDLE(Buffer))
+    {
+        FVulkanRetiredConstantsPage* RetiredPage = new FVulkanRetiredConstantsPage(GetDevice(), Buffer, MemoryAllocation);
+        FVulkanRHI::DeferDeletion(RetiredPage);
+        RetiredPage->Release();
+
+        Buffer = VK_NULL_HANDLE;
+        MemoryAllocation.Reset();
+        MappedMemory = nullptr;
+    }
+
+    VkBufferCreateInfo BufferCreateInfo = {};
+    BufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    BufferCreateInfo.size  = PageSizeBytes;
+    BufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create DynamicConstants buffer");
+        return false;
+    }
+
+    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
+    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, 0, GVulkanForceDedicatedAllocations, MemoryAllocation))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to allocate DynamicConstants memory");
+        return false;
+    }
+
+    void* Mapped = MemoryManager.Map(MemoryAllocation);
+    if (!Mapped)
+    {
+        VULKAN_ERROR_CRITICAL("Failed to map DynamicConstants memory");
+        return false;
+    }
+
+    MappedMemory  = reinterpret_cast<uint8*>(Mapped);
+    CurrentOffset = 0;
+    return true;
+}
+
+FVulkanDynamicConstantsAllocation FVulkanDynamicConstantsAllocator::Allocate(uint64 SizeInBytes)
+{
+    FVulkanDynamicConstantsAllocation Allocation;
+
+    const uint64 AlignedSize   = Math::AlignUp<uint64>(SizeInBytes, MinAlignment);
+    const uint64 AlignedOffset = Math::AlignUp<uint64>(CurrentOffset, MinAlignment);
+
+    if (!VULKAN_CHECK_HANDLE(Buffer) || (AlignedOffset + AlignedSize) > PageSizeBytes)
+    {
+        if (!AllocateNewPage())
+        {
+            return Allocation;
+        }
+    }
+
+    const uint64 FinalOffset = Math::AlignUp<uint64>(CurrentOffset, MinAlignment);
+
+    Allocation.Buffer       = Buffer;
+    Allocation.Offset       = FinalOffset;
+    Allocation.MappedMemory = MappedMemory + FinalOffset;
+    CurrentOffset           = FinalOffset + AlignedSize;
 
     return Allocation;
 }

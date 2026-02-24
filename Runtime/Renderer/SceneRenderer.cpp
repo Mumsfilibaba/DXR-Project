@@ -275,6 +275,22 @@ bool FSceneRenderer::Initialize()
         Resources.CameraBuffer->SetDebugName("CameraBuffer");
     }
 
+    FRHIBufferInfo TransformCBInfo;
+    TransformCBInfo.Size   = sizeof(FTransformBufferHLSL);
+    TransformCBInfo.Stride = sizeof(FTransformBufferHLSL);
+    TransformCBInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Transient;
+
+    Resources.TransformBuffer = FRHI::Get()->CreateBuffer(TransformCBInfo, EResourceAccess::Common, nullptr);
+    if (!Resources.TransformBuffer)
+    {
+        LOG_ERROR("[Renderer]: Failed to create TransformBuffer");
+        return false;
+    }
+    else
+    {
+        Resources.TransformBuffer->SetDebugName("TransformBuffer");
+    }
+
     // Initialize standard input layout
     TArray<FRHIInputElementInfo> InputElements =
     {
