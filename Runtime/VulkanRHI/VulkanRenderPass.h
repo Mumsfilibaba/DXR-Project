@@ -39,15 +39,12 @@ struct FVulkanRenderPassKey
     {
         struct
         {
-            EFormat DepthStencilFormat;
+            EFormat                  DepthStencilFormat;
             FVulkanRenderPassActions DepthStencilActions;
-
-            uint8 NumSamples : 4;
-            uint8 NumRenderTargets : 4;
-
-            FRHIViewInstancingState ViewInstancingState;
-            
-            EFormat RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
+            uint8                    NumSamples : 4;
+            uint8                    NumRenderTargets : 4;
+            FRHIViewInstancingState  ViewInstancingState;
+            EFormat                  RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
             FVulkanRenderPassActions RenderTargetActions[RHI_MAX_RENDER_TARGETS];
         };
         
@@ -103,7 +100,9 @@ struct FVulkanFramebufferKey
         for (uint32 Index = 0; Index < NumAttachmentViews; Index++)
         {
             if (AttachmentViews[Index] != Other.AttachmentViews[Index])
+            {
                 return false;
+            }
         }
 
         return true;
@@ -117,7 +116,6 @@ struct FVulkanFramebufferKey
     friend uint64 GetHashForType(const FVulkanFramebufferKey& Key)
     {
         uint64 Hash = reinterpret_cast<uint64>(Key.RenderPass);
-        
         HashCombine(Hash, Key.Width);
         HashCombine(Hash, Key.Height);
         HashCombine(Hash, Key.NumArrayLayers);
@@ -145,14 +143,23 @@ public:
     FVulkanRenderPassCache(FVulkanDevice* InDevice);
     ~FVulkanRenderPassCache();
 
-    VkRenderPass GetRenderPass(const FVulkanRenderPassKey& Key);
+    VkRenderPass  GetRenderPass(const FVulkanRenderPassKey& Key);
     VkFramebuffer GetFramebuffer(const FVulkanFramebufferKey& Key);
+
     void OnReleaseImageView(VkImageView View);
     void OnReleaseRenderPass(VkRenderPass RenderPass);
+    void EvictStaleFramebuffers();
 
 private:
-    TMap<FVulkanRenderPassKey, VkRenderPass>   RenderPasses;
-    FCriticalSection                           RenderPassesCS;
-    TMap<FVulkanFramebufferKey, VkFramebuffer> Framebuffers;
-    FCriticalSection                           FramebuffersCS;
+    struct FCachedFramebuffer
+    {
+        VkFramebuffer Handle;
+        uint64        LastUsedFrame;
+    };
+
+    TMap<FVulkanRenderPassKey, VkRenderPass>        RenderPasses;
+    FCriticalSection                                RenderPassesCS;
+    TMap<FVulkanFramebufferKey, FCachedFramebuffer> Framebuffers;
+    FCriticalSection                                FramebuffersCS;
+    uint64                                          CurrentFrame;
 };

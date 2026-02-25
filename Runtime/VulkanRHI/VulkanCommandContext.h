@@ -165,6 +165,11 @@ public:
         return TransientDescriptorAllocator;
     }
 
+    FVulkanCommandContextState& GetContextState()
+    {
+        return ContextState;
+    }
+
 private:
     void ConditionalSplitCommandBuffer();
     void ForceFlushCommandPool();

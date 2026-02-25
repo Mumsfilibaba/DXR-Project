@@ -73,6 +73,7 @@ public:
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
     void ResetState();
     void ResetStateForNewCommandBuffer();
+    void EvictStaleDescriptorStates();
 
     void SetViewInstanceInfo(const FRHIViewInstancingState& InViewInstancingInfo);
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState);
@@ -132,6 +133,12 @@ public:
     }
 
 private:
+    struct FCachedDescriptorState
+    {
+        FVulkanDescriptorState* State;
+        uint64                  LastUsedFrame;
+    };
+
     struct FGraphicsState
     {
         FGraphicsState()
@@ -154,7 +161,7 @@ private:
         FVulkanGraphicsPipelineStateRef PipelineState;
         FRHIViewInstancingState ViewInstancingState;
 
-        TMap<FVulkanGraphicsPipelineState*, FVulkanDescriptorState*> DescriptorStates;
+        TMap<FVulkanGraphicsPipelineState*, FCachedDescriptorState> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;
         
         float BlendFactor[4];
@@ -190,7 +197,7 @@ private:
         FVulkanPipelineLayout* CurrentLayout;
         FVulkanComputePipelineStateRef PipelineState;
 
-        TMap<FVulkanComputePipelineState*, FVulkanDescriptorState*> DescriptorStates;
+        TMap<FVulkanComputePipelineState*, FCachedDescriptorState> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;
         
         bool bBindPipelineState : 1;
@@ -203,4 +210,5 @@ private:
     } CommonState;
     
     FVulkanCommandContext& Context;
+    uint64                CurrentFrame;
 };

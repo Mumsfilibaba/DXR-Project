@@ -7,19 +7,20 @@ FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, 
     , ComputeState()
     , CommonState()
     , Context(InContext)
+    , CurrentFrame(0)
 {
 }
 
 FVulkanCommandContextState::~FVulkanCommandContextState()
 {
-    for (auto DescriptorStatePair : ComputeState.DescriptorStates)
+    for (auto Entry : ComputeState.DescriptorStates)
     {
-        delete DescriptorStatePair.Second;
+        delete Entry.Second.State;
     }
 
-    for (auto DescriptorStatePair : GraphicsState.DescriptorStates)
+    for (auto Entry : GraphicsState.DescriptorStates)
     {
-        delete DescriptorStatePair.Second;
+        delete Entry.Second.State;
     }
 
     ComputeState.DescriptorStates.Clear();
@@ -196,9 +197,10 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
         {
             GraphicsState.CurrentLayout = InGraphicsPipelineState->GetPipelineLayout();
             
-            if (FVulkanDescriptorState** State = GraphicsState.DescriptorStates.Find(InGraphicsPipelineState))
+            if (FCachedDescriptorState* Cached = GraphicsState.DescriptorStates.Find(InGraphicsPipelineState))
             {
-                GraphicsState.CurrentDescriptorState = *State;
+                Cached->LastUsedFrame = CurrentFrame;
+                GraphicsState.CurrentDescriptorState = Cached->State;
                 if (GVulkanForceBinding)
                 {
                     GraphicsState.CurrentDescriptorState->Reset();
@@ -206,8 +208,14 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             }
             else
             {
-                GraphicsState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), GraphicsState.CurrentLayout, GetDevice()->GetDefaultResources());
-                GraphicsState.DescriptorStates.Add(InGraphicsPipelineState, GraphicsState.CurrentDescriptorState);
+                FVulkanDescriptorState* NewState = new FVulkanDescriptorState(GetDevice(), GraphicsState.CurrentLayout, GetDevice()->GetDefaultResources());
+                
+                FCachedDescriptorState NewEntry;
+                NewEntry.State         = NewState;
+                NewEntry.LastUsedFrame = CurrentFrame;
+                GraphicsState.DescriptorStates.Add(InGraphicsPipelineState, NewEntry);
+                
+                GraphicsState.CurrentDescriptorState = NewState;
             }
         }
         else
@@ -233,9 +241,10 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
         {
             ComputeState.CurrentLayout = InComputePipelineState->GetPipelineLayout();
 
-            if (FVulkanDescriptorState** State = ComputeState.DescriptorStates.Find(InComputePipelineState))
+            if (FCachedDescriptorState* Cached = ComputeState.DescriptorStates.Find(InComputePipelineState))
             {
-                ComputeState.CurrentDescriptorState = *State;
+                Cached->LastUsedFrame = CurrentFrame;
+                ComputeState.CurrentDescriptorState = Cached->State;
                 if (GVulkanForceBinding)
                 {
                     ComputeState.CurrentDescriptorState->Reset();
@@ -243,8 +252,14 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
             }
             else
             {
-                ComputeState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), ComputeState.CurrentLayout, GetDevice()->GetDefaultResources());
-                ComputeState.DescriptorStates.Add(InComputePipelineState, ComputeState.CurrentDescriptorState);
+                FVulkanDescriptorState* NewState = new FVulkanDescriptorState(GetDevice(), ComputeState.CurrentLayout, GetDevice()->GetDefaultResources());
+                
+                FCachedDescriptorState NewEntry;
+                NewEntry.State         = NewState;
+                NewEntry.LastUsedFrame = CurrentFrame;
+                ComputeState.DescriptorStates.Add(InComputePipelineState, NewEntry);
+                
+                ComputeState.CurrentDescriptorState = NewState;
             }
         }
         else
@@ -506,4 +521,78 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, E
     }
     
     DescriptorState->SetSampler(SamplerState, DescriptorSetIndex, BindingIndex);
+}
+
+void FVulkanCommandContextState::EvictStaleDescriptorStates()
+{
+    constexpr uint64 StaleFrameThreshold = 8;
+    
+    CurrentFrame++;
+
+    if (CurrentFrame <= StaleFrameThreshold)
+    {
+        return;
+    }
+
+    const uint64 EvictionCutoff = CurrentFrame - StaleFrameThreshold;
+    int32 EvictedCount = 0;
+
+    // Evict stale graphics descriptor states
+    {
+        TArray<FVulkanGraphicsPipelineState*> StaleKeys;
+        GraphicsState.DescriptorStates.Foreach([&StaleKeys, EvictionCutoff](FVulkanGraphicsPipelineState* const& Key, const FCachedDescriptorState& Cached)
+        {
+            if (Cached.LastUsedFrame < EvictionCutoff)
+            {
+                StaleKeys.Add(Key);
+            }
+        });
+
+        for (FVulkanGraphicsPipelineState* Key : StaleKeys)
+        {
+            FCachedDescriptorState Cached;
+            if (GraphicsState.DescriptorStates.RemoveKey(Key, &Cached))
+            {
+                if (GraphicsState.CurrentDescriptorState == Cached.State)
+                {
+                    GraphicsState.CurrentDescriptorState = nullptr;
+                }
+
+                delete Cached.State;
+                EvictedCount++;
+            }
+        }
+    }
+
+    // Evict stale compute descriptor states
+    {
+        TArray<FVulkanComputePipelineState*> StaleKeys;
+        ComputeState.DescriptorStates.Foreach([&StaleKeys, EvictionCutoff](FVulkanComputePipelineState* const& Key, const FCachedDescriptorState& Cached)
+        {
+            if (Cached.LastUsedFrame < EvictionCutoff)
+            {
+                StaleKeys.Add(Key);
+            }
+        });
+
+        for (FVulkanComputePipelineState* Key : StaleKeys)
+        {
+            FCachedDescriptorState Cached;
+            if (ComputeState.DescriptorStates.RemoveKey(Key, &Cached))
+            {
+                if (ComputeState.CurrentDescriptorState == Cached.State)
+                {
+                    ComputeState.CurrentDescriptorState = nullptr;
+                }
+
+                delete Cached.State;
+                EvictedCount++;
+            }
+        }
+    }
+
+    if (EvictedCount > 0)
+    {
+        VULKAN_INFO("Evicted %d stale descriptor state(s)", EvictedCount);
+    }
 }

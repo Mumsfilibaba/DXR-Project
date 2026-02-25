@@ -263,6 +263,12 @@ void FVulkanRHI::BeginFrame()
     {
         Device->GetDescriptorPoolManager().EvictUnusedPools();
     }
+
+    Device->GetRenderPassCache().EvictStaleFramebuffers();
+
+    // NOTE: Currently only GraphicsCommandContext exists. When additional contexts
+    // are added (async compute, copy), iterate all contexts here.
+    GraphicsCommandContext->GetContextState().EvictStaleDescriptorStates();
 }
 
 void FVulkanRHI::EndFrame()

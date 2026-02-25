@@ -16,6 +16,8 @@ static void DestroyFramebuffer(VkDevice Device, VkFramebuffer Framebuffer)
 FVulkanRenderPassCache::FVulkanRenderPassCache(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , RenderPasses()
+    , Framebuffers()
+    , CurrentFrame(0)
 {
 }
 
@@ -24,10 +26,9 @@ FVulkanRenderPassCache::~FVulkanRenderPassCache()
     {
         SCOPED_LOCK(FramebuffersCS);
 
-        // Destroy all Framebuffers
-        for (auto Framebuffer : Framebuffers)
+        for (auto Entry : Framebuffers)
         {
-            DestroyFramebuffer(GetDevice()->GetVkDevice(), Framebuffer.Second);
+            DestroyFramebuffer(GetDevice()->GetVkDevice(), Entry.Second.Handle);
         }
 
         Framebuffers.Clear();
@@ -181,13 +182,12 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
 {
     SCOPED_LOCK(FramebuffersCS);
 
-    // Check if a Framebuffer exists
-    if (VkFramebuffer* ExistingFramebuffer = Framebuffers.Find(FrameBufferKey))
+    if (FCachedFramebuffer* Existing = Framebuffers.Find(FrameBufferKey))
     {
-        return *ExistingFramebuffer;
+        Existing->LastUsedFrame = CurrentFrame;
+        return Existing->Handle;
     }
 
-    // Create new Framebuffer
     VkFramebufferCreateInfo FramebufferCreateInfo = {};
     FramebufferCreateInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     FramebufferCreateInfo.renderPass      = FrameBufferKey.RenderPass;
@@ -207,7 +207,11 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
     else
     {
         VULKAN_INFO("Created new Framebuffer");
-        Framebuffers.Add(FrameBufferKey, Framebuffer);
+
+        FCachedFramebuffer Cached;
+        Cached.Handle        = Framebuffer;
+        Cached.LastUsedFrame = CurrentFrame;
+        Framebuffers.Add(FrameBufferKey, Cached);
         return Framebuffer;
     }
 }
@@ -219,15 +223,13 @@ void FVulkanRenderPassCache::OnReleaseImageView(VkImageView View)
     // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
 
-    // Find all Framebuffers containing this RenderPass
     for (const FVulkanFramebufferKey& Key : Keys)
     {
         if (Key.ContainsImageView(View))
         {
-            // Destroy Framebuffer
-            if (VkFramebuffer* Framebuffer = Framebuffers.Find(Key))
+            if (FCachedFramebuffer* Cached = Framebuffers.Find(Key))
             {
-                DestroyFramebuffer(GetDevice()->GetVkDevice(), *Framebuffer);
+                DestroyFramebuffer(GetDevice()->GetVkDevice(), Cached->Handle);
             }
             
             Framebuffers.Remove(Key);
@@ -242,18 +244,56 @@ void FVulkanRenderPassCache::OnReleaseRenderPass(VkRenderPass RenderPass)
     // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
 
-    // Find all Framebuffers containing this RenderPass
     for (const FVulkanFramebufferKey& Key : Keys)
     {
         if (Key.ContainsRenderPass(RenderPass))
         {
-            // Destroy Framebuffer
-            if (VkFramebuffer* Framebuffer = Framebuffers.Find(Key))
+            if (FCachedFramebuffer* Cached = Framebuffers.Find(Key))
             {
-                DestroyFramebuffer(GetDevice()->GetVkDevice(), *Framebuffer);
+                DestroyFramebuffer(GetDevice()->GetVkDevice(), Cached->Handle);
             }
             
             Framebuffers.Remove(Key);
         }
+    }
+}
+
+void FVulkanRenderPassCache::EvictStaleFramebuffers()
+{
+    constexpr uint64 StaleFrameThreshold = 8;
+
+    SCOPED_LOCK(FramebuffersCS);
+
+    CurrentFrame++;
+
+    if (CurrentFrame <= StaleFrameThreshold)
+    {
+        return;
+    }
+
+    const uint64 EvictionCutoff = CurrentFrame - StaleFrameThreshold;
+
+    TArray<FVulkanFramebufferKey> StaleKeys;
+    Framebuffers.Foreach([&StaleKeys, EvictionCutoff](const FVulkanFramebufferKey& Key, const FCachedFramebuffer& Cached)
+    {
+        if (Cached.LastUsedFrame < EvictionCutoff)
+        {
+            StaleKeys.Add(Key);
+        }
+    });
+
+    for (const FVulkanFramebufferKey& Key : StaleKeys)
+    {
+        if (FCachedFramebuffer* Cached = Framebuffers.Find(Key))
+        {
+            DestroyFramebuffer(GetDevice()->GetVkDevice(), Cached->Handle);
+        }
+
+        Framebuffers.Remove(Key);
+    }
+
+    if (StaleKeys.Size() > 0)
+    {
+        VULKAN_INFO("Evicted %d stale framebuffer(s)", StaleKeys.Size());
     }
 }
