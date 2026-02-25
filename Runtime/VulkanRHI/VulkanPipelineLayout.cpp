@@ -1,5 +1,6 @@
 #include "Core/Memory/Memory.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
+#include "VulkanRHI/VulkanConstants.h"
 #include "VulkanRHI/VulkanShader.h"
 
 static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageFlags ShaderStage)
@@ -47,9 +48,45 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
     SetLayoutRemappings.Add(Move(LayoutRemappings));
 }
 
+void FVulkanPipelineLayoutInfo::PromoteUniformBuffersToDynamic()
+{
+    // Cost with robust buffer access: 4 DWORDs per dynamic UB
+    constexpr uint32 DynamicUBCostDwords = 4;
+
+    uint32 BaseCost = SetLayoutInfos.Size() + ConstantsInfo.NumConstants;
+    int32 RemainingBudget = static_cast<int32>(VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS) - static_cast<int32>(BaseCost);
+
+    for (int32 SetIndex = 0; SetIndex < SetLayoutInfos.Size(); SetIndex++)
+    {
+        FVulkanDescriptorSetLayoutInfo& SetLayoutInfo   = SetLayoutInfos[SetIndex];
+        FVulkanDescriptorRemappingInfo& SetRemappingInfo = SetLayoutRemappings[SetIndex];
+
+        CHECK(SetLayoutInfo.Bindings.Size() == SetRemappingInfo.RemappingInfo.Size());
+
+        for (int32 BindingIndex = 0; BindingIndex < SetLayoutInfo.Bindings.Size(); BindingIndex++)
+        {
+            VkDescriptorSetLayoutBinding& Binding = SetLayoutInfo.Bindings[BindingIndex];
+            if (Binding.descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+            {
+                continue;
+            }
+
+            if (RemainingBudget < static_cast<int32>(DynamicUBCostDwords))
+            {
+                return;
+            }
+
+            Binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            SetRemappingInfo.RemappingInfo[BindingIndex].BindingType = VulkanBindingType_UniformBufferDynamic;
+            RemainingBudget -= DynamicUBCostDwords;
+        }
+    }
+}
+
 FVulkanPipelineLayout::FVulkanPipelineLayout(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , LayoutHandle(VK_NULL_HANDLE)
+    , TotalDynamicOffsets(0)
 {
 }
 
@@ -124,37 +161,46 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
         
         // Ensure that the remapping info is copied for later use
         SetLayoutRemappings = LayoutInfo.SetLayoutRemappings;
-    }
 
-    // Calculate user data cost in DWORDs (AMD RDNA):
-    //   Descriptor sets  = 1 DWORD each
-    //   Push constants   = 1 DWORD per 4 bytes
-    //   Dynamic buffers  = 2 DWORDs each (4 with robust buffer access)
-    uint32 UserDataCostDwords = 0;
-    UserDataCostDwords += SetLayoutHandles.Size();
-    UserDataCostDwords += LayoutInfo.ConstantsInfo.NumConstants;
+        // Count dynamic offsets per descriptor set
+        DynamicOffsetCounts.Resize(LayoutInfo.SetLayoutInfos.Size());
+        TotalDynamicOffsets = 0;
 
-    for (const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo : LayoutInfo.SetLayoutInfos)
-    {
-        for (const VkDescriptorSetLayoutBinding& Binding : SetLayoutInfo.Bindings)
+        for (int32 SetIndex = 0; SetIndex < LayoutInfo.SetLayoutInfos.Size(); SetIndex++)
         {
-            if (Binding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || 
-                Binding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+            uint32 DynamicCount = 0;
+            for (const VkDescriptorSetLayoutBinding& Binding : LayoutInfo.SetLayoutInfos[SetIndex].Bindings)
             {
-                UserDataCostDwords += 2;
+                if (Binding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC ||
+                    Binding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+                {
+                    DynamicCount++;
+                }
             }
+
+            DynamicOffsetCounts[SetIndex] = DynamicCount;
+            TotalDynamicOffsets += DynamicCount;
         }
     }
 
+    // Calculate user data cost in DWORDs (AMD RDNA, robust buffer access ON):
+    //   Descriptor sets  = 1 DWORD each
+    //   Push constants   = 1 DWORD per 4 bytes
+    //   Dynamic buffers  = 4 DWORDs each (with robust buffer access)
+    uint32 UserDataCostDwords = 0;
+    UserDataCostDwords += SetLayoutHandles.Size();
+    UserDataCostDwords += LayoutInfo.ConstantsInfo.NumConstants;
+    UserDataCostDwords += TotalDynamicOffsets * 4;
+
     if (UserDataCostDwords > VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS)
     {
-        LOG_WARNING("[FVulkanPipelineLayout] UserDataCost=%u DWORDs exceeds recommended %u (Sets=%d, PushConstants=%u)", 
-            UserDataCostDwords, VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants);
+        LOG_WARNING("[FVulkanPipelineLayout] UserDataCost=%u DWORDs exceeds recommended %u (Sets=%d, PushConstants=%u, DynamicBuffers=%u)", 
+            UserDataCostDwords, VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
     }
     else
     {
-        LOG_INFO("[FVulkanPipelineLayout] UserDataCost=%u DWORDs (Sets=%d, PushConstants=%u)", 
-            UserDataCostDwords, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants);
+        LOG_INFO("[FVulkanPipelineLayout] UserDataCost=%u DWORDs (Sets=%d, PushConstants=%u, DynamicBuffers=%u)", 
+            UserDataCostDwords, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants, TotalDynamicOffsets);
     }
 
     SetupResourceMapping(LayoutInfo);
@@ -249,6 +295,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             switch(RemappingInfo.BindingType)
             {
             case VulkanBindingType_UniformBuffer:
+            case VulkanBindingType_UniformBufferDynamic:
                 StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             case VulkanBindingType_Sampler:

@@ -50,6 +50,7 @@ inline const CHAR* ToString(EShaderVisibility ShaderVisibility)
 enum EVulkanBindingType : uint8
 {
     VulkanBindingType_UniformBuffer = 0,
+    VulkanBindingType_UniformBufferDynamic,
     VulkanBindingType_SampledImage,
     VulkanBindingType_StorageImage,
     VulkanBindingType_StorageBufferRead,
@@ -65,6 +66,7 @@ inline const CHAR* ToString(EVulkanBindingType Binding)
     static constexpr const char* const BindingTypeStrings[]
     {
         "UniformBuffer",
+        "UniformBufferDynamic",
         "SampledImage",
         "StorageImage",
         "StorageBufferRead",
@@ -85,6 +87,8 @@ inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType Bind
     {
         // ConstantBuffers
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        // Dynamic ConstantBuffers
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
         // SRV Images
         VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
         // UAV Images

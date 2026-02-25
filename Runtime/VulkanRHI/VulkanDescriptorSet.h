@@ -168,6 +168,30 @@ public:
         CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         WriteBuffer(Binding, Buffer, Offset, Range);
     }
+
+    // Writes a dynamic uniform buffer descriptor with offset=0. The actual offset is passed
+    // at bind time via vkCmdBindDescriptorSets, so the key only tracks buffer handle and range.
+    void WriteDynamicUniformBuffer(int32 Binding, VkBuffer Buffer, VkDeviceSize Range)
+    {
+        CHECK(Binding < NumDescriptorWrites);
+        CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC);
+
+        VkDescriptorBufferInfo* pBufferInfo = const_cast<VkDescriptorBufferInfo*>(DescriptorWrites[Binding].pBufferInfo);
+        CHECK(pBufferInfo != nullptr);
+
+        const uint64 Resource = reinterpret_cast<uint64>(Buffer);
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource || DescriptorSetKey.Resources[Binding].Range != Range)
+        {
+            pBufferInfo->buffer = Buffer;
+            pBufferInfo->offset = 0;
+            pBufferInfo->range  = Range;
+
+            DescriptorSetKey.Resources[Binding].Resource = Resource;
+            DescriptorSetKey.Resources[Binding].Offset   = 0;
+            DescriptorSetKey.Resources[Binding].Range    = Range;
+            bKeyIsDirty = true;
+        }
+    }
     
     void WriteStorageBuffer(int32 Binding, VkBuffer Buffer, VkDeviceSize Offset, VkDeviceSize Range)
     {
@@ -328,6 +352,15 @@ private:
     TArray<FVulkanDescriptorPoolInfo>   DescriptorPoolInfos;
     const FVulkanDefaultResources&      DefaultResources;
     uint64                              DescriptorSetVersion;
+
+    // Flat array of dynamic offsets passed directly to vkCmdBindDescriptorSets,
+    // ordered by (set, binding). Indexed via DynamicOffsetBasePerSet + BindingToDynamicIndex.
+    TArray<uint32>                      DynamicOffsets;
+    // Per-set base index into DynamicOffsets
+    TArray<uint32>                      DynamicOffsetBasePerSet;
+    // Per-set mapping from binding index to dynamic offset slot (-1 if not dynamic)
+    TArray<TArray<int32>>               BindingToDynamicIndex;
+    bool                                bDynamicOffsetsDirty;
 };
 
 class FVulkanDescriptorPool : public FVulkanDeviceChild, FNonCopyable

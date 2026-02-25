@@ -15,10 +15,10 @@ static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
     "The number of DescriptorSets that can be created from a DescriptorPool",
     32);
 
-static TAutoConsoleVariable<int32> CVarVulkanUseDescriptorCache(
+static TAutoConsoleVariable<bool> CVarVulkanUseDescriptorCache(
     "VulkanRHI.UseDescriptorCache",
-    "Enable descriptor set caching (0 = transient per-frame allocation, 1 = cached)",
-    0);
+    "Enable descriptor set caching (false = transient per-frame allocation, true = cached)",
+    false);
 
 static TAutoConsoleVariable<int32> CVarVulkanTransientDescriptorSetsPerPool(
     "VulkanRHI.TransientDescriptorSetsPerPool",
@@ -32,6 +32,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
     , DescriptorSetBuilders()
     , DefaultResources(InDefaultResources)
     , DescriptorSetVersion(0)
+    , bDynamicOffsetsDirty(false)
 {
     if (!Layout)
     {
@@ -80,6 +81,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             switch(WriteDescriptorSet.descriptorType)
             {
                 case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
                 case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
                 {
                     NumBufferInfos++;
@@ -119,6 +121,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             switch(WriteDescriptorSet.descriptorType)
             {
                 case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
                 case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
                 {
                     WriteDescriptorSet.pBufferInfo = &DSWrites.DescriptorBufferInfos[CurrentBufferInfo++];
@@ -176,6 +179,43 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         PoolInfo.GenerateHash();
         DescriptorPoolInfos.Add(Move(PoolInfo));
     }
+
+    // Initialize dynamic offset tracking as a single flat array
+    const uint32 TotalDynamic = Layout->GetTotalDynamicOffsetCount();
+    DynamicOffsets.Resize(TotalDynamic);
+    FMemory::Memzero(DynamicOffsets.Data(), DynamicOffsets.SizeInBytes());
+
+    DynamicOffsetBasePerSet.Resize(RemappingInfos.Size());
+    BindingToDynamicIndex.Resize(RemappingInfos.Size());
+
+    uint32 FlatBase = 0;
+    for (int32 SetIndex = 0; SetIndex < RemappingInfos.Size(); SetIndex++)
+    {
+        const uint32 NumDynamic  = Layout->GetDynamicOffsetCount(SetIndex);
+        const int32  NumBindings = RemappingInfos[SetIndex].RemappingInfo.Size();
+
+        DynamicOffsetBasePerSet[SetIndex] = FlatBase;
+        BindingToDynamicIndex[SetIndex].Resize(NumBindings);
+
+        int32 DynamicSlot = 0;
+        for (int32 BindingIndex = 0; BindingIndex < NumBindings; BindingIndex++)
+        {
+            const VkDescriptorType Type = DescriptorSetWrites[SetIndex].DescriptorWrites[BindingIndex].descriptorType;
+            if (Type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || Type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+            {
+                BindingToDynamicIndex[SetIndex][BindingIndex] = DynamicSlot++;
+            }
+            else
+            {
+                BindingToDynamicIndex[SetIndex][BindingIndex] = -1;
+            }
+        }
+
+        CHECK(static_cast<uint32>(DynamicSlot) == NumDynamic);
+        FlatBase += NumDynamic;
+    }
+
+    CHECK(FlatBase == TotalDynamic);
 }
 
 void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceView* ShaderResourceView, uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -248,21 +288,37 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
 
 void FVulkanDescriptorState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
-	CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
+    CHECK(DescriptorSetIndex < static_cast<uint32>(DescriptorSetBuilders.Size()));
 
-	if (UniformBuffer)
-	{
-		const VkBuffer     Buffer = UniformBuffer->GetBindVkBuffer();
-		const VkDeviceSize Offset = UniformBuffer->GetBindOffset();
-		const VkDeviceSize Range  = UniformBuffer->GetBindRange();
-        
-		FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
-		DSBuilder.WriteUniformBuffer(BindingIndex, Buffer, Offset, Range);
-	}
-	else
-	{
-		ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
-	}
+    if (UniformBuffer)
+    {
+        const VkBuffer     Buffer = UniformBuffer->GetBindVkBuffer();
+        const VkDeviceSize Offset = UniformBuffer->GetBindOffset();
+        const VkDeviceSize Range  = UniformBuffer->GetBindRange();
+
+        FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
+        const int32 DynamicIndex = BindingToDynamicIndex[DescriptorSetIndex][BindingIndex];
+        if (DynamicIndex >= 0)
+        {
+            DSBuilder.WriteDynamicUniformBuffer(BindingIndex, Buffer, Range);
+
+            const uint32 FlatIndex     = DynamicOffsetBasePerSet[DescriptorSetIndex] + DynamicIndex;
+            const uint32 DynamicOffset = static_cast<uint32>(Offset);
+            if (DynamicOffsets[FlatIndex] != DynamicOffset)
+            {
+                DynamicOffsets[FlatIndex] = DynamicOffset;
+                bDynamicOffsetsDirty = true;
+            }
+        }
+        else
+        {
+            DSBuilder.WriteUniformBuffer(BindingIndex, Buffer, Offset, Range);
+        }
+    }
+    else
+    {
+        ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
+    }
 }
 
 void FVulkanDescriptorState::SetSampler(FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -363,8 +419,9 @@ void FVulkanDescriptorState::Reset()
 
 void FVulkanDescriptorState::BindDescriptorSets(class FVulkanCommandBuffer& CommandBuffer, VkPipelineBindPoint BindPoint)
 {
-    CHECK(DescriptorSetHandles.Size() > 0); // Cannot bind zero DescriptorSets
-    CommandBuffer->BindDescriptorSets(BindPoint, Layout->GetVkPipelineLayout(), 0, DescriptorSetHandles.Size(), DescriptorSetHandles.Data(), 0, nullptr);
+    CHECK(DescriptorSetHandles.Size() > 0);
+    CommandBuffer->BindDescriptorSets(BindPoint, Layout->GetVkPipelineLayout(), 0, DescriptorSetHandles.Size(), DescriptorSetHandles.Data(), DynamicOffsets.Size(), DynamicOffsets.Data());
+    bDynamicOffsetsDirty = false;
 }
 
 void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, uint32 BindingIndex)
@@ -383,6 +440,11 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         {
             DSBuilder.WriteUniformBuffer(BindingIndex, DefaultResources.NullBuffer, 0, VK_WHOLE_SIZE);
+            break;
+        }
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+        {
+            DSBuilder.WriteDynamicUniformBuffer(BindingIndex, DefaultResources.NullBuffer, VK_WHOLE_SIZE);
             break;
         }
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:

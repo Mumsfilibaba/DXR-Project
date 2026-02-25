@@ -97,6 +97,10 @@ struct FVulkanPipelineLayoutInfo
 
     // Add info for a new DescriptorSet based on the ShaderInfo from a certain shader
     void AddSetForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo);
+
+    // Promotes VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER bindings to VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC
+    // when the pipeline layout's user data DWORD budget allows. Must be called before GenerateHash().
+    void PromoteUniformBuffersToDynamic();
     
     // Update constants based on the ShaderInfo
     void UpdateConstantsForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo)
@@ -230,6 +234,16 @@ public:
     {
         return ConstantsInfo;
     }
+
+    uint32 GetDynamicOffsetCount(int32 DescriptorSetIndex) const
+    {
+        return DynamicOffsetCounts[DescriptorSetIndex];
+    }
+
+    uint32 GetTotalDynamicOffsetCount() const
+    {
+        return TotalDynamicOffsets;
+    }
     
 private:
     void SetupResourceMapping(const FVulkanPipelineLayoutInfo& LayoutInfo);
@@ -237,6 +251,8 @@ private:
     VkPipelineLayout                       LayoutHandle;
     TArray<VkDescriptorSetLayout>          SetLayoutHandles;
     TArray<FVulkanDescriptorRemappingInfo> SetLayoutRemappings;
+    TArray<uint32>                         DynamicOffsetCounts;
+    uint32                                 TotalDynamicOffsets;
     FPushConstantsInfo                     ConstantsInfo;
     FStageDescriptorMap                    DescriptorBindMap[ShaderVisibility_Count];
     FString                                DebugName;
