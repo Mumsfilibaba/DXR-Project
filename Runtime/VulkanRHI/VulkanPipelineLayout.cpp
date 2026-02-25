@@ -126,7 +126,37 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
         SetLayoutRemappings = LayoutInfo.SetLayoutRemappings;
     }
 
-    // Store the number of push constants for use later when binding push-constants
+    // Calculate user data cost in DWORDs (AMD RDNA):
+    //   Descriptor sets  = 1 DWORD each
+    //   Push constants   = 1 DWORD per 4 bytes
+    //   Dynamic buffers  = 2 DWORDs each (4 with robust buffer access)
+    uint32 UserDataCostDwords = 0;
+    UserDataCostDwords += SetLayoutHandles.Size();
+    UserDataCostDwords += LayoutInfo.ConstantsInfo.NumConstants;
+
+    for (const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo : LayoutInfo.SetLayoutInfos)
+    {
+        for (const VkDescriptorSetLayoutBinding& Binding : SetLayoutInfo.Bindings)
+        {
+            if (Binding.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || 
+                Binding.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC)
+            {
+                UserDataCostDwords += 2;
+            }
+        }
+    }
+
+    if (UserDataCostDwords > VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS)
+    {
+        LOG_WARNING("[FVulkanPipelineLayout] UserDataCost=%u DWORDs exceeds recommended %u (Sets=%d, PushConstants=%u)", 
+            UserDataCostDwords, VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants);
+    }
+    else
+    {
+        LOG_INFO("[FVulkanPipelineLayout] UserDataCost=%u DWORDs (Sets=%d, PushConstants=%u)", 
+            UserDataCostDwords, SetLayoutHandles.Size(), LayoutInfo.ConstantsInfo.NumConstants);
+    }
+
     SetupResourceMapping(LayoutInfo);
     return true;
 }
