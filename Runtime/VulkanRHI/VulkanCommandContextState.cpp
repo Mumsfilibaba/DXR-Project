@@ -1,4 +1,5 @@
 #include "VulkanRHI/VulkanCommandContextState.h"
+#include "VulkanRHI/VulkanCommandContext.h"
 
 FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
     : FVulkanDeviceChild(InDevice)
@@ -52,7 +53,7 @@ void FVulkanCommandContextState::BindGraphicsStates()
 
     // Update and bind descriptor-sets
     CHECK(PipelineLayout == GraphicsState.CurrentDescriptorState->GetLayout());
-    GraphicsState.CurrentDescriptorState->UpdateDescriptorSets();
+    GraphicsState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
     GraphicsState.CurrentDescriptorState->BindGraphicsDescriptorSets(Context.GetCommandBuffer());
     
     if (GraphicsState.bBindPushConstants || GVulkanForceBinding)
@@ -112,7 +113,7 @@ void FVulkanCommandContextState::BindComputeState()
     
     // Update and bind descriptor-sets
     CHECK(PipelineLayout == ComputeState.CurrentDescriptorState->GetLayout());
-    ComputeState.CurrentDescriptorState->UpdateDescriptorSets();
+    ComputeState.CurrentDescriptorState->UpdateDescriptorSets(Context.GetTransientDescriptorAllocator());
     ComputeState.CurrentDescriptorState->BindComputeDescriptorSets(Context.GetCommandBuffer());
     
     if (ComputeState.bBindPushConstants || GVulkanForceBinding)

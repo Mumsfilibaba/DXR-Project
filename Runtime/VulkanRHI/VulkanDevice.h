@@ -80,6 +80,11 @@ extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
 extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;
 
 // -------------------------------------------------------------------------------------------
+// Descriptor Set Management
+// -------------------------------------------------------------------------------------------
+extern VULKANRHI_API bool   GVulkanUseDescriptorCache;
+
+// -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers;
@@ -290,6 +295,7 @@ public:
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
     FVulkanPipelineStateManager&  GetPipelineStateManager() { return *PipelineStateManager; }
     FVulkanDescriptorSetCache&    GetDescriptorSetCache() { return *DescriptorSetCache; }
+    FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return *DescriptorPoolManager; }
     FVulkanDefaultResources&      GetDefaultResources() { return DefaultResources; }
 
     bool IsLayerEnabled(const FString& LayerName)
@@ -334,6 +340,7 @@ private:
     FVulkanPipelineLayoutManager*        PipelineLayoutManager;
     FVulkanPipelineStateManager*         PipelineStateManager;
     FVulkanDescriptorSetCache*           DescriptorSetCache;
+    FVulkanDescriptorPoolManager*        DescriptorPoolManager;
     FVulkanQueryPoolManager*             TimingQueryPoolManager;
     FVulkanQueryPoolManager*             OcclusionQueryPoolManager;
     FVulkanDefaultResources              DefaultResources;

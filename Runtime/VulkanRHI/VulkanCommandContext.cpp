@@ -128,13 +128,19 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , ContextPhase(ECommandContextPhase::Finished)
     , ContextState(InDevice, *this)
+    , TransientDescriptorAllocator(nullptr)
 {
+    if (!GVulkanUseDescriptorCache)
+    {
+        TransientDescriptorAllocator = new FVulkanTransientDescriptorAllocator(InDevice, InDevice->GetDescriptorPoolManager());
+    }
 }
 
 FVulkanCommandContext::~FVulkanCommandContext()
 {
     // Reset all state
     ContextState.ResetState();
+    SAFE_DELETE(TransientDescriptorAllocator);
 }
 
 bool FVulkanCommandContext::Initialize()
@@ -259,6 +265,11 @@ FVulkanFence* FVulkanCommandContext::SubmitCommandBuffer(bool bFlushPool)
     Commands->PendingBufferBarriers = Move(PendingBufferBarriers);
     Commands->PendingImageStates    = Move(PendingImageStates);
     Commands->PendingBufferStates   = Move(PendingBufferStates);
+
+    if (TransientDescriptorAllocator)
+    {
+        TransientDescriptorAllocator->FlushPools(*Commands);
+    }
 
     Commands->AddCommandBuffer(CommandBuffer);
     CommandBuffer = nullptr;

@@ -255,7 +255,14 @@ void FVulkanRHI::BeginFrame()
         VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
     }
 
-    Device->GetDescriptorSetCache().EvictStaleDescriptorSets(static_cast<uint64>(PendingSubmissions.Size()));
+    if (GVulkanUseDescriptorCache)
+    {
+        Device->GetDescriptorSetCache().EvictStaleDescriptorSets(static_cast<uint64>(PendingSubmissions.Size()));
+    }
+    else
+    {
+        Device->GetDescriptorPoolManager().EvictUnusedPools();
+    }
 }
 
 void FVulkanRHI::EndFrame()

@@ -49,13 +49,16 @@ public:
     }
 
 protected:
-    void IncrementDescriptorVersion() { ++DescriptorVersion; }
+    void IncrementDescriptorVersion()
+    {
+        ++DescriptorVersion;
+    }
 
     FD3D12ResourceRef            ViewResource;
     FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
-    FD3D12GenericResource*          OwnerResource = nullptr;
-    uint32                       DescriptorVersion = 0;
+    FD3D12GenericResource*       OwnerResource;
+    uint32                       DescriptorVersion;
 };
 
 class FD3D12ConstantBufferView : public FD3D12View, public FD3D12RefCounted

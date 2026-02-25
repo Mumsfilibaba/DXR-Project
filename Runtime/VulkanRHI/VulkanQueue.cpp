@@ -518,6 +518,18 @@ void FVulkanCommands::Finish()
     FenceManager.RecycleFence(Fence);
     Fence = nullptr;
 
+    // Return descriptor pools to the global pool manager
+    if (!PendingDescriptorPools.IsEmpty())
+    {
+        FVulkanDescriptorPoolManager& PoolManager = Device->GetDescriptorPoolManager();
+        for (auto& Entry : PendingDescriptorPools)
+        {
+            PoolManager.ReleasePool(Entry.First, Entry.Second);
+        }
+
+        PendingDescriptorPools.Clear();
+    }
+
     // Delete all the resources that has been queued up for destruction
     FVulkanDeferredObject::ProcessItems(DeletionQueue);
     DeletionQueue.Clear();

@@ -225,6 +225,11 @@ public:
         return bKeyIsDirty;
     }
 
+    void ClearDirtyKey()
+    {
+        bKeyIsDirty = false;
+    }
+
     const FVulkanDescriptorSetKey& GetKey() const
     {
         return DescriptorSetKey;
@@ -290,7 +295,7 @@ public:
     void SetUniformBuffer(class FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex);
     void SetSampler(class FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex);
 
-    void UpdateDescriptorSets();
+    void UpdateDescriptorSets(class FVulkanTransientDescriptorAllocator* TransientAllocator);
     void Reset();
 
     inline void BindGraphicsDescriptorSets(class FVulkanCommandBuffer& CommandBuffer)
@@ -322,6 +327,7 @@ private:
     TArray<FVulkanDescriptorSetBuilder> DescriptorSetBuilders;
     TArray<FVulkanDescriptorPoolInfo>   DescriptorPoolInfos;
     const FVulkanDefaultResources&      DefaultResources;
+    uint64                              DescriptorSetVersion;
 };
 
 class FVulkanDescriptorPool : public FVulkanDeviceChild, FNonCopyable
@@ -330,7 +336,7 @@ public:
     FVulkanDescriptorPool(FVulkanDevice* InDevice);
     ~FVulkanDescriptorPool();
     
-    bool Initialize(const FVulkanDescriptorPoolInfo& PoolInfo);
+    bool Initialize(const FVulkanDescriptorPoolInfo& PoolInfo, int32 MaxDescriptorSetCount);
     bool AllocateDescriptorSet(const VkDescriptorSetAllocateInfo& DescriptorSetAllocateInfo, VkDescriptorSet* OutDescriptorSets);
     void Reset();
 
@@ -345,6 +351,56 @@ private:
     int32            MaxDescriptorSets;
     int32            NumDescriptorSets;
     int32            LiveDescriptorSets;
+};
+
+class FVulkanDescriptorPoolManager : public FVulkanDeviceChild
+{
+    struct FFreePool
+    {
+        FVulkanDescriptorPool* Pool;
+        uint64                 ReturnedFrame;
+    };
+
+public:
+    FVulkanDescriptorPoolManager(FVulkanDevice* InDevice);
+    ~FVulkanDescriptorPoolManager();
+
+    FVulkanDescriptorPool* AcquirePool(const FVulkanDescriptorPoolInfo& PoolInfo);
+    void ReleasePool(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorPool* Pool);
+    void EvictUnusedPools();
+
+private:
+    static constexpr uint64 MinUnusedFrames = 8;
+
+    TMap<FVulkanDescriptorPoolInfo, TArray<FFreePool>> FreePools;
+    FCriticalSection                                   PoolCS;
+    uint64                                             CurrentFrame;
+};
+
+class FVulkanTransientDescriptorAllocator : public FVulkanDeviceChild
+{
+    struct FPoolSet
+    {
+        FVulkanDescriptorPool*         ActivePool = nullptr;
+        TArray<FVulkanDescriptorPool*> UsedPools;
+    };
+
+public:
+    FVulkanTransientDescriptorAllocator(FVulkanDevice* InDevice, FVulkanDescriptorPoolManager& InPoolManager);
+    ~FVulkanTransientDescriptorAllocator();
+
+    bool AllocateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
+    void FlushPools(struct FVulkanCommands& Commands);
+
+    uint64 GetDescriptorSetVersion() const
+    {
+        return DescriptorSetVersion;
+    }
+
+private:
+    FVulkanDescriptorPoolManager&              PoolManager;
+    TMap<FVulkanDescriptorPoolInfo, FPoolSet>  PoolSets;
+    uint64                                     DescriptorSetVersion;
 };
 
 class FVulkanDescriptorSetCache : public FVulkanDeviceChild

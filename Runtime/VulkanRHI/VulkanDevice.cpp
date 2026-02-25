@@ -68,6 +68,11 @@ VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations         = 0;
 VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations         = 0;
 
 // -------------------------------------------------------------------------------------------
+// Descriptor Set Management
+// -------------------------------------------------------------------------------------------
+VULKANRHI_API bool   GVulkanUseDescriptorCache                  = true;
+
+// -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
 VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers            = 0;
@@ -552,10 +557,17 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , PipelineLayoutManager(nullptr)
     , PipelineStateManager(nullptr)
     , DescriptorSetCache(nullptr)
+    , DescriptorPoolManager(nullptr)
     , TimingQueryPoolManager(nullptr)
     , OcclusionQueryPoolManager(nullptr)
 {
+    if (IConsoleVariable* UseDescriptorCacheVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDescriptorCache"))
+    {
+        GVulkanUseDescriptorCache = UseDescriptorCacheVar->GetBool();
+    }
+
     DescriptorSetCache = new FVulkanDescriptorSetCache(this);
+    DescriptorPoolManager = GVulkanUseDescriptorCache ? nullptr : new FVulkanDescriptorPoolManager(this);
     TimingQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Timestamp);
     OcclusionQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Occlusion);
     PipelineLayoutManager = new FVulkanPipelineLayoutManager(this);
@@ -597,6 +609,7 @@ FVulkanDevice::~FVulkanDevice()
         delete PipelineStateManager;
     }
     
+    SAFE_DELETE(DescriptorPoolManager);
     SAFE_DELETE(DescriptorSetCache);
     SAFE_DELETE(TimingQueryPoolManager);
     SAFE_DELETE(OcclusionQueryPoolManager);

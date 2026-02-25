@@ -12,9 +12,7 @@ static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageF
     case VK_SHADER_STAGE_GEOMETRY_BIT:                return ShaderVisibility_Geometry;
     case VK_SHADER_STAGE_FRAGMENT_BIT:                return ShaderVisibility_Pixel;
     case VK_SHADER_STAGE_COMPUTE_BIT:                 return ShaderVisibility_Compute;
-    
-    default:
-        return ShaderVisibility_Compute;
+    default:                                          return ShaderVisibility_Compute;
     }
 }
 
@@ -241,7 +239,6 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
         }
     }
 }
-
 
 FVulkanPipelineLayoutManager::FVulkanPipelineLayoutManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)

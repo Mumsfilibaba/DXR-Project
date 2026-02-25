@@ -110,20 +110,20 @@ struct FVulkanShaderInfo
     struct FBindingOffsets
     {
         uint32 DescriptorSetOffset = UINT32_MAX;
-        uint32 BindingOffset = UINT32_MAX;
+        uint32 BindingOffset       = UINT32_MAX;
     };
     
     struct FResourceBinding
     {
         EVulkanBindingType BindingType;
-        uint8 BindingIndex;
-        uint8 OriginalBindingIndex;
-        FString DebugName;
+        uint8              BindingIndex;
+        uint8              OriginalBindingIndex;
+        FString            DebugName;
     };
     
-    TArray<FBindingOffsets> BindingOffsets;
+    TArray<FBindingOffsets>  BindingOffsets;
     TArray<FResourceBinding> ResourceBindings;
-    uint32 NumPushConstants;
+    uint32                   NumPushConstants;
 };
 
 class FVulkanShaderModule : public FVulkanRefCounted

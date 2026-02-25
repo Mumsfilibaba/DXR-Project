@@ -7,6 +7,8 @@ FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOf
     , ViewResource(nullptr)
     , OfflineHeap(InOfflineHeap)
     , Descriptor()
+    , OwnerResource(nullptr)
+    , DescriptorVersion(0)
 {
 }
 

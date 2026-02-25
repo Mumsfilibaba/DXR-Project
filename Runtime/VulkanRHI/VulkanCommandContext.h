@@ -160,6 +160,11 @@ public:
         return Commands ? Commands->Fence : nullptr;
     }
 
+    FVulkanTransientDescriptorAllocator* GetTransientDescriptorAllocator() const
+    {
+        return TransientDescriptorAllocator;
+    }
+
 private:
     void ConditionalSplitCommandBuffer();
     void ForceFlushCommandPool();
@@ -181,6 +186,8 @@ private:
     TArray<FVulkanPendingBufferBarrier>      PendingBufferBarriers;
     TMap<FVulkanTexture*, FVulkanImageState> PendingImageStates;
     TMap<FVulkanBuffer*, FVulkanBufferState> PendingBufferStates;
+
+    FVulkanTransientDescriptorAllocator*  TransientDescriptorAllocator;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection           CommandContextCS;
