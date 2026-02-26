@@ -8,60 +8,49 @@
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
     , FVulkanDeviceChild(InDevice)
-    , Buffer(VK_NULL_HANDLE)
-    , MemoryAllocation()
+    , OwnedBuffer(VK_NULL_HANDLE)
+    , MemoryStorage(InDevice)
     , RequiredAlignment(0)
     , DebugName()
+    , TransientBuffer(VK_NULL_HANDLE)
+    , TransientOffset(0)
+    , TransientRange(0)
 {
 }
 
 FVulkanBuffer::~FVulkanBuffer()
 {
-    FVulkanDevice* VulkanDevice = GetDevice();
-    if (VULKAN_CHECK_HANDLE(Buffer))
+    if (OwnedBuffer != VK_NULL_HANDLE)
     {
-        vkDestroyBuffer(VulkanDevice->GetVkDevice(), Buffer, nullptr);
-        Buffer = VK_NULL_HANDLE;
+        vkDestroyBuffer(GetDevice()->GetVkDevice(), OwnedBuffer, nullptr);
+        OwnedBuffer = VK_NULL_HANDLE;
     }
-
-    FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
-    MemoryManager.Free(MemoryAllocation);
 }
 
 bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
-    VkBufferCreateInfo BufferCreateInfo = {};
-    BufferCreateInfo.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    BufferCreateInfo.pNext                 = nullptr;
-    BufferCreateInfo.flags                 = 0;
-    BufferCreateInfo.pQueueFamilyIndices   = nullptr;
-    BufferCreateInfo.queueFamilyIndexCount = 0;
-    BufferCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
-    BufferCreateInfo.size                  = Info.Size;
-
     const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetProperties();
     RequiredAlignment = 1u;
-    
-    // TODO: Look into abstracting these flags
-    BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    
+
+    VkBufferUsageFlags UsageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
     VkMemoryAllocateFlags AllocateFlags = 0;
     if (Info.IsDefault())
     {
         AllocateFlags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
-        BufferCreateInfo.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+        UsageFlags |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     }
 
     const bool bIsRayTracingSupported = GVulkanSupportsAccelerationStructures;
     if (Info.IsVertexBuffer())
     {
-        BufferCreateInfo.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        UsageFlags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
         if (bIsRayTracingSupported)
         {
-            BufferCreateInfo.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+            UsageFlags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
         }
     #endif
 
@@ -69,11 +58,11 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     }
     if (Info.IsIndexBuffer())
     {
-        BufferCreateInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        UsageFlags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
         if (bIsRayTracingSupported)
         {
-            BufferCreateInfo.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+            UsageFlags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
         }
     #endif
 
@@ -81,25 +70,17 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     }
     if (Info.IsConstantBuffer())
     {
-        BufferCreateInfo.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        UsageFlags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
     }
     if (Info.IsUnorderedAccessBuffer() || Info.IsShaderResourceBuffer())
     {
-        BufferCreateInfo.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        UsageFlags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
-    
-    // Setup the proper size
-    BufferCreateInfo.size = Math::AlignUp(BufferCreateInfo.size, RequiredAlignment);
 
-    VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to create Buffer");
-        return false;
-    }
-    
+    const VkDeviceSize AlignedSize = Math::AlignUp(static_cast<VkDeviceSize>(Info.Size), RequiredAlignment);
+
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (Info.IsDynamic() || Info.IsTransient())
     {
@@ -109,15 +90,45 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     {
         MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
-    
-    // Allocate memory based on the buffer
+
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedBufferAllocations, MemoryAllocation))
+    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, UsageFlags, AllocateFlags, AlignedSize, RequiredAlignment, MemoryStorage))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
         return false;
     }
-    
+
+    if (!MemoryStorage.IsSuballocated())
+    {
+        VkBufferCreateInfo BufferCreateInfo = {};
+        BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        BufferCreateInfo.size        = AlignedSize;
+        BufferCreateInfo.usage       = UsageFlags;
+        BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &OwnedBuffer);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR_CRITICAL("Failed to create dedicated buffer");
+            return false;
+        }
+
+        Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), OwnedBuffer, MemoryStorage.GetMemory(), MemoryStorage.GetMemoryOffset());
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR_CRITICAL("Failed to bind dedicated buffer memory");
+            return false;
+        }
+
+        if (AllocateFlags & VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT)
+        {
+            VkBufferDeviceAddressInfo AddressInfo = {};
+            AddressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+            AddressInfo.buffer = OwnedBuffer;
+            MemoryStorage.SetDeviceAddress(vkGetBufferDeviceAddress(GetDevice()->GetVkDevice(), &AddressInfo));
+        }
+    }
+
     TrackedState.SetState(
         ConvertResourceStateToAccessFlags(InInitialAccess),
         ConvertResourceStateToPipelineStageFlags(InInitialAccess));
@@ -126,15 +137,14 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     {
         if (Info.IsDynamic() || Info.IsTransient())
         {
-            void* BufferData = MemoryManager.Map(MemoryAllocation);
+            void* BufferData = MemoryStorage.GetMappedBaseAddress();
             if (!BufferData)
             {
-                VULKAN_ERROR_CRITICAL("Failed to map buffer memory");
+                VULKAN_ERROR_CRITICAL("Failed to get mapped memory for buffer");
                 return false;
             }
 
             FMemory::Memcpy(BufferData, InInitialData, Info.Size);
-            MemoryManager.Unmap(MemoryAllocation);
         }
         else
         {
@@ -144,7 +154,6 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
             
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
-            // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
                 InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
@@ -159,7 +168,12 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 
 void FVulkanBuffer::SetDebugName(const FString& InName)
 {
-    VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, Buffer, VK_OBJECT_TYPE_BUFFER);
+    VkBuffer BufferHandle = GetVkBuffer();
+    if (BufferHandle != VK_NULL_HANDLE)
+    {
+        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, BufferHandle, VK_OBJECT_TYPE_BUFFER);
+    }
+
     DebugName = InName;
 }
 
@@ -170,7 +184,7 @@ FString FVulkanBuffer::GetDebugName() const
 
 void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
 {
-    if (!MemoryAllocation.IsValid())
+    if (!MemoryStorage.IsValid())
     {
         return nullptr;
     }
@@ -181,6 +195,12 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
+    uint8* Mapped = static_cast<uint8*>(MemoryStorage.GetMappedBaseAddress());
+    if (!Mapped)
+    {
+        return nullptr;
+    }
+
     CHECK(Offset <= Info.Size);
     uint64 MapSize = Size;
     if (MapSize == UINT64_MAX)
@@ -188,23 +208,15 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
         MapSize = Info.Size - Offset;
     }
 
-    FVulkanDevice* VulkanDevice = GetDevice();
-    FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
-    uint8* Mapped = reinterpret_cast<uint8*>(MemoryManager.Map(MemoryAllocation));
-    if (!Mapped)
-    {
-        return nullptr;
-    }
-
     if (Info.IsReadBack())
     {
         VkMappedMemoryRange Range = {};
         Range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         Range.pNext  = nullptr;
-        Range.memory = MemoryAllocation.Memory;
-        Range.offset = MemoryAllocation.Offset + Offset;
+        Range.memory = MemoryStorage.GetMemory();
+        Range.offset = MemoryStorage.GetMemoryOffset() + Offset;
         Range.size   = MapSize;
-        vkInvalidateMappedMemoryRanges(VulkanDevice->GetVkDevice(), 1, &Range);
+        vkInvalidateMappedMemoryRanges(GetDevice()->GetVkDevice(), 1, &Range);
     }
 
     return Mapped + Offset;
@@ -214,13 +226,6 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 void FVulkanBuffer::Unmap(uint64 Offset, uint64 Size)
 {
-    if (!MemoryAllocation.IsValid())
-    {
-        return;
-    }
-
-    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    MemoryManager.Unmap(MemoryAllocation);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

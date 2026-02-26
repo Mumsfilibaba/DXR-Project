@@ -2,7 +2,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHIRayTracing.h"
 #include "VulkanRHI/VulkanResourceViews.h"
-#include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanMemoryManager.h"
 
 typedef TSharedRef<class FVulkanRayTracingGeometry> FVulkanRayTracingGeometryRef; 
 
@@ -28,10 +28,8 @@ public:
 private:
     VkAccelerationStructureKHR Geometry;
     VkDeviceAddress            GeometryDeviceAddress;
-    VkBuffer                   GeometryBuffer;
-    FVulkanMemoryAllocation    GeometryMemory;
-    VkBuffer                   ScratchBuffer;
-    FVulkanMemoryAllocation    ScratchMemory;
+    FVulkanMemoryStorage       GeometryStorage;
+    FVulkanMemoryStorage       ScratchStorage;
     FVulkanBufferRef           VertexBuffer;
     FVulkanBufferRef           IndexBuffer;
     FString                    DebugName;

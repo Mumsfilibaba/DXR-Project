@@ -4,34 +4,22 @@ FVulkanRayTracingGeometry::FVulkanRayTracingGeometry(FVulkanDevice* InDevice, co
     : FRHIRayTracingGeometry(InGeometryInfo)
     , FVulkanDeviceChild(InDevice)
     , Geometry(VK_NULL_HANDLE)
-    , GeometryBuffer(VK_NULL_HANDLE)
+    , GeometryDeviceAddress(0)
+    , GeometryStorage(InDevice)
+    , ScratchStorage(InDevice)
+    , VertexBuffer(nullptr)
+    , IndexBuffer(nullptr)
+    , DebugName()
 {
 }
 
 FVulkanRayTracingGeometry::~FVulkanRayTracingGeometry()
 {
-    VkDevice DeviceHandle = GetDevice()->GetVkDevice();
     if (VULKAN_CHECK_HANDLE(Geometry))
     {
-        vkDestroyAccelerationStructureKHR(DeviceHandle, Geometry, nullptr);
+        vkDestroyAccelerationStructureKHR(GetDevice()->GetVkDevice(), Geometry, nullptr);
         Geometry = VK_NULL_HANDLE;
     }
-
-    if (VULKAN_CHECK_HANDLE(GeometryBuffer))
-    {
-        vkDestroyBuffer(DeviceHandle, GeometryBuffer, nullptr);
-        GeometryBuffer = VK_NULL_HANDLE;
-    }
-
-    if (VULKAN_CHECK_HANDLE(ScratchBuffer))
-    {
-        vkDestroyBuffer(DeviceHandle, ScratchBuffer, nullptr);
-        ScratchBuffer = VK_NULL_HANDLE;
-    }
-
-    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    MemoryManager.Free(GeometryMemory);
-    MemoryManager.Free(ScratchMemory);
 }
 
 void FVulkanRayTracingGeometry::SetDebugName(const FString& InName)
@@ -84,7 +72,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     AccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
     // TODO: Is there any case when this is not true?
-    const uint32_t NumTriangles = BuildInfo.NumIndices / 3;
+    const uint32 NumTriangles = BuildInfo.NumIndices / 3;
     if ((BuildInfo.NumIndices % 3) != 0)
     {
         VULKAN_WARNING("Creating acceleration structure with an indexcount that is not a multiple of 3");
@@ -92,66 +80,42 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
 
     vkGetAccelerationStructureBuildSizesKHR(GetDevice()->GetVkDevice(), VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &AccelerationStructureBuildGeometryInfo, &NumTriangles, &AccelerationStructureBuildSizesInfo);
 
-    VkBufferCreateInfo BufferCreateInfo = {};
-    BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    BufferCreateInfo.size        = AccelerationStructureBuildSizesInfo.accelerationStructureSize;
-    BufferCreateInfo.usage       = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-    BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &GeometryBuffer);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to create Buffer");
-        return false;
-    }
-
-    const VkMemoryAllocateFlags AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
+    const VkMemoryAllocateFlags  AllocateFlags    = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    const VkBufferUsageFlags    GeometryUsage    = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    const VkBufferUsageFlags    ScratchUsage     = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(GeometryBuffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, GeometryMemory))
+    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, GeometryUsage, AllocateFlags, AccelerationStructureBuildSizesInfo.accelerationStructureSize, 256, GeometryStorage))
     {
-        VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate geometry buffer memory");
         return false;
     }
 
     VkAccelerationStructureCreateInfoKHR AccelerationStructureCreateInfo = {};
     AccelerationStructureCreateInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
     AccelerationStructureCreateInfo.createFlags   = 0;
-    AccelerationStructureCreateInfo.buffer        = GeometryBuffer;
-    AccelerationStructureCreateInfo.offset        = 0;
+    AccelerationStructureCreateInfo.buffer        = GeometryStorage.GetBackingBuffer();
+    AccelerationStructureCreateInfo.offset        = GeometryStorage.GetBufferOffset();
     AccelerationStructureCreateInfo.size          = AccelerationStructureBuildSizesInfo.accelerationStructureSize;
     AccelerationStructureCreateInfo.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
     AccelerationStructureCreateInfo.deviceAddress = 0;
 
-    Result = vkCreateAccelerationStructureKHR(GetDevice()->GetVkDevice(), &AccelerationStructureCreateInfo, nullptr, &Geometry);
+    VkResult Result = vkCreateAccelerationStructureKHR(GetDevice()->GetVkDevice(), &AccelerationStructureCreateInfo, nullptr, &Geometry);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR_CRITICAL("Failed to create AccelerationStructure");
         return false;
     }
 
-    // Create ScratchBuffer
-    BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    BufferCreateInfo.size        = AccelerationStructureBuildSizesInfo.buildScratchSize;
-    BufferCreateInfo.usage       = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-    BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &ScratchBuffer);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR_CRITICAL("Failed to create Buffer");
-        return false;
-    }
-
-    if (!MemoryManager.AllocateBufferMemory(ScratchBuffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, ScratchMemory))
+    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, ScratchUsage, AllocateFlags, AccelerationStructureBuildSizesInfo.buildScratchSize, 256, ScratchStorage))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate scratch-buffer memory");
         return false;
     }
 
     AccelerationStructureBuildGeometryInfo.dstAccelerationStructure  = Geometry;
-    AccelerationStructureBuildGeometryInfo.scratchData.deviceAddress = ScratchMemory.DeviceAddress;
+    AccelerationStructureBuildGeometryInfo.scratchData.deviceAddress = ScratchStorage.GetDeviceAddress();
 
     VkAccelerationStructureBuildRangeInfoKHR AccelerationStructureBuildRangeInfo = {};
     AccelerationStructureBuildRangeInfo.primitiveCount  = NumTriangles;

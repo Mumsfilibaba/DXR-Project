@@ -210,5 +210,5 @@ private:
     } CommonState;
     
     FVulkanCommandContext& Context;
-    uint64                CurrentFrame;
+    uint64                 CurrentFrame;
 };

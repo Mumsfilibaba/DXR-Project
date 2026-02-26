@@ -91,7 +91,7 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& I
     , FVulkanDeviceChild(InDevice)
     , DebugName()
     , Image(VK_NULL_HANDLE)
-    , MemoryAllocation()
+    , MemoryStorage(InDevice)
     , CreateInfo{}
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
@@ -103,19 +103,10 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& I
 FVulkanTexture::~FVulkanTexture()
 {
     DestroyImageViews();
-
-    // Check allocation in order to determine if this is a BackBuffer
-    if (MemoryAllocation.IsValid() && VULKAN_CHECK_HANDLE(Image))
+    if (MemoryStorage.IsValid() && VULKAN_CHECK_HANDLE(Image))
     {
-        FVulkanDevice* VulkanDevice = GetDevice();
-        
-        // Destroy the image
-        vkDestroyImage(VulkanDevice->GetVkDevice(), Image, nullptr);
+        vkDestroyImage(GetDevice()->GetVkDevice(), Image, nullptr);
         Image = VK_NULL_HANDLE;
-
-        // Free the memory
-        FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
-        MemoryManager.Free(MemoryAllocation);
     }
 }
 
@@ -200,14 +191,20 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         CreateInfo = ImageCreateInfo;
     }
 
-    // NOTE: All textures are allocated as device local, maybe we want to move this into the AllocateImageMemory function
     const VkMemoryAllocateFlags AllocateFlags = 0;
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, GVulkanForceDedicatedImageAllocations, MemoryAllocation))
+    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, ImageCreateInfo.usage, AllocateFlags, MemoryStorage))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
+        return false;
+    }
+
+    VkResult BindResult = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, MemoryStorage.GetMemory(), MemoryStorage.GetMemoryOffset());
+    if (VULKAN_FAILED(BindResult))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to bind ImageMemory");
         return false;
     }
 

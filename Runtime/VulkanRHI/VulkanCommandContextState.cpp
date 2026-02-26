@@ -317,8 +317,8 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
 
     if (VertexBuffer)
     {
-        Buffer = VertexBuffer->GetVkBuffer();
-        Offset = 0;
+        Buffer = VertexBuffer->GetBindVkBuffer();
+        Offset = VertexBuffer->GetBindOffset();
     }
     else
     {
@@ -345,8 +345,8 @@ void FVulkanCommandContextState::SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIn
 
     if (IndexBuffer)
     {
-        Buffer = IndexBuffer->GetVkBuffer();
-        Offset = 0;
+        Buffer = IndexBuffer->GetBindVkBuffer();
+        Offset = IndexBuffer->GetBindOffset();
     }
     else
     {

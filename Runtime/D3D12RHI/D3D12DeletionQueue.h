@@ -24,7 +24,9 @@ struct FD3D12DeferredObject
         RHIResource           = 4,
         OnlineDescriptorBlock = 5,
         Heap                  = 6,
-        AllocatorBlock        = 7,
+        BuddyAllocatorBlock   = 7,
+        PoolAllocatorBlock    = 8,
+        BucketAllocatorBlock  = 9,
     };
 
     FD3D12DeferredObject(FRHIResource* InResource)
@@ -47,7 +49,7 @@ struct FD3D12DeferredObject
     {
         CHECK(InHeap != nullptr);
         D3DHeap = InHeap;
-        D3DHeap->AddRef();
+        InHeap->AddRef();
     }
 
     FD3D12DeferredObject(FD3D12Resource* InResource)
@@ -76,34 +78,28 @@ struct FD3D12DeferredObject
         InHeap->AddRef();
     }
 
-    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12BuddyAllocatorAllocationData& InAllocationData)
-        : Type(EType::AllocatorBlock)
+    FD3D12DeferredObject(FD3D12BuddyAllocator* InAllocator, const FD3D12BuddyAllocatorAllocationData& InAllocationData)
+        : Type(EType::BuddyAllocatorBlock)
     {
         CHECK(InAllocator != nullptr);
-
-        AllocatorBlock.AllocatorType       = InAllocatorType;
-        AllocatorBlock.Allocator           = InAllocator;
-        AllocatorBlock.BuddyAllocationData = InAllocationData;
+        BuddyAllocatorBlock.Allocator      = InAllocator;
+        BuddyAllocatorBlock.AllocationData = InAllocationData;
     }
 
-    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12PoolAllocatorAllocationData& InAllocationData)
-        : Type(EType::AllocatorBlock)
+    FD3D12DeferredObject(FD3D12PoolAllocator* InAllocator, const FD3D12PoolAllocatorAllocationData& InAllocationData)
+        : Type(EType::PoolAllocatorBlock)
     {
         CHECK(InAllocator != nullptr);
-
-        AllocatorBlock.AllocatorType      = InAllocatorType;
-        AllocatorBlock.Allocator          = InAllocator;
-        AllocatorBlock.PoolAllocationData = InAllocationData;
+        PoolAllocatorBlock.Allocator      = InAllocator;
+        PoolAllocatorBlock.AllocationData = InAllocationData;
     }
 
-    FD3D12DeferredObject(ED3D12DeferredAllocatorType InAllocatorType, void* InAllocator, const FD3D12BucketAllocatorAllocationData& InAllocationData)
-        : Type(EType::AllocatorBlock)
+    FD3D12DeferredObject(FD3D12BucketAllocator* InAllocator, const FD3D12BucketAllocatorAllocationData& InAllocationData)
+        : Type(EType::BucketAllocatorBlock)
     {
         CHECK(InAllocator != nullptr);
-
-        AllocatorBlock.AllocatorType        = InAllocatorType;
-        AllocatorBlock.Allocator            = InAllocator;
-        AllocatorBlock.BucketAllocationData = InAllocationData;
+        BucketAllocatorBlock.Allocator      = InAllocator;
+        BucketAllocatorBlock.AllocationData = InAllocationData;
     }
 
     EType const Type;
@@ -112,20 +108,36 @@ struct FD3D12DeferredObject
     {
         FD3D12OnlineDescriptorHeap*  Heap  = nullptr;
         FD3D12OnlineDescriptorBlock* Block = nullptr;
-    } OnlineDescriptorBlock;
+    };
 
-    struct FAllocatorBlockData
+    struct FBuddyAllocatorBlockData
     {
-        ED3D12DeferredAllocatorType         AllocatorType        = ED3D12DeferredAllocatorType::Pool;
-        FD3D12BuddyAllocatorAllocationData  BuddyAllocationData  = {};
-        FD3D12PoolAllocatorAllocationData   PoolAllocationData   = {};
-        FD3D12BucketAllocatorAllocationData BucketAllocationData = {};
-        void*                               Allocator            = nullptr;
-    } AllocatorBlock;
+        FD3D12BuddyAllocator*              Allocator      = nullptr;
+        FD3D12BuddyAllocatorAllocationData AllocationData = {};
+    };
 
-    FRHIResource*   RHIResource = nullptr;
-    FD3D12Resource* Resource    = nullptr;
-    ID3D12Heap*     D3DHeap     = nullptr;
-    ID3D12Resource* D3DResource = nullptr;
-    FD3D12Heap*     D3D12Heap   = nullptr;
+    struct FPoolAllocatorBlockData
+    {
+        FD3D12PoolAllocator*              Allocator      = nullptr;
+        FD3D12PoolAllocatorAllocationData AllocationData = {};
+    };
+
+    struct FBucketAllocatorBlockData
+    {
+        FD3D12BucketAllocator*              Allocator      = nullptr;
+        FD3D12BucketAllocatorAllocationData AllocationData = {};
+    };
+
+    union
+    {
+        FRHIResource*              RHIResource;
+        FD3D12Resource*            Resource;
+        ID3D12Heap*                D3DHeap;
+        ID3D12Resource*            D3DResource;
+        FD3D12Heap*                D3D12Heap;
+        FOnlineDescriptorBlockData OnlineDescriptorBlock;
+        FBuddyAllocatorBlockData   BuddyAllocatorBlock;
+        FPoolAllocatorBlockData    PoolAllocatorBlock;
+        FBucketAllocatorBlockData  BucketAllocatorBlock;
+    };
 };

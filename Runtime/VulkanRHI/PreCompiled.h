@@ -1,6 +1,6 @@
 #pragma once
 #include "VulkanRHI/VulkanRHI.h"
-#include "VulkanRHI/VulkanAllocators.h"
+#include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanCommandContext.h"
@@ -16,7 +16,6 @@
 #include "VulkanRHI/VulkanFenceManager.h"
 #include "VulkanRHI/VulkanInstance.h"
 #include "VulkanRHI/VulkanLoader.h"
-#include "VulkanRHI/VulkanMemory.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanPipelineState.h"
 #include "VulkanRHI/VulkanQuery.h"

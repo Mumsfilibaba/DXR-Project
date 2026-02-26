@@ -173,6 +173,7 @@ public:
 private:
     void ConditionalSplitCommandBuffer();
     void ForceFlushCommandPool();
+    
     FVulkanFence* SubmitCommandBuffer(bool bFlushPool);
 
     FVulkanImageState&  RetrievePendingImageState(class FVulkanTexture* Texture);

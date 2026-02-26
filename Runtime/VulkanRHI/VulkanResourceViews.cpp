@@ -205,8 +205,8 @@ bool FVulkanShaderResourceView::InitializeSRV(const FRHIShaderResourceViewInfo& 
 			Stride = sizeof(uint32);
 		}
 
-        const VkBuffer Buffer = VulkanBuffer->GetVkBuffer();
-        const VkDeviceSize Offset = Stride * InInfo.BufferSRV.FirstElement;
+        const VkBuffer Buffer = VulkanBuffer->GetBindVkBuffer();
+        const VkDeviceSize Offset = VulkanBuffer->GetBindOffset() + Stride * InInfo.BufferSRV.FirstElement;
 		const VkDeviceSize Range = Stride * InInfo.BufferSRV.NumElements;
 
 		if (!InitializeAsStructuredBufferView(Buffer, Offset, Range))
@@ -334,8 +334,8 @@ bool FVulkanUnorderedAccessView::InitializeUAV(const FRHIUnorderedAccessViewInfo
 			Stride = sizeof(uint32);
 		}
 
-		const VkBuffer Buffer = VulkanBuffer->GetVkBuffer();
-		const VkDeviceSize Offset = Stride * InInfo.BufferUAV.FirstElement;
+		const VkBuffer Buffer = VulkanBuffer->GetBindVkBuffer();
+		const VkDeviceSize Offset = VulkanBuffer->GetBindOffset() + Stride * InInfo.BufferUAV.FirstElement;
 		const VkDeviceSize Range = Stride * InInfo.BufferUAV.NumElements;
 
 		if (!InitializeAsStructuredBufferView(Buffer, Offset, Range))

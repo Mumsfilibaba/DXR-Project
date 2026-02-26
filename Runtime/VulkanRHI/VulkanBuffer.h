@@ -1,6 +1,6 @@
 #pragma once
 #include "RHI/RHIResources.h"
-#include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/VulkanResourceState.h"
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
@@ -31,17 +31,32 @@ public:
 
     VkBuffer GetVkBuffer() const
     {
-        return Buffer;
+        if (OwnedBuffer != VK_NULL_HANDLE)
+        {
+            return OwnedBuffer;
+        }
+
+        return MemoryStorage.GetBackingBuffer();
     }
 
     VkBuffer GetBindVkBuffer() const
     {
-        return (TransientBuffer != VK_NULL_HANDLE) ? TransientBuffer : Buffer;
+        if (TransientBuffer != VK_NULL_HANDLE)
+        {
+            return TransientBuffer;
+        }
+
+        return GetVkBuffer();
     }
 
     VkDeviceSize GetBindOffset() const
     {
-        return TransientOffset;
+        if (TransientBuffer != VK_NULL_HANDLE)
+        {
+            return TransientOffset;
+        }
+
+        return MemoryStorage.GetBufferOffset();
     }
 
     VkDeviceSize GetBindRange() const
@@ -58,12 +73,12 @@ public:
 
     VkDeviceMemory GetVkDeviceMemory() const
     {
-        return MemoryAllocation.Memory;
+        return MemoryStorage.GetMemory();
     }
 
     VkDeviceAddress GetDeviceAddress() const
     {
-        return MemoryAllocation.DeviceAddress;
+        return MemoryStorage.GetDeviceAddress();
     }
 
     VkDeviceSize GetRequiredAlignment() const
@@ -71,17 +86,26 @@ public:
         return RequiredAlignment;
     }
 
+    bool IsSuballocated() const
+    {
+        return MemoryStorage.IsSuballocated() && OwnedBuffer == VK_NULL_HANDLE;
+    }
+
+    const FVulkanMemoryStorage& GetMemoryStorage() const
+    {
+        return MemoryStorage;
+    }
+
     FVulkanBufferState&       GetTrackedState()       { return TrackedState; }
     const FVulkanBufferState& GetTrackedState() const { return TrackedState; }
 
 protected:
-    VkBuffer                Buffer;
-    FVulkanMemoryAllocation MemoryAllocation;
-    VkDeviceSize            RequiredAlignment;
-    FVulkanBufferState      TrackedState;
-    FString                 DebugName;
-
-    VkBuffer     TransientBuffer = VK_NULL_HANDLE;
-    VkDeviceSize TransientOffset = 0;
-    VkDeviceSize TransientRange  = 0;
+    VkBuffer             OwnedBuffer;
+    FVulkanMemoryStorage MemoryStorage;
+    VkDeviceSize         RequiredAlignment;
+    FVulkanBufferState   TrackedState;
+    FString              DebugName;
+    VkBuffer             TransientBuffer;
+    VkDeviceSize         TransientOffset;
+    VkDeviceSize         TransientRange;
 };

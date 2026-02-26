@@ -2,7 +2,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanResourceViews.h"
-#include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/VulkanResourceState.h"
 
 class FVulkanSwapChain;
@@ -71,18 +71,23 @@ public:
     FVulkanImageState&       GetTrackedState()       { return TrackedState; }
     const FVulkanImageState& GetTrackedState() const { return TrackedState; }
 
-protected:
-    FString                 DebugName;
-    VkImage                 Image;
-    FVulkanMemoryAllocation MemoryAllocation;
-    VkImageCreateInfo       CreateInfo;
-    FVulkanImageState       TrackedState;
+    const FVulkanMemoryStorage& GetMemoryStorage() const
+    {
+        return MemoryStorage;
+    }
 
+protected:
+    using FImageViewMap = TMap<FVulkanHashableImageView, FVulkanResourceView*>;
+
+    FString                       DebugName;
+    VkImage                       Image;
+    FVulkanMemoryStorage          MemoryStorage;
+    VkImageCreateInfo             CreateInfo;
+    FVulkanImageState             TrackedState;
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
-
-    TArray<FVulkanResourceView*> ImageViews;
-    TMap<FVulkanHashableImageView, FVulkanResourceView*> ImageViewMap;
+    TArray<FVulkanResourceView*>  ImageViews;
+    FImageViewMap                 ImageViewMap;
 };
 
 class FVulkanBackBufferTexture : public FVulkanTexture

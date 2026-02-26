@@ -65,7 +65,7 @@ FVulkanRHI::~FVulkanRHI()
                 Items = Move(DeletionQueue);
             }
 
-            FVulkanDeferredObject::ProcessItems(Items);
+            FVulkanDeferredObject::ProcessItems(Device, Items);
 
             // NOTE: Objects could contain other objects, that now need to be flushed
             if (FRHICommandListExecutor::IsInitialized())
@@ -269,6 +269,8 @@ void FVulkanRHI::BeginFrame()
     // NOTE: Currently only GraphicsCommandContext exists. When additional contexts
     // are added (async compute, copy), iterate all contexts here.
     GraphicsCommandContext->GetContextState().EvictStaleDescriptorStates();
+
+    Device->GetMemoryManager().CleanUpAllocators();
 }
 
 void FVulkanRHI::EndFrame()

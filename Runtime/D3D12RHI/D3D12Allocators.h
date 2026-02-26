@@ -12,13 +12,6 @@ class FD3D12Device;
 class FD3D12CommandContext;
 class FD3D12FenceManager;
 
-enum class ED3D12DeferredAllocatorType : uint8
-{
-    Pool,
-    Buddy,
-    Bucket
-};
-
 enum class EAllocationStrategy : uint8
 {
     SuballocatedHeap,

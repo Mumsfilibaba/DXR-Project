@@ -66,13 +66,15 @@ public:
     }
 
 protected:
+    using FRenderTargetViewMap = TMap<FD3D12HashableTextureView, FD3D12RenderTargetViewRef>;
+    using FDepthStencilViewMap = TMap<FD3D12HashableTextureView, FD3D12DepthStencilViewRef>;
+
     FD3D12ShaderResourceViewRef       ShaderResourceView;
     FD3D12UnorderedAccessViewRef      UnorderedAccessView;
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
-
-    TMap<FD3D12HashableTextureView, FD3D12RenderTargetViewRef> RenderTargetViewMap;
-    TMap<FD3D12HashableTextureView, FD3D12DepthStencilViewRef> DepthStencilViewMap;
+    FRenderTargetViewMap              RenderTargetViewMap;
+    FDepthStencilViewMap              DepthStencilViewMap;
 };
 
 class FD3D12BackBufferTexture : public FD3D12Texture

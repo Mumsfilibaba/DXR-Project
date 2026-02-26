@@ -207,6 +207,7 @@ private:
     // Size (in bytes) of the header before the VkBool32 feature bits start
     // For 1.1+ structs: header = sType (aligned up to alignof(void*)) + pNext
     // -------------------------------------------------------------------------------------------
+    
     static constexpr SIZE_T GetHeaderSize()
     {
         if constexpr (THasNextMember<T>::Value)

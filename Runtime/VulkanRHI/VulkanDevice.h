@@ -8,9 +8,8 @@
 #include "Core/Containers/String.h"
 #include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanLoader.h"
-#include "VulkanRHI/VulkanAllocators.h"
+#include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/VulkanRenderPass.h"
-#include "VulkanRHI/VulkanMemory.h"
 #include "VulkanRHI/VulkanFenceManager.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanDescriptorSet.h"
@@ -23,12 +22,8 @@ class FVulkanPhysicalDevice;
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
 // -------------------------------------------------------------------------------------------
-extern VULKANRHI_API bool   GVulkanForceBinding;
-extern VULKANRHI_API bool   GVulkanForceDedicatedAllocations;
-extern VULKANRHI_API bool   GVulkanForceDedicatedImageAllocations;
-extern VULKANRHI_API bool   GVulkanForceDedicatedBufferAllocations;
 
-extern VULKANRHI_API bool   GVulkanAllowDedicatedAllocations;
+extern VULKANRHI_API bool   GVulkanForceBinding;
 extern VULKANRHI_API bool   GVulkanAllowNullDescriptors;
 extern VULKANRHI_API bool   GVulkanAllowGeometryShaders;
 extern VULKANRHI_API bool   GVulkanAllowResetCommandBuffers;
@@ -51,16 +46,19 @@ extern VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount;
 // -------------------------------------------------------------------------------------------
 // Programmable sample positions (VK_EXT_sample_locations)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool GVulkanSupportsSampleLocations;
 
 // -------------------------------------------------------------------------------------------
 // Programmable sample positions (VK_EXT_fragment_shader_interlock)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool GVulkanSupportsFragmentShaderInterlock;
 
 // -------------------------------------------------------------------------------------------
 // Ray Tracing (VK_KHR_ray_tracing_pipeline, VK_KHR_ray_query)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool GVulkanSupportsRayTracingPipeline; 
 extern VULKANRHI_API bool GVulkanSupportsRayQuery;
 extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
@@ -68,12 +66,14 @@ extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
 // -------------------------------------------------------------------------------------------
 // Variable Rate Shading (VK_KHR_fragment_shading_rate)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate;
 extern VULKANRHI_API uint32 GVulkanShadingRateTileSize;
 
 // -------------------------------------------------------------------------------------------
 // Mesh shaders (VK_EXT_mesh_shader)
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool   GVulkanSupportsMeshShaders;
 extern VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices;
 extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
@@ -82,11 +82,13 @@ extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;
 // -------------------------------------------------------------------------------------------
 // Descriptor Set Management
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API bool   GVulkanUseDescriptorCache;
 
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
+
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages;
 extern VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages;
@@ -137,8 +139,10 @@ struct FVulkanDefaultResources
 {
 	FVulkanDefaultResources()
 		: NullBuffer(VK_NULL_HANDLE)
+		, NullBufferStorage(nullptr)
 		, NullImage(VK_NULL_HANDLE)
 		, NullImageView(VK_NULL_HANDLE)
+		, NullImageStorage(nullptr)
 		, NullSampler(VK_NULL_HANDLE)
 	{
 	}
@@ -155,17 +159,12 @@ struct FVulkanDefaultResources
 	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
 	void Release(FVulkanDevice& Device);
 
-	// Null-Buffer
-	VkBuffer                NullBuffer;
-	FVulkanMemoryAllocation NullBufferMemory;
-
-	// Null-Image
-	VkImage                 NullImage;
-	VkImageView             NullImageView;
-	FVulkanMemoryAllocation NullImageMemory;
-
-	// NullSampler
-	VkSampler               NullSampler;
+	VkBuffer             NullBuffer;
+	FVulkanMemoryStorage NullBufferStorage;
+	VkImage              NullImage;
+	VkImageView          NullImageView;
+	FVulkanMemoryStorage NullImageStorage;
+	VkSampler            NullSampler;
 };
 
 struct FVulkanHashableSamplerCreateInfo
@@ -218,18 +217,18 @@ public:
     VkFormatProperties GetFormatProperties(VkFormat Format) const;
     
     // Vulkan 1.0 features
-    const VkPhysicalDeviceProperties&        GetProperties() const { return DeviceProperties; }
-    const VkPhysicalDeviceFeatures&          GetFeatures() const { return DeviceFeatures; }
-    const VkPhysicalDeviceMemoryProperties&  GetMemoryProperties()  const { return DeviceMemoryProperties; }
+    const VkPhysicalDeviceProperties&        GetProperties()       const { return DeviceProperties; }
+    const VkPhysicalDeviceFeatures&          GetFeatures()         const { return DeviceFeatures; }
+    const VkPhysicalDeviceMemoryProperties&  GetMemoryProperties() const { return DeviceMemoryProperties; }
 
     // Vulkan 1.1 features
     const VkPhysicalDeviceVulkan11Features&  GetFeaturesVulkan11() const { return DeviceFeatures11; }
     
     // Vulkan 1.2 features
-    const VkPhysicalDeviceProperties2&       GetProperties2() const { return DeviceProperties2; }
-    const VkPhysicalDeviceFeatures2&         GetFeatures2() const { return DeviceFeatures2; }
+    const VkPhysicalDeviceProperties2&       GetProperties2()       const { return DeviceProperties2; }
+    const VkPhysicalDeviceFeatures2&         GetFeatures2()         const { return DeviceFeatures2; }
     const VkPhysicalDeviceMemoryProperties2& GetMemoryProperties2() const { return DeviceMemoryProperties2; }
-    const VkPhysicalDeviceVulkan12Features&  GetFeaturesVulkan12() const { return DeviceFeatures12; }
+    const VkPhysicalDeviceVulkan12Features&  GetFeaturesVulkan12()  const { return DeviceFeatures12; }
 
     // Extension Information
 #if VK_EXT_conservative_rasterization
@@ -284,29 +283,20 @@ public:
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
 
+    FVulkanQueryPoolManager* GetQueryPoolManager(EQueryType QueryType);
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
-    FVulkanQueryPoolManager*      GetQueryPoolManager(EQueryType QueryType);
-    FVulkanRenderPassCache&       GetRenderPassCache() { return *RenderPassCache; }
-    FVulkanMemoryManager&         GetMemoryManager() { return *MemoryManager; }
-    FVulkanUploadHeapAllocator&          GetUploadHeap() { return *UploadHeap; }
-    FVulkanDynamicConstantsAllocator&    GetDynamicConstantsAllocator() { return *DynamicConstantsAllocator; }
-    FVulkanFenceManager&          GetFenceManager() { return *FenceManager; }
+    FVulkanRenderPassCache&       GetRenderPassCache()       { return *RenderPassCache; }
+    FVulkanMemoryManager&         GetMemoryManager()         { return *MemoryManager; }
+    FVulkanFenceManager&          GetFenceManager()          { return *FenceManager; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
-    FVulkanPipelineStateManager&  GetPipelineStateManager() { return *PipelineStateManager; }
-    FVulkanDescriptorSetCache&    GetDescriptorSetCache() { return *DescriptorSetCache; }
+    FVulkanPipelineStateManager&  GetPipelineStateManager()  { return *PipelineStateManager; }
+    FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return *DescriptorSetCache; }
     FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return *DescriptorPoolManager; }
-    FVulkanDefaultResources&      GetDefaultResources() { return DefaultResources; }
+    FVulkanDefaultResources&      GetDefaultResources()      { return DefaultResources; }
 
-    bool IsLayerEnabled(const FString& LayerName)
-    {
-        return LayerNames.Find(LayerName) != nullptr;
-    }
-
-    bool IsExtensionEnabled(const FString& ExtensionName)
-    {
-        return ExtensionNames.Find(ExtensionName) != nullptr;
-    }
+    bool IsLayerEnabled(const FString& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
+    bool IsExtensionEnabled(const FString& ExtensionName) const { return (ExtensionNames.Find(ExtensionName) != nullptr); }
 
     FVulkanInstance* GetInstance() const
     {
@@ -329,12 +319,12 @@ public:
     }
 
 private:
+    using FSamplerMap = TMap<FVulkanHashableSamplerCreateInfo, VkSampler>;
+
     FVulkanInstance*                     Instance;
     FVulkanPhysicalDevice*               PhysicalDevice;
     VkDevice                             Device;
     FVulkanRenderPassCache*              RenderPassCache;
-    FVulkanUploadHeapAllocator*          UploadHeap;
-    FVulkanDynamicConstantsAllocator*    DynamicConstantsAllocator;
     FVulkanMemoryManager*                MemoryManager;
     FVulkanFenceManager*                 FenceManager;
     FVulkanPipelineLayoutManager*        PipelineLayoutManager;
@@ -344,11 +334,9 @@ private:
     FVulkanQueryPoolManager*             TimingQueryPoolManager;
     FVulkanQueryPoolManager*             OcclusionQueryPoolManager;
     FVulkanDefaultResources              DefaultResources;
-
     TSet<FString>                        ExtensionNames;
     TSet<FString>                        LayerNames;
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
-
-    TMap<FVulkanHashableSamplerCreateInfo, VkSampler> SamplerMap;
-    FCriticalSection                                  SamplerMapCS;
+    FSamplerMap                          SamplerMap;
+    FCriticalSection                     SamplerMapCS;
 };

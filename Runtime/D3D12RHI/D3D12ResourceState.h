@@ -6,6 +6,13 @@ class FD3D12Resource;
 
 constexpr D3D12_RESOURCE_STATES D3D12_RESOURCE_STATE_TO_BE_DETERMINED = static_cast<D3D12_RESOURCE_STATES>(0xFFFFFFFF);
 
+struct FD3D12PendingBarrier
+{
+	FD3D12Resource*       Resource;
+	D3D12_RESOURCE_STATES DesiredState;
+	uint32                Subresource;
+};
+
 class FD3D12ResourceState
 {
 public:
@@ -37,11 +44,4 @@ private:
     TArray<D3D12_RESOURCE_STATES> SubresourceStates;
     uint32                        NumSubresources  = 0;
     bool                          bAllSameState    = true;
-};
-
-struct FD3D12PendingBarrier
-{
-    FD3D12Resource*       Resource;
-    D3D12_RESOURCE_STATES DesiredState;
-    uint32                Subresource;
 };

@@ -1050,7 +1050,7 @@ uint32 FMacApplication::MonitorDPIFromScreen(NSScreen* Screen)
     // Use the average of width and height DPI values
     CGFloat ScreenDPI = (ScreenWidthDPI + ScreenHeightDPI) / 2.0;
 
-    // Round and convert to uint32_t
+    // Round and convert to uint32
     const uint32 RoundedDPI = static_cast<uint32>(Math::RoundToInt(ScreenDPI));
     return RoundedDPI;
 }

@@ -2,7 +2,7 @@
 #include "VulkanRHI/VulkanDeletionQueue.h"
 #include "VulkanRHI/VulkanDevice.h"
 
-void FVulkanDeferredObject::ProcessItems(const TArray<FVulkanDeferredObject>& Items)
+void FVulkanDeferredObject::ProcessItems(FVulkanDevice* Device, TArray<FVulkanDeferredObject>& Items)
 {
     for (const FVulkanDeferredObject& Item : Items)
     {
@@ -18,6 +18,32 @@ void FVulkanDeferredObject::ProcessItems(const TArray<FVulkanDeferredObject>& It
             {
                 CHECK(Item.VulkanResource != nullptr);
                 Item.VulkanResource->Release();
+                break;
+            }
+            case FVulkanDeferredObject::EType::BuddyAllocatorBlock:
+            {
+                CHECK(Item.BuddyAllocatorBlock.Allocator != nullptr);
+                Item.BuddyAllocatorBlock.Allocator->RecycleAllocation(Item.BuddyAllocatorBlock.AllocationData);
+                break;
+            }
+            case FVulkanDeferredObject::EType::PoolAllocatorBlock:
+            {
+                CHECK(Item.PoolAllocatorBlock.Allocator != nullptr);
+                Item.PoolAllocatorBlock.Allocator->RecycleAllocation(Item.PoolAllocatorBlock.AllocationData);
+                break;
+            }
+            case FVulkanDeferredObject::EType::DedicatedAllocation:
+            {
+                if (Item.DedicatedAllocation.Buffer != VK_NULL_HANDLE)
+                {
+                    vkDestroyBuffer(Device->GetVkDevice(), Item.DedicatedAllocation.Buffer, nullptr);
+                }
+
+                if (Item.DedicatedAllocation.Memory != VK_NULL_HANDLE)
+                {
+                    vkFreeMemory(Device->GetVkDevice(), Item.DedicatedAllocation.Memory, nullptr);
+                }
+
                 break;
             }
         }

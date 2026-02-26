@@ -9,7 +9,6 @@ public:
     FVulkanDeviceChild(FVulkanDevice* InDevice)
         : Device(InDevice)
     {
-        CHECK(Device != nullptr);
     }
 
     virtual ~FVulkanDeviceChild()
@@ -19,9 +18,10 @@ public:
 
     FORCEINLINE FVulkanDevice* GetDevice() const noexcept
     {
+        CHECK(Device != nullptr);
         return Device;
     }
 
-private:
+protected:
     FVulkanDevice* Device;
 };

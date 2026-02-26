@@ -41,9 +41,7 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
             case FD3D12DeferredObject::EType::OnlineDescriptorBlock:
             {
                 CHECK(Item.OnlineDescriptorBlock.Heap != nullptr);
-
-                FD3D12OnlineDescriptorHeap* Heap = Item.OnlineDescriptorBlock.Heap;
-                Heap->RecycleBlock(Item.OnlineDescriptorBlock.Block);
+                Item.OnlineDescriptorBlock.Heap->RecycleBlock(Item.OnlineDescriptorBlock.Block);
                 break;
             }
 
@@ -54,23 +52,24 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
                 break;
             }
 
-            case FD3D12DeferredObject::EType::AllocatorBlock:
+            case FD3D12DeferredObject::EType::BuddyAllocatorBlock:
             {
-                CHECK(Item.AllocatorBlock.Allocator != nullptr);
+                CHECK(Item.BuddyAllocatorBlock.Allocator != nullptr);
+                Item.BuddyAllocatorBlock.Allocator->RecycleAllocation(Item.BuddyAllocatorBlock.AllocationData);
+                break;
+            }
 
-                switch (Item.AllocatorBlock.AllocatorType)
-                {
-                case ED3D12DeferredAllocatorType::Pool:
-                    static_cast<FD3D12PoolAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.PoolAllocationData);
-                    break;
-                case ED3D12DeferredAllocatorType::Buddy:
-                    static_cast<FD3D12BuddyAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.BuddyAllocationData);
-                    break;
-                case ED3D12DeferredAllocatorType::Bucket:
-                    static_cast<FD3D12BucketAllocator*>(Item.AllocatorBlock.Allocator)->RecycleAllocation(Item.AllocatorBlock.BucketAllocationData);
-                    break;
-                }
+            case FD3D12DeferredObject::EType::PoolAllocatorBlock:
+            {
+                CHECK(Item.PoolAllocatorBlock.Allocator != nullptr);
+                Item.PoolAllocatorBlock.Allocator->RecycleAllocation(Item.PoolAllocatorBlock.AllocationData);
+                break;
+            }
 
+            case FD3D12DeferredObject::EType::BucketAllocatorBlock:
+            {
+                CHECK(Item.BucketAllocatorBlock.Allocator != nullptr);
+                Item.BucketAllocatorBlock.Allocator->RecycleAllocation(Item.BucketAllocatorBlock.AllocationData);
                 break;
             }
         }

@@ -937,11 +937,12 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
 
     if (VulkanBuffer->GetInfo().IsTransient())
     {
-        FVulkanDynamicConstantsAllocation Allocation = GetDevice()->GetDynamicConstantsAllocator().Allocate(BufferRegion.Size);
-        CHECK(Allocation.MappedMemory != nullptr);
+        FVulkanMemoryStorage Storage(GetDevice());
+        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, 0, Storage);
+        CHECK(MappedMemory != nullptr);
 
-        FMemory::Memcpy(Allocation.MappedMemory, SrcData, BufferRegion.Size);
-        VulkanBuffer->SetTransientAllocation(Allocation.Buffer, Allocation.Offset, BufferRegion.Size);
+        FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
+        VulkanBuffer->SetTransientAllocation(Storage.GetBackingBuffer(), Storage.GetBufferOffset(), BufferRegion.Size);
     }
     else if (VulkanBuffer->GetInfo().IsDynamic())
     {
@@ -975,19 +976,19 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     }
     else
     {
-        FVulkanUploadAllocation Allocation = GetDevice()->GetUploadHeap().Allocate(BufferRegion.Size, 1);
-        CHECK(Allocation.Memory != nullptr);
-        FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
+        FVulkanMemoryStorage UploadStorage(GetDevice());
+        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateUploadMemory(BufferRegion.Size, 1, UploadStorage);
+        CHECK(MappedMemory != nullptr);
+        FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
         
         VkBufferCopy BufferCopy = {};
-        BufferCopy.srcOffset = Allocation.Offset;
-        BufferCopy.dstOffset = BufferRegion.Offset;
+        BufferCopy.srcOffset = UploadStorage.GetBufferOffset();
+        BufferCopy.dstOffset = VulkanBuffer->GetBindOffset() + BufferRegion.Offset;
         BufferCopy.size      = BufferRegion.Size;
         
         BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
-        GetCommandBuffer()->CopyBuffer(Allocation.Buffer->GetVkBuffer(), VulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
-        FVulkanRHI::DeferDeletion(Allocation.Buffer.Get());
+        GetCommandBuffer()->CopyBuffer(UploadStorage.GetBackingBuffer(), VulkanBuffer->GetBindVkBuffer(), 1, &BufferCopy);
     }
 }
 
@@ -1002,23 +1003,25 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     // TODO: Check if there exists a Vulkan macro for this
     const uint64 Alignment = 256;
 
-    FVulkanUploadAllocation Allocation = GetDevice()->GetUploadHeap().Allocate(RequiredSize, Alignment);
-    CHECK(Allocation.Memory != nullptr);
+    FVulkanMemoryStorage UploadStorage(GetDevice());
+    uint8* UploadMemory = static_cast<uint8*>(GetDevice()->GetMemoryManager().AllocateUploadMemory(RequiredSize, Alignment, UploadStorage));
+    CHECK(UploadMemory != nullptr);
 
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     CHECK(Source != nullptr);
     
     const uint32 RowPitch = VulkanTextureHelper::CalculateTextureRowPitch(Format, TextureRegion.Width);
     const uint32 NumRows  = VulkanTextureHelper::CalculateTextureNumRows(Format, TextureRegion.Height);
+
     for (uint64 y = 0; y < NumRows; y++)
     {
-        FMemory::Memcpy(Allocation.Memory, Source, RowPitch);
-        Source            += SrcRowPitch;
-        Allocation.Memory += RowPitch;
+        FMemory::Memcpy(UploadMemory, Source, RowPitch);
+        Source       += SrcRowPitch;
+        UploadMemory += RowPitch;
     }
 
     VkBufferImageCopy BufferImageCopy = {};
-    BufferImageCopy.bufferOffset                    = Allocation.Offset;
+    BufferImageCopy.bufferOffset                    = UploadStorage.GetBufferOffset();
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
     BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
@@ -1030,8 +1033,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
 
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
-    GetCommandBuffer()->CopyBufferToImage(Allocation.Buffer->GetVkBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
-    FVulkanRHI::DeferDeletion(Allocation.Buffer.Get());
+    GetCommandBuffer()->CopyBufferToImage(UploadStorage.GetBackingBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
 }
 
 void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -1073,13 +1075,13 @@ void FVulkanCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const F
     CHECK(DstVulkanBuffer != nullptr);
 
     VkBufferCopy BufferCopy = {};
-    BufferCopy.srcOffset = CopyDesc.SrcOffset;
-    BufferCopy.dstOffset = CopyDesc.DstOffset;
+    BufferCopy.srcOffset = SrcVulkanBuffer->GetBindOffset() + CopyDesc.SrcOffset;
+    BufferCopy.dstOffset = DstVulkanBuffer->GetBindOffset() + CopyDesc.DstOffset;
     BufferCopy.size      = CopyDesc.Size;
     
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
-    GetCommandBuffer()->CopyBuffer(SrcVulkanBuffer->GetVkBuffer(), DstVulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
+    GetCommandBuffer()->CopyBuffer(SrcVulkanBuffer->GetBindVkBuffer(), DstVulkanBuffer->GetBindVkBuffer(), 1, &BufferCopy);
 }
 
 void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -1144,9 +1146,10 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopy[MaxCopies];
     
-    uint32_t NumArrayLayers    = 0;
-    uint32_t DstBaseArrayLayer = 0;
-    uint32_t SrcBaseArrayLayer = 0;
+    uint32 NumArrayLayers    = 0;
+    uint32 DstBaseArrayLayer = 0;
+    uint32 SrcBaseArrayLayer = 0;
+
     if (IsTextureCube(SrcVulkanTexture->GetDimension()))
     {
         SrcBaseArrayLayer = CopyDesc.SrcArraySlice  * RHI_NUM_CUBE_FACES;
@@ -1222,7 +1225,7 @@ void FVulkanCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Ds
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     VkBufferImageCopy Copy = {};
-    Copy.bufferOffset      = DstOffset;
+    Copy.bufferOffset      = DstVulkanBuffer->GetBindOffset() + DstOffset;
     Copy.bufferRowLength   = 0;
     Copy.bufferImageHeight = 0;
 
@@ -1242,7 +1245,7 @@ void FVulkanCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Ds
     Copy.imageExtent.height = Math::Max(SrcRegion.Height >> SrcMipLevel, 1u);
     Copy.imageExtent.depth  = 1;
 
-    vkCmdCopyImageToBuffer(GetCommandBuffer().GetVkCommandBuffer(), SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanBuffer->GetVkBuffer(), 1, &Copy);
+    vkCmdCopyImageToBuffer(GetCommandBuffer().GetVkCommandBuffer(), SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanBuffer->GetBindVkBuffer(), 1, &Copy);
 }
 
 void FVulkanCommandContext::WriteFence(FRHIGpuFence* Fence)
@@ -1329,8 +1332,9 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
     else
     {
         const VkImageCreateInfo& CreateInfo = VulkanTexture->GetVkImageCreateInfo();
-        const uint32 BaseMip    = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)    ? 0 : TextureTransition.MipLevel;
-        const uint32 MipCount   = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)    ? CreateInfo.mipLevels : 1;
+
+        const uint32 BaseMip    = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)     ? 0 : TextureTransition.MipLevel;
+        const uint32 MipCount   = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)     ? CreateInfo.mipLevels : 1;
         const uint32 BaseLayer  = (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES) ? 0 : TextureTransition.ArraySlice;
         const uint32 LayerCount = (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES) ? CreateInfo.arrayLayers : 1;
 
@@ -1339,6 +1343,7 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
             for (uint32 Mip = BaseMip; Mip < BaseMip + MipCount; Mip++)
             {
                 const uint32 SubresourceIndex = Layer * CreateInfo.mipLevels + Mip;
+
                 const VkImageLayout SubLayout = LocalState.GetSubresourceLayout(SubresourceIndex);
                 if (SubLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
                 {
@@ -1418,8 +1423,8 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
     {
         const VkImageCreateInfo& CreateInfo = VulkanTexture->GetVkImageCreateInfo();
 
-        const uint32 BaseMip    = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)    ? 0 : TextureTransition.MipLevel;
-        const uint32 MipCount   = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)    ? CreateInfo.mipLevels : 1;
+        const uint32 BaseMip    = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)     ? 0 : TextureTransition.MipLevel;
+        const uint32 MipCount   = (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)     ? CreateInfo.mipLevels : 1;
         const uint32 BaseLayer  = (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES) ? 0 : TextureTransition.ArraySlice;
         const uint32 LayerCount = (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES) ? CreateInfo.arrayLayers : 1;
 
@@ -1569,8 +1574,8 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
     }
     else
     {
-        const uint32 BaseMip    = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)   ? 0 : RequiredState.MipLevel;
-        const uint32 MipCount   = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)   ? CreateInfo.mipLevels : 1;
+        const uint32 BaseMip    = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)     ? 0 : RequiredState.MipLevel;
+        const uint32 MipCount   = (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS)     ? CreateInfo.mipLevels : 1;
         const uint32 BaseLayer  = (RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES) ? 0 : RequiredState.ArraySlice;
         const uint32 LayerCount = (RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES) ? CreateInfo.arrayLayers : 1;
 

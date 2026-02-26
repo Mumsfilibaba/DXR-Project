@@ -9,16 +9,19 @@ public:
     FD3D12DeviceChild(FD3D12Device* InDevice)
         : Device(InDevice)
     {
-        CHECK(Device != nullptr);
     }
 
-    virtual ~FD3D12DeviceChild() = default;
+    virtual ~FD3D12DeviceChild()
+    {
+        Device = nullptr;
+    }
 
     FORCEINLINE FD3D12Device* GetDevice() const
     {
+        CHECK(Device != nullptr);
         return Device;
     }
 
 private:
-    FD3D12Device* const Device;
+    FD3D12Device* Device;
 };

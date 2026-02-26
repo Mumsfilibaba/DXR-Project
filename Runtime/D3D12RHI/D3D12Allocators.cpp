@@ -257,7 +257,7 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
 void FD3D12BuddyAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 {
     const FD3D12BuddyAllocatorAllocationData AllocationData = Storage.GetBuddyAllocationData();
-    FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Buddy, this, AllocationData);
+    FD3D12RHI::DeferDeletion(this, AllocationData);
 }
 
 void FD3D12BuddyAllocator::RecycleAllocation(const FD3D12BuddyAllocatorAllocationData& AllocationData)
@@ -1065,7 +1065,7 @@ void FD3D12PoolAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
         }
     }
 
-    FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, this, Data);
+    FD3D12RHI::DeferDeletion(this, Data);
 }
 
 void FD3D12PoolAllocator::RecycleAllocation(const FD3D12PoolAllocatorAllocationData& Data)
@@ -1257,7 +1257,7 @@ void FD3D12BucketAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
         return;
     }
 
-    FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Bucket, this, AllocationData);
+    FD3D12RHI::DeferDeletion(this, AllocationData);
 }
 
 void FD3D12BucketAllocator::RecycleAllocation(const FD3D12BucketAllocatorAllocationData& Data)
@@ -2387,7 +2387,7 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
         }
 
         Move.Allocator->TransferOwnership(Move.OldAllocationData, nullptr);
-        FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, Move.Allocator, Move.OldAllocationData);
+        FD3D12RHI::DeferDeletion(Move.Allocator, Move.OldAllocationData);
 
         Move.NewResource->Release();
         PendingDefragMoves.RemoveAtSwap(Index);
@@ -2502,7 +2502,7 @@ void FD3D12TextureAllocator::CancelPendingDefragMoves(FD3D12GenericResource* Own
         FPendingDefragMove& Move = PendingDefragMoves[Index];
         if (Move.SourceStorage && Move.SourceStorage->GetOwner() == Owner)
         {
-            FD3D12RHI::DeferDeletion(ED3D12DeferredAllocatorType::Pool, Move.Allocator, Move.NewAllocationData);
+            FD3D12RHI::DeferDeletion(Move.Allocator, Move.NewAllocationData);
 
             if (Move.NewResource->ShouldDeferredRelease())
             {

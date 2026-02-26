@@ -12,11 +12,6 @@
 // -------------------------------------------------------------------------------------------
 
 VULKANRHI_API bool   GVulkanForceBinding                        = false;
-VULKANRHI_API bool   GVulkanForceDedicatedAllocations           = true;
-VULKANRHI_API bool   GVulkanForceDedicatedImageAllocations      = GVulkanForceDedicatedAllocations || false;
-VULKANRHI_API bool   GVulkanForceDedicatedBufferAllocations     = GVulkanForceDedicatedAllocations || false;
-
-VULKANRHI_API bool   GVulkanAllowDedicatedAllocations           = false;
 VULKANRHI_API bool   GVulkanAllowNullDescriptors                = true;
 VULKANRHI_API bool   GVulkanAllowGeometryShaders                = true;
 VULKANRHI_API bool   GVulkanAllowResetCommandBuffers            = false;
@@ -39,47 +34,54 @@ VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount                = 1;
 // -------------------------------------------------------------------------------------------
 // Programmable sample positions (VK_EXT_sample_locations)
 // -------------------------------------------------------------------------------------------
-VULKANRHI_API bool   GVulkanSupportsSampleLocations             = false;
+
+VULKANRHI_API bool GVulkanSupportsSampleLocations = false;
 
 // -------------------------------------------------------------------------------------------
 // Fragment shader interlock (VK_EXT_fragment_shader_interlock)
 // -------------------------------------------------------------------------------------------
-VULKANRHI_API bool   GVulkanSupportsFragmentShaderInterlock     = false;
+
+VULKANRHI_API bool GVulkanSupportsFragmentShaderInterlock = false;
 
 // -------------------------------------------------------------------------------------------
 // Ray Tracing (VK_KHR_ray_tracing_pipeline, VK_KHR_ray_query)
 // -------------------------------------------------------------------------------------------
-VULKANRHI_API bool   GVulkanSupportsRayTracingPipeline          = false;
-VULKANRHI_API bool   GVulkanSupportsRayQuery                    = false;
-VULKANRHI_API bool   GVulkanSupportsAccelerationStructures      = false;
+
+VULKANRHI_API bool GVulkanSupportsRayTracingPipeline     = false;
+VULKANRHI_API bool GVulkanSupportsRayQuery               = false;
+VULKANRHI_API bool GVulkanSupportsAccelerationStructures = false;
 
 // -------------------------------------------------------------------------------------------
 // Variable Rate Shading (VK_KHR_fragment_shading_rate)
 // -------------------------------------------------------------------------------------------
-VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate         = false;
-VULKANRHI_API uint32 GVulkanShadingRateTileSize                 = 0;
+
+VULKANRHI_API bool   GVulkanSupportsFragmentShadingRate = false;
+VULKANRHI_API uint32 GVulkanShadingRateTileSize         = 0;
 
 // -------------------------------------------------------------------------------------------
 // Mesh Shaders (VK_EXT_mesh_shader)
 // -------------------------------------------------------------------------------------------
-VULKANRHI_API bool   GVulkanSupportsMeshShaders                 = false;
-VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices               = 0;
-VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations         = 0;
-VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations         = 0;
+
+VULKANRHI_API bool   GVulkanSupportsMeshShaders         = false;
+VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices       = 0;
+VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations = 0;
+VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations = 0;
 
 // -------------------------------------------------------------------------------------------
 // Descriptor Set Management
 // -------------------------------------------------------------------------------------------
-VULKANRHI_API bool   GVulkanUseDescriptorCache                  = true;
+
+VULKANRHI_API bool GVulkanUseDescriptorCache = true;
 
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers            = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages       = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages       = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers      = 0;
-VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers      = 0;
+
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetSamplers       = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetSampledImages  = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageImages  = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetUniformBuffers = 0;
+VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers = 0;
 
 // -------------------------------------------------------------------------------------------
 // Helpers
@@ -551,7 +553,6 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , PhysicalDevice(InAdapter)
     , Device(VK_NULL_HANDLE)
     , RenderPassCache(nullptr)
-    , UploadHeap(nullptr)
     , MemoryManager(nullptr)
     , FenceManager(nullptr)
     , PipelineLayoutManager(nullptr)
@@ -566,20 +567,13 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
         GVulkanUseDescriptorCache = UseDescriptorCacheVar->GetBool();
     }
 
-    DescriptorSetCache = new FVulkanDescriptorSetCache(this);
-    DescriptorPoolManager = GVulkanUseDescriptorCache ? nullptr : new FVulkanDescriptorPoolManager(this);
-    TimingQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Timestamp);
+    DescriptorSetCache        = new FVulkanDescriptorSetCache(this);
+    DescriptorPoolManager     = GVulkanUseDescriptorCache ? nullptr : new FVulkanDescriptorPoolManager(this);
+    TimingQueryPoolManager    = new FVulkanQueryPoolManager(this, EQueryType::Timestamp);
     OcclusionQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Occlusion);
-    PipelineLayoutManager = new FVulkanPipelineLayoutManager(this);
-    RenderPassCache = new FVulkanRenderPassCache(this);
-
-    UploadHeap = new FVulkanUploadHeapAllocator(this);
-
-    constexpr uint64 DynamicConstantsPageSize = 2 * 1024 * 1024;
-    DynamicConstantsAllocator = new FVulkanDynamicConstantsAllocator(this, DynamicConstantsPageSize);
-
-    FenceManager = new FVulkanFenceManager(this);
-    MemoryManager = new FVulkanMemoryManager(this);
+    PipelineLayoutManager     = new FVulkanPipelineLayoutManager(this);
+    FenceManager              = new FVulkanFenceManager(this);
+    RenderPassCache           = new FVulkanRenderPassCache(this);
 }
 
 FVulkanDevice::~FVulkanDevice()
@@ -615,10 +609,6 @@ FVulkanDevice::~FVulkanDevice()
     SAFE_DELETE(OcclusionQueryPoolManager);
     SAFE_DELETE(PipelineLayoutManager);
     SAFE_DELETE(RenderPassCache);
-
-    SAFE_DELETE(DynamicConstantsAllocator);
-    SAFE_DELETE(UploadHeap);
-
     SAFE_DELETE(FenceManager);
     SAFE_DELETE(MemoryManager);
     
@@ -896,7 +886,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     // Set all GVulkan* globals from collected caps
     // -------------------------------------------------------------------------------------------
 
-    const VkPhysicalDeviceFeatures& CoreDeviceFeatures10 = AvailableDeviceFeatures2.features;
+    const VkPhysicalDeviceFeatures&   CoreDeviceFeatures10   = AvailableDeviceFeatures2.features;
     const VkPhysicalDeviceProperties& CoreDeviceProperties10 = PhysicalDevice->GetProperties();
 
     // Core/sparse/depth bounds
@@ -1027,6 +1017,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     // -------------------------------------------------------------------------------------------
     // Build the feature chain we actually want, then create the device
     // -------------------------------------------------------------------------------------------
+
     VkDeviceCreateInfo DeviceCreateInfo = {};
     DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     DeviceCreateInfo.enabledLayerCount       = 0;
@@ -1273,6 +1264,36 @@ bool FVulkanDevice::PostLoaderInitalize()
         return false;
     }
 
+    // Query the host-visible memory type index for upload/staging allocators
+    const VkMemoryPropertyFlags UploadMemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+    VkBufferCreateInfo DummyBufferInfo = {};
+    DummyBufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    DummyBufferInfo.size        = 256;
+    DummyBufferInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    DummyBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkBuffer DummyBuffer = VK_NULL_HANDLE;
+    vkCreateBuffer(GetVkDevice(), &DummyBufferInfo, nullptr, &DummyBuffer);
+
+    VkMemoryRequirements MemReqs = {};
+    vkGetBufferMemoryRequirements(GetVkDevice(), DummyBuffer, &MemReqs);
+    vkDestroyBuffer(GetVkDevice(), DummyBuffer, nullptr);
+
+    const int32 UploadMemoryTypeIndex = PhysicalDevice->FindMemoryTypeIndex(MemReqs.memoryTypeBits, UploadMemoryProperties);
+    if (UploadMemoryTypeIndex == TNumericLimits<int32>::Max())
+    {
+        VULKAN_ERROR_CRITICAL("FVulkanDevice: No suitable host-visible memory type for upload heap");
+        return false;
+    }
+
+    MemoryManager = new FVulkanMemoryManager(this, static_cast<uint32>(UploadMemoryTypeIndex));
+    if (!MemoryManager->Initialize())
+    {
+        VULKAN_ERROR_CRITICAL("FVulkanDevice: Failed to initialize MemoryManager");
+        return false;
+    }
+
     return true;
 }
 
@@ -1281,6 +1302,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // -------------------------------------------------------------------------------------------
     // Baseline defaults
     // -------------------------------------------------------------------------------------------
+
     RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = false;
     RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
 
@@ -1319,6 +1341,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // -------------------------------------------------------------------------------------------
     // Core features/properties
     // -------------------------------------------------------------------------------------------
+
     VkPhysicalDevice PhysicalDeviceHandle = GetPhysicalDevice()->GetVkPhysicalDevice();
 
     // Core features
@@ -1368,12 +1391,14 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // -------------------------------------------------------------------------------------------
     // SV_RenderTargetArrayIndex from VS (shaderOutputLayer in Vulkan 1.2)
     // -------------------------------------------------------------------------------------------
+
     const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
     RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
 
     // -------------------------------------------------------------------------------------------
     // View Instancing (multiview)
     // -------------------------------------------------------------------------------------------
+
     if (GVulkanSupportsMultiviews)
     {
         RHIDeviceFeatureSupport::MaxViewInstanceCount    = GVulkanMaxMultiviewViewCount;
@@ -1391,6 +1416,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // Tier1: Pipeline ray tracing without ray query
     // Supports ray tracing if acceleration structures + (pipeline OR ray query)
     // -------------------------------------------------------------------------------------------
+
     const bool bHasRayTracingPipeline     = IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
     const bool bHasRayQuery               = IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME);
     const bool bHasAccelerationStructures = IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
@@ -1425,6 +1451,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // Tier2: If attachmentFragmentShadingRate (image-based) is supported
     // Tier1: If pipeline/primitive shading rate is supported
     // -------------------------------------------------------------------------------------------
+    
     if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
         // Query features
@@ -1708,11 +1735,22 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
         VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullBuffer", NullBuffer, VK_OBJECT_TYPE_BUFFER);
     }
 
-    // Allocate memory based on the buffer
+    {
+        FVulkanMemoryStorage TempStorage(&Device);
+        NullBufferStorage.Swap(TempStorage);
+    }
+
     FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(NullBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, false, NullBufferMemory))
+    if (!MemoryManager.AllocateBufferMemory(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, BufferCreateInfo.usage, 0, BufferCreateInfo.size, 256, NullBufferStorage))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
+        return false;
+    }
+
+    VkResult BindResult = vkBindBufferMemory(Device.GetVkDevice(), NullBuffer, NullBufferStorage.GetMemory(), NullBufferStorage.GetMemoryOffset());
+    if (VULKAN_FAILED(BindResult))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to bind NullBuffer memory");
         return false;
     }
 
@@ -1745,9 +1783,21 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
         VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImage", NullImage, VK_OBJECT_TYPE_IMAGE);
     }
 
-    if (!MemoryManager.AllocateImageMemory(NullImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, false, NullImageMemory))
+    {
+        FVulkanMemoryStorage TempStorage(&Device);
+        NullImageStorage.Swap(TempStorage);
+    }
+
+    if (!MemoryManager.AllocateImageMemory(NullImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ImageCreateInfo.usage, 0, NullImageStorage))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
+        return false;
+    }
+
+    VkResult BindImageResult = vkBindImageMemory(Device.GetVkDevice(), NullImage, NullImageStorage.GetMemory(), NullImageStorage.GetMemoryOffset());
+    if (VULKAN_FAILED(BindImageResult))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to bind NullImage memory");
         return false;
     }
 
@@ -1789,9 +1839,7 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
     {
         vkDestroyBuffer(VulkanDevice, NullBuffer, nullptr);
         NullBuffer = VK_NULL_HANDLE;
-
-        FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
-        MemoryManager.Free(NullBufferMemory);
+        NullBufferStorage.ReleaseMemory();
     }
 
     if (VULKAN_CHECK_HANDLE(NullImageView))
@@ -1804,11 +1852,8 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
     {
         vkDestroyImage(VulkanDevice, NullImage, nullptr);
         NullImage = VK_NULL_HANDLE;
-
-        FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
-        MemoryManager.Free(NullImageMemory);
+        NullImageStorage.ReleaseMemory();
     }
 
-    // All samplers are cached and deleted by the device
     NullSampler = VK_NULL_HANDLE;
 }

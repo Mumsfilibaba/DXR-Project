@@ -531,8 +531,10 @@ void FVulkanCommands::Finish()
     }
 
     // Delete all the resources that has been queued up for destruction
-    FVulkanDeferredObject::ProcessItems(DeletionQueue);
+    FVulkanDeferredObject::ProcessItems(Device, DeletionQueue);
     DeletionQueue.Clear();
+
+    Device->GetMemoryManager().CleanUpLinearAllocators();
 
     // Destroy this instance after execution is finished
     delete this;
