@@ -87,7 +87,7 @@ public:
     FORCEINLINE void SetMappedBaseAddress(void* InAddress)           { MappedBaseAddress = InAddress; }
     FORCEINLINE void SetSize(VkDeviceSize InSize)                    { Size = InSize; }
     FORCEINLINE void SetStorageType(EVulkanMemoryStorageType InType) { StorageType = InType; }
-    FORCEINLINE void SetOwner(FVulkanGenericResource* InOwner)     { Owner = InOwner; }
+    FORCEINLINE void SetOwner(FVulkanGenericResource* InOwner)       { Owner = InOwner; }
 
     FORCEINLINE void SetBuddyAllocator(FVulkanBuddyAllocator* InAllocator)
     {
@@ -118,16 +118,16 @@ private:
 
     union FAllocationData
     {
-        FVulkanBuddyAllocatorAllocationData Buddy;
         FVulkanPoolAllocatorAllocationData  Pool;
+        FVulkanBuddyAllocatorAllocationData Buddy;
 
         FAllocationData() { }
     } AllocationData;
 
     union FAllocatorPointers
     {
-        FVulkanBuddyAllocator* BuddyAllocator;
         FVulkanPoolAllocator*  PoolAllocator;
+        FVulkanBuddyAllocator* BuddyAllocator;
         void*                  AsVoid;
 
         FAllocatorPointers()
@@ -337,6 +337,8 @@ private:
 
 class FVulkanLinearAllocator : public FVulkanDeviceChild
 {
+    static constexpr int32 MAX_POOL_PAGES = 8;
+
 public:
     FVulkanLinearAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkBufferUsageFlags InBufferUsageFlags);
     ~FVulkanLinearAllocator();
@@ -348,8 +350,6 @@ public:
 private:
     FVulkanLinearAllocatorPage* AcquirePage();
     FVulkanLinearAllocatorPage* CreatePage();
-
-    static constexpr int32 MAX_POOL_PAGES = 8;
 
     uint64                              PageSizeBytes;
     VkBufferUsageFlags                  BufferUsageFlags;
@@ -443,7 +443,7 @@ public:
     FVulkanTextureAllocator(FVulkanDevice* InDevice, uint64 InDefaultPageSizeBytes);
     ~FVulkanTextureAllocator();
 
-    bool TryAllocate(VkImage Image, VkMemoryPropertyFlags MemoryProperties, VkImageUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
 
     void DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame);
     void CancelPendingDefragMoves(FVulkanGenericResource* Owner);
@@ -469,15 +469,14 @@ public:
     FVulkanUploadHeapAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InSmallThreshold, uint64 InLargeThreshold);
     ~FVulkanUploadHeapAllocator();
 
-    void* Allocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
-    void* AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    void* Allocate(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage);
 
     bool Initialize(uint32 InMemoryTypeIndex);
     void Destroy();
     void CleanUp();
 
 private:
-    void* AllocateOversized(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    void* AllocateOversized(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage);
 
     uint64                      PageSizeBytes;
     uint64                      DefaultAlignment;
@@ -492,15 +491,14 @@ private:
 class FVulkanMemoryManager : public FVulkanDeviceChild
 {
 public:
-    FVulkanMemoryManager(FVulkanDevice* InDevice, uint32 InUploadMemoryTypeIndex);
+    FVulkanMemoryManager(FVulkanDevice* InDevice);
     ~FVulkanMemoryManager();
         
-    void* AllocateUploadMemory(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
-    void* AllocateConstantsMemory(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    void* AllocateUploadMemory(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage);
     void* AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
     void* AllocateStagingBuffer(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
     bool  AllocateBufferMemory(VkMemoryPropertyFlags PropertyFlags, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
-    bool  AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkImageUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
+    bool  AllocateImageMemory(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
 
     bool Initialize();
     void CleanUpAllocators();

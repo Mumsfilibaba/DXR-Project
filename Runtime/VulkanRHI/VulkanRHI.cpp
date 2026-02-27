@@ -19,7 +19,7 @@ IMPLEMENT_ENGINE_MODULE(FVulkanRHIModule, VulkanRHI);
 static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
     "VulkanRHI.MaxPendingSubmissions",
     "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
-    64);
+    32);
 
 static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
     "VulkanRHI.MaxDefragMovesPerFrame",
@@ -192,6 +192,7 @@ bool FVulkanRHI::Initialize()
     // Vulkan 1.3 Required
     DeviceCreateInfo.RequiredFeatures13.dynamicRendering                   = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures13.synchronization2                   = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures13.maintenance4                       = VK_TRUE;
     // Vulkan 1.3 Optional
     DeviceCreateInfo.OptionalFeatures13.pipelineCreationCacheControl       = VK_TRUE;
 
@@ -261,6 +262,8 @@ void FVulkanRHI::BeginFrame()
         VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
     }
 
+    ProcessPendingCommands();
+
     if (GVulkanUseDescriptorCache)
     {
         Device->GetDescriptorSetCache().EvictStaleDescriptorSets(static_cast<uint64>(PendingSubmissions.Size()));
@@ -297,10 +300,9 @@ FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERe
     {
         return nullptr;
     }
-    else
-    {
-        return NewTexture.ReleaseOwnership();
-    }
+
+    TickCoreProgression();
+    return NewTexture.ReleaseOwnership();
 }
 
 FRHIBuffer* FVulkanRHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
@@ -310,10 +312,9 @@ FRHIBuffer* FVulkanRHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResour
     {
         return nullptr;
     }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
+
+    TickCoreProgression();
+    return NewBuffer.ReleaseOwnership();
 }
 
 FRHISamplerState* FVulkanRHI::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
@@ -402,6 +403,8 @@ FRHIRayTracingGeometry* FVulkanRHI::CreateRayTracingGeometry(const FRHIRayTracin
     }
 
     GraphicsCommandContext->FinishContext();
+
+    TickCoreProgression();
     return NewGeometry.ReleaseOwnership();
 }
 
@@ -818,6 +821,37 @@ void FVulkanRHI::ProcessPendingCommands()
         {
             bProcess = false;
         }
+    }
+}
+
+void FVulkanRHI::TickCoreProgression()
+{
+    ProcessPendingCommands();
+
+    const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
+    while (PendingSubmissions.Size() > MaxPending)
+    {
+        FVulkanCommands* Oldest = nullptr;
+        if (PendingSubmissions.Peek(Oldest) && Oldest)
+        {
+            Oldest->Fence->Wait();
+            PendingSubmissions.Dequeue();
+            Oldest->Finish();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    Device->GetMemoryManager().CleanUpAllocators();
+
+    const int32 MaxDefragMoves = CVarMaxDefragMovesPerFrame.GetValue();
+    if (MaxDefragMoves > 0)
+    {
+        GraphicsCommandContext->StartContext();
+        Device->GetMemoryManager().DefragmentAllocations(GraphicsCommandContext, MaxDefragMoves);
+        GraphicsCommandContext->FinishContext();
     }
 }
 

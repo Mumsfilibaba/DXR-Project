@@ -96,6 +96,7 @@ void FVulkanMemoryStorage::ReleaseMemory()
             {
                 FVulkanRHI::DeferDeletion(Memory, BackingBuffer);
             }
+
             break;
         }
     }
@@ -118,19 +119,45 @@ void FVulkanMemoryStorage::Reset()
     AllocatorPointers.AsVoid = nullptr;
 }
 
-FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice, uint32 InUploadMemoryTypeIndex)
+FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , BufferAllocator(InDevice, BUFFER_PAGE_SIZE, BUFFER_MIN_BLOCK, BUFFER_MAX_SUBALLOCATION)
     , TextureAllocator(InDevice, TEXTURE_PAGE_SIZE)
     , UploadHeapAllocator(InDevice, UPLOAD_PAGE_SIZE, UPLOAD_ALIGNMENT, UPLOAD_SMALL_THRESHOLD, UPLOAD_LARGE_THRESHOLD)
     , DynamicConstantsAllocator(InDevice, CONSTANTS_PAGE_SIZE, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
     , StagingBufferAllocator(InDevice, STAGING_PAGE_SIZE, VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
-    , UploadMemoryTypeIndex(InUploadMemoryTypeIndex)
+    , UploadMemoryTypeIndex(0)
 {
 }
 
 bool FVulkanMemoryManager::Initialize()
 {
+    const VkMemoryPropertyFlags UploadMemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+    VkBufferCreateInfo BufferCreateInfo = {};
+    BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    BufferCreateInfo.size        = 256;
+    BufferCreateInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
+    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
+    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
+
+    VkMemoryRequirements2 MemReqs2 = {};
+    MemReqs2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+
+    vkGetDeviceBufferMemoryRequirements(GetDevice()->GetVkDevice(), &DeviceBufferMemReqInfo, &MemReqs2);
+
+    const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemReqs2.memoryRequirements.memoryTypeBits, UploadMemoryProperties);
+    if (MemoryTypeIndex == TNumericLimits<int32>::Max())
+    {
+        VULKAN_ERROR_CRITICAL("FVulkanMemoryManager: No suitable host-visible memory type for upload heap");
+        return false;
+    }
+
+    UploadMemoryTypeIndex = static_cast<uint32>(MemoryTypeIndex);
+
     if (!BufferAllocator.Initialize())
     {
         VULKAN_ERROR_CRITICAL("FVulkanMemoryManager: Failed to initialize BufferAllocator");
@@ -171,19 +198,14 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkMemoryPropertyFlags PropertyFl
     return BufferAllocator.TryAllocate(PropertyFlags, UsageFlags, AllocateFlags, SizeInBytes, Alignment, OutStorage);
 }
 
-bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkImageUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage)
+bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage)
 {
-    return TextureAllocator.TryAllocate(Image, PropertyFlags, UsageFlags, AllocateFlags, OutStorage);
+    return TextureAllocator.TryAllocate(Image, ImageCreateInfo, PropertyFlags, AllocateFlags, OutStorage);
 }
 
-void* FVulkanMemoryManager::AllocateUploadMemory(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
+void* FVulkanMemoryManager::AllocateUploadMemory(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage)
 {
-    return UploadHeapAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
-}
-
-void* FVulkanMemoryManager::AllocateConstantsMemory(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
-{
-    return UploadHeapAllocator.AllocateConstants(SizeInBytes, Alignment, OutStorage);
+    return UploadHeapAllocator.Allocate(SizeInBytes, Alignment, BufferUsageFlags, OutStorage);
 }
 
 void* FVulkanMemoryManager::AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
@@ -191,7 +213,7 @@ void* FVulkanMemoryManager::AllocateConstants(uint64 SizeInBytes, uint64 Alignme
     void* Result = DynamicConstantsAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
     if (!Result)
     {
-        Result = UploadHeapAllocator.AllocateConstants(SizeInBytes, Alignment, OutStorage);
+        Result = UploadHeapAllocator.Allocate(SizeInBytes, Alignment, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, OutStorage);
     }
     
     return Result;
@@ -202,7 +224,7 @@ void* FVulkanMemoryManager::AllocateStagingBuffer(uint64 SizeInBytes, uint64 Ali
     void* Result = StagingBufferAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
     if (!Result)
     {
-        Result = UploadHeapAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
+        Result = UploadHeapAllocator.Allocate(SizeInBytes, Alignment, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, OutStorage);
     }
 
     return Result;
@@ -269,7 +291,7 @@ bool FVulkanBuddyAllocator::Initialize()
     VkResult Result = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DeviceMemory);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR_CRITICAL("FVulkanBuddyAllocator: vkAllocateMemory failed (Size=%llu, MemoryTypeIndex=%u)", BackingStorageSize, MemoryTypeIndex);
+        VULKAN_ERROR_CRITICAL("FVulkanBuddyAllocator: vkAllocateMemory failed with %s (Size=%llu, MemoryTypeIndex=%u)", ToString(Result), BackingStorageSize, MemoryTypeIndex);
         return false;
     }
 
@@ -393,6 +415,7 @@ bool FVulkanBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FV
 
     uint64 Offset = 0;
     uint32 Order  = 0;
+
     {
         const uint64 RequestedSize = Math::Max(AllocationSize, UsedAlignment);
         const uint32 TargetOrder   = GetOrderForSize(RequestedSize);
@@ -451,7 +474,6 @@ bool FVulkanBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FV
 
     OutStorage.SetBuddyAllocationData(AllocationData);
     OutStorage.SetBuddyAllocator(this);
-
     return true;
 }
 
@@ -648,7 +670,7 @@ bool FVulkanPoolAllocatorPage::Initialize()
     VkResult Result = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DeviceMemory);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR_CRITICAL("FVulkanPoolAllocatorPage: vkAllocateMemory failed (Size=%llu, MemoryTypeIndex=%u)", PageSizeBytes, MemoryTypeIndex);
+        VULKAN_ERROR_CRITICAL("FVulkanPoolAllocatorPage: vkAllocateMemory failed with %s (Size=%llu, MemoryTypeIndex=%u)", ToString(Result), PageSizeBytes, MemoryTypeIndex);
         return false;
     }
 
@@ -674,7 +696,6 @@ bool FVulkanPoolAllocatorPage::Initialize()
     InitialRange.Offset = 0;
     InitialRange.Size   = PageSizeBytes;
     FreeRanges.Add(InitialRange);
-
     return true;
 }
 
@@ -734,7 +755,6 @@ bool FVulkanPoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignmen
 
         OutStorage.SetPoolAllocationData(AllocationData);
         LiveAllocations.Add(AllocationData);
-
         return true;
     }
 
@@ -785,7 +805,6 @@ bool FVulkanPoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 I
         OutData.Size   = SizeInBytes;
 
         LiveAllocations.Add(OutData);
-
         return true;
     }
 
@@ -931,7 +950,6 @@ FVulkanPoolAllocatorPage* FVulkanPoolAllocator::CreatePage(uint64 MinimumSize, u
 
     OutPageIndex = static_cast<uint32>(Pages.Size());
     Pages.Add(NewPage);
-
     return NewPage;
 }
 
@@ -1133,11 +1151,7 @@ FVulkanLinearAllocatorPage::FVulkanLinearAllocatorPage(FVulkanDevice* InDevice, 
 bool FVulkanLinearAllocatorPage::Initialize()
 {
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (BufferUsageFlags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-    {
-        return MemoryManager.AllocateConstantsMemory(PageSizeBytes, 16, BackingStorage) != nullptr;
-    }
-    return MemoryManager.AllocateUploadMemory(PageSizeBytes, 16, BackingStorage) != nullptr;
+    return MemoryManager.AllocateUploadMemory(PageSizeBytes, 16, BufferUsageFlags, BackingStorage) != nullptr;
 }
 
 FVulkanLinearAllocator::FVulkanLinearAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkBufferUsageFlags InBufferUsageFlags)
@@ -1355,24 +1369,24 @@ void FVulkanBufferAllocator::ReleasePools()
 
 bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
 {
-    VkBufferCreateInfo DummyBufferInfo = {};
-    DummyBufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    DummyBufferInfo.size        = SizeInBytes;
-    DummyBufferInfo.usage       = UsageFlags;
-    DummyBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VkBufferCreateInfo BufferCreateInfo = {};
+    BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    BufferCreateInfo.size        = SizeInBytes;
+    BufferCreateInfo.usage       = UsageFlags;
+    BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VkDevice VulkanDevice = GetDevice()->GetVkDevice();
 
-    VkBuffer DummyBuffer = VK_NULL_HANDLE;
-    VkResult Result = vkCreateBuffer(VulkanDevice, &DummyBufferInfo, nullptr, &DummyBuffer);
-    if (VULKAN_FAILED(Result))
-    {
-        return false;
-    }
+    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
+    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
+    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
 
-    VkMemoryRequirements MemoryRequirements = {};
-    vkGetBufferMemoryRequirements(VulkanDevice, DummyBuffer, &MemoryRequirements);
-    vkDestroyBuffer(VulkanDevice, DummyBuffer, nullptr);
+    VkMemoryRequirements2 MemoryRequirements2 = {};
+    MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+
+    vkGetDeviceBufferMemoryRequirements(VulkanDevice, &DeviceBufferMemReqInfo, &MemoryRequirements2);
+
+    const VkMemoryRequirements& MemoryRequirements = MemoryRequirements2.memoryRequirements;
 
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, MemoryProperties);
     if (MemoryTypeIndex == TNumericLimits<int32>::Max())
@@ -1382,6 +1396,42 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
     }
 
     const uint64 UsedAlignment = Math::Max<uint64>(Alignment, MemoryRequirements.alignment);
+
+    if (SizeInBytes > MaxSuballocationSize)
+    {
+        VkMemoryAllocateInfo AllocateInfo = {};
+        AllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        AllocateInfo.allocationSize  = MemoryRequirements.size;
+        AllocateInfo.memoryTypeIndex = static_cast<uint32>(MemoryTypeIndex);
+
+        VkMemoryAllocateFlagsInfo AllocateFlagsInfo = {};
+        AllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
+        AllocateFlagsInfo.flags = AllocateFlags;
+
+        FVulkanStructChain AllocateChain(AllocateInfo);
+        AllocateChain.AddNext(AllocateFlagsInfo);
+
+        VkDeviceMemory DedicatedMemory = VK_NULL_HANDLE;
+        VkResult DedicatedResult = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DedicatedMemory);
+        if (VULKAN_FAILED(DedicatedResult))
+        {
+            VULKAN_ERROR_CRITICAL("FVulkanBufferAllocator: Dedicated vkAllocateMemory failed with %s (Size=%llu)", ToString(DedicatedResult), MemoryRequirements.size);
+            return false;
+        }
+
+        OutStorage.Reset();
+        OutStorage.SetMemory(DedicatedMemory);
+        OutStorage.SetMemoryOffset(0);
+        OutStorage.SetSize(MemoryRequirements.size);
+        OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
+
+        if (CVarVulkanLogMemoryAllocations.GetValue())
+        {
+            VULKAN_INFO("FVulkanBufferAllocator: Using dedicated allocation for buffer (Size=%llu)", MemoryRequirements.size);
+        }
+
+        return true;
+    }
 
     SCOPED_LOCK(PoolsCS);
 
@@ -1406,12 +1456,20 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
     FVulkanBufferAllocatorPool* NewPool = new FVulkanBufferAllocatorPool(GetDevice(), static_cast<uint32>(MemoryTypeIndex), UsageFlags, PageSizeBytes, MinBlockBytes, MaxSuballocationSize, AllocateFlags);
     if (!NewPool->Initialize())
     {
+        VULKAN_ERROR_CRITICAL("FVulkanBufferAllocator: Failed to create new pool (Size=%llu, PageSize=%llu, MaxSuballocation=%llu, MemoryTypeIndex=%d)", SizeInBytes, PageSizeBytes, MaxSuballocationSize, MemoryTypeIndex);
         delete NewPool;
         return false;
     }
 
     Pools.Add(NewPool);
-    return NewPool->TryAllocate(SizeInBytes, UsedAlignment, OutStorage);
+
+    if (!NewPool->TryAllocate(SizeInBytes, UsedAlignment, OutStorage))
+    {
+        VULKAN_ERROR_CRITICAL("FVulkanBufferAllocator: Allocation failed after creating new pool (Size=%llu, PageSize=%llu, MaxSuballocation=%llu)", SizeInBytes, PageSizeBytes, MaxSuballocationSize);
+        return false;
+    }
+
+    return true;
 }
 
 FVulkanTextureAllocator::FVulkanTextureAllocator(FVulkanDevice* InDevice, uint64 InDefaultPageSizeBytes)
@@ -1490,7 +1548,7 @@ FVulkanTextureAllocator::ETexturePoolClass FVulkanTextureAllocator::ClassifyText
     return ETexturePoolClass::ReadOnly;
 }
 
-bool FVulkanTextureAllocator::TryAllocate(VkImage Image, VkMemoryPropertyFlags MemoryProperties, VkImageUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage)
+bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage)
 {
     VkDevice VulkanDevice = GetDevice()->GetVkDevice();
 
@@ -1500,14 +1558,14 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, VkMemoryPropertyFlags M
     VkMemoryRequirements2 MemoryRequirements2 = {};
     MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
 
-    VkImageMemoryRequirementsInfo2 ImageRequirementsInfo = {};
-    ImageRequirementsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2;
-    ImageRequirementsInfo.image = Image;
+    VkDeviceImageMemoryRequirements DeviceImageMemReqInfo = {};
+    DeviceImageMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS;
+    DeviceImageMemReqInfo.pCreateInfo = &ImageCreateInfo;
 
     FVulkanStructChain RequirementsChain(MemoryRequirements2);
     RequirementsChain.AddNext(DedicatedRequirements);
 
-    vkGetImageMemoryRequirements2(VulkanDevice, &ImageRequirementsInfo, &MemoryRequirements2);
+    vkGetDeviceImageMemoryRequirements(VulkanDevice, &DeviceImageMemReqInfo, &MemoryRequirements2);
 
     const VkMemoryRequirements& MemReqs = MemoryRequirements2.memoryRequirements;
     const bool bRequiresDedicated = DedicatedRequirements.requiresDedicatedAllocation == VK_TRUE || DedicatedRequirements.prefersDedicatedAllocation == VK_TRUE;
@@ -1542,7 +1600,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, VkMemoryPropertyFlags M
         VkResult Result = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DedicatedMemory);
         if (VULKAN_FAILED(Result))
         {
-            VULKAN_ERROR_CRITICAL("FVulkanTextureAllocator: Dedicated vkAllocateMemory failed");
+            VULKAN_ERROR_CRITICAL("FVulkanTextureAllocator: Dedicated vkAllocateMemory failed with %s", ToString(Result));
             return false;
         }
 
@@ -1553,13 +1611,13 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, VkMemoryPropertyFlags M
         OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
 
         if (CVarVulkanLogMemoryAllocations.GetValue())
-    {
-        VULKAN_INFO("FVulkanTextureAllocator: Using dedicated allocation for image (Size=%llu)", MemReqs.size);
-    }
+        {
+            VULKAN_INFO("FVulkanTextureAllocator: Using dedicated allocation for image (Size=%llu)", MemReqs.size);
+        }
         return true;
     }
 
-    const ETexturePoolClass PoolClass = ClassifyTexture(UsageFlags, MemReqs.alignment);
+    const ETexturePoolClass PoolClass = ClassifyTexture(ImageCreateInfo.usage, MemReqs.alignment);
     const uint32 PoolIndex = static_cast<uint32>(PoolClass);
 
     bool bPoolAllocated = false;
@@ -1605,7 +1663,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, VkMemoryPropertyFlags M
     VkResult Result = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DedicatedMemory);
     if (VULKAN_FAILED(Result))
     {
-        VULKAN_ERROR_CRITICAL("FVulkanTextureAllocator: Fallback dedicated vkAllocateMemory failed (Size=%llu)", MemReqs.size);
+        VULKAN_ERROR_CRITICAL("FVulkanTextureAllocator: Fallback dedicated vkAllocateMemory failed with %s (Size=%llu)", ToString(Result), MemReqs.size);
         return false;
     }
 
@@ -1670,8 +1728,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             continue;
         }
 
-        FVulkanMemoryStorage*   Storage = Move.SourceStorage;
-        FVulkanGenericResource* Owner   = Storage ? Storage->GetOwner() : nullptr;
+        FVulkanGenericResource* Owner = Move.SourceStorage ? Move.SourceStorage->GetOwner() : nullptr;
 
         VkImage OldImage = VK_NULL_HANDLE;
         if (Owner)
@@ -1682,19 +1739,20 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             Texture->DestroyImageViews();
             Texture->SetVkImage(Move.NewImage);
 
-            Storage->SetMemory(Move.Allocator->GetBackingMemory(Move.NewAllocationData.PageIndex));
-            Storage->SetMemoryOffset(Move.NewAllocationData.Offset);
-            Storage->SetPoolAllocationData(Move.NewAllocationData);
+            Move.SourceStorage->SetMemory(Move.Allocator->GetBackingMemory(Move.NewAllocationData.PageIndex));
+            Move.SourceStorage->SetMemoryOffset(Move.NewAllocationData.Offset);
+            Move.SourceStorage->SetPoolAllocationData(Move.NewAllocationData);
 
-            Move.Allocator->TransferOwnership(Move.NewAllocationData, Storage);
+            Move.Allocator->TransferOwnership(Move.NewAllocationData, Move.SourceStorage);
 
-            Owner->ResourceRelocated(Storage);
+            Owner->ResourceRelocated(Move.SourceStorage);
         }
 
         Move.Allocator->TransferOwnership(Move.OldAllocationData, nullptr);
 
         FVulkanPoolAllocatorAllocationData OldData = Move.OldAllocationData;
         OldData.Owner = nullptr;
+        
         FVulkanRHI::DeferDeletion(Move.Allocator, OldData);
 
         if (VULKAN_CHECK_HANDLE(OldImage))
@@ -1715,8 +1773,8 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
     for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
     {
         FVulkanPoolAllocatorAllocationData Candidate = {};
+        
         FVulkanPoolAllocator* SourceAllocator = nullptr;
-
         if (!GetDefragCandidate(Candidate, SourceAllocator))
         {
             break;
@@ -1733,13 +1791,14 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             break;
         }
 
-        FVulkanGenericResource* Owner = Candidate.Owner->GetOwner();
-        FVulkanTexture* Texture = static_cast<FVulkanTexture*>(Owner);
+        FVulkanTexture* Texture = static_cast<FVulkanTexture*>(Candidate.Owner->GetOwner());
+        
         VkImage OldImage = Texture->GetVkImage();
-        const VkImageCreateInfo& OldCreateInfo = Texture->GetVkImageCreateInfo();
-        const VkImageLayout CurrentLayout = Texture->GetImageLayoutState().GetImageLayout();
-
         VkImage NewImage = VK_NULL_HANDLE;
+        
+        const VkImageLayout      CurrentLayout = Texture->GetImageLayoutState().GetImageLayout();
+        const VkImageCreateInfo& OldCreateInfo = Texture->GetVkImageCreateInfo();
+        
         VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &OldCreateInfo, nullptr, &NewImage);
         if (VULKAN_FAILED(Result))
         {
@@ -1804,10 +1863,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             Region.extent.height                 = Math::Max(OldCreateInfo.extent.height >> MipLevel, 1u);
             Region.extent.depth                  = Math::Max(OldCreateInfo.extent.depth >> MipLevel, 1u);
 
-            InCommandContext->GetCommandBuffer()->CopyImage(
-                OldImage,  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                NewImage,  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                1, &Region);
+            InCommandContext->GetCommandBuffer()->CopyImage(OldImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, NewImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &Region);
         }
 
         {
@@ -1905,9 +1961,9 @@ bool FVulkanUploadHeapAllocator::Initialize(uint32 InMemoryTypeIndex)
 
     MemoryTypeIndex = InMemoryTypeIndex;
 
-    const VkMemoryAllocateFlags AllocateFlags = 0;
-    const VkBufferUsageFlags TransferSrcUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    const VkBufferUsageFlags UniformUsage     = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    const VkMemoryAllocateFlags AllocateFlags    = 0;
+    const VkBufferUsageFlags    TransferSrcUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    const VkBufferUsageFlags    UniformUsage     = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
     SmallAllocator = new FVulkanMultiBuddyAllocator(GetDevice(), PageSizeBytes, DefaultAlignment, MemoryTypeIndex, AllocateFlags, TransferSrcUsage);
     if (!SmallAllocator->Initialize())
@@ -1977,10 +2033,22 @@ void FVulkanUploadHeapAllocator::CleanUp()
     }
 }
 
-void* FVulkanUploadHeapAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
+void* FVulkanUploadHeapAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage)
 {
-    const uint64 UsedAlignment = Alignment ? Alignment : DefaultAlignment;
+    if (BufferUsageFlags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+    {
+        const uint64 ConstantsAlignment = GetDevice()->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment;
+        const uint64 UsedAlignment      = Alignment ? Alignment : ConstantsAlignment;
 
+        if (ConstantsAllocator && ConstantsAllocator->TryAllocate(SizeInBytes, UsedAlignment, OutStorage))
+        {
+            return OutStorage.GetMappedBaseAddress();
+        }
+
+        return AllocateOversized(SizeInBytes, UsedAlignment, BufferUsageFlags, OutStorage);
+    }
+
+    const uint64 UsedAlignment = Alignment ? Alignment : DefaultAlignment;
     if (SizeInBytes <= SmallThreshold)
     {
         if (SmallAllocator && SmallAllocator->TryAllocate(SizeInBytes, UsedAlignment, OutStorage))
@@ -1996,10 +2064,10 @@ void* FVulkanUploadHeapAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment,
         }
     }
 
-    return AllocateOversized(SizeInBytes, UsedAlignment, OutStorage);
+    return AllocateOversized(SizeInBytes, UsedAlignment, BufferUsageFlags, OutStorage);
 }
 
-void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
+void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage)
 {
     VkDevice VulkanDevice = GetDevice()->GetVkDevice();
 
@@ -2008,19 +2076,19 @@ void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 A
     VkBufferCreateInfo BufferCreateInfo = {};
     BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferCreateInfo.size        = AlignedSize;
-    BufferCreateInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    BufferCreateInfo.usage       = BufferUsageFlags;
     BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VkBuffer Buffer = VK_NULL_HANDLE;
-    VkResult Result = vkCreateBuffer(VulkanDevice, &BufferCreateInfo, nullptr, &Buffer);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR_CRITICAL("FVulkanUploadHeapAllocator: Oversized vkCreateBuffer failed (Size=%llu)", AlignedSize);
-        return nullptr;
-    }
+    VkDeviceBufferMemoryRequirements DeviceBufferMemReqInfo = {};
+    DeviceBufferMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_BUFFER_MEMORY_REQUIREMENTS;
+    DeviceBufferMemReqInfo.pCreateInfo = &BufferCreateInfo;
 
-    VkMemoryRequirements MemReqs = {};
-    vkGetBufferMemoryRequirements(VulkanDevice, Buffer, &MemReqs);
+    VkMemoryRequirements2 MemReqs2 = {};
+    MemReqs2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
+
+    vkGetDeviceBufferMemoryRequirements(VulkanDevice, &DeviceBufferMemReqInfo, &MemReqs2);
+
+    const VkMemoryRequirements& MemReqs = MemReqs2.memoryRequirements;
 
     VkMemoryAllocateInfo AllocateInfo = {};
     AllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -2028,11 +2096,19 @@ void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 A
     AllocateInfo.memoryTypeIndex = MemoryTypeIndex;
 
     VkDeviceMemory DeviceMemory = VK_NULL_HANDLE;
-    Result = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DeviceMemory);
+    VkResult Result = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DeviceMemory);
     if (VULKAN_FAILED(Result))
     {
-        vkDestroyBuffer(VulkanDevice, Buffer, nullptr);
-        VULKAN_ERROR_CRITICAL("FVulkanUploadHeapAllocator: Oversized vkAllocateMemory failed (Size=%llu)", MemReqs.size);
+        VULKAN_ERROR_CRITICAL("FVulkanUploadHeapAllocator: Oversized vkAllocateMemory failed with %s (Size=%llu)", ToString(Result), MemReqs.size);
+        return nullptr;
+    }
+
+    VkBuffer Buffer = VK_NULL_HANDLE;
+    Result = vkCreateBuffer(VulkanDevice, &BufferCreateInfo, nullptr, &Buffer);
+    if (VULKAN_FAILED(Result))
+    {
+        vkFreeMemory(VulkanDevice, DeviceMemory, nullptr);
+        VULKAN_ERROR_CRITICAL("FVulkanUploadHeapAllocator: Oversized vkCreateBuffer failed (Size=%llu)", AlignedSize);
         return nullptr;
     }
 
@@ -2072,15 +2148,3 @@ void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 A
     return MappedMemory;
 }
 
-void* FVulkanUploadHeapAllocator::AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
-{
-    const uint64 ConstantsAlignment = GetDevice()->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment;
-    const uint64 UsedAlignment      = Alignment ? Alignment : ConstantsAlignment;
-
-    if (ConstantsAllocator && ConstantsAllocator->TryAllocate(SizeInBytes, UsedAlignment, OutStorage))
-    {
-        return OutStorage.GetMappedBaseAddress();
-    }
-
-    return nullptr;
-}

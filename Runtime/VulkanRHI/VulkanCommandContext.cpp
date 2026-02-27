@@ -367,13 +367,6 @@ void FVulkanCommandContext::StartContext()
     ContextState.ResetState();
 
     // -------------------------------------------------------------------------------------------
-    // Pick up and retire any previously submitted command payloads to avoid unbounded growth 
-    // in per-frame allocations and to free pools/buffers for reuse.
-    // -------------------------------------------------------------------------------------------
-    
-    FVulkanRHI::Get()->ProcessPendingCommands();
-
-    // -------------------------------------------------------------------------------------------
     // Acquire/allocate a fresh command buffer so the caller can immediately begin recording 
     // GPU work in this context.
     // -------------------------------------------------------------------------------------------
@@ -978,7 +971,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     else
     {
         FVulkanMemoryStorage UploadStorage(GetDevice());
-        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateUploadMemory(BufferRegion.Size, 1, UploadStorage);
+        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateUploadMemory(BufferRegion.Size, 1, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, UploadStorage);
         CHECK(MappedMemory != nullptr);
         FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
         
@@ -1005,7 +998,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     const uint64 Alignment = 256;
 
     FVulkanMemoryStorage UploadStorage(GetDevice());
-    uint8* UploadMemory = static_cast<uint8*>(GetDevice()->GetMemoryManager().AllocateUploadMemory(RequiredSize, Alignment, UploadStorage));
+    uint8* UploadMemory = static_cast<uint8*>(GetDevice()->GetMemoryManager().AllocateUploadMemory(RequiredSize, Alignment, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, UploadStorage));
     CHECK(UploadMemory != nullptr);
 
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);

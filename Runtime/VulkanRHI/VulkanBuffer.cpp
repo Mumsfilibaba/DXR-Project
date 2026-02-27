@@ -93,7 +93,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     if (!MemoryManager.AllocateBufferMemory(MemoryProperties, UsageFlags, AllocateFlags, AlignedSize, RequiredAlignment, MemoryStorage))
     {
-        VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory (Size=%llu, UsageFlags=0x%x)", AlignedSize, UsageFlags);
         return false;
     }
 

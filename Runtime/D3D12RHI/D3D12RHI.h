@@ -39,11 +39,11 @@ public:
 
     bool Initialize();
 
+    void BeginFrame(FD3D12CommandContext* InCommandContext);
+    
     // FRHI Interface
     virtual void BeginFrame() override final;
     virtual void EndFrame() override final;
-
-    void BeginFrame(FD3D12CommandContext* InCommandContext);
 
     virtual FRHITexture* CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final;
@@ -89,7 +89,6 @@ public:
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
     
-    void ProcessPendingCommands();
     void SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueue);
 
     FD3D12Adapter* GetAdapter() const
@@ -108,14 +107,17 @@ public:
     }
 
 private:
+    bool InitializeDeviceFeatureSupport();
+
+    void ProcessPendingCommands();
+    void TickCoreProgression();
+
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
     {
         TScopedLock Lock(DeletionQueueCS);
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
-
-    bool InitializeDeviceFeatureSupport();
     
     typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef>  FSamplerStateMap;
     typedef TQueue<FD3D12Commands*, EQueueType::MPSC> FCommandsQueue;

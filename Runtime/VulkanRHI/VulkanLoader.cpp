@@ -111,6 +111,10 @@ VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2);
 VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2);
 VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2);
 
+// VK_KHR_maintenance4 (Core in 1.3)
+VULKAN_FUNCTION_DEFINITION(GetDeviceBufferMemoryRequirements);
+VULKAN_FUNCTION_DEFINITION(GetDeviceImageMemoryRequirements);
+
 VULKAN_FUNCTION_DEFINITION(CreateShaderModule);
 VULKAN_FUNCTION_DEFINITION(DestroyShaderModule);
 
@@ -325,6 +329,10 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements2);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements2);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageSparseMemoryRequirements2);
+
+    // VK_KHR_maintenance4 (Core in 1.3)
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetDeviceBufferMemoryRequirements);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetDeviceImageMemoryRequirements);
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateShaderModule);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyShaderModule);

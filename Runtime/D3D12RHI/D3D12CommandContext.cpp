@@ -369,9 +369,6 @@ void FD3D12CommandContext::StartContext()
     // Reset the state
     ContextState.ResetState();
 
-    // Process submitted commands
-    FD3D12RHI::Get()->ProcessPendingCommands();
-
     // Retrieve a new CommandList
     ObtainCommandList();
 

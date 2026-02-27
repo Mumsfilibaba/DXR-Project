@@ -142,6 +142,10 @@ VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2);
 VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2);
 VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2);
 
+// VK_KHR_maintenance4 (Core in 1.3)
+VULKAN_FUNCTION_DECLARATION(GetDeviceBufferMemoryRequirements);
+VULKAN_FUNCTION_DECLARATION(GetDeviceImageMemoryRequirements);
+
 VULKAN_FUNCTION_DECLARATION(CreateShaderModule);
 VULKAN_FUNCTION_DECLARATION(DestroyShaderModule);
 

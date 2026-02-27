@@ -28,7 +28,7 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
 static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
     "D3D12RHI.MaxPendingSubmissions",
     "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
-    64);
+    32);
 
 FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
@@ -171,6 +171,8 @@ void FD3D12RHI::BeginFrame(FD3D12CommandContext* InCommandContext)
     {
         return;
     }
+
+    ProcessPendingCommands();
 
     Device->BeginFrame(InCommandContext);
 
@@ -343,10 +345,9 @@ FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERes
     {
         return nullptr;
     }
-    else
-    {
-        return NewTexture.ReleaseOwnership();
-    }
+
+    TickCoreProgression();
+    return NewTexture.ReleaseOwnership();
 }
 
 FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
@@ -356,10 +357,9 @@ FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourc
     {
         return nullptr;
     }
-    else
-    {
-        return NewBuffer.ReleaseOwnership();
-    }
+
+    TickCoreProgression();
+    return NewBuffer.ReleaseOwnership();
 }
 
 FRHISamplerState* FD3D12RHI::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
@@ -419,6 +419,8 @@ FRHIRayTracingScene* FD3D12RHI::CreateRayTracingScene(const FRHIRayTracingSceneI
     }
 
     DirectCommandContext->FinishContext();
+
+    TickCoreProgression();
     return D3D12Scene.ReleaseOwnership();
 }
 
@@ -442,6 +444,8 @@ FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracing
     }
 
     DirectCommandContext->FinishContext();
+
+    TickCoreProgression();
     return D3D12Geometry.ReleaseOwnership();
 }
 
@@ -1048,6 +1052,66 @@ void FD3D12RHI::ProcessPendingCommands()
         else
         {
             bProcess = false;
+        }
+    }
+}
+
+void FD3D12RHI::TickCoreProgression()
+{
+    ProcessPendingCommands();
+
+    const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
+    while (PendingSubmissions.Size() > MaxPending)
+    {
+        FD3D12Commands* Oldest = nullptr;
+        if (PendingSubmissions.Peek(Oldest) && Oldest)
+        {
+            Oldest->SyncPoint.Fence->WaitForValue(Oldest->SyncPoint.FenceValue);
+            PendingSubmissions.Dequeue();
+            Oldest->Finish();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if (FD3D12LinearAllocator* StagingBufferAllocator = Device->GetStagingBufferAllocator())
+    {
+        StagingBufferAllocator->CleanUp();
+    }
+
+    if (FD3D12DynamicConstantsAllocator* DynamicConstantsAllocator = Device->GetDynamicConstantsAllocator())
+    {
+        DynamicConstantsAllocator->CleanUp();
+    }
+
+    if (FD3D12UploadHeapAllocator* UploadHeapAllocator = Device->GetUploadHeapAllocator())
+    {
+        UploadHeapAllocator->CleanUp();
+    }
+
+    if (FD3D12BufferAllocator* BufferAllocator = Device->GetBufferAllocator())
+    {
+        BufferAllocator->CleanUp();
+    }
+
+    if (FD3D12TextureAllocator* TextureAllocator = Device->GetTextureAllocator())
+    {
+        TextureAllocator->CleanUp();
+    }
+
+    extern TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame;
+    const int32 MaxDefragMoves = CVarMaxDefragMovesPerFrame.GetValue();
+    if (MaxDefragMoves > 0)
+    {
+        if (FD3D12TextureAllocator* TextureAllocator = Device->GetTextureAllocator())
+        {
+            FD3D12FenceManager& FenceManager = Device->GetQueue(ED3D12CommandQueueType::Direct)->GetFenceManager();
+
+            DirectCommandContext->StartContext();
+            TextureAllocator->DefragmentAllocations(DirectCommandContext, MaxDefragMoves, FenceManager);
+            DirectCommandContext->FinishContext();
         }
     }
 }

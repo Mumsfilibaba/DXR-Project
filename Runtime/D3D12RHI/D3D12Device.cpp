@@ -123,7 +123,7 @@ static TAutoConsoleVariable<FString> CVarDeviceRemovedDumpFilePath(
     "File path for DRED device removed dump output",
     "D3D12DeviceRemovedDump.txt");
 
-static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
+TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
     "D3D12RHI.MaxDefragMovesPerFrame",
     "Maximum number of resource defragmentation moves per frame (0 to disable)",
     4);

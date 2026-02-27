@@ -39,7 +39,6 @@ public:
         return GVulkanRHI;
     }
 
-
 public:
     FVulkanRHI();
     ~FVulkanRHI();
@@ -94,7 +93,6 @@ public:
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
 
-    void ProcessPendingCommands();
     void SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQueue);
 
     FVulkanInstance* GetInstance()
@@ -118,6 +116,9 @@ public:
     }
 
 private:
+    void ProcessPendingCommands();
+    void TickCoreProgression();
+
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
     {

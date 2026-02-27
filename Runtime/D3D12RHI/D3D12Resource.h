@@ -8,9 +8,9 @@
 
 typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 
-class FD3D12BuddyAllocator;
-class FD3D12BucketAllocator;
 class FD3D12PoolAllocator;
+class FD3D12BucketAllocator;
+class FD3D12BuddyAllocator;
 class FD3D12GenericResource;
 class FD3D12ResourceStorage;
 
@@ -117,25 +117,25 @@ public:
     }
 
     FORCEINLINE void SetPoolAllocationData(const FD3D12PoolAllocatorAllocationData& InData)     { AllocationData.Pool = InData; }
-    FORCEINLINE void SetBuddyAllocationData(const FD3D12BuddyAllocatorAllocationData& InData)   { AllocationData.Buddy = InData; }
     FORCEINLINE void SetBucketAllocationData(const FD3D12BucketAllocatorAllocationData& InData) { AllocationData.Bucket = InData; }
+    FORCEINLINE void SetBuddyAllocationData(const FD3D12BuddyAllocatorAllocationData& InData)   { AllocationData.Buddy = InData; }
 
 private:
 
     union FAllocatorData
     {
         FD3D12PoolAllocatorAllocationData   Pool;
-        FD3D12BuddyAllocatorAllocationData  Buddy;
         FD3D12BucketAllocatorAllocationData Bucket;
+        FD3D12BuddyAllocatorAllocationData  Buddy;
 
         FAllocatorData() {}
     } AllocationData;
 
     union FAllocatorPointers
     {
-        FD3D12BuddyAllocator*  BuddyAllocator;
-        FD3D12BucketAllocator* BucketAllocator;
         FD3D12PoolAllocator*   PoolAllocator;
+        FD3D12BucketAllocator* BucketAllocator;
+        FD3D12BuddyAllocator*  BuddyAllocator;
         void*                  AsVoid;
 
         FAllocatorPointers()

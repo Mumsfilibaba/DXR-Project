@@ -194,9 +194,9 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, ImageCreateInfo.usage, AllocateFlags, MemoryStorage))
+    if (!MemoryManager.AllocateImageMemory(Image, ImageCreateInfo, MemoryProperties, AllocateFlags, MemoryStorage))
     {
-        VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
+        VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory (Width=%u, Height=%u, Format=%u, Usage=0x%x)", ImageCreateInfo.extent.width, ImageCreateInfo.extent.height, ImageCreateInfo.format, ImageCreateInfo.usage);
         return false;
     }
 

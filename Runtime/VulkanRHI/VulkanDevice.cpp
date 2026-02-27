@@ -1268,30 +1268,7 @@ bool FVulkanDevice::PostLoaderInitalize()
         return false;
     }
 
-    // Query the host-visible memory type index for upload/staging allocators
-    const VkMemoryPropertyFlags UploadMemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-
-    VkBufferCreateInfo DummyBufferInfo = {};
-    DummyBufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    DummyBufferInfo.size        = 256;
-    DummyBufferInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    DummyBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VkBuffer DummyBuffer = VK_NULL_HANDLE;
-    vkCreateBuffer(GetVkDevice(), &DummyBufferInfo, nullptr, &DummyBuffer);
-
-    VkMemoryRequirements MemReqs = {};
-    vkGetBufferMemoryRequirements(GetVkDevice(), DummyBuffer, &MemReqs);
-    vkDestroyBuffer(GetVkDevice(), DummyBuffer, nullptr);
-
-    const int32 UploadMemoryTypeIndex = PhysicalDevice->FindMemoryTypeIndex(MemReqs.memoryTypeBits, UploadMemoryProperties);
-    if (UploadMemoryTypeIndex == TNumericLimits<int32>::Max())
-    {
-        VULKAN_ERROR_CRITICAL("FVulkanDevice: No suitable host-visible memory type for upload heap");
-        return false;
-    }
-
-    MemoryManager = new FVulkanMemoryManager(this, static_cast<uint32>(UploadMemoryTypeIndex));
+    MemoryManager = new FVulkanMemoryManager(this);
     if (!MemoryManager->Initialize())
     {
         VULKAN_ERROR_CRITICAL("FVulkanDevice: Failed to initialize MemoryManager");
@@ -1792,7 +1769,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
         NullImageStorage.Swap(TempStorage);
     }
 
-    if (!MemoryManager.AllocateImageMemory(NullImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, ImageCreateInfo.usage, 0, NullImageStorage))
+    if (!MemoryManager.AllocateImageMemory(NullImage, ImageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, NullImageStorage))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
         return false;
