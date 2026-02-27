@@ -21,6 +21,11 @@ static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
     "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
     64);
 
+static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
+    "VulkanRHI.MaxDefragMovesPerFrame",
+    "Maximum number of texture defragmentation moves per frame (0 to disable)",
+    4);
+
 FRHI* FVulkanRHIModule::CreateRHI()
 {
     TUniquePtr<FVulkanRHI> NewRHI = MakeUniquePtr<FVulkanRHI>();
@@ -167,6 +172,7 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
     // Vulkan 1.0 Optional
     DeviceCreateInfo.OptionalFeatures.geometryShader                       = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.tessellationShader                   = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.multiDrawIndirect                    = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.robustBufferAccess                   = VK_TRUE;
 
@@ -271,6 +277,12 @@ void FVulkanRHI::BeginFrame()
     GraphicsCommandContext->GetContextState().EvictStaleDescriptorStates();
 
     Device->GetMemoryManager().CleanUpAllocators();
+
+    const int32 MaxDefragMoves = CVarMaxDefragMovesPerFrame.GetValue();
+    if (MaxDefragMoves > 0)
+    {
+        Device->GetMemoryManager().DefragmentAllocations(GraphicsCommandContext, MaxDefragMoves);
+    }
 }
 
 void FVulkanRHI::EndFrame()
@@ -412,7 +424,7 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIShaderRes
 	CHECK(Resource != nullptr);
 
     FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), Resource);
-    if (!NewShaderResourceView->InitializeSRV(InInfo))
+    if (!NewShaderResourceView->Initialize(InInfo))
     {
         return nullptr;
     }
@@ -441,7 +453,7 @@ FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIUnorder
 	CHECK(Resource != nullptr);
 
     FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), Resource);
-    if (!NewUnorderedAccessView->InitializeUAV(InInfo))
+    if (!NewUnorderedAccessView->Initialize(InInfo))
     {
         return nullptr;
     }
@@ -843,5 +855,100 @@ void FVulkanRHI::SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQu
                 break;
             }
         }
+    }
+}
+
+VkPipelineStageFlags2 FVulkanRHI::ResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
+{
+    VkPipelineStageFlags2 AllShaderBits =
+        VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
+        VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+
+    VkPipelineStageFlags2 AllNonPixelShaderBits =
+        VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
+        VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
+
+    if (GVulkanSupportsGeometryShader)
+    {
+        AllShaderBits         |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT;
+        AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT;
+    }
+    if (GVulkanSupportsTessellation)
+    {
+        AllShaderBits         |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT;
+        AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT;
+    }
+
+    switch (ResourceState)
+    {
+        case EResourceAccess::Common:                 return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+        case EResourceAccess::CopyDest:               return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        case EResourceAccess::CopySource:             return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        case EResourceAccess::DepthRead:              return VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+        case EResourceAccess::DepthWrite:             return VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+        case EResourceAccess::IndexBuffer:            return VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
+        case EResourceAccess::VertexBuffer:           return VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
+        case EResourceAccess::NonPixelShaderResource: return AllNonPixelShaderBits;
+        case EResourceAccess::PixelShaderResource:    return VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+        case EResourceAccess::Present:                return VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+        case EResourceAccess::RenderTarget:           return VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+        case EResourceAccess::ResolveDest:            return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        case EResourceAccess::ResolveSource:          return VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        case EResourceAccess::ShadingRateSource:      return GVulkanSupportsFragmentShadingRate ? VK_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR : VK_PIPELINE_STAGE_2_NONE;
+        case EResourceAccess::UnorderedAccess:        return AllShaderBits;
+        case EResourceAccess::ConstantBuffer:         return AllShaderBits;
+        case EResourceAccess::GenericRead:            return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+        default:                                      return VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+    }
+}
+
+VkAccessFlags2 FVulkanRHI::ResourceStateToAccessFlags(EResourceAccess ResourceState)
+{
+    switch (ResourceState)
+    {
+        case EResourceAccess::Common:                 return VK_ACCESS_2_NONE;
+        case EResourceAccess::CopyDest:               return VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        case EResourceAccess::CopySource:             return VK_ACCESS_2_TRANSFER_READ_BIT;
+        case EResourceAccess::DepthRead:              return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        case EResourceAccess::DepthWrite:             return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        case EResourceAccess::IndexBuffer:            return VK_ACCESS_2_INDEX_READ_BIT;
+        case EResourceAccess::VertexBuffer:           return VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT;
+        case EResourceAccess::NonPixelShaderResource: return VK_ACCESS_2_SHADER_READ_BIT;
+        case EResourceAccess::PixelShaderResource:    return VK_ACCESS_2_SHADER_READ_BIT;
+        case EResourceAccess::Present:                return VK_ACCESS_2_MEMORY_READ_BIT;
+        case EResourceAccess::RenderTarget:           return VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+        case EResourceAccess::ResolveDest:            return VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        case EResourceAccess::ResolveSource:          return VK_ACCESS_2_TRANSFER_READ_BIT;
+        case EResourceAccess::ShadingRateSource:      return GVulkanSupportsFragmentShadingRate ? VK_ACCESS_2_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR : VK_ACCESS_2_NONE;
+        case EResourceAccess::UnorderedAccess:        return VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
+        case EResourceAccess::ConstantBuffer:         return VK_ACCESS_2_UNIFORM_READ_BIT;
+        case EResourceAccess::GenericRead:            return VK_ACCESS_2_MEMORY_READ_BIT;
+        default:                                      return VK_ACCESS_2_NONE;
+    }
+}
+
+VkImageLayout FVulkanRHI::ResourceStateToImageLayout(EResourceAccess ResourceState)
+{
+    switch (ResourceState)
+    {
+        case EResourceAccess::Common:                 return VK_IMAGE_LAYOUT_GENERAL;
+        case EResourceAccess::CopyDest:               return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case EResourceAccess::DepthRead:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+        case EResourceAccess::DepthWrite:             return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        case EResourceAccess::IndexBuffer:            return VK_IMAGE_LAYOUT_UNDEFINED;
+        case EResourceAccess::VertexBuffer:           return VK_IMAGE_LAYOUT_UNDEFINED;
+        case EResourceAccess::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case EResourceAccess::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case EResourceAccess::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        case EResourceAccess::RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case EResourceAccess::ResolveDest:            return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::ResolveSource:          return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case EResourceAccess::ShadingRateSource:      return VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+        case EResourceAccess::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
+        case EResourceAccess::ConstantBuffer:         return VK_IMAGE_LAYOUT_UNDEFINED;
+        case EResourceAccess::GenericRead:            return VK_IMAGE_LAYOUT_UNDEFINED;
+        default:                                      return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }

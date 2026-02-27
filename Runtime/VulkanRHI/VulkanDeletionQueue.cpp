@@ -1,5 +1,6 @@
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanDevice.h"
 
 void FVulkanDeferredObject::ProcessItems(FVulkanDevice* Device, TArray<FVulkanDeferredObject>& Items)
@@ -44,6 +45,20 @@ void FVulkanDeferredObject::ProcessItems(FVulkanDevice* Device, TArray<FVulkanDe
                     vkFreeMemory(Device->GetVkDevice(), Item.DedicatedAllocation.Memory, nullptr);
                 }
 
+                break;
+            }
+            case FVulkanDeferredObject::EType::LinearAllocatorPage:
+            {
+                CHECK(Item.LinearAllocatorPage.Allocator != nullptr);
+                CHECK(Item.LinearAllocatorPage.Page != nullptr);
+                Item.LinearAllocatorPage.Allocator->ReturnPage(Item.LinearAllocatorPage.Page);
+                break;
+            }
+            case FVulkanDeferredObject::EType::DescriptorPool:
+            {
+                CHECK(Item.DescriptorPoolData.PoolManager != nullptr);
+                CHECK(Item.DescriptorPoolData.Pool != nullptr);
+                Item.DescriptorPoolData.PoolManager->ReleasePool(Item.DescriptorPoolData.Pool);
                 break;
             }
         }

@@ -7,6 +7,7 @@
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanSamplerState.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanRHI.h"
 
 #define VALIDATE_NO_NULL_DESCRIPTORS (0)
 
@@ -472,6 +473,7 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
 
 FVulkanDescriptorPool::FVulkanDescriptorPool(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
+    , PoolInfo()
     , DescriptorPool(VK_NULL_HANDLE)
     , MaxDescriptorSets(0)
     , NumDescriptorSets(0)
@@ -490,10 +492,12 @@ FVulkanDescriptorPool::~FVulkanDescriptorPool()
     }
 }
 
-bool FVulkanDescriptorPool::Initialize(const FVulkanDescriptorPoolInfo& PoolInfo, int32 MaxSetsPerPool)
+bool FVulkanDescriptorPool::Initialize(const FVulkanDescriptorPoolInfo& InPoolInfo, int32 MaxSetsPerPool)
 {
+    PoolInfo = InPoolInfo;
+
     TArray<VkDescriptorPoolSize> PoolSizes;
-    for (const FVulkanDescriptorPoolInfo::FDescriptorSize& Size : PoolInfo.DescriptorSizes)
+    for (const FVulkanDescriptorPoolInfo::FDescriptorSize& Size : InPoolInfo.DescriptorSizes)
     {
         VkDescriptorPoolSize NewPoolSize;
         NewPoolSize.type            = static_cast<VkDescriptorType>(Size.Type);
@@ -600,11 +604,15 @@ FVulkanDescriptorPool* FVulkanDescriptorPoolManager::AcquirePool(const FVulkanDe
     return NewPool;
 }
 
-void FVulkanDescriptorPoolManager::ReleasePool(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorPool* Pool)
+void FVulkanDescriptorPoolManager::ReleasePool(FVulkanDescriptorPool* Pool)
 {
+    CHECK(Pool != nullptr);
+
     TScopedLock Lock(PoolCS);
 
     Pool->Reset();
+
+    const FVulkanDescriptorPoolInfo& PoolInfo = Pool->GetPoolInfo();
 
     FFreePool Entry;
     Entry.Pool          = Pool;
@@ -656,12 +664,12 @@ FVulkanTransientDescriptorAllocator::~FVulkanTransientDescriptorAllocator()
         FPoolSet& Set = Entry.Second;
         if (Set.ActivePool)
         {
-            PoolManager.ReleasePool(Entry.First, Set.ActivePool);
+            PoolManager.ReleasePool(Set.ActivePool);
         }
 
         for (FVulkanDescriptorPool* Pool : Set.UsedPools)
         {
-            PoolManager.ReleasePool(Entry.First, Pool);
+            PoolManager.ReleasePool(Pool);
         }
     }
 
@@ -714,20 +722,20 @@ bool FVulkanTransientDescriptorAllocator::AllocateDescriptorSet(const FVulkanDes
     return bAllocated;
 }
 
-void FVulkanTransientDescriptorAllocator::FlushPools(FVulkanCommands& Commands)
+void FVulkanTransientDescriptorAllocator::FlushPools()
 {
     for (auto Entry : PoolSets)
     {
         FPoolSet& Set = Entry.Second;
         if (Set.ActivePool)
         {
-            Commands.AddDescriptorPool(Entry.First, Set.ActivePool);
+            FVulkanRHI::DeferDeletion(&PoolManager, Set.ActivePool);
             Set.ActivePool = nullptr;
         }
 
         for (FVulkanDescriptorPool* Pool : Set.UsedPools)
         {
-            Commands.AddDescriptorPool(Entry.First, Pool);
+            FVulkanRHI::DeferDeletion(&PoolManager, Pool);
         }
 
         Set.UsedPools.Clear();

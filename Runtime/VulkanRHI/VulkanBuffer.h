@@ -1,11 +1,11 @@
 #pragma once
 #include "RHI/RHIResources.h"
-#include "VulkanRHI/VulkanMemoryManager.h"
+#include "VulkanRHI/VulkanResource.h"
 #include "VulkanRHI/VulkanResourceState.h"
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 
-class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
+class FVulkanBuffer : public FRHIBuffer, public FVulkanGenericResource
 {
 public:
     static FORCEINLINE FVulkanBuffer* Cast(FRHIBuffer* Buffer)
@@ -91,17 +91,11 @@ public:
         return MemoryStorage.IsSuballocated() && OwnedBuffer == VK_NULL_HANDLE;
     }
 
-    const FVulkanMemoryStorage& GetMemoryStorage() const
-    {
-        return MemoryStorage;
-    }
-
-    FVulkanBufferState&       GetTrackedState()       { return TrackedState; }
-    const FVulkanBufferState& GetTrackedState() const { return TrackedState; }
+    FVulkanBufferState&       GetBufferState()       { return TrackedState; }
+    const FVulkanBufferState& GetBufferState() const { return TrackedState; }
 
 protected:
     VkBuffer             OwnedBuffer;
-    FVulkanMemoryStorage MemoryStorage;
     VkDeviceSize         RequiredAlignment;
     FVulkanBufferState   TrackedState;
     FString              DebugName;

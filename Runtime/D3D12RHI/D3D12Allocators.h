@@ -271,14 +271,7 @@ public:
     FD3D12LinearAllocatorPage(FD3D12Device* InDevice, uint64 InPageSizeBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState);
     ~FD3D12LinearAllocatorPage() = default;
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint64& OutOffset);
     bool Initialize();
-    void Reset();
-    
-    bool IsExhausted() const
-    {
-        return CurrentOffset >= PageSizeBytes;
-    }
 
     FD3D12ResourceStorage& GetBackingResourceStorage()
     {
@@ -294,30 +287,32 @@ private:
     uint64                PageSizeBytes;
     D3D12_HEAP_TYPE       HeapType;
     D3D12_RESOURCE_STATES InitialState;
-    uint64                CurrentOffset;
     FD3D12ResourceStorage BackingResourceStorage;
 };
 
 class FD3D12LinearAllocator : public FD3D12DeviceChild
 {
-
 public:
     FD3D12LinearAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState);
     ~FD3D12LinearAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
-    void CleanUp();
+    void  ReturnPage(FD3D12LinearAllocatorPage* InPage);
+    void  CleanUp();
 
 private:
+    FD3D12LinearAllocatorPage* AcquirePage();
     FD3D12LinearAllocatorPage* CreatePage();
-    void RetirePage(FD3D12LinearAllocatorPage* Page);
+
+    static constexpr int32 MAX_POOL_PAGES = 8;
 
     uint64                             PageSizeBytes;
     D3D12_HEAP_TYPE                    HeapType;
     D3D12_RESOURCE_STATES              InitialState;
-    TArray<FD3D12LinearAllocatorPage*> Pages;
-    TArray<FD3D12LinearAllocatorPage*> FullPages;
-    FCriticalSection                   PagesCS;
+    FD3D12LinearAllocatorPage*         CurrentPage;
+    uint64                             CurrentOffset;
+    TArray<FD3D12LinearAllocatorPage*> PagePool;
+    FCriticalSection                   AllocatorCS;
 };
 
 class FD3D12DynamicConstantsAllocator : public FD3D12DeviceChild

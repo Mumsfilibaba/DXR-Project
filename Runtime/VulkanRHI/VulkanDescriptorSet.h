@@ -379,11 +379,14 @@ public:
     void IncrementLive() { LiveDescriptorSets++; }
     void DecrementLive() { LiveDescriptorSets--; }
 
+    const FVulkanDescriptorPoolInfo& GetPoolInfo() const { return PoolInfo; }
+
 private:
-    VkDescriptorPool DescriptorPool;
-    int32            MaxDescriptorSets;
-    int32            NumDescriptorSets;
-    int32            LiveDescriptorSets;
+    FVulkanDescriptorPoolInfo PoolInfo;
+    VkDescriptorPool          DescriptorPool;
+    int32                     MaxDescriptorSets;
+    int32                     NumDescriptorSets;
+    int32                     LiveDescriptorSets;
 };
 
 class FVulkanDescriptorPoolManager : public FVulkanDeviceChild
@@ -399,7 +402,7 @@ public:
     ~FVulkanDescriptorPoolManager();
 
     FVulkanDescriptorPool* AcquirePool(const FVulkanDescriptorPoolInfo& PoolInfo);
-    void ReleasePool(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorPool* Pool);
+    void ReleasePool(FVulkanDescriptorPool* Pool);
     void EvictUnusedPools();
 
 private:
@@ -423,7 +426,7 @@ public:
     ~FVulkanTransientDescriptorAllocator();
 
     bool AllocateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
-    void FlushPools(struct FVulkanCommands& Commands);
+    void FlushPools();
 
     uint64 GetDescriptorSetVersion() const
     {

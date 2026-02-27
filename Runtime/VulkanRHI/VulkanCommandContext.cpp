@@ -7,6 +7,7 @@
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanFence.h"
+#include "VulkanRHI/VulkanRHI.h"
 
 static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandBuffer(
     "VulkanRHI.MaxCommandsPerCommandBuffer",
@@ -203,11 +204,11 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     }
 }
 
-FVulkanImageState& FVulkanCommandContext::RetrievePendingImageState(FVulkanTexture* Texture)
+FVulkanImageLayoutState& FVulkanCommandContext::RetrievePendingImageState(FVulkanTexture* Texture)
 {
     CHECK(Texture != nullptr);
 
-    FVulkanImageState& LocalState = PendingImageStates.FindOrAdd(Texture);
+    FVulkanImageLayoutState& LocalState = PendingImageStates.FindOrAdd(Texture);
     if (!LocalState.IsInitialized())
     {
         const VkImageCreateInfo& CreateInfo = Texture->GetVkImageCreateInfo();
@@ -268,7 +269,7 @@ FVulkanFence* FVulkanCommandContext::SubmitCommandBuffer(bool bFlushPool)
 
     if (TransientDescriptorAllocator)
     {
-        TransientDescriptorAllocator->FlushPools(*Commands);
+        TransientDescriptorAllocator->FlushPools();
     }
 
     Commands->AddCommandBuffer(CommandBuffer);
@@ -484,11 +485,11 @@ void FVulkanCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Re
         VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        ImageBarrier.oldLayout                       = ConvertResourceStateToImageLayout(EResourceAccess::RenderTarget);
+        ImageBarrier.oldLayout                       = FVulkanRHI::ResourceStateToImageLayout(EResourceAccess::RenderTarget);
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = VulkanTexture->GetVkImage();
-        ImageBarrier.srcAccessMask                   = ConvertResourceStateToAccessFlags(EResourceAccess::RenderTarget);
+        ImageBarrier.srcAccessMask                   = FVulkanRHI::ResourceStateToAccessFlags(EResourceAccess::RenderTarget);
         ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
         ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
         ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
@@ -508,11 +509,11 @@ void FVulkanCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Re
         GetCommandBuffer()->ClearColorImage(ImageViewInfo.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1, &ImageViewInfo.SubresourceRange);
         
         // .. And transition back into "RenderTargetState"
-        ImageBarrier.newLayout           = ConvertResourceStateToImageLayout(EResourceAccess::RenderTarget);
+        ImageBarrier.newLayout           = FVulkanRHI::ResourceStateToImageLayout(EResourceAccess::RenderTarget);
         ImageBarrier.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.dstAccessMask       = ConvertResourceStateToAccessFlags(EResourceAccess::RenderTarget);
+        ImageBarrier.dstAccessMask       = FVulkanRHI::ResourceStateToAccessFlags(EResourceAccess::RenderTarget);
         ImageBarrier.srcAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT;
         ImageBarrier.srcStageMask        = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
         ImageBarrier.dstStageMask        = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -538,11 +539,11 @@ void FVulkanCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& De
         VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        ImageBarrier.oldLayout                       = ConvertResourceStateToImageLayout(EResourceAccess::DepthWrite);
+        ImageBarrier.oldLayout                       = FVulkanRHI::ResourceStateToImageLayout(EResourceAccess::DepthWrite);
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = VulkanTexture->GetVkImage();
-        ImageBarrier.srcAccessMask                   = ConvertResourceStateToAccessFlags(EResourceAccess::DepthWrite);
+        ImageBarrier.srcAccessMask                   = FVulkanRHI::ResourceStateToAccessFlags(EResourceAccess::DepthWrite);
         ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
         ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
         ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
@@ -563,11 +564,11 @@ void FVulkanCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& De
         GetCommandBuffer()->ClearDepthStencilImage(ImageViewInfo.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &DepthStencilValue, 1, &ImageViewInfo.SubresourceRange);
 
         // .. And transition back into "DepthStencilState"
-        ImageBarrier.newLayout           = ConvertResourceStateToImageLayout(EResourceAccess::DepthWrite);
+        ImageBarrier.newLayout           = FVulkanRHI::ResourceStateToImageLayout(EResourceAccess::DepthWrite);
         ImageBarrier.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         ImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.dstAccessMask       = ConvertResourceStateToAccessFlags(EResourceAccess::DepthWrite);
+        ImageBarrier.dstAccessMask       = FVulkanRHI::ResourceStateToAccessFlags(EResourceAccess::DepthWrite);
         ImageBarrier.srcAccessMask       = VK_ACCESS_2_TRANSFER_WRITE_BIT;
         ImageBarrier.srcStageMask        = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
         ImageBarrier.dstStageMask        = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
@@ -998,7 +999,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     CHECK(VulkanTexture != nullptr);
 
     const VkFormat Format = VulkanTexture->GetVkFormat();
-    const uint64 RequiredSize = VulkanTextureHelper::CalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
+    const uint64 RequiredSize = VkCalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
     
     // TODO: Check if there exists a Vulkan macro for this
     const uint64 Alignment = 256;
@@ -1010,8 +1011,8 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
     CHECK(Source != nullptr);
     
-    const uint32 RowPitch = VulkanTextureHelper::CalculateTextureRowPitch(Format, TextureRegion.Width);
-    const uint32 NumRows  = VulkanTextureHelper::CalculateTextureNumRows(Format, TextureRegion.Height);
+    const uint32 RowPitch = VkCalculateTextureRowPitch(Format, TextureRegion.Width);
+    const uint32 NumRows  = VkCalculateTextureNumRows(Format, TextureRegion.Height);
 
     for (uint64 y = 0; y < NumRows; y++)
     {
@@ -1308,10 +1309,10 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
     FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
     CHECK(VulkanTexture != nullptr);
 
-    FVulkanImageState& LocalState = RetrievePendingImageState(VulkanTexture);
+    FVulkanImageLayoutState& LocalState = RetrievePendingImageState(VulkanTexture);
 
-    const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
-    const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
+    const VkImageLayout NewLayout      = FVulkanRHI::ResourceStateToImageLayout(TextureTransition.AfterState);
+    const VkImageLayout PreviousLayout = FVulkanRHI::ResourceStateToImageLayout(TextureTransition.BeforeState);
 
     if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS && TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES)
     {
@@ -1370,10 +1371,10 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
         ImageBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                       = VulkanTexture->GetVkImage();
-        ImageBarrier.srcAccessMask               = ConvertResourceStateToAccessFlags(TextureTransition.BeforeState);
-        ImageBarrier.dstAccessMask               = ConvertResourceStateToAccessFlags(TextureTransition.AfterState);
-        ImageBarrier.srcStageMask                = ConvertResourceStateToPipelineStageFlags(TextureTransition.BeforeState);
-        ImageBarrier.dstStageMask                = ConvertResourceStateToPipelineStageFlags(TextureTransition.AfterState);
+        ImageBarrier.srcAccessMask               = FVulkanRHI::ResourceStateToAccessFlags(TextureTransition.BeforeState);
+        ImageBarrier.dstAccessMask               = FVulkanRHI::ResourceStateToAccessFlags(TextureTransition.AfterState);
+        ImageBarrier.srcStageMask                = FVulkanRHI::ResourceStateToPipelineStageFlags(TextureTransition.BeforeState);
+        ImageBarrier.dstStageMask                = FVulkanRHI::ResourceStateToPipelineStageFlags(TextureTransition.AfterState);
         ImageBarrier.subresourceRange.aspectMask = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
 
         if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)
@@ -1446,8 +1447,8 @@ void FVulkanCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceA
 
     FVulkanBufferState& LocalState = RetrievePendingBufferState(VulkanBuffer);
 
-    const VkAccessFlags2        BeforeAccess = ConvertResourceStateToAccessFlags(BeforeState);
-    const VkPipelineStageFlags2 BeforeStage  = ConvertResourceStateToPipelineStageFlags(BeforeState);
+    const VkAccessFlags2        BeforeAccess = FVulkanRHI::ResourceStateToAccessFlags(BeforeState);
+    const VkPipelineStageFlags2 BeforeStage  = FVulkanRHI::ResourceStateToPipelineStageFlags(BeforeState);
 
     if (LocalState.GetAccess() == VK_ACCESS_FLAGS_2_TO_BE_DETERMINED)
     {
@@ -1465,11 +1466,11 @@ void FVulkanCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceA
     VkBufferMemoryBarrier2 BufferBarrier = {};
     BufferBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
     BufferBarrier.srcAccessMask       = BeforeAccess;
-    BufferBarrier.dstAccessMask       = ConvertResourceStateToAccessFlags(AfterState);
+    BufferBarrier.dstAccessMask       = FVulkanRHI::ResourceStateToAccessFlags(AfterState);
     BufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     BufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     BufferBarrier.srcStageMask        = BeforeStage;
-    BufferBarrier.dstStageMask        = ConvertResourceStateToPipelineStageFlags(AfterState);
+    BufferBarrier.dstStageMask        = FVulkanRHI::ResourceStateToPipelineStageFlags(AfterState);
     BufferBarrier.buffer              = VulkanBuffer->GetVkBuffer();
     BufferBarrier.offset              = 0;
     BufferBarrier.size                = VK_WHOLE_SIZE;
@@ -1477,7 +1478,7 @@ void FVulkanCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceA
     CHECK(!IsInsideRenderPass());
     BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
 
-    LocalState.SetState(ConvertResourceStateToAccessFlags(AfterState), ConvertResourceStateToPipelineStageFlags(AfterState));
+    LocalState.SetState(FVulkanRHI::ResourceStateToAccessFlags(AfterState), FVulkanRHI::ResourceStateToPipelineStageFlags(AfterState));
 }
 
 void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
@@ -1485,11 +1486,11 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
     FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
     CHECK(VulkanTexture != nullptr);
 
-    FVulkanImageState& LocalState = RetrievePendingImageState(VulkanTexture);
+    FVulkanImageLayoutState& LocalState = RetrievePendingImageState(VulkanTexture);
 
-    const VkAccessFlags2        DstAccess     = ConvertResourceStateToAccessFlags(RequiredState.State);
-    const VkPipelineStageFlags2 DstStage      = ConvertResourceStateToPipelineStageFlags(RequiredState.State);
-    const VkImageLayout         DesiredLayout = ConvertResourceStateToImageLayout(RequiredState.State);
+    const VkAccessFlags2        DstAccess     = FVulkanRHI::ResourceStateToAccessFlags(RequiredState.State);
+    const VkPipelineStageFlags2 DstStage      = FVulkanRHI::ResourceStateToPipelineStageFlags(RequiredState.State);
+    const VkImageLayout         DesiredLayout = FVulkanRHI::ResourceStateToImageLayout(RequiredState.State);
 
     const VkImageCreateInfo& CreateInfo = VulkanTexture->GetVkImageCreateInfo();
     const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
@@ -1628,8 +1629,8 @@ void FVulkanCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAcce
 
     FVulkanBufferState& LocalState = RetrievePendingBufferState(VulkanBuffer);
     
-    const VkAccessFlags2        DesiredAccess = ConvertResourceStateToAccessFlags(RequiredState);
-    const VkPipelineStageFlags2 DesiredStage  = ConvertResourceStateToPipelineStageFlags(RequiredState);
+    const VkAccessFlags2        DesiredAccess = FVulkanRHI::ResourceStateToAccessFlags(RequiredState);
+    const VkPipelineStageFlags2 DesiredStage  = FVulkanRHI::ResourceStateToPipelineStageFlags(RequiredState);
 
     if (LocalState.GetAccess() == VK_ACCESS_FLAGS_2_TO_BE_DETERMINED)
     {

@@ -72,6 +72,14 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
                 Item.BucketAllocatorBlock.Allocator->RecycleAllocation(Item.BucketAllocatorBlock.AllocationData);
                 break;
             }
+
+            case FD3D12DeferredObject::EType::LinearAllocatorPage:
+            {
+                CHECK(Item.LinearAllocatorPage.Allocator != nullptr);
+                CHECK(Item.LinearAllocatorPage.Page != nullptr);
+                Item.LinearAllocatorPage.Allocator->ReturnPage(Item.LinearAllocatorPage.Page);
+                break;
+            }
         }
     }
 }

@@ -39,6 +39,8 @@ extern VULKANRHI_API bool   GVulkanSupportsSparseBinding;
 extern VULKANRHI_API bool   GVulkanSupportsSparseResidency2D;
 extern VULKANRHI_API bool   GVulkanSupportsSparseResidency3D;
 extern VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased;
+extern VULKANRHI_API bool   GVulkanSupportsGeometryShader;
+extern VULKANRHI_API bool   GVulkanSupportsTessellation;
 
 extern VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount;
 extern VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount;

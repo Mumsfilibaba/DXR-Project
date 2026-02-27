@@ -7,9 +7,8 @@
 
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
-    , FVulkanDeviceChild(InDevice)
+    , FVulkanGenericResource(InDevice)
     , OwnedBuffer(VK_NULL_HANDLE)
-    , MemoryStorage(InDevice)
     , RequiredAlignment(0)
     , DebugName()
     , TransientBuffer(VK_NULL_HANDLE)
@@ -130,8 +129,8 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     }
 
     TrackedState.SetState(
-        ConvertResourceStateToAccessFlags(InInitialAccess),
-        ConvertResourceStateToPipelineStageFlags(InInitialAccess));
+        FVulkanRHI::ResourceStateToAccessFlags(InInitialAccess),
+        FVulkanRHI::ResourceStateToPipelineStageFlags(InInitialAccess));
 
     if (InInitialData)
     {

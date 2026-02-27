@@ -329,7 +329,7 @@ void FVulkanCommands::PreExecute()
 
     for (const FVulkanPendingImageBarrier& Pending : PendingImageBarriers)
     {
-        FVulkanImageState& GlobalState = Pending.Texture->GetTrackedState();
+        FVulkanImageLayoutState& GlobalState = Pending.Texture->GetImageLayoutState();
         const VkImageCreateInfo& CreateInfo = Pending.Texture->GetVkImageCreateInfo();
         const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(CreateInfo.format);
 
@@ -422,7 +422,7 @@ void FVulkanCommands::PreExecute()
 
     for (const FVulkanPendingBufferBarrier& Pending : PendingBufferBarriers)
     {
-        FVulkanBufferState& GlobalState = Pending.Buffer->GetTrackedState();
+        FVulkanBufferState& GlobalState = Pending.Buffer->GetBufferState();
 
         if (GlobalState.GetAccess() != Pending.DesiredAccess || GlobalState.GetStage() != Pending.DesiredStage)
         {
@@ -460,15 +460,15 @@ void FVulkanCommands::PreExecute()
     for (auto It = PendingImageStates.CreateIterator(); !It.IsEnd(); ++It)
     {
         FVulkanTexture*    Texture    = It.GetKey();
-        FVulkanImageState& LocalState = It.GetValue();
-        Texture->GetTrackedState() = LocalState;
+        FVulkanImageLayoutState& LocalState = It.GetValue();
+        Texture->GetImageLayoutState() = LocalState;
     }
 
     for (auto It = PendingBufferStates.CreateIterator(); !It.IsEnd(); ++It)
     {
         FVulkanBuffer*      Buffer     = It.GetKey();
         FVulkanBufferState& LocalState = It.GetValue();
-        Buffer->GetTrackedState() = LocalState;
+        Buffer->GetBufferState() = LocalState;
     }
 
     PendingImageBarriers.Clear();
@@ -518,23 +518,9 @@ void FVulkanCommands::Finish()
     FenceManager.RecycleFence(Fence);
     Fence = nullptr;
 
-    // Return descriptor pools to the global pool manager
-    if (!PendingDescriptorPools.IsEmpty())
-    {
-        FVulkanDescriptorPoolManager& PoolManager = Device->GetDescriptorPoolManager();
-        for (auto& Entry : PendingDescriptorPools)
-        {
-            PoolManager.ReleasePool(Entry.First, Entry.Second);
-        }
-
-        PendingDescriptorPools.Clear();
-    }
-
     // Delete all the resources that has been queued up for destruction
     FVulkanDeferredObject::ProcessItems(Device, DeletionQueue);
     DeletionQueue.Clear();
-
-    Device->GetMemoryManager().CleanUpLinearAllocators();
 
     // Destroy this instance after execution is finished
     delete this;

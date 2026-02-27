@@ -65,6 +65,7 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
 
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
+    
     if (!BackBuffer)
     {
         VULKAN_ERROR_CRITICAL("Failed to create BackBuffer");

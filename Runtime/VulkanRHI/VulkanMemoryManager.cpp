@@ -2,7 +2,10 @@
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Math/Math.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
+#include "VulkanRHI/VulkanResource.h"
+#include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanRHI.h"
 
 static TAutoConsoleVariable<bool> CVarVulkanLogMemoryAllocations(
@@ -32,6 +35,7 @@ FVulkanMemoryStorage::FVulkanMemoryStorage(FVulkanDevice* InDevice)
     , Size(0)
     , AllocatorType(EVulkanAllocatorType::None)
     , StorageType(EVulkanMemoryStorageType::Unknown)
+    , Owner(nullptr)
     , AllocationData()
     , AllocatorPointers()
 {
@@ -61,6 +65,7 @@ void FVulkanMemoryStorage::Swap(FVulkanMemoryStorage& Other)
     ::Swap(Size, Other.Size);
     ::Swap(AllocatorType, Other.AllocatorType);
     ::Swap(StorageType, Other.StorageType);
+    ::Swap(Owner, Other.Owner);
     ::Swap(AllocatorPointers.AsVoid, Other.AllocatorPointers.AsVoid);
 }
 
@@ -109,6 +114,7 @@ void FVulkanMemoryStorage::Reset()
     Size                     = 0;
     AllocatorType            = EVulkanAllocatorType::None;
     StorageType              = EVulkanMemoryStorageType::Unknown;
+    Owner                    = nullptr;
     AllocatorPointers.AsVoid = nullptr;
 }
 
@@ -117,8 +123,8 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice, uint32 InUpl
     , BufferAllocator(InDevice, BUFFER_PAGE_SIZE, BUFFER_MIN_BLOCK, BUFFER_MAX_SUBALLOCATION)
     , TextureAllocator(InDevice, TEXTURE_PAGE_SIZE)
     , UploadHeapAllocator(InDevice, UPLOAD_PAGE_SIZE, UPLOAD_ALIGNMENT, UPLOAD_SMALL_THRESHOLD, UPLOAD_LARGE_THRESHOLD)
-    , DynamicConstantsAllocator(InDevice, CONSTANTS_PAGE_SIZE, InUploadMemoryTypeIndex, 0, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
-    , StagingBufferAllocator(InDevice, STAGING_PAGE_SIZE, InUploadMemoryTypeIndex, 0, VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
+    , DynamicConstantsAllocator(InDevice, CONSTANTS_PAGE_SIZE, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+    , StagingBufferAllocator(InDevice, STAGING_PAGE_SIZE, VK_BUFFER_USAGE_TRANSFER_SRC_BIT)
     , UploadMemoryTypeIndex(InUploadMemoryTypeIndex)
 {
 }
@@ -156,10 +162,6 @@ void FVulkanMemoryManager::CleanUpAllocators()
     BufferAllocator.CleanUp();
     TextureAllocator.CleanUp();
     UploadHeapAllocator.CleanUp();
-}
-
-void FVulkanMemoryManager::CleanUpLinearAllocators()
-{
     DynamicConstantsAllocator.CleanUp();
     StagingBufferAllocator.CleanUp();
 }
@@ -179,14 +181,41 @@ void* FVulkanMemoryManager::AllocateUploadMemory(uint64 SizeInBytes, uint64 Alig
     return UploadHeapAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
 }
 
+void* FVulkanMemoryManager::AllocateConstantsMemory(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
+{
+    return UploadHeapAllocator.AllocateConstants(SizeInBytes, Alignment, OutStorage);
+}
+
 void* FVulkanMemoryManager::AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
 {
-    return DynamicConstantsAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
+    void* Result = DynamicConstantsAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
+    if (!Result)
+    {
+        Result = UploadHeapAllocator.AllocateConstants(SizeInBytes, Alignment, OutStorage);
+    }
+    
+    return Result;
 }
 
 void* FVulkanMemoryManager::AllocateStagingBuffer(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
 {
-    return StagingBufferAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
+    void* Result = StagingBufferAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
+    if (!Result)
+    {
+        Result = UploadHeapAllocator.Allocate(SizeInBytes, Alignment, OutStorage);
+    }
+
+    return Result;
+}
+
+void FVulkanMemoryManager::DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame)
+{
+    TextureAllocator.DefragmentAllocations(InCommandContext, MaxMovesPerFrame);
+}
+
+void FVulkanMemoryManager::CancelPendingDefragMoves(FVulkanGenericResource* Owner)
+{
+    TextureAllocator.CancelPendingDefragMoves(Owner);
 }
 
 FVulkanBuddyAllocator::FVulkanBuddyAllocator(FVulkanDevice* InDevice, uint64 InBackingStorageSize, uint64 InMinBlockBytes, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags)
@@ -701,8 +730,10 @@ bool FVulkanPoolAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 InAlignmen
         AllocationData.PageIndex = InPageIndex;
         AllocationData.Offset    = AlignedOffset;
         AllocationData.Size      = SizeInBytes;
+        AllocationData.Owner     = &OutStorage;
 
         OutStorage.SetPoolAllocationData(AllocationData);
+        LiveAllocations.Add(AllocationData);
 
         return true;
     }
@@ -753,10 +784,24 @@ bool FVulkanPoolAllocatorPage::TryAllocateForDefrag(uint64 SizeInBytes, uint64 I
         OutData.Offset = AlignedOffset;
         OutData.Size   = SizeInBytes;
 
+        LiveAllocations.Add(OutData);
+
         return true;
     }
 
     return false;
+}
+
+void FVulkanPoolAllocatorPage::TransferOwnership(uint64 Offset, FVulkanMemoryStorage* NewStorage)
+{
+    for (FVulkanPoolAllocatorAllocationData& Alloc : LiveAllocations)
+    {
+        if (Alloc.Offset == Offset)
+        {
+            Alloc.Owner = NewStorage;
+            return;
+        }
+    }
 }
 
 void FVulkanPoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInBytes)
@@ -770,6 +815,15 @@ void FVulkanPoolAllocatorPage::RecycleAllocation(uint64 Offset, uint64 SizeInByt
     NewRange.Offset = Offset;
     NewRange.Size   = SizeInBytes;
     FreeRanges.Add(NewRange);
+
+    for (int32 Index = 0; Index < LiveAllocations.Size(); ++Index)
+    {
+        if (LiveAllocations[Index].Offset == Offset)
+        {
+            LiveAllocations.RemoveAtSwap(Index);
+            break;
+        }
+    }
 
     UsedBytes = UsedBytes > SizeInBytes ? (UsedBytes - SizeInBytes) : 0;
     CoalesceFreeRanges();
@@ -999,6 +1053,62 @@ void FVulkanPoolAllocator::RecycleAllocation(const FVulkanPoolAllocatorAllocatio
     RebuildFragmentationData();
 }
 
+bool FVulkanPoolAllocator::GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate) const
+{
+    SCOPED_LOCK(PagesCS);
+
+    uint32 BestPageIndex     = UINT32_MAX;
+    uint64 LowestUtilization = UINT64_MAX;
+
+    for (uint32 PageIndex = 0; PageIndex < static_cast<uint32>(Pages.Size()); ++PageIndex)
+    {
+        const FVulkanPoolAllocatorPage* Page = Pages[PageIndex];
+        if (!Page || Page->IsEmpty() || Page->GetFreeRanges().Size() <= 1)
+        {
+            continue;
+        }
+
+        const uint64 Utilization = Page->GetUsedBytes();
+        if (Utilization < LowestUtilization)
+        {
+            LowestUtilization = Utilization;
+            BestPageIndex     = PageIndex;
+        }
+    }
+
+    if (BestPageIndex == UINT32_MAX)
+    {
+        return false;
+    }
+
+    const FVulkanPoolAllocatorPage* SourcePage = Pages[BestPageIndex];
+    for (const FVulkanPoolAllocatorAllocationData& LiveAlloc : SourcePage->GetLiveAllocations())
+    {
+        if (LiveAlloc.Owner)
+        {
+            OutCandidate = LiveAlloc;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void FVulkanPoolAllocator::TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryStorage* NewStorage)
+{
+    if (Data.PageIndex == UINT32_MAX)
+    {
+        return;
+    }
+
+    SCOPED_LOCK(PagesCS);
+
+    if (Data.PageIndex < static_cast<uint32>(Pages.Size()) && Pages[Data.PageIndex])
+    {
+        Pages[Data.PageIndex]->TransferOwnership(Data.Offset, NewStorage);
+    }
+}
+
 VkDeviceMemory FVulkanPoolAllocator::GetBackingMemory(uint32 PageIndex)
 {
     SCOPED_LOCK(PagesCS);
@@ -1012,165 +1122,51 @@ VkDeviceMemory FVulkanPoolAllocator::GetBackingMemory(uint32 PageIndex)
     return Page ? Page->GetDeviceMemory() : VK_NULL_HANDLE;
 }
 
-FVulkanLinearAllocatorPage::FVulkanLinearAllocatorPage(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags)
+FVulkanLinearAllocatorPage::FVulkanLinearAllocatorPage(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkBufferUsageFlags InBufferUsageFlags)
     : FVulkanDeviceChild(InDevice)
     , PageSizeBytes(InPageSizeBytes)
-    , MemoryTypeIndex(InMemoryTypeIndex)
-    , AllocateFlags(InAllocateFlags)
     , BufferUsageFlags(InBufferUsageFlags)
-    , CurrentOffset(0)
-    , DeviceMemory(VK_NULL_HANDLE)
-    , Buffer(VK_NULL_HANDLE)
-    , MappedBaseAddress(nullptr)
+    , BackingStorage(InDevice)
 {
-}
-
-FVulkanLinearAllocatorPage::~FVulkanLinearAllocatorPage()
-{
-    Reset();
 }
 
 bool FVulkanLinearAllocatorPage::Initialize()
 {
-    VkDevice VulkanDevice = GetDevice()->GetVkDevice();
-
-    VkMemoryAllocateInfo AllocateInfo = {};
-    AllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    AllocateInfo.allocationSize  = PageSizeBytes;
-    AllocateInfo.memoryTypeIndex = MemoryTypeIndex;
-
-    VkMemoryAllocateFlagsInfo AllocateFlagsInfo = {};
-    AllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
-    AllocateFlagsInfo.flags = AllocateFlags;
-
-    FVulkanStructChain AllocateInfoChain(AllocateInfo);
-    AllocateInfoChain.AddNext(AllocateFlagsInfo);
-
-    VkResult Result = vkAllocateMemory(VulkanDevice, &AllocateInfo, nullptr, &DeviceMemory);
-    if (VULKAN_FAILED(Result))
+    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
+    if (BufferUsageFlags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
     {
-        VULKAN_ERROR_CRITICAL("FVulkanLinearAllocatorPage: vkAllocateMemory failed");
-        return false;
+        return MemoryManager.AllocateConstantsMemory(PageSizeBytes, 16, BackingStorage) != nullptr;
     }
-
-    if (BufferUsageFlags != 0)
-    {
-        VkBufferCreateInfo BufferCreateInfo = {};
-        BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        BufferCreateInfo.size        = PageSizeBytes;
-        BufferCreateInfo.usage       = BufferUsageFlags;
-        BufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        Result = vkCreateBuffer(VulkanDevice, &BufferCreateInfo, nullptr, &Buffer);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR_CRITICAL("FVulkanLinearAllocatorPage: vkCreateBuffer failed");
-            Reset();
-            return false;
-        }
-
-        Result = vkBindBufferMemory(VulkanDevice, Buffer, DeviceMemory, 0);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR_CRITICAL("FVulkanLinearAllocatorPage: vkBindBufferMemory failed");
-            Reset();
-            return false;
-        }
-    }
-
-    const VkPhysicalDeviceMemoryProperties& MemoryProperties = GetDevice()->GetPhysicalDevice()->GetMemoryProperties();
-    const VkMemoryPropertyFlags PropertyFlags = MemoryProperties.memoryTypes[MemoryTypeIndex].propertyFlags;
-    if (PropertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
-    {
-        void* Mapped = nullptr;
-        Result = vkMapMemory(VulkanDevice, DeviceMemory, 0, VK_WHOLE_SIZE, 0, &Mapped);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR_CRITICAL("FVulkanLinearAllocatorPage: vkMapMemory failed");
-            Reset();
-            return false;
-        }
-
-        MappedBaseAddress = static_cast<uint8*>(Mapped);
-    }
-
-    CurrentOffset = 0;
-    return true;
+    return MemoryManager.AllocateUploadMemory(PageSizeBytes, 16, BackingStorage) != nullptr;
 }
 
-void FVulkanLinearAllocatorPage::Reset()
-{
-    VkDevice VulkanDevice = GetDevice()->GetVkDevice();
-    if (MappedBaseAddress)
-    {
-        vkUnmapMemory(VulkanDevice, DeviceMemory);
-        MappedBaseAddress = nullptr;
-    }
-
-    if (Buffer != VK_NULL_HANDLE)
-    {
-        vkDestroyBuffer(VulkanDevice, Buffer, nullptr);
-        Buffer = VK_NULL_HANDLE;
-    }
-
-    if (DeviceMemory != VK_NULL_HANDLE)
-    {
-        vkFreeMemory(VulkanDevice, DeviceMemory, nullptr);
-        DeviceMemory = VK_NULL_HANDLE;
-    }
-
-    CurrentOffset = 0;
-}
-
-bool FVulkanLinearAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint64& OutOffset)
-{
-    const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16ull);
-    const uint64 AlignedOffset = Math::AlignUp<uint64>(CurrentOffset, UsedAlignment);
-
-    if (AlignedOffset + SizeInBytes > PageSizeBytes)
-    {
-        return false;
-    }
-
-    OutOffset     = AlignedOffset;
-    CurrentOffset = AlignedOffset + SizeInBytes;
-    return true;
-}
-
-FVulkanLinearAllocator::FVulkanLinearAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags)
+FVulkanLinearAllocator::FVulkanLinearAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkBufferUsageFlags InBufferUsageFlags)
     : FVulkanDeviceChild(InDevice)
     , PageSizeBytes(InPageSizeBytes)
-    , MemoryTypeIndex(InMemoryTypeIndex)
-    , AllocateFlags(InAllocateFlags)
     , BufferUsageFlags(InBufferUsageFlags)
-    , Pages()
-    , FullPages()
-    , PagesCS()
+    , CurrentPage(nullptr)
+    , CurrentOffset(0)
+    , PagePool()
+    , AllocatorCS()
 {
 }
 
 FVulkanLinearAllocator::~FVulkanLinearAllocator()
 {
-    SCOPED_LOCK(PagesCS);
+    delete CurrentPage;
+    CurrentPage = nullptr;
 
-    for (FVulkanLinearAllocatorPage* Page : Pages)
+    for (FVulkanLinearAllocatorPage* Page : PagePool)
     {
         delete Page;
     }
 
-    Pages.Clear();
-
-    for (FVulkanLinearAllocatorPage* Page : FullPages)
-    {
-        delete Page;
-    }
-
-    FullPages.Clear();
+    PagePool.Clear();
 }
 
 FVulkanLinearAllocatorPage* FVulkanLinearAllocator::CreatePage()
 {
-    FVulkanLinearAllocatorPage* NewPage = new FVulkanLinearAllocatorPage(GetDevice(), PageSizeBytes, MemoryTypeIndex, AllocateFlags, BufferUsageFlags);
+    FVulkanLinearAllocatorPage* NewPage = new FVulkanLinearAllocatorPage(GetDevice(), PageSizeBytes, BufferUsageFlags);
     if (!NewPage->Initialize())
     {
         delete NewPage;
@@ -1180,12 +1176,16 @@ FVulkanLinearAllocatorPage* FVulkanLinearAllocator::CreatePage()
     return NewPage;
 }
 
-void FVulkanLinearAllocator::RetirePage(FVulkanLinearAllocatorPage* Page)
+FVulkanLinearAllocatorPage* FVulkanLinearAllocator::AcquirePage()
 {
-    if (Page)
+    if (!PagePool.IsEmpty())
     {
-        Page->Reset();
+        FVulkanLinearAllocatorPage* Page = PagePool.LastElement();
+        PagePool.Pop();
+        return Page;
     }
+
+    return CreatePage();
 }
 
 void* FVulkanLinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
@@ -1198,103 +1198,64 @@ void* FVulkanLinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FVu
     const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16ull);
     const uint64 SizeAligned   = Math::AlignUp<uint64>(SizeInBytes, UsedAlignment);
 
-    SCOPED_LOCK(PagesCS);
+    SCOPED_LOCK(AllocatorCS);
 
-    FVulkanLinearAllocatorPage* SelectedPage = nullptr;
-
-    uint64 AllocationOffset = 0;
-    for (int32 Index = 0; Index < Pages.Size();)
+    const uint64 AlignedOffset = CurrentPage ? Math::AlignUp<uint64>(CurrentOffset, UsedAlignment) : PageSizeBytes;
+    if (AlignedOffset + SizeAligned > PageSizeBytes)
     {
-        FVulkanLinearAllocatorPage* Page = Pages[Index];
-        if (!Page)
+        if (CurrentPage)
         {
-            Pages.RemoveAtSwap(Index);
-            continue;
+            FVulkanRHI::DeferDeletion(this, CurrentPage);
+            CurrentPage = nullptr;
         }
 
-        if (Page->TryAllocate(SizeAligned, UsedAlignment, AllocationOffset))
-        {
-            SelectedPage = Page;
-            break;
-        }
-
-        if (Page->IsExhausted())
-        {
-            FullPages.Add(Page);
-            Pages.RemoveAtSwap(Index);
-            continue;
-        }
-
-        ++Index;
-    }
-
-    if (!SelectedPage)
-    {
-        SelectedPage = CreatePage();
-        if (!SelectedPage)
+        CurrentPage = AcquirePage();
+        if (!CurrentPage)
         {
             return nullptr;
         }
 
-        Pages.Add(SelectedPage);
-
-        if (!SelectedPage->TryAllocate(SizeAligned, UsedAlignment, AllocationOffset))
-        {
-            return nullptr;
-        }
+        CurrentOffset = 0;
     }
 
+    const uint64 AllocationOffset = Math::AlignUp<uint64>(CurrentOffset, UsedAlignment);
+
+    const FVulkanMemoryStorage& BackingStorage = CurrentPage->GetBackingStorage();
     OutStorage.Reset();
-    OutStorage.SetMemory(SelectedPage->GetDeviceMemory());
-    OutStorage.SetMemoryOffset(AllocationOffset);
+    OutStorage.SetMemory(BackingStorage.GetMemory());
+    OutStorage.SetMemoryOffset(BackingStorage.GetMemoryOffset() + AllocationOffset);
     OutStorage.SetSize(SizeAligned);
     OutStorage.SetStorageType(EVulkanMemoryStorageType::Suballocated);
 
-    if (SelectedPage->GetBuffer() != VK_NULL_HANDLE)
+    if (BackingStorage.GetBackingBuffer() != VK_NULL_HANDLE)
     {
-        OutStorage.SetBackingBuffer(SelectedPage->GetBuffer());
-        OutStorage.SetBufferOffset(AllocationOffset);
+        OutStorage.SetBackingBuffer(BackingStorage.GetBackingBuffer());
+        OutStorage.SetBufferOffset(BackingStorage.GetBufferOffset() + AllocationOffset);
     }
 
-    uint8* MappedBase = SelectedPage->GetMappedMemory();
+    uint8* MappedBase = static_cast<uint8*>(BackingStorage.GetMappedBaseAddress());
     OutStorage.SetMappedBaseAddress(MappedBase ? (MappedBase + AllocationOffset) : nullptr);
 
-    if (SelectedPage->IsExhausted())
-    {
-        for (int32 Index = 0; Index < Pages.Size(); ++Index)
-        {
-            if (Pages[Index] == SelectedPage)
-            {
-                FullPages.Add(SelectedPage);
-                Pages.RemoveAtSwap(Index);
-                break;
-            }
-        }
-    }
-
+    CurrentOffset = AllocationOffset + SizeAligned;
     return OutStorage.GetMappedBaseAddress();
+}
+
+void FVulkanLinearAllocator::ReturnPage(FVulkanLinearAllocatorPage* InPage)
+{
+    CHECK(InPage != nullptr);
+
+    SCOPED_LOCK(AllocatorCS);
+    PagePool.Add(InPage);
 }
 
 void FVulkanLinearAllocator::CleanUp()
 {
-    SCOPED_LOCK(PagesCS);
+    SCOPED_LOCK(AllocatorCS);
 
-    for (FVulkanLinearAllocatorPage* Page : FullPages)
+    while (PagePool.Size() > MAX_POOL_PAGES)
     {
-        if (Page)
-        {
-            Pages.Add(Page);
-        }
-    }
-    
-    FullPages.Clear();
-
-    for (FVulkanLinearAllocatorPage* Page : Pages)
-    {
-        if (Page)
-        {
-            Page->ResetOffset();
-        }
+        delete PagePool.LastElement();
+        PagePool.Pop();
     }
 }
 
@@ -1662,6 +1623,264 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, VkMemoryPropertyFlags M
     return true;
 }
 
+bool FVulkanTextureAllocator::GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate, FVulkanPoolAllocator*& OutAllocator)
+{
+    SCOPED_LOCK(PoolsCS);
+
+    uint64 MostFragmented = 0;
+    FVulkanPoolAllocator* BestPool = nullptr;
+
+    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    {
+        if (Pools[Index] && Pools[Index]->GetFragmentedBytes() > MostFragmented)
+        {
+            MostFragmented = Pools[Index]->GetFragmentedBytes();
+            BestPool       = Pools[Index];
+        }
+    }
+
+    if (BestPool && BestPool->GetDefragCandidate(OutCandidate))
+    {
+        OutAllocator = BestPool;
+        return true;
+    }
+
+    return false;
+}
+
+void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame)
+{
+    if (MaxMovesPerFrame <= 0)
+    {
+        return;
+    }
+
+    CHECK(InCommandContext != nullptr);
+
+    static uint64 DefragFrameCounter = 0;
+    DefragFrameCounter++;
+
+    constexpr uint64 DEFRAG_FRAME_DELAY = 3;
+
+    for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
+    {
+        FPendingDefragMove& Move = PendingDefragMoves[Index];
+        if (DefragFrameCounter <= Move.FenceValueAtCreation + DEFRAG_FRAME_DELAY)
+        {
+            continue;
+        }
+
+        FVulkanMemoryStorage*   Storage = Move.SourceStorage;
+        FVulkanGenericResource* Owner   = Storage ? Storage->GetOwner() : nullptr;
+
+        VkImage OldImage = VK_NULL_HANDLE;
+        if (Owner)
+        {
+            FVulkanTexture* Texture = static_cast<FVulkanTexture*>(Owner);
+            OldImage = Texture->GetVkImage();
+
+            Texture->DestroyImageViews();
+            Texture->SetVkImage(Move.NewImage);
+
+            Storage->SetMemory(Move.Allocator->GetBackingMemory(Move.NewAllocationData.PageIndex));
+            Storage->SetMemoryOffset(Move.NewAllocationData.Offset);
+            Storage->SetPoolAllocationData(Move.NewAllocationData);
+
+            Move.Allocator->TransferOwnership(Move.NewAllocationData, Storage);
+
+            Owner->ResourceRelocated(Storage);
+        }
+
+        Move.Allocator->TransferOwnership(Move.OldAllocationData, nullptr);
+
+        FVulkanPoolAllocatorAllocationData OldData = Move.OldAllocationData;
+        OldData.Owner = nullptr;
+        FVulkanRHI::DeferDeletion(Move.Allocator, OldData);
+
+        if (VULKAN_CHECK_HANDLE(OldImage))
+        {
+            vkDestroyImage(GetDevice()->GetVkDevice(), OldImage, nullptr);
+        }
+
+        PendingDefragMoves.RemoveAtSwap(Index);
+    }
+
+    int32 MovesAvailable = MaxMovesPerFrame - PendingDefragMoves.Size();
+    if (MovesAvailable <= 0)
+    {
+        return;
+    }
+
+    FVulkanBarrierBatcher& BarrierBatcher = InCommandContext->GetBarrierBatcher();
+    for (int32 MoveIndex = 0; MoveIndex < MovesAvailable; ++MoveIndex)
+    {
+        FVulkanPoolAllocatorAllocationData Candidate = {};
+        FVulkanPoolAllocator* SourceAllocator = nullptr;
+
+        if (!GetDefragCandidate(Candidate, SourceAllocator))
+        {
+            break;
+        }
+
+        if (!Candidate.Owner || !Candidate.Owner->GetOwner() || !SourceAllocator)
+        {
+            break;
+        }
+
+        FVulkanPoolAllocatorAllocationData NewAllocationData = {};
+        if (!SourceAllocator->TryAllocateForDefrag(Candidate.Size, SourceAllocator->GetAlignment(), Candidate.PageIndex, NewAllocationData))
+        {
+            break;
+        }
+
+        FVulkanGenericResource* Owner = Candidate.Owner->GetOwner();
+        FVulkanTexture* Texture = static_cast<FVulkanTexture*>(Owner);
+        VkImage OldImage = Texture->GetVkImage();
+        const VkImageCreateInfo& OldCreateInfo = Texture->GetVkImageCreateInfo();
+        const VkImageLayout CurrentLayout = Texture->GetImageLayoutState().GetImageLayout();
+
+        VkImage NewImage = VK_NULL_HANDLE;
+        VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &OldCreateInfo, nullptr, &NewImage);
+        if (VULKAN_FAILED(Result))
+        {
+            break;
+        }
+
+        VkDeviceMemory NewMemory = SourceAllocator->GetBackingMemory(NewAllocationData.PageIndex);
+        Result = vkBindImageMemory(GetDevice()->GetVkDevice(), NewImage, NewMemory, NewAllocationData.Offset);
+        if (VULKAN_FAILED(Result))
+        {
+            vkDestroyImage(GetDevice()->GetVkDevice(), NewImage, nullptr);
+            break;
+        }
+
+        const VkImageAspectFlags AspectMask = GetImageAspectFlagsFromFormat(OldCreateInfo.format);
+
+        {
+            VkImageMemoryBarrier2 SrcBarrier = {};
+            SrcBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            SrcBarrier.srcAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+            SrcBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_READ_BIT;
+            SrcBarrier.oldLayout                       = CurrentLayout;
+            SrcBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            SrcBarrier.image                           = OldImage;
+            SrcBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            SrcBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            SrcBarrier.subresourceRange.aspectMask     = AspectMask;
+            SrcBarrier.subresourceRange.baseArrayLayer = 0;
+            SrcBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+            SrcBarrier.subresourceRange.baseMipLevel   = 0;
+            SrcBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+            VkImageMemoryBarrier2 DstBarrier = {};
+            DstBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            DstBarrier.srcAccessMask                   = 0;
+            DstBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            DstBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+            DstBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            DstBarrier.image                           = NewImage;
+            DstBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+            DstBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            DstBarrier.subresourceRange.aspectMask     = AspectMask;
+            DstBarrier.subresourceRange.baseArrayLayer = 0;
+            DstBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+            DstBarrier.subresourceRange.baseMipLevel   = 0;
+            DstBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+            BarrierBatcher.AddImageMemoryBarrier(0, SrcBarrier);
+            BarrierBatcher.AddImageMemoryBarrier(0, DstBarrier);
+            BarrierBatcher.FlushBarriers(InCommandContext->GetCommandBuffer());
+        }
+
+        for (uint32 MipLevel = 0; MipLevel < OldCreateInfo.mipLevels; ++MipLevel)
+        {
+            VkImageCopy Region = {};
+            Region.srcSubresource.aspectMask     = AspectMask;
+            Region.srcSubresource.mipLevel       = MipLevel;
+            Region.srcSubresource.baseArrayLayer = 0;
+            Region.srcSubresource.layerCount     = OldCreateInfo.arrayLayers;
+            Region.dstSubresource                = Region.srcSubresource;
+            Region.extent.width                  = Math::Max(OldCreateInfo.extent.width >> MipLevel, 1u);
+            Region.extent.height                 = Math::Max(OldCreateInfo.extent.height >> MipLevel, 1u);
+            Region.extent.depth                  = Math::Max(OldCreateInfo.extent.depth >> MipLevel, 1u);
+
+            InCommandContext->GetCommandBuffer()->CopyImage(
+                OldImage,  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                NewImage,  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                1, &Region);
+        }
+
+        {
+            VkImageMemoryBarrier2 SrcBarrier = {};
+            SrcBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            SrcBarrier.srcAccessMask                   = VK_ACCESS_2_TRANSFER_READ_BIT;
+            SrcBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+            SrcBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            SrcBarrier.newLayout                       = CurrentLayout;
+            SrcBarrier.image                           = OldImage;
+            SrcBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            SrcBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            SrcBarrier.subresourceRange.aspectMask     = AspectMask;
+            SrcBarrier.subresourceRange.baseArrayLayer = 0;
+            SrcBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+            SrcBarrier.subresourceRange.baseMipLevel   = 0;
+            SrcBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+            VkImageMemoryBarrier2 DstBarrier = {};
+            DstBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+            DstBarrier.srcAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+            DstBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_READ_BIT | VK_ACCESS_2_MEMORY_WRITE_BIT;
+            DstBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            DstBarrier.newLayout                       = CurrentLayout;
+            DstBarrier.image                           = NewImage;
+            DstBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+            DstBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+            DstBarrier.subresourceRange.aspectMask     = AspectMask;
+            DstBarrier.subresourceRange.baseArrayLayer = 0;
+            DstBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+            DstBarrier.subresourceRange.baseMipLevel   = 0;
+            DstBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+            BarrierBatcher.AddImageMemoryBarrier(0, SrcBarrier);
+            BarrierBatcher.AddImageMemoryBarrier(0, DstBarrier);
+            BarrierBatcher.FlushBarriers(InCommandContext->GetCommandBuffer());
+        }
+
+        FPendingDefragMove PendingMove = {};
+        PendingMove.SourceStorage        = Candidate.Owner;
+        PendingMove.NewImage             = NewImage;
+        PendingMove.Allocator            = SourceAllocator;
+        PendingMove.OldAllocationData    = Candidate;
+        PendingMove.NewAllocationData    = NewAllocationData;
+        PendingMove.FenceValueAtCreation = DefragFrameCounter;
+
+        SourceAllocator->TransferOwnership(Candidate, nullptr);
+        PendingDefragMoves.Add(PendingMove);
+    }
+}
+
+void FVulkanTextureAllocator::CancelPendingDefragMoves(FVulkanGenericResource* Owner)
+{
+    for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
+    {
+        FPendingDefragMove& Move = PendingDefragMoves[Index];
+        if (Move.SourceStorage && Move.SourceStorage->GetOwner() == Owner)
+        {
+            FVulkanPoolAllocatorAllocationData NewData = Move.NewAllocationData;
+            NewData.Owner = nullptr;
+
+            FVulkanRHI::DeferDeletion(Move.Allocator, NewData);
+
+            if (VULKAN_CHECK_HANDLE(Move.NewImage))
+            {
+                vkDestroyImage(GetDevice()->GetVkDevice(), Move.NewImage, nullptr);
+            }
+
+            PendingDefragMoves.RemoveAtSwap(Index);
+        }
+    }
+}
+
 FVulkanUploadHeapAllocator::FVulkanUploadHeapAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InSmallThreshold, uint64 InLargeThreshold)
     : FVulkanDeviceChild(InDevice)
     , PageSizeBytes(InPageSizeBytes)
@@ -1685,6 +1904,7 @@ bool FVulkanUploadHeapAllocator::Initialize(uint32 InMemoryTypeIndex)
     Destroy();
 
     MemoryTypeIndex = InMemoryTypeIndex;
+
     const VkMemoryAllocateFlags AllocateFlags = 0;
     const VkBufferUsageFlags TransferSrcUsage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     const VkBufferUsageFlags UniformUsage     = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
@@ -1855,7 +2075,7 @@ void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 A
 void* FVulkanUploadHeapAllocator::AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
 {
     const uint64 ConstantsAlignment = GetDevice()->GetPhysicalDevice()->GetProperties().limits.minUniformBufferOffsetAlignment;
-    const uint64 UsedAlignment = Alignment ? Alignment : ConstantsAlignment;
+    const uint64 UsedAlignment      = Alignment ? Alignment : ConstantsAlignment;
 
     if (ConstantsAllocator && ConstantsAllocator->TryAllocate(SizeInBytes, UsedAlignment, OutStorage))
     {

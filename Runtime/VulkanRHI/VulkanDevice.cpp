@@ -27,6 +27,8 @@ VULKANRHI_API bool   GVulkanSupportsSparseBinding               = false;
 VULKANRHI_API bool   GVulkanSupportsSparseResidency2D           = false;
 VULKANRHI_API bool   GVulkanSupportsSparseResidency3D           = false;
 VULKANRHI_API bool   GVulkanSupportsSparseResidencyAliased      = false;
+VULKANRHI_API bool   GVulkanSupportsGeometryShader              = false;
+VULKANRHI_API bool   GVulkanSupportsTessellation                = false;
 
 VULKANRHI_API uint32 GVulkanMaxMultiviewViewCount               = 1;
 VULKANRHI_API uint32 GVulkanMaxDrawIndirectCount                = 1;
@@ -895,6 +897,8 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     GVulkanSupportsSparseResidency2D      = (CoreDeviceFeatures10.sparseResidencyImage2D == VK_TRUE);
     GVulkanSupportsSparseResidency3D      = (CoreDeviceFeatures10.sparseResidencyImage3D == VK_TRUE);
     GVulkanSupportsSparseResidencyAliased = (CoreDeviceFeatures10.sparseResidencyAliased == VK_TRUE);
+    GVulkanSupportsGeometryShader         = (GVulkanAllowGeometryShaders && CoreDeviceFeatures10.geometryShader == VK_TRUE);
+    GVulkanSupportsTessellation           = (CoreDeviceFeatures10.tessellationShader == VK_TRUE);
 
 #if VK_KHR_robustness2
     if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME) && AvailableDeviceRobustness2Features.nullDescriptor)

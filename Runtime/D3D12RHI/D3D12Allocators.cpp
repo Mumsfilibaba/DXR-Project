@@ -1397,7 +1397,6 @@ FD3D12LinearAllocatorPage::FD3D12LinearAllocatorPage(FD3D12Device* InDevice, uin
     , PageSizeBytes(InPageSizeBytes)
     , HeapType(InHeapType)
     , InitialState(InInitialState)
-    , CurrentOffset(0)
     , BackingResourceStorage(InDevice)
 {
 }
@@ -1448,57 +1447,29 @@ bool FD3D12LinearAllocatorPage::Initialize()
     return true;
 }
 
-bool FD3D12LinearAllocatorPage::TryAllocate(uint64 SizeInBytes, uint64 Alignment, uint64& OutOffset)
-{
-    const uint64 UsedAlignment = Math::Max<uint64>(Alignment, 16ull);
-    const uint64 AlignedOffset = Math::AlignUp<uint64>(CurrentOffset, UsedAlignment);
-
-    if (AlignedOffset + SizeInBytes > PageSizeBytes)
-    {
-        return false;
-    }
-
-    OutOffset     = AlignedOffset;
-    CurrentOffset = AlignedOffset + SizeInBytes;
-    return true;
-}
-
-void FD3D12LinearAllocatorPage::Reset()
-{
-    BackingResourceStorage.ReleaseResource();
-    CurrentOffset = 0;
-}
-
 FD3D12LinearAllocator::FD3D12LinearAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState)
     : FD3D12DeviceChild(InDevice)
     , PageSizeBytes(InPageSizeBytes)
     , HeapType(InHeapType)
     , InitialState(InInitialState)
-    , Pages()
-    , FullPages()
-    , PagesCS()
+    , CurrentPage(nullptr)
+    , CurrentOffset(0)
+    , PagePool()
+    , AllocatorCS()
 {
 }
 
 FD3D12LinearAllocator::~FD3D12LinearAllocator()
 {
-    SCOPED_LOCK(PagesCS);
+    delete CurrentPage;
+    CurrentPage = nullptr;
 
-    for (FD3D12LinearAllocatorPage* Page : Pages)
+    for (FD3D12LinearAllocatorPage* Page : PagePool)
     {
-        RetirePage(Page);
         delete Page;
     }
 
-    Pages.Clear();
-
-    for (FD3D12LinearAllocatorPage* Page : FullPages)
-    {
-        RetirePage(Page);
-        delete Page;
-    }
-
-    FullPages.Clear();
+    PagePool.Clear();
 }
 
 FD3D12LinearAllocatorPage* FD3D12LinearAllocator::CreatePage()
@@ -1513,14 +1484,16 @@ FD3D12LinearAllocatorPage* FD3D12LinearAllocator::CreatePage()
     return NewPage;
 }
 
-void FD3D12LinearAllocator::RetirePage(FD3D12LinearAllocatorPage* Page)
+FD3D12LinearAllocatorPage* FD3D12LinearAllocator::AcquirePage()
 {
-    if (!Page)
+    if (!PagePool.IsEmpty())
     {
-        return;
+        FD3D12LinearAllocatorPage* Page = PagePool.LastElement();
+        PagePool.Pop();
+        return Page;
     }
 
-    Page->Reset();
+    return CreatePage();
 }
 
 void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
@@ -1535,6 +1508,11 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
 
     if (SizeAligned > PageSizeBytes)
     {
+        if (HeapType == D3D12_HEAP_TYPE_UPLOAD)
+        {
+            return GetDevice()->GetUploadHeapAllocator()->Allocate(SizeAligned, UsedAlignment, OutStorage);
+        }
+
         FD3D12ResourceRef Resource;
 
         D3D12_RESOURCE_DESC Desc = {};
@@ -1558,7 +1536,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
         }
 
         void* MappedBaseAddress = nullptr;
-        if (HeapType == D3D12_HEAP_TYPE_UPLOAD || HeapType == D3D12_HEAP_TYPE_READBACK)
+        if (HeapType == D3D12_HEAP_TYPE_READBACK)
         {
             MappedBaseAddress = Resource->MapRange(0, nullptr);
         }
@@ -1572,53 +1550,29 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
         return OutStorage.GetMappedBaseAddress();
     }
 
-    SCOPED_LOCK(PagesCS);
+    SCOPED_LOCK(AllocatorCS);
 
-    FD3D12LinearAllocatorPage* SelectedPage = nullptr;
-    
-    uint64 AllocationOffset = 0;
-    for (int32 Index = 0; Index < Pages.Size();)
+    const uint64 AlignedOffset = CurrentPage ? Math::AlignUp<uint64>(CurrentOffset, UsedAlignment) : PageSizeBytes;
+    if (AlignedOffset + SizeAligned > PageSizeBytes)
     {
-        FD3D12LinearAllocatorPage* Page = Pages[Index];
-        if (!Page)
+        if (CurrentPage)
         {
-            Pages.RemoveAtSwap(Index);
-            continue;
+            FD3D12RHI::DeferDeletion(this, CurrentPage);
+            CurrentPage = nullptr;
         }
 
-        if (Page->TryAllocate(SizeAligned, UsedAlignment, AllocationOffset))
-        {
-            SelectedPage = Page;
-            break;
-        }
-
-        if (Page->IsExhausted())
-        {
-            FullPages.Add(Page);
-            Pages.RemoveAtSwap(Index);
-            continue;
-        }
-
-        ++Index;
-    }
-
-    if (!SelectedPage)
-    {
-        SelectedPage = CreatePage();
-        if (!SelectedPage)
+        CurrentPage = AcquirePage();
+        if (!CurrentPage)
         {
             return nullptr;
         }
 
-        Pages.Add(SelectedPage);
-
-        if (!SelectedPage->TryAllocate(SizeAligned, UsedAlignment, AllocationOffset))
-        {
-            return nullptr;
-        }
+        CurrentOffset = 0;
     }
 
-    const FD3D12ResourceStorage&    BackingStorage     = SelectedPage->GetBackingResourceStorage();
+    const uint64 AllocationOffset = Math::AlignUp<uint64>(CurrentOffset, UsedAlignment);
+
+    const FD3D12ResourceStorage&    BackingStorage     = CurrentPage->GetBackingResourceStorage();
     const uint64                    PageResourceOffset = BackingStorage.GetResourceOffset() + AllocationOffset;
     const D3D12_GPU_VIRTUAL_ADDRESS BaseGpuAddress     = BackingStorage.GetGpuVirtualAddress();
     const D3D12_GPU_VIRTUAL_ADDRESS PageGpuAddress     = BaseGpuAddress ? (BaseGpuAddress + AllocationOffset) : 0;
@@ -1637,47 +1591,26 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
     OutStorage.SetSize(SizeAligned);
     OutStorage.SetStorageType(EResourceStorageType::SuballocatedResource);
 
-    if (SelectedPage->IsExhausted())
-    {
-        for (int32 Index = 0; Index < Pages.Size(); ++Index)
-        {
-            if (Pages[Index] == SelectedPage)
-            {
-                FullPages.Add(SelectedPage);
-                Pages.RemoveAtSwap(Index);
-                break;
-            }
-        }
-    }
-
+    CurrentOffset = AllocationOffset + SizeAligned;
     return OutStorage.GetMappedBaseAddress();
+}
+
+void FD3D12LinearAllocator::ReturnPage(FD3D12LinearAllocatorPage* InPage)
+{
+    CHECK(InPage != nullptr);
+
+    SCOPED_LOCK(AllocatorCS);
+    PagePool.Add(InPage);
 }
 
 void FD3D12LinearAllocator::CleanUp()
 {
-    SCOPED_LOCK(PagesCS);
+    SCOPED_LOCK(AllocatorCS);
 
-    for (int32 Index = FullPages.Size() - 1; Index >= 0; --Index)
+    while (PagePool.Size() > MAX_POOL_PAGES)
     {
-        FD3D12LinearAllocatorPage* Page = FullPages[Index];
-        if (!Page)
-        {
-            FullPages.RemoveAtSwap(Index);
-            continue;
-        }
-
-        RetirePage(Page);
-
-        if (Page->Initialize())
-        {
-            Pages.Add(Page);
-        }
-        else
-        {
-            delete Page;
-        }
-
-        FullPages.RemoveAtSwap(Index);
+        delete PagePool.LastElement();
+        PagePool.Pop();
     }
 }
 

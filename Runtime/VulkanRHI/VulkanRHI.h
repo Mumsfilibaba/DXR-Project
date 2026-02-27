@@ -17,17 +17,28 @@ struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 class VULKANRHI_API FVulkanRHI : public FRHI
 {
 public:
-    static FVulkanRHI* Get()
-    {
-        CHECK(GVulkanRHI != nullptr);
-        return GVulkanRHI;
-    }
+
+    // Convert EResourceAccess to Vulkan access flags
+    static VkAccessFlags2 ResourceStateToAccessFlags(EResourceAccess ResourceState);
+    
+    // Convert EResourceAccess to Vulkan image layout
+    static VkImageLayout ResourceStateToImageLayout(EResourceAccess ResourceState);
+    
+    // Convert EResourceAccess to Vulkan pipeline-stage flags
+    static VkPipelineStageFlags2 ResourceStateToPipelineStageFlags(EResourceAccess ResourceState);
 
     template<typename... ArgTypes>
     static void DeferDeletion(ArgTypes&&... Args)
     {
         Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
     }
+
+    static FVulkanRHI* Get()
+    {
+        CHECK(GVulkanRHI != nullptr);
+        return GVulkanRHI;
+    }
+
 
 public:
     FVulkanRHI();

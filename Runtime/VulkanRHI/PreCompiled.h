@@ -11,6 +11,7 @@
 #include "VulkanRHI/VulkanDescriptorSet.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanResource.h"
 #include "VulkanRHI/VulkanDeviceLimits.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanFenceManager.h"

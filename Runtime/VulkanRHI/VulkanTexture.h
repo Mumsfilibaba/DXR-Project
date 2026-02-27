@@ -2,7 +2,6 @@
 #include "Core/Containers/SharedRef.h"
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanResourceViews.h"
-#include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/VulkanResourceState.h"
 
 class FVulkanSwapChain;
@@ -12,14 +11,7 @@ typedef TSharedRef<FVulkanSwapChain>               FVulkanSwapChainRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
-struct VulkanTextureHelper
-{
-    static uint32 CalculateTextureRowPitch(VkFormat Format, uint32 Width);
-    static uint32 CalculateTextureNumRows(VkFormat Format, uint32 Height);
-    static uint64 CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height);
-};
-
-class FVulkanTexture : public FRHITexture, public FVulkanDeviceChild
+class FVulkanTexture : public FRHITexture, public FVulkanGenericResource
 {
 public:
     static FVulkanTexture* Cast(FRHITexture* Texture);
@@ -68,22 +60,16 @@ public:
         Info.Extent.Y = InHeight;
     }
 
-    FVulkanImageState&       GetTrackedState()       { return TrackedState; }
-    const FVulkanImageState& GetTrackedState() const { return TrackedState; }
-
-    const FVulkanMemoryStorage& GetMemoryStorage() const
-    {
-        return MemoryStorage;
-    }
+    FVulkanImageLayoutState&       GetImageLayoutState()       { return TrackedState; }
+    const FVulkanImageLayoutState& GetImageLayoutState() const { return TrackedState; }
 
 protected:
     using FImageViewMap = TMap<FVulkanHashableImageView, FVulkanResourceView*>;
 
     FString                       DebugName;
     VkImage                       Image;
-    FVulkanMemoryStorage          MemoryStorage;
     VkImageCreateInfo             CreateInfo;
-    FVulkanImageState             TrackedState;
+    FVulkanImageLayoutState       TrackedState;
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
     TArray<FVulkanResourceView*>  ImageViews;

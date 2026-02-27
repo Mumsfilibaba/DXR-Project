@@ -9,7 +9,7 @@ constexpr VkPipelineStageFlags2  VK_PIPELINE_STAGE_FLAGS_2_TO_BE_DETERMINED = ~s
 class FVulkanTexture;
 class FVulkanBuffer;
 
-class FVulkanImageState
+class FVulkanImageLayoutState
 {
 public:
     void Initialize(uint32 InNumSubresources);

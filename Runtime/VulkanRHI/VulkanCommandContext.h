@@ -176,7 +176,7 @@ private:
     
     FVulkanFence* SubmitCommandBuffer(bool bFlushPool);
 
-    FVulkanImageState&  RetrievePendingImageState(class FVulkanTexture* Texture);
+    FVulkanImageLayoutState&  RetrievePendingImageState(class FVulkanTexture* Texture);
     FVulkanBufferState& RetrievePendingBufferState(class FVulkanBuffer* Buffer);
 
     FVulkanQueue&                            Queue;
@@ -190,7 +190,7 @@ private:
     FVulkanCommandContextState               ContextState;
     TArray<FVulkanPendingImageBarrier>       PendingImageBarriers;
     TArray<FVulkanPendingBufferBarrier>      PendingBufferBarriers;
-    TMap<FVulkanTexture*, FVulkanImageState> PendingImageStates;
+    TMap<FVulkanTexture*, FVulkanImageLayoutState> PendingImageStates;
     TMap<FVulkanBuffer*, FVulkanBufferState> PendingBufferStates;
 
     FVulkanTransientDescriptorAllocator*  TransientDescriptorAllocator;

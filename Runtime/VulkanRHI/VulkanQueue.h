@@ -3,7 +3,6 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
 #include "Core/Containers/Map.h"
-#include "Core/Containers/Pair.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
@@ -101,11 +100,6 @@ struct FVulkanCommands
         QueryPools.Add(InQueryPool);
     }
 
-    void AddDescriptorPool(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorPool* Pool)
-    {
-        PendingDescriptorPools.Add(TPair<FVulkanDescriptorPoolInfo, FVulkanDescriptorPool*>(PoolInfo, Pool));
-    }
-
     bool IsExecutionFinished() const
     {
         return Fence ? Fence->IsSignaled() : false;
@@ -123,9 +117,8 @@ struct FVulkanCommands
     TArray<FVulkanCommandBuffer*>            CommandBuffers;
     TArray<FVulkanQueryPool*>                QueryPools;
     TArray<FVulkanDeferredObject>            DeletionQueue;
-    TArray<TPair<FVulkanDescriptorPoolInfo, FVulkanDescriptorPool*>> PendingDescriptorPools;
     TArray<FVulkanPendingImageBarrier>       PendingImageBarriers;
     TArray<FVulkanPendingBufferBarrier>      PendingBufferBarriers;
-    TMap<FVulkanTexture*, FVulkanImageState> PendingImageStates;
+    TMap<FVulkanTexture*, FVulkanImageLayoutState> PendingImageStates;
     TMap<FVulkanBuffer*, FVulkanBufferState> PendingBufferStates;
 };

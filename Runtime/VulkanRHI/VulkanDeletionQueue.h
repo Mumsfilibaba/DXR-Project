@@ -7,6 +7,8 @@
 
 class FRHIResource;
 class FVulkanDevice;
+class FVulkanDescriptorPool;
+class FVulkanDescriptorPoolManager;
 
 struct FVulkanDeferredObject
 {
@@ -19,6 +21,8 @@ struct FVulkanDeferredObject
         BuddyAllocatorBlock = 3,
         PoolAllocatorBlock  = 4,
         DedicatedAllocation = 5,
+        LinearAllocatorPage = 6,
+        DescriptorPool      = 7,
     };
 
     FVulkanDeferredObject(FRHIResource* InResource)
@@ -59,6 +63,24 @@ struct FVulkanDeferredObject
         DedicatedAllocation.Buffer = InBuffer;
     }
 
+    FVulkanDeferredObject(FVulkanLinearAllocator* InAllocator, FVulkanLinearAllocatorPage* InPage)
+        : Type(EType::LinearAllocatorPage)
+    {
+        CHECK(InAllocator != nullptr);
+        CHECK(InPage != nullptr);
+        LinearAllocatorPage.Allocator = InAllocator;
+        LinearAllocatorPage.Page      = InPage;
+    }
+
+    FVulkanDeferredObject(FVulkanDescriptorPoolManager* InPoolManager, FVulkanDescriptorPool* InPool)
+        : Type(EType::DescriptorPool)
+    {
+        CHECK(InPoolManager != nullptr);
+        CHECK(InPool != nullptr);
+        DescriptorPoolData.PoolManager = InPoolManager;
+        DescriptorPoolData.Pool        = InPool;
+    }
+
     EType const Type;
 
     struct FBuddyAllocatorBlockData
@@ -79,6 +101,18 @@ struct FVulkanDeferredObject
         VkDeviceMemory Memory = VK_NULL_HANDLE;
     };
 
+    struct FLinearAllocatorPageData
+    {
+        FVulkanLinearAllocator*     Allocator = nullptr;
+        FVulkanLinearAllocatorPage* Page      = nullptr;
+    };
+
+    struct FDescriptorPoolData
+    {
+        FVulkanDescriptorPoolManager* PoolManager = nullptr;
+        FVulkanDescriptorPool*        Pool        = nullptr;
+    };
+
     union
     {
         FRHIResource*            RHIResource;
@@ -86,5 +120,7 @@ struct FVulkanDeferredObject
         FBuddyAllocatorBlockData BuddyAllocatorBlock;
         FPoolAllocatorBlockData  PoolAllocatorBlock;
         FDedicatedAllocationData DedicatedAllocation;
+        FLinearAllocatorPageData LinearAllocatorPage;
+        FDescriptorPoolData      DescriptorPoolData;
     };
 };

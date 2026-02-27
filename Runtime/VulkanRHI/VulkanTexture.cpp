@@ -4,7 +4,7 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 
-uint32 VulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
+uint32 VkCalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
     if (bIsBlockCompressed)
@@ -23,13 +23,13 @@ uint32 VulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Wid
     }
 }
 
-uint32 VulkanTextureHelper::CalculateTextureNumRows(VkFormat Format, uint32 Height)
+uint32 VkCalculateTextureNumRows(VkFormat Format, uint32 Height)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
     return bIsBlockCompressed ? Math::Max<uint32>(1, (Height + 3) / 4) : Height;
 }
 
-uint64 VulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
+uint64 VkCalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
     if (bIsBlockCompressed)
@@ -88,10 +88,9 @@ FVulkanTexture* FVulkanTexture::Cast(FVulkanCommandContext* InCommandContext, FR
 
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
-    , FVulkanDeviceChild(InDevice)
+    , FVulkanGenericResource(InDevice)
     , DebugName()
     , Image(VK_NULL_HANDLE)
-    , MemoryStorage(InDevice)
     , CreateInfo{}
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
@@ -191,7 +190,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         CreateInfo = ImageCreateInfo;
     }
 
-    const VkMemoryAllocateFlags AllocateFlags = 0;
+    const VkMemoryAllocateFlags AllocateFlags    = 0;
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
@@ -237,7 +236,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         }
 
         FVulkanShaderResourceViewRef DefaultSRV = new FVulkanShaderResourceView(GetDevice(), this);
-        if (!DefaultSRV->InitializeSRV(ViewInfo))
+        if (!DefaultSRV->Initialize(ViewInfo))
         {
             return false;
         }
@@ -260,7 +259,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
             ViewInfo.TextureUAV.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
 
             FVulkanUnorderedAccessViewRef DefaultUAV = new FVulkanUnorderedAccessView(GetDevice(), this);
-            if (!DefaultUAV->InitializeUAV(ViewInfo))
+            if (!DefaultUAV->Initialize(ViewInfo))
             {
                 return false;
             }
@@ -326,20 +325,19 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     }
     else
     {
-        // NOTE: Transition the texture into the expected ImageLayout
         InCommandContext->StartContext();
 
         VkImageMemoryBarrier2 ImageBarrier = {};
         ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-        ImageBarrier.newLayout                       = ConvertResourceStateToImageLayout(InInitialAccess);
+        ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = Image;
-		ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-		ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE;
-		ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-		ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
@@ -347,10 +345,52 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandBuffer());
+
+        VkImageSubresourceRange SubresourceRange = {};
+        SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+        SubresourceRange.baseArrayLayer = 0;
+        SubresourceRange.baseMipLevel   = 0;
+        SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+        if (Info.IsDepthStencil())
+        {
+            VkClearDepthStencilValue ClearDS = {};
+            if (Info.ClearValue.IsDepthStencilValue())
+            {
+                const FDepthStencilValue& DS = Info.ClearValue.AsDepthStencil();
+                ClearDS.depth   = DS.Depth;
+                ClearDS.stencil = static_cast<uint8>(DS.Stencil);
+            }
+            else
+            {
+                ClearDS.depth   = 1.0f;
+                ClearDS.stencil = 0;
+            }
+
+            InCommandContext->GetCommandBuffer()->ClearDepthStencilImage(Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &ClearDS, 1, &SubresourceRange);
+        }
+        else if (!VkFormatIsBlockCompressed(ImageCreateInfo.format))
+        {
+            VkClearColorValue ClearColor = {};
+            if (Info.ClearValue.IsColorValue())
+            {
+                const FFloatColor& Color = Info.ClearValue.AsColor();
+                ClearColor.float32[0] = Color.R;
+                ClearColor.float32[1] = Color.G;
+                ClearColor.float32[2] = Color.B;
+                ClearColor.float32[3] = Color.A;
+            }
+
+            InCommandContext->GetCommandBuffer()->ClearColorImage(Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &ClearColor, 1, &SubresourceRange);
+        }
+
+        InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
         InCommandContext->FinishContext();
     }
 
-    const VkImageLayout InitialLayout = ConvertResourceStateToImageLayout(InInitialAccess);
+    const VkImageLayout InitialLayout = FVulkanRHI::ResourceStateToImageLayout(InInitialAccess);
     const uint32 NumSubresources = ImageCreateInfo.mipLevels * ImageCreateInfo.arrayLayers;
     TrackedState.SetImageLayout(InitialLayout);
     TrackedState.Initialize(Math::Max(NumSubresources, 1u));
@@ -437,10 +477,12 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableI
 
     // Create a new view
     FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
-    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, ImageViewType, ImageAspectFlags, ImageViewInfo.ArrayIndex, ImageViewInfo.NumArraySlices, ImageViewInfo.MipLevel, NumMipLevels))
+    if (!NewImageView->InitializeImageView(Image, VulkanFormat, ImageViewType, ImageAspectFlags, ImageViewInfo.ArrayIndex, ImageViewInfo.NumArraySlices, ImageViewInfo.MipLevel, NumMipLevels))
     {
         return nullptr;
     }
+
+    NewImageView->RegisterWithResource(this);
 
     if (ImageViewInfo.NumArraySlices > 1)
     {

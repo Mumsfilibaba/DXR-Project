@@ -1,12 +1,12 @@
 #include "VulkanRHI/VulkanResourceState.h"
 
-void FVulkanImageState::Initialize(uint32 InNumSubresources)
+void FVulkanImageLayoutState::Initialize(uint32 InNumSubresources)
 {
     NumSubresources = InNumSubresources;
     SubresourceLayouts.Resize(NumSubresources);
 }
 
-VkImageLayout FVulkanImageState::GetSubresourceLayout(uint32 Subresource) const
+VkImageLayout FVulkanImageLayoutState::GetSubresourceLayout(uint32 Subresource) const
 {
     CHECK(Subresource < NumSubresources);
 
@@ -18,7 +18,7 @@ VkImageLayout FVulkanImageState::GetSubresourceLayout(uint32 Subresource) const
     return SubresourceLayouts[Subresource];
 }
 
-void FVulkanImageState::SetSubresourceLayout(uint32 Subresource, VkImageLayout Layout)
+void FVulkanImageLayoutState::SetSubresourceLayout(uint32 Subresource, VkImageLayout Layout)
 {
     CHECK(Subresource < NumSubresources);
 
@@ -42,7 +42,7 @@ void FVulkanImageState::SetSubresourceLayout(uint32 Subresource, VkImageLayout L
     }
 }
 
-void FVulkanImageState::SetImageLayout(VkImageLayout Layout)
+void FVulkanImageLayoutState::SetImageLayout(VkImageLayout Layout)
 {
     ImageLayout = Layout;
 
@@ -57,7 +57,7 @@ void FVulkanImageState::SetImageLayout(VkImageLayout Layout)
     bAllSameLayout = true;
 }
 
-VkImageLayout FVulkanImageState::GetImageLayout() const
+VkImageLayout FVulkanImageLayoutState::GetImageLayout() const
 {
     CHECK(bAllSameLayout);
     return ImageLayout;

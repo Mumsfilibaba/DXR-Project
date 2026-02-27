@@ -1,12 +1,12 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanLoader.h"
-#include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanResource.h"
 
 typedef TSharedRef<class FVulkanShaderResourceView>  FVulkanShaderResourceViewRef;
 typedef TSharedRef<class FVulkanUnorderedAccessView> FVulkanUnorderedAccessViewRef;
 
-class FVulkanResourceView : public FVulkanDeviceChild
+class FVulkanResourceView : public FVulkanDeviceChild, public IVulkanResourceRelocationListener
 {
 public:
     enum class EType
@@ -50,25 +50,63 @@ public:
     FVulkanResourceView(FVulkanDevice* InDevice);
     virtual ~FVulkanResourceView();
 
-    bool InitializeAsImageView(VkImage InImage, VkFormat InFormat, VkImageViewType InImageViewType, VkImageAspectFlags InAspectMask, uint32 InBaseArrayLayer, uint32 InLayerCount, uint32 InBaseMipLevel, uint32 InLevelCount);
-    bool InitializeAsStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange);
-    bool InitializeAsTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange);
-    bool InitializeAsAccelerationStructureView(VkAccelerationStructureKHR InAccelerationStructure);
+    // IVulkanResourceRelocationListener Interface
+    virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    
+    bool InitializeImageView(VkImage InImage, VkFormat InFormat, VkImageViewType InImageViewType, VkImageAspectFlags InAspectMask, uint32 InBaseArrayLayer, uint32 InLayerCount, uint32 InBaseMipLevel, uint32 InLevelCount);
+    bool InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange);
+    bool InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange);
+    bool InitializeAccelerationStructureView(VkAccelerationStructureKHR InAccelerationStructure);
+
+    void RegisterWithResource(FVulkanGenericResource* InOwner);
+    void UnregisterFromResource();
 
     void SetDebugName(const FString& InName);
+    
+    const FStructuredBufferView& GetStructuredBufferInfo() const
+    {
+        CHECK(Type == EType::StructuredBufferView);
+        return StructuredBufferInfo;
+    }
+    
+    const FTypedBufferView& GetTypedBufferInfo() const
+    {
+        CHECK(Type == EType::TypedBufferView);
+        return TypedBufferInfo;
+    }
+
+    const FImageView& GetImageViewInfo() const
+    {
+        CHECK(Type == EType::ImageView);
+        return ImageViewInfo;
+    }
+
+    const FAccelerationStructureView& GetAccelerationStructureInfo() const
+    {
+        CHECK(Type == EType::AccelerationStructureView);
+        return AccelerationStructureInfo;
+    }
 
     EType GetType() const
     {
         return Type;
     }
 
-    const FStructuredBufferView&      GetStructuredBufferInfo()      const { return StructuredBufferInfo; }
-    const FTypedBufferView&           GetTypedBufferInfo()           const { return TypedBufferInfo; }
-    const FImageView&                 GetImageViewInfo()             const { return ImageViewInfo; }
-    const FAccelerationStructureView& GetAccelerationStructureInfo() const { return AccelerationStructureInfo; }
+    uint32 GetDescriptorVersion() const
+    {
+        return DescriptorVersion;
+    }
 
 protected:
-    EType Type;
+    void IncrementDescriptorVersion()
+    {
+        ++DescriptorVersion;
+    }
+
+    EType                   Type;
+    FVulkanGenericResource* OwnerResource;
+    uint32                  DescriptorVersion;
+
     union
     {
         FStructuredBufferView      StructuredBufferInfo;
@@ -84,9 +122,13 @@ public:
     FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanShaderResourceView() = default;
 
-    bool InitializeSRV(const FRHIShaderResourceViewInfo& InInfo);
-
+    // FRHIShaderResourceView Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
+    // IVulkanResourceRelocationListener Interface
+    virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+
+    bool Initialize(const FRHIShaderResourceViewInfo& InInfo);
 };
 
 class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanResourceView
@@ -95,7 +137,11 @@ public:
     FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanUnorderedAccessView() = default;
 
-    bool InitializeUAV(const FRHIUnorderedAccessViewInfo& InInfo);
-
+    // FRHIUnorderedAccessView Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
+    // IVulkanResourceRelocationListener Interface
+    virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+
+    bool Initialize(const FRHIUnorderedAccessViewInfo& InInfo);
 };

@@ -27,6 +27,7 @@ struct FD3D12DeferredObject
         BuddyAllocatorBlock   = 7,
         PoolAllocatorBlock    = 8,
         BucketAllocatorBlock  = 9,
+        LinearAllocatorPage   = 10,
     };
 
     FD3D12DeferredObject(FRHIResource* InResource)
@@ -102,6 +103,15 @@ struct FD3D12DeferredObject
         BucketAllocatorBlock.AllocationData = InAllocationData;
     }
 
+    FD3D12DeferredObject(FD3D12LinearAllocator* InAllocator, FD3D12LinearAllocatorPage* InPage)
+        : Type(EType::LinearAllocatorPage)
+    {
+        CHECK(InAllocator != nullptr);
+        CHECK(InPage != nullptr);
+        LinearAllocatorPage.Allocator = InAllocator;
+        LinearAllocatorPage.Page      = InPage;
+    }
+
     EType const Type;
 
     struct FOnlineDescriptorBlockData
@@ -128,6 +138,12 @@ struct FD3D12DeferredObject
         FD3D12BucketAllocatorAllocationData AllocationData = {};
     };
 
+    struct FLinearAllocatorPageData
+    {
+        FD3D12LinearAllocator*     Allocator = nullptr;
+        FD3D12LinearAllocatorPage* Page      = nullptr;
+    };
+
     union
     {
         FRHIResource*              RHIResource;
@@ -139,5 +155,6 @@ struct FD3D12DeferredObject
         FBuddyAllocatorBlockData   BuddyAllocatorBlock;
         FPoolAllocatorBlockData    PoolAllocatorBlock;
         FBucketAllocatorBlockData  BucketAllocatorBlock;
+        FLinearAllocatorPageData   LinearAllocatorPage;
     };
 };
