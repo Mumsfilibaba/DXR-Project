@@ -21,12 +21,15 @@ public:
 
     uint64 GetCompletedValue() const;
 
-    uint64 GetLastSignaledValue() const { return LastSignaledValue; }
-    uint64 GetCurrentValue() const      { return CurrentValue; }
-
     void SetDebugName(const FString& Name);
 
-    ID3D12Fence* GetD3D12Fence() const { return Fence.Get(); }
+    uint64 GetLastSignaledValue() const { return LastSignaledValue; }
+    uint64 GetCurrentValue()      const { return CurrentValue; }
+
+    ID3D12Fence* GetD3D12Fence() const
+    {
+        return Fence.Get();
+    }
 
 private:
     TComPtr<ID3D12Fence> Fence;
@@ -68,8 +71,15 @@ public:
         return Fence->WaitForValue(FenceValue, TimeoutMs);
     }
 
-    uint64       GetFenceValue() const { return FenceValue; }
-    FD3D12Fence* GetFence() const      { return Fence; }
+    uint64 GetFenceValue() const
+    {
+        return FenceValue;
+    }
+
+    FD3D12Fence* GetFence() const
+    {
+        return Fence;
+    }
 
 private:
     FD3D12Fence* Fence;
@@ -88,6 +98,7 @@ public:
     // FRHIGpuFence Interface
     virtual bool IsSignaled() const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
+
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
