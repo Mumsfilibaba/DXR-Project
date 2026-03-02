@@ -2280,7 +2280,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     return true;
 }
 
-void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame, FD3D12FenceManager& FenceManager)
+void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame)
 {
     if (MaxMovesPerFrame <= 0)
     {
@@ -2290,7 +2290,8 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
     CHECK(InCommandContext != nullptr);
     CHECK(InCommandContext->IsRecording());
 
-    const uint64 CompletedFenceValue = FenceManager.GetFence()->GetCompletedValue();
+    FD3D12Fence& FrameFence = GetDevice()->GetFrameFence();
+    const uint64 CompletedFenceValue = FrameFence.GetCompletedValue();
 
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
@@ -2430,7 +2431,7 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
         PendingMove.OldAllocationData    = Candidate;
         PendingMove.NewAllocationData    = NewAllocationData;
         PendingMove.ResourceState        = CurrentState;
-        PendingMove.FenceValueAtCreation = FenceManager.GetLastSignaledValue();
+        PendingMove.FenceValueAtCreation = FrameFence.GetLastSignaledValue();
 
         NewResource->AddRef();
 

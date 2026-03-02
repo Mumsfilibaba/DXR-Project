@@ -329,7 +329,8 @@ void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQ
     if (bWaitForQueue)
     {
         FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
-        Queue->GetFenceManager().WaitForFence();
+        FD3D12Fence& Fence = Queue->GetSubmissionFence();
+        Fence.WaitForValue(Fence.GetLastSignaledValue());
     }
     
     ObtainCommandList();
@@ -342,7 +343,8 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
     if (bWaitForQueue)
     {
         FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
-        Queue->GetFenceManager().WaitForFence();
+        FD3D12Fence& Fence = Queue->GetSubmissionFence();
+        Fence.WaitForValue(Fence.GetLastSignaledValue());
     }
 
     ContextState.ResetState();
@@ -1090,9 +1092,8 @@ void FD3D12CommandContext::WriteFence(FRHIGpuFence* Fence)
 
     FD3D12GpuFence* D3D12Fence = static_cast<FD3D12GpuFence*>(Fence);
 
-    // Submit all work recorded so far, then signal the fence on the queue.
     SplitCommandList(true, false);
-    D3D12Fence->Signal(QueueType);
+    D3D12Fence->Signal(GetDevice()->GetD3D12CommandQueue(QueueType));
 }
 
 void FD3D12CommandContext::DiscardContents(FRHITexture* Texture)
@@ -1626,8 +1627,9 @@ void FD3D12CommandContext::ClearState()
     FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
     CHECK(Queue != nullptr);
 
-    Queue->GetFenceManager().SignalGPU(QueueType);
-    Queue->GetFenceManager().WaitForFence();
+    FD3D12Fence& Fence = Queue->GetSubmissionFence();
+    Fence.Signal(Queue->GetD3D12CommandQueue());
+    Fence.WaitForValue(Fence.GetLastSignaledValue());
 
     ContextState.ResetState();
 }
@@ -1645,8 +1647,9 @@ void FD3D12CommandContext::Flush()
     FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
     CHECK(Queue != nullptr);
 
-    Queue->GetFenceManager().SignalGPU(QueueType);
-    Queue->GetFenceManager().WaitForFence();
+    FD3D12Fence& Fence = Queue->GetSubmissionFence();
+    Fence.Signal(Queue->GetD3D12CommandQueue());
+    Fence.WaitForValue(Fence.GetLastSignaledValue());
 }
 
 void FD3D12CommandContext::InsertMarker(const FStringView& Message)

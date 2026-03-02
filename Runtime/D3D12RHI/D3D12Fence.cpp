@@ -5,6 +5,9 @@ FD3D12Fence::FD3D12Fence(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , Fence(nullptr)
     , Event(0)
+    , LastCompletedValue(0)
+    , CurrentValue(0)
+    , LastSignaledValue(0)
 {
 }
 
@@ -18,6 +21,9 @@ FD3D12Fence::~FD3D12Fence()
 
 bool FD3D12Fence::Initialize(uint64 InitialValue)
 {
+    CurrentValue     = InitialValue;
+    LastSignaledValue = InitialValue;
+
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
     if (FAILED(Result))
     {
@@ -35,8 +41,44 @@ bool FD3D12Fence::Initialize(uint64 InitialValue)
     return true;
 }
 
+uint64 FD3D12Fence::Signal(ID3D12CommandQueue* Queue)
+{
+    CHECK(Queue != nullptr);
+
+    ++CurrentValue;
+    CHECK(LastSignaledValue != CurrentValue);
+
+    HRESULT hResult = Queue->Signal(Fence.Get(), CurrentValue);
+    if (FAILED(hResult))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Fence]: Failed to signal Fence on the GPU");
+    }
+
+    LastSignaledValue = CurrentValue;
+    return LastSignaledValue;
+}
+
+void FD3D12Fence::WaitGPU(ID3D12CommandQueue* Queue, uint64 Value)
+{
+    CHECK(Queue != nullptr);
+    CHECK(Fence != nullptr);
+    CHECK(Value <= LastSignaledValue);
+
+    HRESULT hResult = Queue->Wait(Fence.Get(), Value);
+    if (FAILED(hResult))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Fence]: Failed to wait for Fence on the GPU");
+    }
+}
+
 bool FD3D12Fence::WaitForValue(uint64 Value, uint32 TimeoutMs)
 {
+    uint64 CompletedValue = GetCompletedValue();
+    if (Value <= CompletedValue)
+    {
+        return true;
+    }
+
     HRESULT Result = Fence->SetEventOnCompletion(Value, Event);
     if (FAILED(Result))
     {
@@ -44,108 +86,33 @@ bool FD3D12Fence::WaitForValue(uint64 Value, uint32 TimeoutMs)
         return false;
     }
 
-    // NOTE: Check if the object was signaled, could also have timed out
     DWORD WaitResult = ::WaitForSingleObject(Event, TimeoutMs);
-    return WaitResult == WAIT_OBJECT_0;
-}
-
-FD3D12FenceManager::FD3D12FenceManager(FD3D12Device* InDevice)
-    : FD3D12DeviceChild(InDevice)
-    , Fence(nullptr)
-    , LastCompletedValue(0)
-    , CurrentValue(0)
-    , LastSignaledValue(0)
-{
-}
-
-bool FD3D12FenceManager::Initialize()
-{
-    FD3D12FenceRef NewFence = new FD3D12Fence(GetDevice());
-    if (!(NewFence && NewFence->Initialize(CurrentValue)))
+    if (WaitResult == WAIT_OBJECT_0)
     {
-        return false;
+        GetCompletedValue();
+        return true;
     }
 
-    Fence = NewFence;
-    return true;
+    return false;
 }
 
-void FD3D12FenceManager::Release()
-{
-    Fence.Reset();
-}
-
-uint64 FD3D12FenceManager::SignalGPU(ED3D12CommandQueueType QueueType)
-{
-    ++CurrentValue;
-    CHECK(LastSignaledValue != CurrentValue);
-
-    ID3D12CommandQueue* CommandQueue = GetDevice()->GetD3D12CommandQueue(QueueType);
-    CHECK(CommandQueue != nullptr);
-    
-    HRESULT hResult = CommandQueue->Signal(Fence->GetD3D12Fence(), CurrentValue);
-    if (FAILED(hResult))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12FenceManager]: Failed to signal Fence on the GPU");
-    }
-
-    LastSignaledValue = CurrentValue;
-    return LastSignaledValue;
-}
-
-void FD3D12FenceManager::WaitGPU(ED3D12CommandQueueType QueueType)
-{
-    WaitGPU(QueueType, LastSignaledValue);
-}
-
-void FD3D12FenceManager::WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue)
+uint64 FD3D12Fence::GetCompletedValue() const
 {
     CHECK(Fence != nullptr);
-    CHECK(InFenceValue <= LastSignaledValue);
-
-    ID3D12CommandQueue* CommandQueue = GetDevice()->GetD3D12CommandQueue(QueueType);
-    CHECK(CommandQueue != nullptr);
-    
-    HRESULT hResult = CommandQueue->Wait(Fence->GetD3D12Fence(), InFenceValue);
-    if (FAILED(hResult))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12FenceManager]: Failed to wait for Fence on the GPU");
-    }
-}
-
-void FD3D12FenceManager::WaitForFence()
-{
-    WaitForFence(LastSignaledValue);
-}
-
-void FD3D12FenceManager::WaitForFence(uint64 InFenceValue)
-{
-    CHECK(Fence != nullptr);
-    CHECK(InFenceValue <= LastSignaledValue);
-
-    uint64 CompletedFenceValue = GetCompletedValue();
-    if (InFenceValue > CompletedFenceValue)
-    {
-        Fence->WaitForValue(InFenceValue);
-        CompletedFenceValue = GetCompletedValue();
-    }
-
-    CHECK(InFenceValue <= CompletedFenceValue);
-}
-
-uint64 FD3D12FenceManager::GetCompletedValue() const
-{
-    CHECK(Fence != nullptr);
-    LastCompletedValue = Fence->GetD3D12Fence()->GetCompletedValue();
+    LastCompletedValue = Fence->GetCompletedValue();
     return LastCompletedValue;
+}
+
+void FD3D12Fence::SetDebugName(const FString& Name)
+{
+    CHECK(Fence != nullptr);
+    Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), *Name);
 }
 
 FD3D12GpuFence::FD3D12GpuFence(FD3D12Device* InDevice)
     : FRHIGpuFence()
     , FD3D12DeviceChild(InDevice)
     , Fence(nullptr)
-    , CurrentValue(0)
-    , TargetValue(0)
     , bHasPendingSignal(false)
     , DebugName()
 {
@@ -163,22 +130,11 @@ bool FD3D12GpuFence::Initialize()
     return true;
 }
 
-void FD3D12GpuFence::Signal(ED3D12CommandQueueType QueueType)
+void FD3D12GpuFence::Signal(ID3D12CommandQueue* Queue)
 {
     CHECK(Fence != nullptr);
-
-    ++CurrentValue;
-    TargetValue = CurrentValue;
     bHasPendingSignal.Store(true);
-
-    ID3D12CommandQueue* CommandQueue = GetDevice()->GetD3D12CommandQueue(QueueType);
-    CHECK(CommandQueue != nullptr);
-
-    HRESULT Result = CommandQueue->Signal(Fence->GetD3D12Fence(), TargetValue);
-    if (FAILED(Result))
-    {
-        D3D12_ERROR_CRITICAL("[FD3D12GpuFence]: Failed to signal Fence on the GPU");
-    }
+    Fence->Signal(Queue);
 }
 
 bool FD3D12GpuFence::IsSignaled() const
@@ -187,11 +143,10 @@ bool FD3D12GpuFence::IsSignaled() const
 
     if (!bHasPendingSignal.Load())
     {
-        // A fence that has never been signaled should not be treated as completed.
         return false;
     }
 
-    return TargetValue <= Fence->GetCompletedValue();
+    return Fence->GetLastSignaledValue() <= Fence->GetCompletedValue();
 }
 
 bool FD3D12GpuFence::Wait(uint64 TimeoutNs) const
@@ -200,7 +155,6 @@ bool FD3D12GpuFence::Wait(uint64 TimeoutNs) const
 
     if (!bHasPendingSignal.Load())
     {
-        // Nothing has been enqueued to signal this fence yet.
         return false;
     }
 
@@ -217,7 +171,7 @@ bool FD3D12GpuFence::Wait(uint64 TimeoutNs) const
         TimeoutMs = TimeoutMs64 > UINT32_MAX ? UINT32_MAX : static_cast<uint32>(TimeoutMs64);
     }
 
-    return Fence->WaitForValue(TargetValue, TimeoutMs);
+    return Fence->WaitForValue(Fence->GetLastSignaledValue(), TimeoutMs);
 }
 
 void FD3D12GpuFence::SetDebugName(const FString& InName)

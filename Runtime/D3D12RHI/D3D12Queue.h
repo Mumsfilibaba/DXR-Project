@@ -24,9 +24,9 @@ public:
     FD3D12FenceSyncPoint ExecuteCommandList(FD3D12CommandList* InCommandList, bool bWaitForCompletion);
     FD3D12FenceSyncPoint ExecuteCommandLists(FD3D12CommandList* const* InCommandLists, uint32 NumCommandLists, bool bWaitForCompletion);
 
-    FD3D12FenceManager& GetFenceManager() 
+    FD3D12Fence& GetSubmissionFence()
     {
-        return FenceManager;
+        return *SubmissionFence;
     }
 
     ED3D12CommandQueueType GetQueueType() const
@@ -53,7 +53,7 @@ private:
     ED3D12CommandQueueType const QueueType;
     D3D12_COMMAND_LIST_TYPE      CommandListType;
     UINT64                       Frequency;
-    FD3D12FenceManager           FenceManager;
+    FD3D12FenceRef               SubmissionFence;
     TComPtr<ID3D12CommandQueue>  CommandQueue;
     TQueue<FD3D12CommandList*>   AvailableCommandLists;
     TArray<FD3D12CommandList*>   CommandLists;

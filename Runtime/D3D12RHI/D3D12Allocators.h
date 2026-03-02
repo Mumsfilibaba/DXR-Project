@@ -12,7 +12,6 @@ static constexpr uint64 D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE = 16ull;
 
 class FD3D12Device;
 class FD3D12CommandContext;
-class FD3D12FenceManager;
 
 enum class EAllocationStrategy : uint8
 {
@@ -415,7 +414,7 @@ public:
     bool TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
-    void DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame, FD3D12FenceManager& FenceManager);
+    void DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame);
     void CancelPendingDefragMoves(FD3D12GenericResource* Owner);
 
     bool Initialize();

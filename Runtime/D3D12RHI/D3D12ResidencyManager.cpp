@@ -145,7 +145,7 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
         FD3D12Queue* DirectQueue = Device->GetQueue(ED3D12CommandQueueType::Direct);
         if (DirectQueue)
         {
-            GPUFence = DirectQueue->GetFenceManager().GetFence();
+            GPUFence = &DirectQueue->GetSubmissionFence();
         }
     }
 }

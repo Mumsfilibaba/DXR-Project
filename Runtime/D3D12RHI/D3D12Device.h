@@ -195,6 +195,7 @@ public:
     FD3D12BufferAllocator*           GetBufferAllocator()           const { return BufferAllocator; }
     FD3D12TextureAllocator*          GetTextureAllocator()          const { return TextureAllocator; }
     FD3D12UploadHeapAllocator*       GetUploadHeapAllocator()       const { return UploadHeapAllocator; }
+    FD3D12Fence&                     GetFrameFence()                const { return *FrameFence; }
 
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
 
@@ -262,6 +263,7 @@ private:
     FD3D12TextureAllocator*          TextureAllocator;
     FD3D12UploadHeapAllocator*       UploadHeapAllocator;
 
+    FD3D12FenceRef                   FrameFence;
     FD3D12Queue*                     DirectQueue;
     FD3D12Queue*                     CopyQueue;
     FD3D12Queue*                     ComputeQueue;

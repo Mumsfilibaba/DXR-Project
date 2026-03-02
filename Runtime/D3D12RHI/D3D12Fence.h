@@ -13,34 +13,32 @@ public:
     FD3D12Fence(FD3D12Device* InDevice);
     ~FD3D12Fence();
 
-    bool Initialize(uint64 InitialValue);
+    bool Initialize(uint64 InitialValue = 0);
 
-    bool WaitForValue(uint64 Value, uint32 TimeoutMs = INFINITE);
+    uint64 Signal(ID3D12CommandQueue* Queue);
+    void   WaitGPU(ID3D12CommandQueue* Queue, uint64 Value);
+    bool   WaitForValue(uint64 Value, uint32 TimeoutMs = INFINITE);
 
-    uint64 GetCompletedValue() const
-    {
-        CHECK(Fence != nullptr);
-        return Fence->GetCompletedValue();
-    }
+    uint64 GetCompletedValue() const;
 
-    void SetDebugName(const FString& Name)
-    {
-        CHECK(Fence != nullptr);
-        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), *Name);
-    }
+    uint64 GetLastSignaledValue() const { return LastSignaledValue; }
+    uint64 GetCurrentValue() const      { return CurrentValue; }
 
-    ID3D12Fence* GetD3D12Fence() const
-    {
-        return Fence.Get();
-    }
+    void SetDebugName(const FString& Name);
+
+    ID3D12Fence* GetD3D12Fence() const { return Fence.Get(); }
 
 private:
     TComPtr<ID3D12Fence> Fence;
     HANDLE               Event;
+    mutable uint64       LastCompletedValue;
+    uint64               CurrentValue;
+    uint64               LastSignaledValue;
 };
 
-struct FD3D12FenceSyncPoint
+class FD3D12FenceSyncPoint
 {
+public:
     FD3D12FenceSyncPoint()
         : Fence(nullptr)
         , FenceValue(0)
@@ -53,57 +51,29 @@ struct FD3D12FenceSyncPoint
     {
     }
 
+    bool IsValid() const
+    {
+        return Fence != nullptr;
+    }
+
     bool IsReached() const
     {
         CHECK(Fence != nullptr);
         return FenceValue <= Fence->GetCompletedValue();
     }
 
-    FD3D12Fence* Fence;
-    uint64       FenceValue;
-};
-
-class FD3D12FenceManager : public FD3D12DeviceChild
-{
-public:
-    FD3D12FenceManager(FD3D12Device* InDevice);
-    ~FD3D12FenceManager() = default;
-
-    bool Initialize();
-
-    void Release();
-    uint64 SignalGPU(ED3D12CommandQueueType QueueType);
-    void WaitGPU(ED3D12CommandQueueType QueueType);
-    void WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue);
-    void WaitForFence();
-    void WaitForFence(uint64 InFenceValue);
-    uint64 GetCompletedValue() const;
-    
-    FD3D12Fence* GetFence() const 
+    bool Wait(uint32 TimeoutMs = INFINITE) const
     {
-        return Fence.Get();
+        CHECK(Fence != nullptr);
+        return Fence->WaitForValue(FenceValue, TimeoutMs);
     }
 
-    uint64 GetLastSignaledValue() const 
-    { 
-        return LastSignaledValue; 
-    }
-
-    uint64 GetCurrentValue() const 
-    { 
-        return CurrentValue; 
-    }
-
-    uint64 GetCompletedValueFast() const 
-    { 
-        return LastCompletedValue;
-    }
+    uint64       GetFenceValue() const { return FenceValue; }
+    FD3D12Fence* GetFence() const      { return Fence; }
 
 private:
-    FD3D12FenceRef Fence;
-    mutable uint64 LastCompletedValue;
-    uint64         CurrentValue;
-    uint64         LastSignaledValue;
+    FD3D12Fence* Fence;
+    uint64       FenceValue;
 };
 
 class FD3D12GpuFence final : public FRHIGpuFence, public FD3D12DeviceChild
@@ -113,7 +83,7 @@ public:
     virtual ~FD3D12GpuFence() = default;
 
     bool Initialize();
-    void Signal(ED3D12CommandQueueType QueueType);
+    void Signal(ID3D12CommandQueue* Queue);
 
     // FRHIGpuFence Interface
     virtual bool IsSignaled() const override final;
@@ -123,8 +93,6 @@ public:
 
 private:
     FD3D12FenceRef Fence;
-    uint64         CurrentValue;
-    uint64         TargetValue;
     FAtomicBool    bHasPendingSignal;
     FString        DebugName;
 };

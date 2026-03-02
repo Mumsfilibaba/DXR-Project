@@ -626,6 +626,7 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , TextureAllocator(nullptr)
     , UploadHeapAllocator(nullptr)
     , ResidencyManager(nullptr)
+    , FrameFence(nullptr)
     , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
     , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , Adapter(InAdapter)
@@ -827,9 +828,10 @@ void FD3D12Device::BeginFrame(FD3D12CommandContext* InCommandContext)
     if (TextureAllocator)
     {
         const int32 MaxMovesPerFrame = CVarMaxDefragMovesPerFrame.GetValue();
-        FD3D12FenceManager& FenceManager = DirectQueue->GetFenceManager();
-        TextureAllocator->DefragmentAllocations(InCommandContext, MaxMovesPerFrame, FenceManager);
+        TextureAllocator->DefragmentAllocations(InCommandContext, MaxMovesPerFrame);
     }
+
+    FrameFence->Signal(DirectQueue->GetD3D12CommandQueue());
 }
 
 void FD3D12Device::CancelPendingDefragMoves(FD3D12GenericResource* Owner)
@@ -851,6 +853,15 @@ bool FD3D12Device::Initialize()
     {
         return false;
     }
+
+    FrameFence = new FD3D12Fence(this);
+    if (!FrameFence->Initialize(0))
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12Device]: Failed to create FrameFence");
+        return false;
+    }
+
+    FrameFence->SetDebugName("FrameFence");
 
     // Check current feature-level
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =

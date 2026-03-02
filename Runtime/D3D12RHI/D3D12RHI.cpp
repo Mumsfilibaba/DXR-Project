@@ -1066,7 +1066,7 @@ void FD3D12RHI::TickCoreProgression()
         FD3D12Commands* Oldest = nullptr;
         if (PendingSubmissions.Peek(Oldest) && Oldest)
         {
-            Oldest->SyncPoint.Fence->WaitForValue(Oldest->SyncPoint.FenceValue);
+            Oldest->SyncPoint.Wait();
             PendingSubmissions.Dequeue();
             Oldest->Finish();
         }
@@ -1127,7 +1127,7 @@ void FD3D12RHI::SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueu
             FD3D12Commands* Oldest = nullptr;
             if (PendingSubmissions.Peek(Oldest) && Oldest)
             {
-                Oldest->SyncPoint.Fence->WaitForValue(Oldest->SyncPoint.FenceValue);
+                Oldest->SyncPoint.Wait();
                 PendingSubmissions.Dequeue();
                 Oldest->Finish();
             }
