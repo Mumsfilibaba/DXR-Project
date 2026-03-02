@@ -42,7 +42,7 @@ void FVulkanDeferredObject::ProcessItems(FVulkanDevice* Device, TArray<FVulkanDe
 
                 if (Item.DedicatedAllocation.Memory != VK_NULL_HANDLE)
                 {
-                    vkFreeMemory(Device->GetVkDevice(), Item.DedicatedAllocation.Memory, nullptr);
+                    Device->GetMemoryManager().FreeMemory(Item.DedicatedAllocation.Memory);
                 }
 
                 break;

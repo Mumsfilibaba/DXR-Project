@@ -100,6 +100,116 @@ int64 FVulkanFence::Release() const
     return RefCount;
 }
 
+FVulkanTimelineFence::FVulkanTimelineFence(FVulkanDevice* InDevice)
+    : FVulkanDeviceChild(InDevice)
+    , TimelineSemaphore(VK_NULL_HANDLE)
+    , LastCompletedValue(0)
+    , CurrentValue(0)
+    , LastSignaledValue(0)
+{
+}
+
+FVulkanTimelineFence::~FVulkanTimelineFence()
+{
+    if (VULKAN_CHECK_HANDLE(TimelineSemaphore))
+    {
+        vkDestroySemaphore(GetDevice()->GetVkDevice(), TimelineSemaphore, nullptr);
+        TimelineSemaphore = VK_NULL_HANDLE;
+    }
+}
+
+bool FVulkanTimelineFence::Initialize()
+{
+    VkSemaphoreTypeCreateInfo TypeInfo = {};
+    TypeInfo.sType         = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+    TypeInfo.pNext         = nullptr;
+    TypeInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+    TypeInfo.initialValue  = 0;
+
+    VkSemaphoreCreateInfo CreateInfo = {};
+    CreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    CreateInfo.pNext = &TypeInfo;
+    CreateInfo.flags = 0;
+
+    VkResult Result = vkCreateSemaphore(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &TimelineSemaphore);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to create timeline semaphore for FVulkanTimelineFence");
+        return false;
+    }
+
+    return true;
+}
+
+uint64 FVulkanTimelineFence::Signal(FVulkanQueue& Queue)
+{
+    ++CurrentValue;
+    CHECK(LastSignaledValue != CurrentValue);
+
+    Queue.AddSignalTimelineSemaphore(TimelineSemaphore, CurrentValue);
+    LastSignaledValue = CurrentValue;
+    return LastSignaledValue;
+}
+
+uint64 FVulkanTimelineFence::GetCompletedValue() const
+{
+    CHECK(VULKAN_CHECK_HANDLE(TimelineSemaphore));
+
+    uint64 CounterValue = 0;
+    VkResult Result = vkGetSemaphoreCounterValue(GetDevice()->GetVkDevice(), TimelineSemaphore, &CounterValue);
+    if (Result == VK_ERROR_DEVICE_LOST)
+    {
+        VULKAN_ERROR_CRITICAL("Device Lost");
+        return LastCompletedValue;
+    }
+
+    VULKAN_ERROR_COND(Result == VK_SUCCESS, "vkGetSemaphoreCounterValue failed");
+    LastCompletedValue = CounterValue;
+    return LastCompletedValue;
+}
+
+bool FVulkanTimelineFence::WaitForValue(uint64 Value, uint64 TimeoutNs)
+{
+    CHECK(VULKAN_CHECK_HANDLE(TimelineSemaphore));
+    CHECK(Value <= LastSignaledValue);
+
+    uint64 CompletedValue = GetCompletedValue();
+    if (Value <= CompletedValue)
+    {
+        return true;
+    }
+
+    VkSemaphoreWaitInfo WaitInfo = {};
+    WaitInfo.sType          = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+    WaitInfo.pNext          = nullptr;
+    WaitInfo.flags          = 0;
+    WaitInfo.semaphoreCount = 1;
+    WaitInfo.pSemaphores    = &TimelineSemaphore;
+    WaitInfo.pValues        = &Value;
+
+    VkResult Result = vkWaitSemaphores(GetDevice()->GetVkDevice(), &WaitInfo, TimeoutNs);
+    if (Result == VK_TIMEOUT)
+    {
+        return false;
+    }
+
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR_CRITICAL("vkWaitSemaphores failed in FVulkanTimelineFence");
+        return false;
+    }
+
+    return true;
+}
+
+void FVulkanTimelineFence::SetDebugName(const FString& Name)
+{
+    if (VULKAN_CHECK_HANDLE(TimelineSemaphore))
+    {
+        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *Name, TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE);
+    }
+}
+
 FVulkanGpuFence::FVulkanGpuFence(FVulkanDevice* InDevice)
     : FRHIGpuFence()
     , FVulkanDeviceChild(InDevice)

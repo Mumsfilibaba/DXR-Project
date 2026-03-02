@@ -3,6 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanInstance.h"
@@ -557,6 +558,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , RenderPassCache(nullptr)
     , MemoryManager(nullptr)
     , FenceManager(nullptr)
+    , FrameFence(nullptr)
     , PipelineLayoutManager(nullptr)
     , PipelineStateManager(nullptr)
     , DescriptorSetCache(nullptr)
@@ -611,6 +613,7 @@ FVulkanDevice::~FVulkanDevice()
     SAFE_DELETE(OcclusionQueryPoolManager);
     SAFE_DELETE(PipelineLayoutManager);
     SAFE_DELETE(RenderPassCache);
+    SAFE_DELETE(FrameFence);
     SAFE_DELETE(FenceManager);
     SAFE_DELETE(MemoryManager);
     
@@ -1274,6 +1277,15 @@ bool FVulkanDevice::PostLoaderInitalize()
         VULKAN_ERROR_CRITICAL("FVulkanDevice: Failed to initialize MemoryManager");
         return false;
     }
+
+    FrameFence = new FVulkanTimelineFence(this);
+    if (!FrameFence->Initialize())
+    {
+        VULKAN_ERROR_CRITICAL("FVulkanDevice: Failed to initialize FrameFence");
+        return false;
+    }
+
+    FrameFence->SetDebugName("FrameFence");
 
     return true;
 }

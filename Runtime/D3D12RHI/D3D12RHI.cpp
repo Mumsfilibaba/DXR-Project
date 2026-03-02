@@ -1100,20 +1100,6 @@ void FD3D12RHI::TickCoreProgression()
     {
         TextureAllocator->CleanUp();
     }
-
-    extern TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame;
-    const int32 MaxDefragMoves = CVarMaxDefragMovesPerFrame.GetValue();
-    if (MaxDefragMoves > 0)
-    {
-        if (FD3D12TextureAllocator* TextureAllocator = Device->GetTextureAllocator())
-        {
-            FD3D12FenceManager& FenceManager = Device->GetQueue(ED3D12CommandQueueType::Direct)->GetFenceManager();
-
-            DirectCommandContext->StartContext();
-            TextureAllocator->DefragmentAllocations(DirectCommandContext, MaxDefragMoves, FenceManager);
-            DirectCommandContext->FinishContext();
-        }
-    }
 }
 
 void FD3D12RHI::SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueue)

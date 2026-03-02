@@ -3,6 +3,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Templates/Utility/NonCopyable.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Threading/ScopedLock.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanRefCounted.h"
@@ -220,7 +221,7 @@ public:
     };
 
 public:
-    FVulkanPoolAllocatorPage(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags);
+    FVulkanPoolAllocatorPage(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags = 0);
     ~FVulkanPoolAllocatorPage();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FVulkanMemoryStorage& OutStorage);
@@ -258,7 +259,9 @@ private:
     uint64                                     UsedBytes;
     uint32                                     MemoryTypeIndex;
     VkMemoryAllocateFlags                      AllocateFlags;
+    VkBufferUsageFlags                         BufferUsageFlags;
     VkDeviceMemory                             DeviceMemory;
+    VkBuffer                                   SharedBuffer;
     uint8*                                     MappedBaseAddress;
     TArray<FFreeRange>                         FreeRanges;
     TArray<FVulkanPoolAllocatorAllocationData> LiveAllocations;
@@ -270,7 +273,7 @@ class FVulkanPoolAllocator : public FVulkanDeviceChild
     static constexpr uint32 TLSFSecondLevelCount = 8;
 
 public:
-    FVulkanPoolAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InMaxAllocationSize, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags);
+    FVulkanPoolAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InMaxAllocationSize, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags = 0);
     ~FVulkanPoolAllocator();
 
     bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
@@ -306,6 +309,7 @@ private:
     uint64                            MaxAllocationSize;
     uint32                            MemoryTypeIndex;
     VkMemoryAllocateFlags             AllocateFlags;
+    VkBufferUsageFlags                BufferUsageFlags;
     uint64                            FragmentedBytes;
     TArray<FVulkanPoolAllocatorPage*> Pages;
     mutable FCriticalSection          PagesCS;
@@ -314,7 +318,7 @@ private:
 class FVulkanLinearAllocatorPage : public FVulkanDeviceChild
 {
 public:
-    FVulkanLinearAllocatorPage(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkBufferUsageFlags InBufferUsageFlags);
+    FVulkanLinearAllocatorPage(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkMemoryPropertyFlags InMemoryProperties, VkBufferUsageFlags InBufferUsageFlags, VkMemoryAllocateFlags InAllocateFlags);
     ~FVulkanLinearAllocatorPage() = default;
 
     bool Initialize();
@@ -330,9 +334,11 @@ public:
     }
 
 private:
-    uint64               PageSizeBytes;
-    VkBufferUsageFlags   BufferUsageFlags;
-    FVulkanMemoryStorage BackingStorage;
+    uint64                PageSizeBytes;
+    VkMemoryPropertyFlags MemoryProperties;
+    VkBufferUsageFlags    BufferUsageFlags;
+    VkMemoryAllocateFlags AllocateFlags;
+    FVulkanMemoryStorage  BackingStorage;
 };
 
 class FVulkanLinearAllocator : public FVulkanDeviceChild
@@ -340,7 +346,7 @@ class FVulkanLinearAllocator : public FVulkanDeviceChild
     static constexpr int32 MAX_POOL_PAGES = 8;
 
 public:
-    FVulkanLinearAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkBufferUsageFlags InBufferUsageFlags);
+    FVulkanLinearAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkMemoryPropertyFlags InMemoryProperties, VkBufferUsageFlags InBufferUsageFlags, VkMemoryAllocateFlags InAllocateFlags);
     ~FVulkanLinearAllocator();
 
     void* Allocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
@@ -350,9 +356,12 @@ public:
 private:
     FVulkanLinearAllocatorPage* AcquirePage();
     FVulkanLinearAllocatorPage* CreatePage();
+    void* AllocateOversized(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
 
     uint64                              PageSizeBytes;
+    VkMemoryPropertyFlags               MemoryProperties;
     VkBufferUsageFlags                  BufferUsageFlags;
+    VkMemoryAllocateFlags               AllocateFlags;
     FVulkanLinearAllocatorPage*         CurrentPage;
     uint64                              CurrentOffset;
     TArray<FVulkanLinearAllocatorPage*> PagePool;
@@ -484,7 +493,7 @@ private:
     uint64                      LargeThreshold;
     uint32                      MemoryTypeIndex;
     FVulkanMultiBuddyAllocator* SmallAllocator;
-    FVulkanMultiBuddyAllocator* LargeAllocator;
+    FVulkanPoolAllocator*       LargeAllocator;
     FVulkanMultiBuddyAllocator* ConstantsAllocator;
 };
 
@@ -506,6 +515,12 @@ public:
     void DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame);
     void CancelPendingDefragMoves(FVulkanGenericResource* Owner);
 
+    VkResult AllocateMemory(const VkMemoryAllocateInfo* AllocateInfo, VkDeviceMemory* OutMemory);
+    void     FreeMemory(VkDeviceMemory Memory);
+
+    int64  GetActiveAllocationCount() const { return ActiveAllocationCount.Load(); }
+    uint32 GetMaxAllocationCount() const    { return MaxAllocationCount; }
+
 private:
     FVulkanBufferAllocator     BufferAllocator;
     FVulkanTextureAllocator    TextureAllocator;
@@ -513,4 +528,6 @@ private:
     FVulkanLinearAllocator     DynamicConstantsAllocator;
     FVulkanLinearAllocator     StagingBufferAllocator;
     uint32                     UploadMemoryTypeIndex;
+    uint32                     MaxAllocationCount;
+    FAtomicInt64               ActiveAllocationCount;
 };

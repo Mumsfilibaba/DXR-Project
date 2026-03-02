@@ -9,6 +9,13 @@ static TAutoConsoleVariable<int32> CVarResidencyDebugBudgetMB(
     "Override residency budget in MB for debugging (0 = use actual DXGI budget)",
     0);
 
+#if !RELEASE_BUILD
+static TAutoConsoleVariable<bool> CVarLogResidencyEvents(
+    "D3D12RHI.LogResidencyEvents",
+    "Log residency events such as evictions and make-resident calls",
+    false);
+#endif
+
 FD3D12PagingWorker::FD3D12PagingWorker(ID3D12Device* InDevice)
     : Device(InDevice)
     , LastResult(S_OK)
@@ -265,6 +272,13 @@ void FD3D12ResidencyManager::MakeResident(FD3D12ResidencyHandle* Handle)
     SCOPED_LOCK(Mutex);
     Handle->bIsResident   = true;
     Handle->LastUsedFrame = CurrentFrame;
+
+#if !RELEASE_BUILD
+    if (CVarLogResidencyEvents.GetValue())
+    {
+        D3D12_INFO("[ResidencyManager] MakeResident: Pageable=%p Size=%llu bytes", Handle->GetPageable(), Handle->SizeBytes);
+    }
+#endif
 }
 
 void FD3D12ResidencyManager::EvictIfNeeded()
@@ -321,6 +335,13 @@ void FD3D12ResidencyManager::EvictIfNeeded()
             break;
         }
 
+#if !RELEASE_BUILD
+        if (CVarLogResidencyEvents.GetValue())
+        {
+            D3D12_INFO("[ResidencyManager] Evict: Pageable=%p Size=%llu bytes (Usage=%llu Budget=%llu)", Victim->Pageable, Victim->SizeBytes, Usage, Budget);
+        }
+#endif
+
         Victim->bIsResident = false;
         Usage = Usage > Victim->SizeBytes ? (Usage - Victim->SizeBytes) : 0;
     }
@@ -376,6 +397,13 @@ void FD3D12ResidencyManager::PrepareForExecution(FD3D12ResidencySet* const* Sets
             {
                 Handle->bIsResident = true;
             }
+
+#if !RELEASE_BUILD
+            if (CVarLogResidencyEvents.GetValue())
+            {
+                D3D12_INFO("[ResidencyManager] PrepareForExecution: Made %d objects resident", ObjectsToMakeResident.Size());
+            }
+#endif
         }
         else
         {

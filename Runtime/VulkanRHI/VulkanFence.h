@@ -34,6 +34,41 @@ private:
     mutable FAtomicInt64 References;
 };
 
+class FVulkanTimelineFence : public FVulkanDeviceChild, FNonCopyable
+{
+public:
+    FVulkanTimelineFence(FVulkanDevice* InDevice);
+    ~FVulkanTimelineFence();
+
+    bool Initialize();
+
+    uint64 Signal(FVulkanQueue& Queue);
+    uint64 GetCompletedValue() const;
+    bool   WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
+    void   SetDebugName(const FString& Name);
+
+    uint64 GetLastSignaledValue() const
+    {
+        return LastSignaledValue;
+    }
+
+    uint64 GetCurrentValue() const
+    {
+        return CurrentValue;
+    }
+
+    VkSemaphore GetVkSemaphore() const
+    {
+        return TimelineSemaphore;
+    }
+
+private:
+    VkSemaphore    TimelineSemaphore;
+    mutable uint64 LastCompletedValue;
+    uint64         CurrentValue;
+    uint64         LastSignaledValue;
+};
+
 class FVulkanGpuFence final : public FRHIGpuFence, public FVulkanDeviceChild
 {
 public:

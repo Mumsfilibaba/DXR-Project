@@ -18,6 +18,7 @@
 
 class FVulkanInstance;
 class FVulkanPhysicalDevice;
+class FVulkanTimelineFence;
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
@@ -291,6 +292,7 @@ public:
     FVulkanRenderPassCache&       GetRenderPassCache()       { return *RenderPassCache; }
     FVulkanMemoryManager&         GetMemoryManager()         { return *MemoryManager; }
     FVulkanFenceManager&          GetFenceManager()          { return *FenceManager; }
+    FVulkanTimelineFence&         GetFrameFence()            { return *FrameFence; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
     FVulkanPipelineStateManager&  GetPipelineStateManager()  { return *PipelineStateManager; }
     FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return *DescriptorSetCache; }
@@ -329,6 +331,7 @@ private:
     FVulkanRenderPassCache*              RenderPassCache;
     FVulkanMemoryManager*                MemoryManager;
     FVulkanFenceManager*                 FenceManager;
+    FVulkanTimelineFence*                FrameFence;
     FVulkanPipelineLayoutManager*        PipelineLayoutManager;
     FVulkanPipelineStateManager*         PipelineStateManager;
     FVulkanDescriptorSetCache*           DescriptorSetCache;

@@ -1,4 +1,5 @@
 #include "Core/Math/Math.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12DeletionQueue.h"
@@ -10,8 +11,12 @@
 static constexpr uint64 D3D12_MIN_TIGHT_RESOURCE_PLACEMENT_ALIGNMENT  = 8ull;
 static constexpr uint64 D3D12_SMALL_TEXTURE_TIGHT_PLACEMENT_ALIGNMENT = 256ull;
 
-#define D3D12_LOG_TEXTURE_POOL_ALIGNMENT 0
-#define D3D12_LOG_BUFFER_POOL_ALIGNMENT 0
+#if !RELEASE_BUILD
+static TAutoConsoleVariable<bool> CVarD3D12LogMemoryAllocations(
+    "D3D12RHI.LogMemoryAllocations",
+    "Log when new memory allocator pages or dedicated allocations are created",
+    false);
+#endif
 
 static D3D12_RESOURCE_DESC ApplyTightAlignmentFlag(const D3D12_RESOURCE_DESC& ResourceDesc)
 {
@@ -1743,14 +1748,19 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
         OutStorage.SetMappedBaseAddress(MappedBaseAddress);
 
-#if D3D12_LOG_BUFFER_POOL_ALIGNMENT
-        D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> Committed",
-            SizeInBytes, UsedAlignment, InHeapType);
+#if !RELEASE_BUILD
+        if (CVarD3D12LogMemoryAllocations.GetValue())
+        {
+            D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> Committed",
+                SizeInBytes, UsedAlignment, InHeapType);
+        }
 #endif
+
         return true;
     }
 
-#if D3D12_LOG_BUFFER_POOL_ALIGNMENT
+#if !RELEASE_BUILD
+    if (CVarD3D12LogMemoryAllocations.GetValue())
     {
         static const char* StrategyNames[] = { "SuballocatedResource", "SuballocatedHeap" };
         D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> %s (MinBlock=%llu)",
@@ -2210,7 +2220,8 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
         return false;
     }
 
-#if D3D12_LOG_TEXTURE_POOL_ALIGNMENT
+#if !RELEASE_BUILD
+    if (CVarD3D12LogMemoryAllocations.GetValue())
     {
         static const CHAR* PoolClassNames[] = { "SmallReadOnly", "ReadOnly", "RenderTargetDepthStencil", "UAVOnly" };
         D3D12_INFO("[TextureAllocator] Dimension=%u %llux%u Format=%u Alignment=%llu Size=%llu -> Pool=%s (PoolAlignment=%llu)",

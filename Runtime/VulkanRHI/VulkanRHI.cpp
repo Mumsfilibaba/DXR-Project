@@ -286,6 +286,8 @@ void FVulkanRHI::BeginFrame()
     {
         Device->GetMemoryManager().DefragmentAllocations(GraphicsCommandContext, MaxDefragMoves);
     }
+
+    Device->GetFrameFence().Signal(*GraphicsQueue);
 }
 
 void FVulkanRHI::EndFrame()
@@ -845,14 +847,6 @@ void FVulkanRHI::TickCoreProgression()
     }
 
     Device->GetMemoryManager().CleanUpAllocators();
-
-    const int32 MaxDefragMoves = CVarMaxDefragMovesPerFrame.GetValue();
-    if (MaxDefragMoves > 0)
-    {
-        GraphicsCommandContext->StartContext();
-        Device->GetMemoryManager().DefragmentAllocations(GraphicsCommandContext, MaxDefragMoves);
-        GraphicsCommandContext->FinishContext();
-    }
 }
 
 void FVulkanRHI::SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQueue)
