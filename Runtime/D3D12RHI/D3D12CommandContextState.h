@@ -14,8 +14,8 @@ public:
 
     void BindGraphicsStates();
     void BindComputeState();
-    void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
-    void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
+    void BindSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
+    void BindResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
     void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
     void ResetState();
     void ResetStateResources();
@@ -33,7 +33,7 @@ public:
     void SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_FORMAT IndexFormat);
     void SetSRV(FD3D12ShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetUAV(FD3D12UnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    void SetCBV(FD3D12ConstantBufferView* ConstantBufferView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetCBV(FD3D12Buffer* Buffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetSampler(FD3D12SamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
     void SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
@@ -113,7 +113,6 @@ public:
 
 private:
     bool InternalSetRootSignature(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
-    void InternalSetShaderStageResourceCount(FD3D12Shader* Shader, EShaderVisibility ShaderStage);
 
     FD3D12CommandContext& Context;
 
@@ -135,20 +134,16 @@ private:
         }
 
         FD3D12GraphicsPipelineStateRef PipelineState;
-
-        float                   BlendFactor[4];
-
-        D3D12_VIEWPORT          Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                  NumViewports;
-        D3D12_RECT              ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                  NumScissorRects;
-
-        FD3D12Texture*          ShadingRateImage;
-        D3D12_SHADING_RATE      ShadingRate;
-
-        FD3D12RenderTargetCache RTCache;
-        FD3D12IndexBufferCache  IBCache;
-        FD3D12VertexBufferCache VBCache;
+        float                          BlendFactor[4];
+        D3D12_VIEWPORT                 Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                         NumViewports;
+        D3D12_RECT                     ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                         NumScissorRects;
+        FD3D12Texture*                 ShadingRateImage;
+        D3D12_SHADING_RATE             ShadingRate;
+        FD3D12RenderTargetCache        RTCache;
+        FD3D12IndexBufferCache         IBCache;
+        FD3D12VertexBufferCache        VBCache;
 
         bool bBindRenderTargets     : 1;
         bool bBindBlendFactor       : 1;
@@ -189,8 +184,6 @@ private:
         FD3D12ShaderResourceViewCache  ShaderResourceViewCache;
         FD3D12UnorderedAccessViewCache UnorderedAccessViewCache;
         FD3D12SamplerStateCache        SamplerStateCache;
-        FShaderResourceRange           ShaderResourceCounts[ShaderVisibility_Count];
-
         FD3D12DescriptorCache          DescriptorCache;
         FD3D12ShaderConstantsCache     ShaderConstantsCache;
     } CommonState;

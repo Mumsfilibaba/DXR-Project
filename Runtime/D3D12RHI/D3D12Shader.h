@@ -40,37 +40,6 @@ enum EResourceType : int32
     ResourceType_Unknown = 5,
 };
 
-struct FShaderResourceRange
-{
-    FShaderResourceRange()
-        : NumCBVs(0)
-        , NumSRVs(0)
-        , NumUAVs(0)
-        , NumSamplers(0)
-    {
-    }
-
-    uint8 NumCBVs;
-    uint8 NumSRVs;
-    uint8 NumUAVs;
-    uint8 NumSamplers;
-};
-
-struct FShaderResourceCount
-{
-    FShaderResourceCount()
-        : Ranges()
-        , NumShaderConstants(0)
-    {
-    }
-
-    void Combine(const FShaderResourceCount& Other);
-    bool IsCompatible(const FShaderResourceCount& Other) const;
-
-    FShaderResourceRange Ranges;
-    uint8                NumShaderConstants;
-};
-
 struct FD3D12ShaderHash
 {
     // Hash retrieved from the shader ByteCode
@@ -94,43 +63,13 @@ struct FD3D12ShaderHash
     }
 };
 
-enum ED3D12BindingType : uint8
+struct FD3D12ShaderBytecode
 {
-    D3D12BindingType_ConstantBuffer = 0,
-    D3D12BindingType_SRV,
-    D3D12BindingType_UAV,
-    D3D12BindingType_Sampler,
-    D3D12BindingType_Count = D3D12BindingType_Sampler + 1,
-};
-
-struct FD3D12ShaderInfo
-{   
-    struct FResourceBinding
-    {
-        FString DebugName;
-        ED3D12BindingType BindingType;
-        uint8 BindingIndex;
-        uint8 OriginalBindingIndex;
-    };
-    
-    TArray<FResourceBinding> ResourceBindings;
-    uint32 NumPushConstants;
-};
-
-class FD3D12Shader : public FD3D12DeviceChild
-{
-public:
-    FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility);
-    ~FD3D12Shader();
-
-	virtual bool Initialize(const TArray<uint8>& InCode);
-
-    const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
-    const FShaderResourceCount& GetLocalRayTracingResourceCount() const { return LocalRayTracingResourceCount; }
-    const D3D12_SHADER_BYTECODE& GetByteCode() const { return ByteCode; }
-    EShaderVisibility GetShaderVisibility() const { return ShaderVisibility; }
-
-    bool HasRootSignature() const { return bContainsRootSignature; }
+    FD3D12ShaderBytecode();
+    FD3D12ShaderBytecode(const TArray<uint8>& InCode);
+    FD3D12ShaderBytecode(const FD3D12ShaderBytecode& Other);
+    FD3D12ShaderBytecode(FD3D12ShaderBytecode&& Other);
+    ~FD3D12ShaderBytecode();
     
     FORCEINLINE const void* GetCode() const
     {
@@ -141,6 +80,65 @@ public:
     {
         return static_cast<uint64>(ByteCode.BytecodeLength);
     }
+    
+    const D3D12_SHADER_BYTECODE& GetD3D12Bytecode() const
+    {
+        return ByteCode;
+    }
+
+    FD3D12ShaderBytecode& operator=(const FD3D12ShaderBytecode& Other);
+    FD3D12ShaderBytecode& operator=(FD3D12ShaderBytecode&& Other);
+
+private:
+    D3D12_SHADER_BYTECODE ByteCode;
+};
+
+enum ED3D12BindingType : uint8
+{
+    D3D12BindingType_ConstantBuffer = 0,
+    D3D12BindingType_SRV,
+    D3D12BindingType_UAV,
+    D3D12BindingType_Sampler,
+    D3D12BindingType_Count = D3D12BindingType_Sampler + 1,
+};
+
+struct FD3D12ShaderBindingInfo
+{   
+    struct FResourceBinding
+    {
+        ED3D12BindingType BindingType;
+        uint8             BindingIndex;
+        uint16            OriginalBindingIndex;
+        FString           DebugName;
+    };
+    
+    void AddBinding(ED3D12BindingType InType, uint16 InOriginalBindingIndex, const FString& InDebugName)
+    {
+        FResourceBinding& Binding    = ResourceBindings.Emplace();
+        Binding.BindingType          = InType;
+        Binding.BindingIndex         = 0;
+        Binding.OriginalBindingIndex = InOriginalBindingIndex;
+        Binding.DebugName            = InDebugName;
+    }
+
+    TArray<FResourceBinding> ResourceBindings;
+    uint32                   NumPushConstants = 0;
+};
+
+class FD3D12Shader : public FD3D12DeviceChild
+{
+public:
+    FD3D12Shader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility);
+    ~FD3D12Shader();
+
+	virtual bool Initialize(const TArray<uint8>& InCode);
+
+    bool HasRootSignature() const { return bContainsRootSignature; }
+    
+    const FD3D12ShaderBytecode&    GetByteCode()    const { return ByteCode; }
+    const FD3D12ShaderBindingInfo& GetBindingInfo() const { return BindingInfo; }
+    
+    EShaderVisibility GetShaderVisibility() const { return ShaderVisibility; }
 
     FORCEINLINE FD3D12ShaderHash GetHash() const
     {
@@ -151,15 +149,13 @@ protected:
     bool IsRootSignatureInShaderBlob(const TComPtr<IDxcBlob>& ShaderBlob);
     bool GetReflectionInterface(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject);
 
-    template<typename TD3D12ReflectionInterface>
-    bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, uint32 NumBoundResources);
+    bool GetShaderResourceBindings(ID3D12ShaderReflection* Reflection, uint32 NumBoundResources);
 
-    D3D12_SHADER_BYTECODE ByteCode;
-    FD3D12ShaderHash      ByteCodeHash;
-    EShaderVisibility     ShaderVisibility;
-    FShaderResourceCount  ResourceCount;
-    FShaderResourceCount  LocalRayTracingResourceCount;
-    bool                  bContainsRootSignature;
+    FD3D12ShaderBytecode     ByteCode;
+    FD3D12ShaderHash         ByteCodeHash;
+    EShaderVisibility        ShaderVisibility;
+    FD3D12ShaderBindingInfo  BindingInfo;
+    bool                     bContainsRootSignature;
 };
 
 class FD3D12GraphicsShader : public FD3D12Shader
@@ -183,7 +179,7 @@ public:
     }
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
@@ -197,7 +193,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
@@ -211,7 +207,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
@@ -225,7 +221,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
@@ -239,7 +235,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
@@ -258,8 +254,18 @@ public:
         return Identifier;
     }
 
+    FORCEINLINE const FD3D12ShaderBindingInfo& GetLocalBindingInfo() const
+    {
+        return LocalBindingInfo;
+    }
+
 protected:
+    bool GetShaderResourceBindings(ID3D12FunctionReflection* Reflection, uint32 NumBoundResources);
+
     FString Identifier;
+
+private:
+    FD3D12ShaderBindingInfo LocalBindingInfo;
 };
 
 class FD3D12RayGenShader : public FRHIRayGenShader, public FD3D12RayTracingShader
@@ -272,7 +278,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -286,7 +292,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -300,7 +306,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -314,7 +320,7 @@ public:
     }
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
@@ -331,7 +337,7 @@ public:
     virtual bool Initialize(const TArray<uint8>& InCode) override final;
 
 	// FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(&ByteCode); }
+    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12Shader*>(this); }
 
 protected:

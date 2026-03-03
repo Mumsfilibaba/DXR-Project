@@ -724,15 +724,10 @@ void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* Con
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
-    FD3D12ConstantBufferView* D3D12ConstantBufferView = nullptr;
-    if (ConstantBuffer)
-    {
-        D3D12ConstantBufferView = static_cast<FD3D12Buffer*>(ConstantBuffer)->GetConstantBufferView();
-        CHECK(D3D12ConstantBufferView != nullptr);
-    }
+    FD3D12Buffer* D3D12Buffer = ConstantBuffer ? FD3D12Buffer::Cast(ConstantBuffer) : nullptr;
     
     CHECK(ParameterIndex < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
-    ContextState.SetCBV(D3D12ConstantBufferView, D3D12Shader->GetShaderVisibility(), ParameterIndex);
+    ContextState.SetCBV(D3D12Buffer, D3D12Shader->GetShaderVisibility(), ParameterIndex);
 }
 
 void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
@@ -743,14 +738,8 @@ void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
     CHECK(ParameterIndex + InConstantBuffers.Size() <= D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
-        FD3D12ConstantBufferView* D3D12ConstantBufferView = nullptr;
-        if (InConstantBuffers[Index])
-        {
-            D3D12ConstantBufferView = static_cast<FD3D12Buffer*>(InConstantBuffers[Index])->GetConstantBufferView();
-            CHECK(D3D12ConstantBufferView != nullptr);
-        }
-
-        ContextState.SetCBV(D3D12ConstantBufferView, D3D12Shader->GetShaderVisibility(), ParameterIndex + Index);
+        FD3D12Buffer* D3D12Buffer = InConstantBuffers[Index] ? FD3D12Buffer::Cast(InConstantBuffers[Index]) : nullptr;
+        ContextState.SetCBV(D3D12Buffer, D3D12Shader->GetShaderVisibility(), ParameterIndex + Index);
     }
 }
 
@@ -838,7 +827,7 @@ void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
 
         if (D3D12Destination->GetInfo().IsConstantBuffer())
         {
-            D3D12Destination->CreateConstantBufferView();
+            D3D12Destination->GetOrCreateConstantBufferView();
         }
     }
     else
@@ -1190,8 +1179,8 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTrac
         {
             for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
-                FD3D12ConstantBufferView* D3D12ConstantBufferView = static_cast<FD3D12Buffer*>(GlobalResource->ConstantBuffers[i])->GetConstantBufferView();
-                ContextState.DescriptorCache.SetConstantBufferView(ShaderVisibility_All, D3D12ConstantBufferView, i);
+                FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(GlobalResource->ConstantBuffers[i]);
+                ContextState.SetCBV(D3D12Buffer, ShaderVisibility_All, i);
             }
         }
         

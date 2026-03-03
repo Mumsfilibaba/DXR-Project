@@ -141,7 +141,15 @@ public:
         return RootSignature.Get();
     }
 
+    uint8 GetEffectiveDescriptorCount(EShaderVisibility Stage, EResourceType Type) const
+    {
+        return EffectiveDescriptorCounts[Stage][Type];
+    }
+
 protected:
+    void ComputeEffectiveDescriptorCounts(FD3D12Shader* const* Shaders, uint32 NumShaders);
+
+    uint8                        EffectiveDescriptorCounts[ShaderVisibility_Count][ResourceType_Count];
     TComPtr<ID3D12PipelineState> PipelineState;
     FD3D12RootSignatureRef       RootSignature;
     FString                      DebugName;
@@ -270,22 +278,22 @@ struct FD3D12HashableViewInstanceDesc
 
 struct FD3D12GraphicsPipelineKey
 {
-    FD3D12ShaderHash                   VSHash = { };
-    FD3D12ShaderHash                   HSHash = { };
-    FD3D12ShaderHash                   DSHash = { };
-    FD3D12ShaderHash                   GSHash = { };
-    FD3D12ShaderHash                   PSHash = { };
-    uint64                             RootSignatureHash = 0;
-    uint64                             InputLayoutHash = 0;
-    uint64                             BlendStateHash = 0;
-    uint64                             DepthStencilHash = 0;
-    uint64                             RasterizerHash = 0;
-    uint64                             ViewInstancingHash = 0;
-    D3D12_PRIMITIVE_TOPOLOGY_TYPE      PrimitiveTopologyType = { };
+    FD3D12ShaderHash                   VSHash                   = { };
+    FD3D12ShaderHash                   HSHash                   = { };
+    FD3D12ShaderHash                   DSHash                   = { };
+    FD3D12ShaderHash                   GSHash                   = { };
+    FD3D12ShaderHash                   PSHash                   = { };
+    uint64                             RootSignatureHash        = 0;
+    uint64                             InputLayoutHash          = 0;
+    uint64                             BlendStateHash           = 0;
+    uint64                             DepthStencilHash         = 0;
+    uint64                             RasterizerHash           = 0;
+    uint64                             ViewInstancingHash       = 0;
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE      PrimitiveTopologyType    = { };
     D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IndexBufferStripCutValue = { };
-    DXGI_FORMAT                        DepthBufferFormat = { };
-    D3D12_RT_FORMAT_ARRAY              RenderTargetInfo = { };
-    DXGI_SAMPLE_DESC                   SampleDesc = { };
+    DXGI_FORMAT                        DepthBufferFormat        = { };
+    D3D12_RT_FORMAT_ARRAY              RenderTargetInfo         = { };
+    DXGI_SAMPLE_DESC                   SampleDesc               = { };
 };
 
 class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineState
@@ -294,8 +302,6 @@ public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12GraphicsPipelineState();
 
-    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
-
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
 
@@ -303,6 +309,8 @@ public:
     {
         FD3D12PipelineState::SetDebugName(InName);
     }
+
+    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
 
     D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
     {
@@ -342,7 +350,7 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12ComputePipelineStrea
 struct FD3D12ComputePipelineKey
 {
     uint64           RootSignatureHash = 0;
-    FD3D12ShaderHash CSHash = { 0, 0 };
+    FD3D12ShaderHash CSHash            = { 0, 0 };
 };
 
 class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineState
@@ -351,8 +359,6 @@ public:
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
     virtual ~FD3D12ComputePipelineState();
 
-    bool Initialize();
-
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
 
@@ -360,6 +366,8 @@ public:
     {
         FD3D12PipelineState::SetDebugName(InName);
     }
+
+    bool Initialize();
 
     FORCEINLINE FD3D12ComputeShader* GetComputeShader() const
     {
@@ -381,8 +389,6 @@ public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12RayTracingPipelineState();
 
-    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
-
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12StateObject()); }
 
@@ -391,6 +397,8 @@ public:
         FStringWide WideName = CharToWide(InName);
         StateObject->SetName(*WideName);
     }
+
+    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
     void* GetShaderIdentifier(const FString& ExportName);
 
@@ -413,7 +421,6 @@ private:
     TComPtr<ID3D12StateObject>                      StateObject;
     TComPtr<ID3D12StateObjectProperties>            StateObjectProperties;
     FD3D12RootSignatureRef                          GlobalRootSignature;
-    // TODO: There could be more than one root signature for locals
     FD3D12RootSignatureRef                          RayGenLocalRootSignature;
     FD3D12RootSignatureRef                          MissLocalRootSignature;
     FD3D12RootSignatureRef                          HitLocalRootSignature;

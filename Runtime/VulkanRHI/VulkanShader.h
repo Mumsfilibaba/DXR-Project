@@ -121,7 +121,7 @@ struct FVulkanShaderInfo
     {
         EVulkanBindingType BindingType;
         uint8              BindingIndex;
-        uint8              OriginalBindingIndex;
+        uint16             OriginalBindingIndex;
         FString            DebugName;
     };
     

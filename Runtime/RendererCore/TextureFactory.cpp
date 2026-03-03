@@ -477,6 +477,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     FRHIComputeShaderRef        ComputeShader = bIsTextureCube ? GenerateMipsTexCube_CS  : GenerateMipsTex2D_CS;
     FRHIComputePipelineStateRef PipelineState = bIsTextureCube ? GenerateMipsTexCube_PSO : GenerateMipsTex2D_PSO;
     CommandList.SetComputePipelineState(PipelineState.Get());
+    CommandList.SetSamplerState(ComputeShader.Get(), LinearSampler.Get(), 0);
 
     struct FGenMipsConstants
     {

@@ -354,8 +354,6 @@ bool FD3D12RayTracingScene::BuildBindingTable(
     ShaderBindingTableBuilder.PopulateEntry(
         PipelineState,
         PipelineState->GetRayGenLocalRootSignature(),
-        ResourceHeap,
-        SamplerHeap,
         RayGenEntry,
         *RayGenLocalResources);
 
@@ -365,8 +363,6 @@ bool FD3D12RayTracingScene::BuildBindingTable(
     ShaderBindingTableBuilder.PopulateEntry(
         PipelineState,
         PipelineState->GetMissLocalRootSignature(),
-        ResourceHeap,
-        SamplerHeap,
         MissEntry,
         *MissLocalResources);
 
@@ -379,13 +375,9 @@ bool FD3D12RayTracingScene::BuildBindingTable(
         ShaderBindingTableBuilder.PopulateEntry(
             PipelineState,
             PipelineState->GetHitLocalRootSignature(),
-            ResourceHeap,
-            SamplerHeap,
             HitGroupEntries[i],
             HitGroupResources[i]);
     }
-
-    ShaderBindingTableBuilder.CopyDescriptors();
 
     // TODO: More dynamic size of binding table
     uint32 TableEntrySize   = sizeof(FD3D12ShaderBindingTableEntry);
@@ -497,126 +489,51 @@ FD3D12ShaderBindingTableBuilder::FD3D12ShaderBindingTableBuilder(FD3D12Device* I
 }
 
 void FD3D12ShaderBindingTableBuilder::PopulateEntry(
-    FD3D12RayTracingPipelineState* /* PipelineState */,
-    FD3D12RootSignature* /* RootSignature */,
-    FD3D12OnlineDescriptorHeap* /* ResourceHeap */,
-    FD3D12OnlineDescriptorHeap* /* SamplerHeap */,
-    FD3D12ShaderBindingTableEntry& /* OutShaderBindingEntry */,
-    const FRayTracingShaderResources& /* Resources */)
+    FD3D12RayTracingPipelineState* PipelineState,
+    FD3D12RootSignature* RootSignature,
+    FD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
+    const FRayTracingShaderResources& Resources)
 {
-#if 0
     CHECK(PipelineState != nullptr);
     CHECK(RootSignature != nullptr);
-    CHECK(ResourceHeap  != nullptr);
-    CHECK(SamplerHeap   != nullptr);
 
     FMemory::Memcpy(OutShaderBindingEntry.ShaderIdentifier, PipelineState->GetShaderIdentifier(Resources.Identifier), D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-    if (!Resources.ConstantBuffers.IsEmpty())
+    const FD3D12ShaderStage& Stage = RootSignature->GetShaderStage(ShaderVisibility_All);
+
+    for (int32 i = 0; i < Resources.ConstantBuffers.Size(); i++)
     {
-        uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_CBV);
-        CHECK(RootIndex < 4);
-
-        uint32 NumDescriptors = Resources.ConstantBuffers.Size();
-        uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUHandle(Handle);
-
-        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUHandle(Handle);
-        GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
-
-        for (FRHIBuffer* ConstantBuffer : Resources.ConstantBuffers)
+        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_CBV, static_cast<uint16>(i));
+        if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
-            FD3D12Buffer* D3D12ConstantBuffer = static_cast<FD3D12Buffer*>(ConstantBuffer);
-            ResourceHandles[CPUResourceIndex++] = D3D12ConstantBuffer->GetConstantBufferView()->GetOfflineHandle();
+            FD3D12Buffer* Buffer = static_cast<FD3D12Buffer*>(Resources.ConstantBuffers[i]);
+            OutShaderBindingEntry.RootDescriptors[ParamIndex] = Buffer ? Buffer->GetGpuVirtualAddress() : 0;
         }
     }
-    if (!Resources.ShaderResourceViews.IsEmpty())
+
+    for (int32 i = 0; i < Resources.ShaderResourceViews.Size(); i++)
     {
-        uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_SRV);
-        CHECK(RootIndex < 4);
-
-        uint32 NumDescriptors = Resources.ShaderResourceViews.Size();
-        uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUHandle(Handle);
-
-        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUHandle(Handle);
-        GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
-
-        for (FRHIShaderResourceView* ShaderResourceView : Resources.ShaderResourceViews)
+        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_SRV, static_cast<uint16>(i));
+        if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
-            FD3D12ShaderResourceView* DxShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
-            ResourceHandles[CPUResourceIndex++] = DxShaderResourceView->GetOfflineHandle();
+            FD3D12ShaderResourceView* SRV = static_cast<FD3D12ShaderResourceView*>(Resources.ShaderResourceViews[i]);
+            const FD3D12Resource* Resource = SRV ? SRV->GetViewResource() : nullptr;
+            OutShaderBindingEntry.RootDescriptors[ParamIndex] = Resource ? Resource->GetGPUVirtualAddress() : 0;
         }
     }
-    if (!Resources.UnorderedAccessViews.IsEmpty())
+
+    for (int32 i = 0; i < Resources.UnorderedAccessViews.Size(); i++)
     {
-        uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_UAV);
-        CHECK(RootIndex < 4);
-
-        uint32 NumDescriptors = Resources.UnorderedAccessViews.Size();
-        uint32 Handle = ResourceHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUHandle(Handle);
-
-        GPUResourceHandles[GPUResourceIndex] = ResourceHeap->GetCPUHandle(Handle);
-        GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
-
-        for (FRHIUnorderedAccessView* UnorderedAccessView : Resources.UnorderedAccessViews)
+        const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_UAV, static_cast<uint16>(i));
+        if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
-            FD3D12UnorderedAccessView* DxUnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
-            ResourceHandles[CPUResourceIndex++] = DxUnorderedAccessView->GetOfflineHandle();
+            FD3D12UnorderedAccessView* UAV = static_cast<FD3D12UnorderedAccessView*>(Resources.UnorderedAccessViews[i]);
+            const FD3D12Resource* Resource = UAV ? UAV->GetViewResource() : nullptr;
+            OutShaderBindingEntry.RootDescriptors[ParamIndex] = Resource ? Resource->GetGPUVirtualAddress() : 0;
         }
     }
-    if (!Resources.SamplerStates.IsEmpty())
-    {
-        uint32 RootIndex = RootSignature->GetRootParameterIndex(ShaderVisibility_All, ResourceType_Sampler);
-        CHECK(RootIndex < 4);
-
-        uint32 NumDescriptors = Resources.SamplerStates.Size();
-        uint32 Handle = SamplerHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = SamplerHeap->GetGPUHandle(Handle);
-
-        GPUSamplerHandles[GPUSamplerIndex] = SamplerHeap->GetCPUHandle(Handle);
-        GPUSamplerHandleSizes[GPUSamplerIndex++] = NumDescriptors;
-
-        for (FRHISamplerState* Sampler : Resources.SamplerStates)
-        {
-            FD3D12SamplerState* DxSampler = static_cast<FD3D12SamplerState*>(Sampler);
-            SamplerHandles[CPUSamplerIndex++] = DxSampler->GetOfflineHandle();
-        }
-    }
-#endif
-}
-
-void FD3D12ShaderBindingTableBuilder::CopyDescriptors()
-{
-    GetDevice()->GetD3D12Device()->CopyDescriptors(
-        GPUResourceIndex,
-        GPUResourceHandles,
-        GPUResourceHandleSizes,
-        CPUResourceIndex,
-        ResourceHandles,
-        CPUHandleSizes,
-        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-    GetDevice()->GetD3D12Device()->CopyDescriptors(
-        GPUSamplerIndex,
-        GPUSamplerHandles,
-        GPUSamplerHandleSizes,
-        CPUSamplerIndex,
-        SamplerHandles,
-        CPUHandleSizes,
-        D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
 }
 
 void FD3D12ShaderBindingTableBuilder::Reset()
 {
-    for (uint32 i = 0; i < ARRAY_COUNT(CPUHandleSizes); i++)
-    {
-        CPUHandleSizes[i] = 1;
-    }
-
-    CPUResourceIndex = 0;
-    CPUSamplerIndex  = 0;
-    GPUResourceIndex = 0;
-    GPUSamplerIndex  = 0;
 }

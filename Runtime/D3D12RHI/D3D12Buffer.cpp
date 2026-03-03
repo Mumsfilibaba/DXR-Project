@@ -71,15 +71,6 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         return false;
     }
 
-    if (Info.IsConstantBuffer())
-    {
-        ConstantBufferView = new FD3D12ConstantBufferView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap());
-        if (!CreateConstantBufferView())
-        {
-            return false;
-        }
-    }
-
     if (InInitialData)
     {
         if (Info.IsDynamic() || Info.IsTransient())
@@ -212,10 +203,24 @@ void FD3D12Buffer::SetResource(FD3D12Resource* InResource)
         ResourceStorage.InitStandalone(InResource);
     }
 
-    if (Info.IsConstantBuffer())
+    if (Info.IsConstantBuffer() && ConstantBufferView.IsValid())
     {
         CreateConstantBufferView();
     }
+}
+
+FD3D12ConstantBufferView* FD3D12Buffer::GetOrCreateConstantBufferView()
+{
+    if (!ConstantBufferView.IsValid())
+    {
+        ConstantBufferView = new FD3D12ConstantBufferView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap());
+        if (!CreateConstantBufferView())
+        {
+            return nullptr;
+        }
+    }
+    
+    return ConstantBufferView.Get();
 }
 
 bool FD3D12Buffer::CreateConstantBufferView()

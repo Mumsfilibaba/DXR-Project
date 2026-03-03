@@ -32,13 +32,15 @@ public:
 
     void SetResource(FD3D12Resource* InResource); 
     
-    FD3D12ConstantBufferView* GetConstantBufferView() const
+    FD3D12ConstantBufferView* GetOrCreateConstantBufferView();
+
+    D3D12_GPU_VIRTUAL_ADDRESS GetGpuVirtualAddress() const
     {
-        return ConstantBufferView.Get();
+        return ResourceStorage.GetGpuVirtualAddress();
     }
 
+private:
     bool CreateConstantBufferView();
 
-private:
     FD3D12ConstantBufferViewRef ConstantBufferView;
 };

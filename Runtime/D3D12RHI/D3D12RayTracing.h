@@ -12,7 +12,7 @@ class FMaterial;
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) FD3D12ShaderBindingTableEntry
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-    D3D12_GPU_DESCRIPTOR_HANDLE RootDescriptorTables[4] = { 0, 0, 0, 0 };
+    D3D12_GPU_VIRTUAL_ADDRESS RootDescriptors[D3D12_MAX_LOCAL_ROOT_DESCRIPTORS] = {};
 };
 
 class FD3D12ShaderBindingTableBuilder : public FD3D12DeviceChild
@@ -23,30 +23,10 @@ public:
     void PopulateEntry(
         FD3D12RayTracingPipelineState*    PipelineState,
         FD3D12RootSignature*              RootSignature,
-        FD3D12OnlineDescriptorHeap*       ResourceHeap,
-        FD3D12OnlineDescriptorHeap*       SamplerHeap,
         FD3D12ShaderBindingTableEntry&    OutShaderBindingEntry,
         const FRayTracingShaderResources& Resources);
 
-    void CopyDescriptors();
     void Reset();
-
-private:
-    uint32 CPUHandleSizes[1024];
-
-    D3D12_CPU_DESCRIPTOR_HANDLE ResourceHandles[1024];
-    D3D12_CPU_DESCRIPTOR_HANDLE SamplerHandles[1024];
-
-    // Online resources
-    D3D12_CPU_DESCRIPTOR_HANDLE GPUResourceHandles[1024];
-    D3D12_CPU_DESCRIPTOR_HANDLE GPUSamplerHandles[1024];
-
-    uint32 GPUResourceHandleSizes[1024];
-    uint32 GPUSamplerHandleSizes[1024];
-    uint32 CPUResourceIndex = 0;
-    uint32 CPUSamplerIndex  = 0;
-    uint32 GPUResourceIndex = 0;
-    uint32 GPUSamplerIndex  = 0;
 };
 
 class FD3D12AccelerationStructure : public FD3D12DeviceChild

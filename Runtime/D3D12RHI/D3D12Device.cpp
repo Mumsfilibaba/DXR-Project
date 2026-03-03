@@ -58,6 +58,11 @@ static TAutoConsoleVariable<int32> CVarUploadHeapSmallAllocationThreshold(
     "Allocation size threshold for the upload small allocator path (bytes)",
     64 * 1024);
 
+static TAutoConsoleVariable<int32> CVarResourceBindingTierOverride(
+    "D3D12RHI.ResourceBindingTierOverride",
+    "Override the resource binding tier (0=no override, 1=Tier1, 2=Tier2, 3=Tier3)",
+    0);
+
 static TAutoConsoleVariable<int32> CVarUploadHeapLargeAllocationThreshold(
     "D3D12RHI.UploadHeapLargeAllocationThreshold",
     "Max suballocation size before upload allocations become standalone (bytes)",
@@ -897,10 +902,6 @@ bool FD3D12Device::Initialize()
 
     // Create RootSignatureManager
     RootSignatureManager = new FD3D12RootSignatureManager(this);
-    if (!RootSignatureManager->Initialize())
-    {
-        return false;
-    } 
 
     // Create DescriptorHeaps
     const uint32 NumOnlineResourceDescriptors = Math::Min<uint32>(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, GD3D12MaxResourceDescriptorHeapSize);
@@ -1487,6 +1488,13 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             GD3D12RasterizerOrderViewsSupported = !!Features.ROVsSupported;
             GD3D12TypedUAVLoadAdditionalFormats = !!Features.TypedUAVLoadAdditionalFormats;
             GD3D12TiledResourcesTier            = Features.TiledResourcesTier;
+
+            const int32 BindingTierOverride = CVarResourceBindingTierOverride.GetValue();
+            if (BindingTierOverride >= 1 && BindingTierOverride <= 3)
+            {
+                GD3D12ResourceBindingTier = static_cast<D3D12_RESOURCE_BINDING_TIER>(BindingTierOverride);
+                D3D12_WARNING("[FD3D12Device] ResourceBinding Tier OVERRIDDEN to: %d", GD3D12ResourceBindingTier);
+            }
 
             D3D12_INFO("[FD3D12Device] ResourceBinding Tier: %d", GD3D12ResourceBindingTier);
             D3D12_INFO("[FD3D12Device] ResourceHeap Tier: %d", GD3D12ResourceHeapTier);

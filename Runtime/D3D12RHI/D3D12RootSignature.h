@@ -15,31 +15,121 @@ enum class ERootSignatureType
     RayTracingLocal  = 4,
 };
 
-struct FD3D12RootSignatureLayout
+struct FD3D12RegisterSet
 {
-    FD3D12RootSignatureLayout()
-        : Type(ERootSignatureType::Unknown)
-        , bAllowInputAssembler(false)
+    FD3D12RegisterSet Union(const FD3D12RegisterSet& Other) const;
+    void Insert(uint16 Register);
+
+    bool IsSubsetOf(const FD3D12RegisterSet& Other) const;
+    bool Contains(uint16 Register) const;
+ 
+    FORCEINLINE uint32 GetCount() const
     {
+        return Registers.Size();
     }
 
-    bool IsCompatible(const FD3D12RootSignatureLayout& Other) const;
+    FORCEINLINE bool IsEmpty() const
+    {
+        return Registers.IsEmpty();
+    }
+    
+    TArray<uint16> Registers;
+};
 
-    FShaderResourceCount ResourceCounts[ShaderVisibility_Count];
-    ERootSignatureType   Type;
-    bool                 bAllowInputAssembler;
+class FD3D12RootSignatureLayout
+{
+public:
+    FD3D12RootSignatureLayout();
+    ~FD3D12RootSignatureLayout() = default;
+
+    void AddRegister(EShaderVisibility Stage, EResourceType ResType, uint16 Register);
+    void AddContiguousRegisters(EShaderVisibility Stage, EResourceType ResType, uint8 Count);
+    
+    bool IsCompatible(const FD3D12RootSignatureLayout& Other) const;
+    
+    void   ComputeRootCBVs();
+    uint32 ComputeCost() const;
+
+    const FD3D12RegisterSet& GetRootCBVRegisters(EShaderVisibility Stage)                 const { return RootCBVSets[Stage]; }
+    const FD3D12RegisterSet& GetRegisters(EShaderVisibility Stage, EResourceType ResType) const { return RegisterSets[Stage][ResType]; }
+
+    FORCEINLINE void SetType(ERootSignatureType InType) 
+    {
+        Type = InType;
+    }
+
+    FORCEINLINE void SetAllowInputAssembler(bool bInAllowInputAssembler)
+    {
+        bAllowInputAssembler = bInAllowInputAssembler;
+    }
+
+    FORCEINLINE void SetNumPushConstants(uint8 Count)
+    {
+        NumPushConstants = Count;
+    }
+
+    FORCEINLINE ERootSignatureType GetType() const
+    {
+        return Type;
+    }
+    
+    FORCEINLINE bool GetAllowInputAssembler() const
+    {
+        return bAllowInputAssembler;
+    }
+    
+    FORCEINLINE uint8 GetNumPushConstants() const
+    {
+        return NumPushConstants;
+    }
+
+private:
+    FD3D12RegisterSet  RegisterSets[ShaderVisibility_Count][ResourceType_Count];
+    FD3D12RegisterSet  RootCBVSets[ShaderVisibility_Count];
+    uint8              NumPushConstants;
+    bool               bAllowInputAssembler;
+    ERootSignatureType Type;
+};
+
+class FD3D12DescriptorTableMapping
+{
+public:
+    FD3D12DescriptorTableMapping();
+    ~FD3D12DescriptorTableMapping() = default;
+
+    void Build(const FD3D12RegisterSet& Registers);
+    
+    int8   GetSlotForRegister(uint16 Register) const;
+    uint16 GetRegisterForSlot(uint8 Slot)      const;
+
+    FORCEINLINE uint8 GetNumSlots() const
+    {
+        return NumSlots;
+    }
+
+private:
+    uint16 SlotToRegister[D3D12_CACHED_DESCRIPTORS_COUNT];
+    uint8  NumSlots;
 };
 
 class FD3D12RootSignatureDescHelper
 {
 public:
-    FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& RootSignatureInfo);
+    FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& Layout);
+    ~FD3D12RootSignatureDescHelper() = default;
 
-    const uint32 GetRootSignatureCost() const { return RootSignatureCost; }
-    const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const { return Desc; }
+    FORCEINLINE uint32 GetRootSignatureCost() const
+    {
+        return RootSignatureCost;
+    }
+
+    FORCEINLINE const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
+    {
+        return Desc;
+    }
 
 private:
-    static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace);
+    static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace, uint32 OffsetInTable);
 
     void InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
     void Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 NumShaderConstants, uint32 ShaderRegister, uint32 RegisterSpace);
@@ -47,61 +137,145 @@ private:
     void InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
     void InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
 
+    uint32 BuildDescriptorRangesForRegisterSet(const FD3D12RegisterSet& Registers, D3D12_DESCRIPTOR_RANGE_TYPE RangeType, uint32 Space);
+
+private:
+    D3D12_ROOT_PARAMETER      RootParameters[D3D12_MAX_ROOT_PARAMETERS];
+    D3D12_DESCRIPTOR_RANGE    DescriptorRanges[D3D12_MAX_DESCRIPTOR_RANGE_SIZE];
     D3D12_ROOT_SIGNATURE_DESC Desc;
+    uint32                    NumRootParameters;
+    uint32                    NumDescriptorRanges;
+    uint32                    RootSignatureCost;
+};
 
-    D3D12_ROOT_PARAMETER   RootParameters[D3D12_MAX_ROOT_PARAMETERS];
-    D3D12_DESCRIPTOR_RANGE DescriptorRanges[D3D12_MAX_DESCRIPTOR_RANGES];
+class FD3D12ShaderStage
+{
+    struct FRootDescriptorEntry
+    {
+        uint16 Register;
+        int8   ParameterIndex;
+    };
 
-    uint32 NumRootParameters   = 0;
-    uint32 NumDescriptorRanges = 0;
-    uint32 RootSignatureCost   = 0;
+public:
+    static constexpr int32 MaxRootCBVsPerStage        = 6;
+    static constexpr int32 MaxRootDescriptorsPerStage = D3D12_MAX_LOCAL_ROOT_DESCRIPTORS;
+
+    FD3D12ShaderStage();
+    ~FD3D12ShaderStage() = default;
+
+    void AddRootDescriptor(EResourceType Type, int8 RootParameterIndex, uint16 Register);
+    void AddRootCBV(int8 RootParameterIndex, uint16 Register);
+    
+    bool IsRootCBV(uint16 Register) const;
+
+    void SetDescriptorTableIndex(EResourceType Type, int8 RootParameterIndex, int8 DescriptorCount);
+
+    int8   GetRootCBVParameterIndex(uint16 Register)   const;
+    int8   GetRootCBVParameterIndexBySlot(uint8 Index) const;
+    uint16 GetRootCBVRegister(uint8 Index)             const;
+    int8   GetRootDescriptorParameterIndex(EResourceType Type, uint16 Register) const;
+    
+    FORCEINLINE int8 GetRootParameterIndex(EResourceType Type) const
+    {
+        return RootParameterIndicies[Type];
+    }
+
+    FORCEINLINE int8 GetNumResources(EResourceType Type) const
+    {
+        return ResourceCounts[Type];
+    }
+
+    FORCEINLINE uint8 GetNumRootCBVs() const
+    {
+        return NumRootCBVs;
+    }
+    
+    FORCEINLINE uint8 GetNumRootDescriptors(EResourceType Type) const
+    {
+        return NumRootDescriptors[Type];
+    }
+
+private:
+    int8                 RootParameterIndicies[ResourceType_Count];
+    int8                 ResourceCounts[ResourceType_Count];
+    int8                 RootCBVParameterIndex[MaxRootCBVsPerStage];
+    uint16               RootCBVRegister[MaxRootCBVsPerStage];
+    uint8                NumRootCBVs;
+    FRootDescriptorEntry RootDescriptors[ResourceType_Count][MaxRootDescriptorsPerStage];
+    uint8                NumRootDescriptors[ResourceType_Count];
 };
 
 class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
 {
-    struct FShaderStage
-    {
-        int8 RootParameterIndicies[ResourceType_Count];
-        int8 ResourceCount[ResourceType_Count];
-    };
-
 public:
+    static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
+    
     FD3D12RootSignature(FD3D12Device* InDevice);
     ~FD3D12RootSignature() = default;
 
-    static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
-    
-    bool Initialize(const FD3D12RootSignatureLayout& RootSignatureInfo);
+    bool Initialize(const FD3D12RootSignatureLayout& Layout);
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
-    void SetDebugName(const FString& Name)
+    bool HasDenyFlag(EShaderVisibility Stage) const;
+
+    FORCEINLINE bool IsRootCBV(EShaderVisibility Stage, uint16 Register) const
+    {
+        return ShaderStages[Stage].IsRootCBV(Register);
+    }
+
+    FORCEINLINE void SetDebugName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
         RootSignature->SetName(*WideName);
     }
 
-    ID3D12RootSignature* GetD3D12RootSignature() const { return RootSignature.Get(); }
+    ID3D12RootSignature*  GetD3D12RootSignature() const  { return RootSignature.Get(); }
     ID3D12RootSignature** GetD3D12RootSignatureAddress() { return RootSignature.GetAddressOf(); }
 
-    int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
+    FORCEINLINE int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
     {
-        return static_cast<int32>(RootParameterMap[Visibility].RootParameterIndicies[Type]);
+        return static_cast<int32>(ShaderStages[Visibility].GetRootParameterIndex(Type));
     }
 
-    int32 GetMaxResourceCount(EShaderVisibility Visibility, EResourceType Type) const
+    FORCEINLINE int32 GetMaxResourceCount(EShaderVisibility Visibility, EResourceType Type) const
     {
-        return static_cast<int32>(RootParameterMap[Visibility].ResourceCount[Type]);
+        return static_cast<int32>(ShaderStages[Visibility].GetNumResources(Type));
     }
 
-    int32 Get32BitConstantsIndex() const
+    FORCEINLINE int32 Get32BitConstantsIndex() const
     {
         return ConstantRootParameterIndex;
     }
 
-    uint64 GetHash() const
+    FORCEINLINE int8 GetSlotForRegister(EShaderVisibility Stage, EResourceType Type, uint16 Register) const
+    {
+        return TableMappings[Stage][Type].GetSlotForRegister(Register);
+    }
+
+    FORCEINLINE int32 GetRootCBVParameterIndex(EShaderVisibility Stage, uint16 Register) const
+    {
+        return ShaderStages[Stage].GetRootCBVParameterIndex(Register);
+    }
+
+    FORCEINLINE D3D12_ROOT_SIGNATURE_FLAGS GetFlags() const
+    {
+        return Flags;
+    }
+
+    FORCEINLINE uint64 GetHash() const
     {
         return Hash;
+    }
+
+    FORCEINLINE const FD3D12DescriptorTableMapping& GetDescriptorTableMapping(EShaderVisibility Stage, EResourceType Type) const
+    {
+        return TableMappings[Stage][Type];
+    }
+
+    FORCEINLINE const FD3D12ShaderStage& GetShaderStage(EShaderVisibility Visibility) const
+    {
+        return ShaderStages[Visibility];
     }
 
 private:
@@ -109,8 +283,10 @@ private:
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;
-    FShaderStage                 RootParameterMap[ShaderVisibility_Count];
+    FD3D12ShaderStage            ShaderStages[ShaderVisibility_Count];
+    FD3D12DescriptorTableMapping TableMappings[ShaderVisibility_Count][ResourceType_Count];
     int32                        ConstantRootParameterIndex;
+    D3D12_ROOT_SIGNATURE_FLAGS   Flags;
     uint64                       Hash;
 };
 
@@ -120,14 +296,13 @@ public:
     FD3D12RootSignatureManager(FD3D12Device* Device);
     ~FD3D12RootSignatureManager();
 
-    bool Initialize();
+    FD3D12RootSignature* GetOrCreateRootSignature(const FD3D12RootSignatureLayout& Layout);
+    
     void ReleaseAll();
-    FD3D12RootSignature* GetOrCreateRootSignature(const FD3D12RootSignatureLayout& ResourceCount);
 
 private:
-    FD3D12RootSignature* CreateRootSignature(const FD3D12RootSignatureLayout& ResourceCount);
+    FD3D12RootSignature* CreateRootSignature(const FD3D12RootSignatureLayout& Layout);
 
-    // TODO: Use a hash instead, this is beacuse == operator does not make sense, use it anyway?
     TArray<FD3D12RootSignatureRef>    RootSignatures;
     TArray<FD3D12RootSignatureLayout> ResourceLayouts;
 };

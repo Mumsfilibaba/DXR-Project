@@ -54,7 +54,8 @@ bool FD3D12LocalDescriptorHeap::Realloc()
     }
 
     CHECK(Block == nullptr);
-    Block = GlobalHeap.AllocateBlock();
+    
+    Block         = GlobalHeap.AllocateBlock();
     CurrentHandle = 0;
 
     if (Block)
@@ -203,17 +204,28 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
     {
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
 
+        const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_CBV);
         auto& CBVCache = Cache.ResourceViews[ShaderStage];
-        for (uint32 Index = 0; Index < NumCBVs; Index++)
+        for (uint32 Slot = 0; Slot < NumCBVs; Slot++)
         {
-            if (FD3D12ConstantBufferView* ConstantBuffer = CBVCache[Index])
+            const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
+            CHECK(Register < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
+
+            if (FD3D12Buffer* Buffer = CBVCache[Register])
             {
-                OfflineHandles[Index] = ConstantBuffer->GetOfflineHandle();
-                Context.GetCommandList().UpdateResidency(ConstantBuffer->GetResourceResidencyHandle());
+                if (FD3D12ConstantBufferView* View = Buffer->GetOrCreateConstantBufferView())
+                {
+                    OfflineHandles[Slot] = View->GetOfflineHandle();
+                    Context.GetCommandList().UpdateResidency(View->GetResourceResidencyHandle());
+                }
+                else
+                {
+                    OfflineHandles[Slot] = DefaultDescriptors.DefaultCBV->GetOfflineHandle();
+                }
             }
             else
             {
-                OfflineHandles[Index] = DefaultDescriptors.DefaultCBV->GetOfflineHandle();
+                OfflineHandles[Slot] = DefaultDescriptors.DefaultCBV->GetOfflineHandle();
             }
         }
 
@@ -264,21 +276,25 @@ void FD3D12DescriptorCache::SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12
     {
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
 
+        const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_SRV);
         auto& SRVCache = Cache.ResourceViews[ShaderStage];
-        for (uint32 Index = 0; Index < NumSRVs; Index++)
+        for (uint32 Slot = 0; Slot < NumSRVs; Slot++)
         {
-            if (FD3D12ShaderResourceView* ShaderResourceView = SRVCache[Index])
+            const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
+            CHECK(Register < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+
+            if (FD3D12ShaderResourceView* ShaderResourceView = SRVCache[Register])
             {
-                OfflineHandles[Index] = ShaderResourceView->GetOfflineHandle();
+                OfflineHandles[Slot] = ShaderResourceView->GetOfflineHandle();
                 Context.GetCommandList().UpdateResidency(ShaderResourceView->GetResourceResidencyHandle());
             }
             else
             {
-                OfflineHandles[Index] = DefaultDescriptors.DefaultSRV->GetOfflineHandle();
+                OfflineHandles[Slot] = DefaultDescriptors.DefaultSRV->GetOfflineHandle();
             }
         }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
+        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle     = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
         ShaderResourceViewCache.Handles[ShaderStage] = ResourceHeap.GetGPUHandle(DescriptorHandleOffset);
         DescriptorHandleOffset += NumSRVs;
         
@@ -325,21 +341,25 @@ void FD3D12DescriptorCache::SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D1
     {
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
 
+        const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_UAV);
         auto& UAVCache = Cache.ResourceViews[ShaderStage];
-        for (uint32 Index = 0; Index < NumUAVs; Index++)
+        for (uint32 Slot = 0; Slot < NumUAVs; Slot++)
         {
-            if (FD3D12UnorderedAccessView* UnorderedAccessView = UAVCache[Index])
+            const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
+            CHECK(Register < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+
+            if (FD3D12UnorderedAccessView* UnorderedAccessView = UAVCache[Register])
             {
-                OfflineHandles[Index] = UnorderedAccessView->GetOfflineHandle();
+                OfflineHandles[Slot] = UnorderedAccessView->GetOfflineHandle();
                 Context.GetCommandList().UpdateResidency(UnorderedAccessView->GetResourceResidencyHandle());
             }
             else
             {
-                OfflineHandles[Index] = DefaultDescriptors.DefaultUAV->GetOfflineHandle();
+                OfflineHandles[Slot] = DefaultDescriptors.DefaultUAV->GetOfflineHandle();
             }
         }
 
-        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
+        D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle      = ResourceHeap.GetCPUHandle(DescriptorHandleOffset);
         UnorderedAccessViewCache.Handles[ShaderStage] = ResourceHeap.GetGPUHandle(DescriptorHandleOffset);
         DescriptorHandleOffset += NumUAVs;
 
@@ -386,16 +406,20 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
     {
         FD3D12UniqueSamplerTable UniqueTable;
 
+        const FD3D12DescriptorTableMapping& Mapping = RootSignature->GetDescriptorTableMapping(ShaderStage, ResourceType_Sampler);
         auto& SamplerStates = Cache.SamplerStates[ShaderStage];
-        for (uint32 Index = 0; Index < NumSamplers; Index++)
+        for (uint32 Slot = 0; Slot < NumSamplers; Slot++)
         {
-            if (FD3D12SamplerState* SamplerState = SamplerStates[Index])
+            const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
+            CHECK(Register < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
+
+            if (FD3D12SamplerState* SamplerState = SamplerStates[Register])
             {
-                UniqueTable.UniqueIDs[Index] = SamplerState->GetUniqueID().Identifier;
+                UniqueTable.UniqueIDs[Slot] = SamplerState->GetUniqueID().Identifier;
             }
             else
             {
-                UniqueTable.UniqueIDs[Index] = DefaultDescriptors.DefaultSampler->GetUniqueID().Identifier;
+                UniqueTable.UniqueIDs[Slot] = DefaultDescriptors.DefaultSampler->GetUniqueID().Identifier;
             }
         }
 
@@ -403,19 +427,22 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
         if (!CachedTable)
         {
             D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
-            for (uint32 Index = 0; Index < NumSamplers; Index++)
+            for (uint32 Slot = 0; Slot < NumSamplers; Slot++)
             {
-                if (FD3D12SamplerState* SamplerState = SamplerStates[Index])
+                const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
+                CHECK(Register < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
+
+                if (FD3D12SamplerState* SamplerState = SamplerStates[Register])
                 {
-                    OfflineHandles[Index] = SamplerState->GetOfflineHandle();
+                    OfflineHandles[Slot] = SamplerState->GetOfflineHandle();
                 }
                 else
                 {
-                    OfflineHandles[Index] = DefaultDescriptors.DefaultSampler->GetOfflineHandle();
+                    OfflineHandles[Slot] = DefaultDescriptors.DefaultSampler->GetOfflineHandle();
                 }
             }
 
-            D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle = SamplerHeap.GetCPUHandle(DescriptorHandleOffset);
+            D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandle    = SamplerHeap.GetCPUHandle(DescriptorHandleOffset);
             D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleGPU = SamplerHeap.GetGPUHandle(DescriptorHandleOffset);
             DescriptorHandleOffset += NumSamplers;
 

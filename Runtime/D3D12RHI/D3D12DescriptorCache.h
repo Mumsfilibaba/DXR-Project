@@ -30,7 +30,7 @@ struct FD3D12VertexBufferCache
     }
 
     D3D12_VERTEX_BUFFER_VIEW VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
-    uint32 NumVertexBuffers;
+    uint32                   NumVertexBuffers;
 };
 
 struct FD3D12IndexBufferCache
@@ -118,9 +118,9 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12ConstantBufferView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
-    uint32 ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
-    uint8 NumBuffers[ShaderVisibility_Count];
+    FD3D12Buffer* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint32        ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint8         NumBuffers[ShaderVisibility_Count];
 };
 
 struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
@@ -144,8 +144,8 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
     }
 
     FD3D12ShaderResourceView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-    uint32 ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-    uint8 NumViews[ShaderVisibility_Count];
+    uint32                    ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+    uint8                     NumViews[ShaderVisibility_Count];
 };
 
 struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
@@ -169,8 +169,8 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
     }
 
     FD3D12UnorderedAccessView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    uint32 ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    uint8 NumViews[ShaderVisibility_Count];
+    uint32                     ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+    uint8                      NumViews[ShaderVisibility_Count];
 };
 
 struct FD3D12ShaderConstantsCache
@@ -234,7 +234,7 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
             auto& StageSamplers = SamplerStates[Index];
-            NumSamplers[Index] = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+            NumSamplers[Index] = 0;
             FMemory::Memzero(&StageSamplers, sizeof(StageSamplers));
         }
     }
