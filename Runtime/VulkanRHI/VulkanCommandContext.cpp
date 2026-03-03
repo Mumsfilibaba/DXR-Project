@@ -593,58 +593,215 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
 
 void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
-    VkClearValue ClearValues[RHI_MAX_RENDER_TARGETS + 1];
-    FMemory::Memzero(ClearValues, sizeof(ClearValues));
-    
-    uint32 Width          = 0;
-    uint32 Height         = 0;
-    uint32 NumClearValues = 0;
-    uint32 NumArrayLayers = 0;
-    
-    VkRenderPass  RenderPass  = VK_NULL_HANDLE;
-    VkFramebuffer FrameBuffer = VK_NULL_HANDLE;
+    CHECK(ContextPhase == ECommandContextPhase::Recording);
 
-    if (BeginRenderPassInfo.DepthStencilView.Texture || BeginRenderPassInfo.NumRenderTargets)
+    if (GVulkanUseDynamicRendering)
     {
-        // TODO: Verify that the samples are all the same
-        uint8 NumSamples = 0;
+        uint32 Width          = 0;
+        uint32 Height         = 0;
+        uint32 NumArrayLayers = 0;
 
-        // Set extent to max so that we can use the min operator when going through the RenderTargets/DepthStencil
-        Width  = TNumericLimits<uint32>::Max();
-        Height = TNumericLimits<uint32>::Max();
+        VkRenderingAttachmentInfo ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
+        VkRenderingAttachmentInfo DepthStencilAttachment = {};
 
-        // RenderPassKey
-        FVulkanRenderPassKey RenderPassKey;
-        RenderPassKey.NumRenderTargets = BeginRenderPassInfo.NumRenderTargets;
-    
-        // FrameBufferKey
-        FVulkanFramebufferKey FramebufferKey;
-        
-        // RenderTargetViews
-        for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; Index++)
+        bool bHasDepthStencil = false;
+        bool bHasStencil      = false;
+
+        if (BeginRenderPassInfo.DepthStencilView.Texture || BeginRenderPassInfo.NumRenderTargets)
         {
-            const FRHIRenderTargetView& RenderTargetView = BeginRenderPassInfo.RenderTargets[Index];
-            if (FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, RenderTargetView.Texture))
+            Width  = TNumericLimits<uint32>::Max();
+            Height = TNumericLimits<uint32>::Max();
+
+            for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; Index++)
+            {
+                const FRHIRenderTargetView& RenderTargetView = BeginRenderPassInfo.RenderTargets[Index];
+                if (FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, RenderTargetView.Texture))
+                {
+                    Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
+                    Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+                    NumArrayLayers = Math::Max<uint32>(RenderTargetView.NumArraySlices, NumArrayLayers);
+
+                    FVulkanHashableImageView HashableImageView;
+                    HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
+                    HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
+                    HashableImageView.Format         = RenderTargetView.Format;
+                    HashableImageView.MipLevel       = RenderTargetView.MipLevel;
+
+                    VkRenderingAttachmentInfo& Attachment = ColorAttachments[Index];
+                    Attachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+                    Attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    Attachment.loadOp      = ConvertLoadAction(RenderTargetView.LoadAction);
+                    Attachment.storeOp     = ConvertStoreAction(RenderTargetView.StoreAction);
+
+                    FMemory::Memcpy(Attachment.clearValue.color.float32, RenderTargetView.ClearValue.RGBA, sizeof(Attachment.clearValue.color.float32));
+
+                    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
+                    {
+                        Attachment.imageView = ImageView->GetImageViewInfo().ImageView;
+                    }
+                }
+                else
+                {
+                    CHECK(RenderTargetView.Texture == nullptr);
+                }
+            }
+
+            const FRHIDepthStencilView& DepthStencilView = BeginRenderPassInfo.DepthStencilView;
+            if (FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, DepthStencilView.Texture))
             {
                 Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
                 Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
-                NumArrayLayers = Math::Max<uint32>(RenderTargetView.NumArraySlices, NumArrayLayers);
-                NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
-
-                RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
-                RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
-                RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
-            
-                VkClearValue& ClearValue = ClearValues[NumClearValues++];
-                FMemory::Memcpy(ClearValue.color.float32, RenderTargetView.ClearValue.RGBA, sizeof(ClearValue.color.float32));
+                NumArrayLayers = Math::Max<uint32>(DepthStencilView.NumArraySlices, NumArrayLayers);
 
                 FVulkanHashableImageView HashableImageView;
-                HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
-                HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
-                HashableImageView.Format         = RenderTargetView.Format;
-                HashableImageView.MipLevel       = RenderTargetView.MipLevel;
+                HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
+                HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
+                HashableImageView.Format         = DepthStencilView.Format;
+                HashableImageView.MipLevel       = DepthStencilView.MipLevel;
 
-                // Get the image view
+                DepthStencilAttachment.sType                           = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+                DepthStencilAttachment.imageLayout                     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                DepthStencilAttachment.loadOp                          = ConvertLoadAction(DepthStencilView.LoadAction);
+                DepthStencilAttachment.storeOp                         = ConvertStoreAction(DepthStencilView.StoreAction);
+                DepthStencilAttachment.clearValue.depthStencil.depth   = DepthStencilView.ClearValue.Depth;
+                DepthStencilAttachment.clearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
+
+                if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
+                {
+                    DepthStencilAttachment.imageView = ImageView->GetImageViewInfo().ImageView;
+                }
+
+                const VkFormat DepthStencilVkFormat = ConvertFormat(DepthStencilView.Format);
+                bHasStencil = (DepthStencilVkFormat == VK_FORMAT_D16_UNORM_S8_UINT || DepthStencilVkFormat == VK_FORMAT_D24_UNORM_S8_UINT ||
+                               DepthStencilVkFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || DepthStencilVkFormat == VK_FORMAT_S8_UINT);
+                    
+                bHasDepthStencil = true;
+            }
+            else
+            {
+                CHECK(BeginRenderPassInfo.DepthStencilView.Texture == nullptr);
+            }
+
+            if (BeginRenderPassInfo.ViewInstancingState.bEnableViewInstancing)
+            {
+                NumArrayLayers = 1;
+            }
+
+            CHECK(Width != TNumericLimits<uint32>::Max());
+            CHECK(Height != TNumericLimits<uint32>::Max());
+        }
+
+        BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+        VkRenderingInfo RenderingInfo = {};
+        RenderingInfo.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        RenderingInfo.renderArea           = { {0, 0}, {Width, Height} };
+        RenderingInfo.layerCount           = Math::Max(NumArrayLayers, 1u);
+        RenderingInfo.colorAttachmentCount = BeginRenderPassInfo.NumRenderTargets;
+        RenderingInfo.pColorAttachments    = ColorAttachments;
+        RenderingInfo.pDepthAttachment     = bHasDepthStencil ? &DepthStencilAttachment : nullptr;
+        RenderingInfo.pStencilAttachment   = bHasStencil      ? &DepthStencilAttachment : nullptr;
+
+        if (GVulkanSupportsMultiviews && BeginRenderPassInfo.ViewInstancingState.bEnableViewInstancing)
+        {
+            constexpr uint32 MaxArraySlices = 32;
+            const uint32 NumViews = Math::Min<uint32>(BeginRenderPassInfo.ViewInstancingState.NumArraySlices, MaxArraySlices);
+
+            uint32 ViewMask = 0;
+            for (uint32 Index = 0; Index < NumViews; Index++)
+            {
+                const uint32 BitIndex = BeginRenderPassInfo.ViewInstancingState.StartRenderTargetArrayIndex + Index;
+                CHECK(BitIndex < 32);
+                ViewMask |= (1u << BitIndex);
+            }
+
+            RenderingInfo.viewMask = ViewMask;
+        }
+
+        GetCommandBuffer()->BeginRendering(&RenderingInfo);
+    }
+    else
+    {
+        VkClearValue ClearValues[RHI_MAX_RENDER_TARGETS + 1];
+        FMemory::Memzero(ClearValues, sizeof(ClearValues));
+
+        uint32 Width          = 0;
+        uint32 Height         = 0;
+        uint32 NumClearValues = 0;
+        uint32 NumArrayLayers = 0;
+
+        VkRenderPass  RenderPass  = VK_NULL_HANDLE;
+        VkFramebuffer FrameBuffer = VK_NULL_HANDLE;
+
+        if (BeginRenderPassInfo.DepthStencilView.Texture || BeginRenderPassInfo.NumRenderTargets)
+        {
+            uint8 NumSamples = 0;
+
+            Width  = TNumericLimits<uint32>::Max();
+            Height = TNumericLimits<uint32>::Max();
+
+            FVulkanRenderPassKey RenderPassKey;
+            RenderPassKey.NumRenderTargets = BeginRenderPassInfo.NumRenderTargets;
+
+            FVulkanFramebufferKey FramebufferKey;
+
+            for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; Index++)
+            {
+                const FRHIRenderTargetView& RenderTargetView = BeginRenderPassInfo.RenderTargets[Index];
+                if (FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, RenderTargetView.Texture))
+                {
+                    Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
+                    Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+                    NumArrayLayers = Math::Max<uint32>(RenderTargetView.NumArraySlices, NumArrayLayers);
+                    NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+
+                    RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
+                    RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
+                    RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
+
+                    VkClearValue& ClearValue = ClearValues[NumClearValues++];
+                    FMemory::Memcpy(ClearValue.color.float32, RenderTargetView.ClearValue.RGBA, sizeof(ClearValue.color.float32));
+
+                    FVulkanHashableImageView HashableImageView;
+                    HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
+                    HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
+                    HashableImageView.Format         = RenderTargetView.Format;
+                    HashableImageView.MipLevel       = RenderTargetView.MipLevel;
+
+                    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
+                    {
+                        const FVulkanResourceView::FImageView& ImageViewInfo = ImageView->GetImageViewInfo();
+                        FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageViewInfo.ImageView;
+                    }
+                }
+                else
+                {
+                    CHECK(RenderTargetView.Texture == nullptr);
+                }
+            }
+
+            const FRHIDepthStencilView& DepthStencilView = BeginRenderPassInfo.DepthStencilView;
+            if (FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, DepthStencilView.Texture))
+            {
+                Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
+                Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+                NumArrayLayers = Math::Max<uint32>(DepthStencilView.NumArraySlices, NumArrayLayers);
+                NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+
+                RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
+                RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
+                RenderPassKey.DepthStencilActions.StoreAction = DepthStencilView.StoreAction;
+
+                VkClearValue& ClearValue = ClearValues[NumClearValues++];
+                ClearValue.depthStencil.depth   = DepthStencilView.ClearValue.Depth;
+                ClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
+
+                FVulkanHashableImageView HashableImageView;
+                HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
+                HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
+                HashableImageView.Format         = DepthStencilView.Format;
+                HashableImageView.MipLevel       = DepthStencilView.MipLevel;
+
                 if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
                 {
                     const FVulkanResourceView::FImageView& ImageViewInfo = ImageView->GetImageViewInfo();
@@ -653,107 +810,70 @@ void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& Begin
             }
             else
             {
-                CHECK(RenderTargetView.Texture == nullptr);
+                CHECK(BeginRenderPassInfo.DepthStencilView.Texture == nullptr);
             }
-        }
 
-        // DepthStencilView
-        const FRHIDepthStencilView& DepthStencilView = BeginRenderPassInfo.DepthStencilView;
-        if (FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, DepthStencilView.Texture))
-        {
-            Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
-            Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
-            NumArrayLayers = Math::Max<uint32>(DepthStencilView.NumArraySlices, NumArrayLayers);
-            NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
-            
-            RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
-            RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
-            RenderPassKey.DepthStencilActions.StoreAction = DepthStencilView.StoreAction;
+            RenderPassKey.NumSamples = NumSamples;
 
-            VkClearValue& ClearValue = ClearValues[NumClearValues++];
-            ClearValue.depthStencil.depth   = DepthStencilView.ClearValue.Depth;
-            ClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
-
-            FVulkanHashableImageView HashableImageView;
-            HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
-            HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
-            HashableImageView.Format         = DepthStencilView.Format;
-            HashableImageView.MipLevel       = DepthStencilView.MipLevel;
-
-            // Get the image view
-            if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
+            if (BeginRenderPassInfo.ViewInstancingState.bEnableViewInstancing)
             {
-                const FVulkanResourceView::FImageView& ImageViewInfo = ImageView->GetImageViewInfo();
-                FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageViewInfo.ImageView;
+                RenderPassKey.ViewInstancingState = BeginRenderPassInfo.ViewInstancingState;
+                NumArrayLayers = 1;
+            }
+
+            RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
+            if (!VULKAN_CHECK_HANDLE(RenderPass))
+            {
+                DEBUG_BREAK();
+            }
+
+            FramebufferKey.RenderPass     = RenderPass;
+            FramebufferKey.NumArrayLayers = static_cast<uint16>(NumArrayLayers);
+
+            CHECK(Width != TNumericLimits<uint32>::Max());
+            FramebufferKey.Width = static_cast<uint16>(Width);
+
+            CHECK(Height != TNumericLimits<uint32>::Max());
+            FramebufferKey.Height = static_cast<uint16>(Height);
+
+            FrameBuffer = GetDevice()->GetRenderPassCache().GetFramebuffer(FramebufferKey);
+            if (!VULKAN_CHECK_HANDLE(FrameBuffer))
+            {
+                DEBUG_BREAK();
             }
         }
-        else
-        {
-            CHECK(BeginRenderPassInfo.DepthStencilView.Texture == nullptr);
-        }
 
-        // Setup the number of samples in the DepthStencil/RenderTarget
-        RenderPassKey.NumSamples = NumSamples;
+        BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
-        // Setup ViewInstancing
-        if (BeginRenderPassInfo.ViewInstancingState.bEnableViewInstancing)
-        {
-            // This view-instance information is used to create multi-view extension mask for the render-pass
-            RenderPassKey.ViewInstancingState = BeginRenderPassInfo.ViewInstancingState;
+        VkRenderPassBeginInfo RenderPassBeginInfo = {};
+        RenderPassBeginInfo.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        RenderPassBeginInfo.renderPass               = RenderPass;
+        RenderPassBeginInfo.framebuffer              = FrameBuffer;
+        RenderPassBeginInfo.renderArea.extent.width  = Width;
+        RenderPassBeginInfo.renderArea.extent.height = Height;
+        RenderPassBeginInfo.clearValueCount          = NumClearValues;
+        RenderPassBeginInfo.pClearValues             = ClearValues;
 
-            // If multi-view is enabled, then we are only allowed to use a single layer
-            NumArrayLayers = 1;
-        }
-
-        // Retrieve or create a RenderPass
-        RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
-        if (!VULKAN_CHECK_HANDLE(RenderPass))
-        {
-            DEBUG_BREAK();
-        }
-
-        // Retrieve or create a FrameBuffer
-        FramebufferKey.RenderPass     = RenderPass;
-        FramebufferKey.NumArrayLayers = static_cast<uint16>(NumArrayLayers);
-        
-        CHECK(Width != TNumericLimits<uint32>::Max());
-        FramebufferKey.Width = static_cast<uint16>(Width);
-
-        CHECK(Height != TNumericLimits<uint32>::Max());
-        FramebufferKey.Height = static_cast<uint16>(Height);
-
-        FrameBuffer = GetDevice()->GetRenderPassCache().GetFramebuffer(FramebufferKey);
-        if (!VULKAN_CHECK_HANDLE(FrameBuffer))
-        {
-            DEBUG_BREAK();
-        }
+        GetCommandBuffer()->BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
 
-    // We need to flush barriers before starting a RenderPass since we could have performed a transition right before starting the RenderPass
-    BarrierBatcher.FlushBarriers(GetCommandBuffer());
-
-    // Begin the RenderPass
-    VkRenderPassBeginInfo RenderPassBeginInfo = {};
-    RenderPassBeginInfo.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    RenderPassBeginInfo.renderPass               = RenderPass;
-    RenderPassBeginInfo.framebuffer              = FrameBuffer;
-    RenderPassBeginInfo.renderArea.extent.width  = Width;
-    RenderPassBeginInfo.renderArea.extent.height = Height;
-    RenderPassBeginInfo.clearValueCount          = NumClearValues;
-    RenderPassBeginInfo.pClearValues             = ClearValues;
-
-    CHECK(ContextPhase == ECommandContextPhase::Recording);
-    GetCommandBuffer()->BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     ContextPhase = ECommandContextPhase::InsideRenderPass;
-
-    // Set the current view-instance so that we can verify that we have the same view-instance info inside the pipeline-state and the current render-pass
     ContextState.SetViewInstanceInfo(BeginRenderPassInfo.ViewInstancingState);
 }
 
 void FVulkanCommandContext::EndRenderPass()  
 {
     CHECK(ContextPhase == ECommandContextPhase::InsideRenderPass);
-    GetCommandBuffer()->EndRenderPass();
+
+    if (GVulkanUseDynamicRendering)
+    {
+        GetCommandBuffer()->EndRendering();
+    }
+    else
+    {
+        GetCommandBuffer()->EndRenderPass();
+    }
+
     ContextPhase = ECommandContextPhase::Recording;
 }
 

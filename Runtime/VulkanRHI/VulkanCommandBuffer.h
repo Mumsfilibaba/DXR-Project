@@ -84,6 +84,16 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         {
             vkCmdEndRenderPass(CommandBuffer);
         }
+
+        FORCEINLINE void BeginRendering(const VkRenderingInfo* RenderingInfo)
+        {
+            vkCmdBeginRendering(CommandBuffer, RenderingInfo);
+        }
+
+        FORCEINLINE void EndRendering()
+        {
+            vkCmdEndRendering(CommandBuffer);
+        }
     
         FORCEINLINE void SetViewport(uint32 FirstViewport, uint32 ViewportCount, const VkViewport* Viewports)
         {

@@ -71,6 +71,12 @@ VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations = 0;
 VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations = 0;
 
 // -------------------------------------------------------------------------------------------
+// Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
+// -------------------------------------------------------------------------------------------
+
+VULKANRHI_API bool GVulkanUseDynamicRendering = true;
+
+// -------------------------------------------------------------------------------------------
 // Descriptor Set Management
 // -------------------------------------------------------------------------------------------
 
@@ -566,6 +572,11 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , TimingQueryPoolManager(nullptr)
     , OcclusionQueryPoolManager(nullptr)
 {
+    if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDynamicRendering"))
+    {
+        GVulkanUseDynamicRendering = UseDynamicRenderingVar->GetBool();
+    }
+
     if (IConsoleVariable* UseDescriptorCacheVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDescriptorCache"))
     {
         GVulkanUseDescriptorCache = UseDescriptorCacheVar->GetBool();

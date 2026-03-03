@@ -187,6 +187,8 @@ VULKAN_FUNCTION_DEFINITION(CmdClearDepthStencilImage);
 VULKAN_FUNCTION_DEFINITION(CmdResolveImage);
 VULKAN_FUNCTION_DEFINITION(CmdBeginRenderPass);
 VULKAN_FUNCTION_DEFINITION(CmdEndRenderPass);
+VULKAN_FUNCTION_DEFINITION(CmdBeginRendering);
+VULKAN_FUNCTION_DEFINITION(CmdEndRendering);
 VULKAN_FUNCTION_DEFINITION(CmdSetViewport);
 VULKAN_FUNCTION_DEFINITION(CmdSetScissor);
 VULKAN_FUNCTION_DEFINITION(CmdSetBlendConstants);
@@ -417,6 +419,8 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdResolveImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndRenderPass);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginRendering);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndRendering);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetViewport);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetScissor);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetBlendConstants);

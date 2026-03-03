@@ -83,6 +83,12 @@ extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
 extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;
 
 // -------------------------------------------------------------------------------------------
+// Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
+// -------------------------------------------------------------------------------------------
+
+extern VULKANRHI_API bool   GVulkanUseDynamicRendering;
+
+// -------------------------------------------------------------------------------------------
 // Descriptor Set Management
 // -------------------------------------------------------------------------------------------
 

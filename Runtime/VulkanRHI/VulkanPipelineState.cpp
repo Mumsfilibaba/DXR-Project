@@ -459,32 +459,9 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
 
-    // Retrieve a compatible RenderPass
-    // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
-    FVulkanRenderPassKey RenderPassKey;
-    RenderPassKey.NumSamples                      = Info.MultiSampleState.SampleCount;
-    RenderPassKey.DepthStencilFormat              = Info.RasterizerOutputFormats.DepthStencilFormat;
-    RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
-    RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
-    RenderPassKey.NumRenderTargets                = Info.RasterizerOutputFormats.NumRenderTargets;
-
-    for (uint8 Index = 0; Index < Info.RasterizerOutputFormats.NumRenderTargets; Index++)
-    {
-        RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
-        RenderPassKey.RenderTargetActions[Index].StoreAction = EAttachmentStoreAction::Store;
-        RenderPassKey.RenderTargetFormats[Index] = Info.RasterizerOutputFormats.RenderTargetFormats[Index];
-    }
-
     if (Info.ViewInstancingState.bEnableViewInstancing)
     {
-        RenderPassKey.ViewInstancingState = Info.ViewInstancingState;
         ViewInstancingState = Info.ViewInstancingState;
-    }
-
-    VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
-    if (!VULKAN_CHECK_HANDLE(RenderPass))
-    {
-        return false;
     }
 
     // Create PipelineState
@@ -501,10 +478,82 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     PipelineCreateInfo.pColorBlendState    = &BlendStateCreateInfo;
     PipelineCreateInfo.pDynamicState       = &DynamicStateCreateInfo;
     PipelineCreateInfo.layout              = PipelineLayout->GetVkPipelineLayout();
-    PipelineCreateInfo.renderPass          = RenderPass;
-    PipelineCreateInfo.subpass             = 0;
     PipelineCreateInfo.basePipelineHandle  = VK_NULL_HANDLE;
     PipelineCreateInfo.basePipelineIndex   = -1;
+
+    VkFormat ColorAttachmentFormats[RHI_MAX_RENDER_TARGETS] = {};
+    
+    VkPipelineRenderingCreateInfo PipelineRenderingInfo = {};
+    if (GVulkanUseDynamicRendering)
+    {
+        for (uint8 Index = 0; Index < Info.RasterizerOutputFormats.NumRenderTargets; Index++)
+        {
+            ColorAttachmentFormats[Index] = ConvertFormat(Info.RasterizerOutputFormats.RenderTargetFormats[Index]);
+        }
+
+        const VkFormat DepthStencilVkFormat = ConvertFormat(Info.RasterizerOutputFormats.DepthStencilFormat);
+        
+        const auto FormatHasStencil = [](VkFormat Format) -> bool
+        {
+            return Format == VK_FORMAT_D16_UNORM_S8_UINT || Format == VK_FORMAT_D24_UNORM_S8_UINT ||
+                Format == VK_FORMAT_D32_SFLOAT_S8_UINT || Format == VK_FORMAT_S8_UINT;
+        };
+
+        PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+        PipelineRenderingInfo.colorAttachmentCount    = Info.RasterizerOutputFormats.NumRenderTargets;
+        PipelineRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats;
+        PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;
+        PipelineRenderingInfo.stencilAttachmentFormat = FormatHasStencil(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
+
+        if (GVulkanSupportsMultiviews && Info.ViewInstancingState.bEnableViewInstancing)
+        {
+            constexpr uint32 MaxArraySlices = 32;
+            const uint32 NumViews = Math::Min<uint32>(Info.ViewInstancingState.NumArraySlices, MaxArraySlices);
+
+            uint32 ViewMask = 0;
+            for (uint32 Index = 0; Index < NumViews; Index++)
+            {
+                const uint32 BitIndex = Info.ViewInstancingState.StartRenderTargetArrayIndex + Index;
+                CHECK(BitIndex < 32);
+                ViewMask |= (1u << BitIndex);
+            }
+
+            PipelineRenderingInfo.viewMask = ViewMask;
+        }
+
+        PipelineCreateInfo.pNext      = &PipelineRenderingInfo;
+        PipelineCreateInfo.renderPass = VK_NULL_HANDLE;
+    }
+    else
+    {
+        FVulkanRenderPassKey RenderPassKey;
+        RenderPassKey.NumSamples                      = Info.MultiSampleState.SampleCount;
+        RenderPassKey.DepthStencilFormat              = Info.RasterizerOutputFormats.DepthStencilFormat;
+        RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
+        RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
+        RenderPassKey.NumRenderTargets                = Info.RasterizerOutputFormats.NumRenderTargets;
+
+        for (uint8 Index = 0; Index < Info.RasterizerOutputFormats.NumRenderTargets; Index++)
+        {
+            RenderPassKey.RenderTargetFormats[Index]             = Info.RasterizerOutputFormats.RenderTargetFormats[Index];
+            RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
+            RenderPassKey.RenderTargetActions[Index].StoreAction = EAttachmentStoreAction::Store;
+        }
+
+        if (Info.ViewInstancingState.bEnableViewInstancing)
+        {
+            RenderPassKey.ViewInstancingState = Info.ViewInstancingState;
+        }
+
+        VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
+        if (!VULKAN_CHECK_HANDLE(RenderPass))
+        {
+            return false;
+        }
+
+        PipelineCreateInfo.renderPass = RenderPass;
+        PipelineCreateInfo.subpass    = 0;
+    }
 
     FVulkanPipelineStateManager& PipelineCache = GetDevice()->GetPipelineStateManager();
     if (PipelineCache.CreateGraphicsPipeline(PipelineCreateInfo, Pipeline))

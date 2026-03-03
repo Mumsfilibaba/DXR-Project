@@ -271,9 +271,9 @@ struct FD3D12HashableViewInstanceDesc
         return Hash;
     }
 
-    D3D12_VIEW_INSTANCE_LOCATION ViewInstanceLocations[D3D12_MAX_VIEW_INSTANCE_COUNT];
-    uint32                       ViewInstanceCount;
     D3D12_VIEW_INSTANCING_FLAGS  Flags;
+    uint32                       ViewInstanceCount;
+    D3D12_VIEW_INSTANCE_LOCATION ViewInstanceLocations[D3D12_MAX_VIEW_INSTANCE_COUNT];
 };
 
 struct FD3D12GraphicsPipelineKey
@@ -350,7 +350,7 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12ComputePipelineStrea
 struct FD3D12ComputePipelineKey
 {
     uint64           RootSignatureHash = 0;
-    FD3D12ShaderHash CSHash            = { 0, 0 };
+    FD3D12ShaderHash CSHash            = { };
 };
 
 class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineState
