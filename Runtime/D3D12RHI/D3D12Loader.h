@@ -9,7 +9,8 @@
 
 typedef HRESULT(WINAPI* PFN_CREATE_DXGI_FACTORY_2)(UINT Flags, REFIID riid, _COM_Outptr_ void** ppFactory);
 typedef HRESULT(WINAPI* PFN_DXGI_GET_DEBUG_INTERFACE_1)(UINT Flags, REFIID riid, _COM_Outptr_ void** pDebug);
-typedef HRESULT(WINAPI* PFN_SetMarkerOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
+typedef HRESULT(WINAPI* PFN_PIXBeginEventOnCommandList)(ID3D12GraphicsCommandList* commandList, UINT64 color, _In_ PCSTR formatString);
+typedef HRESULT(WINAPI* PFN_PIXEndEventOnCommandList)(ID3D12GraphicsCommandList* commandList);
 
 struct D3D12Loader
 {
@@ -26,17 +27,15 @@ private:
 
 struct D3D12Functions
 {
-    static PFN_CREATE_DXGI_FACTORY_2 CreateDXGIFactory2;
-    static PFN_DXGI_GET_DEBUG_INTERFACE_1 DXGIGetDebugInterface1;
-    
-    static PFN_D3D12_CREATE_DEVICE D3D12CreateDevice;
-    static PFN_D3D12_GET_DEBUG_INTERFACE D3D12GetDebugInterface;
-    static PFN_D3D12_SERIALIZE_ROOT_SIGNATURE D3D12SerializeRootSignature;
-    static PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER D3D12CreateRootSignatureDeserializer;
-    static PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE D3D12SerializeVersionedRootSignature;
+    static PFN_CREATE_DXGI_FACTORY_2                              CreateDXGIFactory2;
+    static PFN_DXGI_GET_DEBUG_INTERFACE_1                         DXGIGetDebugInterface1;
+    static PFN_D3D12_CREATE_DEVICE                                D3D12CreateDevice;
+    static PFN_D3D12_GET_DEBUG_INTERFACE                          D3D12GetDebugInterface;
+    static PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12SerializeRootSignature;
+    static PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12CreateRootSignatureDeserializer;
+    static PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12SerializeVersionedRootSignature;
     static PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12CreateVersionedRootSignatureDeserializer;
-    
-    static PFN_SetMarkerOnCommandList SetMarkerOnCommandList;
-
-    static DxcCreateInstanceProc DxcCreateInstance;
+    static PFN_PIXBeginEventOnCommandList                         PIXBeginEventOnCommandList;
+    static PFN_PIXEndEventOnCommandList                           PIXEndEventOnCommandList;
+    static DxcCreateInstanceProc                                  DxcCreateInstance;
 };

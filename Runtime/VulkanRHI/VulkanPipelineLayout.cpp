@@ -1,4 +1,5 @@
 #include "Core/Memory/Memory.h"
+#include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanConstants.h"
 #include "VulkanRHI/VulkanShader.h"
@@ -50,8 +51,8 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
 
 void FVulkanPipelineLayoutInfo::PromoteUniformBuffersToDynamic()
 {
-    // Cost with robust buffer access: 4 DWORDs per dynamic UB
-    constexpr uint32 DynamicUBCostDwords = 4;
+    // AMD RDNA: 4 DWORDs per dynamic UB with robust buffer access, 2 without
+    const uint32 DynamicUBCostDwords = GVulkanRobustBufferAccessEnabled ? 4 : 2;
 
     uint32 BaseCost = SetLayoutInfos.Size() + ConstantsInfo.NumConstants;
     int32 RemainingBudget = static_cast<int32>(VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS) - static_cast<int32>(BaseCost);
@@ -183,14 +184,15 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
         }
     }
 
-    // Calculate user data cost in DWORDs (AMD RDNA, robust buffer access ON):
+    // Calculate user data cost in DWORDs (AMD RDNA):
     //   Descriptor sets  = 1 DWORD each
     //   Push constants   = 1 DWORD per 4 bytes
-    //   Dynamic buffers  = 4 DWORDs each (with robust buffer access)
+    //   Dynamic buffers  = 4 DWORDs each (with robust buffer access) or 2 DWORDs (without)
+    const uint32 DynamicBufferCostDwords = GVulkanRobustBufferAccessEnabled ? 4 : 2;
     uint32 UserDataCostDwords = 0;
     UserDataCostDwords += SetLayoutHandles.Size();
     UserDataCostDwords += LayoutInfo.ConstantsInfo.NumConstants;
-    UserDataCostDwords += TotalDynamicOffsets * 4;
+    UserDataCostDwords += TotalDynamicOffsets * DynamicBufferCostDwords;
 
     if (UserDataCostDwords > VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS)
     {

@@ -225,7 +225,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
     CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Editor NoJitter Depth");
+    RHI_EVENT_SCOPE(CommandList, "Editor NoJitter Depth");
     TRACE_SCOPE("Editor NoJitter Depth");
     GPU_TRACE_SCOPE(CommandList, "Editor NoJitter Depth");
 
@@ -335,8 +335,6 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
     CommandList.EndRenderPass();
 
     CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource));
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Editor NoJitter Depth");
 }
 
 FEditorSelectionIDPass::FEditorSelectionIDPass(FSceneRenderer* InRenderer)
@@ -548,7 +546,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
     CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite)); 
     CommandList.TransitionTextureState(FrameResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Editor SelectionID");
+    RHI_EVENT_SCOPE(CommandList, "Editor SelectionID");
     TRACE_SCOPE("Editor SelectionID");
     GPU_TRACE_SCOPE(CommandList, "Editor SelectionID");
 
@@ -664,8 +662,6 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.TransitionTextureState(FrameResources.EditorObjectID_NoJitter.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource)); 
     CommandList.TransitionTextureState(FrameResources.EditorNoJitterDepth.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource)); 
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Editor SelectionID");
 }
 
 #endif

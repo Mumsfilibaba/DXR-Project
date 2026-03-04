@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Platform/PlatformMisc.h"
 
-struct FDebug
+struct Debug
 {
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {

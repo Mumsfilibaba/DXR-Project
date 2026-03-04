@@ -99,6 +99,12 @@ struct VulkanPlatformBase
         #if VK_NV_ray_tracing_invocation_reorder
             VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
         #endif
+        #if VK_AMD_buffer_marker
+            VK_AMD_BUFFER_MARKER_EXTENSION_NAME,
+        #endif
+        #if VK_NV_device_diagnostic_checkpoints
+            VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME,
+        #endif
         };
     }
     

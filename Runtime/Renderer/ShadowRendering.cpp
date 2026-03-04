@@ -408,7 +408,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         }
     };
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Render PointLight ShadowMaps");
+    RHI_EVENT_SCOPE(CommandList, "Render PointLight ShadowMaps");
 
     GPU_TRACE_SCOPE(CommandList, "PointLight ShadowMaps");
 
@@ -431,8 +431,6 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     }
 
     CommandList.TransitionTextureState(Resources.PointLightShadowMaps.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render PointLight ShadowMaps");
 }
 
 template<ECubeMapRenderPassType RenderPassType>
@@ -1140,7 +1138,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         }
     };
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Render DirectionalLight ShadowMaps");
+    RHI_EVENT_SCOPE(CommandList, "Render DirectionalLight ShadowMaps");
 
     TRACE_SCOPE("Render DirectionalLight ShadowMaps");
 
@@ -1170,8 +1168,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
         CommandList.TransitionTextureState(Resources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
     }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render DirectionalLight ShadowMaps");
 }
 
 template<ECascadeRenderPassType RenderPassType>
@@ -1481,7 +1477,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         return;
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Render ShadowMasks");
+    RHI_EVENT_SCOPE(CommandList, "Render ShadowMasks");
 
     TRACE_SCOPE("Render ShadowMasks");
 
@@ -1550,8 +1546,6 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     {
         CommandList.TransitionTextureState(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
     }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render ShadowMasks");
 }
 
 bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombination& Combination, FComputePipelineStateInstance& OutPSO)

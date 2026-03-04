@@ -1434,19 +1434,14 @@ void FRHIValidationCommandContext::Flush()
     RealContext->Flush();
 }
 
-void FRHIValidationCommandContext::InsertMarker(const FStringView& Message)
+void FRHIValidationCommandContext::PushEvent(const FStringView& Name)
 {
-    RealContext->InsertMarker(Message);
+    RealContext->PushEvent(Name);
 }
 
-void FRHIValidationCommandContext::BeginExternalCapture()
+void FRHIValidationCommandContext::PopEvent()
 {
-    RealContext->BeginExternalCapture();
-}
-
-void FRHIValidationCommandContext::EndExternalCapture()
-{
-    RealContext->EndExternalCapture();
+    RealContext->PopEvent();
 }
 
 void* FRHIValidationCommandContext::GetNativeCommandList()

@@ -28,9 +28,10 @@ float SelectionMaskPS(float2 /* TexCoord */ : TEXCOORD0, float4 Position : SV_Po
     }
 
     float Selected = 0.0f;
-    
+    const uint SafeSelectedCount = min(Constants.SelectedCount, 64u);
+
     [loop]
-    for (uint i = 0; i < Constants.SelectedCount; ++i)
+    for (uint i = 0; i < SafeSelectedCount; ++i)
     {
         if (SelectedIDs[i] == ObjectIDValue)
         {

@@ -213,7 +213,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
 
 void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Skybox");
+    RHI_EVENT_SCOPE(CommandList, "Skybox");
 
     GPU_TRACE_SCOPE(CommandList, "Skybox");
 
@@ -266,6 +266,4 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     CommandList.DrawIndexedInstanced(SkyboxIndexCount, 1, 0, 0, 0);
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Skybox");
 }

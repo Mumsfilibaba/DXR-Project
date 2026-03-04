@@ -191,7 +191,6 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , TimingQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , QueueType(InQueueType)
-    , bIsCapturing(false)
     , bIsRecording(false)
     , CommandContextCS()
 {
@@ -238,6 +237,8 @@ void FD3D12CommandContext::ObtainCommandList()
         {
             D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
         }
+
+        ReopenEventStack();
     }
 
     if (!Commands)
@@ -288,6 +289,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
         {
             QueryHeap->ResolveQueries(GetCommandList());
         }
+
+        CloseEventStack();
 
         if (!CommandList->Close())
         {
@@ -370,6 +373,7 @@ void FD3D12CommandContext::StartContext()
 
     // Reset the state
     ContextState.ResetState();
+    EventStack.Clear();
 
     // Retrieve a new CommandList
     ObtainCommandList();
@@ -878,6 +882,7 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     for (uint64 y = 0; y < NumRows; y++)
     {
         FMemory::Memcpy(WritePtr, Source, SrcRowPitch);
+        
         WritePtr += PlacedSubresourceFootprint.Footprint.RowPitch;
         Source   += SrcRowPitch;
     }
@@ -1641,31 +1646,51 @@ void FD3D12CommandContext::Flush()
     Fence.WaitForValue(Fence.GetLastSignaledValue());
 }
 
-void FD3D12CommandContext::InsertMarker(const FStringView& Message)
+void FD3D12CommandContext::PushEvent(const FStringView& Name)
 {
-    if (D3D12Functions::SetMarkerOnCommandList)
+    EventStack.Emplace(Name.Data());
+
+    if (D3D12Functions::PIXBeginEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
-        D3D12Functions::SetMarkerOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Message);
+        D3D12Functions::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Name);
     }
 }
 
-void FD3D12CommandContext::BeginExternalCapture()
+void FD3D12CommandContext::PopEvent()
 {
-    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetAdapter()->GetGraphicsAnalysis();
-    if (GraphicsAnalysis && !bIsCapturing)
+    if (!EventStack.IsEmpty())
     {
-        GraphicsAnalysis->BeginCapture();
-        bIsCapturing = true;
+        EventStack.Pop();
+    }
+
+    if (D3D12Functions::PIXEndEventOnCommandList)
+    {
+        ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
+        D3D12Functions::PIXEndEventOnCommandList(GraphicsCommandList);
     }
 }
 
-void FD3D12CommandContext::EndExternalCapture()
+void FD3D12CommandContext::CloseEventStack()
 {
-    IDXGraphicsAnalysis* GraphicsAnalysis = GetDevice()->GetAdapter()->GetGraphicsAnalysis();
-    if (GraphicsAnalysis && bIsCapturing)
+    if (D3D12Functions::PIXEndEventOnCommandList)
     {
-        GraphicsAnalysis->EndCapture();
-        bIsCapturing = false;
+        ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
+        for (int32 i = EventStack.Size() - 1; i >= 0; --i)
+        {
+            D3D12Functions::PIXEndEventOnCommandList(GraphicsCommandList);
+        }
+    }
+}
+
+void FD3D12CommandContext::ReopenEventStack()
+{
+    if (D3D12Functions::PIXBeginEventOnCommandList)
+    {
+        ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
+        for (int32 i = 0; i < EventStack.Size(); ++i)
+        {
+            D3D12Functions::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *EventStack[i]);
+        }
     }
 }

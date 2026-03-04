@@ -91,13 +91,11 @@ public:
     virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final;
-    virtual void InsertMarker(const FStringView& Message) override final;
+    virtual void PushEvent(const FStringView& Name) override final;
+    virtual void PopEvent() override final;
 
     virtual void ClearState() override final;
     virtual void Flush() override final;
-
-    virtual void BeginExternalCapture() override final;
-    virtual void EndExternalCapture() override final;
 
     virtual void* GetNativeCommandList() override final 
     { 
@@ -146,6 +144,8 @@ public:
 
 private:
     void ConditionalSplitCommandList();
+    void CloseEventStack();
+    void ReopenEventStack();
 
     FD3D12ResourceState& RetrievePendingResourceState(FD3D12Resource* Resource);
     void AddPendingBarrier(FD3D12Resource* Resource, D3D12_RESOURCE_STATES DesiredState, uint32 Subresource);
@@ -160,7 +160,7 @@ private:
     TArray<FD3D12PendingBarrier>               PendingBarriers;
     TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
     ED3D12CommandQueueType                     QueueType;
-    bool                                       bIsCapturing : 1; // Keeps track of any programmatic captures currently being done
+    TArray<FString>                            EventStack;
     bool                                       bIsRecording : 1; // Keeps track of the recording state of the context. I.e has StartContext been called
 
     // TODO: The whole CommandContext should only be used from one thread at a time

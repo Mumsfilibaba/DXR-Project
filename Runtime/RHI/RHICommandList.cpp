@@ -10,6 +10,13 @@ static TAutoConsoleVariable<bool> CVarEnableRHIThread(
     "Enables the use of a separate Thread for executing RHI Commands",
     true);
 
+bool GRHIVerboseEventOutput = false;
+
+static TAutoConsoleVariable<bool> CVarVerboseEventOutput(
+    "RHI.VerboseEventOutput",
+    "When true, PushEvent names are sent to OutputDebugString (visible in debugger output)",
+    GRHIVerboseEventOutput);
+
 FRHICommandList::FRHICommandList() noexcept
     : Memory()
     , CommandPointer(nullptr)

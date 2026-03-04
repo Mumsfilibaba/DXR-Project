@@ -172,7 +172,7 @@ bool FFrameResources::Initialize()
 
 void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Update Lights");
+    RHI_EVENT_SCOPE(CommandList, "Update Lights");
 
     TRACE_SCOPE("Update LightBuffers");
 
@@ -284,8 +284,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     if (PointLightsData.SizeInBytes() > static_cast<int32>(PointLightsBuffer->GetInfo().Size))
     {
         FRHIBufferInfo BufferInfo;
-		BufferInfo.Stride = PointLightsData.CapacityInBytes();
-		BufferInfo.Size   = PointLightsData.Stride();
+		BufferInfo.Stride = PointLightsData.Stride();
+		BufferInfo.Size   = PointLightsData.CapacityInBytes();
 		BufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
 
         PointLightsBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
@@ -298,8 +298,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     if (PointLightsPosRad.SizeInBytes() > static_cast<int32>(PointLightsPosRadBuffer->GetInfo().Size))
     {
 		FRHIBufferInfo BufferInfo;
-		BufferInfo.Stride = PointLightsPosRad.CapacityInBytes();
-		BufferInfo.Size   = PointLightsPosRad.Stride();
+		BufferInfo.Stride = PointLightsPosRad.Stride();
+		BufferInfo.Size   = PointLightsPosRad.CapacityInBytes();
 		BufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
 
         PointLightsPosRadBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
@@ -312,8 +312,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     if (ShadowCastingPointLightsData.SizeInBytes() > static_cast<int32>(ShadowCastingPointLightsBuffer->GetInfo().Size))
     {
 		FRHIBufferInfo BufferInfo;
-		BufferInfo.Stride = ShadowCastingPointLightsData.CapacityInBytes();
-		BufferInfo.Size   = ShadowCastingPointLightsData.Stride();
+		BufferInfo.Stride = ShadowCastingPointLightsData.Stride();
+		BufferInfo.Size   = ShadowCastingPointLightsData.CapacityInBytes();
 		BufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
 
         ShadowCastingPointLightsBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
@@ -326,8 +326,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     if (ShadowCastingPointLightsPosRad.SizeInBytes() > static_cast<int32>(ShadowCastingPointLightsPosRadBuffer->GetInfo().Size))
     {
 		FRHIBufferInfo BufferInfo;
-		BufferInfo.Stride = ShadowCastingPointLightsPosRad.CapacityInBytes();
-		BufferInfo.Size   = ShadowCastingPointLightsPosRad.Stride();
+		BufferInfo.Stride = ShadowCastingPointLightsPosRad.Stride();
+		BufferInfo.Size   = ShadowCastingPointLightsPosRad.CapacityInBytes();
 		BufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
 
         ShadowCastingPointLightsPosRadBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
@@ -340,8 +340,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
     if (LightProbeInfos.SizeInBytes() > static_cast<int32>(LightProbeBuffer->GetInfo().Size))
     {
         FRHIBufferInfo BufferInfo;
-        BufferInfo.Stride = LightProbeInfos.CapacityInBytes();
-        BufferInfo.Size   = LightProbeInfos.Stride();
+        BufferInfo.Stride = LightProbeInfos.Stride();
+        BufferInfo.Size   = LightProbeInfos.CapacityInBytes();
         BufferInfo.Flags  = EBufferFlags::ConstantBuffer | EBufferFlags::Default;
 
         LightProbeBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
@@ -408,8 +408,6 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
     // Light-Probes
     CommandList.TransitionBufferState(LightProbeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Update Lights");
 }
 
 void FFrameResources::Release()

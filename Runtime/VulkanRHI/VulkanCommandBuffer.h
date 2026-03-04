@@ -211,6 +211,16 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         {
             vkCmdInsertDebugUtilsLabelEXT(CommandBuffer, LabelInfo);
         }
+
+        FORCEINLINE void BeginDebugUtilsLabel(const VkDebugUtilsLabelEXT* LabelInfo)
+        {
+            vkCmdBeginDebugUtilsLabelEXT(CommandBuffer, LabelInfo);
+        }
+
+        FORCEINLINE void EndDebugUtilsLabel()
+        {
+            vkCmdEndDebugUtilsLabelEXT(CommandBuffer);
+        }
     #endif
 
         FORCEINLINE void WriteTimestamp(VkPipelineStageFlagBits PipelineStage, VkQueryPool QueryPool, uint32 Query)

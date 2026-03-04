@@ -8,6 +8,8 @@
 #include "RHI/RHIRayTracing.h"
 #include "RHI/IRHICommandContext.h"
 
+extern RHI_API bool GRHIVerboseEventOutput;
+
 #define DECLARE_RHICOMMAND(RHICommandName) struct RHICommandName final : public TRHICommand<RHICommandName>
 
 class FRHICommandList;
@@ -988,24 +990,34 @@ DECLARE_RHICOMMAND(FRHICommandDispatchRays)
     uint32                       Depth;
 };
 
-DECLARE_RHICOMMAND(FRHICommandInsertMarker)
+DECLARE_RHICOMMAND(FRHICommandPushEvent)
 {
-    FORCEINLINE FRHICommandInsertMarker(const FStringView& InMarker)
-        : Marker(InMarker)
+    FORCEINLINE FRHICommandPushEvent(const FStringView& InName)
+        : Name(InName)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        if (FDebug::IsDebuggerPresent())
+        if (GRHIVerboseEventOutput && Debug::IsDebuggerPresent())
         {
-            FDebug::OutputDebugString(FString(Marker) + '\n');
+            Debug::OutputDebugString(FString(Name) + '\n');
         }
 
-        CommandContext.InsertMarker(Marker);
+        CommandContext.PushEvent(Name);
     }
 
-    FStringView Marker;
+    FStringView Name;
+};
+
+DECLARE_RHICOMMAND(FRHICommandPopEvent)
+{
+    FRHICommandPopEvent() = default;
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.PopEvent();
+    }
 };
 
 DECLARE_RHICOMMAND(FRHICommandDebugBreak)
@@ -1014,30 +1026,10 @@ DECLARE_RHICOMMAND(FRHICommandDebugBreak)
 
     FORCEINLINE void Execute(IRHICommandContext&)
     {
-        if (FDebug::IsDebuggerPresent())
+        if (Debug::IsDebuggerPresent())
         {
             DEBUG_BREAK();
         }
-    }
-};
-
-DECLARE_RHICOMMAND(FRHICommandBeginExternalCapture)
-{
-    FRHICommandBeginExternalCapture() = default;
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.BeginExternalCapture();
-    }
-};
-
-DECLARE_RHICOMMAND(FRHICommandEndExternalCapture)
-{
-    FRHICommandEndExternalCapture() = default;
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.EndExternalCapture();
     }
 };
 

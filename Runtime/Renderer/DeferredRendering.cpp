@@ -227,7 +227,7 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
 
 void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Pre-Pass");
+    RHI_EVENT_SCOPE(CommandList, "Depth Pre-Pass");
 
     TRACE_SCOPE("Depth Pre-Pass");
 
@@ -336,8 +336,6 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
     }
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Pre-Pass");
 }
 
 FDeferredBasePass::FDeferredBasePass(FSceneRenderer* InRenderer)
@@ -577,7 +575,7 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
 
 void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Deferred BasePass");
+    RHI_EVENT_SCOPE(CommandList, "Deferred BasePass");
 
     TRACE_SCOPE("Deferred BasePass");
 
@@ -693,8 +691,6 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     }
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Deferred BasePass");
 }
 
 FTiledLightPass::FTiledLightPass(FSceneRenderer* InRenderer)
@@ -960,7 +956,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
         return;
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightPass");
+    RHI_EVENT_SCOPE(CommandList, "LightPass");
 
     TRACE_SCOPE("LightPass");
 
@@ -1101,8 +1097,6 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     const uint32 WorkGroupWidth  = Math::DivideByMultiple<uint32>(LightPassSettings.ScreenWidth, NumThreads);
     const uint32 WorkGroupHeight = Math::DivideByMultiple<uint32>(LightPassSettings.ScreenHeight, NumThreads);
     CommandList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
 }
 
 FDepthReducePass::FDepthReducePass(FSceneRenderer* InRenderer)
@@ -1227,7 +1221,7 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
         return;
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Reduction");
+    RHI_EVENT_SCOPE(CommandList, "Depth Reduction");
 
     TRACE_SCOPE("Depth Reduction");
 
@@ -1286,6 +1280,4 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTextureState(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-    
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
 }

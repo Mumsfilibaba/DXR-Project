@@ -18,14 +18,6 @@ class FRHIUnorderedAccessView;
 class FRHIShader;
 class FRHISwapChain;
 
-#define ENABLE_INSERT_DEBUG_CMDLIST_MARKER (0)
-
-#if ENABLE_INSERT_DEBUG_CMDLIST_MARKER
-    #define INSERT_DEBUG_CMDLIST_MARKER(CommandList, MarkerString) (CommandList).InsertMarker(MarkerString)
-#else
-    #define INSERT_DEBUG_CMDLIST_MARKER(CommandList, MarkerString)
-#endif
-
 class FRHICommandList;
 class FRHIImmediateCommandList;
 
@@ -410,25 +402,20 @@ public:
         EmplaceCommand<FRHICommandResizeSwapChain>(SwapChain, Width, Height);
     }
 
-    FORCEINLINE void InsertMarker(const FStringView& Marker) noexcept
+    FORCEINLINE void PushEvent(const FStringView& Name) noexcept
     {
-        FStringView NewMarker = AllocateString(*Marker);
-        EmplaceCommand<FRHICommandInsertMarker>(NewMarker);
+        FStringView AllocatedName = AllocateString(*Name);
+        EmplaceCommand<FRHICommandPushEvent>(AllocatedName);
+    }
+
+    FORCEINLINE void PopEvent() noexcept
+    {
+        EmplaceCommand<FRHICommandPopEvent>();
     }
     
     FORCEINLINE void DebugBreak() noexcept
     {
         EmplaceCommand<FRHICommandDebugBreak>();
-    }
-
-    FORCEINLINE void BeginExternalCapture() noexcept
-    {
-        EmplaceCommand<FRHICommandBeginExternalCapture>();
-    }
-
-    FORCEINLINE void EndExternalCapture() noexcept
-    {
-        EmplaceCommand<FRHICommandEndExternalCapture>();
     }
 
 private:
@@ -439,6 +426,24 @@ private:
     FGenericEvent*      FinishedEvent;
     uint32              NumCommands;
 };
+
+struct FRHIScopedEvent
+{
+    FORCEINLINE FRHIScopedEvent(FRHICommandList& InCommandList, const FStringView& Name)
+        : CommandList(InCommandList)
+    {
+        CommandList.PushEvent(Name);
+    }
+
+    FORCEINLINE ~FRHIScopedEvent()
+    {
+        CommandList.PopEvent();
+    }
+
+    FRHICommandList& CommandList;
+};
+
+#define RHI_EVENT_SCOPE(CommandList, Name) FRHIScopedEvent STRING_CONCAT(RHIScopedEvent_, __LINE__)(CommandList, Name)
 
 void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 {

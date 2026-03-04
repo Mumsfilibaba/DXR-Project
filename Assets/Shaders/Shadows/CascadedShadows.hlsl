@@ -124,13 +124,13 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
 
 // View-instancing
 #if ENABLE_CASCADE_VIEW_INSTANCING
-    const int CascadeIndex = min(Input.ViewID, MAX_CASCADES - 1);
+    const int CascadeIndex = clamp(Input.ViewID, 0, MAX_CASCADES - 1);
 // Vertex-shader instancing
 #elif ENABLE_CASCADE_VS_INSTANCING
-    const int CascadeIndex = min(Input.InstanceID, MAX_CASCADES - 1);
+    const int CascadeIndex = clamp(Input.InstanceID, 0, MAX_CASCADES - 1);
 // Regular multi-pass
 #elif ENABLE_CASCADE_MULTI_PASS
-    const int CascadeIndex = min(PerCascadeBuffer.CascadeIndex, MAX_CASCADES - 1);
+    const int CascadeIndex = clamp(PerCascadeBuffer.CascadeIndex, 0, MAX_CASCADES - 1);
 #endif
 
 // Work-around using HLSL (Otherwise it does not work on NVIDIA hardware)

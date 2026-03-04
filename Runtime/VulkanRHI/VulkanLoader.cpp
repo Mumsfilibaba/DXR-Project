@@ -212,11 +212,20 @@ VULKAN_FUNCTION_DEFINITION(CmdBeginQuery);
 VULKAN_FUNCTION_DEFINITION(CmdEndQuery);
 #if VK_EXT_debug_utils
 VULKAN_FUNCTION_DEFINITION(CmdInsertDebugUtilsLabelEXT);
+VULKAN_FUNCTION_DEFINITION(CmdBeginDebugUtilsLabelEXT);
+VULKAN_FUNCTION_DEFINITION(CmdEndDebugUtilsLabelEXT);
 #endif
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DEFINITION(CmdBuildAccelerationStructuresKHR);
 #endif
 VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier2);
+#if VK_AMD_buffer_marker
+VULKAN_FUNCTION_DEFINITION(CmdWriteBufferMarkerAMD);
+#endif
+#if VK_NV_device_diagnostic_checkpoints
+VULKAN_FUNCTION_DEFINITION(CmdSetCheckpointNV);
+VULKAN_FUNCTION_DEFINITION(GetQueueCheckpointDataNV);
+#endif
 
 bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance)
 {
@@ -443,6 +452,21 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginQuery);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndQuery);
 
+#if VK_AMD_buffer_marker
+    if (Device->IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdWriteBufferMarkerAMD);
+    }
+#endif
+
+#if VK_NV_device_diagnostic_checkpoints
+    if (Device->IsExtensionEnabled(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetCheckpointNV);
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetQueueCheckpointDataNV);
+    }
+#endif
+
     VulkanRobustness2KHR::Initialize(Device);
     return true;
 }
@@ -465,6 +489,8 @@ bool VulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDebugUtilsMessengerEXT);
 
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdInsertDebugUtilsLabelEXT);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdBeginDebugUtilsLabelEXT);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdEndDebugUtilsLabelEXT);
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, SetDebugUtilsObjectNameEXT);
         bIsEnabled = true;
     }

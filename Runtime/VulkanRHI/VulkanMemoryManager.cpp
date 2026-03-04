@@ -9,7 +9,7 @@
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanRHI.h"
 
-#if !RELEASE_BUILD
+#if VULKAN_ENABLE_MEMORY_LOGGING
 static TAutoConsoleVariable<bool> CVarVulkanLogMemoryAllocations(
     "VulkanRHI.LogMemoryAllocations",
     "Log when new memory allocator pages or dedicated allocations are created",
@@ -415,7 +415,7 @@ bool FVulkanBuddyAllocator::Initialize()
     FreeOffsets.Resize(MaxOrder + 1);
     FreeOffsets[MaxOrder].Add(0);
 
-#if !RELEASE_BUILD
+#if VULKAN_ENABLE_MEMORY_LOGGING
     if (CVarVulkanLogMemoryAllocations.GetValue())
     {
         VULKAN_INFO("FVulkanBuddyAllocator: Initialized (Size=%llu, MinBlock=%llu, MemoryTypeIndex=%u, HasSharedBuffer=%s)",
@@ -1641,7 +1641,7 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
         OutStorage.SetSize(MemoryRequirements.size);
         OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
 
-#if !RELEASE_BUILD
+#if VULKAN_ENABLE_MEMORY_LOGGING
         if (CVarVulkanLogMemoryAllocations.GetValue())
         {
             VULKAN_INFO("FVulkanBufferAllocator: Using dedicated allocation for buffer (Size=%llu)", MemoryRequirements.size);
@@ -1828,7 +1828,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
         OutStorage.SetSize(MemReqs.size);
         OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
 
-#if !RELEASE_BUILD
+#if VULKAN_ENABLE_MEMORY_LOGGING
         if (CVarVulkanLogMemoryAllocations.GetValue())
         {
             VULKAN_INFO("FVulkanTextureAllocator: Using dedicated allocation for image (Size=%llu)", MemReqs.size);
@@ -1893,7 +1893,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
     OutStorage.SetSize(MemReqs.size);
     OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
 
-#if !RELEASE_BUILD
+#if VULKAN_ENABLE_MEMORY_LOGGING
     if (CVarVulkanLogMemoryAllocations.GetValue())
     {
         VULKAN_INFO("FVulkanTextureAllocator: Pool suballocation failed, using dedicated allocation (Size=%llu)", MemReqs.size);
@@ -2362,7 +2362,7 @@ void* FVulkanUploadHeapAllocator::AllocateOversized(uint64 SizeInBytes, uint64 A
     OutStorage.SetSize(MemReqs.size);
     OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
 
-#if !RELEASE_BUILD
+#if VULKAN_ENABLE_MEMORY_LOGGING
     if (CVarVulkanLogMemoryAllocations.GetValue())
     {
         VULKAN_INFO("FVulkanUploadHeapAllocator: Oversized upload allocation (Size=%llu)", MemReqs.size);

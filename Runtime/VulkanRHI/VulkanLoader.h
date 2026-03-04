@@ -243,11 +243,20 @@ VULKAN_FUNCTION_DECLARATION(CmdBeginQuery);
 VULKAN_FUNCTION_DECLARATION(CmdEndQuery);
 #if VK_EXT_debug_utils
 VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
+VULKAN_FUNCTION_DECLARATION(CmdBeginDebugUtilsLabelEXT);
+VULKAN_FUNCTION_DECLARATION(CmdEndDebugUtilsLabelEXT);
 #endif
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DECLARATION(CmdBuildAccelerationStructuresKHR);
 #endif
 VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier2);
+#if VK_AMD_buffer_marker
+VULKAN_FUNCTION_DECLARATION(CmdWriteBufferMarkerAMD);
+#endif
+#if VK_NV_device_diagnostic_checkpoints
+VULKAN_FUNCTION_DECLARATION(CmdSetCheckpointNV);
+VULKAN_FUNCTION_DECLARATION(GetQueueCheckpointDataNV);
+#endif
 
 struct VulkanLoader
 {

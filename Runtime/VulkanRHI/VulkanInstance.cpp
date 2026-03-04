@@ -1,6 +1,7 @@
 #include "Core/Templates/CString.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "VulkanRHI/VulkanInstance.h"
+#include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
 
@@ -13,6 +14,13 @@ static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
     "VulkanRHI.BreakOnValidationError",
     "Enables breakpoints when the validation-layer encounters an error",
     true);
+
+#if VULKAN_ENABLE_GPU_VALIDATION
+static TAutoConsoleVariable<bool> CVarVulkanEnableGPUAssistedValidation(
+    "VulkanRHI.EnableGPUAssistedValidation",
+    "Enable GPU-Assisted Validation to detect shader-level out-of-bounds buffer accesses at runtime. Requires the debug layer.",
+    false);
+#endif
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -251,9 +259,38 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo)
     }
 #endif
 
+#if VK_EXT_validation_features
+    VkValidationFeatureEnableEXT GPUAVEnables[] = {
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT
+    };
+
+    VkValidationFeaturesEXT ValidationFeatures = {};
+    ValidationFeatures.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+    ValidationFeatures.enabledValidationFeatureCount = ARRAY_COUNT(GPUAVEnables);
+    ValidationFeatures.pEnabledValidationFeatures    = GPUAVEnables;
+
+    bool bEnableGPUAV = false;
+#if VULKAN_ENABLE_GPU_VALIDATION
+    if (bEnableDebugLayer)
+    {
+        bEnableGPUAV = CVarVulkanEnableGPUAssistedValidation.GetValue();
+    }
+#endif
+
+    GVulkanGPUAssistedValidationEnabled = bEnableGPUAV;
+    if (bEnableGPUAV)
+    {
+        VULKAN_INFO("GPU-Assisted Validation enabled — VK_EXT_descriptor_buffer will be disabled");
+    }
+#endif
+
     FVulkanStructChain InstanceCreateChain(InstanceCreateInfo);
 #if VK_EXT_debug_utils
     InstanceCreateChain.AddNext(DebugMessengerCreateInfo);
+#endif
+#if VK_EXT_validation_features
+    InstanceCreateChain.AddNextIf(bEnableGPUAV, ValidationFeatures);
 #endif
 
     Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
@@ -266,6 +303,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo)
     // -------------------------------------------------------------------------------------------
     // Load functions that require the instance to be created
     // -------------------------------------------------------------------------------------------
+
     VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyInstance);
 
     // Initialize DebugUtils extension helper

@@ -8,11 +8,24 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanRHI.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandBuffer(
     "VulkanRHI.MaxCommandsPerCommandBuffer",
     "Number of commands allowed before submitting the current CommandBuffer to the GPU",
     10000);
+
+#if VULKAN_ENABLE_BREADCRUMBS
+static TAutoConsoleVariable<int32> CVarVulkanBreadcrumbLevel(
+    "VulkanRHI.BreadcrumbLevel",
+    "GPU breadcrumb tracking level. 0=off, 1=markers only, 2=per draw/dispatch. Requires VK_AMD_buffer_marker or VK_NV_device_diagnostic_checkpoints.",
+    1);
+
+static int32 GetBreadcrumbLevel()
+{
+    return CVarVulkanBreadcrumbLevel.GetValue();
+}
+#endif
 
 static constexpr bool GVulkanEnableNegativeViewportHeight = true;
 
@@ -139,7 +152,6 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
 
 FVulkanCommandContext::~FVulkanCommandContext()
 {
-    // Reset all state
     ContextState.ResetState();
     SAFE_DELETE(TransientDescriptorAllocator);
 }
@@ -195,6 +207,8 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         {
             VULKAN_ERROR_CRITICAL("Failed to Begin CommandBuffer");
         }
+
+        ReopenEventStack();
     }
 
     if (!Commands)
@@ -256,6 +270,8 @@ FVulkanFence* FVulkanCommandContext::SubmitCommandBuffer(bool bFlushPool)
         ContextState.ResetStateForNewCommandBuffer();
         return nullptr;
     }
+
+    CloseEventStack();
 
     if (!CommandBuffer->End())
     {
@@ -365,6 +381,7 @@ void FVulkanCommandContext::StartContext()
     // -------------------------------------------------------------------------------------------
     
     ContextState.ResetState();
+    EventStack.Clear();
 
     // -------------------------------------------------------------------------------------------
     // Acquire/allocate a fresh command buffer so the caller can immediately begin recording 
@@ -372,6 +389,14 @@ void FVulkanCommandContext::StartContext()
     // -------------------------------------------------------------------------------------------
     
     ObtainCommandBuffer();
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
+    if (Breadcrumbs && GetBreadcrumbLevel() > 0)
+    {
+        Breadcrumbs->ResetMarkers(GetCommandBuffer());
+    }
+#endif
 }
 
 void FVulkanCommandContext::FinishContext()
@@ -1828,6 +1853,14 @@ void FVulkanCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
     
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->Draw(VertexCount, 1, StartVertexLocation, 0);
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
+    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+    {
+        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "Draw");
+    }
+#endif
 }
 
 void FVulkanCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
@@ -1837,6 +1870,14 @@ void FVulkanCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLoca
 
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->DrawIndexed(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
+    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+    {
+        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "DrawIndexed");
+    }
+#endif
 }
 
 void FVulkanCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
@@ -1846,6 +1887,14 @@ void FVulkanCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 
 
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->Draw(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
+    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+    {
+        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "DrawInstanced");
+    }
+#endif
 }
 
 void FVulkanCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
@@ -1855,6 +1904,14 @@ void FVulkanCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, u
 
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->DrawIndexed(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
+    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+    {
+        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "DrawIndexedInstanced");
+    }
+#endif
 }
 
 void FVulkanCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
@@ -1869,6 +1926,14 @@ void FVulkanCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uin
 
     ContextState.BindComputeState();
     GetCommandBuffer()->Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
+    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+    {
+        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "Dispatch");
+    }
+#endif
 }
 
 void FVulkanCommandContext::DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
@@ -1947,30 +2012,79 @@ void FVulkanCommandContext::Flush()
     Queue.WaitForCompletion();
 }
 
-void FVulkanCommandContext::InsertMarker(const FStringView& Message)
+void FVulkanCommandContext::PushEvent(const FStringView& Name)
 {
+    EventStack.Emplace(Name.Data());
+
 #if VK_EXT_debug_utils
     if (VulkanDebugUtilsEXT::IsEnabled())
     {
         VkDebugUtilsLabelEXT DebugUtilsLabel = {};
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-        DebugUtilsLabel.pLabelName = Message.Data();
+        DebugUtilsLabel.pLabelName = Name.Data();
         DebugUtilsLabel.color[0]   = 0.0f;
         DebugUtilsLabel.color[1]   = 0.0f;
         DebugUtilsLabel.color[2]   = 0.0f;
         DebugUtilsLabel.color[3]   = 1.0f;
         
-        GetCommandBuffer()->InsertDebugUtilsLabel(&DebugUtilsLabel);
+        GetCommandBuffer()->BeginDebugUtilsLabel(&DebugUtilsLabel);
+    }
+#endif
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
+    if (Breadcrumbs && GetBreadcrumbLevel() >= 1)
+    {
+        Breadcrumbs->WriteMarker(GetCommandBuffer(), Name);
     }
 #endif
 }
 
-void FVulkanCommandContext::BeginExternalCapture()
+void FVulkanCommandContext::PopEvent()
 {
-    // TODO: Investigate the probability of this
+    if (!EventStack.IsEmpty())
+    {
+        EventStack.Pop();
+    }
+
+#if VK_EXT_debug_utils
+    if (VulkanDebugUtilsEXT::IsEnabled())
+    {
+        GetCommandBuffer()->EndDebugUtilsLabel();
+    }
+#endif
 }
 
-void FVulkanCommandContext::EndExternalCapture()  
+void FVulkanCommandContext::CloseEventStack()
 {
-    // TODO: Investigate the probability of this
+#if VK_EXT_debug_utils
+    if (VulkanDebugUtilsEXT::IsEnabled())
+    {
+        for (int32 i = EventStack.Size() - 1; i >= 0; --i)
+        {
+            GetCommandBuffer()->EndDebugUtilsLabel();
+        }
+    }
+#endif
+}
+
+void FVulkanCommandContext::ReopenEventStack()
+{
+#if VK_EXT_debug_utils
+    if (VulkanDebugUtilsEXT::IsEnabled())
+    {
+        for (int32 i = 0; i < EventStack.Size(); ++i)
+        {
+            VkDebugUtilsLabelEXT DebugUtilsLabel = {};
+            DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+            DebugUtilsLabel.pLabelName = *EventStack[i];
+            DebugUtilsLabel.color[0]   = 0.0f;
+            DebugUtilsLabel.color[1]   = 0.0f;
+            DebugUtilsLabel.color[2]   = 0.0f;
+            DebugUtilsLabel.color[3]   = 1.0f;
+
+            GetCommandBuffer()->BeginDebugUtilsLabel(&DebugUtilsLabel);
+        }
+    }
+#endif
 }

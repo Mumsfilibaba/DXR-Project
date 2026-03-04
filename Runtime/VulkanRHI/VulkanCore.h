@@ -24,7 +24,7 @@
 
 #include "VulkanRHI/VulkanLoader.h"
 
-#if !RELEASE_BUILD
+#if VULKAN_ENABLE_LOGGING
     #define VULKAN_ERROR_CRITICAL(...) \
         do \
         { \
@@ -91,7 +91,26 @@
 #endif
 
 #ifndef VULKAN_FAILED
-    #define VULKAN_FAILED(Result) (Result != VK_SUCCESS)
+    #if VULKAN_ENABLE_DEVICE_LOST_CHECK
+        VULKANRHI_API bool VulkanCheckDeviceLost(VkResult Result);
+
+        FORCEINLINE bool VulkanResultFailed(VkResult Result)
+        {
+            if (Result != VK_SUCCESS)
+            {
+                if (Result == VK_ERROR_DEVICE_LOST)
+                {
+                    VulkanCheckDeviceLost(Result);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        #define VULKAN_FAILED(Result) VulkanResultFailed(Result)
+    #else
+        #define VULKAN_FAILED(Result) (Result != VK_SUCCESS)
+    #endif
 #endif
 
 #ifndef VULKAN_CHECK_HANDLE

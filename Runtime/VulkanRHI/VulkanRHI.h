@@ -8,6 +8,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 {
@@ -115,6 +116,10 @@ public:
         return GraphicsCommandContext;
     }
 
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs* GetBreadcrumbs() { return Breadcrumbs; }
+#endif
+
 private:
     void ProcessPendingCommands();
     void TickCoreProgression();
@@ -140,6 +145,10 @@ private:
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
     FCommandsQueue                PendingSubmissions;
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    FVulkanBreadcrumbs*           Breadcrumbs;
+#endif
 
     static FVulkanRHI* GVulkanRHI;
 };

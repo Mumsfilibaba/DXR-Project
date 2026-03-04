@@ -28,6 +28,8 @@ extern VULKANRHI_API bool   GVulkanForceBinding;
 extern VULKANRHI_API bool   GVulkanAllowNullDescriptors;
 extern VULKANRHI_API bool   GVulkanAllowGeometryShaders;
 extern VULKANRHI_API bool   GVulkanAllowResetCommandBuffers;
+extern VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled;
+extern VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled;
 
 extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
 extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;

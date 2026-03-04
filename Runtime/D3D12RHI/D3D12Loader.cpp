@@ -4,19 +4,17 @@
 #include "D3D12RHI/D3D12Core.h"
 #include "D3D12RHI/D3D12Loader.h"
 
-PFN_CREATE_DXGI_FACTORY_2 D3D12Functions::CreateDXGIFactory2 = nullptr;
-PFN_DXGI_GET_DEBUG_INTERFACE_1 D3D12Functions::DXGIGetDebugInterface1 = nullptr;
-
-PFN_D3D12_CREATE_DEVICE D3D12Functions::D3D12CreateDevice = nullptr;
-PFN_D3D12_GET_DEBUG_INTERFACE D3D12Functions::D3D12GetDebugInterface = nullptr;
-PFN_D3D12_SERIALIZE_ROOT_SIGNATURE D3D12Functions::D3D12SerializeRootSignature = nullptr;
-PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER D3D12Functions::D3D12CreateRootSignatureDeserializer = nullptr;
-PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE D3D12Functions::D3D12SerializeVersionedRootSignature = nullptr;
+PFN_CREATE_DXGI_FACTORY_2                              D3D12Functions::CreateDXGIFactory2                            = nullptr;
+PFN_DXGI_GET_DEBUG_INTERFACE_1                         D3D12Functions::DXGIGetDebugInterface1                        = nullptr;
+PFN_D3D12_CREATE_DEVICE                                D3D12Functions::D3D12CreateDevice                             = nullptr;
+PFN_D3D12_GET_DEBUG_INTERFACE                          D3D12Functions::D3D12GetDebugInterface                        = nullptr;
+PFN_D3D12_SERIALIZE_ROOT_SIGNATURE                     D3D12Functions::D3D12SerializeRootSignature                   = nullptr;
+PFN_D3D12_CREATE_ROOT_SIGNATURE_DESERIALIZER           D3D12Functions::D3D12CreateRootSignatureDeserializer          = nullptr;
+PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE           D3D12Functions::D3D12SerializeVersionedRootSignature          = nullptr;
 PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER D3D12Functions::D3D12CreateVersionedRootSignatureDeserializer = nullptr;
-
-PFN_SetMarkerOnCommandList D3D12Functions::SetMarkerOnCommandList = nullptr;
-
-DxcCreateInstanceProc D3D12Functions::DxcCreateInstance = nullptr;
+PFN_PIXBeginEventOnCommandList                         D3D12Functions::PIXBeginEventOnCommandList                    = nullptr;
+PFN_PIXEndEventOnCommandList                           D3D12Functions::PIXEndEventOnCommandList                      = nullptr;
+DxcCreateInstanceProc                                  D3D12Functions::DxcCreateInstance                             = nullptr;
 
 #define D3D12_LOAD_FUNCTION(Function, LibraryHandle) \
 do \
@@ -83,7 +81,9 @@ bool D3D12Loader::Initialize(bool bEnablePIX)
         if (PIXLibrary)
         {
             D3D12_INFO("Loaded WinPixEventRuntime.dll");
-            D3D12Functions::SetMarkerOnCommandList = FPlatformLibrary::LoadSymbol<PFN_SetMarkerOnCommandList>("PIXSetMarkerOnCommandList", PIXLibrary);
+
+            D3D12Functions::PIXBeginEventOnCommandList = FPlatformLibrary::LoadSymbol<PFN_PIXBeginEventOnCommandList>("PIXBeginEventOnCommandList", PIXLibrary);
+            D3D12Functions::PIXEndEventOnCommandList   = FPlatformLibrary::LoadSymbol<PFN_PIXEndEventOnCommandList>("PIXEndEventOnCommandList", PIXLibrary);
         }
         else
         {
@@ -120,17 +120,15 @@ void D3D12Loader::Release()
         DXCLibrary = nullptr;
 	}
 
-    D3D12Functions::CreateDXGIFactory2 = nullptr;
-    D3D12Functions::DXGIGetDebugInterface1 = nullptr;
-
-    D3D12Functions::D3D12CreateDevice = nullptr;
-    D3D12Functions::D3D12GetDebugInterface = nullptr;
-    D3D12Functions::D3D12SerializeRootSignature = nullptr;
-    D3D12Functions::D3D12SerializeVersionedRootSignature = nullptr;
-    D3D12Functions::D3D12CreateRootSignatureDeserializer = nullptr;
+    D3D12Functions::CreateDXGIFactory2                            = nullptr;
+    D3D12Functions::DXGIGetDebugInterface1                        = nullptr;
+    D3D12Functions::D3D12CreateDevice                             = nullptr;
+    D3D12Functions::D3D12GetDebugInterface                        = nullptr;
+    D3D12Functions::D3D12SerializeRootSignature                   = nullptr;
+    D3D12Functions::D3D12SerializeVersionedRootSignature          = nullptr;
+    D3D12Functions::D3D12CreateRootSignatureDeserializer          = nullptr;
     D3D12Functions::D3D12CreateVersionedRootSignatureDeserializer = nullptr;
-
-    D3D12Functions::SetMarkerOnCommandList = nullptr;
-
-    D3D12Functions::DxcCreateInstance = nullptr;
+    D3D12Functions::PIXBeginEventOnCommandList                    = nullptr;
+    D3D12Functions::PIXEndEventOnCommandList                      = nullptr;
+    D3D12Functions::DxcCreateInstance                             = nullptr;
 }

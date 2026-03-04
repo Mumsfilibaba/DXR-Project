@@ -307,7 +307,10 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         {
             uint Index = 0;
             InterlockedAdd(GGroupPointLightCounter, 1, Index);
-            GGroupPointLightIndices[Index] = i;
+            if (Index < MAX_LIGHTS_PER_TILE)
+            {
+                GGroupPointLightIndices[Index] = i;
+            }
         }
     }
 
@@ -327,7 +330,10 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         {
             uint Index = 0;
             InterlockedAdd(GGroupShadowPointLightCounter, 1, Index);
-            GGroupShadowPointLightIndices[Index] = j;
+            if (Index < MAX_LIGHTS_PER_TILE)
+            {
+                GGroupShadowPointLightIndices[Index] = j;
+            }
         }
     }
 
@@ -364,9 +370,12 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
     float3 L0 = 0.0;
 
+    const uint NumTilePointLights       = min(GGroupPointLightCounter, MAX_LIGHTS_PER_TILE);
+    const uint NumTileShadowPointLights = min(GGroupShadowPointLightCounter, MAX_LIGHTS_PER_TILE);
+
     // Pointlights
     [loop]
-    for (uint i = 0; i < GGroupPointLightCounter; ++i)
+    for (uint i = 0; i < NumTilePointLights; ++i)
     {
         const int Index = GGroupPointLightIndices[i];
 
@@ -386,7 +395,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
     // Point-light shadows
     [loop]
-    for (uint i = 0; i < GGroupShadowPointLightCounter; i++)
+    for (uint i = 0; i < NumTileShadowPointLights; i++)
     {
         int Index = GGroupShadowPointLightIndices[i];
         const FShadowPointLight Light       = ShadowCastingPointLights[Index];

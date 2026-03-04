@@ -150,7 +150,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         return;
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin SSAO");
+    RHI_EVENT_SCOPE(CommandList, "SSAO");
 
     TRACE_SCOPE("SSAO");
 
@@ -236,8 +236,6 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
         
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
     }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End SSAO");
 }
 
 bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)

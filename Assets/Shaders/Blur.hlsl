@@ -27,7 +27,7 @@ static const int OFFSETS[KERNEL_SIZE] =
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID)
 {
-    const int2 Pixel = min(DispatchThreadID.xy, int2(Constants.ScreenSize));   
+    const int2 Pixel = min(DispatchThreadID.xy, int2(Constants.ScreenSize) - 1);
 
     // Cache texture fetches
     GTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[Pixel];
@@ -53,11 +53,11 @@ void Main(uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_Di
         if (any(CurrentTexCoord >= MAX_SIZE) || any(CurrentTexCoord < int2(0, 0)))
         {
     #ifdef HORIZONTAL_PASS
-        const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x), Pixel.y);
+        const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x - 1), Pixel.y);
     #else
-        const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y));
+        const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y - 1));
     #endif
-            Result += Texture[Pixel] * Weight;
+            Result += Texture[CurrentPixel] * Weight;
         }
         else
         {

@@ -351,7 +351,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
 
 void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, TArrayView<const uint32> SelectedIDs)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Selection Outline");
+    RHI_EVENT_SCOPE(CommandList, "Selection Outline");
 
     TRACE_SCOPE("SelectionOutline");
 
@@ -635,8 +635,6 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     }
 
     CommandList.TransitionTextureState(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Selection Outline");
 }
 
 #endif // EDITOR_BUILD

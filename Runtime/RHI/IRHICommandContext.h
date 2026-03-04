@@ -415,19 +415,14 @@ struct IRHICommandContext
     virtual void Flush() = 0;
 
     /**
-     * @brief Inserts a marker on the GPU timeline
+     * @brief Begins a named GPU event region for profiling tools (PIX, RenderDoc, etc.)
      */
-    virtual void InsertMarker(const FStringView& Message) = 0;
+    virtual void PushEvent(const FStringView& Name) = 0;
 
     /**
-     * @brief Begins a PIX capture event, currently only available on D3D12
+     * @brief Ends the current GPU event region
      */
-    virtual void BeginExternalCapture() = 0;
-
-    /**
-     * @brief Ends a PIX capture event, currently only available on D3D12
-     */
-    virtual void EndExternalCapture() = 0;
+    virtual void PopEvent() = 0;
 
     /**
      * @brief Returns the native CommandList

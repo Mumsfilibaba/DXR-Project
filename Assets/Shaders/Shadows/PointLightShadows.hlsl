@@ -143,8 +143,6 @@ void Point_GSMain(triangle FVSPointOutput Input[3], inout TriangleStream<FGSPoin
     [unroll]
     for (int FaceIndex = 0; FaceIndex < NUM_CUBE_FACES; FaceIndex++)
     {
-        const uint FaceIndex = clamp(Input.InstanceID, 0, 5);
-
         FGSPointOutput Output;
         Output.RenderTargetViewIndex = FaceIndex;
 

@@ -83,7 +83,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
         return;
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin TemporalAA");
+    RHI_EVENT_SCOPE(CommandList, "TemporalAA");
 
     TRACE_SCOPE("TemporalAA");
 
@@ -107,7 +107,6 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
         CurrentBufferIndex = 0;
         bHistoryValid = true;
 
-        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End TemporalAA (History Reset)");
         return;
     }
 
@@ -142,8 +141,6 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 
     GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[1]->GetShaderResourceView()),
         TAAHistoryBuffers[1], EResourceAccess::NonPixelShaderResource);
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End TemporalAA");
 }
 
 bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 Width, uint32 Height)

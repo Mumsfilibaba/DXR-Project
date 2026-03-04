@@ -140,10 +140,8 @@ public:
     virtual void ClearState() override final;
     virtual void Flush() override final;
 
-    virtual void InsertMarker(const FStringView& Message) override final;
-
-    virtual void BeginExternalCapture() override final;
-    virtual void EndExternalCapture() override final;
+    virtual void PushEvent(const FStringView& Name) override final;
+    virtual void PopEvent() override final;
 
     virtual void* GetNativeCommandList() override final;
 

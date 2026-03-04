@@ -119,7 +119,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
 void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     // Forward Pass
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ForwardPass");
+    RHI_EVENT_SCOPE(CommandList, "ForwardPass");
 
     TRACE_SCOPE("ForwardPass");
 
@@ -217,6 +217,4 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     CommandList.EndRenderPass();
 
     CommandList.TransitionTextureState(FrameResources.ShadowCascades.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End ForwardPass");
 }

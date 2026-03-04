@@ -544,9 +544,9 @@ void FSceneRenderer::BeginFrame()
     // Update FrameCounter
     FrameCounter.NextFrame();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "-------- Begin Frame --------");
-
     CommandList.BeginFrame();
+
+    CommandList.PushEvent("Frame");
     
     // Resize SwapChains before doing anything else
     {
@@ -558,9 +558,7 @@ void FSceneRenderer::BeginFrame()
         }
 
         SwapChainsToResize.Clear();
-    }    
-    
-    CommandList.BeginExternalCapture();
+    }
 
     // Begin capture GPU FrameTime
     FGPUProfiler::Get().BeginGPUFrame(CommandList);
@@ -697,7 +695,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 #if SUPPORT_VARIABLE_RATE_SHADING
     if (ShadingImage && CVarEnableVariableRateShading.GetValue() && ShadingImage->GetWidth() > 0 && ShadingImage->GetHeight() > 0)
     {
-        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin VRS Image");
+        RHI_EVENT_SCOPE(CommandList, "VRS Image");
         CommandList.SetShadingRate(EShadingRate::VRS_1x1);
 
         CommandList.TransitionTextureState(ShadingImage.Get(), FRHITextureTransition::Make(EResourceAccess::ShadingRateSource, EResourceAccess::UnorderedAccess));
@@ -712,8 +710,6 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         CommandList.TransitionTextureState(ShadingImage.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::ShadingRateSource));
 
         CommandList.SetShadingRateImage(ShadingImage.Get());
-
-        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End VRS Image");
     }
     else if (RHISupportsVariableRateShading())
     {
@@ -1299,7 +1295,7 @@ bool FSceneRenderer::PollEditorObjectPickResult(FScene* Scene, uint32& OutObject
 
 void FSceneRenderer::RenderUI()
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "-------- Begin UI Render --------");
+    RHI_EVENT_SCOPE(CommandList, "UI Render");
 
     {
         TRACE_SCOPE("Render UI");
@@ -1317,17 +1313,13 @@ void FSceneRenderer::RenderUI()
             IImguiPlugin::Get().Draw(CommandList);
         }
     }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "-------- End UI Render --------");
 }
 
 void FSceneRenderer::EndFrame()
 {
     FGPUProfiler::Get().EndGPUFrame(CommandList);
 
-    CommandList.EndExternalCapture();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "-------- End Frame --------");
+    CommandList.PopEvent();
 
     {
         TRACE_SCOPE("Present SwapChains");

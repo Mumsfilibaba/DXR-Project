@@ -108,13 +108,11 @@ public:
     virtual void DispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final;
-    virtual void InsertMarker(const FStringView& Message) override final;
+    virtual void PushEvent(const FStringView& Name) override final;
+    virtual void PopEvent() override final;
     
     virtual void ClearState() override final;
     virtual void Flush() override final;
-
-    virtual void BeginExternalCapture() override final;
-    virtual void EndExternalCapture() override final;
 
     virtual void* GetNativeCommandList() override final 
     { 
@@ -176,24 +174,27 @@ private:
     
     FVulkanFence* SubmitCommandBuffer(bool bFlushPool);
 
-    FVulkanImageLayoutState&  RetrievePendingImageState(class FVulkanTexture* Texture);
-    FVulkanBufferState& RetrievePendingBufferState(class FVulkanBuffer* Buffer);
+    void CloseEventStack();
+    void ReopenEventStack();
 
-    FVulkanQueue&                            Queue;
-    FVulkanCommandPool*                      CommandPool;
-    FVulkanCommandBuffer*                    CommandBuffer;
-    FVulkanCommands*                         Commands;
-    FVulkanQueryAllocator                    TimestampQueryAllocator;
-    FVulkanQueryAllocator                    OcclusionQueryAllocator;
-    FVulkanBarrierBatcher                    BarrierBatcher;
-    ECommandContextPhase                     ContextPhase;
-    FVulkanCommandContextState               ContextState;
-    TArray<FVulkanPendingImageBarrier>       PendingImageBarriers;
-    TArray<FVulkanPendingBufferBarrier>      PendingBufferBarriers;
+    FVulkanBufferState&      RetrievePendingBufferState(class FVulkanBuffer* Buffer);
+    FVulkanImageLayoutState& RetrievePendingImageState(class FVulkanTexture* Texture);
+
+    FVulkanQueue&                                  Queue;
+    FVulkanCommandPool*                            CommandPool;
+    FVulkanCommandBuffer*                          CommandBuffer;
+    FVulkanCommands*                               Commands;
+    FVulkanQueryAllocator                          TimestampQueryAllocator;
+    FVulkanQueryAllocator                          OcclusionQueryAllocator;
+    FVulkanBarrierBatcher                          BarrierBatcher;
+    ECommandContextPhase                           ContextPhase;
+    FVulkanCommandContextState                     ContextState;
+    TArray<FVulkanPendingImageBarrier>             PendingImageBarriers;
+    TArray<FVulkanPendingBufferBarrier>            PendingBufferBarriers;
     TMap<FVulkanTexture*, FVulkanImageLayoutState> PendingImageStates;
-    TMap<FVulkanBuffer*, FVulkanBufferState> PendingBufferStates;
-
-    FVulkanTransientDescriptorAllocator*  TransientDescriptorAllocator;
+    TMap<FVulkanBuffer*, FVulkanBufferState>       PendingBufferStates;
+    FVulkanTransientDescriptorAllocator*           TransientDescriptorAllocator;
+    TArray<FString>                                EventStack;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection           CommandContextCS;

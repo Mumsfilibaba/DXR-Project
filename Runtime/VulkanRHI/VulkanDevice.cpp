@@ -7,6 +7,7 @@
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanInstance.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
@@ -16,6 +17,8 @@ VULKANRHI_API bool   GVulkanForceBinding                        = false;
 VULKANRHI_API bool   GVulkanAllowNullDescriptors                = true;
 VULKANRHI_API bool   GVulkanAllowGeometryShaders                = true;
 VULKANRHI_API bool   GVulkanAllowResetCommandBuffers            = false;
+VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled           = false;
+VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled        = false;
 
 VULKANRHI_API bool   GVulkanSupportsDepthClip                   = false;
 VULKANRHI_API bool   GVulkanSupportsNullDescriptors             = false;
@@ -102,10 +105,13 @@ static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
     {
         return false;
     }
-    else
+#if VK_EXT_descriptor_buffer
+    if (GVulkanGPUAssistedValidationEnabled && FCString::Strcmp(ExtensionProperty.extensionName, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME) == 0)
     {
-        return true;
+        return false;
     }
+#endif
+    return true;
 }
 
 template <typename FeatureStructType>
@@ -709,6 +715,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     // -------------------------------------------------------------------------------------------
     // Queues
     // -------------------------------------------------------------------------------------------
+
     QueueIndicies = FVulkanPhysicalDevice::GetQueueFamilyIndices(PhysicalDevice->GetVkPhysicalDevice());
     if (!QueueIndicies)
     {
@@ -1050,6 +1057,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     EnableDeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     EnableDeviceFeatures2.features = InDeviceCreateInfo.RequiredFeatures;
     EnableOptionalFeatures(EnableDeviceFeatures2.features, InDeviceCreateInfo.OptionalFeatures, InDeviceCreateInfo.RequiredFeatures);
+    GVulkanRobustBufferAccessEnabled = (EnableDeviceFeatures2.features.robustBufferAccess == VK_TRUE);
 
     VkPhysicalDeviceVulkan11Features EnableDeviceFeatures11 = InDeviceCreateInfo.RequiredFeatures11;
     EnableDeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
@@ -1074,7 +1082,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
         {
             EnableDeviceRobustness2Features.robustImageAccess2 = VK_TRUE;
         }
-		if (AvailableDeviceRobustness2Features.robustBufferAccess2)
+		if (AvailableDeviceRobustness2Features.robustBufferAccess2 && GVulkanRobustBufferAccessEnabled)
 		{
 			EnableDeviceRobustness2Features.robustBufferAccess2 = VK_TRUE;
 		}
@@ -1759,7 +1767,12 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     }
 
     // Create a NullImage
-    constexpr VkExtent3D NullExtent = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
+    constexpr VkExtent3D NullExtent = 
+    { 
+        VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 
+        VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT,
+        1 
+    };
 
     VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

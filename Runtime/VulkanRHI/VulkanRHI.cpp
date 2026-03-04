@@ -12,6 +12,7 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanDeviceLimits.h"
 #include "VulkanRHI/VulkanRayTracing.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
 
 IMPLEMENT_ENGINE_MODULE(FVulkanRHIModule, VulkanRHI);
@@ -32,6 +33,16 @@ static TAutoConsoleVariable<bool> CVarVulkanUseDynamicRendering(
     true,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<bool> CVarVulkanEnableRobustBufferAccess(
+    "VulkanRHI.EnableRobustBufferAccess",
+    "Enable Vulkan robustBufferAccess feature. Costs more user-data DWORDs per dynamic uniform buffer.",
+#if RELEASE_BUILD
+    false);
+#else
+    true);
+#endif
+
+
 FRHI* FVulkanRHIModule::CreateRHI()
 {
     TUniquePtr<FVulkanRHI> NewRHI = MakeUniquePtr<FVulkanRHI>();
@@ -50,6 +61,9 @@ FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
     , Instance()
+#if VULKAN_ENABLE_BREADCRUMBS
+    , Breadcrumbs(nullptr)
+#endif
 {
     if (!GVulkanRHI)
     {
@@ -111,6 +125,10 @@ FVulkanRHI::~FVulkanRHI()
 
     // Then flush any potential remaining objects
     FlushDeletionQueue();
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    SAFE_DELETE(Breadcrumbs);
+#endif
 
     SAFE_DELETE(GraphicsQueue);
     SAFE_DELETE(Device);
@@ -177,30 +195,40 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
     // Vulkan 1.0 Optional
-    DeviceCreateInfo.OptionalFeatures.geometryShader                       = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures.tessellationShader                   = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures.multiDrawIndirect                    = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures.robustBufferAccess                   = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.geometryShader     = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.tessellationShader = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.multiDrawIndirect  = VK_TRUE;
+    
+#ifndef RELEASE_BUILD
+    if (CVarVulkanEnableRobustBufferAccess.GetValue())
+    {
+        DeviceCreateInfo.OptionalFeatures.robustBufferAccess = VK_TRUE;
+    }
+#else
+    {
+        DeviceCreateInfo.OptionalFeatures.robustBufferAccess = VK_FALSE;
+    }
+#endif
 
     // Vulkan 1.1 Required
-    DeviceCreateInfo.RequiredFeatures11.shaderDrawParameters               = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures11.shaderDrawParameters = VK_TRUE;
     // Vulkan 1.1 Optional
-    DeviceCreateInfo.OptionalFeatures11.multiview                          = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures11.multiview = VK_TRUE;
 
     // Vulkan 1.2 Required 
-    DeviceCreateInfo.RequiredFeatures12.hostQueryReset                     = VK_TRUE; 
-    DeviceCreateInfo.RequiredFeatures12.bufferDeviceAddress                = VK_TRUE; 
-    DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer                  = VK_TRUE; 
-    DeviceCreateInfo.RequiredFeatures12.timelineSemaphore                  = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures12.hostQueryReset      = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures12.bufferDeviceAddress = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer   = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures12.timelineSemaphore   = VK_TRUE; 
     // Vulkan 1.2 Optional 
-    DeviceCreateInfo.OptionalFeatures12.descriptorIndexing                 = VK_TRUE; 
+    DeviceCreateInfo.OptionalFeatures12.descriptorIndexing  = VK_TRUE; 
 
     // Vulkan 1.3 Required
-    DeviceCreateInfo.RequiredFeatures13.dynamicRendering                   = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures13.synchronization2                   = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures13.maintenance4                       = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures13.dynamicRendering = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures13.synchronization2 = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures13.maintenance4     = VK_TRUE;
     // Vulkan 1.3 Optional
-    DeviceCreateInfo.OptionalFeatures13.pipelineCreationCacheControl       = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures13.pipelineCreationCacheControl = VK_TRUE;
 
     // Create physical device
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
@@ -241,6 +269,17 @@ bool FVulkanRHI::Initialize()
     {
         GraphicsQueue->SetDebugName("Graphics Queue");
     }
+
+#if VULKAN_ENABLE_BREADCRUMBS
+    {
+        Breadcrumbs = new FVulkanBreadcrumbs(Device);
+        if (!Breadcrumbs->Initialize(GraphicsQueue->GetVkQueue()))
+        {
+            delete Breadcrumbs;
+            Breadcrumbs = nullptr;
+        }
+    }
+#endif
 
     // Initialize Default CommandContext
     GraphicsCommandContext = new FVulkanCommandContext(Device, *GraphicsQueue);

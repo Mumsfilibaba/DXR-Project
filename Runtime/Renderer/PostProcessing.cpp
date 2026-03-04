@@ -192,7 +192,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         return;
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Tonemapping");
+    RHI_EVENT_SCOPE(CommandList, "Tonemapping");
 
     TRACE_SCOPE("Tonemapping");
 
@@ -243,8 +243,6 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     {
         CommandList.TransitionTextureState(OutputTarget, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
     }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Tonemapping");
 }
 
 #if EDITOR_BUILD
@@ -354,7 +352,7 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
         return;
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Final Composite");
+    RHI_EVENT_SCOPE(CommandList, "Final Composite");
 
     TRACE_SCOPE("Final Composite");
 
@@ -445,8 +443,6 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
     CommandList.DrawInstanced(3, 1, 0, 0);
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Final Composite");
 }
 #endif
 
@@ -600,7 +596,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
 
 void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin FXAA");
+    RHI_EVENT_SCOPE(CommandList, "FXAA");
 
     TRACE_SCOPE("FXAA");
 
@@ -647,6 +643,4 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
     CommandList.DrawInstanced(3, 1, 0, 0);
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End FXAA");
 }

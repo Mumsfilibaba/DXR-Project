@@ -632,7 +632,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
 
 void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin AABB DebugPass");
+    RHI_EVENT_SCOPE(CommandList, "AABB DebugPass");
 
     TRACE_SCOPE("AABB DebugPass");
 
@@ -670,13 +670,11 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     }
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End AABB DebugPass");
 }
 
 void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PointLight DebugPass");
+    RHI_EVENT_SCOPE(CommandList, "PointLight DebugPass");
 
     TRACE_SCOPE("PointLight DebugPass");
 
@@ -711,13 +709,11 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     }
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End PointLight DebugPass");
 }
 
 void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightProbe DebugPass");
+    RHI_EVENT_SCOPE(CommandList, "LightProbe DebugPass");
 
     TRACE_SCOPE("LightProbe DebugPass");
 
@@ -810,6 +806,4 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     }
 
     CommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightProbe DebugPass");
 }

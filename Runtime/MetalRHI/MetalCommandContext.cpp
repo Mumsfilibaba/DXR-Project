@@ -585,7 +585,7 @@ void FMetalCommandContext::Flush()
     }
 }
 
-void FMetalCommandContext::InsertMarker(const FStringView& Message)
+void FMetalCommandContext::PushEvent(const FStringView& Name)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -600,15 +600,25 @@ void FMetalCommandContext::InsertMarker(const FStringView& Message)
         Encoder = CopyContext.GetMTLCopyEncoder();
     }
 
-    [Encoder insertDebugSignpost:FString(Message).GetNSString()];
+    [Encoder pushDebugGroup:FString(Name).GetNSString()];
 }
 
-void FMetalCommandContext::BeginExternalCapture()
+void FMetalCommandContext::PopEvent()
 {
-    // Empty for now
-}
+    SCOPED_AUTORELEASE_POOL();
+    
+    id<MTLCommandEncoder> Encoder = nil;
+    if (GraphicsEncoder)
+    {
+        Encoder = GraphicsEncoder;
+    }
+    else
+    {
+        Encoder = CopyContext.GetMTLCopyEncoder();
+    }
 
-void FMetalCommandContext::EndExternalCapture()
-{
-    // Empty for now
+    if (Encoder)
+    {
+        [Encoder popDebugGroup];
+    }
 }
