@@ -116,8 +116,13 @@ public:
         return GraphicsCommandContext;
     }
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* GetBreadcrumbs() { return Breadcrumbs; }
+#if VULKAN_ENABLE_CRASH_MARKERS
+    bool IsCrashMarkersEnabled() const { return CrashMarkers != nullptr; }
+
+    FVulkanCrashMarkers* GetCrashMarkers()
+    {
+        return CrashMarkers;
+    }
 #endif
 
 private:
@@ -131,7 +136,7 @@ private:
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    typedef TQueue<FVulkanCommands*, EQueueType::MPSC>         FCommandsQueue;
+    typedef TQueue<FVulkanCommands*, EQueueType::MPSC>                  FCommandsQueue;
     typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
 
     FVulkanInstance               Instance;
@@ -145,9 +150,8 @@ private:
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
     FCommandsQueue                PendingSubmissions;
-
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs*           Breadcrumbs;
+#if VULKAN_ENABLE_CRASH_MARKERS
+    FVulkanCrashMarkers*          CrashMarkers;
 #endif
 
     static FVulkanRHI* GVulkanRHI;

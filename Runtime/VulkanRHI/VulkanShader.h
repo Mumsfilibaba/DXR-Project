@@ -122,7 +122,9 @@ struct FVulkanShaderInfo
         EVulkanBindingType BindingType;
         uint8              BindingIndex;
         uint16             OriginalBindingIndex;
+    #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
         FString            DebugName;
+    #endif
     };
     
     TArray<FBindingOffsets>  BindingOffsets;

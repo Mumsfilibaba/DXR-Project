@@ -28,6 +28,10 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
     FVulkanDescriptorRemappingInfo LayoutRemappings;
     LayoutRemappings.RemappingInfo.Reserve(ShaderInfo.ResourceBindings.Size());
 
+#if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+    LayoutRemappings.DebugNames.Reserve(ShaderInfo.ResourceBindings.Size());
+#endif
+
     for (const FVulkanShaderInfo::FResourceBinding& Binding : ShaderInfo.ResourceBindings)
     {
         VkDescriptorSetLayoutBinding LayoutBinding = {};
@@ -43,6 +47,10 @@ void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage
         RemappingInfo.BindingIndex         = Binding.BindingIndex;
         RemappingInfo.OriginalBindingIndex = Binding.OriginalBindingIndex;
         LayoutRemappings.RemappingInfo.Add(RemappingInfo);
+
+    #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+        LayoutRemappings.DebugNames.Add(Binding.DebugName);
+    #endif
     }
 
     SetLayoutInfos.Add(Move(LayoutInfo));

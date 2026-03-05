@@ -257,6 +257,9 @@ VULKAN_FUNCTION_DECLARATION(CmdWriteBufferMarkerAMD);
 VULKAN_FUNCTION_DECLARATION(CmdSetCheckpointNV);
 VULKAN_FUNCTION_DECLARATION(GetQueueCheckpointDataNV);
 #endif
+#if VK_EXT_device_fault
+VULKAN_FUNCTION_DECLARATION(GetDeviceFaultInfoEXT);
+#endif
 
 struct VulkanLoader
 {

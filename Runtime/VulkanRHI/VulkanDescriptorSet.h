@@ -214,6 +214,7 @@ public:
             pImageInfo->sampler     = Sampler;
             pImageInfo->imageView   = VK_NULL_HANDLE;
             pImageInfo->imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
             DescriptorSetKey.Resources[Binding].Resource = Resource;
             bKeyIsDirty = true;
         }
@@ -290,6 +291,7 @@ private:
             pImageInfo->sampler     = VK_NULL_HANDLE;
             pImageInfo->imageView   = ImageView;
             pImageInfo->imageLayout = ImageLayout;
+            
             DescriptorSetKey.Resources[Binding].Resource = Resource;
             bKeyIsDirty = true;
         }

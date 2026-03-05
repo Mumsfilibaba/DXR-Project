@@ -978,7 +978,7 @@ void FRHIValidationCommandContext::SetShaderConstants(FRHIShader* Shader, const 
     RealContext->SetShaderConstants(Shader, ShaderConstants, NumShaderConstants);
 }
 
-void FRHIValidationCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -986,10 +986,10 @@ void FRHIValidationCommandContext::SetShaderResourceView(FRHIShader* Shader, FRH
         return;
     }
 
-    RealContext->SetShaderResourceView(Shader, ShaderResourceView, ParameterIndex);
+    RealContext->SetShaderResourceView(Shader, ShaderResourceView, RegisterIndex);
 }
 
-void FRHIValidationCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -997,10 +997,10 @@ void FRHIValidationCommandContext::SetShaderResourceViews(FRHIShader* Shader, co
         return;
     }
 
-    RealContext->SetShaderResourceViews(Shader, InShaderResourceViews, ParameterIndex);
+    RealContext->SetShaderResourceViews(Shader, InShaderResourceViews, RegisterIndex);
 }
 
-void FRHIValidationCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -1008,10 +1008,10 @@ void FRHIValidationCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FR
         return;
     }
 
-    RealContext->SetUnorderedAccessView(Shader, UnorderedAccessView, ParameterIndex);
+    RealContext->SetUnorderedAccessView(Shader, UnorderedAccessView, RegisterIndex);
 }
 
-void FRHIValidationCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -1019,10 +1019,10 @@ void FRHIValidationCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, c
         return;
     }
 
-    RealContext->SetUnorderedAccessViews(Shader, InUnorderedAccessViews, ParameterIndex);
+    RealContext->SetUnorderedAccessViews(Shader, InUnorderedAccessViews, RegisterIndex);
 }
 
-void FRHIValidationCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -1030,10 +1030,10 @@ void FRHIValidationCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuf
         return;
     }
 
-    RealContext->SetConstantBuffer(Shader, ConstantBuffer, ParameterIndex);
+    RealContext->SetConstantBuffer(Shader, ConstantBuffer, RegisterIndex);
 }
 
-void FRHIValidationCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -1041,10 +1041,10 @@ void FRHIValidationCommandContext::SetConstantBuffers(FRHIShader* Shader, const 
         return;
     }
 
-    RealContext->SetConstantBuffers(Shader, InConstantBuffers, ParameterIndex);
+    RealContext->SetConstantBuffers(Shader, InConstantBuffers, RegisterIndex);
 }
 
-void FRHIValidationCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -1052,10 +1052,10 @@ void FRHIValidationCommandContext::SetSamplerState(FRHIShader* Shader, FRHISampl
         return;
     }
 
-    RealContext->SetSamplerState(Shader, SamplerState, ParameterIndex);
+    RealContext->SetSamplerState(Shader, SamplerState, RegisterIndex);
 }
 
-void FRHIValidationCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
+void FRHIValidationCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex)
 {
     if (!Shader)
     {
@@ -1063,7 +1063,7 @@ void FRHIValidationCommandContext::SetSamplerStates(FRHIShader* Shader, const TA
         return;
     }
 
-    RealContext->SetSamplerStates(Shader, InSamplerStates, ParameterIndex);
+    RealContext->SetSamplerStates(Shader, InSamplerStates, RegisterIndex);
 }
 
 void FRHIValidationCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)

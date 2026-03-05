@@ -9,7 +9,8 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanRHI.h"
 
-#define VALIDATE_NO_NULL_DESCRIPTORS (0)
+#define VALIDATE_NO_NULL_DESCRIPTORS (!RELEASE_BUILD)
+#define BREAK_ON_NULL_DESCRIPTORS    0
 
 static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
     "VulkanRHI.MaxDescriptorSetsPerPool",
@@ -337,32 +338,74 @@ void FVulkanDescriptorState::SetSampler(FVulkanSamplerState* SamplerState, uint3
     }
 }
 
+static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
+{
+    switch (Type)
+    {
+        case VK_DESCRIPTOR_TYPE_SAMPLER:                return "SAMPLER";
+        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:          return "SAMPLED_IMAGE";
+        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:          return "STORAGE_IMAGE";
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:         return "UNIFORM_BUFFER";
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:         return "STORAGE_BUFFER";
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return "UNIFORM_BUFFER_DYNAMIC";
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return "STORAGE_BUFFER_DYNAMIC";
+        default:                                        return "UNKNOWN";
+    }
+}
+
 void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllocator* TransientAllocator)
 {
     for (int32 Index = 0; Index < DescriptorSetHandles.Size(); Index++)
     {
     #if VALIDATE_NO_NULL_DESCRIPTORS
         const FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[Index];
-        for (const VkWriteDescriptorSet& WriteInfo : DSWrites.DescriptorWrites)
+        const FVulkanDescriptorRemappingInfo& RemappingInfo = Layout->GetDescriptorRemappingInfo(Index);
+        for (int32 BindIdx = 0; BindIdx < DSWrites.DescriptorWrites.Size(); BindIdx++)
         {
+            const VkWriteDescriptorSet& WriteInfo = DSWrites.DescriptorWrites[BindIdx];
+            const uint16 OriginalBinding = (BindIdx < RemappingInfo.RemappingInfo.Size()) ? RemappingInfo.RemappingInfo[BindIdx].OriginalBindingIndex : 0;
+
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+            const CHAR* BindingName = Layout->GetBindingDebugName(Index, BindIdx);
+        #else
+            const CHAR* BindingName = "";
+        #endif
+
             if (WriteInfo.pBufferInfo)
             {
-                CHECK(WriteInfo.pBufferInfo->buffer != DefaultResources.NullBuffer);
+                if (WriteInfo.pBufferInfo->buffer == DefaultResources.NullBuffer)
+                {
+                    VULKAN_WARNING("Null buffer descriptor '%s' (register b%u) at set=%d binding=%u (%s)",
+                        BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
+                #if BREAK_ON_NULL_DESCRIPTORS
+                    DEBUG_BREAK();
+                #endif
+                }
             }
             else if (WriteInfo.pImageInfo)
             {
                 if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
                 {
-                    CHECK(WriteInfo.pImageInfo->imageView != DefaultResources.NullImageView);
+                    if (WriteInfo.pImageInfo->imageView == DefaultResources.NullImageView)
+                    {
+                        VULKAN_WARNING("Null image view descriptor '%s' (register t%u) at set=%d binding=%u (%s)",
+                            BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
+                    #if BREAK_ON_NULL_DESCRIPTORS
+                        DEBUG_BREAK();
+                    #endif
+                    }
                 }
                 else if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
                 {
-                    CHECK(WriteInfo.pImageInfo->sampler != DefaultResources.NullSampler);
+                    if (WriteInfo.pImageInfo->sampler == DefaultResources.NullSampler)
+                    {
+                        VULKAN_WARNING("Null sampler descriptor '%s' (register s%u) at set=%d binding=%u",
+                            BindingName, OriginalBinding, Index, WriteInfo.dstBinding);
+                    #if BREAK_ON_NULL_DESCRIPTORS
+                        DEBUG_BREAK();
+                    #endif
+                    }
                 }
-            }
-            else
-            {
-                DEBUG_BREAK();
             }
         }
      #endif
@@ -375,6 +418,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
 
             // Must run every draw even when not dirty. The cache hit updates LastUsedFrame,
             // preventing the eviction logic from reclaiming the entry and recycling its pool.
+            
             FVulkanDescriptorSetCache& DescriptorSetCache = GetDevice()->GetDescriptorSetCache();
             if (!DescriptorSetCache.FindOrCreateDescriptorSet(DescriptorPoolInfos[Index], DSBuilder, DescriptorSetHandles[Index]))
             {
@@ -446,6 +490,17 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
         {
             DSBuilder.WriteDynamicUniformBuffer(BindingIndex, DefaultResources.NullBuffer, VK_WHOLE_SIZE);
+
+            const int32 DynamicIndex = BindingToDynamicIndex[DescriptorSetIndex][BindingIndex];
+            if (DynamicIndex >= 0)
+            {
+                const uint32 FlatIndex = DynamicOffsetBasePerSet[DescriptorSetIndex] + DynamicIndex;
+                if (DynamicOffsets[FlatIndex] != 0)
+                {
+                    DynamicOffsets[FlatIndex] = 0;
+                    bDynamicOffsetsDirty = true;
+                }
+            }
             break;
         }
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:

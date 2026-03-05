@@ -857,6 +857,10 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         DEBUG_BREAK();
         return false;
     }
+    else
+    {
+        TiledLightPassPSO->SetDebugName("DeferredLightPass PipelineState");
+    }
 
     // Tiled lightning Tile debugging
     TArray<FShaderDefine> Defines =
@@ -989,7 +993,9 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 3);
-    CommandList.SetShaderResourceView(LightPassShader, nullptr, 4); // DXR-Reflection
+#if 0 // DXR-Reflection (currently unused)
+    CommandList.SetShaderResourceView(LightPassShader, nullptr, 4);
+#endif
 
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 5);
 

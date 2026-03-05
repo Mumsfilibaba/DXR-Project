@@ -773,6 +773,11 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     AvailableDeviceRobustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
 #endif
 
+#if VK_EXT_device_fault
+    VkPhysicalDeviceFaultFeaturesEXT AvailableDeviceFaultFeatures = {};
+    AvailableDeviceFaultFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT;
+#endif
+
 #if VK_KHR_fragment_shading_rate
     VkPhysicalDeviceFragmentShadingRateFeaturesKHR AvailableDeviceFragmentShadingRateFeatures = {};
     AvailableDeviceFragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
@@ -837,6 +842,12 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
         if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
         {
             AvailableDeviceFeatureChain.AddNext(AvailableDeviceRobustness2Features);
+        }
+    #endif
+    #if VK_EXT_device_fault
+        if (IsExtensionEnabled(VK_EXT_DEVICE_FAULT_EXTENSION_NAME))
+        {
+            AvailableDeviceFeatureChain.AddNext(AvailableDeviceFaultFeatures);
         }
     #endif
     #if VK_KHR_fragment_shading_rate
@@ -925,6 +936,17 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME) && AvailableDeviceRobustness2Features.nullDescriptor)
     {
         GVulkanSupportsNullDescriptors = true;
+    }
+
+    VULKAN_INFO("Robustness: robustBufferAccess=%s, nullDescriptor=%s, robustBufferAccess2=%s, robustImageAccess2=%s",
+        GVulkanRobustBufferAccessEnabled ? "ON" : "OFF",
+        GVulkanSupportsNullDescriptors   ? "ON" : "OFF",
+        (AvailableDeviceRobustness2Features.robustBufferAccess2 && GVulkanRobustBufferAccessEnabled) ? "ON" : "OFF",
+        AvailableDeviceRobustness2Features.robustImageAccess2 ? "ON" : "OFF");
+
+    if (!GVulkanSupportsNullDescriptors)
+    {
+        VULKAN_WARNING("nullDescriptor not supported - unbound descriptors will use a %u-byte fallback buffer (OOB risk)", VULKAN_DEFAULT_BUFFER_NUM_BYTES);
     }
 #endif
 
@@ -1093,6 +1115,15 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     }
 #endif
 
+#if VK_EXT_device_fault
+    VkPhysicalDeviceFaultFeaturesEXT EnableDeviceFaultFeatures = {};
+    if (IsExtensionEnabled(VK_EXT_DEVICE_FAULT_EXTENSION_NAME) && AvailableDeviceFaultFeatures.deviceFault)
+    {
+        EnableDeviceFaultFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT;
+        EnableDeviceFaultFeatures.deviceFault = VK_TRUE;
+    }
+#endif
+
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT EnableDeviceDepthClipEnableFeatures = {};
     if (GVulkanSupportsDepthClip)
@@ -1219,6 +1250,12 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
     {
         EnableDeviceFeaturesChain.AddNext(EnableDeviceRobustness2Features);
+    }
+#endif
+#if VK_EXT_device_fault
+    if (EnableDeviceFaultFeatures.deviceFault)
+    {
+        EnableDeviceFeaturesChain.AddNext(EnableDeviceFaultFeatures);
     }
 #endif
 #if VK_EXT_depth_clip_enable

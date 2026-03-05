@@ -145,68 +145,68 @@ struct IRHICommandContext
     virtual void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) = 0;
 
     /**
-     * @brief Sets a single ShaderResourceView to the ParameterIndex this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets a single ShaderResourceView at the specified register index. RegisterIndex corresponds to the HLSL register (e.g., register(t0)).
      * @param Shader Shader to bind resource to
      * @param ShaderResourceView ShaderResourceView to bind
-     * @param ParameterIndex ShaderResourceView-index to bind to
+     * @param RegisterIndex Register index to bind to
      */
-    virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) = 0;
+    virtual void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex) = 0;
 
     /**
-     * @brief Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets multiple ShaderResourceViews starting at the specified register index (for arrays in the shader). RegisterIndex corresponds to the HLSL register (e.g., register(t0)).
      * @param Shader Shader to bind resource to
      * @param ShaderResourceViews ArrayView of ShaderResourceViews to bind
-     * @param ParameterIndex ShaderResourceView-index to bind to
+     * @param RegisterIndex Starting register index to bind from
      */
-    virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) = 0;
+    virtual void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex) = 0;
 
     /**
-     * @brief Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets a single UnorderedAccessView at the specified register index. RegisterIndex corresponds to the HLSL register (e.g., register(u0)).
      * @param Shader Shader to bind resource to
      * @param UnorderedAccessView UnorderedAccessView to bind
-     * @param ParameterIndex UnorderedAccessView-index to bind to
+     * @param RegisterIndex Register index to bind to
      */
-    virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 RegisterIndex) = 0;
 
     /**
-     * @brief Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets multiple UnorderedAccessViews starting at the specified register index (for arrays in the shader). RegisterIndex corresponds to the HLSL register (e.g., register(u0)).
      * @param Shader Shader to bind resource to
      * @param InUnorderedAccessViews ArrayView of UnorderedAccessViews to bind
-     * @param ParameterIndex UnorderedAccessView-index to bind to
+     * @param RegisterIndex Starting register index to bind from
      */
-    virtual void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) = 0;
+    virtual void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex) = 0;
 
     /**
-     * @brief Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets a single ConstantBuffer at the specified register index. RegisterIndex corresponds to the HLSL register (e.g., register(b0)).
      * @param Shader Shader to bind resource to
      * @param ConstantBuffer ConstantBuffer to bind
-     * @param ParameterIndex ConstantBuffer-index to bind to
+     * @param RegisterIndex Register index to bind to
      */
-    virtual void SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 RegisterIndex) = 0;
 
     /**
-     * @brief Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets multiple ConstantBuffers starting at the specified register index (for arrays in the shader). RegisterIndex corresponds to the HLSL register (e.g., register(b0)).
      * @param Shader Shader to bind resource to
      * @param ConstantBuffers ArrayView of ConstantBuffers to bind
-     * @param ParameterIndex ConstantBuffer-index to bind to
+     * @param RegisterIndex Starting register index to bind from
      */
-    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex) = 0;
+    virtual void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex) = 0;
 
     /**
-     * @brief Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets a single SamplerState at the specified register index. RegisterIndex corresponds to the HLSL register (e.g., register(s0)).
      * @param Shader Shader to bind sampler to
      * @param SamplerState SamplerState to bind
-     * @param ParameterIndex SamplerState-index to bind to
+     * @param RegisterIndex Register index to bind to
      */
-    virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) = 0;
+    virtual void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 RegisterIndex) = 0;
 
     /**
-     * @brief Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
+     * @brief Sets multiple SamplerStates starting at the specified register index (for arrays in the shader). RegisterIndex corresponds to the HLSL register (e.g., register(s0)).
      * @param Shader Shader to bind resource to
      * @param SamplerStates ArrayView of SamplerStates to bind
-     * @param ParameterIndex ConstantBuffer-index to bind to
+     * @param RegisterIndex Starting register index to bind from
      */
-    virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) = 0;
+    virtual void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex) = 0;
 
     /**
      * @brief Updates the contents of a Buffer

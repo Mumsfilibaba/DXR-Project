@@ -158,7 +158,6 @@ void FVulkanCommandContextState::ResetState()
     GraphicsState.bBindViewports         = true;
     GraphicsState.bBindVertexBuffers     = true;
     GraphicsState.bBindPushConstants     = true;
-
     ComputeState.PipelineState           = nullptr;
     ComputeState.CurrentDescriptorState  = nullptr;
     ComputeState.CurrentLayout           = nullptr;
@@ -175,7 +174,6 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
     GraphicsState.bBindViewports     = true;
     GraphicsState.bBindVertexBuffers = true;
     GraphicsState.bBindPushConstants = true;
-
     ComputeState.bBindPipelineState  = true;
     ComputeState.bBindPushConstants  = true;
 }
@@ -190,7 +188,7 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
     FVulkanGraphicsPipelineState* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
     if (CurrentGraphicsPipelineState != InGraphicsPipelineState || GVulkanForceBinding)
     {
-        GraphicsState.PipelineState = MakeSharedRef<FVulkanGraphicsPipelineState>(InGraphicsPipelineState);
+        GraphicsState.PipelineState      = MakeSharedRef<FVulkanGraphicsPipelineState>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
 
         if (InGraphicsPipelineState)
@@ -199,8 +197,9 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             
             if (FCachedDescriptorState* Cached = GraphicsState.DescriptorStates.Find(InGraphicsPipelineState))
             {
-                Cached->LastUsedFrame = CurrentFrame;
+                Cached->LastUsedFrame                = CurrentFrame;
                 GraphicsState.CurrentDescriptorState = Cached->State;
+
                 if (GVulkanForceBinding)
                 {
                     GraphicsState.CurrentDescriptorState->Reset();
@@ -213,8 +212,8 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
                 FCachedDescriptorState NewEntry;
                 NewEntry.State         = NewState;
                 NewEntry.LastUsedFrame = CurrentFrame;
-                GraphicsState.DescriptorStates.Add(InGraphicsPipelineState, NewEntry);
                 
+                GraphicsState.DescriptorStates.Add(InGraphicsPipelineState, NewEntry);
                 GraphicsState.CurrentDescriptorState = NewState;
             }
         }
@@ -234,7 +233,7 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
     FVulkanComputePipelineState* CurrentComputePipelineState = ComputeState.PipelineState.Get();
     if (CurrentComputePipelineState != InComputePipelineState || GVulkanForceBinding)
     {
-        ComputeState.PipelineState = MakeSharedRef<FVulkanComputePipelineState>(InComputePipelineState);
+        ComputeState.PipelineState      = MakeSharedRef<FVulkanComputePipelineState>(InComputePipelineState);
         ComputeState.bBindPipelineState = true;
 
         if (InComputePipelineState)
@@ -257,8 +256,8 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
                 FCachedDescriptorState NewEntry;
                 NewEntry.State         = NewState;
                 NewEntry.LastUsedFrame = CurrentFrame;
-                ComputeState.DescriptorStates.Add(InComputePipelineState, NewEntry);
                 
+                ComputeState.DescriptorStates.Add(InComputePipelineState, NewEntry);
                 ComputeState.CurrentDescriptorState = NewState;
             }
         }
@@ -281,6 +280,7 @@ void FVulkanCommandContextState::SetViewports(VkViewport* Viewports, uint32 NumV
     if (GraphicsState.NumViewports != NumViewports || FMemory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0 || GVulkanForceBinding)
     {
         FMemory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
+
         GraphicsState.NumViewports   = NumViewports;
         GraphicsState.bBindViewports = true;
     }
@@ -294,6 +294,7 @@ void FVulkanCommandContextState::SetScissorRects(VkRect2D* ScissorRects, uint32 
     if (GraphicsState.NumScissorRects != NumScissorRects || FMemory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0 || GVulkanForceBinding)
     {
         FMemory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
+
         GraphicsState.NumScissorRects   = NumScissorRects;
         GraphicsState.bBindScissorRects = true;
     }
@@ -333,8 +334,8 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
     {
         GraphicsState.VBCache.VertexBuffers[VertexBufferSlot]       = Buffer;
         GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot] = Offset;
-        GraphicsState.VBCache.NumVertexBuffers = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
-        GraphicsState.bBindVertexBuffers       = true;
+        GraphicsState.VBCache.NumVertexBuffers                      = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
+        GraphicsState.bBindVertexBuffers                            = true;
     }
 }
 
@@ -373,6 +374,7 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
     if (NumShaderConstants != ConstantCache.NumConstants || FMemory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0 || GVulkanForceBinding)
     {
         FMemory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
+
         ConstantCache.NumConstants       = NumShaderConstants;
         GraphicsState.bBindPushConstants = true;
         ComputeState.bBindPushConstants  = true;
@@ -409,6 +411,9 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourc
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_SRV, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
+    #if VULKAN_ENABLE_BINDING_VALIDATION
+        VULKAN_WARNING("SetShaderResourceView: Slot %u does not exist in %s shader", ResourceIndex, ToString(ShaderStage));
+    #endif
         return;
     }
     
@@ -445,6 +450,9 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAcc
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UAV, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
+    #if VULKAN_ENABLE_BINDING_VALIDATION
+        VULKAN_WARNING("SetUnorderedAccessView: Slot %u does not exist in %s shader", ResourceIndex, ToString(ShaderStage));
+    #endif
         return;
     }
     
@@ -481,6 +489,9 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, 
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UniformBuffer, ResourceIndex, DescriptorSetIndex, BindingIndex))
     {
+    #if VULKAN_ENABLE_BINDING_VALIDATION
+        VULKAN_WARNING("SetConstantBuffer: Slot %u does not exist in %s shader", ResourceIndex, ToString(ShaderStage));
+    #endif
         return;
     }
     
@@ -517,6 +528,9 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, E
 
     if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_Sampler, SamplerIndex, DescriptorSetIndex, BindingIndex))
     {
+    #if VULKAN_ENABLE_BINDING_VALIDATION
+        VULKAN_WARNING("SetSamplerState: Slot %u does not exist in %s shader", SamplerIndex, ToString(ShaderStage));
+    #endif
         return;
     }
     

@@ -223,8 +223,9 @@ bool FVulkanShader::InitializeShaderLayout()
                 DescriptorSetOffset = UINT32_MAX;
             }
 
-            // Set debug-name
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, SampledImages[Index].base_type_id);
+        #endif
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
             ShaderInfo.ResourceBindings.Add(Move(Binding));
@@ -260,8 +261,9 @@ bool FVulkanShader::InitializeShaderLayout()
                 DescriptorSetOffset = UINT32_MAX;
             }
 
-            // Set debug-name
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, Samplers[Index].base_type_id);
+        #endif
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
             ShaderInfo.ResourceBindings.Add(Move(Binding));
@@ -297,8 +299,9 @@ bool FVulkanShader::InitializeShaderLayout()
                 DescriptorSetOffset = UINT32_MAX;
             }
             
-            // Set debug-name
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, StorageImages[Index].base_type_id);
+        #endif
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
             ShaderInfo.ResourceBindings.Add(Move(Binding));
@@ -334,8 +337,9 @@ bool FVulkanShader::InitializeShaderLayout()
                 DescriptorSetOffset = UINT32_MAX;
             }
 
-            // Set debug-name
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = spvc_compiler_get_name(Compiler, UniformBuffers[Index].base_type_id);
+        #endif
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
             ShaderInfo.ResourceBindings.Add(Move(Binding));
@@ -382,8 +386,9 @@ bool FVulkanShader::InitializeShaderLayout()
                 Binding.BindingType = VulkanBindingType_StorageBufferRead;
             }
 
-            // Set debug-name
+        #if VULKAN_ENABLE_BINDING_DEBUG_NAMES
             Binding.DebugName = Move(BaseTypeName);
+        #endif
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
             ShaderInfo.ResourceBindings.Add(Move(Binding));

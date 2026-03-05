@@ -42,7 +42,9 @@ Texture2D<float4> MaterialTex : register(t2);
 Texture2D<float> DepthStencilTex : register(t3);
 
 // Reflections
+#if 0
 Texture2D<float4> DXRReflection : register(t4);
+#endif
 
 // Pre-integrated LUT
 Texture2D<float2> IntegrationLUT : register(t5);

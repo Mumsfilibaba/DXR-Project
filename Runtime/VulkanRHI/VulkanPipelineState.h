@@ -150,6 +150,11 @@ public:
         FVulkanPipeline::SetDebugName(InName);
     }
 
+    virtual FString GetDebugName() const override final
+    {
+        return DebugName;
+    }
+
     FORCEINLINE const FRHIViewInstancingState& GetViewInstancingState() const
     {
         return ViewInstancingState;
@@ -173,6 +178,11 @@ public:
     virtual void SetDebugName(const FString& InName) override final
     {
         FVulkanPipeline::SetDebugName(InName);
+    }
+
+    virtual FString GetDebugName() const override final
+    {
+        return DebugName;
     }
 };
 

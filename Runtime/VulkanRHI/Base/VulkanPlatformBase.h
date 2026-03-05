@@ -105,6 +105,9 @@ struct VulkanPlatformBase
         #if VK_NV_device_diagnostic_checkpoints
             VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME,
         #endif
+        #if VK_EXT_device_fault
+            VK_EXT_DEVICE_FAULT_EXTENSION_NAME,
+        #endif
         };
     }
     

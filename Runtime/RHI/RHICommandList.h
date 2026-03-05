@@ -217,48 +217,48 @@ public:
         EmplaceCommand<FRHICommandSetShaderConstants>(Shader, SourceData, NumShaderConstants);
     }
 
-    FORCEINLINE void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex) noexcept
     {
-        EmplaceCommand<FRHICommandSetShaderResourceView>(Shader, ShaderResourceView, ParameterIndex);
+        EmplaceCommand<FRHICommandSetShaderResourceView>(Shader, ShaderResourceView, RegisterIndex);
     }
 
-    FORCEINLINE void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex) noexcept
     {
         TArrayView<FRHIShaderResourceView* const> ShaderResourceViews = AllocateArray(InShaderResourceViews);
-        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews, ParameterIndex);
+        EmplaceCommand<FRHICommandSetShaderResourceViews>(Shader, ShaderResourceViews, RegisterIndex);
     }
 
-    FORCEINLINE void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 RegisterIndex) noexcept
     {
-        EmplaceCommand<FRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, ParameterIndex);
+        EmplaceCommand<FRHICommandSetUnorderedAccessView>(Shader, UnorderedAccessView, RegisterIndex);
     }
 
-    FORCEINLINE void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex) noexcept
     {
         TArrayView<FRHIUnorderedAccessView* const> UnorderedAccessViews = AllocateArray(InUnorderedAccessViews);
-        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews, ParameterIndex);
+        EmplaceCommand<FRHICommandSetUnorderedAccessViews>(Shader, UnorderedAccessViews, RegisterIndex);
     }
 
-    FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 RegisterIndex) noexcept
     {
-        EmplaceCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, ParameterIndex);
+        EmplaceCommand<FRHICommandSetConstantBuffer>(Shader, ConstantBuffer, RegisterIndex);
     }
 
-    FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex) noexcept
     {
         TArrayView<FRHIBuffer* const> ConstantBuffers = AllocateArray(InConstantBuffers);
-        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers, ParameterIndex);
+        EmplaceCommand<FRHICommandSetConstantBuffers>(Shader, ConstantBuffers, RegisterIndex);
     }
 
-    FORCEINLINE void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 RegisterIndex) noexcept
     {
-        EmplaceCommand<FRHICommandSetSamplerState>(Shader, SamplerState, ParameterIndex);
+        EmplaceCommand<FRHICommandSetSamplerState>(Shader, SamplerState, RegisterIndex);
     }
 
-    FORCEINLINE void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) noexcept
+    FORCEINLINE void SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex) noexcept
     {
         TArrayView<FRHISamplerState* const> SamplerStates = AllocateArray(InSamplerStates);
-        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates, ParameterIndex);
+        EmplaceCommand<FRHICommandSetSamplerStates>(Shader, SamplerStates, RegisterIndex);
     }
 
     FORCEINLINE void UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* InSrcData) noexcept

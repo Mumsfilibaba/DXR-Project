@@ -15,15 +15,15 @@ static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandBuffer(
     "Number of commands allowed before submitting the current CommandBuffer to the GPU",
     10000);
 
-#if VULKAN_ENABLE_BREADCRUMBS
-static TAutoConsoleVariable<int32> CVarVulkanBreadcrumbLevel(
-    "VulkanRHI.BreadcrumbLevel",
-    "GPU breadcrumb tracking level. 0=off, 1=markers only, 2=per draw/dispatch. Requires VK_AMD_buffer_marker or VK_NV_device_diagnostic_checkpoints.",
+#if VULKAN_ENABLE_CRASH_MARKERS
+static TAutoConsoleVariable<int32> CVarVulkanCrashMarkerLevel(
+    "VulkanRHI.CrashMarkerLevel",
+    "GPU crash marker tracking level. 0=off, 1=markers only, 2=per draw/dispatch. Requires VK_AMD_buffer_marker or VK_NV_device_diagnostic_checkpoints.",
     1);
 
-static int32 GetBreadcrumbLevel()
+static int32 GetCrashMarkerLevel()
 {
-    return CVarVulkanBreadcrumbLevel.GetValue();
+    return CVarVulkanCrashMarkerLevel.GetValue();
 }
 #endif
 
@@ -313,6 +313,13 @@ void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQue
 {
     if (CommandBuffer)
     {
+#if VULKAN_ENABLE_CRASH_MARKERS
+        if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 1)
+        {
+            FVulkanRHI::Get()->GetCrashMarkers()->WriteSplitMarker(GetCommandBuffer());
+        }
+#endif
+
         FinishCommandBuffer(bFlushPool);
     }
     
@@ -390,11 +397,10 @@ void FVulkanCommandContext::StartContext()
     
     ObtainCommandBuffer();
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
-    if (Breadcrumbs && GetBreadcrumbLevel() > 0)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() > 0)
     {
-        Breadcrumbs->ResetMarkers(GetCommandBuffer());
+        FVulkanRHI::Get()->GetCrashMarkers()->ResetMarkers(GetCommandBuffer());
     }
 #endif
 }
@@ -977,95 +983,95 @@ void FVulkanCommandContext::SetShaderConstants(FRHIShader* Shader, const void* S
     ContextState.SetPushConstants(reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
-void FVulkanCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
+void FVulkanCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+    CHECK(RegisterIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
     FVulkanShaderResourceView* VulkanShaderResourceView = static_cast<FVulkanShaderResourceView*>(ShaderResourceView);
-    ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), ParameterIndex);
+    ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
-void FVulkanCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
+void FVulkanCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex + InShaderResourceViews.Size() <= VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+    CHECK(RegisterIndex + InShaderResourceViews.Size() <= VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
         FVulkanShaderResourceView* VulkanShaderResourceView = static_cast<FVulkanShaderResourceView*>(InShaderResourceViews[Index]);
-        ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+        ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
 
-void FVulkanCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
+void FVulkanCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+    CHECK(RegisterIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
     FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
-    ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), ParameterIndex);
+    ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
-void FVulkanCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
+void FVulkanCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex + InUnorderedAccessViews.Size() <= VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+    CHECK(RegisterIndex + InUnorderedAccessViews.Size() <= VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
         FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(InUnorderedAccessViews[Index]);
-        ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+        ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
 
-void FVulkanCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
+void FVulkanCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
+    CHECK(RegisterIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
 
     FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(ConstantBuffer);
-    ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex);
+    ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
-void FVulkanCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
+void FVulkanCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex + InConstantBuffers.Size() <= VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
+    CHECK(RegisterIndex + InConstantBuffers.Size() <= VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
 
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(InConstantBuffers[Index]);
-        ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+        ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
 
-void FVulkanCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
+void FVulkanCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
+    CHECK(RegisterIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
 
     FVulkanSamplerState* VulkanSamplerState = static_cast<FVulkanSamplerState*>(SamplerState);
-    ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), ParameterIndex);
+    ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
-void FVulkanCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
+void FVulkanCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex + InSamplerStates.Size() <= VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
+    CHECK(RegisterIndex + InSamplerStates.Size() <= VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
 
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
         FVulkanSamplerState* VulkanSamplerState = static_cast<FVulkanSamplerState*>(InSamplerStates[Index]);
-        ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+        ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
 
@@ -1854,11 +1860,10 @@ void FVulkanCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->Draw(VertexCount, 1, StartVertexLocation, 0);
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
-    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "Draw");
+        FVulkanRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "Draw");
     }
 #endif
 }
@@ -1871,11 +1876,10 @@ void FVulkanCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLoca
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->DrawIndexed(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
-    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "DrawIndexed");
+        FVulkanRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DrawIndexed");
     }
 #endif
 }
@@ -1888,11 +1892,10 @@ void FVulkanCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->Draw(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
-    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "DrawInstanced");
+        FVulkanRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DrawInstanced");
     }
 #endif
 }
@@ -1905,11 +1908,10 @@ void FVulkanCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, u
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->DrawIndexed(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
-    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "DrawIndexedInstanced");
+        FVulkanRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "DrawIndexedInstanced");
     }
 #endif
 }
@@ -1927,11 +1929,10 @@ void FVulkanCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uin
     ContextState.BindComputeState();
     GetCommandBuffer()->Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
-    if (Breadcrumbs && GetBreadcrumbLevel() >= 2)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 2)
     {
-        Breadcrumbs->WriteDrawMarker(GetCommandBuffer(), "Dispatch");
+        FVulkanRHI::Get()->GetCrashMarkers()->WriteDrawMarker(GetCommandBuffer(), "Dispatch");
     }
 #endif
 }
@@ -2031,17 +2032,23 @@ void FVulkanCommandContext::PushEvent(const FStringView& Name)
     }
 #endif
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    FVulkanBreadcrumbs* Breadcrumbs = FVulkanRHI::Get()->GetBreadcrumbs();
-    if (Breadcrumbs && GetBreadcrumbLevel() >= 1)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 1)
     {
-        Breadcrumbs->WriteMarker(GetCommandBuffer(), Name);
+        FVulkanRHI::Get()->GetCrashMarkers()->WriteMarker(GetCommandBuffer(), Name);
     }
 #endif
 }
 
 void FVulkanCommandContext::PopEvent()
 {
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 1)
+    {
+        FVulkanRHI::Get()->GetCrashMarkers()->WriteEndMarker(GetCommandBuffer());
+    }
+#endif
+
     if (!EventStack.IsEmpty())
     {
         EventStack.Pop();

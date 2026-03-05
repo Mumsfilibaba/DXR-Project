@@ -43,8 +43,8 @@ struct FVulkanDescriptorRemappingInfo
     struct FRemappingInfo
     {
         EVulkanBindingType BindingType;
-        uint8        BindingIndex;
-        uint16       OriginalBindingIndex;
+        uint8              BindingIndex;
+        uint16             OriginalBindingIndex;
     };
 
     FVulkanDescriptorRemappingInfo()
@@ -76,6 +76,9 @@ struct FVulkanDescriptorRemappingInfo
 
     TArray<FRemappingInfo> RemappingInfo;
     uint64                 Hash;
+#if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+    TArray<FString>        DebugNames;
+#endif
 };
 
 struct FPushConstantsInfo
@@ -98,8 +101,7 @@ struct FVulkanPipelineLayoutInfo
     // Add info for a new DescriptorSet based on the ShaderInfo from a certain shader
     void AddSetForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo);
 
-    // Promotes VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER bindings to VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC
-    // when the pipeline layout's user data DWORD budget allows. Must be called before GenerateHash().
+    // Promotes VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER bindings to VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC. Must be called before GenerateHash().
     void PromoteUniformBuffersToDynamic();
     
     // Update constants based on the ShaderInfo
@@ -167,15 +169,10 @@ struct FVulkanPipelineLayoutInfo
         return Value.Hash;
     }
     
-    // This information is needed when building the resource-map
-    TArray<FVulkanDescriptorRemappingInfo> SetLayoutRemappings;
-    
-    // This contains the actual information for the DescriptorSetLayouts
-    TArray<FVulkanDescriptorSetLayoutInfo> SetLayoutInfos;
-    
-    // This structure contains information about global push constants in the pipeline
-    FPushConstantsInfo ConstantsInfo;
-    uint64             Hash;
+    TArray<FVulkanDescriptorRemappingInfo> SetLayoutRemappings; // Information that is needed when building the resource-map
+    TArray<FVulkanDescriptorSetLayoutInfo> SetLayoutInfos;      // The actual information for the DescriptorSetLayouts
+    FPushConstantsInfo                     ConstantsInfo;       // Information about global push constants in the pipeline
+    uint64                                 Hash;
 };
 
 enum EResourceType
@@ -244,6 +241,18 @@ public:
     {
         return TotalDynamicOffsets;
     }
+
+#if VULKAN_ENABLE_BINDING_DEBUG_NAMES
+    const CHAR* GetBindingDebugName(int32 SetIndex, int32 BindingIndex) const
+    {
+        if (SetIndex < SetLayoutRemappings.Size() && BindingIndex < SetLayoutRemappings[SetIndex].DebugNames.Size())
+        {
+            return SetLayoutRemappings[SetIndex].DebugNames[BindingIndex].Data();
+        }
+
+        return "";
+    }
+#endif
     
 private:
     void SetupResourceMapping(const FVulkanPipelineLayoutInfo& LayoutInfo);
@@ -265,7 +274,7 @@ public:
     ~FVulkanPipelineLayoutManager();
 
     FVulkanPipelineLayout* FindOrCreateLayout(const FVulkanPipelineLayoutInfo& LayoutInfo);
-    VkDescriptorSetLayout FindOrCreateSetLayouts(const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo);
+    VkDescriptorSetLayout  FindOrCreateSetLayouts(const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo);
 
 private:
     TMap<FVulkanPipelineLayoutInfo, FVulkanPipelineLayout*>     Layouts;

@@ -209,99 +209,99 @@ void FMetalCommandContext::SetShaderConstants(FRHIShader* Shader, const void* Sh
 {
 }
 
-void FMetalCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
+void FMetalCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(ParameterIndex < kMaxSRVs);
+    CHECK(RegisterIndex < kMaxSRVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentSRVs[Visibility][ParameterIndex] = MakeSharedRef<FMetalShaderResourceView>(ShaderResourceView);
+    CurrentSRVs[Visibility][RegisterIndex] = MakeSharedRef<FMetalShaderResourceView>(ShaderResourceView);
 }
 
-void FMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
+void FMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InShaderResourceViews.Size()) < kMaxSRVs);
+    CHECK((RegisterIndex + InShaderResourceViews.Size()) < kMaxSRVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
-        CurrentSRVs[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalShaderResourceView>(InShaderResourceViews[Index]);
+        CurrentSRVs[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalShaderResourceView>(InShaderResourceViews[Index]);
     }
 }
 
-void FMetalCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
+void FMetalCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(ParameterIndex < kMaxUAVs);
+    CHECK(RegisterIndex < kMaxUAVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentUAVs[Visibility][ParameterIndex] = MakeSharedRef<FMetalUnorderedAccessView>(UnorderedAccessView);
+    CurrentUAVs[Visibility][RegisterIndex] = MakeSharedRef<FMetalUnorderedAccessView>(UnorderedAccessView);
 }
 
-void FMetalCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
+void FMetalCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InUnorderedAccessViews.Size()) < kMaxUAVs);
+    CHECK((RegisterIndex + InUnorderedAccessViews.Size()) < kMaxUAVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
-        CurrentUAVs[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalUnorderedAccessView>(InUnorderedAccessViews[Index]);
+        CurrentUAVs[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalUnorderedAccessView>(InUnorderedAccessViews[Index]);
     }
 }
 
-void FMetalCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
+void FMetalCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(ParameterIndex < kMaxConstantBuffers);
+    CHECK(RegisterIndex < kMaxConstantBuffers);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentConstantBuffers[Visibility][ParameterIndex] = MakeSharedRef<FMetalBuffer>(ConstantBuffer);
+    CurrentConstantBuffers[Visibility][RegisterIndex] = MakeSharedRef<FMetalBuffer>(ConstantBuffer);
 }
 
-void FMetalCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
+void FMetalCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InConstantBuffers.Size()) < kMaxConstantBuffers);
+    CHECK((RegisterIndex + InConstantBuffers.Size()) < kMaxConstantBuffers);
         
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
-        CurrentConstantBuffers[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalBuffer>(InConstantBuffers[Index]);
+        CurrentConstantBuffers[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalBuffer>(InConstantBuffers[Index]);
     }
 }
 
-void FMetalCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
+void FMetalCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(ParameterIndex < kMaxConstantBuffers);
+    CHECK(RegisterIndex < kMaxConstantBuffers);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentSamplerStates[Visibility][ParameterIndex] = MakeSharedRef<FMetalSamplerState>(SamplerState);
+    CurrentSamplerStates[Visibility][RegisterIndex] = MakeSharedRef<FMetalSamplerState>(SamplerState);
 }
 
-void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
+void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((ParameterIndex + InSamplerStates.Size()) < kMaxSamplerStates);
+    CHECK((RegisterIndex + InSamplerStates.Size()) < kMaxSamplerStates);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
-        CurrentSamplerStates[Visibility][ParameterIndex + Index] = MakeSharedRef<FMetalSamplerState>(InSamplerStates[Index]);
+        CurrentSamplerStates[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalSamplerState>(InSamplerStates[Index]);
     }
 
     /*CurrentSamplerStates[Visibility] = NSMakeRange(
-        Math::Min<uint32>(ParameterIndex, CurrentSamplerStateRange[Visibility].location),
+        Math::Min<uint32>(RegisterIndex, CurrentSamplerStateRange[Visibility].location),
         Math::Max<uint32>(InSamplerStates.Size(), CurrentSamplerStateRange[Visibility].length));*/
 }
 

@@ -42,6 +42,13 @@ static TAutoConsoleVariable<bool> CVarVulkanEnableRobustBufferAccess(
     true);
 #endif
 
+#if VULKAN_ENABLE_CRASH_MARKERS
+static TAutoConsoleVariable<bool> CVarVulkanEnableCrashMarkers(
+    "VulkanRHI.EnableCrashMarkers",
+    "Enable GPU crash markers for post-mortem debugging. Requires VK_AMD_buffer_marker or VK_NV_device_diagnostic_checkpoints.",
+    true);
+#endif
+
 
 FRHI* FVulkanRHIModule::CreateRHI()
 {
@@ -61,8 +68,8 @@ FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
     , Instance()
-#if VULKAN_ENABLE_BREADCRUMBS
-    , Breadcrumbs(nullptr)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    , CrashMarkers(nullptr)
 #endif
 {
     if (!GVulkanRHI)
@@ -126,8 +133,8 @@ FVulkanRHI::~FVulkanRHI()
     // Then flush any potential remaining objects
     FlushDeletionQueue();
 
-#if VULKAN_ENABLE_BREADCRUMBS
-    SAFE_DELETE(Breadcrumbs);
+#if VULKAN_ENABLE_CRASH_MARKERS
+    SAFE_DELETE(CrashMarkers);
 #endif
 
     SAFE_DELETE(GraphicsQueue);
@@ -270,13 +277,14 @@ bool FVulkanRHI::Initialize()
         GraphicsQueue->SetDebugName("Graphics Queue");
     }
 
-#if VULKAN_ENABLE_BREADCRUMBS
+#if VULKAN_ENABLE_CRASH_MARKERS
+    if (CVarVulkanEnableCrashMarkers.GetValue())
     {
-        Breadcrumbs = new FVulkanBreadcrumbs(Device);
-        if (!Breadcrumbs->Initialize(GraphicsQueue->GetVkQueue()))
+        CrashMarkers = new FVulkanCrashMarkers(Device);
+        if (!CrashMarkers->Initialize(*GraphicsQueue))
         {
-            delete Breadcrumbs;
-            Breadcrumbs = nullptr;
+            delete CrashMarkers;
+            CrashMarkers = nullptr;
         }
     }
 #endif

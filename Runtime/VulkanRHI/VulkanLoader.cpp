@@ -226,6 +226,9 @@ VULKAN_FUNCTION_DEFINITION(CmdWriteBufferMarkerAMD);
 VULKAN_FUNCTION_DEFINITION(CmdSetCheckpointNV);
 VULKAN_FUNCTION_DEFINITION(GetQueueCheckpointDataNV);
 #endif
+#if VK_EXT_device_fault
+VULKAN_FUNCTION_DEFINITION(GetDeviceFaultInfoEXT);
+#endif
 
 bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance)
 {
@@ -464,6 +467,13 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     {
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetCheckpointNV);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetQueueCheckpointDataNV);
+    }
+#endif
+
+#if VK_EXT_device_fault
+    if (Device->IsExtensionEnabled(VK_EXT_DEVICE_FAULT_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetDeviceFaultInfoEXT);
     }
 #endif
 
