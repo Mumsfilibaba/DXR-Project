@@ -68,6 +68,7 @@ public:
     ~FVulkanCommandContextState();
 
     bool Initialize();
+    
     void BindGraphicsStates();
     void BindComputeState();
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
@@ -141,6 +142,8 @@ private:
 
     struct FGraphicsState
     {
+        typedef TMap<FVulkanGraphicsPipelineState*, FCachedDescriptorState> FPipelineToDescriptorStateMap;
+        
         FGraphicsState()
             : CurrentLayout(nullptr)
             , PipelineState(nullptr)
@@ -157,23 +160,18 @@ private:
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
-        FVulkanPipelineLayout* CurrentLayout;
+        FVulkanPipelineLayout*          CurrentLayout;
         FVulkanGraphicsPipelineStateRef PipelineState;
-        FRHIViewInstancingState ViewInstancingState;
-
-        TMap<FVulkanGraphicsPipelineState*, FCachedDescriptorState> DescriptorStates;
-        FVulkanDescriptorState* CurrentDescriptorState;
-        
-        float BlendFactor[4];
-
-        VkViewport Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32     NumViewports;
-
-        VkRect2D   ScissorRects[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32     NumScissorRects;
-
-        FVulkanIndexBufferCache  IBCache;
-        FVulkanVertexBufferCache VBCache;
+        FRHIViewInstancingState         ViewInstancingState;
+        FPipelineToDescriptorStateMap   DescriptorStates;
+        FVulkanDescriptorState*         CurrentDescriptorState;
+        float                           BlendFactor[4];
+        VkViewport                      Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                          NumViewports;
+        VkRect2D                        ScissorRects[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                          NumScissorRects;
+        FVulkanIndexBufferCache         IBCache;
+        FVulkanVertexBufferCache        VBCache;
 
         bool bBindBlendFactor   : 1;
         bool bBindPipelineState : 1;
@@ -186,6 +184,8 @@ private:
 
     struct FComputeState
     {
+        typedef TMap<FVulkanComputePipelineState*, FCachedDescriptorState> FPipelineToDescriptorStateMap;
+        
         FComputeState()
             : CurrentLayout(nullptr)
             , PipelineState(nullptr)
@@ -194,11 +194,10 @@ private:
         {
         }
 
-        FVulkanPipelineLayout* CurrentLayout;
+        FVulkanPipelineLayout*         CurrentLayout;
         FVulkanComputePipelineStateRef PipelineState;
-
-        TMap<FVulkanComputePipelineState*, FCachedDescriptorState> DescriptorStates;
-        FVulkanDescriptorState* CurrentDescriptorState;
+        FPipelineToDescriptorStateMap  DescriptorStates;
+        FVulkanDescriptorState*        CurrentDescriptorState;
         
         bool bBindPipelineState : 1;
         bool bBindPushConstants : 1;

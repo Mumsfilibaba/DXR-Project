@@ -118,16 +118,14 @@ struct FVulkanDeviceCreateInfo
 {
     TArray<const CHAR*>              RequiredExtensionNames = {};
     TArray<const CHAR*>              OptionalExtensionNames = {}; // Used to select most optimal adapter
-
-    VkPhysicalDeviceFeatures         RequiredFeatures   = {};
-    VkPhysicalDeviceVulkan11Features RequiredFeatures11 = {};
-    VkPhysicalDeviceVulkan12Features RequiredFeatures12 = {};
-    VkPhysicalDeviceVulkan13Features RequiredFeatures13 = {};
-
-	VkPhysicalDeviceFeatures         OptionalFeatures   = {};
-	VkPhysicalDeviceVulkan11Features OptionalFeatures11 = {};
-	VkPhysicalDeviceVulkan12Features OptionalFeatures12 = {};
-	VkPhysicalDeviceVulkan13Features OptionalFeatures13 = {};
+    VkPhysicalDeviceFeatures         RequiredFeatures       = {};
+    VkPhysicalDeviceVulkan11Features RequiredFeatures11     = {};
+    VkPhysicalDeviceVulkan12Features RequiredFeatures12     = {};
+    VkPhysicalDeviceVulkan13Features RequiredFeatures13     = {};
+	VkPhysicalDeviceFeatures         OptionalFeatures       = {};
+	VkPhysicalDeviceVulkan11Features OptionalFeatures11     = {};
+	VkPhysicalDeviceVulkan12Features OptionalFeatures12     = {};
+	VkPhysicalDeviceVulkan13Features OptionalFeatures13     = {};
 };
 
 struct FVulkanQueueFamilyIndices
@@ -244,7 +242,10 @@ public:
 
     // Extension Information
 #if VK_EXT_conservative_rasterization
-    const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const { return ConservativeRasterizationProperties; }
+    const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const
+    {
+        return ConservativeRasterizationProperties;
+    }
 #endif
 
     FVulkanInstance* GetInstance() const

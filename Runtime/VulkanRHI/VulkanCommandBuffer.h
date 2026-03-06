@@ -291,8 +291,8 @@ public:
     }
 
 private:
-    FVulkanCommandPool* OwnerPool;
-    FCommandBuffer      CommandBuffer;
+    FVulkanCommandPool*  OwnerPool;
+    FCommandBuffer       CommandBuffer;
     VkCommandBufferLevel Level;
     uint32               NumCommands;
     bool                 bIsRecording;
