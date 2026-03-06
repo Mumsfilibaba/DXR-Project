@@ -3,14 +3,14 @@
 #include "VulkanRHI/VulkanCommandBuffer.h"
 
 static TAutoConsoleVariable<int32> CVarBackbufferCount(
-    "VulkanRHI.BackbufferCount",
+    "VulkanRHI.SwapChain.BackBufferCount",
     "The preferred number of backbuffers for the SwapChain",
     NUM_BACK_BUFFERS,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarEnableVSync(
-    "VulkanRHI.EnableVSync",
-    "Enable V-Sync for SwapChains (Already created viewports does not change mode at the moment)",
+    "VulkanRHI.SwapChain.EnableVSync",
+    "Enable V-Sync for SwapChains (Changes take effect at the next present)",
     true,
     EConsoleVariableFlags::Default);
 
@@ -27,6 +27,8 @@ FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainI
     , ImageSemaphores()
     , RenderSemaphores()
     , BackBufferIndex(VULKAN_INVALID_BACK_BUFFER_INDEX)
+    , ActiveBackBufferCount(0)
+    , bActiveVSync(CVarEnableVSync.GetValue())
 {
 }
 
@@ -171,6 +173,9 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
 	{
 		SwapChainResource = NewSwapChainResource;
 	}
+
+	ActiveBackBufferCount = SwapChainCreateInfo.BufferCount;
+	bActiveVSync          = SwapChainCreateInfo.bVerticalSync;
 
     // Update the description if the requested image size was not supported
     VkExtent2D SwapChainExtent = SwapChainResource->GetExtent();
@@ -330,9 +335,6 @@ bool FVulkanSwapChain::Resize(FVulkanCommandContext* InCommandContext, uint32 In
 
 bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync)
 {
-    // TODO: Recreate SwapChain based on V-Sync
-    UNREFERENCED_VARIABLE(bVerticalSync);
-   
 	// If we don't have a drawable size, don't try to acquire/present
     if (Info.Width == 0 || Info.Height == 0 || !SwapChainResource)
     {
@@ -354,12 +356,44 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
 		VULKAN_INFO("FVulkanSwapChain::Present SemaphoreIndex=%d", SemaphoreIndex);
 	}
 
+    bool bNeedsRecreation = false;
+
     VkResult Result = SwapChainResource->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
 		VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is %s", (Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" :
 				(Result == VK_ERROR_SURFACE_LOST_KHR ? "SurfaceLost" : "OutOfDate")));
+        bNeedsRecreation = true;
+    }
+	else if (Result != VK_SUCCESS)
+	{
+		VULKAN_ERROR_CRITICAL("FVulkanSwapChain::Present vkQueuePresentKHR failed with %s.", ToString(Result));
+		return false;
+	}
 
+    // Detect runtime settings changes that require swapchain recreation
+    if (bVerticalSync != bActiveVSync)
+    {
+        VULKAN_INFO("FVulkanSwapChain::Present VSync changed (%s -> %s)", bActiveVSync ? "on" : "off", bVerticalSync ? "on" : "off");
+        CVarEnableVSync->SetAsBool(bVerticalSync, EConsoleVariableFlags::SetByCode);
+        bNeedsRecreation = true;
+    }
+
+    const int32 DesiredBackBufferCount = CVarBackbufferCount.GetValue();
+    if (DesiredBackBufferCount != ActiveBackBufferCount)
+    {
+        VULKAN_INFO("FVulkanSwapChain::Present BackBuffer count changed (%d -> %d)", ActiveBackBufferCount, DesiredBackBufferCount);
+        bNeedsRecreation = true;
+    }
+
+    if (CVarEnableVSync.GetValue() != bActiveVSync)
+    {
+        VULKAN_INFO("FVulkanSwapChain::Present VSync CVar changed (%s -> %s)", bActiveVSync ? "on" : "off", CVarEnableVSync.GetValue() ? "on" : "off");
+        bNeedsRecreation = true;
+    }
+
+    if (bNeedsRecreation)
+    {
         InCommandContext->SplitCommandBuffer(false, true);
 
         if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
@@ -368,11 +402,6 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
             return false;
         }
     }
-	else if (Result != VK_SUCCESS)
-	{
-		VULKAN_ERROR_CRITICAL("FVulkanSwapChain::Present vkQueuePresentKHR failed with %s.", ToString(Result));
-		return false;
-	}
 
     AdvanceSemaphoreIndex();
     BackBufferIndex = VULKAN_INVALID_BACK_BUFFER_INDEX;

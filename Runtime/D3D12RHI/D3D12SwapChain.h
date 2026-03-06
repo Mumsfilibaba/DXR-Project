@@ -31,6 +31,7 @@ public:
 
 private:
     bool RetrieveBackBuffers();
+    void ApplySettingsChanges();
 
     TComPtr<IDXGISwapChain3>   SwapChain;
     FD3D12CommandContext*      CommandContext;
@@ -40,5 +41,6 @@ private:
     HANDLE                     SwapChainWaitableObject;
     uint32                     Flags;
     uint32                     NumBackBuffers;
+    uint32                     ActiveFrameLatency;
     uint32                     BackBufferIndex;
 };

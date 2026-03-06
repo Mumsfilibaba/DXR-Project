@@ -75,5 +75,7 @@ private:
     FVulkanSemaphoreArray       RenderSemaphores;
     int32                       SemaphoreIndex;
     int32                       BackBufferIndex;
+    int32                       ActiveBackBufferCount;
+    bool                        bActiveVSync;
 };
 

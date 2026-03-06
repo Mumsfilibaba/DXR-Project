@@ -4,9 +4,19 @@
 #include "D3D12RHI/D3D12SwapChain.h"
 
 static TAutoConsoleVariable<int32> CVarSwapChainBackBufferCount(
-    "D3D12RHI.SwapChainBackBufferCount",
+    "D3D12RHI.SwapChain.BackBufferCount",
     "Number of swap chain back buffers",
     D3D12_NUM_BACK_BUFFERS);
+
+static TAutoConsoleVariable<int32> CVarSyncInterval(
+    "D3D12RHI.SwapChain.SyncInterval",
+    "Override sync interval for Present (-1 = use VSync setting, 0-4 = explicit interval)",
+    -1);
+
+static TAutoConsoleVariable<int32> CVarMaxFrameLatency(
+    "D3D12RHI.SwapChain.MaxFrameLatency",
+    "Maximum frame latency for the swap chain (-1 = use backbuffer count)",
+    -1);
 
 FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainInfo& InSwapChainInfo)
     : FD3D12DeviceChild(InDevice)
@@ -19,6 +29,7 @@ FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* I
     , SwapChainWaitableObject(0)
     , Flags(0)
     , NumBackBuffers(0)
+    , ActiveFrameLatency(0)
     , BackBufferIndex(0)
 {
 }
@@ -135,7 +146,9 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
             SwapChainWaitableObject = SwapChain->GetFrameLatencyWaitableObject();
         }
 
-        SwapChain->SetMaximumFrameLatency(NumSwapChainBuffers);
+        const int32 FrameLatencyCVar = CVarMaxFrameLatency.GetValue();
+        ActiveFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumSwapChainBuffers;
+        SwapChain->SetMaximumFrameLatency(ActiveFrameLatency);
     }
     else
     {
@@ -156,7 +169,11 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 
 bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
-    if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0u && InHeight > 0u)
+    const uint32 DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
+    const bool bSizeChanged       = (InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0u && InHeight > 0u;
+    const bool bBufferCountChanged = DesiredBackBufferCount != NumBackBuffers;
+
+    if (bSizeChanged || bBufferCountChanged)
     {
         if (InCommandContext->IsRecording())
         {
@@ -172,11 +189,19 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
             Texture->SetResource(nullptr);
         }
 
-        HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
+        const uint32 ResizeWidth  = bSizeChanged ? InWidth  : Info.Width;
+        const uint32 ResizeHeight = bSizeChanged ? InHeight : Info.Height;
+
+        HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, ResizeWidth, ResizeHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
         {
-            Info.Width  = uint16(InWidth);
-            Info.Height = uint16(InHeight);
+            NumBackBuffers = DesiredBackBufferCount;
+
+            if (bSizeChanged)
+            {
+                Info.Width  = uint16(InWidth);
+                Info.Height = uint16(InHeight);
+            }
         }
         else
         {
@@ -189,10 +214,19 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
             return false;
         }
 
-        D3D12_INFO("[FD3D12SwapChain]: Resized %u x %u", Info.Width, Info.Height);
+        D3D12_INFO("[FD3D12SwapChain]: Resized %u x %u (backbuffers=%u)", Info.Width, Info.Height, NumBackBuffers);
     }
 
-    // NOTE: Not considered an error to try to resize when the size is the same, maybe it should?
+    // Apply frame latency changes if needed
+    const int32 FrameLatencyCVar = CVarMaxFrameLatency.GetValue();
+    const uint32 DesiredFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumBackBuffers;
+    if (DesiredFrameLatency != ActiveFrameLatency)
+    {
+        SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
+        ActiveFrameLatency = DesiredFrameLatency;
+        D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
+    }
+
     return true;
 }
 
@@ -200,7 +234,8 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
-    const uint32 SyncInterval = bVerticalSync ? 1 : 0;
+    const int32 SyncIntervalOverride = CVarSyncInterval.GetValue();
+    const uint32 SyncInterval = (SyncIntervalOverride >= 0) ? Math::Clamp<uint32>(SyncIntervalOverride, 0, 4) : (bVerticalSync ? 1 : 0);
 
     uint32 PresentFlags = 0;
     if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
@@ -227,11 +262,49 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
             }
         }
 
+        ApplySettingsChanges();
         return true;
     }
     else
     {
         return false;
+    }
+}
+
+void FD3D12SwapChain::ApplySettingsChanges()
+{
+    const uint32 DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
+    if (DesiredBackBufferCount != NumBackBuffers)
+    {
+        // Wait for all GPU work to complete before releasing backbuffer resources
+        CommandContext->Flush();
+
+        for (FD3D12TextureRef& Texture : BackBuffers)
+        {
+            Texture->SetResource(nullptr);
+        }
+
+        HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, Info.Width, Info.Height, DXGI_FORMAT_UNKNOWN, Flags);
+        if (SUCCEEDED(Result))
+        {
+            NumBackBuffers = DesiredBackBufferCount;
+            RetrieveBackBuffers();
+            D3D12_INFO("[FD3D12SwapChain]: Changed backbuffer count to %u", NumBackBuffers);
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12SwapChain]: ResizeBuffers for backbuffer count change FAILED");
+            RetrieveBackBuffers();
+        }
+    }
+
+    const int32 FrameLatencyCVar = CVarMaxFrameLatency.GetValue();
+    const uint32 DesiredFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumBackBuffers;
+    if (DesiredFrameLatency != ActiveFrameLatency)
+    {
+        SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
+        ActiveFrameLatency = DesiredFrameLatency;
+        D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
     }
 }
 
