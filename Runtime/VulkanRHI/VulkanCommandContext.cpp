@@ -1082,42 +1082,25 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
 
     if (VulkanBuffer->GetInfo().IsTransient())
     {
-        FVulkanMemoryStorage Storage(GetDevice());
-        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, 0, Storage);
+        FVulkanMemoryStorage NewStorage(GetDevice());
+        void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(BufferRegion.Size, 0, NewStorage);
         CHECK(MappedMemory != nullptr);
 
         FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
-        VulkanBuffer->SetTransientAllocation(Storage.GetBackingBuffer(), Storage.GetBufferOffset(), BufferRegion.Size);
+        VulkanBuffer->GetMemoryStorage().Swap(NewStorage);
+        VulkanBuffer->ResourceRelocated(&VulkanBuffer->GetMemoryStorage());
     }
     else if (VulkanBuffer->GetInfo().IsDynamic())
     {
-        VkDevice       NativeDevice = GetDevice()->GetVkDevice();
-        VkDeviceMemory DeviceMemory = VulkanBuffer->GetVkDeviceMemory();
-        uint8*         BufferData   = nullptr;
-
-        VkResult Result = vkMapMemory(NativeDevice, DeviceMemory, 0, VK_WHOLE_SIZE, 0, reinterpret_cast<void**>(&BufferData));
-        if (VULKAN_FAILED(Result) || !BufferData)
+        void* BufferData = VulkanBuffer->Map(BufferRegion.Offset, BufferRegion.Size);
+        if (!BufferData)
         {
             VULKAN_ERROR_CRITICAL("Failed to map buffer memory");
             return;
         }
 
-        FMemory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
-        
-        VkMappedMemoryRange MappedMemoryRange = {};
-        MappedMemoryRange.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-        MappedMemoryRange.memory = DeviceMemory;
-        MappedMemoryRange.offset = 0;
-        MappedMemoryRange.size   = VK_WHOLE_SIZE;
-        
-        Result = vkFlushMappedMemoryRanges(NativeDevice, 1, &MappedMemoryRange);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR_CRITICAL("Failed to flush buffer memory");
-            return;
-        }
-        
-        vkUnmapMemory(NativeDevice, DeviceMemory);
+        FMemory::Memcpy(BufferData, SrcData, BufferRegion.Size);
+        VulkanBuffer->Unmap(BufferRegion.Offset, BufferRegion.Size);
     }
     else
     {

@@ -11,9 +11,6 @@ FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBu
     , OwnedBuffer(VK_NULL_HANDLE)
     , RequiredAlignment(0)
     , DebugName()
-    , TransientBuffer(VK_NULL_HANDLE)
-    , TransientOffset(0)
-    , TransientRange(0)
 {
 }
 

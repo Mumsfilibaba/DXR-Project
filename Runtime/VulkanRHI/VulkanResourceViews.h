@@ -23,6 +23,7 @@ public:
         VkBuffer     Buffer;
         VkDeviceSize Offset;
         VkDeviceSize Range;
+        VkDeviceSize ViewOffset;
     };
 
     struct FTypedBufferView
@@ -54,7 +55,7 @@ public:
     virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
     
     bool InitializeImageView(VkImage InImage, VkFormat InFormat, VkImageViewType InImageViewType, VkImageAspectFlags InAspectMask, uint32 InBaseArrayLayer, uint32 InLayerCount, uint32 InBaseMipLevel, uint32 InLevelCount);
-    bool InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange);
+    bool InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset);
     bool InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange);
     bool InitializeAccelerationStructureView(VkAccelerationStructureKHR InAccelerationStructure);
 

@@ -135,7 +135,7 @@ bool FVulkanResourceView::InitializeImageView(VkImage InImage, VkFormat InFormat
     return true;
 }
 
-bool FVulkanResourceView::InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange)
+bool FVulkanResourceView::InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset)
 {
     if (!VULKAN_CHECK_HANDLE(InBuffer))
     {
@@ -144,9 +144,10 @@ bool FVulkanResourceView::InitializeStructuredBufferView(VkBuffer InBuffer, VkDe
     }
 
     Type = EType::StructuredBufferView;
-    StructuredBufferInfo.Buffer = InBuffer;
-    StructuredBufferInfo.Offset = InOffset;
-    StructuredBufferInfo.Range  = InRange;
+    StructuredBufferInfo.Buffer     = InBuffer;
+    StructuredBufferInfo.Offset     = InOffset;
+    StructuredBufferInfo.Range      = InRange;
+    StructuredBufferInfo.ViewOffset = InViewOffset;
     return true;
 }
 
@@ -247,6 +248,7 @@ void FVulkanShaderResourceView::OnResourceRelocated(FVulkanGenericResource* Relo
         {
             FVulkanBuffer* VulkanBuffer = static_cast<FVulkanBuffer*>(RelocatedResource);
             StructuredBufferInfo.Buffer = VulkanBuffer->GetBindVkBuffer();
+            StructuredBufferInfo.Offset = VulkanBuffer->GetBindOffset() + StructuredBufferInfo.ViewOffset;
         }
     }
 }
@@ -274,11 +276,12 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
 			Stride = sizeof(uint32);
 		}
 
-        const VkBuffer     Buffer = VulkanBuffer->GetBindVkBuffer();
-        const VkDeviceSize Offset = VulkanBuffer->GetBindOffset() + Stride * InInfo.BufferSRV.FirstElement;
-		const VkDeviceSize Range  = Stride * InInfo.BufferSRV.NumElements;
+        const VkDeviceSize ViewOffset = Stride * InInfo.BufferSRV.FirstElement;
+        const VkBuffer     Buffer     = VulkanBuffer->GetBindVkBuffer();
+        const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
+		const VkDeviceSize Range      = Stride * InInfo.BufferSRV.NumElements;
 
-		if (!InitializeStructuredBufferView(Buffer, Offset, Range))
+		if (!InitializeStructuredBufferView(Buffer, Offset, Range, ViewOffset))
 		{
 			return false;
 		}
@@ -413,6 +416,7 @@ void FVulkanUnorderedAccessView::OnResourceRelocated(FVulkanGenericResource* Rel
         {
             FVulkanBuffer* VulkanBuffer = static_cast<FVulkanBuffer*>(RelocatedResource);
             StructuredBufferInfo.Buffer = VulkanBuffer->GetBindVkBuffer();
+            StructuredBufferInfo.Offset = VulkanBuffer->GetBindOffset() + StructuredBufferInfo.ViewOffset;
         }
     }
 }
@@ -440,11 +444,12 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 			Stride = sizeof(uint32);
 		}
 
-		const VkBuffer     Buffer = VulkanBuffer->GetBindVkBuffer();
-		const VkDeviceSize Offset = VulkanBuffer->GetBindOffset() + Stride * InInfo.BufferUAV.FirstElement;
-		const VkDeviceSize Range  = Stride * InInfo.BufferUAV.NumElements;
+		const VkDeviceSize ViewOffset = Stride * InInfo.BufferUAV.FirstElement;
+		const VkBuffer     Buffer     = VulkanBuffer->GetBindVkBuffer();
+		const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
+		const VkDeviceSize Range      = Stride * InInfo.BufferUAV.NumElements;
 
-		if (!InitializeStructuredBufferView(Buffer, Offset, Range))
+		if (!InitializeStructuredBufferView(Buffer, Offset, Range, ViewOffset))
 		{
 			return false;
 		}

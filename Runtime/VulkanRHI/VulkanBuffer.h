@@ -41,34 +41,17 @@ public:
 
     VkBuffer GetBindVkBuffer() const
     {
-        if (TransientBuffer != VK_NULL_HANDLE)
-        {
-            return TransientBuffer;
-        }
-
         return GetVkBuffer();
     }
 
     VkDeviceSize GetBindOffset() const
     {
-        if (TransientBuffer != VK_NULL_HANDLE)
-        {
-            return TransientOffset;
-        }
-
         return MemoryStorage.GetBufferOffset();
     }
 
     VkDeviceSize GetBindRange() const
     {
-        return (TransientBuffer != VK_NULL_HANDLE) ? TransientRange : Info.Size;
-    }
-
-    void SetTransientAllocation(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange)
-    {
-        TransientBuffer = InBuffer;
-        TransientOffset = InOffset;
-        TransientRange  = InRange;
+        return Info.Size;
     }
 
     VkDeviceMemory GetVkDeviceMemory() const
@@ -99,7 +82,4 @@ protected:
     VkDeviceSize         RequiredAlignment;
     FVulkanBufferState   TrackedState;
     FString              DebugName;
-    VkBuffer             TransientBuffer;
-    VkDeviceSize         TransientOffset;
-    VkDeviceSize         TransientRange;
 };
