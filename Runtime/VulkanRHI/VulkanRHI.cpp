@@ -278,7 +278,7 @@ bool FVulkanRHI::Initialize()
     }
 
 #if VULKAN_ENABLE_CRASH_MARKERS
-    if (CVarVulkanEnableCrashMarkers.GetValue())
+    if (Device->IsCrashMarkerExtensionsEnabled() && CVarVulkanEnableCrashMarkers.GetValue())
     {
         CrashMarkers = new FVulkanCrashMarkers(Device);
         if (!CrashMarkers->Initialize(*GraphicsQueue))

@@ -312,6 +312,12 @@ public:
     bool IsLayerEnabled(const FString& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
     bool IsExtensionEnabled(const FString& ExtensionName) const { return (ExtensionNames.Find(ExtensionName) != nullptr); }
 
+#if VULKAN_ENABLE_CRASH_MARKERS
+    bool IsAMDBufferMarkerEnabled()         const { return bSupportsAMDBufferMarker; }
+    bool IsNVDiagnosticCheckpointsEnabled() const { return bSupportsNVDiagnosticCheckpoints; }
+    bool IsCrashMarkerExtensionsEnabled()   const { return bSupportsAMDBufferMarker || bSupportsNVDiagnosticCheckpoints; }
+#endif
+
     FVulkanInstance* GetInstance() const
     {
         return Instance;
@@ -354,4 +360,9 @@ private:
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
     FSamplerMap                          SamplerMap;
     FCriticalSection                     SamplerMapCS;
+
+#if VULKAN_ENABLE_CRASH_MARKERS
+    bool bSupportsAMDBufferMarker         : 1;
+    bool bSupportsNVDiagnosticCheckpoints : 1;
+#endif
 };

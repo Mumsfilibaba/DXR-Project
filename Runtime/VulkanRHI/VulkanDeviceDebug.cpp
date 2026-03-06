@@ -29,7 +29,7 @@ bool FVulkanCrashMarkers::Initialize(FVulkanQueue& InGraphicsQueue)
     GraphicsQueue = &InGraphicsQueue;
 
 #if VK_AMD_buffer_marker
-    if (GetDevice()->IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME))
+    if (GetDevice()->IsAMDBufferMarkerEnabled())
     {
         Extension = ECrashMarkerExtension::AMDBufferMarker;
 
@@ -62,7 +62,7 @@ bool FVulkanCrashMarkers::Initialize(FVulkanQueue& InGraphicsQueue)
 #endif
 
 #if VK_NV_device_diagnostic_checkpoints
-    if (GetDevice()->IsExtensionEnabled(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME))
+    if (GetDevice()->IsNVDiagnosticCheckpointsEnabled())
     {
         Extension = ECrashMarkerExtension::NVCheckpoints;
         VULKAN_INFO("GPU crash marker tracking initialized with VK_NV_device_diagnostic_checkpoints");

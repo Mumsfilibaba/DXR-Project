@@ -577,6 +577,10 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , DescriptorPoolManager(nullptr)
     , TimingQueryPoolManager(nullptr)
     , OcclusionQueryPoolManager(nullptr)
+#if VULKAN_ENABLE_CRASH_MARKERS
+    , bSupportsAMDBufferMarker(false)
+    , bSupportsNVDiagnosticCheckpoints(false)
+#endif
 {
     if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDynamicRendering"))
     {
@@ -1051,6 +1055,16 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
             GVulkanSupportsFragmentShaderInterlock = true;
         }
     }
+#endif
+
+    // Crash marker extensions
+#if VULKAN_ENABLE_CRASH_MARKERS
+#if VK_AMD_buffer_marker
+    bSupportsAMDBufferMarker = IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME);
+#endif
+#if VK_NV_device_diagnostic_checkpoints
+    bSupportsNVDiagnosticCheckpoints = IsExtensionEnabled(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME);
+#endif
 #endif
 
     // Limits / counts
