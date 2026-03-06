@@ -117,7 +117,10 @@ public:
     }
 
 #if VULKAN_ENABLE_CRASH_MARKERS
-    bool IsCrashMarkersEnabled() const { return CrashMarkers != nullptr; }
+    bool IsCrashMarkersEnabled() const 
+    {
+        return CrashMarkers != nullptr;
+    }
 
     FVulkanCrashMarkers* GetCrashMarkers()
     {

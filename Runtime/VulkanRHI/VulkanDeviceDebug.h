@@ -24,9 +24,10 @@ enum class ECrashMarkerExtension
 
 class FVulkanCrashMarkers : public FVulkanDeviceChild
 {
-    static constexpr uint32 SENTINEL    = 0xDEADBEEF;
-    static constexpr uint32 GPU_SLOTS   = 256;
-    static constexpr uint32 DUMP_WINDOW = 64;
+    static constexpr uint32 GPU_SLOTS      = 256;
+    static constexpr uint32 RESERVED_SLOTS = 1;
+    static constexpr uint32 DATA_SLOTS     = GPU_SLOTS - RESERVED_SLOTS;
+    static constexpr uint32 SLOT_COUNTER   = 0;
 
 public:
     FVulkanCrashMarkers(FVulkanDevice* InDevice);
@@ -55,9 +56,6 @@ private:
     FString               CurrentRegion;
     TArray<FString>       StringPool;
     TMap<uint32, uint32>  HashToIndex;
-    TArray<uint32>        FrameHashes;
-    TArray<uint32>        PrevFrameHashes;
-    uint32                PrevNextIndex;
 };
 
 #endif

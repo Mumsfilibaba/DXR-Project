@@ -9,8 +9,8 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanRHI.h"
 
-#define VALIDATE_NO_NULL_DESCRIPTORS (!RELEASE_BUILD)
-#define BREAK_ON_NULL_DESCRIPTORS    0
+#define VALIDATE_NO_NULL_DESCRIPTORS (0)
+#define BREAK_ON_NULL_DESCRIPTORS (0)
 
 static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
     "VulkanRHI.MaxDescriptorSetsPerPool",

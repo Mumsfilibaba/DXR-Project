@@ -16,7 +16,6 @@ FVulkanCrashMarkers::FVulkanCrashMarkers(FVulkanDevice* InDevice)
     , NextIndex(0)
     , DrawCounter(0)
     , CurrentRegion()
-    , PrevNextIndex(0)
 {
 }
 
@@ -55,12 +54,9 @@ bool FVulkanCrashMarkers::Initialize(FVulkanQueue& InGraphicsQueue)
             return false;
         }
 
-        for (uint32 i = 0; i < GPU_SLOTS; i++)
-        {
-            MappedData[i] = SENTINEL;
-        }
+        MappedData[SLOT_COUNTER] = 0;
 
-        VULKAN_INFO("GPU crash marker tracking initialized with VK_AMD_buffer_marker (%u GPU slots)", GPU_SLOTS);
+        VULKAN_INFO("GPU crash marker tracking initialized with VK_AMD_buffer_marker (%u data slots)", DATA_SLOTS);
         return true;
     }
 #endif
@@ -91,28 +87,16 @@ void FVulkanCrashMarkers::Release()
     Extension = ECrashMarkerExtension::None;
 }
 
-void FVulkanCrashMarkers::ResetMarkers(FVulkanCommandBuffer& CmdBuf)
+void FVulkanCrashMarkers::ResetMarkers(FVulkanCommandBuffer& /*CmdBuf*/)
 {
-    PrevFrameHashes = Move(FrameHashes);
-    PrevNextIndex   = NextIndex;
-
-    NextIndex   = 0;
     DrawCounter = 0;
     CurrentRegion.Clear();
-
-#if VK_AMD_buffer_marker
-    if (Extension == ECrashMarkerExtension::AMDBufferMarker && MappedData)
-    {
-        const VkDeviceSize BufferSize = GPU_SLOTS * sizeof(uint32);
-        CmdBuf->FillBuffer(MemoryStorage.GetBackingBuffer(), MemoryStorage.GetBufferOffset(), BufferSize, SENTINEL);
-    }
-#endif
 }
 
 void FVulkanCrashMarkers::WriteMarker(FVulkanCommandBuffer& CmdBuf, const FStringView& Name)
 {
-    CurrentRegion = Name.Data();
     DrawCounter   = 0;
+    CurrentRegion = Name.Data();
 
     WriteMarkerInternal(CmdBuf, Name);
 }
@@ -144,7 +128,7 @@ void FVulkanCrashMarkers::WriteDrawMarker(FVulkanCommandBuffer& CmdBuf, const FS
 
 void FVulkanCrashMarkers::WriteSplitMarker(FVulkanCommandBuffer& CmdBuf)
 {
-    WriteMarkerInternal(CmdBuf, "========== CommandBuffer Split ==========");
+    WriteMarkerInternal(CmdBuf, "---------- CommandBuffer Split ----------");
 }
 
 void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, const FStringView& Name)
@@ -161,14 +145,15 @@ void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, cons
         StringPool.Add(FString(Name.Data()));
     }
 
-    FrameHashes.Add(Hash);
-
-    const uint32 Slot = NextIndex % GPU_SLOTS;
     if (Extension == ECrashMarkerExtension::AMDBufferMarker)
     {
     #if VK_AMD_buffer_marker
-        const VkDeviceSize Offset = MemoryStorage.GetBufferOffset() + static_cast<VkDeviceSize>(Slot) * sizeof(uint32);
-        vkCmdWriteBufferMarkerAMD(CmdBuf.GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, MemoryStorage.GetBackingBuffer(), Offset, Hash);
+        const uint32       RingSlot      = RESERVED_SLOTS + (NextIndex % DATA_SLOTS);
+        const VkDeviceSize HashOffset    = MemoryStorage.GetBufferOffset() + static_cast<VkDeviceSize>(RingSlot) * sizeof(uint32);
+        const VkDeviceSize CounterOffset = MemoryStorage.GetBufferOffset() + static_cast<VkDeviceSize>(SLOT_COUNTER) * sizeof(uint32);
+
+        vkCmdWriteBufferMarkerAMD(CmdBuf.GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, MemoryStorage.GetBackingBuffer(), HashOffset, Hash);
+        vkCmdWriteBufferMarkerAMD(CmdBuf.GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, MemoryStorage.GetBackingBuffer(), CounterOffset, NextIndex + 1);
     #endif
     }
     else if (Extension == ECrashMarkerExtension::NVCheckpoints)
@@ -197,19 +182,9 @@ const FString& FVulkanCrashMarkers::ResolveHash(uint32 Hash) const
 
 void FVulkanCrashMarkers::DumpCrashMarkers()
 {
-    LOG_ERROR("==========================================================");
+    LOG_ERROR("----------------------------------------------------------");
     LOG_ERROR("[VulkanRHI] GPU CRASH MARKERS (VK_ERROR_DEVICE_LOST)");
-    LOG_ERROR("==========================================================");
-
-    if (NextIndex == 0 && PrevNextIndex == 0)
-    {
-        LOG_ERROR("[VulkanRHI]   No crash markers were recorded.");
-        LOG_ERROR("==========================================================");
-        return;
-    }
-
-    LOG_ERROR("[VulkanRHI]   %u markers this frame, %u previous frame.",
-        NextIndex, PrevNextIndex);
+    LOG_ERROR("----------------------------------------------------------");
 
     if (Extension == ECrashMarkerExtension::AMDBufferMarker)
     {
@@ -217,107 +192,28 @@ void FVulkanCrashMarkers::DumpCrashMarkers()
         if (!MappedData)
         {
             LOG_ERROR("[VulkanRHI]   AMD buffer marker: mapped data is null.");
-            LOG_ERROR("==========================================================");
+            LOG_ERROR("----------------------------------------------------------");
             return;
         }
 
-        uint32 HighestCompleted = UINT32_MAX;
-        bool bUsingPrevFrame = false;
-        const TArray<uint32>* ActiveHashes = &FrameHashes;
-        uint32 ActiveTotal = NextIndex;
-
-        if (ActiveTotal > 0)
+        const uint32 GPUCount = MappedData[SLOT_COUNTER];
+        if (GPUCount == 0)
         {
-            for (uint32 i = ActiveTotal; i > 0; i--)
-            {
-                const uint32 Idx  = i - 1;
-                const uint32 Slot = Idx % GPU_SLOTS;
-                if (MappedData[Slot] == (*ActiveHashes)[Idx])
-                {
-                    HighestCompleted = Idx;
-                    break;
-                }
-            }
-        }
-
-        if (HighestCompleted == UINT32_MAX && PrevNextIndex > 0)
-        {
-            bUsingPrevFrame = true;
-            ActiveHashes    = &PrevFrameHashes;
-            ActiveTotal     = PrevNextIndex;
-
-            for (uint32 i = ActiveTotal; i > 0; i--)
-            {
-                const uint32 Idx  = i - 1;
-                const uint32 Slot = Idx % GPU_SLOTS;
-                if (MappedData[Slot] == (*ActiveHashes)[Idx])
-                {
-                    HighestCompleted = Idx;
-                    break;
-                }
-            }
-        }
-
-        if (bUsingPrevFrame)
-        {
-            LOG_ERROR("[VulkanRHI]   GPU buffer contains stale data (vkCmdFillBuffer reset did not execute).");
-            LOG_ERROR("[VulkanRHI]   Analyzing previous frame's %u markers.", ActiveTotal);
-        }
-
-        if (HighestCompleted == UINT32_MAX)
-        {
-            LOG_ERROR("[VulkanRHI]   GPU did not complete any marker.");
+            LOG_ERROR("[VulkanRHI]   No markers were executed by the GPU.");
             LOG_ERROR("----------------------------------------------------------");
-
-            const uint32 ShowCount = (ActiveTotal < DUMP_WINDOW) ? ActiveTotal : DUMP_WINDOW;
-            for (uint32 i = 0; i < ShowCount; i++)
-            {
-                LOG_ERROR("[VulkanRHI]   [NOT REACHED] [%4u] %s", i, *ResolveHash((*ActiveHashes)[i]));
-            }
-
-            if (ActiveTotal > ShowCount)
-            {
-                LOG_ERROR("[VulkanRHI]   ... (%u more NOT REACHED entries omitted)", ActiveTotal - ShowCount);
-            }
+            return;
         }
-        else if (HighestCompleted + 1 >= ActiveTotal)
+
+        const uint32 ValidCount = (GPUCount < DATA_SLOTS) ? GPUCount : DATA_SLOTS;
+
+        LOG_ERROR("[VulkanRHI]   Showing last %u executed markers:", ValidCount);
+        LOG_ERROR("----------------------------------------------------------");
+
+        for (uint32 i = 0; i < ValidCount; i++)
         {
-            LOG_ERROR("[VulkanRHI]   All %u markers completed. Crash likely after last marker.", ActiveTotal);
-            LOG_ERROR("----------------------------------------------------------");
-
-            const uint32 ShowStart = (ActiveTotal > DUMP_WINDOW) ? (ActiveTotal - DUMP_WINDOW) : 0;
-            for (uint32 i = ShowStart; i < ActiveTotal; i++)
-            {
-                LOG_ERROR("[VulkanRHI]   [DONE] [%4u] %s", i, *ResolveHash((*ActiveHashes)[i]));
-            }
-        }
-        else
-        {
-            const uint32 FirstNotReached = HighestCompleted + 1;
-            LOG_ERROR("[VulkanRHI]   Last completed  : [%u] %s", HighestCompleted, *ResolveHash((*ActiveHashes)[HighestCompleted]));
-            LOG_ERROR("[VulkanRHI]   First not reached: [%u] %s", FirstNotReached, *ResolveHash((*ActiveHashes)[FirstNotReached]));
-            LOG_ERROR("----------------------------------------------------------");
-
-            const uint32 WindowBefore = DUMP_WINDOW / 2;
-            const uint32 WindowAfter  = DUMP_WINDOW / 2;
-            const uint32 DumpStart    = (HighestCompleted >= WindowBefore) ? (HighestCompleted - WindowBefore) : 0;
-            const uint32 DumpEnd      = ((FirstNotReached + WindowAfter) < ActiveTotal) ? (FirstNotReached + WindowAfter) : ActiveTotal;
-
-            if (DumpStart > 0)
-            {
-                LOG_ERROR("[VulkanRHI]   ... (%u earlier entries omitted, all DONE)", DumpStart);
-            }
-
-            for (uint32 i = DumpStart; i < DumpEnd; i++)
-            {
-                const bool bDone = (i <= HighestCompleted);
-                LOG_ERROR("[VulkanRHI]   [%s] [%4u] %s", bDone ? "DONE" : "NOT REACHED", i, *ResolveHash((*ActiveHashes)[i]));
-            }
-
-            if (DumpEnd < ActiveTotal)
-            {
-                LOG_ERROR("[VulkanRHI]   ... (%u later entries omitted, all NOT REACHED)", ActiveTotal - DumpEnd);
-            }
+            const uint32 MarkerIdx = GPUCount - ValidCount + i;
+            const uint32 RingSlot  = RESERVED_SLOTS + (MarkerIdx % DATA_SLOTS);
+            LOG_ERROR("[VulkanRHI]   [%4u] %s", i, *ResolveHash(MappedData[RingSlot]));
         }
     #else
         LOG_ERROR("[VulkanRHI]   AMD buffer marker: extension not compiled in.");
@@ -329,7 +225,7 @@ void FVulkanCrashMarkers::DumpCrashMarkers()
         if (!GraphicsQueue)
         {
             LOG_ERROR("[VulkanRHI]   NV checkpoints: no graphics queue available.");
-            LOG_ERROR("==========================================================");
+            LOG_ERROR("----------------------------------------------------------");
             return;
         }
 
@@ -339,7 +235,7 @@ void FVulkanCrashMarkers::DumpCrashMarkers()
         if (CheckpointCount == 0)
         {
             LOG_ERROR("[VulkanRHI]   NV checkpoints: no checkpoint data returned by driver.");
-            LOG_ERROR("==========================================================");
+            LOG_ERROR("----------------------------------------------------------");
             return;
         }
 
@@ -352,87 +248,50 @@ void FVulkanCrashMarkers::DumpCrashMarkers()
 
         vkGetQueueCheckpointDataNV(GraphicsQueue->GetVkQueue(), &CheckpointCount, Checkpoints.Data());
 
-        uint32 HighestReached = UINT32_MAX;
+        uint32 HighestReached = 0;
         for (uint32 j = 0; j < CheckpointCount; j++)
         {
             const uintptr_t Marker = reinterpret_cast<uintptr_t>(Checkpoints[j].pCheckpointMarker);
             const uint32    Index  = static_cast<uint32>(Marker & 0xFFFFFFFF);
 
-            if (HighestReached == UINT32_MAX || Index > HighestReached)
+            if (Index > HighestReached)
             {
                 HighestReached = Index;
             }
         }
 
-        bool bNVPrevFrame = false;
-        const TArray<uint32>* NVHashes = &FrameHashes;
-        uint32 NVTotal = NextIndex;
+        LOG_ERROR("[VulkanRHI]   %u checkpoint(s) returned by driver (highest index: %u):",
+            CheckpointCount, HighestReached);
+        LOG_ERROR("----------------------------------------------------------");
 
-        if (HighestReached != UINT32_MAX && HighestReached >= NextIndex && PrevNextIndex > 0)
+        // Sort checkpoints by index for display (driver order is unspecified)
+        for (uint32 i = 0; i < CheckpointCount; i++)
         {
-            bNVPrevFrame = true;
-            NVHashes     = &PrevFrameHashes;
-            NVTotal      = PrevNextIndex;
-        }
-
-        if (bNVPrevFrame)
-        {
-            LOG_ERROR("[VulkanRHI]   Checkpoint data is from a previous frame.");
-            LOG_ERROR("[VulkanRHI]   Analyzing previous frame's %u markers.", NVTotal);
-        }
-
-        if (HighestReached == UINT32_MAX || HighestReached + 1 >= NVTotal)
-        {
-            LOG_ERROR("[VulkanRHI]   %u checkpoint(s) returned. %s",
-                CheckpointCount, (HighestReached == UINT32_MAX) ? "GPU did not reach any marker." : "All markers reached.");
-            LOG_ERROR("----------------------------------------------------------");
-
-            if (NVTotal > 0 && HighestReached != UINT32_MAX)
+            for (uint32 j = i + 1; j < CheckpointCount; j++)
             {
-                const uint32 ShowStart = (NVTotal > DUMP_WINDOW) ? (NVTotal - DUMP_WINDOW) : 0;
-                for (uint32 i = ShowStart; i < NVTotal; i++)
+                const uint32 IdxI = static_cast<uint32>(reinterpret_cast<uintptr_t>(Checkpoints[i].pCheckpointMarker) & 0xFFFFFFFF);
+                const uint32 IdxJ = static_cast<uint32>(reinterpret_cast<uintptr_t>(Checkpoints[j].pCheckpointMarker) & 0xFFFFFFFF);
+                if (IdxJ < IdxI)
                 {
-                    LOG_ERROR("[VulkanRHI]   [REACHED    ] [%4u] %s", i, *ResolveHash((*NVHashes)[i]));
+                    VkCheckpointDataNV Temp = Checkpoints[i];
+                    Checkpoints[i] = Checkpoints[j];
+                    Checkpoints[j] = Temp;
                 }
             }
         }
-        else
+
+        for (uint32 i = 0; i < CheckpointCount; i++)
         {
-            const uint32 FirstNotReached = HighestReached + 1;
-            LOG_ERROR("[VulkanRHI]   Last reached    : [%u] %s", HighestReached, *ResolveHash((*NVHashes)[HighestReached]));
-            LOG_ERROR("[VulkanRHI]   First not reached: [%u] %s", FirstNotReached, *ResolveHash((*NVHashes)[FirstNotReached]));
-            LOG_ERROR("----------------------------------------------------------");
-
-            const uint32 WindowBefore = DUMP_WINDOW / 2;
-            const uint32 WindowAfter  = DUMP_WINDOW / 2;
-
-            const uint32 DumpStart = (HighestReached >= WindowBefore) ? (HighestReached - WindowBefore) : 0;
-            const uint32 DumpEnd   = ((FirstNotReached + WindowAfter) < NVTotal) ? (FirstNotReached + WindowAfter) : NVTotal;
-
-            if (DumpStart > 0)
-            {
-                LOG_ERROR("[VulkanRHI]   ... (%u earlier entries omitted, all REACHED)", DumpStart);
-            }
-
-            for (uint32 i = DumpStart; i < DumpEnd; i++)
-            {
-                const bool bReached = (i <= HighestReached);
-                LOG_ERROR("[VulkanRHI]   [%s] [%4u] %s", bReached ? "REACHED    " : "NOT REACHED", i, *ResolveHash((*NVHashes)[i]));
-            }
-
-            if (DumpEnd < NVTotal)
-            {
-                LOG_ERROR("[VulkanRHI]   ... (%u later entries omitted, all NOT REACHED)", NVTotal - DumpEnd);
-            }
+            const uintptr_t Marker = reinterpret_cast<uintptr_t>(Checkpoints[i].pCheckpointMarker);
+            const uint32    Hash   = static_cast<uint32>(Marker >> 32);
+            LOG_ERROR("[VulkanRHI]   [%4u] %s", i, *ResolveHash(Hash));
         }
-
-        LOG_ERROR("[VulkanRHI]   %u checkpoint(s) returned by driver.", CheckpointCount);
     #else
         LOG_ERROR("[VulkanRHI]   NV checkpoints: extension not compiled in.");
     #endif
     }
 
-    LOG_ERROR("==========================================================");
+    LOG_ERROR("----------------------------------------------------------");
 }
 
 #endif // VULKAN_ENABLE_CRASH_MARKERS
@@ -465,7 +324,7 @@ bool VulkanCheckDeviceLost(VkResult Result)
                 VkResult FaultResult = vkGetDeviceFaultInfoEXT(Device->GetVkDevice(), &FaultCounts, nullptr);
                 if (FaultResult == VK_SUCCESS)
                 {
-                    LOG_ERROR("==========================================================");
+                    LOG_ERROR("----------------------------------------------------------");
                     LOG_ERROR("[VulkanRHI] VK_EXT_device_fault: %u address info(s), %u vendor info(s), %llu bytes vendor binary",
                         FaultCounts.addressInfoCount, FaultCounts.vendorInfoCount, FaultCounts.vendorBinarySize);
 
@@ -522,7 +381,7 @@ bool VulkanCheckDeviceLost(VkResult Result)
                         }
                     }
 
-                    LOG_ERROR("==========================================================");
+                    LOG_ERROR("----------------------------------------------------------");
                 }
                 else
                 {

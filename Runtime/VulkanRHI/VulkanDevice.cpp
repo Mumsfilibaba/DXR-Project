@@ -1566,18 +1566,20 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
         return false;
     }
 
-    // If null-descriptors are supported then we can return here, since we have no DefaultResources to upload
+    CommandContext.ObtainCommandBuffer();
+
+    if (VULKAN_CHECK_HANDLE(DefaultResources.NullBuffer))
+    {
+        CommandContext.GetCommandBuffer()->FillBuffer(DefaultResources.NullBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
+    }
+
     if (GVulkanSupportsNullDescriptors)
     {
         return true;
     }
 
-    CommandContext.ObtainCommandBuffer();
-
     VkBuffer DefaultBuffer = DefaultResources.NullBuffer;
-    CommandContext.GetCommandBuffer()->FillBuffer(DefaultBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
-
-    VkImage DefaultImage = DefaultResources.NullImage;
+    VkImage  DefaultImage  = DefaultResources.NullImage;
 
     VkImageMemoryBarrier2 ImageBarrier = {};
     ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -1713,7 +1715,6 @@ uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const
 
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 {
-    // We only need to actually create these resources if we don't support null-descriptors
     if (!GVulkanSupportsNullDescriptors)
     {
         if (!InitializeNullBufferAndImage(Device))
@@ -1721,6 +1722,15 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
             return false;
         }
     }
+#if VULKAN_ENABLE_DYNAMIC_UNIFORM_BUFFERS
+    else
+    {
+        if (!InitializeNullBuffer(Device))
+        {
+            return false;
+        }
+    }
+#endif
 
     // Create a NullSampler
     VkSamplerCreateInfo SamplerCreateInfo = {};
@@ -1754,9 +1764,8 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     return true;
 }
 
-bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device)
+bool FVulkanDefaultResources::InitializeNullBuffer(FVulkanDevice& Device)
 {
-    // Create NullBuffer
     VkBufferCreateInfo BufferCreateInfo = {};
     BufferCreateInfo.sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     BufferCreateInfo.pNext                 = nullptr;
@@ -1803,6 +1812,18 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
         return false;
     }
 
+    return true;
+}
+
+bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device)
+{
+    if (!InitializeNullBuffer(Device))
+    {
+        return false;
+    }
+
+    FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
+
     // Create a NullImage
     constexpr VkExtent3D NullExtent = 
     { 
@@ -1826,7 +1847,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageCreateInfo.arrayLayers           = 1;
 
-    Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &NullImage);
+    VkResult Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &NullImage);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR_CRITICAL("Failed to create image");

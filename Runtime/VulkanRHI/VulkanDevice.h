@@ -167,6 +167,7 @@ struct FVulkanDefaultResources
 	}
 
 	bool Initialize(FVulkanDevice& Device);
+	bool InitializeNullBuffer(FVulkanDevice& Device);
 	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
 	void Release(FVulkanDevice& Device);
 

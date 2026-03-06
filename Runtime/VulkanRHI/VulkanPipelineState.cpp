@@ -288,7 +288,9 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
         LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_FRAGMENT_BIT, Shaders[ShaderVisibility_Pixel]->GetShaderInfo());
     }
     
+#if VULKAN_ENABLE_DYNAMIC_UNIFORM_BUFFERS
     LayoutInfo.PromoteUniformBuffersToDynamic();
+#endif
 
     // Generate Hash here since it is saved and not generated all the time
     LayoutInfo.GenerateHash();
@@ -605,7 +607,9 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo&
     FVulkanPipelineLayoutInfo LayoutInfo;
     LayoutInfo.AddSetForStage(VK_SHADER_STAGE_COMPUTE_BIT, VulkanComputeShader->GetShaderInfo());
     LayoutInfo.UpdateConstantsForStage(VK_SHADER_STAGE_COMPUTE_BIT, VulkanComputeShader->GetShaderInfo());
+#if VULKAN_ENABLE_DYNAMIC_UNIFORM_BUFFERS
     LayoutInfo.PromoteUniformBuffersToDynamic();
+#endif
     LayoutInfo.GenerateHash();
 
     FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();

@@ -102,8 +102,10 @@
                 {
                     VulkanCheckDeviceLost(Result);
                 }
+
                 return true;
             }
+            
             return false;
         }
 
