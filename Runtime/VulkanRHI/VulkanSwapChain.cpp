@@ -344,7 +344,7 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     // RenderSemaphore unsignaled when vkQueuePresentKHR tries to wait on it.
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
-        VULKAN_WARNING("FVulkanSwapChain::Present skipped — no image was acquired this frame");
+        VULKAN_WARNING("FVulkanSwapChain::Present skipped - no image was acquired this frame");
         return true;
     }
 

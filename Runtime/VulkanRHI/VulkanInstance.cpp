@@ -281,7 +281,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo)
     GVulkanGPUAssistedValidationEnabled = bEnableGPUAV;
     if (bEnableGPUAV)
     {
-        VULKAN_INFO("GPU-Assisted Validation enabled — VK_EXT_descriptor_buffer will be disabled");
+        VULKAN_INFO("GPU-Assisted Validation enabled - VK_EXT_descriptor_buffer will be disabled");
     }
 #endif
 

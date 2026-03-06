@@ -423,7 +423,7 @@ void FVulkanCommandContext::FinishContext()
 
     // -------------------------------------------------------------------------------------------
     // In frames where Present() is the last operation and no additional commands are 
-    // recorded/submitted, ensure we don�t keep accumulating command-buffers in the pool across 
+    // recorded/submitted, ensure we don't keep accumulating command-buffers in the pool across 
     // frames by retiring the pool here.
     // -------------------------------------------------------------------------------------------
 
