@@ -261,58 +261,43 @@ VULKAN_FUNCTION_DECLARATION(GetQueueCheckpointDataNV);
 VULKAN_FUNCTION_DECLARATION(GetDeviceFaultInfoEXT);
 #endif
 
+class FVulkanExtensionRegistry;
+
 struct VulkanLoader
 {
-    static bool LoadInstanceFunctions(FVulkanInstance* Instance);
-    static bool LoadDeviceFunctions(FVulkanDevice* Device);
+    static bool LoadInstanceFunctions(FVulkanInstance* Instance, FVulkanExtensionRegistry& Registry);
+    static bool LoadDeviceFunctions(FVulkanDevice* Device, FVulkanExtensionRegistry& Registry);
 };
 
-class VulkanDebugUtilsEXT
+// -------------------------------------------------------------------------------------------
+// Debug Utils helpers (VK_EXT_debug_utils)
+// -------------------------------------------------------------------------------------------
+
+extern VULKANRHI_API bool GVulkanSupportsDebugUtils;
+
+inline VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, uint64 ObjectHandle, VkObjectType ObjectType)
 {
-public:
-    static bool Initialize(FVulkanInstance* Instance);
-
-    template<typename HandleType>
-    static FORCEINLINE VkResult SetObjectName(VkDevice Device, const CHAR* Name, HandleType ObjectHandle, VkObjectType ObjectType)
+#if VK_EXT_debug_utils
+    if (!GVulkanSupportsDebugUtils)
     {
-        return SetObjectName(Device, Name, reinterpret_cast<uint64>(ObjectHandle), ObjectType);
+        return VK_SUCCESS;
     }
 
-    static VkResult SetObjectName(VkDevice Device, const CHAR* Name, uint64 ObjectHandle, VkObjectType ObjectType)
-    {
-    #if VK_EXT_debug_utils
-        VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo = {};
-        DebugUtilsObjectNameInfo.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-        DebugUtilsObjectNameInfo.pNext        = nullptr;
-        DebugUtilsObjectNameInfo.pObjectName  = Name;
-        DebugUtilsObjectNameInfo.objectHandle = ObjectHandle;
-        DebugUtilsObjectNameInfo.objectType   = ObjectType;
+    VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo = {};
+    DebugUtilsObjectNameInfo.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    DebugUtilsObjectNameInfo.pNext        = nullptr;
+    DebugUtilsObjectNameInfo.pObjectName  = Name;
+    DebugUtilsObjectNameInfo.objectHandle = ObjectHandle;
+    DebugUtilsObjectNameInfo.objectType   = ObjectType;
 
-        return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
-    #else
-        return VK_ERROR_UNKNOWN;
-    #endif
-    }
+    return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
+#else
+    return VK_SUCCESS;
+#endif
+}
 
-    static FORCEINLINE bool IsEnabled()
-    {
-        return bIsEnabled;
-    }
-
-private:
-    static bool bIsEnabled;
-};
-
-class VulkanRobustness2KHR
+template<typename HandleType>
+FORCEINLINE VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, HandleType ObjectHandle, VkObjectType ObjectType)
 {
-public:
-    static void Initialize(FVulkanDevice* Device);
-    
-    static FORCEINLINE bool IsEnabled()
-    {
-        return bIsEnabled;
-    }
-    
-private:
-    static bool bIsEnabled;
-};
+    return VulkanSetObjectName(Device, Name, reinterpret_cast<uint64>(ObjectHandle), ObjectType);
+}

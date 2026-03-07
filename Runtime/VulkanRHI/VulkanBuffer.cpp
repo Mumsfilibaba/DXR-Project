@@ -167,7 +167,7 @@ void FVulkanBuffer::SetDebugName(const FString& InName)
     VkBuffer BufferHandle = GetVkBuffer();
     if (BufferHandle != VK_NULL_HANDLE)
     {
-        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, BufferHandle, VK_OBJECT_TYPE_BUFFER);
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, BufferHandle, VK_OBJECT_TYPE_BUFFER);
     }
 
     DebugName = InName;

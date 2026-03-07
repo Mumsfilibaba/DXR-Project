@@ -26,7 +26,7 @@ void FVulkanRayTracingGeometry::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(Geometry))
     {
-        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.Data(), Geometry, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR);
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), InName.Data(), Geometry, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR);
     }
 
     DebugName = InName;

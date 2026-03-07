@@ -202,11 +202,11 @@ void FVulkanResourceView::SetDebugName(const FString& InName)
     {
         if (Type == EType::ImageView)
         {
-            VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.Data(), ImageViewInfo.ImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+            VulkanSetObjectName(GetDevice()->GetVkDevice(), InName.Data(), ImageViewInfo.ImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
         }
         else if (Type == EType::TypedBufferView)
         {
-            VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.Data(), TypedBufferInfo.BufferView, VK_OBJECT_TYPE_BUFFER_VIEW);
+            VulkanSetObjectName(GetDevice()->GetVkDevice(), InName.Data(), TypedBufferInfo.BufferView, VK_OBJECT_TYPE_BUFFER_VIEW);
         }
     }
 }

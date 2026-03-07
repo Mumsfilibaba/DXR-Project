@@ -19,6 +19,7 @@
 class FVulkanInstance;
 class FVulkanPhysicalDevice;
 class FVulkanTimelineFence;
+class FVulkanExtensionRegistry;
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
@@ -33,6 +34,8 @@ extern VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled;
 
 extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
 extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;
+extern VULKANRHI_API bool   GVulkanSupportsRobustness2;
+extern VULKANRHI_API bool   GVulkanSupportsDebugUtils;
 extern VULKANRHI_API bool   GVulkanSupportsConservativeRasterization;
 extern VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl;
 extern VULKANRHI_API bool   GVulkanSupportsMultiviews;
@@ -117,15 +120,14 @@ enum class EVulkanCommandQueueType
 struct FVulkanDeviceCreateInfo
 {
     TArray<const CHAR*>              RequiredExtensionNames = {};
-    TArray<const CHAR*>              OptionalExtensionNames = {}; // Used to select most optimal adapter
     VkPhysicalDeviceFeatures         RequiredFeatures       = {};
     VkPhysicalDeviceVulkan11Features RequiredFeatures11     = {};
     VkPhysicalDeviceVulkan12Features RequiredFeatures12     = {};
     VkPhysicalDeviceVulkan13Features RequiredFeatures13     = {};
-	VkPhysicalDeviceFeatures         OptionalFeatures       = {};
-	VkPhysicalDeviceVulkan11Features OptionalFeatures11     = {};
-	VkPhysicalDeviceVulkan12Features OptionalFeatures12     = {};
-	VkPhysicalDeviceVulkan13Features OptionalFeatures13     = {};
+    VkPhysicalDeviceFeatures         OptionalFeatures       = {};
+    VkPhysicalDeviceVulkan11Features OptionalFeatures11     = {};
+    VkPhysicalDeviceVulkan12Features OptionalFeatures12     = {};
+    VkPhysicalDeviceVulkan13Features OptionalFeatures13     = {};
 };
 
 struct FVulkanQueueFamilyIndices
@@ -288,7 +290,7 @@ public:
     FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter);
     ~FVulkanDevice();
 
-    bool Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo);
+    bool Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo, FVulkanExtensionRegistry& InRegistry);
     bool PostLoaderInitalize();
     bool InitializeDeviceFeatureSupport();
     bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);

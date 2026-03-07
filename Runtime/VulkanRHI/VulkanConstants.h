@@ -55,3 +55,5 @@
 // AMD RDNA recommends staying below 13 DWORDs of user data in a PipelineLayout.
 // See: https://gpuopen.com/learn/rdna-performance-guide/ (Descriptors section)
 #define VULKAN_RECOMMENDED_MAX_USER_DATA_DWORDS (13)
+
+#define VULKAN_VALIDATION_LAYER_NAME "VK_LAYER_KHRONOS_validation"

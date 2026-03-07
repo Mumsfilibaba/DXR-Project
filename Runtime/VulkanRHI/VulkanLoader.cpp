@@ -1,6 +1,7 @@
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanInstance.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanExtensions.h"
 
 // -------------------------------------------------------------------------------------------
 // Pre-Instance Created Functions
@@ -230,7 +231,7 @@ VULKAN_FUNCTION_DEFINITION(GetQueueCheckpointDataNV);
 VULKAN_FUNCTION_DEFINITION(GetDeviceFaultInfoEXT);
 #endif
 
-bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance)
+bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance, FVulkanExtensionRegistry& Registry)
 {
     if (!Instance)
     {
@@ -257,42 +258,10 @@ bool VulkanLoader::LoadInstanceFunctions(FVulkanInstance* Instance)
 
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetDeviceProcAddr);
 
-#if VK_EXT_metal_surface
-    if (Instance->IsExtensionEnabled(VK_EXT_METAL_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateMetalSurfaceEXT);
-    }
-#endif
-    
-#if VK_MVK_macos_surface
-    if (Instance->IsExtensionEnabled(VK_MVK_MACOS_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateMacOSSurfaceMVK);
-    }
-#endif
-
-#if VK_KHR_win32_surface
-    if (Instance->IsExtensionEnabled(VK_KHR_WIN32_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateWin32SurfaceKHR);
-    }
-#endif
-
-#if VK_KHR_surface
-    if (Instance->IsExtensionEnabled(VK_KHR_SURFACE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroySurfaceKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceCapabilitiesKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceFormatsKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfacePresentModesKHR);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceSupportKHR);
-    }
-#endif
-        
-    return true;
+    return Registry.LoadInstanceFunctions(Instance);
 }
 
-bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
+bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device, FVulkanExtensionRegistry& Registry)
 {
     if (!Device)
     {
@@ -331,7 +300,6 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BindBufferMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBuffer);
 
-    // VK_KHR_buffer_device_address (Core in 1.2)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddress);
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImage);
@@ -339,12 +307,10 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BindImageMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImage);
 
-    // VK_KHR_get_memory_requirements2 (Core in 1.1)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements2);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements2);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageSparseMemoryRequirements2);
 
-    // VK_KHR_maintenance4 (Core in 1.3)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetDeviceBufferMemoryRequirements);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetDeviceImageMemoryRequirements);
     
@@ -379,17 +345,6 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBufferView);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBufferView);
 
-#if VK_KHR_acceleration_structure
-    if (Device->IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateAccelerationStructureKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyAccelerationStructureKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetAccelerationStructureBuildSizesKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetAccelerationStructureDeviceAddressKHR);    
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBuildAccelerationStructuresKHR);
-    }
-#endif
-
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateQueryPool);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyQueryPool);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, ResetQueryPool);
@@ -413,17 +368,6 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetDeviceQueue);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, QueueSubmit);
-
-#if VK_KHR_swapchain
-    if (Device->IsExtensionEnabled(VK_KHR_SWAPCHAIN_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSwapchainKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySwapchainKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AcquireNextImageKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, QueuePresentKHR);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetSwapchainImagesKHR);
-    }
-#endif
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier2);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdClearColorImage);
@@ -455,74 +399,6 @@ bool VulkanLoader::LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginQuery);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndQuery);
 
-#if VK_AMD_buffer_marker
-    if (Device->IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdWriteBufferMarkerAMD);
-    }
-#endif
-
-#if VK_NV_device_diagnostic_checkpoints
-    if (Device->IsExtensionEnabled(VK_NV_DEVICE_DIAGNOSTIC_CHECKPOINTS_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetCheckpointNV);
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetQueueCheckpointDataNV);
-    }
-#endif
-
-#if VK_EXT_device_fault
-    if (Device->IsExtensionEnabled(VK_EXT_DEVICE_FAULT_EXTENSION_NAME))
-    {
-        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetDeviceFaultInfoEXT);
-    }
-#endif
-
-    VulkanRobustness2KHR::Initialize(Device);
-    return true;
+    return Registry.LoadDeviceFunctions(Device);
 }
 
-bool VulkanDebugUtilsEXT::bIsEnabled = false;
-
-bool VulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
-{
-    if (!Instance)
-    {
-        VULKAN_ERROR_CRITICAL("Instance cannot be nullptr");
-        return false;
-    }
-
-#if VK_EXT_debug_utils
-    if (Instance->IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-    {
-        VkInstance InstanceHandle = Instance->GetVkInstance();
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateDebugUtilsMessengerEXT);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDebugUtilsMessengerEXT);
-
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdInsertDebugUtilsLabelEXT);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdBeginDebugUtilsLabelEXT);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdEndDebugUtilsLabelEXT);
-        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, SetDebugUtilsObjectNameEXT);
-        bIsEnabled = true;
-    }
-#endif
-    
-    return true;
-}
-
-bool VulkanRobustness2KHR::bIsEnabled = false;
-
-void VulkanRobustness2KHR::Initialize(FVulkanDevice* Device)
-{
-    if (!Device)
-    {
-        VULKAN_ERROR_CRITICAL("Device cannot be nullptr");
-        return;
-    }
-
-#if VK_KHR_robustness2
-    if (Device->IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
-    {
-        bIsEnabled = true;
-    }
-#endif
-}

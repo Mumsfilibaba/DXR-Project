@@ -4,11 +4,12 @@
 #include "Core/Platform/PlatformLibrary.h"
 #include "VulkanRHI/VulkanRefCounted.h"
 
+class FVulkanExtensionRegistry;
+
 struct FVulkanInstanceCreateInfo
 {
     TArray<const CHAR*> RequiredExtensionNames;
     TArray<const CHAR*> RequiredLayerNames;
-    TArray<const CHAR*> OptionalExtensionNames;
     TArray<const CHAR*> OptionalLayerNames;
 };
 
@@ -18,7 +19,8 @@ public:
     FVulkanInstance();
     ~FVulkanInstance();
 
-    bool Initialize(const FVulkanInstanceCreateInfo& CreateInfo);
+    bool Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FVulkanExtensionRegistry& ExtensionRegistry);
+    bool CreateDebugMessenger();
     void Release();
 
     bool IsLayerEnabled(const FString& LayerName)

@@ -1,6 +1,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/VulkanQuery.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanShader.h"
@@ -152,43 +153,41 @@ FVulkanRHI::~FVulkanRHI()
 
 bool FVulkanRHI::Initialize()
 {
+    FVulkanExtensionRegistry ExtensionRegistry;
+
     FVulkanInstanceCreateInfo InstanceDesc;
-    InstanceDesc.RequiredExtensionNames = VulkanPlatform::GetRequiredInstanceExtensions();
     InstanceDesc.RequiredLayerNames     = VulkanPlatform::GetRequiredInstanceLayers();
-    InstanceDesc.OptionalExtensionNames = VulkanPlatform::GetOptionalInstanceExtensions();
-    
+    InstanceDesc.RequiredExtensionNames = VulkanPlatform::GetRequiredInstanceExtensions();
+
     bool bEnableDebugLayer = false;
     if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
     {
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
     
-    // Turn on the DebugLayer
     if (bEnableDebugLayer)
     {
-        InstanceDesc.RequiredLayerNames.Add("VK_LAYER_KHRONOS_validation");
+        InstanceDesc.RequiredLayerNames.Add(VULKAN_VALIDATION_LAYER_NAME);
     }
     
-    // We always want to add debug utils in order to make markers work, even without the debug-layer
-#if VK_EXT_debug_utils
-    InstanceDesc.RequiredExtensionNames.Add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#endif
-
-    if (!Instance.Initialize(InstanceDesc))
+    if (!Instance.Initialize(InstanceDesc, ExtensionRegistry))
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanInstance");
         return false;
     }
     
-    // Load functions that requires an instance here
-    if (!VulkanLoader::LoadInstanceFunctions(GetInstance()))
+    if (!VulkanLoader::LoadInstanceFunctions(GetInstance(), ExtensionRegistry))
+    {
+        return false;
+    }
+
+    if (!Instance.CreateDebugMessenger())
     {
         return false;
     }
 
     FVulkanDeviceCreateInfo DeviceCreateInfo;
     DeviceCreateInfo.RequiredExtensionNames = VulkanPlatform::GetRequiredDeviceExtensions();
-    DeviceCreateInfo.OptionalExtensionNames = VulkanPlatform::GetOptionalDeviceExtensions();
     
 	// -------------------------------------------------------------------------------------------
     // Enable required features (These are necessary to run)
@@ -201,6 +200,7 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures.depthBiasClamp                       = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
+    
     // Vulkan 1.0 Optional
     DeviceCreateInfo.OptionalFeatures.geometryShader     = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.tessellationShader = VK_TRUE;
@@ -219,6 +219,7 @@ bool FVulkanRHI::Initialize()
 
     // Vulkan 1.1 Required
     DeviceCreateInfo.RequiredFeatures11.shaderDrawParameters = VK_TRUE;
+    
     // Vulkan 1.1 Optional
     DeviceCreateInfo.OptionalFeatures11.multiview = VK_TRUE;
 
@@ -227,6 +228,7 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures12.bufferDeviceAddress = VK_TRUE; 
     DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer   = VK_TRUE; 
     DeviceCreateInfo.RequiredFeatures12.timelineSemaphore   = VK_TRUE; 
+    
     // Vulkan 1.2 Optional 
     DeviceCreateInfo.OptionalFeatures12.descriptorIndexing  = VK_TRUE; 
 
@@ -234,6 +236,7 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures13.dynamicRendering = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures13.synchronization2 = VK_TRUE;
     DeviceCreateInfo.RequiredFeatures13.maintenance4     = VK_TRUE;
+
     // Vulkan 1.3 Optional
     DeviceCreateInfo.OptionalFeatures13.pipelineCreationCacheControl = VK_TRUE;
 
@@ -246,14 +249,13 @@ bool FVulkanRHI::Initialize()
     }
 
     Device = new FVulkanDevice(GetInstance(), GetPhysicalDevice());
-    if (!Device->Initialize(DeviceCreateInfo))
+    if (!Device->Initialize(DeviceCreateInfo, ExtensionRegistry))
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanDevice");
         return false;
     }
     
-    // Load functions that requires a device here (Order is important)
-    if (!VulkanLoader::LoadDeviceFunctions(Device))
+    if (!VulkanLoader::LoadDeviceFunctions(Device, ExtensionRegistry))
     {
         return false;
     }

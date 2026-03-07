@@ -535,7 +535,7 @@ void FVulkanTexture::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(Image))
     {
-        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, Image, VK_OBJECT_TYPE_IMAGE);
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, Image, VK_OBJECT_TYPE_IMAGE);
         DebugName = InName;
     }
 }

@@ -43,7 +43,7 @@ public:
 
     void SetDebugName(const FString& Name)
     {
-        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *Name, Queue, VK_OBJECT_TYPE_QUEUE);
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), *Name, Queue, VK_OBJECT_TYPE_QUEUE);
     }
 
     VkQueue GetVkQueue() const

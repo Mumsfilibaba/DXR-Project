@@ -8,6 +8,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanInstance.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
+#include "VulkanRHI/VulkanExtensions.h"
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
@@ -22,6 +23,8 @@ VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled      = false;
 
 VULKANRHI_API bool   GVulkanSupportsDepthClip                 = false;
 VULKANRHI_API bool   GVulkanSupportsNullDescriptors           = false;
+VULKANRHI_API bool   GVulkanSupportsRobustness2               = false;
+VULKANRHI_API bool   GVulkanSupportsDebugUtils                = false;
 VULKANRHI_API bool   GVulkanSupportsConservativeRasterization = false;
 VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl      = false;
 VULKANRHI_API bool   GVulkanSupportsMultiviews                = false;
@@ -98,21 +101,6 @@ VULKANRHI_API uint32 GVulkanMaxDescriptorSetStorageBuffers = 0;
 // -------------------------------------------------------------------------------------------
 // Helpers
 // -------------------------------------------------------------------------------------------
-
-static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
-{
-    if (!GVulkanAllowNullDescriptors && FCString::Strcmp(ExtensionProperty.extensionName, VK_KHR_ROBUSTNESS_2_EXTENSION_NAME) == 0)
-    {
-        return false;
-    }
-#if VK_EXT_descriptor_buffer
-    if (GVulkanGPUAssistedValidationEnabled && FCString::Strcmp(ExtensionProperty.extensionName, VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME) == 0)
-    {
-        return false;
-    }
-#endif
-    return true;
-}
 
 template <typename FeatureStructType>
 static bool CheckRequiredFeatures(const FeatureStructType& RequiredFeatures, const FeatureStructType& AvailableFeatures, const char* StructName, const char* DeviceName)
@@ -645,7 +633,7 @@ FVulkanDevice::~FVulkanDevice()
     }
 }
 
-bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo)
+bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo, FVulkanExtensionRegistry& InRegistry)
 {
     if (!PhysicalDevice)
     {
@@ -656,7 +644,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     VkResult Result = VK_SUCCESS;
 
     // -------------------------------------------------------------------------------------------
-    // Enumerate and select extensions
+    // Enumerate and select extensions via the registry
     // -------------------------------------------------------------------------------------------
     
     uint32 DeviceExtensionCount = 0;
@@ -676,32 +664,39 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     }
 
     TArray<const CHAR*> EnabledExtensionNames;
-    EnabledExtensionNames.Reserve(InDeviceCreateInfo.RequiredExtensionNames.Size() + InDeviceCreateInfo.OptionalExtensionNames.Size());
-
-    for (const VkExtensionProperties& ExtensionProperties : AvailableDeviceExtensions)
+    if (!InRegistry.ResolveDeviceExtensions(AvailableDeviceExtensions, EnabledExtensionNames))
     {
-        if (!FilterExtensions(ExtensionProperties))
-        {
-            continue;
-        }
+        return false;
+    }
 
-        const auto MatchExtensionNames = [&](const CHAR* InExtensionName) { return FCString::Strcmp(ExtensionProperties.extensionName, InExtensionName) == 0; };
-        if (InDeviceCreateInfo.RequiredExtensionNames.ContainsWithPredicate(MatchExtensionNames) || 
-            InDeviceCreateInfo.OptionalExtensionNames.ContainsWithPredicate(MatchExtensionNames))
+    // Also match platform-required extension names that are not in the registry
+    for (const CHAR* RequiredName : InDeviceCreateInfo.RequiredExtensionNames)
+    {
+        const auto AlreadyEnabled = [&](const CHAR* Name) { return FCString::Strcmp(RequiredName, Name) == 0; };
+        if (!EnabledExtensionNames.ContainsWithPredicate(AlreadyEnabled))
         {
-            EnabledExtensionNames.Add(ExtensionProperties.extensionName);
-            ExtensionNames.Emplace(ExtensionProperties.extensionName);
+            bool bFound = false;
+            for (const VkExtensionProperties& ExtProp : AvailableDeviceExtensions)
+            {
+                if (FCString::Strcmp(RequiredName, ExtProp.extensionName) == 0)
+                {
+                    EnabledExtensionNames.Add(ExtProp.extensionName);
+                    bFound = true;
+                    break;
+                }
+            }
+
+            if (!bFound)
+            {
+                VULKAN_ERROR_CRITICAL("Device extension '%s' could not be enabled", RequiredName);
+                return false;
+            }
         }
     }
 
-    for (const CHAR* RequiredExtensionName : InDeviceCreateInfo.RequiredExtensionNames)
+    for (const CHAR* ExtName : EnabledExtensionNames)
     {
-        const auto MatchExtensionNames = [&](const CHAR* InExtensionName) { return FCString::Strcmp(RequiredExtensionName, InExtensionName) == 0; };
-        if (!EnabledExtensionNames.ContainsWithPredicate(MatchExtensionNames))
-        {
-            VULKAN_ERROR_CRITICAL("Device extension '%s' could not be enabled", RequiredExtensionName);
-            return false;
-        }
+        ExtensionNames.Emplace(ExtName);
     }
 
     if (IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging"))
@@ -753,7 +748,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     // Collect core features/properties + extension feature/property structs
     // -------------------------------------------------------------------------------------------
 
-    // Core feature blocks
     VkPhysicalDeviceFeatures2 AvailableDeviceFeatures2 = {};
     AvailableDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
@@ -766,64 +760,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     VkPhysicalDeviceVulkan13Features AvailableDeviceFeatures13 = {};
     AvailableDeviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
 
-    // Extension feature/property blocks
-#if VK_EXT_depth_clip_enable
-    VkPhysicalDeviceDepthClipEnableFeaturesEXT AvailableDeviceDepthClipEnableFeatures = {};
-    AvailableDeviceDepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
-#endif
-
-#if VK_KHR_robustness2
-    VkPhysicalDeviceRobustness2FeaturesKHR AvailableDeviceRobustness2Features = {};
-    AvailableDeviceRobustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
-#endif
-
-#if VK_EXT_device_fault
-    VkPhysicalDeviceFaultFeaturesEXT AvailableDeviceFaultFeatures = {};
-    AvailableDeviceFaultFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT;
-#endif
-
-#if VK_KHR_fragment_shading_rate
-    VkPhysicalDeviceFragmentShadingRateFeaturesKHR AvailableDeviceFragmentShadingRateFeatures = {};
-    AvailableDeviceFragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
-
-    VkPhysicalDeviceFragmentShadingRatePropertiesKHR AvailableDeviceFragmentShadingRateProperties = {};
-    AvailableDeviceFragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-#endif
-
-#if VK_KHR_acceleration_structure
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR AvailableDeviceAccelerationStructureFeatures = {};
-    AvailableDeviceAccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-#endif
-
-#if VK_KHR_ray_tracing_pipeline
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR AvailableDeviceRayTracingPipelineFeatures = {};
-    AvailableDeviceRayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-#endif
-
-#if VK_KHR_ray_query
-    VkPhysicalDeviceRayQueryFeaturesKHR AvailableDeviceRayQueryFeatures = {};
-    AvailableDeviceRayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
-#endif
-
-#if VK_EXT_mesh_shader
-    VkPhysicalDeviceMeshShaderFeaturesEXT AvailableDeviceMeshShaderFeatures = {};
-    AvailableDeviceMeshShaderFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
-
-    VkPhysicalDeviceMeshShaderPropertiesEXT AvailableDeviceMeshShaderProperties = {};
-    AvailableDeviceMeshShaderProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
-#endif
-
-#if VK_EXT_sample_locations
-    VkPhysicalDeviceSampleLocationsPropertiesEXT AvailableDeviceSampleLocationsProperties = {};
-    AvailableDeviceSampleLocationsProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
-#endif
-
-#if VK_EXT_fragment_shader_interlock
-    VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT AvailableDeviceFragmentShaderInterlockFeatures = {};
-    AvailableDeviceFragmentShaderInterlockFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
-#endif
-
-    // Core property blocks
     VkPhysicalDeviceProperties2 AvailableDeviceProperties2 = {};
     AvailableDeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
@@ -832,37 +768,8 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
 
     {
         FVulkanStructChain AvailableDeviceFeatureChain(AvailableDeviceFeatures2);
-        AvailableDeviceFeatureChain.AddNext(AvailableDeviceFeatures11);
-        AvailableDeviceFeatureChain.AddNext(AvailableDeviceFeatures12);
-        AvailableDeviceFeatureChain.AddNext(AvailableDeviceFeatures13);
-
-    #if VK_EXT_depth_clip_enable
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME), AvailableDeviceDepthClipEnableFeatures);
-    #endif
-    #if VK_KHR_robustness2
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME), AvailableDeviceRobustness2Features);
-    #endif
-    #if VK_EXT_device_fault
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_EXT_DEVICE_FAULT_EXTENSION_NAME), AvailableDeviceFaultFeatures);
-    #endif
-    #if VK_KHR_fragment_shading_rate
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME), AvailableDeviceFragmentShadingRateFeatures);
-    #endif
-    #if VK_KHR_acceleration_structure
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME), AvailableDeviceAccelerationStructureFeatures);
-    #endif
-    #if VK_KHR_ray_tracing_pipeline
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME), AvailableDeviceRayTracingPipelineFeatures);
-    #endif
-    #if VK_KHR_ray_query
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME), AvailableDeviceRayQueryFeatures);
-    #endif
-    #if VK_EXT_mesh_shader
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_EXT_MESH_SHADER_EXTENSION_NAME), AvailableDeviceMeshShaderFeatures);
-    #endif
-    #if VK_EXT_fragment_shader_interlock
-        AvailableDeviceFeatureChain.AddNextIf(IsExtensionEnabled(VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME), AvailableDeviceFragmentShaderInterlockFeatures);
-    #endif
+        AvailableDeviceFeatureChain.AddAll(AvailableDeviceFeatures11, AvailableDeviceFeatures12, AvailableDeviceFeatures13);
+        InRegistry.BuildFeatureQueryChain(AvailableDeviceFeatureChain);
 
         vkGetPhysicalDeviceFeatures2(PhysicalDevice->GetVkPhysicalDevice(), &AvailableDeviceFeatures2);
     }
@@ -870,28 +777,18 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     {
         FVulkanStructChain AvailableDevicePropertiesChain(AvailableDeviceProperties2);
         AvailableDevicePropertiesChain.AddNext(AvailableDeviceMultiviewProperties);
-
-    #if VK_KHR_fragment_shading_rate
-        AvailableDevicePropertiesChain.AddNextIf(IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME), AvailableDeviceFragmentShadingRateProperties);
-    #endif
-    #if VK_EXT_mesh_shader
-        AvailableDevicePropertiesChain.AddNextIf(IsExtensionEnabled(VK_EXT_MESH_SHADER_EXTENSION_NAME), AvailableDeviceMeshShaderProperties);
-    #endif
-    #if VK_EXT_sample_locations
-        AvailableDevicePropertiesChain.AddNextIf(IsExtensionEnabled(VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME), AvailableDeviceSampleLocationsProperties);
-    #endif
+        InRegistry.BuildPropertyQueryChain(AvailableDevicePropertiesChain);
 
         vkGetPhysicalDeviceProperties2(PhysicalDevice->GetVkPhysicalDevice(), &AvailableDeviceProperties2);
     }
 
     // -------------------------------------------------------------------------------------------
-    // Set all GVulkan* globals from collected caps
+    // Set core GVulkan* globals from collected caps
     // -------------------------------------------------------------------------------------------
 
     const VkPhysicalDeviceFeatures&   CoreDeviceFeatures10   = AvailableDeviceFeatures2.features;
     const VkPhysicalDeviceProperties& CoreDeviceProperties10 = PhysicalDevice->GetProperties();
 
-    // Core/sparse/depth bounds
     GVulkanSupportsDepthBoundsTest        = (CoreDeviceFeatures10.depthBounds == VK_TRUE);
     GVulkanSupportsSparseBinding          = (CoreDeviceFeatures10.sparseBinding == VK_TRUE);
     GVulkanSupportsSparseResidency2D      = (CoreDeviceFeatures10.sparseResidencyImage2D == VK_TRUE);
@@ -900,39 +797,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     GVulkanSupportsGeometryShader         = (GVulkanAllowGeometryShaders && CoreDeviceFeatures10.geometryShader == VK_TRUE);
     GVulkanSupportsTessellation           = (CoreDeviceFeatures10.tessellationShader == VK_TRUE);
 
-#if VK_KHR_robustness2
-    if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME) && AvailableDeviceRobustness2Features.nullDescriptor)
-    {
-        GVulkanSupportsNullDescriptors = true;
-    }
-
-    VULKAN_INFO("Robustness: robustBufferAccess=%s, nullDescriptor=%s, robustBufferAccess2=%s, robustImageAccess2=%s",
-        GVulkanRobustBufferAccessEnabled ? "ON" : "OFF",
-        GVulkanSupportsNullDescriptors   ? "ON" : "OFF",
-        (AvailableDeviceRobustness2Features.robustBufferAccess2 && GVulkanRobustBufferAccessEnabled) ? "ON" : "OFF",
-        AvailableDeviceRobustness2Features.robustImageAccess2 ? "ON" : "OFF");
-
-    if (!GVulkanSupportsNullDescriptors)
-    {
-        VULKAN_WARNING("nullDescriptor not supported - unbound descriptors will use a %u-byte fallback buffer (OOB risk)", VULKAN_DEFAULT_BUFFER_NUM_BYTES);
-    }
-#endif
-
-#if VK_EXT_depth_clip_enable
-    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME) && AvailableDeviceDepthClipEnableFeatures.depthClipEnable && CoreDeviceFeatures10.depthClamp)
-    {
-        GVulkanSupportsDepthClip = true;
-    }
-#endif
-
-#if VK_EXT_conservative_rasterization
-    if (IsExtensionEnabled(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME))
-    {
-        GVulkanSupportsConservativeRasterization = true;
-    }
-#endif
-
-    // Multiview (Core 1.1)
     if (AvailableDeviceFeatures11.multiview)
     {
         GVulkanSupportsMultiviews    = true;
@@ -944,84 +808,16 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
         GVulkanMaxMultiviewViewCount = 1u;
     }
 
-    // Pipeline cache control (Core 1.3)
     if (AvailableDeviceFeatures13.pipelineCreationCacheControl)
     {
         GVulkanSupportsPipelineCacheControl = true;
     }
 
-    // Descriptor indexing (Bindless heuristic)
     if (AvailableDeviceFeatures12.descriptorIndexing)
     {
         GVulkanSupportsBindless = true;
     }
 
-    // Ray Tracing
-#if VK_KHR_acceleration_structure
-    if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) && AvailableDeviceAccelerationStructureFeatures.accelerationStructure == VK_TRUE)
-    {
-        GVulkanSupportsAccelerationStructures = true;
-    }
-#endif
-#if VK_KHR_ray_tracing_pipeline
-    if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME) && AvailableDeviceRayTracingPipelineFeatures.rayTracingPipeline)
-    {
-        GVulkanSupportsRayTracingPipeline = true;
-    }
-#endif
-#if VK_KHR_ray_query
-    if (IsExtensionEnabled(VK_KHR_RAY_QUERY_EXTENSION_NAME) && AvailableDeviceRayQueryFeatures.rayQuery == VK_TRUE)
-    {
-        GVulkanSupportsRayQuery = true;
-    }
-#endif
-
-    // Fragment shading rate (VRS)
-#if VK_KHR_fragment_shading_rate
-    if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
-    {
-        if (AvailableDeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate || AvailableDeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate ||
-            AvailableDeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate)
-	    {
-		    GVulkanShadingRateTileSize = Math::Max<uint32>(1u, AvailableDeviceFragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width);
-		    GVulkanSupportsFragmentShadingRate = true;
-	    }
-    }
-#endif
-
-    // Mesh shaders
-#if VK_EXT_mesh_shader
-    if (IsExtensionEnabled(VK_EXT_MESH_SHADER_EXTENSION_NAME) && 
-        (AvailableDeviceMeshShaderFeatures.meshShader || AvailableDeviceMeshShaderFeatures.taskShader))
-    {
-        GVulkanMaxMeshOutputVertices       = AvailableDeviceMeshShaderProperties.maxMeshOutputVertices;
-        GVulkanMaxMeshWorkGroupInvocations = AvailableDeviceMeshShaderProperties.maxMeshWorkGroupInvocations;
-        GVulkanMaxTaskWorkGroupInvocations = AvailableDeviceMeshShaderProperties.maxTaskWorkGroupInvocations;
-        GVulkanSupportsMeshShaders         = true;
-    }
-#endif
-
-    // Sample locations
-#if VK_EXT_sample_locations
-    if (IsExtensionEnabled(VK_EXT_SAMPLE_LOCATIONS_EXTENSION_NAME))
-    {
-        GVulkanSupportsSampleLocations = true;
-    }
-#endif
-
-    // Fragment shader interlock
-#if VK_EXT_fragment_shader_interlock
-    if (IsExtensionEnabled(VK_EXT_FRAGMENT_SHADER_INTERLOCK_EXTENSION_NAME))
-    {
-        if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderSampleInterlock || AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderPixelInterlock ||
-            AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderShadingRateInterlock)
-        {
-            GVulkanSupportsFragmentShaderInterlock = true;
-        }
-    }
-#endif
-
-    // Crash marker extensions
 #if VULKAN_ENABLE_CRASH_MARKERS
 #if VK_AMD_buffer_marker
     bSupportsAMDBufferMarker = IsExtensionEnabled(VK_AMD_BUFFER_MARKER_EXTENSION_NAME);
@@ -1031,13 +827,21 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
 #endif
 #endif
 
-    // Limits / counts
-    GVulkanMaxDrawIndirectCount            = CoreDeviceProperties10.limits.maxDrawIndirectCount;
-    GVulkanMaxDescriptorSetSamplers        = CoreDeviceProperties10.limits.maxDescriptorSetSamplers;
-    GVulkanMaxDescriptorSetSampledImages   = CoreDeviceProperties10.limits.maxDescriptorSetSampledImages;
-    GVulkanMaxDescriptorSetStorageImages   = CoreDeviceProperties10.limits.maxDescriptorSetStorageImages;
-    GVulkanMaxDescriptorSetUniformBuffers  = CoreDeviceProperties10.limits.maxDescriptorSetUniformBuffers;
-    GVulkanMaxDescriptorSetStorageBuffers  = CoreDeviceProperties10.limits.maxDescriptorSetStorageBuffers;
+    GVulkanMaxDrawIndirectCount           = CoreDeviceProperties10.limits.maxDrawIndirectCount;
+    GVulkanMaxDescriptorSetSamplers       = CoreDeviceProperties10.limits.maxDescriptorSetSamplers;
+    GVulkanMaxDescriptorSetSampledImages  = CoreDeviceProperties10.limits.maxDescriptorSetSampledImages;
+    GVulkanMaxDescriptorSetStorageImages  = CoreDeviceProperties10.limits.maxDescriptorSetStorageImages;
+    GVulkanMaxDescriptorSetUniformBuffers = CoreDeviceProperties10.limits.maxDescriptorSetUniformBuffers;
+    GVulkanMaxDescriptorSetStorageBuffers = CoreDeviceProperties10.limits.maxDescriptorSetStorageBuffers;
+
+    // Extension-specific globals are set by the registry
+    InRegistry.ProcessQueriedFeatures();
+
+    // depthClip requires depthClamp support from core features
+    if (GVulkanSupportsDepthClip && !CoreDeviceFeatures10.depthClamp)
+    {
+        GVulkanSupportsDepthClip = false;
+    }
 
     // -------------------------------------------------------------------------------------------
     // Build the feature chain we actually want, then create the device
@@ -1052,12 +856,17 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     DeviceCreateInfo.queueCreateInfoCount    = QueueCreateInfos.Size();
     DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
 
-    // Core features to enable (start from Required + clamp by available)
     VkPhysicalDeviceFeatures2 EnableDeviceFeatures2 = {};
     EnableDeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     EnableDeviceFeatures2.features = InDeviceCreateInfo.RequiredFeatures;
     EnableOptionalFeatures(EnableDeviceFeatures2.features, InDeviceCreateInfo.OptionalFeatures, InDeviceCreateInfo.RequiredFeatures);
     GVulkanRobustBufferAccessEnabled = (EnableDeviceFeatures2.features.robustBufferAccess == VK_TRUE);
+
+    // Depth clip requires depthClamp to also be enabled
+    if (GVulkanSupportsDepthClip && AvailableDeviceFeatures2.features.depthClamp)
+    {
+        EnableDeviceFeatures2.features.depthClamp = VK_TRUE;
+    }
 
     VkPhysicalDeviceVulkan11Features EnableDeviceFeatures11 = InDeviceCreateInfo.RequiredFeatures11;
     EnableDeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
@@ -1068,191 +877,13 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo
     EnableOptionalFeatures(EnableDeviceFeatures12, InDeviceCreateInfo.OptionalFeatures12, InDeviceCreateInfo.RequiredFeatures12);
 
     VkPhysicalDeviceVulkan13Features EnableDeviceFeatures13 = InDeviceCreateInfo.RequiredFeatures13;
-	EnableDeviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    EnableDeviceFeatures13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
     EnableOptionalFeatures(EnableDeviceFeatures13, InDeviceCreateInfo.OptionalFeatures13, InDeviceCreateInfo.RequiredFeatures13);
 
-    // Extension features to enable
-#if VK_KHR_robustness2
-    VkPhysicalDeviceRobustness2FeaturesKHR EnableDeviceRobustness2Features = {};
-    if (IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME))
-    {
-        EnableDeviceRobustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
-
-        if (AvailableDeviceRobustness2Features.robustImageAccess2)
-        {
-            EnableDeviceRobustness2Features.robustImageAccess2 = VK_TRUE;
-        }
-		if (AvailableDeviceRobustness2Features.robustBufferAccess2 && GVulkanRobustBufferAccessEnabled)
-		{
-			EnableDeviceRobustness2Features.robustBufferAccess2 = VK_TRUE;
-		}
-		if (AvailableDeviceRobustness2Features.nullDescriptor)
-		{
-			EnableDeviceRobustness2Features.nullDescriptor = VK_TRUE;
-		}
-    }
-#endif
-
-#if VK_EXT_device_fault
-    VkPhysicalDeviceFaultFeaturesEXT EnableDeviceFaultFeatures = {};
-    if (IsExtensionEnabled(VK_EXT_DEVICE_FAULT_EXTENSION_NAME) && AvailableDeviceFaultFeatures.deviceFault)
-    {
-        EnableDeviceFaultFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT;
-        EnableDeviceFaultFeatures.deviceFault = VK_TRUE;
-    }
-#endif
-
-#if VK_EXT_depth_clip_enable
-    VkPhysicalDeviceDepthClipEnableFeaturesEXT EnableDeviceDepthClipEnableFeatures = {};
-    if (GVulkanSupportsDepthClip)
-    {
-        EnableDeviceDepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
-
-		if (AvailableDeviceDepthClipEnableFeatures.depthClipEnable)
-		{
-            EnableDeviceDepthClipEnableFeatures.depthClipEnable = VK_TRUE;
-		}
-		if (AvailableDeviceFeatures2.features.depthClamp)
-		{
-            EnableDeviceFeatures2.features.depthClamp = VK_TRUE;
-		}
-    }
-#endif
-
-#if VK_KHR_acceleration_structure
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR EnableDeviceAccelerationStructureFeatures = {};
-    if (GVulkanSupportsAccelerationStructures)
-    {
-        EnableDeviceAccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-
-		if (AvailableDeviceAccelerationStructureFeatures.accelerationStructure)
-		{
-            EnableDeviceAccelerationStructureFeatures.accelerationStructure = VK_TRUE;
-		}
-    }
-#endif
-
-#if VK_KHR_ray_tracing_pipeline
-    VkPhysicalDeviceRayTracingPipelineFeaturesKHR EnableDeviceRayTracingPipelineFeatures = {};
-    if (GVulkanSupportsRayTracingPipeline)
-    {
-        EnableDeviceRayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
-
-		if (AvailableDeviceRayTracingPipelineFeatures.rayTracingPipeline)
-		{
-            EnableDeviceRayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
-		}
-    }
-#endif
-
-#if VK_KHR_ray_query
-    VkPhysicalDeviceRayQueryFeaturesKHR EnableDeviceRayQueryFeatures = {};
-    if (GVulkanSupportsRayQuery)
-    {
-        EnableDeviceRayQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
-
-        if (AvailableDeviceRayQueryFeatures.rayQuery)
-        {
-            EnableDeviceRayQueryFeatures.rayQuery = VK_TRUE;
-        }
-    }
-#endif
-
-#if VK_KHR_fragment_shading_rate
-    VkPhysicalDeviceFragmentShadingRateFeaturesKHR EnableDeviceFragmentShadingRateFeatures = {};
-    if (GVulkanSupportsFragmentShadingRate)
-    {
-        EnableDeviceFragmentShadingRateFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
-
-		if (AvailableDeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate)
-		{
-            EnableDeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate = VK_TRUE;
-		}
-		if (AvailableDeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate)
-		{
-            EnableDeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate = VK_TRUE;
-		}
-		if (AvailableDeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate)
-		{
-            EnableDeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate = VK_TRUE;
-		}
-    }
-#endif
-
-#if VK_EXT_mesh_shader
-    VkPhysicalDeviceMeshShaderFeaturesEXT EnableDeviceMeshShaderFeatures = {};
-    if (GVulkanSupportsMeshShaders)
-    {
-        EnableDeviceMeshShaderFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
-
-        if (AvailableDeviceMeshShaderFeatures.meshShader)
-        {
-            EnableDeviceMeshShaderFeatures.meshShader = VK_TRUE;
-        }
-        if (AvailableDeviceMeshShaderFeatures.taskShader)
-        {
-            EnableDeviceMeshShaderFeatures.taskShader = VK_TRUE;
-        }
-    }
-#endif
-
-#if VK_EXT_fragment_shader_interlock
-    VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT EnableDeviceFragmentShaderInterlockFeatures = {};
-    if (GVulkanSupportsFragmentShaderInterlock)
-    {
-        EnableDeviceFragmentShaderInterlockFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
-
-		if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderSampleInterlock)
-		{
-            EnableDeviceFragmentShaderInterlockFeatures.fragmentShaderSampleInterlock = VK_TRUE;
-		}
-		if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderPixelInterlock)
-		{
-            EnableDeviceFragmentShaderInterlockFeatures.fragmentShaderPixelInterlock = VK_TRUE;
-		}
-		if (AvailableDeviceFragmentShaderInterlockFeatures.fragmentShaderShadingRateInterlock)
-		{
-            EnableDeviceFragmentShaderInterlockFeatures.fragmentShaderShadingRateInterlock = VK_TRUE;
-		}
-    }
-#endif
-
-    // Build the "Enable" chain
     FVulkanStructChain EnableDeviceFeaturesChain(DeviceCreateInfo);
-    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures2);
-    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures11);
-    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures12);
-    EnableDeviceFeaturesChain.AddNext(EnableDeviceFeatures13);
+    EnableDeviceFeaturesChain.AddAll(EnableDeviceFeatures2, EnableDeviceFeatures11, EnableDeviceFeatures12, EnableDeviceFeatures13);
+    InRegistry.BuildFeatureEnableChain(EnableDeviceFeaturesChain);
 
-#if VK_KHR_robustness2
-    EnableDeviceFeaturesChain.AddNextIf(IsExtensionEnabled(VK_KHR_ROBUSTNESS_2_EXTENSION_NAME), EnableDeviceRobustness2Features);
-#endif
-#if VK_EXT_device_fault
-    EnableDeviceFeaturesChain.AddNextIf(EnableDeviceFaultFeatures.deviceFault, EnableDeviceFaultFeatures);
-#endif
-#if VK_EXT_depth_clip_enable
-    EnableDeviceFeaturesChain.AddNextIf(GVulkanSupportsDepthClip, EnableDeviceDepthClipEnableFeatures);
-#endif
-#if VK_KHR_acceleration_structure
-    EnableDeviceFeaturesChain.AddNextIf(GVulkanSupportsAccelerationStructures, EnableDeviceAccelerationStructureFeatures);
-#endif
-#if VK_KHR_ray_tracing_pipeline
-    EnableDeviceFeaturesChain.AddNextIf(GVulkanSupportsRayTracingPipeline, EnableDeviceRayTracingPipelineFeatures);
-#endif
-#if VK_KHR_ray_query
-    EnableDeviceFeaturesChain.AddNextIf(GVulkanSupportsRayQuery, EnableDeviceRayQueryFeatures);
-#endif
-#if VK_KHR_fragment_shading_rate
-    EnableDeviceFeaturesChain.AddNextIf(GVulkanSupportsFragmentShadingRate, EnableDeviceFragmentShadingRateFeatures);
-#endif
-#if VK_EXT_mesh_shader
-    EnableDeviceFeaturesChain.AddNextIf(GVulkanSupportsMeshShaders, EnableDeviceMeshShaderFeatures);
-#endif
-#if VK_EXT_fragment_shader_interlock
-    EnableDeviceFeaturesChain.AddNextIf(GVulkanSupportsFragmentShaderInterlock, EnableDeviceFragmentShaderInterlockFeatures);
-#endif
-
-    // Finally create the device
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     if (VULKAN_FAILED(Result))
     {
@@ -1617,7 +1248,7 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     else
     {
         const FString DebugName = FString::CreateFormatted("Sampler %d", SamplerMap.Size());
-        VulkanDebugUtilsEXT::SetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
+        VulkanSetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 
     SamplerMap.Add(HashableCreateInfo, OutSampler);
@@ -1709,7 +1340,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     }
     else
     {
-        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullSampler", NullSampler, VK_OBJECT_TYPE_SAMPLER);
+        VulkanSetObjectName(Device.GetVkDevice(), "NullSampler", NullSampler, VK_OBJECT_TYPE_SAMPLER);
     }
 
     return true;
@@ -1741,7 +1372,7 @@ bool FVulkanDefaultResources::InitializeNullBuffer(FVulkanDevice& Device)
     }
     else
     {
-        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullBuffer", NullBuffer, VK_OBJECT_TYPE_BUFFER);
+        VulkanSetObjectName(Device.GetVkDevice(), "NullBuffer", NullBuffer, VK_OBJECT_TYPE_BUFFER);
     }
 
     {
@@ -1806,7 +1437,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     }
     else
     {
-        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImage", NullImage, VK_OBJECT_TYPE_IMAGE);
+        VulkanSetObjectName(Device.GetVkDevice(), "NullImage", NullImage, VK_OBJECT_TYPE_IMAGE);
     }
 
     {
@@ -1852,7 +1483,7 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     }
     else
     {
-        VulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+        VulkanSetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
     }
 
     return true;

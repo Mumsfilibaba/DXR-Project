@@ -206,7 +206,7 @@ void FVulkanTimelineFence::SetDebugName(const FString& Name)
 {
     if (VULKAN_CHECK_HANDLE(TimelineSemaphore))
     {
-        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *Name, TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE);
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), *Name, TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE);
     }
 }
 
@@ -341,7 +341,7 @@ void FVulkanGpuFence::SetDebugName(const FString& InName)
 
     if (bUsesTimeline && VULKAN_CHECK_HANDLE(TimelineSemaphore))
     {
-        VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE);
+        VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE);
     }
 }
 

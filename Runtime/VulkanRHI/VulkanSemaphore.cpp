@@ -35,7 +35,7 @@ bool FVulkanSemaphore::Initialize()
 
 bool FVulkanSemaphore::SetDebugName(const FString& Name)
 {
-    VkResult Result = VulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *Name, Semaphore, VK_OBJECT_TYPE_SEMAPHORE);
+    VkResult Result = VulkanSetObjectName(GetDevice()->GetVkDevice(), *Name, Semaphore, VK_OBJECT_TYPE_SEMAPHORE);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("vkSetDebugUtilsObjectNameEXT failed");

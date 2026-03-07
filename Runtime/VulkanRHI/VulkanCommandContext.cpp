@@ -2001,7 +2001,7 @@ void FVulkanCommandContext::PushEvent(const FStringView& Name)
     EventStack.Emplace(Name.Data());
 
 #if VK_EXT_debug_utils
-    if (VulkanDebugUtilsEXT::IsEnabled())
+    if (GVulkanSupportsDebugUtils)
     {
         VkDebugUtilsLabelEXT DebugUtilsLabel = {};
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
@@ -2038,7 +2038,7 @@ void FVulkanCommandContext::PopEvent()
     }
 
 #if VK_EXT_debug_utils
-    if (VulkanDebugUtilsEXT::IsEnabled())
+    if (GVulkanSupportsDebugUtils)
     {
         GetCommandBuffer()->EndDebugUtilsLabel();
     }
@@ -2048,7 +2048,7 @@ void FVulkanCommandContext::PopEvent()
 void FVulkanCommandContext::CloseEventStack()
 {
 #if VK_EXT_debug_utils
-    if (VulkanDebugUtilsEXT::IsEnabled())
+    if (GVulkanSupportsDebugUtils)
     {
         for (int32 i = EventStack.Size() - 1; i >= 0; --i)
         {
@@ -2061,7 +2061,7 @@ void FVulkanCommandContext::CloseEventStack()
 void FVulkanCommandContext::ReopenEventStack()
 {
 #if VK_EXT_debug_utils
-    if (VulkanDebugUtilsEXT::IsEnabled())
+    if (GVulkanSupportsDebugUtils)
     {
         for (int32 i = 0; i < EventStack.Size(); ++i)
         {
