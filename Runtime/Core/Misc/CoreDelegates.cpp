@@ -1,20 +1,22 @@
 #include "Core/Misc/CoreDelegates.h"
 
-namespace CoreDelegates
+void CoreDelegates::Shutdown()
 {
-    CORE_API FPostInitRHIDelegate PostInitRHIDelegate;
-
-    CORE_API FPostApplicationCreateDelegate PostApplicationCreateDelegate;
-
-    CORE_API FPreInitFinishedDelegate PreInitFinishedDelegate;
-
-    CORE_API FPreEngineInitDelegate PreEngineInitDelegate;
-
-    CORE_API FPostEngineInitDelegate PostEngineInitDelegate;
-
-    CORE_API FPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
-
-    CORE_API FPostApplicationLoadedDelegate PostGameModuleLoadedDelegate;
-
-    CORE_API FDeviceRemovedDelegate DeviceRemovedDelegate;
+    PostInitRHIDelegate.UnbindAll();
+    PostApplicationCreateDelegate.UnbindAll();
+    PreInitFinishedDelegate.UnbindAll();
+    PreEngineInitDelegate.UnbindAll();
+    PostEngineInitDelegate.UnbindAll();
+    PreApplicationLoadedDelegate.UnbindAll();
+    PostGameModuleLoadedDelegate.UnbindAll();
+    DeviceRemovedDelegate.UnbindAll();
 }
+
+CoreDelegates::FPostInitRHIDelegate           CoreDelegates::PostInitRHIDelegate;
+CoreDelegates::FPostApplicationCreateDelegate CoreDelegates::PostApplicationCreateDelegate;
+CoreDelegates::FPreInitFinishedDelegate       CoreDelegates::PreInitFinishedDelegate;
+CoreDelegates::FPreEngineInitDelegate         CoreDelegates::PreEngineInitDelegate;
+CoreDelegates::FPostEngineInitDelegate        CoreDelegates::PostEngineInitDelegate;
+CoreDelegates::FPreApplicationLoadedDelegate  CoreDelegates::PreApplicationLoadedDelegate;
+CoreDelegates::FPostApplicationLoadedDelegate CoreDelegates::PostGameModuleLoadedDelegate;
+CoreDelegates::FDeviceRemovedDelegate         CoreDelegates::DeviceRemovedDelegate;

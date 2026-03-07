@@ -6,6 +6,11 @@
 
 IMPLEMENT_ENGINE_MODULE(FEngineModule, Engine);
 
+FEngineModule::~FEngineModule()
+{
+    CoreDelegates::PreEngineInitDelegate.Unbind(PreEngineInitHandle);
+}
+
 bool FEngineModule::Load()
 {
     PreEngineInitHandle = CoreDelegates::PreEngineInitDelegate.AddLambda([]()

@@ -328,6 +328,9 @@ void FEngineLoop::Release()
 
     FConfig::Release();
 
+    // Clear all core delegates before unloading modules to prevent dangling vtable pointers
+    CoreDelegates::Shutdown();
+
     // Release all modules
     FModuleManager::Shutdown();
 

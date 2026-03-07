@@ -16,6 +16,8 @@ FRendererModule::FRendererModule()
 
 FRendererModule::~FRendererModule()
 {
+    CoreDelegates::PreEngineInitDelegate.Unbind(PreEngineInitHandle);
+
     for (FScene* Scene : Scenes)
     {
         delete Scene;

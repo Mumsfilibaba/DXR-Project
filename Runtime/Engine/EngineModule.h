@@ -4,6 +4,7 @@
 class ENGINE_API FEngineModule : public FModuleInterface
 {
 public:
+    virtual ~FEngineModule();
     virtual bool Load() override final;
 
 private:
