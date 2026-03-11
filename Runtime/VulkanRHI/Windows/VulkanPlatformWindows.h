@@ -2,43 +2,25 @@
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Windows/WindowsApplication.h"
 #include "VulkanRHI/Base/VulkanPlatformBase.h"
+#include "VulkanRHI/VulkanExtensions.h"
 
 struct VulkanPlatformWindows : public VulkanPlatformBase
 {
-    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions()
-    { 
-        return
-        {
-        #if VK_KHR_surface
-            VK_KHR_SURFACE_EXTENSION_NAME,
-        #endif
-        #if VK_EXT_debug_utils
-            VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-        #endif
-        #if VK_KHR_win32_surface
-            VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-        #endif
-        };
+    static void RetrieveDeviceExtensions(TArray<TUniquePtr<FVulkanDeviceExtension>>& OutDeviceExtensions)
+    {
+    #if VK_KHR_swapchain
+        OutDeviceExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_KHR_SWAPCHAIN_EXTENSION_NAME, true, true));
+    #endif
     }
 
-    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceLayers()
-    { 
-        return TArray<const CHAR*>(); 
-    }
-
-    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceExtensions() 
-    { 
-        return
-        {
-        #if VK_KHR_swapchain
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        #endif
-        };
-    }
-
-    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceLayers()
-    { 
-        return TArray<const CHAR*>(); 
+    static void RetrieveInstanceExtensions(TArray<TUniquePtr<FVulkanInstanceExtension>>& OutInstanceExtensions)
+    {
+    #if VK_KHR_surface
+        OutInstanceExtensions.Add(MakeUniquePtr<FVulkanInstanceExtension>(VK_KHR_SURFACE_EXTENSION_NAME, true, true));
+    #endif
+    #if VK_KHR_win32_surface
+        OutInstanceExtensions.Add(MakeUniquePtr<FVulkanInstanceExtension>(VK_KHR_WIN32_SURFACE_EXTENSION_NAME, true, true));
+    #endif
     }
 
     static FORCEINLINE void* LoadVulkanLibrary()

@@ -55,7 +55,7 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateInfo Info;
+    FRHIDepthStencilStateInfo             Info;
     VkPipelineDepthStencilStateCreateInfo CreateInfo;
 };
 
@@ -76,10 +76,10 @@ public:
     }
     
 private:
-    FRHIRasterizerStateInfo Info;
+    FRHIRasterizerStateInfo                Info;
     VkPipelineRasterizationStateCreateInfo CreateInfo;
 #if VK_EXT_depth_clip_enable
-    VkPipelineRasterizationDepthClipStateCreateInfoEXT DepthClipStateCreateInfo;
+    VkPipelineRasterizationDepthClipStateCreateInfoEXT    DepthClipStateCreateInfo;
 #endif
 #if VK_EXT_conservative_rasterization
     VkPipelineRasterizationConservativeStateCreateInfoEXT ConservativeStateCreateInfo;
@@ -103,7 +103,7 @@ public:
     }
 
 private:
-    FRHIBlendStateInfo Info;
+    FRHIBlendStateInfo                  Info;
     VkPipelineColorBlendStateCreateInfo CreateInfo;
     VkPipelineColorBlendAttachmentState BlendAttachmentStates[VULKAN_MAX_RENDER_TARGET_COUNT];
 };
@@ -127,11 +127,9 @@ public:
     }
 
 protected:
-    FString    DebugName;
-    VkPipeline Pipeline;
-
-    // Layout is NOT owned by this class and should not be deleted when the FVulkanPipeline is destroyed
-    FVulkanPipelineLayout* PipelineLayout;
+    VkPipeline             Pipeline;
+    FVulkanPipelineLayout* PipelineLayout; // Layout is NOT owned by this class and should not be deleted when the FVulkanPipeline is destroyed
+    FString                DebugName;
 };
 
 class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline

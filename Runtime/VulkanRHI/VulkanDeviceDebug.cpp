@@ -1,9 +1,88 @@
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/CRC.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanRHI.h"
-#include "Core/Misc/CRC.h"
+
+VULKANRHI_API bool GVulkanSupportsDebugUtils = false;
+
+static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
+    "VulkanRHI.BreakOnValidationError",
+    "Enables breakpoints when the validation-layer encounters an error",
+    true);
+
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT Severity, VkDebugUtilsMessageTypeFlagsEXT Type,
+    const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
+{
+    if (Severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+    {
+        LOG_ERROR("[Vulkan Validation layer] %s", CallbackData->pMessage);
+
+        if (CVarBreakOnValidationError.GetValue())
+        {
+            DEBUG_BREAK();
+        }
+    }
+    else if (Severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    {
+        LOG_WARNING("[Vulkan Validation layer] %s", CallbackData->pMessage);
+    }
+
+    return VK_FALSE;
+}
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING
+
+void VulkanCreateDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& OutMessenger)
+{
+#if VK_EXT_debug_utils
+    if (!GVulkanSupportsDebugUtils)
+    {
+        return;
+    }
+
+    bool bEnableDebugLayer = false;
+    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
+    {
+        bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
+    }
+
+    if (!bEnableDebugLayer)
+    {
+        return;
+    }
+
+    VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo = {};
+    DebugMessengerCreateInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    DebugMessengerCreateInfo.flags           = 0;
+    DebugMessengerCreateInfo.pNext           = nullptr;
+    DebugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    DebugMessengerCreateInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    DebugMessengerCreateInfo.pfnUserCallback = VulkanDebugLayerCallback;
+    DebugMessengerCreateInfo.pUserData       = nullptr;
+
+    VkResult Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &OutMessenger);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create DebugMessenger");
+    }
+#endif
+}
+
+void VulkanDestroyDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& InOutMessenger)
+{
+#if VK_EXT_debug_utils
+    if (VULKAN_CHECK_HANDLE(InOutMessenger))
+    {
+        vkDestroyDebugUtilsMessengerEXT(Instance, InOutMessenger, nullptr);
+        InOutMessenger = VK_NULL_HANDLE;
+    }
+#endif
+}
 
 #if VULKAN_ENABLE_CRASH_MARKERS
 

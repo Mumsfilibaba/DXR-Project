@@ -9,9 +9,53 @@
 class FVulkanCommandBuffer;
 class FVulkanQueue;
 
+// -------------------------------------------------------------------------------------------
+// Debug Utils (VK_EXT_debug_utils)
+// -------------------------------------------------------------------------------------------
+
+extern VULKANRHI_API bool GVulkanSupportsDebugUtils;
+
+inline VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, uint64 ObjectHandle, VkObjectType ObjectType)
+{
+#if VK_EXT_debug_utils
+    if (!GVulkanSupportsDebugUtils)
+    {
+        return VK_SUCCESS;
+    }
+
+    VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo = {};
+    DebugUtilsObjectNameInfo.sType        = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+    DebugUtilsObjectNameInfo.pNext        = nullptr;
+    DebugUtilsObjectNameInfo.pObjectName  = Name;
+    DebugUtilsObjectNameInfo.objectHandle = ObjectHandle;
+    DebugUtilsObjectNameInfo.objectType   = ObjectType;
+
+    return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
+#else
+    return VK_SUCCESS;
+#endif
+}
+
+template<typename HandleType>
+FORCEINLINE VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, HandleType ObjectHandle, VkObjectType ObjectType)
+{
+    return VulkanSetObjectName(Device, Name, reinterpret_cast<uint64>(ObjectHandle), ObjectType);
+}
+
+void VulkanCreateDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& OutMessenger);
+void VulkanDestroyDebugMessenger(VkInstance Instance, VkDebugUtilsMessengerEXT& InOutMessenger);
+
+// -------------------------------------------------------------------------------------------
+// Device Lost Check
+// -------------------------------------------------------------------------------------------
+
 #if VULKAN_ENABLE_DEVICE_LOST_CHECK
 VULKANRHI_API bool VulkanCheckDeviceLost(VkResult Result);
 #endif
+
+// -------------------------------------------------------------------------------------------
+// Crash Markers
+// -------------------------------------------------------------------------------------------
 
 #if VULKAN_ENABLE_CRASH_MARKERS
 

@@ -2,6 +2,7 @@
 #include "Core/Platform/PlatformInterlocked.h"
 #include "VulkanRHI/VulkanQuery.h"
 #include "VulkanRHI/VulkanDeviceLimits.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarVulkanQueryPoolSize(
     "VulkanRHI.QueryPoolSize",

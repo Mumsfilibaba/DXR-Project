@@ -133,87 +133,31 @@ public:
     static constexpr bool Value = decltype(Test<T>(0))::Value;
 };
 
-class FVulkanStructChain
+template <typename StructType, typename NextStructType>
+void AddToStructChain(StructType& OutCurrentNode, NextStructType& OutNextNode)
 {
-public:
-    template <typename StructType>
-    explicit FVulkanStructChain(StructType& Head)
+    // pNext may be void* or const void*; route through void* to get writable access regardless
+    void** CurrentPNext = reinterpret_cast<void**>(static_cast<void*>(&OutCurrentNode.pNext));
+    void** NextPNext    = reinterpret_cast<void**>(static_cast<void*>(&OutNextNode.pNext));
+
+    *NextPNext    = *CurrentPNext;
+    *CurrentPNext = reinterpret_cast<void*>(&OutNextNode);
+}
+
+template <typename StructType, typename NextStructType>
+void AddToStructChainIf(bool bCondition, StructType& OutCurrentNode, NextStructType& OutNextNode)
+{
+    if (bCondition)
     {
-        Init(Head);
+        AddToStructChain(OutCurrentNode, OutNextNode);
     }
+}
 
-    template <typename StructType>
-    FVulkanStructChain& Reset(StructType& Head)
-    {
-        Init(Head);
-        return *this;
-    }
-
-    template <typename StructType>
-    FVulkanStructChain& AddNext(StructType& NextNode)
-    {
-        void** NextNext = GetNextAddress(NextNode); // writable address of NextNode.pNext
-        *NextNext = nullptr;                        // ensure appended node starts clean
-
-        *TailNext = &NextNode;                      // link current tail -> NextNode
-        TailNext  = NextNext;                       // advance tail to NextNode.pNext
-        *TailNext = nullptr;                        // keep chain terminated
-        return *this;
-    }
-
-    template <typename StructType>
-    FVulkanStructChain& AddNextIf(bool bCondition, StructType& NextNode)
-    {
-        if (bCondition)
-        {
-            AddNext(NextNode);
-        }
-
-        return *this;
-    }
-
-    template <typename FirstStructType, typename... StructTypes>
-    FVulkanStructChain& AddAll(FirstStructType& FirstNode, StructTypes&... Nodes)
-    {
-        AddNext(FirstNode);
-        (AddNext(Nodes), ...);
-        return *this;
-    }
-
-    void* Head() const
-    {
-        return HeadPtr;
-    }
-
-private:
-    template <typename StructType>
-    static void** GetNextAddress(StructType& Node)
-    {
-        typedef decltype((reinterpret_cast<StructType*>(nullptr))->pNext) NextPtrType;
-
-        if constexpr (TIsSame<NextPtrType, void*>::Value)
-        {
-            return reinterpret_cast<void**>(&Node.pNext);
-        }
-        else
-        {
-            return const_cast<void**>(reinterpret_cast<const void**>(&Node.pNext));
-        }
-    }
-
-    template <typename StructType>
-    void Init(StructType& Head)
-    {
-        static_assert(TIsStandardLayout<StructType>::Value, "Vulkan structs should be standard-layout.");
-
-        HeadPtr   = &Head;
-        TailNext  = GetNextAddress(Head);
-        *TailNext = nullptr;
-    }
-
-    void*  HeadPtr  = nullptr;
-    void** TailNext = nullptr;
-};
+template <typename FirstStructType, typename... StructTypes>
+void AddAllToStructChain(FirstStructType& OutFirstNode, StructTypes&... OutNodes)
+{
+    (AddToStructChain(OutFirstNode, OutNodes), ...);
+}
 
 template <typename T>
 struct TVulkanFeatureLayout
@@ -256,40 +200,6 @@ public:
     static_assert((FeatureBytes % sizeof(VkBool32)) == 0, "Feature area must be composed of whole VkBool32 elements.");
 };
 
-class FVulkanFeatureStructView
-{
-public:
-    FVulkanFeatureStructView() = default;
-
-    template <typename FeatureStructType>
-    explicit FVulkanFeatureStructView(FeatureStructType& Features)
-    {
-        // Start address of the VkBool32 block:
-        const uint8* Base  = reinterpret_cast<const uint8*>(&Features);
-        const uint8* Start = Base + TVulkanFeatureLayout<FeatureStructType>::HeaderSizeBytes;
-
-        FeatureStart = const_cast<VkBool32*>(reinterpret_cast<const VkBool32*>(Start));
-        FeatureCount = TVulkanFeatureLayout<FeatureStructType>::FeatureCount;
-    }
-
-    SIZE_T          Size() const  { return FeatureCount; }
-
-    VkBool32*       Data()        { return FeatureStart; }
-    const VkBool32* Data() const  { return FeatureStart; }
-
-    VkBool32*       Begin()       { return FeatureStart; }
-    VkBool32*       End()         { return FeatureStart + FeatureCount; }
-    const VkBool32* Begin() const { return FeatureStart; }
-    const VkBool32* End()   const { return FeatureStart + FeatureCount; }
-
-    VkBool32&       operator[](SIZE_T FeatureIndex)       { return FeatureStart[FeatureIndex]; }
-    const VkBool32& operator[](SIZE_T FeatureIndex) const { return FeatureStart[FeatureIndex]; }
-
-private:
-    VkBool32* FeatureStart = nullptr;
-    SIZE_T    FeatureCount = 0;
-};
-
 template <typename T>
 class TVulkanFeatureView
 {
@@ -301,28 +211,56 @@ public:
     {
         uint8* BasePointer  = reinterpret_cast<uint8*>(&Features);
         uint8* StartPointer = BasePointer + LayoutType::HeaderSize;
-
         FeatureStart = reinterpret_cast<VkBool32*>(StartPointer);
-        FeatureCount = LayoutType::FeatureCount;
     }
 
-    SIZE_T          Size()  const { return FeatureCount; }
-    
-    VkBool32*       Data()        { return FeatureStart; }
-    const VkBool32* Data()  const { return FeatureStart; }
-    
-    VkBool32*       Begin()       { return FeatureStart; }
-    VkBool32*       End()         { return FeatureStart + FeatureCount; }
+    constexpr SIZE_T Size()
+    {
+        return LayoutType::FeatureCount;
+    }
 
-    const VkBool32* Begin() const { return FeatureStart; }
-    const VkBool32* End()   const { return FeatureStart + FeatureCount; }
+    VkBool32* Data()
+    {
+        return FeatureStart;
+    }
 
-    VkBool32&       operator[](SIZE_T FeatureIndex)       { return FeatureStart[FeatureIndex]; }
-    const VkBool32& operator[](SIZE_T FeatureIndex) const { return FeatureStart[FeatureIndex]; }
+    const VkBool32* Data() const
+    {
+        return FeatureStart;
+    }
+
+    VkBool32* Begin()
+    {
+        return FeatureStart;
+    }
+
+    VkBool32* End()
+    {
+        return FeatureStart + LayoutType::FeatureCount;
+    }
+
+    const VkBool32* Begin() const
+    {
+        return FeatureStart;
+    }
+
+    const VkBool32* End() const
+    {
+        return FeatureStart + LayoutType::FeatureCount;
+    }
+
+    VkBool32& operator[](SIZE_T FeatureIndex)
+    {
+        return FeatureStart[FeatureIndex];
+    }
+
+    const VkBool32& operator[](SIZE_T FeatureIndex) const
+    {
+        return FeatureStart[FeatureIndex];
+    }
 
 private:
     VkBool32* FeatureStart = nullptr;
-    SIZE_T    FeatureCount = 0;
 };
 
 template <typename T>
@@ -336,23 +274,36 @@ public:
     {
         const uint8* BasePointer  = reinterpret_cast<const uint8*>(&Features);
         const uint8* StartPointer = BasePointer + LayoutType::HeaderSize;
-
         FeatureStart = reinterpret_cast<const VkBool32*>(StartPointer);
-        FeatureCount = LayoutType::FeatureCount;
     }
 
-    SIZE_T           Size()  const { return FeatureCount; }
-    
-    const VkBool32*  Data()  const { return FeatureStart; }
-    
-    const VkBool32*  Begin() const { return FeatureStart; }
-    const VkBool32*  End()   const { return FeatureStart + FeatureCount; }
-    
-    const VkBool32&  operator[](SIZE_T FeatureIndex) const { return FeatureStart[FeatureIndex]; }
+    constexpr SIZE_T Size()
+    {
+        return LayoutType::FeatureCount;
+    }
+
+    const VkBool32* Data() const
+    {
+        return FeatureStart;
+    }
+
+    const VkBool32* Begin() const
+    {
+        return FeatureStart;
+    }
+
+    const VkBool32* End() const
+    {
+        return FeatureStart + LayoutType::FeatureCount;
+    }
+
+    const VkBool32& operator[](SIZE_T FeatureIndex) const
+    {
+        return FeatureStart[FeatureIndex];
+    }
 
 private:
     const VkBool32* FeatureStart = nullptr;
-    SIZE_T          FeatureCount = 0;
 };
 
 struct FVulkanHashableImageView

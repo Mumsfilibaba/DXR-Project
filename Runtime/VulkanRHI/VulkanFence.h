@@ -16,12 +16,14 @@ public:
     ~FVulkanFence();
 
     bool Initialize(bool bSignaled);
-    bool IsSignaled() const;
+
     bool Wait(uint64 TimeOut = UINT64_MAX) const;
     bool Reset();
     
+    bool IsSignaled()   const;
     bool IsReferenced() const;
-    int64 AddRef() const;
+
+    int64 AddRef()  const;
     int64 Release() const;
 
     VkFence GetVkFence() const
@@ -45,7 +47,8 @@ public:
     uint64 Signal(FVulkanQueue& Queue);
     uint64 GetCompletedValue() const;
     bool   WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
-    void   SetDebugName(const FString& Name);
+
+    void SetDebugName(const FString& Name);
 
     uint64 GetLastSignaledValue() const
     {
@@ -80,6 +83,7 @@ public:
     // FRHIGpuFence Interface
     virtual bool IsSignaled() const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
+    
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
  

@@ -37,9 +37,9 @@ public:
 
 private:
     VkImageLayout         ImageLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-    TArray<VkImageLayout> SubresourceLayouts;
     uint32                NumSubresources = 0;
     bool                  bAllSameLayout  = true;
+    TArray<VkImageLayout> SubresourceLayouts;
 };
 
 class FVulkanBufferState

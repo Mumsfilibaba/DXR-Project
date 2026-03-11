@@ -1,6 +1,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<int32> CVarBackbufferCount(
     "VulkanRHI.SwapChain.BackBufferCount",

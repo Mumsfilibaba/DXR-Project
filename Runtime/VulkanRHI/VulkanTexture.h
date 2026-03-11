@@ -38,6 +38,9 @@ public:
 
     void SetVkImage(VkImage InImage);
     
+    FVulkanImageLayoutState&       GetImageLayoutState()       { return TrackedState; }
+    const FVulkanImageLayoutState& GetImageLayoutState() const { return TrackedState; }
+
     VkImage GetVkImage() const
     {
         return Image;
@@ -59,9 +62,6 @@ public:
         Info.Extent.X = InWidth;
         Info.Extent.Y = InHeight;
     }
-
-    FVulkanImageLayoutState&       GetImageLayoutState()       { return TrackedState; }
-    const FVulkanImageLayoutState& GetImageLayoutState() const { return TrackedState; }
 
 protected:
     using FImageViewMap = TMap<FVulkanHashableImageView, FVulkanResourceView*>;

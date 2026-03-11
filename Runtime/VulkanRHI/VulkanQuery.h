@@ -69,6 +69,7 @@ public:
     ~FVulkanQueryPool();
 
     bool Initialize();
+    
     FVulkanQueryAllocation Allocate(uint64* InResults);
     void Reset();
     void ResolveQueries();

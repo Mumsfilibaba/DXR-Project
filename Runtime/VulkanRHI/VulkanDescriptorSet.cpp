@@ -338,6 +338,7 @@ void FVulkanDescriptorState::SetSampler(FVulkanSamplerState* SamplerState, uint3
     }
 }
 
+#if VALIDATE_NO_NULL_DESCRIPTORS
 static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
 {
     switch (Type)
@@ -352,6 +353,7 @@ static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
         default:                                        return "UNKNOWN";
     }
 }
+#endif
 
 void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllocator* TransientAllocator)
 {

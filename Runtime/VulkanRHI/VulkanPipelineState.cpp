@@ -6,6 +6,7 @@
 #include "VulkanRHI/VulkanPipelineState.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanShader.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "VulkanRHI.PipelineCacheFileName",
@@ -160,18 +161,15 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
             ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT;
         }
 
-        const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& ConservativeRasterizationProperties = GetDevice()->GetPhysicalDevice()->GetConservativeRasterizationProperties();
-        ConservativeStateCreateInfo.extraPrimitiveOverestimationSize = ConservativeRasterizationProperties.maxExtraPrimitiveOverestimationSize;
+        ConservativeStateCreateInfo.extraPrimitiveOverestimationSize = GVulkanMaxExtraPrimitiveOverestimationSize;
     }
 #endif
 
-    // Helper for checking for extensions
-    FVulkanStructChain CreateInfoChain(CreateInfo);
 #if VK_EXT_depth_clip_enable
-    CreateInfoChain.AddNext(DepthClipStateCreateInfo);
+    AddToStructChain(CreateInfo, DepthClipStateCreateInfo);
 #endif
 #if VK_EXT_conservative_rasterization
-    CreateInfoChain.AddNext(ConservativeStateCreateInfo);
+    AddToStructChain(CreateInfo, ConservativeStateCreateInfo);
 #endif
 }
 

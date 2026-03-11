@@ -3,6 +3,7 @@
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanConstants.h"
 #include "VulkanRHI/VulkanShader.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageFlags ShaderStage)
 {

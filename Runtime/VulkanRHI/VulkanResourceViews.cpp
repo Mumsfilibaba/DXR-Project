@@ -2,6 +2,7 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 FVulkanResourceView::FVulkanResourceView(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
@@ -143,7 +144,7 @@ bool FVulkanResourceView::InitializeStructuredBufferView(VkBuffer InBuffer, VkDe
         return false;
     }
 
-    Type = EType::StructuredBufferView;
+    Type                            = EType::StructuredBufferView;
     StructuredBufferInfo.Buffer     = InBuffer;
     StructuredBufferInfo.Offset     = InOffset;
     StructuredBufferInfo.Range      = InRange;
@@ -276,10 +277,10 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
 			Stride = sizeof(uint32);
 		}
 
-        const VkDeviceSize ViewOffset = Stride * InInfo.BufferSRV.FirstElement;
         const VkBuffer     Buffer     = VulkanBuffer->GetBindVkBuffer();
-        const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
+        const VkDeviceSize ViewOffset = Stride * InInfo.BufferSRV.FirstElement;
 		const VkDeviceSize Range      = Stride * InInfo.BufferSRV.NumElements;
+        const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
 
 		if (!InitializeStructuredBufferView(Buffer, Offset, Range, ViewOffset))
 		{
@@ -444,10 +445,10 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 			Stride = sizeof(uint32);
 		}
 
-		const VkDeviceSize ViewOffset = Stride * InInfo.BufferUAV.FirstElement;
-		const VkBuffer     Buffer     = VulkanBuffer->GetBindVkBuffer();
-		const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
 		const VkDeviceSize Range      = Stride * InInfo.BufferUAV.NumElements;
+		const VkBuffer     Buffer     = VulkanBuffer->GetBindVkBuffer();
+		const VkDeviceSize ViewOffset = Stride * InInfo.BufferUAV.FirstElement;
+		const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
 
 		if (!InitializeStructuredBufferView(Buffer, Offset, Range, ViewOffset))
 		{

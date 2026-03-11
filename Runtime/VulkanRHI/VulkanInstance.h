@@ -3,14 +3,13 @@
 #include "Core/Containers/Set.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "VulkanRHI/VulkanRefCounted.h"
-
-class FVulkanExtensionRegistry;
+#include "VulkanRHI/VulkanExtensions.h"
 
 struct FVulkanInstanceCreateInfo
 {
-    TArray<const CHAR*> RequiredExtensionNames;
     TArray<const CHAR*> RequiredLayerNames;
     TArray<const CHAR*> OptionalLayerNames;
+    TArray<TUniquePtr<FVulkanInstanceExtension>> Extensions;
 };
 
 class FVulkanInstance
@@ -19,8 +18,7 @@ public:
     FVulkanInstance();
     ~FVulkanInstance();
 
-    bool Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FVulkanExtensionRegistry& ExtensionRegistry);
-    bool CreateDebugMessenger();
+    bool Initialize(FVulkanInstanceCreateInfo& CreateInfo);
     void Release();
 
     bool IsLayerEnabled(const FString& LayerName)
@@ -39,11 +37,8 @@ public:
     }
 
 private:
-    void*                    DriverHandle;  
-    VkInstance               Instance;
-#if VK_EXT_debug_utils
-    VkDebugUtilsMessengerEXT DebugMessenger;
-#endif
-    TSet<FString>            ExtensionNames;
-    TSet<FString>            LayerNames;
+    void*         DriverHandle;  
+    VkInstance    Instance;
+    TSet<FString> ExtensionNames;
+    TSet<FString> LayerNames;
 };

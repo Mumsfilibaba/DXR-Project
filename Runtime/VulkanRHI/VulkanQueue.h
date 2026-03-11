@@ -5,6 +5,7 @@
 #include "Core/Containers/Map.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanResourceState.h"

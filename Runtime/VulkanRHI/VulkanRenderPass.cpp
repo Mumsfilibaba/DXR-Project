@@ -158,8 +158,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         MultiviewCreateInfo.correlationMaskCount = 1;
         MultiviewCreateInfo.pCorrelationMasks    = &CorrelationMask;
 
-        FVulkanStructChain RenderPassCreateHelper(RenderPassCreateInfo);
-        RenderPassCreateHelper.AddNext(MultiviewCreateInfo);
+        AddToStructChain(RenderPassCreateInfo, MultiviewCreateInfo);
     }
 
     // Create the RenderPass
@@ -220,9 +219,7 @@ void FVulkanRenderPassCache::OnReleaseImageView(VkImageView View)
 {
     SCOPED_LOCK(FramebuffersCS);
 
-    // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
-
     for (const FVulkanFramebufferKey& Key : Keys)
     {
         if (Key.ContainsImageView(View))
@@ -241,9 +238,7 @@ void FVulkanRenderPassCache::OnReleaseRenderPass(VkRenderPass RenderPass)
 {
     SCOPED_LOCK(FramebuffersCS);
 
-    // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
-
     for (const FVulkanFramebufferKey& Key : Keys)
     {
         if (Key.ContainsRenderPass(RenderPass))

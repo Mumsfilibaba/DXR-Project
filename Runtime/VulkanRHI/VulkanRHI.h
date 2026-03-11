@@ -143,6 +143,9 @@ private:
     typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
 
     FVulkanInstance               Instance;
+#if VK_EXT_debug_utils
+    VkDebugUtilsMessengerEXT     DebugMessenger;
+#endif
     FVulkanPhysicalDevice*        PhysicalDevice;
     FVulkanDevice*                Device;
     FVulkanQueue*                 GraphicsQueue;

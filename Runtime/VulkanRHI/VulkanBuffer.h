@@ -29,6 +29,14 @@ public:
     virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
     virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
 
+    FVulkanBufferState&       GetBufferState()       { return TrackedState; }
+    const FVulkanBufferState& GetBufferState() const { return TrackedState; }
+
+    bool IsSuballocated() const
+    {
+        return MemoryStorage.IsSuballocated() && OwnedBuffer == VK_NULL_HANDLE;
+    }
+
     VkBuffer GetVkBuffer() const
     {
         if (OwnedBuffer != VK_NULL_HANDLE)
@@ -68,14 +76,6 @@ public:
     {
         return RequiredAlignment;
     }
-
-    bool IsSuballocated() const
-    {
-        return MemoryStorage.IsSuballocated() && OwnedBuffer == VK_NULL_HANDLE;
-    }
-
-    FVulkanBufferState&       GetBufferState()       { return TrackedState; }
-    const FVulkanBufferState& GetBufferState() const { return TrackedState; }
 
 protected:
     VkBuffer             OwnedBuffer;

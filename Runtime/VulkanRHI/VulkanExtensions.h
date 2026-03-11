@@ -3,78 +3,100 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Set.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 
-class FVulkanInstance;
-class FVulkanDevice;
-
-class VULKANRHI_API FVulkanExtensionBase
+class VULKANRHI_API FVulkanExtension
 {
 public:
-    virtual ~FVulkanExtensionBase() = default;
+    FVulkanExtension(const CHAR* InExtensionName, bool bInRequired, bool bInShouldEnable)
+        : ExtensionName(InExtensionName)
+        , bEnabled(false)
+        , bRequired(bInRequired)
+        , bShouldEnable(bInShouldEnable)
+    {
+    }
 
-    virtual bool IsRequired()   const { return false; }
-    virtual bool ShouldEnable() const { return true; }
-    
-    virtual const CHAR* GetName() const = 0;
+    virtual ~FVulkanExtension() = default;
 
-    bool IsEnabled() const
+    FORCEINLINE const CHAR* GetExtensionName() const
+    {
+        return ExtensionName;
+    }
+
+    FORCEINLINE bool IsRequired() const
+    {
+        return bRequired;
+    }
+
+    FORCEINLINE bool ShouldEnable() const
+    {
+        return bShouldEnable;
+    }
+
+    FORCEINLINE bool IsEnabled() const
     {
         return bEnabled;
     }
 
-    void SetEnabled(bool bInEnabled)
+    FORCEINLINE void SetEnabled(bool bInEnabled)
     {
         bEnabled = bInEnabled;
     }
 
 private:
-    bool bEnabled = false;
+    const CHAR* ExtensionName;
+
+    bool bRequired : 1;
+    bool bEnabled : 1;
+    bool bShouldEnable : 1;
 };
 
-struct VULKANRHI_API FVulkanInstanceExtension : public FVulkanExtensionBase
+struct VULKANRHI_API FVulkanInstanceExtension : public FVulkanExtension
 {
-    virtual bool LoadFunctions(FVulkanInstance* Instance) { return true; }
+public:
+    static void RegisterExtensions(TArray<TUniquePtr<FVulkanInstanceExtension>>& OutExtensions);
+
+public:
+    FVulkanInstanceExtension(const CHAR* InName, bool bInRequired, bool bInShouldEnable)
+        : FVulkanExtension(InName, bInRequired, bInShouldEnable)
+    {
+    }
+
+    virtual void PrepareInstanceCreateInfo(VkInstanceCreateInfo& OutInstanceCreateInfo) { }
+
 };
 
-struct VULKANRHI_API FVulkanDeviceExtension : public FVulkanExtensionBase
+struct VULKANRHI_API FVulkanDeviceExtension : public FVulkanExtension
 {
-    virtual bool LoadFunctions(FVulkanDevice* Device) { return true; }
+public:
+    static void RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceExtension>>& OutExtensions);
     
-    virtual void AddToFeatureQueryChain(FVulkanStructChain& Chain)  { }
-    virtual void AddToPropertyQueryChain(FVulkanStructChain& Chain) { }
-    virtual void AddToFeatureEnableChain(FVulkanStructChain& Chain) { }
+public:
+    FVulkanDeviceExtension(const CHAR* InName, bool bInRequired, bool bInShouldEnable)
+        : FVulkanExtension(InName, bInRequired, bInShouldEnable)
+    {
+    }
 
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures)       { }
+    virtual void PrepareDeviceProperties(VkPhysicalDeviceProperties2& OutProperties) { }
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo)    { }
     virtual void ProcessQueriedFeatures() { }
 };
 
-class VULKANRHI_API FVulkanExtensionRegistry : public FNonCopyable
+#if VK_KHR_portability_enumeration
+class FVulkanKHRPortabilityEnumerationExtension : public FVulkanInstanceExtension
 {
 public:
-    FVulkanExtensionRegistry();
-    ~FVulkanExtensionRegistry();
+    FVulkanKHRPortabilityEnumerationExtension(bool bInRequired, bool bInShouldEnable)
+        : FVulkanInstanceExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, bInRequired, bInShouldEnable)
+    {
+    }
 
-    FVulkanExtensionRegistry& AddExtension(FVulkanInstanceExtension* Extension);
-    FVulkanExtensionRegistry& AddExtension(FVulkanDeviceExtension* Extension);
-
-    bool ResolveInstanceExtensions(const TArray<VkExtensionProperties>& Available, TArray<const CHAR*>& OutEnabledNames);
-    bool ResolveDeviceExtensions(const TArray<VkExtensionProperties>& Available, TArray<const CHAR*>& OutEnabledNames);
-
-    bool LoadInstanceFunctions(FVulkanInstance* Instance);
-    bool LoadDeviceFunctions(FVulkanDevice* Device);
-
-    void BuildFeatureQueryChain(FVulkanStructChain& Chain);
-    void BuildPropertyQueryChain(FVulkanStructChain& Chain);
-    void BuildFeatureEnableChain(FVulkanStructChain& Chain);
-    void ProcessQueriedFeatures();
-
-    bool IsDeviceExtensionEnabled(const FString& Name)   const;
-    bool IsInstanceExtensionEnabled(const FString& Name) const;
-
-private:
-    TSet<FString>                     EnabledInstanceExtensionNames;
-    TSet<FString>                     EnabledDeviceExtensionNames;
-    TArray<FVulkanInstanceExtension*> InstanceExtensions;
-    TArray<FVulkanDeviceExtension*>   DeviceExtensions;
+    virtual void PrepareInstanceCreateInfo(VkInstanceCreateInfo& OutInstanceCreateInfo) override final
+    {
+        OutInstanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+    }
 };
+#endif
 

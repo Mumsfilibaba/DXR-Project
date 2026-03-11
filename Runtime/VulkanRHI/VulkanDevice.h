@@ -8,6 +8,7 @@
 #include "Core/Containers/String.h"
 #include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/VulkanRenderPass.h"
 #include "VulkanRHI/VulkanFenceManager.h"
@@ -19,7 +20,6 @@
 class FVulkanInstance;
 class FVulkanPhysicalDevice;
 class FVulkanTimelineFence;
-class FVulkanExtensionRegistry;
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
@@ -35,8 +35,8 @@ extern VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled;
 extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
 extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;
 extern VULKANRHI_API bool   GVulkanSupportsRobustness2;
-extern VULKANRHI_API bool   GVulkanSupportsDebugUtils;
 extern VULKANRHI_API bool   GVulkanSupportsConservativeRasterization;
+extern VULKANRHI_API float  GVulkanMaxExtraPrimitiveOverestimationSize;
 extern VULKANRHI_API bool   GVulkanSupportsPipelineCacheControl;
 extern VULKANRHI_API bool   GVulkanSupportsMultiviews;
 extern VULKANRHI_API bool   GVulkanSupportsBindless;
@@ -117,17 +117,27 @@ enum class EVulkanCommandQueueType
     Compute  = 3, 
 };
 
+struct VULKANRHI_API FVulkanCoreFeatures
+{
+    VkPhysicalDeviceFeatures         Features10 = {};
+    VkPhysicalDeviceVulkan11Features Features11 = {};
+    VkPhysicalDeviceVulkan12Features Features12 = {};
+    VkPhysicalDeviceVulkan13Features Features13 = {};
+
+    void BuildQueryChain(VkPhysicalDeviceFeatures2& Root);
+    bool CheckRequired(VkPhysicalDevice PhysicalDevice) const;
+    void EnableAvailable(FVulkanCoreFeatures& OutEnabled, const FVulkanCoreFeatures& Available) const;
+    void BuildEnableChain(VkPhysicalDeviceFeatures2& Root);
+};
+
 struct FVulkanDeviceCreateInfo
 {
-    TArray<const CHAR*>              RequiredExtensionNames = {};
-    VkPhysicalDeviceFeatures         RequiredFeatures       = {};
-    VkPhysicalDeviceVulkan11Features RequiredFeatures11     = {};
-    VkPhysicalDeviceVulkan12Features RequiredFeatures12     = {};
-    VkPhysicalDeviceVulkan13Features RequiredFeatures13     = {};
-    VkPhysicalDeviceFeatures         OptionalFeatures       = {};
-    VkPhysicalDeviceVulkan11Features OptionalFeatures11     = {};
-    VkPhysicalDeviceVulkan12Features OptionalFeatures12     = {};
-    VkPhysicalDeviceVulkan13Features OptionalFeatures13     = {};
+    FVulkanCoreFeatures RequiredFeatures;
+    FVulkanCoreFeatures OptionalFeatures;
+
+    TArray<const CHAR*> RequiredLayerNames;
+    TArray<const CHAR*> OptionalLayerNames;
+    TArray<TUniquePtr<FVulkanDeviceExtension>> Extensions;
 };
 
 struct FVulkanQueueFamilyIndices
@@ -242,14 +252,6 @@ public:
     const VkPhysicalDeviceMemoryProperties2& GetMemoryProperties2() const { return DeviceMemoryProperties2; }
     const VkPhysicalDeviceVulkan12Features&  GetFeaturesVulkan12()  const { return DeviceFeatures12; }
 
-    // Extension Information
-#if VK_EXT_conservative_rasterization
-    const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const
-    {
-        return ConservativeRasterizationProperties;
-    }
-#endif
-
     FVulkanInstance* GetInstance() const
     {
         return Instance;
@@ -277,11 +279,6 @@ private:
     VkPhysicalDeviceFeatures2         DeviceFeatures2;
     VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
     VkPhysicalDeviceVulkan12Features  DeviceFeatures12;
-
-    // Extension Information
-#if VK_EXT_conservative_rasterization
-    VkPhysicalDeviceConservativeRasterizationPropertiesEXT ConservativeRasterizationProperties;
-#endif
 };
 
 class FVulkanDevice
@@ -290,8 +287,9 @@ public:
     FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter);
     ~FVulkanDevice();
 
-    bool Initialize(const FVulkanDeviceCreateInfo& InDeviceCreateInfo, FVulkanExtensionRegistry& InRegistry);
+    bool Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo);
     bool PostLoaderInitalize();
+    
     bool InitializeDeviceFeatureSupport();
     bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);
 

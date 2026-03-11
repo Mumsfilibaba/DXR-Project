@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "VulkanRHI/VulkanCore.h"
+#include "VulkanRHI/VulkanExtensions.h"
 
 // Need the beta header for VK_KHR_portability_subset
 #include <vulkan/vulkan_beta.h>
@@ -10,22 +11,25 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct VulkanPlatformBase
 {
-    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions()
-    {
-        return TArray<const CHAR*>();
-    }
+    static FORCEINLINE void RetrieveDeviceExtensions(TArray<TUniquePtr<FVulkanDeviceExtension>>& OutDeviceExtensions)       { }
+    static FORCEINLINE void RetrieveInstanceExtensions(TArray<TUniquePtr<FVulkanInstanceExtension>>& OutInstanceExtensions) { }
 
     static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceLayers()
     {
         return TArray<const CHAR*>();
     }
 
-    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceExtensions()
+    static FORCEINLINE TArray<const CHAR*> GetOptionalInstanceLayers()
     {
         return TArray<const CHAR*>();
     }
-    
+
     static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceLayers()
+    {
+        return TArray<const CHAR*>();
+    }
+
+    static FORCEINLINE TArray<const CHAR*> GetOptionalDeviceLayers()
     {
         return TArray<const CHAR*>();
     }

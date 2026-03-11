@@ -1,4 +1,5 @@
 #include "VulkanRHI/VulkanRayTracing.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 FVulkanRayTracingGeometry::FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo)
     : FRHIRayTracingGeometry(InGeometryInfo)
@@ -71,7 +72,6 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     VkAccelerationStructureBuildSizesInfoKHR AccelerationStructureBuildSizesInfo = {};
     AccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-    // TODO: Is there any case when this is not true?
     const uint32 NumTriangles = BuildInfo.NumIndices / 3;
     if ((BuildInfo.NumIndices % 3) != 0)
     {

@@ -519,7 +519,7 @@ public:
     void     FreeMemory(VkDeviceMemory Memory);
 
     int64  GetActiveAllocationCount() const { return ActiveAllocationCount.Load(); }
-    uint32 GetMaxAllocationCount() const    { return MaxAllocationCount; }
+    uint32 GetMaxAllocationCount()    const { return MaxAllocationCount; }
 
 private:
     FVulkanBufferAllocator     BufferAllocator;

@@ -1,5 +1,6 @@
 #include "VulkanRHI/VulkanSemaphore.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanDeviceDebug.h"
 
 FVulkanSemaphore::FVulkanSemaphore(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)

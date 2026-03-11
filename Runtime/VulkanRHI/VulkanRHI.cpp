@@ -69,6 +69,9 @@ FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
     , Instance()
+#if VK_EXT_debug_utils
+    , DebugMessenger(VK_NULL_HANDLE)
+#endif
 #if VULKAN_ENABLE_CRASH_MARKERS
     , CrashMarkers(nullptr)
 #endif
@@ -141,8 +144,11 @@ FVulkanRHI::~FVulkanRHI()
     SAFE_DELETE(GraphicsQueue);
     SAFE_DELETE(Device);
     SAFE_DELETE(PhysicalDevice);
+
+#if VK_EXT_debug_utils
+    VulkanDestroyDebugMessenger(Instance.GetVkInstance(), DebugMessenger);
+#endif
     
-    // Finally release the VkInstance
     Instance.Release();
 
     if (GVulkanRHI == this)
@@ -153,12 +159,20 @@ FVulkanRHI::~FVulkanRHI()
 
 bool FVulkanRHI::Initialize()
 {
-    FVulkanExtensionRegistry ExtensionRegistry;
+    // -------------------------------------------------------------------------------------------
+    // Build instance create info
+    // -------------------------------------------------------------------------------------------
 
-    FVulkanInstanceCreateInfo InstanceDesc;
-    InstanceDesc.RequiredLayerNames     = VulkanPlatform::GetRequiredInstanceLayers();
-    InstanceDesc.RequiredExtensionNames = VulkanPlatform::GetRequiredInstanceExtensions();
+    FVulkanInstanceCreateInfo InstanceCreateInfo;
+    InstanceCreateInfo.RequiredLayerNames = VulkanPlatform::GetRequiredInstanceLayers();
+    InstanceCreateInfo.OptionalLayerNames = VulkanPlatform::GetOptionalInstanceLayers();
 
+    // Retrieve platform specific extensions
+    VulkanPlatform::RetrieveInstanceExtensions(InstanceCreateInfo.Extensions);
+    
+    // Register extensions that the engine wants to use
+    FVulkanInstanceExtension::RegisterExtensions(InstanceCreateInfo.Extensions);
+    
     bool bEnableDebugLayer = false;
     if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
     {
@@ -167,78 +181,89 @@ bool FVulkanRHI::Initialize()
     
     if (bEnableDebugLayer)
     {
-        InstanceDesc.RequiredLayerNames.Add(VULKAN_VALIDATION_LAYER_NAME);
+        InstanceCreateInfo.RequiredLayerNames.Add(VULKAN_VALIDATION_LAYER_NAME);
     }
-    
-    if (!Instance.Initialize(InstanceDesc, ExtensionRegistry))
+
+    if (!Instance.Initialize(InstanceCreateInfo))
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanInstance");
         return false;
     }
     
-    if (!VulkanLoader::LoadInstanceFunctions(GetInstance(), ExtensionRegistry))
+    if (!VulkanLoader::LoadInstanceFunctions(&Instance))
     {
         return false;
     }
 
-    if (!Instance.CreateDebugMessenger())
-    {
-        return false;
-    }
+#if VK_EXT_debug_utils
+    GVulkanSupportsDebugUtils = Instance.IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    VulkanCreateDebugMessenger(Instance.GetVkInstance(), DebugMessenger);
+#endif
+
+    // -------------------------------------------------------------------------------------------
+    // Build device create info
+    // -------------------------------------------------------------------------------------------
 
     FVulkanDeviceCreateInfo DeviceCreateInfo;
-    DeviceCreateInfo.RequiredExtensionNames = VulkanPlatform::GetRequiredDeviceExtensions();
+    DeviceCreateInfo.RequiredLayerNames = VulkanPlatform::GetRequiredDeviceLayers();
+    DeviceCreateInfo.OptionalLayerNames = VulkanPlatform::GetOptionalDeviceLayers();
+
+    // Retrieve platform specific extensions
+    VulkanPlatform::RetrieveDeviceExtensions(DeviceCreateInfo.Extensions);
     
+    // Register extensions that the engine wants to use
+    FVulkanDeviceExtension::RegisterExtensions(DeviceCreateInfo.Extensions);
+
 	// -------------------------------------------------------------------------------------------
     // Enable required features (These are necessary to run)
     // -------------------------------------------------------------------------------------------
 
     // Vulkan 1.0 Required
-    DeviceCreateInfo.RequiredFeatures.samplerAnisotropy                    = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures.shaderImageGatherExtended            = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures.imageCubeArray                       = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures.depthBiasClamp                       = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures.shaderStorageImageReadWithoutFormat  = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features10.samplerAnisotropy                    = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features10.shaderImageGatherExtended            = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features10.imageCubeArray                       = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features10.depthBiasClamp                       = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features10.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features10.shaderStorageImageReadWithoutFormat  = VK_TRUE;
     
     // Vulkan 1.0 Optional
-    DeviceCreateInfo.OptionalFeatures.geometryShader     = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures.tessellationShader = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures.multiDrawIndirect  = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.geometryShader     = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.tessellationShader = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.multiDrawIndirect  = VK_TRUE;
     
 #ifndef RELEASE_BUILD
     if (CVarVulkanEnableRobustBufferAccess.GetValue())
     {
-        DeviceCreateInfo.OptionalFeatures.robustBufferAccess = VK_TRUE;
+        DeviceCreateInfo.OptionalFeatures.Features10.robustBufferAccess = VK_TRUE;
     }
 #else
     {
-        DeviceCreateInfo.OptionalFeatures.robustBufferAccess = VK_FALSE;
+        DeviceCreateInfo.OptionalFeatures.Features10.robustBufferAccess = VK_FALSE;
     }
 #endif
 
     // Vulkan 1.1 Required
-    DeviceCreateInfo.RequiredFeatures11.shaderDrawParameters = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features11.shaderDrawParameters = VK_TRUE;
     
     // Vulkan 1.1 Optional
-    DeviceCreateInfo.OptionalFeatures11.multiview = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features11.multiview = VK_TRUE;
 
     // Vulkan 1.2 Required 
-    DeviceCreateInfo.RequiredFeatures12.hostQueryReset      = VK_TRUE; 
-    DeviceCreateInfo.RequiredFeatures12.bufferDeviceAddress = VK_TRUE; 
-    DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer   = VK_TRUE; 
-    DeviceCreateInfo.RequiredFeatures12.timelineSemaphore   = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures.Features12.hostQueryReset      = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures.Features12.bufferDeviceAddress = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures.Features12.shaderOutputLayer   = VK_TRUE; 
+    DeviceCreateInfo.RequiredFeatures.Features12.timelineSemaphore   = VK_TRUE; 
     
     // Vulkan 1.2 Optional 
-    DeviceCreateInfo.OptionalFeatures12.descriptorIndexing  = VK_TRUE; 
+    DeviceCreateInfo.OptionalFeatures.Features12.descriptorIndexing  = VK_TRUE; 
 
     // Vulkan 1.3 Required
-    DeviceCreateInfo.RequiredFeatures13.dynamicRendering = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures13.synchronization2 = VK_TRUE;
-    DeviceCreateInfo.RequiredFeatures13.maintenance4     = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features13.dynamicRendering = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features13.synchronization2 = VK_TRUE;
+    DeviceCreateInfo.RequiredFeatures.Features13.maintenance4     = VK_TRUE;
 
     // Vulkan 1.3 Optional
-    DeviceCreateInfo.OptionalFeatures13.pipelineCreationCacheControl = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features13.pipelineCreationCacheControl = VK_TRUE;
 
     // Create physical device
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
@@ -249,13 +274,13 @@ bool FVulkanRHI::Initialize()
     }
 
     Device = new FVulkanDevice(GetInstance(), GetPhysicalDevice());
-    if (!Device->Initialize(DeviceCreateInfo, ExtensionRegistry))
+    if (!Device->Initialize(DeviceCreateInfo))
     {
         VULKAN_ERROR_CRITICAL("Failed to initialize VulkanDevice");
         return false;
     }
     
-    if (!VulkanLoader::LoadDeviceFunctions(Device, ExtensionRegistry))
+    if (!VulkanLoader::LoadDeviceFunctions(Device))
     {
         return false;
     }

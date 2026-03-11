@@ -11,11 +11,6 @@ static TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
     "Enables more logging within VulkanRHI",
     true);
 
-static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
-    "VulkanRHI.BreakOnValidationError",
-    "Enables breakpoints when the validation-layer encounters an error",
-    true);
-
 #if VULKAN_ENABLE_GPU_VALIDATION
 static TAutoConsoleVariable<bool> CVarVulkanEnableGPUAssistedValidation(
     "VulkanRHI.EnableGPUAssistedValidation",
@@ -23,34 +18,9 @@ static TAutoConsoleVariable<bool> CVarVulkanEnableGPUAssistedValidation(
     false);
 #endif
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
-
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
-{
-    if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-    {
-        LOG_ERROR("[Vulkan Validation layer] %s", CallbackData->pMessage);
-        
-        if (CVarBreakOnValidationError.GetValue())
-        {
-            DEBUG_BREAK();
-        }
-    }
-    else if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-    {
-        LOG_WARNING("[Vulkan Validation layer] %s", CallbackData->pMessage);
-    }
-
-    return VK_FALSE;
-}
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING
-
 FVulkanInstance::FVulkanInstance()
     : DriverHandle(nullptr)
     , Instance(VK_NULL_HANDLE)
-    , DebugMessenger()
     , ExtensionNames()
     , LayerNames()
 {
@@ -61,7 +31,7 @@ FVulkanInstance::~FVulkanInstance()
     Release();
 }
 
-bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FVulkanExtensionRegistry& ExtensionRegistry)
+bool FVulkanInstance::Initialize(FVulkanInstanceCreateInfo& CreateInfo)
 {
     DriverHandle = VulkanPlatform::LoadVulkanLibrary();
     if (!DriverHandle)
@@ -77,9 +47,10 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FV
         return false;
     }
 
-    VULKAN_LOAD_INSTANCE_FUNCTION(Instance, CreateInstance);
-    VULKAN_LOAD_INSTANCE_FUNCTION(Instance, EnumerateInstanceLayerProperties);
-    VULKAN_LOAD_INSTANCE_FUNCTION(Instance, EnumerateInstanceExtensionProperties);
+    if (!VulkanLoader::LoadGlobalFunctions())
+    {
+        return false;
+    }
 
     VkResult Result = VK_SUCCESS;
 
@@ -152,6 +123,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FV
     for (const VkLayerProperties& LayerProperty : LayerProperties)
     {
         const auto MatchLayer = [=](const CHAR* Other) -> bool { return FCString::Strcmp(LayerProperty.layerName, Other) == 0; };
+
         if (CreateInfo.RequiredLayerNames.ContainsWithPredicate(MatchLayer) || CreateInfo.OptionalLayerNames.ContainsWithPredicate(MatchLayer))
         {
             EnabledLayerNames.Add(LayerProperty.layerName);
@@ -162,6 +134,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FV
     for (const CHAR* LayerName : CreateInfo.RequiredLayerNames)
     {
         const auto MatchLayer = [=](const CHAR* Other) -> bool { return FCString::Strcmp(LayerName, Other) == 0; };
+
         if (!EnabledLayerNames.ContainsWithPredicate(MatchLayer))
         {
             VULKAN_ERROR_CRITICAL("Instance layer '%s' could not be enabled", LayerName);
@@ -169,41 +142,33 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FV
         }
     }
 
-    // Resolve instance extensions via the registry
+    // Resolve instance extensions
     TArray<const CHAR*> EnabledExtensionNames;
-    if (!ExtensionRegistry.ResolveInstanceExtensions(ExtensionProperties, EnabledExtensionNames))
+    for (const TUniquePtr<FVulkanInstanceExtension>& Extension : CreateInfo.Extensions)
     {
-        return false;
-    }
+        Extension->SetEnabled(false);
 
-    // Also match platform-required extension names that are not in the registry
-    for (const CHAR* RequiredName : CreateInfo.RequiredExtensionNames)
-    {
-        const auto AlreadyEnabled = [&](const CHAR* Name) { return FCString::Strcmp(RequiredName, Name) == 0; };
-        if (!EnabledExtensionNames.ContainsWithPredicate(AlreadyEnabled))
+        if (!Extension->ShouldEnable())
         {
-            bool bFound = false;
-            for (const VkExtensionProperties& ExtProp : ExtensionProperties)
-            {
-                if (FCString::Strcmp(RequiredName, ExtProp.extensionName) == 0)
-                {
-                    EnabledExtensionNames.Add(ExtProp.extensionName);
-                    bFound = true;
-                    break;
-                }
-            }
+            continue;
+        }
 
-            if (!bFound)
+        for (const VkExtensionProperties& Property : ExtensionProperties)
+        {
+            if (FCString::Strcmp(Extension->GetExtensionName(), Property.extensionName) == 0)
             {
-                VULKAN_ERROR_CRITICAL("Instance extension '%s' could not be enabled", RequiredName);
-                return false;
+                Extension->SetEnabled(true);
+                EnabledExtensionNames.Add(Property.extensionName);
+                ExtensionNames.Emplace(Property.extensionName);
+                break;
             }
         }
-    }
 
-    for (const CHAR* ExtName : EnabledExtensionNames)
-    {
-        ExtensionNames.Emplace(ExtName);
+        if (!Extension->IsEnabled() && Extension->IsRequired())
+        {
+            VULKAN_ERROR_CRITICAL("Required instance extension '%s' is not available", Extension->GetExtensionName());
+            return false;
+        }
     }
 
     if (bVerboseLogging)
@@ -233,9 +198,9 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FV
     ApplicationInfo.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     ApplicationInfo.pNext              = nullptr;
     ApplicationInfo.apiVersion         = VK_API_VERSION_1_3;
-    ApplicationInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
     ApplicationInfo.pApplicationName   = "DXR-Project";
     ApplicationInfo.pEngineName        = "DXR-Engine";
+    ApplicationInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
     ApplicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 
     VkInstanceCreateInfo InstanceCreateInfo = {};
@@ -247,67 +212,13 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FV
     InstanceCreateInfo.enabledLayerCount       = EnabledLayerNames.Size();
     InstanceCreateInfo.ppEnabledLayerNames     = EnabledLayerNames.Data();
 
-#if VK_KHR_portability_enumeration
-    if (IsExtensionEnabled(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME))
+    for (const TUniquePtr<FVulkanInstanceExtension>& Extension : CreateInfo.Extensions)
     {
-        InstanceCreateInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        if (Extension->IsEnabled())
+        {
+            Extension->PrepareInstanceCreateInfo(InstanceCreateInfo);
+        }
     }
-#endif
-
-    bool bEnableDebugLayer = false;
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
-    {
-        bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
-    }
-
-#if VK_EXT_debug_utils
-    VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo = {};
-    if (bEnableDebugLayer)
-    {
-        DebugMessengerCreateInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        DebugMessengerCreateInfo.flags           = 0;
-        DebugMessengerCreateInfo.pNext           = nullptr;
-        DebugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        DebugMessengerCreateInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        DebugMessengerCreateInfo.pfnUserCallback = DebugLayerCallback;
-        DebugMessengerCreateInfo.pUserData       = nullptr;
-    }
-#endif
-
-#if VK_EXT_validation_features
-    VkValidationFeatureEnableEXT GPUAVEnables[] = 
-    {
-        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
-        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT
-    };
-
-    VkValidationFeaturesEXT ValidationFeatures = {};
-    ValidationFeatures.sType                         = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-    ValidationFeatures.enabledValidationFeatureCount = ARRAY_COUNT(GPUAVEnables);
-    ValidationFeatures.pEnabledValidationFeatures    = GPUAVEnables;
-
-    bool bEnableGPUAV = false;
-#if VULKAN_ENABLE_GPU_VALIDATION
-    if (bEnableDebugLayer)
-    {
-        bEnableGPUAV = CVarVulkanEnableGPUAssistedValidation.GetValue();
-    }
-#endif
-
-    GVulkanGPUAssistedValidationEnabled = bEnableGPUAV;
-    if (bEnableGPUAV)
-    {
-        VULKAN_INFO("GPU-Assisted Validation enabled - VK_EXT_descriptor_buffer will be disabled");
-    }
-#endif
-
-    FVulkanStructChain InstanceCreateChain(InstanceCreateInfo);
-#if VK_EXT_debug_utils
-    InstanceCreateChain.AddNext(DebugMessengerCreateInfo);
-#endif
-#if VK_EXT_validation_features
-    InstanceCreateChain.AddNextIf(bEnableGPUAV, ValidationFeatures);
-#endif
 
     Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
     if (VULKAN_FAILED(Result))
@@ -316,62 +227,11 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& CreateInfo, FV
         return false;
     }
 
-    // -------------------------------------------------------------------------------------------
-    // Load functions that require the instance to be created
-    // -------------------------------------------------------------------------------------------
-
-    VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyInstance);
-
-    return true;
-}
-
-bool FVulkanInstance::CreateDebugMessenger()
-{
-#if VK_EXT_debug_utils
-    if (!GVulkanSupportsDebugUtils)
-    {
-        return true;
-    }
-
-    bool bEnableDebugLayer = false;
-    if (IConsoleVariable* CVarEnableDebugLayer = FConsoleManager::Get().FindConsoleVariable("RHI.EnableDebugLayer"))
-    {
-        bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
-    }
-
-    if (bEnableDebugLayer)
-    {
-        VkDebugUtilsMessengerCreateInfoEXT DebugMessengerCreateInfo = {};
-        DebugMessengerCreateInfo.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        DebugMessengerCreateInfo.flags           = 0;
-        DebugMessengerCreateInfo.pNext           = nullptr;
-        DebugMessengerCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        DebugMessengerCreateInfo.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        DebugMessengerCreateInfo.pfnUserCallback = DebugLayerCallback;
-        DebugMessengerCreateInfo.pUserData       = nullptr;
-
-        VkResult Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &DebugMessenger);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR_CRITICAL("Failed to create DebugMessenger");
-            return false;
-        }
-    }
-#endif
-
     return true;
 }
 
 void FVulkanInstance::Release()
 {
-#if VK_EXT_debug_utils
-    if (VULKAN_CHECK_HANDLE(DebugMessenger))
-    {
-        vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
-        DebugMessenger = VK_NULL_HANDLE;
-    }
-#endif
-
     if (VULKAN_CHECK_HANDLE(Instance))
     {
         vkDestroyInstance(Instance, nullptr);

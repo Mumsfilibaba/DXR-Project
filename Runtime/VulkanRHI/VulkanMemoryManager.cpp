@@ -351,8 +351,7 @@ bool FVulkanBuddyAllocator::Initialize()
     AllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
     AllocateFlagsInfo.flags = AllocateFlags;
 
-    FVulkanStructChain AllocateInfoChain(AllocateInfo);
-    AllocateInfoChain.AddNext(AllocateFlagsInfo);
+    AddToStructChain(AllocateInfo, AllocateFlagsInfo);
 
     VkResult Result = GetDevice()->GetMemoryManager().AllocateMemory(&AllocateInfo, &DeviceMemory);
     if (VULKAN_FAILED(Result))
@@ -740,8 +739,7 @@ bool FVulkanPoolAllocatorPage::Initialize()
     AllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
     AllocateFlagsInfo.flags = AllocateFlags;
 
-    FVulkanStructChain AllocateInfoChain(AllocateInfo);
-    AllocateInfoChain.AddNext(AllocateFlagsInfo);
+    AddToStructChain(AllocateInfo, AllocateFlagsInfo);
 
     VkResult Result = GetDevice()->GetMemoryManager().AllocateMemory(&AllocateInfo, &DeviceMemory);
     if (VULKAN_FAILED(Result))
@@ -1358,8 +1356,7 @@ void* FVulkanLinearAllocator::AllocateOversized(uint64 SizeInBytes, uint64 Align
     AllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
     AllocateFlagsInfo.flags = AllocateFlags;
 
-    FVulkanStructChain AllocateInfoChain(AllocateInfo);
-    AllocateInfoChain.AddNext(AllocateFlagsInfo);
+    AddToStructChain(AllocateInfo, AllocateFlagsInfo);
 
     VkDeviceMemory DeviceMemory = VK_NULL_HANDLE;
     VkResult Result = MemoryManager.AllocateMemory(&AllocateInfo, &DeviceMemory);
@@ -1624,8 +1621,7 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
         AllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
         AllocateFlagsInfo.flags = AllocateFlags;
 
-        FVulkanStructChain AllocateChain(AllocateInfo);
-        AllocateChain.AddNext(AllocateFlagsInfo);
+        AddToStructChain(AllocateInfo, AllocateFlagsInfo);
 
         VkDeviceMemory DedicatedMemory = VK_NULL_HANDLE;
         VkResult DedicatedResult = GetDevice()->GetMemoryManager().AllocateMemory(&AllocateInfo, &DedicatedMemory);
@@ -1780,8 +1776,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
     DeviceImageMemReqInfo.sType       = VK_STRUCTURE_TYPE_DEVICE_IMAGE_MEMORY_REQUIREMENTS;
     DeviceImageMemReqInfo.pCreateInfo = &ImageCreateInfo;
 
-    FVulkanStructChain RequirementsChain(MemoryRequirements2);
-    RequirementsChain.AddNext(DedicatedRequirements);
+    AddToStructChain(MemoryRequirements2, DedicatedRequirements);
 
     vkGetDeviceImageMemoryRequirements(VulkanDevice, &DeviceImageMemReqInfo, &MemoryRequirements2);
 
@@ -1810,9 +1805,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
         DedicatedAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
         DedicatedAllocateInfo.image = Image;
 
-        FVulkanStructChain AllocateChain(AllocateInfo);
-        AllocateChain.AddNext(AllocateFlagsInfo);
-        AllocateChain.AddNext(DedicatedAllocateInfo);
+        AddAllToStructChain(AllocateInfo, AllocateFlagsInfo, DedicatedAllocateInfo);
 
         VkDeviceMemory DedicatedMemory = VK_NULL_HANDLE;
         VkResult Result = GetDevice()->GetMemoryManager().AllocateMemory(&AllocateInfo, &DedicatedMemory);
@@ -1876,8 +1869,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
     AllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
     AllocateFlagsInfo.flags = AllocateFlags;
 
-    FVulkanStructChain AllocateChain(AllocateInfo);
-    AllocateChain.AddNext(AllocateFlagsInfo);
+    AddToStructChain(AllocateInfo, AllocateFlagsInfo);
 
     VkDeviceMemory DedicatedMemory = VK_NULL_HANDLE;
     VkResult Result = GetDevice()->GetMemoryManager().AllocateMemory(&AllocateInfo, &DedicatedMemory);
