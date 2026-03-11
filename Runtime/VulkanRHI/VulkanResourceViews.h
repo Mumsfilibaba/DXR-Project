@@ -30,6 +30,9 @@ public:
     {
         VkBuffer     Buffer;
         VkBufferView BufferView;
+        VkFormat     Format;
+        VkDeviceSize Range;
+        VkDeviceSize ViewOffset;
     };
 
     struct FImageView

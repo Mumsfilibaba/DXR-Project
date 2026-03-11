@@ -74,6 +74,16 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         UsageFlags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
+    if (Info.IsShaderResourceBuffer())
+    {
+        UsageFlags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minTexelBufferOffsetAlignment);
+    }
+    if (Info.IsUnorderedAccessBuffer())
+    {
+        UsageFlags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+        RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minTexelBufferOffsetAlignment);
+    }
 
     const VkDeviceSize AlignedSize = Math::AlignUp(static_cast<VkDeviceSize>(Info.Size), RequiredAlignment);
 

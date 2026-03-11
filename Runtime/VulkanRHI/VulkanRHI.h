@@ -116,6 +116,13 @@ public:
         return GraphicsCommandContext;
     }
 
+    FVulkanQueue* GetPresentQueue() const
+    {
+        return PresentQueue;
+    }
+
+    bool EnsurePresentQueue();
+
 #if VULKAN_ENABLE_CRASH_MARKERS
     bool IsCrashMarkersEnabled() const 
     {
@@ -149,6 +156,7 @@ private:
     FVulkanPhysicalDevice*        PhysicalDevice;
     FVulkanDevice*                Device;
     FVulkanQueue*                 GraphicsQueue;
+    FVulkanQueue*                 PresentQueue;
     FVulkanCommandContext*        GraphicsCommandContext;
     TArray<FVulkanDeferredObject> DeletionQueue;
     FCriticalSection              DeletionQueueCS;

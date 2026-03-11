@@ -1081,66 +1081,101 @@ bool FD3D12Device::CreateDevice()
         }
     }
 
-#if WIN10_BUILD_14393
+#ifdef __ID3D12Device1_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device1>(&D3D12Device1)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device1");
     }
 #endif
 
-#if WIN10_BUILD_15063
+#ifdef __ID3D12Device2_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device2>(&D3D12Device2)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device2");
     }
 #endif
 
-#if WIN10_BUILD_16299
+#ifdef __ID3D12Device3_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device3>(&D3D12Device3)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device3");
     }
 #endif
 
-#if WIN10_BUILD_17134
+#ifdef __ID3D12Device4_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device4>(&D3D12Device4)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device4");
     }
 #endif
 
-#if WIN10_BUILD_17763
+#ifdef __ID3D12Device5_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device5>(&D3D12Device5)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device5");
     }
 #endif
 
-#if WIN10_BUILD_18362
+#ifdef __ID3D12Device6_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device6>(&D3D12Device6)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device6");
     }
 #endif
 
-#if WIN10_BUILD_19041
+#ifdef __ID3D12Device7_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device7>(&D3D12Device7)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device7");
     }
 #endif
 
-#if WIN10_BUILD_20348
+#ifdef __ID3D12Device8_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device8>(&D3D12Device8)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device8");
     }
 #endif
 
-#if WIN11_BUILD_22000
+#ifdef __ID3D12Device9_INTERFACE_DEFINED__
     if (FAILED(D3D12Device.GetAs<ID3D12Device9>(&D3D12Device9)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device9");
+    }
+#endif
+
+#ifdef __ID3D12Device10_INTERFACE_DEFINED__
+    if (FAILED(D3D12Device.GetAs<ID3D12Device10>(&D3D12Device10)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device10");
+    }
+#endif
+
+#ifdef __ID3D12Device11_INTERFACE_DEFINED__
+    if (FAILED(D3D12Device.GetAs<ID3D12Device11>(&D3D12Device11)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device11");
+    }
+#endif
+
+#ifdef __ID3D12Device12_INTERFACE_DEFINED__
+    if (FAILED(D3D12Device.GetAs<ID3D12Device12>(&D3D12Device12)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device12");
+    }
+#endif
+
+#ifdef __ID3D12Device13_INTERFACE_DEFINED__
+    if (FAILED(D3D12Device.GetAs<ID3D12Device13>(&D3D12Device13)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device13");
+    }
+#endif
+
+#ifdef __ID3D12Device14_INTERFACE_DEFINED__
+    if (FAILED(D3D12Device.GetAs<ID3D12Device14>(&D3D12Device14)))
+    {
+        D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device14");
     }
 #endif
 

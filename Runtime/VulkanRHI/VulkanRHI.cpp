@@ -141,6 +141,14 @@ FVulkanRHI::~FVulkanRHI()
     SAFE_DELETE(CrashMarkers);
 #endif
 
+    if (PresentQueue != GraphicsQueue)
+    {
+        SAFE_DELETE(PresentQueue);
+    }
+    else
+    {
+        PresentQueue = nullptr;
+    }
     SAFE_DELETE(GraphicsQueue);
     SAFE_DELETE(Device);
     SAFE_DELETE(PhysicalDevice);
@@ -438,10 +446,41 @@ FRHISwapChain* FVulkanRHI::CreateSwapChain(const FRHISwapChainInfo& InSwapChainI
     {
         return nullptr;
     }
-    else
+
+    EnsurePresentQueue();
+    return NewSwapChain.ReleaseOwnership();
+}
+
+bool FVulkanRHI::EnsurePresentQueue()
+{
+    if (PresentQueue)
     {
-        return NewSwapChain.ReleaseOwnership();
+        return true;
     }
+
+    TOptional<FVulkanQueueFamilyIndices> QueueIndices = Device->GetQueueIndicies();
+    if (!QueueIndices || QueueIndices->PresentQueueIndex == uint32(~0))
+    {
+        return false;
+    }
+
+    if (!QueueIndices->HasSeparatePresentQueue())
+    {
+        PresentQueue = GraphicsQueue;
+        return true;
+    }
+
+    PresentQueue = new FVulkanQueue(Device, EVulkanCommandQueueType::Present);
+    if (!PresentQueue->Initialize())
+    {
+        VULKAN_ERROR_CRITICAL("Failed to initialize present queue");
+        SAFE_DELETE(PresentQueue);
+        return false;
+    }
+
+    PresentQueue->SetDebugName("Present Queue");
+    VULKAN_INFO("Created separate present queue (family=%u)", QueueIndices->PresentQueueIndex);
+    return true;
 }
 
 FRHIQuery* FVulkanRHI::CreateQuery(EQueryType InQueryType)

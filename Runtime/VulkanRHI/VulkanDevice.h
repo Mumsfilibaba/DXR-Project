@@ -115,6 +115,7 @@ enum class EVulkanCommandQueueType
     Graphics = 1, 
     Copy     = 2, 
     Compute  = 3, 
+    Present  = 4,
 };
 
 struct VULKANRHI_API FVulkanCoreFeatures
@@ -148,12 +149,16 @@ struct FVulkanQueueFamilyIndices
         : GraphicsQueueIndex(InGraphicsQueueIndex)
         , CopyQueueIndex(InCopyQueueIndex)
         , ComputeQueueIndex(InComputeQueueIndex)
+        , PresentQueueIndex(InGraphicsQueueIndex)
     {
     }
+
+    bool HasSeparatePresentQueue() const { return PresentQueueIndex != GraphicsQueueIndex; }
 
     uint32 GraphicsQueueIndex = uint32(~0);
     uint32 CopyQueueIndex     = uint32(~0);
     uint32 ComputeQueueIndex  = uint32(~0);
+    uint32 PresentQueueIndex  = uint32(~0);
 };
 
 struct FVulkanDefaultResources
@@ -298,6 +303,7 @@ public:
 
     FVulkanQueryPoolManager* GetQueryPoolManager(EQueryType QueryType);
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
+    bool   InitializePresentQueueFamily(VkSurfaceKHR Surface);
 
     FVulkanRenderPassCache&       GetRenderPassCache()       { return *RenderPassCache; }
     FVulkanMemoryManager&         GetMemoryManager()         { return *MemoryManager; }

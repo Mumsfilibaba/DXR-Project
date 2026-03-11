@@ -50,6 +50,7 @@ void FD3D12CommandContextState::BindGraphicsStates()
         GraphicsState.bBindRenderTargets = false;
     }
 
+#ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
     if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
     {
 		if (GraphicsState.bBindShadingRateImage)
@@ -71,6 +72,7 @@ void FD3D12CommandContextState::BindGraphicsStates()
 			GraphicsState.bBindShadingRate = false;
 		}
     }
+#endif
 
     BindResources(RootSignture, GraphicsState.PipelineState.Get(), ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
     BindSamplers(RootSignture, GraphicsState.PipelineState.Get(), ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);

@@ -1748,8 +1748,12 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
     RayDispatchDesc.Height = Height;
     RayDispatchDesc.Depth  = Depth;
 
+#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
     CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
     CommandList->GetGraphicsCommandList4()->DispatchRays(&RayDispatchDesc);
+#else
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: DispatchRays requires ID3D12GraphicsCommandList4 (Windows SDK 10.0.17763+)");
+#endif
 }
 
 void FD3D12CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)

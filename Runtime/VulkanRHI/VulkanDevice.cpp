@@ -721,14 +721,20 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         return false;
     }
 
-    VULKAN_INFO("QueueIndicies: Graphics=%d, Compute=%d, Copy=%d", QueueIndicies->GraphicsQueueIndex, QueueIndicies->ComputeQueueIndex, QueueIndicies->CopyQueueIndex);
+    VULKAN_INFO("QueueIndicies: Graphics=%d, Compute=%d, Copy=%d, Present=%d", 
+        QueueIndicies->GraphicsQueueIndex, QueueIndicies->ComputeQueueIndex, QueueIndicies->CopyQueueIndex, QueueIndicies->PresentQueueIndex);
 
-    const TSet<uint32> UniqueQueueIndices = 
+    TSet<uint32> UniqueQueueIndices = 
     { 
         QueueIndicies->GraphicsQueueIndex, 
         QueueIndicies->CopyQueueIndex, 
         QueueIndicies->ComputeQueueIndex
     };
+
+    if (QueueIndicies->PresentQueueIndex != uint32(~0) && QueueIndicies->HasSeparatePresentQueue())
+    {
+        UniqueQueueIndices.Insert(QueueIndicies->PresentQueueIndex);
+    }
 
     const float DefaultQueuePriority = 0.0f;
 
@@ -1339,11 +1345,65 @@ uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const
     {
         return QueueIndicies->CopyQueueIndex;
     }
+    else if (Type == EVulkanCommandQueueType::Present)
+    {
+        return QueueIndicies->PresentQueueIndex;
+    }
     else
     {
         VULKAN_ERROR_CRITICAL("Invalid CommandQueueType");
         return (~0U);
     }
+}
+
+bool FVulkanDevice::InitializePresentQueueFamily(VkSurfaceKHR Surface)
+{
+    CHECK(QueueIndicies.HasValue());
+
+    VkPhysicalDevice GPU = PhysicalDevice->GetVkPhysicalDevice();
+
+    uint32 QueueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(GPU, &QueueFamilyCount, nullptr);
+
+    // Prefer the graphics family if it also supports present (common case)
+    VkBool32 GraphicsSupportsPresent = VK_FALSE;
+    vkGetPhysicalDeviceSurfaceSupportKHR(GPU, QueueIndicies->GraphicsQueueIndex, Surface, &GraphicsSupportsPresent);
+    if (GraphicsSupportsPresent)
+    {
+        QueueIndicies->PresentQueueIndex = QueueIndicies->GraphicsQueueIndex;
+        return true;
+    }
+
+    // Graphics queue doesn't support present - find another family that does,
+    // preferring one we already have a queue for (compute or copy)
+    const uint32 PreferredFamilies[] = { QueueIndicies->ComputeQueueIndex, QueueIndicies->CopyQueueIndex };
+    for (uint32 FamilyIndex : PreferredFamilies)
+    {
+        VkBool32 Supported = VK_FALSE;
+        vkGetPhysicalDeviceSurfaceSupportKHR(GPU, FamilyIndex, Surface, &Supported);
+        if (Supported)
+        {
+            QueueIndicies->PresentQueueIndex = FamilyIndex;
+            VULKAN_INFO("Using queue family %u (shared with existing queue) for present", FamilyIndex);
+            return true;
+        }
+    }
+
+    // Fall back to first family that supports present
+    for (uint32 i = 0; i < QueueFamilyCount; i++)
+    {
+        VkBool32 Supported = VK_FALSE;
+        vkGetPhysicalDeviceSurfaceSupportKHR(GPU, i, Surface, &Supported);
+        if (Supported)
+        {
+            QueueIndicies->PresentQueueIndex = i;
+            VULKAN_WARNING("Present queue family %u differs from graphics (%u) and is not a pre-existing queue family", i, QueueIndicies->GraphicsQueueIndex);
+            return true;
+        }
+    }
+
+    VULKAN_ERROR_CRITICAL("No queue family supports presentation for this surface");
+    return false;
 }
 
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)

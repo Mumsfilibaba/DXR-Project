@@ -1,4 +1,5 @@
 #include "VulkanRHI/VulkanSwapChainResource.h"
+#include "VulkanRHI/VulkanCommandBuffer.h"
 
 static constexpr bool GVulkanReportSwapChainAcquireImageNonSuccessResult = true;
 
@@ -104,7 +105,6 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 		VULKAN_INFO("Selected format '%s' (colorspace=%d) for SwapChain", ToString(SelectedFormat.format), int(SelectedFormat.colorSpace));
 	}
 
-	// TODO: Investigate Vulkan V-sync
 	// Pick present mode (FIFO guaranteed by spec)
 	const auto HasPresentMode = [&](const VkPresentModeKHR& InPresentMode)
 	{
@@ -119,37 +119,36 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 		return false;
 	};
 
-    // VK_PRESENT_MODE_FIFO_KHR is spec-guaranteed
 	VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 	if (CreateInfo.bVerticalSync)
 	{
-        if (HasPresentMode(VK_PRESENT_MODE_MAILBOX_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-        }
-        else if (HasPresentMode(VK_PRESENT_MODE_FIFO_KHR))
-        {
+		// FIFO is true vsync (frame rate capped to display refresh, spec-guaranteed).
+		// FIFO_RELAXED allows late frames to present immediately to reduce stuttering.
+		if (HasPresentMode(VK_PRESENT_MODE_FIFO_KHR))
+		{
 			SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-        }
-        else if (HasPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
-        }
+		}
+		else if (HasPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+		}
 	}
 	else
 	{
-        if (HasPresentMode(VK_PRESENT_MODE_IMMEDIATE_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-        }
-        else if (HasPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
-        }
-        else
-        {
-            SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-        }
+		// IMMEDIATE has no vsync and lowest latency.
+		// MAILBOX replaces queued frames (triple-buffered, no frame-rate cap, reduced tearing).
+		if (HasPresentMode(VK_PRESENT_MODE_IMMEDIATE_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+		}
+		else if (HasPresentMode(VK_PRESENT_MODE_MAILBOX_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+		}
+		else if (HasPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+		}
 	}
 
 	VULKAN_INFO("Selected present mode '%s' for SwapChain", ToString(SelectedPresentMode));
@@ -193,15 +192,8 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 		VULKAN_INFO("Adjusted buffer count from %u to %u (min=%u max=%u)", CreateInfo.BufferCount, DesiredCount, Capabilities.minImageCount, Capabilities.maxImageCount);
 	}
 
-	// Queue sharing mode (graphics/present may differ)
-	const uint32 QueueFamilyIndices[2] = 
-    {
-        // TODO: Separate Present- and Graphics- Queues
-        GetDevice()->GetQueueIndexFromType(EVulkanCommandQueueType::Graphics),
-        GetDevice()->GetQueueIndexFromType(EVulkanCommandQueueType::Graphics)
-    };
-
-	const bool bSameFamily = QueueFamilyIndices[0] == QueueFamilyIndices[1];
+	GraphicsQueueFamilyIndex = GetDevice()->GetQueueIndexFromType(EVulkanCommandQueueType::Graphics);
+	PresentQueueFamilyIndex  = GetDevice()->GetQueueIndexFromType(EVulkanCommandQueueType::Present);
 
 	// Pre-transform 
 	const VkSurfaceTransformFlagBitsKHR PreTransform = (Capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) ? 
@@ -252,9 +244,9 @@ bool FVulkanSwapChainResource::Initialize(const FVulkanSwapChainCreateInfo& Crea
 	SwapChainCreateInfo.imageExtent           = CurrentExtent;
 	SwapChainCreateInfo.imageArrayLayers      = 1;
 	SwapChainCreateInfo.imageUsage            = FinalUsage;
-	SwapChainCreateInfo.imageSharingMode      = bSameFamily ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
-	SwapChainCreateInfo.queueFamilyIndexCount = bSameFamily ? 0u : 2u;
-	SwapChainCreateInfo.pQueueFamilyIndices   = bSameFamily ? nullptr : QueueFamilyIndices;
+	SwapChainCreateInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+	SwapChainCreateInfo.queueFamilyIndexCount = 0;
+	SwapChainCreateInfo.pQueueFamilyIndices   = nullptr;
 	SwapChainCreateInfo.preTransform          = PreTransform;
 	SwapChainCreateInfo.compositeAlpha        = CompositeAlpha;
 	SwapChainCreateInfo.presentMode           = SelectedPresentMode;
@@ -292,8 +284,64 @@ bool FVulkanSwapChainResource::GetSwapChainImages(VkImage* OutImages)
 	return true;
 }
 
-VkResult FVulkanSwapChainResource::Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore)
+void FVulkanSwapChainResource::ReleaseOwnershipForPresent(FVulkanCommandBuffer& GraphicsCmdBuffer, VkImage SwapChainImage)
 {
+	if (!HasSeparatePresentQueue())
+	{
+		return;
+	}
+
+	VkImageMemoryBarrier Barrier = {};
+	Barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	Barrier.srcAccessMask                   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	Barrier.dstAccessMask                   = 0;
+	Barrier.oldLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.srcQueueFamilyIndex             = GraphicsQueueFamilyIndex;
+	Barrier.dstQueueFamilyIndex             = PresentQueueFamilyIndex;
+	Barrier.image                           = SwapChainImage;
+	Barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	Barrier.subresourceRange.baseMipLevel   = 0;
+	Barrier.subresourceRange.levelCount     = 1;
+	Barrier.subresourceRange.baseArrayLayer = 0;
+	Barrier.subresourceRange.layerCount     = 1;
+
+	vkCmdPipelineBarrier(GraphicsCmdBuffer.GetVkCommandBuffer(),
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		0, 0, nullptr, 0, nullptr, 1, &Barrier);
+}
+
+void FVulkanSwapChainResource::AcquireOwnershipAfterPresent(FVulkanCommandBuffer& GraphicsCmdBuffer, VkImage SwapChainImage)
+{
+	if (!HasSeparatePresentQueue())
+	{
+		return;
+	}
+
+	VkImageMemoryBarrier Barrier = {};
+	Barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	Barrier.srcAccessMask                   = 0;
+	Barrier.dstAccessMask                   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	Barrier.oldLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.srcQueueFamilyIndex             = PresentQueueFamilyIndex;
+	Barrier.dstQueueFamilyIndex             = GraphicsQueueFamilyIndex;
+	Barrier.image                           = SwapChainImage;
+	Barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	Barrier.subresourceRange.baseMipLevel   = 0;
+	Barrier.subresourceRange.levelCount     = 1;
+	Barrier.subresourceRange.baseArrayLayer = 0;
+	Barrier.subresourceRange.layerCount     = 1;
+
+	vkCmdPipelineBarrier(GraphicsCmdBuffer.GetVkCommandBuffer(),
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		0, 0, nullptr, 0, nullptr, 1, &Barrier);
+}
+
+VkResult FVulkanSwapChainResource::Present(FVulkanQueue& GraphicsQueue, FVulkanQueue* PresentQueue, FVulkanSemaphore* WaitSemaphore)
+{
+	FVulkanQueue& QueueForPresent = PresentQueue ? *PresentQueue : GraphicsQueue;
+
 	VkPresentInfoKHR PresentInfo = { };
 	PresentInfo.sType          = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	PresentInfo.swapchainCount = 1;
@@ -313,8 +361,7 @@ VkResult FVulkanSwapChainResource::Present(FVulkanQueue& Queue, FVulkanSemaphore
 		PresentInfo.pWaitSemaphores    = nullptr;
 	}
 
-	// Caller should handle VK_ERROR_OUT_OF_DATE_KHR / VK_SUBOPTIMAL_KHR to trigger recreate.
-	return vkQueuePresentKHR(Queue.GetVkQueue(), &PresentInfo);
+	return vkQueuePresentKHR(QueueForPresent.GetVkQueue(), &PresentInfo);
 }
 
 VkResult FVulkanSwapChainResource::AcquireNextImage(FVulkanSemaphore* AcquireSemaphore)

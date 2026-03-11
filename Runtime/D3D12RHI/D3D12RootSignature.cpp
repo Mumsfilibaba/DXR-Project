@@ -831,6 +831,7 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
 
     Flags = Desc->Flags;
     InternalInitRootParameterMap(*Desc);
+    InternalInitTableMappingsFromDesc(*Desc);
 
     TComPtr<ID3DBlob> Blob;
     if (!Serialize(*Desc, &Blob))
@@ -887,6 +888,62 @@ void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_SIGNATUR
         {
             const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
             ShaderStages[ShaderVisibility].AddRootDescriptor(ResourceType_UAV, static_cast<int8>(Index), static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+        }
+    }
+}
+
+void FD3D12RootSignature::InternalInitTableMappingsFromDesc(const D3D12_ROOT_SIGNATURE_DESC& Desc)
+{
+    FD3D12RegisterSet RegisterSets[ShaderVisibility_Count][ResourceType_Count];
+    FD3D12RegisterSet RootCBVRegisters[ShaderVisibility_Count];
+
+    for (uint32 Index = 0; Index < Desc.NumParameters; Index++)
+    {
+        const D3D12_ROOT_PARAMETER& Parameter = Desc.pParameters[Index];
+        const uint32 Stage = GetShaderVisibility(Parameter.ShaderVisibility);
+
+        if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
+        {
+            for (uint32 RangeIdx = 0; RangeIdx < Parameter.DescriptorTable.NumDescriptorRanges; RangeIdx++)
+            {
+                const D3D12_DESCRIPTOR_RANGE& Range = Parameter.DescriptorTable.pDescriptorRanges[RangeIdx];
+                const uint32 ResType = GetResourceType(Range.RangeType);
+
+                for (uint32 Reg = Range.BaseShaderRegister; Reg < Range.BaseShaderRegister + Range.NumDescriptors; Reg++)
+                {
+                    RegisterSets[Stage][ResType].Insert(static_cast<uint16>(Reg));
+                }
+            }
+        }
+        else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV)
+        {
+            RootCBVRegisters[Stage].Insert(static_cast<uint16>(Parameter.Descriptor.ShaderRegister));
+        }
+    }
+
+    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    {
+        for (uint32 ResType = 0; ResType < ResourceType_Count; ResType++)
+        {
+            if (ResType == ResourceType_CBV)
+            {
+                FD3D12RegisterSet TableRegisters;
+                const FD3D12RegisterSet& Registers = RegisterSets[Stage][ResType];
+
+                for (uint32 i = 0; i < Registers.GetCount(); i++)
+                {
+                    if (!RootCBVRegisters[Stage].Contains(Registers.Registers[i]))
+                    {
+                        TableRegisters.Insert(Registers.Registers[i]);
+                    }
+                }
+
+                TableMappings[Stage][ResType].Build(TableRegisters);
+            }
+            else
+            {
+                TableMappings[Stage][ResType].Build(RegisterSets[Stage][ResType]);
+            }
         }
     }
 }

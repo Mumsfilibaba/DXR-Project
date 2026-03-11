@@ -65,8 +65,9 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         FMemory::Memzero(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.SizeInBytes());
         
         // Init DescriptorWrites and count the other bindings
-        uint32 NumImageInfos  = 0;
-        uint32 NumBufferInfos = 0;
+        uint32 NumImageInfos       = 0;
+        uint32 NumBufferInfos      = 0;
+        uint32 NumTexelBufferViews = 0;
 
         for (int32 Index = 0; Index < SetRemappingInfo.RemappingInfo.Size(); Index++)
         {
@@ -96,6 +97,12 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     NumImageInfos++;
                     break;
                 }
+                case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+                case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+                {
+                    NumTexelBufferViews++;
+                    break;
+                }
                 default:
                 {
                     VULKAN_ERROR_CRITICAL("Unhandled DescriptorType");
@@ -106,16 +113,20 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             DescriptorCountMap[WriteDescriptorSet.descriptorType]++;
         }
 
-        // Allocate Buffer and Image Infos
+        // Allocate Buffer, Image, and TexelBufferView Infos
         DSWrites.DescriptorImageInfos.Resize(NumImageInfos);
         FMemory::Memzero(DSWrites.DescriptorImageInfos.Data(), DSWrites.DescriptorImageInfos.SizeInBytes());
 
         DSWrites.DescriptorBufferInfos.Resize(NumBufferInfos);
         FMemory::Memzero(DSWrites.DescriptorBufferInfos.Data(), DSWrites.DescriptorBufferInfos.SizeInBytes());
 
-        // Setup Buffer and ImageInfos
-        uint32 CurrentImageInfo  = 0;
-        uint32 CurrentBufferInfo = 0;
+        DSWrites.DescriptorTexelBufferViews.Resize(NumTexelBufferViews);
+        FMemory::Memzero(DSWrites.DescriptorTexelBufferViews.Data(), DSWrites.DescriptorTexelBufferViews.SizeInBytes());
+
+        // Setup Buffer, Image, and TexelBufferView Infos
+        uint32 CurrentImageInfo       = 0;
+        uint32 CurrentBufferInfo      = 0;
+        uint32 CurrentTexelBufferView = 0;
 
         for (int32 Index = 0; Index < DSWrites.DescriptorWrites.Size(); Index++)
         {
@@ -128,7 +139,6 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 {
                     WriteDescriptorSet.pBufferInfo = &DSWrites.DescriptorBufferInfos[CurrentBufferInfo++];
                     
-                    // Initialize buffers to use a null-buffer
                     VkDescriptorBufferInfo* BufferInfo = const_cast<VkDescriptorBufferInfo*>(WriteDescriptorSet.pBufferInfo);
                     BufferInfo->buffer = DefaultResources.NullBuffer;
                     BufferInfo->offset = 0;
@@ -138,7 +148,6 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
                 case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                 {
-                    // Initialize textures to use a null-image
                     WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
                     
                     VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
@@ -149,13 +158,18 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 }
                 case VK_DESCRIPTOR_TYPE_SAMPLER:
                 {
-                    // Initialize samplers to use a null-sampler
                     WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
                     
                     VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
                     ImageInfo->imageView   = VK_NULL_HANDLE;
                     ImageInfo->imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
                     ImageInfo->sampler     = DefaultResources.NullSampler;
+                    break;
+                }
+                case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+                case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+                {
+                    WriteDescriptorSet.pTexelBufferView = &DSWrites.DescriptorTexelBufferViews[CurrentTexelBufferView++];
                     break;
                 }
                 default:
@@ -241,6 +255,12 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceView* ShaderResourceVie
                 DSBuilder.WriteStorageBuffer(BindingIndex, StructuredBufferView.Buffer, StructuredBufferView.Offset, StructuredBufferView.Range);
                 break; 
             }
+            case FVulkanResourceView::EType::TypedBufferView:
+            {
+                const FVulkanResourceView::FTypedBufferView& TypedBufferView = ShaderResourceView->GetTypedBufferInfo();
+                DSBuilder.WriteUniformTexelBuffer(BindingIndex, TypedBufferView.BufferView);
+                break;
+            }
             default:
             {
                 VULKAN_ERROR_CRITICAL("Invalid ShaderResourveView, probably uninitialized resource");
@@ -273,6 +293,12 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
             {
                 const FVulkanResourceView::FStructuredBufferView& StructuredBufferView = UnorderedAccessView->GetStructuredBufferInfo();
                 DSBuilder.WriteStorageBuffer(BindingIndex, StructuredBufferView.Buffer, StructuredBufferView.Offset, StructuredBufferView.Range);
+                break;
+            }
+            case FVulkanResourceView::EType::TypedBufferView:
+            {
+                const FVulkanResourceView::FTypedBufferView& TypedBufferView = UnorderedAccessView->GetTypedBufferInfo();
+                DSBuilder.WriteStorageTexelBuffer(BindingIndex, TypedBufferView.BufferView);
                 break;
             }
             default:

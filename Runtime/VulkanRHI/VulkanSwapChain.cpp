@@ -1,5 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "VulkanRHI/VulkanSwapChain.h"
+#include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
@@ -359,7 +360,8 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
 
     bool bNeedsRecreation = false;
 
-    VkResult Result = SwapChainResource->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
+    FVulkanQueue* PresentQueue = FVulkanRHI::Get()->GetPresentQueue();
+    VkResult Result = SwapChainResource->Present(InCommandContext->GetCommandQueue(), PresentQueue, RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
 		VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is %s", (Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" :

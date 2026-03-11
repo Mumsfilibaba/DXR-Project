@@ -32,19 +32,9 @@ bool FVulkanSurface::Initialize()
         return false;
     }
 
-    FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
-
-    VkBool32 PresentSupport = false;
-    Result = vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice->GetVkPhysicalDevice(), Queue.GetQueueFamilyIndex(), Surface, &PresentSupport);
-    if (VULKAN_FAILED(Result))
+    if (!GetDevice()->InitializePresentQueueFamily(Surface))
     {
-        VULKAN_ERROR("Failed to retrieve presentation support for surface");
-        return false;
-    }
-
-    if (!PresentSupport)
-    {
-        VULKAN_ERROR("Queue does not support presentation");
+        VULKAN_ERROR("No queue family supports presentation for this surface");
         return false;
     }
 

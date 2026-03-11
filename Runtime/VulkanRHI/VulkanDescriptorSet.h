@@ -199,6 +199,20 @@ public:
         CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
         WriteBuffer(Binding, Buffer, Offset, Range);
     }
+
+    void WriteUniformTexelBuffer(int32 Binding, VkBufferView BufferView)
+    {
+        CHECK(Binding < NumDescriptorWrites);
+        CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER);
+        WriteTexelBuffer(Binding, BufferView);
+    }
+
+    void WriteStorageTexelBuffer(int32 Binding, VkBufferView BufferView)
+    {
+        CHECK(Binding < NumDescriptorWrites);
+        CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER);
+        WriteTexelBuffer(Binding, BufferView);
+    }
     
     void WriteSampler(int32 Binding, VkSampler Sampler)
     {
@@ -296,6 +310,21 @@ private:
             bKeyIsDirty = true;
         }
     }
+
+    void WriteTexelBuffer(int32 Binding, VkBufferView BufferView)
+    {
+        CHECK(DescriptorWrites[Binding].pTexelBufferView != nullptr);
+
+        const uint64 Resource = reinterpret_cast<uint64>(BufferView);
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource)
+        {
+            VkBufferView* pTexelBufferView = const_cast<VkBufferView*>(DescriptorWrites[Binding].pTexelBufferView);
+            *pTexelBufferView = BufferView;
+
+            DescriptorSetKey.Resources[Binding].Resource = Resource;
+            bKeyIsDirty = true;
+        }
+    }
         
     FVulkanDescriptorSetKey DescriptorSetKey;
     VkWriteDescriptorSet*   DescriptorWrites;
@@ -308,6 +337,7 @@ struct FVulkanDescriptorWrites
     TArray<VkWriteDescriptorSet>   DescriptorWrites;
     TArray<VkDescriptorBufferInfo> DescriptorBufferInfos;
     TArray<VkDescriptorImageInfo>  DescriptorImageInfos;
+    TArray<VkBufferView>           DescriptorTexelBufferViews;
 };
 
 class FVulkanDescriptorState : public FVulkanDeviceChild, FNonCopyable

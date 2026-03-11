@@ -280,6 +280,7 @@ public:
 
 private:
     void InternalInitRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+    void InternalInitTableMappingsFromDesc(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;

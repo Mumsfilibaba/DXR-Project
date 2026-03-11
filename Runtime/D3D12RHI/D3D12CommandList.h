@@ -122,35 +122,75 @@ public:
         return CommandList(this, CmdList.Get());
     }
 
+#ifdef __ID3D12GraphicsCommandList1_INTERFACE_DEFINED__
     FORCEINLINE CommandList<ID3D12GraphicsCommandList1> GetGraphicsCommandList1()
     {
         return CommandList(this, CmdList1.Get());
     }
+#endif
 
+#ifdef __ID3D12GraphicsCommandList2_INTERFACE_DEFINED__
     FORCEINLINE CommandList<ID3D12GraphicsCommandList2> GetGraphicsCommandList2()
     {
         return CommandList(this, CmdList2.Get());
     }
+#endif
 
+#ifdef __ID3D12GraphicsCommandList3_INTERFACE_DEFINED__
     FORCEINLINE CommandList<ID3D12GraphicsCommandList3> GetGraphicsCommandList3()
     {
         return CommandList(this, CmdList3.Get());
     }
+#endif
 
+#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
     FORCEINLINE CommandList<ID3D12GraphicsCommandList4> GetGraphicsCommandList4()
     {
         return CommandList(this, CmdList4.Get());
     }
+#endif
 
+#ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
     FORCEINLINE CommandList<ID3D12GraphicsCommandList5> GetGraphicsCommandList5()
     {
         return CommandList(this, CmdList5.Get());
     }
+#endif
 
+#ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
     FORCEINLINE CommandList<ID3D12GraphicsCommandList6> GetGraphicsCommandList6()
     {
         return CommandList(this, CmdList6.Get());
     }
+#endif
+
+#ifdef __ID3D12GraphicsCommandList7_INTERFACE_DEFINED__
+    FORCEINLINE CommandList<ID3D12GraphicsCommandList7> GetGraphicsCommandList7()
+    {
+        return CommandList(this, CmdList7.Get());
+    }
+#endif
+
+#ifdef __ID3D12GraphicsCommandList8_INTERFACE_DEFINED__
+    FORCEINLINE CommandList<ID3D12GraphicsCommandList8> GetGraphicsCommandList8()
+    {
+        return CommandList(this, CmdList8.Get());
+    }
+#endif
+
+#ifdef __ID3D12GraphicsCommandList9_INTERFACE_DEFINED__
+    FORCEINLINE CommandList<ID3D12GraphicsCommandList9> GetGraphicsCommandList9()
+    {
+        return CommandList(this, CmdList9.Get());
+    }
+#endif
+
+#ifdef __ID3D12GraphicsCommandList10_INTERFACE_DEFINED__
+    FORCEINLINE CommandList<ID3D12GraphicsCommandList10> GetGraphicsCommandList10()
+    {
+        return CommandList(this, CmdList10.Get());
+    }
+#endif
 
     FORCEINLINE ID3D12CommandList* GetCommandList() const
     {
@@ -169,12 +209,36 @@ public:
 
 private:
     TComPtr<ID3D12GraphicsCommandList>  CmdList;
+#ifdef __ID3D12GraphicsCommandList1_INTERFACE_DEFINED__
     TComPtr<ID3D12GraphicsCommandList1> CmdList1;
+#endif
+#ifdef __ID3D12GraphicsCommandList2_INTERFACE_DEFINED__
     TComPtr<ID3D12GraphicsCommandList2> CmdList2;
+#endif
+#ifdef __ID3D12GraphicsCommandList3_INTERFACE_DEFINED__
     TComPtr<ID3D12GraphicsCommandList3> CmdList3;
+#endif
+#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
     TComPtr<ID3D12GraphicsCommandList4> CmdList4;
+#endif
+#ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
     TComPtr<ID3D12GraphicsCommandList5> CmdList5;
+#endif
+#ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
     TComPtr<ID3D12GraphicsCommandList6> CmdList6;
+#endif
+#ifdef __ID3D12GraphicsCommandList7_INTERFACE_DEFINED__
+    TComPtr<ID3D12GraphicsCommandList7> CmdList7;
+#endif
+#ifdef __ID3D12GraphicsCommandList8_INTERFACE_DEFINED__
+    TComPtr<ID3D12GraphicsCommandList8> CmdList8;
+#endif
+#ifdef __ID3D12GraphicsCommandList9_INTERFACE_DEFINED__
+    TComPtr<ID3D12GraphicsCommandList9> CmdList9;
+#endif
+#ifdef __ID3D12GraphicsCommandList10_INTERFACE_DEFINED__
+    TComPtr<ID3D12GraphicsCommandList10> CmdList10;
+#endif
     uint32                              NumCommands;
     bool                                bIsReady;
     FD3D12ResidencySet                  ResidencySet;

@@ -468,7 +468,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
         }
         else
         {
-            // TODO: Maybe use all shaders and create one that fits all
             const FD3D12ShaderBytecode& ByteCode = ShadersWithRootSignature.FirstElement()->GetByteCode();
 
             RootSignature = new FD3D12RootSignature(GetDevice());
@@ -479,6 +478,21 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
             else
             {
                 RootSignature->SetDebugName("Custom Graphics RootSignature");
+            }
+
+            // Validate that all shaders with embedded root signatures are compatible
+            for (int32 i = 1; i < ShadersWithRootSignature.Size(); i++)
+            {
+                FD3D12RootSignature ValidationRS(GetDevice());
+                const FD3D12ShaderBytecode& OtherByteCode = ShadersWithRootSignature[i]->GetByteCode();
+                if (ValidationRS.Initialize(OtherByteCode.GetCode(), OtherByteCode.GetCodeSize()))
+                {
+                    if (ValidationRS.GetHash() != RootSignature->GetHash())
+                    {
+                        D3D12_ERROR_CRITICAL("Shader at index %d has an incompatible embedded root signature (hash mismatch: 0x%llx vs 0x%llx)",
+                            i, ValidationRS.GetHash(), RootSignature->GetHash());
+                    }
+                }
             }
         }
 
@@ -495,6 +509,17 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
             {
                 D3D12_ERROR_CRITICAL("Root Signature denies access to stage %u, but shader has %d resource bindings and %u push constants.",
                     Stage, BindingInfo.ResourceBindings.Size(), BindingInfo.NumPushConstants);
+            }
+
+            for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
+            {
+                const EResourceType ResType = static_cast<EResourceType>(Binding.BindingType);
+                if (RootSignature->GetSlotForRegister(Stage, ResType, Binding.OriginalBindingIndex) < 0 &&
+                    RootSignature->GetShaderStage(Stage).GetRootDescriptorParameterIndex(ResType, Binding.OriginalBindingIndex) < 0)
+                {
+                    D3D12_ERROR_CRITICAL("Custom root signature missing register %u (type %u) for shader stage %u", 
+                        Binding.OriginalBindingIndex, Binding.BindingType, Stage);
+                }
             }
         }
 
@@ -569,6 +594,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
         }
     }
 
+#ifdef __ID3D12Device2_INTERFACE_DEFINED__
     TComPtr<ID3D12PipelineState> NewPipelineState;
     HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
     if (FAILED(Result))
@@ -579,6 +605,10 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     PipelineState = NewPipelineState;
     return true;
+#else
+    D3D12_ERROR_CRITICAL("[D3D12GraphicsPipelineState]: ID3D12Device2 is required for pipeline stream creation");
+    return false;
+#endif
 }
 
 FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader)
@@ -628,6 +658,18 @@ bool FD3D12ComputePipelineState::Initialize()
         {
             RootSignature->SetDebugName("Custom Compute RootSignature");
         }
+
+        const FD3D12ShaderBindingInfo& BindingInfo = Shader->GetBindingInfo();
+        for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
+        {
+            const EResourceType ResType = static_cast<EResourceType>(Binding.BindingType);
+            if (RootSignature->GetSlotForRegister(ShaderVisibility_All, ResType, Binding.OriginalBindingIndex) < 0 &&
+                RootSignature->GetShaderStage(ShaderVisibility_All).GetRootDescriptorParameterIndex(ResType, Binding.OriginalBindingIndex) < 0)
+            {
+                D3D12_ERROR_CRITICAL("Custom compute root signature missing register %u (type %u)",
+                    Binding.OriginalBindingIndex, Binding.BindingType);
+            }
+        }
     }
 
     CHECK(RootSignature != nullptr);
@@ -667,6 +709,7 @@ bool FD3D12ComputePipelineState::Initialize()
         }
     }
 
+#ifdef __ID3D12Device2_INTERFACE_DEFINED__
     HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
     if (FAILED(Result))
     {
@@ -675,6 +718,10 @@ bool FD3D12ComputePipelineState::Initialize()
     }
 
     return true;
+#else
+    D3D12_ERROR_CRITICAL("[D3D12ComputePipelineState]: ID3D12Device2 is required for pipeline stream creation");
+    return false;
+#endif
 }
 
 struct FD3D12RootSignatureAssociation
@@ -1027,6 +1074,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     RayTracingPipeline.pSubobjects   = PipelineStream.SubObjects.Data();
     RayTracingPipeline.NumSubobjects = PipelineStream.SubObjects.Size();
 
+#ifdef __ID3D12Device5_INTERFACE_DEFINED__
     TComPtr<ID3D12StateObject> TempStateObject;
     HRESULT Result = GetDevice()->GetD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
     if (FAILED(Result))
@@ -1046,6 +1094,10 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     StateObject           = TempStateObject;
     StateObjectProperties = TempStateObjectProperties;
     return true;
+#else
+    D3D12_ERROR_CRITICAL("[D3D12RayTracingPipelineState]: ID3D12Device5 is required for ray tracing pipeline creation");
+    return false;
+#endif
 }
 
 void* FD3D12RayTracingPipelineState::GetShaderIdentifier(const FString& ExportName)
@@ -1096,6 +1148,7 @@ bool FD3D12PipelineStateManager::Initialize()
     // In case we allocated data, let's free it
     FreePipelineData();
 
+#ifdef __ID3D12Device1_INTERFACE_DEFINED__
     ID3D12Device1* Device1 = GetDevice()->GetD3D12Device1();
     if (!Device1)
     {
@@ -1115,6 +1168,10 @@ bool FD3D12PipelineStateManager::Initialize()
     }
 
     return true;
+#else
+    D3D12_WARNING("ID3D12Device1 is not supported, PipelineCache not supported");
+    return false;
+#endif
 }
 
 bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState)
@@ -1129,6 +1186,7 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
     HRESULT hResult = PipelineLibrary->LoadPipeline(PipelineHash, &PipelineStream, IID_PPV_ARGS(&OutPipelineState));
     if (hResult == E_INVALIDARG)
     {
+#ifdef __ID3D12Device2_INTERFACE_DEFINED__
         hResult = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStream, IID_PPV_ARGS(&OutPipelineState));
         if (FAILED(hResult))
         {
@@ -1143,6 +1201,10 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
         }
 
         bPipelineLibraryDirty = true;
+#else
+        D3D12_ERROR_CRITICAL("ID3D12Device2 is required for pipeline stream creation");
+        return false;
+#endif
     }
 
     return true;
@@ -1160,6 +1222,7 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
     HRESULT hResult = PipelineLibrary->LoadPipeline(PipelineHash, &PipelineStream, IID_PPV_ARGS(&OutPipelineState));
     if (hResult == E_INVALIDARG)
     {
+#ifdef __ID3D12Device2_INTERFACE_DEFINED__
         hResult = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStream, IID_PPV_ARGS(&OutPipelineState));
         if (FAILED(hResult))
         {
@@ -1174,6 +1237,10 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
         }
 
         bPipelineLibraryDirty = true;
+#else
+        D3D12_ERROR_CRITICAL("ID3D12Device2 is required for pipeline stream creation");
+        return false;
+#endif
     }
 
     return true;
@@ -1297,6 +1364,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
         return false;
     }
     
+#ifdef __ID3D12Device1_INTERFACE_DEFINED__
     ID3D12Device1* Device1 = GetDevice()->GetD3D12Device1();
     if (!Device1)
     {
@@ -1322,6 +1390,10 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
     }
 
     return true;
+#else
+    D3D12_WARNING("ID3D12Device1 is not supported, PipelineCache not supported");
+    return false;
+#endif
 }
 
 void FD3D12PipelineStateManager::FreePipelineData()

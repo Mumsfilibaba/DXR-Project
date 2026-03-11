@@ -37,16 +37,22 @@ public:
     ~FVulkanSwapChainResource();
 
     bool     Initialize(const FVulkanSwapChainCreateInfo& CreateInfo);
-    VkResult Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore);
+    VkResult Present(FVulkanQueue& GraphicsQueue, FVulkanQueue* PresentQueue, FVulkanSemaphore* WaitSemaphore);
     VkResult AcquireNextImage(FVulkanSemaphore* AcquireSemaphore);
     bool     GetSwapChainImages(VkImage* OutImages);
+
+    void ReleaseOwnershipForPresent(FVulkanCommandBuffer& GraphicsCmdBuffer, VkImage SwapChainImage);
+    void AcquireOwnershipAfterPresent(FVulkanCommandBuffer& GraphicsCmdBuffer, VkImage SwapChainImage);
     
-    VkResult           GetPresentResult()   const { return PresentResult; }
-    VkSwapchainKHR     GetVkSwapChain()     const { return SwapChain; }
-    VkExtent2D         GetExtent()          const { return Extent; }
-    VkSurfaceFormatKHR GetVkSurfaceFormat() const { return Format; }
-    uint32             GetBufferCount()     const { return BufferCount; }
-    uint32             GetBufferIndex()     const { return BufferIndex; }
+    VkResult           GetPresentResult()          const { return PresentResult; }
+    VkSwapchainKHR     GetVkSwapChain()            const { return SwapChain; }
+    VkExtent2D         GetExtent()                 const { return Extent; }
+    VkSurfaceFormatKHR GetVkSurfaceFormat()        const { return Format; }
+    uint32             GetBufferCount()            const { return BufferCount; }
+    uint32             GetBufferIndex()            const { return BufferIndex; }
+    bool               HasSeparatePresentQueue()   const { return GraphicsQueueFamilyIndex != PresentQueueFamilyIndex; }
+    uint32             GetGraphicsQueueFamilyIndex() const { return GraphicsQueueFamilyIndex; }
+    uint32             GetPresentQueueFamilyIndex()  const { return PresentQueueFamilyIndex; }
 
 private:
     VkResult           PresentResult;
@@ -55,4 +61,6 @@ private:
     uint32             BufferIndex;
     uint32             BufferCount;
     VkSurfaceFormatKHR Format;
+    uint32             GraphicsQueueFamilyIndex = 0;
+    uint32             PresentQueueFamilyIndex  = 0;
 };

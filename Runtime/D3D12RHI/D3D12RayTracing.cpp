@@ -51,6 +51,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
+#ifdef __ID3D12Device5_INTERFACE_DEFINED__
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
@@ -131,10 +132,16 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     {
         CommandList.UpdateResidency(IndexBuffer->GetResource()->GetResidencyHandle());
     }
+#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
+#endif
 
     CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
     return true;
+#else
+    D3D12_ERROR_CRITICAL("[D3D12RayTracingGeometry]: ID3D12Device5 is required for ray tracing");
+    return false;
+#endif
 }
 
 void FD3D12RayTracingGeometry::SetDebugName(const FString& InName)
@@ -184,6 +191,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
+#ifdef __ID3D12Device5_INTERFACE_DEFINED__
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
@@ -327,12 +335,18 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     CommandList.UpdateResidency(ResultResourceStorage.GetResource()->GetResidencyHandle());
     CommandList.UpdateResidency(ScratchResourceStorage.GetResource()->GetResidencyHandle());
     CommandList.UpdateResidency(InstanceBuffer->GetResidencyHandle());
+#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
+#endif
 
     CmdContext.GetBarrierBatcher().AddUnorderedAccessBarrier(ResultResourceStorage.GetResource());
 
     Instances.Reset(BuildInfo.Instances, BuildInfo.NumInstances);
     return true;
+#else
+    D3D12_ERROR_CRITICAL("[D3D12RayTracingScene]: ID3D12Device5 is required for ray tracing");
+    return false;
+#endif
 }
 
 bool FD3D12RayTracingScene::BuildBindingTable(
