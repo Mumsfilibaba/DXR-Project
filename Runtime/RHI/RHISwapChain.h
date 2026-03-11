@@ -34,7 +34,9 @@ protected:
     virtual ~FRHISwapChain() = default;
 
 public:
-    virtual FRHITexture* GetBackBuffer() const { return nullptr; };
+    virtual FRHITexture* GetBackBuffer() const { return nullptr; }
+    virtual void* GetNativeSwapChain() const { return nullptr; }
+    virtual void* GetBackBufferRenderTargetView() { return nullptr; }
 
     EFormat GetColorFormat() const
     {

@@ -22,6 +22,11 @@ public:
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
+    virtual void* GetNativeSwapChain() const override final
+    {
+        return (__bridge void*)MetalLayer;
+    }
+
     bool Initialize();
     bool Resize(uint32 InWidth, uint32 InHeight);
     bool Present(bool bVerticalSync);

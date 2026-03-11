@@ -75,11 +75,18 @@ struct IRHICommandContext
     virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, const uint8 Stencil) = 0;
 
     /**
-     * @brief Clears a UnorderedAccessView with a specific value
+     * @brief Clears a UnorderedAccessView with float values
      * @param UnorderedAccessView UnorderedAccessView to clear
      * @param ClearColor Value to set each pixel within the UnorderedAccessView to
      */
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
+
+    /**
+     * @brief Clears a UnorderedAccessView with unsigned integer values
+     * @param UnorderedAccessView UnorderedAccessView to clear
+     * @param Values Four uint32 values to set each element within the UnorderedAccessView to
+     */
+    virtual void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) = 0;
 
     /**
      * @brief Begins a new RenderPass
@@ -227,6 +234,17 @@ struct IRHICommandContext
     virtual void UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) = 0;
 
     /**
+     * @brief Updates a region of a 3D texture (or any texture with depth/array slices).
+     * @param Dst Destination texture
+     * @param TextureRegion 3D region describing width, height, depth, and offsets
+     * @param MipLevel Mip level to update
+     * @param SrcData Source data pointer
+     * @param SrcRowPitch Byte stride between rows in SrcData
+     * @param SrcDepthPitch Byte stride between depth slices in SrcData
+     */
+    virtual void UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch) = 0;
+
+    /**
      * @brief Resolves a multi-sampled texture, must have the same sizes and compatible formats
      * @param Dst Destination texture, must have a single sample
      * @param Src Source texture to resolve
@@ -265,6 +283,17 @@ struct IRHICommandContext
      * @param SrcMipLevel Source mip level.
      */
     virtual void CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) = 0;
+
+    /**
+     * @brief Copies a 3D region from a specific subresource of a texture to a buffer (typically readback).
+     * @param Dst Destination buffer
+     * @param DstOffset Offset into destination buffer (bytes)
+     * @param Src Source texture
+     * @param SrcRegion Source region (3D texel coordinates)
+     * @param SrcMipLevel Source mip level
+     * @param SrcArraySlice Source array slice (0 for 3D textures)
+     */
+    virtual void CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice) = 0;
 
     /**
      * @brief Splits the command stream and signals the provided fence after all prior GPU work is complete.

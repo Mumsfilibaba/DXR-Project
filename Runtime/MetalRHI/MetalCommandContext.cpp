@@ -81,6 +81,10 @@ void FMetalCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
 {
 }
 
+void FMetalCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
+{
+}
+
 void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
     SCOPED_AUTORELEASE_POOL();
@@ -313,6 +317,10 @@ void FMetalCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
 {
 }
 
+void FMetalCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
+{
+}
+
 void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
 }
@@ -362,7 +370,11 @@ void FMetalCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
 void FMetalCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) 
 { 
 } 
- 
+
+void FMetalCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice)
+{
+}
+
 void FMetalCommandContext::WriteFence(FRHIGpuFence* Fence) 
 { 
 } 

@@ -308,6 +308,16 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
 		VkImageViewType VulkanImageType;
 		switch (VulkanTexture->GetDimension())
 		{
+			case ETextureDimension::Texture1D:
+			{
+				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
+				break;
+			}
+			case ETextureDimension::Texture1DArray:
+			{
+				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+				break;
+			}
 			case ETextureDimension::Texture2D:
 			{
 				VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
@@ -353,7 +363,6 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
 			LayerCount     = Math::Max<uint16>(InInfo.TextureSRV.NumSlices, 1u);
 		}
 
-		// NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture
 		const VkFormat           VulkanFormat     = VulkanTexture->GetVkFormat();
 		const VkImage            Image            = VulkanTexture->GetVkImage();
 		const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
@@ -476,6 +485,18 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 		VkImageViewType VulkanImageType;
 		switch (VulkanTexture->GetDimension())
 		{
+			case ETextureDimension::Texture1D:
+			{
+				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
+				break;
+			}
+			
+			case ETextureDimension::Texture1DArray:
+			{
+				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+				break;
+			}
+			
 			case ETextureDimension::Texture2D:
 			{
 				VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
@@ -516,7 +537,6 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 			LayerCount     = Math::Max<uint16>(InInfo.TextureUAV.NumSlices, 1u);
 		}
 
-		// NOTE: We need to read the format from the texture, otherwise we need the MUTABLE flag on the texture
 		const VkFormat           VulkanFormat     = VulkanTexture->GetVkFormat();
 		const VkImage            Image            = VulkanTexture->GetVkImage();
 		const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);

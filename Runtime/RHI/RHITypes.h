@@ -376,37 +376,31 @@ NODISCARD constexpr EFormat CastSRVFormat(EFormat Format)
 {
     switch (Format)
     {
-        // TODO: Fix formats better
-        case EFormat::R32G32B32A32_Typeless:
-            return EFormat::R32G32B32A32_Float;
-        case EFormat::R32G32B32_Typeless:
-            return EFormat::R32G32B32_Float;
-        case EFormat::R16G16B16A16_Typeless:
-            return EFormat::R16G16B16A16_Float;
-        case EFormat::R32G32_Typeless:
-            return EFormat::R32G32B32_Float;
-        case EFormat::R10G10B10A2_Typeless:
-            return EFormat::R10G10B10A2_Unorm;
-        case EFormat::R8G8B8A8_Typeless:
-            return EFormat::R8G8B8A8_Unorm;
-        case EFormat::R16G16_Typeless:
-            return EFormat::R16G16_Float;
+        case EFormat::R32G32B32A32_Typeless: return EFormat::R32G32B32A32_Float;
+        case EFormat::R32G32B32_Typeless:    return EFormat::R32G32B32_Float;
+        case EFormat::R16G16B16A16_Typeless: return EFormat::R16G16B16A16_Float;
+        case EFormat::R32G32_Typeless:       return EFormat::R32G32_Float;
+        case EFormat::R10G10B10A2_Typeless:  return EFormat::R10G10B10A2_Unorm;
+        case EFormat::R8G8B8A8_Typeless:     return EFormat::R8G8B8A8_Unorm;
+        case EFormat::B8G8R8A8_Typeless:     return EFormat::B8G8R8A8_Unorm;
+        case EFormat::R16G16_Typeless:       return EFormat::R16G16_Float;
         case EFormat::R32_Typeless:
-        case EFormat::D32_Float:
-            return EFormat::R32_Float;
+        case EFormat::D32_Float:             return EFormat::R32_Float;
         case EFormat::R24G8_Typeless:
-            return EFormat::R24_Unorm_X8_Typeless;
-        case EFormat::R8G8_Typeless:
-            return EFormat::R8G8_Unorm;
-        case EFormat::R16_Typeless:
-            return EFormat::R16_Float;
-        case EFormat::D16_Unorm:
-            return EFormat::R16_Unorm;
-        case EFormat::R8_Typeless:
-            return EFormat::R8_Unorm;
+        case EFormat::D24_Unorm_S8_Uint:     return EFormat::R24_Unorm_X8_Typeless;
+        case EFormat::R8G8_Typeless:         return EFormat::R8G8_Unorm;
+        case EFormat::R16_Typeless:          return EFormat::R16_Float;
+        case EFormat::D16_Unorm:             return EFormat::R16_Unorm;
+        case EFormat::R8_Typeless:           return EFormat::R8_Unorm;
+        case EFormat::BC1_Typeless:          return EFormat::BC1_UNorm;
+        case EFormat::BC2_Typeless:          return EFormat::BC2_UNorm;
+        case EFormat::BC3_Typeless:          return EFormat::BC3_UNorm;
+        case EFormat::BC4_Typeless:          return EFormat::BC4_UNorm;
+        case EFormat::BC5_Typeless:          return EFormat::BC5_UNorm;
+        case EFormat::BC6H_Typeless:         return EFormat::BC6H_UF16;
+        case EFormat::BC7_Typeless:          return EFormat::BC7_UNorm;
 
-        default:
-            return Format;
+        default: return Format;
     }
 }
 
@@ -844,6 +838,28 @@ struct FTextureRegion2D
     uint32 Height    = 0;
     uint32 PositionX = 0;
     uint32 PositionY = 0;
+};
+
+struct FTextureRegion3D
+{
+    constexpr FTextureRegion3D() noexcept = default;
+
+    constexpr FTextureRegion3D(uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InPositionX = 0, uint32 InPositionY = 0, uint32 InPositionZ = 0) noexcept
+        : Width(InWidth)
+        , Height(InHeight)
+        , Depth(InDepth)
+        , PositionX(InPositionX)
+        , PositionY(InPositionY)
+        , PositionZ(InPositionZ)
+    {
+    }
+
+    uint32 Width     = 0;
+    uint32 Height    = 0;
+    uint32 Depth     = 0;
+    uint32 PositionX = 0;
+    uint32 PositionY = 0;
+    uint32 PositionZ = 0;
 };
 
 struct FBufferCopyInfo

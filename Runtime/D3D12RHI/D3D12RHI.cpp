@@ -493,7 +493,23 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
         Desc.Format = ConvertFormat(InInfo.TextureSRV.Format);
 
         const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
-        if (TextureInfo.IsTexture2D())
+        if (TextureInfo.IsTexture1D())
+        {
+            Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE1D;
+            Desc.Texture1D.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
+            Desc.Texture1D.MipLevels           = InInfo.TextureSRV.NumMips;
+            Desc.Texture1D.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+        }
+        else if (TextureInfo.IsTexture1DArray())
+        {
+            Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+            Desc.Texture1DArray.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
+            Desc.Texture1DArray.MipLevels           = InInfo.TextureSRV.NumMips;
+            Desc.Texture1DArray.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+            Desc.Texture1DArray.FirstArraySlice     = InInfo.TextureSRV.FirstArraySlice;
+            Desc.Texture1DArray.ArraySize           = InInfo.TextureSRV.NumSlices;
+        }
+        else if (TextureInfo.IsTexture2D())
         {
             if (!TextureInfo.IsMultisampled())
             {
@@ -616,7 +632,19 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnordere
         Resource      = D3D12Texture;
 
         const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
-        if (TextureInfo.IsTexture2D())
+        if (TextureInfo.IsTexture1D())
+        {
+            Desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
+            Desc.Texture1D.MipSlice = InInfo.TextureUAV.MipLevel;
+        }
+        else if (TextureInfo.IsTexture1DArray())
+        {
+            Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+            Desc.Texture1DArray.MipSlice        = InInfo.TextureUAV.MipLevel;
+            Desc.Texture1DArray.FirstArraySlice = InInfo.TextureUAV.FirstArraySlice;
+            Desc.Texture1DArray.ArraySize       = InInfo.TextureUAV.NumSlices;
+        }
+        else if (TextureInfo.IsTexture2D())
         {
             if (!TextureInfo.IsMultisampled())
             {

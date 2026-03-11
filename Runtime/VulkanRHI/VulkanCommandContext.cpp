@@ -615,10 +615,57 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
         const FVulkanResourceView::FImageView& ImageViewInfo = VulkanUnorderedAccessView->GetImageViewInfo();
         GetCommandBuffer()->ClearColorImage(ImageViewInfo.Image, VK_IMAGE_LAYOUT_GENERAL, &VulkanClearColor, 1, &ImageViewInfo.SubresourceRange);
     }
+    else if (Type == FVulkanResourceView::EType::StructuredBufferView)
+    {
+        const FVulkanResourceView::FStructuredBufferView& BufferInfo = VulkanUnorderedAccessView->GetStructuredBufferInfo();
+        uint32 FillData;
+        FMemory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
+        BarrierBatcher.FlushBarriers(GetCommandBuffer());
+        GetCommandBuffer()->FillBuffer(BufferInfo.Buffer, BufferInfo.Offset, BufferInfo.Range, FillData);
+    }
+    else if (Type == FVulkanResourceView::EType::TypedBufferView)
+    {
+        const FVulkanResourceView::FTypedBufferView& BufferInfo = VulkanUnorderedAccessView->GetTypedBufferInfo();
+        uint32 FillData;
+        FMemory::Memcpy(&FillData, &ClearColor.X, sizeof(uint32));
+        BarrierBatcher.FlushBarriers(GetCommandBuffer());
+        GetCommandBuffer()->FillBuffer(BufferInfo.Buffer, 0, VK_WHOLE_SIZE, FillData);
+    }
     else
     {
-        // TODO: Clear UAV-Buffers
-        DEBUG_BREAK();
+        VULKAN_ERROR("Unsupported UAV type for ClearUnorderedAccessViewFloat");
+    }
+}
+
+void FVulkanCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
+{
+    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
+    CHECK(VulkanUnorderedAccessView != nullptr);
+
+    const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
+    if (Type == FVulkanResourceView::EType::ImageView)
+    {
+        VkClearColorValue VulkanClearColor;
+        FMemory::Memcpy(VulkanClearColor.uint32, Values, sizeof(VulkanClearColor.uint32));
+
+        const FVulkanResourceView::FImageView& ImageViewInfo = VulkanUnorderedAccessView->GetImageViewInfo();
+        GetCommandBuffer()->ClearColorImage(ImageViewInfo.Image, VK_IMAGE_LAYOUT_GENERAL, &VulkanClearColor, 1, &ImageViewInfo.SubresourceRange);
+    }
+    else if (Type == FVulkanResourceView::EType::StructuredBufferView)
+    {
+        const FVulkanResourceView::FStructuredBufferView& BufferInfo = VulkanUnorderedAccessView->GetStructuredBufferInfo();
+        BarrierBatcher.FlushBarriers(GetCommandBuffer());
+        GetCommandBuffer()->FillBuffer(BufferInfo.Buffer, BufferInfo.Offset, BufferInfo.Range, Values[0]);
+    }
+    else if (Type == FVulkanResourceView::EType::TypedBufferView)
+    {
+        const FVulkanResourceView::FTypedBufferView& BufferInfo = VulkanUnorderedAccessView->GetTypedBufferInfo();
+        BarrierBatcher.FlushBarriers(GetCommandBuffer());
+        GetCommandBuffer()->FillBuffer(BufferInfo.Buffer, 0, VK_WHOLE_SIZE, Values[0]);
+    }
+    else
+    {
+        VULKAN_ERROR("Unsupported UAV type for ClearUnorderedAccessViewUint");
     }
 }
 
@@ -1128,8 +1175,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     const VkFormat Format = VulkanTexture->GetVkFormat();
     const uint64 RequiredSize = VkCalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
     
-    // TODO: Check if there exists a Vulkan macro for this
-    const uint64 Alignment = 256;
+    const uint64 Alignment = GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
 
     FVulkanMemoryStorage UploadStorage(GetDevice());
     uint8* UploadMemory = static_cast<uint8*>(GetDevice()->GetMemoryManager().AllocateUploadMemory(RequiredSize, Alignment, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, UploadStorage));
@@ -1156,8 +1202,55 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     BufferImageCopy.imageSubresource.mipLevel       = MipLevel;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
     BufferImageCopy.imageSubresource.layerCount     = 1;
-    BufferImageCopy.imageOffset                     = { 0, 0, 0 };
+    BufferImageCopy.imageOffset                     = { static_cast<int32>(TextureRegion.PositionX), static_cast<int32>(TextureRegion.PositionY), 0 };
     BufferImageCopy.imageExtent                     = { TextureRegion.Width, TextureRegion.Height, 1 };
+
+    BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+    GetCommandBuffer()->CopyBufferToImage(UploadStorage.GetBackingBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+}
+
+void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
+{
+    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Dst);
+    CHECK(VulkanTexture != nullptr);
+
+    const VkFormat Format = VulkanTexture->GetVkFormat();
+    const uint32 RowPitch = VkCalculateTextureRowPitch(Format, TextureRegion.Width);
+    const uint32 NumRows  = VkCalculateTextureNumRows(Format, TextureRegion.Height);
+    const uint64 SliceSize = static_cast<uint64>(RowPitch) * NumRows;
+    const uint64 RequiredSize = SliceSize * TextureRegion.Depth;
+
+    const uint64 Alignment = GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
+
+    FVulkanMemoryStorage UploadStorage(GetDevice());
+    uint8* UploadMemory = static_cast<uint8*>(GetDevice()->GetMemoryManager().AllocateUploadMemory(RequiredSize, Alignment, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, UploadStorage));
+    CHECK(UploadMemory != nullptr);
+
+    const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
+    CHECK(Source != nullptr);
+
+    for (uint32 z = 0; z < TextureRegion.Depth; z++)
+    {
+        const uint8* SliceSource = Source + z * SrcDepthPitch;
+        for (uint32 y = 0; y < NumRows; y++)
+        {
+            FMemory::Memcpy(UploadMemory, SliceSource, RowPitch);
+            SliceSource  += SrcRowPitch;
+            UploadMemory += RowPitch;
+        }
+    }
+
+    VkBufferImageCopy BufferImageCopy = {};
+    BufferImageCopy.bufferOffset                    = UploadStorage.GetBufferOffset();
+    BufferImageCopy.bufferRowLength                 = 0;
+    BufferImageCopy.bufferImageHeight               = 0;
+    BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+    BufferImageCopy.imageSubresource.mipLevel       = MipLevel;
+    BufferImageCopy.imageSubresource.baseArrayLayer = 0;
+    BufferImageCopy.imageSubresource.layerCount     = 1;
+    BufferImageCopy.imageOffset                     = { static_cast<int32>(TextureRegion.PositionX), static_cast<int32>(TextureRegion.PositionY), static_cast<int32>(TextureRegion.PositionZ) };
+    BufferImageCopy.imageExtent                     = { TextureRegion.Width, TextureRegion.Height, TextureRegion.Depth };
 
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
@@ -1376,6 +1469,40 @@ void FVulkanCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Ds
     vkCmdCopyImageToBuffer(GetCommandBuffer().GetVkCommandBuffer(), SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanBuffer->GetBindVkBuffer(), 1, &Copy);
 }
 
+void FVulkanCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice)
+{
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::Cast(this, Src);
+    CHECK(SrcVulkanTexture != nullptr);
+
+    FVulkanBuffer* DstVulkanBuffer = FVulkanBuffer::Cast(Dst);
+    CHECK(DstVulkanBuffer != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+    VkBufferImageCopy Copy = {};
+    Copy.bufferOffset      = DstVulkanBuffer->GetBindOffset() + DstOffset;
+    Copy.bufferRowLength   = 0;
+    Copy.bufferImageHeight = 0;
+
+    Copy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+    Copy.imageSubresource.mipLevel       = SrcMipLevel;
+    Copy.imageSubresource.baseArrayLayer = SrcArraySlice;
+    Copy.imageSubresource.layerCount     = 1;
+
+    Copy.imageOffset.x = static_cast<int32>(SrcRegion.PositionX);
+    Copy.imageOffset.y = static_cast<int32>(SrcRegion.PositionY);
+    Copy.imageOffset.z = static_cast<int32>(SrcRegion.PositionZ);
+
+    Copy.imageExtent.width  = SrcRegion.Width;
+    Copy.imageExtent.height = Math::Max(SrcRegion.Height, 1u);
+    Copy.imageExtent.depth  = Math::Max(SrcRegion.Depth, 1u);
+
+    vkCmdCopyImageToBuffer(GetCommandBuffer().GetVkCommandBuffer(), SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanBuffer->GetBindVkBuffer(), 1, &Copy);
+}
+
 void FVulkanCommandContext::WriteFence(FRHIGpuFence* Fence)
 {
     CHECK(Fence != nullptr);
@@ -1405,7 +1532,45 @@ void FVulkanCommandContext::WriteFence(FRHIGpuFence* Fence)
 
 void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
 {
-    UNREFERENCED_VARIABLE(Resource);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Resource);
+    if (!VulkanTexture)
+    {
+        return;
+    }
+
+    FVulkanImageLayoutState& LocalState = RetrievePendingImageState(VulkanTexture);
+
+    VkImageLayout CurrentLayout = LocalState.GetImageLayout();
+    if (CurrentLayout == VK_IMAGE_LAYOUT_TO_BE_DETERMINED)
+    {
+        CurrentLayout = VulkanTexture->GetImageLayoutState().GetImageLayout();
+    }
+
+    if (CurrentLayout == VK_IMAGE_LAYOUT_UNDEFINED)
+    {
+        return;
+    }
+
+    const VkImageCreateInfo& CreateInfo = VulkanTexture->GetVkImageCreateInfo();
+
+    VkImageMemoryBarrier2 ImageBarrier = {};
+    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageBarrier.newLayout                       = CurrentLayout;
+    ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.image                           = VulkanTexture->GetVkImage();
+    ImageBarrier.srcAccessMask                   = 0;
+    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT;
+    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
+    ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(CreateInfo.format);
+    ImageBarrier.subresourceRange.baseArrayLayer = 0;
+    ImageBarrier.subresourceRange.baseMipLevel   = 0;
+    ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+    BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
 }
 
 void FVulkanCommandContext::BuildRayTracingScene(FRHIRayTracingScene* InRayTracingScene, const FRayTracingSceneBuildInfo& InBuildInfo)

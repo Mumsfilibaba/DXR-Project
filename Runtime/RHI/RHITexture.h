@@ -20,17 +20,21 @@ enum class ETextureDimension
 {
     None = 0,
     
-    Texture2D        = 1,
-    Texture2DArray   = 2,
-    TextureCube      = 3,
-    TextureCubeArray = 4,
-    Texture3D        = 5,
+    Texture1D        = 1,
+    Texture1DArray   = 2,
+    Texture2D        = 3,
+    Texture2DArray   = 4,
+    TextureCube      = 5,
+    TextureCubeArray = 6,
+    Texture3D        = 7,
 };
 
 NODISCARD constexpr const CHAR* ToString(ETextureDimension TextureDimension)
 {
 	switch (TextureDimension)
 	{
+	case ETextureDimension::Texture1D:        return "Texture1D";
+	case ETextureDimension::Texture1DArray:   return "Texture1DArray";
 	case ETextureDimension::Texture2D:        return "Texture2D";
 	case ETextureDimension::Texture2DArray:   return "Texture2DArray";
 	case ETextureDimension::TextureCube:      return "TextureCube";
@@ -57,6 +61,18 @@ struct IRHITextureData
 
 struct FRHITextureInfo
 {
+    NODISCARD static FRHITextureInfo CreateTexture1D(EFormat InFormat, uint32 InWidth, uint32 InNumMipLevels,
+        ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    {
+        return FRHITextureInfo(ETextureDimension::Texture1D, InFormat, FIntVector3(InWidth, 1, 0), 1, InNumMipLevels, 1, InUsageFlags, InClearValue);
+    }
+
+    NODISCARD static FRHITextureInfo CreateTexture1DArray(EFormat InFormat, uint32 InWidth, uint32 InArraySlices, uint32 InNumMipLevels,
+        ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
+    {
+        return FRHITextureInfo(ETextureDimension::Texture1DArray, InFormat, FIntVector3(InWidth, 1, 0), InArraySlices, InNumMipLevels, 1, InUsageFlags, InClearValue);
+    }
+
     NODISCARD static FRHITextureInfo CreateTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMipLevels, uint32 InNumSamples,
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
@@ -102,6 +118,8 @@ struct FRHITextureInfo
     {
     }
 
+    NODISCARD constexpr bool IsTexture1D() const { return (Dimension == ETextureDimension::Texture1D); }
+    NODISCARD constexpr bool IsTexture1DArray() const { return (Dimension == ETextureDimension::Texture1DArray); }
     NODISCARD constexpr bool IsTexture2D() const { return (Dimension == ETextureDimension::Texture2D); }
     NODISCARD constexpr bool IsTexture2DArray() const { return (Dimension == ETextureDimension::Texture2DArray); }
     NODISCARD constexpr bool IsTextureCube() const { return (Dimension == ETextureDimension::TextureCube); }

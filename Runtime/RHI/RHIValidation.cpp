@@ -900,6 +900,17 @@ void FRHIValidationCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAc
     RealContext->ClearUnorderedAccessViewFloat(UnorderedAccessView, ClearColor);
 }
 
+void FRHIValidationCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
+{
+    if (!UnorderedAccessView)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call ClearUnorderedAccessViewUint when UnorderedAccessView is nullptr");
+        return;
+    }
+
+    RealContext->ClearUnorderedAccessViewUint(UnorderedAccessView, Values);
+}
+
 void FRHIValidationCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
     if (ContextPhase == ECommandContextPhase::InsideRenderPass)
@@ -1100,6 +1111,23 @@ void FRHIValidationCommandContext::UpdateTexture2D(FRHITexture* Dst, const FText
     RealContext->UpdateTexture2D(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
 }
 
+void FRHIValidationCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
+{
+    if (!Dst)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call UpdateTexture3D when Dst is nullptr");
+        return;
+    }
+
+    if (!SrcData)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call UpdateTexture3D when SrcData is nullptr");
+        return;
+    }
+
+    RealContext->UpdateTexture3D(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch, SrcDepthPitch);
+}
+
 void FRHIValidationCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
     if (!Dst)
@@ -1183,6 +1211,23 @@ void FRHIValidationCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, ui
     }
 
     RealContext->CopyTextureRegionToBuffer(Dst, DstOffset, Src, SrcRegion, SrcMipLevel);
+}
+
+void FRHIValidationCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice)
+{
+    if (!Dst)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call CopyTextureSubresourceToBuffer when Dst is nullptr");
+        return;
+    }
+
+    if (!Src)
+    {
+        RHI_VALIDATION_ERROR("Invalid to call CopyTextureSubresourceToBuffer when Src is nullptr");
+        return;
+    }
+
+    RealContext->CopyTextureSubresourceToBuffer(Dst, DstOffset, Src, SrcRegion, SrcMipLevel, SrcArraySlice);
 }
 
 void FRHIValidationCommandContext::WriteFence(FRHIGpuFence* Fence)

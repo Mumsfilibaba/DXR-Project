@@ -213,15 +213,15 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ViewInfo.TextureSRV.Texture = this;
         ViewInfo.TextureSRV.Format  = VulkanCastShaderResourceFormat(Info.Format);
 
-        if (Info.IsTexture2D() || Info.IsTextureCube())
+        if (Info.IsTexture1D() || Info.IsTexture2D() || Info.IsTextureCube())
         {
             ViewInfo.TextureSRV.FirstMipLevel   = 0;
             ViewInfo.TextureSRV.NumMips         = static_cast<uint8>(Info.NumMipLevels);
             ViewInfo.TextureSRV.MinLODClamp     = 0.0f;
-			ViewInfo.TextureSRV.FirstArraySlice = 0;
-			ViewInfo.TextureSRV.NumSlices       = 1;
+            ViewInfo.TextureSRV.FirstArraySlice = 0;
+            ViewInfo.TextureSRV.NumSlices       = 1;
         }
-        else if (Info.IsTexture2DArray() || Info.IsTextureCubeArray() || Info.IsTexture3D())
+        else if (Info.IsTexture1DArray() || Info.IsTexture2DArray() || Info.IsTextureCubeArray() || Info.IsTexture3D())
         {
             ViewInfo.TextureSRV.FirstMipLevel   = 0;
             ViewInfo.TextureSRV.NumMips         = static_cast<uint8>(Info.NumMipLevels);
@@ -244,34 +244,28 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ShaderResourceView = DefaultSRV;
     }
 
-    // TODO: Fix for other resources than Texture2D
-    const bool bIsTexture2D = Info.IsTexture2D();
-    if (bIsTexture2D)
+    if (Info.IsUnorderedAccessTexture())
     {
-        if (Info.IsUnorderedAccessTexture())
+        FRHIUnorderedAccessViewInfo ViewInfo;
+        ViewInfo.Type                       = FRHIUnorderedAccessViewInfo::EType::TextureUAV;
+        ViewInfo.TextureUAV.Texture         = this;
+        ViewInfo.TextureUAV.Format          = VulkanCastShaderResourceFormat(Info.Format);
+        ViewInfo.TextureUAV.FirstArraySlice = 0;
+        ViewInfo.TextureUAV.MipLevel        = 0;
+        ViewInfo.TextureUAV.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
+
+        FVulkanUnorderedAccessViewRef DefaultUAV = new FVulkanUnorderedAccessView(GetDevice(), this);
+        if (!DefaultUAV->Initialize(ViewInfo))
         {
-            FRHIUnorderedAccessViewInfo ViewInfo;
-            ViewInfo.Type                       = FRHIUnorderedAccessViewInfo::EType::TextureUAV;
-            ViewInfo.TextureUAV.Texture         = this;
-            ViewInfo.TextureUAV.Format          = Info.Format;
-            ViewInfo.TextureUAV.FirstArraySlice = 0;
-            ViewInfo.TextureUAV.MipLevel        = 0;
-            ViewInfo.TextureUAV.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
-
-            FVulkanUnorderedAccessViewRef DefaultUAV = new FVulkanUnorderedAccessView(GetDevice(), this);
-            if (!DefaultUAV->Initialize(ViewInfo))
-            {
-                return false;
-            }
-
-            UnorderedAccessView = DefaultUAV;
+            return false;
         }
+
+        UnorderedAccessView = DefaultUAV;
     }
     
     CHECK(InCommandContext != nullptr);
     if (InInitialData)
     {
-        // TODO: Support other types than texture 2D
         InCommandContext->StartContext();
         
         VkImageMemoryBarrier2 ImageBarrier = {};
@@ -281,10 +275,10 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = Image;
-		ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
-		ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-		ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-		ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
@@ -293,33 +287,73 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
         InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
 
-        // Transfer all the mip-levels
+        const uint32   NumArrayLayers = ImageCreateInfo.arrayLayers;
+        const VkFormat Format         = ImageCreateInfo.format;
+        const uint64   Alignment      = InCommandContext->GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
+
         uint32 Width  = Info.Extent.X;
         uint32 Height = Info.Extent.Y;
+        uint32 Depth  = Info.IsTexture3D() ? Info.Extent.Z : 1;
 
-        for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
+        for (uint32 MipIndex = 0; MipIndex < Info.NumMipLevels; ++MipIndex)
         {
-            // TODO: This does not feel optimal
-            if (IsBlockCompressed(Info.Format) && (Width % 4 != 0 || Height % 4 != 0))
+            void* MipData = InInitialData->GetMipData(MipIndex);
+            if (!MipData)
             {
                 break;
             }
 
-            // If there is no data for this mip-level we break
-            void* Data = InInitialData->GetMipData(Index);
-            if (!Data)
-            {
-                break;
-            }
-            
-            FTextureRegion2D TextureRegion(Width, Height);
-            InCommandContext->UpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
+            const uint32 SrcRowPitch   = static_cast<uint32>(InInitialData->GetMipRowPitch(MipIndex));
+            const int64  SrcSlicePitch = InInitialData->GetMipSlicePitch(MipIndex);
 
-			Width  = Math::Max(1u, Width >> 1);
-			Height = Math::Max(1u, Height >> 1);
+            const uint32 RowPitch = VkCalculateTextureRowPitch(Format, Width);
+            const uint32 NumRows  = VkCalculateTextureNumRows(Format, Height);
+
+            for (uint32 ArrayLayer = 0; ArrayLayer < NumArrayLayers; ++ArrayLayer)
+            {
+                const uint64 SliceSize = static_cast<uint64>(RowPitch) * NumRows * Depth;
+
+                FVulkanMemoryStorage UploadStorage(InCommandContext->GetDevice());
+                uint8* UploadMemory = static_cast<uint8*>(InCommandContext->GetDevice()->GetMemoryManager().AllocateUploadMemory(SliceSize, Alignment, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, UploadStorage));
+                CHECK(UploadMemory != nullptr);
+
+                const uint8* Source = reinterpret_cast<const uint8*>(MipData) + ArrayLayer * SrcSlicePitch;
+
+                for (uint32 DepthSlice = 0; DepthSlice < Depth; ++DepthSlice)
+                {
+                    for (uint32 y = 0; y < NumRows; y++)
+                    {
+                        FMemory::Memcpy(UploadMemory, Source, RowPitch);
+                        Source       += SrcRowPitch;
+                        UploadMemory += RowPitch;
+                    }
+                }
+
+                VkBufferImageCopy BufferImageCopy = {};
+                BufferImageCopy.bufferOffset                    = UploadStorage.GetBufferOffset();
+                BufferImageCopy.bufferRowLength                 = 0;
+                BufferImageCopy.bufferImageHeight               = 0;
+                BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+                BufferImageCopy.imageSubresource.mipLevel       = MipIndex;
+                BufferImageCopy.imageSubresource.baseArrayLayer = ArrayLayer;
+                BufferImageCopy.imageSubresource.layerCount     = 1;
+                BufferImageCopy.imageOffset                     = { 0, 0, 0 };
+                BufferImageCopy.imageExtent                     = { Width, Height, Depth };
+
+                InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandBuffer());
+                InCommandContext->GetCommandBuffer()->CopyBufferToImage(UploadStorage.GetBackingBuffer(), Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+
+                if (Info.IsTexture3D())
+                {
+                    break;
+                }
+            }
+
+            Width  = Math::Max(1u, Width >> 1);
+            Height = Math::Max(1u, Height >> 1);
+            Depth  = Math::Max(1u, Depth >> 1);
         }
 
-        // NOTE: Transition into InitialAccess
         InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
         InCommandContext->FinishContext();
     }
@@ -444,10 +478,19 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableI
         return ExistingView;
     }
 
-    // Get the ImageViewType
     VkImageViewType ImageViewType;
     switch (Info.Dimension)
     {
+        case ETextureDimension::Texture1D:
+        {
+            ImageViewType = VK_IMAGE_VIEW_TYPE_1D;
+            break;
+        }
+        case ETextureDimension::Texture1DArray:
+        {
+            ImageViewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+            break;
+        }
         case ETextureDimension::Texture2D:
         {
             ImageViewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -566,7 +609,8 @@ void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
     for (uint32 Index = 0; Index < NumBackBuffers; Index++)
     {
         FVulkanTexture* BackBuffer = SwapChain->GetBackBufferFromIndex(Index);
-        BackBuffer->Resize(InWidth, InHeight);
+        BackBuffer->Info.Extent.X = InWidth;
+        BackBuffer->Info.Extent.Y = InHeight;
         BackBuffer->DestroyImageViews();
     }
 }

@@ -158,9 +158,14 @@ public:
         EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }
 
-    FORCEINLINE void ClearUnorderedAccessView(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) noexcept
+    FORCEINLINE void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) noexcept
     {
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
+    }
+
+    FORCEINLINE void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) noexcept
+    {
+        EmplaceCommand<FRHICommandClearUnorderedAccessViewUint>(UnorderedAccessView, Values);
     }
 
     FORCEINLINE void BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo) noexcept
@@ -276,6 +281,14 @@ public:
         EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
     }
 
+    FORCEINLINE void UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* InSrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch) noexcept
+    {
+        const uint32 SizeInBytes = SrcDepthPitch * TextureRegion.Depth;
+        void* SrcData = Allocate(SizeInBytes, alignof(uint8));
+        FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
+        EmplaceCommand<FRHICommandUpdateTexture3D>(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch, SrcDepthPitch);
+    }
+
     FORCEINLINE void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) noexcept
     {
         EmplaceCommand<FRHICommandResolveTexture>(Dst, Src);
@@ -299,6 +312,11 @@ public:
     FORCEINLINE void CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion2D& SrcRegion, uint32 SrcMipLevel) noexcept
     {
         EmplaceCommand<FRHICommandCopyTextureRegionToBuffer>(Dst, DstOffset, Src, SrcRegion, SrcMipLevel);
+    }
+
+    FORCEINLINE void CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice) noexcept
+    {
+        EmplaceCommand<FRHICommandCopyTextureSubresourceToBuffer>(Dst, DstOffset, Src, SrcRegion, SrcMipLevel, SrcArraySlice);
     }
 
     FORCEINLINE void WriteFence(FRHIGpuFence* Fence) noexcept

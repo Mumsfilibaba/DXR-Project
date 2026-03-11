@@ -470,6 +470,23 @@ FRHITexture* FVulkanSwapChain::GetBackBuffer() const
     return BackBuffer.Get();
 }
 
+void* FVulkanSwapChain::GetBackBufferRenderTargetView()
+{
+    if (BackBufferIndex < 0 || !BackBuffers.IsValidIndex(BackBufferIndex))
+    {
+        return nullptr;
+    }
+
+    FVulkanTexture* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
+
+    FVulkanHashableImageView HashableImageView;
+    HashableImageView.ArrayIndex     = 0;
+    HashableImageView.NumArraySlices = 1;
+    HashableImageView.Format         = Info.ColorFormat;
+    HashableImageView.MipLevel       = 0;
+    return CurrentBackBuffer->GetOrCreateImageView(HashableImageView);
+}
+
 VkResult FVulkanSwapChain::AcquireNextImage(FVulkanCommandContext* InCommandContext)
 {
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];

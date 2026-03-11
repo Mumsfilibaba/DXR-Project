@@ -13,6 +13,8 @@ typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
 class FVulkanTexture : public FRHITexture, public FVulkanGenericResource
 {
+    friend class FVulkanBackBufferTexture;
+
 public:
     static FVulkanTexture* Cast(FRHITexture* Texture);
     static FVulkanTexture* Cast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
@@ -56,13 +58,6 @@ public:
         return CreateInfo.format;
     }
     
-    // TODO: Solve in a cleaner way and remove this function
-    void Resize(uint32 InWidth, uint32 InHeight)
-    {
-        Info.Extent.X = InWidth;
-        Info.Extent.Y = InHeight;
-    }
-
 protected:
     using FImageViewMap = TMap<FVulkanHashableImageView, FVulkanResourceView*>;
 

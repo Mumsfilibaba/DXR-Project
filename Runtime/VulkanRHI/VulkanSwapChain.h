@@ -22,6 +22,13 @@ public:
 
     virtual FRHITexture* GetBackBuffer() const override final;
 
+    virtual void* GetNativeSwapChain() const override final
+    {
+        return reinterpret_cast<void*>(SwapChainResource->GetVkSwapChain());
+    }
+
+    virtual void* GetBackBufferRenderTargetView() override final;
+
     bool Initialize(FVulkanCommandContext* InCommandContext);
     bool Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
     bool Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync);
@@ -78,4 +85,3 @@ private:
     int32                       ActiveBackBufferCount;
     bool                        bActiveVSync;
 };
-

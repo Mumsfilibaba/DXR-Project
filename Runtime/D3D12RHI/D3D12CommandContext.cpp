@@ -550,6 +550,37 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
         nullptr);
 }
 
+void FD3D12CommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
+{
+    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
+    CHECK(D3D12UnorderedAccessView != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
+    if (!ResourceHeap.HasSpace(1))
+    {
+        ResourceHeap.Realloc();
+        CHECK(ResourceHeap.HasSpace(1));
+    }
+
+    ContextState.GetDescriptorCache().SetDescriptorHeaps();
+
+    const uint32 HandeOffset = ResourceHeap.AllocateHandles(1);
+
+    const D3D12_CPU_DESCRIPTOR_HANDLE OnlineHandleCPU = ResourceHeap.GetCPUHandle(HandeOffset);
+    GetDevice()->GetD3D12Device()->CopyDescriptorsSimple(1, OnlineHandleCPU, D3D12UnorderedAccessView->GetOfflineHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+    const D3D12_GPU_DESCRIPTOR_HANDLE OnlineHandleGPU = ResourceHeap.GetGPUHandle(HandeOffset);
+    GetCommandList()->ClearUnorderedAccessViewUint(
+        OnlineHandleGPU,
+        D3D12UnorderedAccessView->GetOfflineHandle(),
+        D3D12UnorderedAccessView->GetViewResource()->GetD3D12Resource(),
+        Values,
+        0,
+        nullptr);
+}
+
 void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
     BarrierBatcher.FlushBarriers(GetCommandList());
@@ -781,13 +812,12 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     FD3D12Texture* D3D12Destination = FD3D12Texture::Cast(Dst);
     FD3D12Texture* D3D12Source      = FD3D12Texture::Cast(Src);
 
-    const DXGI_FORMAT DstFormat = D3D12Destination->GetDXGIFormat();
-    const DXGI_FORMAT SrcFormat = D3D12Source->GetDXGIFormat();
+    const DXGI_FORMAT DstFormat = D3D12CastShaderResourceFormat(D3D12Destination->GetDXGIFormat());
+    const DXGI_FORMAT SrcFormat = D3D12CastShaderResourceFormat(D3D12Source->GetDXGIFormat());
 
-    //TODO: For now texture must be the same format. I.e typeless does probably not work
     if (DstFormat != SrcFormat)
     {
-        D3D12_ERROR("Dst or Src must have the same formats");
+        D3D12_ERROR("Dst and Src must have compatible formats for resolve");
         return;
     }
 
@@ -898,16 +928,82 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
     SourceLocation.PlacedFootprint.Footprint.Depth    = 1;
     SourceLocation.PlacedFootprint.Footprint.RowPitch = PlacedSubresourceFootprint.Footprint.RowPitch;
 
-    // TODO: MipLevel may not be the correct subresource
-    // TODO: Add offset
-    D3D12_TEXTURE_COPY_LOCATION DestLocation;
-    FMemory::Memzero(&DestLocation);
-
+    D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
     DestLocation.pResource        = D3D12Resource->GetD3D12Resource();
     DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
     DestLocation.SubresourceIndex = MipLevel;
 
-    GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
+    GetCommandList()->CopyTextureRegion(&DestLocation, TextureRegion.PositionX, TextureRegion.PositionY, 0, &SourceLocation, nullptr);
+}
+
+void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
+{
+    CHECK(SrcData != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    FD3D12Texture* D3D12Destination = FD3D12Texture::Cast(Dst);
+    CHECK(D3D12Destination != nullptr);
+
+    FD3D12Resource* D3D12Resource = D3D12Destination->GetResource();
+    CHECK(D3D12Resource != nullptr);
+
+    D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
+    if ((Desc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT) != 0)
+    {
+        Desc.Alignment = 0;
+    }
+
+    UINT64 RequiredSize = 0;
+    UINT64 RowPitch     = 0;
+    UINT32 NumRows      = 0;
+
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT PlacedSubresourceFootprint;
+    GetDevice()->GetD3D12Device()->GetCopyableFootprints(&Desc, MipLevel, 1, 0, &PlacedSubresourceFootprint, &NumRows, &RowPitch, &RequiredSize);
+
+    const uint64 Alignment   = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
+    const uint64 AlignedSize = Math::AlignUp<uint64>(RequiredSize, Alignment);
+
+    FD3D12ResourceStorage ResourceStorage(GetDevice());
+    if (GetDevice()->GetStagingBufferAllocator()->Allocate(AlignedSize, Alignment, ResourceStorage) == nullptr || ResourceStorage.GetMappedBaseAddress() == nullptr || ResourceStorage.GetResource() == nullptr)
+    {
+        D3D12_ERROR_CRITICAL("Upload allocation failed");
+        return;
+    }
+
+    uint8* WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
+    const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
+
+    const uint32 DstSlicePitch = PlacedSubresourceFootprint.Footprint.RowPitch * NumRows;
+    for (uint32 z = 0; z < TextureRegion.Depth; z++)
+    {
+        const uint8* SliceSource = Source + z * SrcDepthPitch;
+        uint8* SliceDest = WritePtr + z * DstSlicePitch;
+
+        for (uint32 y = 0; y < NumRows; y++)
+        {
+            FMemory::Memcpy(SliceDest, SliceSource, SrcRowPitch);
+            SliceDest   += PlacedSubresourceFootprint.Footprint.RowPitch;
+            SliceSource += SrcRowPitch;
+        }
+    }
+
+    D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
+    SourceLocation.pResource                          = ResourceStorage.GetResource()->GetD3D12Resource();
+    SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    SourceLocation.PlacedFootprint.Offset             = ResourceStorage.GetResourceOffset();
+    SourceLocation.PlacedFootprint.Footprint.Format   = Desc.Format;
+    SourceLocation.PlacedFootprint.Footprint.Width    = TextureRegion.Width;
+    SourceLocation.PlacedFootprint.Footprint.Height   = TextureRegion.Height;
+    SourceLocation.PlacedFootprint.Footprint.Depth    = TextureRegion.Depth;
+    SourceLocation.PlacedFootprint.Footprint.RowPitch = PlacedSubresourceFootprint.Footprint.RowPitch;
+
+    D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
+    DestLocation.pResource        = D3D12Resource->GetD3D12Resource();
+    DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    DestLocation.SubresourceIndex = MipLevel;
+
+    GetCommandList()->CopyTextureRegion(&DestLocation, TextureRegion.PositionX, TextureRegion.PositionY, TextureRegion.PositionZ, &SourceLocation, nullptr);
 }
 
 void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo)
@@ -1080,6 +1176,73 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, &SourceBox);
 }
 
+void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice)
+{
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
+
+    BarrierBatcher.FlushBarriers(GetCommandList());
+
+    if ((DstOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
+    {
+        D3D12_ERROR("CopyTextureSubresourceToBuffer requires DstOffset aligned to %u bytes. Offset=%llu", D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT, DstOffset);
+        return;
+    }
+
+    FD3D12Buffer* D3D12Destination = FD3D12Buffer::Cast(Dst);
+    CHECK(D3D12Destination != nullptr);
+
+    FD3D12Texture* D3D12Source = FD3D12Texture::Cast(Src);
+    CHECK(D3D12Source != nullptr);
+
+    GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
+    GetCommandList().UpdateResidency(D3D12Source->GetResource()->GetResidencyHandle());
+
+    const uint32 BytesPerPixel = GetByteStrideFromFormat(Src->GetFormat());
+    if (BytesPerPixel == 0 || IsBlockCompressed(Src->GetFormat()))
+    {
+        D3D12_ERROR("CopyTextureSubresourceToBuffer requires a non-block-compressed, supported format. SrcFormat=%s", ToString(Src->GetFormat()));
+        return;
+    }
+
+    FD3D12Resource* DstResource = D3D12Destination->GetResource();
+    CHECK(DstResource != nullptr);
+
+    const ETextureDimension TextureDimension = Src->GetDimension();
+    const uint32 NumArraySlices = D3D12CalculateArraySlices(TextureDimension, Src->GetNumArraySlices());
+    const uint32 SrcSubresource = D3D12CalculateSubresource(SrcMipLevel, SrcArraySlice, 0, Src->GetNumMipLevels(), NumArraySlices);
+
+    D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
+    SourceLocation.pResource        = D3D12Source->GetResource()->GetD3D12Resource();
+    SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+    SourceLocation.SubresourceIndex = SrcSubresource;
+
+    const uint32 CopyWidth  = SrcRegion.Width;
+    const uint32 CopyHeight = Math::Max(SrcRegion.Height, 1u);
+    const uint32 CopyDepth  = Math::Max(SrcRegion.Depth, 1u);
+    const uint32 RowPitch   = Math::AlignUp<uint32>(BytesPerPixel * CopyWidth, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+
+    D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
+    DestLocation.pResource                        = DstResource->GetD3D12Resource();
+    DestLocation.Type                             = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+    DestLocation.PlacedFootprint.Offset           = DstOffset;
+    DestLocation.PlacedFootprint.Footprint.Format = ConvertFormat(Src->GetFormat());
+    DestLocation.PlacedFootprint.Footprint.Width    = CopyWidth;
+    DestLocation.PlacedFootprint.Footprint.Height   = CopyHeight;
+    DestLocation.PlacedFootprint.Footprint.Depth    = CopyDepth;
+    DestLocation.PlacedFootprint.Footprint.RowPitch = RowPitch;
+
+    D3D12_BOX SourceBox = {};
+    SourceBox.left   = SrcRegion.PositionX;
+    SourceBox.right  = SrcRegion.PositionX + CopyWidth;
+    SourceBox.top    = SrcRegion.PositionY;
+    SourceBox.bottom = SrcRegion.PositionY + CopyHeight;
+    SourceBox.front  = SrcRegion.PositionZ;
+    SourceBox.back   = SrcRegion.PositionZ + CopyDepth;
+
+    GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, &SourceBox);
+}
+
 void FD3D12CommandContext::WriteFence(FRHIGpuFence* Fence)
 {
     CHECK(Fence != nullptr);
@@ -1092,7 +1255,6 @@ void FD3D12CommandContext::WriteFence(FRHIGpuFence* Fence)
 
 void FD3D12CommandContext::DiscardContents(FRHITexture* Texture)
 {
-    // TODO: Enable regions to be discarded
     if (FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(Texture))
     {
         GetCommandList()->DiscardResource(D3D12Texture->GetResource()->GetD3D12Resource(), nullptr);

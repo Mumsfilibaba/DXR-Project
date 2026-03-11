@@ -181,6 +181,24 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
     FVector4                 ClearColor;
 };
 
+DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewUint)
+{
+    FORCEINLINE FRHICommandClearUnorderedAccessViewUint(FRHIUnorderedAccessView* InUnorderedAccessView, const uint32 InValues[4])
+        : UnorderedAccessView(InUnorderedAccessView)
+    {
+        CHECK(InUnorderedAccessView != nullptr);
+        FMemory::Memcpy(Values, InValues, sizeof(Values));
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.ClearUnorderedAccessViewUint(UnorderedAccessView, Values);
+    }
+
+    FRHIUnorderedAccessView* UnorderedAccessView;
+    uint32                   Values[4];
+};
+
 DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 {
     FRHICommandBeginRenderPass(const FRHIBeginRenderPassInfo& InBeginRenderPassInfo)
@@ -556,6 +574,37 @@ DECLARE_RHICOMMAND(FRHICommandUpdateTexture2D)
     uint32           SrcRowPitch;
 };
 
+DECLARE_RHICOMMAND(FRHICommandUpdateTexture3D)
+{
+    FORCEINLINE FRHICommandUpdateTexture3D(
+        FRHITexture*            InDst,
+        const FTextureRegion3D& InTextureRegion,
+        uint32                  InMipLevel,
+        const void*             InSrcData,
+        uint32                  InSrcRowPitch,
+        uint32                  InSrcDepthPitch)
+        : Dst(InDst)
+        , TextureRegion(InTextureRegion)
+        , MipLevel(InMipLevel)
+        , SrcData(InSrcData)
+        , SrcRowPitch(InSrcRowPitch)
+        , SrcDepthPitch(InSrcDepthPitch)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.UpdateTexture3D(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch, SrcDepthPitch);
+    }
+
+    FRHITexture*     Dst;
+    FTextureRegion3D TextureRegion;
+    uint32           MipLevel;
+    const void*      SrcData;
+    uint32           SrcRowPitch;
+    uint32           SrcDepthPitch;
+};
+
 DECLARE_RHICOMMAND(FRHICommandResolveTexture)
 {
     FORCEINLINE FRHICommandResolveTexture(FRHITexture* InDst, FRHITexture* InSrc)
@@ -649,6 +698,31 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegionToBuffer)
     FRHITexture*     Src;
     FTextureRegion2D SrcRegion;
     uint32           SrcMipLevel;
+};
+
+DECLARE_RHICOMMAND(FRHICommandCopyTextureSubresourceToBuffer)
+{
+    FORCEINLINE FRHICommandCopyTextureSubresourceToBuffer(FRHIBuffer* InDst, uint64 InDstOffset, FRHITexture* InSrc, const FTextureRegion3D& InSrcRegion, uint32 InSrcMipLevel, uint32 InSrcArraySlice)
+        : Dst(InDst)
+        , DstOffset(InDstOffset)
+        , Src(InSrc)
+        , SrcRegion(InSrcRegion)
+        , SrcMipLevel(InSrcMipLevel)
+        , SrcArraySlice(InSrcArraySlice)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.CopyTextureSubresourceToBuffer(Dst, DstOffset, Src, SrcRegion, SrcMipLevel, SrcArraySlice);
+    }
+
+    FRHIBuffer*      Dst;
+    uint64           DstOffset;
+    FRHITexture*     Src;
+    FTextureRegion3D SrcRegion;
+    uint32           SrcMipLevel;
+    uint32           SrcArraySlice;
 };
 
 DECLARE_RHICOMMAND(FRHICommandWriteFence)
