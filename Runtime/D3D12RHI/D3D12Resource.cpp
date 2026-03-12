@@ -12,11 +12,13 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     , Desc(InResource ? InResource->GetDesc() : D3D12_RESOURCE_DESC{})
     , Address(0)
     , Heap(MakeSharedRef<FD3D12Heap>(InHeap))
+    , DefaultState(D3D12_RESOURCE_STATE_COMMON)
     , NumSubresources(0)
     , bShouldDeferredRelease(true)
     , bHasClearValue(false)
+    , bHasDefaultState(false)
 {
-    TrackedState.SetResourceState(InInitialState);
+    ResourceState.SetResourceState(InInitialState);
 
     if (Resource)
     {
@@ -37,8 +39,8 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
 
 void FD3D12Resource::InitializeStateTracking(D3D12_RESOURCE_STATES InitialState)
 {
-    TrackedState.Initialize(Math::Max(NumSubresources, 1u));
-    TrackedState.SetResourceState(InitialState);
+    ResourceState.Initialize(Math::Max(NumSubresources, 1u));
+    ResourceState.SetResourceState(InitialState);
 }
 
 void* FD3D12Resource::MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range)

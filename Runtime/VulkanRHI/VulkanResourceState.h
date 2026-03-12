@@ -35,10 +35,28 @@ public:
         return NumSubresources;
     }
 
+    void SetDefaultLayout(VkImageLayout InDefaultLayout)
+    {
+        DefaultLayout    = InDefaultLayout;
+        bHasDefaultLayout = true;
+    }
+
+    bool HasDefaultLayout() const
+    {
+        return bHasDefaultLayout;
+    }
+
+    VkImageLayout GetDefaultLayout() const
+    {
+        return DefaultLayout;
+    }
+
 private:
-    VkImageLayout         ImageLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-    uint32                NumSubresources = 0;
-    bool                  bAllSameLayout  = true;
+    VkImageLayout         ImageLayout      = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkImageLayout         DefaultLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
+    uint32                NumSubresources  = 0;
+    bool                  bAllSameLayout   = true;
+    bool                  bHasDefaultLayout = false;
     TArray<VkImageLayout> SubresourceLayouts;
 };
 

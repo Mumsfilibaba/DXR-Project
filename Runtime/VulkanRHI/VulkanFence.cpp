@@ -40,11 +40,13 @@ bool FVulkanFence::Initialize(bool bSignaled)
 bool FVulkanFence::IsSignaled() const
 {
     VkResult Result = vkGetFenceStatus(GetDevice()->GetVkDevice(), Fence);
+#if VULKAN_ENABLE_DEVICE_LOST_CHECK
     if (Result == VK_ERROR_DEVICE_LOST)
     {
         VULKAN_ERROR_CRITICAL("Device Lost");
         return false;
     }
+#endif
 
     return Result == VK_SUCCESS;
 }
@@ -157,11 +159,13 @@ uint64 FVulkanTimelineFence::GetCompletedValue() const
 
     uint64 CounterValue = 0;
     VkResult Result = vkGetSemaphoreCounterValue(GetDevice()->GetVkDevice(), TimelineSemaphore, &CounterValue);
+#if VULKAN_ENABLE_DEVICE_LOST_CHECK
     if (Result == VK_ERROR_DEVICE_LOST)
     {
         VULKAN_ERROR_CRITICAL("Device Lost");
         return LastCompletedValue;
     }
+#endif
 
     VULKAN_ERROR_COND(Result == VK_SUCCESS, "vkGetSemaphoreCounterValue failed");
     LastCompletedValue = CounterValue;
@@ -282,11 +286,13 @@ bool FVulkanGpuFence::IsSignaled() const
     {
         uint64 CounterValue = 0;
         VkResult Result = vkGetSemaphoreCounterValue(GetDevice()->GetVkDevice(), TimelineSemaphore, &CounterValue);
+#if VULKAN_ENABLE_DEVICE_LOST_CHECK
         if (Result == VK_ERROR_DEVICE_LOST)
         {
             VULKAN_ERROR_CRITICAL("Device Lost");
             return false;
         }
+#endif
 
         VULKAN_ERROR_COND(Result == VK_SUCCESS, "vkGetSemaphoreCounterValue failed");
         return CounterValue >= TargetValue;

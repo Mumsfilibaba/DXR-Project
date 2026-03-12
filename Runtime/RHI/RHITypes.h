@@ -340,6 +340,11 @@ NODISCARD constexpr bool IsBlockCompressed(EFormat Format)
     return UnderlyingTypeValue(Format) >= UnderlyingTypeValue(EFormat::BC1_Typeless);
 }
 
+NODISCARD constexpr bool FormatHasStencil(EFormat Format)
+{
+    return Format == EFormat::D24_Unorm_S8_Uint;
+}
+
 // BlockCompressed images must be aligned to 4 pixels in all dimensions
 NODISCARD constexpr bool IsBlockCompressedAligned(uint32 Extent)
 {

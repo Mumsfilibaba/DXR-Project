@@ -426,8 +426,16 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
     const VkImageLayout InitialLayout = FVulkanRHI::ResourceStateToImageLayout(InInitialAccess);
     const uint32 NumSubresources = ImageCreateInfo.mipLevels * ImageCreateInfo.arrayLayers;
-    TrackedState.SetImageLayout(InitialLayout);
-    TrackedState.Initialize(Math::Max(NumSubresources, 1u));
+    ImageLayoutState.SetImageLayout(InitialLayout);
+    ImageLayoutState.Initialize(Math::Max(NumSubresources, 1u));
+
+    {
+        constexpr ETextureUsageFlags WriteMask = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::DepthStencil | ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::Presentable;
+        if ((Info.UsageFlags & WriteMask) == ETextureUsageFlags::None && IsEnumFlagSet(Info.UsageFlags, ETextureUsageFlags::ShaderResourceTexture))
+        {
+            ImageLayoutState.SetDefaultLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        }
+    }
 
     return true;
 }
@@ -570,8 +578,8 @@ void FVulkanTexture::SetVkImage(VkImage InImage)
     }
 
     const uint32 NumSubresources = CreateInfo.mipLevels * CreateInfo.arrayLayers;
-    TrackedState.Initialize(Math::Max(NumSubresources, 1u));
-    TrackedState.SetImageLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    ImageLayoutState.Initialize(Math::Max(NumSubresources, 1u));
+    ImageLayoutState.SetImageLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
 
 void FVulkanTexture::SetDebugName(const FString& InName)

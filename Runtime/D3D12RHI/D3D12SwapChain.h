@@ -19,17 +19,8 @@ public:
 
     // FRHISwapChain Interface
     virtual FRHITexture* GetBackBuffer() const override final { return BackBufferProxy.Get(); }
-
-    virtual void* GetNativeSwapChain() const override final
-    {
-        return SwapChain.Get();
-    }
-
-    virtual void* GetBackBufferRenderTargetView() override final
-    {
-        FD3D12Texture* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
-        return CurrentBackBuffer->GetOrCreateRenderTargetView(FRHIRenderTargetView(CurrentBackBuffer));
-    }
+    virtual void* GetNativeSwapChain() const override final { return SwapChain.Get(); }
+    virtual void* GetBackBufferRenderTargetView() override final;
 
     bool Initialize(FD3D12CommandContext* InCommandContext);
     bool Resize(FD3D12CommandContext* InCommandContext, uint32 Width, uint32 Height);

@@ -248,6 +248,11 @@ public:
         return ConstantRootParameterIndex;
     }
 
+    FORCEINLINE uint32 GetNum32BitConstants() const
+    {
+        return Num32BitConstants;
+    }
+
     FORCEINLINE int8 GetSlotForRegister(EShaderVisibility Stage, EResourceType Type, uint16 Register) const
     {
         return TableMappings[Stage][Type].GetSlotForRegister(Register);
@@ -287,6 +292,7 @@ private:
     FD3D12ShaderStage            ShaderStages[ShaderVisibility_Count];
     FD3D12DescriptorTableMapping TableMappings[ShaderVisibility_Count][ResourceType_Count];
     int32                        ConstantRootParameterIndex;
+    uint32                       Num32BitConstants;
     D3D12_ROOT_SIGNATURE_FLAGS   Flags;
     uint64                       Hash;
 };

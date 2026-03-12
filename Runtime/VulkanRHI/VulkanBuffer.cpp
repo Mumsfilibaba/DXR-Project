@@ -135,7 +135,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
         }
     }
 
-    TrackedState.SetState(
+    BufferState.SetState(
         FVulkanRHI::ResourceStateToAccessFlags(InInitialAccess),
         FVulkanRHI::ResourceStateToPipelineStageFlags(InInitialAccess));
 

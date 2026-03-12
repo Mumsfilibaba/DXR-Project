@@ -18,10 +18,12 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
+#if D3D12_ENABLE_GPU_VALIDATION
 static TAutoConsoleVariable<bool> CVarEnableGPUValidation(
     "D3D12RHI.EnableGPUValidation",
     "Enables GPU Based Validation if true",
     false);
+#endif
 
 static TAutoConsoleVariable<bool> CVarBreakOnError(
     "D3D12RHI.BreakOnError",
@@ -33,10 +35,12 @@ static TAutoConsoleVariable<bool> CVarBreakOnWarning(
     "When enabled, there will be a DebugBreak when the validation layer encounters an warnings",
     false);
 
+#if D3D12_ENABLE_CRASH_MARKERS
 static TAutoConsoleVariable<bool> CVarEnableDRED(
     "D3D12RHI.EnableDRED",
     "Enables Device Removed Extended Data (DRED) if the Device gets removed",
     false);
+#endif
 
 static TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
     "D3D12RHI.PreferDedicatedGPU",
@@ -360,6 +364,7 @@ bool FD3D12Adapter::Initialize()
             DebugInterface->EnableDebugLayer();
         }
 
+    #if D3D12_ENABLE_CRASH_MARKERS
         const bool bEnableDRED = CVarEnableDRED.GetValue();
         if (bEnableDRED)
         {
@@ -374,14 +379,16 @@ bool FD3D12Adapter::Initialize()
                 D3D12_ERROR("[FD3D12Adapter]: FAILED to enable DRED");
             }
         }
+    #endif
 
+    #if D3D12_ENABLE_GPU_VALIDATION
         const bool bEnableGPUValidation = CVarEnableGPUValidation.GetValue();
         if (bEnableGPUValidation)
         {
             TComPtr<ID3D12Debug1> DebugInterface1;
             if (FAILED(DebugInterface.GetAs(&DebugInterface1)))
             {
-                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable GPU- Validation");
+                D3D12_ERROR("[FD3D12Adapter]: FAILED to enable GPU-Validation");
                 return false;
             }
             else
@@ -389,6 +396,7 @@ bool FD3D12Adapter::Initialize()
                 DebugInterface1->SetEnableGPUBasedValidation(true);
             }
         }
+    #endif
 
     #if WIN10_BUILD_20348
         {

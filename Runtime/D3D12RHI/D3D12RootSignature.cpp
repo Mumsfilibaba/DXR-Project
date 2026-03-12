@@ -753,6 +753,7 @@ FD3D12RootSignature::FD3D12RootSignature(FD3D12Device* InDevice)
     , ShaderStages()
     , TableMappings()
     , ConstantRootParameterIndex(-1)
+    , Num32BitConstants(0)
     , Flags(D3D12_ROOT_SIGNATURE_FLAG_NONE)
     , Hash(0)
 {
@@ -872,6 +873,7 @@ void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_SIGNATUR
         {
             CHECK(ConstantRootParameterIndex == -1);
             ConstantRootParameterIndex = Index;
+            Num32BitConstants          = Parameter.Constants.Num32BitValues;
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV)
         {

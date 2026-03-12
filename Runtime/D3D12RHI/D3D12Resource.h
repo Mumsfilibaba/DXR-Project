@@ -190,8 +190,8 @@ public:
     D3D12_RESOURCE_DIMENSION   GetDimension()     const { return Desc.Dimension; }
     D3D12_HEAP_TYPE            GetHeapType()      const { return HeapType; }
     const D3D12_CLEAR_VALUE&   GetClearValue()    const { return ClearValue; }
-    FD3D12ResourceState&       GetResourceState()       { return TrackedState; }
-    const FD3D12ResourceState& GetResourceState() const { return TrackedState; }
+    FD3D12ResourceState&       GetResourceState()       { return ResourceState; }
+    const FD3D12ResourceState& GetResourceState() const { return ResourceState; }
     FD3D12Heap*                GetHeap()          const { return Heap.Get(); }
     FD3D12ResidencyHandle*     GetResidencyHandle()     { return Heap ? Heap->GetResidencyHandle() : &ResidencyHandle; }
 
@@ -204,6 +204,22 @@ public:
     bool HasClearValue() const
     {
         return bHasClearValue;
+    }
+
+    void SetDefaultState(D3D12_RESOURCE_STATES InDefaultState)
+    {
+        DefaultState     = InDefaultState;
+        bHasDefaultState = true;
+    }
+
+    bool HasDefaultState() const
+    {
+        return bHasDefaultState;
+    }
+
+    D3D12_RESOURCE_STATES GetDefaultState() const
+    {
+        return DefaultState;
     }
 
     uint32 GetNumSubresources() const 
@@ -225,16 +241,18 @@ private:
     void InitializeStateTracking(D3D12_RESOURCE_STATES InitialState);
 
     TComPtr<ID3D12Resource>   Resource;
-    FD3D12ResourceState       TrackedState;
+    FD3D12ResourceState       ResourceState;
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_DESC       Desc;
     D3D12_CLEAR_VALUE         ClearValue;
     D3D12_GPU_VIRTUAL_ADDRESS Address;
+    D3D12_RESOURCE_STATES     DefaultState;
     FD3D12ResidencyHandle     ResidencyHandle;
     FD3D12HeapRef             Heap;
     uint32                    NumSubresources;
     bool                      bShouldDeferredRelease : 1;
     bool                      bHasClearValue : 1;
+    bool                      bHasDefaultState : 1;
 };
 
 struct ID3D12ResourceRelocationListener

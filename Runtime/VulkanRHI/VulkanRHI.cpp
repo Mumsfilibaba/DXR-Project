@@ -72,6 +72,11 @@ FVulkanRHI::FVulkanRHI()
 #if VK_EXT_debug_utils
     , DebugMessenger(VK_NULL_HANDLE)
 #endif
+    , PhysicalDevice(nullptr)
+    , Device(nullptr)
+    , GraphicsQueue(nullptr)
+    , PresentQueue(nullptr)
+    , GraphicsCommandContext(nullptr)
 #if VULKAN_ENABLE_CRASH_MARKERS
     , CrashMarkers(nullptr)
 #endif

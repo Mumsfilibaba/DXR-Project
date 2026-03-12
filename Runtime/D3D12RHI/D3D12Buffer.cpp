@@ -30,19 +30,30 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     ResourceDesc.SampleDesc.Count   = 1;
     ResourceDesc.SampleDesc.Quality = 0;
 
-    D3D12_HEAP_TYPE       D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
-    D3D12_RESOURCE_STATES D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
+    ED3D12ResourceStateMode StateMode         = ED3D12ResourceStateMode::MultipleStates;
+    D3D12_RESOURCE_STATES   D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
+    D3D12_HEAP_TYPE         D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
+    D3D12_RESOURCE_STATES   D3D12DefaultState = DetermineDefaultBufferState(Info.Flags);
 
     if (Info.IsReadBack())
     {
         D3D12HeapType      = D3D12_HEAP_TYPE_READBACK;
         D3D12InitialState  = D3D12_RESOURCE_STATE_COPY_DEST;
+        D3D12DefaultState  = D3D12_RESOURCE_STATE_COPY_DEST;
+        StateMode          = ED3D12ResourceStateMode::SingleState;
         ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
     }
     else if (Info.IsDynamic() || Info.IsTransient())
     {
         D3D12HeapType     = D3D12_HEAP_TYPE_UPLOAD;
         D3D12InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
+        D3D12DefaultState = D3D12_RESOURCE_STATE_GENERIC_READ;
+        StateMode         = ED3D12ResourceStateMode::SingleState;
+    }
+    else if (D3D12DefaultState != D3D12_RESOURCE_STATES(0))
+    {
+        D3D12InitialState = D3D12DefaultState;
+        StateMode         = ED3D12ResourceStateMode::SingleState;
     }
 
     bool bAllocated = false;
@@ -63,12 +74,20 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     }
     else
     {
-        bAllocated = GetDevice()->GetBufferAllocator()->TryAllocate(D3D12HeapType, ResourceDesc, D3D12InitialState, Alignment, ResourceStorage);
+        bAllocated = GetDevice()->GetBufferAllocator()->TryAllocate(D3D12HeapType, ResourceDesc, D3D12InitialState, StateMode, Alignment, ResourceStorage);
     }
 
     if (!bAllocated || ResourceStorage.GetResource() == nullptr)
     {
         return false;
+    }
+
+    FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
+
+    const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
+    if (bHasDefaultState)
+    {
+        D3D12Resource->SetDefaultState(D3D12DefaultState);
     }
 
     if (InInitialData)
@@ -78,7 +97,6 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
             void* MappedAddress = ResourceStorage.GetMappedBaseAddress();
             if (!MappedAddress)
             {
-                FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
                 MappedAddress = D3D12Resource->MapRange(0, nullptr);
                 if (!MappedAddress)
                 {
@@ -94,29 +112,32 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
                 FMemory::Memcpy(MappedAddress, InInitialData, Info.Size);
             }
         }
+        else if (bHasDefaultState)
+        {
+            InCommandContext->StartContext();
+
+            InCommandContext->TransitionResourceState(D3D12Resource, D3D12DefaultState, D3D12_RESOURCE_STATE_COPY_DEST);
+            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->TransitionResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12DefaultState);
+
+            InCommandContext->FinishContext();
+        }
         else
         {
             InCommandContext->StartContext();
 
             InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
-
-            if (InInitialAccess != EResourceAccess::CopyDest)
-            {
-                InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
-            }
+            InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
 
             InCommandContext->FinishContext();
         }
     }
-    else
+    else if (!bHasDefaultState && InInitialAccess != EResourceAccess::Common && D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT)
     {
-        if (InInitialAccess != EResourceAccess::Common && D3D12HeapType == D3D12_HEAP_TYPE_DEFAULT)
-        {
-            InCommandContext->StartContext();
-            InCommandContext->TransitionBufferState(this, EResourceAccess::Common, InInitialAccess);
-            InCommandContext->FinishContext();
-        }
+        InCommandContext->StartContext();
+        InCommandContext->TransitionBufferState(this, EResourceAccess::Common, InInitialAccess);
+        InCommandContext->FinishContext();
     }
 
     return true;
@@ -191,6 +212,7 @@ FString FD3D12Buffer::GetDebugName() const
     {
         ResourceStorage.GetResource()->GetDebugName(DebugName);
     }
+
     return DebugName;
 }
 

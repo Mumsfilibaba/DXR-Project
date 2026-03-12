@@ -27,10 +27,11 @@ public:
 
     // FRHITexture Interface
     virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetVkImage()); }
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
@@ -40,8 +41,8 @@ public:
 
     void SetVkImage(VkImage InImage);
     
-    FVulkanImageLayoutState&       GetImageLayoutState()       { return TrackedState; }
-    const FVulkanImageLayoutState& GetImageLayoutState() const { return TrackedState; }
+    FVulkanImageLayoutState&       GetImageLayoutState()       { return ImageLayoutState; }
+    const FVulkanImageLayoutState& GetImageLayoutState() const { return ImageLayoutState; }
 
     VkImage GetVkImage() const
     {
@@ -64,7 +65,7 @@ protected:
     FString                       DebugName;
     VkImage                       Image;
     VkImageCreateInfo             CreateInfo;
-    FVulkanImageLayoutState       TrackedState;
+    FVulkanImageLayoutState       ImageLayoutState;
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
     TArray<FVulkanResourceView*>  ImageViews;

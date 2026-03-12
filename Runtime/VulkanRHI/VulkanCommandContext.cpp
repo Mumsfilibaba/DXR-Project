@@ -1778,6 +1778,15 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
     FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
     CHECK(VulkanTexture != nullptr);
 
+    if (VulkanTexture->GetImageLayoutState().HasDefaultLayout())
+    {
+        const VkImageLayout RequiredLayout = FVulkanRHI::ResourceStateToImageLayout(RequiredState.State);
+        if (RequiredLayout == VulkanTexture->GetImageLayoutState().GetDefaultLayout())
+        {
+            return;
+        }
+    }
+
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(VulkanTexture);
 
     const VkAccessFlags2        DstAccess     = FVulkanRHI::ResourceStateToAccessFlags(RequiredState.State);

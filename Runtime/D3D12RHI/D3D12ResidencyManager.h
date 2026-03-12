@@ -25,11 +25,18 @@ public:
         bIsResident = true;
     }
 
-    FORCEINLINE bool IsInitialized() const { return Pageable != nullptr; }
     FORCEINLINE bool IsResident()    const { return bIsResident; }
+    FORCEINLINE bool IsInitialized() const { return Pageable != nullptr; }
 
-    FORCEINLINE ID3D12Pageable* GetPageable()  const { return Pageable; }
-    FORCEINLINE uint64          GetSizeBytes() const { return SizeBytes; }
+    FORCEINLINE ID3D12Pageable* GetPageable() const
+    {
+        return Pageable;
+    }
+
+    FORCEINLINE uint64 GetSizeBytes() const
+    {
+        return SizeBytes;
+    }
 
 private:
     ID3D12Pageable* Pageable            = nullptr;

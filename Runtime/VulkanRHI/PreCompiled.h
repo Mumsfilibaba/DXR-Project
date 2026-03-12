@@ -1,4 +1,5 @@
 #pragma once
+#include "VulkanRHI/VulkanConfiguration.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
 #include "VulkanRHI/VulkanBuffer.h"

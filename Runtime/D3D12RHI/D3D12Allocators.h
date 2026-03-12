@@ -19,6 +19,17 @@ enum class EAllocationStrategy : uint8
     SuballocatedResource
 };
 
+NODISCARD inline const char* ToString(EAllocationStrategy Strategy)
+{
+    switch (Strategy)
+    {
+        case EAllocationStrategy::SuballocatedHeap:     return "SuballocatedHeap";
+        case EAllocationStrategy::SuballocatedResource: return "SuballocatedResource";
+    }
+    
+    return "Unknown";
+}
+
 class FD3D12BuddyAllocator : public FD3D12DeviceChild
 {
 public:
@@ -360,13 +371,13 @@ private:
 class FD3D12BufferAllocator : public FD3D12DeviceChild
 {
 public:
-    static EAllocationStrategy GetAllocationStrategy(D3D12_HEAP_TYPE HeapType);
+    static EAllocationStrategy GetAllocationStrategy(D3D12_HEAP_TYPE HeapType, ED3D12ResourceStateMode StateMode);
 
 public:
     FD3D12BufferAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize);
     ~FD3D12BufferAllocator();
     
-    bool TryAllocate(D3D12_HEAP_TYPE HeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
+    bool TryAllocate(D3D12_HEAP_TYPE HeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, ED3D12ResourceStateMode StateMode, uint64 Alignment, FD3D12ResourceStorage& OutStorage);
     bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
     bool Initialize();

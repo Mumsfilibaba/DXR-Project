@@ -28,10 +28,12 @@ bool FD3D12CommandAllocator::Initialize()
 bool FD3D12CommandAllocator::Reset()
 {
     HRESULT Result = Allocator->Reset();
+#if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
         D3D12DeviceRemovedHandlerRHI(GetDevice());
     }
+#endif
 
     return SUCCEEDED(Result);
 }
@@ -199,10 +201,12 @@ bool FD3D12CommandList::Reset(FD3D12CommandAllocator* Allocator)
     ResidencySet.Reset();
 
     HRESULT Result = CmdList->Reset(Allocator->GetD3D12Allocator(), nullptr);
+#if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
         D3D12DeviceRemovedHandlerRHI(GetDevice());
     }
+#endif
 
     return SUCCEEDED(Result);
 }
@@ -212,10 +216,12 @@ bool FD3D12CommandList::Close()
     bIsReady = false;
 
     HRESULT Result = CmdList->Close();
+#if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
         D3D12DeviceRemovedHandlerRHI(GetDevice());
     }
+#endif
 
     NumCommands = 0;
     return SUCCEEDED(Result);

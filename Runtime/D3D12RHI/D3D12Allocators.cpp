@@ -11,7 +11,7 @@
 static constexpr uint64 D3D12_MIN_TIGHT_RESOURCE_PLACEMENT_ALIGNMENT  = 8ull;
 static constexpr uint64 D3D12_SMALL_TEXTURE_TIGHT_PLACEMENT_ALIGNMENT = 256ull;
 
-#if !RELEASE_BUILD
+#if D3D12_ENABLE_MEMORY_LOGGING
 static TAutoConsoleVariable<bool> CVarD3D12LogMemoryAllocations(
     "D3D12RHI.LogMemoryAllocations",
     "Log when new memory allocator pages or dedicated allocations are created",
@@ -1748,7 +1748,7 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
         OutStorage.SetMappedBaseAddress(MappedBaseAddress);
 
-#if !RELEASE_BUILD
+#if D3D12_ENABLE_MEMORY_LOGGING
         if (CVarD3D12LogMemoryAllocations.GetValue())
         {
             D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> Committed",
@@ -1759,13 +1759,12 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         return true;
     }
 
-#if !RELEASE_BUILD
+#if D3D12_ENABLE_MEMORY_LOGGING
     if (CVarD3D12LogMemoryAllocations.GetValue())
     {
-        static const char* StrategyNames[] = { "SuballocatedResource", "SuballocatedHeap" };
         D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> %s (MinBlock=%llu)",
             SizeInBytes, UsedAlignment, InHeapType,
-            StrategyNames[static_cast<uint32>(AllocationStrategy)],
+            ToString(AllocationStrategy),
             MinBlockBytes);
     }
 #endif
@@ -1809,9 +1808,14 @@ FD3D12BufferAllocator::~FD3D12BufferAllocator()
     Destroy();
 }
 
-EAllocationStrategy FD3D12BufferAllocator::GetAllocationStrategy(D3D12_HEAP_TYPE HeapType)
+EAllocationStrategy FD3D12BufferAllocator::GetAllocationStrategy(D3D12_HEAP_TYPE HeapType, ED3D12ResourceStateMode StateMode)
 {
-    return (HeapType == D3D12_HEAP_TYPE_DEFAULT) ? EAllocationStrategy::SuballocatedHeap : EAllocationStrategy::SuballocatedResource;
+    if (HeapType != D3D12_HEAP_TYPE_DEFAULT)
+    {
+        return EAllocationStrategy::SuballocatedResource;
+    }
+
+    return (StateMode == ED3D12ResourceStateMode::SingleState) ? EAllocationStrategy::SuballocatedResource : EAllocationStrategy::SuballocatedHeap;
 }
 
 bool FD3D12BufferAllocator::Initialize()
@@ -1820,21 +1824,20 @@ bool FD3D12BufferAllocator::Initialize()
 
     const D3D12_HEAP_TYPE HeapTypes[] =
     {
-        D3D12_HEAP_TYPE_DEFAULT,
         D3D12_HEAP_TYPE_UPLOAD,
         D3D12_HEAP_TYPE_READBACK
     };
 
     const D3D12_RESOURCE_STATES InitialStates[] =
     {
-        D3D12_RESOURCE_STATE_COMMON,
         D3D12_RESOURCE_STATE_GENERIC_READ,
         D3D12_RESOURCE_STATE_COPY_DEST
     };
 
     for (uint32 Index = 0; Index < ARRAY_COUNT(HeapTypes); ++Index)
     {
-        const EAllocationStrategy Strategy = GetAllocationStrategy(HeapTypes[Index]);
+        const EAllocationStrategy Strategy = GetAllocationStrategy(HeapTypes[Index], ED3D12ResourceStateMode::SingleState);
+
         FD3D12BufferAllocatorPool* Pool = new FD3D12BufferAllocatorPool(GetDevice(), HeapTypes[Index], PageSizeBytes, MinBlockBytes, MaxSuballocationSize, InitialStates[Index], Strategy);
         if (!Pool->Initialize())
         {
@@ -1890,6 +1893,7 @@ bool FD3D12BufferAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_
 void FD3D12BufferAllocator::ReleasePools()
 {
     SCOPED_LOCK(PoolsCS);
+
     for (FD3D12BufferAllocatorPool* Pool : Pools)
     {
         delete Pool;
@@ -1898,7 +1902,7 @@ void FD3D12BufferAllocator::ReleasePools()
     Pools.Clear();
 }
 
-bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
+bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_STATES InitialState, ED3D12ResourceStateMode StateMode, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
 {
     D3D12_RESOURCE_DESC AllocationDesc = ApplyTightAlignmentFlag(ResourceDesc);
 
@@ -1908,7 +1912,7 @@ bool FD3D12BufferAllocator::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3D12_
         return false;
     }
 
-    const EAllocationStrategy Strategy = GetAllocationStrategy(InHeapType);
+    const EAllocationStrategy Strategy = GetAllocationStrategy(InHeapType, StateMode);
 
     SCOPED_LOCK(PoolsCS);
 
@@ -1981,8 +1985,8 @@ bool FD3D12TextureAllocator::Initialize()
         return true;
     };
 
+    const uint64 DefaultAlignment       = GD3D12SupportTightAlignment ? D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
     const uint64 SmallReadOnlyAlignment = GD3D12SupportTightAlignment ? D3D12_SMALL_TEXTURE_TIGHT_PLACEMENT_ALIGNMENT : D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
-    const uint64 DefaultAlignment          = GD3D12SupportTightAlignment ? D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT : D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
 
     SmallPoolAlignment = D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT;
 
@@ -2220,7 +2224,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
         return false;
     }
 
-#if !RELEASE_BUILD
+#if D3D12_ENABLE_MEMORY_LOGGING
     if (CVarD3D12LogMemoryAllocations.GetValue())
     {
         static const CHAR* PoolClassNames[] = { "SmallReadOnly", "ReadOnly", "RenderTargetDepthStencil", "UAVOnly" };

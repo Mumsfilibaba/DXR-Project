@@ -29,8 +29,8 @@ public:
     virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
     virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
 
-    FVulkanBufferState&       GetBufferState()       { return TrackedState; }
-    const FVulkanBufferState& GetBufferState() const { return TrackedState; }
+    FVulkanBufferState&       GetBufferState()       { return BufferState; }
+    const FVulkanBufferState& GetBufferState() const { return BufferState; }
 
     bool IsSuballocated() const
     {
@@ -80,6 +80,6 @@ public:
 protected:
     VkBuffer             OwnedBuffer;
     VkDeviceSize         RequiredAlignment;
-    FVulkanBufferState   TrackedState;
+    FVulkanBufferState   BufferState;
     FString              DebugName;
 };

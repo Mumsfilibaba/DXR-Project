@@ -20,14 +20,14 @@ public:
     FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainInfo& InSwapChainInfo);
     virtual ~FVulkanSwapChain();
 
+    // FRHISwapChain Interface
     virtual FRHITexture* GetBackBuffer() const override final;
+    virtual void* GetBackBufferRenderTargetView() override final;
 
     virtual void* GetNativeSwapChain() const override final
     {
         return reinterpret_cast<void*>(SwapChainResource->GetVkSwapChain());
     }
-
-    virtual void* GetBackBufferRenderTargetView() override final;
 
     bool Initialize(FVulkanCommandContext* InCommandContext);
     bool Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
@@ -69,6 +69,7 @@ private:
         SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
     }
 
+private:
     typedef TArray<FVulkanFence*, TInlineArrayAllocator<FVulkanFence*, NUM_BACK_BUFFERS>> FVulkanFenceArray;
     typedef TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> FVulkanSemaphoreArray;
 

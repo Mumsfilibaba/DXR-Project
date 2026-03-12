@@ -95,7 +95,13 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         }
     }
 
-    const bool bAllocated = GetDevice()->GetTextureAllocator()->TryAllocate(ResourceDesc, D3D12_RESOURCE_STATE_COMMON, bSupportClearValue ? &ClearValue : nullptr, ResourceStorage);
+    const D3D12_RESOURCE_STATES D3D12DefaultState = DetermineDefaultTextureState(Info.UsageFlags);
+    const bool bAllocated = GetDevice()->GetTextureAllocator()->TryAllocate(
+        ResourceDesc, 
+        D3D12_RESOURCE_STATE_COMMON, 
+        bSupportClearValue ? &ClearValue : nullptr, 
+        ResourceStorage);
+
     if (!bAllocated || ResourceStorage.GetResource() == nullptr)
     {
         return false;
@@ -251,8 +257,8 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         UnorderedAccessView = DefaultUAV;
     }
 
-    const IRHITextureData* InitialData = InInitialData;
-    if (InitialData)
+    const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
+    if (const IRHITextureData* InitialData = InInitialData)
     {
         InCommandContext->StartContext();
         InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
@@ -394,7 +400,13 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
             FD3D12DepthStencilView* D3D12DSV = GetOrCreateDepthStencilView(DSView);
             CHECK(D3D12DSV != nullptr);
 
-            InCommandContext->GetCommandList()->ClearDepthStencilView(D3D12DSV->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, ClearValue.DepthStencil.Depth, static_cast<uint8>(ClearValue.DepthStencil.Stencil), 0, nullptr);
+            D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
+            if (FormatHasStencil(DSView.Format))
+            {
+                ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
+            }
+
+            InCommandContext->GetCommandList()->ClearDepthStencilView(D3D12DSV->GetOfflineHandle(), ClearFlags, ClearValue.DepthStencil.Depth, static_cast<uint8>(ClearValue.DepthStencil.Stencil), 0, nullptr);
 
             if (InInitialAccess != EResourceAccess::DepthWrite)
             {
@@ -409,6 +421,11 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         InCommandContext->StartContext();
         InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, InInitialAccess));
         InCommandContext->FinishContext();
+    }
+
+    if (bHasDefaultState)
+    {
+        GetResource()->SetDefaultState(D3D12DefaultState);
     }
 
     return true;

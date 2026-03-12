@@ -55,7 +55,7 @@
     #define WIN11_BUILD_22621 (1)
 #endif
 
-#if !RELEASE_BUILD
+#if D3D12_ENABLE_LOGGING
     #define D3D12_ERROR_CRITICAL(...) \
         do \
         { \
@@ -616,6 +616,58 @@ NODISCARD constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess R
     }
 
     return D3D12_RESOURCE_STATES();
+}
+
+enum class ED3D12ResourceStateMode : uint8
+{
+    SingleState,
+    MultipleStates
+};
+
+NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultBufferState(EBufferFlags Flags)
+{
+    constexpr EBufferFlags WriteMask = EBufferFlags::UnorderedAccessBuffer;
+    if (IsEnumFlagSet(Flags, WriteMask))
+    {
+        return D3D12_RESOURCE_STATES(0);
+    }
+
+    D3D12_RESOURCE_STATES State = D3D12_RESOURCE_STATES(0);
+    if (IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer))
+    {
+        State |= D3D12_RESOURCE_STATE_INDEX_BUFFER;
+    }
+    if (IsEnumFlagSet(Flags, EBufferFlags::VertexBuffer) || IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer))
+    {
+        State |= D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+    }
+    if (IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer))
+    {
+        State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    }
+
+    return State;
+}
+
+NODISCARD inline D3D12_RESOURCE_STATES DetermineDefaultTextureState(ETextureUsageFlags Flags)
+{
+    constexpr ETextureUsageFlags WriteMask = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::DepthStencil | ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::Presentable;
+    if ((Flags & WriteMask) != ETextureUsageFlags::None)
+    {
+        return D3D12_RESOURCE_STATES(0);
+    }
+
+    D3D12_RESOURCE_STATES State = D3D12_RESOURCE_STATES(0);
+    if (IsEnumFlagSet(Flags, ETextureUsageFlags::ShaderResourceTexture))
+    {
+        State |= D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+    }
+    if (IsEnumFlagSet(Flags, ETextureUsageFlags::ShadingRateTexture))
+    {
+        State |= D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+    }
+
+    return State;
 }
 
 NODISCARD constexpr D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)

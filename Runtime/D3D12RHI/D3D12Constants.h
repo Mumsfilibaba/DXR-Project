@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Core.h"
+#include "D3D12RHI/D3D12Configuration.h"
 
 #include <d3d12.h>
 
@@ -20,8 +20,6 @@
 #define D3D12_NUM_BACK_BUFFERS (3)
 
 #define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
-#define D3D12_ENABLE_PIX_MARKERS (1)
-
 #define D3D12_DEFAULT_QUERY_COUNT (128)
 
 #define D3D12_DEFAULT_ONLINE_RESOURCE_DESCRIPTOR_COUNT (D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT)

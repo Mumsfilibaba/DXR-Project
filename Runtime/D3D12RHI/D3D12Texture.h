@@ -22,10 +22,11 @@ public:
 
     // FRHITexture Interface
     virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(ResourceStorage.GetResource()); }
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
@@ -91,6 +92,7 @@ public:
     }
 
     void Resize(uint32 InWidth, uint32 InHeight);
+    
     FD3D12Texture* GetCurrentBackBufferTexture() const;
 
     FD3D12SwapChain* GetSwapChain() const

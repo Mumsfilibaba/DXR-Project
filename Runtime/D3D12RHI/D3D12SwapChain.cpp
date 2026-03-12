@@ -230,6 +230,12 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
     return true;
 }
 
+void* FD3D12SwapChain::GetBackBufferRenderTargetView()
+{
+    FD3D12Texture* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
+    return CurrentBackBuffer->GetOrCreateRenderTargetView(FRHIRenderTargetView(CurrentBackBuffer));
+}
+
 bool FD3D12SwapChain::Present(bool bVerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
@@ -244,10 +250,12 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
     }
 
     HRESULT Result = SwapChain->Present(SyncInterval, PresentFlags);
+#if D3D12_ENABLE_DEVICE_LOST_CHECK
     if (Result == DXGI_ERROR_DEVICE_REMOVED)
     {
         D3D12DeviceRemovedHandlerRHI(GetDevice());
     }
+#endif
 
     if (SUCCEEDED(Result))
     {

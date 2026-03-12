@@ -53,24 +53,24 @@ void FD3D12CommandContextState::BindGraphicsStates()
 #ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
     if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
     {
-		if (GraphicsState.bBindShadingRateImage)
-		{
-			ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
+        if (GraphicsState.bBindShadingRateImage)
+        {
+            ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
             Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
-			GraphicsState.bBindShadingRateImage = false;
-		}
+            GraphicsState.bBindShadingRateImage = false;
+        }
 
-		if (GraphicsState.bBindShadingRate)
-		{
-			D3D12_SHADING_RATE_COMBINER Combiners[] =
-			{
-				D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-				D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-			};
+        if (GraphicsState.bBindShadingRate)
+        {
+            D3D12_SHADING_RATE_COMBINER Combiners[] =
+            {
+                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+            };
 
             Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
-			GraphicsState.bBindShadingRate = false;
-		}
+            GraphicsState.bBindShadingRate = false;
+        }
     }
 #endif
 
@@ -162,7 +162,7 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
             }
             NumSamplerDescriptors += NumSamplers[CurrentStage];
         }
-        
+
         if (!CommonState.DescriptorCache.GetSamplerHeap().HasSpace(NumSamplerDescriptors))
         {
             if (!CommonState.DescriptorCache.GetSamplerHeap().Realloc())
@@ -209,7 +209,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
     uint32 NumUAVs[ShaderVisibility_Count];
 
     constexpr int32 MaxTries = 4;
-    
+
     uint32 NumResourceDescriptors;
     for (int32 NumTries = 0; NumTries < MaxTries; NumTries++)
     {
@@ -629,11 +629,10 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     D3D12_VERTEX_BUFFER_VIEW CurrentVBV;
     if (VertexBuffer)
     {
-        FD3D12Resource* Resource = VertexBuffer->GetResource();
-        CurrentVBV.BufferLocation = Resource->GetGPUVirtualAddress();
+        CurrentVBV.BufferLocation = VertexBuffer->GetGpuVirtualAddress();
         CurrentVBV.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetInfo().Size);
         CurrentVBV.StrideInBytes  = VertexBuffer->GetInfo().Stride;
-        Context.GetCommandList().UpdateResidency(Resource->GetResidencyHandle());
+        Context.GetCommandList().UpdateResidency(VertexBuffer->GetResource()->GetResidencyHandle());
     }
     else
     {
@@ -653,11 +652,10 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
     D3D12_INDEX_BUFFER_VIEW NewIndexBuffer;
     if (IndexBuffer)
     {
-        FD3D12Resource* Resource = IndexBuffer->GetResource();
-        NewIndexBuffer.BufferLocation = Resource->GetGPUVirtualAddress();
+        NewIndexBuffer.BufferLocation = IndexBuffer->GetGpuVirtualAddress();
         NewIndexBuffer.Format         = IndexFormat;
         NewIndexBuffer.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetInfo().Size);
-        Context.GetCommandList().UpdateResidency(Resource->GetResidencyHandle());
+        Context.GetCommandList().UpdateResidency(IndexBuffer->GetResource()->GetResidencyHandle());
     }
     else
     {

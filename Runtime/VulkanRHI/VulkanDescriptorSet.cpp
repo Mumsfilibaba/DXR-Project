@@ -9,8 +9,6 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanRHI.h"
 
-#define VALIDATE_NO_NULL_DESCRIPTORS (0)
-#define BREAK_ON_NULL_DESCRIPTORS (0)
 
 static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
     "VulkanRHI.MaxDescriptorSetsPerPool",
@@ -364,7 +362,7 @@ void FVulkanDescriptorState::SetSampler(FVulkanSamplerState* SamplerState, uint3
     }
 }
 
-#if VALIDATE_NO_NULL_DESCRIPTORS
+#if VULKAN_VALIDATE_NO_NULL_DESCRIPTORS
 static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
 {
     switch (Type)
@@ -385,7 +383,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
 {
     for (int32 Index = 0; Index < DescriptorSetHandles.Size(); Index++)
     {
-    #if VALIDATE_NO_NULL_DESCRIPTORS
+    #if VULKAN_VALIDATE_NO_NULL_DESCRIPTORS
         const FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[Index];
         const FVulkanDescriptorRemappingInfo& RemappingInfo = Layout->GetDescriptorRemappingInfo(Index);
         for (int32 BindIdx = 0; BindIdx < DSWrites.DescriptorWrites.Size(); BindIdx++)
@@ -405,7 +403,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
                 {
                     VULKAN_WARNING("Null buffer descriptor '%s' (register b%u) at set=%d binding=%u (%s)",
                         BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
-                #if BREAK_ON_NULL_DESCRIPTORS
+                #if VULKAN_BREAK_ON_NULL_DESCRIPTORS
                     DEBUG_BREAK();
                 #endif
                 }
@@ -418,7 +416,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
                     {
                         VULKAN_WARNING("Null image view descriptor '%s' (register t%u) at set=%d binding=%u (%s)",
                             BindingName, OriginalBinding, Index, WriteInfo.dstBinding, GetDescriptorTypeName(WriteInfo.descriptorType));
-                    #if BREAK_ON_NULL_DESCRIPTORS
+                    #if VULKAN_BREAK_ON_NULL_DESCRIPTORS
                         DEBUG_BREAK();
                     #endif
                     }
@@ -429,7 +427,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
                     {
                         VULKAN_WARNING("Null sampler descriptor '%s' (register s%u) at set=%d binding=%u",
                             BindingName, OriginalBinding, Index, WriteInfo.dstBinding);
-                    #if BREAK_ON_NULL_DESCRIPTORS
+                    #if VULKAN_BREAK_ON_NULL_DESCRIPTORS
                         DEBUG_BREAK();
                     #endif
                     }

@@ -17,7 +17,7 @@ extern VULKANRHI_API bool GVulkanSupportsDebugUtils;
 
 inline VkResult VulkanSetObjectName(VkDevice Device, const CHAR* Name, uint64 ObjectHandle, VkObjectType ObjectType)
 {
-#if VK_EXT_debug_utils
+#if VULKAN_ENABLE_DEBUG_NAMES && VK_EXT_debug_utils
     if (!GVulkanSupportsDebugUtils)
     {
         return VK_SUCCESS;

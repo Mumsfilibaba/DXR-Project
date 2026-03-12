@@ -8,12 +8,6 @@
 #include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12SamplerState.h"
 
-#if DEBUG_BUILD
-    #define D3D12_BREAK_ON_HASH_COLLISION (1)
-#else
-    #define D3D12_BREAK_ON_HASH_COLLISION (0)
-#endif
-
 class FD3D12CommandContext;
 
 struct FD3D12VertexBufferCache

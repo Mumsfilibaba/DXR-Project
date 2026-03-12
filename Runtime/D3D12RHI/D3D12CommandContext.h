@@ -145,6 +145,8 @@ public:
         return CommandList == nullptr;
     }
 
+    void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+
 private:
     void ConditionalSplitCommandList();
     void CloseEventStack();

@@ -77,7 +77,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -106,7 +106,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -217,7 +217,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -262,7 +262,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
+        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
