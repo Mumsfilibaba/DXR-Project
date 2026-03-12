@@ -443,7 +443,9 @@ public:
     bool Initialize();
 
     bool CreateGraphicsPipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState);
+    bool CreateGraphicsPipeline(const WIDECHAR* PipelineHash, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& Desc, TComPtr<ID3D12PipelineState>& OutPipelineState);
     bool CreateComputePipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState);
+    bool CreateComputePipeline(const WIDECHAR* PipelineHash, const D3D12_COMPUTE_PIPELINE_STATE_DESC& Desc, TComPtr<ID3D12PipelineState>& OutPipelineState);
     bool SaveCacheData();
     
     ID3D12PipelineLibrary1* GetD3D12PipelineLibrary() const

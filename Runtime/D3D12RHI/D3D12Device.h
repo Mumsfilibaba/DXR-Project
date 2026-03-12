@@ -42,6 +42,7 @@ typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
 extern D3D12RHI_API bool GD3D12ForceBinding;
 extern D3D12RHI_API bool GD3D12SupportPipelineCache;
+extern D3D12RHI_API bool GD3D12SupportPipelineStream;
 extern D3D12RHI_API bool GD3D12SupportTightAlignment;
 extern D3D12RHI_API bool GD3D12SupportGPUUploadHeaps;
 extern D3D12RHI_API bool GD3D12SupportsBindless;

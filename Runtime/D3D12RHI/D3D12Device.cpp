@@ -152,6 +152,7 @@ static TAutoConsoleVariable<bool> CVarEnableTightAlignment(
 
 D3D12RHI_API bool GD3D12ForceBinding            = false;
 D3D12RHI_API bool GD3D12SupportPipelineCache    = false;
+D3D12RHI_API bool GD3D12SupportPipelineStream   = false;
 D3D12RHI_API bool GD3D12SupportTightAlignment   = false;
 D3D12RHI_API bool GD3D12SupportGPUUploadHeaps   = false;
 D3D12RHI_API bool GD3D12SupportsBindless        = false;
@@ -862,6 +863,25 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
+#if D3D12_ENABLE_PIPELINE_STATE_STREAM
+    #ifdef __ID3D12Device2_INTERFACE_DEFINED__
+        GD3D12SupportPipelineStream = (GetD3D12Device2() != nullptr);
+    #else
+        GD3D12SupportPipelineStream = false;
+    #endif
+#else
+    GD3D12SupportPipelineStream = false;
+#endif
+
+    if (GD3D12SupportPipelineStream)
+    {
+        D3D12_INFO("[FD3D12Device]: Pipeline State Stream creation enabled (ID3D12Device2)");
+    }
+    else
+    {
+        D3D12_INFO("[FD3D12Device]: Pipeline State Stream creation disabled, using legacy pipeline state creation");
+    }
+
     if (!CreateCommandQueues())
     {
         return false;
@@ -1025,7 +1045,7 @@ bool FD3D12Device::Initialize()
     {
         SAFE_DELETE(PipelineStateManager);
         GD3D12SupportPipelineCache = false;
-        return false;
+        D3D12_WARNING("[FD3D12Device]: Pipeline cache initialization failed, continuing without cache");
     }
     else
     {
