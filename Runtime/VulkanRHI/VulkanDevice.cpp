@@ -733,7 +733,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
 
     if (QueueIndicies->PresentQueueIndex != uint32(~0) && QueueIndicies->HasSeparatePresentQueue())
     {
-        UniqueQueueIndices.Insert(QueueIndicies->PresentQueueIndex);
+        UniqueQueueIndices.Add(QueueIndicies->PresentQueueIndex);
     }
 
     const float DefaultQueuePriority = 0.0f;
