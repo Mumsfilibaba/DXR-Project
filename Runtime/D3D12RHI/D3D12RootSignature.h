@@ -47,7 +47,7 @@ public:
     
     bool IsCompatible(const FD3D12RootSignatureLayout& Other) const;
     
-    void   ComputeRootCBVs();
+    void ComputeRootCBVs();
     uint32 ComputeCost() const;
 
     const FD3D12RegisterSet& GetRootCBVRegisters(EShaderVisibility Stage)                 const { return RootCBVSets[Stage]; }
@@ -123,29 +123,54 @@ public:
         return RootSignatureCost;
     }
 
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    FORCEINLINE const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& GetVersionedDesc() const
+    {
+        return VersionedDesc;
+    }
+#else
     FORCEINLINE const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
     {
         return Desc;
     }
+#endif
 
 private:
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE1& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace, D3D12_DESCRIPTOR_RANGE_FLAGS Flags, uint32 OffsetInTable);
+#else
     static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace, uint32 OffsetInTable);
+#endif
 
+private:
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    void InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE1* DescriptorRanges, uint32 NumDescriptorRanges);
+    void InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace, D3D12_ROOT_DESCRIPTOR_FLAGS Flags);
+    void InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace, D3D12_ROOT_DESCRIPTOR_FLAGS Flags);
+    void InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace, D3D12_ROOT_DESCRIPTOR_FLAGS Flags);
+    uint32 BuildDescriptorRangesForRegisterSet(const FD3D12RegisterSet& Registers, D3D12_DESCRIPTOR_RANGE_TYPE RangeType, uint32 Space, D3D12_DESCRIPTOR_RANGE_FLAGS Flags);
+#else
     void InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
-    void Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 NumShaderConstants, uint32 ShaderRegister, uint32 RegisterSpace);
     void InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
     void InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
     void InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
-
     uint32 BuildDescriptorRangesForRegisterSet(const FD3D12RegisterSet& Registers, D3D12_DESCRIPTOR_RANGE_TYPE RangeType, uint32 Space);
+#endif
+    void Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 NumShaderConstants, uint32 ShaderRegister, uint32 RegisterSpace);
 
 private:
-    D3D12_ROOT_PARAMETER      RootParameters[D3D12_MAX_ROOT_PARAMETERS];
-    D3D12_DESCRIPTOR_RANGE    DescriptorRanges[D3D12_MAX_DESCRIPTOR_RANGE_SIZE];
-    D3D12_ROOT_SIGNATURE_DESC Desc;
-    uint32                    NumRootParameters;
-    uint32                    NumDescriptorRanges;
-    uint32                    RootSignatureCost;
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    D3D12_ROOT_PARAMETER1                RootParameters[D3D12_MAX_ROOT_PARAMETERS];
+    D3D12_DESCRIPTOR_RANGE1              DescriptorRanges[D3D12_MAX_DESCRIPTOR_RANGE_SIZE];
+    D3D12_VERSIONED_ROOT_SIGNATURE_DESC  VersionedDesc;
+#else
+    D3D12_ROOT_PARAMETER                 RootParameters[D3D12_MAX_ROOT_PARAMETERS];
+    D3D12_DESCRIPTOR_RANGE               DescriptorRanges[D3D12_MAX_DESCRIPTOR_RANGE_SIZE];
+    D3D12_ROOT_SIGNATURE_DESC            Desc;
+#endif
+    uint32                               NumRootParameters;
+    uint32                               NumDescriptorRanges;
+    uint32                               RootSignatureCost;
 };
 
 class FD3D12ShaderStage
@@ -208,13 +233,21 @@ private:
 class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    static bool Serialize(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
+#else
     static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
+#endif
     
     FD3D12RootSignature(FD3D12Device* InDevice);
     ~FD3D12RootSignature() = default;
 
     bool Initialize(const FD3D12RootSignatureLayout& Layout);
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    bool Initialize(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& Desc);
+#else
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+#endif
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     bool HasDenyFlag(EShaderVisibility Stage) const;
@@ -284,8 +317,13 @@ public:
     }
 
 private:
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    void InternalInitRootParameterMap(const D3D12_ROOT_PARAMETER1* Parameters, uint32 NumParameters);
+    void InternalInitTableMappingsFromDesc(const D3D12_ROOT_PARAMETER1* Parameters, uint32 NumParameters);
+#else
     void InternalInitRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     void InternalInitTableMappingsFromDesc(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+#endif
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;

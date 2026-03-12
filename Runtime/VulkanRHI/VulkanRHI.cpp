@@ -388,7 +388,10 @@ void FVulkanRHI::BeginFrame()
 
 void FVulkanRHI::EndFrame()
 {
-    // NOTE: Empty for now
+    if (Device)
+    {
+        Device->GetPipelineStateManager().SaveCacheDataAsync();
+    }
 }
 
 FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)

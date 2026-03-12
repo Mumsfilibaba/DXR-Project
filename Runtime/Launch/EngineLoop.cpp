@@ -9,6 +9,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
 #include "Core/Misc/Paths.h"
+#include "Core/Misc/FileOutputDevice.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
@@ -40,6 +41,7 @@ ENABLE_UNREFERENCED_VARIABLE_WARNING
 
 static TUniquePtr<FDebuggerOutputDevice>       GDebuggerOutputDevice;
 static TUniquePtr<FGenericConsoleOutputDevice> GConsoleWindow;
+static TUniquePtr<FFileOutputDevice>           GFileOutputDevice;
 
 static bool InitializeOutputDevices()
 {
@@ -61,6 +63,13 @@ static bool InitializeOutputDevices()
     {
         GDebuggerOutputDevice = MakeUniquePtr<FDebuggerOutputDevice>();
         FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
+    }
+
+    const FString OutputLogPath = FPaths::GetProjectDir() + "/OutputLog.txt";
+    GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(OutputLogPath);
+    if (GFileOutputDevice && GFileOutputDevice->IsValid())
+    {
+        FOutputDeviceLogger::Get()->RegisterOutputDevice(GFileOutputDevice.Get());
     }
 
     return true;

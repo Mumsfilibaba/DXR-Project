@@ -151,7 +151,7 @@ bool FConfigFile::WriteToFile()
     DumpToString(ConfigString);
 
     {
-        FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
+        TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(Filename);
         if (!File)
         {
             return false;
@@ -223,7 +223,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
     TArray<CHAR> FileContents;
 
     {
-        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Filename);
         if (!File)
         {
             return nullptr;

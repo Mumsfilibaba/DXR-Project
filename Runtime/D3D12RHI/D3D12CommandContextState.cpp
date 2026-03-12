@@ -170,6 +170,9 @@ bool FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
         for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
         {
             const uint32 MaxSamplers = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_Sampler);
+#if D3D12_ENABLE_STATIC_DESCRIPTORS && D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            NumSamplers[CurrentStage] = MaxSamplers;
+#else
             if (GD3D12ResourceBindingTier > D3D12_RESOURCE_BINDING_TIER_1)
             {
                 NumSamplers[CurrentStage] = PipelineState->GetEffectiveDescriptorCount(CurrentStage, ResourceType_Sampler);
@@ -178,6 +181,7 @@ bool FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
             {
                 NumSamplers[CurrentStage] = MaxSamplers;
             }
+#endif
 
             NumSamplerDescriptors += NumSamplers[CurrentStage];
         }
@@ -251,6 +255,11 @@ bool FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
             const uint32 MaxSRVs = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_SRV);
             const uint32 MaxUAVs = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_UAV);
 
+#if D3D12_ENABLE_STATIC_DESCRIPTORS && D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            NumCBVs[CurrentStage] = MaxCBVs;
+            NumSRVs[CurrentStage] = MaxSRVs;
+            NumUAVs[CurrentStage] = MaxUAVs;
+#else
             if (GD3D12ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3)
             {
                 NumCBVs[CurrentStage] = PipelineState->GetEffectiveDescriptorCount(CurrentStage, ResourceType_CBV);
@@ -269,6 +278,7 @@ bool FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
                 NumSRVs[CurrentStage] = MaxSRVs;
                 NumUAVs[CurrentStage] = MaxUAVs;
             }
+#endif
 
             NumResourceDescriptors += NumCBVs[CurrentStage];
             NumResourceDescriptors += NumSRVs[CurrentStage];

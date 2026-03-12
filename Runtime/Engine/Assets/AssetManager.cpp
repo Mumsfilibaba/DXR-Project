@@ -65,7 +65,7 @@ void FAssetRegistry::LoadRegistryFile()
 {
     TArray<CHAR> FileContents;
     {
-        FFileHandleRef File = FPlatformFile::OpenForRead(RegistryFilename);
+        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(RegistryFilename);
         if (!File)
         {
             return;
@@ -140,7 +140,7 @@ void FAssetRegistry::UpdateRegistryFile()
     }
 
     {
-        FFileHandleRef File = FPlatformFile::OpenForWrite(RegistryFilename);
+        TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(RegistryFilename);
         if (!File)
         {
             return;

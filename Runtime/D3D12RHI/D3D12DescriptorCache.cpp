@@ -491,6 +491,7 @@ void FD3D12DescriptorCache::SetDescriptorHeaps()
     if (CurrentDescriptorHeaps[0] != DescriptorHeaps[0] || CurrentDescriptorHeaps[1] != DescriptorHeaps[1] || GD3D12ForceBinding)
     {
         Context.GetCommandList()->SetDescriptorHeaps(ARRAY_COUNT(DescriptorHeaps), DescriptorHeaps);
+
         CurrentDescriptorHeaps[0] = DescriptorHeaps[0];
         CurrentDescriptorHeaps[1] = DescriptorHeaps[1];
     }

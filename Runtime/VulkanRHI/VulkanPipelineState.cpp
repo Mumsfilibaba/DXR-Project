@@ -1,5 +1,7 @@
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Platform/PlatformTime.h"
 #include "Core/Threading/TaskManager.h"
+#include "Core/Threading/AsyncTask.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Misc/Paths.h"
@@ -12,6 +14,11 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "VulkanRHI.PipelineCacheFileName",
     "FileName for the file storing the PipelineCache",
     "PipelineCache.vkpsocache");
+
+static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
+    "VulkanRHI.PipelineCacheSaveInterval",
+    "Minimum interval in seconds between automatic pipeline cache saves",
+    30);
 
 FVulkanInputLayout::FVulkanInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
     : FRHIInputLayout()
@@ -659,6 +666,7 @@ FVulkanPipelineStateManager::FVulkanPipelineStateManager(FVulkanDevice* InDevice
     : FVulkanDeviceChild(InDevice)
     , PipelineCache(VK_NULL_HANDLE)
     , bPipelineCacheDirty(false)
+    , LastSaveTimestamp(FPlatformTime::QueryPerformanceCounter())
 {
 }
 
@@ -748,7 +756,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
     const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
 
-    FFileHandleRef CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
+    TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
     {
         VULKAN_WARNING("Failed to open PipelineCache-file");
@@ -804,12 +812,81 @@ bool FVulkanPipelineStateManager::SaveCacheData()
     return true;
 }
 
+void FVulkanPipelineStateManager::SaveCacheDataAsync()
+{
+    if (!VULKAN_CHECK_HANDLE(PipelineCache) || !bPipelineCacheDirty)
+    {
+        return;
+    }
+
+    const uint64 CurrentTime = FPlatformTime::QueryPerformanceCounter();
+    const uint64 Frequency   = FPlatformTime::QueryPerformanceFrequency();
+    const double ElapsedSeconds = static_cast<double>(CurrentTime - LastSaveTimestamp) / static_cast<double>(Frequency);
+
+    const int32 SaveInterval = CVarPipelineCacheSaveInterval.GetValue();
+    if (ElapsedSeconds < static_cast<double>(SaveInterval))
+    {
+        return;
+    }
+
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+
+    TUniquePtr<uint8[]> SerializedData;
+    size_t SerializedSize = 0;
+
+    FVulkanPipelineDataHeader DataHeader;
+    FMemory::Memzero(&DataHeader, sizeof(FVulkanPipelineDataHeader));
+
+    {
+        TScopedLock Lock(PipelineCacheCS);
+
+        VkResult Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &SerializedSize, nullptr);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("[FVulkanPipelineStateManager] Failed to retrieve size of PipelineCache for async save");
+            return;
+        }
+
+        SerializedData = MakeUniquePtr<uint8[]>(SerializedSize);
+        Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &SerializedSize, SerializedData.Get());
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("[FVulkanPipelineStateManager] Failed to serialize PipelineCache for async save");
+            return;
+        }
+
+        bPipelineCacheDirty = false;
+    }
+
+    LastSaveTimestamp = CurrentTime;
+
+    FMemory::Memcpy(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic));
+    DataHeader.DataCRC  = CRC32::Generate(SerializedData.Get(), SerializedSize);
+    DataHeader.DataSize = SerializedSize;
+
+    Async([FilePath = PipelineCacheFilepath, DataHeader, Data = Move(SerializedData), DataSize = SerializedSize]()
+    {
+        TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(FilePath);
+        if (!CacheFile)
+        {
+            VULKAN_WARNING("[FVulkanPipelineStateManager] Failed to open PipelineCache file for async save");
+            return;
+        }
+
+        CacheFile->Write(reinterpret_cast<const uint8*>(&DataHeader), sizeof(FVulkanPipelineDataHeader));
+        CacheFile->Write(Data.Get(), static_cast<uint32>(DataSize));
+
+        VULKAN_INFO("[FVulkanPipelineStateManager] Async saved PipelineCache to '%s'", *FilePath);
+    });
+}
+
 bool FVulkanPipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
     const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
     
-    FFileHandleRef CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
+    TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)
     {
         VULKAN_WARNING("Failed to open PipelineCache-file");

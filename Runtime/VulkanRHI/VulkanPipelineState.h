@@ -218,6 +218,7 @@ public:
     bool CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
     bool CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
     bool SaveCacheData();
+    void SaveCacheDataAsync();
     
     VkPipelineCache GetVkPipelineCache() const
     {
@@ -230,4 +231,5 @@ private:
     VkPipelineCache  PipelineCache;
     FCriticalSection PipelineCacheCS;
     bool             bPipelineCacheDirty;
+    uint64           LastSaveTimestamp;
 };

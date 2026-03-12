@@ -29,6 +29,8 @@ FRHIValidation::FRHIValidation(FRHI* InRealRHI)
 
 FRHIValidation::~FRHIValidation()
 {
+    delete RealRHI;
+    RealRHI = nullptr;
 }
 
 bool FRHIValidation::Initialize()

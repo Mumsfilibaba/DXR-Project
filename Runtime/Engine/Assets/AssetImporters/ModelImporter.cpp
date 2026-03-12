@@ -15,7 +15,7 @@ bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFl
 
     {
         const FString Filename = FString(InFilename);
-        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Filename);
         if (!File)
         {
             return false;
@@ -297,7 +297,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo
     OutputStream.Write(ModelHeader, 0);
 
     {
-        FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
+        TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(Filename);
         if (!File)
         {
             return false;

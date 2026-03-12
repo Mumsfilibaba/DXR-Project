@@ -65,6 +65,9 @@ FScene::~FScene()
     // Remove potential DirectionalLight
     SAFE_DELETE(DirectionalLight);
 
+    // Remove potential Skybox
+    SAFE_DELETE(Skybox);
+
     // Reset Other stuff
     World  = nullptr;
     Camera = nullptr;

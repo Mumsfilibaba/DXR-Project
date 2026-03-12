@@ -76,7 +76,7 @@ static EFormat GetFloatFormat(int32 Channels)
 
 TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 {
-    FFileHandleRef File = FPlatformFile::OpenForRead(FString(FileName));
+    TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(FString(FileName));
     if (!File)
     {
         LOG_ERROR("[FTextureImporterBase]: Failed to open '%s'", *FileName);

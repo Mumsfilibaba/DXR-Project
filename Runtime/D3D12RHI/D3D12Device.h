@@ -167,6 +167,7 @@ public:
 
     bool Initialize();
     void BeginFrame(FD3D12CommandContext* InCommandContext);
+    void UnregisterDebugMessageCallback();
     void CancelPendingDefragMoves(FD3D12GenericResource* Owner);
 
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
@@ -189,14 +190,13 @@ public:
     FD3D12OfflineDescriptorHeap&     GetDepthStencilOfflineDescriptorHeap() const { return *DepthStencilOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap&     GetSamplerOfflineDescriptorHeap()      const { return *SamplerOfflineDescriptorHeap; }
     const FD3D12DefaultDescriptors&  GetDefaultDescriptors()                const { return DefaultDescriptors; }
-
-    FD3D12ResidencyManager*          GetResidencyManager()          const { return ResidencyManager; }
-    FD3D12LinearAllocator*           GetStagingBufferAllocator()    const { return StagingBufferAllocator; }
-    FD3D12DynamicConstantsAllocator* GetDynamicConstantsAllocator() const { return DynamicConstantsAllocator; }
-    FD3D12BufferAllocator*           GetBufferAllocator()           const { return BufferAllocator; }
-    FD3D12TextureAllocator*          GetTextureAllocator()          const { return TextureAllocator; }
-    FD3D12UploadHeapAllocator*       GetUploadHeapAllocator()       const { return UploadHeapAllocator; }
-    FD3D12Fence&                     GetFrameFence()                const { return *FrameFence; }
+    FD3D12ResidencyManager*          GetResidencyManager()                  const { return ResidencyManager; }
+    FD3D12LinearAllocator*           GetStagingBufferAllocator()            const { return StagingBufferAllocator; }
+    FD3D12DynamicConstantsAllocator* GetDynamicConstantsAllocator()         const { return DynamicConstantsAllocator; }
+    FD3D12BufferAllocator*           GetBufferAllocator()                   const { return BufferAllocator; }
+    FD3D12TextureAllocator*          GetTextureAllocator()                  const { return TextureAllocator; }
+    FD3D12UploadHeapAllocator*       GetUploadHeapAllocator()               const { return UploadHeapAllocator; }
+    FD3D12Fence&                     GetFrameFence()                        const { return *FrameFence; }
 
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
 
@@ -339,5 +339,10 @@ private:
 #endif
 #ifdef __ID3D12Device14_INTERFACE_DEFINED__
     TComPtr<ID3D12Device14> D3D12Device14;
+#endif
+
+#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
+    TComPtr<ID3D12InfoQueue1> DebugInfoQueue;
+    DWORD                     DebugMessageCallbackCookie = 0;
 #endif
 };

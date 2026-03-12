@@ -3,7 +3,7 @@
 #include "Core/Generic/GenericPlatformFile.h"
 #include <sys/stat.h>
 
-class CORE_API FMacFileHandle : public IFileHandle
+class CORE_API FMacFileHandle : public IPlatformFile
 {
     static constexpr int64 MaxReadWriteSize = 1024 * 1024;
 
@@ -27,10 +27,34 @@ private:
     bool  bReadOnly;
 };
 
+class CORE_API FMacAsyncFileHandle : public IPlatformAsyncFile
+{
+public:
+    FMacAsyncFileHandle(int32 InFileDescriptor);
+    virtual ~FMacAsyncFileHandle() = default;
+
+    virtual bool WriteAsync(const uint8* Src, uint32 BytesToWrite) override final;
+    virtual void WaitForPendingWrites() override final;
+    virtual bool HasPendingWrites() const override final;
+    virtual bool IsValid() const override final;
+    virtual void Close() override final;
+
+private:
+    struct FPendingWrite;
+
+    void GarbageCollectCompleted();
+    void FreePendingWrite(FPendingWrite* PendingWrite);
+
+    int32                  FileDescriptor;
+    int64                  WriteOffset;
+    TArray<FPendingWrite*> PendingWrites;
+};
+
 struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
 {
-    static IFileHandle* OpenForRead(const FString& Filename);
-    static IFileHandle* OpenForWrite(const FString& Filename, bool bTruncate = true);
+    static IPlatformFile* OpenForRead(const FString& Filename);
+    static IPlatformFile* OpenForWrite(const FString& Filename, bool bTruncate = true);
+    static IPlatformAsyncFile* OpenForAsyncWrite(const FString& Filename, bool bTruncate = true);
     static FString GetCurrentWorkingDirectory();
     static const CHAR* GetExecutablePath();
 

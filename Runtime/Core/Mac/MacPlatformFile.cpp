@@ -1,5 +1,7 @@
 #include "Core/Mac/MacPlatformFile.h"
 #include "Core/Platform/PlatformString.h"
+#include "Core/Memory/Memory.h"
+#include <aio.h>
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -8,7 +10,7 @@
 #include <unistd.h>
 
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
-    : IFileHandle()
+    : IPlatformFile()
     , FileHandle(InFileHandle)
     , bReadOnly(bInReadOnly)
 {
@@ -154,7 +156,156 @@ void FMacFileHandle::Close()
     delete this;
 }
 
-IFileHandle* FMacPlatformFile::OpenForRead(const FString& Filename)
+struct FMacAsyncFileHandle::FPendingWrite
+{
+    struct aiocb ControlBlock;
+    uint8*       Buffer;
+};
+
+FMacAsyncFileHandle::FMacAsyncFileHandle(int32 InFileDescriptor)
+    : FileDescriptor(InFileDescriptor)
+    , WriteOffset(0)
+{
+}
+
+bool FMacAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
+{
+    CHECK(IsValid());
+    CHECK(Src != nullptr);
+    CHECK(BytesToWrite > 0);
+
+    GarbageCollectCompleted();
+
+    FPendingWrite* Pending = new FPendingWrite();
+    FMemory::Memzero(&Pending->ControlBlock, sizeof(struct aiocb));
+
+    Pending->Buffer = reinterpret_cast<uint8*>(FMemory::Malloc(BytesToWrite));
+    FMemory::Memcpy(Pending->Buffer, Src, BytesToWrite);
+
+    Pending->ControlBlock.aio_fildes = FileDescriptor;
+    Pending->ControlBlock.aio_buf    = Pending->Buffer;
+    Pending->ControlBlock.aio_nbytes = BytesToWrite;
+    Pending->ControlBlock.aio_offset = WriteOffset;
+
+    int32 Result = ::aio_write(&Pending->ControlBlock);
+    if (Result != 0)
+    {
+        FMemory::Free(Pending->Buffer);
+        delete Pending;
+        return false;
+    }
+
+    WriteOffset += BytesToWrite;
+    PendingWrites.Emplace(Pending);
+    return true;
+}
+
+void FMacAsyncFileHandle::WaitForPendingWrites()
+{
+    while (!PendingWrites.IsEmpty())
+    {
+        TArray<struct aiocb*> AioCBs;
+        AioCBs.Resize(PendingWrites.Size());
+
+        for (int32 i = 0; i < PendingWrites.Size(); ++i)
+        {
+            AioCBs[i] = &PendingWrites[i]->ControlBlock;
+        }
+
+        ::aio_suspend(AioCBs.Data(), AioCBs.Size(), nullptr);
+
+        for (int32 i = PendingWrites.Size() - 1; i >= 0; --i)
+        {
+            int32 Error = ::aio_error(&PendingWrites[i]->ControlBlock);
+            if (Error != EINPROGRESS)
+            {
+                ::aio_return(&PendingWrites[i]->ControlBlock);
+                FreePendingWrite(PendingWrites[i]);
+                PendingWrites.RemoveAt(i);
+            }
+        }
+    }
+}
+
+bool FMacAsyncFileHandle::HasPendingWrites() const
+{
+    const_cast<FMacAsyncFileHandle*>(this)->GarbageCollectCompleted();
+    return !PendingWrites.IsEmpty();
+}
+
+bool FMacAsyncFileHandle::IsValid() const
+{
+    return (FileDescriptor >= 0);
+}
+
+void FMacAsyncFileHandle::Close()
+{
+    WaitForPendingWrites();
+
+    if (IsValid())
+    {
+        ::flock(FileDescriptor, LOCK_UN | LOCK_NB);
+        ::close(FileDescriptor);
+    }
+
+    FileDescriptor = -1;
+    delete this;
+}
+
+void FMacAsyncFileHandle::GarbageCollectCompleted()
+{
+    for (int32 i = PendingWrites.Size() - 1; i >= 0; --i)
+    {
+        int32 Error = ::aio_error(&PendingWrites[i]->ControlBlock);
+        if (Error != EINPROGRESS)
+        {
+            ::aio_return(&PendingWrites[i]->ControlBlock);
+            FreePendingWrite(PendingWrites[i]);
+            PendingWrites.RemoveAt(i);
+        }
+    }
+}
+
+void FMacAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
+{
+    FMemory::Free(PendingWrite->Buffer);
+    delete PendingWrite;
+}
+
+IPlatformAsyncFile* FMacPlatformFile::OpenForAsyncWrite(const FString& Filename, bool bTruncate)
+{
+    int32 Flags =
+        O_WRONLY |
+        O_CREAT;
+
+    if (bTruncate)
+    {
+        Flags |= O_TRUNC;
+    }
+
+    const int32 PermissionFlags =
+        S_IRUSR | S_IWUSR |
+        S_IRGRP | S_IWGRP |
+        S_IROTH | S_IWOTH;
+
+    int32 FileHandle = ::open(*Filename, Flags, PermissionFlags);
+    if (FileHandle < 0)
+    {
+        return nullptr;
+    }
+
+    const int32 LockFlags = LOCK_NB | LOCK_EX;
+    const int32 Result = ::flock(FileHandle, LockFlags);
+    if (Result != 0)
+    {
+        ::close(FileHandle);
+        return nullptr;
+    }
+
+    return new FMacAsyncFileHandle(FileHandle);
+}
+
+IPlatformFile* FMacPlatformFile::OpenForRead(const FString& Filename)
 {
     int32 FileHandle = ::open(*Filename, O_RDONLY);
     if (FileHandle < 0)
@@ -178,7 +329,7 @@ IFileHandle* FMacPlatformFile::OpenForRead(const FString& Filename)
     }
 }
 
-IFileHandle* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
+IPlatformFile* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
 {
     int32 Flags =
         O_WRONLY | // Writing only 

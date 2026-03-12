@@ -2,7 +2,7 @@
 #include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericPlatformFile.h"
 
-class CORE_API FWindowsFileHandle : public IFileHandle
+class CORE_API FWindowsFileHandle : public IPlatformFile
 {
 public:
     FWindowsFileHandle(HANDLE InFileHandle);
@@ -27,10 +27,39 @@ private:
     int64  FileSize;
 };
 
+class CORE_API FWindowsAsyncFileHandle : public IPlatformAsyncFile
+{
+public:
+    FWindowsAsyncFileHandle(HANDLE InFileHandle);
+    virtual ~FWindowsAsyncFileHandle() = default;
+
+    virtual bool WriteAsync(const uint8* Src, uint32 BytesToWrite) override final;
+    virtual void WaitForPendingWrites() override final;
+    virtual bool HasPendingWrites() const override final;
+    virtual bool IsValid() const override final;
+    virtual void Close() override final;
+
+private:
+    struct FPendingWrite
+    {
+        OVERLAPPED Overlapped;
+        HANDLE     CompletionEvent;
+        uint8*     Buffer;
+    };
+
+    void GarbageCollectCompleted();
+    void FreePendingWrite(FPendingWrite* PendingWrite);
+
+    HANDLE                 FileHandle;
+    int64                  WriteOffset;
+    TArray<FPendingWrite*> PendingWrites;
+};
+
 struct CORE_API FWindowsPlatformFile : public FGenericPlatformFile
 {
-    static IFileHandle* OpenForRead(const FString& Filename);
-    static IFileHandle* OpenForWrite(const FString& Filename, bool bTruncate = true);
+    static IPlatformFile* OpenForRead(const FString& Filename);
+    static IPlatformFile* OpenForWrite(const FString& Filename, bool bTruncate = true);
+    static IPlatformAsyncFile* OpenForAsyncWrite(const FString& Filename, bool bTruncate = true);
     static FString GetCurrentWorkingDirectory();
     static const CHAR* GetExecutablePath();
 

@@ -315,7 +315,7 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
 
     {
         // Open the file
-        FFileHandleRef File = FPlatformFile::OpenForRead(FilePath);
+        TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(FilePath);
         if (!File)
         {
             LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", *Filename);
@@ -1056,7 +1056,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
 
 bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
 {
-    FFileHandleRef Output = FPlatformFile::OpenForWrite(Filename);
+    TFileRef<IPlatformFile> Output = FPlatformFile::OpenForWrite(Filename);
     if (!Output)
     {
         LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", *Filename);

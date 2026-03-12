@@ -142,6 +142,27 @@ static TAutoConsoleVariable<bool> CVarEnableTightAlignment(
     "Enable tight alignment if supported by the device",
     true);
 
+#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
+static void __stdcall D3D12DebugMessageCallback(D3D12_MESSAGE_CATEGORY, D3D12_MESSAGE_SEVERITY Severity, D3D12_MESSAGE_ID, LPCSTR pDescription, void*)
+{
+    switch (Severity)
+    {
+        case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+        case D3D12_MESSAGE_SEVERITY_ERROR:
+            D3D12_ERROR("[D3D12 Debug Layer] %s", pDescription);
+            break;
+        case D3D12_MESSAGE_SEVERITY_WARNING:
+            D3D12_WARNING("[D3D12 Debug Layer] %s", pDescription);
+            break;
+        case D3D12_MESSAGE_SEVERITY_INFO:
+        case D3D12_MESSAGE_SEVERITY_MESSAGE:
+        default:
+            D3D12_INFO("[D3D12 Debug Layer] %s", pDescription);
+            break;
+    }
+}
+#endif
+
 // -------------------------------------------------------------------------------------------
 // D3D12 Feature Support
 // -------------------------------------------------------------------------------------------
@@ -289,7 +310,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         return;
     }
 
-    FFileHandleRef File = FPlatformFile::OpenForWrite(GetDeviceRemovedDumpFilePath());
+    TFileRef<IPlatformFile> File = FPlatformFile::OpenForWrite(GetDeviceRemovedDumpFilePath());
     if (File)
     {
         Message += '\n';
@@ -781,6 +802,9 @@ FD3D12Device::~FD3D12Device()
             DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
         }
     }
+   
+    // Unregister debug callback
+    UnregisterDebugMessageCallback();
 
     D3D12Device.Reset();
 #if WIN10_BUILD_14393
@@ -809,6 +833,32 @@ FD3D12Device::~FD3D12Device()
 #endif
 #if WIN11_BUILD_22000
     D3D12Device9.Reset();
+#endif
+}
+
+void FD3D12Device::UnregisterDebugMessageCallback()
+{
+#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
+
+    if (DebugInfoQueue)
+    {
+        if (DebugMessageCallbackCookie != 0)
+        {
+            HRESULT Result = DebugInfoQueue->UnregisterMessageCallback(DebugMessageCallbackCookie);
+            if (FAILED(Result))
+            {
+                D3D12_WARNING("[FD3D12Device] Failed to unregister D3D12 debug message callback (hr=0x%08X)", Result);
+            }
+            else
+            {
+                D3D12_INFO("[FD3D12Device] Unregistered D3D12 debug message callback");
+            }
+
+            DebugMessageCallbackCookie = 0;
+        }
+
+        DebugInfoQueue.Reset();
+    }
 #endif
 }
 
@@ -1107,6 +1157,27 @@ bool FD3D12Device::CreateDevice()
             Filter.DenyList.pIDList = Hide;
             InfoQueue->AddStorageFilterEntries(&Filter);
         }
+
+#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
+        if (SUCCEEDED(D3D12Device.GetAs(&DebugInfoQueue)))
+        {
+            HRESULT CallbackResult = DebugInfoQueue->RegisterMessageCallback(
+                D3D12DebugMessageCallback,
+                D3D12_MESSAGE_CALLBACK_FLAG_NONE,
+                nullptr,
+                &DebugMessageCallbackCookie);
+
+            if (SUCCEEDED(CallbackResult))
+            {
+                D3D12_INFO("[FD3D12Device] Registered D3D12 debug message callback");
+            }
+            else
+            {
+                D3D12_WARNING("[FD3D12Device] Failed to register D3D12 debug message callback (hr=0x%08X)", CallbackResult);
+                DebugInfoQueue.Reset();
+            }
+        }
+#endif
     }
 
 #ifdef __ID3D12Device1_INTERFACE_DEFINED__
@@ -1759,12 +1830,36 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     // -------------------------------------------------------------------------------------------
 
     {
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+        D3D12_FEATURE_DATA_ROOT_SIGNATURE RootSignature = { D3D_ROOT_SIGNATURE_VERSION_1_2 };
+        HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &RootSignature, sizeof(RootSignature));
+        if (FAILED(hr))
+        {
+            RootSignature.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+            hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &RootSignature, sizeof(RootSignature));
+        }
+#else
         D3D12_FEATURE_DATA_ROOT_SIGNATURE RootSignature = { D3D_ROOT_SIGNATURE_VERSION_1_1 };
         HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &RootSignature, sizeof(RootSignature));
+#endif
+
         if (SUCCEEDED(hr))
         {
             GD3D12RootSignatureVersion = RootSignature.HighestVersion;
-            D3D12_INFO("[FD3D12Device] RootSignature Version Supported: %s", (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_1) ? "1.1" : "1.0");
+
+            const CHAR* VersionString = "1.0";
+            if (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_1)
+            {
+                VersionString = "1.1";
+            }
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            else if (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_2)
+            {
+                VersionString = "1.2";
+            }
+#endif
+
+            D3D12_INFO("[FD3D12Device] RootSignature Version Supported: %s", VersionString);
         }
         else
         {

@@ -5,9 +5,9 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct IFileHandle
+struct IPlatformFile
 {
-    virtual ~IFileHandle() = default;
+    virtual ~IPlatformFile() = default;
 
     /** @brief Move the file pointer relative to the beginning of the file */
     virtual bool SeekFromStart(int64 NewPosition) = 0;
@@ -40,26 +40,47 @@ struct IFileHandle
     virtual void Close() = 0;
 };
 
-class FFileHandleRef
+struct IPlatformAsyncFile
+{
+    virtual ~IPlatformAsyncFile() = default;
+
+    /** @brief Submits an asynchronous write. Copies Src internally and returns immediately. */
+    virtual bool WriteAsync(const uint8* Src, uint32 BytesToWrite) = 0;
+
+    /** @brief Blocks until all pending async writes have completed */
+    virtual void WaitForPendingWrites() = 0;
+
+    /** @return Returns true if there are async writes still in-flight */
+    virtual bool HasPendingWrites() const = 0;
+
+    /** @return Returns true if the handle is valid */
+    virtual bool IsValid() const = 0;
+
+    /** @brief Waits for pending writes, closes the handle, and deletes this instance */
+    virtual void Close() = 0;
+};
+
+template<typename T>
+class TFileRef
 { 
 public:
-    FORCEINLINE FFileHandleRef()
+    FORCEINLINE TFileRef()
         : Handle(nullptr)
     {
     }
 
-    FORCEINLINE FFileHandleRef(IFileHandle* InHandle)
+    FORCEINLINE TFileRef(T* InHandle)
         : Handle(InHandle)
     {
     }
     
-    FORCEINLINE FFileHandleRef(FFileHandleRef&& Other)
+    FORCEINLINE TFileRef(TFileRef&& Other)
         : Handle(Other.Handle)
     {
         Other.Handle = nullptr;
     }
 
-    FORCEINLINE ~FFileHandleRef()
+    FORCEINLINE ~TFileRef()
     {
         Close();
     }
@@ -78,12 +99,12 @@ public:
         }
     }
 
-    FORCEINLINE IFileHandle* Get() const
+    FORCEINLINE T* Get() const
     {
         return Handle;
     }
 
-    FORCEINLINE IFileHandle* operator->() const
+    FORCEINLINE T* operator->() const
     {
         return Handle;
     }
@@ -93,10 +114,11 @@ public:
         return IsValid();
     }
 
-    FORCEINLINE FFileHandleRef& operator=(FFileHandleRef&& Other)
+    FORCEINLINE TFileRef& operator=(TFileRef&& Other)
     {
         if (this != ::AddressOf(Other))
         {
+            Close();
             Handle = Other.Handle;
             Other.Handle = nullptr;
         }
@@ -105,22 +127,28 @@ public:
     }
 
 private:
-    IFileHandle* Handle;
+    T* Handle;
 };
+
 
 struct CORE_API FGenericPlatformFile
 {
     static void ObtainRelativePath(const FString& Path);
 
-    static FORCEINLINE IFileHandle* OpenForRead(const FString& Filename) 
+    static FORCEINLINE IPlatformFile* OpenForRead(const FString& Filename) 
     {
         return nullptr;
     }
 
-    static FORCEINLINE IFileHandle* OpenForWrite(const FString& Filename, bool bTruncate = true)
+    static FORCEINLINE IPlatformFile* OpenForWrite(const FString& Filename, bool bTruncate = true)
     {
         return nullptr;
-    }    
+    }
+
+    static FORCEINLINE IPlatformAsyncFile* OpenForAsyncWrite(const FString& Filename, bool bTruncate = true)
+    {
+        return nullptr;
+    }
 
     static FORCEINLINE FString GetCurrentWorkingDirectory()
     {
@@ -151,16 +179,16 @@ struct CORE_API FGenericPlatformFile
 class CORE_API FFileHelpers
 {
 public:
-    static bool ReadFile(IFileHandle* File, FByteInputStream& OutData);
-    static bool ReadFile(IFileHandle* File, TArray<uint8>& OutData);
-    static bool ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText);
+    static bool ReadFile(IPlatformFile* File, FByteInputStream& OutData);
+    static bool ReadFile(IPlatformFile* File, TArray<uint8>& OutData);
+    static bool ReadTextFile(IPlatformFile* File, TArray<CHAR>& OutText);
 
-    static FORCEINLINE bool WriteTextFile(IFileHandle* File, const TArray<CHAR>& Text)
+    static FORCEINLINE bool WriteTextFile(IPlatformFile* File, const TArray<CHAR>& Text)
     {
         return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
     }
 
-    static FORCEINLINE bool WriteTextFile(IFileHandle* File, const FString& Text)
+    static FORCEINLINE bool WriteTextFile(IPlatformFile* File, const FString& Text)
     {
         return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
     }
@@ -175,7 +203,7 @@ public:
     static FString ExtractFilenameWithoutExtension(const FString& Filepath);
 
 private:
-    static bool WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Size);
+    static bool WriteTextFile(IPlatformFile* File, const CHAR* Text, uint32 Size);
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

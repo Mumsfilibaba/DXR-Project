@@ -2,6 +2,9 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
+
+#include <dxgidebug.h>
+
 #include "D3D12RHI/D3D12CommandList.h"
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12RootSignature.h"
@@ -110,6 +113,7 @@ FD3D12RHI::~FD3D12RHI()
     // ... Finally, delete all remaining resources
     FlushDeletionQueues();
 
+    // Destroy the device and adapter
     SAFE_DELETE(Device);
     SAFE_DELETE(Adapter);
 
@@ -193,6 +197,8 @@ void FD3D12RHI::EndFrame()
     {
         ResidencyManager->EvictIfNeeded();
     }
+
+    Device->GetPipelineStateManager().SaveCacheDataAsync();
 }
 
 bool FD3D12RHI::InitializeDeviceFeatureSupport()

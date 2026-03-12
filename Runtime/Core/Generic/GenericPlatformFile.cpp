@@ -1,6 +1,6 @@
 #include "Core/Generic/GenericPlatformFile.h"
 
-bool FFileHelpers::ReadFile(IFileHandle* File, FByteInputStream& OutData)
+bool FFileHelpers::ReadFile(IPlatformFile* File, FByteInputStream& OutData)
 {
     CHECK(File != nullptr);
 
@@ -20,7 +20,7 @@ bool FFileHelpers::ReadFile(IFileHandle* File, FByteInputStream& OutData)
     }
 }
 
-bool FFileHelpers::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
+bool FFileHelpers::ReadFile(IPlatformFile* File, TArray<uint8>& OutData)
 {
     CHECK(File != nullptr);
 
@@ -40,7 +40,7 @@ bool FFileHelpers::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
     }
 }
 
-bool FFileHelpers::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
+bool FFileHelpers::ReadTextFile(IPlatformFile* File, TArray<CHAR>& OutText)
 {
     CHECK(File != nullptr);
 
@@ -63,7 +63,7 @@ bool FFileHelpers::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
     }
 }
 
-bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Size)
+bool FFileHelpers::WriteTextFile(IPlatformFile* File, const CHAR* Text, uint32 Size)
 {
     CHECK(File != nullptr);
 

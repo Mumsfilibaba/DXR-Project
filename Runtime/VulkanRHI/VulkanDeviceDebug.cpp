@@ -15,6 +15,29 @@ static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+static bool VulkanIsMessageSuppressed(const VkDebugUtilsMessengerCallbackDataEXT* CallbackData)
+{
+    if (!CallbackData->pMessageIdName)
+    {
+        return false;
+    }
+
+    static const CHAR* SuppressedMessageIds[] =
+    {
+        "VUID-vkDestroyDevice-device-05137",
+    };
+
+    for (const CHAR* SuppressedId : SuppressedMessageIds)
+    {
+        if (FCString::Strcmp(CallbackData->pMessageIdName, SuppressedId) == 0)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT Severity, VkDebugUtilsMessageTypeFlagsEXT Type,
     const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
 {
@@ -22,7 +45,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugLayerCallback(VkDebugUtilsMessa
     {
         LOG_ERROR("[Vulkan Validation layer] %s", CallbackData->pMessage);
 
-        if (CVarBreakOnValidationError.GetValue())
+        if (CVarBreakOnValidationError.GetValue() && !VulkanIsMessageSuppressed(CallbackData))
         {
             DEBUG_BREAK();
         }

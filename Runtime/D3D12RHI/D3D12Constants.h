@@ -1,8 +1,6 @@
 #pragma once
 #include "D3D12RHI/D3D12Configuration.h"
 
-#include <d3d12.h>
-
 #define D3D12_MAX_ROOT_PARAMETERS (64)
 #define D3D12_MAX_SHADER_PARAMETERS (16)
 #define D3D12_MAX_HIT_GROUPS (512)

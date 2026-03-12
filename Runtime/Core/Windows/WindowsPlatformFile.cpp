@@ -3,7 +3,7 @@
 #include "Core/Templates/NumericLimits.h"
 
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)
-    : IFileHandle()
+    : IPlatformFile()
     , FileHandle(InFileHandle)
     , FileSize(-1)
     , FilePointer(0)
@@ -165,7 +165,7 @@ void FWindowsFileHandle::UpdateFileSize()
 }
 
 
-IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
+IPlatformFile* FWindowsPlatformFile::OpenForRead(const FString& Filename)
 {
     ::SetLastError(S_OK);
 
@@ -191,7 +191,7 @@ IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
     }
 }
 
-IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
+IPlatformFile* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
 {
     ::SetLastError(S_OK);
 
@@ -217,6 +217,138 @@ IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bT
         ::SetLastError(S_OK);
         return new FWindowsFileHandle(NewHandle);
     }
+}
+
+IPlatformAsyncFile* FWindowsPlatformFile::OpenForAsyncWrite(const FString& Filename, bool bTruncate)
+{
+    ::SetLastError(S_OK);
+
+    const DWORD CreationDisposition = bTruncate ? CREATE_ALWAYS : OPEN_ALWAYS;
+
+    HANDLE NewHandle = ::CreateFileA(*Filename, GENERIC_WRITE, 0, 0, CreationDisposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, 0);
+    if (NewHandle == INVALID_HANDLE_VALUE)
+    {
+        FString ErrorString;
+        FWindowsPlatformMisc::GetLastErrorString(ErrorString);
+
+        int32 Position = ErrorString.FindLast("\r\n");
+        if (Position != FString::InvalidIndex)
+        {
+            ErrorString.Remove(Position, 2);
+        }
+
+        LOG_ERROR("[FWindowsPlatformFile] Failed to open async file. Error '%s'", *ErrorString);
+        return nullptr;
+    }
+    else
+    {
+        ::SetLastError(S_OK);
+        return new FWindowsAsyncFileHandle(NewHandle);
+    }
+}
+
+FWindowsAsyncFileHandle::FWindowsAsyncFileHandle(HANDLE InFileHandle)
+    : FileHandle(InFileHandle)
+    , WriteOffset(0)
+{
+}
+
+bool FWindowsAsyncFileHandle::WriteAsync(const uint8* Src, uint32 BytesToWrite)
+{
+    CHECK(IsValid());
+    CHECK(Src != nullptr);
+    CHECK(BytesToWrite > 0);
+
+    GarbageCollectCompleted();
+
+    FPendingWrite* Pending = new FPendingWrite();
+    FMemory::Memzero(&Pending->Overlapped, sizeof(OVERLAPPED));
+
+    Pending->Buffer = reinterpret_cast<uint8*>(FMemory::Malloc(BytesToWrite));
+    FMemory::Memcpy(Pending->Buffer, Src, BytesToWrite);
+
+    Pending->CompletionEvent = ::CreateEventA(nullptr, TRUE, FALSE, nullptr);
+    if (Pending->CompletionEvent == nullptr)
+    {
+        FMemory::Free(Pending->Buffer);
+        delete Pending;
+        return false;
+    }
+
+    Pending->Overlapped.Offset     = static_cast<DWORD>(WriteOffset & 0xFFFFFFFF);
+    Pending->Overlapped.OffsetHigh = static_cast<DWORD>((WriteOffset >> 32) & 0xFFFFFFFF);
+    Pending->Overlapped.hEvent     = Pending->CompletionEvent;
+
+    BOOL Result = ::WriteFile(FileHandle, Pending->Buffer, BytesToWrite, nullptr, &Pending->Overlapped);
+    if (!Result)
+    {
+        DWORD Error = ::GetLastError();
+        if (Error != ERROR_IO_PENDING)
+        {
+            ::CloseHandle(Pending->CompletionEvent);
+            FMemory::Free(Pending->Buffer);
+            delete Pending;
+            return false;
+        }
+    }
+
+    WriteOffset += BytesToWrite;
+    PendingWrites.Emplace(Pending);
+    return true;
+}
+
+void FWindowsAsyncFileHandle::WaitForPendingWrites()
+{
+    for (FPendingWrite* Pending : PendingWrites)
+    {
+        ::WaitForSingleObject(Pending->CompletionEvent, INFINITE);
+        FreePendingWrite(Pending);
+    }
+
+    PendingWrites.Clear();
+}
+
+bool FWindowsAsyncFileHandle::HasPendingWrites() const
+{
+    const_cast<FWindowsAsyncFileHandle*>(this)->GarbageCollectCompleted();
+    return !PendingWrites.IsEmpty();
+}
+
+bool FWindowsAsyncFileHandle::IsValid() const
+{
+    return FileHandle != nullptr && FileHandle != INVALID_HANDLE_VALUE;
+}
+
+void FWindowsAsyncFileHandle::Close()
+{
+    WaitForPendingWrites();
+
+    if (IsValid())
+    {
+        ::CloseHandle(FileHandle);
+    }
+
+    FileHandle = INVALID_HANDLE_VALUE;
+    delete this;
+}
+
+void FWindowsAsyncFileHandle::GarbageCollectCompleted()
+{
+    for (int32 i = PendingWrites.Size() - 1; i >= 0; --i)
+    {
+        if (HasOverlappedIoCompleted(&PendingWrites[i]->Overlapped))
+        {
+            FreePendingWrite(PendingWrites[i]);
+            PendingWrites.RemoveAt(i);
+        }
+    }
+}
+
+void FWindowsAsyncFileHandle::FreePendingWrite(FPendingWrite* PendingWrite)
+{
+    ::CloseHandle(PendingWrite->CompletionEvent);
+    FMemory::Free(PendingWrite->Buffer);
+    delete PendingWrite;
 }
 
 const CHAR* FWindowsPlatformFile::GetExecutablePath()

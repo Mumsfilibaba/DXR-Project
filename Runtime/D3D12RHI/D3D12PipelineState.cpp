@@ -1,6 +1,8 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Platform/PlatformTime.h"
 #include "Core/Containers/UniquePtr.h"
+#include "Core/Threading/AsyncTask.h"
 #include "Core/Misc/Paths.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12Device.h"
@@ -9,6 +11,11 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "D3D12RHI.PipelineCacheFileName",
     "FileName for the file storing the PipelineCache",
     "PipelineCache.d3d12psocache");
+
+static TAutoConsoleVariable<int32> CVarPipelineCacheSaveInterval(
+    "D3D12RHI.PipelineCacheSaveInterval",
+    "Minimum interval in seconds between automatic pipeline cache saves",
+    30);
 
 static EResourceType GetResourceTypeFromBindingType(ED3D12BindingType BindingType)
 {
@@ -1211,6 +1218,7 @@ FD3D12PipelineStateManager::FD3D12PipelineStateManager(FD3D12Device* InDevice)
     , PipelineDataSize(0)
     , PipelineLibrary(nullptr)
     , bPipelineLibraryDirty(false)
+    , LastSaveTimestamp(FPlatformTime::QueryPerformanceCounter())
 {
 }
 
@@ -1406,7 +1414,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
     const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
 
-    FFileHandleRef CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
+    TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
     {
         D3D12_WARNING("Failed to open PipelineCache-file");
@@ -1455,12 +1463,74 @@ bool FD3D12PipelineStateManager::SaveCacheData()
     return true;
 }
 
+void FD3D12PipelineStateManager::SaveCacheDataAsync()
+{
+    if (!PipelineLibrary || !bPipelineLibraryDirty)
+    {
+        return;
+    }
+
+    const uint64 CurrentTime = FPlatformTime::QueryPerformanceCounter();
+    const uint64 Frequency   = FPlatformTime::QueryPerformanceFrequency();
+    const double ElapsedSeconds = static_cast<double>(CurrentTime - LastSaveTimestamp) / static_cast<double>(Frequency);
+
+    const int32 SaveInterval = CVarPipelineCacheSaveInterval.GetValue();
+    if (ElapsedSeconds < static_cast<double>(SaveInterval))
+    {
+        return;
+    }
+
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
+
+    TUniquePtr<uint8[]> SerializedData;
+    SIZE_T SerializedSize = 0;
+
+    {
+        TScopedLock Lock(PipelineLibraryCS);
+
+        SerializedSize = PipelineLibrary->GetSerializedSize();
+        SerializedData = MakeUniquePtr<uint8[]>(SerializedSize);
+
+        HRESULT hResult = PipelineLibrary->Serialize(SerializedData.Get(), SerializedSize);
+        if (FAILED(hResult))
+        {
+            D3D12_ERROR("[FD3D12PipelineStateManager] Failed to serialize PipelineCache for async save");
+            return;
+        }
+
+        bPipelineLibraryDirty = false;
+    }
+
+    LastSaveTimestamp = CurrentTime;
+
+    FD3D12PipelineDiskHeader Header;
+    FMemory::Memcpy(Header.Magic, "D3D12PSO", sizeof(Header.Magic));
+    Header.DataCRC  = CRC32::Generate(SerializedData.Get(), SerializedSize);
+    Header.DataSize = SerializedSize;
+
+    Async([FilePath = PipelineCacheFilepath, Header, Data = Move(SerializedData), DataSize = SerializedSize]()
+    {
+        TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForWrite(FilePath);
+        if (!CacheFile)
+        {
+            D3D12_WARNING("[FD3D12PipelineStateManager] Failed to open PipelineCache file for async save");
+            return;
+        }
+
+        CacheFile->Write(reinterpret_cast<const uint8*>(&Header), sizeof(FD3D12PipelineDiskHeader));
+        CacheFile->Write(Data.Get(), static_cast<uint32>(DataSize));
+
+        D3D12_INFO("[FD3D12PipelineStateManager] Async saved PipelineCache to '%s'", *FilePath);
+    });
+}
+
 bool FD3D12PipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
     const FString PipelineCacheFilepath = FPaths::GetAssetDir() + '/' + PipelineCacheFilename;
     
-    FFileHandleRef CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
+    TFileRef<IPlatformFile> CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
     if (!CacheFile)
     {
         D3D12_WARNING("Failed to open PipelineCache-file");

@@ -74,7 +74,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 {
     const FString Filename = FString(InFilename);
 
-    FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+    TFileRef<IPlatformFile> File = FPlatformFile::OpenForRead(Filename);
     if (!File)
     {
         LOG_ERROR("[FFBXImporter]: Failed to open '%s'", *Filename);

@@ -35,3 +35,6 @@ packages/
 *.dxrmesh
 *.pipelinecache
 /Solutions
+*.d3d12psocache
+*.d3d12psocache
+*.vkpsocache
