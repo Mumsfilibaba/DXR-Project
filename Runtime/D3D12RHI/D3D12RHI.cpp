@@ -1130,6 +1130,11 @@ void FD3D12RHI::TickCoreProgression()
     }
 }
 
+void FD3D12RHI::FlushCompletedSubmissions()
+{
+    ProcessPendingCommands();
+}
+
 void FD3D12RHI::SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueue)
 {
     CHECK(Commands != nullptr);

@@ -348,6 +348,12 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
     ObtainCommandList();
 }
 
+void FD3D12CommandContext::SplitCommandListForDescriptorHeapRollover()
+{
+    SplitCommandList(true, true);
+    FD3D12RHI::Get()->FlushCompletedSubmissions();
+}
+
 void FD3D12CommandContext::BeginFrame()
 {
     FD3D12RHI::Get()->BeginFrame(this);

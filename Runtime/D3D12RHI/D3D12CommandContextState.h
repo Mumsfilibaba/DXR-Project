@@ -14,8 +14,8 @@ public:
 
     void BindGraphicsStates();
     void BindComputeState();
-    void BindSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
-    void BindResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
+    bool BindSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
+    bool BindResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
     void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
     void ResetState();
     void ResetStateResources();

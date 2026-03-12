@@ -90,6 +90,7 @@ public:
     virtual void* GetNativeCopyCommandQueue() override final;
     
     void SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueue);
+    void FlushCompletedSubmissions();
 
     FD3D12Adapter* GetAdapter() const
     {

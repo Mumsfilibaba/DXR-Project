@@ -88,6 +88,24 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureInfo& InTextureInfo,
 	// -------------------------------------------------------------------------------------------
 	switch (InTextureInfo.Dimension)
 	{
+	case ETextureDimension::Texture1D:
+		if (InTextureInfo.NumArraySlices != 1)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture1D) NumArraySlices must be 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
+	case ETextureDimension::Texture1DArray:
+		if (InTextureInfo.NumArraySlices == 0)
+		{
+			RHI_VALIDATION_ERROR("CreateTexture: (Texture1DArray) NumArraySlices must be >= 1. (NumArraySlices=%u).", InTextureInfo.NumArraySlices);
+			return nullptr;
+		}
+
+		break;
+
 	case ETextureDimension::Texture2D:
 		if (InTextureInfo.NumArraySlices != 1)
 		{

@@ -1,5 +1,6 @@
 #include "Core/Memory/Memory.h"
 #include "D3D12RHI/D3D12CommandContextState.h"
+#include "D3D12RHI/D3D12CommandContext.h"
 
 FD3D12CommandContextState::FD3D12CommandContextState(FD3D12Device* InDevice, FD3D12CommandContext& InContext)
     : FD3D12DeviceChild(InDevice)
@@ -24,62 +25,70 @@ bool FD3D12CommandContextState::Initialize()
 
 void FD3D12CommandContextState::BindGraphicsStates()
 {
-    FD3D12RootSignature* RootSignture = GraphicsState.PipelineState->GetRootSignature();
-    if (GraphicsState.bBindPipelineState)
+    bool bCommandListSplit;
+    
+    do
     {
-        Context.GetCommandList()->SetPipelineState(GraphicsState.PipelineState->GetD3D12PipelineState());
-        GraphicsState.bBindPipelineState = false;
-    }
+        bCommandListSplit = false;
 
-    D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = GraphicsState.PipelineState->GetD3D12PrimitiveTopology();
-    if (GraphicsState.bBindPrimitiveTopology)
-    {
-        Context.GetCommandList()->IASetPrimitiveTopology(PrimitiveTopology);
-        GraphicsState.bBindPrimitiveTopology = false;
-    }
-
-    bool bRootSignatureReset = false;
-    if (GraphicsState.bBindRootSignature)
-    {
-        bRootSignatureReset = InternalSetRootSignature(RootSignture, ShaderVisibility_Pixel);
-    }
-
-    if (GraphicsState.bBindRenderTargets)
-    {
-        CommonState.DescriptorCache.SetRenderTargets(GraphicsState.RTCache);
-        GraphicsState.bBindRenderTargets = false;
-    }
-
-#ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
-    if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
-    {
-        if (GraphicsState.bBindShadingRateImage)
+        FD3D12RootSignature* RootSignture = GraphicsState.PipelineState->GetRootSignature();
+        if (GraphicsState.bBindPipelineState)
         {
-            ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
-            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
-            GraphicsState.bBindShadingRateImage = false;
+            Context.GetCommandList()->SetPipelineState(GraphicsState.PipelineState->GetD3D12PipelineState());
+            GraphicsState.bBindPipelineState = false;
         }
 
-        if (GraphicsState.bBindShadingRate)
+        D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = GraphicsState.PipelineState->GetD3D12PrimitiveTopology();
+        if (GraphicsState.bBindPrimitiveTopology)
         {
-            D3D12_SHADING_RATE_COMBINER Combiners[] =
+            Context.GetCommandList()->IASetPrimitiveTopology(PrimitiveTopology);
+            GraphicsState.bBindPrimitiveTopology = false;
+        }
+
+        bool bRootSignatureReset = false;
+        if (GraphicsState.bBindRootSignature)
+        {
+            bRootSignatureReset = InternalSetRootSignature(RootSignture, ShaderVisibility_Pixel);
+        }
+
+        if (GraphicsState.bBindRenderTargets)
+        {
+            CommonState.DescriptorCache.SetRenderTargets(GraphicsState.RTCache);
+            GraphicsState.bBindRenderTargets = false;
+        }
+
+    #ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
+        if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
+        {
+            if (GraphicsState.bBindShadingRateImage)
             {
-                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-                D3D12_SHADING_RATE_COMBINER_OVERRIDE,
-            };
+                ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetResource()->GetD3D12Resource() : nullptr;
+                Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
+                GraphicsState.bBindShadingRateImage = false;
+            }
 
-            Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
-            GraphicsState.bBindShadingRate = false;
+            if (GraphicsState.bBindShadingRate)
+            {
+                D3D12_SHADING_RATE_COMBINER Combiners[] =
+                {
+                    D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+                    D3D12_SHADING_RATE_COMBINER_OVERRIDE,
+                };
+
+                Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
+                GraphicsState.bBindShadingRate = false;
+            }
         }
-    }
-#endif
+    #endif
 
-    BindResources(RootSignture, GraphicsState.PipelineState.Get(), ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
-    BindSamplers(RootSignture, GraphicsState.PipelineState.Get(), ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
+        bCommandListSplit |= BindResources(RootSignture, GraphicsState.PipelineState.Get(), ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
+        bCommandListSplit |= BindSamplers(RootSignture, GraphicsState.PipelineState.Get(), ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
+
+    } while (bCommandListSplit);
 
     if (GraphicsState.bBindShaderConstants)
     {
-        BindShaderConstants(RootSignture, ShaderVisibility_Pixel);
+        BindShaderConstants(GraphicsState.PipelineState->GetRootSignature(), ShaderVisibility_Pixel);
         GraphicsState.bBindShaderConstants = false;
     }
 
@@ -116,39 +125,48 @@ void FD3D12CommandContextState::BindGraphicsStates()
 
 void FD3D12CommandContextState::BindComputeState()
 {
-    FD3D12RootSignature* RootSignture = ComputeState.PipelineState->GetRootSignature();
-    if (ComputeState.bBindPipelineState)
+    bool bCommandListSplit;
+    do
     {
-        Context.GetCommandList()->SetPipelineState(ComputeState.PipelineState->GetD3D12PipelineState());
-        ComputeState.bBindPipelineState = false;
-    }
+        bCommandListSplit = false;
 
-    bool bRootSignatureReset = false;
-    if (ComputeState.bBindRootSignature)
-    {
-        bRootSignatureReset = InternalSetRootSignature(RootSignture, ShaderVisibility_All);
-    }
+        FD3D12RootSignature* RootSignture = ComputeState.PipelineState->GetRootSignature();
+        if (ComputeState.bBindPipelineState)
+        {
+            Context.GetCommandList()->SetPipelineState(ComputeState.PipelineState->GetD3D12PipelineState());
+            ComputeState.bBindPipelineState = false;
+        }
 
-    BindResources(RootSignture, ComputeState.PipelineState.Get(), ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
-    BindSamplers(RootSignture, ComputeState.PipelineState.Get(), ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
+        bool bRootSignatureReset = false;
+        if (ComputeState.bBindRootSignature)
+        {
+            bRootSignatureReset = InternalSetRootSignature(RootSignture, ShaderVisibility_All);
+        }
+
+        bCommandListSplit |= BindResources(RootSignture, ComputeState.PipelineState.Get(), ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
+        bCommandListSplit |= BindSamplers(RootSignture, ComputeState.PipelineState.Get(), ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
+
+    } while (bCommandListSplit);
 
     if (ComputeState.bBindShaderConstants)
     {
-        BindShaderConstants(RootSignture, ShaderVisibility_All);
+        BindShaderConstants(ComputeState.PipelineState->GetRootSignature(), ShaderVisibility_All);
         ComputeState.bBindShaderConstants = false;
     }
 }
 
-void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature, FD3D12PipelineState* PipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
+bool FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature, FD3D12PipelineState* PipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
     uint32 NumSamplers[ShaderVisibility_Count];
 
     constexpr int32 MaxTries = 4;
+    bool bCommandListSplit = false;
 
     uint32 NumSamplerDescriptors;
     for (int32 NumTries = 0; NumTries < MaxTries; NumTries++)
     {
         NumSamplerDescriptors = 0;
+
         for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
         {
             const uint32 MaxSamplers = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_Sampler);
@@ -160,6 +178,7 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
             {
                 NumSamplers[CurrentStage] = MaxSamplers;
             }
+
             NumSamplerDescriptors += NumSamplers[CurrentStage];
         }
 
@@ -167,8 +186,16 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
         {
             if (!CommonState.DescriptorCache.GetSamplerHeap().Realloc())
             {
-                DEBUG_BREAK();
-                return;
+                LOG_WARNING("SamplerHeap exhausted, splitting CommandList to recycle blocks");
+
+                Context.SplitCommandListForDescriptorHeapRollover();
+                bCommandListSplit = true;
+
+                if (!CommonState.DescriptorCache.GetSamplerHeap().Realloc())
+                {
+                    D3D12_ERROR("Failed to allocate sampler descriptor block after CommandList split");
+                    return bCommandListSplit;
+                }
             }
 
             CommonState.DescriptorCache.InvalidateCachedSamplerTables();
@@ -184,7 +211,8 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
     CommonState.DescriptorCache.SetDescriptorHeaps();
 
     const uint32 StartHandleOffset = CommonState.DescriptorCache.GetSamplerHeap().AllocateHandles(NumSamplerDescriptors);
-    uint32 DescriptorHandleOffset = StartHandleOffset;
+    uint32 DescriptorHandleOffset  = StartHandleOffset;
+
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
         if (!NumSamplers[CurrentStage])
@@ -200,20 +228,23 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
     }
 
     CommonState.DescriptorCache.GetSamplerHeap().SetCurrentHandle(DescriptorHandleOffset);
+    return bCommandListSplit;
 }
 
-void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature, FD3D12PipelineState* PipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
+bool FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature, FD3D12PipelineState* PipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
     uint32 NumCBVs[ShaderVisibility_Count];
     uint32 NumSRVs[ShaderVisibility_Count];
     uint32 NumUAVs[ShaderVisibility_Count];
 
     constexpr int32 MaxTries = 4;
+    bool bCommandListSplit = false;
 
     uint32 NumResourceDescriptors;
     for (int32 NumTries = 0; NumTries < MaxTries; NumTries++)
     {
         NumResourceDescriptors = 0;
+
         for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
         {
             const uint32 MaxCBVs = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_CBV);
@@ -249,15 +280,21 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
         {
             if (!CommonState.DescriptorCache.GetResourceHeap().Realloc())
             {
-                LOG_INFO("ResourceHeap Roll-Over");
-                DEBUG_BREAK();
-                return;
+                LOG_WARNING("ResourceHeap exhausted, splitting CommandList to recycle blocks");
+
+                Context.SplitCommandListForDescriptorHeapRollover();
+                bCommandListSplit = true;
+
+                if (!CommonState.DescriptorCache.GetResourceHeap().Realloc())
+                {
+                    D3D12_ERROR("Failed to allocate resource descriptor block after CommandList split");
+                    return bCommandListSplit;
+                }
             }
 
             bDescriptorHeapRolledOver = true;
         }
 
-        // TODO: If our DescriptorHeaps rolled over we want to finish up our current CommandList
         if (bDescriptorHeapRolledOver)
         {
             ResetStateResources();
@@ -269,13 +306,12 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
 
     CommonState.DescriptorCache.SetDescriptorHeaps();
 
-    // Check for stale view versions (views recreated due to resource relocation).
-    // Must use the descriptor table mapping to check the correct register for each table slot.
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
         if (!CommonState.ConstantBufferCache.IsDirty(CurrentStage) && NumCBVs[CurrentStage] > 0)
         {
             const FD3D12DescriptorTableMapping& CBVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, ResourceType_CBV);
+
             auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
             for (uint32 Slot = 0; Slot < NumCBVs[CurrentStage]; Slot++)
             {
@@ -287,7 +323,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
                         if (View->GetDescriptorVersion() != CommonState.ConstantBufferCache.ViewVersions[CurrentStage][Register])
                         {
                             CommonState.ConstantBufferCache.ViewVersions[CurrentStage][Register] = View->GetDescriptorVersion();
-                            CommonState.ConstantBufferCache.bDirty[CurrentStage] = true;
+                            CommonState.ConstantBufferCache.bDirty[CurrentStage]                 = true;
                             break;
                         }
                     }
@@ -298,6 +334,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
         if (!CommonState.ShaderResourceViewCache.IsDirty(CurrentStage) && NumSRVs[CurrentStage] > 0)
         {
             const FD3D12DescriptorTableMapping& SRVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, ResourceType_SRV);
+
             auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[CurrentStage];
             for (uint32 Slot = 0; Slot < NumSRVs[CurrentStage]; Slot++)
             {
@@ -307,7 +344,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
                     if (View->GetDescriptorVersion() != CommonState.ShaderResourceViewCache.ViewVersions[CurrentStage][Register])
                     {
                         CommonState.ShaderResourceViewCache.ViewVersions[CurrentStage][Register] = View->GetDescriptorVersion();
-                        CommonState.ShaderResourceViewCache.bDirty[CurrentStage] = true;
+                        CommonState.ShaderResourceViewCache.bDirty[CurrentStage]                 = true;
                         break;
                     }
                 }
@@ -317,6 +354,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
         if (!CommonState.UnorderedAccessViewCache.IsDirty(CurrentStage) && NumUAVs[CurrentStage] > 0)
         {
             const FD3D12DescriptorTableMapping& UAVMapping = RootSignature->GetDescriptorTableMapping(CurrentStage, ResourceType_UAV);
+
             auto& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[CurrentStage];
             for (uint32 Slot = 0; Slot < NumUAVs[CurrentStage]; Slot++)
             {
@@ -326,7 +364,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
                     if (View->GetDescriptorVersion() != CommonState.UnorderedAccessViewCache.ViewVersions[CurrentStage][Register])
                     {
                         CommonState.UnorderedAccessViewCache.ViewVersions[CurrentStage][Register] = View->GetDescriptorVersion();
-                        CommonState.UnorderedAccessViewCache.bDirty[CurrentStage] = true;
+                        CommonState.UnorderedAccessViewCache.bDirty[CurrentStage]                 = true;
                         break;
                     }
                 }
@@ -335,7 +373,8 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
     }
 
     const uint32 StartHandleOffset = CommonState.DescriptorCache.GetResourceHeap().AllocateHandles(NumResourceDescriptors);
-    uint32 DescriptorHandleOffset = StartHandleOffset;
+    uint32 DescriptorHandleOffset  = StartHandleOffset;
+
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
         if (NumCBVs[CurrentStage] > 0)
@@ -353,8 +392,8 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
             auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[CurrentStage];
             for (uint8 RootCBVIdx = 0; RootCBVIdx < Stage.GetNumRootCBVs(); RootCBVIdx++)
             {
-                const int8 ParamIndex = Stage.GetRootCBVParameterIndexBySlot(RootCBVIdx);
-                const uint16 Register = Stage.GetRootCBVRegister(RootCBVIdx);
+                const int8   ParamIndex = Stage.GetRootCBVParameterIndexBySlot(RootCBVIdx);
+                const uint16 Register   = Stage.GetRootCBVRegister(RootCBVIdx);
                 CHECK(Register < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
 
                 D3D12_GPU_VIRTUAL_ADDRESS GpuVA = 0;
@@ -405,6 +444,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
 
     // If not all handles are used, return the remaining handles
     CommonState.DescriptorCache.GetResourceHeap().SetCurrentHandle(DescriptorHandleOffset);
+    return bCommandListSplit;
 }
 
 void FD3D12CommandContextState::BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage)
@@ -448,7 +488,6 @@ void FD3D12CommandContextState::ResetState()
     GraphicsState.PipelineState          = nullptr;
     GraphicsState.ShadingRate            = D3D12_SHADING_RATE_1X1;
     GraphicsState.ShadingRateImage       = nullptr;
-
     GraphicsState.bBindIndexBuffer       = true;
     GraphicsState.bBindRenderTargets     = true;
     GraphicsState.bBindBlendFactor       = true;
@@ -511,21 +550,33 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
     FD3D12GraphicsPipelineState* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
     if (CurrentGraphicsPipelineState != InGraphicsPipelineState)
     {
-        FD3D12RootSignature* RootSignature        = InGraphicsPipelineState      ? InGraphicsPipelineState->GetRootSignature()      : nullptr;
-        FD3D12RootSignature* CurrentRootSignature = CurrentGraphicsPipelineState ? CurrentGraphicsPipelineState->GetRootSignature() : nullptr;
+        FD3D12RootSignature* const RootSignature = InGraphicsPipelineState ? 
+            InGraphicsPipelineState->GetRootSignature() :
+            nullptr;
+
+        FD3D12RootSignature* const CurrentRootSignature = CurrentGraphicsPipelineState ?
+            CurrentGraphicsPipelineState->GetRootSignature() :
+            nullptr;
+
         if (CurrentRootSignature != RootSignature)
         {
             GraphicsState.bBindRootSignature = true;
         }
 
-        D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology        = InGraphicsPipelineState      ? InGraphicsPipelineState->GetD3D12PrimitiveTopology()      : D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
-        D3D12_PRIMITIVE_TOPOLOGY CurrentPrimitiveTopology = CurrentGraphicsPipelineState ? CurrentGraphicsPipelineState->GetD3D12PrimitiveTopology() : D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = InGraphicsPipelineState ? 
+            InGraphicsPipelineState->GetD3D12PrimitiveTopology() : 
+            D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
+        const D3D12_PRIMITIVE_TOPOLOGY CurrentPrimitiveTopology = CurrentGraphicsPipelineState ? 
+            CurrentGraphicsPipelineState->GetD3D12PrimitiveTopology() : 
+            D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+
         if (CurrentPrimitiveTopology != PrimitiveTopology)
         {
             GraphicsState.bBindPrimitiveTopology = true;
         }
 
-        GraphicsState.PipelineState = MakeSharedRef<FD3D12GraphicsPipelineState>(InGraphicsPipelineState);
+        GraphicsState.PipelineState      = MakeSharedRef<FD3D12GraphicsPipelineState>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
     }
 }
@@ -535,14 +586,20 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
     FD3D12ComputePipelineState* CurrentComputePipelineState = ComputeState.PipelineState.Get();
     if (CurrentComputePipelineState != InComputePipelineState)
     {
-        FD3D12RootSignature* RootSignature        = InComputePipelineState      ? InComputePipelineState->GetRootSignature()      : nullptr;
-        FD3D12RootSignature* CurrentRootSignature = CurrentComputePipelineState ? CurrentComputePipelineState->GetRootSignature() : nullptr;
+        FD3D12RootSignature* const RootSignature = InComputePipelineState ? 
+            InComputePipelineState->GetRootSignature() : 
+            nullptr;
+
+        FD3D12RootSignature* const CurrentRootSignature = CurrentComputePipelineState ? 
+            CurrentComputePipelineState->GetRootSignature() : 
+            nullptr;
+
         if (CurrentRootSignature != RootSignature)
         {
             ComputeState.bBindRootSignature = true;
         }
 
-        ComputeState.PipelineState = MakeSharedRef<FD3D12ComputePipelineState>(InComputePipelineState);
+        ComputeState.PipelineState      = MakeSharedRef<FD3D12ComputePipelineState>(InComputePipelineState);
         ComputeState.bBindPipelineState = true;
     }
 }
@@ -563,7 +620,7 @@ void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetView* const* 
         if (GraphicsState.RTCache.RenderTargetViews[Index] != RenderTargets[Index])
         {
             GraphicsState.RTCache.RenderTargetViews[Index] = RenderTargets[Index];
-            GraphicsState.bBindRenderTargets = true;
+            GraphicsState.bBindRenderTargets               = true;
         }
     }
 }
@@ -573,7 +630,7 @@ void FD3D12CommandContextState::SetShadingRate(EShadingRate ShadingRate)
     D3D12_SHADING_RATE D3DShadingRate = ConvertShadingRate(ShadingRate);
     if (GraphicsState.ShadingRate != D3DShadingRate)
     {
-        GraphicsState.ShadingRate = D3DShadingRate;
+        GraphicsState.ShadingRate      = D3DShadingRate;
         GraphicsState.bBindShadingRate = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
     }
 }
@@ -582,7 +639,7 @@ void FD3D12CommandContextState::SetShadingRateImage(FD3D12Texture* ShadingRateIm
 {
     if (GraphicsState.ShadingRateImage != ShadingRateImage)
     {
-        GraphicsState.ShadingRateImage = ShadingRateImage;
+        GraphicsState.ShadingRateImage      = ShadingRateImage;
         GraphicsState.bBindShadingRateImage = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
     }
 }
@@ -595,6 +652,7 @@ void FD3D12CommandContextState::SetViewports(D3D12_VIEWPORT* Viewports, uint32 N
     if (GraphicsState.NumViewports != NumViewports || FMemory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0)
     {
         FMemory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
+
         GraphicsState.NumViewports   = NumViewports;
         GraphicsState.bBindViewports = true;
     }
@@ -608,6 +666,7 @@ void FD3D12CommandContextState::SetScissorRects(D3D12_RECT* ScissorRects, uint32
     if (GraphicsState.NumScissorRects != NumScissorRects || FMemory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0)
     {
         FMemory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
+
         GraphicsState.NumScissorRects   = NumScissorRects;
         GraphicsState.bBindScissorRects = true;
     }
@@ -632,6 +691,7 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
         CurrentVBV.BufferLocation = VertexBuffer->GetGpuVirtualAddress();
         CurrentVBV.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetInfo().Size);
         CurrentVBV.StrideInBytes  = VertexBuffer->GetInfo().Stride;
+
         Context.GetCommandList().UpdateResidency(VertexBuffer->GetResource()->GetResidencyHandle());
     }
     else
@@ -642,8 +702,10 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     if (FMemory::Memcmp(&CurrentVBV, &GraphicsState.VBCache.VertexBuffers[VertexBufferSlot], sizeof(D3D12_VERTEX_BUFFER_VIEW)) != 0)
     {
         FMemory::Memcpy(&GraphicsState.VBCache.VertexBuffers[VertexBufferSlot], &CurrentVBV, sizeof(D3D12_VERTEX_BUFFER_VIEW));
-        GraphicsState.VBCache.NumVertexBuffers = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
-        GraphicsState.bBindVertexBuffers = true;
+
+        const uint8 NumVertexBuffers =  Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
+        GraphicsState.VBCache.NumVertexBuffers = NumVertexBuffers;
+        GraphicsState.bBindVertexBuffers       = true;
     }
 }
 
@@ -655,6 +717,7 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
         NewIndexBuffer.BufferLocation = IndexBuffer->GetGpuVirtualAddress();
         NewIndexBuffer.Format         = IndexFormat;
         NewIndexBuffer.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetInfo().Size);
+
         Context.GetCommandList().UpdateResidency(IndexBuffer->GetResource()->GetResidencyHandle());
     }
     else
@@ -675,9 +738,11 @@ void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceView* ShaderResourceV
     if (SRVCache[ResourceIndex] != ShaderResourceView)
     {
         SRVCache[ResourceIndex] = ShaderResourceView;
+
+        const uint8 NumViews = Math::Max<uint8>(CommonState.ShaderResourceViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.ShaderResourceViewCache.ViewVersions[ShaderStage][ResourceIndex] = ShaderResourceView ? ShaderResourceView->GetDescriptorVersion() : 0;
-        CommonState.ShaderResourceViewCache.NumViews[ShaderStage] = Math::Max<uint8>(CommonState.ShaderResourceViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
-        CommonState.ShaderResourceViewCache.bDirty[ShaderStage] = true;
+        CommonState.ShaderResourceViewCache.NumViews[ShaderStage]                    = NumViews;
+        CommonState.ShaderResourceViewCache.bDirty[ShaderStage]                      = true;
     }
 }
 
@@ -687,9 +752,11 @@ void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessView* UnorderedAcces
     if (UAVCache[ResourceIndex] != UnorderedAccessView)
     {
         UAVCache[ResourceIndex] = UnorderedAccessView;
+
+        const uint8 NumViews = Math::Max<uint8>(CommonState.UnorderedAccessViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.UnorderedAccessViewCache.ViewVersions[ShaderStage][ResourceIndex] = UnorderedAccessView ? UnorderedAccessView->GetDescriptorVersion() : 0;
-        CommonState.UnorderedAccessViewCache.NumViews[ShaderStage] = Math::Max<uint8>(CommonState.UnorderedAccessViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
-        CommonState.UnorderedAccessViewCache.bDirty[ShaderStage] = true;
+        CommonState.UnorderedAccessViewCache.NumViews[ShaderStage]                    = NumViews;
+        CommonState.UnorderedAccessViewCache.bDirty[ShaderStage]                      = true;
     }
 }
 
@@ -699,9 +766,11 @@ void FD3D12CommandContextState::SetCBV(FD3D12Buffer* Buffer, EShaderVisibility S
     if (CBVCache[ResourceIndex] != Buffer)
     {
         CBVCache[ResourceIndex] = Buffer;
+
+        const uint8 NumBuffers = Math::Max<uint8>(CommonState.ConstantBufferCache.NumBuffers[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
         CommonState.ConstantBufferCache.ViewVersions[ShaderStage][ResourceIndex] = 0;
-        CommonState.ConstantBufferCache.NumBuffers[ShaderStage] = Math::Max<uint8>(CommonState.ConstantBufferCache.NumBuffers[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
-        CommonState.ConstantBufferCache.bDirty[ShaderStage] = true;
+        CommonState.ConstantBufferCache.NumBuffers[ShaderStage]                  = NumBuffers;
+        CommonState.ConstantBufferCache.bDirty[ShaderStage]                      = true;
     }
 }
 
@@ -711,8 +780,10 @@ void FD3D12CommandContextState::SetSampler(FD3D12SamplerState* SamplerState, ESh
     if (SamplerCache[SamplerIndex] != SamplerState)
     {
         SamplerCache[SamplerIndex] = SamplerState;
-        CommonState.SamplerStateCache.NumSamplers[ShaderStage] = Math::Max<uint8>(CommonState.SamplerStateCache.NumSamplers[ShaderStage], static_cast<uint8>(SamplerIndex) + 1);
-        CommonState.SamplerStateCache.bDirty[ShaderStage] = true;
+
+        const uint8 NumSamplers = Math::Max<uint8>(CommonState.SamplerStateCache.NumSamplers[ShaderStage], static_cast<uint8>(SamplerIndex) + 1);
+        CommonState.SamplerStateCache.NumSamplers[ShaderStage] = NumSamplers;
+        CommonState.SamplerStateCache.bDirty[ShaderStage]      = true;
     }
 }
 
@@ -723,8 +794,9 @@ void FD3D12CommandContextState::SetShaderConstants(const uint32* ShaderConstants
     {
         FMemory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
         ConstantCache.NumConstants = NumShaderConstants;
+        
         GraphicsState.bBindShaderConstants = true;
-        ComputeState.bBindShaderConstants = true;
+        ComputeState.bBindShaderConstants  = true;
     }
 }
 
@@ -736,8 +808,9 @@ bool FD3D12CommandContextState::InternalSetRootSignature(FD3D12RootSignature* In
         if (ComputeState.bBindRootSignature)
         {
             Context.GetCommandList()->SetComputeRootSignature(InRootSignature->GetD3D12RootSignature());
+            
             ComputeState.bBindRootSignature = false;
-            bRootSignatureReset = true;
+            bRootSignatureReset             = true;
         }
     }
     else
@@ -745,8 +818,9 @@ bool FD3D12CommandContextState::InternalSetRootSignature(FD3D12RootSignature* In
         if (GraphicsState.bBindRootSignature)
         {
             Context.GetCommandList()->SetGraphicsRootSignature(InRootSignature->GetD3D12RootSignature());
+            
             GraphicsState.bBindRootSignature = false;
-            bRootSignatureReset = true;
+            bRootSignatureReset              = true;
         }
     }
 

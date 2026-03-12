@@ -106,10 +106,12 @@ public:
     }
 
     bool Initialize();
+    
     void ObtainCommandList();
     void FinishCommandList(bool bFlushAllocator);
     void SplitCommandList(bool bFlushAllocator, bool bWaitForQueue);
     void SplitCommandListAndResetState(bool bFlushAllocator, bool bWaitForQueue);
+    void SplitCommandListForDescriptorHeapRollover();
     
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
