@@ -183,6 +183,8 @@ VULKAN_DEVICE_FUNCTION(CmdEndRendering)
 VULKAN_DEVICE_FUNCTION(CmdSetViewport)
 VULKAN_DEVICE_FUNCTION(CmdSetScissor)
 VULKAN_DEVICE_FUNCTION(CmdSetBlendConstants)
+VULKAN_DEVICE_FUNCTION(CmdSetStencilReference)
+VULKAN_DEVICE_FUNCTION(CmdSetDepthBias)
 VULKAN_DEVICE_FUNCTION(CmdBindVertexBuffers)
 VULKAN_DEVICE_FUNCTION(CmdBindIndexBuffer)
 VULKAN_DEVICE_FUNCTION(CmdBindPipeline)
@@ -236,6 +238,12 @@ VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdWriteBufferMarkerAMD)
 #if VK_NV_device_diagnostic_checkpoints
 VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdSetCheckpointNV)
 VULKAN_DEVICE_FUNCTION_OPTIONAL(GetQueueCheckpointDataNV)
+#endif
+
+#if VK_EXT_transform_feedback
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBindTransformFeedbackBuffersEXT)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdBeginTransformFeedbackEXT)
+VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdEndTransformFeedbackEXT)
 #endif
 
 #if VK_EXT_device_fault

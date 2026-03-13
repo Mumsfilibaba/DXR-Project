@@ -82,6 +82,9 @@ public:
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
     void SetScissorRects(VkRect2D* ScissorRects, uint32 NumScissorRects);
     void SetBlendFactor(const float BlendFactor[4]);
+    void SetStencilRef(uint32 InStencilRef);
+    void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
+    void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexFormat);
     void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
@@ -152,12 +155,18 @@ private:
             , CurrentDescriptorState(nullptr)
             , NumViewports(0)
             , NumScissorRects(0)
-            , IBCache()
-            , VBCache()
+            , IndexBufferCache()
+            , VertexBufferCache()
         {
             FMemory::Memzero(BlendFactor, sizeof(BlendFactor));
+            FMemory::Memzero(DepthBias, sizeof(DepthBias));
+            StencilRef = 0;
             FMemory::Memzero(Viewports, sizeof(Viewports));
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
+            FMemory::Memzero(StreamOutputBuffers, sizeof(StreamOutputBuffers));
+            FMemory::Memzero(StreamOutputOffsets, sizeof(StreamOutputOffsets));
+            FMemory::Memzero(StreamOutputSizes, sizeof(StreamOutputSizes));
+            NumStreamOutputBuffers = 0;
         }
 
         FVulkanPipelineLayout*          CurrentLayout;
@@ -166,20 +175,29 @@ private:
         FPipelineToDescriptorStateMap   DescriptorStates;
         FVulkanDescriptorState*         CurrentDescriptorState;
         float                           BlendFactor[4];
+        float                           DepthBias[3];
+        uint32                          StencilRef;
         VkViewport                      Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
         uint32                          NumViewports;
         VkRect2D                        ScissorRects[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
         uint32                          NumScissorRects;
-        FVulkanIndexBufferCache         IBCache;
-        FVulkanVertexBufferCache        VBCache;
+        FVulkanIndexBufferCache         IndexBufferCache;
+        FVulkanVertexBufferCache        VertexBufferCache;
+        VkBuffer                        StreamOutputBuffers[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+        VkDeviceSize                    StreamOutputOffsets[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+        VkDeviceSize                    StreamOutputSizes[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+        uint32                          NumStreamOutputBuffers;
 
-        bool bBindBlendFactor   : 1;
-        bool bBindPipelineState : 1;
-        bool bBindScissorRects  : 1;
-        bool bBindViewports     : 1;
-        bool bBindVertexBuffers : 1;
-        bool bBindIndexBuffer   : 1;
-        bool bBindPushConstants : 1;
+        bool bBindBlendFactor          : 1;
+        bool bBindStencilRef           : 1;
+        bool bBindDepthBias            : 1;
+        bool bBindPipelineState        : 1;
+        bool bBindScissorRects         : 1;
+        bool bBindViewports            : 1;
+        bool bBindVertexBuffers        : 1;
+        bool bBindIndexBuffer          : 1;
+        bool bBindPushConstants        : 1;
+        bool bBindStreamOutputTargets  : 1;
     } GraphicsState;
 
     struct FComputeState

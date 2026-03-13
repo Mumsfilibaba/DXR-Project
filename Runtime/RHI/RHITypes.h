@@ -519,6 +519,7 @@ enum class EResourceAccess : uint32
     ShadingRateSource               = FLAG(14),
     Present                         = FLAG(15),
     GenericRead                     = FLAG(16),
+    StreamOutput                    = FLAG(17),
 };
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
@@ -545,6 +546,7 @@ NODISCARD constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
     case EResourceAccess::Present:                         return "Present";
     case EResourceAccess::GenericRead:                     return "GenericRead";
+    case EResourceAccess::StreamOutput:                    return "StreamOutput";
     
     default: return "Unknown";
     }

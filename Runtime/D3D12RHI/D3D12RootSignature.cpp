@@ -38,6 +38,19 @@ static EShaderVisibility GetShaderVisibility(uint32 Visbility)
     return GShaderVisibility[Visbility];
 }
 
+static D3D12_SHADER_VISIBILITY GetD3D12ShaderVisibilityFromShaderStage(EShaderStage Stage)
+{
+    switch (Stage)
+    {
+    case EShaderStage::Vertex:   return D3D12_SHADER_VISIBILITY_VERTEX;
+    case EShaderStage::Hull:     return D3D12_SHADER_VISIBILITY_HULL;
+    case EShaderStage::Domain:   return D3D12_SHADER_VISIBILITY_DOMAIN;
+    case EShaderStage::Geometry: return D3D12_SHADER_VISIBILITY_GEOMETRY;
+    case EShaderStage::Pixel:    return D3D12_SHADER_VISIBILITY_PIXEL;
+    default:                     return D3D12_SHADER_VISIBILITY_ALL;
+    }
+}
+
 static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 {
     switch (Type)
@@ -67,6 +80,39 @@ static D3D12_DESCRIPTOR_RANGE_TYPE GetD3D12DescriptorRangeType(EResourceType Typ
         return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     }
 }
+
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+static D3D12_DESCRIPTOR_RANGE_FLAGS GetDescriptorRangeFlags(EResourceType ResType)
+{
+#if D3D12_ENABLE_STATIC_DESCRIPTORS
+    if (ResType == ResourceType_Sampler)
+    {
+        return D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+    }
+    else if (ResType == ResourceType_UAV)
+    {
+        return D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
+    }
+    else
+    {
+        return D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+    }
+#else
+    if (ResType == ResourceType_Sampler)
+    {
+        return D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE;
+    }
+    else if (ResType == ResourceType_UAV)
+    {
+        return D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
+    }
+    else
+    {
+        return D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
+    }
+#endif
+}
+#endif
 
 static const EShaderVisibility GRootCBVStagePriority[] =
 {
@@ -103,6 +149,30 @@ void FD3D12RegisterSet::Insert(uint16 Register)
     }
 
     Registers.Insert(Low, Register);
+}
+
+void FD3D12RegisterSet::Remove(uint16 Register)
+{
+    int32 Low  = 0;
+    int32 High = Registers.Size() - 1;
+
+    while (Low <= High)
+    {
+        const int32 Mid = (Low + High) / 2;
+        if (Registers[Mid] == Register)
+        {
+            Registers.RemoveAt(Mid);
+            return;
+        }
+        else if (Registers[Mid] < Register)
+        {
+            Low = Mid + 1;
+        }
+        else
+        {
+            High = Mid - 1;
+        }
+    }
 }
 
 bool FD3D12RegisterSet::Contains(uint16 Register) const
@@ -197,8 +267,19 @@ FD3D12RegisterSet FD3D12RegisterSet::Union(const FD3D12RegisterSet& Other) const
 FD3D12RootSignatureLayout::FD3D12RootSignatureLayout()
     : Type(ERootSignatureType::Unknown)
     , bAllowInputAssembler(false)
+    , bAllowStreamOutput(false)
     , NumPushConstants(0)
 {
+}
+
+void FD3D12RootSignatureLayout::AddStaticSampler(const FRHIStaticSamplerInfo& StaticSampler)
+{
+    StaticSamplers.Emplace(StaticSampler);
+
+    for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
+    {
+        RegisterSets[Stage][ResourceType_Sampler].Remove(StaticSampler.ShaderRegister);
+    }
 }
 
 void FD3D12RootSignatureLayout::AddRegister(EShaderVisibility Stage, EResourceType ResType, uint16 Register)
@@ -239,7 +320,7 @@ void FD3D12RootSignatureLayout::ComputeRootCBVs()
 
     for (uint32 PriorityIdx = 0; PriorityIdx < GRootCBVStagePriorityCount && Budget >= 2; PriorityIdx++)
     {
-        const EShaderVisibility Stage = GRootCBVStagePriority[PriorityIdx];
+        const EShaderVisibility  Stage        = GRootCBVStagePriority[PriorityIdx];
         const FD3D12RegisterSet& CBVRegisters = RegisterSets[Stage][ResourceType_CBV];
 
         for (int32 RegIdx = 0; RegIdx < static_cast<int32>(CBVRegisters.GetCount()) && Budget >= 2; RegIdx++)
@@ -257,6 +338,7 @@ void FD3D12RootSignatureLayout::ComputeRootCBVs()
     for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
     {
         const FD3D12RegisterSet& CBVRegisters = RegisterSets[Stage][ResourceType_CBV];
+
         bool bHasNonRootCBVs = false;
         for (int32 i = 0; i < static_cast<int32>(CBVRegisters.GetCount()); i++)
         {
@@ -318,7 +400,7 @@ uint32 FD3D12RootSignatureLayout::ComputeCost() const
 
 bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Other) const
 {
-    if (Type != Other.Type || bAllowInputAssembler != Other.bAllowInputAssembler)
+    if (Type != Other.Type || bAllowInputAssembler != Other.bAllowInputAssembler || bAllowStreamOutput != Other.bAllowStreamOutput)
     {
         return false;
     }
@@ -326,6 +408,20 @@ bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Ot
     if (NumPushConstants > Other.NumPushConstants)
     {
         return false;
+    }
+
+    if (StaticSamplers.Size() != Other.StaticSamplers.Size())
+    {
+        return false;
+    }
+
+    for (int32 i = 0; i < StaticSamplers.Size(); ++i)
+    {
+        if (StaticSamplers[i].ShaderVisibility != Other.StaticSamplers[i].ShaderVisibility || 
+            StaticSamplers[i].ShaderRegister != Other.StaticSamplers[i].ShaderRegister)
+        {
+            return false;
+        }
     }
 
     for (uint32 Stage = 0; Stage < ShaderVisibility_Count; Stage++)
@@ -526,11 +622,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             for (uint32 i = 0; i < CBVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
                 InsertRootCBV(D3D12Visibility, CBVRegisters.Registers[i], Space, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE);
-#else
+            #else
                 InsertRootCBV(D3D12Visibility, CBVRegisters.Registers[i], Space);
-#endif
+            #endif
                 bIsStageUsed = true;
             }
 
@@ -538,11 +634,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             for (uint32 i = 0; i < SRVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
                 InsertRootSRV(D3D12Visibility, SRVRegisters.Registers[i], Space, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE);
-#else
+            #else
                 InsertRootSRV(D3D12Visibility, SRVRegisters.Registers[i], Space);
-#endif
+            #endif
                 bIsStageUsed = true;
             }
 
@@ -550,11 +646,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             for (uint32 i = 0; i < UAVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
                 InsertRootUAV(D3D12Visibility, UAVRegisters.Registers[i], Space, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE);
-#else
+            #else
                 InsertRootUAV(D3D12Visibility, UAVRegisters.Registers[i], Space);
-#endif
+            #endif
                 bIsStageUsed = true;
             }
 
@@ -569,24 +665,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
                 if (!Registers.IsEmpty())
                 {
                     const uint32 RangeStart = NumDescriptorRanges;
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
-#if D3D12_ENABLE_STATIC_DESCRIPTORS
-                    const D3D12_DESCRIPTOR_RANGE_FLAGS RangeFlags = (ResType == ResourceType_Sampler) 
-                        ? D3D12_DESCRIPTOR_RANGE_FLAG_NONE 
-                        : (ResType == ResourceType_UAV) 
-                            ? D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE 
-                            : D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE;
-#else
-                    const D3D12_DESCRIPTOR_RANGE_FLAGS RangeFlags = (ResType == ResourceType_Sampler) 
-                        ? D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE 
-                        : (ResType == ResourceType_UAV) 
-                            ? (D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE) 
-                            : (D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE);
-#endif
-                    const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(Registers, GetD3D12DescriptorRangeType(ResType), Space, RangeFlags);
-#else
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+                    const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(Registers, GetD3D12DescriptorRangeType(ResType), Space, GetDescriptorRangeFlags(ResType));
+            #else
                     const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(Registers, GetD3D12DescriptorRangeType(ResType), Space);
-#endif
+            #endif
                     InsertDescriptorTable(D3D12Visibility, &DescriptorRanges[RangeStart], NumRanges);
                     bIsStageUsed = true;
                 }
@@ -596,11 +679,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             for (uint32 i = 0; i < RootCBVRegisters.GetCount(); i++)
             {
                 CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+            #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
                 InsertRootCBV(D3D12Visibility, RootCBVRegisters.Registers[i], Space, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_VOLATILE);
-#else
+            #else
                 InsertRootCBV(D3D12Visibility, RootCBVRegisters.Registers[i], Space);
-#endif
+            #endif
                 bIsStageUsed = true;
             }
 
@@ -617,15 +700,11 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             if (!TableCBVRegisters.IsEmpty())
             {
                 const uint32 RangeStart = NumDescriptorRanges;
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
-#if D3D12_ENABLE_STATIC_DESCRIPTORS
-                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE);
-#else
-                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space, D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC_WHILE_SET_AT_EXECUTE);
-#endif
-#else
+        #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+                const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space, GetDescriptorRangeFlags(ResourceType_CBV));
+        #else
                 const uint32 NumRanges = BuildDescriptorRangesForRegisterSet(TableCBVRegisters, D3D12_DESCRIPTOR_RANGE_TYPE_CBV, Space);
-#endif
+        #endif
                 InsertDescriptorTable(D3D12Visibility, &DescriptorRanges[RangeStart], NumRanges);
                 bIsStageUsed = true;
             }
@@ -672,36 +751,82 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
         Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
     }
 
+    if (Layout.GetAllowStreamOutput())
+    {
+        Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_STREAM_OUTPUT;
+    }
+
+    NumStaticSamplers = 0;
+
+    const auto& LayoutStaticSamplers = Layout.GetStaticSamplers();
+    for (int32 i = 0; i < LayoutStaticSamplers.Size() && NumStaticSamplers < 16; ++i)
+    {
+        const FRHIStaticSamplerInfo& Entry = LayoutStaticSamplers[i];
+        D3D12_STATIC_SAMPLER_DESC& Desc = StaticSamplers[NumStaticSamplers];
+        Desc.Filter           = ConvertSamplerFilter(Entry.Filter);
+        Desc.AddressU         = ConvertSamplerMode(Entry.AddressU);
+        Desc.AddressV         = ConvertSamplerMode(Entry.AddressV);
+        Desc.AddressW         = ConvertSamplerMode(Entry.AddressW);
+        Desc.MipLODBias       = Entry.MipLODBias;
+        Desc.MaxAnisotropy    = Entry.MaxAnisotropy;
+        Desc.ComparisonFunc   = ConvertComparisonFunc(Entry.ComparisonFunc);
+        Desc.BorderColor      = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+        Desc.MinLOD           = Entry.MinLOD;
+        Desc.MaxLOD           = Entry.MaxLOD;
+        Desc.ShaderRegister   = Entry.ShaderRegister;
+        Desc.RegisterSpace    = 0;
+        Desc.ShaderVisibility = GetD3D12ShaderVisibilityFromShaderStage(Entry.ShaderVisibility);
+
+    #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+        D3D12_STATIC_SAMPLER_DESC1& Desc1 = StaticSamplers1[NumStaticSamplers];
+        Desc1.Filter           = Desc.Filter;
+        Desc1.AddressU         = Desc.AddressU;
+        Desc1.AddressV         = Desc.AddressV;
+        Desc1.AddressW         = Desc.AddressW;
+        Desc1.MipLODBias       = Desc.MipLODBias;
+        Desc1.MaxAnisotropy    = Desc.MaxAnisotropy;
+        Desc1.ComparisonFunc   = Desc.ComparisonFunc;
+        Desc1.BorderColor      = Desc.BorderColor;
+        Desc1.MinLOD           = Desc.MinLOD;
+        Desc1.MaxLOD           = Desc.MaxLOD;
+        Desc1.ShaderRegister   = Desc.ShaderRegister;
+        Desc1.RegisterSpace    = Desc.RegisterSpace;
+        Desc1.ShaderVisibility = Desc.ShaderVisibility;
+        Desc1.Flags            = D3D12_SAMPLER_FLAG_NONE;
+    #endif
+
+        NumStaticSamplers++;
+    }
+
 #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
     if (GD3D12RootSignatureVersion >= D3D_ROOT_SIGNATURE_VERSION_1_2)
     {
-        VersionedDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_2;
+        VersionedDesc.Version                    = D3D_ROOT_SIGNATURE_VERSION_1_2;
         VersionedDesc.Desc_1_2.NumParameters     = NumRootParameters;
         VersionedDesc.Desc_1_2.pParameters       = RootParameters;
-        VersionedDesc.Desc_1_2.NumStaticSamplers = 0;
-        VersionedDesc.Desc_1_2.pStaticSamplers   = nullptr;
+        VersionedDesc.Desc_1_2.NumStaticSamplers = NumStaticSamplers;
+        VersionedDesc.Desc_1_2.pStaticSamplers   = NumStaticSamplers > 0 ? StaticSamplers1 : nullptr;
         VersionedDesc.Desc_1_2.Flags             = Flags;
     }
     else
     {
-        VersionedDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+        VersionedDesc.Version                    = D3D_ROOT_SIGNATURE_VERSION_1_1;
         VersionedDesc.Desc_1_1.NumParameters     = NumRootParameters;
         VersionedDesc.Desc_1_1.pParameters       = RootParameters;
-        VersionedDesc.Desc_1_1.NumStaticSamplers = 0;
-        VersionedDesc.Desc_1_1.pStaticSamplers   = nullptr;
+        VersionedDesc.Desc_1_1.NumStaticSamplers = NumStaticSamplers;
+        VersionedDesc.Desc_1_1.pStaticSamplers   = NumStaticSamplers > 0 ? StaticSamplers : nullptr;
         VersionedDesc.Desc_1_1.Flags             = Flags;
     }
 #else
     Desc.NumParameters     = NumRootParameters;
     Desc.pParameters       = RootParameters;
-    Desc.NumStaticSamplers = 0;
-    Desc.pStaticSamplers   = nullptr;
+    Desc.NumStaticSamplers = NumStaticSamplers;
+    Desc.pStaticSamplers   = NumStaticSamplers > 0 ? StaticSamplers : nullptr;
     Desc.Flags             = Flags;
 #endif
 }
 
 #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
-
 uint32 FD3D12RootSignatureDescHelper::BuildDescriptorRangesForRegisterSet(const FD3D12RegisterSet& Registers, D3D12_DESCRIPTOR_RANGE_TYPE RangeType, uint32 Space, D3D12_DESCRIPTOR_RANGE_FLAGS RangeFlags)
 {
     uint32 NumRangesCreated = 0;
@@ -723,6 +848,7 @@ uint32 FD3D12RootSignatureDescHelper::BuildDescriptorRangesForRegisterSet(const 
         CHECK(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGE_SIZE);
 
         InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], RangeType, NumDescriptors, RangeStart, Space, RangeFlags, DescriptorOffset);
+
         NumDescriptorRanges++;
         NumRangesCreated++;
         DescriptorOffset += NumDescriptors;
@@ -791,9 +917,7 @@ void FD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY Shader
 
     RootSignatureCost += 2;
 }
-
 #else // !D3D12_USE_VERSIONED_ROOT_SIGNATURES
-
 uint32 FD3D12RootSignatureDescHelper::BuildDescriptorRangesForRegisterSet(const FD3D12RegisterSet& Registers, D3D12_DESCRIPTOR_RANGE_TYPE RangeType, uint32 Space)
 {
     uint32 NumRangesCreated = 0;
@@ -815,6 +939,7 @@ uint32 FD3D12RootSignatureDescHelper::BuildDescriptorRangesForRegisterSet(const 
         CHECK(NumDescriptorRanges < D3D12_MAX_DESCRIPTOR_RANGE_SIZE);
 
         InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], RangeType, NumDescriptors, RangeStart, Space, DescriptorOffset);
+
         NumDescriptorRanges++;
         NumRangesCreated++;
         DescriptorOffset += NumDescriptors;
@@ -879,7 +1004,6 @@ void FD3D12RootSignatureDescHelper::InsertRootUAV(D3D12_SHADER_VISIBILITY Shader
 
     RootSignatureCost += 2;
 }
-
 #endif // D3D12_USE_VERSIONED_ROOT_SIGNATURES
 
 void FD3D12RootSignatureDescHelper::Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 NumShaderConstants, uint32 ShaderRegister, uint32 RegisterSpace)
@@ -986,7 +1110,7 @@ bool FD3D12RootSignature::Initialize(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& 
         return false;
     }
 
-    const D3D12_ROOT_PARAMETER1* Parameters   = nullptr;
+    const D3D12_ROOT_PARAMETER1* Parameters    = nullptr;
     uint32                       NumParameters = 0;
 
     if (Desc.Version == D3D_ROOT_SIGNATURE_VERSION_1_2)
@@ -1027,7 +1151,7 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
 
     CHECK(VersionedDesc != nullptr);
 
-    const D3D12_ROOT_PARAMETER1* Parameters   = nullptr;
+    const D3D12_ROOT_PARAMETER1* Parameters    = nullptr;
     uint32                       NumParameters = 0;
 
     if (VersionedDesc->Version == D3D_ROOT_SIGNATURE_VERSION_1_2)
@@ -1323,7 +1447,6 @@ bool FD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64
 }
 
 #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
-
 bool FD3D12RootSignature::Serialize(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob)
 {
     TComPtr<ID3DBlob> ErrorBlob;
@@ -1337,9 +1460,7 @@ bool FD3D12RootSignature::Serialize(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& D
 
     return true;
 }
-
 #else
-
 bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob)
 {
     TComPtr<ID3DBlob> ErrorBlob;
@@ -1353,7 +1474,6 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 
     return true;
 }
-
 #endif
 
 FD3D12RootSignatureManager::FD3D12RootSignatureManager(FD3D12Device* InDevice)
@@ -1367,7 +1487,6 @@ FD3D12RootSignatureManager::~FD3D12RootSignatureManager()
 {
     ReleaseAll();
 }
-
 
 void FD3D12RootSignatureManager::ReleaseAll()
 {

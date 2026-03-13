@@ -70,8 +70,11 @@ public:
     virtual void SetViewport(const FViewportRegion& ViewportRegion) override final;
     virtual void SetScissorRect(const FScissorRegion& ScissorRegion) override final;
     virtual void SetBlendFactor(const FVector4& Color) override final;
+    virtual void SetStencilRef(uint32 StencilRef) override final;
+    virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) override final;
     virtual void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final;
     virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;
+    virtual void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets) override final;
     virtual void SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
     virtual void SetComputePipelineState(class FRHIComputePipelineState* PipelineState) override final;
     virtual void SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants) override final;

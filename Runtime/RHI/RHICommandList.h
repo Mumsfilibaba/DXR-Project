@@ -193,6 +193,16 @@ public:
         EmplaceCommand<FRHICommandSetBlendFactor>(Color);
     }
 
+    FORCEINLINE void SetStencilRef(uint32 StencilRef) noexcept
+    {
+        EmplaceCommand<FRHICommandSetStencilRef>(StencilRef);
+    }
+
+    FORCEINLINE void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) noexcept
+    {
+        EmplaceCommand<FRHICommandSetDepthBias>(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
+    }
+
     FORCEINLINE void SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) noexcept
     {
         TArrayView<FRHIBuffer* const> VertexBuffers = AllocateArray(InVertexBuffers);
@@ -202,6 +212,12 @@ public:
     FORCEINLINE void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) noexcept
     {
         EmplaceCommand<FRHICommandSetIndexBuffer>(IndexBuffer, IndexFormat);
+    }
+
+    FORCEINLINE void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> InBuffers, const uint64* InOffsets) noexcept
+    {
+        TArrayView<FRHIBuffer* const> Buffers = AllocateArray(InBuffers);
+        EmplaceCommand<FRHICommandSetStreamOutputTargets>(Buffers, InOffsets);
     }
 
     FORCEINLINE void SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState) noexcept

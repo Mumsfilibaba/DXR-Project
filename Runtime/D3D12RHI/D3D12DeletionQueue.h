@@ -108,6 +108,7 @@ struct FD3D12DeferredObject
     {
         CHECK(InAllocator != nullptr);
         CHECK(InPage != nullptr);
+        
         LinearAllocatorPage.Allocator = InAllocator;
         LinearAllocatorPage.Page      = InPage;
     }
@@ -123,19 +124,19 @@ struct FD3D12DeferredObject
     struct FBuddyAllocatorBlockData
     {
         FD3D12BuddyAllocator*              Allocator      = nullptr;
-        FD3D12BuddyAllocatorAllocationData AllocationData = {};
+        FD3D12BuddyAllocatorAllocationData AllocationData = { };
     };
 
     struct FPoolAllocatorBlockData
     {
         FD3D12PoolAllocator*              Allocator      = nullptr;
-        FD3D12PoolAllocatorAllocationData AllocationData = {};
+        FD3D12PoolAllocatorAllocationData AllocationData = { };
     };
 
     struct FBucketAllocatorBlockData
     {
         FD3D12BucketAllocator*              Allocator      = nullptr;
-        FD3D12BucketAllocatorAllocationData AllocationData = {};
+        FD3D12BucketAllocatorAllocationData AllocationData = { };
     };
 
     struct FLinearAllocatorPageData

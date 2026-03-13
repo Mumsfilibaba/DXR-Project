@@ -3,6 +3,7 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Shader.h"
 #include "D3D12RHI/D3D12RefCounted.h"
+#include "RHI/RHISamplerState.h"
 
 typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 
@@ -19,6 +20,7 @@ struct FD3D12RegisterSet
 {
     FD3D12RegisterSet Union(const FD3D12RegisterSet& Other) const;
     void Insert(uint16 Register);
+    void Remove(uint16 Register);
 
     bool IsSubsetOf(const FD3D12RegisterSet& Other) const;
     bool Contains(uint16 Register) const;
@@ -44,7 +46,8 @@ public:
 
     void AddRegister(EShaderVisibility Stage, EResourceType ResType, uint16 Register);
     void AddContiguousRegisters(EShaderVisibility Stage, EResourceType ResType, uint8 Count);
-    
+    void AddStaticSampler(const FRHIStaticSamplerInfo& StaticSampler);
+
     bool IsCompatible(const FD3D12RootSignatureLayout& Other) const;
     
     void ComputeRootCBVs();
@@ -68,6 +71,11 @@ public:
         NumPushConstants = Count;
     }
 
+    FORCEINLINE void SetAllowStreamOutput(bool bInAllowStreamOutput)
+    {
+        bAllowStreamOutput = bInAllowStreamOutput;
+    }
+
     FORCEINLINE ERootSignatureType GetType() const
     {
         return Type;
@@ -77,18 +85,30 @@ public:
     {
         return bAllowInputAssembler;
     }
+
+    FORCEINLINE bool GetAllowStreamOutput() const
+    {
+        return bAllowStreamOutput;
+    }
     
     FORCEINLINE uint8 GetNumPushConstants() const
     {
         return NumPushConstants;
     }
 
+    FORCEINLINE const TArray<FRHIStaticSamplerInfo>& GetStaticSamplers() const
+    {
+        return StaticSamplers;
+    }
+
 private:
-    FD3D12RegisterSet  RegisterSets[ShaderVisibility_Count][ResourceType_Count];
-    FD3D12RegisterSet  RootCBVSets[ShaderVisibility_Count];
-    uint8              NumPushConstants;
-    bool               bAllowInputAssembler;
-    ERootSignatureType Type;
+    FD3D12RegisterSet            RegisterSets[ShaderVisibility_Count][ResourceType_Count];
+    FD3D12RegisterSet            RootCBVSets[ShaderVisibility_Count];
+    TArray<FRHIStaticSamplerInfo> StaticSamplers;
+    uint8                       NumPushConstants;
+    bool                        bAllowInputAssembler;
+    bool                        bAllowStreamOutput;
+    ERootSignatureType          Type;
 };
 
 class FD3D12DescriptorTableMapping
@@ -171,6 +191,11 @@ private:
     uint32                               NumRootParameters;
     uint32                               NumDescriptorRanges;
     uint32                               RootSignatureCost;
+    D3D12_STATIC_SAMPLER_DESC            StaticSamplers[16];
+#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    D3D12_STATIC_SAMPLER_DESC1           StaticSamplers1[16];
+#endif
+    uint32                               NumStaticSamplers;
 };
 
 class FD3D12ShaderStage
@@ -185,6 +210,7 @@ public:
     static constexpr int32 MaxRootCBVsPerStage        = 6;
     static constexpr int32 MaxRootDescriptorsPerStage = D3D12_MAX_LOCAL_ROOT_DESCRIPTORS;
 
+public:
     FD3D12ShaderStage();
     ~FD3D12ShaderStage() = default;
 

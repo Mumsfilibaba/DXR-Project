@@ -996,6 +996,21 @@ void FVulkanCommandContext::SetBlendFactor(const FVector4& Color)
     ContextState.SetBlendFactor(Color.XYZW);
 }
 
+void FVulkanCommandContext::SetStencilRef(uint32 StencilRef)
+{
+    ContextState.SetStencilRef(StencilRef);
+}
+
+void FVulkanCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
+{
+    ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
+}
+
+void FVulkanCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
+{
+    ContextState.SetStreamOutputTargets(Buffers, Offsets);
+}
+
 void FVulkanCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
     for (int32 Index = 0; Index < InVertexBuffers.Size(); ++Index)

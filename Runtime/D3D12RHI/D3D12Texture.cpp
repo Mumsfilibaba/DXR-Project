@@ -107,6 +107,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         return false;
     }
 
+    if (!Info.IsNoDefaultSRV())
     {
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc = {};
         ViewDesc.Format                  = D3D12CastShaderResourceFormat(ResourceDesc.Format);
@@ -190,7 +191,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         ShaderResourceView = DefaultSRV;
     }
 
-    if (Info.IsUnorderedAccessTexture())
+    if (Info.IsUnorderedAccessTexture() && !Info.IsNoDefaultUAV())
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc = {};
         ViewDesc.Format = D3D12CastShaderResourceFormat(ResourceDesc.Format);

@@ -204,6 +204,16 @@ struct RHIDeviceFeatureSupport
 
     /** Required alignment for raw/byte-address buffers (SRV/UAV) */
     static RHI_API uint32 RawBufferRequiredAlignment;
+
+    // -------------------------------------------------------------------------------------------
+    // Dynamic State
+    // -------------------------------------------------------------------------------------------
+
+    /** Whether dynamic depth bias (RSSetDepthBias) is supported */
+    static RHI_API bool bSupportsDynamicDepthBias;
+
+    /** Whether stream output / transform feedback is supported */
+    static RHI_API bool bSupportsStreamOutput;
 };
 
 // -------------------------------------------------------------------------------------------

@@ -110,9 +110,19 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
+    // Static sampler: Linear Wrap at s0
+    FRHIStaticSamplerInfo GenMipsStaticSampler;
+    GenMipsStaticSampler.AddressU = ESamplerMode::Wrap;
+    GenMipsStaticSampler.AddressV = ESamplerMode::Wrap;
+    GenMipsStaticSampler.AddressW = ESamplerMode::Wrap;
+    GenMipsStaticSampler.Filter   = ESamplerFilter::MinMagMipLinear;
+    GenMipsStaticSampler.MinLOD   = 0.0f;
+    GenMipsStaticSampler.MaxLOD   = TNumericLimits<float>::Max();
+
     // Create "GenerateMips Texure2D" pipeline
 	FRHIComputePipelineStateInfo GenerateMipsTex2D_PSOInfo;
-    GenerateMipsTex2D_PSOInfo.Shader = GenerateMipsTex2D_CS.Get();
+    GenerateMipsTex2D_PSOInfo.Shader         = GenerateMipsTex2D_CS.Get();
+    GenerateMipsTex2D_PSOInfo.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&GenMipsStaticSampler, 1);
 
     GenerateMipsTex2D_PSO = FRHI::Get()->CreateComputePipelineState(GenerateMipsTex2D_PSOInfo);
     if (GenerateMipsTex2D_PSO)
@@ -139,7 +149,8 @@ bool FTextureFactory::CreateResources()
 
     // Create "GenerateMips TexureCube" pipeline
 	FRHIComputePipelineStateInfo GenerateMipsTexCube_PSOInfo;
-    GenerateMipsTexCube_PSOInfo.Shader = GenerateMipsTexCube_CS.Get();
+    GenerateMipsTexCube_PSOInfo.Shader         = GenerateMipsTexCube_CS.Get();
+    GenerateMipsTexCube_PSOInfo.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&GenMipsStaticSampler, 1);
 
     GenerateMipsTexCube_PSO = FRHI::Get()->CreateComputePipelineState(GenerateMipsTexCube_PSOInfo);
     if (GenerateMipsTexCube_PSO)
@@ -477,7 +488,6 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     FRHIComputeShaderRef        ComputeShader = bIsTextureCube ? GenerateMipsTexCube_CS  : GenerateMipsTex2D_CS;
     FRHIComputePipelineStateRef PipelineState = bIsTextureCube ? GenerateMipsTexCube_PSO : GenerateMipsTex2D_PSO;
     CommandList.SetComputePipelineState(PipelineState.Get());
-    CommandList.SetSamplerState(ComputeShader.Get(), LinearSampler.Get(), 0);
 
     struct FGenMipsConstants
     {

@@ -181,6 +181,18 @@ void FMetalCommandContext::SetBlendFactor(const FVector4& Color)
 {
 }
 
+void FMetalCommandContext::SetStencilRef(uint32 StencilRef)
+{
+}
+
+void FMetalCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
+{
+}
+
+void FMetalCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
+{
+}
+
 void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
     for (int32 BufferIndex = 0; BufferIndex < InVertexBuffers.Size(); ++BufferIndex)

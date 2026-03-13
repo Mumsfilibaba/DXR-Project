@@ -459,6 +459,46 @@ public:
 };
 #endif
 
+#if VK_EXT_transform_feedback
+class FVulkanEXTTransformFeedbackExtension : public FVulkanDeviceExtension
+{
+public:
+    FVulkanEXTTransformFeedbackExtension()
+        : FVulkanDeviceExtension(VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME, false, true)
+    {
+    }
+
+    virtual void PrepareDeviceFeatures(VkPhysicalDeviceFeatures2& OutFeatures) override final
+    {
+        AvailableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT;
+        AddToStructChain(OutFeatures, AvailableFeatures);
+    }
+
+    virtual void ProcessQueriedFeatures() override final
+    {
+        if (AvailableFeatures.transformFeedback)
+        {
+            GVulkanSupportsTransformFeedback = true;
+        }
+    }
+
+    virtual void PrepareDeviceCreateInfo(VkDeviceCreateInfo& OutDeviceCreateInfo) override final
+    {
+        if (!GVulkanSupportsTransformFeedback)
+        {
+            return;
+        }
+
+        EnableFeatures.sType             = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT;
+        EnableFeatures.transformFeedback = VK_TRUE;
+        AddToStructChain(OutDeviceCreateInfo, EnableFeatures);
+    }
+
+    VkPhysicalDeviceTransformFeedbackFeaturesEXT EnableFeatures    = {};
+    VkPhysicalDeviceTransformFeedbackFeaturesEXT AvailableFeatures = {};
+};
+#endif
+
 #if VK_EXT_device_fault
 class FVulkanEXTDeviceFaultExtension : public FVulkanDeviceExtension
 {
@@ -612,6 +652,9 @@ void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceE
 #endif
 #if VK_EXT_fragment_shader_interlock
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTFragmentShaderInterlockExtension>());
+#endif
+#if VK_EXT_transform_feedback
+    OutExtensions.Add(MakeUniquePtr<FVulkanEXTTransformFeedbackExtension>());
 #endif
 #if VK_EXT_device_fault
     OutExtensions.Add(MakeUniquePtr<FVulkanEXTDeviceFaultExtension>());

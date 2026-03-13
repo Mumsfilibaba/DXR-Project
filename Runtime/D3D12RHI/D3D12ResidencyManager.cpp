@@ -112,7 +112,7 @@ FD3D12ResidencyManager::FD3D12ResidencyManager(FD3D12Device* InDevice, bool bEna
         return;
     }
 
-#ifdef __ID3D12Device3_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_3
     ID3D12Device3* Device3 = Device->GetD3D12Device3();
     if (Device3)
     {
@@ -443,7 +443,7 @@ bool FD3D12ResidencyManager::MakeResidentAsync(TArray<ID3D12Pageable*>& Pageable
         return true;
     }
 
-#ifdef __ID3D12Device3_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_3
     if (ID3D12Device3* Device3 = Device->GetD3D12Device3())
     {
         const uint64 FenceValue = ++PagingFenceValue;

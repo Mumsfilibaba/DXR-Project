@@ -10,7 +10,7 @@
 #include "D3D12RHI/D3D12Queue.h"
 
 #include <DXProgrammableCapture.h>
-#if WIN10_BUILD_17134
+#if DXGI_1_6
     #include <dxgi1_6.h>
 #endif
 
@@ -45,6 +45,7 @@ extern D3D12RHI_API bool GD3D12SupportPipelineCache;
 extern D3D12RHI_API bool GD3D12SupportPipelineStream;
 extern D3D12RHI_API bool GD3D12SupportTightAlignment;
 extern D3D12RHI_API bool GD3D12SupportGPUUploadHeaps;
+extern D3D12RHI_API bool GD3D12SupportDynamicDepthBias;
 extern D3D12RHI_API bool GD3D12SupportsBindless;
 extern D3D12RHI_API bool GD3D12SupportEnhancedBarriers;
 
@@ -128,7 +129,7 @@ public:
     }
 
     FORCEINLINE IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
-#if WIN10_BUILD_17134
+#if DXGI_1_6
     FORCEINLINE IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
 #endif
 
@@ -138,7 +139,7 @@ private:
     TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
     TComPtr<IDXGIFactory2>       Factory;
     TComPtr<IDXGIFactory5>       Factory5;
-#if WIN10_BUILD_17134
+#if DXGI_1_6
     TComPtr<IDXGIFactory6>       Factory6;
 #endif
 
@@ -213,46 +214,46 @@ public:
         return D3D12Device.Get();
     }
 
-#ifdef __ID3D12Device1_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_1
     FORCEINLINE ID3D12Device1* GetD3D12Device1() const { return D3D12Device1.Get(); }
 #endif
-#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_2
     FORCEINLINE ID3D12Device2* GetD3D12Device2() const { return D3D12Device2.Get(); }
 #endif
-#ifdef __ID3D12Device3_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_3
     FORCEINLINE ID3D12Device3* GetD3D12Device3() const { return D3D12Device3.Get(); }
 #endif
-#ifdef __ID3D12Device4_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_4
     FORCEINLINE ID3D12Device4* GetD3D12Device4() const { return D3D12Device4.Get(); }
 #endif
-#ifdef __ID3D12Device5_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_5
     FORCEINLINE ID3D12Device5* GetD3D12Device5() const { return D3D12Device5.Get(); }
 #endif
-#ifdef __ID3D12Device6_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_6
     FORCEINLINE ID3D12Device6* GetD3D12Device6() const { return D3D12Device6.Get(); }
 #endif
-#ifdef __ID3D12Device7_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_7
     FORCEINLINE ID3D12Device7* GetD3D12Device7() const { return D3D12Device7.Get(); }
 #endif
-#ifdef __ID3D12Device8_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_8
     FORCEINLINE ID3D12Device8* GetD3D12Device8() const { return D3D12Device8.Get(); }
 #endif
-#ifdef __ID3D12Device9_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_9
     FORCEINLINE ID3D12Device9* GetD3D12Device9() const { return D3D12Device9.Get(); }
 #endif
-#ifdef __ID3D12Device10_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_10
     FORCEINLINE ID3D12Device10* GetD3D12Device10() const { return D3D12Device10.Get(); }
 #endif
-#ifdef __ID3D12Device11_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_11
     FORCEINLINE ID3D12Device11* GetD3D12Device11() const { return D3D12Device11.Get(); }
 #endif
-#ifdef __ID3D12Device12_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_12
     FORCEINLINE ID3D12Device12* GetD3D12Device12() const { return D3D12Device12.Get(); }
 #endif
-#ifdef __ID3D12Device13_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_13
     FORCEINLINE ID3D12Device13* GetD3D12Device13() const { return D3D12Device13.Get(); }
 #endif
-#ifdef __ID3D12Device14_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_14
     FORCEINLINE ID3D12Device14* GetD3D12Device14() const { return D3D12Device14.Get(); }
 #endif
 
@@ -298,46 +299,46 @@ private:
     uint32                           NodeCount;
 
     TComPtr<ID3D12Device>  D3D12Device;
-#ifdef __ID3D12Device1_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_1
     TComPtr<ID3D12Device1> D3D12Device1;
 #endif
-#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_2
     TComPtr<ID3D12Device2> D3D12Device2;
 #endif
-#ifdef __ID3D12Device3_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_3
     TComPtr<ID3D12Device3> D3D12Device3;
 #endif
-#ifdef __ID3D12Device4_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_4
     TComPtr<ID3D12Device4> D3D12Device4;
 #endif
-#ifdef __ID3D12Device5_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_5
     TComPtr<ID3D12Device5> D3D12Device5;
 #endif
-#ifdef __ID3D12Device6_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_6
     TComPtr<ID3D12Device6> D3D12Device6;
 #endif
-#ifdef __ID3D12Device7_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_7
     TComPtr<ID3D12Device7> D3D12Device7;
 #endif
-#ifdef __ID3D12Device8_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_8
     TComPtr<ID3D12Device8> D3D12Device8;
 #endif
-#ifdef __ID3D12Device9_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_9
     TComPtr<ID3D12Device9> D3D12Device9;
 #endif
-#ifdef __ID3D12Device10_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_10
     TComPtr<ID3D12Device10> D3D12Device10;
 #endif
-#ifdef __ID3D12Device11_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_11
     TComPtr<ID3D12Device11> D3D12Device11;
 #endif
-#ifdef __ID3D12Device12_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_12
     TComPtr<ID3D12Device12> D3D12Device12;
 #endif
-#ifdef __ID3D12Device13_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_13
     TComPtr<ID3D12Device13> D3D12Device13;
 #endif
-#ifdef __ID3D12Device14_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_14
     TComPtr<ID3D12Device14> D3D12Device14;
 #endif
 

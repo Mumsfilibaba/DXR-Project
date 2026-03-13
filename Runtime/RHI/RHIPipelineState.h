@@ -6,6 +6,8 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+struct FRHIStaticSamplerInfo;
+
 enum class EStencilOp : uint8
 {
     Keep    = 1,
@@ -50,10 +52,10 @@ struct FRHIDepthStencilStateInfo
             return Hash;
         }
 
-        EStencilOp StencilFailOp      = EStencilOp::Keep;
-        EStencilOp StencilDepthFailOp = EStencilOp::Keep;
-        EStencilOp StencilDepthPassOp = EStencilOp::Keep;
-        EComparisonFunc StencilFunc   = EComparisonFunc::Always;
+        EStencilOp      StencilFailOp      = EStencilOp::Keep;
+        EStencilOp      StencilDepthFailOp = EStencilOp::Keep;
+        EStencilOp      StencilDepthPassOp = EStencilOp::Keep;
+        EComparisonFunc StencilFunc        = EComparisonFunc::Always;
     };
 
     constexpr bool operator==(const FRHIDepthStencilStateInfo& Other) const noexcept = default;
@@ -315,13 +317,13 @@ struct FRenderTargetBlendInfo
         return Hash;
     }
 
-    EBlendType SrcBlend      = EBlendType::One;
-    EBlendType DstBlend      = EBlendType::Zero;
-    EBlendOp   BlendOp       = EBlendOp::Add;
-    EBlendType SrcBlendAlpha = EBlendType::One;
-    EBlendType DstBlendAlpha = EBlendType::Zero;
-    EBlendOp   BlendOpAlpha  = EBlendOp::Add;
-    bool       bBlendEnable  = false;
+    EBlendType       SrcBlend       = EBlendType::One;
+    EBlendType       DstBlend       = EBlendType::Zero;
+    EBlendOp         BlendOp        = EBlendOp::Add;
+    EBlendType       SrcBlendAlpha  = EBlendType::One;
+    EBlendType       DstBlendAlpha  = EBlendType::Zero;
+    EBlendOp         BlendOpAlpha   = EBlendOp::Add;
+    bool             bBlendEnable   = false;
     EColorWriteFlags ColorWriteMask = EColorWriteFlags::All;
 };
 
@@ -346,13 +348,12 @@ struct FRHIBlendStateInfo
         return Hash;
     }
 
-    FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS];
-    uint8 NumRenderTargets = 0;
-    
-    ELogicOp LogicOp = ELogicOp::NoOp;
-    bool     bLogicOpEnable = false;
-    bool     bAlphaToCoverageEnable  = false;
-    bool     bIndependentBlendEnable = false;
+    FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS] = { };
+    uint8                  NumRenderTargets                      = 0;
+    ELogicOp               LogicOp                               = ELogicOp::NoOp;
+    bool                   bLogicOpEnable                        = false;
+    bool                   bAlphaToCoverageEnable                = false;
+    bool                   bIndependentBlendEnable               = false;
 };
 
 class FRHIBlendState : public FRHIResource
@@ -439,8 +440,8 @@ public:
 struct FRHIGraphicsPipelineFormats
 {
     EFormat RenderTargetFormats[RHI_MAX_RENDER_TARGETS] = { };
-    uint8   NumRenderTargets   = 0;
-    EFormat DepthStencilFormat = EFormat::Unknown;
+    uint8   NumRenderTargets                            = 0;
+    EFormat DepthStencilFormat                          = EFormat::Unknown;
 };
 
 struct FRHIViewInstancingState
@@ -466,25 +467,40 @@ struct FRHIMultiSampleState
     uint32 SampleMask    = RHI_DEFAULT_SAMPLE_MASK;
 };
 
+struct FRHIStreamOutputEntry
+{
+    const CHAR* SemanticName   = nullptr;
+    uint32      SemanticIndex  = 0;
+    uint8       StartComponent = 0;
+    uint8       ComponentCount = 0;
+    uint8       OutputSlot     = 0;
+};
+
+struct FRHIStreamOutputDeclaration
+{
+    TArrayView<const FRHIStreamOutputEntry> Entries          = { };
+    TArrayView<const uint32>                BufferStrides    = { };
+    uint32                                  RasterizedStream = 0;
+};
+
 struct FRHIGraphicsPipelineStateInfo
 {
-    FRHIVertexShader*   VertexShader   = nullptr;
-    FRHIHullShader*     HullShader     = nullptr;
-    FRHIDomainShader*   DomainShader   = nullptr;
-    FRHIGeometryShader* GeometryShader = nullptr;
-    FRHIPixelShader*    PixelShader    = nullptr;
-
-    FRHIInputLayout*       InputLayout       = nullptr;
-    FRHIDepthStencilState* DepthStencilState = nullptr;
-    FRHIRasterizerState*   RasterizerState   = nullptr;
-    FRHIBlendState*        BlendState        = nullptr;
-    
-    FRHIMultiSampleState        MultiSampleState = { };
-    FRHIGraphicsPipelineFormats RasterizerOutputFormats = { };
-    FRHIViewInstancingState     ViewInstancingState = { };
-
-    EPrimitiveTopology PrimitiveTopology = EPrimitiveTopology::TriangleList;
-    bool bPrimitiveRestartEnable = false;
+    FRHIVertexShader*                       VertexShader            = nullptr;
+    FRHIHullShader*                         HullShader              = nullptr;
+    FRHIDomainShader*                       DomainShader            = nullptr;
+    FRHIGeometryShader*                     GeometryShader          = nullptr;
+    FRHIPixelShader*                        PixelShader             = nullptr;
+    FRHIInputLayout*                        InputLayout             = nullptr;
+    FRHIDepthStencilState*                  DepthStencilState       = nullptr;
+    FRHIRasterizerState*                    RasterizerState         = nullptr;
+    FRHIBlendState*                         BlendState              = nullptr;
+    const FRHIStreamOutputDeclaration*      StreamOutputDeclaration = nullptr;
+    TArrayView<const FRHIStaticSamplerInfo> StaticSamplers          = { };
+    FRHIMultiSampleState                    MultiSampleState        = { };
+    FRHIGraphicsPipelineFormats             RasterizerOutputFormats = { };
+    FRHIViewInstancingState                 ViewInstancingState     = { };
+    EPrimitiveTopology                      PrimitiveTopology       = EPrimitiveTopology::TriangleList;
+    bool                                    bPrimitiveRestartEnable = false;
 };
 
 class FRHIGraphicsPipelineState : public FRHIPipelineState
@@ -496,7 +512,8 @@ protected:
 
 struct FRHIComputePipelineStateInfo
 {
-    FRHIComputeShader* Shader = nullptr;
+    FRHIComputeShader*                      Shader         = nullptr;
+    TArrayView<const FRHIStaticSamplerInfo> StaticSamplers = { };
 };
 
 class FRHIComputePipelineState : public FRHIPipelineState
@@ -526,9 +543,9 @@ struct FRHIRayTracingHitGroupInfo
 
     bool operator==(const FRHIRayTracingHitGroupInfo& Other) const noexcept = default;
 
-    FString Name;
+    FString                       Name;
     TArray<FRHIRayTracingShader*> Shaders;
-    ERayTracingHitGroupType Type = ERayTracingHitGroupType::Unknown;
+    ERayTracingHitGroupType       Type = ERayTracingHitGroupType::Unknown;
 };
 
 struct FRHIRayTracingPipelineStateInitializer
@@ -554,10 +571,9 @@ struct FRHIRayTracingPipelineStateInitializer
     TArray<FRHIRayCallableShader*>     CallableShaders;
     TArray<FRHIRayMissShader*>         MissShaders;
     TArray<FRHIRayTracingHitGroupInfo> HitGroups;
-
-    uint32 MaxAttributeSizeInBytes = 0;
-    uint32 MaxPayloadSizeInBytes   = 0;
-    uint32 MaxRecursionDepth       = 1;
+    uint32                             MaxAttributeSizeInBytes = 0;
+    uint32                             MaxPayloadSizeInBytes   = 0;
+    uint32                             MaxRecursionDepth       = 1;
 };
 
 class FRHIRayTracingPipelineState : public FRHIPipelineState

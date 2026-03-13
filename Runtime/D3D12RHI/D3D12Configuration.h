@@ -83,3 +83,155 @@
 #else
     #define D3D12_USE_DEBUG_MESSAGE_CALLBACK (0)
 #endif
+
+// -------------------------------------------
+// ID3D12Device interface availability
+// -------------------------------------------
+
+#ifdef __ID3D12Device1_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_1 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_1 (0)
+#endif
+
+#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_2 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_2 (0)
+#endif
+
+#ifdef __ID3D12Device3_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_3 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_3 (0)
+#endif
+
+#ifdef __ID3D12Device4_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_4 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_4 (0)
+#endif
+
+#ifdef __ID3D12Device5_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_5 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_5 (0)
+#endif
+
+#ifdef __ID3D12Device6_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_6 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_6 (0)
+#endif
+
+#ifdef __ID3D12Device7_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_7 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_7 (0)
+#endif
+
+#ifdef __ID3D12Device8_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_8 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_8 (0)
+#endif
+
+#ifdef __ID3D12Device9_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_9 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_9 (0)
+#endif
+
+#ifdef __ID3D12Device10_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_10 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_10 (0)
+#endif
+
+#ifdef __ID3D12Device11_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_11 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_11 (0)
+#endif
+
+#ifdef __ID3D12Device12_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_12 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_12 (0)
+#endif
+
+#ifdef __ID3D12Device13_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_13 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_13 (0)
+#endif
+
+#ifdef __ID3D12Device14_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12DEVICE_14 (1)
+#else
+    #define D3D12_USE_ID3D12DEVICE_14 (0)
+#endif
+
+// -------------------------------------------
+// ID3D12CommandList interface availability
+// -------------------------------------------
+
+#ifdef __ID3D12GraphicsCommandList1_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_1 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_1 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList2_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_2 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_2 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList3_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_3 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_3 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_4 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_4 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_5 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_5 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList6_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_6 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_6 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList7_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_7 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_7 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList8_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_8 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_8 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList9_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_9 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_9 (0)
+#endif
+
+#ifdef __ID3D12GraphicsCommandList10_INTERFACE_DEFINED__
+    #define D3D12_USE_ID3D12COMMANDLIST_10 (1)
+#else
+    #define D3D12_USE_ID3D12COMMANDLIST_10 (0)
+#endif

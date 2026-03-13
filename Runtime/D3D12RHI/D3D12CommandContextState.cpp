@@ -57,7 +57,7 @@ void FD3D12CommandContextState::BindGraphicsStates()
             GraphicsState.bBindRenderTargets = false;
         }
 
-    #ifdef __ID3D12GraphicsCommandList5_INTERFACE_DEFINED__
+    #if D3D12_USE_ID3D12COMMANDLIST_5
         if (Context.GetCommandList().GetGraphicsCommandList5().IsValid())
         {
             if (GraphicsState.bBindShadingRateImage)
@@ -94,13 +94,13 @@ void FD3D12CommandContextState::BindGraphicsStates()
 
     if (GraphicsState.bBindVertexBuffers)
     {
-        CommonState.DescriptorCache.SetVertexBuffers(GraphicsState.VBCache);
+        CommonState.DescriptorCache.SetVertexBuffers(GraphicsState.VertexBufferCache);
         GraphicsState.bBindVertexBuffers = false;
     }
 
     if (GraphicsState.bBindIndexBuffer)
     {
-        CommonState.DescriptorCache.SetIndexBuffer(GraphicsState.IBCache);
+        CommonState.DescriptorCache.SetIndexBuffer(GraphicsState.IndexBufferCache);
         GraphicsState.bBindIndexBuffer = false;
     }
 
@@ -120,6 +120,26 @@ void FD3D12CommandContextState::BindGraphicsStates()
     {
         Context.GetCommandList()->OMSetBlendFactor(GraphicsState.BlendFactor);
         GraphicsState.bBindBlendFactor = false;
+    }
+
+    if (GraphicsState.bBindStencilRef)
+    {
+        Context.GetCommandList()->OMSetStencilRef(GraphicsState.StencilRef);
+        GraphicsState.bBindStencilRef = false;
+    }
+
+#if D3D12_USE_ID3D12COMMANDLIST_9
+    if (GraphicsState.bBindDepthBias)
+    {
+        Context.GetCommandList().GetGraphicsCommandList9()->RSSetDepthBias(GraphicsState.DepthBias[0], GraphicsState.DepthBias[1], GraphicsState.DepthBias[2]);
+        GraphicsState.bBindDepthBias = false;
+    }
+#endif
+
+    if (GraphicsState.bBindStreamOutputTargets)
+    {
+        Context.GetCommandList()->SOSetTargets(0, GraphicsState.NumSOBuffers, GraphicsState.SOBufferViews);
+        GraphicsState.bBindStreamOutputTargets = false;
     }
 }
 
@@ -170,9 +190,9 @@ bool FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
         for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
         {
             const uint32 MaxSamplers = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_Sampler);
-#if D3D12_ENABLE_STATIC_DESCRIPTORS && D3D12_USE_VERSIONED_ROOT_SIGNATURES
+        #if D3D12_ENABLE_STATIC_DESCRIPTORS && D3D12_USE_VERSIONED_ROOT_SIGNATURES
             NumSamplers[CurrentStage] = MaxSamplers;
-#else
+        #else
             if (GD3D12ResourceBindingTier > D3D12_RESOURCE_BINDING_TIER_1)
             {
                 NumSamplers[CurrentStage] = PipelineState->GetEffectiveDescriptorCount(CurrentStage, ResourceType_Sampler);
@@ -181,7 +201,7 @@ bool FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
             {
                 NumSamplers[CurrentStage] = MaxSamplers;
             }
-#endif
+        #endif
 
             NumSamplerDescriptors += NumSamplers[CurrentStage];
         }
@@ -255,11 +275,11 @@ bool FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
             const uint32 MaxSRVs = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_SRV);
             const uint32 MaxUAVs = RootSignature->GetMaxResourceCount(CurrentStage, ResourceType_UAV);
 
-#if D3D12_ENABLE_STATIC_DESCRIPTORS && D3D12_USE_VERSIONED_ROOT_SIGNATURES
+        #if D3D12_ENABLE_STATIC_DESCRIPTORS && D3D12_USE_VERSIONED_ROOT_SIGNATURES
             NumCBVs[CurrentStage] = MaxCBVs;
             NumSRVs[CurrentStage] = MaxSRVs;
             NumUAVs[CurrentStage] = MaxUAVs;
-#else
+        #else
             if (GD3D12ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3)
             {
                 NumCBVs[CurrentStage] = PipelineState->GetEffectiveDescriptorCount(CurrentStage, ResourceType_CBV);
@@ -278,7 +298,7 @@ bool FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
                 NumSRVs[CurrentStage] = MaxSRVs;
                 NumUAVs[CurrentStage] = MaxUAVs;
             }
-#endif
+        #endif
 
             NumResourceDescriptors += NumCBVs[CurrentStage];
             NumResourceDescriptors += NumSRVs[CurrentStage];
@@ -485,8 +505,8 @@ void FD3D12CommandContextState::ResetState()
     CommonState.SamplerStateCache.Clear();
 
     GraphicsState.RTCache.Clear();
-    GraphicsState.VBCache.Clear();
-    GraphicsState.IBCache.Clear();
+    GraphicsState.VertexBufferCache.Clear();
+    GraphicsState.IndexBufferCache.Clear();
 
     FMemory::Memzero(GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
     FMemory::Memzero(GraphicsState.Viewports, sizeof(GraphicsState.Viewports));
@@ -691,6 +711,53 @@ void FD3D12CommandContextState::SetBlendFactor(const float BlendFactor[4])
     }
 }
 
+void FD3D12CommandContextState::SetStencilRef(uint32 InStencilRef)
+{
+    if (GraphicsState.StencilRef != InStencilRef)
+    {
+        GraphicsState.StencilRef      = InStencilRef;
+        GraphicsState.bBindStencilRef = true;
+    }
+}
+
+void FD3D12CommandContextState::SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias)
+{
+    const float NewValues[3] = 
+    { 
+        InDepthBias, 
+        InDepthBiasClamp, 
+        InSlopeScaledDepthBias 
+    };
+    
+    if (FMemory::Memcmp(GraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0)
+    {
+        FMemory::Memcpy(GraphicsState.DepthBias, NewValues, sizeof(NewValues));
+        GraphicsState.bBindDepthBias = true;
+    }
+}
+
+void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
+{
+    GraphicsState.NumSOBuffers = Math::Min(static_cast<uint32>(Buffers.Size()), 4u);
+
+    for (uint32 Index = 0; Index < GraphicsState.NumSOBuffers; ++Index)
+    {
+        FD3D12Buffer* D3DBuffer = static_cast<FD3D12Buffer*>(Buffers[Index]);
+        if (D3DBuffer)
+        {
+            GraphicsState.SOBufferViews[Index].BufferLocation           = D3DBuffer->GetGpuVirtualAddress() + (Offsets ? Offsets[Index] : 0);
+            GraphicsState.SOBufferViews[Index].SizeInBytes              = D3DBuffer->GetInfo().Size;
+            GraphicsState.SOBufferViews[Index].BufferFilledSizeLocation = 0;
+        }
+        else
+        {
+            FMemory::Memzero(&GraphicsState.SOBufferViews[Index], sizeof(D3D12_STREAM_OUTPUT_BUFFER_VIEW));
+        }
+    }
+
+    GraphicsState.bBindStreamOutputTargets = true;
+}
+
 void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint32 VertexBufferSlot)
 {
     CHECK(VertexBufferSlot < D3D12_MAX_VERTEX_BUFFER_SLOTS);
@@ -709,12 +776,12 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
         FMemory::Memzero(&CurrentVBV);
     }
 
-    if (FMemory::Memcmp(&CurrentVBV, &GraphicsState.VBCache.VertexBuffers[VertexBufferSlot], sizeof(D3D12_VERTEX_BUFFER_VIEW)) != 0)
+    if (FMemory::Memcmp(&CurrentVBV, &GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot], sizeof(D3D12_VERTEX_BUFFER_VIEW)) != 0)
     {
-        FMemory::Memcpy(&GraphicsState.VBCache.VertexBuffers[VertexBufferSlot], &CurrentVBV, sizeof(D3D12_VERTEX_BUFFER_VIEW));
+        FMemory::Memcpy(&GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot], &CurrentVBV, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 
-        const uint8 NumVertexBuffers =  Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
-        GraphicsState.VBCache.NumVertexBuffers = NumVertexBuffers;
+        const uint8 NumVertexBuffers =  Math::Max(GraphicsState.VertexBufferCache.NumVertexBuffers, VertexBufferSlot + 1);
+        GraphicsState.VertexBufferCache.NumVertexBuffers = NumVertexBuffers;
         GraphicsState.bBindVertexBuffers       = true;
     }
 }
@@ -735,9 +802,9 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
         FMemory::Memzero(&NewIndexBuffer);
     }
 
-    if (FMemory::Memcmp(&NewIndexBuffer, &GraphicsState.IBCache.IndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW)) != 0)
+    if (FMemory::Memcmp(&NewIndexBuffer, &GraphicsState.IndexBufferCache.IndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW)) != 0)
     {
-        FMemory::Memcpy(&GraphicsState.IBCache.IndexBuffer, &NewIndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW));
+        FMemory::Memcpy(&GraphicsState.IndexBufferCache.IndexBuffer, &NewIndexBuffer, sizeof(D3D12_INDEX_BUFFER_VIEW));
         GraphicsState.bBindIndexBuffer = true;
     }
 }

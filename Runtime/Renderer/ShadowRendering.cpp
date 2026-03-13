@@ -974,11 +974,20 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         FRHIRasterizerStateInfo RasterizerStateInfo;
         RasterizerStateInfo.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
 
-        // TODO: Revisit depth-bias
-        RasterizerStateInfo.bEnableDepthBias     = true;
-        RasterizerStateInfo.DepthBias            = 1.0f;
-        RasterizerStateInfo.DepthBiasClamp       = 0.05f;
-        RasterizerStateInfo.SlopeScaledDepthBias = 1.0f;
+        if (RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+        {
+            RasterizerStateInfo.bEnableDepthBias     = false;
+            RasterizerStateInfo.DepthBias            = 0.0f;
+            RasterizerStateInfo.DepthBiasClamp       = 0.0f;
+            RasterizerStateInfo.SlopeScaledDepthBias = 0.0f;
+        }
+        else
+        {
+            RasterizerStateInfo.bEnableDepthBias     = true;
+            RasterizerStateInfo.DepthBias            = 1.0f;
+            RasterizerStateInfo.DepthBiasClamp       = 0.05f;
+            RasterizerStateInfo.SlopeScaledDepthBias = 1.0f;
+        }
 
         if (Material->IsDoubleSided())
         {
@@ -1198,6 +1207,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
         CommandList.BeginRenderPass(RenderPass);
 
+        if (RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+        {
+            CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
+        }
+
         const float CascadeSize = static_cast<float>(Resources.CascadeSize);
         FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.SetViewport(ViewportRegion);
@@ -1307,6 +1321,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             RenderPass.DepthStencilView.ArrayIndex = static_cast<uint16>(Index);
 
             CommandList.BeginRenderPass(RenderPass);
+
+            if (RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+            {
+                CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
+            }
 
             const float CascadeSize = static_cast<float>(Resources.CascadeSize);
             FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);

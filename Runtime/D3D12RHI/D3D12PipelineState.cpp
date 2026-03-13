@@ -90,7 +90,7 @@ FD3D12InputLayout::FD3D12InputLayout(const TArray<FRHIInputElementInfo>& InInput
         ElementDesc.Emplace(InputElementDesc);
     }
 
-    Desc.NumElements = ElementDesc.Size();
+    Desc.NumElements        = ElementDesc.Size();
     Desc.pInputElementDescs = ElementDesc.Data();
 
     Hash = CalculatedHash;
@@ -242,20 +242,35 @@ FD3D12GraphicsPipelineState::~FD3D12GraphicsPipelineState()
 {
 }
 
+void FD3D12GraphicsPipelineState::SetDebugName(const FString& InName)
+{
+    FD3D12PipelineState::SetDebugName(InName);
+}
+
 bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo& Info)
 {
-    FD3D12GraphicsPipelineStream PipelineStream;
+    D3D12_INPUT_LAYOUT_DESC            InputLayoutDesc          = {};
+    D3D12_SHADER_BYTECODE              VertexShaderCode         = {};
+    D3D12_SHADER_BYTECODE              HullShaderCode           = {};
+    D3D12_SHADER_BYTECODE              DomainShaderCode         = {};
+    D3D12_SHADER_BYTECODE              GeometryShaderCode       = {};
+    D3D12_SHADER_BYTECODE              PixelShaderCode          = {};
+    D3D12_RT_FORMAT_ARRAY              RenderTargetInfo         = {};
+    DXGI_FORMAT                        DepthBufferFormat        = {};
+    D3D12_RASTERIZER_DESC              RasterizerDesc           = {};
+    D3D12_DEPTH_STENCIL_DESC           DepthStencilDesc         = {};
+    D3D12_BLEND_DESC                   BlendStateDesc           = {};
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE      PrimitiveTopologyType    = {};
+    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IndexBufferStripCutValue = {};
+    DXGI_SAMPLE_DESC                   SampleDesc               = {};
+    D3D12_STREAM_OUTPUT_DESC           StreamOutputDesc         = {};
+    D3D12_PIPELINE_STATE_FLAGS         PipelineStateFlags       = D3D12_PIPELINE_STATE_FLAG_NONE;
 
     // InputLayout
     FD3D12InputLayout* D3D12InputLayout = static_cast<FD3D12InputLayout*>(Info.InputLayout);
     if (D3D12InputLayout)
     {
-        PipelineStream.InputLayout = D3D12InputLayout->GetDesc();
-    }
-    else
-    {
-        PipelineStream.InputLayout.pInputElementDescs = nullptr;
-        PipelineStream.InputLayout.NumElements        = 0;
+        InputLayoutDesc = D3D12InputLayout->GetDesc();
     }
 
     // ShaderStages
@@ -271,7 +286,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
                 ShadersWithRootSignature.Emplace(D3D12VertexShader);
             }
 
-            D3D12_SHADER_BYTECODE& VertexShaderCode = PipelineStream.VertexShaderCode;
             VertexShaderCode = D3D12VertexShader->GetByteCode().GetD3D12Bytecode();
             BaseShaders.Emplace(D3D12VertexShader);
 
@@ -286,7 +300,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // HullShader
     {
-        D3D12_SHADER_BYTECODE& HullShaderCode = PipelineStream.HullShaderCode;
         if (FD3D12HullShader* D3D12HullShader = static_cast<FD3D12HullShader*>(Info.HullShader))
         {
             if (D3D12HullShader->HasRootSignature())
@@ -308,7 +321,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // DomainShader
     {
-        D3D12_SHADER_BYTECODE& DomainShaderCode = PipelineStream.DomainShaderCode;
         if (FD3D12DomainShader* D3D12DomainShader = static_cast<FD3D12DomainShader*>(Info.DomainShader))
         {
             if (D3D12DomainShader->HasRootSignature())
@@ -330,7 +342,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // GeometryShader
     {
-        D3D12_SHADER_BYTECODE& GeometryShaderCode = PipelineStream.GeometryShaderCode;
         if (FD3D12GeometryShader* D3D12GeometryShader = static_cast<FD3D12GeometryShader*>(Info.GeometryShader))
         {
             if (D3D12GeometryShader->HasRootSignature())
@@ -352,7 +363,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // PixelShader
     {
-        D3D12_SHADER_BYTECODE& PixelShaderCode = PipelineStream.PixelShaderCode;
         if (FD3D12PixelShader* D3D12PixelShader = static_cast<FD3D12PixelShader*>(Info.PixelShader))
         {
             if (D3D12PixelShader->HasRootSignature())
@@ -374,7 +384,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // RenderTarget
     {
-        D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
         RenderTargetInfo.NumRenderTargets = Info.RasterizerOutputFormats.NumRenderTargets;
 
         for (uint32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
@@ -383,14 +392,13 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
         }
 
         // DepthStencil
-        PipelineStream.DepthBufferFormat = ConvertFormat(Info.RasterizerOutputFormats.DepthStencilFormat);
+        DepthBufferFormat = ConvertFormat(Info.RasterizerOutputFormats.DepthStencilFormat);
     }
 
     // RasterizerState
     FD3D12RasterizerState* D3D12RasterizerState = static_cast<FD3D12RasterizerState*>(Info.RasterizerState);
     if (D3D12RasterizerState)
     {
-        D3D12_RASTERIZER_DESC& RasterizerDesc = PipelineStream.RasterizerDesc;
         RasterizerDesc = D3D12RasterizerState->GetD3D12Desc();
     }
     else
@@ -403,7 +411,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     FD3D12DepthStencilState* D3D12DepthStencilState = static_cast<FD3D12DepthStencilState*>(Info.DepthStencilState);
     if (D3D12DepthStencilState)
     {
-        D3D12_DEPTH_STENCIL_DESC& DepthStencilDesc = PipelineStream.DepthStencilDesc;
         DepthStencilDesc = D3D12DepthStencilState->GetD3D12Desc();
     }
     else
@@ -416,7 +423,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     FD3D12BlendState* D3D12BlendState = static_cast<FD3D12BlendState*>(Info.BlendState);
     if (D3D12BlendState)
     {
-        D3D12_BLEND_DESC& BlendStateDesc = PipelineStream.BlendStateDesc;
         BlendStateDesc = D3D12BlendState->GetD3D12Desc();
     }
     else
@@ -427,22 +433,21 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // Topology
     {
-        PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(Info.PrimitiveTopology);
-        PrimitiveTopology = ConvertPrimitiveTopology(Info.PrimitiveTopology);
+        PrimitiveTopologyType = ConvertPrimitiveTopologyType(Info.PrimitiveTopology);
+        PrimitiveTopology     = ConvertPrimitiveTopology(Info.PrimitiveTopology);
     }
 
     // IndexBufferStripCutValue
     {
-        PipelineStream.IndexBufferStripCutValue = Info.bPrimitiveRestartEnable ? 
+        IndexBufferStripCutValue = Info.bPrimitiveRestartEnable ? 
             D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_0xFFFFFFFF : 
             D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
     }
 
     // MSAA
     {
-        DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
-        SamplerDesc.Count   = Info.MultiSampleState.SampleCount;
-        SamplerDesc.Quality = Info.MultiSampleState.SampleQuality;
+        SampleDesc.Count   = Info.MultiSampleState.SampleCount;
+        SampleDesc.Quality = Info.MultiSampleState.SampleQuality;
     }
 
     // RootSignature
@@ -468,6 +473,17 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
             }
 
             RootSignatureLayout.SetNumPushConstants(NumPushConstants);
+
+            if (Info.StreamOutputDeclaration)
+            {
+                RootSignatureLayout.SetAllowStreamOutput(true);
+            }
+
+            for (const FRHIStaticSamplerInfo& StaticSampler : Info.StaticSamplers)
+            {
+                RootSignatureLayout.AddStaticSampler(StaticSampler);
+            }
+
             RootSignatureLayout.ComputeRootCBVs();
 
             FD3D12RootSignatureManager& RootSignatureManager = GetDevice()->GetRootSignatureManager();
@@ -504,7 +520,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
         }
 
         CHECK(RootSignature != nullptr);
-        PipelineStream.RootSignature = RootSignature->GetD3D12RootSignature();
 
         for (FD3D12Shader* Shader : BaseShaders)
         {
@@ -535,25 +550,51 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
     // View Instancing
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
-    PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
-
     if (Info.ViewInstancingState.bEnableViewInstancing)
     {
         ViewInstanceDesc.ViewInstanceCount = Math::Min<uint32>(Info.ViewInstancingState.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
-            // NOTE: This does not work on NVIDIA for some reason, only way to work around this is by using the SV_RenderTargetArrayIndex
             ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Info.ViewInstancingState.StartRenderTargetArrayIndex;
             ViewInstanceDesc.ViewInstanceLocations[Index].ViewportArrayIndex     = 0;
         }
-
-        PipelineStream.ViewInstancingDesc.pViewInstanceLocations = ViewInstanceDesc.ViewInstanceLocations;
-        PipelineStream.ViewInstancingDesc.ViewInstanceCount      = ViewInstanceDesc.ViewInstanceCount;
     }
-    else
+
+    // Stream Output
+    TArray<UINT>                       StreamOutputStrides;
+    TArray<D3D12_SO_DECLARATION_ENTRY> StreamOutputEntries;
+
+    if (Info.StreamOutputDeclaration)
     {
-        PipelineStream.ViewInstancingDesc.pViewInstanceLocations = nullptr;
-        PipelineStream.ViewInstancingDesc.ViewInstanceCount      = 0;
+        const FRHIStreamOutputDeclaration& StreamOutputDecl = *Info.StreamOutputDeclaration;
+        for (const FRHIStreamOutputEntry& Entry : StreamOutputDecl.Entries)
+        {
+            D3D12_SO_DECLARATION_ENTRY D3DEntry = {};
+            D3DEntry.SemanticName   = Entry.SemanticName;
+            D3DEntry.SemanticIndex  = Entry.SemanticIndex;
+            D3DEntry.StartComponent = Entry.StartComponent;
+            D3DEntry.ComponentCount = Entry.ComponentCount;
+            D3DEntry.OutputSlot     = Entry.OutputSlot;
+            D3DEntry.Stream         = 0;
+
+            StreamOutputEntries.Emplace(D3DEntry);
+        }
+        for (uint32 Stride : StreamOutputDecl.BufferStrides)
+        {
+            StreamOutputStrides.Emplace(Stride);
+        }
+
+        StreamOutputDesc.pSODeclaration    = StreamOutputEntries.Data();
+        StreamOutputDesc.NumEntries        = StreamOutputEntries.Size();
+        StreamOutputDesc.pBufferStrides    = StreamOutputStrides.Data();
+        StreamOutputDesc.NumStrides        = StreamOutputStrides.Size();
+        StreamOutputDesc.RasterizedStream  = StreamOutputDecl.RasterizedStream;
+    }
+
+    // Dynamic Depth Bias
+    if (GD3D12SupportDynamicDepthBias)
+    {
+        PipelineStateFlags = D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS;
     }
 
     // Build pipeline key for caching (shared by both paths)
@@ -561,16 +602,16 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     FMemory::Memzero(&PipelineKey, sizeof(FD3D12GraphicsPipelineKey));
 
     PipelineKey.RootSignatureHash        = RootSignature->GetHash();
-    PipelineKey.PrimitiveTopologyType    = PipelineStream.PrimitiveTopologyType;
-    PipelineKey.IndexBufferStripCutValue = PipelineStream.IndexBufferStripCutValue;
-    PipelineKey.DepthBufferFormat        = PipelineStream.DepthBufferFormat;
-    PipelineKey.RenderTargetInfo         = PipelineStream.RenderTargetInfo;
+    PipelineKey.PrimitiveTopologyType    = PrimitiveTopologyType;
+    PipelineKey.IndexBufferStripCutValue = IndexBufferStripCutValue;
+    PipelineKey.DepthBufferFormat        = DepthBufferFormat;
+    PipelineKey.RenderTargetInfo         = RenderTargetInfo;
     PipelineKey.ViewInstancingHash       = ViewInstanceDesc.GenerateHash();
     PipelineKey.InputLayoutHash          = D3D12InputLayout ? D3D12InputLayout->GetHash() : 0;
     PipelineKey.RasterizerHash           = D3D12RasterizerState->GetHash();
     PipelineKey.DepthStencilHash         = D3D12DepthStencilState->GetHash();
     PipelineKey.BlendStateHash           = D3D12BlendState->GetHash();
-    PipelineKey.SampleDesc               = PipelineStream.SampleDesc;
+    PipelineKey.SampleDesc               = SampleDesc;
 
     PipelineKey.VSHash = VertexShader->GetHash();
     PipelineKey.HSHash = HullShader     ? HullShader->GetHash()     : FD3D12ShaderHash();
@@ -584,8 +625,35 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     FPlatformString::Snprintf(PipelineHashBuffer, BufferLength, L"GraphicsPSO[%llu]", PipelineHash);
 
     // Create pipeline-state via stream path (ID3D12Device2) or legacy path (ID3D12Device)
+#if D3D12_ENABLE_PIPELINE_STATE_STREAM
     if (GD3D12SupportPipelineStream)
     {
+        FD3D12GraphicsPipelineStream PipelineStream;
+        PipelineStream.RootSignature            = RootSignature->GetD3D12RootSignature();
+        PipelineStream.InputLayout              = InputLayoutDesc;
+        PipelineStream.PrimitiveTopologyType    = PrimitiveTopologyType;
+        PipelineStream.VertexShaderCode         = VertexShaderCode;
+        PipelineStream.HullShaderCode           = HullShaderCode;
+        PipelineStream.DomainShaderCode         = DomainShaderCode;
+        PipelineStream.GeometryShaderCode       = GeometryShaderCode;
+        PipelineStream.PixelShaderCode          = PixelShaderCode;
+        PipelineStream.RenderTargetInfo         = RenderTargetInfo;
+        PipelineStream.DepthBufferFormat        = DepthBufferFormat;
+        PipelineStream.RasterizerDesc           = RasterizerDesc;
+        PipelineStream.DepthStencilDesc         = DepthStencilDesc;
+        PipelineStream.BlendStateDesc           = BlendStateDesc;
+        PipelineStream.SampleDesc               = SampleDesc;
+        PipelineStream.IndexBufferStripCutValue = IndexBufferStripCutValue;
+        PipelineStream.StreamOutputDesc         = StreamOutputDesc;
+        PipelineStream.PipelineStateFlags       = PipelineStateFlags;
+        PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
+
+        if (Info.ViewInstancingState.bEnableViewInstancing)
+        {
+            PipelineStream.ViewInstancingDesc.pViewInstanceLocations = ViewInstanceDesc.ViewInstanceLocations;
+            PipelineStream.ViewInstancingDesc.ViewInstanceCount      = ViewInstanceDesc.ViewInstanceCount;
+        }
+
         D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
         FMemory::Memzero(&PipelineStreamDesc);
 
@@ -601,7 +669,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
             }
         }
 
-#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+    #if D3D12_USE_ID3D12DEVICE_2
         TComPtr<ID3D12PipelineState> NewPipelineState;
         HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&NewPipelineState));
         if (FAILED(Result))
@@ -612,12 +680,13 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
 
         PipelineState = NewPipelineState;
         return true;
-#else
+    #else
         D3D12_ERROR_CRITICAL("[D3D12GraphicsPipelineState]: ID3D12Device2 is required for pipeline stream creation");
         return false;
-#endif
+    #endif
     }
     else
+#endif
     {
         if (Info.ViewInstancingState.bEnableViewInstancing)
         {
@@ -628,27 +697,30 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
         FMemory::Memzero(&LegacyDesc);
 
         LegacyDesc.pRootSignature        = RootSignature->GetD3D12RootSignature();
-        LegacyDesc.VS                    = PipelineStream.VertexShaderCode;
-        LegacyDesc.HS                    = PipelineStream.HullShaderCode;
-        LegacyDesc.DS                    = PipelineStream.DomainShaderCode;
-        LegacyDesc.GS                    = PipelineStream.GeometryShaderCode;
-        LegacyDesc.PS                    = PipelineStream.PixelShaderCode;
-        LegacyDesc.BlendState            = PipelineStream.BlendStateDesc;
+        LegacyDesc.VS                    = VertexShaderCode;
+        LegacyDesc.HS                    = HullShaderCode;
+        LegacyDesc.DS                    = DomainShaderCode;
+        LegacyDesc.GS                    = GeometryShaderCode;
+        LegacyDesc.PS                    = PixelShaderCode;
+        LegacyDesc.BlendState            = BlendStateDesc;
         LegacyDesc.SampleMask            = UINT_MAX;
-        LegacyDesc.RasterizerState       = PipelineStream.RasterizerDesc;
-        LegacyDesc.DepthStencilState     = PipelineStream.DepthStencilDesc;
-        LegacyDesc.InputLayout           = PipelineStream.InputLayout;
-        LegacyDesc.IBStripCutValue       = PipelineStream.IndexBufferStripCutValue;
-        LegacyDesc.PrimitiveTopologyType = PipelineStream.PrimitiveTopologyType;
-        LegacyDesc.DSVFormat             = PipelineStream.DepthBufferFormat;
-        LegacyDesc.SampleDesc            = PipelineStream.SampleDesc;
+        LegacyDesc.RasterizerState       = RasterizerDesc;
+        LegacyDesc.DepthStencilState     = DepthStencilDesc;
+        LegacyDesc.InputLayout           = InputLayoutDesc;
+        LegacyDesc.IBStripCutValue       = IndexBufferStripCutValue;
+        LegacyDesc.PrimitiveTopologyType = PrimitiveTopologyType;
+        LegacyDesc.DSVFormat             = DepthBufferFormat;
+        LegacyDesc.SampleDesc            = SampleDesc;
         LegacyDesc.NodeMask              = GetDevice()->GetNodeMask();
 
-        LegacyDesc.NumRenderTargets = PipelineStream.RenderTargetInfo.NumRenderTargets;
+        LegacyDesc.NumRenderTargets = RenderTargetInfo.NumRenderTargets;
         for (uint32 Index = 0; Index < LegacyDesc.NumRenderTargets; Index++)
         {
-            LegacyDesc.RTVFormats[Index] = PipelineStream.RenderTargetInfo.RTFormats[Index];
+            LegacyDesc.RTVFormats[Index] = RenderTargetInfo.RTFormats[Index];
         }
+
+        LegacyDesc.StreamOutput = StreamOutputDesc;
+        LegacyDesc.Flags        = PipelineStateFlags;
 
         if (GD3D12SupportPipelineCache)
         {
@@ -681,10 +753,14 @@ FD3D12ComputePipelineState::~FD3D12ComputePipelineState()
 {
 }
 
-bool FD3D12ComputePipelineState::Initialize()
+void FD3D12ComputePipelineState::SetDebugName(const FString& InName)
 {
-    FD3D12ComputePipelineStream PipelineStream;
-    PipelineStream.ComputeShader = Shader->GetByteCode().GetD3D12Bytecode();
+    FD3D12PipelineState::SetDebugName(InName);
+}
+
+bool FD3D12ComputePipelineState::Initialize(const FRHIComputePipelineStateInfo& Info)
+{
+    D3D12_SHADER_BYTECODE ComputeShaderCode = Shader->GetByteCode().GetD3D12Bytecode();
 
     if (!Shader->HasRootSignature())
     {
@@ -696,6 +772,11 @@ bool FD3D12ComputePipelineState::Initialize()
         for (const FD3D12ShaderBindingInfo::FResourceBinding& Binding : BindingInfo.ResourceBindings)
         {
             Layout.AddRegister(ShaderVisibility_All, static_cast<EResourceType>(Binding.BindingType), Binding.OriginalBindingIndex);
+        }
+
+        for (const FRHIStaticSamplerInfo& StaticSampler : Info.StaticSamplers)
+        {
+            Layout.AddStaticSampler(StaticSampler);
         }
 
         Layout.SetNumPushConstants(static_cast<uint8>(BindingInfo.NumPushConstants));
@@ -732,7 +813,6 @@ bool FD3D12ComputePipelineState::Initialize()
     }
 
     CHECK(RootSignature != nullptr);
-    PipelineStream.RootSignature = RootSignature->GetD3D12RootSignature();
 
     {
         FD3D12Shader* ComputeShaders[] = { Shader.Get() };
@@ -752,8 +832,13 @@ bool FD3D12ComputePipelineState::Initialize()
     FPlatformString::Snprintf(PipelineHashBuffer, BufferLength, L"ComputePSO[%llu]", PipelineHash);
 
     // Create PipelineState via stream path (ID3D12Device2) or legacy path (ID3D12Device)
+#if D3D12_ENABLE_PIPELINE_STATE_STREAM
     if (GD3D12SupportPipelineStream)
     {
+        FD3D12ComputePipelineStream PipelineStream;
+        PipelineStream.RootSignature = RootSignature->GetD3D12RootSignature();
+        PipelineStream.ComputeShader = ComputeShaderCode;
+
         D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
         FMemory::Memzero(&PipelineStreamDesc);
 
@@ -769,7 +854,7 @@ bool FD3D12ComputePipelineState::Initialize()
             }
         }
 
-#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+    #if D3D12_USE_ID3D12DEVICE_2
         HRESULT Result = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStreamDesc, IID_PPV_ARGS(&PipelineState));
         if (FAILED(Result))
         {
@@ -778,18 +863,19 @@ bool FD3D12ComputePipelineState::Initialize()
         }
 
         return true;
-#else
+    #else
         D3D12_ERROR_CRITICAL("[D3D12ComputePipelineState]: ID3D12Device2 is required for pipeline stream creation");
         return false;
-#endif
+    #endif
     }
     else
+#endif
     {
         D3D12_COMPUTE_PIPELINE_STATE_DESC LegacyDesc;
         FMemory::Memzero(&LegacyDesc);
 
         LegacyDesc.pRootSignature = RootSignature->GetD3D12RootSignature();
-        LegacyDesc.CS             = PipelineStream.ComputeShader;
+        LegacyDesc.CS             = ComputeShaderCode;
         LegacyDesc.NodeMask       = GetDevice()->GetNodeMask();
 
         if (GD3D12SupportPipelineCache)
@@ -991,6 +1077,12 @@ FD3D12RayTracingPipelineState::~FD3D12RayTracingPipelineState()
 {
 }
 
+void FD3D12RayTracingPipelineState::SetDebugName(const FString& InName)
+{
+    FStringWide WideName = CharToWide(InName);
+    StateObject->SetName(*WideName);
+}
+
 bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
     FD3D12RayTracingPipelineStateStream PipelineStream;
@@ -1140,6 +1232,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
         {
             GlobalLayout.AddRegister(ShaderVisibility_All, static_cast<EResourceType>(Binding.BindingType), Binding.OriginalBindingIndex);
         }
+
         MaxPushConstants = Math::Max<uint8>(MaxPushConstants, static_cast<uint8>(BindingInfo.NumPushConstants));
     }
 
@@ -1162,7 +1255,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     RayTracingPipeline.pSubobjects   = PipelineStream.SubObjects.Data();
     RayTracingPipeline.NumSubobjects = PipelineStream.SubObjects.Size();
 
-#ifdef __ID3D12Device5_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_5
     TComPtr<ID3D12StateObject> TempStateObject;
     HRESULT Result = GetDevice()->GetD3D12Device5()->CreateStateObject(&RayTracingPipeline, IID_PPV_ARGS(&TempStateObject));
     if (FAILED(Result))
@@ -1237,7 +1330,7 @@ bool FD3D12PipelineStateManager::Initialize()
     // In case we allocated data, let's free it
     FreePipelineData();
 
-#ifdef __ID3D12Device1_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_1
     ID3D12Device1* Device1 = GetDevice()->GetD3D12Device1();
     if (!Device1)
     {
@@ -1275,7 +1368,7 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
     HRESULT hResult = PipelineLibrary->LoadPipeline(PipelineHash, &PipelineStream, IID_PPV_ARGS(&OutPipelineState));
     if (hResult == E_INVALIDARG)
     {
-#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+    #if D3D12_USE_ID3D12DEVICE_2
         hResult = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStream, IID_PPV_ARGS(&OutPipelineState));
         if (FAILED(hResult))
         {
@@ -1290,10 +1383,10 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
         }
 
         bPipelineLibraryDirty = true;
-#else
+    #else
         D3D12_ERROR_CRITICAL("ID3D12Device2 is required for pipeline stream creation");
         return false;
-#endif
+    #endif
     }
 
     return true;
@@ -1311,7 +1404,7 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
     HRESULT hResult = PipelineLibrary->LoadPipeline(PipelineHash, &PipelineStream, IID_PPV_ARGS(&OutPipelineState));
     if (hResult == E_INVALIDARG)
     {
-#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+    #if D3D12_USE_ID3D12DEVICE_2
         hResult = GetDevice()->GetD3D12Device2()->CreatePipelineState(&PipelineStream, IID_PPV_ARGS(&OutPipelineState));
         if (FAILED(hResult))
         {
@@ -1326,10 +1419,10 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
         }
 
         bPipelineLibraryDirty = true;
-#else
+    #else
         D3D12_ERROR_CRITICAL("ID3D12Device2 is required for pipeline stream creation");
         return false;
-#endif
+    #endif
     }
 
     return true;
@@ -1577,7 +1670,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
         return false;
     }
     
-#ifdef __ID3D12Device1_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_1
     ID3D12Device1* Device1 = GetDevice()->GetD3D12Device1();
     if (!Device1)
     {

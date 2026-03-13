@@ -694,6 +694,21 @@ void FD3D12CommandContext::SetBlendFactor(const FVector4& Color)
     ContextState.SetBlendFactor(Color.XYZW);
 }
 
+void FD3D12CommandContext::SetStencilRef(uint32 StencilRef)
+{
+    ContextState.SetStencilRef(StencilRef);
+}
+
+void FD3D12CommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
+{
+    ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
+}
+
+void FD3D12CommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
+{
+    ContextState.SetStreamOutputTargets(Buffers, Offsets);
+}
+
 void FD3D12CommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
     for (int32 Index = 0; Index < InVertexBuffers.Size(); ++Index)
@@ -1837,11 +1852,11 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
     RayDispatchDesc.Height = Height;
     RayDispatchDesc.Depth  = Depth;
 
-#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12COMMANDLIST_4
     CommandList->GetGraphicsCommandList4()->SetPipelineState1(D3D12PipelineState->GetD3D12StateObject());
     CommandList->GetGraphicsCommandList4()->DispatchRays(&RayDispatchDesc);
 #else
-    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: DispatchRays requires ID3D12GraphicsCommandList4 (Windows SDK 10.0.17763+)");
+    D3D12_ERROR_CRITICAL("[FD3D12CommandContext]: DispatchRays requires ID3D12GraphicsCommandList4");
 #endif
 }
 

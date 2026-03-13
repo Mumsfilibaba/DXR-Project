@@ -42,8 +42,18 @@ bool FTextureCompressor::Initialize()
         return false;
     }
 
+    // Static sampler: Linear Wrap at s0 for block compression
+    FRHIStaticSamplerInfo BC6HStaticSampler;
+    BC6HStaticSampler.AddressU = ESamplerMode::Wrap;
+    BC6HStaticSampler.AddressV = ESamplerMode::Wrap;
+    BC6HStaticSampler.AddressW = ESamplerMode::Wrap;
+    BC6HStaticSampler.Filter   = ESamplerFilter::MinMagMipLinear;
+    BC6HStaticSampler.MinLOD   = 0.0f;
+    BC6HStaticSampler.MaxLOD   = TNumericLimits<float>::Max();
+
     FRHIComputePipelineStateInfo PSOInfo;
-    PSOInfo.Shader = BC6HCompressionShader.Get();
+    PSOInfo.Shader         = BC6HCompressionShader.Get();
+    PSOInfo.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&BC6HStaticSampler, 1);
 
     BC6HCompressionPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
     if (!BC6HCompressionPSO)
@@ -72,7 +82,8 @@ bool FTextureCompressor::Initialize()
     }
 
     FRHIComputePipelineStateInfo BlockCompressionBC6H_PSOInfo;
-    BlockCompressionBC6H_PSOInfo.Shader = BC6HCompressionCubeShader.Get();
+    BlockCompressionBC6H_PSOInfo.Shader         = BC6HCompressionCubeShader.Get();
+    BlockCompressionBC6H_PSOInfo.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&BC6HStaticSampler, 1);
 
     BC6HCompressionCubePSO = FRHI::Get()->CreateComputePipelineState(BlockCompressionBC6H_PSOInfo);
     if (!BC6HCompressionCubePSO)
@@ -162,7 +173,6 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
 
     CommandList.SetShaderResourceView(BC6HCompressionShader.Get(), SrcTexture->GetShaderResourceView(), 0);
     CommandList.SetUnorderedAccessView(BC6HCompressionShader.Get(), CompressedTex->GetUnorderedAccessView(), 0);
-    CommandList.SetSamplerState(BC6HCompressionShader.Get(), PointSampler.Get(), 0);
 
     const FVector2 TexSize = FVector2(static_cast<float>(SourceInfo.Extent.X), static_cast<float>(SourceInfo.Extent.Y));
 
@@ -319,7 +329,6 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
 
     // Compress the texture
     CommandList.SetComputePipelineState(BC6HCompressionCubePSO.Get());
-    CommandList.SetSamplerState(BC6HCompressionCubeShader.Get(), PointSampler.Get(), 0);
 
     CommandList.TransitionTextureState(SrcCubeMap.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
     

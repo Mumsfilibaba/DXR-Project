@@ -63,6 +63,9 @@ RHI_API uint32 RHIDeviceFeatureSupport::StructuredBufferMinStride  = 4;
 RHI_API uint32 RHIDeviceFeatureSupport::StructuredBufferMaxStride  = 2048;
 RHI_API uint32 RHIDeviceFeatureSupport::RawBufferRequiredAlignment = 4;
 
+RHI_API bool RHIDeviceFeatureSupport::bSupportsDynamicDepthBias = false;
+RHI_API bool RHIDeviceFeatureSupport::bSupportsStreamOutput     = false;
+
 // -------------------------------------------------------------------------------------------
 // Statistics
 // -------------------------------------------------------------------------------------------

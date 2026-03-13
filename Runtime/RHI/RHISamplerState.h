@@ -1,6 +1,8 @@
 #pragma once
 #include "RHI/RHIResource.h"
 
+enum class EShaderStage : uint8;
+
 enum class ESamplerMode : uint8
 {
     Unknown    = 0,
@@ -125,6 +127,62 @@ struct FRHISamplerStateInfo
     float           MinLOD         = TNumericLimits<float>::Lowest();
     float           MaxLOD         = TNumericLimits<float>::Max();
     FFloatColor     BorderColor    = { };
+};
+
+struct FRHIStaticSamplerInfo
+{
+    FRHISamplerStateInfo GetSamplerStateInfo() const
+    {
+        FRHISamplerStateInfo Info;
+        Info.AddressU       = AddressU;
+        Info.AddressV       = AddressV;
+        Info.AddressW       = AddressW;
+        Info.Filter         = Filter;
+        Info.ComparisonFunc = ComparisonFunc;
+        Info.MaxAnisotropy  = MaxAnisotropy;
+        Info.MipLODBias     = MipLODBias;
+        Info.MinLOD         = MinLOD;
+        Info.MaxLOD         = MaxLOD;
+        Info.BorderColor    = BorderColor;
+        return Info;
+    }
+
+    NODISCARD constexpr bool IsComparisonSampler() const noexcept
+    {
+        return Filter >= ESamplerFilter::Comparison_MinMagMipPoint && Filter <= ESamplerFilter::Comparison_Anisotropic;
+    }
+
+    bool operator==(const FRHIStaticSamplerInfo& Other) const noexcept = default;
+
+    NODISCARD friend uint64 GetHashForType(const FRHIStaticSamplerInfo& Value)
+    {
+        uint64 Hash = UnderlyingTypeValue(Value.AddressU);
+        HashCombine(Hash, UnderlyingTypeValue(Value.AddressV));
+        HashCombine(Hash, UnderlyingTypeValue(Value.AddressW));
+        HashCombine(Hash, UnderlyingTypeValue(Value.Filter));
+        HashCombine(Hash, UnderlyingTypeValue(Value.ComparisonFunc));
+        HashCombine(Hash, Value.MaxAnisotropy);
+        HashCombine(Hash, Value.MipLODBias);
+        HashCombine(Hash, Value.MinLOD);
+        HashCombine(Hash, Value.MaxLOD);
+        HashCombine(Hash, GetHashForType(Value.BorderColor));
+        HashCombine(Hash, UnderlyingTypeValue(Value.ShaderVisibility));
+        HashCombine(Hash, Value.ShaderRegister);
+        return Hash;
+    }
+
+    ESamplerMode    AddressU         = ESamplerMode::Clamp;
+    ESamplerMode    AddressV         = ESamplerMode::Clamp;
+    ESamplerMode    AddressW         = ESamplerMode::Clamp;
+    ESamplerFilter  Filter           = ESamplerFilter::MinMagMipLinear;
+    EComparisonFunc ComparisonFunc   = EComparisonFunc::Unknown;
+    uint8           MaxAnisotropy    = 1;
+    float           MipLODBias       = 0.0f;
+    float           MinLOD           = TNumericLimits<float>::Lowest();
+    float           MaxLOD           = TNumericLimits<float>::Max();
+    FFloatColor     BorderColor      = { };
+    EShaderStage    ShaderVisibility = EShaderStage{};
+    uint16          ShaderRegister   = 0;
 };
 
 class FRHISamplerState : public FRHIResource

@@ -269,6 +269,40 @@ DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
     FVector4 Color;
 };
 
+DECLARE_RHICOMMAND(FRHICommandSetStencilRef)
+{
+    FORCEINLINE FRHICommandSetStencilRef(uint32 InStencilRef)
+        : StencilRef(InStencilRef)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetStencilRef(StencilRef);
+    }
+
+    uint32 StencilRef;
+};
+
+DECLARE_RHICOMMAND(FRHICommandSetDepthBias)
+{
+    FORCEINLINE FRHICommandSetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias)
+        : DepthBias(InDepthBias)
+        , DepthBiasClamp(InDepthBiasClamp)
+        , SlopeScaledDepthBias(InSlopeScaledDepthBias)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
+    }
+
+    float DepthBias;
+    float DepthBiasClamp;
+    float SlopeScaledDepthBias;
+};
+
 DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
 {
     FORCEINLINE FRHICommandSetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 InStartSlot)
@@ -312,6 +346,23 @@ DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
 
     FRHIBuffer*  IndexBuffer;
     EIndexFormat IndexFormat;
+};
+
+DECLARE_RHICOMMAND(FRHICommandSetStreamOutputTargets)
+{
+    FORCEINLINE FRHICommandSetStreamOutputTargets(const TArrayView<FRHIBuffer* const> InBuffers, const uint64* InOffsets)
+        : Buffers(InBuffers)
+        , Offsets(InOffsets)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.SetStreamOutputTargets(Buffers, Offsets);
+    }
+
+    TArrayView<FRHIBuffer* const> Buffers;
+    const uint64*                 Offsets;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetGraphicsPipelineState)

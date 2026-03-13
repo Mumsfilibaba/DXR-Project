@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/ShaderCompilerInclude.h"
 #include "D3D12RHI/D3D12Constants.h"
-#if WIN10_BUILD_17134
+#if DXGI_1_6
     #include <dxgi1_6.h>
 #else
     #include <dxgi1_4.h>

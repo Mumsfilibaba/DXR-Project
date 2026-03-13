@@ -340,6 +340,9 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
         }
     }
 
+    RHIDeviceFeatureSupport::bSupportsDynamicDepthBias = GD3D12SupportDynamicDepthBias;
+    RHIDeviceFeatureSupport::bSupportsStreamOutput     = true;
+
     return true;
 }
 
@@ -895,7 +898,7 @@ FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGrap
 FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
 {
     FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInfo.Shader));
-    if (!NewPipelineState->Initialize())
+    if (!NewPipelineState->Initialize(InInfo))
     {
         return nullptr;
     }

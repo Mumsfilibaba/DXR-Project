@@ -12,6 +12,8 @@ enum class ETextureUsageFlags
     ShaderResourceTexture  = FLAG(4), // ShaderResourceView
     ShadingRateTexture     = FLAG(5), // Indicates that the texture is going to be used as a shading rate texture
     Presentable            = FLAG(6), // Indicates that the texture is a BackBuffer resource
+    NoDefaultSRV           = FLAG(7), // Do not create a default ShaderResourceView at texture creation time
+    NoDefaultUAV           = FLAG(8), // Do not create a default UnorderedAccessView at texture creation time
 };
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
@@ -54,9 +56,9 @@ struct IRHITextureData
 {
     virtual ~IRHITextureData() = default;
 
-    virtual int64 GetMipRowPitch(uint32 MipLevel = 0) const = 0;
+    virtual int64 GetMipRowPitch(uint32 MipLevel = 0)   const = 0;
     virtual int64 GetMipSlicePitch(uint32 MipLevel = 0) const = 0;
-    virtual void* GetMipData(uint32 MipLevel = 0) const = 0;
+    virtual void* GetMipData(uint32 MipLevel = 0)       const = 0;
 };
 
 struct FRHITextureInfo
@@ -118,34 +120,35 @@ struct FRHITextureInfo
     {
     }
 
-    NODISCARD constexpr bool IsTexture1D() const { return (Dimension == ETextureDimension::Texture1D); }
-    NODISCARD constexpr bool IsTexture1DArray() const { return (Dimension == ETextureDimension::Texture1DArray); }
-    NODISCARD constexpr bool IsTexture2D() const { return (Dimension == ETextureDimension::Texture2D); }
-    NODISCARD constexpr bool IsTexture2DArray() const { return (Dimension == ETextureDimension::Texture2DArray); }
-    NODISCARD constexpr bool IsTextureCube() const { return (Dimension == ETextureDimension::TextureCube); }
+    NODISCARD constexpr bool IsTexture1D()        const { return (Dimension == ETextureDimension::Texture1D); }
+    NODISCARD constexpr bool IsTexture1DArray()   const { return (Dimension == ETextureDimension::Texture1DArray); }
+    NODISCARD constexpr bool IsTexture2D()        const { return (Dimension == ETextureDimension::Texture2D); }
+    NODISCARD constexpr bool IsTexture2DArray()   const { return (Dimension == ETextureDimension::Texture2DArray); }
+    NODISCARD constexpr bool IsTextureCube()      const { return (Dimension == ETextureDimension::TextureCube); }
     NODISCARD constexpr bool IsTextureCubeArray() const { return (Dimension == ETextureDimension::TextureCubeArray); }
-    NODISCARD constexpr bool IsTexture3D() const { return (Dimension == ETextureDimension::Texture3D); }
+    NODISCARD constexpr bool IsTexture3D()        const { return (Dimension == ETextureDimension::Texture3D); }
 
-    NODISCARD constexpr bool IsShaderResourceTexture() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResourceTexture); }
+    NODISCARD constexpr bool IsShaderResourceTexture()  const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResourceTexture); }
     NODISCARD constexpr bool IsUnorderedAccessTexture() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::UnorderedAccessTexture); }
-    NODISCARD constexpr bool IsRenderTarget() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
-    NODISCARD constexpr bool IsDepthStencil() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
+    NODISCARD constexpr bool IsRenderTarget()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
+    NODISCARD constexpr bool IsDepthStencil()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
+    NODISCARD constexpr bool IsPresentable()            const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
+    NODISCARD constexpr bool IsShadingRateTexture()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShadingRateTexture); }
+    NODISCARD constexpr bool IsNoDefaultSRV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultSRV); }
+    NODISCARD constexpr bool IsNoDefaultUAV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultUAV); }
+    NODISCARD constexpr bool IsMultisampled()           const { return (NumSamples > 1); }
 
-    NODISCARD constexpr bool IsPresentable() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
-    NODISCARD constexpr bool IsShadingRateTexture() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShadingRateTexture); }
-    NODISCARD constexpr bool IsMultisampled() const { return (NumSamples > 1); }
-
-    NODISCARD constexpr ETextureDimension  GetDimension() const { return Dimension; }
-    NODISCARD constexpr EFormat            GetFormat() const { return Format; }
-    NODISCARD constexpr ETextureUsageFlags GetUsageFlags() const { return UsageFlags; }
+    NODISCARD constexpr ETextureDimension  GetDimension()      const { return Dimension; }
+    NODISCARD constexpr EFormat            GetFormat()         const { return Format; }
+    NODISCARD constexpr ETextureUsageFlags GetUsageFlags()     const { return UsageFlags; }
     NODISCARD constexpr uint32             GetNumArraySlices() const { return NumArraySlices; }
-    NODISCARD constexpr uint32             GetNumMipLevels() const { return NumMipLevels; }
-    NODISCARD constexpr uint32             GetNumSamples() const { return NumSamples; }
-    NODISCARD constexpr uint32             GetWidth() const { return Extent.X; }
-    NODISCARD constexpr uint32             GetHeight() const { return Extent.Y; }
-    NODISCARD constexpr uint32             GetDepth() const { return Extent.Z; }
-    NODISCARD constexpr const FIntVector3& GetExtent() const { return Extent; }
-    NODISCARD constexpr const FClearValue& GetClearValue() const { return ClearValue; }
+    NODISCARD constexpr uint32             GetNumMipLevels()   const { return NumMipLevels; }
+    NODISCARD constexpr uint32             GetNumSamples()     const { return NumSamples; }
+    NODISCARD constexpr uint32             GetWidth()          const { return Extent.X; }
+    NODISCARD constexpr uint32             GetHeight()         const { return Extent.Y; }
+    NODISCARD constexpr uint32             GetDepth()          const { return Extent.Z; }
+    NODISCARD constexpr const FIntVector3& GetExtent()         const { return Extent; }
+    NODISCARD constexpr const FClearValue& GetClearValue()     const { return ClearValue; }
 
     bool operator==(const FRHITextureInfo& Other) const noexcept = default;
 
@@ -173,10 +176,10 @@ public:
     // Returns the native handle for this resource
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
+    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const { return FRHIDescriptorHandle(); }
 
     virtual void SetDebugName(const FString&) { }
     virtual FString GetDebugName() const { return ""; }

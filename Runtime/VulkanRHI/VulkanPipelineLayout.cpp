@@ -1,5 +1,7 @@
 #include "Core/Memory/Memory.h"
+#include "RHI/RHISamplerState.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanPipelineLayout.h"
 #include "VulkanRHI/VulkanConstants.h"
 #include "VulkanRHI/VulkanShader.h"
@@ -89,6 +91,80 @@ void FVulkanPipelineLayoutInfo::PromoteUniformBuffersToDynamic()
             Binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
             SetRemappingInfo.RemappingInfo[BindingIndex].BindingType = VulkanBindingType_UniformBufferDynamic;
             RemainingBudget -= DynamicUBCostDwords;
+        }
+    }
+}
+
+static VkShaderStageFlags GetVkStageFlagsFromShaderStage(EShaderStage Stage)
+{
+    switch (Stage)
+    {
+    case EShaderStage::Vertex:   return VK_SHADER_STAGE_VERTEX_BIT;
+    case EShaderStage::Hull:     return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+    case EShaderStage::Domain:   return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+    case EShaderStage::Geometry: return VK_SHADER_STAGE_GEOMETRY_BIT;
+    case EShaderStage::Pixel:    return VK_SHADER_STAGE_FRAGMENT_BIT;
+    case EShaderStage::Compute:  return VK_SHADER_STAGE_COMPUTE_BIT;
+    default:                     return 0; // All stages
+    }
+}
+
+void FVulkanPipelineLayoutInfo::ApplyImmutableSamplers(FVulkanDevice* Device, const TArrayView<const FRHIStaticSamplerInfo>& StaticSamplers)
+{
+    if (StaticSamplers.Size() == 0)
+    {
+        return;
+    }
+
+    for (int32 SetIndex = 0; SetIndex < SetLayoutInfos.Size(); SetIndex++)
+    {
+        FVulkanDescriptorSetLayoutInfo& SetLayout = SetLayoutInfos[SetIndex];
+        if (SetLayout.ImmutableSamplers.Size() == 0 && SetLayout.Bindings.Size() > 0)
+        {
+            SetLayout.ImmutableSamplers.Resize(SetLayout.Bindings.Size());
+            FMemory::Memzero(SetLayout.ImmutableSamplers.Data(), SetLayout.ImmutableSamplers.SizeInBytes());
+        }
+    }
+
+    for (const FRHIStaticSamplerInfo& StaticSampler : StaticSamplers)
+    {
+        VkSampler Sampler = VK_NULL_HANDLE;
+        if (!Device->FindOrCreateSampler(StaticSampler, Sampler))
+        {
+            VULKAN_ERROR("Failed to create immutable sampler for register s%u", StaticSampler.ShaderRegister);
+            continue;
+        }
+
+        const VkShaderStageFlags TargetStageFlags = GetVkStageFlagsFromShaderStage(StaticSampler.ShaderVisibility);
+
+        for (int32 SetIndex = 0; SetIndex < SetLayoutInfos.Size(); SetIndex++)
+        {
+            FVulkanDescriptorSetLayoutInfo& SetLayout = SetLayoutInfos[SetIndex];
+            FVulkanDescriptorRemappingInfo& SetRemap  = SetLayoutRemappings[SetIndex];
+
+            for (int32 BindingIndex = 0; BindingIndex < SetLayout.Bindings.Size(); BindingIndex++)
+            {
+                const VkDescriptorSetLayoutBinding& Binding = SetLayout.Bindings[BindingIndex];
+                const FVulkanDescriptorRemappingInfo::FRemappingInfo& Remap = SetRemap.RemappingInfo[BindingIndex];
+
+                if (Binding.descriptorType != VK_DESCRIPTOR_TYPE_SAMPLER)
+                {
+                    continue;
+                }
+
+                if (Remap.OriginalBindingIndex != StaticSampler.ShaderRegister)
+                {
+                    continue;
+                }
+
+                if (TargetStageFlags != 0 && (Binding.stageFlags & TargetStageFlags) == 0)
+                {
+                    continue;
+                }
+
+                SetLayout.ImmutableSamplers[BindingIndex] = Sampler;
+                SetRemap.RemappingInfo[BindingIndex].BindingType = VulkanBindingType_ImmutableSampler;
+            }
         }
     }
 }
@@ -320,6 +396,8 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             case VulkanBindingType_StorageBufferReadWrite:
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
+            case VulkanBindingType_ImmutableSampler:
+                break;
             default:
                 DEBUG_BREAK();
                 break;
@@ -398,12 +476,29 @@ VkDescriptorSetLayout FVulkanPipelineLayoutManager::FindOrCreateSetLayouts(const
     {
         return *ExistingSetLayout;
     }
-    
-    // Create the DescriptorSetLayout or assign an "default" empty DescriptorSetLayout
+
+    // Build a local copy of bindings with pImmutableSamplers pointers resolved.
+    // The stored Bindings always have pImmutableSamplers=nullptr (raw pointers don't survive copy/hash);
+    // the actual VkSampler handles live in the ImmutableSamplers array.
+    const bool bHasImmutableSamplers = SetLayoutInfo.ImmutableSamplers.Size() > 0;
+    TArray<VkDescriptorSetLayoutBinding> ResolvedBindings;
+
+    if (bHasImmutableSamplers)
+    {
+        ResolvedBindings = SetLayoutInfo.Bindings;
+        for (int32 i = 0; i < ResolvedBindings.Size(); i++)
+        {
+            if (SetLayoutInfo.ImmutableSamplers[i] != VK_NULL_HANDLE)
+            {
+                ResolvedBindings[i].pImmutableSamplers = &SetLayoutInfo.ImmutableSamplers[i];
+            }
+        }
+    }
+
     VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo = {};
     DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     DescriptorSetLayoutCreateInfo.bindingCount = SetLayoutInfo.Bindings.Size();
-    DescriptorSetLayoutCreateInfo.pBindings    = SetLayoutInfo.Bindings.Data();
+    DescriptorSetLayoutCreateInfo.pBindings    = bHasImmutableSamplers ? ResolvedBindings.Data() : SetLayoutInfo.Bindings.Data();
 
     VkDescriptorSetLayout NewSetLayout = VK_NULL_HANDLE;
     VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &NewSetLayout);

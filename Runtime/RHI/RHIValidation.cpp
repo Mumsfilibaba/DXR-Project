@@ -978,6 +978,21 @@ void FRHIValidationCommandContext::SetBlendFactor(const FVector4& Color)
     RealContext->SetBlendFactor(Color);
 }
 
+void FRHIValidationCommandContext::SetStencilRef(uint32 StencilRef)
+{
+    RealContext->SetStencilRef(StencilRef);
+}
+
+void FRHIValidationCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
+{
+    if (!RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+    {
+        RHI_VALIDATION_ERROR("SetDepthBias called but dynamic depth bias is not supported on this device");
+    }
+
+    RealContext->SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
+}
+
 void FRHIValidationCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
 {
     RealContext->SetVertexBuffers(InVertexBuffers, BufferSlot);
@@ -986,6 +1001,19 @@ void FRHIValidationCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer*
 void FRHIValidationCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
     RealContext->SetIndexBuffer(IndexBuffer, IndexFormat);
+}
+
+void FRHIValidationCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
+{
+    for (FRHIBuffer* const Buffer : Buffers)
+    {
+        if (Buffer && !Buffer->GetInfo().IsStreamOutputBuffer())
+        {
+            RHI_VALIDATION_ERROR("SetStreamOutputTargets: Buffer '%s' does not have StreamOutputBuffer flag", "");
+        }
+    }
+
+    RealContext->SetStreamOutputTargets(Buffers, Offsets);
 }
 
 void FRHIValidationCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)

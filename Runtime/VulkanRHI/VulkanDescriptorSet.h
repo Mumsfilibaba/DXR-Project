@@ -123,6 +123,7 @@ public:
     FVulkanDescriptorSetBuilder()
         : DescriptorWrites(nullptr)
         , NumDescriptorWrites(0)
+        , ImmutableBindingMask(0)
         , bKeyIsDirty(true)
     {
     }
@@ -234,6 +235,12 @@ public:
         }
     }
 
+    void MarkBindingAsImmutable(int32 BindingIndex)
+    {
+        CHECK(BindingIndex < 32);
+        ImmutableBindingMask |= (1u << BindingIndex);
+    }
+
     void SetDescriptorSet(VkDescriptorSet DescriptorSet)
     {
         for (int32 Index = 0; Index < NumDescriptorWrites; Index++)
@@ -244,9 +251,31 @@ public:
     
     void UpdateDescriptorSet(VkDevice Device)
     {
-        if (DescriptorWrites)
+        if (!DescriptorWrites || NumDescriptorWrites == 0)
+        {
+            return;
+        }
+
+        if (ImmutableBindingMask == 0)
         {
             vkUpdateDescriptorSets(Device, NumDescriptorWrites, DescriptorWrites, 0, nullptr);
+        }
+        else
+        {
+            VkWriteDescriptorSet FilteredWrites[32];
+            int32 FilteredCount = 0;
+            for (int32 i = 0; i < NumDescriptorWrites; i++)
+            {
+                if (i >= 32 || (ImmutableBindingMask & (1u << i)) == 0)
+                {
+                    FilteredWrites[FilteredCount++] = DescriptorWrites[i];
+                }
+            }
+
+            if (FilteredCount > 0)
+            {
+                vkUpdateDescriptorSets(Device, FilteredCount, FilteredWrites, 0, nullptr);
+            }
         }
     }
     
@@ -329,6 +358,7 @@ private:
     FVulkanDescriptorSetKey DescriptorSetKey;
     VkWriteDescriptorSet*   DescriptorWrites;
     int32                   NumDescriptorWrites;
+    uint32                  ImmutableBindingMask;
     bool                    bKeyIsDirty;
 };
 

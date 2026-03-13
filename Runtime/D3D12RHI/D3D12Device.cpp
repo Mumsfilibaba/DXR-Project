@@ -176,6 +176,7 @@ D3D12RHI_API bool GD3D12SupportPipelineCache    = false;
 D3D12RHI_API bool GD3D12SupportPipelineStream   = false;
 D3D12RHI_API bool GD3D12SupportTightAlignment   = false;
 D3D12RHI_API bool GD3D12SupportGPUUploadHeaps   = false;
+D3D12RHI_API bool GD3D12SupportDynamicDepthBias = false;
 D3D12RHI_API bool GD3D12SupportsBindless        = false;
 D3D12RHI_API bool GD3D12SupportEnhancedBarriers = false;
 
@@ -355,7 +356,7 @@ FD3D12Adapter::FD3D12Adapter()
     , bAllowTearing(false)
     , bEnableDebugLayer(false)
     , Factory(nullptr)
-#if WIN10_BUILD_17134
+#if DXGI_1_6
     , Factory6(nullptr)
 #endif
     , Adapter(nullptr)
@@ -509,9 +510,9 @@ bool FD3D12Adapter::Initialize()
     
     const D3D_FEATURE_LEVEL TestFeatureLevels[] =
     {
-#if 0 /*&& WIN10_BUILD_20348*/
+    #if WIN10_BUILD_20348
         D3D_FEATURE_LEVEL_12_2,
-#endif
+    #endif
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
@@ -520,7 +521,7 @@ bool FD3D12Adapter::Initialize()
 
     TComPtr<IDXGIAdapter1> FinalAdapter;
 
-#if !WIN10_BUILD_17134
+#if !DXGI_1_6
     {
         SIZE_T BestVideoMem = 0;
         
@@ -666,32 +667,47 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , Adapter(InAdapter)
     , D3D12Device(nullptr)
-#if WIN10_BUILD_14393
+#if D3D12_USE_ID3D12DEVICE_1
     , D3D12Device1(nullptr)
 #endif
-#if WIN10_BUILD_15063
+#if D3D12_USE_ID3D12DEVICE_2
     , D3D12Device2(nullptr)
 #endif
-#if WIN10_BUILD_16299
+#if D3D12_USE_ID3D12DEVICE_3
     , D3D12Device3(nullptr)
 #endif
-#if WIN10_BUILD_17134
+#if D3D12_USE_ID3D12DEVICE_4
     , D3D12Device4(nullptr)
 #endif
-#if WIN10_BUILD_17763
+#if D3D12_USE_ID3D12DEVICE_5
     , D3D12Device5(nullptr)
 #endif
-#if WIN10_BUILD_18362
+#if D3D12_USE_ID3D12DEVICE_6
     , D3D12Device6(nullptr)
 #endif
-#if WIN10_BUILD_19041
+#if D3D12_USE_ID3D12DEVICE_7
     , D3D12Device7(nullptr)
 #endif
-#if WIN10_BUILD_20348
+#if D3D12_USE_ID3D12DEVICE_8
     , D3D12Device8(nullptr)
 #endif
-#if WIN11_BUILD_22000
+#if D3D12_USE_ID3D12DEVICE_9
     , D3D12Device9(nullptr)
+#endif
+#if D3D12_USE_ID3D12DEVICE_10
+    , D3D12Device10(nullptr)
+#endif
+#if D3D12_USE_ID3D12DEVICE_11
+    , D3D12Device11(nullptr)
+#endif
+#if D3D12_USE_ID3D12DEVICE_12
+    , D3D12Device12(nullptr)
+#endif
+#if D3D12_USE_ID3D12DEVICE_13
+    , D3D12Device13(nullptr)
+#endif
+#if D3D12_USE_ID3D12DEVICE_14
+    , D3D12Device14(nullptr)
 #endif
     , NodeMask(0)
     , NodeCount(0)
@@ -807,32 +823,47 @@ FD3D12Device::~FD3D12Device()
     UnregisterDebugMessageCallback();
 
     D3D12Device.Reset();
-#if WIN10_BUILD_14393
+#if D3D12_USE_ID3D12DEVICE_1
     D3D12Device1.Reset();
 #endif
-#if WIN10_BUILD_15063
+#if D3D12_USE_ID3D12DEVICE_2
     D3D12Device2.Reset();
 #endif
-#if WIN10_BUILD_16299
+#if D3D12_USE_ID3D12DEVICE_3
     D3D12Device3.Reset();
 #endif
-#if WIN10_BUILD_17134
+#if D3D12_USE_ID3D12DEVICE_4
     D3D12Device4.Reset();
 #endif
-#if WIN10_BUILD_17763
+#if D3D12_USE_ID3D12DEVICE_5
     D3D12Device5.Reset();
 #endif
-#if WIN10_BUILD_18362
+#if D3D12_USE_ID3D12DEVICE_6
     D3D12Device6.Reset();
 #endif
-#if WIN10_BUILD_19041
+#if D3D12_USE_ID3D12DEVICE_7
     D3D12Device7.Reset();
 #endif
-#if WIN10_BUILD_20348
+#if D3D12_USE_ID3D12DEVICE_8
     D3D12Device8.Reset();
 #endif
-#if WIN11_BUILD_22000
+#if D3D12_USE_ID3D12DEVICE_9
     D3D12Device9.Reset();
+#endif
+#if D3D12_USE_ID3D12DEVICE_10
+    D3D12Device10.Reset();
+#endif
+#if D3D12_USE_ID3D12DEVICE_11
+    D3D12Device11.Reset();
+#endif
+#if D3D12_USE_ID3D12DEVICE_12
+    D3D12Device12.Reset();
+#endif
+#if D3D12_USE_ID3D12DEVICE_13
+    D3D12Device13.Reset();
+#endif
+#if D3D12_USE_ID3D12DEVICE_14
+    D3D12Device14.Reset();
 #endif
 }
 
@@ -914,7 +945,7 @@ bool FD3D12Device::Initialize()
     }
 
 #if D3D12_ENABLE_PIPELINE_STATE_STREAM
-    #ifdef __ID3D12Device2_INTERFACE_DEFINED__
+    #if D3D12_USE_ID3D12DEVICE_2
         GD3D12SupportPipelineStream = (GetD3D12Device2() != nullptr);
     #else
         GD3D12SupportPipelineStream = false;
@@ -1158,7 +1189,7 @@ bool FD3D12Device::CreateDevice()
             InfoQueue->AddStorageFilterEntries(&Filter);
         }
 
-#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
+    #if D3D12_USE_DEBUG_MESSAGE_CALLBACK
         if (SUCCEEDED(D3D12Device.GetAs(&DebugInfoQueue)))
         {
             HRESULT CallbackResult = DebugInfoQueue->RegisterMessageCallback(
@@ -1177,101 +1208,101 @@ bool FD3D12Device::CreateDevice()
                 DebugInfoQueue.Reset();
             }
         }
-#endif
+    #endif
     }
 
-#ifdef __ID3D12Device1_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_1
     if (FAILED(D3D12Device.GetAs<ID3D12Device1>(&D3D12Device1)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device1");
     }
 #endif
 
-#ifdef __ID3D12Device2_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_2
     if (FAILED(D3D12Device.GetAs<ID3D12Device2>(&D3D12Device2)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device2");
     }
 #endif
 
-#ifdef __ID3D12Device3_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_3
     if (FAILED(D3D12Device.GetAs<ID3D12Device3>(&D3D12Device3)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device3");
     }
 #endif
 
-#ifdef __ID3D12Device4_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_4
     if (FAILED(D3D12Device.GetAs<ID3D12Device4>(&D3D12Device4)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device4");
     }
 #endif
 
-#ifdef __ID3D12Device5_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_5
     if (FAILED(D3D12Device.GetAs<ID3D12Device5>(&D3D12Device5)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device5");
     }
 #endif
 
-#ifdef __ID3D12Device6_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_6
     if (FAILED(D3D12Device.GetAs<ID3D12Device6>(&D3D12Device6)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device6");
     }
 #endif
 
-#ifdef __ID3D12Device7_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_7
     if (FAILED(D3D12Device.GetAs<ID3D12Device7>(&D3D12Device7)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device7");
     }
 #endif
 
-#ifdef __ID3D12Device8_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_8
     if (FAILED(D3D12Device.GetAs<ID3D12Device8>(&D3D12Device8)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device8");
     }
 #endif
 
-#ifdef __ID3D12Device9_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_9
     if (FAILED(D3D12Device.GetAs<ID3D12Device9>(&D3D12Device9)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device9");
     }
 #endif
 
-#ifdef __ID3D12Device10_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_10
     if (FAILED(D3D12Device.GetAs<ID3D12Device10>(&D3D12Device10)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device10");
     }
 #endif
 
-#ifdef __ID3D12Device11_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_11
     if (FAILED(D3D12Device.GetAs<ID3D12Device11>(&D3D12Device11)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device11");
     }
 #endif
 
-#ifdef __ID3D12Device12_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_12
     if (FAILED(D3D12Device.GetAs<ID3D12Device12>(&D3D12Device12)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device12");
     }
 #endif
 
-#ifdef __ID3D12Device13_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_13
     if (FAILED(D3D12Device.GetAs<ID3D12Device13>(&D3D12Device13)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device13");
     }
 #endif
 
-#ifdef __ID3D12Device14_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_14
     if (FAILED(D3D12Device.GetAs<ID3D12Device14>(&D3D12Device14)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device14");
@@ -1576,6 +1607,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
 
     GD3D12SupportTightAlignment            = false;
     GD3D12SupportGPUUploadHeaps            = false;
+    GD3D12SupportDynamicDepthBias          = false;
     GD3D12SupportsBindless                 = false;
     GD3D12SupportEnhancedBarriers          = false;
 
@@ -1771,6 +1803,11 @@ void FD3D12Device::QueryDeviceFeatureSupport()
         {
             GD3D12SupportGPUUploadHeaps = !!Features16.GPUUploadHeapSupported;
             D3D12_INFO("[FD3D12Device] GPU Upload Heaps Supported: %s", GD3D12SupportGPUUploadHeaps ? "true" : "false");
+
+        #if D3D12_USE_ID3D12COMMANDLIST_9
+            GD3D12SupportDynamicDepthBias = !!Features16.DynamicDepthBiasSupported;
+            D3D12_INFO("[FD3D12Device] Dynamic Depth Bias Supported: %s", GD3D12SupportDynamicDepthBias ? "true" : "false");
+        #endif
         }
         else
         {
@@ -1830,7 +1867,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
     // -------------------------------------------------------------------------------------------
 
     {
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+    #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
         D3D12_FEATURE_DATA_ROOT_SIGNATURE RootSignature = { D3D_ROOT_SIGNATURE_VERSION_1_2 };
         HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &RootSignature, sizeof(RootSignature));
         if (FAILED(hr))
@@ -1838,10 +1875,10 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             RootSignature.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
             hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &RootSignature, sizeof(RootSignature));
         }
-#else
+    #else
         D3D12_FEATURE_DATA_ROOT_SIGNATURE RootSignature = { D3D_ROOT_SIGNATURE_VERSION_1_1 };
         HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &RootSignature, sizeof(RootSignature));
-#endif
+    #endif
 
         if (SUCCEEDED(hr))
         {
@@ -1852,12 +1889,12 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             {
                 VersionString = "1.1";
             }
-#if D3D12_USE_VERSIONED_ROOT_SIGNATURES
+        #if D3D12_USE_VERSIONED_ROOT_SIGNATURES
             else if (GD3D12RootSignatureVersion == D3D_ROOT_SIGNATURE_VERSION_1_2)
             {
                 VersionString = "1.2";
             }
-#endif
+        #endif
 
             D3D12_INFO("[FD3D12Device] RootSignature Version Supported: %s", VersionString);
         }

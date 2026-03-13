@@ -207,6 +207,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         return false;
     }
 
+    if (!Info.IsNoDefaultSRV())
     {
         FRHIShaderResourceViewInfo ViewInfo;
         ViewInfo.Type               = FRHIShaderResourceViewInfo::EType::TextureSRV;
@@ -244,7 +245,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ShaderResourceView = DefaultSRV;
     }
 
-    if (Info.IsUnorderedAccessTexture())
+    if (Info.IsUnorderedAccessTexture() && !Info.IsNoDefaultUAV())
     {
         FRHIUnorderedAccessViewInfo ViewInfo;
         ViewInfo.Type                       = FRHIUnorderedAccessViewInfo::EType::TextureUAV;

@@ -125,6 +125,33 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         {
             vkCmdSetBlendConstants(CommandBuffer, BlendConstants);
         }
+
+        FORCEINLINE void SetStencilReference(VkStencilFaceFlags FaceMask, uint32 Reference)
+        {
+            vkCmdSetStencilReference(CommandBuffer, FaceMask, Reference);
+        }
+
+        FORCEINLINE void SetDepthBias(float DepthBiasConstantFactor, float DepthBiasClamp, float DepthBiasSlopeFactor)
+        {
+            vkCmdSetDepthBias(CommandBuffer, DepthBiasConstantFactor, DepthBiasClamp, DepthBiasSlopeFactor);
+        }
+
+#if VK_EXT_transform_feedback
+        FORCEINLINE void BindTransformFeedbackBuffers(uint32 FirstBinding, uint32 BindingCount, const VkBuffer* Buffers, const VkDeviceSize* Offsets, const VkDeviceSize* Sizes)
+        {
+            vkCmdBindTransformFeedbackBuffersEXT(CommandBuffer, FirstBinding, BindingCount, Buffers, Offsets, Sizes);
+        }
+
+        FORCEINLINE void BeginTransformFeedback(uint32 FirstCounterBuffer, uint32 CounterBufferCount, const VkBuffer* CounterBuffers, const VkDeviceSize* CounterBufferOffsets)
+        {
+            vkCmdBeginTransformFeedbackEXT(CommandBuffer, FirstCounterBuffer, CounterBufferCount, CounterBuffers, CounterBufferOffsets);
+        }
+
+        FORCEINLINE void EndTransformFeedback(uint32 FirstCounterBuffer, uint32 CounterBufferCount, const VkBuffer* CounterBuffers, const VkDeviceSize* CounterBufferOffsets)
+        {
+            vkCmdEndTransformFeedbackEXT(CommandBuffer, FirstCounterBuffer, CounterBufferCount, CounterBuffers, CounterBufferOffsets);
+        }
+#endif
     
         FORCEINLINE void BindPipeline(VkPipelineBindPoint PipelineBindPoint, VkPipeline Pipeline)
         {

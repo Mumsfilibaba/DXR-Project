@@ -9,6 +9,7 @@ struct FVulkanDescriptorSetLayoutInfo
 {
     FVulkanDescriptorSetLayoutInfo()
         : Bindings()
+        , ImmutableSamplers()
         , Hash(0)
     {
     }
@@ -16,12 +17,38 @@ struct FVulkanDescriptorSetLayoutInfo
     uint64 GenerateHash()
     {
         Hash = CRC32::Generate(Bindings.Data(), Bindings.SizeInBytes());
+        
+        if (ImmutableSamplers.Size() > 0)
+        {
+            HashCombine(Hash, CRC32::Generate(ImmutableSamplers.Data(), ImmutableSamplers.SizeInBytes()));
+        }
+
         return Hash;
     }
     
     bool operator==(const FVulkanDescriptorSetLayoutInfo& Other) const
     {
-        return (Bindings.Size() == Other.Bindings.Size()) ? FMemory::Memcmp(Bindings.Data(), Other.Bindings.Data(), Bindings.SizeInBytes()) == 0 : false;
+        if (Bindings.Size() != Other.Bindings.Size())
+        {
+            return false;
+        }
+        
+        if (FMemory::Memcmp(Bindings.Data(), Other.Bindings.Data(), Bindings.SizeInBytes()) != 0)
+        {
+            return false;
+        }
+        
+        if (ImmutableSamplers.Size() != Other.ImmutableSamplers.Size())
+        {
+            return false;
+        }
+        
+        if (ImmutableSamplers.Size() > 0 && FMemory::Memcmp(ImmutableSamplers.Data(), Other.ImmutableSamplers.Data(), ImmutableSamplers.SizeInBytes()) != 0)
+        {
+            return false;
+        }
+
+        return true;
     }
     
     bool operator!=(const FVulkanDescriptorSetLayoutInfo& Other) const
@@ -35,6 +62,7 @@ struct FVulkanDescriptorSetLayoutInfo
     }
     
     TArray<VkDescriptorSetLayoutBinding> Bindings;
+    TArray<VkSampler>                    ImmutableSamplers; // Parallel to Bindings; VK_NULL_HANDLE for non-immutable
     uint64                               Hash;
 };
 
@@ -61,7 +89,8 @@ struct FVulkanDescriptorRemappingInfo
 
     bool operator==(const FVulkanDescriptorRemappingInfo& Other) const
     {
-        return (RemappingInfo.Size() == Other.RemappingInfo.Size()) ? FMemory::Memcmp(RemappingInfo.Data(), Other.RemappingInfo.Data(), RemappingInfo.SizeInBytes()) == 0 : false;
+        return (RemappingInfo.Size() == Other.RemappingInfo.Size()) ? 
+            FMemory::Memcmp(RemappingInfo.Data(), Other.RemappingInfo.Data(), RemappingInfo.SizeInBytes()) == 0 : false;
     }
 
     bool operator!=(const FVulkanDescriptorRemappingInfo& Other) const
@@ -103,6 +132,10 @@ struct FVulkanPipelineLayoutInfo
 
     // Promotes VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER bindings to VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC. Must be called before GenerateHash().
     void PromoteUniformBuffersToDynamic();
+
+    // Converts RHI static sampler info into VkSampler handles and assigns them as immutable samplers
+    // on the matching descriptor set layout bindings. Must be called after all AddSetForStage calls and before GenerateHash().
+    void ApplyImmutableSamplers(FVulkanDevice* Device, const TArrayView<const struct FRHIStaticSamplerInfo>& StaticSamplers);
     
     // Update constants based on the ShaderInfo
     void UpdateConstantsForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo)
@@ -135,7 +168,9 @@ struct FVulkanPipelineLayoutInfo
     
     bool operator==(const FVulkanPipelineLayoutInfo& Other) const
     {
-        if (SetLayoutRemappings.Size() != Other.SetLayoutRemappings.Size() || SetLayoutInfos.Size() != Other.SetLayoutInfos.Size() || ConstantsInfo != Other.ConstantsInfo)
+        if (SetLayoutRemappings.Size() != Other.SetLayoutRemappings.Size() || 
+            SetLayoutInfos.Size() != Other.SetLayoutInfos.Size() || 
+            ConstantsInfo != Other.ConstantsInfo)
         {
             return false;
         }

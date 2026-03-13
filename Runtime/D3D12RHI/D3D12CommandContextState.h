@@ -29,6 +29,9 @@ public:
     void SetViewports(D3D12_VIEWPORT* Viewports, uint32 NumViewports);
     void SetScissorRects(D3D12_RECT* ScissorRects, uint32 NumScissorRects);
     void SetBlendFactor(const float BlendFactor[4]);
+    void SetStencilRef(uint32 InStencilRef);
+    void SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias);
+    void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets);
     void SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_FORMAT IndexFormat);
     void SetSRV(FD3D12ShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
@@ -125,38 +128,51 @@ private:
             , ShadingRateImage(nullptr)
             , ShadingRate(D3D12_SHADING_RATE_1X1)
             , RTCache()
-            , IBCache()
-            , VBCache()
+            , IndexBufferCache()
+            , VertexBufferCache()
         {
             FMemory::Memzero(BlendFactor, sizeof(BlendFactor));
+            StencilRef = 0;
+            
+            FMemory::Memzero(DepthBias, sizeof(DepthBias));
+            FMemory::Memzero(SOBufferViews, sizeof(SOBufferViews));
+            NumSOBuffers = 0;
+
             FMemory::Memzero(Viewports, sizeof(Viewports));
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
-        FD3D12GraphicsPipelineStateRef PipelineState;
-        float                          BlendFactor[4];
-        D3D12_VIEWPORT                 Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                         NumViewports;
-        D3D12_RECT                     ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                         NumScissorRects;
-        FD3D12Texture*                 ShadingRateImage;
-        D3D12_SHADING_RATE             ShadingRate;
-        FD3D12RenderTargetCache        RTCache;
-        FD3D12IndexBufferCache         IBCache;
-        FD3D12VertexBufferCache        VBCache;
+        FD3D12GraphicsPipelineStateRef  PipelineState;
+        float                           BlendFactor[4];
+        uint32                          StencilRef;
+        D3D12_VIEWPORT                  Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                          NumViewports;
+        D3D12_RECT                      ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                          NumScissorRects;
+        FD3D12Texture*                  ShadingRateImage;
+        D3D12_SHADING_RATE              ShadingRate;
+        float                           DepthBias[3]; // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
+        D3D12_STREAM_OUTPUT_BUFFER_VIEW SOBufferViews[4];
+        uint32                          NumSOBuffers;
+        FD3D12RenderTargetCache         RTCache;
+        FD3D12IndexBufferCache          IndexBufferCache;
+        FD3D12VertexBufferCache         VertexBufferCache;
 
-        bool bBindRenderTargets     : 1;
-        bool bBindBlendFactor       : 1;
-        bool bBindPipelineState     : 1;
-        bool bBindScissorRects      : 1;
-        bool bBindViewports         : 1;
-        bool bBindRootSignature     : 1;
-        bool bBindShadingRate       : 1;
-        bool bBindShadingRateImage  : 1;
-        bool bBindVertexBuffers     : 1;
-        bool bBindIndexBuffer       : 1;
-        bool bBindShaderConstants   : 1;
-        bool bBindPrimitiveTopology : 1;
+        bool bBindRenderTargets       : 1;
+        bool bBindBlendFactor         : 1;
+        bool bBindStencilRef          : 1;
+        bool bBindDepthBias           : 1;
+        bool bBindStreamOutputTargets : 1;
+        bool bBindPipelineState       : 1;
+        bool bBindScissorRects        : 1;
+        bool bBindViewports           : 1;
+        bool bBindRootSignature       : 1;
+        bool bBindShadingRate         : 1;
+        bool bBindShadingRateImage    : 1;
+        bool bBindVertexBuffers       : 1;
+        bool bBindIndexBuffer         : 1;
+        bool bBindShaderConstants     : 1;
+        bool bBindPrimitiveTopology   : 1;
     } GraphicsState;
 
     struct FComputeState

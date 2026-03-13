@@ -88,6 +88,12 @@ extern VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations;
 extern VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations;
 
 // -------------------------------------------------------------------------------------------
+// Transform Feedback / Stream Output (VK_EXT_transform_feedback)
+// -------------------------------------------------------------------------------------------
+
+extern VULKANRHI_API bool   GVulkanSupportsTransformFeedback;
+
+// -------------------------------------------------------------------------------------------
 // Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
 // -------------------------------------------------------------------------------------------
 
@@ -300,6 +306,8 @@ public:
 
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
+    bool FindOrCreateSampler(const struct FRHISamplerStateInfo& SamplerInfo, VkSampler& OutSampler);
+    bool FindOrCreateSampler(const struct FRHIStaticSamplerInfo& StaticSamplerInfo, VkSampler& OutSampler);
 
     FVulkanQueryPoolManager* GetQueryPoolManager(EQueryType QueryType);
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;

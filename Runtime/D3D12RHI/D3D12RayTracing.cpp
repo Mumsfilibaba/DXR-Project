@@ -51,7 +51,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
-#ifdef __ID3D12Device5_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_5
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
@@ -132,7 +132,7 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     {
         CommandList.UpdateResidency(IndexBuffer->GetResource()->GetResidencyHandle());
     }
-#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12COMMANDLIST_4
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 #endif
 
@@ -191,7 +191,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
-#ifdef __ID3D12Device5_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12DEVICE_5
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo = {};
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
@@ -335,7 +335,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     CommandList.UpdateResidency(ResultResourceStorage.GetResource()->GetResidencyHandle());
     CommandList.UpdateResidency(ScratchResourceStorage.GetResource()->GetResidencyHandle());
     CommandList.UpdateResidency(InstanceBuffer->GetResidencyHandle());
-#ifdef __ID3D12GraphicsCommandList4_INTERFACE_DEFINED__
+#if D3D12_USE_ID3D12COMMANDLIST_4
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 #endif
 

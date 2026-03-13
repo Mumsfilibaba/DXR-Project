@@ -185,6 +185,14 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         // Setup the builders
         DescriptorSetBuilders[DescriptorSetIndex].SetupDescriptorWrites(PoolInfo.DescriptorSetLayout, DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.Size());
 
+        for (int32 BindingIndex = 0; BindingIndex < SetRemappingInfo.RemappingInfo.Size(); BindingIndex++)
+        {
+            if (SetRemappingInfo.RemappingInfo[BindingIndex].BindingType == VulkanBindingType_ImmutableSampler)
+            {
+                DescriptorSetBuilders[DescriptorSetIndex].MarkBindingAsImmutable(BindingIndex);
+            }
+        }
+
         for (auto TypePair : DescriptorCountMap)
         {
             PoolInfo.DescriptorSizes.Emplace(TypePair.First, TypePair.Second);

@@ -10,6 +10,7 @@
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanExtensions.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
+#include "RHI/RHISamplerState.h"
 
 // -------------------------------------------------------------------------------------------
 // Vulkan Device Feature Support
@@ -76,6 +77,12 @@ VULKANRHI_API bool   GVulkanSupportsMeshShaders         = false;
 VULKANRHI_API uint32 GVulkanMaxMeshOutputVertices       = 0;
 VULKANRHI_API uint32 GVulkanMaxMeshWorkGroupInvocations = 0;
 VULKANRHI_API uint32 GVulkanMaxTaskWorkGroupInvocations = 0;
+
+// -------------------------------------------------------------------------------------------
+// Transform Feedback / Stream Output (VK_EXT_transform_feedback)
+// -------------------------------------------------------------------------------------------
+
+VULKANRHI_API bool GVulkanSupportsTransformFeedback = false;
 
 // -------------------------------------------------------------------------------------------
 // Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
@@ -1085,6 +1092,8 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
 
     const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
     RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
+    RHIDeviceFeatureSupport::bSupportsDynamicDepthBias = true;
+    RHIDeviceFeatureSupport::bSupportsStreamOutput     = GVulkanSupportsTransformFeedback;
 
     // -------------------------------------------------------------------------------------------
     // View Instancing (multiview)
@@ -1310,6 +1319,48 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
 
     SamplerMap.Add(HashableCreateInfo, OutSampler);
     return true;
+}
+
+bool FVulkanDevice::FindOrCreateSampler(const FRHISamplerStateInfo& SamplerInfo, VkSampler& OutSampler)
+{
+    VkSamplerCreateInfo CreateInfo = {};
+    CreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    CreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(SamplerInfo.Filter);
+    CreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(SamplerInfo.Filter);
+    CreateInfo.mipmapMode              = ConvertSamplerFilterToMipmapMode(SamplerInfo.Filter);
+    CreateInfo.addressModeU            = ConvertSamplerMode(SamplerInfo.AddressU);
+    CreateInfo.addressModeV            = ConvertSamplerMode(SamplerInfo.AddressV);
+    CreateInfo.addressModeW            = ConvertSamplerMode(SamplerInfo.AddressW);
+    CreateInfo.mipLodBias              = SamplerInfo.MipLODBias;
+    CreateInfo.anisotropyEnable        = IsAnisotropySampler(SamplerInfo.Filter);
+    CreateInfo.maxAnisotropy           = SamplerInfo.MaxAnisotropy;
+    CreateInfo.compareEnable           = IsComparisonSampler(SamplerInfo.Filter);
+    CreateInfo.compareOp               = ConvertComparisonFunc(SamplerInfo.ComparisonFunc);
+    CreateInfo.minLod                  = SamplerInfo.MinLOD;
+    CreateInfo.maxLod                  = SamplerInfo.MaxLOD;
+    CreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    CreateInfo.unnormalizedCoordinates = false;
+
+    if (!CreateInfo.anisotropyEnable)
+    {
+        CreateInfo.maxAnisotropy = 1.0f;
+    }
+    else
+    {
+        CreateInfo.maxAnisotropy = Math::Max(1.0f, CreateInfo.maxAnisotropy);
+    }
+
+    if (CreateInfo.maxLod < CreateInfo.minLod)
+    {
+        Math::Swap(CreateInfo.minLod, CreateInfo.maxLod);
+    }
+
+    return FindOrCreateSampler(CreateInfo, OutSampler);
+}
+
+bool FVulkanDevice::FindOrCreateSampler(const FRHIStaticSamplerInfo& StaticSamplerInfo, VkSampler& OutSampler)
+{
+    return FindOrCreateSampler(StaticSamplerInfo.GetSamplerStateInfo(), OutSampler);
 }
 
 FVulkanQueryPoolManager* FVulkanDevice::GetQueryPoolManager(EQueryType QueryType)

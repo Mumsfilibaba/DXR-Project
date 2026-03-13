@@ -18,6 +18,7 @@ enum class EBufferFlags : uint16
     ShaderResourceBuffer  = FLAG(7), // Can be used in ShaderResourceViews
     VertexBuffer          = FLAG(8), // Can be used as VertexBuffer
     IndexBuffer           = FLAG(9), // Can be used as IndexBuffer
+    StreamOutputBuffer    = FLAG(10), // Can be used as a StreamOutput target
 
     RWBuffer = UnorderedAccessBuffer | ShaderResourceBuffer
 };
@@ -26,20 +27,21 @@ ENUM_CLASS_OPERATORS(EBufferFlags);
 
 struct FRHIBufferInfo
 {
-    NODISCARD constexpr bool IsDefault() const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
-    NODISCARD constexpr bool IsDynamic() const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
-    NODISCARD constexpr bool IsReadBack() const { return IsEnumFlagSet(Flags, EBufferFlags::ReadBack); }
+    NODISCARD constexpr bool IsDefault()   const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
+    NODISCARD constexpr bool IsDynamic()   const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
+    NODISCARD constexpr bool IsReadBack()  const { return IsEnumFlagSet(Flags, EBufferFlags::ReadBack); }
     NODISCARD constexpr bool IsTransient() const { return IsEnumFlagSet(Flags, EBufferFlags::Transient); }
     
-    NODISCARD constexpr bool IsConstantBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer); }
-    NODISCARD constexpr bool IsShaderResourceBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer); }
-    NODISCARD constexpr bool IsVertexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::VertexBuffer); }
-    NODISCARD constexpr bool IsIndexBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
+    NODISCARD constexpr bool IsConstantBuffer()        const { return IsEnumFlagSet(Flags, EBufferFlags::ConstantBuffer); }
+    NODISCARD constexpr bool IsShaderResourceBuffer()  const { return IsEnumFlagSet(Flags, EBufferFlags::ShaderResourceBuffer); }
+    NODISCARD constexpr bool IsVertexBuffer()          const { return IsEnumFlagSet(Flags, EBufferFlags::VertexBuffer); }
+    NODISCARD constexpr bool IsIndexBuffer()           const { return IsEnumFlagSet(Flags, EBufferFlags::IndexBuffer); }
     NODISCARD constexpr bool IsUnorderedAccessBuffer() const { return IsEnumFlagSet(Flags, EBufferFlags::UnorderedAccessBuffer); }
+    NODISCARD constexpr bool IsStreamOutputBuffer()    const { return IsEnumFlagSet(Flags, EBufferFlags::StreamOutputBuffer); }
 
-    EBufferFlags Flags = EBufferFlags::None;
-    uint32 Stride = 0;
-    uint64 Size   = 0;
+    EBufferFlags Flags  = EBufferFlags::None;
+    uint32       Stride = 0;
+    uint64       Size   = 0;
 };
 
 class FRHIBuffer : public FRHIResource 

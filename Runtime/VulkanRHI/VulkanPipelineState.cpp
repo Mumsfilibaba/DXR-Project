@@ -297,6 +297,11 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     LayoutInfo.PromoteUniformBuffersToDynamic();
 #endif
 
+    if (Info.StaticSamplers.Size() > 0)
+    {
+        LayoutInfo.ApplyImmutableSamplers(GetDevice(), Info.StaticSamplers);
+    }
+
     // Generate Hash here since it is saved and not generated all the time
     LayoutInfo.GenerateHash();
     
@@ -459,6 +464,8 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR,
         VK_DYNAMIC_STATE_BLEND_CONSTANTS,
+        VK_DYNAMIC_STATE_STENCIL_REFERENCE,
+        VK_DYNAMIC_STATE_DEPTH_BIAS,
     };
 
     VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo = {};
@@ -615,6 +622,12 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo&
 #if VULKAN_ENABLE_DYNAMIC_UNIFORM_BUFFERS
     LayoutInfo.PromoteUniformBuffersToDynamic();
 #endif
+
+    if (InInfo.StaticSamplers.Size() > 0)
+    {
+        LayoutInfo.ApplyImmutableSamplers(GetDevice(), InInfo.StaticSamplers);
+    }
+
     LayoutInfo.GenerateHash();
 
     FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();

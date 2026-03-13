@@ -65,15 +65,15 @@ void FVulkanCommandContextState::BindGraphicsStates()
 
     if (GraphicsState.bBindVertexBuffers || GVulkanForceBinding)
     {
-        FVulkanVertexBufferCache& VBCache = GraphicsState.VBCache;
-        Context.GetCommandBuffer()->BindVertexBuffers(0, VBCache.NumVertexBuffers, VBCache.VertexBuffers, VBCache.VertexBufferOffsets);
+        FVulkanVertexBufferCache& VertexBufferCache = GraphicsState.VertexBufferCache;
+        Context.GetCommandBuffer()->BindVertexBuffers(0, VertexBufferCache.NumVertexBuffers, VertexBufferCache.VertexBuffers, VertexBufferCache.VertexBufferOffsets);
         GraphicsState.bBindVertexBuffers = false;
     }
 
     if (GraphicsState.bBindIndexBuffer || GVulkanForceBinding)
     {
-        FVulkanIndexBufferCache& IBCache = GraphicsState.IBCache;
-        Context.GetCommandBuffer()->BindIndexBuffer(IBCache.IndexBuffer, IBCache.Offset, IBCache.IndexType);
+        FVulkanIndexBufferCache& IndexBufferCache = GraphicsState.IndexBufferCache;
+        Context.GetCommandBuffer()->BindIndexBuffer(IndexBufferCache.IndexBuffer, IndexBufferCache.Offset, IndexBufferCache.IndexType);
         GraphicsState.bBindIndexBuffer = false;
     }
 
@@ -94,6 +94,26 @@ void FVulkanCommandContextState::BindGraphicsStates()
         Context.GetCommandBuffer()->SetBlendConstants(GraphicsState.BlendFactor);
         GraphicsState.bBindBlendFactor = false;
     }
+
+    if (GraphicsState.bBindStencilRef || GVulkanForceBinding)
+    {
+        Context.GetCommandBuffer()->SetStencilReference(VK_STENCIL_FACE_FRONT_AND_BACK, GraphicsState.StencilRef);
+        GraphicsState.bBindStencilRef = false;
+    }
+
+    if (GraphicsState.bBindDepthBias || GVulkanForceBinding)
+    {
+        Context.GetCommandBuffer()->SetDepthBias(GraphicsState.DepthBias[0], GraphicsState.DepthBias[1], GraphicsState.DepthBias[2]);
+        GraphicsState.bBindDepthBias = false;
+    }
+
+#if VK_EXT_transform_feedback
+    if (GraphicsState.bBindStreamOutputTargets && GVulkanSupportsTransformFeedback)
+    {
+        Context.GetCommandBuffer()->BindTransformFeedbackBuffers(0, GraphicsState.NumStreamOutputBuffers, GraphicsState.StreamOutputBuffers, GraphicsState.StreamOutputOffsets, GraphicsState.StreamOutputSizes);
+        GraphicsState.bBindStreamOutputTargets = false;
+    }
+#endif
 }
 
 void FVulkanCommandContextState::BindComputeState()
@@ -138,44 +158,56 @@ void FVulkanCommandContextState::ResetState()
 {
     CommonState.PushConstantsCache.Clear();
 
-    GraphicsState.VBCache.Clear();
-    GraphicsState.IBCache.Clear();
+    GraphicsState.VertexBufferCache.Clear();
+    GraphicsState.IndexBufferCache.Clear();
 
     FMemory::Memzero(GraphicsState.BlendFactor, sizeof(GraphicsState.BlendFactor));
+    FMemory::Memzero(GraphicsState.DepthBias, sizeof(GraphicsState.DepthBias));
+    FMemory::Memzero(GraphicsState.StreamOutputBuffers, sizeof(GraphicsState.StreamOutputBuffers));
+    FMemory::Memzero(GraphicsState.StreamOutputOffsets, sizeof(GraphicsState.StreamOutputOffsets));
+    FMemory::Memzero(GraphicsState.StreamOutputSizes, sizeof(GraphicsState.StreamOutputSizes));
+    GraphicsState.NumStreamOutputBuffers = 0;
+    GraphicsState.StencilRef = 0;
     FMemory::Memzero(GraphicsState.Viewports, sizeof(GraphicsState.Viewports));
     GraphicsState.NumViewports = 0;
 
     FMemory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
     GraphicsState.NumScissorRects = 0;
     
-    GraphicsState.PipelineState          = nullptr;
-    GraphicsState.CurrentDescriptorState = nullptr;
-    GraphicsState.CurrentLayout          = nullptr;
-    GraphicsState.bBindIndexBuffer       = true;
-    GraphicsState.bBindBlendFactor       = true;
-    GraphicsState.bBindPipelineState     = true;
-    GraphicsState.bBindScissorRects      = true;
-    GraphicsState.bBindViewports         = true;
-    GraphicsState.bBindVertexBuffers     = true;
-    GraphicsState.bBindPushConstants     = true;
-    ComputeState.PipelineState           = nullptr;
-    ComputeState.CurrentDescriptorState  = nullptr;
-    ComputeState.CurrentLayout           = nullptr;
-    ComputeState.bBindPipelineState      = true;
-    ComputeState.bBindPushConstants      = true;
+    GraphicsState.PipelineState            = nullptr;
+    GraphicsState.CurrentDescriptorState   = nullptr;
+    GraphicsState.CurrentLayout            = nullptr;
+    GraphicsState.bBindIndexBuffer         = true;
+    GraphicsState.bBindBlendFactor         = true;
+    GraphicsState.bBindStencilRef          = true;
+    GraphicsState.bBindDepthBias           = true;
+    GraphicsState.bBindPipelineState       = true;
+    GraphicsState.bBindScissorRects        = true;
+    GraphicsState.bBindViewports           = true;
+    GraphicsState.bBindVertexBuffers       = true;
+    GraphicsState.bBindPushConstants       = true;
+    GraphicsState.bBindStreamOutputTargets = false;
+    ComputeState.PipelineState             = nullptr;
+    ComputeState.CurrentDescriptorState    = nullptr;
+    ComputeState.CurrentLayout             = nullptr;
+    ComputeState.bBindPipelineState        = true;
+    ComputeState.bBindPushConstants        = true;
 }
 
 void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
 {
-    GraphicsState.bBindIndexBuffer   = true;
-    GraphicsState.bBindBlendFactor   = true;
-    GraphicsState.bBindPipelineState = true;
-    GraphicsState.bBindScissorRects  = true;
-    GraphicsState.bBindViewports     = true;
-    GraphicsState.bBindVertexBuffers = true;
-    GraphicsState.bBindPushConstants = true;
-    ComputeState.bBindPipelineState  = true;
-    ComputeState.bBindPushConstants  = true;
+    GraphicsState.bBindIndexBuffer         = true;
+    GraphicsState.bBindBlendFactor         = true;
+    GraphicsState.bBindStencilRef          = true;
+    GraphicsState.bBindDepthBias           = true;
+    GraphicsState.bBindPipelineState       = true;
+    GraphicsState.bBindScissorRects        = true;
+    GraphicsState.bBindViewports           = true;
+    GraphicsState.bBindVertexBuffers       = true;
+    GraphicsState.bBindPushConstants       = true;
+    GraphicsState.bBindStreamOutputTargets = (GraphicsState.NumStreamOutputBuffers > 0);
+    ComputeState.bBindPipelineState        = true;
+    ComputeState.bBindPushConstants        = true;
 }
 
 void FVulkanCommandContextState::SetViewInstanceInfo(const FRHIViewInstancingState& InViewInstancingInfo)
@@ -309,6 +341,48 @@ void FVulkanCommandContextState::SetBlendFactor(const float BlendFactor[4])
     }
 }
 
+void FVulkanCommandContextState::SetStencilRef(uint32 InStencilRef)
+{
+    if (GraphicsState.StencilRef != InStencilRef || GVulkanForceBinding)
+    {
+        GraphicsState.StencilRef     = InStencilRef;
+        GraphicsState.bBindStencilRef = true;
+    }
+}
+
+void FVulkanCommandContextState::SetDepthBias(float InDepthBias, float InDepthBiasClamp, float InSlopeScaledDepthBias)
+{
+    const float NewValues[3] = { InDepthBias, InDepthBiasClamp, InSlopeScaledDepthBias };
+    if (FMemory::Memcmp(GraphicsState.DepthBias, NewValues, sizeof(NewValues)) != 0 || GVulkanForceBinding)
+    {
+        FMemory::Memcpy(GraphicsState.DepthBias, NewValues, sizeof(NewValues));
+        GraphicsState.bBindDepthBias = true;
+    }
+}
+
+void FVulkanCommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
+{
+    GraphicsState.NumStreamOutputBuffers = Math::Min(static_cast<uint32>(Buffers.Size()), static_cast<uint32>(VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT));
+    for (uint32 Index = 0; Index < GraphicsState.NumStreamOutputBuffers; ++Index)
+    {
+        FVulkanBuffer* VulkanBuffer = static_cast<FVulkanBuffer*>(Buffers[Index]);
+        if (VulkanBuffer)
+        {
+            GraphicsState.StreamOutputBuffers[Index] = VulkanBuffer->GetVkBuffer();
+            GraphicsState.StreamOutputOffsets[Index] = Offsets ? Offsets[Index] : 0;
+            GraphicsState.StreamOutputSizes[Index]   = VulkanBuffer->GetInfo().Size;
+        }
+        else
+        {
+            GraphicsState.StreamOutputBuffers[Index] = VK_NULL_HANDLE;
+            GraphicsState.StreamOutputOffsets[Index] = 0;
+            GraphicsState.StreamOutputSizes[Index]   = 0;
+        }
+    }
+
+    GraphicsState.bBindStreamOutputTargets = true;
+}
+
 void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 VertexBufferSlot)
 {
     CHECK(VertexBufferSlot < VULKAN_MAX_VERTEX_BUFFER_SLOTS);
@@ -327,15 +401,15 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
         Offset = 0;
     }
 
-    VkBuffer     CurrentBuffer = GraphicsState.VBCache.VertexBuffers[VertexBufferSlot];
-    VkDeviceSize CurrentOffset = GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot];
+    VkBuffer     CurrentBuffer = GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot];
+    VkDeviceSize CurrentOffset = GraphicsState.VertexBufferCache.VertexBufferOffsets[VertexBufferSlot];
 
     if (Buffer != CurrentBuffer || Offset != CurrentOffset || GVulkanForceBinding)
     {
-        GraphicsState.VBCache.VertexBuffers[VertexBufferSlot]       = Buffer;
-        GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot] = Offset;
-        GraphicsState.VBCache.NumVertexBuffers                      = Math::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
-        GraphicsState.bBindVertexBuffers                            = true;
+        GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot]       = Buffer;
+        GraphicsState.VertexBufferCache.VertexBufferOffsets[VertexBufferSlot] = Offset;
+        GraphicsState.VertexBufferCache.NumVertexBuffers                      = Math::Max(GraphicsState.VertexBufferCache.NumVertexBuffers, VertexBufferSlot + 1);
+        GraphicsState.bBindVertexBuffers                                      = true;
     }
 }
 
@@ -355,16 +429,16 @@ void FVulkanCommandContextState::SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIn
         Offset = 0;
     }
 
-    VkBuffer     CurrentBuffer    = GraphicsState.IBCache.IndexBuffer;
-    VkDeviceSize CurrentOffset    = GraphicsState.IBCache.Offset;
-    VkIndexType  CurrentIndexType = GraphicsState.IBCache.IndexType;
+    VkBuffer     CurrentBuffer    = GraphicsState.IndexBufferCache.IndexBuffer;
+    VkDeviceSize CurrentOffset    = GraphicsState.IndexBufferCache.Offset;
+    VkIndexType  CurrentIndexType = GraphicsState.IndexBufferCache.IndexType;
 
     if (Buffer != CurrentBuffer || Offset != CurrentOffset || IndexType != CurrentIndexType || GVulkanForceBinding)
     {
-        GraphicsState.IBCache.IndexBuffer = Buffer;
-        GraphicsState.IBCache.Offset      = Offset;
-        GraphicsState.IBCache.IndexType   = IndexType;
-        GraphicsState.bBindIndexBuffer    = true;
+        GraphicsState.IndexBufferCache.IndexBuffer = Buffer;
+        GraphicsState.IndexBufferCache.Offset      = Offset;
+        GraphicsState.IndexBufferCache.IndexType   = IndexType;
+        GraphicsState.bBindIndexBuffer             = true;
     }
 }
 

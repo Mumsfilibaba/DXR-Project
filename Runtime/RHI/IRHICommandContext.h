@@ -118,6 +118,20 @@ struct IRHICommandContext
     virtual void SetBlendFactor(const FVector4& Color) = 0;
 
     /**
+     * @brief Set the stencil reference value
+     * @param StencilRef New stencil reference value
+     */
+    virtual void SetStencilRef(uint32 StencilRef) = 0;
+
+    /**
+     * @brief Set the depth bias parameters dynamically (requires RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+     * @param DepthBias Constant depth bias
+     * @param DepthBiasClamp Maximum depth bias clamp
+     * @param SlopeScaledDepthBias Slope-scaled depth bias
+     */
+    virtual void SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias) = 0;
+
+    /**
      * @brief Set the VertexBuffers to be used
      * @param VertexBuffers ArrayView of VertexBuffers to use
      * @param BufferSlot Slot to start bind the array to
@@ -130,6 +144,12 @@ struct IRHICommandContext
      * @param IndexFormat Format of the indices in the IndexBuffer
      */
     virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) = 0;
+
+    /**
+     * @param Buffers ArrayView of stream output target buffers
+     * @param Offsets Per-buffer byte offsets into each target
+     */
+    virtual void SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets) = 0;
 
     /**
      * @brief Sets the current graphics PipelineState

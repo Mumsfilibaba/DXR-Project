@@ -6,53 +6,18 @@
 #include "RHI/RHIRayTracing.h"
 #include "D3D12RHI/D3D12Constants.h"
 
-// Windows 10 1507 
-#if (NTDDI_WIN10 && (WDK_NTDDI_VERSION >= NTDDI_WIN10))
-    #define WIN10_BUILD_10240 (1)
-#endif
-// Windows 10 1511 (November Update)
-#if (NTDDI_WIN10_TH2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_TH2))
-    #define WIN10_BUILD_10586 (1)
-#endif
-// Windows 10 1607 (Anniversary Update)
-#if (NTDDI_WIN10_RS1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS1))
-    #define WIN10_BUILD_14393 (1)
-#endif
-// Windows 10 1703 (Creators Update)
-#if (NTDDI_WIN10_RS2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS2))
-    #define WIN10_BUILD_15063 (1)
-#endif
-// Windows 10 1709 (Fall Creators Update)
-#if (NTDDI_WIN10_RS3 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS3))
-    #define WIN10_BUILD_16299 (1)
-#endif
-// Windows 10 1803 (April 2018 Update)
+// -------------------------------------------
+// Windows SDK feature availability
+// -------------------------------------------
+
+// DXGI 1.6 (IDXGIFactory6, DXGI_GPU_PREFERENCE) - requires Windows 10 1803 (RS4) SDK
 #if (NTDDI_WIN10_RS4 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS4))
-    #define WIN10_BUILD_17134 (1)
+    #define DXGI_1_6 (1)
 #endif
-// Windows 10 1809 (October 2018 Update)
-#if (NTDDI_WIN10_RS5 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS5))
-    #define WIN10_BUILD_17763 (1)
-#endif
-// Windows 10 1903 (May 2019 Update)
-#if (NTDDI_WIN10_19H1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_19H1))
-    #define WIN10_BUILD_18362 (1)
-#endif
-// Windows 10 2004 (May 2020 Update)
-#if (NTDDI_WIN10_VB && (WDK_NTDDI_VERSION >= NTDDI_WIN10_VB))
-    #define WIN10_BUILD_19041 (1)
-#endif
-// Windows 10 2104
+
+// D3D_FEATURE_LEVEL_12_2, ID3D12Debug5 - requires Windows 10 21H1 (FE) SDK
 #if (NTDDI_WIN10_FE && (WDK_NTDDI_VERSION >= NTDDI_WIN10_FE))
     #define WIN10_BUILD_20348 (1)
-#endif
-// Windows 11 21H2
-#if (NTDDI_WIN10_CO && (WDK_NTDDI_VERSION >= NTDDI_WIN10_CO))
-    #define WIN11_BUILD_22000 (1)
-#endif
-// Windows 11 22H2
-#if (NTDDI_WIN10_NI && (WDK_NTDDI_VERSION >= NTDDI_WIN10_NI))
-    #define WIN11_BUILD_22621 (1)
 #endif
 
 #if D3D12_ENABLE_LOGGING
@@ -613,6 +578,7 @@ NODISCARD constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess R
         case EResourceAccess::UnorderedAccess:        return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
         case EResourceAccess::ConstantBuffer:         return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
         case EResourceAccess::GenericRead:            return D3D12_RESOURCE_STATE_GENERIC_READ;
+        case EResourceAccess::StreamOutput:           return D3D12_RESOURCE_STATE_STREAM_OUT;
     }
 
     return D3D12_RESOURCE_STATES();

@@ -155,6 +155,7 @@ protected:
     FString                      DebugName;
 };
 
+#if D3D12_ENABLE_PIPELINE_STATE_STREAM
 struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStream
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
@@ -252,7 +253,20 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStre
         D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type15 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING;
         D3D12_VIEW_INSTANCING_DESC ViewInstancingDesc = { };
     };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type16 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT;
+        D3D12_STREAM_OUTPUT_DESC StreamOutputDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type17 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS;
+        D3D12_PIPELINE_STATE_FLAGS PipelineStateFlags = D3D12_PIPELINE_STATE_FLAG_NONE;
+    };
 };
+#endif
 
 struct FD3D12HashableViewInstanceDesc
 {
@@ -302,15 +316,12 @@ public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12GraphicsPipelineState();
 
+    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
+
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
 
-    virtual void SetDebugName(const FString& InName) override final
-    {
-        FD3D12PipelineState::SetDebugName(InName);
-    }
-
-    bool Initialize(const FRHIGraphicsPipelineStateInfo& Info);
+    virtual void SetDebugName(const FString& InName) override final;
 
     D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
     {
@@ -332,6 +343,7 @@ private:
     TSharedRef<FD3D12PixelShader>    PixelShader;
 };
 
+#if D3D12_ENABLE_PIPELINE_STATE_STREAM
 struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12ComputePipelineStream
 {
     struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
@@ -346,6 +358,7 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12ComputePipelineStrea
         D3D12_SHADER_BYTECODE ComputeShader = { };
     };
 };
+#endif
 
 struct FD3D12ComputePipelineKey
 {
@@ -359,15 +372,12 @@ public:
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
     virtual ~FD3D12ComputePipelineState();
 
+    bool Initialize(const FRHIComputePipelineStateInfo& Info);
+
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
 
-    virtual void SetDebugName(const FString& InName) override final
-    {
-        FD3D12PipelineState::SetDebugName(InName);
-    }
-
-    bool Initialize();
+    virtual void SetDebugName(const FString& InName) override final;
 
     FORCEINLINE FD3D12ComputeShader* GetComputeShader() const
     {
@@ -389,16 +399,12 @@ public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12RayTracingPipelineState();
 
+    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
+
     // FRHIPipelineState Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12StateObject()); }
 
-    virtual void SetDebugName(const FString& InName) override final
-    {
-        FStringWide WideName = CharToWide(InName);
-        StateObject->SetName(*WideName);
-    }
-
-    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
+    virtual void SetDebugName(const FString& InName) override final;
 
     void* GetShaderIdentifier(const FString& ExportName);
 
