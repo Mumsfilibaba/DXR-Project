@@ -13,7 +13,17 @@ struct FCompressionBufferHLSL
 };
 
 FTextureCompressor::FTextureCompressor()
-    : BC6HCompressionShader(nullptr)
+    : BC1CompressionShader(nullptr)
+    , BC1CompressionPSO(nullptr)
+    , BC2CompressionShader(nullptr)
+    , BC2CompressionPSO(nullptr)
+    , BC3CompressionShader(nullptr)
+    , BC3CompressionPSO(nullptr)
+    , BC4CompressionShader(nullptr)
+    , BC4CompressionPSO(nullptr)
+    , BC5CompressionShader(nullptr)
+    , BC5CompressionPSO(nullptr)
+    , BC6HCompressionShader(nullptr)
     , BC6HCompressionPSO(nullptr)
     , BC6HCompressionCubeShader(nullptr)
     , BC6HCompressionCubePSO(nullptr)
@@ -24,12 +34,122 @@ FTextureCompressor::~FTextureCompressor()
 {
 }
 
+static bool CompileAndCreateShaderPSO(
+    const FString& ShaderPath,
+    const FRHIStaticSamplerInfo& StaticSampler,
+    FRHIComputeShaderRef& OutShader,
+    FRHIComputePipelineStateRef& OutPSO)
+{
+    TArray<uint8> ShaderCode;
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile(ShaderPath, CompileInfo, ShaderCode))
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to compile shader: %s", *ShaderPath);
+        return false;
+    }
+
+    OutShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    if (!OutShader)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create compute shader: %s", *ShaderPath);
+        return false;
+    }
+
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader         = OutShader.Get();
+    PSOInfo.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&StaticSampler, 1);
+
+    OutPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    if (!OutPSO)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create PSO: %s", *ShaderPath);
+        return false;
+    }
+
+    return true;
+}
+
 bool FTextureCompressor::Initialize()
 {
+    FRHISamplerStateInfo SamplerInfo;
+    SamplerInfo.AddressU = ESamplerMode::Wrap;
+    SamplerInfo.AddressV = ESamplerMode::Wrap;
+    SamplerInfo.AddressW = ESamplerMode::Wrap;
+    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    SamplerInfo.MinLOD   = 0.0f;
+    SamplerInfo.MaxLOD   = TNumericLimits<float>::Max();
+
+    PointSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+    if (!PointSampler)
+    {
+        return false;
+    }
+
+    if (!InitializeBC1ToBC5())
+    {
+        return false;
+    }
+
+    if (!InitializeBC6H())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FTextureCompressor::InitializeBC1ToBC5()
+{
+    FRHIStaticSamplerInfo StaticSampler;
+    StaticSampler.AddressU = ESamplerMode::Clamp;
+    StaticSampler.AddressV = ESamplerMode::Clamp;
+    StaticSampler.AddressW = ESamplerMode::Clamp;
+    StaticSampler.Filter   = ESamplerFilter::MinMagMipPoint;
+    StaticSampler.MinLOD   = 0.0f;
+    StaticSampler.MaxLOD   = 0.0f;
+
+    if (!CompileAndCreateShaderPSO("Shaders/BlockCompression/BlockCompressionBC1.hlsl", StaticSampler, BC1CompressionShader, BC1CompressionPSO))
+    {
+        return false;
+    }
+
+    if (!CompileAndCreateShaderPSO("Shaders/BlockCompression/BlockCompressionBC2.hlsl", StaticSampler, BC2CompressionShader, BC2CompressionPSO))
+    {
+        return false;
+    }
+
+    if (!CompileAndCreateShaderPSO("Shaders/BlockCompression/BlockCompressionBC3.hlsl", StaticSampler, BC3CompressionShader, BC3CompressionPSO))
+    {
+        return false;
+    }
+
+    if (!CompileAndCreateShaderPSO("Shaders/BlockCompression/BlockCompressionBC4.hlsl", StaticSampler, BC4CompressionShader, BC4CompressionPSO))
+    {
+        return false;
+    }
+
+    if (!CompileAndCreateShaderPSO("Shaders/BlockCompression/BlockCompressionBC5.hlsl", StaticSampler, BC5CompressionShader, BC5CompressionPSO))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FTextureCompressor::InitializeBC6H()
+{
+    FRHIStaticSamplerInfo BC6HStaticSampler;
+    BC6HStaticSampler.AddressU = ESamplerMode::Wrap;
+    BC6HStaticSampler.AddressV = ESamplerMode::Wrap;
+    BC6HStaticSampler.AddressW = ESamplerMode::Wrap;
+    BC6HStaticSampler.Filter   = ESamplerFilter::MinMagMipLinear;
+    BC6HStaticSampler.MinLOD   = 0.0f;
+    BC6HStaticSampler.MaxLOD   = TNumericLimits<float>::Max();
+
     TArray<uint8> ShaderCode;
 
     FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/BlockCompressionBC6H.hlsl", CompileInfo, ShaderCode))
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/BlockCompression/BlockCompressionBC6H.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -41,15 +161,6 @@ bool FTextureCompressor::Initialize()
         DEBUG_BREAK();
         return false;
     }
-
-    // Static sampler: Linear Wrap at s0 for block compression
-    FRHIStaticSamplerInfo BC6HStaticSampler;
-    BC6HStaticSampler.AddressU = ESamplerMode::Wrap;
-    BC6HStaticSampler.AddressV = ESamplerMode::Wrap;
-    BC6HStaticSampler.AddressW = ESamplerMode::Wrap;
-    BC6HStaticSampler.Filter   = ESamplerFilter::MinMagMipLinear;
-    BC6HStaticSampler.MinLOD   = 0.0f;
-    BC6HStaticSampler.MaxLOD   = TNumericLimits<float>::Max();
 
     FRHIComputePipelineStateInfo PSOInfo;
     PSOInfo.Shader         = BC6HCompressionShader.Get();
@@ -68,7 +179,7 @@ bool FTextureCompressor::Initialize()
     };
 
     CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, CompressDefines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/BlockCompressionBC6H.hlsl", CompileInfo, ShaderCode))
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/BlockCompression/BlockCompressionBC6H.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -92,21 +203,225 @@ bool FTextureCompressor::Initialize()
         return false;
     }
 
-    FRHISamplerStateInfo SamplerInfo;
-    SamplerInfo.AddressU = ESamplerMode::Wrap;
-    SamplerInfo.AddressV = ESamplerMode::Wrap;
-    SamplerInfo.AddressW = ESamplerMode::Wrap;
-    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
-    SamplerInfo.MinLOD   = 0.0f;
-    SamplerInfo.MaxLOD   = TNumericLimits<float>::Max();
+    return true;
+}
 
-    PointSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
-    if (!PointSampler)
+bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture,
+    FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat)
+{
+    const FRHITextureInfo SourceInfo = SrcTexture->GetInfo();
+    if (!IsBlockCompressedAligned(SourceInfo.Extent.X) || !IsBlockCompressedAligned(SourceInfo.Extent.Y))
     {
+        LOG_ERROR("[FTextureCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
         return false;
     }
 
+    const int32 BlocksX = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    const int32 BlocksY = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
+
+    FRHITextureInfo CompressedTexInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32_Uint, BlocksX, BlocksY, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureRef CompressedTex = FRHI::Get()->CreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
+    if (!CompressedTex)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create temporary compressed texture");
+        return false;
+    }
+
+    FRHITextureInfo OutputInfo = FRHITextureInfo::CreateTexture2D(OutputFormat, SourceInfo.Extent.X, SourceInfo.Extent.Y, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
+    OutTexture = FRHI::Get()->CreateTexture(OutputInfo, EResourceAccess::CopyDest);
+    if (!OutTexture)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create compressed texture");
+        return false;
+    }
+
+    CommandList.SetComputePipelineState(PSO);
+    CommandList.SetShaderResourceView(Shader, SrcTexture->GetShaderResourceView(), 0);
+    CommandList.SetUnorderedAccessView(Shader, CompressedTex->GetUnorderedAccessView(), 0);
+
+    const FVector2 TexSize = FVector2(static_cast<float>(SourceInfo.Extent.X), static_cast<float>(SourceInfo.Extent.Y));
+
+    FCompressionBufferHLSL Buffer;
+    Buffer.TextureSizeInBlocks[0] = Math::AlignUp(BlocksX, BC_BLOCK_SIZE);
+    Buffer.TextureSizeInBlocks[1] = Math::AlignUp(BlocksY, BC_BLOCK_SIZE);
+    Buffer.TextureSizeRcp         = FVector2(1.0f) / TexSize;
+
+    constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
+    CommandList.SetShaderConstants(Shader, &Buffer, NumConstants);
+
+    CommandList.TransitionTextureState(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+
+    const int32 ThreadGroupsX = Math::DivideByMultiple(BlocksX, int32(CS_NUM_THREADS));
+    const int32 ThreadGroupsY = Math::DivideByMultiple(BlocksY, int32(CS_NUM_THREADS));
+    CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
+    CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+
+    FTextureCopyInfo CopyDesc;
+    CopyDesc.DstArraySlice = 0;
+    CopyDesc.DstMipSlice   = 0;
+    CopyDesc.DstPosition   = FIntVector3();
+    CopyDesc.SrcArraySlice = 0;
+    CopyDesc.SrcMipSlice   = 0;
+    CopyDesc.SrcPosition   = FIntVector3();
+    CopyDesc.Size.X         = BlocksX;
+    CopyDesc.Size.Y         = BlocksY;
+    CopyDesc.Size.Z         = 1;
+    CopyDesc.NumArraySlices = 1;
+    CopyDesc.NumMipLevels   = 1;
+
+    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
+    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
     return true;
+}
+
+bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture,
+    FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat)
+{
+    const FRHITextureInfo SourceInfo = SrcTexture->GetInfo();
+    if (!IsBlockCompressedAligned(SourceInfo.Extent.X) || !IsBlockCompressedAligned(SourceInfo.Extent.Y))
+    {
+        LOG_ERROR("[FTextureCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
+        return false;
+    }
+
+    const int32 BlocksX = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    const int32 BlocksY = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
+
+    FRHITextureInfo CompressedTexInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32B32A32_Uint, BlocksX, BlocksY, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureRef CompressedTex = FRHI::Get()->CreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
+    if (!CompressedTex)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create temporary compressed texture");
+        return false;
+    }
+
+    FRHITextureInfo OutputInfo = FRHITextureInfo::CreateTexture2D(OutputFormat, SourceInfo.Extent.X, SourceInfo.Extent.Y, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
+    OutTexture = FRHI::Get()->CreateTexture(OutputInfo, EResourceAccess::CopyDest);
+    if (!OutTexture)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create compressed texture");
+        return false;
+    }
+
+    CommandList.SetComputePipelineState(PSO);
+    CommandList.SetShaderResourceView(Shader, SrcTexture->GetShaderResourceView(), 0);
+    CommandList.SetUnorderedAccessView(Shader, CompressedTex->GetUnorderedAccessView(), 0);
+
+    const FVector2 TexSize = FVector2(static_cast<float>(SourceInfo.Extent.X), static_cast<float>(SourceInfo.Extent.Y));
+
+    FCompressionBufferHLSL Buffer;
+    Buffer.TextureSizeInBlocks[0] = Math::AlignUp(BlocksX, BC_BLOCK_SIZE);
+    Buffer.TextureSizeInBlocks[1] = Math::AlignUp(BlocksY, BC_BLOCK_SIZE);
+    Buffer.TextureSizeRcp         = FVector2(1.0f) / TexSize;
+
+    constexpr uint32 NumConstants = sizeof(FCompressionBufferHLSL) / sizeof(uint32);
+    CommandList.SetShaderConstants(Shader, &Buffer, NumConstants);
+
+    CommandList.TransitionTextureState(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+
+    const int32 ThreadGroupsX = Math::DivideByMultiple(BlocksX, int32(CS_NUM_THREADS));
+    const int32 ThreadGroupsY = Math::DivideByMultiple(BlocksY, int32(CS_NUM_THREADS));
+    CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
+    CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+
+    FTextureCopyInfo CopyDesc;
+    CopyDesc.DstArraySlice = 0;
+    CopyDesc.DstMipSlice   = 0;
+    CopyDesc.DstPosition   = FIntVector3();
+    CopyDesc.SrcArraySlice = 0;
+    CopyDesc.SrcMipSlice   = 0;
+    CopyDesc.SrcPosition   = FIntVector3();
+    CopyDesc.Size.X         = BlocksX;
+    CopyDesc.Size.Y         = BlocksY;
+    CopyDesc.Size.Z         = 1;
+    CopyDesc.NumArraySlices = 1;
+    CopyDesc.NumMipLevels   = 1;
+
+    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
+    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+    return true;
+}
+
+bool FTextureCompressor::CompressBC1(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    FRHICommandList CommandList;
+    if (!CompressBC1(CommandList, SrcTexture, OutTexture))
+    {
+        return false;
+    }
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureCompressor::CompressBC1(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    return CompressSinglePass64(CommandList, SrcTexture, OutTexture, BC1CompressionShader.Get(), BC1CompressionPSO.Get(), EFormat::BC1_UNorm);
+}
+
+bool FTextureCompressor::CompressBC2(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    FRHICommandList CommandList;
+    if (!CompressBC2(CommandList, SrcTexture, OutTexture))
+    {
+        return false;
+    }
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureCompressor::CompressBC2(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    return CompressSinglePass128(CommandList, SrcTexture, OutTexture, BC2CompressionShader.Get(), BC2CompressionPSO.Get(), EFormat::BC2_UNorm);
+}
+
+bool FTextureCompressor::CompressBC3(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    FRHICommandList CommandList;
+    if (!CompressBC3(CommandList, SrcTexture, OutTexture))
+    {
+        return false;
+    }
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureCompressor::CompressBC3(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    return CompressSinglePass128(CommandList, SrcTexture, OutTexture, BC3CompressionShader.Get(), BC3CompressionPSO.Get(), EFormat::BC3_UNorm);
+}
+
+bool FTextureCompressor::CompressBC4(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    FRHICommandList CommandList;
+    if (!CompressBC4(CommandList, SrcTexture, OutTexture))
+    {
+        return false;
+    }
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureCompressor::CompressBC4(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    return CompressSinglePass64(CommandList, SrcTexture, OutTexture, BC4CompressionShader.Get(), BC4CompressionPSO.Get(), EFormat::BC4_UNorm);
+}
+
+bool FTextureCompressor::CompressBC5(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    FRHICommandList CommandList;
+    if (!CompressBC5(CommandList, SrcTexture, OutTexture))
+    {
+        return false;
+    }
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureCompressor::CompressBC5(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    return CompressSinglePass128(CommandList, SrcTexture, OutTexture, BC5CompressionShader.Get(), BC5CompressionPSO.Get(), EFormat::BC5_UNorm);
 }
 
 bool FTextureCompressor::CompressBC6(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)

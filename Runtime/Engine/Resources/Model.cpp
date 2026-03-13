@@ -1,7 +1,10 @@
 #include "Core/Templates/NumericLimits.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/Resources/Model.h"
+#include "RendererCore/TextureFactory.h"
+#include "RendererCore/TextureCompressor.h"
 
 FMesh::FMesh()
     : VertexBuffer(nullptr)
@@ -365,6 +368,55 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
         {
             Material->NormalMap = CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
         }
+
+        // Block-compress uncompressed textures for reduced memory usage
+        FTextureCompressor& Compressor = FTextureFactory::Get().GetTextureCompressor();
+
+        auto TryCompressBC1 = [&](FRHITextureRef& Texture)
+        {
+            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
+            {
+                FRHITextureRef Compressed;
+                if (Compressor.CompressBC1(Texture, Compressed))
+                {
+                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC1", Texture->GetInfo().Extent.X, Texture->GetInfo().Extent.Y, ToString(Texture->GetFormat()));
+                    Texture = Compressed;
+                }
+            }
+        };
+
+        auto TryCompressBC5 = [&](FRHITextureRef& Texture)
+        {
+            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
+            {
+                FRHITextureRef Compressed;
+                if (Compressor.CompressBC5(Texture, Compressed))
+                {
+                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC5", Texture->GetInfo().Extent.X, Texture->GetInfo().Extent.Y, ToString(Texture->GetFormat()));
+                    Texture = Compressed;
+                }
+            }
+        };
+
+        auto TryCompressBC4 = [&](FRHITextureRef& Texture)
+        {
+            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
+            {
+                FRHITextureRef Compressed;
+                if (Compressor.CompressBC4(Texture, Compressed))
+                {
+                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC4", Texture->GetInfo().Extent.X, Texture->GetInfo().Extent.Y, ToString(Texture->GetFormat()));
+                    Texture = Compressed;
+                }
+            }
+        };
+
+        TryCompressBC1(Material->AlbedoMap);
+        TryCompressBC5(Material->NormalMap);
+        TryCompressBC1(Material->SpecularMap);
+        TryCompressBC4(Material->RoughnessMap);
+        TryCompressBC4(Material->MetallicMap);
+        TryCompressBC4(Material->AOMap);
 
         Material->Initialize();
         Material->SetName(CreateInfo.Materials[Index].Name);

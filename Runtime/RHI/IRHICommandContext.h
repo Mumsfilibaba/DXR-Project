@@ -146,6 +146,7 @@ struct IRHICommandContext
     virtual void SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) = 0;
 
     /**
+     * @brief Set the stream output target buffers
      * @param Buffers ArrayView of stream output target buffers
      * @param Offsets Per-buffer byte offsets into each target
      */

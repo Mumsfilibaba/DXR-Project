@@ -1405,7 +1405,7 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
     else
     {
         DstBaseArrayLayer = CopyDesc.DstArraySlice;
-        NumArrayLayers    = Math::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
+        NumArrayLayers    = Math::Max(CopyDesc.NumArraySlices, NumArrayLayers);
     }
 
     // Flush barriers
