@@ -363,4 +363,21 @@ public:
         const uint32 LargestDim   = Max(Width, Max(Height, DepthClamped));
         return MipCountFromDimension(LargestDim);
     }
+
+    /** @brief Computes the number of mip levels where both Width and Height remain >= MinSize. Returns 0 if the base dimensions are already below MinSize. */
+    static FORCEINLINE uint32 MipCountAboveMinSize(uint32 Width, uint32 Height, uint32 MinSize)
+    {
+        if (Width == 0 || Height == 0 || MinSize == 0)
+        {
+            return 0;
+        }
+
+        const uint32 SmallestDim = Min(Width, Height);
+        if (SmallestDim < MinSize)
+        {
+            return 0;
+        }
+
+        return MipCountFromDimension(SmallestDim / MinSize);
+    }
 };

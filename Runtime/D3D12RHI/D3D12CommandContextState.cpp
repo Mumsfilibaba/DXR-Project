@@ -780,7 +780,7 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     {
         FMemory::Memcpy(&GraphicsState.VertexBufferCache.VertexBuffers[VertexBufferSlot], &CurrentVBV, sizeof(D3D12_VERTEX_BUFFER_VIEW));
 
-        const uint8 NumVertexBuffers =  Math::Max(GraphicsState.VertexBufferCache.NumVertexBuffers, VertexBufferSlot + 1);
+        const uint8 NumVertexBuffers = uint8(Math::Max<uint32>(GraphicsState.VertexBufferCache.NumVertexBuffers, VertexBufferSlot + 1));
         GraphicsState.VertexBufferCache.NumVertexBuffers = NumVertexBuffers;
         GraphicsState.bBindVertexBuffers       = true;
     }

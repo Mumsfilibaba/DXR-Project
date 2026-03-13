@@ -616,7 +616,7 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
     const int32 SpecularIrradianceMiplevels = DstCubeMap->GetNumMipLevels();
     for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        FRHIUnorderedAccessViewInfo UAVInfo = FRHIUnorderedAccessViewInfo::CreateTextureUAV(DstCubeMap, DstCubeMap->GetFormat(), MipLevel, 0, 1);
+        FRHIUnorderedAccessViewInfo UAVInfo = FRHIUnorderedAccessViewInfo::CreateTextureUAV(DstCubeMap, DstCubeMap->GetFormat(), uint8(MipLevel), 0, 1);
 
         FRHIUnorderedAccessViewRef UAV = FRHI::Get()->CreateUnorderedAccessView(UAVInfo);
         if (UAV)
