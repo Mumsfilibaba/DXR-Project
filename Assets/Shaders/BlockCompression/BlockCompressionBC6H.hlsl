@@ -2,7 +2,7 @@
 
 // Modified version of: https://github.com/knarkowicz/GPURealTimeBC6H/blob/master/bin/compress.hlsl
 
-// "loop control variable conflicts with A previous declaration in the outer scope"
+// "loop control variable conflicts with a previous declaration in the outer scope"
 #pragma warning(disable : 3078)
 
 // Whether to use P2 modes (4 endpoints) for compression. Slow, but improves quality.
@@ -35,6 +35,10 @@ TEXTURE_FORMAT_UNKNOWN RWTexture2DArray<uint4> OutputTexture : register(u0);
 Texture2D<float4> SourceTexture : register(t0);
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<uint4> OutputTexture : register(u0);
 #endif
+
+// ------------------------------------------------------------------------------------------------
+// Cube Map Helpers
+// ------------------------------------------------------------------------------------------------
 
 float3 TexCoordToCubeMapDir(in float2 TexCoord, in uint FaceIndex)
 {
@@ -70,13 +74,16 @@ float3 TexCoordToCubeMapDir(in float2 TexCoord, in uint FaceIndex)
 	}
 }
 
-// TODO: This could def. be a static sampler
 SamplerState PointSampler : register(s0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
 	uint2  TextureSizeInBlocks;
 	float2 TextureSizeRcp;
 SHADER_CONSTANT_BLOCK_END
+
+// ------------------------------------------------------------------------------------------------
+// Utility Functions
+// ------------------------------------------------------------------------------------------------
 
 float CalcMSLE(float3 A, float3 B)
 {
@@ -198,7 +205,10 @@ void SignExtend(inout float3 V1, uint Mask, uint SignFlag)
 	V1 = V;
 }
 
-// Refine endpoints by insetting bounding box in log2 RGB space
+// ------------------------------------------------------------------------------------------------
+// Endpoint Optimization
+// ------------------------------------------------------------------------------------------------
+
 void InsetColorBBoxP1(float3 Texels[16], inout float3 BlockMin, inout float3 BlockMax)
 {
 	float3 RefinedBlockMin = BlockMax;
@@ -324,12 +334,12 @@ void OptimizeEndpointsP2(float3 Texels[16], uint PatternIndex, uint PatternSelec
 
 			float3 TexelF16 = f32tof16(Texels[i].xyz);
 			AlphaTexelSum += Alpha * TexelF16;
-			BetaTexelSum  += Beta * TexelF16;
+			BetaTexelSum  += Beta  * TexelF16;
 
 			AlphaBetaSum += Alpha * Beta;
 
 			AlphaSqSum += Alpha * Alpha;
-			BetaSqSum  += Beta * Beta;
+			BetaSqSum  += Beta  * Beta;
 		}
 	}
 
@@ -341,6 +351,10 @@ void OptimizeEndpointsP2(float3 Texels[16], uint PatternIndex, uint PatternSelec
 		BlockMax = f16tof32(clamp(DetRcp * (BetaTexelSum * AlphaSqSum - AlphaTexelSum * AlphaBetaSum), 0.0, HALF_MAX));
 	}
 }
+
+// ------------------------------------------------------------------------------------------------
+// P1 Encoding (single partition, mode 11: 10-bit endpoints, 4-bit indices)
+// ------------------------------------------------------------------------------------------------
 
 void EncodeP1(inout uint4 Block, inout float BlockMSLE, float3 Texels[16])
 {
@@ -373,7 +387,7 @@ void EncodeP1(inout uint4 Block, inout float BlockMSLE, float3 Texels[16])
 
 	// Check if endpoint swap is required
 	float FixupTexelPos = f32tof16(dot(Texels[0], BlockDir));
-	uint FixupIndex = ComputeIndex4(FixupTexelPos, EndPoint0Pos, EndPoint1Pos);
+	uint  FixupIndex    = ComputeIndex4(FixupTexelPos, EndPoint0Pos, EndPoint1Pos);
 	if (FixupIndex > 7)
 	{
 		Swap(EndPoint0Pos, EndPoint1Pos);
@@ -396,9 +410,9 @@ void EncodeP1(inout uint4 Block, inout float BlockMSLE, float3 Texels[16])
 	for (uint i = 0; i < 16; ++i)
 	{
 		float Weight = floor((Indices[i] * 64.0) / 15.0 + 0.5);
-		float3 texelUnc = FinishUnquantize(Endpoint0Unq, Endpoint1Unq, Weight);
+		float3 TexelUnc = FinishUnquantize(Endpoint0Unq, Endpoint1Unq, Weight);
 
-		MSLE += CalcMSLE(Texels[i], texelUnc);
+		MSLE += CalcMSLE(Texels[i], TexelUnc);
 	}
 
 	// Encode Block for mode 11
@@ -433,6 +447,10 @@ void EncodeP1(inout uint4 Block, inout float BlockMSLE, float3 Texels[16])
 	Block.w |= Indices[14] << 24;
 	Block.w |= Indices[15] << 28;
 }
+
+// ------------------------------------------------------------------------------------------------
+// P2 Encoding (two partitions, modes 7.6 and 9.5: 3-bit indices)
+// ------------------------------------------------------------------------------------------------
 
 float DistToLineSq(float3 PointOnLine, float3 LineDirection, float3 Point)
 {
@@ -507,7 +525,7 @@ void EncodeP2Pattern(inout uint4 Block, inout float BlockMSLE, int PatternIndex,
 	}
 
 #if INSET_COLOR_BBOX
-	// Disabled because it was A negligible quality increase
+	// Disabled because it was a negligible quality increase
 	//InsetColorBBoxP2(Texels, PatternIndex, 0, P0BlockMin, P0BlockMax);
 	//InsetColorBBoxP2(Texels, PatternIndex, 1, P1BlockMin, P1BlockMax);
 #endif
@@ -537,6 +555,7 @@ void EncodeP2Pattern(inout uint4 Block, inout float BlockMSLE, int PatternIndex,
 		Swap(P0Endpoint0Pos, P0Endpoint1Pos);
 		Swap(P0BlockMin, P0BlockMax);
 	}
+
 	if (P1FixupIndex > 3)
 	{
 		Swap(P1Endpoint0Pos, P1Endpoint1Pos);
@@ -604,11 +623,11 @@ void EncodeP2Pattern(inout uint4 Block, inout float BlockMSLE, int PatternIndex,
 		float3 Tmp951Unq = PaletteID == 0 ? Endpoint951Unq : Endpoint953Unq;
 
 		float  Weight     = floor((Indices[i] * 64.0) / 7.0 + 0.5);
-		float3 texelUnc76 = FinishUnquantize(Tmp760Unq, Tmp761Unq, Weight);
-		float3 texelUnc95 = FinishUnquantize(Tmp950Unq, Tmp951Unq, Weight);
+		float3 TexelUnc76 = FinishUnquantize(Tmp760Unq, Tmp761Unq, Weight);
+		float3 TexelUnc95 = FinishUnquantize(Tmp950Unq, Tmp951Unq, Weight);
 
-		Msle76 += CalcMSLE(Texels[i], texelUnc76);
-		Msle95 += CalcMSLE(Texels[i], texelUnc95);
+		Msle76 += CalcMSLE(Texels[i], TexelUnc76);
+		Msle95 += CalcMSLE(Texels[i], TexelUnc95);
 	}
 
 	SignExtend(Endpoint761, 0x1F, 0x20);
@@ -745,6 +764,10 @@ void EncodeP2Pattern(inout uint4 Block, inout float BlockMSLE, int PatternIndex,
 	}
 }
 
+// ------------------------------------------------------------------------------------------------
+// Entry Point
+// ------------------------------------------------------------------------------------------------
+
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(uint3 GroupID : SV_GroupID, uint3 DispatchThreadID : SV_DispatchThreadID, uint3 GroupThreadID : SV_GroupThreadID)
 {
@@ -806,7 +829,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 DispatchThreadID : SV_DispatchThread
 		EncodeP1(Block, BlockMSLE, Texels);
 
 	#if ENCODE_P2
-		// First find Pattern which is A best fit for A current Block
+		// Find the pattern which is the best fit for the current block
 		float BestScore   = EvaluateP2Pattern(0, Texels);
 		uint  BestPattern = 0;
 		for (uint PatternIndex = 1; PatternIndex < 32; ++PatternIndex)

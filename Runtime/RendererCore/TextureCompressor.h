@@ -1,6 +1,8 @@
 #pragma once
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
+#include "RHI/RHIBuffer.h"
+#include "RHI/RHIResourceViews.h"
 
 class RENDERERCORE_API FTextureCompressor
 {
@@ -28,12 +30,16 @@ public:
     bool CompressBC6(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture);
     bool CompressBC6(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture);
 
+    bool CompressBC7(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture);
+    bool CompressBC7(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture);
+
     bool CompressCubeMapBC6(const FRHITextureRef& SrcCubeMap, FRHITextureRef& OutCubeMap);
     bool CompressCubeMapBC6(FRHICommandList& CommandList, const FRHITextureRef& SrcCubeMap, FRHITextureRef& OutCubeMap);
 
 private:
     bool InitializeBC1ToBC5();
     bool InitializeBC6H();
+    bool InitializeBC7();
 
     bool CompressSinglePass64(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture, 
         FRHIComputeShader* Shader, FRHIComputePipelineState* PSO, EFormat OutputFormat);
@@ -58,6 +64,15 @@ private:
     FRHIComputePipelineStateRef BC6HCompressionPSO;
     FRHIComputeShaderRef        BC6HCompressionCubeShader;
     FRHIComputePipelineStateRef BC6HCompressionCubePSO;
+
+    FRHIComputeShaderRef        BC7TryMode456Shader;
+    FRHIComputePipelineStateRef BC7TryMode456PSO;
+    FRHIComputeShaderRef        BC7TryMode137Shader;
+    FRHIComputePipelineStateRef BC7TryMode137PSO;
+    FRHIComputeShaderRef        BC7TryMode02Shader;
+    FRHIComputePipelineStateRef BC7TryMode02PSO;
+    FRHIComputeShaderRef        BC7EncodeBlockShader;
+    FRHIComputePipelineStateRef BC7EncodeBlockPSO;
 
     FRHISamplerStateRef         PointSampler;
 };

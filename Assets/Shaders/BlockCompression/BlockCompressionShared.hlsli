@@ -16,9 +16,9 @@ SHADER_CONSTANT_BLOCK_BEGIN
 	float2 TextureSizeRcp;
 SHADER_CONSTANT_BLOCK_END
 
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 // Texel Gathering
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 
 struct FGatherUVs
 {
@@ -42,7 +42,10 @@ FGatherUVs ComputeGatherUVs(uint2 BlockCoord)
 
 void GatherChannel(Texture2D<float4> Tex, FGatherUVs UVs, uint ChannelMask, out float Values[16])
 {
-	float4 B0, B1, B2, B3;
+	float4 B0;
+	float4 B1;
+	float4 B2;
+	float4 B3;
 
 	if (ChannelMask == 0)
 	{
@@ -118,14 +121,14 @@ void GatherRGB(Texture2D<float4> Tex, FGatherUVs UVs, out float3 Texels[16])
 	Texels[15] = float3(B3R.y, B3G.y, B3B.y);
 }
 
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 // BC4: Single-channel block encoding (64 bits)
 //
 // Layout: [endpoint0:8][endpoint1:8][16 x 3-bit indices : 48 bits]
 // When endpoint0 > endpoint1: 8-value palette (6 interpolated + 2 endpoints)
 // When endpoint0 <= endpoint1: 6-value palette (4 interpolated + 0.0 + 1.0)
 // We always use the 8-value mode for best quality on continuous data.
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 
 uint2 EncodeBC4Block(float Texels[16])
 {
@@ -144,57 +147,37 @@ uint2 EncodeBC4Block(float Texels[16])
 
 	if (Endpoint0 == Endpoint1)
 	{
-		// All texels same value, indices all zero
 		return uint2(Endpoint0 | (Endpoint1 << 8), 0);
 	}
 
-	// Ensure 8-value mode: endpoint0 > endpoint1
 	if (Endpoint0 < Endpoint1)
 	{
 		uint Temp = Endpoint0;
 		Endpoint0 = Endpoint1;
 		Endpoint1 = Temp;
-
-		float TempF = BlockMax;
-		BlockMax = BlockMin;
-		BlockMin = TempF;
 	}
 
-	// Compute palette (8 values)
-	float Palette[8];
-	Palette[0] = BlockMax;
-	Palette[1] = BlockMin;
-	Palette[2] = (6.0 * BlockMax + 1.0 * BlockMin) / 7.0;
-	Palette[3] = (5.0 * BlockMax + 2.0 * BlockMin) / 7.0;
-	Palette[4] = (4.0 * BlockMax + 3.0 * BlockMin) / 7.0;
-	Palette[5] = (3.0 * BlockMax + 4.0 * BlockMin) / 7.0;
-	Palette[6] = (2.0 * BlockMax + 5.0 * BlockMin) / 7.0;
-	Palette[7] = (1.0 * BlockMax + 6.0 * BlockMin) / 7.0;
+	// Reconstruct quantized endpoints for projection
+	float MaxVal = Endpoint0 / 255.0;
+	float MinVal = Endpoint1 / 255.0;
 
-	// Find best index for each texel
+	// Project texels onto the endpoint line to determine indices.
+	// Natural index: 0 = MaxVal (endpoint0), 7 = MinVal (endpoint1)
+	float Step = 7.0 / (MaxVal - MinVal);
+
 	uint Indices[16];
 
 	[unroll]
 	for (uint i = 0; i < 16; i++)
 	{
-		float BestDist = abs(Texels[i] - Palette[0]);
-		Indices[i] = 0;
+		float Projected = clamp(Step * (MaxVal - Texels[i]), 0.0, 7.0);
+		uint  Index     = uint(round(Projected));
 
-		[unroll]
-		for (uint j = 1; j < 8; j++)
-		{
-			float Dist = abs(Texels[i] - Palette[j]);
-			if (Dist < BestDist)
-			{
-				BestDist = Dist;
-				Indices[i] = j;
-			}
-		}
+		// BC4 palette order: 0=ep0, 1=ep1, 2..7=6/7 to 1/7 interpolated
+		// Remap natural 0,1,2,3,4,5,6,7 -> BC4 indices 0,2,3,4,5,6,7,1
+		Indices[i] = Index + (Index > 0) - 7 * (Index == 7);
 	}
 
-	// Pack into uint2 (64 bits)
-	// .x: endpoint0[7:0] | endpoint1[15:8] | indices[0..4] in bits 16-30, low bit of index[5] at bit 31
-	// .y: remaining indices
 	uint2 Block;
 	Block.x = Endpoint0 | (Endpoint1 << 8);
 	Block.x |= (Indices[0]  << 16);
@@ -219,14 +202,14 @@ uint2 EncodeBC4Block(float Texels[16])
 	return Block;
 }
 
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 // BC1: RGB block encoding (64 bits)
 //
 // Layout: [color0:16 R5G6B5][color1:16 R5G6B5][16 x 2-bit indices : 32 bits]
 // When color0 > color1: 4-color mode (2 endpoints + 2 interpolated)
 // When color0 <= color1: 3-color + transparent mode
 // We use 4-color mode (color0 > color1) for opaque compression.
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 
 uint PackR5G6B5(float3 Color)
 {
@@ -246,7 +229,6 @@ float3 UnpackR5G6B5(uint Packed)
 
 uint2 EncodeBC1Block(float3 Texels[16])
 {
-	// Find bounding box
 	float3 BlockMin = Texels[0];
 	float3 BlockMax = Texels[0];
 
@@ -257,72 +239,64 @@ uint2 EncodeBC1Block(float3 Texels[16])
 		BlockMax = max(BlockMax, Texels[i]);
 	}
 
-	// Inset bounding box by 1/16 for better quality
+	// Inset bounding box by 1/16 to reduce RMS error (van Waveren & Castano)
 	float3 Inset = (BlockMax - BlockMin) / 16.0;
 	BlockMin = saturate(BlockMin + Inset);
 	BlockMax = saturate(BlockMax - Inset);
 
-	// Quantize endpoints to R5G6B5
 	uint Color0 = PackR5G6B5(BlockMax);
 	uint Color1 = PackR5G6B5(BlockMin);
 
-	// Ensure 4-color mode: color0 > color1
 	if (Color0 < Color1)
 	{
 		uint Temp = Color0;
 		Color0 = Color1;
 		Color1 = Temp;
 	}
-	else if (Color0 == Color1)
+
+	if (Color0 == Color1)
 	{
-		// All same color, indices all zero
 		return uint2(Color0 | (Color1 << 16), 0);
 	}
 
-	// Reconstruct actual endpoint colors after quantization
 	float3 Ep0 = UnpackR5G6B5(Color0);
 	float3 Ep1 = UnpackR5G6B5(Color1);
 
-	// Build 4-color palette
-	float3 Palette[4];
-	Palette[0] = Ep0;
-	Palette[1] = Ep1;
-	Palette[2] = (2.0 / 3.0) * Ep0 + (1.0 / 3.0) * Ep1;
-	Palette[3] = (1.0 / 3.0) * Ep0 + (2.0 / 3.0) * Ep1;
+	// Project texels onto the endpoint line to determine indices.
+	// Natural index: 0 = Ep0 (color0), 3 = Ep1 (color1)
+	float3 Direction = Ep1 - Ep0;
+	float  Scale     = 3.0 / dot(Direction, Direction);
+	float  Bias      = Scale * (dot(Ep0, Ep0) - dot(Ep0, Ep1));
+	Direction *= Scale;
 
-	// Find best 2-bit index for each texel
 	uint IndexBlock = 0;
 
 	[unroll]
-	for (uint i = 0; i < 16; i++)
+	for (int j = 15; j >= 0; --j)
 	{
-		float3 Diff  = Texels[i] - Palette[0];
-		float BestDist = dot(Diff, Diff);
-		uint BestIdx = 0;
+		float Projected = clamp(dot(Texels[j], Direction) + Bias, 0.0, 3.0);
+		uint  Index     = uint(round(Projected));
 
-		[unroll]
-		for (uint j = 1; j < 4; j++)
+		// BC1 palette order is: 0=color0, 1=color1, 2=2/3+1/3, 3=1/3+2/3
+		// Remap natural 0,1,2,3 -> BC1 indices 0,2,3,1
+		uint Bit0 = Index & 1;
+		uint Bit1 = Index >> 1;
+		IndexBlock |= ((Bit0 ^ Bit1) << 1) | Bit1;
+
+		if (j > 0)
 		{
-			Diff = Texels[i] - Palette[j];
-			float Dist = dot(Diff, Diff);
-			if (Dist < BestDist)
-			{
-				BestDist = Dist;
-				BestIdx = j;
-			}
+			IndexBlock <<= 2;
 		}
-
-		IndexBlock |= (BestIdx << (i * 2));
 	}
 
 	return uint2(Color0 | (Color1 << 16), IndexBlock);
 }
 
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 // BC2: Explicit 4-bit alpha encoding (64 bits for alpha portion)
 //
 // Layout: 16 alpha values x 4 bits = 64 bits = uint2
-// ============================================================================
+// ------------------------------------------------------------------------------------------------
 
 uint2 EncodeBC2AlphaBlock(float Alphas[16])
 {

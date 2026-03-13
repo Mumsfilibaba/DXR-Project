@@ -12,6 +12,24 @@ struct FCompressionBufferHLSL
     FVector2 TextureSizeRcp;
 };
 
+#define BC7_UNORM_FORMAT    98
+#define BC7_THREAD_GROUP    64
+#define BC7_BLOCKS_PER_GROUP_456 4
+#define BC7_BLOCKS_PER_GROUP_137 1
+#define BC7_BLOCKS_PER_GROUP_02  1
+#define BC7_BLOCKS_PER_GROUP_ENC 4
+
+struct FBC7CompressionBufferHLSL
+{
+    uint32 TexWidth;
+    uint32 NumBlockX;
+    uint32 Format;
+    uint32 ModeId;
+    uint32 StartBlockId;
+    uint32 NumTotalBlocks;
+    float  AlphaWeight;
+};
+
 FTextureCompressor::FTextureCompressor()
     : BC1CompressionShader(nullptr)
     , BC1CompressionPSO(nullptr)
@@ -27,6 +45,14 @@ FTextureCompressor::FTextureCompressor()
     , BC6HCompressionPSO(nullptr)
     , BC6HCompressionCubeShader(nullptr)
     , BC6HCompressionCubePSO(nullptr)
+    , BC7TryMode456Shader(nullptr)
+    , BC7TryMode456PSO(nullptr)
+    , BC7TryMode137Shader(nullptr)
+    , BC7TryMode137PSO(nullptr)
+    , BC7TryMode02Shader(nullptr)
+    , BC7TryMode02PSO(nullptr)
+    , BC7EncodeBlockShader(nullptr)
+    , BC7EncodeBlockPSO(nullptr)
 {
 }
 
@@ -69,6 +95,41 @@ static bool CompileAndCreateShaderPSO(
     return true;
 }
 
+static bool CompileAndCreateShaderPSOEx(
+    const FString& ShaderPath,
+    const FString& EntryPoint,
+    const TArrayView<FShaderDefine>& Defines,
+    FRHIComputeShaderRef& OutShader,
+    FRHIComputePipelineStateRef& OutPSO)
+{
+    TArray<uint8> ShaderCode;
+    FShaderCompileInfo CompileInfo(EntryPoint, EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+    if (!FShaderCompiler::Get().CompileFromFile(ShaderPath, CompileInfo, ShaderCode))
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to compile shader: %s (entry: %s)", *ShaderPath, *EntryPoint);
+        return false;
+    }
+
+    OutShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    if (!OutShader)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create compute shader: %s (entry: %s)", *ShaderPath, *EntryPoint);
+        return false;
+    }
+
+    FRHIComputePipelineStateInfo PSOInfo;
+    PSOInfo.Shader = OutShader.Get();
+
+    OutPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    if (!OutPSO)
+    {
+        LOG_ERROR("[FTextureCompressor] Failed to create PSO: %s (entry: %s)", *ShaderPath, *EntryPoint);
+        return false;
+    }
+
+    return true;
+}
+
 bool FTextureCompressor::Initialize()
 {
     FRHISamplerStateInfo SamplerInfo;
@@ -91,6 +152,11 @@ bool FTextureCompressor::Initialize()
     }
 
     if (!InitializeBC6H())
+    {
+        return false;
+    }
+
+    if (!InitializeBC7())
     {
         return false;
     }
@@ -524,6 +590,211 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
     CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
     CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
     CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+    return true;
+}
+
+bool FTextureCompressor::InitializeBC7()
+{
+    const FString BC7ShaderPath = "Shaders/BlockCompression/BlockCompressionBC7.hlsl";
+
+    TArray<FShaderDefine> NoDefines;
+    if (!CompileAndCreateShaderPSOEx(BC7ShaderPath, "TryMode456CS", NoDefines, BC7TryMode456Shader, BC7TryMode456PSO))
+    {
+        return false;
+    }
+
+    if (!CompileAndCreateShaderPSOEx(BC7ShaderPath, "TryMode137CS", NoDefines, BC7TryMode137Shader, BC7TryMode137PSO))
+    {
+        return false;
+    }
+
+    if (!CompileAndCreateShaderPSOEx(BC7ShaderPath, "TryMode02CS", NoDefines, BC7TryMode02Shader, BC7TryMode02PSO))
+    {
+        return false;
+    }
+
+    TArray<FShaderDefine> EncodeDefines = { { "BC7_ENCODE_ONLY", "(1)" } };
+    if (!CompileAndCreateShaderPSOEx(BC7ShaderPath, "EncodeBlockCS", EncodeDefines, BC7EncodeBlockShader, BC7EncodeBlockPSO))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FTextureCompressor::CompressBC7(const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    FRHICommandList CommandList;
+    if (!CompressBC7(CommandList, SrcTexture, OutTexture))
+    {
+        return false;
+    }
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITextureRef& SrcTexture, FRHITextureRef& OutTexture)
+{
+    const FRHITextureInfo SourceInfo = SrcTexture->GetInfo();
+    if (!IsBlockCompressedAligned(SourceInfo.Extent.X) || !IsBlockCompressedAligned(SourceInfo.Extent.Y))
+    {
+        LOG_ERROR("[FTextureCompressor] BC7: Cannot compress a texture with dimensions that are not a multiple of 4");
+        return false;
+    }
+
+    const int32 BlocksX       = Math::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    const int32 BlocksY       = Math::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
+    const uint32 NumTotalBlocks = static_cast<uint32>(BlocksX * BlocksY);
+
+    // Structured buffers for mode-selection ping-pong (uint4 per block)
+    const uint32 StructuredStride = sizeof(uint32) * 4;
+    const uint64 BufferSize       = static_cast<uint64>(NumTotalBlocks) * StructuredStride;
+
+    FRHIBufferInfo BufInfo;
+    BufInfo.Flags  = EBufferFlags::Default | EBufferFlags::RWBuffer;
+    BufInfo.Stride = StructuredStride;
+    BufInfo.Size   = BufferSize;
+
+    FRHIBufferRef BufA = FRHI::Get()->CreateBuffer(BufInfo, EResourceAccess::UnorderedAccess);
+    FRHIBufferRef BufB = FRHI::Get()->CreateBuffer(BufInfo, EResourceAccess::UnorderedAccess);
+    if (!BufA || !BufB)
+    {
+        LOG_ERROR("[FTextureCompressor] BC7: Failed to create structured buffers for mode selection");
+        return false;
+    }
+
+    // Create SRV/UAV pairs for both buffers
+    FRHIShaderResourceViewInfo SrvInfoA = FRHIShaderResourceViewInfo::CreateBufferSRV(BufA.Get(), 0, NumTotalBlocks);
+    FRHIShaderResourceViewInfo SrvInfoB = FRHIShaderResourceViewInfo::CreateBufferSRV(BufB.Get(), 0, NumTotalBlocks);
+    FRHIUnorderedAccessViewInfo UavInfoA = FRHIUnorderedAccessViewInfo::CreateBufferUAV(BufA.Get(), 0, NumTotalBlocks);
+    FRHIUnorderedAccessViewInfo UavInfoB = FRHIUnorderedAccessViewInfo::CreateBufferUAV(BufB.Get(), 0, NumTotalBlocks);
+
+    FRHIShaderResourceViewRef  SrvA = FRHI::Get()->CreateShaderResourceView(SrvInfoA);
+    FRHIShaderResourceViewRef  SrvB = FRHI::Get()->CreateShaderResourceView(SrvInfoB);
+    FRHIUnorderedAccessViewRef UavA = FRHI::Get()->CreateUnorderedAccessView(UavInfoA);
+    FRHIUnorderedAccessViewRef UavB = FRHI::Get()->CreateUnorderedAccessView(UavInfoB);
+    if (!SrvA || !SrvB || !UavA || !UavB)
+    {
+        LOG_ERROR("[FTextureCompressor] BC7: Failed to create buffer SRV/UAV views");
+        return false;
+    }
+
+    // Temporary texture for EncodeBlockCS output (uint4 per block, reinterpreted as BC7)
+    FRHITextureInfo CompressedTexInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32B32A32_Uint, BlocksX, BlocksY, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureRef CompressedTex = FRHI::Get()->CreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
+    if (!CompressedTex)
+    {
+        LOG_ERROR("[FTextureCompressor] BC7: Failed to create temporary compressed texture");
+        return false;
+    }
+
+    // Final BC7 output texture
+    FRHITextureInfo OutputInfo = FRHITextureInfo::CreateTexture2D(EFormat::BC7_UNorm, SourceInfo.Extent.X, SourceInfo.Extent.Y, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
+    OutTexture = FRHI::Get()->CreateTexture(OutputInfo, EResourceAccess::CopyDest);
+    if (!OutTexture)
+    {
+        LOG_ERROR("[FTextureCompressor] BC7: Failed to create output BC7 texture");
+        return false;
+    }
+
+    CommandList.TransitionTextureState(SrcTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+
+    // Common constants
+    FBC7CompressionBufferHLSL ConstBuffer;
+    ConstBuffer.TexWidth       = static_cast<uint32>(SourceInfo.Extent.X);
+    ConstBuffer.NumBlockX      = static_cast<uint32>(BlocksX);
+    ConstBuffer.Format         = BC7_UNORM_FORMAT;
+    ConstBuffer.ModeId         = 0;
+    ConstBuffer.StartBlockId   = 0;
+    ConstBuffer.NumTotalBlocks = NumTotalBlocks;
+    ConstBuffer.AlphaWeight    = 1.0f;
+    constexpr uint32 NumConstants = sizeof(FBC7CompressionBufferHLSL) / sizeof(uint32);
+
+    auto DispatchTryModePass = [&](FRHIComputeShader* Shader, FRHIComputePipelineState* PSO,
+        FRHIShaderResourceView* InSrv, FRHIUnorderedAccessView* InUav,
+        FRHIBuffer* InBuf, FRHIBuffer* OutBuf,
+        uint32 ModeId, uint32 BlocksPerGroup)
+    {
+        ConstBuffer.ModeId = ModeId;
+
+        CommandList.SetComputePipelineState(PSO);
+        CommandList.SetShaderResourceView(Shader, SrcTexture->GetShaderResourceView(), 0);
+        if (InSrv)
+        {
+            CommandList.SetShaderResourceView(Shader, InSrv, 1);
+        }
+        CommandList.SetUnorderedAccessView(Shader, InUav, 0);
+        CommandList.SetShaderConstants(Shader, &ConstBuffer, NumConstants);
+
+        const uint32 NumGroups = Math::DivideByMultiple(NumTotalBlocks, BlocksPerGroup);
+        CommandList.Dispatch(NumGroups, 1, 1);
+
+        CommandList.UnorderedAccessBufferBarrier(OutBuf);
+        if (InBuf)
+        {
+            CommandList.TransitionBufferState(OutBuf, EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+            CommandList.TransitionBufferState(InBuf, EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+        }
+    };
+
+    // Pass 1: TryMode456CS -> BufA (no input buffer needed)
+    DispatchTryModePass(BC7TryMode456Shader.Get(), BC7TryMode456PSO.Get(),
+        nullptr, UavA.Get(), nullptr, BufA.Get(), 0, BC7_BLOCKS_PER_GROUP_456);
+
+    // Transition BufA from UAV to SRV for next read
+    CommandList.TransitionBufferState(BufA.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+
+    // Pass 2: TryMode137CS (mode=1) BufA -> BufB
+    DispatchTryModePass(BC7TryMode137Shader.Get(), BC7TryMode137PSO.Get(),
+        SrvA.Get(), UavB.Get(), BufA.Get(), BufB.Get(), 1, BC7_BLOCKS_PER_GROUP_137);
+
+    // Pass 3: TryMode137CS (mode=3) BufB -> BufA
+    DispatchTryModePass(BC7TryMode137Shader.Get(), BC7TryMode137PSO.Get(),
+        SrvB.Get(), UavA.Get(), BufB.Get(), BufA.Get(), 3, BC7_BLOCKS_PER_GROUP_137);
+
+    // Pass 4: TryMode137CS (mode=7) BufA -> BufB
+    DispatchTryModePass(BC7TryMode137Shader.Get(), BC7TryMode137PSO.Get(),
+        SrvA.Get(), UavB.Get(), BufA.Get(), BufB.Get(), 7, BC7_BLOCKS_PER_GROUP_137);
+
+    // Pass 5: TryMode02CS (mode=0) BufB -> BufA
+    DispatchTryModePass(BC7TryMode02Shader.Get(), BC7TryMode02PSO.Get(),
+        SrvB.Get(), UavA.Get(), BufB.Get(), BufA.Get(), 0, BC7_BLOCKS_PER_GROUP_02);
+
+    // Pass 6: TryMode02CS (mode=2) BufA -> BufB
+    DispatchTryModePass(BC7TryMode02Shader.Get(), BC7TryMode02PSO.Get(),
+        SrvA.Get(), UavB.Get(), BufA.Get(), BufB.Get(), 2, BC7_BLOCKS_PER_GROUP_02);
+
+    // Pass 7: EncodeBlockCS reads BufB, writes to output texture
+    CommandList.SetComputePipelineState(BC7EncodeBlockPSO.Get());
+    CommandList.SetShaderResourceView(BC7EncodeBlockShader.Get(), SrcTexture->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(BC7EncodeBlockShader.Get(), SrvB.Get(), 1);
+    CommandList.SetUnorderedAccessView(BC7EncodeBlockShader.Get(), CompressedTex->GetUnorderedAccessView(), 0);
+
+    ConstBuffer.ModeId = 0;
+    CommandList.SetShaderConstants(BC7EncodeBlockShader.Get(), &ConstBuffer, NumConstants);
+
+    const uint32 EncodeGroups = Math::DivideByMultiple(NumTotalBlocks, static_cast<uint32>(BC7_BLOCKS_PER_GROUP_ENC));
+    CommandList.Dispatch(EncodeGroups, 1, 1);
+    CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
+
+    // Copy reinterpreted uint4 texture to the BC7 output
+    FTextureCopyInfo CopyDesc;
+    CopyDesc.DstArraySlice = 0;
+    CopyDesc.DstMipSlice   = 0;
+    CopyDesc.DstPosition   = FIntVector3();
+    CopyDesc.SrcArraySlice = 0;
+    CopyDesc.SrcMipSlice   = 0;
+    CopyDesc.SrcPosition   = FIntVector3();
+    CopyDesc.Size.X         = BlocksX;
+    CopyDesc.Size.Y         = BlocksY;
+    CopyDesc.Size.Z         = 1;
+    CopyDesc.NumArraySlices = 1;
+    CopyDesc.NumMipLevels   = 1;
+
+    CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.CopyTextureRegion(OutTexture.Get(), CompressedTex.Get(), CopyDesc);
+    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+
     return true;
 }
 
