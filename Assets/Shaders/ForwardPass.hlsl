@@ -41,31 +41,28 @@ ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5);
 
 // Per Object Buffers
 ConstantBuffer<FTransform> TransformBuffer : register(b1);
-ConstantBuffer<FMaterial>  MaterialBuffer : register(b6);
+ConstantBuffer<FMaterial>  MaterialBuffer  : register(b6);
 
 // Per Frame Samplers
-SamplerState MaterialSampler : register(s0);
-SamplerState LUTSampler : register(s1);
+SamplerState MaterialSampler   : register(s0);
+SamplerState LUTSampler        : register(s1);
 SamplerState IrradianceSampler : register(s2);
 
 SamplerComparisonState ShadowMapSampler0 : register(s3);
 SamplerComparisonState ShadowMapSampler1 : register(s4);
 
 // Per Frame Textures
-TextureCube<float4> IrradianceMap : register(t0);
-TextureCube<float4> SpecularIrradianceMap : register(t1);
-Texture2D<float4> IntegrationLUT : register(t2);
-Texture2D<float> DirLightShadowMaps : register(t3);
-TextureCubeArray<float> PointLightShadowMaps : register(t4);
+TextureCube<float4>     IrradianceMap         : register(t0);
+TextureCube<float4>     SpecularIrradianceMap : register(t1);
+Texture2D<float4>       IntegrationLUT        : register(t2);
+Texture2D<float>        DirLightShadowMaps    : register(t3);
+TextureCubeArray<float> PointLightShadowMaps  : register(t4);
 
 // Per Object Textures
-Texture2D<float4> AlbedoTex : register(t5);
-Texture2D<float4> NormalTex : register(t6);
-Texture2D<float> RoughnessTex : register(t7);
-Texture2D<float> HeightMap : register(t8);
-Texture2D<float> MetallicTex : register(t9);
-Texture2D<float> AOTex : register(t10);
-Texture2D<float> AlphaTex : register(t11);
+Texture2D<float4> AlbedoTex    : register(t5);
+Texture2D<float4> NormalTex    : register(t6);
+Texture2D<float3> MaterialMap  : register(t7);
+Texture2D<float>  HeightMap    : register(t8);
 
 struct FVSInput
 {
@@ -149,10 +146,17 @@ float4 PSMain(FPSInput Input) : SV_Target0
     }
 #endif
 
-    float3 SampledAlbedo = SRGBToLinear(AlbedoTex.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
+    const float4 AlbedoSample = AlbedoTex.Sample(MaterialSampler, TexCoords);
+    if (AlbedoSample.a < 0.5)
+    {
+        discard;
+    }
+
+    float3 SampledAlbedo = SRGBToLinear(AlbedoSample.rgb) * MaterialBuffer.Albedo;
     
     const float3 WorldPosition = Input.WorldPosition;
     const float3 V             = normalize(CameraBuffer.PositionWS - WorldPosition);
+
     float3 N = normalize(Input.Normal);
     if (!Input.bIsFrontFace)
     {
@@ -167,21 +171,18 @@ float4 PSMain(FPSInput Input) : SV_Target0
     float3 Normal    = normalize(N);
     N = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
 
-    const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.AO;
-    const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Metallic;
-    const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
-    const float	SampledAlpha     = AlphaTex.Sample(MaterialSampler, TexCoords);
-    const float Roughness        = SampledRoughness;
-    if (SampledAlpha < 0.5)
-    {
-        discard;
-    }
+    // Sample packed materialparam texture (R=AO, G=Roughness, B=Metallic)
+    const float3 MaterialParams   = MaterialMap.Sample(MaterialSampler, TexCoords);
+    const float  SampledAO        = MaterialParams.r * MaterialBuffer.AO;
+    const float  SampledRoughness = MaterialParams.g * MaterialBuffer.Roughness;
+    const float  SampledMetallic  = MaterialParams.b * MaterialBuffer.Metallic;
+    const float  Roughness        = SampledRoughness;
     
     float3 F0 = 0.04;
     F0 = lerp(F0, SampledAlbedo, SampledMetallic);
 
-    float NDotV = max(dot(N, V), 0.0);
-    float3 L0 = 0.0;
+    float  NDotV = max(dot(N, V), 0.0);
+    float3 L0    = 0.0;
     
     // Pointlights
     for (int i = 0; i < 0; i++)
@@ -241,16 +242,18 @@ float4 PSMain(FPSInput Input) : SV_Target0
     
     // Image Based Lightning
     float3 FinalColor = L0;
+
     {
         const float NDotV = max(dot(N, V), 0.0);
         
         float3 F  = FresnelSchlick_Roughness(F0, V, N, Roughness);
         float3 Ks = F;
         float3 Kd = 1.0 - Ks;
+
         float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, N, 0.0).rgb;
         float3 Diffuse    = Irradiance * SampledAlbedo * Kd;
 
-        float3 R = reflect(-V, N);
+        float3 R               = reflect(-V, N);
         float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, R, Roughness * (7.0 - 1.0)).rgb;
         float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
         float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);

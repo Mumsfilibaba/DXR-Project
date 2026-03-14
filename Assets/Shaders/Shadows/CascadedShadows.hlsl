@@ -2,9 +2,6 @@
 #include "../Constants.hlsli"
 #include "CascadeStructs.hlsli"
 
-#ifndef ENABLE_PACKED_MATERIAL_TEXTURE
-    #define ENABLE_PACKED_MATERIAL_TEXTURE 0
-#endif
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK 0
 #endif
@@ -60,11 +57,7 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
     SamplerState MaterialSampler : register(s0);
     // Material Textures
     #if ENABLE_ALPHA_MASK
-        #if ENABLE_PACKED_MATERIAL_TEXTURE
-            Texture2D<float4> AlphaMaskTex : register(t0);
-        #else
-            Texture2D<float> AlphaMaskTex : register(t0);
-        #endif
+        Texture2D<float4> AlbedoAlphaTex : register(t0);
     #endif
 
     #if ENABLE_PARALLAX_MAPPING
@@ -200,11 +193,7 @@ void Cascade_PSMain(FPSCascadeInput Input)
     // TODO: Perform Parallax mapping
 
 #if ENABLE_ALPHA_MASK
-    #if ENABLE_PACKED_MATERIAL_TEXTURE
-        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
-    #else
-        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).r;        
-    #endif
+    const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
 
     [[branch]]
     if (AlphaMask < 0.5f)

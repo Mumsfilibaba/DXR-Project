@@ -349,7 +349,7 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
         MaterialInfo.AmbientOcclusion = CreateInfo.Materials[Index].AmbientFactor;
         MaterialInfo.Metallic         = CreateInfo.Materials[Index].Metallic;
         MaterialInfo.Roughness        = CreateInfo.Materials[Index].Roughness;
-        MaterialInfo.MaterialFlags    = CreateInfo.Materials[Index].MaterialFlags;
+        MaterialInfo.MaterialFlags    = CreateInfo.Materials[Index].MaterialFlags & (EMaterialFlags::EnableHeight | EMaterialFlags::EnableAlpha | EMaterialFlags::EnableNormalMapping | EMaterialFlags::DoubleSided | EMaterialFlags::ForceForwardPass);
         
         if (CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal])
         {
@@ -357,16 +357,59 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
         }
 
         TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(MaterialInfo);
-        Material->AlbedoMap    = GetRHITexture(CreateInfo, EMaterialTexture::Diffuse, Index);
-        Material->AOMap        = GetRHITexture(CreateInfo, EMaterialTexture::AmbientOcclusion, Index);
-        Material->SpecularMap  = GetRHITexture(CreateInfo, EMaterialTexture::Specular, Index);
-        Material->MetallicMap  = GetRHITexture(CreateInfo, EMaterialTexture::Metallic, Index);
-        Material->RoughnessMap = GetRHITexture(CreateInfo, EMaterialTexture::Roughness, Index);
-        Material->AlphaMask    = GetRHITexture(CreateInfo, EMaterialTexture::AlphaMask, Index);
+        Material->AlbedoMap = GetRHITexture(CreateInfo, EMaterialTexture::Diffuse, Index);
+
+        // If a separate AlphaMask texture exists, bake it into AlbedoMap.a
+        const FTexture2DRef& AlphaMaskTex = CreateInfo.Materials[Index].Textures[EMaterialTexture::AlphaMask];
+        if (AlphaMaskTex)
+        {
+            FRHITextureRef AlbedoWithAlpha;
+            if (FTextureFactory::Get().BakeAlphaIntoAlbedo(Material->AlbedoMap, AlphaMaskTex->GetRHITexture(), AlbedoWithAlpha))
+            {
+                Material->AlbedoMap = AlbedoWithAlpha;
+                Material->EnableAlphaMask(true);
+                LOG_INFO("[FModel] Baked separate alpha mask into AlbedoMap.a for material '%s'", *CreateInfo.Materials[Index].Name);
+            }
+        }
 
         if (CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal])
         {
             Material->NormalMap = CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
+        }
+
+        // Determine the MaterialMap (R=AO, G=Roughness, B=Metallic)
+        // If a packed Specular texture exists (from FBX scenes like Sun Temple, Bistro), use it directly.
+        // Otherwise, if separate single-channel textures exist, pack them into a material param texture.
+        const FTexture2DRef& SpecularTex  = CreateInfo.Materials[Index].Textures[EMaterialTexture::Specular];
+        const FTexture2DRef& RoughnessTex = CreateInfo.Materials[Index].Textures[EMaterialTexture::Roughness];
+        const FTexture2DRef& MetallicTex  = CreateInfo.Materials[Index].Textures[EMaterialTexture::Metallic];
+        const FTexture2DRef& AOTex        = CreateInfo.Materials[Index].Textures[EMaterialTexture::AmbientOcclusion];
+
+        if (SpecularTex)
+        {
+            Material->MaterialMap = SpecularTex->GetRHITexture();
+        }
+        else if (RoughnessTex || MetallicTex || AOTex)
+        {
+            FRHITextureRef DefaultWhite   = FEngine::Get()->BaseTexture;
+            FRHITextureRef AOInput        = AOTex ? AOTex->GetRHITexture() : DefaultWhite;
+            FRHITextureRef RoughnessInput = RoughnessTex ? RoughnessTex->GetRHITexture() : DefaultWhite;
+            FRHITextureRef MetallicInput  = MetallicTex ? MetallicTex->GetRHITexture() : DefaultWhite;
+
+            FRHITextureRef PackedMaterial;
+            if (FTextureFactory::Get().PackMaterialParamsTexture(AOInput, RoughnessInput, MetallicInput, PackedMaterial))
+            {
+                Material->MaterialMap = PackedMaterial;
+                LOG_INFO("[FModel] Packed separate AO/Roughness/Metallic into MaterialMap for material '%s'", *CreateInfo.Materials[Index].Name);
+            }
+            else
+            {
+                Material->MaterialMap = FEngine::Get()->BaseTexture;
+            }
+        }
+        else
+        {
+            Material->MaterialMap = FEngine::Get()->BaseTexture;
         }
 
         // Block-compress uncompressed textures for reduced memory usage
@@ -398,25 +441,9 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
             }
         };
 
-        auto TryCompressBC4 = [&](FRHITextureRef& Texture)
-        {
-            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
-            {
-                FRHITextureRef Compressed;
-                if (Compressor.CompressBC4(Texture, Compressed))
-                {
-                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC4", Texture->GetInfo().Extent.X, Texture->GetInfo().Extent.Y, ToString(Texture->GetFormat()));
-                    Texture = Compressed;
-                }
-            }
-        };
-
         TryCompressBC1(Material->AlbedoMap);
         TryCompressBC5(Material->NormalMap);
-        TryCompressBC1(Material->SpecularMap);
-        TryCompressBC4(Material->RoughnessMap);
-        TryCompressBC4(Material->MetallicMap);
-        TryCompressBC4(Material->AOMap);
+        TryCompressBC1(Material->MaterialMap);
 
         Material->Initialize();
         Material->SetName(CreateInfo.Materials[Index].Name);

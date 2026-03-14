@@ -289,10 +289,7 @@ bool FEngine::Init()
     BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
     BaseMaterial->AlbedoMap    = BaseTexture;
     BaseMaterial->NormalMap    = BaseNormal;
-    BaseMaterial->RoughnessMap = BaseTexture;
-    BaseMaterial->AOMap        = BaseTexture;
-    BaseMaterial->MetallicMap  = BaseTexture;
-    BaseMaterial->AlphaMask    = BaseTexture;
+    BaseMaterial->MaterialMap  = BaseTexture;
     BaseMaterial->Initialize();
 
     // Create a new world

@@ -11,10 +11,8 @@ enum class EMaterialFlags : int32
 {
     None                = 0,       // No flags
     EnableHeight        = FLAG(0), // Enable HeightMaps (Parallax Occlusion Mapping)
-    EnableAlpha         = FLAG(1), // Enable Alpha Textures
+    EnableAlpha         = FLAG(1), // Enable Alpha Textures (alpha in AlbedoMap.a)
     EnableNormalMapping = FLAG(2), // Enable Normal Mapping
-    PackedDiffuseAlpha  = FLAG(3), // The alpha and diffuse is stored in the same texture
-    PackedParams        = FLAG(4), // The Roughness, AO, and Metallic is stored in the same texture
     DoubleSided         = FLAG(5), // The Material should be rendered without culling
     ForceForwardPass    = FLAG(6), // This material should be rendered in the ForwardPass
 };
@@ -91,13 +89,10 @@ public:
     
     void SetName(const FString& InName);
 
-    bool HasAlphaMask()          const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableAlpha) != EMaterialFlags::None; }
-    bool HasHeightMap()          const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableHeight) != EMaterialFlags::None; }
-    bool HasNormalMap()          const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableNormalMapping) != EMaterialFlags::None; }
-    bool HasPackedDiffuseAlpha() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::PackedDiffuseAlpha) != EMaterialFlags::None; }
-
-    bool IsDoubleSided()    const { return (MaterialInfo.MaterialFlags & EMaterialFlags::DoubleSided) != EMaterialFlags::None; }
-    bool IsPackedMaterial() const { return (MaterialInfo.MaterialFlags & (EMaterialFlags::PackedDiffuseAlpha | EMaterialFlags::PackedParams)) != EMaterialFlags::None; }
+    bool HasAlphaMask() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableAlpha) != EMaterialFlags::None; }
+    bool HasHeightMap() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableHeight) != EMaterialFlags::None; }
+    bool HasNormalMap() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableNormalMapping) != EMaterialFlags::None; }
+    bool IsDoubleSided() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::DoubleSided) != EMaterialFlags::None; }
     
     bool ShouldRenderInForwardPass() const { return (MaterialInfo.MaterialFlags & EMaterialFlags::ForceForwardPass) != EMaterialFlags::None; }
     bool ShouldRenderInPrePass()     const { return !ShouldRenderInForwardPass(); }
@@ -112,11 +107,6 @@ public:
     FRHIBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
-    }
-
-    FRHIShaderResourceView* GetAlphaMaskSRV() const
-    {
-        return (MaterialInfo.MaterialFlags & EMaterialFlags::PackedDiffuseAlpha) != EMaterialFlags::None ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
     }
 
     EMaterialFlags GetMaterialFlags() const 
@@ -150,14 +140,10 @@ public:
     }
 
 public:
-    FRHITextureRef AlbedoMap;
-    FRHITextureRef NormalMap;
-    FRHITextureRef RoughnessMap;
-    FRHITextureRef HeightMap;
-    FRHITextureRef AOMap;
-    FRHITextureRef SpecularMap;
-    FRHITextureRef MetallicMap;
-    FRHITextureRef AlphaMask;
+    FRHITextureRef AlbedoMap;    // RGB=BaseColor, A=Opacity
+    FRHITextureRef NormalMap;    // Tangent-space normal (BC5)
+    FRHITextureRef MaterialMap;  // R=AO, G=Roughness, B=Metallic (BC1)
+    FRHITextureRef HeightMap;    // Parallax height (BC4)
 
 private:
     FString             Name;

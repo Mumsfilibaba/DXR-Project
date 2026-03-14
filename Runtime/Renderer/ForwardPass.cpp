@@ -184,11 +184,8 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         
         CommandList.SetShaderResourceView(PShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 5);
         CommandList.SetShaderResourceView(PShader.Get(), Material->NormalMap->GetShaderResourceView(), 6);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->RoughnessMap->GetShaderResourceView(), 7);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->MetallicMap->GetShaderResourceView(), 8);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->AOMap->GetShaderResourceView(), 9);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->AlphaMask->GetShaderResourceView(), 10);
-        CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 11);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->MaterialMap->GetShaderResourceView(), 7);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 8);
         
         FRHISamplerState* SamplerState = Material->GetMaterialSampler();
         CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);

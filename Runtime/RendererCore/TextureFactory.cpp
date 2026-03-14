@@ -214,6 +214,56 @@ bool FTextureFactory::CreateResources()
         SpecularCubeMapFilter_PSO->SetDebugName("Specular cube-map filter PSO");
     }
 
+    // Compile "PackMaterialParams" shader
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/PackMaterialParams.hlsl", CompileInfo, Code))
+    {
+        LOG_ERROR("Failed to compile PackMaterialParams shader");
+        return false;
+    }
+
+    PackMaterialParams_CS = FRHI::Get()->CreateComputeShader(Code);
+    if (!PackMaterialParams_CS)
+    {
+        LOG_ERROR("Failed to create PackMaterialParams shader");
+        return false;
+    }
+
+    FRHIComputePipelineStateInfo PackMaterialParams_PSOInfo;
+    PackMaterialParams_PSOInfo.Shader = PackMaterialParams_CS.Get();
+
+    PackMaterialParams_PSO = FRHI::Get()->CreateComputePipelineState(PackMaterialParams_PSOInfo);
+    if (!PackMaterialParams_PSO)
+    {
+        LOG_ERROR("Failed to create PackMaterialParams PSO");
+        return false;
+    }
+
+    // Compile "BakeAlpha" shader
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/BakeAlpha.hlsl", CompileInfo, Code))
+    {
+        LOG_ERROR("Failed to compile BakeAlpha shader");
+        return false;
+    }
+
+    BakeAlpha_CS = FRHI::Get()->CreateComputeShader(Code);
+    if (!BakeAlpha_CS)
+    {
+        LOG_ERROR("Failed to create BakeAlpha shader");
+        return false;
+    }
+
+    FRHIComputePipelineStateInfo BakeAlpha_PSOInfo;
+    BakeAlpha_PSOInfo.Shader = BakeAlpha_CS.Get();
+
+    BakeAlpha_PSO = FRHI::Get()->CreateComputePipelineState(BakeAlpha_PSOInfo);
+    if (!BakeAlpha_PSO)
+    {
+        LOG_ERROR("Failed to create BakeAlpha PSO");
+        return false;
+    }
+
     // Sampler
     FRHISamplerStateInfo LinearSamplerInfo;
     LinearSamplerInfo.AddressU = ESamplerMode::Wrap;
@@ -743,5 +793,192 @@ bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITex
 
     CommandList.TransitionTextureState(DstCubeMap, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
     CommandList.TransitionTextureState(SrcCubeMap, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    return true;
+}
+
+bool FTextureFactory::PackMaterialParamsTexture(const FRHITextureRef& AOTexture, const FRHITextureRef& RoughnessTexture, const FRHITextureRef& MetallicTexture, FRHITextureRef& OutTexture)
+{
+    const FRHITextureRef& SizeRef = AOTexture ? AOTexture : (RoughnessTexture ? RoughnessTexture : MetallicTexture);
+    if (!SizeRef)
+    {
+        LOG_ERROR("[FTextureFactory] PackMaterialParamsTexture: No valid input textures");
+        return false;
+    }
+
+    const uint32 Width  = SizeRef->GetWidth();
+    const uint32 Height = SizeRef->GetHeight();
+
+    FRHITextureInfo TempInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureRef  TempTex  = FRHI::Get()->CreateTexture(TempInfo, EResourceAccess::UnorderedAccess, nullptr);
+    if (!TempTex)
+    {
+        LOG_ERROR("[FTextureFactory] PackMaterialParamsTexture: Failed to create temporary UAV texture");
+        return false;
+    }
+
+    FRHITextureInfo OutputInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
+    OutTexture = FRHI::Get()->CreateTexture(OutputInfo, EResourceAccess::CopyDest, nullptr);
+    if (!OutTexture)
+    {
+        LOG_ERROR("[FTextureFactory] PackMaterialParamsTexture: Failed to create output texture");
+        return false;
+    }
+
+    FRHICommandList CommandList;
+
+    if (AOTexture)
+    {
+        CommandList.RequireTextureState(AOTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    }
+    if (RoughnessTexture)
+    {
+        CommandList.RequireTextureState(RoughnessTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    }
+    if (MetallicTexture)
+    {
+        CommandList.RequireTextureState(MetallicTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    }
+
+    CommandList.SetComputePipelineState(PackMaterialParams_PSO.Get());
+
+    struct FPackMaterialParamsConstants
+    {
+        uint32 TextureSize[2];
+    };
+
+    FPackMaterialParamsConstants PackConstants;
+    PackConstants.TextureSize[0] = Width;
+    PackConstants.TextureSize[1] = Height;
+
+    constexpr uint32 NumPackConstants = sizeof(FPackMaterialParamsConstants) / sizeof(uint32);
+    CommandList.SetShaderConstants(PackMaterialParams_CS.Get(), &PackConstants, NumPackConstants);
+
+    auto SafeGetSRV = [](const FRHITextureRef& Tex) -> FRHIShaderResourceView*
+    {
+        return Tex ? Tex->GetShaderResourceView() : nullptr;
+    };
+
+    CommandList.SetShaderResourceView(PackMaterialParams_CS.Get(), SafeGetSRV(AOTexture), 0);
+    CommandList.SetShaderResourceView(PackMaterialParams_CS.Get(), SafeGetSRV(RoughnessTexture), 1);
+    CommandList.SetShaderResourceView(PackMaterialParams_CS.Get(), SafeGetSRV(MetallicTexture), 2);
+    CommandList.SetUnorderedAccessView(PackMaterialParams_CS.Get(), TempTex->GetUnorderedAccessView(), 0);
+
+    const uint32 ThreadGroupsX = Math::DivideByMultiple(Width, 8u);
+    const uint32 ThreadGroupsY = Math::DivideByMultiple(Height, 8u);
+    CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
+
+    CommandList.UnorderedAccessTextureBarrier(TempTex.Get());
+    CommandList.TransitionTextureState(TempTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+
+    FTextureCopyInfo CopyDesc;
+    CopyDesc.DstArraySlice  = 0;
+    CopyDesc.DstMipSlice    = 0;
+    CopyDesc.DstPosition    = FIntVector3();
+    CopyDesc.SrcArraySlice  = 0;
+    CopyDesc.SrcMipSlice    = 0;
+    CopyDesc.SrcPosition    = FIntVector3();
+    CopyDesc.Size.X         = Width;
+    CopyDesc.Size.Y         = Height;
+    CopyDesc.Size.Z         = 1;
+    CopyDesc.NumArraySlices = 1;
+    CopyDesc.NumMipLevels   = 1;
+
+    CommandList.CopyTextureRegion(OutTexture.Get(), TempTex.Get(), CopyDesc);
+    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+
+    if (AOTexture)
+    {
+        CommandList.RequireTextureState(AOTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    }
+    if (RoughnessTexture)
+    {
+        CommandList.RequireTextureState(RoughnessTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    }
+    if (MetallicTexture)
+    {
+        CommandList.RequireTextureState(MetallicTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    }
+
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureFactory::BakeAlphaIntoAlbedo(const FRHITextureRef& AlbedoTexture, const FRHITextureRef& AlphaTexture, FRHITextureRef& OutTexture)
+{
+    if (!AlbedoTexture || !AlphaTexture)
+    {
+        LOG_ERROR("[FTextureFactory] BakeAlphaIntoAlbedo: Missing input texture");
+        return false;
+    }
+
+    const uint32 Width  = AlbedoTexture->GetWidth();
+    const uint32 Height = AlbedoTexture->GetHeight();
+
+    FRHITextureInfo TempInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureRef  TempTex  = FRHI::Get()->CreateTexture(TempInfo, EResourceAccess::UnorderedAccess, nullptr);
+    if (!TempTex)
+    {
+        LOG_ERROR("[FTextureFactory] BakeAlphaIntoAlbedo: Failed to create temporary UAV texture");
+        return false;
+    }
+
+    FRHITextureInfo OutputInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
+    OutTexture = FRHI::Get()->CreateTexture(OutputInfo, EResourceAccess::CopyDest, nullptr);
+    if (!OutTexture)
+    {
+        LOG_ERROR("[FTextureFactory] BakeAlphaIntoAlbedo: Failed to create output texture");
+        return false;
+    }
+
+    FRHICommandList CommandList;
+
+    CommandList.RequireTextureState(AlbedoTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    CommandList.RequireTextureState(AlphaTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+
+    CommandList.SetComputePipelineState(BakeAlpha_PSO.Get());
+
+    struct FBakeAlphaConstants
+    {
+        uint32 TextureSize[2];
+    };
+
+    FBakeAlphaConstants BakeConstants;
+    BakeConstants.TextureSize[0] = Width;
+    BakeConstants.TextureSize[1] = Height;
+
+    constexpr uint32 NumBakeConstants = sizeof(FBakeAlphaConstants) / sizeof(uint32);
+    CommandList.SetShaderConstants(BakeAlpha_CS.Get(), &BakeConstants, NumBakeConstants);
+
+    CommandList.SetShaderResourceView(BakeAlpha_CS.Get(), AlbedoTexture->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(BakeAlpha_CS.Get(), AlphaTexture->GetShaderResourceView(), 1);
+    CommandList.SetUnorderedAccessView(BakeAlpha_CS.Get(), TempTex->GetUnorderedAccessView(), 0);
+
+    const uint32 ThreadGroupsX = Math::DivideByMultiple(Width, 8u);
+    const uint32 ThreadGroupsY = Math::DivideByMultiple(Height, 8u);
+    CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
+
+    CommandList.UnorderedAccessTextureBarrier(TempTex.Get());
+    CommandList.TransitionTextureState(TempTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+
+    FTextureCopyInfo CopyDesc;
+    CopyDesc.DstArraySlice  = 0;
+    CopyDesc.DstMipSlice    = 0;
+    CopyDesc.DstPosition    = FIntVector3();
+    CopyDesc.SrcArraySlice  = 0;
+    CopyDesc.SrcMipSlice    = 0;
+    CopyDesc.SrcPosition    = FIntVector3();
+    CopyDesc.Size.X         = Width;
+    CopyDesc.Size.Y         = Height;
+    CopyDesc.Size.Z         = 1;
+    CopyDesc.NumArraySlices = 1;
+    CopyDesc.NumMipLevels   = 1;
+
+    CommandList.CopyTextureRegion(OutTexture.Get(), TempTex.Get(), CopyDesc);
+    CommandList.TransitionTextureState(OutTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+
+    CommandList.RequireTextureState(AlbedoTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    CommandList.RequireTextureState(AlphaTexture.Get(), FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     return true;
 }

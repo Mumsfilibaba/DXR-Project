@@ -28,6 +28,30 @@
 #define ENABLE_LIGHT_TEST (0)
 #define ENABLE_SPHERES_TEST (0)
 
+static void TryCompressBC1(FTextureCompressor& Compressor, FRHITextureRef& Texture)
+{
+    if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
+    {
+        FRHITextureRef Compressed;
+        if (Compressor.CompressBC1(Texture, Compressed))
+        {
+            Texture = Compressed;
+        }
+    }
+}
+
+static void TryCompressBC5(FTextureCompressor& Compressor, FRHITextureRef& Texture)
+{
+    if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
+    {
+        FRHITextureRef Compressed;
+        if (Compressor.CompressBC5(Texture, Compressed))
+        {
+            Texture = Compressed;
+        }
+    }
+}
+
 IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
 FSandbox::FSandbox()
@@ -86,10 +110,9 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = Sponza->GetMaterial(Index);
-        if (Material->AlphaMask)
+        if (Material->HasAlphaMask())
         {
-            const EMaterialFlags Flags = EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided;
-            Material->SetMaterialFlags(Flags, true);
+            Material->EnableDoubleSided(true);
         }
     }
 
@@ -131,9 +154,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
                 {
                     TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
                     NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-                    NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-                    NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
-                    NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+                    NewMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
                     NewMaterial->Initialize();
                     NewMaterial->SetName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
@@ -205,9 +226,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
                     NewComponent->Material->AlbedoMap = FEngine::Get()->BaseTexture;
                     NewComponent->Material->NormalMap = FEngine::Get()->BaseNormal;
-                    NewComponent->Material->RoughnessMap = FEngine::Get()->BaseTexture;
-                    NewComponent->Material->AOMap = FEngine::Get()->BaseTexture;
-                    NewComponent->Material->MetallicMap = FEngine::Get()->BaseTexture;
+                    NewComponent->Material->MaterialMap = FEngine::Get()->BaseTexture;
                     NewComponent->Material->Initialize();
 
                     NewActor->AddComponent(NewComponent);
@@ -242,13 +261,19 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
             FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
             FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
 
+            FRHITextureRef PackedMaterial;
+            FTextureFactory::Get().PackMaterialParamsTexture(AOMap->GetRHITexture(), RoughnessMap->GetRHITexture(), MetallicMap->GetRHITexture(), PackedMaterial);
+
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
             NewMaterial->NormalMap    = NormalMap->GetRHITexture();
-            NewMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
             NewMaterial->HeightMap    = HeightMap->GetRHITexture();
-            NewMaterial->AOMap        = AOMap->GetRHITexture();
-            NewMaterial->MetallicMap  = MetallicMap->GetRHITexture();
+            NewMaterial->MaterialMap  = PackedMaterial;
+
+            FTextureCompressor& Compressor = FTextureFactory::Get().GetTextureCompressor();
+            TryCompressBC1(Compressor, NewMaterial->AlbedoMap);
+            TryCompressBC5(Compressor, NewMaterial->NormalMap);
+            TryCompressBC1(Compressor, NewMaterial->MaterialMap);
 
             NewMaterial->Initialize();
             NewMaterial->SetName("GateMaterial");
@@ -282,9 +307,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
-            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+            NewMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("PlaneMaterial");
@@ -318,9 +341,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
-            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+            NewMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("ConeMaterial");
@@ -355,9 +376,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
-            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+            NewMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("TorusMaterial");
@@ -393,9 +412,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
-            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+            NewMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("TeapotMaterial");
@@ -430,9 +447,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         {
             TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-            NewMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-            NewMaterial->AOMap        = FEngine::Get()->BaseTexture;
-            NewMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+            NewMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
             NewMaterial->Initialize();
             NewMaterial->SetName("PyramidMaterial");
@@ -457,6 +472,9 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
         FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
         FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
 
+        FRHITextureRef StreetLightPackedMaterial;
+        FTextureFactory::Get().PackMaterialParamsTexture(FEngine::Get()->BaseTexture, RoughnessMap->GetRHITexture(), MetallicMap->GetRHITexture(), StreetLightPackedMaterial);
+
         MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
@@ -465,10 +483,13 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
         TSharedPtr<FMaterial> StreetLightMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
         StreetLightMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
-        StreetLightMaterial->NormalMap    = NormalMap->GetRHITexture();
-        StreetLightMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
-        StreetLightMaterial->AOMap        = FEngine::Get()->BaseTexture;
-        StreetLightMaterial->MetallicMap  = MetallicMap->GetRHITexture();
+        StreetLightMaterial->NormalMap   = NormalMap->GetRHITexture();
+        StreetLightMaterial->MaterialMap = StreetLightPackedMaterial;
+
+        FTextureCompressor& Compressor = FTextureFactory::Get().GetTextureCompressor();
+        TryCompressBC1(Compressor, StreetLightMaterial->AlbedoMap);
+        TryCompressBC5(Compressor, StreetLightMaterial->NormalMap);
+        TryCompressBC1(Compressor, StreetLightMaterial->MaterialMap);
 
         StreetLightMaterial->Initialize();
         StreetLightMaterial->SetName("StreetLightMaterial");
@@ -505,9 +526,7 @@ bool FSandbox::CreateSponza(FWorld* InWorld)
 
     TSharedPtr<FMaterial> CylinderMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
     CylinderMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-    CylinderMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-    CylinderMaterial->AOMap        = FEngine::Get()->BaseTexture;
-    CylinderMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+    CylinderMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
     CylinderMaterial->Initialize();
     CylinderMaterial->SetName("CylinderMaterial");
@@ -693,14 +712,10 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = BistroInterior->GetMaterial(Index);
-
-        EMaterialFlags Flags = EMaterialFlags::PackedParams;
         if (Material->GetName().Contains("DoubleSided"))
         {
-            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+            Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
-
-        Material->SetMaterialFlags(Flags, true);
     }
 
     BistroInterior->AddToWorld(InWorld);
@@ -715,14 +730,10 @@ bool FSandbox::CreateBistro(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = BistroExterior->GetMaterial(Index);
-
-        EMaterialFlags Flags = EMaterialFlags::PackedParams;
         if (Material->GetName().Contains("DoubleSided"))
         {
-            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+            Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
-
-        Material->SetMaterialFlags(Flags, true);
     }
 
     BistroExterior->AddToWorld(InWorld);
@@ -785,14 +796,10 @@ bool FSandbox::CreateSunTemple(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = SunTemple->GetMaterial(Index);
-
-        EMaterialFlags Flags = EMaterialFlags::PackedParams;
         if (Material->GetName().Contains("DoubleSided"))
         {
-            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+            Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
-
-        Material->SetMaterialFlags(Flags, true);
     }
 
     SunTemple->AddToWorld(InWorld);
@@ -895,14 +902,10 @@ bool FSandbox::CreateEmeraldSquare(FWorld* InWorld)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         const TSharedPtr<FMaterial>& Material = EmeraldSquare_Day->GetMaterial(Index);
-
-        EMaterialFlags Flags = EMaterialFlags::PackedParams;
         if (Material->GetName().Contains("DoubleSided"))
         {
-            Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+            Material->SetMaterialFlags(EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided, true);
         }
-
-        Material->SetMaterialFlags(Flags, true);
     }
 
     EmeraldSquare_Day->AddToWorld(InWorld);
@@ -963,9 +966,7 @@ bool FSandbox::CreateLightSandbox(FWorld* InWorld)
 
     TSharedPtr<FMaterial> BasicMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
     BasicMaterial->AlbedoMap    = FEngine::Get()->BaseTexture;
-    BasicMaterial->RoughnessMap = FEngine::Get()->BaseTexture;
-    BasicMaterial->AOMap        = FEngine::Get()->BaseTexture;
-    BasicMaterial->MetallicMap  = FEngine::Get()->BaseTexture;
+    BasicMaterial->MaterialMap  = FEngine::Get()->BaseTexture;
 
     BasicMaterial->Initialize();
     BasicMaterial->SetName("Basic-Material");

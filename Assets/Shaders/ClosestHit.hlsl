@@ -18,16 +18,6 @@ SamplerState TextureSampler : register(s1);
 StructuredBuffer<FVertex> Vertices : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 ByteAddressBuffer InIndices : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
-//ConstantBuffer<Material> MaterialBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-
-//Texture2D<float4> AlbedoMap    : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> NormalMap    : register(t1, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> RoughnessMap : register(t2, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> HeightMap    : register(t3, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> MetallicMap  : register(t4, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-//Texture2D<float4> AOMap        : register(t5, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
-
-//SamplerState TextureSampler : register(s0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);
 
 [shader("closesthit")]
 void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttributes IntersectionAttributes)
@@ -86,9 +76,10 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
         (TriangleTangent[2] * BarycentricCoords.z);
     Tangent = normalize(Tangent);
 
-    uint TextureIndex = InstanceID();
-    uint AlbedoIndex  = TextureIndex;
-    uint NormalIndex  = TextureIndex + 1;
+    uint TextureIndex  = InstanceID();
+    uint AlbedoIndex   = TextureIndex;
+    uint NormalIndex   = TextureIndex + 1;
+    uint MaterialIndex = TextureIndex + 2;
     
     float3 MappedNormal = MaterialTextures[NormalIndex].SampleLevel(TextureSampler, TexCoords, 0).rgb;
     MappedNormal = UnpackNormal(MappedNormal);
@@ -104,10 +95,11 @@ void ClosestHit(inout RayPayload PayLoad, in BuiltInTriangleIntersectionAttribut
     const float3 LightDir    = normalize(float3(0.0f, 1.0f, 0.0f));
     const float3 ViewDir     = normalize(CameraBuffer.PositionWS - HitPosition);
     
-    //// MaterialProperties
-    const float SampledAO        = 1.0f; //AOMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.AO;
-    const float SampledMetallic  = 1.0f; //MetallicMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.Metallic;
-    const float SampledRoughness = 1.0f; //RoughnessMap.SampleLevel(TextureSampler, TexCoords, 0).r * MaterialBuffer.Roughness;
+    // Sample packed material texture (R=AO, G=Roughness, B=Metallic)
+    const float3 MaterialParams  = MaterialTextures[MaterialIndex].SampleLevel(TextureSampler, TexCoords, 0).rgb;
+    const float SampledAO        = MaterialParams.r;
+    const float SampledRoughness = MaterialParams.g;
+    const float SampledMetallic  = MaterialParams.b;
     const float FinalRoughness   = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
     //float3 ReflectedColor = 0.0;

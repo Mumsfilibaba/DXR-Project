@@ -10,10 +10,6 @@
     #define ENABLE_ALPHA_MASK (0)
 #endif
 
-#ifndef ENABLE_PACKED_MATERIAL_TEXTURE
-    #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
-#endif
-
 #ifndef USE_UNJITTERED_CAMERA
     #define USE_UNJITTERED_CAMERA (0)
 #endif
@@ -29,11 +25,7 @@ ConstantBuffer<FTransform> TransformBuffer : register(b1);
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
     SamplerState MaterialSampler : register(s0);
 #if ENABLE_ALPHA_MASK
-    #if ENABLE_PACKED_MATERIAL_TEXTURE
-        Texture2D<float4> AlbedoAlphaTex : register(t0);
-    #else
-        Texture2D<float> AlphaMaskTex : register(t0);
-    #endif
+    Texture2D<float4> AlbedoAlphaTex : register(t0);
 #endif
 #if ENABLE_PARALLAX_MAPPING
     Texture2D<float> HeightTex : register(t1);
@@ -131,21 +123,12 @@ void PSMain(FPSInput Input)
 #endif
 
 #if ENABLE_ALPHA_MASK
-    #if ENABLE_PACKED_MATERIAL_TEXTURE
-        const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
-        [[branch]]
-        if (AlphaMask < 0.5)
-        {
-            discard;
-        }
-    #else
-        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
-        [[branch]]
-        if (AlphaMask < 0.5)
-        {
-            discard;
-        }
-    #endif
+    const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
+    [[branch]]
+    if (AlphaMask < 0.5)
+    {
+        discard;
+    }
 #endif
 #endif
 }

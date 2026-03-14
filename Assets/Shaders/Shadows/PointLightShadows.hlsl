@@ -1,9 +1,6 @@
 #include "../Structs.hlsli"
 #include "../Constants.hlsli"
 
-#ifndef ENABLE_PACKED_MATERIAL_TEXTURE
-    #define ENABLE_PACKED_MATERIAL_TEXTURE 0
-#endif
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK 0
 #endif
@@ -31,11 +28,7 @@ ConstantBuffer<FTransform> TransformBuffer : register(b1);
     ConstantBuffer<FMaterial> MaterialBuffer : register(b2);
 
     #if ENABLE_ALPHA_MASK
-        #if ENABLE_PACKED_MATERIAL_TEXTURE
-            Texture2D<float4> AlphaMaskTex : register(t0);
-        #else
-            Texture2D<float> AlphaMaskTex : register(t0);
-        #endif
+        Texture2D<float4> AlbedoAlphaTex : register(t0);
     #endif
     #if ENABLE_PARALLAX_MAPPING
         Texture2D<float> HeightMap : register(t1);
@@ -185,11 +178,7 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
     // TODO: Do parallax-mapping
 
 #if ENABLE_ALPHA_MASK 
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
-#else
-    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
-#endif
+    const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
 
     [[branch]]
     if (AlphaMask < 0.5)

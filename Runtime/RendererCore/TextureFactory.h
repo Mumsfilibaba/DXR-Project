@@ -56,6 +56,13 @@ public:
     bool FilterDiffuseCubeMap(FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap);
     bool FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITexture* SrcCubeMap, FRHITexture* DstCubeMap);
 
+    // Packs up to 3 single-channel textures into a single material param texture (R=AO, G=Roughness, B=Metallic).
+    // Any input may be nullptr, in which case the channel defaults to 1.0.
+    bool PackMaterialParamsTexture(const FRHITextureRef& AOTexture, const FRHITextureRef& RoughnessTexture, const FRHITextureRef& MetallicTexture, FRHITextureRef& OutTexture);
+
+    // Combines an Albedo RGB texture and a separate Alpha mask into a single RGBA texture.
+    bool BakeAlphaIntoAlbedo(const FRHITextureRef& AlbedoTexture, const FRHITextureRef& AlphaTexture, FRHITextureRef& OutTexture);
+
     FORCEINLINE FTextureCompressor& GetTextureCompressor() 
     {
         return TextureCompressor;
@@ -86,6 +93,12 @@ private:
     
     FRHIComputePipelineStateRef SpecularCubeMapFilter_PSO;
     FRHIComputeShaderRef        SpecularCubeMapFilter_CS;
+
+    FRHIComputePipelineStateRef PackMaterialParams_PSO;
+    FRHIComputeShaderRef        PackMaterialParams_CS;
+
+    FRHIComputePipelineStateRef BakeAlpha_PSO;
+    FRHIComputeShaderRef        BakeAlpha_CS;
 
     static FTextureFactory* GTextureFactory;
 };

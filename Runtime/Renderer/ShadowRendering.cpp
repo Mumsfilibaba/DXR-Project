@@ -145,15 +145,6 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
         }
 
-        if (Material->HasPackedDiffuseAlpha())
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
-        }
-
         if (Material->HasAlphaMask())
         {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
@@ -512,7 +503,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     
                     if (Material->HasAlphaMask())
                     {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
                     }
                     if (Material->HasHeightMap())
                     {
@@ -625,7 +616,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         if (Material->HasAlphaMask())
                         {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
                         }
                         if (Material->HasHeightMap())
                         {
@@ -841,15 +832,6 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
         }
 
-        if (Material->HasPackedDiffuseAlpha())
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
-        }
-
         if (Material->HasAlphaMask())
         {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
@@ -916,7 +898,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
             }
         }
 
-        const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha();
+        const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask();
         if (bWantPixelShader)
         {
             CompileInfo = FShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
@@ -1250,7 +1232,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 if (Material->HasAlphaMask())
                 {
-                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
                 }
                 if (Material->HasHeightMap())
                 {
@@ -1354,7 +1336,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                     if (Material->HasAlphaMask())
                     {
-                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
                     }
                     if (Material->HasHeightMap())
                     {

@@ -51,15 +51,6 @@ void FEditorNoJitterDepthPass::InitializePipelineState(FMaterial* Material, cons
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
     }
 
-    if (Material->HasPackedDiffuseAlpha())
-    {
-        ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
-    }
-    else
-    {
-        ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
-    }
-
     if (Material->HasAlphaMask())
     {
         ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
@@ -84,7 +75,7 @@ void FEditorNoJitterDepthPass::InitializePipelineState(FMaterial* Material, cons
         return;
     }
 
-    const bool bWantPixelShader = Material->HasHeightMap() || Material->HasPackedDiffuseAlpha() || Material->HasAlphaMask();
+    const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask();
     if (bWantPixelShader)
     {
         CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
@@ -136,7 +127,7 @@ void FEditorNoJitterDepthPass::InitializePipelineState(FMaterial* Material, cons
     {
         NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
     }
-    else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+    else if (Material->HasAlphaMask())
     {
         TArray<FRHIInputElementInfo> InputElements =
         {
@@ -273,14 +264,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
         if (Material->HasAlphaMask())
         {
-            if (Material->IsPackedMaterial())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-            }
-            else
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 0);
-            }
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
         }
 
         if (Material->HasHeightMap())
@@ -303,7 +287,7 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             }
-            else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+            else if (Material->HasAlphaMask())
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
@@ -370,15 +354,6 @@ void FEditorSelectionIDPass::InitializePipelineState(FMaterial* Material, const 
     else
     {
         ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
-    }
-
-    if (Material->HasPackedDiffuseAlpha())
-    {
-        ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
-    }
-    else
-    {
-        ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
     }
 
     if (Material->HasAlphaMask())
@@ -454,7 +429,7 @@ void FEditorSelectionIDPass::InitializePipelineState(FMaterial* Material, const 
     {
         NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
     }
-    else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+    else if (Material->HasAlphaMask())
     {
         TArray<FRHIInputElementInfo> InputElements =
         {
@@ -594,14 +569,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
         if (Material->HasAlphaMask())
         {
-            if (Material->IsPackedMaterial())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-            }
-            else
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 0);
-            }
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
         }
 
         if (Material->HasHeightMap())
@@ -624,7 +592,7 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             }
-            else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+            else if (Material->HasAlphaMask())
             {
                 FRHIBuffer* VertexBuffers[] =
                 {

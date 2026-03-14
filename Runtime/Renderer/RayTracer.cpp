@@ -120,10 +120,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
         uint32 AlbedoIndex = Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->AlbedoMap));
         Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->NormalMap));
-        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->RoughnessMap));
-        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->HeightMap));
-        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->MetallicMap));
-        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->AOMap));
+        Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->MaterialMap));
         Sampler = Material->GetMaterialSampler();
 
         const FMatrix3x4 TinyTransform;// = StaticMesh->Actor->GetTransform().GetTinyMatrix();

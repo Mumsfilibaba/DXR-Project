@@ -13,10 +13,6 @@
     #define ENABLE_NORMAL_MAPPING (0)
 #endif
 
-#ifndef ENABLE_PACKED_MATERIAL_TEXTURE
-    #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
-#endif
-
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK (0)
 #endif
@@ -32,31 +28,16 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 SamplerState MaterialSampler : register(s0);
 
 ConstantBuffer<FTransform> TransformBuffer : register(b1);
-ConstantBuffer<FMaterial>  MaterialBuffer : register(b1);
+ConstantBuffer<FMaterial>  MaterialBuffer  : register(b1);
 
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    Texture2D<float4> AlbedoAlphaMap : register(t0);
+// Unified texture layout: AlbedoMap (RGBA), NormalMap, MaterialMap (R=AO, G=Roughness, B=Metallic), HeightMap
+Texture2D<float4> AlbedoMap   : register(t0);
 #if ENABLE_NORMAL_MAPPING
-    Texture2D<float3> NormalTex : register(t1);
+Texture2D<float3> NormalTex   : register(t1);
 #endif
-    Texture2D<float3> AO_Roughness_Metal_Tex : register(t2);
+Texture2D<float3> MaterialMap : register(t2);
 #if ENABLE_PARALLAX_MAPPING
-    Texture2D<float> HeightTex : register(t3);
-#endif
-#else
-    Texture2D<float3> AlbedoMap : register(t0);
-#if ENABLE_NORMAL_MAPPING
-    Texture2D<float3> NormalTex : register(t1);
-#endif
-    Texture2D<float> RoughnessTex : register(t2);
-    Texture2D<float> MetallicTex : register(t3);
-    Texture2D<float> AOTex : register(t4);
-#if ENABLE_ALPHA_MASK
-    Texture2D<float> AlphaMaskTex : register(t5);
-#endif
-#if ENABLE_PARALLAX_MAPPING
-    Texture2D<float> HeightTex : register(t6);
-#endif
+Texture2D<float>  HeightTex   : register(t3);
 #endif
 
 // VertexShader
@@ -71,16 +52,14 @@ struct FVSInput
 
 struct FVSOutput
 {
-    float3 Normal    : NORMAL0;
-    float3 Tangent   : TANGENT0;
-    float3 Bitangent : BITANGENT0;
-    float2 TexCoord	 : TEXCOORD0;
-
+    float3 Normal           : NORMAL0;
+    float3 Tangent          : TANGENT0;
+    float3 Bitangent        : BITANGENT0;
+    float2 TexCoord	        : TEXCOORD0;
 #if ENABLE_PARALLAX_MAPPING 
     float3 TangentViewPos   : TANGENTVIEWPOS0;
     float3 TangentPosition  : TANGENTPOSITION0;
 #endif
-
     float3 PositionWS       : POSITION0;
     float4 ClipPosition     : POSITION1;
     float4 PrevClipPosition : POSITION2;
@@ -109,6 +88,7 @@ FVSOutput VSMain(FVSInput Input)
     Output.Bitangent        = Bitangent;
     Output.Position         = mul(PositionWS, CameraBuffer.ViewProjection);
     Output.PositionWS       = PositionWS3;
+
     // TODO: Handle moving objects (aka PrevTransform)
     Output.ClipPosition     = Output.Position;
     Output.PrevClipPosition = mul(PositionWS, CameraBuffer.PrevViewProjection);
@@ -127,16 +107,14 @@ FVSOutput VSMain(FVSInput Input)
 
 struct FPSInput
 {
-    float3 Normal    : NORMAL0;
-    float3 Tangent   : TANGENT0;
-    float3 Bitangent : BITANGENT0;
-    float2 TexCoord  : TEXCOORD0;
-
+    float3 Normal           : NORMAL0;
+    float3 Tangent          : TANGENT0;
+    float3 Bitangent        : BITANGENT0;
+    float2 TexCoord         : TEXCOORD0;
 #if ENABLE_PARALLAX_MAPPING
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
+    float3 TangentViewPos   : TANGENTVIEWPOS0;
+    float3 TangentPosition  : TANGENTPOSITION0;
 #endif
-
     float3 PositionWS       : POSITION0;
     float4 ClipPosition     : POSITION1;
     float4 PrevClipPosition : POSITION2;
@@ -172,36 +150,18 @@ FPSOutput PSMain(FPSInput Input)
     }
 #endif
 
-    // If we are using a packed albedo texture, sample it here 
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    const float4 AlbedoAlphaMask = AlbedoAlphaMap.Sample(MaterialSampler, TexCoords);
-#endif
+    // Sample albedo (alpha in .a channel)
+    const float4 AlbedoSample = AlbedoMap.Sample(MaterialSampler, TexCoords);
 
 #if ENABLE_ALPHA_MASK
-    #if ENABLE_PACKED_MATERIAL_TEXTURE
-        [[branch]]
-        if (AlbedoAlphaMask.a < 0.5)
-        {
-            discard;
-        }
-    #else
-        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
-
-        [[branch]]
-        if (AlphaMask < 0.5)
-        {
-            discard;
-        }
-    #endif
+    [[branch]]
+    if (AlbedoSample.a < 0.5)
+    {
+        discard;
+    }
 #endif
 
-    // Sample albedo
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    float3 Albedo = SRGBToLinear(AlbedoAlphaMask.rgb);
-#else
-    float3 Albedo = SRGBToLinear(AlbedoMap.Sample(MaterialSampler, TexCoords));
-#endif
-    Albedo *= MaterialBuffer.Albedo;
+    float3 Albedo = SRGBToLinear(AlbedoSample.rgb) * MaterialBuffer.Albedo;
 
     // Sample normal
 #if ENABLE_NORMAL_MAPPING
@@ -234,21 +194,11 @@ FPSOutput PSMain(FPSInput Input)
     // Pack the normal and prepare for output
     Normal = PackNormal(Normal);
 
-    // Sample material params
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    const float3 AO_Roughness_Metal = AO_Roughness_Metal_Tex.Sample(MaterialSampler, TexCoords);
-    float Occlusion = AO_Roughness_Metal.r;
-    float Roughness = AO_Roughness_Metal.g;
-    float Metallic  = AO_Roughness_Metal.b;
-#else
-    float Occlusion = AOTex.Sample(MaterialSampler, TexCoords);
-    float Metallic  = MetallicTex.Sample(MaterialSampler, TexCoords);
-    float Roughness = RoughnessTex.Sample(MaterialSampler, TexCoords);
-#endif
-
-    Occlusion *= MaterialBuffer.AO;
-    Roughness *= MaterialBuffer.Roughness;
-    Metallic  *= MaterialBuffer.Metallic;
+    // Sample material params from packed materialparam texture (R=AO, G=Roughness, B=Metallic)
+    const float3 MaterialParams = MaterialMap.Sample(MaterialSampler, TexCoords);
+    const float  Occlusion      = MaterialParams.r * MaterialBuffer.AO;
+    float        Roughness      = MaterialParams.g * MaterialBuffer.Roughness;
+    const float  Metallic       = MaterialParams.b * MaterialBuffer.Metallic;
 
     // Specular anti-aliasing
     {

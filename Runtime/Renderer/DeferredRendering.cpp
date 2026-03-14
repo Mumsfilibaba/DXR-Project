@@ -49,15 +49,6 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
         }
 
-        if (Material->HasPackedDiffuseAlpha())
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
-        }
-
         if (Material->HasAlphaMask())
         {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
@@ -82,7 +73,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             return;
         }
 
-        const bool bWantPixelShader = Material->HasHeightMap() || Material->HasPackedDiffuseAlpha() || Material->HasAlphaMask();
+        const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask();
         if (bWantPixelShader)
         {
             CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
@@ -141,7 +132,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         {
             NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
         }
-        else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+        else if (Material->HasAlphaMask())
         {
             TArray<FRHIInputElementInfo> InputElements =
             {
@@ -277,14 +268,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         if (Material->HasAlphaMask())
         {
-            if (Material->IsPackedMaterial())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-            }
-            else
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 0);
-            }
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
         }
 
         if (Material->HasHeightMap())
@@ -306,7 +290,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             }
-            else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
+            else if (Material->HasAlphaMask())
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
@@ -375,15 +359,6 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         else
         {
             ShaderDefines.Emplace("ENABLE_NORMAL_MAPPING", "(0)");
-        }
-
-        if (Material->HasPackedDiffuseAlpha())
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
-        }
-        else
-        {
-            ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
         }
 
         if (Material->HasAlphaMask())
@@ -622,42 +597,19 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         CommandList.SetConstantBuffer(PipelineInstance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-        if (Material->IsPackedMaterial())
+        // Unified texture layout: t0=Albedo, t1=Normal, t2=MaterialMap, t3=Height
+        CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+
+        if (Material->HasNormalMap())
         {
-            // Setup resources after the PipelineState since binding a pipeline invalidates all resources
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-            if (Material->HasNormalMap())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->NormalMap->GetShaderResourceView(), 1);
-            }
-
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->SpecularMap->GetShaderResourceView(), 2);
-
-            if (Material->HasHeightMap())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 3);
-            }
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->NormalMap->GetShaderResourceView(), 1);
         }
-        else
+
+        CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->MaterialMap->GetShaderResourceView(), 2);
+
+        if (Material->HasHeightMap())
         {
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-            if (Material->HasNormalMap())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->NormalMap->GetShaderResourceView(), 1);
-            }
-
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->RoughnessMap->GetShaderResourceView(), 2);
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->MetallicMap->GetShaderResourceView(), 3);
-            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AOMap->GetShaderResourceView(), 4);
-
-            if (Material->HasAlphaMask())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 5);
-            }
-            if (Material->HasHeightMap())
-            {
-                CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 6);
-            }
+            CommandList.SetShaderResourceView(PipelineInstance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 3);
         }
 
         FRHIBuffer* PSConstantBuffers[] =
