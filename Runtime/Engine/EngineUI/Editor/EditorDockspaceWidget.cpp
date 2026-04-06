@@ -7,6 +7,8 @@
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
+#include "Engine/EngineUI/Editor/EditorGPUProfilerWidget.h"
+#include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
@@ -349,6 +351,32 @@ void FEditorDockspaceWidget::DrawMenuBar()
                     else
                     {
                         EditorWidgets::MenuItem("Content Browser", nullptr, false, false);
+                    }
+
+                    if (FEditorGPUProfilerWidget* GPUProfilerWidget = EditorEngine->GetGPUProfilerWidget().Get())
+                    {
+                        bool bVisible = GPUProfilerWidget->IsVisible();
+                        if (EditorWidgets::MenuItem("GPU Profiler", nullptr, bVisible))
+                        {
+                            GPUProfilerWidget->SetVisible(!bVisible);
+                        }
+                    }
+                    else
+                    {
+                        EditorWidgets::MenuItem("GPU Profiler", nullptr, false, false);
+                    }
+
+                    if (FEditorFrameProfilerWidget* FrameProfilerWidget = EditorEngine->GetFrameProfilerWidget().Get())
+                    {
+                        bool bVisible = FrameProfilerWidget->IsVisible();
+                        if (EditorWidgets::MenuItem("Frame Profiler", nullptr, bVisible))
+                        {
+                            FrameProfilerWidget->SetVisible(!bVisible);
+                        }
+                    }
+                    else
+                    {
+                        EditorWidgets::MenuItem("Frame Profiler", nullptr, false, false);
                     }
                 }
 

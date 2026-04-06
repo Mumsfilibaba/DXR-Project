@@ -80,21 +80,26 @@ public:
     virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final;
     virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
-    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const override final;
-    virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
-    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult) override final;
-    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
-    virtual FString GetAdapterName() const override final;
-
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
+    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const override final;
+    virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
+    
+    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final;
+    virtual bool GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode) override final;
+    
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
+    
     virtual void* GetNativeAdapter() override final;
     virtual void* GetNativeDevice() override final;
     virtual void* GetNativeDirectCommandQueue() override final;
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
 
-    void SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQueue);
+    virtual FString GetAdapterName() const override final;
+
+    void FlushDeletionQueue(FVulkanCommands* Commands);
+    void FlushCompletedSubmissions();
 
     FVulkanInstance* GetInstance()
     {
@@ -136,17 +141,15 @@ public:
 #endif
 
 private:
-    void ProcessPendingCommands();
     void TickCoreProgression();
 
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
     {
-        TScopedLock Lock(DeletionQueueCS);
-        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
+        TScopedLock Lock(DeferredObjectsCS);
+        DeferredObjects.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    typedef TQueue<FVulkanCommands*, EQueueType::MPSC>                  FCommandsQueue;
     typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
 
     FVulkanInstance               Instance;
@@ -158,12 +161,10 @@ private:
     FVulkanQueue*                 GraphicsQueue;
     FVulkanQueue*                 PresentQueue;
     FVulkanCommandContext*        GraphicsCommandContext;
-    TArray<FVulkanDeferredObject> DeletionQueue;
-    FCriticalSection              DeletionQueueCS;
-    FCriticalSection              SubmissionCS;
+    TArray<FVulkanDeferredObject> DeferredObjects;
+    FCriticalSection              DeferredObjectsCS;
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;
-    FCommandsQueue                PendingSubmissions;
 #if VULKAN_ENABLE_CRASH_MARKERS
     FVulkanCrashMarkers*          CrashMarkers;
 #endif

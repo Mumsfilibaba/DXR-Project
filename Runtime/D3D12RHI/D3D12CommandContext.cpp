@@ -85,42 +85,42 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
             continue;
         }
 
-        // Case 1: Redundant barrier (A->B then A->B again) => ignore new barrier
+        // Case 1: Redundant barrier (FirstRange->SecondRange then FirstRange->SecondRange again) => ignore new barrier
         D3D12_RESOURCE_TRANSITION_BARRIER& ExistingTransitionBarrier = It->Transition;
         if (ExistingTransitionBarrier.StateBefore == BeforeState && ExistingTransitionBarrier.StateAfter == AfterState)
         {
-#if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-            LOG_INFO("  Redundant barrier A->B kept (SubresourceIndex=%u, %s->%s)", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
-#endif
+        #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+            LOG_INFO("  Redundant barrier FirstRange->SecondRange kept (SubresourceIndex=%u, %s->%s)", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
+        #endif
             return;
         }
 
-        // Case 2: Extend barrier (A->B then B->C) => A->C
+        // Case 2: Extend barrier (FirstRange->SecondRange then SecondRange->C) => FirstRange->C
         if (ExistingTransitionBarrier.StateAfter == BeforeState)
         {
             ExistingTransitionBarrier.StateAfter = AfterState;
-#if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+        #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
             LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter), SubresourceIndex);
-#endif
+        #endif
 
             // If we changed state to the same before- and after-state, remove it
             if (ExistingTransitionBarrier.StateBefore == ExistingTransitionBarrier.StateAfter)
             {
-#if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+            #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
                 LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter));
-#endif
+            #endif
                 Barriers.RemoveAt(It.GetIndex());
             }
 
             return;
         }
 
-        // Case 3: Cancel barrier (A->B then B->A) => remove
+        // Case 3: Cancel barrier (FirstRange->SecondRange then SecondRange->FirstRange) => remove
         if (ExistingTransitionBarrier.StateBefore == AfterState)
         {
-#if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
+        #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
             LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
-#endif
+        #endif
             Barriers.RemoveAt(It.GetIndex());
             return;
         }
@@ -174,6 +174,7 @@ void FD3D12BarrierBatcher::FlushBarriers(FD3D12CommandList& CommandList)
     Barriers.Clear();
 }
 
+
 FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : IRHICommandContext()
     , FD3D12DeviceChild(InDevice)
@@ -181,9 +182,11 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , CommandAllocator(nullptr)
     , Commands(nullptr)
     , ContextState(InDevice, *this)
-    , TimingQueryAllocator(InDevice, *this, EQueryType::Timestamp)
-    , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
+    , TimingQueryAllocator(InDevice, D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
+    , OcclusionQueryAllocator(InDevice, D3D12_QUERY_HEAP_TYPE_OCCLUSION)
+    , PipelineStatsQueryAllocator(InDevice, GetPipelineStatsHeapType())
     , QueueType(InQueueType)
+    , ActiveQueryCount(0)
     , bIsRecording(false)
     , CommandContextCS()
 {
@@ -231,6 +234,8 @@ void FD3D12CommandContext::ObtainCommandList()
             D3D12_ERROR_CRITICAL("Failed to initialize CommandList");
         }
 
+        CommandList->InsertBeginTimestamp(TimingQueryAllocator);
+
         ReopenEventStack();
     }
 
@@ -263,24 +268,76 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
     PendingBarriers.Add(PendingBarrier);
 }
 
-
-void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
+void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator, bool bResolveQueries)
 {
     TRACE_FUNCTION_SCOPE();
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
+    CommandList->InsertEndTimestamp(TimingQueryAllocator);
+
     const uint32 RecordedCommands = CommandList->GetNumCommands();
     if (RecordedCommands > 0)
     {
-        // NOTE: This is fine since using a query requires a command to be issues
-        TimingQueryAllocator.PrepareForNewCommandList();
-        OcclusionQueryAllocator.PrepareForNewCommandList();
-
-        // Ensure that all QueryHeaps are resolved
-        for (FD3D12QueryHeap* QueryHeap : Commands->QueryHeaps)
+        if (bResolveQueries)
         {
-            QueryHeap->ResolveQueries(GetCommandList());
+            TimingQueryAllocator.Reset(Commands->QueryRanges);
+            OcclusionQueryAllocator.Reset(Commands->QueryRanges);
+            PipelineStatsQueryAllocator.Reset(Commands->QueryRanges);
+
+            Commands->Flags |= ED3D12CommandsFlags::ResolveQueries;
+
+            TArray<FD3D12QueryRange>& AllRanges = Commands->QueryRanges;
+
+            AllRanges.SortWithPredicate([](const FD3D12QueryRange& FirstRange, const FD3D12QueryRange& SecondRange)
+            {
+                if (FirstRange.Heap != SecondRange.Heap)
+                {
+                    return reinterpret_cast<uintptr_t>(FirstRange.Heap) < reinterpret_cast<uintptr_t>(SecondRange.Heap);
+                }
+                
+                return FirstRange.StartIndex < SecondRange.StartIndex;
+            });
+
+            for (int32 i = 0; i < AllRanges.Size(); )
+            {
+                const FD3D12QueryRange& Range = AllRanges[i];
+                if (Range.Count <= 0 || !Range.Heap)
+                {
+                    i++;
+                    continue;
+                }
+
+                FD3D12QueryHeap* Heap = Range.Heap;
+
+                int32 MergedStart = Range.StartIndex;
+                int32 MergedEnd   = MergedStart + Range.Count;
+
+                int32 j = i + 1;
+                while (j < AllRanges.Size() && AllRanges[j].Heap == Heap && AllRanges[j].StartIndex <= MergedEnd)
+                {
+                    int32 RangeEnd = AllRanges[j].StartIndex + AllRanges[j].Count;
+                    if (RangeEnd > MergedEnd)
+                    {
+                        MergedEnd = RangeEnd;
+                    }
+
+                    j++;
+                }
+
+                GetCommandList().UpdateResidency(Heap->GetResidencyHandle());
+
+                GetCommandList()->ResolveQueryData(
+                    Heap->GetD3D12QueryHeap(),
+                    GetResolveQueryType(Heap->QueryHeapType),
+                    MergedStart,
+                    MergedEnd - MergedStart,
+                    Heap->GetReadbackResource()->GetD3D12Resource(),
+                    MergedStart * Heap->GetQuerySize()
+                );
+
+                i = j;
+            }
         }
 
         CloseEventStack();
@@ -305,7 +362,11 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
             CommandAllocator = nullptr;
         }
 
-        FD3D12RHI::Get()->SubmitCommands(Commands, true);
+        Commands->PendingQueries = Move(PendingQueries);
+
+        FD3D12RHI::Get()->FlushDeletionQueue(Commands);
+
+        Commands->Queue->SubmitCommands(Commands);
         Commands = nullptr;
     }
     else
@@ -314,13 +375,12 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
         PendingResourceStates.Clear();
     }
 
-    // Ensure that the state will rebind the necessary state when we obtain a new CommandList
     ContextState.ResetStateForNewCommandList();
 }
 
 void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQueue)
 {
-    FinishCommandList(bFlushAllocator);
+    FinishCommandList(bFlushAllocator, false);
 
     if (bWaitForQueue)
     {
@@ -328,13 +388,13 @@ void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQ
         FD3D12Fence& Fence = Queue->GetSubmissionFence();
         Fence.WaitForValue(Fence.GetLastSignaledValue());
     }
-    
+
     ObtainCommandList();
 }
 
 void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, bool bWaitForQueue)
 {
-    FinishCommandList(bFlushAllocator);
+    FinishCommandList(bFlushAllocator, false);
 
     if (bWaitForQueue)
     {
@@ -344,7 +404,6 @@ void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, b
     }
 
     ContextState.ResetState();
-
     ObtainCommandList();
 }
 
@@ -419,7 +478,12 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
 
         FMemory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
 
-        const D3D12_RANGE WrittenRange = { BufferRegion.Offset, BufferRegion.Offset + BufferRegion.Size };
+        const D3D12_RANGE WrittenRange =
+        {
+            BufferRegion.Offset,
+            BufferRegion.Offset + BufferRegion.Size
+        };
+
         Resource->UnmapRange(0, &WrittenRange);
     }
     else
@@ -444,57 +508,68 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     }
 }
 
-void FD3D12CommandContext::BeginQuery(FRHIQuery* Query) 
+void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
 {
-    FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
+    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
     CHECK(D3D12Query != nullptr);
 
-    FD3D12QueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&D3D12Query->Result);
-    if (!QueryAllocation.IsValid())
+    const EQueryType Type = D3D12Query->GetType();
+    if (Type == EQueryType::Occlusion)
+    {
+        OcclusionQueryAllocator.Allocate(D3D12Query->CurrentQuery, D3D12Query->QueryResult, ED3D12QueryType::Occlusion);
+    }
+    else if (Type == EQueryType::PipelineStatistics)
+    {
+        PipelineStatsQueryAllocator.Allocate(D3D12Query->CurrentQuery, D3D12Query->QueryResult, ED3D12QueryType::PipelineStatistics);
+    }
+    else
+    {
+        D3D12_ERROR_CRITICAL("BeginQuery is not supported for this query type");
+        return;
+    }
+
+    if (!D3D12Query->CurrentQuery.IsValid())
     {
         D3D12_ERROR_CRITICAL("Failed to allocate Query");
         return;
     }
 
-    CHECK(QueryAllocation.QueryHeap != nullptr);
-    GetCommandList().UpdateResidency(QueryAllocation.QueryHeap->GetResidencyHandle());
-    GetCommandList()->BeginQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryHeap);
-    D3D12Query->QueryAllocation = QueryAllocation;
+    GetCommandList().BeginQuery(D3D12Query->CurrentQuery);
+    PendingQueries.Add(D3D12Query);
+    
+    ActiveQueryCount++;
 }
 
-void FD3D12CommandContext::EndQuery(FRHIQuery* Query) 
+void FD3D12CommandContext::EndQuery(FRHIQuery* Query)
 {
-    FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
+    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
     CHECK(D3D12Query != nullptr);
 
-    FD3D12QueryAllocation QueryAllocation = D3D12Query->QueryAllocation;
-    if (!QueryAllocation.IsValid())
+    if (!D3D12Query->CurrentQuery.IsValid())
     {
-        D3D12_ERROR_CRITICAL("Failed to allocate Query");
+        D3D12_ERROR_CRITICAL("EndQuery called on query with no allocation");
         return;
     }
 
-    CHECK(QueryAllocation.QueryHeap != nullptr);
-    GetCommandList().UpdateResidency(QueryAllocation.QueryHeap->GetResidencyHandle());
-    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryHeap);
+    ActiveQueryCount--;
+    CHECK(ActiveQueryCount >= 0);
+
+    GetCommandList().EndQuery(D3D12Query->CurrentQuery);
 }
 
 void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
 {
-    FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
+    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
     CHECK(D3D12Query != nullptr);
 
-    FD3D12QueryAllocation QueryAllocation = TimingQueryAllocator.Allocate(&D3D12Query->Result);
-    if (!QueryAllocation.IsValid())
+    if (!TimingQueryAllocator.Allocate(D3D12Query->CurrentQuery, D3D12Query->QueryResult, ED3D12QueryType::Timestamp))
     {
-        D3D12_ERROR_CRITICAL("Failed to allocate Query");
+        D3D12_ERROR_CRITICAL("Failed to allocate timestamp query");
         return;
     }
 
-    CHECK(QueryAllocation.QueryHeap != nullptr);
-    GetCommandList().UpdateResidency(QueryAllocation.QueryHeap->GetResidencyHandle());
-    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_TIMESTAMP, QueryAllocation.IndexInQueryHeap);
-    D3D12Query->QueryAllocation = QueryAllocation;
+    GetCommandList().EndQuery(D3D12Query->CurrentQuery);
+    PendingQueries.Add(D3D12Query);
 }
 
 void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
@@ -952,9 +1027,9 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
         return;
     }
 
-    uint8* WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
-    
+    uint8*       WritePtr = reinterpret_cast<uint8*>(ResourceStorage.GetMappedBaseAddress());
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
+    
     for (uint64 y = 0; y < NumRows; y++)
     {
         FMemory::Memcpy(WritePtr, Source, SrcRowPitch);
@@ -1031,6 +1106,7 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
         for (uint32 y = 0; y < NumRows; y++)
         {
             FMemory::Memcpy(SliceDest, SliceSource, SrcRowPitch);
+
             SliceDest   += PlacedSubresourceFootprint.Footprint.RowPitch;
             SliceSource += SrcRowPitch;
         }
@@ -1186,8 +1262,8 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
     FD3D12Texture* D3D12Source = FD3D12Texture::Cast(Src); 
     CHECK(D3D12Source != nullptr);
 
-    GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
     GetCommandList().UpdateResidency(D3D12Source->GetResource()->GetResidencyHandle());
+    GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
 
     const uint32 BytesPerPixel = GetByteStrideFromFormat(Src->GetFormat());
     if (BytesPerPixel == 0 || IsBlockCompressed(Src->GetFormat()))
@@ -1275,6 +1351,7 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     CHECK(DstResource != nullptr);
 
     const ETextureDimension TextureDimension = Src->GetDimension();
+
     const uint32 NumArraySlices = D3D12CalculateArraySlices(TextureDimension, Src->GetNumArraySlices());
     const uint32 SrcSubresource = D3D12CalculateSubresource(SrcMipLevel, SrcArraySlice, 0, Src->GetNumMipLevels(), NumArraySlices);
 
@@ -1800,6 +1877,11 @@ void FD3D12CommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 
 void FD3D12CommandContext::ConditionalSplitCommandList()
 {
+    if (ActiveQueryCount > 0)
+    {
+        return;
+    }
+
     const uint32 MaxCommands = static_cast<uint32>(CVarMaxCommandsPerCommandList.GetValue());
     if (CommandList->GetNumCommands() >= MaxCommands)
     {
@@ -1834,10 +1916,12 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     GetCommandList().UpdateResidency(D3D12Scene->GetResource()->GetResidencyHandle());
+
     if (D3D12Scene->GetBindingTable())
     {
         GetCommandList().UpdateResidency(D3D12Scene->GetBindingTable()->GetResidencyHandle());
     }
+
     if (D3D12Scene->GetInstanceBuffer())
     {
         GetCommandList().UpdateResidency(D3D12Scene->GetInstanceBuffer()->GetResidencyHandle());
@@ -1845,8 +1929,8 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc = {};
     RayDispatchDesc.RayGenerationShaderRecord = D3D12Scene->GetRayGenShaderRecord();
-    RayDispatchDesc.MissShaderTable           = D3D12Scene->GetMissShaderTable();
     RayDispatchDesc.HitGroupTable             = D3D12Scene->GetHitGroupTable();
+    RayDispatchDesc.MissShaderTable           = D3D12Scene->GetMissShaderTable();
 
     RayDispatchDesc.Width  = Width;
     RayDispatchDesc.Height = Height;
@@ -1862,13 +1946,10 @@ void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FR
 
 void FD3D12CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
-    // Ensure that commands are submitted
     FinishCommandList(true);
 
     FD3D12SwapChain* D3D12SwapChain = static_cast<FD3D12SwapChain*>(SwapChain);
     D3D12SwapChain->Present(bVerticalSync);
-
-    // Start recording again
     ObtainCommandList();
 }
 
@@ -1951,6 +2032,7 @@ void FD3D12CommandContext::CloseEventStack()
     if (D3D12Functions::PIXEndEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
+
         for (int32 i = EventStack.Size() - 1; i >= 0; --i)
         {
             D3D12Functions::PIXEndEventOnCommandList(GraphicsCommandList);
@@ -1965,6 +2047,7 @@ void FD3D12CommandContext::ReopenEventStack()
     if (D3D12Functions::PIXBeginEventOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
+
         for (int32 i = 0; i < EventStack.Size(); ++i)
         {
             D3D12Functions::PIXBeginEventOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *EventStack[i]);
@@ -1972,3 +2055,4 @@ void FD3D12CommandContext::ReopenEventStack()
     }
 #endif
 }
+

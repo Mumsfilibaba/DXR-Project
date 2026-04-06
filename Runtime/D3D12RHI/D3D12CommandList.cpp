@@ -1,5 +1,7 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12CommandList.h"
+#include "D3D12RHI/D3D12Query.h"
+#include "D3D12RHI/D3D12Core.h"
 
 FD3D12CommandAllocator::FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)
@@ -106,6 +108,8 @@ FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
 {
 }
 
+FD3D12CommandList::~FD3D12CommandList() = default;
+
 bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline)
 {
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandList(1, Type, Allocator->GetD3D12Allocator(), InitalPipeline, IID_PPV_ARGS(&CmdList));
@@ -197,8 +201,14 @@ bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAl
 
 bool FD3D12CommandList::Reset(FD3D12CommandAllocator* Allocator)
 {
-    bIsReady = true;
     ResidencySet.Reset();
+    TimestampQueries.Clear();
+    OcclusionQueries.Clear();
+    PipelineStatsQueries.Clear();
+    
+    bIsReady       = true;
+    BeginTimestamp = FD3D12Query();
+    EndTimestamp   = FD3D12Query();
 
     HRESULT Result = CmdList->Reset(Allocator->GetD3D12Allocator(), nullptr);
 #if D3D12_ENABLE_DEVICE_LOST_CHECK
@@ -225,4 +235,55 @@ bool FD3D12CommandList::Close()
 
     NumCommands = 0;
     return SUCCEEDED(Result);
+}
+
+void FD3D12CommandList::InsertBeginTimestamp(FD3D12QueryAllocator& Allocator)
+{
+    if (Allocator.Allocate(BeginTimestamp, nullptr, ED3D12QueryType::CommandListBegin))
+    {
+        EndQuery(BeginTimestamp);
+    }
+}
+
+void FD3D12CommandList::InsertEndTimestamp(FD3D12QueryAllocator& Allocator)
+{
+    if (Allocator.Allocate(EndTimestamp, nullptr, ED3D12QueryType::CommandListEnd))
+    {
+        EndQuery(EndTimestamp);
+    }
+}
+
+void FD3D12CommandList::BeginQuery(const FD3D12Query& Query)
+{
+    FD3D12QueryHeap* Heap = Query.QueryHeap;
+    UpdateResidency(Heap->GetResidencyHandle());
+
+    const D3D12_QUERY_TYPE D3DType = GetResolveQueryType(Heap->QueryHeapType);
+    GetGraphicsCommandList()->BeginQuery(Heap->GetD3D12QueryHeap(), D3DType, Query.QueryIndex);
+
+    if (Heap->QueryHeapType == D3D12_QUERY_HEAP_TYPE_OCCLUSION)
+    {
+        OcclusionQueries.Add(Query);
+    }
+    else
+    {
+        PipelineStatsQueries.Add(Query);
+    }
+}
+
+void FD3D12CommandList::EndQuery(const FD3D12Query& Query)
+{
+    FD3D12QueryHeap* Heap = Query.QueryHeap;
+    UpdateResidency(Heap->GetResidencyHandle());
+
+    if (Heap->QueryHeapType == D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
+    {
+        GetGraphicsCommandList()->EndQuery(Heap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_TIMESTAMP, Query.QueryIndex);
+        TimestampQueries.Add(Query);
+    }
+    else
+    {
+        const D3D12_QUERY_TYPE D3DType = GetResolveQueryType(Heap->QueryHeapType);
+        GetGraphicsCommandList()->EndQuery(Heap->GetD3D12QueryHeap(), D3DType, Query.QueryIndex);
+    }
 }

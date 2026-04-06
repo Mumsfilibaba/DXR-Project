@@ -127,7 +127,7 @@ public:
 
     bool Initialize();
     void ObtainCommandBuffer();
-    void FinishCommandBuffer(bool bFlushPool);
+    void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true, FVulkanFence** OutFence = nullptr);
     void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
 
     bool IsRecording()        const { return ContextPhase >= ECommandContextPhase::Recording; }
@@ -178,8 +178,6 @@ private:
     void ConditionalSplitCommandBuffer();
     void ForceFlushCommandPool();
     
-    FVulkanFence* SubmitCommandBuffer(bool bFlushPool);
-
     void CloseEventStack();
     void ReopenEventStack();
 
@@ -192,7 +190,9 @@ private:
     FVulkanCommands*                               Commands;
     FVulkanQueryAllocator                          TimestampQueryAllocator;
     FVulkanQueryAllocator                          OcclusionQueryAllocator;
+    FVulkanQueryAllocator                          PipelineStatsQueryAllocator;
     FVulkanBarrierBatcher                          BarrierBatcher;
+    TArray<FVulkanQueryRHI*>                       PendingQueries;
     ECommandContextPhase                           ContextPhase;
     FVulkanCommandContextState                     ContextState;
     TArray<FVulkanPendingImageBarrier>             PendingImageBarriers;
@@ -200,8 +200,10 @@ private:
     TMap<FVulkanTexture*, FVulkanImageLayoutState> PendingImageStates;
     TMap<FVulkanBuffer*, FVulkanBufferState>       PendingBufferStates;
     FVulkanTransientDescriptorAllocator*           TransientDescriptorAllocator;
+    int32                                          ActiveQueryCount;
     TArray<FString>                                EventStack;
+    FRHIBeginRenderPassInfo                        SavedRenderPassInfo;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection           CommandContextCS;
+    FCriticalSection CommandContextCS;
 };

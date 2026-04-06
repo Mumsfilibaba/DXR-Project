@@ -15,11 +15,6 @@ static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
     "The number of DescriptorSets that can be created from a DescriptorPool",
     32);
 
-static TAutoConsoleVariable<bool> CVarVulkanUseDescriptorCache(
-    "VulkanRHI.UseDescriptorCache",
-    "Enable descriptor set caching (false = transient per-frame allocation, true = cached)",
-    false);
-
 static TAutoConsoleVariable<int32> CVarVulkanTransientDescriptorSetsPerPool(
     "VulkanRHI.TransientDescriptorSetsPerPool",
     "The number of DescriptorSets per pool when using transient (non-cached) descriptor allocation",
@@ -446,8 +441,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
 
         FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[Index];
 
-        if (GVulkanUseDescriptorCache)
-        {
+        #if VULKAN_USE_DESCRIPTOR_CACHE
             DSBuilder.UpdateHash();
 
             // Must run every draw even when not dirty. The cache hit updates LastUsedFrame,
@@ -459,9 +453,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
                 VULKAN_ERROR_CRITICAL("Failed to find or create DescriptorSet");
                 return;
             }
-        }
-        else
-        {
+        #else
             CHECK(TransientAllocator != nullptr);
 
             if (TransientAllocator->GetDescriptorSetVersion() != DescriptorSetVersion)
@@ -480,7 +472,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
                 VULKAN_ERROR_CRITICAL("Failed to allocate transient DescriptorSet");
                 return;
             }
-        }
+        #endif
     }
 }
 

@@ -2,8 +2,6 @@
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalViews.h"
 #include "MetalRHI/MetalDeviceChild.h"
-#include "MetalRHI/MetalRefCounted.h"
-
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FMetalSwapChain;

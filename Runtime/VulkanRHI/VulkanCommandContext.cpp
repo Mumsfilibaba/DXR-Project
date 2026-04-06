@@ -15,6 +15,11 @@ static TAutoConsoleVariable<int32> CVarMaxCommandsPerCommandBuffer(
     "Number of commands allowed before submitting the current CommandBuffer to the GPU",
     10000);
 
+static TAutoConsoleVariable<bool> CVarTimestampTopOfPipe(
+    "VulkanRHI.TimestampTopOfPipe",
+    "Use top-of-pipe timestamps instead of bottom-of-pipe",
+    false);
+
 #if VULKAN_ENABLE_CRASH_MARKERS
 static TAutoConsoleVariable<int32> CVarVulkanCrashMarkerLevel(
     "VulkanRHI.CrashMarkerLevel",
@@ -132,22 +137,24 @@ void FVulkanBarrierBatcher::FlushBarriers(FVulkanCommandBuffer& CommandBuffer)
     Batches.Clear();
 }
 
+
 FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
     : FVulkanDeviceChild(InDevice)
     , Queue(InQueue)
     , CommandPool(nullptr)
     , CommandBuffer(nullptr)
     , Commands(nullptr)
-    , TimestampQueryAllocator(InDevice, *this, EQueryType::Timestamp)
-    , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
+    , TimestampQueryAllocator(InDevice, VK_QUERY_TYPE_TIMESTAMP)
+    , OcclusionQueryAllocator(InDevice, VK_QUERY_TYPE_OCCLUSION)
+    , PipelineStatsQueryAllocator(InDevice, VK_QUERY_TYPE_PIPELINE_STATISTICS)
     , ContextPhase(ECommandContextPhase::Finished)
     , ContextState(InDevice, *this)
+    , ActiveQueryCount(0)
     , TransientDescriptorAllocator(nullptr)
 {
-    if (!GVulkanUseDescriptorCache)
-    {
-        TransientDescriptorAllocator = new FVulkanTransientDescriptorAllocator(InDevice, InDevice->GetDescriptorPoolManager());
-    }
+#if !VULKAN_USE_DESCRIPTOR_CACHE
+    TransientDescriptorAllocator = new FVulkanTransientDescriptorAllocator(InDevice, InDevice->GetDescriptorPoolManager());
+#endif
 }
 
 FVulkanCommandContext::~FVulkanCommandContext()
@@ -208,6 +215,8 @@ void FVulkanCommandContext::ObtainCommandBuffer()
             VULKAN_ERROR_CRITICAL("Failed to Begin CommandBuffer");
         }
 
+        CommandBuffer->InsertBeginTimestamp(TimestampQueryAllocator);
+
         ReopenEventStack();
     }
 
@@ -226,6 +235,7 @@ FVulkanImageLayoutState& FVulkanCommandContext::RetrievePendingImageState(FVulka
     if (!LocalState.IsInitialized())
     {
         const VkImageCreateInfo& CreateInfo = Texture->GetVkImageCreateInfo();
+
         const uint32 NumSubresources = CreateInfo.arrayLayers * CreateInfo.mipLevels;
         LocalState.Initialize(NumSubresources);
         LocalState.SetImageLayout(VK_IMAGE_LAYOUT_TO_BE_DETERMINED);
@@ -247,18 +257,13 @@ FVulkanBufferState& FVulkanCommandContext::RetrievePendingBufferState(FVulkanBuf
     return LocalState;
 }
 
-
-void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
-{
-    SubmitCommandBuffer(bFlushPool);
-}
-
-FVulkanFence* FVulkanCommandContext::SubmitCommandBuffer(bool bFlushPool)
+void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQueries, FVulkanFence** OutFence)
 {
     CHECK(CommandBuffer != nullptr);
 
-    // Flush barrier before we submit the CommandBuffer
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
+
+    CommandBuffer->InsertEndTimestamp(TimestampQueryAllocator);
 
     const uint32 NumCommands = CommandBuffer->GetNumCommands();
     if (NumCommands == 0)
@@ -268,10 +273,91 @@ FVulkanFence* FVulkanCommandContext::SubmitCommandBuffer(bool bFlushPool)
         PendingImageStates.Clear();
         PendingBufferStates.Clear();
         ContextState.ResetStateForNewCommandBuffer();
-        return nullptr;
+
+        CommandBuffer->End();
+        CommandPool->RecycleBuffer(CommandBuffer);
+        CommandBuffer = nullptr;
+
+        FVulkanFenceManager& FenceManager = GetDevice()->GetFenceManager();
+        FenceManager.RecycleFence(Commands->Fence);
+        Commands->Fence = nullptr;
+        delete Commands;
+        Commands = nullptr;
+
+        if (OutFence)
+        {
+            *OutFence = nullptr;
+        }
+        
+        return;
     }
 
     CloseEventStack();
+
+#if VULKAN_USE_CPU_QUERY_RESOLVE
+    TimestampQueryAllocator.Reset(Commands->QueryRanges);
+    OcclusionQueryAllocator.Reset(Commands->QueryRanges);
+    PipelineStatsQueryAllocator.Reset(Commands->QueryRanges);
+#else
+    if (bResolveQueries)
+    {
+        TimestampQueryAllocator.Reset(Commands->QueryRanges);
+        OcclusionQueryAllocator.Reset(Commands->QueryRanges);
+        PipelineStatsQueryAllocator.Reset(Commands->QueryRanges);
+
+        Commands->Flags |= EVulkanCommandsFlags::ResolveQueries;
+
+        TArray<FVulkanQueryRange>& AllRanges = Commands->QueryRanges;
+
+        AllRanges.SortWithPredicate([](const FVulkanQueryRange& FirstRange, const FVulkanQueryRange& SecondRange)
+        {
+            if (FirstRange.Pool != SecondRange.Pool)
+            {
+                return reinterpret_cast<uintptr_t>(FirstRange.Pool) < reinterpret_cast<uintptr_t>(SecondRange.Pool);
+            }
+
+            return FirstRange.StartIndex < SecondRange.StartIndex;
+        });
+
+        for (int32 i = 0; i < AllRanges.Size(); )
+        {
+            const FVulkanQueryRange& Range = AllRanges[i];
+            if (Range.Count <= 0 || !Range.Pool)
+            {
+                i++;
+                continue;
+            }
+
+            FVulkanQueryPool* Pool = Range.Pool;
+            int32 MergedStart = Range.StartIndex;
+            int32 MergedEnd   = MergedStart + Range.Count;
+
+            int32 j = i + 1;
+            while (j < AllRanges.Size() && AllRanges[j].Pool == Pool && AllRanges[j].StartIndex <= MergedEnd)
+            {
+                int32 RangeEnd = AllRanges[j].StartIndex + AllRanges[j].Count;
+                if (RangeEnd > MergedEnd)
+                {
+                    MergedEnd = RangeEnd;
+                }
+                j++;
+            }
+
+            const uint64 Stride = Pool->GetQuerySize();
+            const VkDeviceSize BaseOffset = Pool->GetReadbackBufferOffset();
+            GetCommandBuffer()->CopyQueryPoolResults(
+                Pool->GetVkQueryPool(),
+                MergedStart,
+                MergedEnd - MergedStart,
+                Pool->GetReadbackBuffer(),
+                BaseOffset + MergedStart * Stride,
+                Stride,
+                VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+
+            i = j;
+        }
+    }
+#endif
 
     if (!CommandBuffer->End())
     {
@@ -297,46 +383,73 @@ FVulkanFence* FVulkanCommandContext::SubmitCommandBuffer(bool bFlushPool)
         CommandPool = nullptr;
     }
 
-    TimestampQueryAllocator.PrepareForNewCommandBuffer();
-    OcclusionQueryAllocator.PrepareForNewCommandBuffer();
+    Commands->PendingQueries = Move(PendingQueries);
 
-    FVulkanFence* SubmittedFence = Commands->Fence;
+    if (OutFence)
+    {
+        *OutFence = Commands->Fence;
+    }
 
-    FVulkanRHI::Get()->SubmitCommands(Commands, true);
+    FVulkanRHI::Get()->FlushDeletionQueue(Commands);
+    Commands->Queue.SubmitCommands(Commands);
     Commands = nullptr;
 
     ContextState.ResetStateForNewCommandBuffer();
-    return SubmittedFence;
 }
 
 void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue)
 {
     if (CommandBuffer)
     {
-#if VULKAN_ENABLE_CRASH_MARKERS
+    #if VULKAN_ENABLE_CRASH_MARKERS
         if (FVulkanRHI::Get()->IsCrashMarkersEnabled() && GetCrashMarkerLevel() >= 1)
         {
             FVulkanRHI::Get()->GetCrashMarkers()->WriteSplitMarker(GetCommandBuffer());
         }
-#endif
+    #endif
 
-        FinishCommandBuffer(bFlushPool);
+        FinishCommandBuffer(bFlushPool, false);
     }
     
     if (bWaitForQueue)
     {
         GetCommandQueue().WaitForCompletion();
     }
-    
+
     ObtainCommandBuffer();
 }
 
 void FVulkanCommandContext::ConditionalSplitCommandBuffer()
 {
+    if (ActiveQueryCount > 0)
+    {
+        return;
+    }
+
     const uint32 MaxCommands = static_cast<uint32>(CVarMaxCommandsPerCommandBuffer.GetValue());
     if (CommandBuffer->GetNumCommands() >= MaxCommands)
     {
+        const bool bWasInsideRenderPass = IsInsideRenderPass();
+        if (bWasInsideRenderPass)
+        {
+            EndRenderPass();
+        }
+
         SplitCommandBuffer(true, false);
+
+        if (bWasInsideRenderPass)
+        {
+            FRHIBeginRenderPassInfo ResumeInfo = SavedRenderPassInfo;
+            for (uint32 i = 0; i < ResumeInfo.NumRenderTargets; i++)
+            {
+                ResumeInfo.RenderTargets[i].LoadAction = EAttachmentLoadAction::Load;
+            }
+            if (ResumeInfo.DepthStencilView.Texture)
+            {
+                ResumeInfo.DepthStencilView.LoadAction = EAttachmentLoadAction::Load;
+            }
+            BeginRenderPass(ResumeInfo);
+        }
     }
 }
 
@@ -445,51 +558,69 @@ void FVulkanCommandContext::FinishContext()
 
 void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
 {
-    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
     CHECK(VulkanQuery != nullptr);
 
-    FVulkanQueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&VulkanQuery->Result);
-    if (!QueryAllocation.IsValid())
+    const EQueryType Type = VulkanQuery->GetType();
+    if (Type == EQueryType::Occlusion)
+    {
+        OcclusionQueryAllocator.Allocate(VulkanQuery->CurrentQuery, VulkanQuery->QueryResult, EVulkanQueryType::Occlusion);
+    }
+    else if (Type == EQueryType::PipelineStatistics)
+    {
+        PipelineStatsQueryAllocator.Allocate(VulkanQuery->CurrentQuery, VulkanQuery->QueryResult, EVulkanQueryType::PipelineStatistics);
+    }
+    else
+    {
+        VULKAN_ERROR_CRITICAL("BeginQuery is not supported for this query type");
+        return;
+    }
+
+    if (!VulkanQuery->CurrentQuery.IsValid())
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate Query");
         return;
     }
 
-    CHECK(QueryAllocation.QueryPool != nullptr);
-    GetCommandBuffer()->BeginQuery(QueryAllocation.QueryPool->GetVkQueryPool(), QueryAllocation.IndexInQueryPool, 0);
-    VulkanQuery->QueryAllocation = QueryAllocation;
+    GetCommandBuffer().BeginQuery(VulkanQuery->CurrentQuery);
+    PendingQueries.Add(VulkanQuery);
+    ActiveQueryCount++;
 }
 
 void FVulkanCommandContext::EndQuery(FRHIQuery* Query)
 {
-    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
     CHECK(VulkanQuery != nullptr);
 
-    if (!VulkanQuery->QueryAllocation.IsValid())
+    if (!VulkanQuery->CurrentQuery.IsValid())
     {
-        VULKAN_ERROR_CRITICAL("No valid QueryAllocation, ensure that RHIBeginQuery was called correctly");
+        VULKAN_ERROR_CRITICAL("No valid query allocation, ensure that RHIBeginQuery was called correctly");
         return;
     }
 
-    CHECK(VulkanQuery->QueryAllocation.QueryPool != nullptr);
-    GetCommandBuffer()->EndQuery(VulkanQuery->QueryAllocation.QueryPool->GetVkQueryPool(), VulkanQuery->QueryAllocation.IndexInQueryPool);
+    ActiveQueryCount--;
+    CHECK(ActiveQueryCount >= 0);
+
+    GetCommandBuffer().EndQuery(VulkanQuery->CurrentQuery);
 }
 
 void FVulkanCommandContext::QueryTimestamp(FRHIQuery* Query)
 {
-    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
     CHECK(VulkanQuery != nullptr);
 
-    FVulkanQueryAllocation QueryAllocation = TimestampQueryAllocator.Allocate(&VulkanQuery->Result);
-    if (!QueryAllocation.IsValid())
+    if (!TimestampQueryAllocator.Allocate(VulkanQuery->CurrentQuery, VulkanQuery->QueryResult, EVulkanQueryType::Timestamp))
     {
-        VULKAN_ERROR_CRITICAL("Failed to allocate Query");
+        VULKAN_ERROR_CRITICAL("Failed to allocate timestamp query");
         return;
     }
 
-    CHECK(QueryAllocation.QueryPool != nullptr);
-    GetCommandBuffer()->WriteTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, QueryAllocation.QueryPool->GetVkQueryPool(), QueryAllocation.IndexInQueryPool);
-    VulkanQuery->QueryAllocation = QueryAllocation;
+    const VkPipelineStageFlagBits PipelineStage = CVarTimestampTopOfPipe.GetValue()
+        ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+        : VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
+    GetCommandBuffer().EndQuery(VulkanQuery->CurrentQuery, PipelineStage);
+    PendingQueries.Add(VulkanQuery);
 }
 
 void FVulkanCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
@@ -672,6 +803,8 @@ void FVulkanCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView
 void FVulkanCommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
     CHECK(ContextPhase == ECommandContextPhase::Recording);
+
+    SavedRenderPassInfo = BeginRenderPassInfo;
 
     if (GVulkanUseDynamicRendering)
     {
@@ -1535,7 +1668,8 @@ void FVulkanCommandContext::WriteFence(FRHIGpuFence* Fence)
             VulkanFence->EnqueueSignal(GetCommandQueue());
         }
 
-        FVulkanFence* SubmittedFence = SubmitCommandBuffer(true);
+        FVulkanFence* SubmittedFence = nullptr;
+        FinishCommandBuffer(true, true, &SubmittedFence);
         if (!VulkanFence->UsesTimeline())
         {
             VulkanFence->SetSubmissionFence(SubmittedFence);
@@ -2026,6 +2160,8 @@ void FVulkanCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 
 void FVulkanCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 {
+    ConditionalSplitCommandBuffer();
+
     CHECK(IsInsideRenderPass());
     CHECK(!BarrierBatcher.HasPendingBarriers());
     
@@ -2042,6 +2178,8 @@ void FVulkanCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
 
 void FVulkanCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
+    ConditionalSplitCommandBuffer();
+
     CHECK(IsInsideRenderPass());
     CHECK(!BarrierBatcher.HasPendingBarriers());
 
@@ -2058,6 +2196,8 @@ void FVulkanCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLoca
 
 void FVulkanCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
+    ConditionalSplitCommandBuffer();
+
     CHECK(IsInsideRenderPass());
     CHECK(!BarrierBatcher.HasPendingBarriers());
 
@@ -2074,6 +2214,8 @@ void FVulkanCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 
 
 void FVulkanCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
+    ConditionalSplitCommandBuffer();
+
     CHECK(IsInsideRenderPass());
     CHECK(!BarrierBatcher.HasPendingBarriers());
 
@@ -2267,3 +2409,4 @@ void FVulkanCommandContext::ReopenEventStack()
     }
 #endif
 }
+

@@ -166,26 +166,15 @@ public:
     {
         return new FNullRHIGraphicsPipelineState();
     }
-
+    
     virtual class FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final
     {
         return new FNullRHIComputePipelineState();
     }
-
+    
     virtual class FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final
     {
         return new FNullRHIRayTracingPipelineState();
-    }
-
-    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult) override final
-    {
-        OutResult = 0;
-        return true;
-    }
-
-    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final
-    {
-        delete Resource;
     }
 
     virtual class FRHIQuery* CreateQuery(EQueryType InQueryType) override final
@@ -203,14 +192,43 @@ public:
         return CommandContext;
     }
 
-    virtual FString GetAdapterName() const override final
-    {
-        return FString("NullRHI Adapter");
-    }
-
     virtual bool QueryUAVFormatSupport(EFormat Format) const override final
     {
         return true;
+    }
+
+    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const override final
+    {
+        OutMemoryStats = {};
+        return false;
+    }
+
+    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final
+    {
+        OutResult = 0;
+        return true;
+    }
+
+    virtual bool GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode) override final
+    {
+        OutResult = {};
+        return true;
+    }
+
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final
+    {
+        delete Resource;
+    }
+
+    virtual void* GetNativeAdapter()             override final { return nullptr; }
+    virtual void* GetNativeDevice()              override final { return nullptr; }
+    virtual void* GetNativeDirectCommandQueue()  override final { return nullptr; }
+    virtual void* GetNativeComputeCommandQueue() override final { return nullptr; }
+    virtual void* GetNativeCopyCommandQueue()    override final { return nullptr; }
+
+    virtual FString GetAdapterName() const override final
+    {
+        return FString("NullRHI Adapter");
     }
 
 private:

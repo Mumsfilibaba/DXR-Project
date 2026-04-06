@@ -2,8 +2,6 @@
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalDeviceContext.h"
 #include "MetalRHI/MetalShader.h"
-#include "MetalRHI/MetalRefCounted.h"
-
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 typedef TSharedRef<class FMetalInputLayout>            FMetalVertexInputLayoutRef;

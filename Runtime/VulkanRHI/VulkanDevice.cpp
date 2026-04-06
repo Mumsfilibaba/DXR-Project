@@ -91,12 +91,6 @@ VULKANRHI_API bool GVulkanSupportsTransformFeedback = false;
 VULKANRHI_API bool GVulkanUseDynamicRendering = true;
 
 // -------------------------------------------------------------------------------------------
-// Descriptor Set Management
-// -------------------------------------------------------------------------------------------
-
-VULKANRHI_API bool GVulkanUseDescriptorCache = true;
-
-// -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
 
@@ -575,10 +569,14 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , FrameFence(nullptr)
     , PipelineLayoutManager(nullptr)
     , PipelineStateManager(nullptr)
+#if VULKAN_USE_DESCRIPTOR_CACHE
     , DescriptorSetCache(nullptr)
+#else
     , DescriptorPoolManager(nullptr)
+#endif
     , TimingQueryPoolManager(nullptr)
     , OcclusionQueryPoolManager(nullptr)
+    , PipelineStatsQueryPoolManager(nullptr)
 #if VULKAN_ENABLE_CRASH_MARKERS
     , bSupportsAMDBufferMarker(false)
     , bSupportsNVDiagnosticCheckpoints(false)
@@ -589,18 +587,17 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
         GVulkanUseDynamicRendering = UseDynamicRenderingVar->GetBool();
     }
 
-    if (IConsoleVariable* UseDescriptorCacheVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDescriptorCache"))
-    {
-        GVulkanUseDescriptorCache = UseDescriptorCacheVar->GetBool();
-    }
-
-    DescriptorSetCache        = new FVulkanDescriptorSetCache(this);
-    DescriptorPoolManager     = GVulkanUseDescriptorCache ? nullptr : new FVulkanDescriptorPoolManager(this);
-    TimingQueryPoolManager    = new FVulkanQueryPoolManager(this, EQueryType::Timestamp);
-    OcclusionQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Occlusion);
-    PipelineLayoutManager     = new FVulkanPipelineLayoutManager(this);
-    FenceManager              = new FVulkanFenceManager(this);
-    RenderPassCache           = new FVulkanRenderPassCache(this);
+#if VULKAN_USE_DESCRIPTOR_CACHE
+    DescriptorSetCache            = new FVulkanDescriptorSetCache(this);
+#else
+    DescriptorPoolManager         = new FVulkanDescriptorPoolManager(this);
+#endif
+    TimingQueryPoolManager        = new FVulkanQueryPoolManager(this, VK_QUERY_TYPE_TIMESTAMP, VULKAN_DEFAULT_QUERY_COUNT);
+    OcclusionQueryPoolManager     = new FVulkanQueryPoolManager(this, VK_QUERY_TYPE_OCCLUSION, VULKAN_DEFAULT_QUERY_COUNT);
+    PipelineStatsQueryPoolManager = new FVulkanQueryPoolManager(this, VK_QUERY_TYPE_PIPELINE_STATISTICS, VULKAN_DEFAULT_QUERY_COUNT);
+    PipelineLayoutManager         = new FVulkanPipelineLayoutManager(this);
+    FenceManager                  = new FVulkanFenceManager(this);
+    RenderPassCache               = new FVulkanRenderPassCache(this);
 }
 
 FVulkanDevice::~FVulkanDevice()
@@ -630,10 +627,14 @@ FVulkanDevice::~FVulkanDevice()
         delete PipelineStateManager;
     }
     
-    SAFE_DELETE(DescriptorPoolManager);
+#if VULKAN_USE_DESCRIPTOR_CACHE
     SAFE_DELETE(DescriptorSetCache);
+#else
+    SAFE_DELETE(DescriptorPoolManager);
+#endif
     SAFE_DELETE(TimingQueryPoolManager);
     SAFE_DELETE(OcclusionQueryPoolManager);
+    SAFE_DELETE(PipelineStatsQueryPoolManager);
     SAFE_DELETE(PipelineLayoutManager);
     SAFE_DELETE(RenderPassCache);
     SAFE_DELETE(FrameFence);
@@ -1096,6 +1097,14 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     RHIDeviceFeatureSupport::bSupportsStreamOutput     = GVulkanSupportsTransformFeedback;
 
     // -------------------------------------------------------------------------------------------
+    // Query Support
+    // -------------------------------------------------------------------------------------------
+
+    RHIDeviceFeatureSupport::bSupportsTimestampQueries           = PhysicalDeviceProperties.limits.timestampComputeAndGraphics ? true : false;
+    RHIDeviceFeatureSupport::bSupportsPipelineStatisticsQueries  = PhysicalDeviceFeatures.pipelineStatisticsQuery ? true : false;
+    RHIDeviceFeatureSupport::bSupportsGPUTimestampBubblesRemoval = true;
+
+    // -------------------------------------------------------------------------------------------
     // View Instancing (multiview)
     // -------------------------------------------------------------------------------------------
 
@@ -1363,23 +1372,38 @@ bool FVulkanDevice::FindOrCreateSampler(const FRHIStaticSamplerInfo& StaticSampl
     return FindOrCreateSampler(StaticSamplerInfo.GetSamplerStateInfo(), OutSampler);
 }
 
-FVulkanQueryPoolManager* FVulkanDevice::GetQueryPoolManager(EQueryType QueryType)
+FVulkanQueryPoolManager* FVulkanDevice::GetQueryPoolManager(VkQueryType QueryType)
 {
-    if (QueryType == EQueryType::Timestamp)
+    switch (QueryType)
     {
+    case VK_QUERY_TYPE_TIMESTAMP:
         CHECK(TimingQueryPoolManager != nullptr);
         return TimingQueryPoolManager;
-    }
-    else if (QueryType == EQueryType::Occlusion)
-    {
+    case VK_QUERY_TYPE_OCCLUSION:
         CHECK(OcclusionQueryPoolManager != nullptr);
         return OcclusionQueryPoolManager;
-    }
-    else
-    {
+    case VK_QUERY_TYPE_PIPELINE_STATISTICS:
+        CHECK(PipelineStatsQueryPoolManager != nullptr);
+        return PipelineStatsQueryPoolManager;
+    default:
         DEBUG_BREAK();
         return nullptr;
     }
+}
+
+FVulkanQueryPool* FVulkanDevice::ObtainQueryPool(VkQueryType QueryType)
+{
+    FVulkanQueryPoolManager* Manager = GetQueryPoolManager(QueryType);
+    CHECK(Manager != nullptr);
+    return Manager->ObtainPool();
+}
+
+void FVulkanDevice::RecycleQueryPool(FVulkanQueryPool* Pool)
+{
+    CHECK(Pool != nullptr);
+    FVulkanQueryPoolManager* Manager = GetQueryPoolManager(Pool->QueryType);
+    CHECK(Manager != nullptr);
+    Manager->RecyclePool(Pool);
 }
 
 uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const

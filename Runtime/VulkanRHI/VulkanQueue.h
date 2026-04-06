@@ -3,18 +3,26 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
 #include "Core/Containers/Map.h"
+#include "Core/Templates/Utility/EnumOperators.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanQuery.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanResourceState.h"
+#include "VulkanRHI/VulkanCommandBuffer.h"
 
-typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
+enum class EVulkanCommandsFlags : uint32
+{
+    None           = 0,
+    ResolveQueries = 1 << 0,
+};
+ENUM_CLASS_OPERATORS(EVulkanCommandsFlags);
 
 class FVulkanCommandPool;
-class FVulkanCommandBuffer;
-class FVulkanQueryPool;
+
+typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 
 class FVulkanQueue : public FVulkanDeviceChild
 {
@@ -29,13 +37,16 @@ public:
     
     bool ExecuteCommandBuffer(class FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class FVulkanFence* Fence);
     
+    void SubmitCommands(FVulkanCommands* Commands);
+    void ProcessCommandQueue();
+
     void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);
     void AddWaitTimelineSemaphore(VkSemaphore Semaphore, uint64 Value, VkPipelineStageFlags WaitStage);
     void AddSignalSemaphore(VkSemaphore Semaphore);
     void AddSignalTimelineSemaphore(VkSemaphore Semaphore, uint64 Value);
     
-    bool IsWaitingForSemaphore(VkSemaphore Semaphore) const { return WaitSemaphores.Contains(Semaphore); }
     bool IsSignalingSemaphore(VkSemaphore Semaphore)  const { return SignalSemaphores.Contains(Semaphore); }
+    bool IsWaitingForSemaphore(VkSemaphore Semaphore) const { return WaitSemaphores.Contains(Semaphore); }
     
     void WaitForCompletion();
 
@@ -63,6 +74,8 @@ public:
     }
 
 private:
+    typedef TQueue<FVulkanCommands*, EQueueType::MPSC> FCommandsQueue;
+
     VkQueue                      Queue;
     uint32                       QueueFamilyIndex;
     EVulkanCommandQueueType      QueueType;
@@ -74,6 +87,15 @@ private:
     TQueue<FVulkanCommandPool*>  AvailableCommandPools;
     TArray<FVulkanCommandPool*>  CommandPools;
     FCriticalSection             CommandPoolsCS;
+    FCommandsQueue               PendingSubmissions;
+    FCriticalSection             SubmissionCS;
+#if !VULKAN_USE_CPU_QUERY_RESOLVE
+    TArray<FVulkanQueryRange>    PendingQueryRanges;
+    TArray<FVulkanQuery>         PendingTimestampQueries;
+    TArray<FVulkanQuery>         PendingOcclusionQueries;
+    TArray<FVulkanQuery>         PendingPipelineStatsQueries;
+    TArray<FVulkanQueryRHI*>     PendingQueryRHIs;
+#endif
 };
 
 struct FVulkanCommands
@@ -84,7 +106,7 @@ struct FVulkanCommands
     void AcquireFence();
     void PreExecute();
     void Execute();
-    void Finish();
+    void PostExecute();
 
     void AddCommandPool(FVulkanCommandPool* InCommandPool)
     {
@@ -94,11 +116,6 @@ struct FVulkanCommands
     void AddCommandBuffer(FVulkanCommandBuffer* InCommandBuffer)
     {
         CommandBuffers.Add(InCommandBuffer);
-    }
-
-    void AddQueryPool(FVulkanQueryPool* InQueryPool)
-    {
-        QueryPools.Add(InQueryPool);
     }
 
     bool IsExecutionFinished() const
@@ -111,15 +128,20 @@ struct FVulkanCommands
         return CommandBuffers.IsEmpty();
     }
 
-    FVulkanQueue&                            Queue;
-    FVulkanDevice* const                     Device;
-    FVulkanFence*                            Fence;
-    TArray<FVulkanCommandPool*>              CommandPools;
-    TArray<FVulkanCommandBuffer*>            CommandBuffers;
-    TArray<FVulkanQueryPool*>                QueryPools;
-    TArray<FVulkanDeferredObject>            DeletionQueue;
-    TArray<FVulkanPendingImageBarrier>       PendingImageBarriers;
-    TArray<FVulkanPendingBufferBarrier>      PendingBufferBarriers;
+    FVulkanQueue&                                  Queue;
+    FVulkanDevice* const                           Device;
+    EVulkanCommandsFlags                           Flags;
+    FVulkanFence*                                  Fence;
+    TArray<FVulkanCommandPool*>                    CommandPools;
+    TArray<FVulkanCommandBuffer*>                  CommandBuffers;
+    TArray<FVulkanQueryRange>                      QueryRanges;
+    TArray<FVulkanQuery>                           TimestampQueries;
+    TArray<FVulkanQuery>                           OcclusionQueries;
+    TArray<FVulkanQuery>                           PipelineStatsQueries;
+    TArray<struct FVulkanQueryRHI*>                PendingQueries;
+    TArray<FVulkanDeferredObject>                  DeferredObjects;
+    TArray<FVulkanPendingImageBarrier>             PendingImageBarriers;
+    TArray<FVulkanPendingBufferBarrier>            PendingBufferBarriers;
     TMap<FVulkanTexture*, FVulkanImageLayoutState> PendingImageStates;
-    TMap<FVulkanBuffer*, FVulkanBufferState> PendingBufferStates;
+    TMap<FVulkanBuffer*, FVulkanBufferState>       PendingBufferStates;
 };

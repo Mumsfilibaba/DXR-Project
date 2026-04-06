@@ -5,6 +5,7 @@
 
 class FWorld;
 class FRHITexture;
+struct IGPUProfiler;
 typedef TSharedRef<class FRHISwapChain> FRHISwapChainRef;
 
 struct FSceneRenderView
@@ -64,4 +65,7 @@ struct IRendererModule : public FModuleInterface
 
     /** @brief Destroy a Renderer Scene */
     virtual void DestroyScene(IScene* Scene) = 0;
+
+    /** @brief Returns the GPU profiler interface */
+    virtual IGPUProfiler& GetGPUProfiler() = 0;
 };

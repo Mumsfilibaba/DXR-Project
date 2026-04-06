@@ -69,9 +69,14 @@ public:
     virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final;
     virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
+    virtual IRHICommandContext* ObtainCommandContext() override final
+    {
+        return CommandContext;
+    }
+
     virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
     
-    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult) override final
+    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final
     {
         OutResult = 0;
         return true;
@@ -82,17 +87,6 @@ public:
         // delete Resource;
     }
     
-    virtual IRHICommandContext* ObtainCommandContext() override final
-    {
-        return CommandContext;
-    }
-
-    virtual FString GetAdapterName() const override final 
-    {
-        // TODO: Finish
-        return FString(); 
-    }
-
     virtual void* GetNativeAdapter() override final 
     {
         // TODO: Finish
@@ -121,6 +115,12 @@ public:
     {
         // TODO: Finish
         return nullptr;
+    }
+
+    virtual FString GetAdapterName() const override final 
+    {
+        // TODO: Finish
+        return FString(); 
     }
 
     FMetalDeviceContext* GetMetalDeviceContext() const

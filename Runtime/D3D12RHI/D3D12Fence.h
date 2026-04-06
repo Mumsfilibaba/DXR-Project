@@ -1,13 +1,13 @@
 #pragma once
+#include "Core/RefCountedBase.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
 #include "RHI/RHIFence.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
-#include "D3D12RHI/D3D12RefCounted.h"
 
 typedef TSharedRef<class FD3D12Fence>    FD3D12FenceRef;
 typedef TSharedRef<class FD3D12GpuFence> FD3D12GpuFenceRef;
 
-class FD3D12Fence : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12Fence : public FD3D12DeviceChild, public FRefCountedBase
 {
 public:
     FD3D12Fence(FD3D12Device* InDevice);
@@ -23,8 +23,8 @@ public:
 
     void SetDebugName(const FString& Name);
 
-    uint64 GetLastSignaledValue() const { return LastSignaledValue; }
     uint64 GetCurrentValue()      const { return CurrentValue; }
+    uint64 GetLastSignaledValue() const { return LastSignaledValue; }
 
     ID3D12Fence* GetD3D12Fence() const
     {

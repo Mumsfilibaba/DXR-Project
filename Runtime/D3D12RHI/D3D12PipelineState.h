@@ -4,8 +4,6 @@
 #include "D3D12RHI/D3D12Shader.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
-#include "D3D12RHI/D3D12RefCounted.h"
-
 typedef TSharedRef<class FD3D12InputLayout>             FD3D12InputLayoutRef;
 typedef TSharedRef<class FD3D12DepthStencilState>       FD3D12DepthStencilStateRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;

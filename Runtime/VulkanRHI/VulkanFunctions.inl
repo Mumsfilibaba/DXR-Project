@@ -204,6 +204,7 @@ VULKAN_DEVICE_FUNCTION(CmdDrawIndexed)
 VULKAN_DEVICE_FUNCTION(CmdWriteTimestamp)
 VULKAN_DEVICE_FUNCTION(CmdBeginQuery)
 VULKAN_DEVICE_FUNCTION(CmdEndQuery)
+VULKAN_DEVICE_FUNCTION(CmdCopyQueryPoolResults)
 
 // -------------------------------------------------------------------------------------------
 // Device Extension Functions
@@ -248,4 +249,10 @@ VULKAN_DEVICE_FUNCTION_OPTIONAL(CmdEndTransformFeedbackEXT)
 
 #if VK_EXT_device_fault
 VULKAN_DEVICE_FUNCTION_OPTIONAL(GetDeviceFaultInfoEXT)
+#endif
+
+#if VK_KHR_calibrated_timestamps
+VULKAN_DEVICE_FUNCTION_OPTIONAL(GetCalibratedTimestampsKHR)
+#elif VK_EXT_calibrated_timestamps
+VULKAN_DEVICE_FUNCTION_OPTIONAL(GetCalibratedTimestampsEXT)
 #endif

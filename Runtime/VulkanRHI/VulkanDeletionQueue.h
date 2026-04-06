@@ -2,7 +2,7 @@
 #include "Core/Platform/CriticalSection.h"
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanCore.h"
-#include "VulkanRHI/VulkanRefCounted.h"
+#include "Core/RefCountedBase.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
 
 class FRHIResource;
@@ -32,7 +32,7 @@ struct FVulkanDeferredObject
         RHIResource = InResource;
     }
 
-    FVulkanDeferredObject(FVulkanRefCounted* InResource)
+    FVulkanDeferredObject(FRefCountedBase* InResource)
         : Type(EType::VulkanResource)
     {
         CHECK(InResource != nullptr);
@@ -116,7 +116,7 @@ struct FVulkanDeferredObject
     union
     {
         FRHIResource*            RHIResource;
-        FVulkanRefCounted*       VulkanResource;
+        FRefCountedBase*         VulkanResource;
         FBuddyAllocatorBlockData BuddyAllocatorBlock;
         FPoolAllocatorBlockData  PoolAllocatorBlock;
         FDedicatedAllocationData DedicatedAllocation;

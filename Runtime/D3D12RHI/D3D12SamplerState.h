@@ -4,8 +4,6 @@
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12Device.h"
-#include "D3D12RHI/D3D12RefCounted.h"
-
 typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
 
 struct FD3D12SamplerStateIdentifier

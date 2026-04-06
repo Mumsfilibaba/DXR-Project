@@ -13,6 +13,7 @@
 #include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12RHI.h"
 
 #include <dxgidebug.h>
@@ -46,6 +47,11 @@ static TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
     "D3D12RHI.PreferDedicatedGPU",
     "When enabled, a dedicated GPU will be selected when creating a the Device", 
     true);
+
+static TAutoConsoleVariable<bool> CVarStablePowerState(
+    "D3D12RHI.StablePowerState",
+    "Enables stable power state on the GPU for more consistent profiling results. Requires developer mode enabled in Windows.",
+    false);
 
 static TAutoConsoleVariable<int32> CVarResourceOnlineDescriptorBlockSize(
     "D3D12RHI.ResourceOnlineDescriptorBlockSize",
@@ -125,6 +131,11 @@ static TAutoConsoleVariable<int32> CVarNumTimestampQueriesPerHeap(
 static TAutoConsoleVariable<int32> CVarNumOcclusionQueriesPerHeap(
     "D3D12RHI.NumOcclusionQueriesPerHeap",
     "Number of occlusion queries in each occlusion query heap",
+    D3D12_DEFAULT_QUERY_COUNT);
+
+static TAutoConsoleVariable<int32> CVarNumPipelineStatsQueriesPerHeap(
+    "D3D12RHI.NumPipelineStatsQueriesPerHeap",
+    "Number of pipeline statistics queries in each query heap",
     D3D12_DEFAULT_QUERY_COUNT);
 
 static TAutoConsoleVariable<FString> CVarDeviceRemovedDumpFilePath(
@@ -711,15 +722,14 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 #endif
     , NodeMask(0)
     , NodeCount(0)
+    , TimingQueryHeapManager(nullptr)
+    , OcclusionQueryHeapManager(nullptr)
+    , PipelineStatsQueryHeapManager(nullptr)
 {
     // Create CommandAllocatorManagers
     DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
     CopyCommandAllocatorManager    = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
     ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
-
-    // Create QueryHeapManagers
-    TimingQueryHeapManager    = new FD3D12QueryHeapManager(this, EQueryType::Timestamp, CVarNumTimestampQueriesPerHeap.GetValue());
-    OcclusionQueryHeapManager = new FD3D12QueryHeapManager(this, EQueryType::Occlusion, CVarNumOcclusionQueriesPerHeap.GetValue());
 }
 
 FD3D12Device::~FD3D12Device()
@@ -743,6 +753,7 @@ FD3D12Device::~FD3D12Device()
     // Destroy QueryHeapManagers
     SAFE_DELETE(TimingQueryHeapManager);
     SAFE_DELETE(OcclusionQueryHeapManager);
+    SAFE_DELETE(PipelineStatsQueryHeapManager);
 
     // Destroy all CommandLists
     SAFE_DELETE(DirectQueue);
@@ -1009,6 +1020,10 @@ bool FD3D12Device::Initialize()
     // Check for feature support
     QueryDeviceFeatureSupport();
 
+    TimingQueryHeapManager        = new FD3D12QueryHeapManager(this, D3D12_QUERY_HEAP_TYPE_TIMESTAMP, CVarNumTimestampQueriesPerHeap.GetValue());
+    OcclusionQueryHeapManager     = new FD3D12QueryHeapManager(this, D3D12_QUERY_HEAP_TYPE_OCCLUSION, CVarNumOcclusionQueriesPerHeap.GetValue());
+    PipelineStatsQueryHeapManager = new FD3D12QueryHeapManager(this, GetPipelineStatsHeapType(), CVarNumPipelineStatsQueriesPerHeap.GetValue());
+
     // Create RootSignatureManager
     RootSignatureManager = new FD3D12RootSignatureManager(this);
 
@@ -1148,6 +1163,19 @@ bool FD3D12Device::CreateDevice()
     {
         const FString Description = Adapter->GetDescription();
         D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", *Description);
+    }
+
+    if (CVarStablePowerState.GetValue())
+    {
+        HRESULT StablePowerResult = D3D12Device->SetStablePowerState(TRUE);
+        if (SUCCEEDED(StablePowerResult))
+        {
+            D3D12_INFO("[FD3D12Device]: Stable power state enabled");
+        }
+        else
+        {
+            D3D12_WARNING("[FD3D12Device]: Failed to enable stable power state (HRESULT: 0x%08X). Ensure Windows Developer Mode is enabled.", StablePowerResult);
+        }
     }
 
     // NodeMask
@@ -1593,9 +1621,78 @@ FD3D12QueryHeapManager* FD3D12Device::GetQueryHeapManager(EQueryType QueryType)
     {
         return OcclusionQueryHeapManager;
     }
+    else if (QueryType == EQueryType::PipelineStatistics)
+    {
+        return PipelineStatsQueryHeapManager;
+    }
     else
     {
         return nullptr;
+    }
+}
+
+FD3D12QueryHeap* FD3D12Device::ObtainQueryHeap(D3D12_QUERY_HEAP_TYPE HeapType)
+{
+    switch (HeapType)
+    {
+    case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:
+        return TimingQueryHeapManager ? TimingQueryHeapManager->ObtainHeap() : nullptr;
+    case D3D12_QUERY_HEAP_TYPE_OCCLUSION:
+        return OcclusionQueryHeapManager ? OcclusionQueryHeapManager->ObtainHeap() : nullptr;
+    case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS:
+#ifdef D3D12_SUPPORT_PIPELINE_STATISTICS1
+    case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1:
+#endif
+        return PipelineStatsQueryHeapManager ? PipelineStatsQueryHeapManager->ObtainHeap() : nullptr;
+    default:
+        return nullptr;
+    }
+}
+
+void FD3D12Device::RecycleQueryHeap(FD3D12QueryHeap* Heap)
+{
+    if (!Heap)
+    {
+        return;
+    }
+
+    switch (Heap->QueryHeapType)
+    {
+        case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:
+        {
+            if (TimingQueryHeapManager)
+            {
+                TimingQueryHeapManager->RecycleHeap(Heap);
+            }
+            
+            break;
+        }
+
+        case D3D12_QUERY_HEAP_TYPE_OCCLUSION:
+        {
+            if (OcclusionQueryHeapManager)
+            {
+                OcclusionQueryHeapManager->RecycleHeap(Heap);
+            }
+            
+            break;
+        }
+
+        case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS:
+    #ifdef D3D12_SUPPORT_PIPELINE_STATISTICS1
+        case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1:
+    #endif
+        {
+            if (PipelineStatsQueryHeapManager)
+            {
+                PipelineStatsQueryHeapManager->RecycleHeap(Heap);
+            }
+            
+            break;
+        }
+
+        default:
+            break;
     }
 }
 

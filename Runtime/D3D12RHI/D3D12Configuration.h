@@ -58,6 +58,7 @@
     #define D3D12_ENABLE_STATIC_DESCRIPTORS (0)
 #endif
 
+
 // Only enable the static descriptors if we have versioned root-signatures
 #if D3D12_ENABLE_STATIC_DESCRIPTORS && !D3D12_ENABLE_VERSIONED_ROOT_SIGNATURES
     #undef  D3D12_ENABLE_STATIC_DESCRIPTORS
@@ -82,6 +83,16 @@
     #define D3D12_USE_DEBUG_MESSAGE_CALLBACK (1)
 #else
     #define D3D12_USE_DEBUG_MESSAGE_CALLBACK (0)
+#endif
+
+// -------------------------------------------
+// Query heap type availability
+// -------------------------------------------
+
+#if defined(D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1) && defined(D3D12_QUERY_TYPE_PIPELINE_STATISTICS1)
+    #define D3D12_SUPPORT_PIPELINE_STATISTICS1 (1)
+#else
+    #define D3D12_SUPPORT_PIPELINE_STATISTICS1 (0)
 #endif
 
 // -------------------------------------------

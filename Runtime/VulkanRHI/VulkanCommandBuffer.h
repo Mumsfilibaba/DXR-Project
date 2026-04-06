@@ -1,11 +1,15 @@
 #pragma once
 #include "Core/Containers/Queue.h"
 #include "VulkanRHI/VulkanFence.h"
+#include "VulkanRHI/VulkanQuery.h"
 
 class FVulkanCommandPool;
+class FVulkanQueryAllocator;
 
 class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
 {
+    friend struct FVulkanCommands;
+
     class FCommandBuffer : FNonCopyable
     {
     public:
@@ -136,7 +140,7 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdSetDepthBias(CommandBuffer, DepthBiasConstantFactor, DepthBiasClamp, DepthBiasSlopeFactor);
         }
 
-#if VK_EXT_transform_feedback
+    #if VK_EXT_transform_feedback
         FORCEINLINE void BindTransformFeedbackBuffers(uint32 FirstBinding, uint32 BindingCount, const VkBuffer* Buffers, const VkDeviceSize* Offsets, const VkDeviceSize* Sizes)
         {
             vkCmdBindTransformFeedbackBuffersEXT(CommandBuffer, FirstBinding, BindingCount, Buffers, Offsets, Sizes);
@@ -151,7 +155,7 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         {
             vkCmdEndTransformFeedbackEXT(CommandBuffer, FirstCounterBuffer, CounterBufferCount, CounterBuffers, CounterBufferOffsets);
         }
-#endif
+    #endif
     
         FORCEINLINE void BindPipeline(VkPipelineBindPoint PipelineBindPoint, VkPipeline Pipeline)
         {
@@ -173,8 +177,7 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdCopyBuffer(CommandBuffer, SrcBuffer, DstBuffer, RegionCount, Regions);
         }
 
-        FORCEINLINE void CopyBufferToImage(VkBuffer SrcBuffer, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, 
-            const VkBufferImageCopy* Regions)
+        FORCEINLINE void CopyBufferToImage(VkBuffer SrcBuffer, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkBufferImageCopy* Regions)
         {
             vkCmdCopyBufferToImage(CommandBuffer, SrcBuffer, DstImage, DstImageLayout, RegionCount, Regions);
         }
@@ -194,15 +197,13 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         FORCEINLINE void BufferMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags,
             uint32 BufferMemoryBarrierCount, const VkBufferMemoryBarrier* BufferMemoryBarriers)
         {
-            vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0,
-                nullptr, BufferMemoryBarrierCount, BufferMemoryBarriers, 0, nullptr);
+            vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, BufferMemoryBarrierCount, BufferMemoryBarriers, 0, nullptr);
         }
 
         FORCEINLINE void ImageMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags,
             uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier* ImageMemoryBarriers)
         {
-            vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, 
-                nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
+            vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
         }
 
         FORCEINLINE void PipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, 
@@ -265,6 +266,11 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
             vkCmdEndQuery(CommandBuffer, QueryPool, Query);
         }
 
+        FORCEINLINE void CopyQueryPoolResults(VkQueryPool QueryPool, uint32 FirstQuery, uint32 QueryCount, VkBuffer DstBuffer, VkDeviceSize DstOffset, VkDeviceSize Stride, VkQueryResultFlags Flags)
+        {
+            vkCmdCopyQueryPoolResults(CommandBuffer, QueryPool, FirstQuery, QueryCount, DstBuffer, DstOffset, Stride, Flags);
+        }
+
     #if VK_KHR_acceleration_structure
         FORCEINLINE void BuildAccelerationStructures(uint32 InfoCount, const VkAccelerationStructureBuildGeometryInfoKHR* Infos, 
             const VkAccelerationStructureBuildRangeInfoKHR* const* BuildRangeInfos)
@@ -290,6 +296,11 @@ public:
     bool Reset();
     bool Begin(VkCommandBufferUsageFlags Flags = 0);
     bool End();
+
+    void BeginQuery(const FVulkanQuery& Query);
+    void EndQuery(const FVulkanQuery& Query, VkPipelineStageFlagBits TimestampStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+    void InsertBeginTimestamp(FVulkanQueryAllocator& Allocator);
+    void InsertEndTimestamp(FVulkanQueryAllocator& Allocator);
 
     FVulkanCommandPool* GetOwnerPool()
     {
@@ -323,6 +334,11 @@ private:
     VkCommandBufferLevel Level;
     uint32               NumCommands;
     bool                 bIsRecording;
+    FVulkanQuery         BeginTimestamp;
+    FVulkanQuery         EndTimestamp;
+    TArray<FVulkanQuery> TimestampQueries;
+    TArray<FVulkanQuery> OcclusionQueries;
+    TArray<FVulkanQuery> PipelineStatsQueries;
 };
 
 class FVulkanCommandPool : public FVulkanDeviceChild, FNonCopyable

@@ -18,11 +18,6 @@
 
 IMPLEMENT_ENGINE_MODULE(FVulkanRHIModule, VulkanRHI);
 
-static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
-    "VulkanRHI.MaxPendingSubmissions",
-    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
-    32);
-
 static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
     "VulkanRHI.MaxDefragMovesPerFrame",
     "Maximum number of texture defragmentation moves per frame (0 to disable)",
@@ -98,12 +93,12 @@ FVulkanRHI::~FVulkanRHI()
         }
 
         // Delete all remaining resources
-        while (!DeletionQueue.IsEmpty())
+        while (!DeferredObjects.IsEmpty())
         {
             TArray<FVulkanDeferredObject> Items;
             {
-                TScopedLock Lock(DeletionQueueCS);
-                Items = Move(DeletionQueue);
+                TScopedLock Lock(DeferredObjectsCS);
+                Items = Move(DeferredObjects);
             }
 
             FVulkanDeferredObject::ProcessItems(Device, Items);
@@ -122,9 +117,9 @@ FVulkanRHI::~FVulkanRHI()
         GraphicsCommandContext->Flush();
     }
 
-    while (!PendingSubmissions.IsEmpty())
+    if (GraphicsQueue)
     {
-        ProcessPendingCommands();
+        GraphicsQueue->ProcessCommandQueue();
     }
 
     // Flush before submitting since some objects needs the CommandContext
@@ -154,6 +149,7 @@ FVulkanRHI::~FVulkanRHI()
     {
         PresentQueue = nullptr;
     }
+
     SAFE_DELETE(GraphicsQueue);
     SAFE_DELETE(Device);
     SAFE_DELETE(PhysicalDevice);
@@ -240,9 +236,10 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures.Features10.shaderStorageImageReadWithoutFormat  = VK_TRUE;
     
     // Vulkan 1.0 Optional
-    DeviceCreateInfo.OptionalFeatures.Features10.geometryShader     = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures.Features10.tessellationShader = VK_TRUE;
-    DeviceCreateInfo.OptionalFeatures.Features10.multiDrawIndirect  = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.geometryShader          = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.tessellationShader      = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.multiDrawIndirect       = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.pipelineStatisticsQuery = VK_TRUE;
     
 #ifndef RELEASE_BUILD
     if (CVarVulkanEnableRobustBufferAccess.GetValue())
@@ -355,16 +352,13 @@ void FVulkanRHI::BeginFrame()
         VulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
     }
 
-    ProcessPendingCommands();
+    GraphicsQueue->ProcessCommandQueue();
 
-    if (GVulkanUseDescriptorCache)
-    {
-        Device->GetDescriptorSetCache().EvictStaleDescriptorSets(static_cast<uint64>(PendingSubmissions.Size()));
-    }
-    else
-    {
-        Device->GetDescriptorPoolManager().EvictUnusedPools();
-    }
+#if VULKAN_USE_DESCRIPTOR_CACHE
+    Device->GetDescriptorSetCache().EvictStaleDescriptorSets(0);
+#else
+    Device->GetDescriptorPoolManager().EvictUnusedPools();
+#endif
 
     if (!GVulkanUseDynamicRendering)
     {
@@ -493,7 +487,7 @@ bool FVulkanRHI::EnsurePresentQueue()
 
 FRHIQuery* FVulkanRHI::CreateQuery(EQueryType InQueryType)
 {
-    return new FVulkanQuery(Device, InQueryType);
+    return new FVulkanQueryRHI(Device, InQueryType);
 }
 
 FRHIGpuFence* FVulkanRHI::CreateFence()
@@ -858,15 +852,46 @@ bool FVulkanRHI::QueryUAVFormatSupport(EFormat Format) const
     return false;
 }
 
-bool FVulkanRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult)
+bool FVulkanRHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
-    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
     if (!VulkanQuery)
     {
         return false;
     }
 
-    OutResult = VulkanQuery->Result;
+    if (Mode == EQueryResultMode::Wait)
+    {
+        if (!VulkanQuery->SyncFence)
+        {
+            return false;
+        }
+
+        VulkanQuery->SyncFence->Wait(UINT64_MAX);
+    }
+
+    OutResult = *VulkanQuery->QueryResult;
+    return true;
+}
+
+bool FVulkanRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
+{
+    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
+    if (!VulkanQuery)
+    {
+        return false;
+    }
+
+    if (Mode == EQueryResultMode::Wait)
+    {
+        if (!VulkanQuery->SyncFence)
+        {
+            return false;
+        }
+        VulkanQuery->SyncFence->Wait(UINT64_MAX);
+    }
+
+    OutResult = *reinterpret_cast<const FRHIPipelineStatistics*>(VulkanQuery->QueryResult);
     return true;
 }
 
@@ -928,92 +953,27 @@ void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
     }
 }
 
-void FVulkanRHI::ProcessPendingCommands()
-{
-    bool bProcess = true;
-    while (bProcess)
-    {
-        FVulkanCommands* Commands = nullptr;
-        if (PendingSubmissions.Peek(Commands))
-        {
-            CHECK(Commands != nullptr);
-            if (!Commands->IsExecutionFinished())
-            {
-                bProcess = false;
-                break;
-            }
-            else
-            {
-                // If we are finished we remove the item from the queue
-                PendingSubmissions.Dequeue();
-                Commands->Finish();
-            }
-        }
-        else
-        {
-            bProcess = false;
-        }
-    }
-}
-
 void FVulkanRHI::TickCoreProgression()
 {
-    ProcessPendingCommands();
-
-    const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
-    while (PendingSubmissions.Size() > MaxPending)
-    {
-        FVulkanCommands* Oldest = nullptr;
-        if (PendingSubmissions.Peek(Oldest) && Oldest)
-        {
-            Oldest->Fence->Wait();
-            PendingSubmissions.Dequeue();
-            Oldest->Finish();
-        }
-        else
-        {
-            break;
-        }
-    }
-
+    GraphicsQueue->ProcessCommandQueue();
     Device->GetMemoryManager().CleanUpAllocators();
 }
 
-void FVulkanRHI::SubmitCommands(FVulkanCommands* Commands, bool bFlushDeletionQueue)
+void FVulkanRHI::FlushCompletedSubmissions()
+{
+    GraphicsQueue->ProcessCommandQueue();
+}
+
+void FVulkanRHI::FlushDeletionQueue(FVulkanCommands* Commands)
 {
     CHECK(Commands != nullptr);
-
-    if (!Commands->IsEmpty())
+    if (Commands->IsEmpty())
     {
-        TScopedLock SubmitLock(SubmissionCS);
-
-        if (bFlushDeletionQueue)
-        {
-            TScopedLock Lock(DeletionQueueCS);
-            Commands->DeletionQueue = Move(DeletionQueue);
-        }
-
-        Commands->PreExecute();
-        Commands->Execute();
-
-        PendingSubmissions.Enqueue(Commands);
-
-        const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
-        while (PendingSubmissions.Size() > MaxPending)
-        {
-            FVulkanCommands* Oldest = nullptr;
-            if (PendingSubmissions.Peek(Oldest) && Oldest)
-            {
-                Oldest->Fence->Wait();
-                PendingSubmissions.Dequeue();
-                Oldest->Finish();
-            }
-            else
-            {
-                break;
-            }
-        }
+        return;
     }
+
+    TScopedLock Lock(DeferredObjectsCS);
+    Commands->DeferredObjects = Move(DeferredObjects);
 }
 
 VkPipelineStageFlags2 FVulkanRHI::ResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
@@ -1032,6 +992,7 @@ VkPipelineStageFlags2 FVulkanRHI::ResourceStateToPipelineStageFlags(EResourceAcc
         AllShaderBits         |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT;
         AllNonPixelShaderBits |= VK_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT;
     }
+    
     if (GVulkanSupportsTessellation)
     {
         AllShaderBits         |= VK_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT | VK_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT;

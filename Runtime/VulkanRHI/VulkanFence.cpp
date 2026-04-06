@@ -5,7 +5,6 @@
 FVulkanFence::FVulkanFence(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , Fence(VK_NULL_HANDLE)
-    , References(0)
 {
 }
 
@@ -40,6 +39,7 @@ bool FVulkanFence::Initialize(bool bSignaled)
 bool FVulkanFence::IsSignaled() const
 {
     VkResult Result = vkGetFenceStatus(GetDevice()->GetVkDevice(), Fence);
+
 #if VULKAN_ENABLE_DEVICE_LOST_CHECK
     if (Result == VK_ERROR_DEVICE_LOST)
     {
@@ -81,26 +81,6 @@ bool FVulkanFence::Reset()
     return true;
 }
 
-bool FVulkanFence::IsReferenced() const
-{
-    const int64 RefCount = References.Load();
-    CHECK(RefCount >= 0);
-    return RefCount > 0;
-}
-
-int64 FVulkanFence::AddRef() const
-{
-    CHECK(References.Load() >= 0);
-    ++References;
-    return References.Load();
-}
-
-int64 FVulkanFence::Release() const
-{
-    const int64 RefCount = --References;
-    CHECK(RefCount >= 0);
-    return RefCount;
-}
 
 FVulkanTimelineFence::FVulkanTimelineFence(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
@@ -158,6 +138,7 @@ uint64 FVulkanTimelineFence::GetCompletedValue() const
     CHECK(VULKAN_CHECK_HANDLE(TimelineSemaphore));
 
     uint64 CounterValue = 0;
+
     VkResult Result = vkGetSemaphoreCounterValue(GetDevice()->GetVkDevice(), TimelineSemaphore, &CounterValue);
 #if VULKAN_ENABLE_DEVICE_LOST_CHECK
     if (Result == VK_ERROR_DEVICE_LOST)
@@ -285,14 +266,15 @@ bool FVulkanGpuFence::IsSignaled() const
     if (bUsesTimeline)
     {
         uint64 CounterValue = 0;
+
         VkResult Result = vkGetSemaphoreCounterValue(GetDevice()->GetVkDevice(), TimelineSemaphore, &CounterValue);
-#if VULKAN_ENABLE_DEVICE_LOST_CHECK
+    #if VULKAN_ENABLE_DEVICE_LOST_CHECK
         if (Result == VK_ERROR_DEVICE_LOST)
         {
             VULKAN_ERROR_CRITICAL("Device Lost");
             return false;
         }
-#endif
+    #endif
 
         VULKAN_ERROR_COND(Result == VK_SUCCESS, "vkGetSemaphoreCounterValue failed");
         return CounterValue >= TargetValue;

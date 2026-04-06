@@ -11,19 +11,20 @@ public:
     FRendererModule();
     virtual ~FRendererModule();
     
-    virtual bool Load() override final;
+    // IRendererModule Interface 
+    virtual bool Load()       override final;
     virtual bool Initialize() override final;
-    virtual void Release() override final;
+    virtual void Release()    override final;
 
     virtual void BeginFrame() override final;
-    virtual void Tick() override final;
-    virtual void EndFrame() override final;
+    virtual void Tick()       override final;
+    virtual void EndFrame()   override final;
 
     virtual void RenderSceneView(const FSceneRenderView& SceneRenderView) override final; 
     virtual void RenderUI() override final; 
  
     virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) override final; 
-    virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID) override final; 
+    virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID)       override final; 
  
     virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height) override final; 
     virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) override final; 
@@ -34,6 +35,8 @@ public:
     
     // Destroys and removes a scene from the list of scenes
     virtual void DestroyScene(IScene* Scene) override final;
+
+    virtual IGPUProfiler& GetGPUProfiler() override final;
 
     const TArray<FScene*>& GetScenes() const
     {

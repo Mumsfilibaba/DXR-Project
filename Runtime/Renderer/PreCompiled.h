@@ -11,7 +11,6 @@
 #include "Renderer/Scene/SceneSkyLight.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
-#include "Renderer/RendererUI/GPUProfilerWidget.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
 #include "Renderer/RendererUI/RendererSettingsWidget.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"

@@ -1,9 +1,9 @@
 #pragma once
+#include "Core/RefCountedBase.h"
 #include "Core/Containers/Map.h"
+#include "RHI/RHISamplerState.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Shader.h"
-#include "D3D12RHI/D3D12RefCounted.h"
-#include "RHI/RHISamplerState.h"
 
 typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 
@@ -256,7 +256,7 @@ private:
     uint8                NumRootDescriptors[ResourceType_Count];
 };
 
-class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12RootSignature : public FD3D12DeviceChild, public FRefCountedBase
 {
 public:
 #if D3D12_USE_VERSIONED_ROOT_SIGNATURES

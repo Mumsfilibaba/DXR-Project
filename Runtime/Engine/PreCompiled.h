@@ -30,7 +30,7 @@
 #include "Engine/EngineUI/Editor/EditorSceneHierarchyWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
-#include "Engine/EngineUI/FrameProfilerWidget.h"
+#include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Actors/PlayerController.h"

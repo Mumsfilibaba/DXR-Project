@@ -2,8 +2,6 @@
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
-#include "VulkanRHI/VulkanRefCounted.h"
-
 typedef TSharedRef<class FVulkanSamplerState> FVulkanSamplerStateRef;
 
 class FVulkanSamplerState : public FRHISamplerState, public FVulkanDeviceChild

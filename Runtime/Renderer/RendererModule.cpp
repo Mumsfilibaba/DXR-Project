@@ -3,6 +3,7 @@
 #include "ImGuiPlugin/ImGuiExtensions.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/RendererModule.h"
+#include "Renderer/Performance/GPUProfiler.h"
 #include "Renderer/Scene/Scene.h"
 
 IMPLEMENT_ENGINE_MODULE(FRendererModule, Renderer);
@@ -177,4 +178,9 @@ void FRendererModule::DestroyScene(IScene* Scene)
         Scenes.Remove(SceneToRemove);
         delete SceneToRemove;
     }
+}
+
+IGPUProfiler& FRendererModule::GetGPUProfiler()
+{
+    return FGPUProfiler::Get();
 }

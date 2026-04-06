@@ -1,8 +1,8 @@
 #pragma once
+#include "Core/RefCountedBase.h"
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Resource.h"
-#include "D3D12RHI/D3D12RefCounted.h"
 
 class FD3D12OfflineDescriptorHeap;
 
@@ -61,7 +61,7 @@ protected:
     uint32                       DescriptorVersion;
 };
 
-class FD3D12ConstantBufferView : public FD3D12View, public FD3D12RefCounted
+class FD3D12ConstantBufferView : public FD3D12View, public FRefCountedBase
 {
 public:
     FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap);
@@ -133,7 +133,7 @@ private:
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
 };
 
-class FD3D12RenderTargetView : public FD3D12View, public FD3D12RefCounted
+class FD3D12RenderTargetView : public FD3D12View, public FRefCountedBase
 {
 public:
     FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap);
@@ -153,7 +153,7 @@ private:
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
 };
 
-class FD3D12DepthStencilView : public FD3D12View, public FD3D12RefCounted
+class FD3D12DepthStencilView : public FD3D12View, public FRefCountedBase
 {
 public:
     FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap);

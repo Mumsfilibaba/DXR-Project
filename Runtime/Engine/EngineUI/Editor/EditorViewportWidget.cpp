@@ -1,11 +1,20 @@
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Templates/CString.h"
 #include "Application/Application.h"
 #include "RHI/RHIResources.h" 
 #include "Engine/Engine.h" 
 #include "Engine/EngineUI/Editor/EditorGuizmo.h" 
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h" 
+#include "RendererCore/Interfaces/IRendererModule.h" 
 #include "ImGuiPlugin/ImGuiCore.h" 
 #include "ImGuiPlugin/ImGuiRenderer.h" 
-#include "RendererCore/Interfaces/IRendererModule.h" 
+
+static TAutoConsoleVariable<bool> CVarDrawFps(
+    "Engine.DrawFps",
+    "Enable FPS counter in the viewport corner",
+    false,
+    EConsoleVariableFlags::Default);
 
 FEditorViewportWidget::FEditorViewportWidget()
     : CachedViewportSize(0, 0)
@@ -171,6 +180,31 @@ void FEditorViewportWidget::Draw()
             const ImVec2 BorderMax = ImVec2(ContentPos.x + ContentSize.x - 0.5f, ContentPos.y + ContentSize.y - 0.5f);
 
             DrawList->AddRect(BorderMin, BorderMax, BorderColorU32, 0.0f, ImDrawListFlags_AntiAliasedLines, BorderThickness);
+        }
+
+        // ---------------------------------------------------------------------
+        // FPS counter
+        // ---------------------------------------------------------------------
+
+        if (CVarDrawFps.GetValue())
+        {
+            char FpsText[16];
+            FCString::Snprintf(FpsText, sizeof(FpsText), "%d", FFrameProfiler::Get().GetFramesPerSecond());
+
+            ImDrawList* DrawList = ImGui::GetWindowDrawList();
+            
+            const ImFont* Font     = ImGui::GetFont();
+            const ImVec2  TextSize = Font->CalcTextSizeA(Font->FontSize, FLT_MAX, 0.0f, FpsText);
+
+            const float Margin  = 6.0f;
+            const float Padding = 4.0f;
+
+            const ImVec2 BoxMax  = ImVec2(ContentPos.x + ContentSize.x - Margin, ContentPos.y + Margin + TextSize.y + Padding * 2.0f);
+            const ImVec2 BoxMin  = ImVec2(BoxMax.x - TextSize.x - Padding * 2.0f, ContentPos.y + Margin);
+            const ImVec2 TextPos = ImVec2(BoxMin.x + Padding, BoxMin.y + Padding);
+
+            DrawList->AddRectFilled(BoxMin, BoxMax, IM_COL32(32, 32, 32, 192), 0.0f);
+            DrawList->AddText(TextPos, IM_COL32(0, 255, 50, 255), FpsText);
         }
     }
 

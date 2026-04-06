@@ -1,29 +1,29 @@
 #pragma once
-#include "MetalRHI/MetalCore.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 #include "Core/Threading/Atomic.h"
 
-class FMetalRefCounted
+struct FRefCountedBase : public FNonCopyable
 {
 protected:
-    FMetalRefCounted()
+    FRefCountedBase()
         : StrongReferences(1)
     {
     }
 
-    virtual ~FMetalRefCounted()
+    virtual ~FRefCountedBase()
     {
         CHECK(StrongReferences.Load() == 0);
     }
 
 public:
-    int32 AddRef()
+    int32 AddRef() const
     {
         CHECK(StrongReferences.Load() > 0);
         ++StrongReferences;
         return StrongReferences.Load();
     }
 
-    int32 Release()
+    int32 Release() const
     {
         const int32 RefCount = --StrongReferences;
         CHECK(RefCount >= 0);

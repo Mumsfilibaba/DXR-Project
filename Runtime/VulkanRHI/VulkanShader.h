@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Containers/Map.h"
+#include "Core/RefCountedBase.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
-#include "VulkanRHI/VulkanRefCounted.h"
 
 typedef TSharedRef<class FVulkanShader>              FVulkanShaderRef;
 typedef TSharedRef<class FVulkanVertexShader>        FVulkanVertexShaderRef;
@@ -136,7 +136,7 @@ struct FVulkanShaderInfo
     uint32                   NumPushConstants;
 };
 
-class FVulkanShaderModule : public FVulkanRefCounted
+class FVulkanShaderModule : public FRefCountedBase
 {
 public:
     FVulkanShaderModule(FVulkanDevice* InDevice, VkShaderModule InShaderModule);

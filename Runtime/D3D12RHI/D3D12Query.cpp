@@ -1,51 +1,69 @@
-#include "Core/Misc/ConsoleManager.h"
+#include "Core/Threading/ScopedLock.h"
 #include "D3D12RHI/D3D12Device.h"
-#include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/D3D12Core.h"
 #include "D3D12RHI/D3D12Query.h"
-#include "D3D12RHI/D3D12Queue.h"
 
-
-static uint64 ToNanoseconds(uint64 Timestamp, uint64 Frequency)
-{
-    const double NanosecondScale = 1000'000'000.0 / static_cast<double>(Frequency);
-    return static_cast<uint64>(static_cast<double>(Timestamp) * NanosecondScale);
-}
-
-FD3D12Query::FD3D12Query(FD3D12Device* InDevice, EQueryType InQueryType)
+FD3D12QueryRHI::FD3D12QueryRHI(FD3D12Device* InDevice, EQueryType InQueryType)
     : FD3D12DeviceChild(InDevice)
     , FRHIQuery(InQueryType)
-    , QueryAllocation()
-    , Result(0)
+    , CurrentQuery()
+    , SyncPoint()
+    , QueryResult(static_cast<uint64*>(FMemory::Malloc(GetQueryResultElementCount(InQueryType) * sizeof(uint64))))
 {
+    FMemory::Memzero(QueryResult, GetQueryResultElementCount(InQueryType) * sizeof(uint64));
 }
 
-FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager* InQueryHeapManager)
+FD3D12QueryRHI::~FD3D12QueryRHI()
+{
+    FMemory::Free(QueryResult);
+    QueryResult = nullptr;
+}
+
+void FD3D12Query::CopyResult(void* Dst) const
+{
+    if (!QueryHeap || QueryIndex == D3D12_INVALID_QUERY_INDEX || !Dst)
+    {
+        return;
+    }
+
+    const uint64* MappedData = QueryHeap->GetReadbackData();
+    if (!MappedData)
+    {
+        return;
+    }
+
+    const uint64 Stride = QueryHeap->GetQuerySize();
+    FMemory::Memcpy(Dst, reinterpret_cast<const uint8*>(MappedData) + QueryIndex * Stride, static_cast<size_t>(Stride));
+}
+
+FD3D12QueryHeap::FD3D12QueryHeap(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType, int32 InNumQueries)
     : FD3D12DeviceChild(InDevice)
-    , ReadbackResourceStorage(InDevice)
-    , QueryHeap(nullptr)
-    , QueryAllocations()
-    , QueryHeapType()
-    , CurrentQueryIndex(0)
-    , NumQueries(0)
-    , QueryHeapManager(InQueryHeapManager)
+    , QueryHeapType(InHeapType)
+    , QueryType(GetResolveQueryType(InHeapType))
+    , NumQueries(InNumQueries)
+    , ReadbackData(nullptr)
 {
 }
 
 FD3D12QueryHeap::~FD3D12QueryHeap()
 {
+    if (ReadbackData && ReadbackResource.IsValid())
+    {
+        ReadbackResource->UnmapRange(0, nullptr);
+        ReadbackData = nullptr;
+    }
+
     if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
     {
         ResidencyManager->EndTrackingObject(&ResidencyHandle);
     }
-
-    ReadbackResourceStorage.ReleaseResource();
 }
 
-bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 InNumQueries)
+bool FD3D12QueryHeap::Initialize()
 {
     D3D12_QUERY_HEAP_DESC QueryHeapDesc = {};
-    QueryHeapDesc.Type     = InQueryHeapType;
-    QueryHeapDesc.Count    = Math::Max<int32>(1, InNumQueries);
+    QueryHeapDesc.Type     = QueryHeapType;
+    QueryHeapDesc.Count    = Math::Max<int32>(1, NumQueries);
     QueryHeapDesc.NodeMask = GetDevice()->GetNodeMask();
 
     TComPtr<ID3D12QueryHeap> NewQueryHeap;
@@ -56,12 +74,14 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 In
         return false;
     }
 
+    const uint64 ResultStride = GetQuerySize();
+
     D3D12_RESOURCE_DESC Desc = {};
     Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = QueryHeapDesc.Count * sizeof(uint64); 
+    Desc.Width              = QueryHeapDesc.Count * ResultStride;
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;
@@ -69,94 +89,29 @@ bool FD3D12QueryHeap::Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 In
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    FD3D12ResourceRef ReadbackResource;
     if (!GetDevice()->CreateCommittedResource(Desc, D3D12_HEAP_TYPE_READBACK, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, ReadbackResource))
     {
         D3D12_ERROR_CRITICAL("Failed to create Query Readback resource");
         return false;
     }
 
-    ReadbackResourceStorage.InitStandalone(ReadbackResource.Get());
+    QueryHeap = NewQueryHeap;
 
-    QueryHeap     = NewQueryHeap;
-    QueryHeapType = InQueryHeapType;
-    NumQueries    = QueryHeapDesc.Count;
-
-    ResidencyHandle.Initialize(QueryHeap.Get(), QueryHeapDesc.Count * sizeof(uint64));
+    ResidencyHandle.Initialize(QueryHeap.Get(), QueryHeapDesc.Count * ResultStride);
     if (FD3D12ResidencyManager* ResidencyManager = GetDevice()->GetResidencyManager())
     {
         ResidencyManager->BeginTrackingObject(&ResidencyHandle);
     }
 
-    QueryAllocations.Resize(NumQueries);
+    void* Mapped = ReadbackResource->MapRange(0, nullptr);
+    ReadbackData = reinterpret_cast<uint64*>(Mapped);
+    if (!ReadbackData)
+    {
+        D3D12_ERROR_CRITICAL("[FD3D12QueryHeap]: FAILED to persistently map readback buffer");
+        return false;
+    }
+
     return true;
-}
-
-FD3D12QueryAllocation FD3D12QueryHeap::AllocateQueries(uint64* Results)
-{
-    int32 Index = CurrentQueryIndex++;
-    if (Index >= NumQueries)
-    {
-        return FD3D12QueryAllocation();
-    }
-
-    QueryAllocations[Index] = FD3D12QueryAllocation(this, Index, Results);
-    return QueryAllocations[Index];
-}
-
-void FD3D12QueryHeap::ResolveQueries(FD3D12CommandList& CommandList)
-{
-    D3D12_QUERY_TYPE QueryType = D3D12_QUERY_TYPE_TIMESTAMP;
-    if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
-    {
-        QueryType = D3D12_QUERY_TYPE_TIMESTAMP;
-    }
-    else if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_OCCLUSION)
-    {
-        QueryType = D3D12_QUERY_TYPE_OCCLUSION;
-    }
-
-    CommandList.UpdateResidency(&ResidencyHandle);
-
-    const uint32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
-    CommandList->ResolveQueryData(QueryHeap.Get(), QueryType, 0, NumUsedQueries, ReadbackResourceStorage.GetResource()->GetD3D12Resource(), 0);
-}
-
-void FD3D12QueryHeap::ReadBackResults(FD3D12Queue& Queue)
-{
-    void* Data = ReadbackResourceStorage.GetResource()->MapRange(0, nullptr);
-    if (!Data)
-    {
-        D3D12_ERROR_CRITICAL("Failed to read query results");
-        return;
-    }
-
-    const int32 NumUsedQueries = Math::Min<int32>(CurrentQueryIndex, NumQueries);
-    if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
-    {
-        const uint64 Frequency = Queue.GetFrequency();
-
-        const uint64* TimestampResults = reinterpret_cast<uint64*>(Data);
-        for (int32 Index = 0; Index < NumUsedQueries; Index++)
-        {
-            uint64* Result = QueryAllocations[Index].Results;
-            *Result = ToNanoseconds(TimestampResults[Index], Frequency);
-        }
-    }
-    else if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_OCCLUSION)
-    {
-        const uint64* OcclusionResults = reinterpret_cast<uint64*>(Data);
-        for (int32 Index = 0; Index < NumUsedQueries; Index++)
-        {
-            uint64* Result = QueryAllocations[Index].Results;
-            *Result = OcclusionResults[Index];
-        }
-    }
-
-    ReadbackResourceStorage.GetResource()->UnmapRange(0, nullptr);
-
-    // Reset this heap for future use
-    CurrentQueryIndex = 0;
 }
 
 void FD3D12QueryHeap::SetDebugName(const FString& InName)
@@ -169,7 +124,6 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
             D3D12_ERROR("Failed to set queryheap name");
         }
 
-        // Calling SetName as well since NVIDIA NSight does not recognize the name otherwise
         FStringWide WideName = CharToWide(InName);
         Result = QueryHeap->SetName(*WideName);
         if (FAILED(Result))
@@ -178,104 +132,96 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
         }
     }
 
-    const FString ResourceName = InName + "ReadBack Resource";
-    ReadbackResourceStorage.GetResource()->SetDebugName(ResourceName);
+    if (ReadbackResource.IsValid())
+    {
+        const FString ResourceName = InName + "ReadBack Resource";
+        ReadbackResource->SetDebugName(ResourceName);
+    }
 }
 
-FD3D12QueryAllocator::FD3D12QueryAllocator(FD3D12Device* InDevice, FD3D12CommandContext& InContext, EQueryType InQueryType)
+FD3D12QueryAllocator::FD3D12QueryAllocator(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType)
     : FD3D12DeviceChild(InDevice)
-    , Context(InContext)
-    , QueryHeap(nullptr)
-    , QueryType(InQueryType)
+    , HeapType(InHeapType)
 {
-    QueryHeapManager = InDevice->GetQueryHeapManager(QueryType);
-    CHECK(QueryHeapManager != nullptr);
 }
 
 FD3D12QueryAllocator::~FD3D12QueryAllocator()
 {
-    // NOTE: The QueryHeap should have been released when the context flushed it's CommandBuffer
-    CHECK(QueryHeap == nullptr);
 }
 
-FD3D12QueryAllocation FD3D12QueryAllocator::Allocate(uint64* InResults)
+bool FD3D12QueryAllocator::Allocate(FD3D12Query& OutQuery, uint64* ResultTarget, ED3D12QueryType InType)
 {
-    if (!QueryHeap)
+    const bool bNeedNewHeap = Ranges.IsEmpty() || Ranges.LastElement().Count >= Ranges.LastElement().Heap->NumQueries;
+    if (bNeedNewHeap)
     {
-        QueryHeap = QueryHeapManager->ObtainQueryHeap();
+        FD3D12QueryHeap* Heap = GetDevice()->ObtainQueryHeap(HeapType);
+        if (!Heap)
+        {
+            return false;
+        }
+
+        Ranges.Add(FD3D12QueryRange(Heap, 0, 0));
     }
 
-    FD3D12QueryAllocation QueryAllocation = QueryHeap->AllocateQueries(InResults);
-    if (!QueryAllocation.IsValid())
-    {
-        Context.GetCommands().AddQueryHeap(QueryHeap);
-        QueryHeap = QueryHeapManager->ObtainQueryHeap();
-        QueryAllocation = QueryHeap->AllocateQueries(InResults);
-    }
-
-    return QueryAllocation;
+    FD3D12QueryRange& Range = Ranges.LastElement();
+    OutQuery = FD3D12Query(Range.Heap, Range.StartIndex + Range.Count, ResultTarget, InType);
+    Range.Count++;
+    return true;
 }
 
-void FD3D12QueryAllocator::PrepareForNewCommandList()
+void FD3D12QueryAllocator::Reset(TArray<FD3D12QueryRange>& OutRanges)
 {
-    if (QueryHeap)
+    for (FD3D12QueryRange& Range : Ranges)
     {
-        Context.GetCommands().AddQueryHeap(QueryHeap);
-        QueryHeap = nullptr;
+        OutRanges.Add(Move(Range));
     }
+
+    Ranges.Clear();
 }
 
-FD3D12QueryHeapManager::FD3D12QueryHeapManager(FD3D12Device* InDevice, EQueryType InQueryType, int32 InQueriesPerHeap)
+FD3D12QueryHeapManager::FD3D12QueryHeapManager(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType, int32 InQueriesPerHeap)
     : FD3D12DeviceChild(InDevice)
-    , QueryType(InQueryType)
+    , HeapType(InHeapType)
     , QueriesPerHeap(Math::Max<int32>(1, InQueriesPerHeap))
-    , AvailableQueryHeaps()
-    , QueryHeaps()
-    , QueryHeapsCS()
 {
 }
 
 FD3D12QueryHeapManager::~FD3D12QueryHeapManager()
 {
-    TScopedLock Lock(QueryHeapsCS);
-
-    for (FD3D12QueryHeap* QueryHeap : QueryHeaps)
+    TScopedLock Lock(HeapsCS);
+    for (FD3D12QueryHeap* Heap : AllHeaps)
     {
-        delete QueryHeap;
+        delete Heap;
     }
-
-    QueryHeaps.Clear();
-    AvailableQueryHeaps.Clear();
+    AllHeaps.Clear();
 }
 
-FD3D12QueryHeap* FD3D12QueryHeapManager::ObtainQueryHeap()
+FD3D12QueryHeap* FD3D12QueryHeapManager::ObtainHeap()
 {
-    TScopedLock Lock(QueryHeapsCS);
+    TScopedLock Lock(HeapsCS);
 
-    FD3D12QueryHeap* QueryHeap = nullptr;
-    if (AvailableQueryHeaps.Dequeue(QueryHeap))
+    FD3D12QueryHeap* Heap = nullptr;
+    if (AvailableHeaps.Dequeue(Heap))
     {
-        return QueryHeap;
+        return Heap;
     }
 
-    const D3D12_QUERY_HEAP_TYPE QueryHeapType = ToQueryHeapType(QueryType);
-    QueryHeap = new FD3D12QueryHeap(GetDevice(), this);
-    if (!QueryHeap->Initialize(QueryHeapType, QueriesPerHeap))
+    Heap = new FD3D12QueryHeap(GetDevice(), HeapType, QueriesPerHeap);
+    if (!Heap->Initialize())
     {
-        DEBUG_BREAK();
-        delete QueryHeap;
+        delete Heap;
         return nullptr;
     }
 
-    const FString DebugName = FString::CreateFormatted("QueryHeap [%s %d]", ToString(QueryType), QueryHeaps.Size());
-    QueryHeap->SetDebugName(DebugName);
+    const FString DebugName = FString::CreateFormatted("QueryHeap [%d]", AllHeaps.Size());
+    Heap->SetDebugName(DebugName);
 
-    QueryHeaps.Add(QueryHeap);
-    return QueryHeap;
+    AllHeaps.Add(Heap);
+    return Heap;
 }
 
-void FD3D12QueryHeapManager::RecycleQueryHeap(FD3D12QueryHeap* InQueryHeap)
+void FD3D12QueryHeapManager::RecycleHeap(FD3D12QueryHeap* Heap)
 {
-    TScopedLock Lock(QueryHeapsCS);
-    AvailableQueryHeaps.Enqueue(InQueryHeap);
+    TScopedLock Lock(HeapsCS);
+    AvailableHeaps.Enqueue(Heap);
 }

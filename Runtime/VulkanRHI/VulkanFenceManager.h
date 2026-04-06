@@ -18,9 +18,11 @@ public:
 
 private:
     bool FindAvailableFence(FVulkanFence** OutAvailableFence);
+    void ReclaimReleasedFences();
 
     TArray<FVulkanFence*> AvailableFences;
-    FCriticalSection AvailableFencesCS;
+    TArray<FVulkanFence*> PendingRecycleFences;
+    FCriticalSection      FencePoolCS;
     TArray<FVulkanFence*> Fences;
-    FCriticalSection FencesCS;
+    FCriticalSection      FencesCS;
 };

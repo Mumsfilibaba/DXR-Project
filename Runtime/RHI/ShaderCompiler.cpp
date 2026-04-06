@@ -1,5 +1,5 @@
 #include "Core/Containers/ComPtr.h"
-#include "Core/Platform/PlatformInterlocked.h"
+#include "Core/RefCountedBase.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Memory/Malloc.h"
@@ -146,13 +146,12 @@ static glslang_stage_t GetGlslangStage(EShaderStage ShaderStage)
     }
 }
 
-class FShaderBlob final : public IDxcBlob
+class FShaderBlob final : public IDxcBlob, public FRefCountedBase
 {
 public:
     FShaderBlob(LPCVOID InData, SIZE_T InSize)
         : Data(nullptr)
         , Size(InSize)
-        , References(1)
     {
         Data = FMemory::Malloc(Size);
         FMemory::Memcpy(Data, InData, Size);
@@ -163,15 +162,11 @@ public:
         FMemory::Free(Data);
     }
 
-    virtual LPVOID GetBufferPointer() override final
-    {
-        return Data;
-    }
+    virtual SIZE_T GetBufferSize()    override final { return Size; }
+    virtual LPVOID GetBufferPointer() override final { return Data; }
 
-    virtual SIZE_T GetBufferSize() override final
-    {
-        return Size;
-    }
+    virtual ULONG AddRef()  override final { return static_cast<ULONG>(FRefCountedBase::AddRef()); }
+    virtual ULONG Release() override final { return static_cast<ULONG>(FRefCountedBase::Release()); }
 
     virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
     {
@@ -193,27 +188,9 @@ public:
         return E_NOINTERFACE;
     }
 
-    virtual ULONG AddRef() override final
-    {
-        FPlatformInterlocked::InterlockedIncrement(&References);
-        return static_cast<ULONG>(References);
-    }
-
-    virtual ULONG Release() override final
-    {
-        ULONG NumRefs = static_cast<ULONG>(FPlatformInterlocked::InterlockedDecrement(&References));
-        if (NumRefs == 0)
-        {
-            delete this;
-        }
-
-        return NumRefs;
-    }
-
 private:
     LPVOID Data;
     SIZE_T Size;
-    int32  References;
 };
 
 FShaderCompiler* FShaderCompiler::GShaderCompiler = nullptr;

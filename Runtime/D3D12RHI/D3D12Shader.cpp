@@ -1,5 +1,5 @@
 #include "Core/Misc/CRC.h"
-#include "Core/Threading/Atomic.h"
+#include "Core/RefCountedBase.h"
 #include "D3D12RHI/D3D12Shader.h"
 #include "D3D12RHI/D3D12RootSignature.h"
 #include "D3D12RHI/D3D12Loader.h"
@@ -74,13 +74,12 @@ enum DxilFourCC
 
 #undef MAKEFOURCC
 
-class FExistingBlob : public IDxcBlob
+class FExistingBlob : public IDxcBlob, public FRefCountedBase
 {
 public:
 	FExistingBlob(LPVOID InData, SIZE_T InSizeInBytes)
 		: SizeInBytes(InSizeInBytes)
 		, Data(nullptr)
-		, References(1)
 	{
 		Data = FMemory::Malloc(SizeInBytes);
 		FMemory::Memcpy(Data, InData, SizeInBytes);
@@ -91,8 +90,11 @@ public:
 		FMemory::Free(Data);
 	}
 
-	virtual LPVOID GetBufferPointer() override final { return Data; }
+    virtual ULONG AddRef()  override final { return static_cast<ULONG>(FRefCountedBase::AddRef()); }
+    virtual ULONG Release() override final { return static_cast<ULONG>(FRefCountedBase::Release()); }
+
 	virtual SIZE_T GetBufferSize()    override final { return SizeInBytes; }
+	virtual LPVOID GetBufferPointer() override final { return Data; }
 
 	virtual HRESULT QueryInterface(REFIID Riid, LPVOID* ppvObject) override final
 	{
@@ -113,27 +115,9 @@ public:
 		return E_NOINTERFACE;
 	}
 
-	virtual ULONG AddRef() override final
-	{
-		const uint32 NewRefCount = ++References;
-		return static_cast<ULONG>(NewRefCount);
-	}
-
-	virtual ULONG Release() override final
-	{
-		const uint32 NewRefCount = --References;
-		if (NewRefCount == 0)
-		{
-			delete this;
-		}
-
-		return static_cast<ULONG>(NewRefCount);
-	}
-
 private:
 	SIZE_T SizeInBytes;
 	LPVOID Data;
-	FAtomicUInt32 References;
 };
 
 FD3D12ShaderBytecode::FD3D12ShaderBytecode()

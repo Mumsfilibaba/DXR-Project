@@ -1,3 +1,6 @@
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Threading/ScopedLock.h"
+#include "RHI/RHIQuery.h"
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanLoader.h"
@@ -7,6 +10,18 @@
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanCommandContext.h"
+#include "VulkanRHI/VulkanQuery.h"
+#include "VulkanRHI/VulkanDeviceLimits.h"
+
+static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
+    "VulkanRHI.MaxPendingSubmissions",
+    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    32);
+
+static uint64 ToNanoseconds(uint64 Timestamp)
+{
+    return static_cast<uint64>(static_cast<double>(Timestamp) * static_cast<double>(VulkanDeviceLimits::TimestampPeriod));
+}
 
 FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQueueType)
     : FVulkanDeviceChild(InDevice)
@@ -304,14 +319,120 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
     return true;
 }
 
+void FVulkanQueue::SubmitCommands(FVulkanCommands* Commands)
+{
+    CHECK(Commands != nullptr);
+    if (Commands->IsEmpty())
+    {
+        return;
+    }
+
+    TScopedLock Lock(SubmissionCS);
+
+    Commands->PreExecute();
+
+#if !VULKAN_USE_CPU_QUERY_RESOLVE
+    const bool bResolveQueries = IsEnumFlagSet(Commands->Flags, EVulkanCommandsFlags::ResolveQueries);
+    if (bResolveQueries)
+    {
+        if (!PendingTimestampQueries.IsEmpty())
+        {
+            Commands->TimestampQueries.Insert(0, PendingTimestampQueries);
+            PendingTimestampQueries.Clear();
+        }
+
+        if (!PendingOcclusionQueries.IsEmpty())
+        {
+            Commands->OcclusionQueries.Insert(0, PendingOcclusionQueries);
+            PendingOcclusionQueries.Clear();
+        }
+
+        if (!PendingPipelineStatsQueries.IsEmpty())
+        {
+            Commands->PipelineStatsQueries.Insert(0, PendingPipelineStatsQueries);
+            PendingPipelineStatsQueries.Clear();
+        }
+
+        if (!PendingQueryRHIs.IsEmpty())
+        {
+            Commands->PendingQueries.Insert(0, PendingQueryRHIs);
+            PendingQueryRHIs.Clear();
+        }
+    }
+    else
+    {
+        PendingTimestampQueries.Append(Commands->TimestampQueries);
+        PendingOcclusionQueries.Append(Commands->OcclusionQueries);
+        PendingPipelineStatsQueries.Append(Commands->PipelineStatsQueries);
+        PendingQueryRHIs.Append(Commands->PendingQueries);
+
+        Commands->TimestampQueries.Clear();
+        Commands->OcclusionQueries.Clear();
+        Commands->PipelineStatsQueries.Clear();
+        Commands->PendingQueries.Clear();
+    }
+#endif
+
+    Commands->Execute();
+
+    PendingSubmissions.Enqueue(Commands);
+
+    const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
+    while (PendingSubmissions.Size() > MaxPending)
+    {
+        FVulkanCommands* Oldest = nullptr;
+        if (PendingSubmissions.Peek(Oldest) && Oldest)
+        {
+            Oldest->Fence->Wait(UINT64_MAX);
+            PendingSubmissions.Dequeue();
+            Oldest->PostExecute();
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
+void FVulkanQueue::ProcessCommandQueue()
+{
+    bool bProcess = true;
+    while (bProcess)
+    {
+        FVulkanCommands* Commands = nullptr;
+        if (PendingSubmissions.Peek(Commands))
+        {
+            CHECK(Commands != nullptr);
+            if (!Commands->IsExecutionFinished())
+            {
+                bProcess = false;
+            }
+            else
+            {
+                PendingSubmissions.Dequeue();
+                Commands->PostExecute();
+            }
+        }
+        else
+        {
+            bProcess = false;
+        }
+    }
+}
+
 FVulkanCommands::FVulkanCommands(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
     : Queue(InQueue)
-    , Fence(nullptr)
     , Device(InDevice)
+    , Flags(EVulkanCommandsFlags::None)
+    , Fence(nullptr)
     , CommandPools()
     , CommandBuffers()
-    , QueryPools()
-    , DeletionQueue()
+    , QueryRanges()
+    , TimestampQueries()
+    , OcclusionQueries()
+    , PipelineStatsQueries()
+    , PendingQueries()
+    , DeferredObjects()
 {
 }
 
@@ -329,6 +450,18 @@ void FVulkanCommands::AcquireFence()
 
 void FVulkanCommands::PreExecute()
 {
+    for (int32 i = 0; i < CommandBuffers.Size(); i++)
+    {
+        FVulkanCommandBuffer* CommandBuffer = CommandBuffers[i];
+        TimestampQueries.Append(CommandBuffer->TimestampQueries);
+        OcclusionQueries.Append(CommandBuffer->OcclusionQueries);
+        PipelineStatsQueries.Append(CommandBuffer->PipelineStatsQueries);
+
+        CommandBuffer->TimestampQueries.Clear();
+        CommandBuffer->OcclusionQueries.Clear();
+        CommandBuffer->PipelineStatsQueries.Clear();
+    }
+
     FVulkanBarrierBatcher BarrierBatcher;
 
     for (const FVulkanPendingImageBarrier& Pending : PendingImageBarriers)
@@ -488,46 +621,160 @@ void FVulkanCommands::Execute()
     CHECK(CommandBuffers.IsEmpty() == false);
     CHECK(Fence != nullptr);
     Queue.ExecuteCommandBuffer(CommandBuffers.Data(), CommandBuffers.Size(), Fence);
+
+    for (int32 i = 0; i < PendingQueries.Size(); i++)
+    {
+        PendingQueries[i]->SyncFence = MakeSharedRef<FVulkanFence>(Fence);
+    }
+    PendingQueries.Clear();
 }
 
-void FVulkanCommands::Finish()
+void FVulkanCommands::PostExecute()
 {
-    // Resolve queries
-    for (FVulkanQueryPool* QueryPool : QueryPools)
+    TArray<uint64> RawTicksArray;
+    RawTicksArray.Resize(TimestampQueries.Size());
+
+    for (int32 i = 0; i < TimestampQueries.Size(); i++)
     {
-        FVulkanQueryPoolManager* QueryPoolManager = QueryPool->GetQueryPoolManager();
-        QueryPool->ResolveQueries();
-        QueryPoolManager->RecycleQueryPool(QueryPool);
+        RawTicksArray[i] = 0;
+        
+        const FVulkanQuery& Query = TimestampQueries[i];
+        if (Query.QueryPool)
+        {
+            Query.CopyResult(&RawTicksArray[i], sizeof(uint64));
+        }
     }
 
-    QueryPools.Clear();
-
-    // Recycle all the CommandBuffers before CommandPools to avoid needing to lock the CommandPools
-    for (FVulkanCommandBuffer* CommandBuffer : CommandBuffers)
+    uint64 AccumulatedIdleTicks      = 0;
+    uint64 LastCommandBufferEndTicks = 0;
+    
+    bool bHaveLastCommandBufferEnd = false;
+    for (int32 i = 0; i < TimestampQueries.Size(); i++)
     {
-        FVulkanCommandPool* CommandPool = CommandBuffer->GetOwnerPool();
-        CommandPool->RecycleBuffer(CommandBuffer);
+        const FVulkanQuery& Query = TimestampQueries[i];
+        const uint64 Ticks = RawTicksArray[i];
+
+        if (Query.Type == EVulkanQueryType::CommandListEnd)
+        {
+            LastCommandBufferEndTicks = Ticks;
+            bHaveLastCommandBufferEnd = true;
+        }
+        else if (Query.Type == EVulkanQueryType::CommandListBegin && bHaveLastCommandBufferEnd)
+        {
+            if (Ticks > LastCommandBufferEndTicks)
+            {
+                AccumulatedIdleTicks += Ticks - LastCommandBufferEndTicks;
+            }
+
+            bHaveLastCommandBufferEnd = false;
+        }
+
+        if (Query.Type == EVulkanQueryType::Timestamp && Query.ResultTarget)
+        {
+            const uint64 AdjustedTicks = (Ticks > AccumulatedIdleTicks) ? (Ticks - AccumulatedIdleTicks) : 0;
+            *Query.ResultTarget = ToNanoseconds(AdjustedTicks);
+        }
+    }
+
+    TimestampQueries.Clear();
+
+    for (int32 QueryIdx = 0; QueryIdx < OcclusionQueries.Size(); QueryIdx++)
+    {
+        const FVulkanQuery& Query = OcclusionQueries[QueryIdx];
+        if (!Query.QueryPool || !Query.ResultTarget)
+        {
+            continue;
+        }
+
+        uint64 NumSamples = 0;
+        if (Query.CopyResult(&NumSamples, sizeof(uint64)))
+        {
+            *Query.ResultTarget = NumSamples;
+        }
+    }
+
+    OcclusionQueries.Clear();
+
+    for (int32 QueryIdx = 0; QueryIdx < PipelineStatsQueries.Size(); QueryIdx++)
+    {
+        const FVulkanQuery& Query = PipelineStatsQueries[QueryIdx];
+        if (!Query.QueryPool || !Query.ResultTarget)
+        {
+            continue;
+        }
+
+        struct FPipelineStats
+        {
+            uint64 IAVertices;
+            uint64 IAPrimitives;
+            uint64 VSInvocations;
+            uint64 GSInvocations;
+            uint64 GSPrimitives;
+            uint64 CInvocations;
+            uint64 CPrimitives;
+            uint64 PSInvocations;
+            uint64 HSInvocations;
+            uint64 DSInvocations;
+            uint64 CSInvocations;
+        };
+
+        FPipelineStats VulkanStats = {};
+        if (Query.CopyResult(&VulkanStats, sizeof(VulkanStats)))
+        {
+            FRHIPipelineStatistics* Stats = reinterpret_cast<FRHIPipelineStatistics*>(Query.ResultTarget);
+            Stats->IAVertices    = VulkanStats.IAVertices;
+            Stats->IAPrimitives  = VulkanStats.IAPrimitives;
+            Stats->VSInvocations = VulkanStats.VSInvocations;
+            Stats->GSInvocations = VulkanStats.GSInvocations;
+            Stats->GSPrimitives  = VulkanStats.GSPrimitives;
+            Stats->CInvocations  = VulkanStats.CInvocations;
+            Stats->CPrimitives   = VulkanStats.CPrimitives;
+            Stats->PSInvocations = VulkanStats.PSInvocations;
+            Stats->HSInvocations = VulkanStats.HSInvocations;
+            Stats->DSInvocations = VulkanStats.DSInvocations;
+            Stats->CSInvocations = VulkanStats.CSInvocations;
+            Stats->ASInvocations = 0;
+            Stats->MSInvocations = 0;
+            Stats->MSPrimitives  = 0;
+        }
+    }
+
+    PipelineStatsQueries.Clear();
+
+    for (int32 RangeIdx = 0; RangeIdx < QueryRanges.Size(); RangeIdx++)
+    {
+        FVulkanQueryPool* Pool = QueryRanges[RangeIdx].Pool;
+        Device->RecycleQueryPool(Pool);
+    }
+
+    QueryRanges.Clear();
+
+    for (int32 CmdBufIdx = 0; CmdBufIdx < CommandBuffers.Size(); CmdBufIdx++)
+    {
+        FVulkanCommandPool* CommandPool = CommandBuffers[CmdBufIdx]->GetOwnerPool();
+        CommandPool->RecycleBuffer(CommandBuffers[CmdBufIdx]);
     }
 
     CommandBuffers.Clear();
 
-    // Recycle all the CommandPool
-    for (FVulkanCommandPool* CommandPool : CommandPools)
+    for (int32 PoolIdx = 0; PoolIdx < CommandPools.Size(); PoolIdx++)
     {
-        Queue.RecycleCommandPool(CommandPool);
+        Queue.RecycleCommandPool(CommandPools[PoolIdx]);
     }
-    
+
     CommandPools.Clear();
 
-    // Recycle the fence
     FVulkanFenceManager& FenceManager = Device->GetFenceManager();
     FenceManager.RecycleFence(Fence);
     Fence = nullptr;
 
-    // Delete all the resources that has been queued up for destruction
-    FVulkanDeferredObject::ProcessItems(Device, DeletionQueue);
-    DeletionQueue.Clear();
+    FVulkanDeferredObject::ProcessItems(Device, DeferredObjects);
+    DeferredObjects.Clear();
 
-    // Destroy this instance after execution is finished
+    PendingImageBarriers.Clear();
+    PendingBufferBarriers.Clear();
+    PendingImageStates.Clear();
+    PendingBufferStates.Clear();
+
     delete this;
 }

@@ -6,8 +6,6 @@
 #include "Core/Threading/Atomic.h"
 #include "Core/Threading/ScopedLock.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
-#include "VulkanRHI/VulkanRefCounted.h"
-
 static constexpr uint64 VULKAN_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE = 16ull;
 
 class FVulkanBuddyAllocator;

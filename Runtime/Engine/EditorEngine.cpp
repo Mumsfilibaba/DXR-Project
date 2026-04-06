@@ -6,7 +6,9 @@
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
+#include "Engine/EngineUI/Editor/EditorGPUProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
+#include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "RendererCore/RenderSettings.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
@@ -22,6 +24,8 @@ FEditorEngine::FEditorEngine()
     , SceneHierarchyWidget(nullptr)
     , ContentBrowserWidget(nullptr)
     , GuizmoWidget(nullptr)
+    , GPUProfilerWidget(nullptr)
+    , FrameProfilerWidget(nullptr)
     , ViewportImage(nullptr)
     , ViewportImageSize()
 {
@@ -47,7 +51,9 @@ bool FEditorEngine::Init()
         PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
         ContentBrowserWidget = MakeSharedPtr<FEditorContentBrowserWidget>();
         GuizmoWidget         = MakeSharedPtr<FEditorGuizmoWidget>(this);
-        
+        GPUProfilerWidget    = MakeSharedPtr<FEditorGPUProfilerWidget>();
+        FrameProfilerWidget  = MakeSharedPtr<FEditorFrameProfilerWidget>();
+
         ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
         ViewportWidget->SetViewportWidget(GetViewportWidget());
     }
@@ -83,6 +89,8 @@ void FEditorEngine::Release()
         PropertiesWidget.Reset();
         ContentBrowserWidget.Reset();
         GuizmoWidget.Reset();
+        GPUProfilerWidget.Reset();
+        FrameProfilerWidget.Reset();
     }
 
     FEngine::Release();

@@ -3,7 +3,6 @@
 #include "Core/Containers/Array.h"
 #include "Core/Misc/CRC.h"
 #include "Core/Platform/CriticalSection.h"
-#include "VulkanRHI/VulkanRefCounted.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
 class FVulkanBuffer;

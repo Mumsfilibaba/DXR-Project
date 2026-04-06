@@ -28,11 +28,6 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);
 
-static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
-    "D3D12RHI.MaxPendingSubmissions",
-    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
-    32);
-
 FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
 FRHI* FD3D12RHIModule::CreateRHI()
@@ -69,12 +64,12 @@ FD3D12RHI::~FD3D12RHI()
             FRHICommandListExecutor::Get().FlushDeletedResources();
         }
 
-        while (!DeletionQueue.IsEmpty())
+        while (!DeferredObjects.IsEmpty())
         {
             TArray<FD3D12DeferredObject> Items;
             {
-                TScopedLock Lock(DeletionQueueCS);
-                Items = Move(DeletionQueue);
+                TScopedLock Lock(DeferredObjectsCS);
+                Items = Move(DeferredObjects);
             }
 
             FD3D12DeferredObject::ProcessItems(Items);
@@ -93,9 +88,10 @@ FD3D12RHI::~FD3D12RHI()
         DirectCommandContext->Flush();
     }
 
-    while (!PendingSubmissions.IsEmpty())
+    if (Device)
     {
-        ProcessPendingCommands();
+        FD3D12Queue* DirectQueue = Device->GetQueue(ED3D12CommandQueueType::Direct);
+        DirectQueue->ProcessCommandQueue();
     }
 
     // Flush any objects that might need the context...
@@ -176,7 +172,7 @@ void FD3D12RHI::BeginFrame(FD3D12CommandContext* InCommandContext)
         return;
     }
 
-    ProcessPendingCommands();
+    Device->GetQueue(ED3D12CommandQueueType::Direct)->ProcessCommandQueue();
 
     Device->BeginFrame(InCommandContext);
 
@@ -342,6 +338,10 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
 
     RHIDeviceFeatureSupport::bSupportsDynamicDepthBias = GD3D12SupportDynamicDepthBias;
     RHIDeviceFeatureSupport::bSupportsStreamOutput     = true;
+
+    RHIDeviceFeatureSupport::bSupportsTimestampQueries           = true;
+    RHIDeviceFeatureSupport::bSupportsPipelineStatisticsQueries  = true;
+    RHIDeviceFeatureSupport::bSupportsGPUTimestampBubblesRemoval = true;
 
     return true;
 }
@@ -923,7 +923,7 @@ FRHIRayTracingPipelineState* FD3D12RHI::CreateRayTracingPipelineState(const FRHI
 
 FRHIQuery* FD3D12RHI::CreateQuery(EQueryType InQueryType)
 {
-    return new FD3D12Query(GetDevice(), InQueryType);
+    return new FD3D12QueryRHI(GetDevice(), InQueryType);
 }
 
 FRHIGpuFence* FD3D12RHI::CreateFence()
@@ -1004,15 +1004,49 @@ bool FD3D12RHI::QueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
-bool FD3D12RHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult)
+bool FD3D12RHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
-    FD3D12Query* D3D12Result = static_cast<FD3D12Query*>(Query);
-    if (!D3D12Result)
+    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
+    if (!D3D12Query)
     {
         return false;
     }
 
-    OutResult = D3D12Result->Result;
+    if (Mode == EQueryResultMode::Wait)
+    {
+        const FD3D12FenceSyncPoint& SyncPoint = D3D12Query->SyncPoint;
+        if (!SyncPoint.IsValid())
+        {
+            return false;
+        }
+
+        SyncPoint.Wait();
+    }
+
+    OutResult = *D3D12Query->QueryResult;
+    return true;
+}
+
+bool FD3D12RHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
+{
+    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
+    if (!D3D12Query)
+    {
+        return false;
+    }
+
+    if (Mode == EQueryResultMode::Wait)
+    {
+        const FD3D12FenceSyncPoint& SyncPoint = D3D12Query->SyncPoint;
+        if (!SyncPoint.IsValid())
+        {
+            return false;
+        }
+
+        SyncPoint.Wait();
+    }
+
+    OutResult = *reinterpret_cast<const FRHIPipelineStatistics*>(D3D12Query->QueryResult);
     return true;
 }
 
@@ -1065,53 +1099,9 @@ void* FD3D12RHI::GetNativeCopyCommandQueue()
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
 }
 
-void FD3D12RHI::ProcessPendingCommands()
-{
-    bool bProcess = true;
-    while (bProcess)
-    {
-        FD3D12Commands* Commands = nullptr;
-        if (PendingSubmissions.Peek(Commands))
-        {
-            CHECK(Commands != nullptr);
-            if (!Commands->SyncPoint.IsReached())
-            {
-                bProcess = false;
-                break;
-            }
-            else
-            {
-                // If we are finished we remove the item from the queue
-                PendingSubmissions.Dequeue();
-                Commands->Finish();
-            }
-        }
-        else
-        {
-            bProcess = false;
-        }
-    }
-}
-
 void FD3D12RHI::TickCoreProgression()
 {
-    ProcessPendingCommands();
-
-    const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
-    while (PendingSubmissions.Size() > MaxPending)
-    {
-        FD3D12Commands* Oldest = nullptr;
-        if (PendingSubmissions.Peek(Oldest) && Oldest)
-        {
-            Oldest->SyncPoint.Wait();
-            PendingSubmissions.Dequeue();
-            Oldest->Finish();
-        }
-        else
-        {
-            break;
-        }
-    }
+    Device->GetQueue(ED3D12CommandQueueType::Direct)->ProcessCommandQueue();
 
     if (FD3D12LinearAllocator* StagingBufferAllocator = Device->GetStagingBufferAllocator())
     {
@@ -1141,42 +1131,17 @@ void FD3D12RHI::TickCoreProgression()
 
 void FD3D12RHI::FlushCompletedSubmissions()
 {
-    ProcessPendingCommands();
+    Device->GetQueue(ED3D12CommandQueueType::Direct)->ProcessCommandQueue();
 }
 
-void FD3D12RHI::SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueue)
+void FD3D12RHI::FlushDeletionQueue(FD3D12Commands* Commands)
 {
     CHECK(Commands != nullptr);
-
-    if (!Commands->IsEmpty())
+    if (Commands->IsEmpty())
     {
-        TScopedLock SubmitLock(SubmissionCS);
-
-        if (bFlushDeletionQueue)
-        {
-            TScopedLock Lock(DeletionQueueCS);
-            Commands->DeletionQueue = Move(DeletionQueue);
-        }
-
-        Commands->PreExecute();
-        Commands->Execute();
-
-        PendingSubmissions.Enqueue(Commands);
-
-        const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
-        while (PendingSubmissions.Size() > MaxPending)
-        {
-            FD3D12Commands* Oldest = nullptr;
-            if (PendingSubmissions.Peek(Oldest) && Oldest)
-            {
-                Oldest->SyncPoint.Wait();
-                PendingSubmissions.Dequeue();
-                Oldest->Finish();
-            }
-            else
-            {
-                break;
-            }
-        }
+        return;
     }
+
+    TScopedLock Lock(DeferredObjectsCS);
+    Commands->DeferredObjects = Move(DeferredObjects);
 }

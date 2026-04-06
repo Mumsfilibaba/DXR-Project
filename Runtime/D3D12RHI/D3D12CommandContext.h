@@ -111,12 +111,14 @@ public:
     bool Initialize();
     
     void ObtainCommandList();
-    void FinishCommandList(bool bFlushAllocator);
+    void FinishCommandList(bool bFlushAllocator, bool bResolveQueries = true);
     void SplitCommandList(bool bFlushAllocator, bool bWaitForQueue);
     void SplitCommandListAndResetState(bool bFlushAllocator, bool bWaitForQueue);
     void SplitCommandListForDescriptorHeapRollover();
     
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
+    
+    void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
 
     FD3D12CommandList& GetCommandList() 
     {
@@ -150,8 +152,6 @@ public:
         return CommandList == nullptr;
     }
 
-    void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
-
 private:
     void ConditionalSplitCommandList();
     void CloseEventStack();
@@ -166,13 +166,16 @@ private:
     FD3D12CommandContextState                  ContextState;
     FD3D12QueryAllocator                       TimingQueryAllocator;
     FD3D12QueryAllocator                       OcclusionQueryAllocator;
+    FD3D12QueryAllocator                       PipelineStatsQueryAllocator;
     FD3D12BarrierBatcher                       BarrierBatcher;
     TArray<FD3D12PendingBarrier>               PendingBarriers;
     TMap<FD3D12Resource*, FD3D12ResourceState> PendingResourceStates;
+    TArray<FD3D12QueryRHI*>                    PendingQueries;
     ED3D12CommandQueueType                     QueueType;
     TArray<FString>                            EventStack;
-    bool                                       bIsRecording : 1; // Keeps track of the recording state of the context. I.e has StartContext been called
+    int32                                      ActiveQueryCount;
+    bool                                       bIsRecording : 1;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection          CommandContextCS;
+    FCriticalSection CommandContextCS;
 };

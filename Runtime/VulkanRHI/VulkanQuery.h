@@ -1,9 +1,16 @@
 #pragma once
-#include "Core/Containers/SharedRef.h"
-#include "Core/Containers/BitArray.h"
+#include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
+#include "Core/Containers/SharedRef.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/ScopedLock.h"
 #include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanConfiguration.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanFence.h"
+#if !VULKAN_USE_CPU_QUERY_RESOLVE
+#include "VulkanRHI/VulkanMemoryManager.h"
+#endif
 
 #define VULKAN_INVALID_QUERY_INDEX (-1)
 
@@ -12,7 +19,16 @@ class FVulkanQueryPoolManager;
 class FVulkanCommandBuffer;
 class FVulkanCommandContext;
 
-typedef TSharedRef<struct FVulkanQuery> FVulkanQueryRef;
+typedef TSharedRef<struct FVulkanQueryRHI> FVulkanQueryRHIRef;
+
+enum class EVulkanQueryType : uint8
+{
+    CommandListBegin,
+    CommandListEnd,
+    Timestamp,
+    Occlusion,
+    PipelineStatistics,
+};
 
 struct FVulkanTimingQuery
 {
@@ -26,114 +42,175 @@ struct FVulkanOcclusionQuery
     uint64 Availability;
 };
 
-struct FVulkanQueryAllocation
+struct FVulkanPipelineStatisticsQueryData
 {
-    FVulkanQueryAllocation()
-        : QueryPool(nullptr)
-        , IndexInQueryPool(VULKAN_INVALID_QUERY_INDEX)
-        , Results(nullptr)
+    uint64 IAVertices;
+    uint64 IAPrimitives;
+    uint64 VSInvocations;
+    uint64 GSInvocations;
+    uint64 GSPrimitives;
+    uint64 CInvocations;
+    uint64 CPrimitives;
+    uint64 PSInvocations;
+    uint64 HSInvocations;
+    uint64 DSInvocations;
+    uint64 CSInvocations;
+    uint64 Availability;
+};
+
+struct FVulkanQuery
+{
+    FVulkanQuery() = default;
+
+    FVulkanQuery(FVulkanQueryPool* InPool, int32 InIndex, uint64* InResultTarget, EVulkanQueryType InType)
+        : QueryPool(InPool)
+        , ResultTarget(InResultTarget)
+        , Type(InType)
+        , QueryIndex(InIndex)
     {
     }
 
-    FVulkanQueryAllocation(FVulkanQueryPool* InQueryPool, int32 InIndexInQueryPool, uint64* InResults)
-        : QueryPool(InQueryPool)
-        , IndexInQueryPool(InIndexInQueryPool)
-        , Results(InResults)
+    bool CopyResult(void* Dst, uint64 DstSize) const;
+
+    bool IsValid() const
+    {
+        return QueryPool != nullptr && QueryIndex != VULKAN_INVALID_QUERY_INDEX;
+    }
+
+    operator bool() const
+    {
+        return IsValid();
+    }
+
+    FVulkanQueryPool* QueryPool    = nullptr;
+    uint64*           ResultTarget = nullptr;
+    EVulkanQueryType  Type         = EVulkanQueryType::Timestamp;
+    int32             QueryIndex   = VULKAN_INVALID_QUERY_INDEX;
+};
+
+struct FVulkanQueryRHI : public FRHIQuery, public FVulkanDeviceChild
+{
+    FVulkanQueryRHI(FVulkanDevice* InDevice, EQueryType InQueryType);
+    virtual ~FVulkanQueryRHI();
+
+    FVulkanQuery             CurrentQuery;
+    TSharedRef<FVulkanFence> SyncFence;
+    uint64*                  QueryResult;
+};
+
+struct FVulkanQueryRange
+{
+    FVulkanQueryRange() = default;
+
+    FVulkanQueryRange(FVulkanQueryPool* InPool, int32 InStartIndex, int32 InCount)
+        : Pool(InPool)
+        , StartIndex(InStartIndex)
+        , Count(InCount)
     {
     }
 
     bool IsValid() const
     {
-        return QueryPool != nullptr && IndexInQueryPool != VULKAN_INVALID_QUERY_INDEX;
+        return Pool != nullptr;
+    }
+    
+    operator bool() const
+    {
+        return IsValid();
     }
 
-    FVulkanQueryPool* QueryPool;
-    int32             IndexInQueryPool;
-    uint64*           Results;
-};
-
-struct FVulkanQuery : public FRHIQuery, public FVulkanDeviceChild
-{
-    FVulkanQuery(FVulkanDevice* InDevice, EQueryType InQueryType);
-    virtual ~FVulkanQuery() = default;
-
-    // QueryAllocation should only used on RHI Thread
-    FVulkanQueryAllocation QueryAllocation;
-    uint64                 Result;
+    FVulkanQueryPool* Pool       = nullptr;
+    int32             StartIndex = 0;
+    int32             Count      = 0;
 };
 
 class FVulkanQueryPool : public FVulkanDeviceChild
 {
 public:
-    FVulkanQueryPool(FVulkanDevice* InDevice, FVulkanQueryPoolManager* InQueryPoolManager, EQueryType InQueryType);
+    FVulkanQueryPool(FVulkanDevice* InDevice, VkQueryType InQueryType, int32 InNumQueries);
     ~FVulkanQueryPool();
 
     bool Initialize();
-    
-    FVulkanQueryAllocation Allocate(uint64* InResults);
-    void Reset();
-    void ResolveQueries();
+    void ResetPool();
     void SetDebugName(const FString& InName);
-    const FString& GetDebugName() const { return DebugName; }
 
     VkQueryPool GetVkQueryPool() const
     {
         return QueryPool;
     }
 
-    uint32 GetMaxQueries() const
+    const FString& GetDebugName() const
     {
-        return NumQueries;
+        return DebugName;
     }
 
-    FVulkanQueryPoolManager* GetQueryPoolManager() const
+    uint64 GetQuerySize() const
     {
-        return QueryPoolManager;
+        switch (QueryType)
+        {
+            case VK_QUERY_TYPE_TIMESTAMP:           return sizeof(uint64);
+            case VK_QUERY_TYPE_OCCLUSION:           return sizeof(uint64);
+            case VK_QUERY_TYPE_PIPELINE_STATISTICS: return sizeof(FVulkanPipelineStatisticsQueryData) - sizeof(uint64);
+            default:                                return sizeof(uint64);
+        }
     }
 
-    EQueryType GetType() const 
+#if !VULKAN_USE_CPU_QUERY_RESOLVE
+    VkBuffer GetReadbackBuffer() const
     {
-        return QueryType;
+        return ReadbackStorage.GetBackingBuffer();
     }
-    
+
+    VkDeviceSize GetReadbackBufferOffset() const
+    {
+        return ReadbackStorage.GetBufferOffset();
+    }
+
+    uint64* GetReadbackData() const
+    {
+        return ReadbackData;
+    }
+#endif
+
+    const VkQueryType QueryType;
+    const int32       NumQueries;
+
 private:
-    FVulkanQueryPoolManager*       QueryPoolManager;
-    VkQueryPool                    QueryPool;
-    TArray<FVulkanQueryAllocation> QueryAllocations;
-    int32                          CurrentQueryIndex;
-    int32                          NumQueries;
-    EQueryType                     QueryType;
-    FString                        DebugName;
+    VkQueryPool          QueryPool;
+    FString              DebugName;
+#if !VULKAN_USE_CPU_QUERY_RESOLVE
+    FVulkanMemoryStorage ReadbackStorage;
+    uint64*              ReadbackData;
+#endif
 };
 
 class FVulkanQueryAllocator : public FVulkanDeviceChild
 {
 public:
-    FVulkanQueryAllocator(FVulkanDevice* InDevice, FVulkanCommandContext& InContext, EQueryType InQueryType);
+    FVulkanQueryAllocator(FVulkanDevice* InDevice, VkQueryType InQueryType);
     ~FVulkanQueryAllocator();
 
-    FVulkanQueryAllocation Allocate(uint64* InResults);
-    void PrepareForNewCommandBuffer();
+    bool Allocate(FVulkanQuery& OutQuery, uint64* ResultTarget, EVulkanQueryType InType);
+    void Reset(TArray<FVulkanQueryRange>& OutRanges);
 
 private:
-    FVulkanCommandContext&   Context; 
-    FVulkanQueryPool*        QueryPool;
-    EQueryType               QueryType;
-    FVulkanQueryPoolManager* QueryPoolManager;
+    TArray<FVulkanQueryRange> Ranges;
+    VkQueryType               QueryType;
 };
 
 class FVulkanQueryPoolManager : public FVulkanDeviceChild
 {
 public:
-    FVulkanQueryPoolManager(FVulkanDevice* InDevice, EQueryType InQueryType);
+    FVulkanQueryPoolManager(FVulkanDevice* InDevice, VkQueryType InQueryType, int32 InQueriesPerPool);
     ~FVulkanQueryPoolManager();
 
-    FVulkanQueryPool* ObtainQueryPool();
-    void RecycleQueryPool(FVulkanQueryPool* InQueryPool);
+    FVulkanQueryPool* ObtainPool();
+    void RecyclePool(FVulkanQueryPool* Pool);
 
 private:
-    EQueryType                QueryType;
-    TQueue<FVulkanQueryPool*> AvailableQueryPools;
-    TArray<FVulkanQueryPool*> QueryPools;
-    FCriticalSection          QueryPoolsCS;
+    VkQueryType               QueryType;
+    int32                     QueriesPerPool;
+    TQueue<FVulkanQueryPool*> AvailablePools;
+    TArray<FVulkanQueryPool*> AllPools;
+    FCriticalSection          PoolsCS;
 };

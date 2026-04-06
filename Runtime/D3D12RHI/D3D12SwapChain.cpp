@@ -144,11 +144,11 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
             SwapChainWaitableObject = SwapChain->GetFrameLatencyWaitableObject();
-        }
 
-        const int32 FrameLatencyCVar = CVarMaxFrameLatency.GetValue();
-        ActiveFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumSwapChainBuffers;
-        SwapChain->SetMaximumFrameLatency(ActiveFrameLatency);
+            const int32 FrameLatencyCVar = CVarMaxFrameLatency.GetValue();
+            ActiveFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumSwapChainBuffers;
+            SwapChain->SetMaximumFrameLatency(ActiveFrameLatency);
+        }
     }
     else
     {
@@ -170,7 +170,8 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
     const uint32 DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
-    const bool bSizeChanged       = (InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0u && InHeight > 0u;
+    
+    const bool bSizeChanged        = (InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0u && InHeight > 0u;
     const bool bBufferCountChanged = DesiredBackBufferCount != NumBackBuffers;
 
     if (bSizeChanged || bBufferCountChanged)
@@ -218,13 +219,17 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
     }
 
     // Apply frame latency changes if needed
-    const int32 FrameLatencyCVar = CVarMaxFrameLatency.GetValue();
-    const uint32 DesiredFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumBackBuffers;
-    if (DesiredFrameLatency != ActiveFrameLatency)
+    if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
     {
-        SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
-        ActiveFrameLatency = DesiredFrameLatency;
-        D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
+        const int32  FrameLatencyCVar    = CVarMaxFrameLatency.GetValue();
+        const uint32 DesiredFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumBackBuffers;
+
+        if (DesiredFrameLatency != ActiveFrameLatency)
+        {
+            SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
+            ActiveFrameLatency = DesiredFrameLatency;
+            D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
+        }
     }
 
     return true;
@@ -240,8 +245,8 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
-    const int32 SyncIntervalOverride = CVarSyncInterval.GetValue();
-    const uint32 SyncInterval = (SyncIntervalOverride >= 0) ? Math::Clamp<uint32>(SyncIntervalOverride, 0, 4) : (bVerticalSync ? 1 : 0);
+    const int32  SyncIntervalOverride = CVarSyncInterval.GetValue();
+    const uint32 SyncInterval         = (SyncIntervalOverride >= 0) ? Math::Clamp<uint32>(SyncIntervalOverride, 0, 4) : (bVerticalSync ? 1 : 0);
 
     uint32 PresentFlags = 0;
     if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
@@ -306,19 +311,25 @@ void FD3D12SwapChain::ApplySettingsChanges()
         }
     }
 
-    const int32 FrameLatencyCVar = CVarMaxFrameLatency.GetValue();
-    const uint32 DesiredFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumBackBuffers;
-    if (DesiredFrameLatency != ActiveFrameLatency)
+    if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
     {
-        SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
-        ActiveFrameLatency = DesiredFrameLatency;
-        D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
+        const int32  FrameLatencyCVar    = CVarMaxFrameLatency.GetValue();
+        const uint32 DesiredFrameLatency = (FrameLatencyCVar >= 0) ? static_cast<uint32>(FrameLatencyCVar) : NumBackBuffers;
+
+        if (DesiredFrameLatency != ActiveFrameLatency)
+        {
+            SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
+            ActiveFrameLatency = DesiredFrameLatency;
+            D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
+        }
     }
 }
 
 bool FD3D12SwapChain::RetrieveBackBuffers()
 {
-    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
+    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, UsageFlags);
+
     if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
     {
         BackBuffers.Resize(NumBackBuffers);
@@ -348,7 +359,12 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
             return false;
         }
 
-        FD3D12ResourceRef BackBufferResource = new FD3D12Resource(GetDevice(), D3DBackBufferResource.ReleaseOwnership(), D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_PRESENT);
+        FD3D12ResourceRef BackBufferResource = new FD3D12Resource(
+            GetDevice(), 
+            D3DBackBufferResource.ReleaseOwnership(), 
+            D3D12_HEAP_TYPE_DEFAULT, 
+            D3D12_RESOURCE_STATE_PRESENT);
+
         BackBufferResource->DisableDeferredRelease();
         
         BackBuffers[Index]->SetResource(BackBufferResource.Get());

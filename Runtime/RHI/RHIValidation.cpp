@@ -706,6 +706,7 @@ FRHIQuery* FRHIValidation::CreateQuery(EQueryType InQueryType)
     return RealRHI->CreateQuery(InQueryType);
 }
 
+
 FRHIGpuFence* FRHIValidation::CreateFence()
 {
     return RealRHI->CreateFence();
@@ -730,7 +731,7 @@ IRHICommandContext* FRHIValidation::ObtainCommandContext()
     }
 }
 
-bool FRHIValidation::GetQueryResult(FRHIQuery* Query, uint64& OutResult)
+bool FRHIValidation::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
     if (!Query)
     {
@@ -738,8 +739,27 @@ bool FRHIValidation::GetQueryResult(FRHIQuery* Query, uint64& OutResult)
         return false;
     }
 
-    return RealRHI->GetQueryResult(Query, OutResult);
+    return RealRHI->GetQueryResult(Query, OutResult, Mode);
 }
+
+bool FRHIValidation::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
+{
+    if (!Query)
+    {
+        RHI_VALIDATION_ERROR("Cannot retrieve PipelineStatistics-result from a nullptr Query");
+        return false;
+    }
+
+    if (Query->GetType() != EQueryType::PipelineStatistics)
+    {
+        RHI_VALIDATION_ERROR("Query is not a PipelineStatistics query");
+        return false;
+    }
+
+    return RealRHI->GetPipelineStatisticsResult(Query, OutResult, Mode);
+}
+
+
 
 void FRHIValidation::EnqueueResourceDeletion(FRHIResource* Resource)
 {

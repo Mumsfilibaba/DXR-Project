@@ -1,6 +1,7 @@
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanQuery.h"
 
 FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanCommandPool* InOwnerPool)
     : FVulkanDeviceChild(InDevice)
@@ -42,6 +43,13 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
 
 bool FVulkanCommandBuffer::Reset()
 {
+    BeginTimestamp = FVulkanQuery();
+    EndTimestamp   = FVulkanQuery();
+
+    TimestampQueries.Clear();
+    OcclusionQueries.Clear();
+    PipelineStatsQueries.Clear();
+
     VkResult Result = CommandBuffer.ResetCommandBuffer(0);
 	if (VULKAN_FAILED(Result))
 	{
@@ -56,6 +64,13 @@ bool FVulkanCommandBuffer::Reset()
 
 bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
 {
+    BeginTimestamp = FVulkanQuery();
+    EndTimestamp   = FVulkanQuery();
+
+    TimestampQueries.Clear();
+    OcclusionQueries.Clear();
+    PipelineStatsQueries.Clear();
+
     VkCommandBufferBeginInfo BeginInfo = {};
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     BeginInfo.flags = Flags;
@@ -80,9 +95,55 @@ bool FVulkanCommandBuffer::End()
         return false;
     }
 
-    NumCommands = 0;
+    NumCommands  = 0;
     bIsRecording = false;
     return true;
+}
+
+void FVulkanCommandBuffer::InsertBeginTimestamp(FVulkanQueryAllocator& Allocator)
+{
+    if (Allocator.Allocate(BeginTimestamp, nullptr, EVulkanQueryType::CommandListBegin))
+    {
+        EndQuery(BeginTimestamp);
+    }
+}
+
+void FVulkanCommandBuffer::InsertEndTimestamp(FVulkanQueryAllocator& Allocator)
+{
+    if (Allocator.Allocate(EndTimestamp, nullptr, EVulkanQueryType::CommandListEnd))
+    {
+        EndQuery(EndTimestamp);
+    }
+}
+
+void FVulkanCommandBuffer::BeginQuery(const FVulkanQuery& Query)
+{
+    FVulkanQueryPool* Pool = Query.QueryPool;
+    (*this)->BeginQuery(Pool->GetVkQueryPool(), Query.QueryIndex, 0);
+
+    if (Pool->QueryType == VK_QUERY_TYPE_OCCLUSION)
+    {
+        OcclusionQueries.Add(Query);
+    }
+    else
+    {
+        PipelineStatsQueries.Add(Query);
+    }
+}
+
+void FVulkanCommandBuffer::EndQuery(const FVulkanQuery& Query, VkPipelineStageFlagBits TimestampStage)
+{
+    FVulkanQueryPool* Pool = Query.QueryPool;
+
+    if (Pool->QueryType == VK_QUERY_TYPE_TIMESTAMP)
+    {
+        (*this)->WriteTimestamp(TimestampStage, Pool->GetVkQueryPool(), Query.QueryIndex);
+        TimestampQueries.Add(Query);
+    }
+    else
+    {
+        (*this)->EndQuery(Pool->GetVkQueryPool(), Query.QueryIndex);
+    }
 }
 
 FVulkanCommandPool::FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQueueType InType)

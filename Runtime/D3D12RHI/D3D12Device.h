@@ -21,6 +21,7 @@ class FD3D12RootSignature;
 class FD3D12ComputePipelineState;
 class FD3D12OnlineDescriptorHeap;
 class FD3D12OfflineDescriptorHeap;
+class FD3D12QueryHeap;
 class FD3D12QueryHeapManager;
 class FD3D12ResidencyManager;
 class FD3D12LinearAllocator;
@@ -28,6 +29,7 @@ class FD3D12DynamicConstantsAllocator;
 class FD3D12BufferAllocator;
 class FD3D12TextureAllocator;
 class FD3D12UploadHeapAllocator;
+class FD3D12CommandContext;
 
 typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
@@ -158,8 +160,6 @@ struct FD3D12DefaultDescriptors
     FD3D12SamplerStateRef        DefaultSampler;
 };
 
-class FD3D12CommandContext;
-
 class FD3D12Device
 {
 public:
@@ -181,6 +181,8 @@ public:
     FD3D12Queue*                     GetQueue(ED3D12CommandQueueType QueueType);
     FD3D12CommandAllocatorManager*   GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
     FD3D12QueryHeapManager*          GetQueryHeapManager(EQueryType QueryType);
+    FD3D12QueryHeap*                 ObtainQueryHeap(D3D12_QUERY_HEAP_TYPE HeapType);
+    void                             RecycleQueryHeap(FD3D12QueryHeap* Heap);
 
     FD3D12RootSignatureManager&      GetRootSignatureManager()              const { return *RootSignatureManager; }
     FD3D12PipelineStateManager&      GetPipelineStateManager()              const { return *PipelineStateManager; }
@@ -199,10 +201,9 @@ public:
     FD3D12UploadHeapAllocator*       GetUploadHeapAllocator()               const { return UploadHeapAllocator; }
     FD3D12Fence&                     GetFrameFence()                        const { return *FrameFence; }
 
+    uint32            GetNodeCount()    const { return NodeCount; }
+    uint32            GetNodeMask()     const { return NodeMask; }
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
-
-    uint32 GetNodeMask()  const { return NodeMask; }
-    uint32 GetNodeCount() const { return NodeCount; }
 
     FORCEINLINE FD3D12Adapter* GetAdapter() const
     {
@@ -262,6 +263,7 @@ private:
     bool CreateCommandQueues();
     bool CreateDefaultResources();
     void QueryDeviceFeatureSupport();
+
     FD3D12Adapter* const             Adapter;
 
     FD3D12OnlineDescriptorHeap*      GlobalResourceHeap;
@@ -290,6 +292,7 @@ private:
 
     FD3D12QueryHeapManager*          TimingQueryHeapManager;
     FD3D12QueryHeapManager*          OcclusionQueryHeapManager;
+    FD3D12QueryHeapManager*          PipelineStatsQueryHeapManager;
 
     FD3D12DefaultDescriptors         DefaultDescriptors;
 
@@ -341,7 +344,6 @@ private:
 #if D3D12_USE_ID3D12DEVICE_14
     TComPtr<ID3D12Device14> D3D12Device14;
 #endif
-
 #if D3D12_USE_DEBUG_MESSAGE_CALLBACK
     TComPtr<ID3D12InfoQueue1> DebugInfoQueue;
     DWORD                     DebugMessageCallbackCookie = 0;

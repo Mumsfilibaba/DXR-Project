@@ -1,17 +1,17 @@
 #pragma once
+#include "Core/RefCountedBase.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
-#include "D3D12RHI/D3D12RefCounted.h"
 
 class FD3D12DescriptorHeap;
 class FD3D12OnlineDescriptorHeap;
 
 typedef TSharedRef<FD3D12DescriptorHeap> FD3D12DescriptorHeapRef;
 
-class FD3D12DescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12DescriptorHeap : public FD3D12DeviceChild, public FRefCountedBase
 {
 public:
     FD3D12DescriptorHeap(FD3D12Device* InDevice, ID3D12DescriptorHeap* InHeap, D3D12_DESCRIPTOR_HEAP_TYPE InType, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags, uint32 InNumDescriptors);

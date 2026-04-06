@@ -19,7 +19,6 @@
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12RayTracing.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
-#include "D3D12RHI/D3D12RefCounted.h"
 #include "D3D12RHI/D3D12Resource.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12RootSignature.h"

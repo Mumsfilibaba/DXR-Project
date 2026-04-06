@@ -1,9 +1,17 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
+#include "RHI/RHIQuery.h"
 #include "D3D12RHI/D3D12Queue.h"
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12Resource.h"
 #include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/D3D12Query.h"
+#include "D3D12RHI/D3D12Core.h"
+
+static TAutoConsoleVariable<int32> CVarMaxPendingSubmissions(
+    "D3D12RHI.MaxPendingSubmissions",
+    "Maximum number of pending GPU submissions before the CPU waits for the GPU to catch up",
+    32);
 
 static TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
     "D3D12RHI.EnableGPUTimeout",
@@ -176,19 +184,141 @@ FD3D12FenceSyncPoint FD3D12Queue::ExecuteCommandLists(FD3D12CommandList* const* 
     return FD3D12FenceSyncPoint(SubmissionFence.Get(), FenceValue);
 }
 
+void FD3D12Queue::SubmitCommands(FD3D12Commands* Commands)
+{
+    CHECK(Commands != nullptr);
+    if (Commands->IsEmpty())
+    {
+        return;
+    }
+
+    TScopedLock Lock(SubmissionCS);
+
+    Commands->PreExecute();
+
+    const bool bResolveQueries = IsEnumFlagSet(Commands->Flags, ED3D12CommandsFlags::ResolveQueries);
+    if (bResolveQueries)
+    {
+        if (!PendingQueryRanges.IsEmpty())
+        {
+            Commands->QueryRanges.Insert(0, PendingQueryRanges);
+            PendingQueryRanges.Clear();
+        }
+
+        if (!PendingTimestampQueries.IsEmpty())
+        {
+            Commands->TimestampQueries.Insert(0, PendingTimestampQueries);
+            PendingTimestampQueries.Clear();
+        }
+
+        if (!PendingOcclusionQueries.IsEmpty())
+        {
+            Commands->OcclusionQueries.Insert(0, PendingOcclusionQueries);
+            PendingOcclusionQueries.Clear();
+        }
+
+        if (!PendingPipelineStatsQueries.IsEmpty())
+        {
+            Commands->PipelineStatsQueries.Insert(0, PendingPipelineStatsQueries);
+            PendingPipelineStatsQueries.Clear();
+        }
+
+        if (!PendingQueryRHIs.IsEmpty())
+        {
+            Commands->PendingQueries.Insert(0, PendingQueryRHIs);
+            PendingQueryRHIs.Clear();
+        }
+    }
+    else
+    {
+        PendingTimestampQueries.Append(Commands->TimestampQueries);
+        PendingOcclusionQueries.Append(Commands->OcclusionQueries);
+        PendingPipelineStatsQueries.Append(Commands->PipelineStatsQueries);
+        PendingQueryRHIs.Append(Commands->PendingQueries);
+
+        Commands->TimestampQueries.Clear();
+        Commands->OcclusionQueries.Clear();
+        Commands->PipelineStatsQueries.Clear();
+        Commands->PendingQueries.Clear();
+    }
+
+    Commands->Execute();
+
+    PendingSubmissions.Enqueue(Commands);
+
+    const int32 MaxPending = CVarMaxPendingSubmissions.GetValue();
+    while (PendingSubmissions.Size() > MaxPending)
+    {
+        FD3D12Commands* Oldest = nullptr;
+        if (PendingSubmissions.Peek(Oldest) && Oldest)
+        {
+            Oldest->SyncPoint.Wait();
+            PendingSubmissions.Dequeue();
+            Oldest->PostExecute();
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
+void FD3D12Queue::ProcessCommandQueue()
+{
+    bool bProcess = true;
+    while (bProcess)
+    {
+        FD3D12Commands* Commands = nullptr;
+        if (PendingSubmissions.Peek(Commands))
+        {
+            CHECK(Commands != nullptr);
+            if (!Commands->SyncPoint.IsReached())
+            {
+                bProcess = false;
+            }
+            else
+            {
+                PendingSubmissions.Dequeue();
+                Commands->PostExecute();
+            }
+        }
+        else
+        {
+            bProcess = false;
+        }
+    }
+}
+
 FD3D12Commands::FD3D12Commands(FD3D12Device* InDevice, FD3D12Queue* InQueue)
     : Queue(InQueue)
     , Device(InDevice)
+    , Flags(ED3D12CommandsFlags::None)
     , SyncPoint()
     , CommandAllocators()
     , CommandLists()
-    , QueryHeaps()
-    , DeletionQueue()
+    , QueryRanges()
+    , TimestampQueries()
+    , OcclusionQueries()
+    , PipelineStatsQueries()
+    , PendingQueries()
+    , DeferredObjects()
 {
 }
 
 void FD3D12Commands::PreExecute()
 {
+    for (int32 i = 0; i < CommandLists.Size(); i++)
+    {
+        FD3D12CommandList* CommandList = CommandLists[i];
+        TimestampQueries.Append(CommandList->TimestampQueries);
+        OcclusionQueries.Append(CommandList->OcclusionQueries);
+        PipelineStatsQueries.Append(CommandList->PipelineStatsQueries);
+        
+        CommandList->TimestampQueries.Clear();
+        CommandList->OcclusionQueries.Clear();
+        CommandList->PipelineStatsQueries.Clear();
+    }
+
     FD3D12BarrierBatcher BarrierBatcher;
 
     for (const FD3D12PendingBarrier& Pending : PendingBarriers)
@@ -251,9 +381,9 @@ void FD3D12Commands::Execute()
     {
         ResidencySets.Reserve(CommandLists.Size());
 
-        for (FD3D12CommandList* CmdList : CommandLists)
+        for (int32 CmdListIdx = 0; CmdListIdx < CommandLists.Size(); CmdListIdx++)
         {
-            ResidencySets.Add(&CmdList->GetResidencySet());
+            ResidencySets.Add(&CommandLists[CmdListIdx]->GetResidencySet());
         }
 
         ResidencyManager->PrepareForExecution(ResidencySets.Data(), ResidencySets.Size());
@@ -261,44 +391,172 @@ void FD3D12Commands::Execute()
 
     SyncPoint = Queue->ExecuteCommandLists(CommandLists.Data(), CommandLists.Size(), false);
 
+    for (int32 QueryIdx = 0; QueryIdx < PendingQueries.Size(); QueryIdx++)
+    {
+        PendingQueries[QueryIdx]->SyncPoint = SyncPoint;
+    }
+
+    PendingQueries.Clear();
+
     if (FD3D12ResidencyManager* ResidencyManager = Device->GetResidencyManager())
     {
         ResidencyManager->NotifySubmitted(ResidencySets.Data(), ResidencySets.Size(), SyncPoint.GetFenceValue());
     }
 }
 
-void FD3D12Commands::Finish()
+void FD3D12Commands::PostExecute()
 {
-    for (FD3D12QueryHeap* QueryHeap : QueryHeaps)
+    const uint64 Frequency = Queue->GetFrequency();
+
+    TArray<uint64> RawTicksArray;
+    RawTicksArray.Resize(TimestampQueries.Size());
+
+    for (int32 i = 0; i < TimestampQueries.Size(); i++)
     {
-        FD3D12QueryHeapManager* QueryHeapManager = QueryHeap->GetQueryHeapManager();
-        QueryHeap->ReadBackResults(*Queue);
-        QueryHeapManager->RecycleQueryHeap(QueryHeap);
+        RawTicksArray[i] = 0;
+        const FD3D12Query& Query = TimestampQueries[i];
+        if (Query.QueryHeap)
+        {
+            Query.CopyResult(&RawTicksArray[i]);
+        }
     }
 
-    QueryHeaps.Clear();
-
-    // Recycle all the CommandLists
-    for (FD3D12CommandList* CommandList : CommandLists)
+    uint64 AccumulatedIdleTicks    = 0;
+    uint64 LastCommandListEndTicks = 0;
+    
+    bool bHaveLastCommandListEnd = false;
+    for (int32 i = 0; i < TimestampQueries.Size(); i++)
     {
-        Queue->RecycleCommandList(CommandList);
+        const FD3D12Query& Query = TimestampQueries[i];
+        
+        const uint64 Ticks = RawTicksArray[i];
+        if (Query.Type == ED3D12QueryType::CommandListEnd)
+        {
+            LastCommandListEndTicks = Ticks;
+            bHaveLastCommandListEnd = true;
+        }
+        else if (Query.Type == ED3D12QueryType::CommandListBegin && bHaveLastCommandListEnd)
+        {
+            if (Ticks > LastCommandListEndTicks)
+            {
+                AccumulatedIdleTicks += Ticks - LastCommandListEndTicks;
+            }
+
+            bHaveLastCommandListEnd = false;
+        }
+
+        if (Query.Type == ED3D12QueryType::Timestamp && Query.ResultTarget)
+        {
+            const uint64 AdjustedTicks = (Ticks > AccumulatedIdleTicks) ? (Ticks - AccumulatedIdleTicks) : 0;
+            const uint64 Nanoseconds   = (AdjustedTicks * 1000000000ULL) / Frequency;
+            *Query.ResultTarget = Nanoseconds;
+        }
+    }
+
+    TimestampQueries.Clear();
+
+    for (int32 QueryIdx = 0; QueryIdx < OcclusionQueries.Size(); QueryIdx++)
+    {
+        const FD3D12Query& Query = OcclusionQueries[QueryIdx];
+        if (!Query.QueryHeap || !Query.ResultTarget)
+        {
+            continue;
+        }
+
+        uint64 OcclusionResult = 0;
+        Query.CopyResult(&OcclusionResult);
+        *Query.ResultTarget = OcclusionResult;
+    }
+
+    OcclusionQueries.Clear();
+
+    for (int32 QueryIdx = 0; QueryIdx < PipelineStatsQueries.Size(); QueryIdx++)
+    {
+        const FD3D12Query& Query = PipelineStatsQueries[QueryIdx];
+        FD3D12QueryHeap* Heap = Query.QueryHeap;
+        if (!Heap || !Query.ResultTarget)
+        {
+            continue;
+        }
+
+        FRHIPipelineStatistics* Stats = reinterpret_cast<FRHIPipelineStatistics*>(Query.ResultTarget);
+        const D3D12_QUERY_HEAP_TYPE HeapType = Heap->QueryHeapType;
+
+        if (HeapType == D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS)
+        {
+            D3D12_QUERY_DATA_PIPELINE_STATISTICS Src = {};
+            Query.CopyResult(&Src);
+
+            Stats->IAVertices    = Src.IAVertices;
+            Stats->IAPrimitives  = Src.IAPrimitives;
+            Stats->VSInvocations = Src.VSInvocations;
+            Stats->GSInvocations = Src.GSInvocations;
+            Stats->GSPrimitives  = Src.GSPrimitives;
+            Stats->CInvocations  = Src.CInvocations;
+            Stats->CPrimitives   = Src.CPrimitives;
+            Stats->PSInvocations = Src.PSInvocations;
+            Stats->HSInvocations = Src.HSInvocations;
+            Stats->DSInvocations = Src.DSInvocations;
+            Stats->CSInvocations = Src.CSInvocations;
+            Stats->ASInvocations = 0;
+            Stats->MSInvocations = 0;
+            Stats->MSPrimitives  = 0;
+        }
+#if D3D12_SUPPORT_PIPELINE_STATISTICS1
+        else if (HeapType == D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1)
+        {
+            D3D12_QUERY_DATA_PIPELINE_STATISTICS1 Src = {};
+            Query.CopyResult(&Src);
+
+            Stats->IAVertices    = Src.IAVertices;
+            Stats->IAPrimitives  = Src.IAPrimitives;
+            Stats->VSInvocations = Src.VSInvocations;
+            Stats->GSInvocations = Src.GSInvocations;
+            Stats->GSPrimitives  = Src.GSPrimitives;
+            Stats->CInvocations  = Src.CInvocations;
+            Stats->CPrimitives   = Src.CPrimitives;
+            Stats->PSInvocations = Src.PSInvocations;
+            Stats->HSInvocations = Src.HSInvocations;
+            Stats->DSInvocations = Src.DSInvocations;
+            Stats->CSInvocations = Src.CSInvocations;
+            Stats->ASInvocations = Src.ASInvocations;
+            Stats->MSInvocations = Src.MSInvocations;
+            Stats->MSPrimitives  = Src.MSPrimitives;
+        }
+#endif
+    }
+
+    PipelineStatsQueries.Clear();
+
+    for (int32 RangeIdx = 0; RangeIdx < QueryRanges.Size(); RangeIdx++)
+    {
+        FD3D12QueryHeap* Heap = QueryRanges[RangeIdx].Heap;
+        Device->RecycleQueryHeap(Heap);
+    }
+
+    QueryRanges.Clear();
+
+    for (int32 CmdListIdx = 0; CmdListIdx < CommandLists.Size(); CmdListIdx++)
+    {
+        Queue->RecycleCommandList(CommandLists[CmdListIdx]);
     }
 
     CommandLists.Clear();
 
-    // Recycle all the CommandAllocators
-    for (FD3D12CommandAllocator* CommandAllocator : CommandAllocators)
+    for (int32 AllocIdx = 0; AllocIdx < CommandAllocators.Size(); AllocIdx++)
     {
+        FD3D12CommandAllocator*        CommandAllocator        = CommandAllocators[AllocIdx];
         FD3D12CommandAllocatorManager* CommandAllocatorManager = Device->GetCommandAllocatorManager(CommandAllocator->GetQueueType());
         CommandAllocatorManager->RecycleAllocator(CommandAllocator);
     }
-    
+
     CommandAllocators.Clear();
 
-    // Delete all the resources that has been queued up for destruction
-    FD3D12DeferredObject::ProcessItems(DeletionQueue);
-    DeletionQueue.Clear();
-    
-    // Destroy this instance after execution is finished
+    FD3D12DeferredObject::ProcessItems(DeferredObjects);
+    DeferredObjects.Clear();
+
+    PendingBarriers.Clear();
+    PendingResourceStates.Clear();
+
     delete this;
 }

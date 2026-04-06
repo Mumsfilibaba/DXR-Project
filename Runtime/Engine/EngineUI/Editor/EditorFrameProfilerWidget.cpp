@@ -1,34 +1,23 @@
-#include "FrameProfilerWidget.h"
-#include "Core/Misc/ConsoleManager.h"
+#include "EditorFrameProfilerWidget.h"
 #include "Core/Time/ElapsedTime.h"
 #include "Core/Threading/ThreadManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
-static TAutoConsoleVariable<bool> CVarDrawFps(
-    "Engine.DrawFps",
-    "Enable FPS counter in the top right corner",
-    true,
-    EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarDrawFrameProfiler(
-    "Engine.DrawFrameProfiler",
-    "Enables the FrameProfiler and displays the profiler window",
-    false,
-    EConsoleVariableFlags::Default);
-
-FFrameProfilerWidget::FFrameProfilerWidget()
+FEditorFrameProfilerWidget::FEditorFrameProfilerWidget()
     : ThreadInfos()
     , ImGuiDelegateHandle()
+    , bVisible(false)
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FFrameProfilerWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDrawDelegate(FImGuiDelegate::CreateRaw(this, &FEditorFrameProfilerWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
 
-FFrameProfilerWidget::~FFrameProfilerWidget()
+FEditorFrameProfilerWidget::~FEditorFrameProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -36,50 +25,16 @@ FFrameProfilerWidget::~FFrameProfilerWidget()
     }
 }
 
-void FFrameProfilerWidget::Draw()
+void FEditorFrameProfilerWidget::Draw()
 {
-    if (CVarDrawFps.GetValue())
-    {
-        DrawFPS();
-    }
-
-    if (CVarDrawFrameProfiler.GetValue())
+    if (bVisible)
     {
         DrawWindow();
     }
 }
 
-void FFrameProfilerWidget::DrawFPS()
-{
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(5.0f, 5.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 
-    const ImVec2 Size     = ImGuiExtensions::GetMainViewportSize();
-    const ImVec2 Position = ImGuiExtensions::GetMainViewportPos();
-    ImGui::SetNextWindowPos(ImVec2(Position.x + Size.x, Position.y), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
-
-    const ImGuiWindowFlags Flags =
-        ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoInputs |
-        ImGuiWindowFlags_AlwaysAutoResize |
-        ImGuiWindowFlags_NoBringToFrontOnFocus |
-        ImGuiWindowFlags_NoFocusOnAppearing |
-        ImGuiWindowFlags_NoSavedSettings;
-
-    if (ImGui::Begin("FPS Window", nullptr, Flags))
-    {
-        ImGui::Text("%d", FFrameProfiler::Get().GetFramesPerSecond());
-    }
-
-    ImGui::End();
-
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar();
-    ImGui::PopStyleVar();
-}
-
-void FFrameProfilerWidget::DrawCPUData(float Width)
+void FEditorFrameProfilerWidget::DrawCPUData(float Width)
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
     if (ImGui::BeginTable("Frame Statistics", 1, TableFlags))
@@ -148,7 +103,6 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
         ImGui::EndTable();
     }
 
-    // Size constants
     constexpr int32 NumColumns           = 5;
     constexpr int32 NumColumnsExceptName = NumColumns - 1;
 
@@ -158,7 +112,6 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
     const float NameColumnWidth  = Width * NameColumnWidthPercentage;
     const float OtherColumnWidth = (Width * OtherColumnWidthPercentage) / static_cast<float>(NumColumnsExceptName);
 
-    // Retrieve a copy of the CPU samples
     FFrameProfiler::Get().GetFunctionInfo(ThreadInfos);
 
     int32 ThreadIndex = 0;
@@ -235,7 +188,7 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
     }
 }
 
-void FFrameProfilerWidget::DrawWindow()
+void FEditorFrameProfilerWidget::DrawWindow()
 {
     const ImVec2 Size     = ImGuiExtensions::GetMainViewportSize();
     const ImVec2 Position = ImGuiExtensions::GetMainViewportPos();
@@ -248,8 +201,7 @@ void FFrameProfilerWidget::DrawWindow()
 
     const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
 
-    bool bDrawProfiler = CVarDrawFrameProfiler.GetValue();
-    if (ImGui::Begin("Profiler", &bDrawProfiler, Flags))
+    if (ImGui::Begin("Frame Profiler", &bVisible, Flags))
     {
         if (ImGui::Button("Start Profile"))
         {
@@ -276,6 +228,4 @@ void FFrameProfilerWidget::DrawWindow()
     }
 
     ImGui::End();
-
-    CVarDrawFrameProfiler->SetAsBool(bDrawProfiler, EConsoleVariableFlags::SetByCode);
 }

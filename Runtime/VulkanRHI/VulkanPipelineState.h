@@ -1,7 +1,6 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanShader.h"
-#include "VulkanRHI/VulkanRefCounted.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
 typedef TSharedRef<class FVulkanInputLayout>            FVulkanVertexInputLayoutRef;

@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
-#include "Core/Threading/Atomic.h"
+#include "Core/RefCountedBase.h"
 #include "Core/Threading/Atomic/AtomicBool.h"
 #include "RHI/RHIFence.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
@@ -9,7 +9,7 @@
 
 class FVulkanQueue;
 
-class FVulkanFence : public FVulkanDeviceChild, FNonCopyable
+class FVulkanFence : public FVulkanDeviceChild, public FRefCountedBase
 {
 public:
     FVulkanFence(FVulkanDevice* InDevice);
@@ -20,11 +20,12 @@ public:
     bool Wait(uint64 TimeOut = UINT64_MAX) const;
     bool Reset();
     
-    bool IsSignaled()   const;
-    bool IsReferenced() const;
+    bool IsSignaled() const;
 
-    int64 AddRef()  const;
-    int64 Release() const;
+    bool IsReferenced() const
+    {
+        return GetRefCount() > 1;
+    }
 
     VkFence GetVkFence() const
     {
@@ -33,7 +34,6 @@ public:
 
 private:
     VkFence Fence;
-    mutable FAtomicInt64 References;
 };
 
 class FVulkanTimelineFence : public FVulkanDeviceChild, FNonCopyable
@@ -46,7 +46,8 @@ public:
 
     uint64 Signal(FVulkanQueue& Queue);
     uint64 GetCompletedValue() const;
-    bool   WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
+
+    bool WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
 
     void SetDebugName(const FString& Name);
 

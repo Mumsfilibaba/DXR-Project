@@ -214,6 +214,19 @@ struct RHIDeviceFeatureSupport
 
     /** Whether stream output / transform feedback is supported */
     static RHI_API bool bSupportsStreamOutput;
+
+    // -------------------------------------------------------------------------------------------
+    // Query Support
+    // -------------------------------------------------------------------------------------------
+
+    /** Whether GPU timestamp queries are supported */
+    static RHI_API bool bSupportsTimestampQueries;
+
+    /** Whether pipeline statistics queries are supported */
+    static RHI_API bool bSupportsPipelineStatisticsQueries;
+
+    /** Whether the backend can filter out GPU idle bubbles from timestamp results */
+    static RHI_API bool bSupportsGPUTimestampBubblesRemoval;
 };
 
 // -------------------------------------------------------------------------------------------

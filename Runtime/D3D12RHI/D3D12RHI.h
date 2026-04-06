@@ -75,21 +75,25 @@ public:
     virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo) override final;
     virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
-    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const override final;
-    virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
-    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult) override final;
-    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
-    virtual FString GetAdapterName() const override final;
-
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
+    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const override final;
+    virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
+
+    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final;
+    virtual bool GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode) override final;
+
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
+    
     virtual void* GetNativeAdapter() override final;
     virtual void* GetNativeDevice() override final;
     virtual void* GetNativeDirectCommandQueue() override final;
     virtual void* GetNativeComputeCommandQueue() override final;
     virtual void* GetNativeCopyCommandQueue() override final;
     
-    void SubmitCommands(FD3D12Commands* Commands, bool bFlushDeletionQueue);
+    virtual FString GetAdapterName() const override final;
+    
+    void FlushDeletionQueue(FD3D12Commands* Commands);
     void FlushCompletedSubmissions();
 
     FD3D12Adapter* GetAdapter() const
@@ -109,27 +113,22 @@ public:
 
 private:
     bool InitializeDeviceFeatureSupport();
-
-    void ProcessPendingCommands();
     void TickCoreProgression();
 
     template<typename... ArgTypes>
     void DeferDeletionInternal(ArgTypes&&... Args)
     {
-        TScopedLock Lock(DeletionQueueCS);
-        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
+        TScopedLock Lock(DeferredObjectsCS);
+        DeferredObjects.Emplace(Forward<ArgTypes>(Args)...);
     }
     
-    typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef>  FSamplerStateMap;
-    typedef TQueue<FD3D12Commands*, EQueueType::MPSC> FCommandsQueue;
+    typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> FSamplerStateMap;
 
     FD3D12Adapter*               Adapter;
     FD3D12Device*                Device;
     FD3D12CommandContext*        DirectCommandContext;
-    TArray<FD3D12DeferredObject> DeletionQueue;
-    FCriticalSection             DeletionQueueCS;
-    FCriticalSection             SubmissionCS;
-    FCommandsQueue               PendingSubmissions;
+    TArray<FD3D12DeferredObject> DeferredObjects;
+    FCriticalSection             DeferredObjectsCS;
     FSamplerStateMap             SamplerStateMap;
     FCriticalSection             SamplerStateMapCS;
 

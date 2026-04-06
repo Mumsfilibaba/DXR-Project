@@ -27,7 +27,6 @@
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/RendererUI/TextureDebugWidget.h"
 #include "Renderer/RendererUI/RendererInfoWidget.h"
-#include "Renderer/RendererUI/GPUProfilerWidget.h"
 #include "Renderer/RendererUI/RendererSettingsWidget.h"
 
 class FViewportWidget;
@@ -305,6 +304,5 @@ private:
     // Widgets
     TSharedPtr<FTextureDebugWidget>     TextureDebugger;
     TSharedPtr<FRendererInfoWidget>     InfoWindow;
-    TSharedPtr<FGPUProfilerWidget>      GPUProfilerWindow;
     TSharedPtr<FRendererSettingsWidget> SettingsWindow;
 };

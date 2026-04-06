@@ -3,7 +3,7 @@
 #include "D3D12RHI/D3D12ResidencyManager.h"
 
 FD3D12Heap::FD3D12Heap(FD3D12Device* InDevice, ID3D12Heap* InHeap)
-    : FD3D12RefCounted()
+    : FRefCountedBase()
     , FD3D12DeviceChild(InDevice)
     , Heap(InHeap)
     , Desc(InHeap ? InHeap->GetDesc() : D3D12_HEAP_DESC{})

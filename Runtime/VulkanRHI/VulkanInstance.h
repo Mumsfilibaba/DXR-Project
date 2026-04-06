@@ -2,7 +2,6 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Set.h"
 #include "Core/Platform/PlatformLibrary.h"
-#include "VulkanRHI/VulkanRefCounted.h"
 #include "VulkanRHI/VulkanExtensions.h"
 
 struct FVulkanInstanceCreateInfo

@@ -116,7 +116,6 @@ workspace "EngineTests"
             "../Runtime/Core/Misc/OutputDeviceLogger.cpp",
             "../Runtime/Core/Memory/Memory.cpp",
             "../Runtime/Core/Memory/Malloc.cpp",
-            "../Runtime/Core/RefCounted.cpp",
             "../Runtime/Core/Delegates/DelegateInstance.cpp",
             "../Runtime/Core/Generic/GenericThread.cpp",
             "../Runtime/Core/Generic/GenericPlatformStackTrace.cpp",

@@ -2,11 +2,11 @@
 #include "Core/Containers/SharedRef.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanLoader.h"
-#include "VulkanRHI/VulkanRefCounted.h"
+#include "Core/RefCountedBase.h"
 
 typedef TSharedRef<class FVulkanSemaphore> FVulkanSemaphoreRef;
 
-class FVulkanSemaphore : public FVulkanDeviceChild, public FVulkanRefCounted
+class FVulkanSemaphore : public FVulkanDeviceChild, public FRefCountedBase
 {
 public:
     FVulkanSemaphore(FVulkanDevice* InDevice);

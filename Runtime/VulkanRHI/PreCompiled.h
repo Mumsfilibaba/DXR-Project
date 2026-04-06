@@ -23,7 +23,6 @@
 #include "VulkanRHI/VulkanQuery.h"
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanRayTracing.h"
-#include "VulkanRHI/VulkanRefCounted.h"
 #include "VulkanRHI/VulkanRenderPass.h"
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanSamplerState.h"

@@ -1,6 +1,6 @@
 #include "Engine/RuntimeEngine.h"
 #include "Engine/EngineUI/Runtime/RuntimeConsoleWidget.h"
-#include "Engine/EngineUI/FrameProfilerWidget.h"
+#include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 FRuntimeEngine::FRuntimeEngine()
@@ -23,7 +23,7 @@ bool FRuntimeEngine::Init()
 
     if (IImguiPlugin::IsEnabled())
     {
-        ProfilerWidget = MakeSharedPtr<FFrameProfilerWidget>();
+        ProfilerWidget = MakeSharedPtr<FEditorFrameProfilerWidget>();
         ConsoleWidget  = MakeSharedPtr<FRuntimeConsoleWidget>();
     }
 

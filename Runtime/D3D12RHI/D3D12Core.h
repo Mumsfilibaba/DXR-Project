@@ -142,17 +142,6 @@ NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueue
     return D3D12_COMMAND_LIST_TYPE(-1);
 }
 
-NODISCARD constexpr D3D12_QUERY_HEAP_TYPE ToQueryHeapType(EQueryType QueryType)
-{
-    switch (QueryType)
-    {
-        case EQueryType::Timestamp: return D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-        case EQueryType::Occlusion: return D3D12_QUERY_HEAP_TYPE_OCCLUSION;
-    }
-
-    return D3D12_QUERY_HEAP_TYPE(-1);
-}
-
 NODISCARD constexpr uint32 GetBufferAlignment(EBufferFlags BufferFlags)
 {
     // Constant buffers require special alignment
@@ -932,6 +921,34 @@ constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
         case DXGI_FORMAT_BC7_TYPELESS:  return DXGI_FORMAT_BC7_UNORM;
 
         default: return Format;
+    }
+}
+
+NODISCARD inline uint64 GetQueryResultStride(D3D12_QUERY_HEAP_TYPE HeapType)
+{
+    switch (HeapType)
+    {
+        case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:            return sizeof(uint64);
+        case D3D12_QUERY_HEAP_TYPE_OCCLUSION:            return sizeof(uint64);
+        case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS:  return sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS);
+    #if D3D12_SUPPORT_PIPELINE_STATISTICS1
+        case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1: return sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS1);
+    #endif
+        default:                                         return sizeof(uint64);
+    }
+}
+
+NODISCARD inline D3D12_QUERY_TYPE GetResolveQueryType(D3D12_QUERY_HEAP_TYPE HeapType)
+{
+    switch (HeapType)
+    {
+        case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:            return D3D12_QUERY_TYPE_TIMESTAMP;
+        case D3D12_QUERY_HEAP_TYPE_OCCLUSION:            return D3D12_QUERY_TYPE_OCCLUSION;
+        case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS:  return D3D12_QUERY_TYPE_PIPELINE_STATISTICS;
+    #if D3D12_SUPPORT_PIPELINE_STATISTICS1
+        case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1: return D3D12_QUERY_TYPE_PIPELINE_STATISTICS1;
+    #endif
+        default:                                         return D3D12_QUERY_TYPE_TIMESTAMP;
     }
 }
 

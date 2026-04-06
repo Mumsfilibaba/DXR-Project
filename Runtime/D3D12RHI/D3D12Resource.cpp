@@ -5,7 +5,7 @@
 #include "D3D12RHI/D3D12ResidencyManager.h"
 
 FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, FD3D12Heap* InHeap)
-    : FD3D12RefCounted()
+    : FRefCountedBase()
     , FD3D12DeviceChild(InDevice)
     , Resource(InResource)
     , HeapType(InHeapType)

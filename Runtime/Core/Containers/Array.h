@@ -439,6 +439,12 @@ public:
     void Insert(SizeType Position, const ElementType* Elements, SizeType InNumElements)
     {
         CHECK(Position <= ArraySize);
+
+        if (InNumElements == 0)
+        {
+            return;
+        }
+
         CHECK(Elements != nullptr);
 
         InsertUninitializedUnchecked(Position, InNumElements);

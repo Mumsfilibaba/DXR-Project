@@ -1,8 +1,8 @@
 #pragma once
+#include "Core/RefCountedBase.h"
 #include "Core/Containers/Array.h"
 #include "Core/Templates/Utility/NonCopyable.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
-#include "D3D12RHI/D3D12RefCounted.h"
 #include "D3D12RHI/D3D12Heap.h"
 #include "D3D12RHI/D3D12ResourceState.h"
 
@@ -155,7 +155,7 @@ private:
     EResourceStorageType      StorageType;
 };
 
-class FD3D12Resource : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12Resource : public FD3D12DeviceChild, public FRefCountedBase
 {
 public:
     FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, FD3D12Heap* InHeap = nullptr);

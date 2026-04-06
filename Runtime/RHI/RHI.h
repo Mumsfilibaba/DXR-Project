@@ -300,6 +300,7 @@ public:
      */
     virtual FRHIQuery* CreateQuery(EQueryType InQueryType) = 0;
 
+
     /**
      * @brief Creates a GPU fence for GPU->CPU synchronization.
      * @return The newly created fence object.
@@ -313,12 +314,37 @@ public:
     virtual IRHICommandContext* ObtainCommandContext() = 0;
 
     /**
+     * @brief Checks if the current RHI supports unordered access views for the specified format.
+     * @param Format Format to check.
+     * @return True if unordered access views with the specified format are supported.
+     */
+    virtual bool QueryUAVFormatSupport(EFormat Format) const = 0;
+
+    /**
+     * @brief Retrieves memory statistics from the RHI.
+     * @param MemoryType The type of video memory to query.
+     * @param OutMemoryStats Variable to store the memory statistics.
+     * @return True if the statistics were retrieved successfully.
+     */
+    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const = 0;
+
+    /**
      * @brief Gets the result for a query.
      * @param Query Query to get the result from.
      * @param OutResult Variable to store the result.
+     * @param Mode Controls synchronization: Available returns current data without blocking, Wait ensures GPU completion first.
      * @return True if the result was retrieved successfully.
      */
-    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult) = 0;
+    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode = EQueryResultMode::Available) = 0;
+
+    /**
+     * @brief Gets the pipeline statistics result for a query.
+     * @param Query Pipeline statistics query to get the result from.
+     * @param OutResult Variable to store the pipeline statistics.
+     * @param Mode Controls synchronization: Available returns current data without blocking, Wait ensures GPU completion first.
+     * @return True if the result was retrieved successfully.
+     */
+    virtual bool GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode = EQueryResultMode::Available) = 0;
 
     /** @brief Defers destruction of an RHI resource to the deferred deletion code. */
     virtual void EnqueueResourceDeletion(FRHIResource* Resource) = 0;
@@ -327,52 +353,37 @@ public:
      * @brief Gets the native adapter.
      * @return The native adapter.
      */
-    virtual void* GetNativeAdapter() { return nullptr; }
+    virtual void* GetNativeAdapter() = 0;
 
     /**
      * @brief Gets the native device.
      * @return The native device.
      */
-    virtual void* GetNativeDevice() { return nullptr; }
+    virtual void* GetNativeDevice() = 0;
 
     /**
      * @brief Gets the native direct (graphics) command queue.
      * @return The native direct command queue.
      */
-    virtual void* GetNativeDirectCommandQueue() { return nullptr; }
+    virtual void* GetNativeDirectCommandQueue() = 0;
 
     /**
      * @brief Gets the native compute command queue.
      * @return The native compute command queue.
      */
-    virtual void* GetNativeComputeCommandQueue() { return nullptr; }
+    virtual void* GetNativeComputeCommandQueue() = 0;
 
     /**
      * @brief Gets the native copy command queue.
      * @return The native copy command queue.
      */
-    virtual void* GetNativeCopyCommandQueue() { return nullptr; }
-
-    /**
-     * @brief Checks if the current RHI supports unordered access views for the specified format.
-     * @param Format Format to check.
-     * @return True if unordered access views with the specified format are supported.
-     */
-    virtual bool QueryUAVFormatSupport(EFormat Format) const { return false; }
-
-    /**
-     * @brief Retrieves memory statistics from the RHI.
-     * @param MemoryType The type of video memory to query.
-     * @param OutMemoryStats Variable to store the memory statistics.
-     * @return True if the statistics were retrieved successfully.
-     */
-    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const { return false; }
+    virtual void* GetNativeCopyCommandQueue() = 0;
 
     /**
      * @brief Gets the adapter name.
      * @return A string with the adapter name.
      */
-    virtual FString GetAdapterName() const { return ""; }
+    virtual FString GetAdapterName() const = 0;
 
     /**
      * @brief Gets the current RHI's API type.

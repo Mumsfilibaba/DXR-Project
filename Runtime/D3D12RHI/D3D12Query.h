@@ -1,86 +1,152 @@
 #pragma once
+#include "Core/Containers/Queue.h"
+#include "Core/Platform/CriticalSection.h"
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12Resource.h"
-#include "D3D12RHI/D3D12CommandList.h"
+#include "D3D12RHI/D3D12Fence.h"
 
 #define D3D12_INVALID_QUERY_INDEX (-1)
 
+class FD3D12Queue;
 class FD3D12QueryHeap;
 class FD3D12QueryHeapManager;
-class FD3D12CommandContext;
-class FD3D12Queue;
+class FD3D12QueryAllocator;
 
-typedef TSharedRef<FD3D12QueryHeap>    FD3D12QueryHeapRef;
-typedef TSharedRef<struct FD3D12Query> FD3D12QueryRef;
+typedef TSharedRef<struct FD3D12QueryRHI> FD3D12QueryRHIRef;
 
-struct FD3D12QueryAllocation
+enum class ED3D12QueryType : uint8
 {
-    FD3D12QueryAllocation()
-        : QueryHeap(nullptr)
-        , IndexInQueryHeap(D3D12_INVALID_QUERY_INDEX)
-        , Results(nullptr)
+    CommandListBegin,
+    CommandListEnd,
+    Timestamp,
+    Occlusion,
+    PipelineStatistics,
+};
+
+#if D3D12_SUPPORT_PIPELINE_STATISTICS1
+extern D3D12RHI_API D3D12_MESH_SHADER_TIER GD3D12MeshShaderTier;
+#endif
+
+#if D3D12_SUPPORT_PIPELINE_STATISTICS1
+NODISCARD FORCEINLINE bool SupportsPipelineStatistics1()
+{
+    return GD3D12MeshShaderTier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+}
+#endif
+
+NODISCARD FORCEINLINE D3D12_QUERY_HEAP_TYPE GetPipelineStatsHeapType()
+{
+#if D3D12_SUPPORT_PIPELINE_STATISTICS1
+    if (SupportsPipelineStatistics1())
+    {
+        return D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1;
+    }
+#endif
+
+    return D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS;
+}
+
+NODISCARD FORCEINLINE D3D12_QUERY_TYPE GetPipelineStatsQueryType()
+{
+#if D3D12_SUPPORT_PIPELINE_STATISTICS1
+    if (SupportsPipelineStatistics1())
+    {
+        return D3D12_QUERY_TYPE_PIPELINE_STATISTICS1;
+    }
+#endif
+
+    return D3D12_QUERY_TYPE_PIPELINE_STATISTICS;
+}
+
+struct FD3D12Query
+{
+    FD3D12Query() = default;
+
+    FD3D12Query(FD3D12QueryHeap* InHeap, int32 InQueryIndex, uint64* InResultTarget, ED3D12QueryType InType)
+        : QueryHeap(InHeap)
+        , ResultTarget(InResultTarget)
+        , Type(InType)
+        , QueryIndex(InQueryIndex)
     {
     }
 
-    FD3D12QueryAllocation(FD3D12QueryHeap* InQueryHeap, int32 InIndexInQueryHeap, uint64* InResults)
-        : QueryHeap(InQueryHeap)
-        , IndexInQueryHeap(InIndexInQueryHeap)
-        , Results(InResults)
+    void CopyResult(void* Dst) const;
+
+    bool IsValid() const
+    {
+        return QueryHeap != nullptr && QueryIndex != D3D12_INVALID_QUERY_INDEX;
+    }
+
+    operator bool() const
+    {
+        return IsValid();
+    }
+
+    FD3D12QueryHeap* QueryHeap    = nullptr;
+    uint64*          ResultTarget = nullptr;
+    ED3D12QueryType  Type         = ED3D12QueryType::Timestamp;
+    int32            QueryIndex   = D3D12_INVALID_QUERY_INDEX;
+};
+
+struct FD3D12QueryRHI : public FRHIQuery, public FD3D12DeviceChild
+{
+    FD3D12QueryRHI(FD3D12Device* InDevice, EQueryType InQueryType);
+    virtual ~FD3D12QueryRHI();
+
+    FD3D12Query          CurrentQuery;
+    FD3D12FenceSyncPoint SyncPoint;
+    uint64*              QueryResult;
+};
+
+struct FD3D12QueryRange
+{
+    FD3D12QueryRange() = default;
+
+    FD3D12QueryRange(FD3D12QueryHeap* InHeap, int32 InStartIndex, int32 InCount)
+        : Heap(InHeap)
+        , StartIndex(InStartIndex)
+        , Count(InCount)
     {
     }
 
     bool IsValid() const
     {
-        return QueryHeap != nullptr && IndexInQueryHeap != D3D12_INVALID_QUERY_INDEX;
+        return Heap != nullptr;
     }
 
-    FD3D12QueryHeap* QueryHeap;
-    int32            IndexInQueryHeap;
-    uint64*          Results;
-};
+    operator bool() const
+    {
+        return IsValid();
+    }
 
-struct FD3D12Query : public FRHIQuery, public FD3D12DeviceChild
-{
-    FD3D12Query(FD3D12Device* InDevice, EQueryType InQueryType);
-    virtual ~FD3D12Query() = default;
-
-    // QueryAllocation should only used on RHI Thread
-    FD3D12QueryAllocation QueryAllocation;
-    uint64                Result;
+    FD3D12QueryHeap* Heap       = nullptr;
+    int32            StartIndex = 0;
+    int32            Count      = 0;
 };
 
 class FD3D12QueryHeap : public FD3D12DeviceChild
 {
 public:
-    FD3D12QueryHeap(FD3D12Device* InDevice, FD3D12QueryHeapManager* InQueryHeapManager);
+    FD3D12QueryHeap(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType, int32 InNumQueries);
     ~FD3D12QueryHeap();
 
-    bool Initialize(D3D12_QUERY_HEAP_TYPE InQueryHeapType, int32 InNumQueries);
-
-    FD3D12QueryAllocation AllocateQueries(uint64* Results);
-    void ResolveQueries(FD3D12CommandList& CommandList);
-    void ReadBackResults(FD3D12Queue& Queue);
-    
+    bool Initialize();
     void SetDebugName(const FString& InName);
 
-    ID3D12QueryHeap* GetD3D12QueryHeap() const
+    uint64 GetQuerySize() const
     {
-        return QueryHeap.Get();
-    }
+        switch (QueryHeapType)
+        {
+            case D3D12_QUERY_HEAP_TYPE_TIMESTAMP:            return sizeof(uint64);
+            case D3D12_QUERY_HEAP_TYPE_OCCLUSION:            return sizeof(uint64);
+            case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS:  return sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS);
+        #if D3D12_SUPPORT_PIPELINE_STATISTICS1
+            case D3D12_QUERY_HEAP_TYPE_PIPELINE_STATISTICS1: return sizeof(D3D12_QUERY_DATA_PIPELINE_STATISTICS1);
+        #endif
 
-    FD3D12Resource* GetReadResource() const
-    {
-        return ReadbackResourceStorage.GetResource();
-    }
-
-    FD3D12QueryHeapManager* GetQueryHeapManager() const
-    {
-        return QueryHeapManager;
-    }
-
-    D3D12_QUERY_HEAP_TYPE GetQueryType() const
-    {
-        return QueryHeapType;
+            default:
+                return sizeof(uint64);
+        }
     }
 
     FD3D12ResidencyHandle* GetResidencyHandle()
@@ -88,56 +154,48 @@ public:
         return &ResidencyHandle;
     }
 
+    FD3D12Resource*  GetReadbackResource() const { return ReadbackResource.Get(); }
+    uint64*          GetReadbackData()     const { return ReadbackData; }
+    ID3D12QueryHeap* GetD3D12QueryHeap()   const { return QueryHeap.Get(); }
+
+    const D3D12_QUERY_TYPE      QueryType;
+    const D3D12_QUERY_HEAP_TYPE QueryHeapType;
+    const int32                 NumQueries;
+
 private:
-    FD3D12ResourceStorage         ReadbackResourceStorage;
-    TComPtr<ID3D12QueryHeap>      QueryHeap;
-    FD3D12QueryHeapManager*       QueryHeapManager;
-    TArray<FD3D12QueryAllocation> QueryAllocations;
-    FD3D12ResidencyHandle         ResidencyHandle;
-    D3D12_QUERY_HEAP_TYPE         QueryHeapType;
-    int32                         CurrentQueryIndex;
-    int32                         NumQueries;
+    TComPtr<ID3D12QueryHeap> QueryHeap;
+    FD3D12ResourceRef        ReadbackResource;
+    FD3D12ResidencyHandle    ResidencyHandle;
+    uint64*                  ReadbackData;
 };
 
 class FD3D12QueryAllocator : public FD3D12DeviceChild
 {
 public:
-    FD3D12QueryAllocator(FD3D12Device* InDevice, FD3D12CommandContext& InContext, EQueryType InQueryType);
+    FD3D12QueryAllocator(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType);
     ~FD3D12QueryAllocator();
 
-    FD3D12QueryAllocation Allocate(uint64* InResults);
-    void PrepareForNewCommandList();
+    bool Allocate(FD3D12Query& OutQuery, uint64* ResultTarget, ED3D12QueryType InType);
+    void Reset(TArray<FD3D12QueryRange>& OutRanges);
 
 private:
-    FD3D12CommandContext&   Context;
-    FD3D12QueryHeap*        QueryHeap;
-    EQueryType              QueryType;
-    FD3D12QueryHeapManager* QueryHeapManager;
+    TArray<FD3D12QueryRange> Ranges;
+    D3D12_QUERY_HEAP_TYPE    HeapType;
 };
 
 class FD3D12QueryHeapManager : public FD3D12DeviceChild
 {
 public:
-    FD3D12QueryHeapManager(FD3D12Device* InDevice, EQueryType InQueryType, int32 InQueriesPerHeap);
+    FD3D12QueryHeapManager(FD3D12Device* InDevice, D3D12_QUERY_HEAP_TYPE InHeapType, int32 InQueriesPerHeap);
     ~FD3D12QueryHeapManager();
 
-    FD3D12QueryHeap* ObtainQueryHeap();
-    void RecycleQueryHeap(FD3D12QueryHeap* InQueryPool);
-
-    EQueryType GetQueryType() const 
-    {
-        return QueryType;
-    }
-
-    int32 GetQueriesPerHeap() const
-    {
-        return QueriesPerHeap;
-    }
+    FD3D12QueryHeap* ObtainHeap();
+    void RecycleHeap(FD3D12QueryHeap* Heap);
 
 private:
-    EQueryType               QueryType;
+    D3D12_QUERY_HEAP_TYPE    HeapType;
     int32                    QueriesPerHeap;
-    TQueue<FD3D12QueryHeap*> AvailableQueryHeaps;
-    TArray<FD3D12QueryHeap*> QueryHeaps;
-    FCriticalSection         QueryHeapsCS;
+    TQueue<FD3D12QueryHeap*> AvailableHeaps;
+    TArray<FD3D12QueryHeap*> AllHeaps;
+    FCriticalSection         HeapsCS;
 };

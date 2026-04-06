@@ -46,7 +46,10 @@ public:
     virtual FRHIGpuFence* CreateFence() override final;
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
-    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult) override final;
+    virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final;
+    virtual bool GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode) override final;
+
+
 
     virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
 

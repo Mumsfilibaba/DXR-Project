@@ -100,12 +100,6 @@ extern VULKANRHI_API bool   GVulkanSupportsTransformFeedback;
 extern VULKANRHI_API bool   GVulkanUseDynamicRendering;
 
 // -------------------------------------------------------------------------------------------
-// Descriptor Set Management
-// -------------------------------------------------------------------------------------------
-
-extern VULKANRHI_API bool   GVulkanUseDescriptorCache;
-
-// -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
 // -------------------------------------------------------------------------------------------
 
@@ -309,7 +303,9 @@ public:
     bool FindOrCreateSampler(const struct FRHISamplerStateInfo& SamplerInfo, VkSampler& OutSampler);
     bool FindOrCreateSampler(const struct FRHIStaticSamplerInfo& StaticSamplerInfo, VkSampler& OutSampler);
 
-    FVulkanQueryPoolManager* GetQueryPoolManager(EQueryType QueryType);
+    FVulkanQueryPoolManager* GetQueryPoolManager(VkQueryType QueryType);
+    FVulkanQueryPool*        ObtainQueryPool(VkQueryType QueryType);
+    void                     RecycleQueryPool(FVulkanQueryPool* Pool);
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
     bool   InitializePresentQueueFamily(VkSurfaceKHR Surface);
 
@@ -319,8 +315,11 @@ public:
     FVulkanTimelineFence&         GetFrameFence()            { return *FrameFence; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
     FVulkanPipelineStateManager&  GetPipelineStateManager()  { return *PipelineStateManager; }
+#if VULKAN_USE_DESCRIPTOR_CACHE
     FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return *DescriptorSetCache; }
+#else
     FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return *DescriptorPoolManager; }
+#endif
     FVulkanDefaultResources&      GetDefaultResources()      { return DefaultResources; }
 
     bool IsLayerEnabled(const FString& LayerName)         const { return (LayerNames.Find(LayerName) != nullptr); }
@@ -364,10 +363,14 @@ private:
     FVulkanTimelineFence*                FrameFence;
     FVulkanPipelineLayoutManager*        PipelineLayoutManager;
     FVulkanPipelineStateManager*         PipelineStateManager;
+#if VULKAN_USE_DESCRIPTOR_CACHE
     FVulkanDescriptorSetCache*           DescriptorSetCache;
+#else
     FVulkanDescriptorPoolManager*        DescriptorPoolManager;
+#endif
     FVulkanQueryPoolManager*             TimingQueryPoolManager;
     FVulkanQueryPoolManager*             OcclusionQueryPoolManager;
+    FVulkanQueryPoolManager*             PipelineStatsQueryPoolManager;
     FVulkanDefaultResources              DefaultResources;
     TSet<FString>                        ExtensionNames;
     TSet<FString>                        LayerNames;

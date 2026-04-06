@@ -358,10 +358,11 @@ constexpr VkQueryType ConvertQueryType(EQueryType QueryType)
 {
     switch (QueryType)
     {
-        case EQueryType::Timestamp: return VK_QUERY_TYPE_TIMESTAMP;
-        case EQueryType::Occlusion: return VK_QUERY_TYPE_OCCLUSION;
+        case EQueryType::Timestamp:          return VK_QUERY_TYPE_TIMESTAMP;
+        case EQueryType::Occlusion:          return VK_QUERY_TYPE_OCCLUSION;
+        case EQueryType::PipelineStatistics: return VK_QUERY_TYPE_PIPELINE_STATISTICS;
 
-        default: return VK_QUERY_TYPE_MAX_ENUM; // NOTE Return invalid value
+        default: return VK_QUERY_TYPE_MAX_ENUM;
     }
 }
 

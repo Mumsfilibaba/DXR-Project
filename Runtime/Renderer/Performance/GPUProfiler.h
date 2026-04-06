@@ -1,12 +1,12 @@
 #pragma once
-#include "Core/Containers/Map.h"
+#include "Core/Containers/Array.h"
 #include "Core/Threading/Spinlock.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
+#include "RendererCore/Interfaces/IGPUProfiler.h"
 #include "Renderer/RendererModule.h"
 
-#define ENABLE_GPU_PROFILER      (1)
-#define NUM_GPU_PROFILER_SAMPLES (200)
+#define ENABLE_GPU_PROFILER (1)
 
 #if ENABLE_GPU_PROFILER
     #define GPU_TRACE_SCOPE(CmdList, Name) FGPUScopedTrace STRING_CONCAT(GPUScopedTrace_Line_, __LINE__)(CmdList, Name)
@@ -14,67 +14,18 @@
     #define GPU_TRACE_SCOPE(CmdList, Name)
 #endif
 
-struct FGPUProfileSample
+static constexpr int32 GPU_PROFILER_BUFFER_COUNT = 3;
+
+struct FGPUProfileScopeQueries
 {
-    void AddSample(float NewSample)
-    {
-        Samples[CurrentSample] = NewSample;
-
-        Min = Math::Min(NewSample, Min);
-        Max = Math::Max(NewSample, Max);
-
-        SampleCount = Math::Min<int32>(Samples.Size(), SampleCount + 1);
-
-        CurrentSample++;
-        if (CurrentSample >= int32(Samples.Size()))
-        {
-            CurrentSample = 0;
-        }
-    }
-
-    float GetAverage() const
-    {
-        if (SampleCount < 1)
-            return 0.0f;
-
-        float Average = 0.0f;
-        for (int32 n = 0; n < SampleCount; n++)
-        {
-            Average += Samples[n];
-        }
-
-        return Average / float(SampleCount);
-    }
-
-    void Reset()
-    {
-        Samples.Fill(0.0f);
-
-        SampleCount = 0;
-        CurrentSample = 0;
-        TotalCalls = 0;
-
-        Max = TNumericLimits<float>::Lowest();
-        Min = TNumericLimits<float>::Max();
-    }
-
-    TStaticArray<float, NUM_GPU_PROFILER_SAMPLES> Samples;
-
-    FRHIQueryRef BeginQuery;
-    FRHIQueryRef EndQuery;
-    float        Max = TNumericLimits<float>::Lowest();
-    float        Min = TNumericLimits<float>::Max();
-    int32        SampleCount;
-    int32        CurrentSample;
-    int32        TotalCalls;
+    FRHIQueryRef BeginQuery[GPU_PROFILER_BUFFER_COUNT];
+    FRHIQueryRef EndQuery[GPU_PROFILER_BUFFER_COUNT];
+    FRHIQueryRef PipelineStatsQuery[GPU_PROFILER_BUFFER_COUNT];
 };
 
-using GPUProfileSamplesMap = TMap<FString, FGPUProfileSample>;
-
-class RENDERER_API FGPUProfiler
+class FGPUProfiler : public IGPUProfiler
 {
 public:
-
     static FORCEINLINE FGPUProfiler& Get()
     {
         return GGpuProfiler;
@@ -82,46 +33,65 @@ public:
 
 public:
 
-    /** @brief Releases all query objects */
-    void Release();
+    // IGPUProfiler interface
+    virtual void Enable()  override final;
+    virtual void Disable() override final;
+    virtual void Reset()   override final;
 
-     /** @brief Enables the collection of samples (Resume) */
-    void Enable();
+    virtual void EnablePipelineStatistics()    override final;
+    virtual void DisablePipelineStatistics()   override final;
+    virtual bool IsPipelineStatisticsEnabled() const override final;
 
-     /** @brief Disables the collection of samples (Pause) */
-    void Disable();
-
-     /** @brief Resets all the samples */
-    void Reset();
-
-     /** @brief Retrieve a copy of the GPU Profiler samples */
-    void GetGPUSamples(GPUProfileSamplesMap& OutGPUSamples);
-
-     /** @brief Start the GPU frame */
-    void BeginGPUFrame(FRHICommandList& CmdList);
-
-     /** @brief End the GPU frame */
-    void EndGPUFrame(FRHICommandList& CmdList);
-
-     /** @brief Begin a GPU scope */
-    void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
-
-     /** @brief End a GPU scope */
-    void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
-
-    const FGPUProfileSample& GetGPUFrameTime() const
+    virtual void GetGPUSamples(GPUProfileSamplesMap& OutGPUSamples) override final;
+    
+    virtual const FGPUProfileSample& GetGPUFrameTime() const override final
     {
         return FrameTime;
     }
+    
+    virtual const FRHIPipelineStatistics& GetPipelineStatistics() const override final
+    {
+        return LastPipelineStats;
+    }
+
+    virtual const FPipelineStatisticsMinMax& GetPipelineStatisticsMinMax() const override final
+    {
+        return PipelineStatsMinMax;
+    }
+    
+    /** @brief Releases all query objects */
+    void Release();
+
+    /** @brief Start the GPU frame */
+    void BeginGPUFrame(FRHICommandList& CmdList);
+
+    /** @brief End the GPU frame */
+    void EndGPUFrame(FRHICommandList& CmdList);
+
+    /** @brief Begin a GPU scope */
+    void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
+
+    /** @brief End a GPU scope */
+    void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
 private:
     FGPUProfiler();
     ~FGPUProfiler();
 
-    FGPUProfileSample    FrameTime;
-    GPUProfileSamplesMap Samples;
-    FSpinLock            SamplesLock;
-    bool                 bEnabled;
+    void CollectResults();
+
+    FGPUProfileSample                      FrameTime;
+    GPUProfileSamplesMap                   Samples;
+    FSpinLock                              SamplesLock;
+    FRHIQueryRef                           FrameBeginQuery[GPU_PROFILER_BUFFER_COUNT];
+    FRHIQueryRef                           FrameEndQuery[GPU_PROFILER_BUFFER_COUNT];
+    TMap<FString, FGPUProfileScopeQueries> ScopeQueries;
+    FRHIPipelineStatistics                 LastPipelineStats;
+    FPipelineStatisticsMinMax              PipelineStatsMinMax;
+    bool                                   bEnabled;
+    bool                                   bPipelineStatsEnabled;
+    int32                                  WriteIndex;
+    int32                                  PipelineStatsNestingDepth;
 
     static FGPUProfiler GGpuProfiler;
 };
@@ -143,5 +113,5 @@ public:
 
 private:
     FRHICommandList& CommandList;
-    const CHAR* Name = nullptr;
+    const CHAR*      Name;
 };

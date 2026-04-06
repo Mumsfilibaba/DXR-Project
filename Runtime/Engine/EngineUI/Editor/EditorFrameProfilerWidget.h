@@ -2,18 +2,28 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FFrameProfilerWidget
+class FEditorFrameProfilerWidget
 {
 public:
-    FFrameProfilerWidget();
-    ~FFrameProfilerWidget();
+    FEditorFrameProfilerWidget();
+    ~FEditorFrameProfilerWidget();
 
     void Draw();
-    void DrawFPS();
     void DrawWindow();
     void DrawCPUData(float Width);
+
+    void SetVisible(bool bInVisible)
+    {
+        bVisible = bInVisible;
+    }
+
+    bool IsVisible() const
+    {
+        return bVisible;
+    }
 
 private:
     TArray<FFrameProfilerThreadInfo> ThreadInfos;
     FDelegateHandle                  ImGuiDelegateHandle;
+    bool                             bVisible;
 };

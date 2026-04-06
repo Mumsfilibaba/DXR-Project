@@ -785,8 +785,8 @@ void FWindowsApplication::ProcessWindowMoveMessage(const FWindowsDeferredMessage
 {
     if (Message.Window)
     {
-        uint32 X = static_cast<uint32>(LOWORD(Message.lParam));
-        uint32 Y = static_cast<uint32>(HIWORD(Message.lParam));
+        const int32 X = static_cast<int32>(static_cast<int16>(LOWORD(Message.lParam)));
+        const int32 Y = static_cast<int32>(static_cast<int16>(HIWORD(Message.lParam)));
 
         MessageHandler->OnWindowMoved(Message.Window, X, Y);
     }

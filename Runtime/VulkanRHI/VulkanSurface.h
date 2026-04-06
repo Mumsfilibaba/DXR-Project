@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/RefCountedBase.h"
 #include "VulkanRHI/VulkanQueue.h"
 
 typedef TSharedRef<class FVulkanSurface> FVulkanSurfaceRef;
@@ -25,7 +26,7 @@ constexpr const CHAR* ToString(ESurfaceStatus Status)
     }
 }
 
-class FVulkanSurface : public FVulkanDeviceChild, public FVulkanRefCounted
+class FVulkanSurface : public FVulkanDeviceChild, public FRefCountedBase
 {
 public:
     FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue& InQueue, void* InWindowHandle);

@@ -7,6 +7,7 @@
 #include "D3D12RHI/D3D12ResourceViews.h"
 #include "D3D12RHI/D3D12Fence.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
+#include "D3D12RHI/D3D12Query.h"
 
 class FD3D12ComputePipelineState;
 
@@ -64,6 +65,8 @@ private:
 
 class FD3D12CommandList : public FD3D12DeviceChild, FNonCopyable
 {
+    friend struct FD3D12Commands;
+
     template<typename CommandListInterfaceType>
     struct CommandList
     {
@@ -90,11 +93,16 @@ class FD3D12CommandList : public FD3D12DeviceChild, FNonCopyable
 
 public:
     FD3D12CommandList(FD3D12Device* InDevice);
-    ~FD3D12CommandList() = default;
+    ~FD3D12CommandList();
     
     bool Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
     bool Reset(FD3D12CommandAllocator* Allocator);
     bool Close();
+
+    void BeginQuery(const FD3D12Query& Query);
+    void EndQuery(const FD3D12Query& Query);
+    void InsertBeginTimestamp(FD3D12QueryAllocator& Allocator);
+    void InsertEndTimestamp(FD3D12QueryAllocator& Allocator);
 
     FORCEINLINE bool IsReady() const
     {
@@ -208,38 +216,44 @@ public:
     }
 
 private:
-    TComPtr<ID3D12GraphicsCommandList>  CmdList;
+    FD3D12Query                          BeginTimestamp;
+    FD3D12Query                          EndTimestamp;
+    TArray<FD3D12Query>                  TimestampQueries;
+    TArray<FD3D12Query>                  OcclusionQueries;
+    TArray<FD3D12Query>                  PipelineStatsQueries;
+
+    TComPtr<ID3D12GraphicsCommandList>   CmdList;
 #if D3D12_USE_ID3D12COMMANDLIST_1
-    TComPtr<ID3D12GraphicsCommandList1> CmdList1;
+    TComPtr<ID3D12GraphicsCommandList1>  CmdList1;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_2
-    TComPtr<ID3D12GraphicsCommandList2> CmdList2;
+    TComPtr<ID3D12GraphicsCommandList2>  CmdList2;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_3
-    TComPtr<ID3D12GraphicsCommandList3> CmdList3;
+    TComPtr<ID3D12GraphicsCommandList3>  CmdList3;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_4
-    TComPtr<ID3D12GraphicsCommandList4> CmdList4;
+    TComPtr<ID3D12GraphicsCommandList4>  CmdList4;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_5
-    TComPtr<ID3D12GraphicsCommandList5> CmdList5;
+    TComPtr<ID3D12GraphicsCommandList5>  CmdList5;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_6
-    TComPtr<ID3D12GraphicsCommandList6> CmdList6;
+    TComPtr<ID3D12GraphicsCommandList6>  CmdList6;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_7
-    TComPtr<ID3D12GraphicsCommandList7> CmdList7;
+    TComPtr<ID3D12GraphicsCommandList7>  CmdList7;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_8
-    TComPtr<ID3D12GraphicsCommandList8> CmdList8;
+    TComPtr<ID3D12GraphicsCommandList8>  CmdList8;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_9
-    TComPtr<ID3D12GraphicsCommandList9> CmdList9;
+    TComPtr<ID3D12GraphicsCommandList9>  CmdList9;
 #endif
 #if D3D12_USE_ID3D12COMMANDLIST_10
     TComPtr<ID3D12GraphicsCommandList10> CmdList10;
 #endif
-    uint32                              NumCommands;
-    bool                                bIsReady;
-    FD3D12ResidencySet                  ResidencySet;
+    FD3D12ResidencySet                   ResidencySet;
+    uint32                               NumCommands;
+    bool                                 bIsReady;
 };

@@ -1,8 +1,6 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "MetalRHI/MetalDeviceChild.h"
-#include "MetalRHI/MetalRefCounted.h"
-
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 typedef TSharedRef<class FMetalSamplerState> FMetalSamplerStateRef;

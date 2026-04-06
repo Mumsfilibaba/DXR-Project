@@ -2,8 +2,6 @@
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12Resource.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
-#include "D3D12RHI/D3D12RefCounted.h"
-
 class FD3D12CommandContext;
 
 class FD3D12Buffer : public FRHIBuffer, public FD3D12GenericResource
