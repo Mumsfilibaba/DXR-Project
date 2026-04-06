@@ -2,6 +2,7 @@
 #include "VulkanRHI/VulkanConfiguration.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
+#include "VulkanRHI/VulkanStats.h"
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanCommandContext.h"

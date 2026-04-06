@@ -2,6 +2,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Threading/ScopedLock.h"
 #include "D3D12RHI/D3D12Core.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
@@ -9,6 +10,15 @@
 #include "D3D12RHI/D3D12Heap.h"
 
 static constexpr uint64 D3D12_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE = 16ull;
+
+#if D3D12_ENABLE_STATS
+struct FD3D12AllocatorUsage
+{
+    uint64 AllocatedBytes  = 0;
+    uint64 UsedBytes       = 0;
+    uint64 FragmentedBytes = 0;
+};
+#endif
 
 class FD3D12Device;
 class FD3D12CommandContext;
@@ -46,9 +56,18 @@ public:
     
     bool IsEmpty() const;
 
+#if D3D12_ENABLE_STATS
+    void UpdateMemoryStats(FD3D12AllocatorUsage& OutUsage) const;
+#endif
+
     bool IsBackedByHeap() const
     {
         return AllocationStrategy == EAllocationStrategy::SuballocatedHeap;
+    }
+
+    uint64 GetBackingStorageSize() const
+    {
+        return BackingStorageSize;
     }
 
     FD3D12Heap* GetBackingHeap() const
@@ -75,6 +94,8 @@ private:
     FD3D12ResourceRef        BackingResource;
     TArray<TArray<uint64>>   FreeOffsets;
     uint8*                   MappedBaseAddress;
+    FAtomicInt64             TrackedUsedBytes;
+    FAtomicInt64             TrackedWastedBytes;
     mutable FCriticalSection AllocatorCS;
 };
 
@@ -90,7 +111,11 @@ public:
     bool Initialize();
     void Destroy();
     void CleanUp();
-    
+
+#if D3D12_ENABLE_STATS
+    void UpdateMemoryStats(FD3D12AllocatorUsage& OutUsage) const;
+#endif
+
 private:
     bool CreateAllocator(D3D12_RESOURCE_FLAGS InResourceFlags);
 
@@ -124,7 +149,10 @@ public:
     
     bool Initialize();
 
-    bool IsEmpty() const { return UsedBytes == 0; }
+    bool IsEmpty() const
+    {
+        return UsedBytes == 0;
+    }
 
     FD3D12Heap* GetBackingHeap() const
     {
@@ -171,8 +199,8 @@ private:
 
 class FD3D12PoolAllocator : public FD3D12DeviceChild
 {
-    static constexpr uint32 TLSFFirstLevelCount  = 32;
-    static constexpr uint32 TLSFSecondLevelCount = 8;
+    static constexpr uint32 TLSF_FIRST_LEVEL_COUNT  = 32;
+    static constexpr uint32 TLSF_SECOND_LEVEL_COUNT = 8;
 
 public:
     FD3D12PoolAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InMaxResourceSize, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, D3D12_RESOURCE_FLAGS InResourceFlags = D3D12_RESOURCE_FLAG_NONE);
@@ -193,6 +221,11 @@ public:
     void TransferOwnership(const FD3D12PoolAllocatorAllocationData& Data, FD3D12ResourceStorage* NewStorage);
 
     FD3D12Heap* GetBackingHeap(uint32 PageIndex);
+
+#if D3D12_ENABLE_STATS
+    void UpdateMemoryStats(FD3D12AllocatorUsage& OutUsage) const;
+    void ReleaseStandaloneAllocation(uint64 SizeInBytes);
+#endif
 
     uint64 GetFragmentedBytes() const
     {
@@ -222,6 +255,9 @@ private:
     EAllocationStrategy              AllocationStrategy;
     D3D12_RESOURCE_FLAGS             ResourceFlags;
     uint64                           FragmentedBytes;
+    FAtomicInt64                     TrackedAllocatedBytes;
+    FAtomicInt64                     TrackedUsedBytes;
+    FAtomicInt64                     StandaloneAllocatedBytes;
     TArray<FD3D12PoolAllocatorPage*> Pages;
     mutable FCriticalSection         PagesCS;
 };
@@ -230,9 +266,9 @@ class FD3D12BucketAllocator : public FD3D12DeviceChild
 {
     struct FBucket
     {
-        uint64            BlockSize = 0;
-        uint8*            MappedBaseAddress = nullptr;
-        FD3D12ResourceRef BackingResource;
+        uint64                                      BlockSize         = 0;
+        uint8*                                      MappedBaseAddress = nullptr;
+        FD3D12ResourceRef                           BackingResource;
         TArray<FD3D12BucketAllocatorAllocationData> FreeBlocks;
     };
 
@@ -267,6 +303,10 @@ public:
     bool Initialize();
     void Destroy();
     void CleanUp();
+
+#if D3D12_ENABLE_STATS
+    void UpdateMemoryStats();
+#endif
 
 private:
     uint64                    PageSizeBytes;
@@ -356,6 +396,13 @@ public:
     bool Initialize();
     void CleanUp();
 
+#if D3D12_ENABLE_STATS
+    void UpdateMemoryStats(FD3D12AllocatorUsage& OutUsage) const
+    {
+        MultiBuddyAllocator.UpdateMemoryStats(OutUsage);
+    }
+#endif
+
 private:
     void Destroy();
 
@@ -384,6 +431,10 @@ public:
     void Destroy();
     void CleanUp();
 
+#if D3D12_ENABLE_STATS
+    void UpdateMemoryStats();
+#endif
+
 private:
     void ReleasePools();
 
@@ -405,7 +456,7 @@ class FD3D12TextureAllocator : public FD3D12DeviceChild
         Count
     };
 
-    static constexpr uint32 TexturePoolClassCount = static_cast<uint32>(ETexturePoolClass::Count);
+    static constexpr uint32 TEXTURE_POOL_CLASS_COUNT = static_cast<uint32>(ETexturePoolClass::Count);
 
     struct FPendingDefragMove
     {
@@ -430,7 +481,11 @@ public:
 
     bool Initialize();
     void Destroy();
-    void CleanUp();    
+    void CleanUp();
+
+#if D3D12_ENABLE_STATS
+    void UpdateMemoryStats();
+#endif
 
 private:
     ETexturePoolClass ClassifyTexture(const D3D12_RESOURCE_DESC& Desc, uint64 Alignment) const;
@@ -441,7 +496,7 @@ private:
     uint64                     CommittedThreshold;
     uint64                     DefaultPageSizeBytes;
     uint64                     SmallPoolAlignment;
-    FD3D12PoolAllocator*       Pools[TexturePoolClassCount];
+    FD3D12PoolAllocator*       Pools[TEXTURE_POOL_CLASS_COUNT];
     TArray<FPendingDefragMove> PendingDefragMoves;
     FCriticalSection           PoolsCS;
 };

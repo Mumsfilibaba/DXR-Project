@@ -1,5 +1,10 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Stats/Stats.h"
+
+#ifndef VULKAN_ENABLE_STATS
+    #define VULKAN_ENABLE_STATS (STATS_ENABLED)
+#endif
 
 #ifndef VULKAN_ENABLE_CRASH_MARKERS
     #define VULKAN_ENABLE_CRASH_MARKERS (!RELEASE_BUILD)

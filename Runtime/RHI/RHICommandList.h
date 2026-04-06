@@ -10,6 +10,7 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommands.h"
 #include "RHI/RHIRayTracing.h"
+#include "RHI/RHIStats.h"
 
 struct FRHIRenderTargetView;
 struct FRHIDepthStencilView;
@@ -394,31 +395,31 @@ public:
     FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept
     {
         EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
-        RHIStatistics::NumDrawCalls++;
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
 
     FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
-        RHIStatistics::NumDrawCalls++;
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
 
     FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-        RHIStatistics::NumDrawCalls++;
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
      
     FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
-        RHIStatistics::NumDrawCalls++;
+        STAT_ADD(STAT_RHI_DrawCalls, 1);
     }
 
     FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
     {
         EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-        RHIStatistics::NumDispatchCalls++;
+        STAT_ADD(STAT_RHI_DispatchCalls, 1);
     }
 
     FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept

@@ -20,6 +20,8 @@
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
+#include "D3D12RHI/D3D12Stats.h"
+#include "RHI/RHIStats.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D12RHIModule, D3D12RHI);
 
@@ -195,6 +197,37 @@ void FD3D12RHI::EndFrame()
     }
 
     Device->GetPipelineStateManager().SaveCacheDataAsync();
+
+#if D3D12_ENABLE_STATS
+    if (FD3D12BufferAllocator* BufferAlloc = Device->GetBufferAllocator())
+    {
+        BufferAlloc->UpdateMemoryStats();
+    }
+    if (FD3D12TextureAllocator* TextureAlloc = Device->GetTextureAllocator())
+    {
+        TextureAlloc->UpdateMemoryStats();
+    }
+    if (FD3D12UploadHeapAllocator* UploadAlloc = Device->GetUploadHeapAllocator())
+    {
+        UploadAlloc->UpdateMemoryStats();
+    }
+
+    {
+        FRHIVideoMemoryInfo LocalMemory;
+        if (QueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemory))
+        {
+            STAT_SET(STAT_RHI_LocalMemoryBudget, LocalMemory.MemoryBudget);
+            STAT_SET(STAT_RHI_LocalMemoryUsage,  LocalMemory.MemoryUsage);
+        }
+
+        FRHIVideoMemoryInfo NonLocalMemory;
+        if (QueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemory))
+        {
+            STAT_SET(STAT_RHI_NonLocalMemoryBudget, NonLocalMemory.MemoryBudget);
+            STAT_SET(STAT_RHI_NonLocalMemoryUsage,  NonLocalMemory.MemoryUsage);
+        }
+    }
+#endif
 }
 
 bool FD3D12RHI::InitializeDeviceFeatureSupport()
@@ -355,6 +388,20 @@ FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERes
         return nullptr;
     }
 
+#if D3D12_ENABLE_STATS
+    {
+        const int64 AllocatedSize = static_cast<int64>(NewTexture->GetResourceStorage().GetSize());
+        if (InTextureInfo.IsRenderTarget() || InTextureInfo.IsDepthStencil())
+        {
+            STAT_ADD(STAT_RHI_RenderTargetMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_ADD(STAT_RHI_TextureMemory, AllocatedSize);
+        }
+    }
+#endif
+
     TickCoreProgression();
     return NewTexture.ReleaseOwnership();
 }
@@ -366,6 +413,41 @@ FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourc
     {
         return nullptr;
     }
+
+#if D3D12_ENABLE_STATS
+    {
+        const int64 AllocatedSize = static_cast<int64>(NewBuffer->GetResourceStorage().GetSize());
+        if (InBufferInfo.IsVertexBuffer())
+        {
+            STAT_ADD(STAT_RHI_VertexBufferMemory, AllocatedSize);
+        }
+        else if (InBufferInfo.IsIndexBuffer())
+        {
+            STAT_ADD(STAT_RHI_IndexBufferMemory, AllocatedSize);
+        }
+        else if (InBufferInfo.IsConstantBuffer())
+        {
+            STAT_ADD(STAT_RHI_ConstantBufferMemory, AllocatedSize);
+        }
+        else if (InBufferInfo.IsShaderResourceBuffer() || InBufferInfo.IsUnorderedAccessBuffer())
+        {
+            STAT_ADD(STAT_RHI_StructuredBufferMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_ADD(STAT_RHI_MiscBufferMemory, AllocatedSize);
+        }
+
+        if (InBufferInfo.IsReadBack())
+        {
+            STAT_ADD(STAT_RHI_ReadbackMemory, AllocatedSize);
+        }
+        if (InBufferInfo.IsDynamic() || InBufferInfo.IsTransient())
+        {
+            STAT_ADD(STAT_RHI_UploadMemory, AllocatedSize);
+        }
+    }
+#endif
 
     TickCoreProgression();
     return NewBuffer.ReleaseOwnership();

@@ -1,4 +1,5 @@
 #include "Engine/World/Camera.h"
+#include "Renderer/RendererStats.h"
 #include "Renderer/Scene/SceneView.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
@@ -40,21 +41,24 @@ void FSceneView::SetupFrustum(const FMatrix4& View, const FMatrix4& Projection)
 
 bool FSceneView::AddStaticMesh(FSceneStaticMesh* StaticMesh)
 {
-    // If we have no Frustum, just add the mesh
+    STAT_ADD(STAT_Render_ObjectsTested, 1);
+
     if (!Frustum)
     {
         MeshBatcher.AddStaticMesh(StaticMesh);
+        STAT_ADD(STAT_Render_ObjectsVisible, 1);
         return true;
     }
 
-    // If there are a frustum
     if (Frustum->IntersectsAABB(StaticMesh->GetWorldBounds()))
     {
         MeshBatcher.AddStaticMesh(StaticMesh);
+        STAT_ADD(STAT_Render_ObjectsVisible, 1);
         return true;
     }
     else
     {
+        STAT_ADD(STAT_Render_ObjectsCulled, 1);
         return false;
     }
 }

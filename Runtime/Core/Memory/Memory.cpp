@@ -1,4 +1,5 @@
 #include "Core/Memory/Memory.h"
+#include "Core/Memory/MemoryStats.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformStackTrace.h"
 #include <cstdlib>
@@ -47,7 +48,13 @@ void* FMemory::Malloc(uint64 Size) noexcept
         CHECK(GMalloc != nullptr);
     }
 
-    return GMalloc->Malloc(Size);
+    void* Result = GMalloc->Malloc(Size);
+    if (Result)
+    {
+        STAT_ADD(STAT_Memory_AllocationCount, 1);
+    }
+
+    return Result;
 }
 
 void* FMemory::Realloc(void* Block, uint64 Size) noexcept
@@ -58,7 +65,13 @@ void* FMemory::Realloc(void* Block, uint64 Size) noexcept
         CHECK(GMalloc != nullptr);
     }
 
-    return GMalloc->Realloc(Block, Size);
+    void* Result = GMalloc->Realloc(Block, Size);
+    if (!Block && Result)
+    {
+        STAT_ADD(STAT_Memory_AllocationCount, 1);
+    }
+
+    return Result;
 }
 
 void FMemory::Free(void* Block) noexcept
@@ -69,7 +82,12 @@ void FMemory::Free(void* Block) noexcept
         CHECK(GMalloc != nullptr);
     }
 
-    return GMalloc->Free(Block);
+    if (Block)
+    {
+        STAT_SUBTRACT(STAT_Memory_AllocationCount, 1);
+    }
+
+    GMalloc->Free(Block);
 }
 
 void* FMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept

@@ -8,6 +8,7 @@
 #include "Core/Misc/CRC.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "RHI/ShaderStats.h"
 
 #include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
@@ -319,6 +320,7 @@ bool FShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShad
 
 bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
+    STAT_ADD(STAT_Shader_CompileCount, 1);
     OutByteCode.Clear();
 
     TComPtr<IDxcUtils> Utils;

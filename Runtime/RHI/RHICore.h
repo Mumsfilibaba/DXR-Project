@@ -229,22 +229,3 @@ struct RHIDeviceFeatureSupport
     static RHI_API bool bSupportsGPUTimestampBubblesRemoval;
 };
 
-// -------------------------------------------------------------------------------------------
-// Statistics (atomic)
-// -------------------------------------------------------------------------------------------
-
-struct RHIStatistics
-{
-    // -------------------------------------------------------------------------------------------
-    // Command Submission Metrics
-    // -------------------------------------------------------------------------------------------
-
-    /** Total number of graphics draw calls submitted to the GPU */
-    static RHI_API FAtomicUInt64 NumDrawCalls;
-
-    /** Total number of compute dispatch calls submitted to the GPU */
-    static RHI_API FAtomicUInt64 NumDispatchCalls;
-
-    /** Total number of commands recorded to command lists/command buffers */
-    static RHI_API FAtomicUInt64 NumCommands;
-};

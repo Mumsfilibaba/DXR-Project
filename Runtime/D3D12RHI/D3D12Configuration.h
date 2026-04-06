@@ -1,6 +1,11 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Stats/Stats.h"
 #include <d3d12.h>
+
+#ifndef D3D12_ENABLE_STATS
+    #define D3D12_ENABLE_STATS (STATS_ENABLED)
+#endif
 
 #ifndef D3D12_ENABLE_PIX_MARKERS
     #define D3D12_ENABLE_PIX_MARKERS (!RELEASE_BUILD)

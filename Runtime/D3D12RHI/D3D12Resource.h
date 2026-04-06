@@ -46,8 +46,9 @@ struct FD3D12PoolAllocatorAllocationData
 
 struct FD3D12BuddyAllocatorAllocationData
 {
-    uint32 Order  = 0;
-    uint64 Offset = 0;
+    uint32 Order         = 0;
+    uint64 Offset        = 0;
+    uint64 RequestedSize = 0;
 };
 
 struct FD3D12BucketAllocatorAllocationData
@@ -158,7 +159,7 @@ private:
 class FD3D12Resource : public FD3D12DeviceChild, public FRefCountedBase
 {
 public:
-    FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, FD3D12Heap* InHeap = nullptr);
+    FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_CLEAR_VALUE* InClearValue = nullptr, FD3D12Heap* InHeap = nullptr);
     ~FD3D12Resource();
 
     void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
@@ -237,6 +238,11 @@ public:
         return Desc;
     }
 
+    uint64 GetAllocationSize() const
+    {
+        return AllocationSize;
+    }
+
 private:
     void InitializeStateTracking(D3D12_RESOURCE_STATES InitialState);
 
@@ -249,6 +255,7 @@ private:
     D3D12_RESOURCE_STATES     DefaultState;
     FD3D12ResidencyHandle     ResidencyHandle;
     FD3D12HeapRef             Heap;
+    uint64                    AllocationSize;
     uint32                    NumSubresources;
     bool                      bShouldDeferredRelease : 1;
     bool                      bHasClearValue : 1;

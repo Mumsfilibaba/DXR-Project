@@ -11,6 +11,8 @@ class FEditorContentBrowserWidget;
 class FEditorGuizmoWidget;
 class FEditorGPUProfilerWidget;
 class FEditorFrameProfilerWidget;
+class FEditorRHIInfoWidget;
+class FEditorStatsWidget;
 
 class ENGINE_API FEditorEngine : public FEngine
 {
@@ -37,6 +39,8 @@ public:
     const TSharedPtr<FEditorGuizmoWidget>&         GetGuizmoWidget()         const { return GuizmoWidget; }
     const TSharedPtr<FEditorGPUProfilerWidget>&    GetGPUProfilerWidget()    const { return GPUProfilerWidget; }
     const TSharedPtr<FEditorFrameProfilerWidget>& GetFrameProfilerWidget()  const { return FrameProfilerWidget; }
+    const TSharedPtr<FEditorRHIInfoWidget>&       GetRHIInfoWidget()        const { return RHIInfoWidget; }
+    const TSharedPtr<FEditorStatsWidget>&         GetStatsWidget()          const { return StatsWidget; }
 
     void SetSelectedActor(FActor* InActor);
     void SetSelectedLight(FLight* InLight);
@@ -68,6 +72,8 @@ private:
     TSharedPtr<FEditorGuizmoWidget>         GuizmoWidget;
     TSharedPtr<FEditorGPUProfilerWidget>    GPUProfilerWidget;
     TSharedPtr<FEditorFrameProfilerWidget>  FrameProfilerWidget;
+    TSharedPtr<FEditorRHIInfoWidget>        RHIInfoWidget;
+    TSharedPtr<FEditorStatsWidget>          StatsWidget;
     FRHITextureRef                          ViewportImage;
     FIntVector2                             ViewportImageSize;
 };

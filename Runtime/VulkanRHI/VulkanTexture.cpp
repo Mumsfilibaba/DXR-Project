@@ -3,6 +3,7 @@
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanCommandContext.h"
+#include "RHI/RHIStats.h"
 
 uint32 VkCalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {
@@ -101,6 +102,21 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& I
 
 FVulkanTexture::~FVulkanTexture()
 {
+#if VULKAN_ENABLE_STATS
+    const int64 AllocatedSize = static_cast<int64>(MemoryStorage.GetSize());
+    if (AllocatedSize > 0)
+    {
+        if (Info.IsRenderTarget() || Info.IsDepthStencil())
+        {
+            STAT_SUBTRACT(STAT_RHI_RenderTargetMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_SUBTRACT(STAT_RHI_TextureMemory, AllocatedSize);
+        }
+    }
+#endif
+
     DestroyImageViews();
     if (MemoryStorage.IsValid() && VULKAN_CHECK_HANDLE(Image))
     {

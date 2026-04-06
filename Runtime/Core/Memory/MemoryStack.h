@@ -2,6 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
+#include "Core/Memory/MemoryStats.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
@@ -123,6 +124,9 @@ private:
         StackStart = reinterpret_cast<uint8*>(NewPage->Data());
         StackEnd   = StackStart + HeapSize;
         TopPage    = NewPage;
+
+        STAT_ADD(STAT_Memory_StackBytes, AllocSize);
+        STAT_ADD(STAT_Memory_StackPageCount, 1);
         return StackStart;
     }
 
@@ -132,6 +136,8 @@ private:
         while (CurrentChunk != LastPage)
         {
             FMemoryHeader* PreviousChunk = CurrentChunk;
+            STAT_SUBTRACT(STAT_Memory_StackBytes, PreviousChunk->Size + static_cast<int32>(sizeof(FMemoryHeader)));
+            STAT_SUBTRACT(STAT_Memory_StackPageCount, 1);
             CurrentChunk = CurrentChunk->Next;
             FMemory::Free(PreviousChunk);
         }

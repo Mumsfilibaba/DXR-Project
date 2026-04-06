@@ -43,14 +43,14 @@ public:
 
     void Draw();
 
-    void SetVisible(bool bInVisible)
-    {
-        bVisible = bInVisible;
-    }
-
     bool IsVisible() const
     {
         return bVisible;
+    }
+    
+    void SetVisible(bool bInVisible)
+    {
+        bVisible = bInVisible;
     }
 
 private:

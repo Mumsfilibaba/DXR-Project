@@ -16,14 +16,14 @@ public:
     
     FIntVector2 GetViewportSize() const;
 
-    void SetVisible(bool bInVisible)
-    {
-        bVisible = bInVisible;
-    }
-
     bool IsVisible() const
     {
         return bVisible;
+    }
+    
+    void SetVisible(bool bInVisible)
+    {
+        bVisible = bInVisible;
     }
 
 private:

@@ -159,7 +159,6 @@ static FAutoConsoleCommand CVarFreezeRendering(
 
 FSceneRenderer::FSceneRenderer()
     : TextureDebugger(nullptr)
-    , InfoWindow(nullptr)
     , SettingsWindow(nullptr)
     , CommandList()
     , Resources()
@@ -242,7 +241,6 @@ FSceneRenderer::~FSceneRenderer()
     if (IImguiPlugin::IsEnabled())
     {
         TextureDebugger.Reset();
-        InfoWindow.Reset();
         SettingsWindow.Reset();
     }
 }
@@ -395,7 +393,6 @@ bool FSceneRenderer::Initialize()
     if (IImguiPlugin::IsEnabled())
     {
         TextureDebugger   = MakeSharedPtr<FTextureDebugWidget>();
-        InfoWindow        = MakeSharedPtr<FRendererInfoWidget>(this);
         SettingsWindow    = MakeSharedPtr<FRendererSettingsWidget>();
     }
 

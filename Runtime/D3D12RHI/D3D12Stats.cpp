@@ -1,0 +1,23 @@
+#include "D3D12RHI/D3D12Stats.h"
+
+STAT_DEFINE_MEMORY(STAT_D3D12_BufferPoolAllocated,   "Buffer Pool Allocated",   "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_BufferPoolUsed,        "Buffer Pool Used",        "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_BufferPoolFragmented,  "Buffer Pool Fragmented",  "D3D12 Allocators");
+
+STAT_DEFINE_MEMORY(STAT_D3D12_TexturePoolAllocated,  "Texture Pool Allocated",  "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_TexturePoolUsed,       "Texture Pool Used",       "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_TexturePoolFragmented, "Texture Pool Fragmented", "D3D12 Allocators");
+
+STAT_DEFINE_MEMORY(STAT_D3D12_UploadHeapAllocated,   "Upload Heap Allocated",   "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_UploadHeapUsed,        "Upload Heap Used",        "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_UploadHeapFragmented,  "Upload Heap Fragmented",  "D3D12 Allocators");
+
+STAT_DEFINE_MEMORY(STAT_D3D12_CommittedResourceMemory,  "Committed Resource Memory",  "D3D12 Allocators");
+STAT_DEFINE_COUNTER(STAT_D3D12_CommittedResourceCount,  "Committed Resource Count",   "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_CommittedDefaultMemory,   "Committed Default Memory",   "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_CommittedUploadMemory,    "Committed Upload Memory",    "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_CommittedReadbackMemory,  "Committed Readback Memory",  "D3D12 Allocators");
+
+// PSO Stats
+STAT_DEFINE_COUNTER(STAT_D3D12_PSOCreateCount, "PSOs Created",          "D3D12 PSO");
+STAT_DEFINE_MEMORY(STAT_D3D12_PSOCacheSize,    "Cache Serialized Size", "D3D12 PSO");

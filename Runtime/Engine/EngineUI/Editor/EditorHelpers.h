@@ -127,6 +127,7 @@ struct ENGINE_API EditorHelpers
     }
 
     static const CHAR* GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int32 OutBufSize);
+    static void FormatBytes(int64 Bytes, char* OutBuffer, int32 BufferSize);
 };
 
 // -----------------------------------------------------------------------------------------

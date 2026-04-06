@@ -13,6 +13,8 @@
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanDeviceLimits.h"
 #include "VulkanRHI/VulkanRayTracing.h"
+#include "VulkanRHI/VulkanStats.h"
+#include "RHI/RHIStats.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
 
@@ -385,6 +387,26 @@ void FVulkanRHI::EndFrame()
     if (Device)
     {
         Device->GetPipelineStateManager().SaveCacheDataAsync();
+
+#if VULKAN_ENABLE_STATS
+        Device->GetMemoryManager().UpdateMemoryStats();
+
+        {
+            FRHIVideoMemoryInfo LocalMemory;
+            if (QueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemory))
+            {
+                STAT_SET(STAT_RHI_LocalMemoryBudget, LocalMemory.MemoryBudget);
+                STAT_SET(STAT_RHI_LocalMemoryUsage,  LocalMemory.MemoryUsage);
+            }
+
+            FRHIVideoMemoryInfo NonLocalMemory;
+            if (QueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemory))
+            {
+                STAT_SET(STAT_RHI_NonLocalMemoryBudget, NonLocalMemory.MemoryBudget);
+                STAT_SET(STAT_RHI_NonLocalMemoryUsage,  NonLocalMemory.MemoryUsage);
+            }
+        }
+#endif
     }
 }
 
@@ -395,6 +417,20 @@ FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERe
     {
         return nullptr;
     }
+
+#if VULKAN_ENABLE_STATS
+    {
+        const int64 AllocatedSize = static_cast<int64>(NewTexture->GetMemoryStorage().GetSize());
+        if (InTextureInfo.IsRenderTarget() || InTextureInfo.IsDepthStencil())
+        {
+            STAT_ADD(STAT_RHI_RenderTargetMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_ADD(STAT_RHI_TextureMemory, AllocatedSize);
+        }
+    }
+#endif
 
     TickCoreProgression();
     return NewTexture.ReleaseOwnership();
@@ -407,6 +443,41 @@ FRHIBuffer* FVulkanRHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResour
     {
         return nullptr;
     }
+
+#if VULKAN_ENABLE_STATS
+    {
+        const int64 AllocatedSize = static_cast<int64>(NewBuffer->GetMemoryStorage().GetSize());
+        if (InBufferInfo.IsVertexBuffer())
+        {
+            STAT_ADD(STAT_RHI_VertexBufferMemory, AllocatedSize);
+        }
+        else if (InBufferInfo.IsIndexBuffer())
+        {
+            STAT_ADD(STAT_RHI_IndexBufferMemory, AllocatedSize);
+        }
+        else if (InBufferInfo.IsConstantBuffer())
+        {
+            STAT_ADD(STAT_RHI_ConstantBufferMemory, AllocatedSize);
+        }
+        else if (InBufferInfo.IsShaderResourceBuffer() || InBufferInfo.IsUnorderedAccessBuffer())
+        {
+            STAT_ADD(STAT_RHI_StructuredBufferMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_ADD(STAT_RHI_MiscBufferMemory, AllocatedSize);
+        }
+
+        if (InBufferInfo.IsReadBack())
+        {
+            STAT_ADD(STAT_RHI_ReadbackMemory, AllocatedSize);
+        }
+        if (InBufferInfo.IsDynamic() || InBufferInfo.IsTransient())
+        {
+            STAT_ADD(STAT_RHI_UploadMemory, AllocatedSize);
+        }
+    }
+#endif
 
     TickCoreProgression();
     return NewBuffer.ReleaseOwnership();
@@ -814,16 +885,10 @@ bool FVulkanRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemo
     const VkPhysicalDeviceMemoryProperties& memoryProperties = MemoryProperties2.memoryProperties;
     for (uint32 Index = 0; Index < memoryProperties.memoryHeapCount; Index++)
     {
-        if (MemoryType == EVideoMemoryType::Local)
-        {
-            const VkMemoryHeap& MemoryHeap = memoryProperties.memoryHeaps[Index];
-            if (MemoryHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-            {
-                OutMemoryStats.MemoryBudget += MemoryBudgetProperties.heapBudget[Index];
-                OutMemoryStats.MemoryUsage  += MemoryBudgetProperties.heapUsage[Index];
-            }
-        }
-        else
+        const VkMemoryHeap& MemoryHeap  = memoryProperties.memoryHeaps[Index];
+        const bool          bDeviceLocal = (MemoryHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0;
+
+        if ((MemoryType == EVideoMemoryType::Local) == bDeviceLocal)
         {
             OutMemoryStats.MemoryBudget += MemoryBudgetProperties.heapBudget[Index];
             OutMemoryStats.MemoryUsage  += MemoryBudgetProperties.heapUsage[Index];

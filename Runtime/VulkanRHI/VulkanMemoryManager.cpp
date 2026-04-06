@@ -2,6 +2,7 @@
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Math/Math.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
+#include "VulkanRHI/VulkanStats.h"
 #include "VulkanRHI/VulkanResource.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanDevice.h"
@@ -307,6 +308,16 @@ void FVulkanMemoryManager::FreeMemory(VkDeviceMemory Memory)
     }
 }
 
+#if VULKAN_ENABLE_STATS
+void FVulkanMemoryManager::UpdateMemoryStats()
+{
+    BufferAllocator.UpdateMemoryStats();
+    TextureAllocator.UpdateMemoryStats();
+    UploadHeapAllocator.UpdateMemoryStats();
+    STAT_SET(STAT_Vulkan_ActiveAllocations, ActiveAllocationCount.Load());
+}
+#endif
+
 FVulkanBuddyAllocator::FVulkanBuddyAllocator(FVulkanDevice* InDevice, uint64 InBackingStorageSize, uint64 InMinBlockBytes, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags)
     : FVulkanDeviceChild(InDevice)
     , BackingStorageSize(InBackingStorageSize)
@@ -521,6 +532,11 @@ bool FVulkanBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FV
     }
 
     const uint64 BlockSize = GetOrderBlockSize(Order);
+#if VULKAN_ENABLE_STATS
+    TrackedUsedBytes.Add(static_cast<int64>(BlockSize));
+    TrackedWastedBytes.Add(static_cast<int64>(BlockSize - AllocationSize));
+#endif
+
     OutStorage.Reset();
     OutStorage.SetSize(BlockSize);
     OutStorage.SetMemory(DeviceMemory);
@@ -537,8 +553,9 @@ bool FVulkanBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FV
     OutStorage.SetMappedBaseAddress(MappedBaseAddress ? (MappedBaseAddress + Offset) : nullptr);
 
     FVulkanBuddyAllocatorAllocationData AllocationData = {};
-    AllocationData.Order  = Order;
-    AllocationData.Offset = Offset;
+    AllocationData.Order         = Order;
+    AllocationData.Offset        = Offset;
+    AllocationData.RequestedSize = AllocationSize;
 
     OutStorage.SetBuddyAllocationData(AllocationData);
     OutStorage.SetBuddyAllocator(this);
@@ -552,6 +569,14 @@ void FVulkanBuddyAllocator::Deallocate(const FVulkanMemoryStorage& Storage)
 
 void FVulkanBuddyAllocator::RecycleAllocation(const FVulkanBuddyAllocatorAllocationData& AllocationData)
 {
+#if VULKAN_ENABLE_STATS
+    {
+        const uint64 BlockSize = GetOrderBlockSize(AllocationData.Order);
+        TrackedUsedBytes.Subtract(static_cast<int64>(BlockSize));
+        TrackedWastedBytes.Subtract(static_cast<int64>(BlockSize - AllocationData.RequestedSize));
+    }
+#endif
+
     SCOPED_LOCK(AllocatorCS);
 
     if (FreeOffsets.IsEmpty())
@@ -605,6 +630,15 @@ bool FVulkanBuddyAllocator::IsEmpty() const
     const uint32 MaxOrder = static_cast<uint32>(FreeOffsets.Size() - 1);
     return FreeOffsets[MaxOrder].Size() == 1 && FreeOffsets[MaxOrder][0] == 0;
 }
+
+#if VULKAN_ENABLE_STATS
+void FVulkanBuddyAllocator::UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const
+{
+    OutUsage.AllocatedBytes  += BackingStorageSize;
+    OutUsage.UsedBytes       += static_cast<uint64>(TrackedUsedBytes.Load());
+    OutUsage.FragmentedBytes += static_cast<uint64>(TrackedWastedBytes.Load());
+}
+#endif
 
 FVulkanMultiBuddyAllocator::FVulkanMultiBuddyAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags)
     : FVulkanDeviceChild(InDevice)
@@ -668,6 +702,21 @@ void FVulkanMultiBuddyAllocator::CleanUp()
         }
     }
 }
+
+#if VULKAN_ENABLE_STATS
+void FVulkanMultiBuddyAllocator::UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const
+{
+    SCOPED_LOCK(AllocatorsCS);
+
+    for (const FVulkanBuddyAllocator* Allocator : Allocators)
+    {
+        if (Allocator)
+        {
+            Allocator->UpdateMemoryStats(OutUsage);
+        }
+    }
+}
+#endif
 
 bool FVulkanMultiBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage)
 {
@@ -1028,6 +1077,10 @@ void FVulkanPoolAllocator::CleanUp()
         FVulkanPoolAllocatorPage* Page = Pages[Index];
         if (Page && Page->IsEmpty())
         {
+        #if VULKAN_ENABLE_STATS
+            TrackedAllocatedBytes.Subtract(static_cast<int64>(Page->GetPageSize()));
+        #endif
+
             delete Page;
             Pages[Index] = nullptr;
         }
@@ -1053,6 +1106,10 @@ FVulkanPoolAllocatorPage* FVulkanPoolAllocator::CreatePage(uint64 MinimumSize, u
         return nullptr;
     }
 
+#if VULKAN_ENABLE_STATS
+    TrackedAllocatedBytes.Add(static_cast<int64>(ActualPageSize));
+#endif
+
     OutPageIndex = static_cast<uint32>(Pages.Size());
     Pages.Add(NewPage);
     return NewPage;
@@ -1077,6 +1134,15 @@ void FVulkanPoolAllocator::RebuildFragmentationData()
     }
 }
 
+#if VULKAN_ENABLE_STATS
+void FVulkanPoolAllocator::UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const
+{
+    OutUsage.AllocatedBytes  += static_cast<uint64>(TrackedAllocatedBytes.Load());
+    OutUsage.UsedBytes       += static_cast<uint64>(TrackedUsedBytes.Load());
+    OutUsage.FragmentedBytes += FragmentedBytes;
+}
+#endif
+
 bool FVulkanPoolAllocator::TryAllocate(uint64 SizeInBytes, uint64 InAlignment, FVulkanMemoryStorage& OutStorage)
 {
     if (SizeInBytes == 0)
@@ -1099,6 +1165,10 @@ bool FVulkanPoolAllocator::TryAllocate(uint64 SizeInBytes, uint64 InAlignment, F
         FVulkanPoolAllocatorPage* Page = Pages[PageIndex];
         if (Page && Page->TryAllocate(SizeAligned, UsedAlignment, PageIndex, OutStorage))
         {
+        #if VULKAN_ENABLE_STATS
+            TrackedUsedBytes.Add(static_cast<int64>(SizeAligned));
+        #endif
+
             OutStorage.SetPoolAllocator(this);
             return true;
         }
@@ -1115,6 +1185,10 @@ bool FVulkanPoolAllocator::TryAllocate(uint64 SizeInBytes, uint64 InAlignment, F
     {
         return false;
     }
+
+#if VULKAN_ENABLE_STATS
+    TrackedUsedBytes.Add(static_cast<int64>(SizeAligned));
+#endif
 
     OutStorage.SetPoolAllocator(this);
     return true;
@@ -1158,6 +1232,10 @@ void FVulkanPoolAllocator::RecycleAllocation(const FVulkanPoolAllocatorAllocatio
     {
         return;
     }
+
+#if VULKAN_ENABLE_STATS
+    TrackedUsedBytes.Subtract(static_cast<int64>(AllocationData.Size));
+#endif
 
     SCOPED_LOCK(PagesCS);
 
@@ -1568,6 +1646,26 @@ void FVulkanBufferAllocator::CleanUp()
     }
 }
 
+#if VULKAN_ENABLE_STATS
+void FVulkanBufferAllocator::UpdateMemoryStats()
+{
+    SCOPED_LOCK(PoolsCS);
+
+    FVulkanAllocatorUsage Usage;
+    for (const FVulkanBufferAllocatorPool* Pool : Pools)
+    {
+        if (Pool)
+        {
+            Pool->UpdateMemoryStats(Usage);
+        }
+    }
+
+    STAT_SET(STAT_Vulkan_BufferPoolAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_Vulkan_BufferPoolUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_Vulkan_BufferPoolFragmented, Usage.FragmentedBytes);
+}
+#endif
+
 void FVulkanBufferAllocator::ReleasePools()
 {
     SCOPED_LOCK(PoolsCS);
@@ -1637,12 +1735,12 @@ bool FVulkanBufferAllocator::TryAllocate(VkMemoryPropertyFlags MemoryProperties,
         OutStorage.SetSize(MemoryRequirements.size);
         OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
 
-#if VULKAN_ENABLE_MEMORY_LOGGING
+    #if VULKAN_ENABLE_MEMORY_LOGGING
         if (CVarVulkanLogMemoryAllocations.GetValue())
         {
             VULKAN_INFO("FVulkanBufferAllocator: Using dedicated allocation for buffer (Size=%llu)", MemoryRequirements.size);
         }
-#endif
+    #endif
 
         return true;
     }
@@ -1691,7 +1789,7 @@ FVulkanTextureAllocator::FVulkanTextureAllocator(FVulkanDevice* InDevice, uint64
     , DefaultPageSizeBytes(InDefaultPageSizeBytes)
     , PoolsCS()
 {
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         Pools[Index] = nullptr;
     }
@@ -1718,7 +1816,7 @@ void FVulkanTextureAllocator::CleanUp()
 {
     SCOPED_LOCK(PoolsCS);
 
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         if (Pools[Index])
         {
@@ -1729,7 +1827,7 @@ void FVulkanTextureAllocator::CleanUp()
 
 void FVulkanTextureAllocator::ReleasePools()
 {
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         if (Pools[Index])
         {
@@ -1738,6 +1836,26 @@ void FVulkanTextureAllocator::ReleasePools()
         }
     }
 }
+
+#if VULKAN_ENABLE_STATS
+void FVulkanTextureAllocator::UpdateMemoryStats()
+{
+    SCOPED_LOCK(PoolsCS);
+
+    FVulkanAllocatorUsage Usage;
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
+    {
+        if (Pools[Index])
+        {
+            Pools[Index]->UpdateMemoryStats(Usage);
+        }
+    }
+
+    STAT_SET(STAT_Vulkan_TexturePoolAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_Vulkan_TexturePoolUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_Vulkan_TexturePoolFragmented, Usage.FragmentedBytes);
+}
+#endif
 
 FVulkanTextureAllocator::ETexturePoolClass FVulkanTextureAllocator::ClassifyTexture(VkImageUsageFlags UsageFlags, uint64 Alignment) const
 {
@@ -1821,12 +1939,13 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
         OutStorage.SetSize(MemReqs.size);
         OutStorage.SetStorageType(EVulkanMemoryStorageType::Dedicated);
 
-#if VULKAN_ENABLE_MEMORY_LOGGING
+    #if VULKAN_ENABLE_MEMORY_LOGGING
         if (CVarVulkanLogMemoryAllocations.GetValue())
         {
             VULKAN_INFO("FVulkanTextureAllocator: Using dedicated allocation for image (Size=%llu)", MemReqs.size);
         }
-#endif
+    #endif
+
         return true;
     }
 
@@ -1834,7 +1953,7 @@ bool FVulkanTextureAllocator::TryAllocate(VkImage Image, const VkImageCreateInfo
     const uint32 PoolIndex = static_cast<uint32>(PoolClass);
 
     bool bPoolAllocated = false;
-    if (PoolIndex < TexturePoolClassCount)
+    if (PoolIndex < TEXTURE_POOL_CLASS_COUNT)
     {
         SCOPED_LOCK(PoolsCS);
 
@@ -1902,7 +2021,7 @@ bool FVulkanTextureAllocator::GetDefragCandidate(FVulkanPoolAllocatorAllocationD
     uint64 MostFragmented = 0;
     FVulkanPoolAllocator* BestPool = nullptr;
 
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         if (Pools[Index] && Pools[Index]->GetFragmentedBytes() > MostFragmented)
         {
@@ -2244,6 +2363,30 @@ void FVulkanUploadHeapAllocator::CleanUp()
         ConstantsAllocator->CleanUp();
     }
 }
+
+#if VULKAN_ENABLE_STATS
+void FVulkanUploadHeapAllocator::UpdateMemoryStats()
+{
+    FVulkanAllocatorUsage Usage;
+
+    if (SmallAllocator)
+    {
+        SmallAllocator->UpdateMemoryStats(Usage);
+    }
+    if (LargeAllocator)
+    {
+        LargeAllocator->UpdateMemoryStats(Usage);
+    }
+    if (ConstantsAllocator)
+    {
+        ConstantsAllocator->UpdateMemoryStats(Usage);
+    }
+
+    STAT_SET(STAT_Vulkan_UploadHeapAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_Vulkan_UploadHeapUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_Vulkan_UploadHeapFragmented, Usage.FragmentedBytes);
+}
+#endif
 
 void* FVulkanUploadHeapAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage)
 {

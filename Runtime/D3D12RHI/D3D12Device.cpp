@@ -12,6 +12,7 @@
 #include "D3D12RHI/D3D12Loader.h"
 #include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
+#include "D3D12RHI/D3D12Stats.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12Query.h"
 #include "D3D12RHI/D3D12RHI.h"
@@ -1482,17 +1483,27 @@ bool FD3D12Device::CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D1
         return false;
     }
 
-    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), HeapType, InitialState);
-    if (ClearValue)
+    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), HeapType, InitialState, ClearValue);
+
+#if D3D12_ENABLE_STATS
     {
-        OutResource->SetClearValue(*ClearValue);
+        const uint64 Size = OutResource->GetAllocationSize();
+        STAT_ADD(STAT_D3D12_CommittedResourceMemory, Size);
+        STAT_ADD(STAT_D3D12_CommittedResourceCount, 1);
+
+        switch (HeapType)
+        {
+        case D3D12_HEAP_TYPE_DEFAULT:  STAT_ADD(STAT_D3D12_CommittedDefaultMemory,  Size); break;
+        case D3D12_HEAP_TYPE_UPLOAD:   STAT_ADD(STAT_D3D12_CommittedUploadMemory,   Size); break;
+        case D3D12_HEAP_TYPE_READBACK: STAT_ADD(STAT_D3D12_CommittedReadbackMemory, Size); break;
+        }
     }
+#endif
 
     if (HeapType == D3D12_HEAP_TYPE_DEFAULT)
     {
         OutResource->StartResidencyTracking();
     }
-
 
     return true;
 }
@@ -1519,11 +1530,7 @@ bool FD3D12Device::CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D
         return false;
     }
 
-    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), Heap->GetHeapType(), InitialState, Heap);
-    if (ClearValue)
-    {
-        OutResource->SetClearValue(*ClearValue);
-    }
+    OutResource = new FD3D12Resource(this, NewResource.ReleaseOwnership(), Heap->GetHeapType(), InitialState, ClearValue, Heap);
 
     return true;
 }

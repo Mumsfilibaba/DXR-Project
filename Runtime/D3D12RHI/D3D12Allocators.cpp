@@ -1,6 +1,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "D3D12RHI/D3D12Allocators.h"
+#include "D3D12RHI/D3D12Stats.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12DeletionQueue.h"
 #include "D3D12RHI/D3D12Device.h"
@@ -231,6 +232,11 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
     }
 
     const uint64 BlockSize = GetOrderBlockSize(Order);
+#if D3D12_ENABLE_STATS
+    TrackedUsedBytes.Add(static_cast<int64>(BlockSize));
+    TrackedWastedBytes.Add(static_cast<int64>(BlockSize - AllocationSize));
+#endif
+
     OutStorage.Reset();
     OutStorage.SetSize(BlockSize);
 
@@ -251,8 +257,9 @@ bool FD3D12BuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3
     }
 
     FD3D12BuddyAllocatorAllocationData AllocationData = {};
-    AllocationData.Order  = Order;
-    AllocationData.Offset = Offset;
+    AllocationData.Order         = Order;
+    AllocationData.Offset        = Offset;
+    AllocationData.RequestedSize = AllocationSize;
     
     OutStorage.SetBuddyAllocationData(AllocationData);
     OutStorage.SetBuddyAllocator(this);
@@ -267,6 +274,14 @@ void FD3D12BuddyAllocator::Deallocate(const FD3D12ResourceStorage& Storage)
 
 void FD3D12BuddyAllocator::RecycleAllocation(const FD3D12BuddyAllocatorAllocationData& AllocationData)
 {
+#if D3D12_ENABLE_STATS
+    {
+        const uint64 BlockSize = GetOrderBlockSize(AllocationData.Order);
+        TrackedUsedBytes.Subtract(static_cast<int64>(BlockSize));
+        TrackedWastedBytes.Subtract(static_cast<int64>(BlockSize - AllocationData.RequestedSize));
+    }
+#endif
+
     SCOPED_LOCK(AllocatorCS);
 
     if (FreeOffsets.IsEmpty())
@@ -320,6 +335,15 @@ bool FD3D12BuddyAllocator::IsEmpty() const
     const uint32 MaxOrder = static_cast<uint32>(FreeOffsets.Size() - 1);
     return FreeOffsets[MaxOrder].Size() == 1 && FreeOffsets[MaxOrder][0] == 0;
 }
+
+#if D3D12_ENABLE_STATS
+void FD3D12BuddyAllocator::UpdateMemoryStats(FD3D12AllocatorUsage& OutUsage) const
+{
+    OutUsage.AllocatedBytes  += BackingStorageSize;
+    OutUsage.UsedBytes       += static_cast<uint64>(TrackedUsedBytes.Load());
+    OutUsage.FragmentedBytes += static_cast<uint64>(TrackedWastedBytes.Load());
+}
+#endif
 
 FD3D12MultiBuddyAllocator::FD3D12MultiBuddyAllocator(FD3D12Device* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy)
     : FD3D12DeviceChild(InDevice)
@@ -408,6 +432,21 @@ void FD3D12MultiBuddyAllocator::CleanUp()
         }
     }
 }
+
+#if D3D12_ENABLE_STATS
+void FD3D12MultiBuddyAllocator::UpdateMemoryStats(FD3D12AllocatorUsage& OutUsage) const
+{
+    SCOPED_LOCK(AllocatorsCS);
+
+    for (const FD3D12BuddyAllocator* Allocator : Allocators)
+    {
+        if (Allocator)
+        {
+            Allocator->UpdateMemoryStats(OutUsage);
+        }
+    }
+}
+#endif
 
 bool FD3D12MultiBuddyAllocator::TryAllocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage, D3D12_RESOURCE_FLAGS InResourceFlags)
 {
@@ -768,6 +807,10 @@ void FD3D12PoolAllocator::CleanUp()
         FD3D12PoolAllocatorPage* Page = Pages[Index];
         if (Page && Page->IsEmpty())
         {
+        #if D3D12_ENABLE_STATS
+            TrackedAllocatedBytes.Subtract(static_cast<int64>(Page->GetPageSize()));
+        #endif
+
             delete Page;
             Pages[Index] = nullptr;
         }
@@ -777,7 +820,6 @@ void FD3D12PoolAllocator::CleanUp()
     {
         Pages.Pop();
     }
-
 }
 
 bool FD3D12PoolAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, EAllocationStrategy InAllocationStrategy, const D3D12_RESOURCE_DESC& ResourceDesc, D3D12_RESOURCE_FLAGS InResourceFlags) const
@@ -827,6 +869,10 @@ FD3D12PoolAllocatorPage* FD3D12PoolAllocator::CreatePage(uint64 MinimumSize, uin
         return nullptr;
     }
 
+#if D3D12_ENABLE_STATS
+    TrackedAllocatedBytes.Add(static_cast<int64>(ActualPageSize));
+#endif
+
     OutPageIndex = static_cast<uint32>(Pages.Size());
     Pages.Add(NewPage);
 
@@ -852,13 +898,13 @@ void FD3D12PoolAllocator::ComputeTLSFIndices(uint64 SizeInBytes, uint32& OutFL, 
         ++FirstLevel;
     }
 
-    OutFL = Math::Min<uint32>(FirstLevel, TLSFFirstLevelCount - 1);
+    OutFL = Math::Min<uint32>(FirstLevel, TLSF_FIRST_LEVEL_COUNT - 1);
 
     const uint64 RangeBase     = 1ull << OutFL;
     const uint64 OffsetInRange = SizeInBytes - RangeBase;
-    const uint64 SL            = (OffsetInRange * TLSFSecondLevelCount) / RangeBase;
+    const uint64 SL            = (OffsetInRange * TLSF_SECOND_LEVEL_COUNT) / RangeBase;
 
-    OutSL = Math::Min<uint32>(static_cast<uint32>(SL), TLSFSecondLevelCount - 1);
+    OutSL = Math::Min<uint32>(static_cast<uint32>(SL), TLSF_SECOND_LEVEL_COUNT - 1);
 }
 
 void FD3D12PoolAllocator::RebuildFragmentationData()
@@ -879,6 +925,23 @@ void FD3D12PoolAllocator::RebuildFragmentationData()
         }
     }
 }
+
+#if D3D12_ENABLE_STATS
+void FD3D12PoolAllocator::UpdateMemoryStats(FD3D12AllocatorUsage& OutUsage) const
+{
+    OutUsage.AllocatedBytes  += static_cast<uint64>(TrackedAllocatedBytes.Load()) + static_cast<uint64>(StandaloneAllocatedBytes.Load());
+    OutUsage.UsedBytes       += static_cast<uint64>(TrackedUsedBytes.Load());
+    OutUsage.FragmentedBytes += FragmentedBytes;
+}
+#endif
+
+#if D3D12_ENABLE_STATS
+void FD3D12PoolAllocator::ReleaseStandaloneAllocation(uint64 SizeInBytes)
+{
+    StandaloneAllocatedBytes.Subtract(static_cast<int64>(SizeInBytes));
+    TrackedUsedBytes.Subtract(static_cast<int64>(SizeInBytes));
+}
+#endif
 
 bool FD3D12PoolAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate) const
 {
@@ -1001,6 +1064,11 @@ bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D
             MappedBaseAddress = NewResource->MapRange(0, nullptr);
         }
 
+    #if D3D12_ENABLE_STATS
+        StandaloneAllocatedBytes.Add(static_cast<int64>(SizeAligned));
+        TrackedUsedBytes.Add(static_cast<int64>(SizeAligned));
+    #endif
+
         OutStorage.InitStandalone(NewResource.Get());
         OutStorage.SetSize(SizeAligned);
         OutStorage.SetResourceOffset(0);
@@ -1025,6 +1093,10 @@ bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D
         FD3D12PoolAllocatorPage* Page = Pages[PageIndex];
         if (Page && Page->TryAllocate(SizeAligned, UsedAlignment, PageIndex, OutStorage))
         {
+        #if D3D12_ENABLE_STATS
+            TrackedUsedBytes.Add(static_cast<int64>(SizeAligned));
+        #endif
+
             OutStorage.SetPoolAllocator(this);
             return true;
         }
@@ -1042,6 +1114,10 @@ bool FD3D12PoolAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc, D
     {
         return false;
     }
+
+#if D3D12_ENABLE_STATS
+    TrackedUsedBytes.Add(static_cast<int64>(SizeAligned));
+#endif
 
     OutStorage.SetPoolAllocator(this);
     return true;
@@ -1079,6 +1155,10 @@ void FD3D12PoolAllocator::RecycleAllocation(const FD3D12PoolAllocatorAllocationD
     {
         return;
     }
+
+#if D3D12_ENABLE_STATS
+    TrackedUsedBytes.Subtract(static_cast<int64>(Data.Size));
+#endif
 
     SCOPED_LOCK(PagesCS);
 
@@ -1347,6 +1427,20 @@ void FD3D12UploadHeapAllocator::CleanUp()
     LargeAllocator.CleanUp();
     ConstantsAllocator.CleanUp();
 }
+
+#if D3D12_ENABLE_STATS
+void FD3D12UploadHeapAllocator::UpdateMemoryStats()
+{
+    FD3D12AllocatorUsage Usage;
+    SmallAllocator.UpdateMemoryStats(Usage);
+    LargeAllocator.UpdateMemoryStats(Usage);
+    ConstantsAllocator.UpdateMemoryStats(Usage);
+
+    STAT_SET(STAT_D3D12_UploadHeapAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_D3D12_UploadHeapUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_D3D12_UploadHeapFragmented, Usage.FragmentedBytes);
+}
+#endif
 
 void* FD3D12UploadHeapAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D12ResourceStorage& OutStorage)
 {
@@ -1748,13 +1842,12 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
         OutStorage.SetGpuVirtualAddress(Resource->GetGPUVirtualAddress());
         OutStorage.SetMappedBaseAddress(MappedBaseAddress);
 
-#if D3D12_ENABLE_MEMORY_LOGGING
+    #if D3D12_ENABLE_MEMORY_LOGGING
         if (CVarD3D12LogMemoryAllocations.GetValue())
         {
-            D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> Committed",
-                SizeInBytes, UsedAlignment, InHeapType);
+            D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> Committed", SizeInBytes, UsedAlignment, InHeapType);
         }
-#endif
+    #endif
 
         return true;
     }
@@ -1762,10 +1855,8 @@ bool FD3D12BufferAllocatorPool::TryAllocate(D3D12_HEAP_TYPE InHeapType, const D3
 #if D3D12_ENABLE_MEMORY_LOGGING
     if (CVarD3D12LogMemoryAllocations.GetValue())
     {
-        D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> %s (MinBlock=%llu)",
-            SizeInBytes, UsedAlignment, InHeapType,
-            ToString(AllocationStrategy),
-            MinBlockBytes);
+        D3D12_INFO("[BufferAllocator] Size=%llu Alignment=%llu HeapType=%u -> %s (MinBlock=%llu)", 
+            SizeInBytes, UsedAlignment, InHeapType, ToString(AllocationStrategy), MinBlockBytes);
     }
 #endif
 
@@ -1870,6 +1961,26 @@ void FD3D12BufferAllocator::CleanUp()
     }
 }
 
+#if D3D12_ENABLE_STATS
+void FD3D12BufferAllocator::UpdateMemoryStats()
+{
+    SCOPED_LOCK(PoolsCS);
+
+    FD3D12AllocatorUsage Usage;
+    for (const FD3D12BufferAllocatorPool* Pool : Pools)
+    {
+        if (Pool)
+        {
+            Pool->UpdateMemoryStats(Usage);
+        }
+    }
+
+    STAT_SET(STAT_D3D12_BufferPoolAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_D3D12_BufferPoolUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_D3D12_BufferPoolFragmented, Usage.FragmentedBytes);
+}
+#endif
+
 bool FD3D12BufferAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const
 {
     if (ResourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER)
@@ -1946,7 +2057,7 @@ FD3D12TextureAllocator::FD3D12TextureAllocator(FD3D12Device* InDevice, uint64 In
     , DefaultPageSizeBytes(InDefaultPageSizeBytes)
     , SmallPoolAlignment(0)
 {
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         Pools[Index] = nullptr;
     }
@@ -1964,7 +2075,7 @@ bool FD3D12TextureAllocator::Initialize()
     auto CreatePool = [this](ETexturePoolClass PoolClass, uint64 PoolAlignment) -> bool
     {
         const uint32 PoolIndex = static_cast<uint32>(PoolClass);
-        if (PoolIndex >= TexturePoolClassCount)
+        if (PoolIndex >= TEXTURE_POOL_CLASS_COUNT)
         {
             return false;
         }
@@ -2012,7 +2123,7 @@ void FD3D12TextureAllocator::CleanUp()
 {
     SCOPED_LOCK(PoolsCS);
 
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         if (Pools[Index])
         {
@@ -2021,6 +2132,26 @@ void FD3D12TextureAllocator::CleanUp()
     }
 }
 
+#if D3D12_ENABLE_STATS
+void FD3D12TextureAllocator::UpdateMemoryStats()
+{
+    SCOPED_LOCK(PoolsCS);
+
+    FD3D12AllocatorUsage Usage;
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
+    {
+        if (Pools[Index])
+        {
+            Pools[Index]->UpdateMemoryStats(Usage);
+        }
+    }
+
+    STAT_SET(STAT_D3D12_TexturePoolAllocated,  Usage.AllocatedBytes);
+    STAT_SET(STAT_D3D12_TexturePoolUsed,       Usage.UsedBytes);
+    STAT_SET(STAT_D3D12_TexturePoolFragmented, Usage.FragmentedBytes);
+}
+#endif
+
 bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationData& OutCandidate, FD3D12PoolAllocator*& OutAllocator)
 {
     SCOPED_LOCK(PoolsCS);
@@ -2028,7 +2159,7 @@ bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationDat
     uint64 MostFragmented = 0;
     FD3D12PoolAllocator* BestPool = nullptr;
 
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         if (Pools[Index] && Pools[Index]->GetFragmentedBytes() > MostFragmented)
         {
@@ -2060,7 +2191,7 @@ bool FD3D12TextureAllocator::Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RE
 
 void FD3D12TextureAllocator::ReleasePools()
 {
-    for (uint32 Index = 0; Index < TexturePoolClassCount; ++Index)
+    for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         if (Pools[Index])
         {
@@ -2219,7 +2350,7 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
     SCOPED_LOCK(PoolsCS);
 
     const uint32 PoolIndex = static_cast<uint32>(ClassifyTexture(AllocationDesc, AllocationInfo.Alignment));
-    if (PoolIndex >= TexturePoolClassCount || !Pools[PoolIndex])
+    if (PoolIndex >= TEXTURE_POOL_CLASS_COUNT || !Pools[PoolIndex])
     {
         return false;
     }
@@ -2227,7 +2358,14 @@ bool FD3D12TextureAllocator::TryAllocate(const D3D12_RESOURCE_DESC& ResourceDesc
 #if D3D12_ENABLE_MEMORY_LOGGING
     if (CVarD3D12LogMemoryAllocations.GetValue())
     {
-        static const CHAR* PoolClassNames[] = { "SmallReadOnly", "ReadOnly", "RenderTargetDepthStencil", "UAVOnly" };
+        static const CHAR* PoolClassNames[] = 
+        { 
+            "SmallReadOnly", 
+            "ReadOnly", 
+            "RenderTargetDepthStencil", 
+            "UAVOnly"
+        };
+        
         D3D12_INFO("[TextureAllocator] Dimension=%u %llux%u Format=%u Alignment=%llu Size=%llu -> Pool=%s (PoolAlignment=%llu)",
             AllocationDesc.Dimension,
             AllocationDesc.Width, AllocationDesc.Height,

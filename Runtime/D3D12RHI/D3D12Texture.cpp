@@ -3,6 +3,7 @@
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12SwapChain.h"
 #include "D3D12RHI/D3D12RHI.h"
+#include "RHI/RHIStats.h"
 
 FD3D12Texture* FD3D12Texture::Cast(FRHITexture* Texture)
 {
@@ -37,6 +38,21 @@ FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTe
 
 FD3D12Texture::~FD3D12Texture()
 {
+#if D3D12_ENABLE_STATS
+    const int64 AllocatedSize = static_cast<int64>(ResourceStorage.GetSize());
+    if (AllocatedSize > 0)
+    {
+        if (Info.IsRenderTarget() || Info.IsDepthStencil())
+        {
+            STAT_SUBTRACT(STAT_RHI_RenderTargetMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_SUBTRACT(STAT_RHI_TextureMemory, AllocatedSize);
+        }
+    }
+#endif
+
     DestroyDepthStencilViews();
     DestroyRenderTargetViews();
 }

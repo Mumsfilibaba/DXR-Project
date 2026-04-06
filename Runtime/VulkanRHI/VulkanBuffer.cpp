@@ -4,6 +4,7 @@
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanCommandContext.h"
+#include "RHI/RHIStats.h"
 
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
@@ -16,6 +17,42 @@ FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBu
 
 FVulkanBuffer::~FVulkanBuffer()
 {
+#if VULKAN_ENABLE_STATS
+    const int64 AllocatedSize = static_cast<int64>(MemoryStorage.GetSize());
+    if (AllocatedSize > 0)
+    {
+        if (Info.IsVertexBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_VertexBufferMemory, AllocatedSize);
+        }
+        else if (Info.IsIndexBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_IndexBufferMemory, AllocatedSize);
+        }
+        else if (Info.IsConstantBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_ConstantBufferMemory, AllocatedSize);
+        }
+        else if (Info.IsShaderResourceBuffer() || Info.IsUnorderedAccessBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_StructuredBufferMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_SUBTRACT(STAT_RHI_MiscBufferMemory, AllocatedSize);
+        }
+
+        if (Info.IsReadBack())
+        {
+            STAT_SUBTRACT(STAT_RHI_ReadbackMemory, AllocatedSize);
+        }
+        if (Info.IsDynamic() || Info.IsTransient())
+        {
+            STAT_SUBTRACT(STAT_RHI_UploadMemory, AllocatedSize);
+        }
+    }
+#endif
+
     if (OwnedBuffer != VK_NULL_HANDLE)
     {
         vkDestroyBuffer(GetDevice()->GetVkDevice(), OwnedBuffer, nullptr);

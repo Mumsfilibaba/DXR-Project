@@ -1,4 +1,5 @@
 #include "Core/Threading/TaskManager.h"
+#include "Core/Threading/TaskStats.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -197,6 +198,7 @@ bool FTaskManager::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
     if (AvailableWorkers.IsEmpty())
     {
         TaskQueue.Enqueue(NewTask, Priority);
+        STAT_SET(STAT_Task_PendingTasks, TaskQueue.Size());
         FPlatformMisc::MemoryBarrier();
         return true;
     }
@@ -205,6 +207,7 @@ bool FTaskManager::SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority)
     FTaskWorkerThread* WorkerThread = AvailableWorkers[0];
     CHECK(WorkerThread != nullptr);
     AvailableWorkers.RemoveAt(0);
+    STAT_ADD(STAT_Task_ActiveWorkers, 1);
 
     FPlatformMisc::MemoryBarrier();
 
@@ -237,12 +240,14 @@ IAsyncTask* FTaskManager::ReturnThreadOrRetrieveNextTask(FTaskWorkerThread* InTh
     IAsyncTask* NewTask = nullptr;
     if (TaskQueue.Dequeue(&NewTask))
     {
+        STAT_SET(STAT_Task_PendingTasks, TaskQueue.Size());
         FPlatformMisc::MemoryBarrier();
         return NewTask;
     }
     else
     {
         AvailableWorkers.Emplace(InThread);
+        STAT_SUBTRACT(STAT_Task_ActiveWorkers, 1);
         FPlatformMisc::MemoryBarrier();
         return nullptr;
     }
@@ -290,6 +295,7 @@ bool FTaskManager::CreateWorkers(int32 NumWorkers)
     else
     {
         bIsRunning = true;
+        STAT_SET(STAT_Task_TotalWorkers, Workers.Size());
     }
 
     return bResult;

@@ -13,20 +13,19 @@ public:
     void Draw();
     void DrawSceneInfo();
 
+    bool IsVisible() const
+    {
+        return bVisible;
+    }
+    
     void SetVisible(bool bInVisible)
     {
         bVisible = bInVisible;
     }
 
-    bool IsVisible() const
-    {
-        return bVisible;
-    }
-
 private:
     void DrawActorRow(FActor* Actor, const CHAR* Type, const bool bSelected, float Indent);
 
-private:
     FEditorEngine*          EditorEngine;
     FActor*                 RenamingActor;
     FDelegateHandle         ImGuiDelegateHandle;

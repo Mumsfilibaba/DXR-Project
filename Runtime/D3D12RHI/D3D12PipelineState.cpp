@@ -5,6 +5,7 @@
 #include "Core/Threading/AsyncTask.h"
 #include "Core/Misc/Paths.h"
 #include "D3D12RHI/D3D12PipelineState.h"
+#include "D3D12RHI/D3D12Stats.h"
 #include "D3D12RHI/D3D12Device.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
@@ -1389,6 +1390,7 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
     #endif
     }
 
+    STAT_ADD(STAT_D3D12_PSOCreateCount, 1);
     return true;
 }
 
@@ -1425,6 +1427,7 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
     #endif
     }
 
+    STAT_ADD(STAT_D3D12_PSOCreateCount, 1);
     return true;
 }
 
@@ -1456,6 +1459,7 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
         bPipelineLibraryDirty = true;
     }
 
+    STAT_ADD(STAT_D3D12_PSOCreateCount, 1);
     return true;
 }
 
@@ -1487,6 +1491,7 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
         bPipelineLibraryDirty = true;
     }
 
+    STAT_ADD(STAT_D3D12_PSOCreateCount, 1);
     return true;
 }
 
@@ -1518,6 +1523,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         TScopedLock Lock(PipelineLibraryCS);
 
         const SIZE_T PipelineCacheSize = PipelineLibrary->GetSerializedSize();
+        STAT_SET(STAT_D3D12_PSOCacheSize, static_cast<int64>(PipelineCacheSize));
         TUniquePtr<uint8[]> PipelineCacheData = MakeUniquePtr<uint8[]>(PipelineCacheSize);
 
         HRESULT hResult = PipelineLibrary->Serialize(PipelineCacheData.Get(), PipelineCacheSize);

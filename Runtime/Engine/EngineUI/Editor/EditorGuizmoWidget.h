@@ -12,20 +12,19 @@ public:
 
     void Draw();
 
+    bool IsVisible() const
+    {
+        return bVisible;
+    }
+    
     void SetVisible(bool bInVisible)
     {
         bVisible = bInVisible;
     }
 
-    bool IsVisible() const
-    {
-        return bVisible;
-    }
-
 private:
     void UpdateShortcuts(bool bViewportHovered);
 
-private:
     FEditorEngine*           EditorEngine;
     FDelegateHandle          ImGuiEndFrameDelegateHandle;
     bool                     bVisible;

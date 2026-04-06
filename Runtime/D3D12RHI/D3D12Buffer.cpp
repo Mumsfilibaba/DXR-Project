@@ -1,6 +1,7 @@
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12Buffer.h"
+#include "RHI/RHIStats.h"
 
 FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo)
     : FRHIBuffer(InBufferInfo)
@@ -10,6 +11,41 @@ FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBuffe
 
 FD3D12Buffer::~FD3D12Buffer()
 {
+#if D3D12_ENABLE_STATS
+    const int64 AllocatedSize = static_cast<int64>(ResourceStorage.GetSize());
+    if (AllocatedSize > 0)
+    {
+        if (Info.IsVertexBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_VertexBufferMemory, AllocatedSize);
+        }
+        else if (Info.IsIndexBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_IndexBufferMemory, AllocatedSize);
+        }
+        else if (Info.IsConstantBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_ConstantBufferMemory, AllocatedSize);
+        }
+        else if (Info.IsShaderResourceBuffer() || Info.IsUnorderedAccessBuffer())
+        {
+            STAT_SUBTRACT(STAT_RHI_StructuredBufferMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_SUBTRACT(STAT_RHI_MiscBufferMemory, AllocatedSize);
+        }
+
+        if (Info.IsReadBack())
+        {
+            STAT_SUBTRACT(STAT_RHI_ReadbackMemory, AllocatedSize);
+        }
+        if (Info.IsDynamic() || Info.IsTransient())
+        {
+            STAT_SUBTRACT(STAT_RHI_UploadMemory, AllocatedSize);
+        }
+    }
+#endif
 }
 
 bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)

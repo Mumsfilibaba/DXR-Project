@@ -26,27 +26,25 @@ public:
 
     void Draw();
 
-    void SetVisible(bool bInVisible)
-    {
-        bVisible = bInVisible;
-    }
-
     bool IsVisible() const
     {
         return bVisible;
+    }
+    
+    void SetVisible(bool bInVisible)
+    {
+        bVisible = bInVisible;
     }
 
 private:
     void DrawFilterBar();
     void DrawLogListRichText();
 
-private:
     TStaticArray<CHAR, 256> SearchFilterBuffer;
     TArray<FLogMessage>     Messages;
     FCriticalSection        MessagesCS;
     RichTextViewContext     RichTextCtx;
     FDelegateHandle         ImGuiDelegateHandle;
-
     bool                    bVisible;
     bool                    bAutoScroll;
     bool                    bScrollToBottom;

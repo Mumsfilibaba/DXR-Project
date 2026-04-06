@@ -6,6 +6,7 @@
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Misc/Paths.h"
 #include "VulkanRHI/VulkanPipelineState.h"
+#include "VulkanRHI/VulkanStats.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanShader.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
@@ -733,6 +734,7 @@ bool FVulkanPipelineStateManager::CreateGraphicsPipeline(const VkGraphicsPipelin
     else
     {
         bPipelineCacheDirty = true;
+        STAT_ADD(STAT_Vulkan_PSOCreateCount, 1);
         return true;
     }
 }
@@ -749,6 +751,7 @@ bool FVulkanPipelineStateManager::CreateComputePipeline(const VkComputePipelineC
     else
     {
         bPipelineCacheDirty = true;
+        STAT_ADD(STAT_Vulkan_PSOCreateCount, 1);
         return true;
     }
 }
@@ -787,6 +790,8 @@ bool FVulkanPipelineStateManager::SaveCacheData()
             return false;
         }
         
+        STAT_SET(STAT_Vulkan_PSOCacheSize, static_cast<int64>(PipelineCacheSize));
+
         TUniquePtr<uint8[]> PipelineCacheData = MakeUniquePtr<uint8[]>(PipelineCacheSize);
         Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &PipelineCacheSize, PipelineCacheData.Get());
         if (VULKAN_FAILED(Result))

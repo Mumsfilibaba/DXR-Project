@@ -7,6 +7,7 @@
 #include "Engine/World/Lights/SkyLight.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
+#include "Renderer/RendererStats.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneSkybox.h"
 #include "Renderer/Scene/SceneLightProbe.h"
@@ -71,6 +72,11 @@ FScene::~FScene()
     // Reset Other stuff
     World  = nullptr;
     Camera = nullptr;
+
+    STAT_SET(STAT_Scene_StaticMeshCount, 0);
+    STAT_SET(STAT_Scene_PointLightCount, 0);
+    STAT_SET(STAT_Scene_MaterialCount, 0);
+    STAT_SET(STAT_Scene_LightProbeCount, 0);
 }
 
 void FScene::Tick()
@@ -124,6 +130,7 @@ void FScene::AddLight(FLight* InLight)
             {
                 FScenePointLight* ScenePointLight = new FScenePointLight(this, InPointLight); 
                 PointLights.Add(ScenePointLight);
+                STAT_ADD(STAT_Scene_PointLightCount, 1);
             }
         }
     }
@@ -137,6 +144,7 @@ void FScene::AddLightProbe(FLightProbe* InLightProbe)
         NewLightProbe->FilterStaticCubeMaps();
 
         LightProbes.Add(NewLightProbe);
+        STAT_ADD(STAT_Scene_LightProbeCount, 1);
     }
 }
 
@@ -156,12 +164,15 @@ void FScene::AddStaticMesh(FStaticMeshComponent* InMeshComponent)
     {
         FSceneStaticMesh* NewStaticMesh = new FSceneStaticMesh(this, InMeshComponent);
         StaticMeshes.Add(NewStaticMesh);
+        STAT_ADD(STAT_Scene_StaticMeshCount, 1);
 
         for (uint32 Index = 0; Index < NewStaticMesh->GetNumMaterials(); Index++)
         {
             CHECK(NewStaticMesh->GetMaterial(Index) != nullptr);
             Materials.AddUnique(NewStaticMesh->GetMaterial(Index).Get());
         }
+
+        STAT_SET(STAT_Scene_MaterialCount, Materials.Size());
     }
 }
 
@@ -254,6 +265,10 @@ void FScene::PrepareViewsForRendering()
 {
     TRACE_SCOPE("PrepareViewsForRendering");
 
+    STAT_SET(STAT_Render_ObjectsTested, 0);
+    STAT_SET(STAT_Render_ObjectsVisible, 0);
+    STAT_SET(STAT_Render_ObjectsCulled, 0);
+
     // We shrink the array of meshes if it is too large
     if (StaticMeshes.Capacity() > StaticMeshes.Size())
     {
@@ -318,6 +333,21 @@ void FScene::PrepareViewsForRendering()
             }
         }
     }
+
+#if STATS_ENABLED
+    {
+        const TArray<FMeshBatch>& Batches = CameraView.GetMeshBatches();
+        STAT_SET(STAT_Render_MeshBatchCount, Batches.Size());
+
+        int32 TotalRefs = 0;
+        for (const FMeshBatch& Batch : Batches)
+        {
+            TotalRefs += Batch.MeshReferences.Size();
+        }
+
+        STAT_SET(STAT_Render_MeshReferenceCount, TotalRefs);
+    }
+#endif
 }
 
 void FScene::DeferDeletion(FSceneObject* InObject)

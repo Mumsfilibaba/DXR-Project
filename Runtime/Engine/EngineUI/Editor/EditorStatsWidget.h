@@ -1,16 +1,14 @@
 #pragma once
+#include "Core/Delegates/Delegate.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FEditorEngine;
-
-class FEditorPropertiesWidget
+class FEditorStatsWidget
 {
 public:
-    FEditorPropertiesWidget(FEditorEngine* InEditorEngine);
-    ~FEditorPropertiesWidget();
+    FEditorStatsWidget();
+    ~FEditorStatsWidget();
 
     void Draw();
-    void DrawWindowContents();
 
     bool IsVisible() const
     {
@@ -23,7 +21,6 @@ public:
     }
 
 private:
-    FEditorEngine*  EditorEngine;
     FDelegateHandle ImGuiDelegateHandle;
     bool            bVisible;
 };

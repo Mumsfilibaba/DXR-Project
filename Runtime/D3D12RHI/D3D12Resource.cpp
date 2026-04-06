@@ -3,8 +3,9 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
+#include "D3D12RHI/D3D12Stats.h"
 
-FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, FD3D12Heap* InHeap)
+FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResource, D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_CLEAR_VALUE* InClearValue, FD3D12Heap* InHeap)
     : FRefCountedBase()
     , FD3D12DeviceChild(InDevice)
     , Resource(InResource)
@@ -13,12 +14,18 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     , Address(0)
     , Heap(MakeSharedRef<FD3D12Heap>(InHeap))
     , DefaultState(D3D12_RESOURCE_STATE_COMMON)
+    , AllocationSize(0)
     , NumSubresources(0)
     , bShouldDeferredRelease(true)
     , bHasClearValue(false)
     , bHasDefaultState(false)
 {
     ResourceState.SetResourceState(InInitialState);
+
+    if (InClearValue)
+    {
+        SetClearValue(*InClearValue);
+    }
 
     if (Resource)
     {
@@ -29,6 +36,18 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
 
         const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
         NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
+
+        D3D12_RESOURCE_DESC QueryDesc = Desc;
+        if (QueryDesc.Flags & D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT)
+        {
+            QueryDesc.Alignment = 0;
+        }
+
+        const D3D12_RESOURCE_ALLOCATION_INFO AllocInfo = GetDevice()->GetD3D12Device()->GetResourceAllocationInfo(0, 1, &QueryDesc);
+        if (AllocInfo.SizeInBytes != UINT64_MAX)
+        {
+            AllocationSize = AllocInfo.SizeInBytes;
+        }
     }
 
     if (HeapType == D3D12_HEAP_TYPE_DEFAULT)
@@ -118,6 +137,21 @@ void FD3D12Resource::GetDebugName(FString& OutDebugName) const
 
 FD3D12Resource::~FD3D12Resource()
 {
+#if D3D12_ENABLE_STATS
+    if (!IsPlacedResource() && AllocationSize > 0)
+    {
+        STAT_SUBTRACT(STAT_D3D12_CommittedResourceMemory, AllocationSize);
+        STAT_SUBTRACT(STAT_D3D12_CommittedResourceCount, 1);
+
+        switch (HeapType)
+        {
+        case D3D12_HEAP_TYPE_DEFAULT:  STAT_SUBTRACT(STAT_D3D12_CommittedDefaultMemory,  AllocationSize); break;
+        case D3D12_HEAP_TYPE_UPLOAD:   STAT_SUBTRACT(STAT_D3D12_CommittedUploadMemory,   AllocationSize); break;
+        case D3D12_HEAP_TYPE_READBACK: STAT_SUBTRACT(STAT_D3D12_CommittedReadbackMemory, AllocationSize); break;
+        }
+    }
+#endif
+
     EndResidencyTracking();
 }
 
@@ -232,6 +266,13 @@ void FD3D12ResourceStorage::ReleaseResource()
 
     if (StorageType == EResourceStorageType::Standalone)
     {
+    #if D3D12_ENABLE_STATS
+        if (AllocatorType == ED3D12AllocatorType::PoolAllocator && AllocatorPointers.PoolAllocator)
+        {
+            AllocatorPointers.PoolAllocator->ReleaseStandaloneAllocation(Size);
+        }
+    #endif
+
         if (Resource && Resource->ShouldDeferredRelease())
         {
             Resource->DeferredRelease();

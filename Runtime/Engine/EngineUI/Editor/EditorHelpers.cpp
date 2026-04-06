@@ -1069,6 +1069,27 @@ const CHAR* EditorHelpers::GetTrimmedQuery(const CHAR* InText, CHAR* OutBuf, int
     return OutBuf[0] ? OutBuf : nullptr;
 }
 
+void EditorHelpers::FormatBytes(int64 Bytes, char* OutBuffer, int32 BufferSize)
+{
+    const double AbsBytes = static_cast<double>(Bytes < 0 ? -Bytes : Bytes);
+    if (AbsBytes >= 1024.0 * 1024.0 * 1024.0)
+    {
+        snprintf(OutBuffer, BufferSize, "%.2f GB", static_cast<double>(Bytes) / (1024.0 * 1024.0 * 1024.0));
+    }
+    else if (AbsBytes >= 1024.0 * 1024.0)
+    {
+        snprintf(OutBuffer, BufferSize, "%.2f MB", static_cast<double>(Bytes) / (1024.0 * 1024.0));
+    }
+    else if (AbsBytes >= 1024.0)
+    {
+        snprintf(OutBuffer, BufferSize, "%.2f KB", static_cast<double>(Bytes) / 1024.0);
+    }
+    else
+    {
+        snprintf(OutBuffer, BufferSize, "%lld B", static_cast<long long>(Bytes));
+    }
+}
+
 void EditorWidgets::DrawErrorWindow(ErrorWindowContext& InOutContext)
 {
     if (!InOutContext.bVisible)

@@ -81,10 +81,3 @@ RHI_API bool RHIDeviceFeatureSupport::bSupportsTimestampQueries           = fals
 RHI_API bool RHIDeviceFeatureSupport::bSupportsPipelineStatisticsQueries  = false;
 RHI_API bool RHIDeviceFeatureSupport::bSupportsGPUTimestampBubblesRemoval = false;
 
-// -------------------------------------------------------------------------------------------
-// Statistics
-// -------------------------------------------------------------------------------------------
-
-RHI_API FAtomicUInt64 RHIStatistics::NumDrawCalls     = { 0 };
-RHI_API FAtomicUInt64 RHIStatistics::NumDispatchCalls = { 0 };
-RHI_API FAtomicUInt64 RHIStatistics::NumCommands      = { 0 };
