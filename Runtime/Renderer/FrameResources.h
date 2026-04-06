@@ -136,19 +136,43 @@ struct FCascadeGenerationInfoHLSL
     float TightFrustumShrinkFactor;
     float TightFrustumStableExtents;
     float TightFrustumDepthQuant;
-    float CascadeFitAABB;
+    float TightFrustumPadding;
 
     // 144-160
     int32 FilterMode;
     float PCFFilterWorld;
     float PCFMinFilterRadiusTexels;
-    float AdaptiveSplitRangeEnabled;
+    float UseDepthReducedRange;
 
     // 160-176
     float MaxShadowDistance;
     float ShadowPancakingEnabled;
+    float PCSSMaxRadiusTexels;
     float Padding0;
+
+    // 176-192
     float Padding1;
+    float Padding2;
+    float Padding3;
+    float Padding4;
+
+    // 192-208
+    float Padding5;
+    float Padding6;
+    float Padding7;
+    float Padding8;
+
+    // 224-240
+    int32 CascadeSplitMode;
+    float CSMNearDistance;
+    float ManualCascadeSplitDistance0;
+    float ManualCascadeSplitDistance1;
+
+    // 240-256
+    float ManualCascadeSplitDistance2;
+    float Padding9;
+    float Padding10;
+    float Padding11;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);
@@ -237,8 +261,8 @@ struct FFrameResources
     FRHITextureRef             CSMMinMaxDepthHistory;
     FRHIBufferRef              CascadeSnapHistoryBuffer;
     FRHIUnorderedAccessViewRef CascadeSnapHistoryBufferUAV;
-    FRHIBufferRef              CascadeExtentsHistoryBuffer;
-    FRHIUnorderedAccessViewRef CascadeExtentsHistoryBufferUAV;
+    FRHIBufferRef              CascadeSplitHistoryBuffer;
+    FRHIUnorderedAccessViewRef CascadeSplitHistoryBufferUAV;
     bool                       bCSMMinMaxHistoryInitialized  = false;
     bool                       bCSMCascadeHistoryInitialized = false;
 
@@ -273,15 +297,17 @@ struct FFrameResources
     FRHIBufferRef              CascadeGenerationDataBuffer;
     bool                       bCascadeGenerationDataDirty;
     bool                       bCascadeSizeDirty;
-
     FRHITextureRef            ShadowCascades;
     FRHIShaderResourceViewRef ShadowCascadesSRVs[NUM_SHADOW_CASCADES];
     FRHITextureRef            DirectionalShadowMask;
     FRHITextureRef            ShadowMaskRaw;
     FRHITextureRef            ShadowDebugBuffer;
     FRHITextureRef            ShadowMaskHistory[2];
+    FRHITextureRef            ShadowMaskMomentsHistory[2];
     FRHITextureRef            CascadeIndexBuffer;
     bool                      bShadowMaskHistoryInitialized = false;
+    bool                      bShadowMaskMomentsHistoryInitialized = false;
+    uint32                    ShadowMaskHistoryLatestIndex = 0;
 
     FRHIBufferRef              CascadeMatrixBuffer;
     FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;

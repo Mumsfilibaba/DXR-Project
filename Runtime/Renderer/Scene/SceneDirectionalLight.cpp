@@ -14,6 +14,10 @@ FSceneDirectionalLight::FSceneDirectionalLight(FScene* InScene, FDirectionalLigh
     , ShadowNearPlane(0.0f)
     , ShadowFarPlane(0.0f)
     , ShadowBias(0.0f)
+    , ShadowPositionOffset(0.0f)
+    , CascadeSplitLambda(0.60f)
+    , CascadeSplitMode(ECascadeSplitMode::AutoLambda)
+    , ManualCascadeSplitDistances{ 50.0f, 150.0f, 400.0f }
     , LightArea(0.5f)
 {
     ShadowMatrix.SetIdentity();
@@ -39,6 +43,11 @@ void FSceneDirectionalLight::Tick()
     ShadowBias           = DirectionalLight->GetShadowBias();
     ShadowPositionOffset = DirectionalLight->GetShadowPositionOffset();
     CascadeSplitLambda   = DirectionalLight->GetCascadeSplitLambda();
+    CascadeSplitMode     = DirectionalLight->GetCascadeSplitMode();
+    for (int32 CascadeIndex = 0; CascadeIndex < 3; ++CascadeIndex)
+    {
+        ManualCascadeSplitDistances[CascadeIndex] = DirectionalLight->GetManualCascadeSplitDistance(CascadeIndex);
+    }
     LightArea            = DirectionalLight->GetLightArea();
 
     // Update ShadowMatrix

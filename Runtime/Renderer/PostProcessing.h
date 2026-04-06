@@ -76,7 +76,7 @@ public:
     virtual ~FFinalCompositePass();
 
     bool Initialize(const FFrameResources& FrameResources);
-    void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FRHITexture* InputSceneColor);
+    void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FRHITexture* InputSceneColor, bool bEnableGridOverlay);
 
 private:
     FRHIGraphicsPipelineStateRef CompositePSO;

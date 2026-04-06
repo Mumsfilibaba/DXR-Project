@@ -19,6 +19,11 @@ static TAutoConsoleVariable<bool> CVarBasePassClearAllTargets(
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
     true);
 
+static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
+    "Renderer.PrePass.DepthReduce",
+    "Enables the depth reduction pass (used by features such as optional CSM depth-ranged split generation).",
+    false);
+
 FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , MaterialPSOs()

@@ -4,6 +4,12 @@
 
 #define NUM_SHADOW_CASCADES (4)
 
+enum class ECascadeSplitMode : uint8
+{
+    AutoLambda = 0,
+    Manual     = 1,
+};
+
 class ENGINE_API FDirectionalLight : public FLight
 {
 public:
@@ -17,6 +23,9 @@ public:
 
     // Lambda for determine the splits of the shadow-cascades
     void SetCascadeSplitLambda(float InCascadeSplitLambda);
+
+    void SetCascadeSplitMode(ECascadeSplitMode InMode);
+    void SetManualCascadeSplitDistance(int32 Index, float Distance);
 
     // Offset from the calculated camera position, that then becomes the point-of-view of the shadow-cascade
     void SetShadowPositionOffset(float InShadowPositionOffset);
@@ -44,6 +53,16 @@ public:
         return CascadeSplitLambda;
     }
 
+    FORCEINLINE ECascadeSplitMode GetCascadeSplitMode() const
+    {
+        return CascadeSplitMode;
+    }
+
+    FORCEINLINE float GetManualCascadeSplitDistance(int32 Index) const
+    {
+        return (Index >= 0 && Index < (NUM_SHADOW_CASCADES - 1)) ? ManualCascadeSplitDistances[Index] : 0.0f;
+    }
+
     FORCEINLINE float GetLightArea() const
     {
         return LightArea;
@@ -54,5 +73,7 @@ private:
     FVector3 Rotation;
     float    ShadowPositionOffset;
     float    CascadeSplitLambda;
+    ECascadeSplitMode CascadeSplitMode;
+    float    ManualCascadeSplitDistances[NUM_SHADOW_CASCADES - 1];
     float    LightArea;
 };

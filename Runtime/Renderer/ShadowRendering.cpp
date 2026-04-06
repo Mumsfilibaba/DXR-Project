@@ -44,12 +44,6 @@ static TAutoConsoleVariable<bool> CVarCSMStableCascades(
     true,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarCSMAdaptiveSplitRange(
-    "Renderer.CSM.AdaptiveSplitRange",
-    "Adapt cascade split range based on scene depth (may introduce split movement)",
-    true,
-    EConsoleVariableFlags::Default);
-
 static TAutoConsoleVariable<bool> CVarCSMEnableSinglePassRendering(
     "Renderer.CSM.EnableSinglePassRendering",
     "Enables instancing for cascade rendering via VertexShaders, enabling a single-pass for rendering a full cube-map, which creates less overhead on the CPU",
@@ -107,7 +101,7 @@ static TAutoConsoleVariable<float> CVarCSMMaxShadowDistance(
 static TAutoConsoleVariable<float> CVarCSMMaxShadowDistanceFade(
     "Renderer.CSM.MaxShadowDistanceFade",
     "Fade band (world units) for CSM max distance (0 = hard cutoff)",
-    50.0f,
+    2.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSRadiusScale(
@@ -143,7 +137,7 @@ static TAutoConsoleVariable<float> CVarCSMPCSSMaxPenumbraWorld(
 static TAutoConsoleVariable<float> CVarCSMPCSSMaxSearchDistanceWorld(
     "Renderer.CSM.PCSS.MaxSearchDistanceWorld",
     "Maximum PCSS blocker search distance (world units, 0 disables)",
-    1.0f,
+    6.0f,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<float> CVarCSMPCSSMinFilterMaxAngularDiameter(
@@ -182,12 +176,6 @@ static TAutoConsoleVariable<bool> CVarCSMBlendCascades(
     true,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarCSMSelectCascadeFromProjection(
-    "Renderer.CSM.SelectCascadeFromProjection",
-    "Select what cascade to use based on projection",
-    true,
-    EConsoleVariableFlags::Default);
-
 static TAutoConsoleVariable<bool> CVarCSMShadowHistory(
     "Renderer.CSM.ShadowHistory",
     "Enables shadow mask history filtering (recommended for PCF/PCSS at low sample counts)",
@@ -198,6 +186,18 @@ static TAutoConsoleVariable<bool> CVarCSMCascadeFallback(
     "Renderer.CSM.CascadeFallback",
     "Enables per-tap cascade fallback sampling (debug/safety)",
     true,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarCSMPCSSPerTapGlobalRemap(
+    "Renderer.CSM.PCSS.PerTapGlobalRemap",
+    "Enables per-tap global cascade remap for out-of-bounds PCSS/PCF taps.",
+    true,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<int32> CVarCSMPCSSMaxCascadeRemapSteps(
+    "Renderer.CSM.PCSS.MaxCascadeRemapSteps",
+    "Maximum number of coarser cascades checked when remapping out-of-bounds taps.",
+    3,
     EConsoleVariableFlags::Default);
 
 FPointLightRenderPass::FPointLightRenderPass(FSceneRenderer* InRenderer)
@@ -912,15 +912,15 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeSnapHistoryBuffer->SetDebugName("Cascade Snap History Buffer");
     }
 
-    Resources.CascadeExtentsHistoryBuffer = FRHI::Get()->CreateBuffer(CascadeHistoryDesc, EResourceAccess::UnorderedAccess, nullptr);
-    if (!Resources.CascadeExtentsHistoryBuffer)
+    Resources.CascadeSplitHistoryBuffer = FRHI::Get()->CreateBuffer(CascadeHistoryDesc, EResourceAccess::UnorderedAccess, nullptr);
+    if (!Resources.CascadeSplitHistoryBuffer)
     {
         DEBUG_BREAK();
         return false;
     }
     else
     {
-        Resources.CascadeExtentsHistoryBuffer->SetDebugName("Cascade Extents History Buffer");
+        Resources.CascadeSplitHistoryBuffer->SetDebugName("Cascade Split History Buffer");
     }
 
     UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeSnapHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
@@ -932,14 +932,16 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeExtentsHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeExtentsHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+    UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeSplitHistoryBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeSplitHistoryBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
     
-    if (!Resources.CascadeExtentsHistoryBufferUAV)
+    if (!Resources.CascadeSplitHistoryBufferUAV)
     {
         DEBUG_BREAK();
         return false;
     }
+
+    Resources.bCSMCascadeHistoryInitialized = false;
 
     return true;
 }
@@ -956,9 +958,9 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
         CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
     }
 
-    if (Resources.CascadeExtentsHistoryBuffer)
+    if (Resources.CascadeSplitHistoryBuffer)
     {
-        CommandList.TransitionBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+        CommandList.TransitionBuffer(Resources.CascadeSplitHistoryBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
     }
 
     if (Resources.CSMMinMaxDepthHistory)
@@ -974,24 +976,24 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     if (!Resources.bCSMCascadeHistoryInitialized)
     {
-        const FVector4 InvalidCenter  = FVector4(-1.0f, -1.0f, -1.0f, -1.0f);
-        const FVector4 InvalidExtents = FVector4(-1.0f, -1.0f, -1.0f, -1.0f);
+        const FVector4 InvalidCenter = FVector4(-1.0f, -1.0f, -1.0f, -1.0f);
+        const FVector4 InvalidSplit  = FVector4(-1.0f, -1.0f, 0.0f, 0.0f);
 
-        TArray<FVector4> SnapHistory    = TArray<FVector4>(NUM_SHADOW_CASCADES, InvalidCenter);
-        TArray<FVector4> ExtentsHistory = TArray<FVector4>(NUM_SHADOW_CASCADES, InvalidExtents);
+        TArray<FVector4> SnapHistory  = TArray<FVector4>(NUM_SHADOW_CASCADES, InvalidCenter);
+        TArray<FVector4> SplitHistory = TArray<FVector4>(NUM_SHADOW_CASCADES, InvalidSplit);
 
         if (Resources.CascadeSnapHistoryBuffer)
         {
             CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopyDest);
-            CommandList.UpdateBuffer(Resources.CascadeSnapHistoryBuffer.Get(), FBufferRegion(0, ExtentsHistory.SizeInBytes()), SnapHistory.Data());
+            CommandList.UpdateBuffer(Resources.CascadeSnapHistoryBuffer.Get(), FBufferRegion(0, SnapHistory.SizeInBytes()), SnapHistory.Data());
             CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::UnorderedAccess);
         }
 
-        if (Resources.CascadeExtentsHistoryBuffer)
+        if (Resources.CascadeSplitHistoryBuffer)
         {
-            CommandList.TransitionBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopyDest);
-            CommandList.UpdateBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), FBufferRegion(0, ExtentsHistory.SizeInBytes()), ExtentsHistory.Data());
-            CommandList.TransitionBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::UnorderedAccess);
+            CommandList.TransitionBuffer(Resources.CascadeSplitHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopyDest);
+            CommandList.UpdateBuffer(Resources.CascadeSplitHistoryBuffer.Get(), FBufferRegion(0, SplitHistory.SizeInBytes()), SplitHistory.Data());
+            CommandList.TransitionBuffer(Resources.CascadeSplitHistoryBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::UnorderedAccess);
         }
 
         Resources.bCSMCascadeHistoryInitialized = true;
@@ -1015,12 +1017,20 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
         CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeSnapHistoryBufferUAV.Get(), 3);
     }
     
-    if (Resources.CascadeExtentsHistoryBufferUAV)
+    if (Resources.CascadeSplitHistoryBufferUAV)
     {
-        CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeExtentsHistoryBufferUAV.Get(), 4);
+        CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), Resources.CascadeSplitHistoryBufferUAV.Get(), 4);
     }
 
-    CommandList.SetShaderResourceView(CascadeGenShader.Get(), Resources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
+    // Use the first reduction level for cascade generation so we retain tile-level spatial distribution.
+    FRHITexture* ReducedDepthSource = Resources.ReducedDepthBuffer[0] ? Resources.ReducedDepthBuffer[0].Get() : Resources.ReducedDepthBuffer[1].Get();
+    if (!ReducedDepthSource)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    CommandList.SetShaderResourceView(CascadeGenShader.Get(), ReducedDepthSource->GetShaderResourceView(), 0);
 
     CommandList.Dispatch(1, 1, 1);
 
@@ -1031,9 +1041,9 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
     {
         CommandList.TransitionBuffer(Resources.CascadeSnapHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
     }
-    if (Resources.CascadeExtentsHistoryBuffer)
+    if (Resources.CascadeSplitHistoryBuffer)
     {
-        CommandList.TransitionBuffer(Resources.CascadeExtentsHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionBuffer(Resources.CascadeSplitHistoryBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
     }
 }
 
@@ -1689,6 +1699,22 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
         }
     }
 
+    FRHITextureDesc ShadowMomentsDesc = FRHITextureDesc::CreateTexture2D(EFormat::R16G16_Float, Width, Height, 1, 1, Flags);
+    ShadowMomentsDesc.bEnableResourceStateTracking = true;
+
+    for (uint32 Index = 0; Index < 2; ++Index)
+    {
+        Resources.ShadowMaskMomentsHistory[Index] = FRHI::Get()->CreateTexture(ShadowMomentsDesc, EResourceAccess::NonPixelShaderResource);
+        if (Resources.ShadowMaskMomentsHistory[Index])
+        {
+            Resources.ShadowMaskMomentsHistory[Index]->SetDebugName(FString::CreateFormatted("Shadow Mask Moments History[%u]", Index));
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     FRHITextureDesc ShadowDebugDesc = FRHITextureDesc::CreateTexture2D(GlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Flags);
     ShadowDebugDesc.bEnableResourceStateTracking = true;
 
@@ -1703,6 +1729,8 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
     }
 
     Resources.bShadowMaskHistoryInitialized = false;
+    Resources.bShadowMaskMomentsHistoryInitialized = false;
+    Resources.ShadowMaskHistoryLatestIndex = 0;
 
     FRHITextureDesc CascadeIndexBufferDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
     CascadeIndexBufferDesc.bEnableResourceStateTracking = true;
@@ -1909,17 +1937,6 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
         Defines.Emplace("ROTATE_SAMPLES", "0");
     }
 
-    // Select cascades from projection
-    if (Combination.bSelectCascadeFromProjection)
-    {
-        Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "1");
-        DebugName += " CascadeFromProjection ";
-    }
-    else
-    {
-        Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "0");
-    }
-
     // Blend cascades
     if (Combination.bBlendCascades)
     {
@@ -1941,6 +1958,21 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     {
         Defines.Emplace("ENABLE_CASCADE_FALLBACK", "0");
     }
+
+    if (Combination.bPerTapGlobalRemap)
+    {
+        Defines.Emplace("ENABLE_PER_TAP_GLOBAL_REMAP", "1");
+        DebugName += " PerTapRemap ";
+    }
+    else
+    {
+        Defines.Emplace("ENABLE_PER_TAP_GLOBAL_REMAP", "0");
+    }
+
+    const uint32 MaxCascadeRemapSteps = Math::Clamp<uint32>(Combination.MaxCascadeRemapSteps, 0, 3);
+    const FString MaxCascadeRemapStepsString = TTypeToString<int32>::ToString(static_cast<int32>(MaxCascadeRemapSteps));
+    Defines.Emplace("MAX_CASCADE_REMAP_STEPS", MaxCascadeRemapStepsString);
+    DebugName += " RemapSteps=" + MaxCascadeRemapStepsString;
 
     // Number of samples
     auto QuantizePoissonSamples = [](uint32 Samples) -> uint32
@@ -2030,10 +2062,11 @@ void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskSha
     OutCombination.bDebugMode                   = CVarCSMDebugData.GetValue();
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bCascadeFallback             = CVarCSMCascadeFallback.GetValue();
-    OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
+    OutCombination.bPerTapGlobalRemap           = CVarCSMPCSSPerTapGlobalRemap.GetValue();
     OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
     OutCombination.NumSamples                   = Math::Clamp<uint32>(CVarCSMNumPoissonDiscSamples.GetValue(), 1, 255);
     OutCombination.NumBlockerSamples            = Math::Clamp<uint32>(CVarCSMPCSSNumBlockerSamples.GetValue(), 1, 128);
+    OutCombination.MaxCascadeRemapSteps         = static_cast<uint8>(Math::Clamp<int32>(CVarCSMPCSSMaxCascadeRemapSteps.GetValue(), 0, 3));
 }
 
 FShadowMaskHistoryPass::FShadowMaskHistoryPass(FSceneRenderer* InRenderer)
@@ -2089,6 +2122,8 @@ bool FShadowMaskHistoryPass::Initialize(FFrameResources& FrameResources)
 
     CurrentHistoryIndex                          = 0;
     FrameResources.bShadowMaskHistoryInitialized = false;
+    FrameResources.bShadowMaskMomentsHistoryInitialized = false;
+    FrameResources.ShadowMaskHistoryLatestIndex = 0;
     return true;
 }
 
@@ -2096,30 +2131,40 @@ void FShadowMaskHistoryPass::Execute(FRHICommandList& CommandList, FFrameResourc
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ShadowMask History");
 
-    if (!FrameResources.ShadowMaskRaw || !FrameResources.DirectionalShadowMask)
+    if (!FrameResources.ShadowMaskRaw || !FrameResources.DirectionalShadowMask || !FrameResources.ShadowMaskMomentsHistory[0] || !FrameResources.ShadowMaskMomentsHistory[1])
     {
         return;
     }
 
-    if (!FrameResources.bShadowMaskHistoryInitialized)
+    if (!FrameResources.bShadowMaskHistoryInitialized || !FrameResources.bShadowMaskMomentsHistoryInitialized)
     {
         CommandList.RequireTextureState(FrameResources.ShadowMaskHistory[0].Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
         CommandList.RequireTextureState(FrameResources.ShadowMaskHistory[1].Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+        CommandList.RequireTextureState(FrameResources.ShadowMaskMomentsHistory[0].Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+        CommandList.RequireTextureState(FrameResources.ShadowMaskMomentsHistory[1].Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
         
         const FVector4 ClearValue(1.0f, 1.0f, 1.0f, 1.0f);
         CommandList.ClearUnorderedAccessViewFloat(FrameResources.ShadowMaskHistory[0]->GetUnorderedAccessView(), ClearValue);
         CommandList.ClearUnorderedAccessViewFloat(FrameResources.ShadowMaskHistory[1]->GetUnorderedAccessView(), ClearValue);
+        CommandList.ClearUnorderedAccessViewFloat(FrameResources.ShadowMaskMomentsHistory[0]->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 0.0f, 0.0f));
+        CommandList.ClearUnorderedAccessViewFloat(FrameResources.ShadowMaskMomentsHistory[1]->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 0.0f, 0.0f));
         
         FrameResources.bShadowMaskHistoryInitialized = true;
+        FrameResources.bShadowMaskMomentsHistoryInitialized = true;
         CurrentHistoryIndex = 0;
+        FrameResources.ShadowMaskHistoryLatestIndex = 0;
     }
 
     FRHITextureRef WriteHistory = FrameResources.ShadowMaskHistory[CurrentHistoryIndex];
     FRHITextureRef ReadHistory  = FrameResources.ShadowMaskHistory[1 - CurrentHistoryIndex];
+    FRHITextureRef WriteMoments = FrameResources.ShadowMaskMomentsHistory[CurrentHistoryIndex];
+    FRHITextureRef ReadMoments  = FrameResources.ShadowMaskMomentsHistory[1 - CurrentHistoryIndex];
 
     CommandList.RequireTextureState(FrameResources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
     CommandList.RequireTextureState(WriteHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
     CommandList.RequireTextureState(ReadHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    CommandList.RequireTextureState(WriteMoments.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+    CommandList.RequireTextureState(ReadMoments.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
 
     CommandList.SetComputePipelineState(HistoryPSO.Get());
 
@@ -2127,11 +2172,13 @@ void FShadowMaskHistoryPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.SetUnorderedAccessView(HistoryShader.Get(), FrameResources.DirectionalShadowMask->GetUnorderedAccessView(), 0);
     CommandList.SetUnorderedAccessView(HistoryShader.Get(), WriteHistory->GetUnorderedAccessView(), 1);
+    CommandList.SetUnorderedAccessView(HistoryShader.Get(), WriteMoments->GetUnorderedAccessView(), 2);
 
     CommandList.SetShaderResourceView(HistoryShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
     CommandList.SetShaderResourceView(HistoryShader.Get(), FrameResources.GBuffer[GBufferIndex_Velocity]->GetShaderResourceView(), 1);
     CommandList.SetShaderResourceView(HistoryShader.Get(), FrameResources.ShadowMaskRaw->GetShaderResourceView(), 2);
     CommandList.SetShaderResourceView(HistoryShader.Get(), ReadHistory->GetShaderResourceView(), 3);
+    CommandList.SetShaderResourceView(HistoryShader.Get(), ReadMoments->GetShaderResourceView(), 4);
 
     CommandList.SetSamplerState(HistoryShader.Get(), LinearSampler.Get(), 0);
 
@@ -2142,8 +2189,137 @@ void FShadowMaskHistoryPass::Execute(FRHICommandList& CommandList, FFrameResourc
 
     CommandList.RequireTextureState(FrameResources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
     CommandList.RequireTextureState(WriteHistory.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    CommandList.RequireTextureState(WriteMoments.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
 
+    const uint32 WrittenHistoryIndex = CurrentHistoryIndex;
+    FrameResources.ShadowMaskHistoryLatestIndex = WrittenHistoryIndex;
     CurrentHistoryIndex = 1 - CurrentHistoryIndex;
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End ShadowMask History");
+}
+
+FShadowMaskDenoisePass::FShadowMaskDenoisePass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+{
+}
+
+FShadowMaskDenoisePass::~FShadowMaskDenoisePass()
+{
+    DenoisePSO.Reset();
+    DenoiseShader.Reset();
+}
+
+bool FShadowMaskDenoisePass::Initialize(FFrameResources& /* FrameResources */)
+{
+    TArray<uint8> ShaderCode;
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/ShadowMaskDenoise.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    DenoiseShader = FRHI::Get()->CreateComputeShader(ShaderCode);
+    if (!DenoiseShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIComputePipelineStateDesc PSODesc;
+    PSODesc.Shader = DenoiseShader.Get();
+
+    DenoisePSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
+    if (!DenoisePSO)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    DenoisePSO->SetDebugName("ShadowMaskDenoise PSO");
+
+    return true;
+}
+
+bool FShadowMaskDenoisePass::CreateResources(FFrameResources& /* Resources */, uint32 /* Width */, uint32 /* Height */)
+{
+    return true;
+}
+
+void FShadowMaskDenoisePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
+{
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ShadowMask Denoise");
+
+    if (!FrameResources.DirectionalShadowMask || !FrameResources.ShadowMaskRaw || !FrameResources.ShadowMaskMomentsHistory[0] || !FrameResources.ShadowMaskMomentsHistory[1] ||
+        !FrameResources.GBuffer[GBufferIndex_Depth] || !FrameResources.GBuffer[GBufferIndex_Normal] || !DenoisePSO || !DenoiseShader)
+    {
+        return;
+    }
+
+    struct FShadowDenoiseConstants
+    {
+        int32 StepWidth;
+        int32 bCopyOnly;
+        float DepthSigma;
+        float NormalSigma;
+        float VarianceBoost;
+        float Padding0;
+    };
+
+    const auto DispatchDenoise = [&](FRHITexture* SrcShadow, FRHITexture* DstShadow, int32 StepWidth, bool bCopyOnly)
+    {
+        CommandList.RequireTextureState(SrcShadow, FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        const uint32 MomentsIndex = Math::Min<uint32>(FrameResources.ShadowMaskHistoryLatestIndex, 1u);
+        CommandList.RequireTextureState(FrameResources.ShadowMaskMomentsHistory[MomentsIndex].Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.RequireTextureState(FrameResources.GBuffer[GBufferIndex_Depth].Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.RequireTextureState(FrameResources.GBuffer[GBufferIndex_Normal].Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+        CommandList.RequireTextureState(DstShadow, FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
+
+        CommandList.SetComputePipelineState(DenoisePSO.Get());
+        CommandList.SetConstantBuffer(DenoiseShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
+        FShadowDenoiseConstants Constants;
+        Constants.StepWidth    = StepWidth;
+        Constants.bCopyOnly    = bCopyOnly ? 1 : 0;
+        Constants.DepthSigma   = 64.0f;
+        Constants.NormalSigma  = 64.0f;
+        Constants.VarianceBoost = 64.0f;
+        Constants.Padding0     = 0.0f;
+
+        constexpr uint32 NumConstants = sizeof(FShadowDenoiseConstants) / sizeof(uint32);
+        CommandList.SetShaderConstants(DenoiseShader.Get(), &Constants, NumConstants);
+
+        CommandList.SetShaderResourceView(DenoiseShader.Get(), SrcShadow->GetShaderResourceView(), 0);
+        CommandList.SetShaderResourceView(DenoiseShader.Get(), FrameResources.ShadowMaskMomentsHistory[MomentsIndex]->GetShaderResourceView(), 1);
+        CommandList.SetShaderResourceView(DenoiseShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 2);
+        CommandList.SetShaderResourceView(DenoiseShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 3);
+        CommandList.SetUnorderedAccessView(DenoiseShader.Get(), DstShadow->GetUnorderedAccessView(), 0);
+
+        constexpr uint32 NumThreads = 16;
+        const uint32 ThreadsX = Math::DivideByMultiple(DstShadow->GetWidth(), NumThreads);
+        const uint32 ThreadsY = Math::DivideByMultiple(DstShadow->GetHeight(), NumThreads);
+        CommandList.Dispatch(ThreadsX, ThreadsY, 1);
+
+        CommandList.RequireTextureState(DstShadow, FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+    };
+
+    // Seed the ping-pong chain with the temporally accumulated result.
+    DispatchDenoise(FrameResources.DirectionalShadowMask.Get(), FrameResources.ShadowMaskRaw.Get(), 0, true);
+
+    static constexpr int32 AtrousStepWidths[3] = { 1, 2, 4 };
+    FRHITexture* ReadShadow = FrameResources.ShadowMaskRaw.Get();
+    FRHITexture* WriteShadow = FrameResources.DirectionalShadowMask.Get();
+
+    for (int32 Iteration = 0; Iteration < 3; ++Iteration)
+    {
+        DispatchDenoise(ReadShadow, WriteShadow, AtrousStepWidths[Iteration], false);
+
+        FRHITexture* Temp = ReadShadow;
+        ReadShadow = WriteShadow;
+        WriteShadow = Temp;
+    }
+
+    // After three iterations the final output lands in DirectionalShadowMask (due to the initial copy seed).
+    CommandList.RequireTextureState(FrameResources.DirectionalShadowMask.Get(), FRHIRequiredTextureState::Make(EResourceAccess::NonPixelShaderResource));
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End ShadowMask Denoise");
 }

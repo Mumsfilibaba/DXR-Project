@@ -94,19 +94,43 @@ struct FCascadeGenerationInfo
     float TightFrustumShrinkFactor;
     float TightFrustumStableExtents;
     float TightFrustumDepthQuant;
-    float CascadeFitAABB;
+    float TightFrustumPadding;
 
     // 144-160
     int   FilterMode;
     float PCFFilterWorld;
     float PCFMinFilterRadiusTexels;
-    float AdaptiveSplitRangeEnabled;
+    float UseDepthReducedRange;
 
     // 160-176
     float MaxShadowDistance;
     float ShadowPancakingEnabled;
+    float PCSSMaxRadiusTexels;
     float Padding0;
+
+    // 176-192
     float Padding1;
+    float Padding2;
+    float Padding3;
+    float Padding4;
+
+    // 192-208
+    float Padding5;
+    float Padding6;
+    float Padding7;
+    float Padding8;
+
+    // 224-240
+    int   CascadeSplitMode;
+    float CSMNearDistance;
+    float ManualCascadeSplitDistance0;
+    float ManualCascadeSplitDistance1;
+
+    // 240-256
+    float ManualCascadeSplitDistance2;
+    float Padding9;
+    float Padding10;
+    float Padding11;
 };
 
 struct FDirectionalLight

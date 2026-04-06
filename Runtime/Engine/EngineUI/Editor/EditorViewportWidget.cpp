@@ -122,6 +122,7 @@ void FEditorViewportWidget::Draw()
                     { "CSM Containment", FSceneRenderView::EDebugView::ShadowContainment },
                     { "CSM Cascade Fallback", FSceneRenderView::EDebugView::ShadowCascadeFallback },
                     { "CSM Cascade Overlay", FSceneRenderView::EDebugView::ShadowCascadeOverlay },
+                    { "CSM Split Bands", FSceneRenderView::EDebugView::ShadowCascadeSplitFrustums },
                 };
 
                 const auto FindDebugLabel = [&](FSceneRenderView::EDebugView InView) -> const CHAR*

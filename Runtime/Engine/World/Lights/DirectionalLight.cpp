@@ -11,6 +11,8 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     , Rotation(0.0f, 0.0f, 0.0f)
     , ShadowPositionOffset(200.0f)
     , CascadeSplitLambda(0.60f)
+    , CascadeSplitMode(ECascadeSplitMode::AutoLambda)
+    , ManualCascadeSplitDistances{ 50.0f, 150.0f, 400.0f }
     , LightArea(0.5f)
 {
     ShadowBias = 0.0005f;
@@ -35,6 +37,21 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
 void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
     CascadeSplitLambda = InCascadeSplitLambda;
+}
+
+void FDirectionalLight::SetCascadeSplitMode(ECascadeSplitMode InMode)
+{
+    CascadeSplitMode = InMode;
+}
+
+void FDirectionalLight::SetManualCascadeSplitDistance(int32 Index, float Distance)
+{
+    if (Index < 0 || Index >= (NUM_SHADOW_CASCADES - 1))
+    {
+        return;
+    }
+
+    ManualCascadeSplitDistances[Index] = Math::Max(Distance, 0.0f);
 }
 
 void FDirectionalLight::SetShadowPositionOffset(float InShadowPositionOffset)

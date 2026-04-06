@@ -3,19 +3,53 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "RHI/RHIFence.h"
+#include "Engine/World/Camera.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Lights/PointLight.h"
+#include "Renderer/ShadowRendering.h"
 #include "Renderer/DebugRendering.h"
 #include "Renderer/Scene/Scene.h"
 #include "Renderer/Scene/SceneLightProbe.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
+#include <cstring>
+#include <cstddef>
 
 struct FAABBShaderInfoHLSL
 {
     FMatrix4 WorldMatrix;
     FVector4 Color;
 };
+
+static void BuildCameraFrustumPlaneCorners(const FCamera& Camera, float Depth, FVector3 OutCorners[4])
+{
+    const float ClampedDepth = Math::Max(Depth, 0.001f);
+    float Aspect = Camera.GetAspectRatio();
+    if (Camera.GetHeight() > 0.0f)
+    {
+        Aspect = Camera.GetWidth() / Camera.GetHeight();
+    }
+
+    if (Aspect <= 0.0f || Math::IsNaN(Aspect) || Math::IsInfinity(Aspect))
+    {
+        Aspect = 1.0f;
+    }
+
+    const float HalfFovDeg = Math::Clamp(Camera.GetFieldOfView() * 0.5f, 1.0f, 89.0f);
+    const float HalfFovRad = Math::DegreesToRadians(HalfFovDeg);
+    const float HalfHeight   = Math::Tan(HalfFovRad) * ClampedDepth;
+    const float HalfWidth    = HalfHeight * Aspect;
+
+    const FVector3 Center = Camera.GetPosition() + (Camera.GetForwardVector() * ClampedDepth);
+    const FVector3 Right  = Camera.GetRightVector();
+    const FVector3 Up     = Camera.GetUpVector();
+
+    OutCorners[0] = Center - (Right * HalfWidth) - (Up * HalfHeight);
+    OutCorners[1] = Center + (Right * HalfWidth) - (Up * HalfHeight);
+    OutCorners[2] = Center + (Right * HalfWidth) + (Up * HalfHeight);
+    OutCorners[3] = Center - (Right * HalfWidth) + (Up * HalfHeight);
+}
 
 FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -39,7 +73,21 @@ FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
     , ProbeDebug_PSO(nullptr)
     , ProbeDebug_VS(nullptr)
     , ProbeDebug_PS(nullptr)
+    , CascadeFrustumDebug_PSO(nullptr)
+    , CascadeFrustumDebug_VS(nullptr)
+    , CascadeFrustumDebug_PS(nullptr)
+    , CascadeSplitReadbackBuffer(nullptr)
+    , CascadeSplitReadbackFence(nullptr)
+    , bCascadeSplitReadbackInFlight(false)
+    , bHasCascadeSplitDistances(false)
+    , CascadeSplitReadbackSize(0)
+    , CascadeSplitStrideBytes(0)
 {
+    for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+    {
+        CachedCascadeSplitStart[CascadeIndex] = 0.0f;
+        CachedCascadeSplitEnd[CascadeIndex]   = 0.0f;
+    }
 }
 
 FDebugRenderer::~FDebugRenderer()
@@ -66,6 +114,12 @@ FDebugRenderer::~FDebugRenderer()
     ProbeDebug_PSO.Reset();
     ProbeDebug_VS.Reset();
     ProbeDebug_PS.Reset();
+
+    CascadeFrustumDebug_PSO.Reset();
+    CascadeFrustumDebug_VS.Reset();
+    CascadeFrustumDebug_PS.Reset();
+    CascadeSplitReadbackBuffer.Reset();
+    CascadeSplitReadbackFence.Reset();
 }
 
 bool FDebugRenderer::Initialize(FFrameResources& Resources)
@@ -629,6 +683,110 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
     }
 
+    // Cascade Split Frustum Debug
+    {
+        TArray<FShaderDefine> CascadeFrustumDefines =
+        {
+            { "LINE_DEBUG", "(1)" }
+        };
+
+        FShaderCompileInfo CompileInfo("Line_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, CascadeFrustumDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CascadeFrustumDebug_VS = FRHI::Get()->CreateVertexShader(ShaderCode);
+        if (!CascadeFrustumDebug_VS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FShaderCompileInfo("Line_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, CascadeFrustumDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CascadeFrustumDebug_PS = FRHI::Get()->CreatePixelShader(ShaderCode);
+        if (!CascadeFrustumDebug_PS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        TArray<FRHIInputElementDesc> InputElements =
+        {
+            { "POSITION", 0, EFormat::R32G32B32_Float,      sizeof(FCascadeLineVertex), 0, static_cast<uint32>(offsetof(FCascadeLineVertex, Position)), 0, EVertexInputClass::Vertex, 0 },
+            { "COLOR",    0, EFormat::R32G32B32A32_Float,   sizeof(FCascadeLineVertex), 0, static_cast<uint32>(offsetof(FCascadeLineVertex, Color)),    1, EVertexInputClass::Vertex, 0 },
+        };
+
+        FRHIInputLayoutRef InputLayoutState = FRHI::Get()->CreateInputLayout(InputElements);
+        if (!InputLayoutState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIDepthStencilStateDesc DepthStencilStateDesc;
+        DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateDesc.bDepthEnable      = false;
+        DepthStencilStateDesc.bDepthWriteEnable = false;
+
+        FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
+        if (!DepthStencilState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIRasterizerStateDesc RasterizerStateDesc;
+        RasterizerStateDesc.CullMode = ECullMode::None;
+
+        FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
+        if (!RasterizerState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIBlendStateDesc BlendStateDesc;
+        BlendStateDesc.NumRenderTargets = 1;
+
+        FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
+        if (!BlendState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIGraphicsPipelineStateDesc PSODesc;
+        PSODesc.BlendState                                     = BlendState.Get();
+        PSODesc.DepthStencilState                              = DepthStencilState.Get();
+        PSODesc.InputLayout                                    = InputLayoutState.Get();
+        PSODesc.RasterizerState                                = RasterizerState.Get();
+        PSODesc.VertexShader                                   = CascadeFrustumDebug_VS.Get();
+        PSODesc.PixelShader                                    = CascadeFrustumDebug_PS.Get();
+        PSODesc.PrimitiveTopology                              = EPrimitiveTopology::LineList;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = GlobalTextureFormats::FinalTargetFormat;
+        PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = GlobalTextureFormats::DepthBufferFormat;
+
+        CascadeFrustumDebug_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+        if (!CascadeFrustumDebug_PSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            CascadeFrustumDebug_PSO->SetDebugName("Cascade Split Frustum Debug PSO");
+        }
+    }
+
     return true;
 }
 
@@ -814,4 +972,328 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     CommandList.EndRenderPass();
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightProbe DebugPass");
+}
+
+void FDebugRenderer::UpdateCascadeSplitReadback()
+{
+    if (!bCascadeSplitReadbackInFlight || !CascadeSplitReadbackFence || !CascadeSplitReadbackBuffer)
+    {
+        return;
+    }
+
+    if (!CascadeSplitReadbackFence->IsSignaled())
+    {
+        return;
+    }
+
+    const uint64 BufferSize = CascadeSplitReadbackBuffer->GetDesc().Size;
+    if (BufferSize < CascadeSplitReadbackSize || CascadeSplitStrideBytes == 0)
+    {
+        bCascadeSplitReadbackInFlight = false;
+        return;
+    }
+
+    void* MappedData = CascadeSplitReadbackBuffer->Map(0, BufferSize);
+    if (!MappedData)
+    {
+        bCascadeSplitReadbackInFlight = false;
+        return;
+    }
+
+    const uint8* SplitBase = reinterpret_cast<const uint8*>(MappedData);
+    const uint64 RequiredBytesPerSplit = sizeof(FVector4) * NumCascadeFrustumPlanes;
+    bool bSawAnySplitDistance = false;
+
+    for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+    {
+        const uint64 SplitOffset = uint64(CascadeIndex) * CascadeSplitStrideBytes;
+        if ((SplitOffset + RequiredBytesPerSplit) > BufferSize)
+        {
+            break;
+        }
+
+        const uint8* SplitData = SplitBase + SplitOffset;
+        std::memcpy(CachedCascadeFrustumPlanes[CascadeIndex], SplitData, RequiredBytesPerSplit);
+
+        if (CascadeSplitStrideBytes >= sizeof(FCascadeSplitHLSL) && (SplitOffset + sizeof(FCascadeSplitHLSL)) <= BufferSize)
+        {
+            const FCascadeSplitHLSL* Split = reinterpret_cast<const FCascadeSplitHLSL*>(SplitData);
+            CachedCascadeSplitStart[CascadeIndex] = Split->PreviousSplit;
+            CachedCascadeSplitEnd[CascadeIndex]   = Split->Split;
+            bSawAnySplitDistance = true;
+        }
+    }
+
+    CascadeSplitReadbackBuffer->Unmap(0, BufferSize);
+
+    bHasCascadeSplitDistances     = bSawAnySplitDistance;
+    bCascadeSplitReadbackInFlight = false;
+}
+
+void FDebugRenderer::QueueCascadeSplitReadback(FRHICommandList& CommandList, FFrameResources& Resources)
+{
+    if (!Resources.CascadeSplitsBuffer)
+    {
+        return;
+    }
+
+    if (bCascadeSplitReadbackInFlight)
+    {
+        return;
+    }
+
+    const FRHIBufferDesc& CascadeSplitsDesc = Resources.CascadeSplitsBuffer->GetDesc();
+    if (CascadeSplitsDesc.Size == 0 || CascadeSplitsDesc.Stride == 0)
+    {
+        return;
+    }
+
+    if (!CascadeSplitReadbackBuffer || CascadeSplitReadbackSize != CascadeSplitsDesc.Size)
+    {
+        FRHIBufferDesc ReadbackDesc;
+        ReadbackDesc.Stride = sizeof(uint32);
+        ReadbackDesc.Size   = CascadeSplitsDesc.Size;
+        ReadbackDesc.Flags  = EBufferFlags::ReadBack;
+        ReadbackDesc.bEnableResourceStateTracking = true;
+
+        CascadeSplitReadbackBuffer = FRHI::Get()->CreateBuffer(ReadbackDesc, EResourceAccess::CopyDest, nullptr);
+        if (!CascadeSplitReadbackBuffer)
+        {
+            return;
+        }
+
+        CascadeSplitReadbackBuffer->SetDebugName("CascadeSplit Debug Readback");
+        CascadeSplitReadbackSize = CascadeSplitsDesc.Size;
+    }
+
+    if (!CascadeSplitReadbackFence)
+    {
+        CascadeSplitReadbackFence = FRHI::Get()->CreateFence();
+        if (!CascadeSplitReadbackFence)
+        {
+            return;
+        }
+
+        CascadeSplitReadbackFence->SetDebugName("CascadeSplit Debug Readback Fence");
+    }
+
+    CascadeSplitStrideBytes = CascadeSplitsDesc.Stride;
+
+    CommandList.RequireBufferState(Resources.CascadeSplitsBuffer.Get(), EResourceAccess::CopySource);
+    CommandList.RequireBufferState(CascadeSplitReadbackBuffer.Get(), EResourceAccess::CopyDest);
+
+    FRHIBufferCopyDesc CopyDesc;
+    CopyDesc.SrcOffset = 0;
+    CopyDesc.DstOffset = 0;
+    CopyDesc.Size      = CascadeSplitsDesc.Size;
+    CommandList.CopyBuffer(CascadeSplitReadbackBuffer.Get(), Resources.CascadeSplitsBuffer.Get(), CopyDesc);
+
+    CommandList.RequireBufferState(Resources.CascadeSplitsBuffer.Get(), EResourceAccess::NonPixelShaderResource);
+    CommandList.WriteFence(CascadeSplitReadbackFence.Get());
+
+    bCascadeSplitReadbackInFlight = true;
+}
+
+bool FDebugRenderer::BuildCascadeFrustumVertices(const FFrameResources& Resources, const FScene* Scene, TArray<FCascadeLineVertex>& OutVertices) const
+{
+    if (!Scene || !Scene->Camera)
+    {
+        return false;
+    }
+
+    static const FVector4 CascadeColors[NUM_SHADOW_CASCADES] =
+    {
+        FVector4(1.0f, 0.2f, 0.2f, 1.0f),
+        FVector4(0.2f, 1.0f, 0.2f, 1.0f),
+        FVector4(0.2f, 0.5f, 1.0f, 1.0f),
+        FVector4(1.0f, 0.9f, 0.2f, 1.0f),
+    };
+
+    const FVector4 NearPlaneColor(1.0f, 1.0f, 1.0f, 1.0f);
+    const FVector4 FarPlaneColor(1.0f, 1.0f, 1.0f, 1.0f);
+    const FVector4 SidePlaneColor(0.6f, 0.6f, 0.6f, 1.0f);
+
+    static constexpr uint32 PlaneEdgeIndices[4][2] =
+    {
+        { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },
+    };
+
+    float PlaneDepths[NUM_SHADOW_CASCADES + 1] = {};
+    const FCamera& Camera = *Scene->Camera;
+    const float CameraNear = Math::Max(Camera.GetNearPlane(), 0.001f);
+    const float CameraFar = Math::Max(Camera.GetFarPlane(), CameraNear + 0.001f);
+
+    bool bHaveReadbackSplits = bHasCascadeSplitDistances;
+    if (bHaveReadbackSplits)
+    {
+        PlaneDepths[0] = CachedCascadeSplitStart[0];
+        for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+        {
+            PlaneDepths[CascadeIndex + 1] = CachedCascadeSplitEnd[CascadeIndex];
+        }
+    }
+    else
+    {
+        float NearDepth = CameraNear;
+        float FarDepth = CameraFar;
+
+        if (Scene->DirectionalLight)
+        {
+            const float CSMNearDistance = Math::Max(Resources.CascadeGenerationData.CSMNearDistance, 0.0f);
+            if (CSMNearDistance > NearDepth)
+            {
+                NearDepth = Math::Min(CSMNearDistance, FarDepth);
+            }
+
+            const float MaxShadowDistance = Resources.CascadeGenerationData.MaxShadowDistance;
+            if (MaxShadowDistance > NearDepth)
+            {
+                FarDepth = Math::Min(FarDepth, MaxShadowDistance);
+            }
+        }
+
+        FarDepth = Math::Max(FarDepth, NearDepth + 0.001f);
+
+        if (Resources.CascadeGenerationData.CascadeSplitMode != 0)
+        {
+            float ManualEnds[NUM_SHADOW_CASCADES] =
+            {
+                Math::Max(Resources.CascadeGenerationData.ManualCascadeSplitDistance0, 0.0f),
+                Math::Max(Resources.CascadeGenerationData.ManualCascadeSplitDistance1, 0.0f),
+                Math::Max(Resources.CascadeGenerationData.ManualCascadeSplitDistance2, 0.0f),
+                FarDepth,
+            };
+
+            float PrevDepth = NearDepth;
+            for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+            {
+                float Distance = Math::Clamp(ManualEnds[CascadeIndex], NearDepth, FarDepth);
+                Distance = Math::Max(Distance, PrevDepth + 0.001f);
+                Distance = Math::Min(Distance, FarDepth);
+                PlaneDepths[CascadeIndex + 1] = Distance;
+                PrevDepth = Distance;
+            }
+        }
+        else
+        {
+            const float Lambda = Math::Clamp(Resources.CascadeGenerationData.CascadeSplitLambda, 0.0f, 1.0f);
+            const float ClipRange = FarDepth - NearDepth;
+            for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+            {
+                const float SplitRatio = float(CascadeIndex + 1) / float(NUM_SHADOW_CASCADES);
+                const float LogScale = NearDepth * Math::Pow(FarDepth / NearDepth, SplitRatio);
+                const float UniformScale = NearDepth + (ClipRange * SplitRatio);
+                const float Distance = (Lambda * (LogScale - UniformScale)) + UniformScale;
+                PlaneDepths[CascadeIndex + 1] = Distance;
+            }
+        }
+        PlaneDepths[0] = NearDepth;
+    }
+
+    for (uint32 Index = 0; Index <= NUM_SHADOW_CASCADES; ++Index)
+    {
+        PlaneDepths[Index] = Math::Clamp(PlaneDepths[Index], CameraNear, CameraFar);
+        if (Index > 0)
+        {
+            PlaneDepths[Index] = Math::Max(PlaneDepths[Index], PlaneDepths[Index - 1] + 0.001f);
+        }
+    }
+
+    OutVertices.Clear();
+    OutVertices.Reserve((NUM_SHADOW_CASCADES + 1) * 8 + (NUM_SHADOW_CASCADES * 8) + 8);
+
+    auto AppendLine = [&](const FVector3& A, const FVector3& B, const FVector4& Color)
+    {
+        FCascadeLineVertex V0;
+        V0.Position = A;
+        V0.Color    = Color;
+        OutVertices.Emplace(V0);
+
+        FCascadeLineVertex V1;
+        V1.Position = B;
+        V1.Color    = Color;
+        OutVertices.Emplace(V1);
+    };
+
+    FVector3 PlaneCorners[NUM_SHADOW_CASCADES + 1][4];
+    for (uint32 PlaneIndex = 0; PlaneIndex <= NUM_SHADOW_CASCADES; ++PlaneIndex)
+    {
+        BuildCameraFrustumPlaneCorners(Camera, PlaneDepths[PlaneIndex], PlaneCorners[PlaneIndex]);
+    }
+
+    for (uint32 PlaneIndex = 0; PlaneIndex <= NUM_SHADOW_CASCADES; ++PlaneIndex)
+    {
+        FVector4 PlaneColor = NearPlaneColor;
+        if (PlaneIndex == NUM_SHADOW_CASCADES)
+        {
+            PlaneColor = FarPlaneColor;
+        }
+        else if (PlaneIndex > 0)
+        {
+            PlaneColor = CascadeColors[(PlaneIndex - 1) & 3u];
+        }
+
+        for (uint32 EdgeIndex = 0; EdgeIndex < 4; ++EdgeIndex)
+        {
+            const uint32 A = PlaneEdgeIndices[EdgeIndex][0];
+            const uint32 B = PlaneEdgeIndices[EdgeIndex][1];
+            AppendLine(PlaneCorners[PlaneIndex][A], PlaneCorners[PlaneIndex][B], PlaneColor);
+        }
+    }
+
+    for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+    {
+        const FVector4 CascadeColor = CascadeColors[CascadeIndex & 3u];
+        for (uint32 CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
+        {
+            const FVector4 SideColor = (CornerIndex & 1u) ? SidePlaneColor : CascadeColor;
+            AppendLine(PlaneCorners[CascadeIndex][CornerIndex], PlaneCorners[CascadeIndex + 1][CornerIndex], SideColor);
+        }
+    }
+
+    const FVector3 CameraPosition = Camera.GetPosition();
+    for (uint32 CornerIndex = 0; CornerIndex < 4; ++CornerIndex)
+    {
+        AppendLine(CameraPosition, PlaneCorners[NUM_SHADOW_CASCADES][CornerIndex], SidePlaneColor);
+    }
+
+    return !OutVertices.IsEmpty();
+}
+
+void FDebugRenderer::RenderCascadeSplitFrustums(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
+{
+    if (!CascadeFrustumDebug_PSO || !CascadeFrustumDebug_VS || !CascadeFrustumDebug_PS)
+    {
+        return;
+    }
+
+    TArray<FCascadeLineVertex> LineVertices;
+    if (!BuildCascadeFrustumVertices(Resources, Scene, LineVertices))
+    {
+        return;
+    }
+
+    FRHIBufferDesc VBDesc;
+    VBDesc.Stride = sizeof(FCascadeLineVertex);
+    VBDesc.Size   = LineVertices.SizeInBytes();
+    VBDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+    VBDesc.bEnableResourceStateTracking = true;
+
+    FRHIBufferRef LineVertexBuffer = FRHI::Get()->CreateBuffer(VBDesc, EResourceAccess::Common, LineVertices.Data());
+    if (!LineVertexBuffer)
+    {
+        return;
+    }
+
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+
+    CommandList.BeginRenderPass(RenderPassDesc);
+    CommandList.SetGraphicsPipelineState(CascadeFrustumDebug_PSO.Get());
+    CommandList.SetConstantBuffer(CascadeFrustumDebug_VS.Get(), Resources.CameraBuffer.Get(), 0);
+    CommandList.SetVertexBuffers(MakeArrayView(&LineVertexBuffer, 1), 0);
+    CommandList.DrawInstanced(LineVertices.Size(), 1, 0, 0);
+    CommandList.EndRenderPass();
 }

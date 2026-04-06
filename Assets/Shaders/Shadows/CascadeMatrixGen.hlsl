@@ -13,7 +13,7 @@ RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
 RWStructuredBuffer<FCascadeSplit> SplitBuffer : register(u1);
 RWTexture2D<float2> MinMaxDepthHistory : register(u2);
 RWStructuredBuffer<float4> CascadeSnapHistory : register(u3);
-RWStructuredBuffer<float4> CascadeExtentsHistory : register(u4);
+RWStructuredBuffer<float4> CascadeSplitHistory : register(u4);
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
 
@@ -24,17 +24,49 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {
     // Retrieve the cascade-index for this thread
     const int CascadeIndex = min(int(DispatchThreadID.x), min(GenerationInfo.MaxCascadeIndex, NUM_SHADOW_CASCADES - 1));
+    const float CascadeResolution = GenerationInfo.CascadeResolution;
     
+    const bool bManualSplitMode = (GenerationInfo.CascadeSplitMode != 0);
+    const bool bUseDepthReducedRangeForAuto = (!bManualSplitMode) && (GenerationInfo.UseDepthReducedRange > 0.5);
+
     // Get the minimum and maximum depth of the scene
     float2 MinMaxDepth = float2(0.0, 1.0);
 
-    const bool bUseMinMaxDepth = (GenerationInfo.bEnableTightFrustum != 0) || (GenerationInfo.AdaptiveSplitRangeEnabled > 0.5);
+    const bool bUseMinMaxDepth = (GenerationInfo.bEnableTightFrustum != 0) || bUseDepthReducedRangeForAuto;
     [branch]
     if (bUseMinMaxDepth)
     {
         if (DispatchThreadID.x == 0)
         {
-            float2 LocalMinMax = saturate(MinMaxDepthTex[uint2(0, 0)]);
+            uint2 MinMaxTexSize = uint2(1, 1);
+            MinMaxDepthTex.GetDimensions(MinMaxTexSize.x, MinMaxTexSize.y);
+
+            float LocalMin = 1.0;
+            float LocalMax = 0.0;
+            bool bHasValidSamples = false;
+
+            [loop]
+            for (uint Y = 0; Y < MinMaxTexSize.y; ++Y)
+            {
+                [loop]
+                for (uint X = 0; X < MinMaxTexSize.x; ++X)
+                {
+                    const float2 SampleMinMax = saturate(MinMaxDepthTex[uint2(X, Y)]);
+                    if (SampleMinMax.x <= SampleMinMax.y)
+                    {
+                        LocalMin = min(LocalMin, SampleMinMax.x);
+                        LocalMax = max(LocalMax, SampleMinMax.y);
+                        bHasValidSamples = true;
+                    }
+                }
+            }
+
+            float2 LocalMinMax = float2(0.0, 1.0);
+            if (bHasValidSamples)
+            {
+                LocalMinMax = float2(LocalMin, LocalMax);
+            }
+
             if (LocalMinMax.x > LocalMinMax.y)
             {
                 LocalMinMax = float2(0.0, 1.0);
@@ -52,18 +84,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
             LocalMinMax.x = saturate(LocalMinMax.x - DepthPad);
             LocalMinMax.y = saturate(LocalMinMax.y + DepthPad);
 
-            // Apply hysteresis to reduce temporal popping: expand immediately, shrink slowly.
-            float2 PrevMinMax = MinMaxDepthHistory[uint2(0, 0)];
-            if (PrevMinMax.x < 0.0 || PrevMinMax.y < 0.0 || PrevMinMax.x > PrevMinMax.y)
-            {
-                PrevMinMax = LocalMinMax;
-            }
-
-            const float ShrinkFactor = saturate(GenerationInfo.TightFrustumShrinkFactor);
-            float2 SmoothedMinMax;
-            SmoothedMinMax.x = (LocalMinMax.x < PrevMinMax.x) ? LocalMinMax.x : lerp(PrevMinMax.x, LocalMinMax.x, ShrinkFactor);
-            SmoothedMinMax.y = (LocalMinMax.y > PrevMinMax.y) ? LocalMinMax.y : lerp(PrevMinMax.y, LocalMinMax.y, ShrinkFactor);
-            gMinMaxDepth = SmoothedMinMax;
+            gMinMaxDepth = LocalMinMax;
         }
 
         GroupMemoryBarrierWithGroupSync();
@@ -76,12 +97,37 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
     }
 
-    float CameraNear = CameraBuffer.NearPlane;
-    float CameraFar  = CameraBuffer.FarPlane;
+    const float BaseCameraNear = CameraBuffer.NearPlane;
+    const float BaseCameraFar  = CameraBuffer.FarPlane;
+
+    float CameraNear = BaseCameraNear;
+    float CameraFar  = BaseCameraFar;
+    const float CSMNearDistance = max(GenerationInfo.CSMNearDistance, 0.0);
+    if (CSMNearDistance > CameraNear && CSMNearDistance < CameraFar)
+    {
+        CameraNear = CSMNearDistance;
+    }
+
     const float MaxShadowDistance = GenerationInfo.MaxShadowDistance;
     if (MaxShadowDistance > CameraNear && MaxShadowDistance < CameraFar)
     {
         CameraFar = MaxShadowDistance;
+    }
+
+    if (CameraFar <= CameraNear)
+    {
+        CameraNear = BaseCameraNear;
+        CameraFar  = BaseCameraFar;
+
+        if (MaxShadowDistance > CameraNear && MaxShadowDistance < CameraFar)
+        {
+            CameraFar = MaxShadowDistance;
+        }
+
+        if (CameraFar <= CameraNear)
+        {
+            CameraFar = CameraNear + 1.0;
+        }
     }
 
     const float CameraRange   = max(CameraFar - CameraNear, 1e-6);
@@ -92,48 +138,107 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float MaxDepth = CameraNear + CameraRange * MinMaxDepth.y;
     MinDepth = clamp(MinDepth, CameraNear, CameraFar);
     MaxDepth = clamp(MaxDepth, MinDepth, CameraFar);
-    
-    const bool bAdaptiveSplitRange = (GenerationInfo.AdaptiveSplitRangeEnabled > 0.5);
-    float CascadeSplits[NUM_SHADOW_CASCADES];
-    float CascadeSplitsReference[NUM_SHADOW_CASCADES];
-    
-    // Calculate split depths based on view camera frustum
-    // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
+
+    if (!bUseDepthReducedRangeForAuto)
     {
-        const float Range = MaxDepth - MinDepth;
-        const float Ratio = MaxDepth / max(MinDepth, 0.01);
-
-        [unroll]
-        for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
-        {
-            float Percentage   = (Index + 1) / float(NUM_SHADOW_CASCADES);
-            float LogScale     = MinDepth * pow(abs(Ratio), Percentage);
-            float UniformScale = MinDepth + Range * Percentage;
-            float Distance     = GenerationInfo.CascadeSplitLambda * (LogScale - UniformScale) + UniformScale;
-
-            CascadeSplits[Index] = (Distance - NearPlane) / ClipRange;
-        }
+        MinDepth = CameraNear;
+        MaxDepth = CameraFar;
     }
 
-    // Also calculate a reference set of splits.
-    // When adaptive split range is enabled, use the adaptive min/max to keep reference coverage tight.
-    // Otherwise, use the full camera clip range for stable penumbra behavior.
+    float CascadeSplits[NUM_SHADOW_CASCADES];
+    float CascadeSplitsReference[NUM_SHADOW_CASCADES];
+
+    if (bManualSplitMode)
     {
-        const float ReferenceMinDepth = bAdaptiveSplitRange ? MinDepth : NearPlane;
-        const float ReferenceMaxDepth = bAdaptiveSplitRange ? MaxDepth : CameraFar;
+        float ManualEnds[NUM_SHADOW_CASCADES];
+        ManualEnds[0] = max(GenerationInfo.ManualCascadeSplitDistance0, 0.0);
+        ManualEnds[1] = max(GenerationInfo.ManualCascadeSplitDistance1, 0.0);
+        ManualEnds[2] = max(GenerationInfo.ManualCascadeSplitDistance2, 0.0);
+        ManualEnds[3] = CameraFar;
 
-        const float Range = ReferenceMaxDepth - ReferenceMinDepth;
-        const float Ratio = ReferenceMaxDepth / max(ReferenceMinDepth, 0.01);
-
+        float PrevEnd = NearPlane;
         [unroll]
         for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
         {
-            float Percentage   = (Index + 1) / float(NUM_SHADOW_CASCADES);
-            float LogScale     = ReferenceMinDepth * pow(abs(Ratio), Percentage);
-            float UniformScale = ReferenceMinDepth + Range * Percentage;
-            float Distance     = GenerationInfo.CascadeSplitLambda * (LogScale - UniformScale) + UniformScale;
+            float EndDistance = clamp(ManualEnds[Index], NearPlane, CameraFar);
+            EndDistance = max(EndDistance, PrevEnd + 1e-5);
+            EndDistance = min(EndDistance, CameraFar);
+            if (EndDistance <= PrevEnd)
+            {
+                EndDistance = min(CameraFar, PrevEnd + 1e-5);
+            }
 
-            CascadeSplitsReference[Index] = (Distance - NearPlane) / ClipRange;
+            const float SplitNorm = saturate((EndDistance - NearPlane) / ClipRange);
+            CascadeSplits[Index] = SplitNorm;
+            CascadeSplitsReference[Index] = SplitNorm;
+            PrevEnd = EndDistance;
+        }
+    }
+    else
+    {
+        // Calculate split depths based on view camera frustum
+        // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
+        {
+            const float SplitMinDepth = bUseDepthReducedRangeForAuto ? MinDepth : NearPlane;
+            const float SplitMaxDepth = bUseDepthReducedRangeForAuto ? MaxDepth : CameraFar;
+            const float Range = SplitMaxDepth - SplitMinDepth;
+            const float Ratio = SplitMaxDepth / max(SplitMinDepth, 0.01);
+
+            [unroll]
+            for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+            {
+                float Percentage   = (Index + 1) / float(NUM_SHADOW_CASCADES);
+                float LogScale     = SplitMinDepth * pow(abs(Ratio), Percentage);
+                float UniformScale = SplitMinDepth + Range * Percentage;
+                float Distance     = GenerationInfo.CascadeSplitLambda * (LogScale - UniformScale) + UniformScale;
+
+                CascadeSplits[Index] = (Distance - NearPlane) / ClipRange;
+            }
+
+            [unroll]
+            for (int Index = 1; Index < NUM_SHADOW_CASCADES; ++Index)
+            {
+                CascadeSplits[Index] = max(CascadeSplits[Index], CascadeSplits[Index - 1] + 1e-5);
+            }
+
+            [unroll]
+            for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+            {
+                CascadeSplits[Index] = saturate(CascadeSplits[Index]);
+            }
+        }
+
+        // Reference splits always use the selected CSM near/far clip range (not the depth-reduced range)
+        // so filter scaling stays stable when the reduced range changes frame-to-frame.
+        {
+            const float ReferenceMinDepth = NearPlane;
+            const float ReferenceMaxDepth = CameraFar;
+
+            const float Range = ReferenceMaxDepth - ReferenceMinDepth;
+            const float Ratio = ReferenceMaxDepth / max(ReferenceMinDepth, 0.01);
+
+            [unroll]
+            for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+            {
+                float Percentage   = (Index + 1) / float(NUM_SHADOW_CASCADES);
+                float LogScale     = ReferenceMinDepth * pow(abs(Ratio), Percentage);
+                float UniformScale = ReferenceMinDepth + Range * Percentage;
+                float Distance     = GenerationInfo.CascadeSplitLambda * (LogScale - UniformScale) + UniformScale;
+
+                CascadeSplitsReference[Index] = (Distance - NearPlane) / ClipRange;
+            }
+
+            [unroll]
+            for (int Index = 1; Index < NUM_SHADOW_CASCADES; ++Index)
+            {
+                CascadeSplitsReference[Index] = max(CascadeSplitsReference[Index], CascadeSplitsReference[Index - 1] + 1e-5);
+            }
+
+            [unroll]
+            for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+            {
+                CascadeSplitsReference[Index] = saturate(CascadeSplitsReference[Index]);
+            }
         }
     }
 
@@ -182,11 +287,15 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
     }
 
-    // Use min between MinMaxDepth to protect against cases where the lowest is 1.0 
-    // and highest 0.0. This can happen when nothing is rendered in the prepass.
-    const float AdaptiveNear = (MinDepth - NearPlane) / max(ClipRange, 1e-6);
-    float SplitDist     = bAdaptiveSplitRange ? CascadeSplits[CascadeIndex] : CascadeSplitsReference[CascadeIndex];
-    float PrevSplitDist = (CascadeIndex == 0) ? (bAdaptiveSplitRange ? AdaptiveNear : 0.0) : (bAdaptiveSplitRange ? CascadeSplits[CascadeIndex - 1] : CascadeSplitsReference[CascadeIndex - 1]);
+    // Use the reduced-range near depth for the first cascade only when Auto mode uses depth-reduced range.
+    const float ReducedRangeNear = (MinDepth - NearPlane) / max(ClipRange, 1e-6);
+    float SplitDist     = bUseDepthReducedRangeForAuto ? CascadeSplits[CascadeIndex] : CascadeSplitsReference[CascadeIndex];
+    float PrevSplitDist = (CascadeIndex == 0) ? (bUseDepthReducedRangeForAuto ? ReducedRangeNear : 0.0) : (bUseDepthReducedRangeForAuto ? CascadeSplits[CascadeIndex - 1] : CascadeSplitsReference[CascadeIndex - 1]);
+
+    SplitDist = max(SplitDist, PrevSplitDist + 1e-5);
+    SplitDist = saturate(SplitDist);
+    PrevSplitDist = saturate(PrevSplitDist);
+    CascadeSplitHistory[CascadeIndex] = float4(SplitDist, PrevSplitDist, 0.0, 0.0);
 
     {
         [unroll]
@@ -293,10 +402,8 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float4x4 InvView = float4x4(float4(LightRotation[0], 0.0), float4(LightRotation[1], 0.0), float4(LightRotation[2], 0.0), float4(ShadowEyePos, 1.0));
 
     // Cache the shadow-map size
-    const float CascadeResolution = GenerationInfo.CascadeResolution;
     const float ReferenceWorldTexelSize = (2.0 * ReferenceSphereRadius) / max(CascadeResolution, 1.0);
 
-    const bool bUseTightAABB = (GenerationInfo.bEnableTightFrustum != 0) && (GenerationInfo.CascadeFitAABB > 0.5);
     const bool bStableExtents = (GenerationInfo.bEnableStableCascades != 0) && (GenerationInfo.TightFrustumStableExtents > 0.5);
 
     float3 MinExtents;
@@ -315,77 +422,14 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         }
     }
 
-    if (bUseTightAABB)
+    float StableRadius = SphereRadius;
+    if (GenerationInfo.bEnableTightFrustum && bStableExtents)
     {
-        float3 LSMin = float3(1e9, 1e9, 1e9);
-        float3 LSMax = float3(-1e9, -1e9, -1e9);
-
-        [unroll]
-        for (int Index = 0; Index < 8; ++Index)
-        {
-            float3 CornerLS = mul(float4(FrustumCornersWS[Index], 1.0), View).xyz;
-            LSMin = min(LSMin, CornerLS);
-            LSMax = max(LSMax, CornerLS);
-        }
-
-        float3 RefLSMin = LSMin;
-        float3 RefLSMax = LSMax;
-
-        if (bStableExtents)
-        {
-            RefLSMin = float3(1e9, 1e9, 1e9);
-            RefLSMax = float3(-1e9, -1e9, -1e9);
-
-            [unroll]
-            for (int Index = 0; Index < 8; ++Index)
-            {
-                float3 CornerLS = mul(float4(ReferenceFrustumCornersWS[Index], 1.0), View).xyz;
-                RefLSMin = min(RefLSMin, CornerLS);
-                RefLSMax = max(RefLSMax, CornerLS);
-            }
-        }
-
-        const float2 MinXY = bStableExtents ? RefLSMin.xy : LSMin.xy;
-        const float2 MaxXY = bStableExtents ? RefLSMax.xy : LSMax.xy;
-
-        MinExtents = float3(MinXY, LSMin.z);
-        MaxExtents = float3(MaxXY, LSMax.z);
-    }
-    else
-    {
-        float StableRadius = SphereRadius;
-        if (GenerationInfo.bEnableTightFrustum && bStableExtents)
-        {
-            StableRadius = ReferenceSphereRadius;
-        }
-
-        MaxExtents = float3(StableRadius, StableRadius, SphereRadius);
-        MinExtents = float3(-StableRadius, -StableRadius, -SphereRadius);
+        StableRadius = ReferenceSphereRadius;
     }
 
-    // Apply hysteresis to tight-frustum XY extents: expand immediately, shrink slowly.
-    if (GenerationInfo.bEnableTightFrustum && bUseTightAABB)
-    {
-        float4 PrevExtents = CascadeExtentsHistory[CascadeIndex];
-        const bool bPrevValid = (PrevExtents.z > PrevExtents.x) && (PrevExtents.w > PrevExtents.y);
-        if (!bPrevValid)
-        {
-            PrevExtents = float4(MinExtents.xy, MaxExtents.xy);
-        }
-
-        const float ShrinkFactor = saturate(GenerationInfo.TightFrustumShrinkFactor);
-        float2 NewMin = lerp(PrevExtents.xy, MinExtents.xy, ShrinkFactor);
-        float2 NewMax = lerp(PrevExtents.zw, MaxExtents.xy, ShrinkFactor);
-
-        // Expand immediately (component-wise), shrink slowly.
-        NewMin = min(NewMin, MinExtents.xy);
-        NewMax = max(NewMax, MaxExtents.xy);
-
-        MinExtents.xy = NewMin;
-        MaxExtents.xy = NewMax;
-
-        CascadeExtentsHistory[CascadeIndex] = float4(NewMin, NewMax);
-    }
+    MaxExtents = float3(StableRadius, StableRadius, SphereRadius);
+    MinExtents = float3(-StableRadius, -StableRadius, -SphereRadius);
 
     float3 CascadeExtents = MaxExtents - MinExtents;
 
@@ -394,10 +438,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     const float PCFRadiusTexels = max(GenerationInfo.PCFMinFilterRadiusTexels, (GenerationInfo.PCFFilterWorld / RefTexelSize) * 0.5);
     const float PCFMarginTexels = ceil(PCFRadiusTexels) + 1.0;
 
-    const float BasePCSS = CascadeResolution / 32.0;
-    const uint CascadeShift = (1u << CascadeIndex);
-    const float CascadeScale = rcp(float(CascadeShift));
-    const float MaxPCSSRadiusTexels = clamp(BasePCSS * CascadeScale, 4.0, 64.0);
+    const float MaxPCSSRadiusTexels = max(GenerationInfo.PCSSMaxRadiusTexels, 4.0);
     const float PCSSMarginTexels = MaxPCSSRadiusTexels + 3.0;
 
     const bool bUsePCSS = (GenerationInfo.FilterMode != 0);
@@ -410,7 +451,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
         // Prevent guard bands from exploding the cascade when very large kernels are requested.
         const float MaxAbsX = max(abs(MinExtents.x), abs(MaxExtents.x));
         const float MaxAbsY = max(abs(MinExtents.y), abs(MaxExtents.y));
-        const float MaxGuardBand = max(MaxAbsX, MaxAbsY) * 0.5;
+        const float MaxGuardBand = max(MaxAbsX, MaxAbsY) * 0.95;
         MarginWorld = min(MarginWorld, MaxGuardBand);
         MaxExtents.xy += MarginWorld;
         MinExtents.xy -= MarginWorld;

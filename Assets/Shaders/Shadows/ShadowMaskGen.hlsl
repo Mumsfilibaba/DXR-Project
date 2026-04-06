@@ -46,16 +46,20 @@
     #define NUM_BLOCKER_SAMPLES 128
 #endif
 
-#if !defined(SELECT_CASCADE_FROM_PROJECTION)
-    #define SELECT_CASCADE_FROM_PROJECTION 1
-#endif
-
 #if !defined(ENABLE_CASCADE_BLENDING)
     #define ENABLE_CASCADE_BLENDING 1
 #endif
 
 #if !defined(ENABLE_CASCADE_FALLBACK)
     #define ENABLE_CASCADE_FALLBACK 0
+#endif
+
+#if !defined(ENABLE_PER_TAP_GLOBAL_REMAP)
+    #define ENABLE_PER_TAP_GLOBAL_REMAP 1
+#endif
+
+#if !defined(MAX_CASCADE_REMAP_STEPS)
+    #define MAX_CASCADE_REMAP_STEPS 2
 #endif
 
 #if !defined(CASCADE_FADE_FACTOR)
@@ -75,8 +79,6 @@
 #define SHADOW_DEBUG_CASCADE_FALLBACK   7
 
 // NOTE: DirectionalLight.LightSize is treated as *degrees* (angular diameter).
-
-#define USE_ORTHO 1
 
 // Camera and Light
 #if SHADER_LANG == SHADER_LANG_MSL
@@ -347,6 +349,50 @@ float2 BaseCascadeOffsetUVToGlobal(uint BaseCascadeIndex, float2 OffsetUV)
     return OffsetUV / BaseScale;
 }
 
+bool ResolveRemappedCascadeUVW(uint BaseCascadeIndex, float3 SampleGlobal, out uint OutCascadeIndex, out float3 OutSampleUVW)
+{
+    OutCascadeIndex = BaseCascadeIndex;
+    OutSampleUVW = GlobalToCascadeUVW(BaseCascadeIndex, SampleGlobal);
+    if (IsInsideCascadeUVW(OutSampleUVW))
+    {
+        return true;
+    }
+
+#if ENABLE_PER_TAP_GLOBAL_REMAP
+    [unroll]
+    for (uint Step = 1; Step <= MAX_CASCADE_REMAP_STEPS; ++Step)
+    {
+        const uint CascadeIndex = BaseCascadeIndex + Step;
+        if (CascadeIndex >= NUM_SHADOW_CASCADES)
+        {
+            break;
+        }
+
+        const float3 CandidateUVW = GlobalToCascadeUVW(CascadeIndex, SampleGlobal);
+        if (IsInsideCascadeUVW(CandidateUVW))
+        {
+            OutCascadeIndex = CascadeIndex;
+            OutSampleUVW = CandidateUVW;
+            return true;
+        }
+    }
+#elif ENABLE_CASCADE_FALLBACK
+    [loop]
+    for (uint CascadeIndex = BaseCascadeIndex + 1; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+    {
+        const float3 CandidateUVW = GlobalToCascadeUVW(CascadeIndex, SampleGlobal);
+        if (IsInsideCascadeUVW(CandidateUVW))
+        {
+            OutCascadeIndex = CascadeIndex;
+            OutSampleUVW = CandidateUVW;
+            return true;
+        }
+    }
+#endif
+
+    return false;
+}
+
 // Samples the shadow-map depth for a given UV offset, automatically falling back to coarser cascades if the sample goes out of bounds.
 float SampleShadowDepthMultiCascade(uint BaseCascadeIndex, FFilterSetup FilterSetup, float2 OffsetUV, out float OutReceiverBiasedDepth, out uint OutSampleCascadeIndex, inout uint FallbackHit)
 {
@@ -358,23 +404,17 @@ float SampleShadowDepthMultiCascade(uint BaseCascadeIndex, FFilterSetup FilterSe
         return ShadowCascades.SampleLevel(ShadowSamplerPoint, float3(BaseUV, BaseCascadeIndex), 0);
     }
 
-#if ENABLE_CASCADE_FALLBACK
     const float2 GlobalOffset = BaseCascadeOffsetUVToGlobal(BaseCascadeIndex, OffsetUV);
     const float3 SampleGlobal = FilterSetup.GlobalShadowPosition + float3(GlobalOffset, 0.0);
-
-    [loop]
-    for (uint CascadeIndex = BaseCascadeIndex + 1; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+    uint CascadeIndex = BaseCascadeIndex;
+    float3 SampleUVW = 0.0;
+    if (ResolveRemappedCascadeUVW(BaseCascadeIndex, SampleGlobal, CascadeIndex, SampleUVW))
     {
-        const float3 SampleUVW = GlobalToCascadeUVW(CascadeIndex, SampleGlobal);
-        if (IsInsideCascadeUVW(SampleUVW))
-        {
-            OutReceiverBiasedDepth = ReceiverDepthForCascade(CascadeIndex, FilterSetup.GlobalShadowPosition);
-            OutSampleCascadeIndex = CascadeIndex;
-            FallbackHit = 1;
-            return ShadowCascades.SampleLevel(ShadowSamplerPoint, float3(SampleUVW.xy, CascadeIndex), 0);
-        }
+        OutReceiverBiasedDepth = ReceiverDepthForCascade(CascadeIndex, FilterSetup.GlobalShadowPosition);
+        OutSampleCascadeIndex = CascadeIndex;
+        FallbackHit = (CascadeIndex != BaseCascadeIndex) ? 1 : FallbackHit;
+        return ShadowCascades.SampleLevel(ShadowSamplerPoint, float3(SampleUVW.xy, CascadeIndex), 0);
     }
-#endif
 
     // Outside all cascades: treat as far depth (no blocker).
     OutReceiverBiasedDepth = FilterSetup.ReceiverDepth;
@@ -391,23 +431,17 @@ float SampleShadowCmpMultiCascade(uint BaseCascadeIndex, FFilterSetup FilterSetu
         return ShadowCompare(BaseCascadeIndex, FilterSetup.BiasedDepth, SampleDepth);
     }
 
-#if ENABLE_CASCADE_FALLBACK
     const float2 GlobalOffset = BaseCascadeOffsetUVToGlobal(BaseCascadeIndex, OffsetUV);
     const float3 SampleGlobal = FilterSetup.GlobalShadowPosition + float3(GlobalOffset, 0.0);
-
-    [loop]
-    for (uint CascadeIndex = BaseCascadeIndex + 1; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
+    uint CascadeIndex = BaseCascadeIndex;
+    float3 SampleUVW = 0.0;
+    if (ResolveRemappedCascadeUVW(BaseCascadeIndex, SampleGlobal, CascadeIndex, SampleUVW))
     {
-        const float3 SampleUVW = GlobalToCascadeUVW(CascadeIndex, SampleGlobal);
-        if (IsInsideCascadeUVW(SampleUVW))
-        {
-            const float ReceiverBiasedDepth = ReceiverBiasedDepthForCascade(CascadeIndex, FilterSetup.GlobalShadowPosition, FilterSetup.ShadowBiasWorld);
-            FallbackHit = 1;
-            const float SampleDepth = ShadowCascades.SampleLevel(ShadowSamplerPoint, float3(SampleUVW.xy, CascadeIndex), 0);
-            return ShadowCompare(CascadeIndex, ReceiverBiasedDepth, SampleDepth);
-        }
+        const float ReceiverBiasedDepth = ReceiverBiasedDepthForCascade(CascadeIndex, FilterSetup.GlobalShadowPosition, FilterSetup.ShadowBiasWorld);
+        FallbackHit = (CascadeIndex != BaseCascadeIndex) ? 1 : FallbackHit;
+        const float SampleDepth = ShadowCascades.SampleLevel(ShadowSamplerPoint, float3(SampleUVW.xy, CascadeIndex), 0);
+        return ShadowCompare(CascadeIndex, ReceiverBiasedDepth, SampleDepth);
     }
-#endif
 
     // Outside all cascades: treat as unshadowed.
     return 1.0;
@@ -538,15 +572,6 @@ float ShadowAmountSimple(uint CascadeIndex, FFilterSetup FilterSetup)
     return ShadowCompare(CascadeIndex, FilterSetup.BiasedDepth, SampleDepth);
 }
 
-float PCSS_ClipToEye(float DepthVS, float NearPlane, float FarPlane)
-{
-#if USE_ORTHO
-    return NearPlane + (FarPlane - NearPlane) * DepthVS;
-#else
-	return FarPlane * NearPlane / (FarPlane - DepthVS * (FarPlane - NearPlane));
-#endif
-}
-
 float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS, float3 ShadowPosition, out float DebugPCSSClamp, out uint DebugFallbackHit)
 {
     DebugPCSSClamp = 1.0;
@@ -605,12 +630,19 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 #if FILTER_MODE_PCSS
     
     // PCSS Step 0: Setup
-    const float ReceiverDepthLS = PCSS_ClipToEye(saturate(BiasedShadowPosition.z), CascadeSplit.NearPlane, CascadeSplit.FarPlane);
     const float ReceiverDepthGlobalLS = FilterSetup.GlobalShadowPosition.z;
+    const float ReceiverDepthForSearch = abs(ReceiverDepthGlobalLS);
     const float2 CascadeExtentsXY = max((CascadeSplit.MaxExtent - CascadeSplit.MinExtent).xy, float2(0.0001, 0.0001));
-    // Use cascade 0 reference to keep the PCSS clamp consistent across cascades.
-    // This avoids visible seam changes in penumbra size when crossing cascade boundaries.
+    // Use shared references from the first cascades to keep PCSS scale stable across split transitions.
     const float RefWorldTexelSizeRef = max(ShadowSplitsBuffer[0].RefWorldTexelSize, 1e-6);
+    float MaxPenumbraWorldRef = ShadowSplitsBuffer[0].MaxPCSSRadiusWorld;
+    float MaxSearchRadiusWorldRef = ShadowSplitsBuffer[0].MaxPCSSSearchWorld;
+    [unroll]
+    for (uint RefCascade = 1; RefCascade < NUM_SHADOW_CASCADES; ++RefCascade)
+    {
+        MaxPenumbraWorldRef = max(MaxPenumbraWorldRef, ShadowSplitsBuffer[RefCascade].MaxPCSSRadiusWorld);
+        MaxSearchRadiusWorldRef = max(MaxSearchRadiusWorldRef, ShadowSplitsBuffer[RefCascade].MaxPCSSSearchWorld);
+    }
     float MinRadiusWorld = max(SettingsBuffer.PCSSMinFilterRadiusTexels, 0.0) * RefWorldTexelSizeRef;
 
     // Interpret LightSize as an angular diameter (degrees).
@@ -624,8 +656,8 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
         MinRadiusWorld *= MinFilterScale;
     }
 
-    const float MaxPenumbraWorldRef = max(ShadowSplitsBuffer[0].MaxPCSSRadiusWorld, MinRadiusWorld);
-    const float MaxSearchRadiusWorldRef = max(ShadowSplitsBuffer[0].MaxPCSSSearchWorld, MinRadiusWorld);
+    MaxPenumbraWorldRef = max(MaxPenumbraWorldRef, MinRadiusWorld);
+    MaxSearchRadiusWorldRef = max(MaxSearchRadiusWorldRef, MinRadiusWorld);
     float MaxPenumbraWorld = MaxPenumbraWorldRef;
     float MaxSearchRadiusWorld = MaxSearchRadiusWorldRef;
     if (SettingsBuffer.PCSSMaxPenumbraWorld > 0.0)
@@ -644,7 +676,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
     const float SearchRadiusScale = tan(SearchAngularRadiusRad);
 
     // PCSS Step 1: Find blockers in a search region (UV space)
-    float SearchRadiusWorld = SettingsBuffer.PCSSBlockerSearchScale * SearchRadiusScale * max(ReceiverDepthLS - CascadeSplit.NearPlane, 0.0);
+    float SearchRadiusWorld = SettingsBuffer.PCSSBlockerSearchScale * SearchRadiusScale * ReceiverDepthForSearch;
     SearchRadiusWorld = clamp(SearchRadiusWorld, MinRadiusWorld, MaxSearchRadiusWorld);
     float2 SearchRadiusUV = SearchRadiusWorld / CascadeExtentsXY;
 
@@ -687,7 +719,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 PositionWS, float3 NormalWS,
 
 float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel, inout uint CascadeIndex, out float DebugValue)
 {
-    // Calculate view depth (stable across jitter; used for ViewZ cascade selection).
+    // Calculate view depth (stable across jitter; used for max-distance fade).
     const float  ViewPosZ           = max(dot(PositionWS - CameraBuffer.PositionWS, CameraBuffer.Forward), 0.0);
     const float3 ProjectionPosition = mul(float4(PositionWS, 1.0), LightBuffer.ShadowMatrix).xyz;
 
@@ -697,35 +729,19 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
     [unroll]
     for (int Index = NUM_SHADOW_CASCADES - 1; Index >= 0; --Index)
     {
-        FCascadeSplit CascadeSplit = ShadowSplitsBuffer[Index];
-
-    #if SELECT_CASCADE_FROM_PROJECTION
-        const float4 Offsets = CascadeSplit.Offsets;
-        const float4 Scale   = CascadeSplit.Scale;
-
-        float3 CascadePosition = ProjectionPosition + Offsets.xyz;
-        CascadePosition *= Scale.xyz;
-        CascadePosition  = abs(CascadePosition - 0.5);
+        float3 CascadePosition = ComputeCascadeUVWFromMatrix(Index, PositionWS);
+        CascadePosition = abs(CascadePosition - 0.5);
 
         if (all(CascadePosition <= (0.5 + CASCADE_UV_EPSILON)))
         {
             CascadeIndex = Index;
         }
-    #else
-        if (ViewPosZ < CascadeSplit.Split)
-        {
-            CascadeIndex = Index;
-        }
-    #endif
     }
 
-    // Safety for ViewZ-based selection: the chosen cascade can be correct in Z but still not contain the point in XY
-    // (tight frustum / reconstruction error). Walk towards coarser cascades until the point is inside to avoid
-    // out-of-bounds sampling (black quads / seams).
-#if !SELECT_CASCADE_FROM_PROJECTION
+    // Safety for projection-based selection: walk toward coarser cascades when reconstruction lands outside
+    // the selected split (tight frustum / numerical drift).
     {
-        FCascadeSplit Selected = ShadowSplitsBuffer[CascadeIndex];
-        float3 CascadePosition = (ProjectionPosition + Selected.Offsets.xyz) * Selected.Scale.xyz;
+        float3 CascadePosition = ComputeCascadeUVWFromMatrix(CascadeIndex, PositionWS);
 
         [branch]
         if (!IsInsideCascadeUVW(CascadePosition))
@@ -735,8 +751,7 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
             [loop]
             for (uint Index = CascadeIndex + 1; Index < NUM_SHADOW_CASCADES; ++Index)
             {
-                FCascadeSplit Candidate = ShadowSplitsBuffer[Index];
-                float3 CandidatePos = (ProjectionPosition + Candidate.Offsets.xyz) * Candidate.Scale.xyz;
+                float3 CandidatePos = ComputeCascadeUVWFromMatrix(Index, PositionWS);
 
                 if (IsInsideCascadeUVW(CandidatePos))
                 {
@@ -746,7 +761,6 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
             }
         }
     }
-#endif
 
 #if ENABLE_FIRST_CASCADE_ONLY
     if (CascadeIndex > 0)
@@ -783,9 +797,7 @@ float ComputeShadow(float3 PositionWS, float3 Normal, float DepthVS, uint2 Pixel
     if (CascadeIndex != (NUM_SHADOW_CASCADES - 1))
     {
         const FCascadeSplit NextSplitData = ShadowSplitsBuffer[CascadeIndex + 1];
-        float NextSplit  = CascadeSplit.Split;
-        const float TransitionWidth = max(max(CascadeSplit.TransitionWidthViewZ, NextSplitData.TransitionWidthViewZ), 1e-6);
-        float FadeFactor = (NextSplit - ViewPosZ) / TransitionWidth;
+        float FadeFactor = 1.0;
 
         const float EdgeMarginTexels = max(CascadeSplit.TransitionMarginTexels, NextSplitData.TransitionMarginTexels);
         const float EdgeWidth = (EdgeMarginTexels / max(float(SettingsBuffer.ShadowMapSize), 1.0)) * 2.0;

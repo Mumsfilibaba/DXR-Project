@@ -216,6 +216,7 @@ private:
     FCascadedShadowsRenderPass* CascadedShadowsRenderPass;
     FShadowMaskRenderPass*      ShadowMaskRenderPass;
     FShadowMaskHistoryPass*     ShadowMaskHistoryPass;
+    FShadowMaskDenoisePass*     ShadowMaskDenoisePass;
     FScreenSpaceOcclusionPass*  ScreenSpaceOcclusionPass;
     FSkyboxRenderPass*          SkyboxRenderPass;
     FTemporalAA*                TemporalAA;

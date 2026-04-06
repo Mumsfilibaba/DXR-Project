@@ -27,10 +27,20 @@ static TAutoConsoleVariable<float> CVarCSMTightFrustumDepthQuant(
     "Quantization steps used for tight-frustum min/max depth snapping (higher = finer, lower = more stable).",
     1024.0f);
 
-static TAutoConsoleVariable<bool> CVarCSMCascadeFitAABB(
-    "Renderer.CSM.CascadeFitAABB",
-    "Use a tight AABB fit for cascades when tight frustum is enabled (default is sphere fit).",
+static TAutoConsoleVariable<bool> CVarCSMUseDepthReducedRange(
+    "Renderer.CSM.UseDepthReducedRange",
+    "Use reduced scene depth min/max to tighten the split-generation near/far range in Auto (Lambda) mode.",
     false);
+
+static TAutoConsoleVariable<float> CVarCSMNearDistance(
+    "Renderer.CSM.NearDistance",
+    "Near distance (view-space) used for CSM split generation. 0 uses the camera near plane.",
+    0.0f);
+
+static TAutoConsoleVariable<float> CVarCSMPCSSMaxRadiusTexels(
+    "Renderer.CSM.PCSS.MaxRadiusTexels",
+    "Maximum PCSS kernel radius in texels used for cascade guard bands.",
+    192.0f);
 
 static TAutoConsoleVariable<int32> CVarPointLightShadowMapSize(
     "Renderer.Shadows.PointLightShadowMapSize",
@@ -72,6 +82,8 @@ FFrameResources::FFrameResources()
     , bCascadeGenerationDataDirty(true)
     , bCascadeSizeDirty(false)
 {
+    DirectionalLightData  = {};
+    CascadeGenerationData = {};
 }
 
 FFrameResources::~FFrameResources()
@@ -250,14 +262,8 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         CascadeGenerationData.CascadeResolution   = static_cast<float>(CascadeSize);
         CascadeGenerationData.MaxCascadeIndex     = Math::Max(NUM_SHADOW_CASCADES - 1, 0);
 
-        if (IConsoleVariable* CVarCSMTightFrustum = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
-        {
-            CascadeGenerationData.bEnableTightFrustum = CVarCSMTightFrustum->GetBool();
-        }
-        else
-        {
-            CascadeGenerationData.bEnableTightFrustum = true;
-        }
+        // Force sphere-fit path without tight-frustum depth fitting.
+        CascadeGenerationData.bEnableTightFrustum = false;
 
         if (IConsoleVariable* CVarCSMStableCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.StableCascades"))
         {
@@ -268,13 +274,19 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
             CascadeGenerationData.bEnableStableCascades = true;
         }
 
-        bool bAdaptiveSplitRange = false;
-        if (IConsoleVariable* CVarAdaptiveSplitRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.AdaptiveSplitRange"))
-        {
-            bAdaptiveSplitRange = CVarAdaptiveSplitRange->GetBool();
-        }
+        const float PrevUseDepthReducedRange = CascadeGenerationData.UseDepthReducedRange;
+        const float PrevCSMNearDistance      = CascadeGenerationData.CSMNearDistance;
+        const int32 PrevCascadeSplitMode     = CascadeGenerationData.CascadeSplitMode;
+        const float PrevManualSplit0         = CascadeGenerationData.ManualCascadeSplitDistance0;
+        const float PrevManualSplit1         = CascadeGenerationData.ManualCascadeSplitDistance1;
+        const float PrevManualSplit2         = CascadeGenerationData.ManualCascadeSplitDistance2;
 
-        CascadeGenerationData.AdaptiveSplitRangeEnabled = bAdaptiveSplitRange ? 1.0f : 0.0f;
+        CascadeGenerationData.UseDepthReducedRange = CVarCSMUseDepthReducedRange.GetValue() ? 1.0f : 0.0f;
+        CascadeGenerationData.CSMNearDistance      = Math::Max(CVarCSMNearDistance.GetValue(), 0.0f);
+        CascadeGenerationData.CascadeSplitMode     = static_cast<int32>(DirectionalLight->GetCascadeSplitMode());
+        CascadeGenerationData.ManualCascadeSplitDistance0 = Math::Max(DirectionalLight->GetManualCascadeSplitDistance(0), 0.0f);
+        CascadeGenerationData.ManualCascadeSplitDistance1 = Math::Max(DirectionalLight->GetManualCascadeSplitDistance(1), 0.0f);
+        CascadeGenerationData.ManualCascadeSplitDistance2 = Math::Max(DirectionalLight->GetManualCascadeSplitDistance(2), 0.0f);
 
         if (IConsoleVariable* CVarMaxShadowDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxShadowDistance"))
         {
@@ -293,16 +305,46 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         {
             CascadeGenerationData.ShadowPancakingEnabled = 0.0f;
         }
-        
+
+        CascadeGenerationData.PCSSMaxRadiusTexels = Math::Clamp(CVarCSMPCSSMaxRadiusTexels.GetValue(), 4.0f, 512.0f);
         CascadeGenerationData.Padding0 = 0.0f;
         CascadeGenerationData.Padding1 = 0.0f;
+        CascadeGenerationData.Padding2 = 0.0f;
+        CascadeGenerationData.Padding3 = 0.0f;
+        CascadeGenerationData.Padding4 = 0.0f;
+        CascadeGenerationData.Padding5 = 0.0f;
+        CascadeGenerationData.Padding6 = 0.0f;
+        CascadeGenerationData.Padding7 = 0.0f;
+        CascadeGenerationData.Padding8 = 0.0f;
+        CascadeGenerationData.Padding9 = 0.0f;
+        CascadeGenerationData.Padding10 = 0.0f;
+        CascadeGenerationData.Padding11 = 0.0f;
 
-        if (!CascadeGenerationData.bEnableTightFrustum && !bAdaptiveSplitRange)
+        const bool bUseDepthReducedRangeChanged = Math::Abs(CascadeGenerationData.UseDepthReducedRange - PrevUseDepthReducedRange) > 1e-4f;
+        const bool bCSMNearDistanceChanged      = Math::Abs(CascadeGenerationData.CSMNearDistance - PrevCSMNearDistance) > 1e-4f;
+        const bool bSplitModeChanged            = CascadeGenerationData.CascadeSplitMode != PrevCascadeSplitMode;
+        const bool bManualSplitsChanged =
+            Math::Abs(CascadeGenerationData.ManualCascadeSplitDistance0 - PrevManualSplit0) > 1e-4f ||
+            Math::Abs(CascadeGenerationData.ManualCascadeSplitDistance1 - PrevManualSplit1) > 1e-4f ||
+            Math::Abs(CascadeGenerationData.ManualCascadeSplitDistance2 - PrevManualSplit2) > 1e-4f;
+
+        if (bUseDepthReducedRangeChanged || bCSMNearDistanceChanged)
+        {
+            bCSMMinMaxHistoryInitialized = false;
+            bCSMCascadeHistoryInitialized = false;
+        }
+
+        if (bSplitModeChanged || bManualSplitsChanged)
+        {
+            bCSMCascadeHistoryInitialized = false;
+        }
+
+        if (CascadeGenerationData.UseDepthReducedRange <= 0.5f)
         {
             bCSMMinMaxHistoryInitialized = false;
         }
-        
-        if (!CascadeGenerationData.bEnableStableCascades || !CascadeGenerationData.bEnableTightFrustum)
+
+        if (!CascadeGenerationData.bEnableStableCascades)
         {
             bCSMCascadeHistoryInitialized = false;
         }
@@ -351,15 +393,7 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
         {
             CascadeGenerationData.TightFrustumDepthQuant = 1024.0f;
         }
-
-        if (IConsoleVariable* CVarCascadeFitAABB = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeFitAABB"))
-        {
-            CascadeGenerationData.CascadeFitAABB = CVarCascadeFitAABB->GetBool() ? 1.0f : 0.0f;
-        }
-        else
-        {
-            CascadeGenerationData.CascadeFitAABB = 0.0f;
-        }
+        CascadeGenerationData.TightFrustumPadding = 0.0f;
 
         if (IConsoleVariable* CVarFilterMode = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.FilterMode"))
         {
@@ -613,8 +647,8 @@ void FFrameResources::Release()
     CSMMinMaxDepthHistory.Reset();
     CascadeSnapHistoryBuffer.Reset();
     CascadeSnapHistoryBufferUAV.Reset();
-    CascadeExtentsHistoryBuffer.Reset();
-    CascadeExtentsHistoryBufferUAV.Reset();
+    CascadeSplitHistoryBuffer.Reset();
+    CascadeSplitHistoryBufferUAV.Reset();
 
 #if EDITOR_BUILD
     EditorNoJitterDepth.Reset();
@@ -637,9 +671,13 @@ void FFrameResources::Release()
     ShadowDebugBuffer.Reset();
     ShadowMaskHistory[0].Reset();
     ShadowMaskHistory[1].Reset();
+    ShadowMaskMomentsHistory[0].Reset();
+    ShadowMaskMomentsHistory[1].Reset();
     CascadeIndexBuffer.Reset();
 
     bShadowMaskHistoryInitialized = false;
+    bShadowMaskMomentsHistoryInitialized = false;
+    ShadowMaskHistoryLatestIndex = 0;
 
     PointLightsPosRadBuffer.Reset();
     PointLightsBuffer.Reset();

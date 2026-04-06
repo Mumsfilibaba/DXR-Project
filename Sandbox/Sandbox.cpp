@@ -31,7 +31,7 @@
 
 IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
-FSandbox::FSandbox()
+FSandbox::FSandbox() 
     : FGameModule()
 {
 }

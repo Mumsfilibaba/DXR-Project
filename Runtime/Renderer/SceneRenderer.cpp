@@ -143,12 +143,6 @@ static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
     false,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<bool> CVarCSMTightFrustum(
-    "Renderer.CSM.TightFrustum",
-    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer to be able to create a tight frustum that fits the scene",
-    true,
-    EConsoleVariableFlags::Default);
-
 static FAutoConsoleCommand CVarFreezeRendering(
     "Renderer.FreezeRendering",
     "Freezes the updating of Frustum culling",
@@ -173,6 +167,7 @@ FSceneRenderer::FSceneRenderer()
     , CascadedShadowsRenderPass(nullptr)
     , ShadowMaskRenderPass(nullptr)
     , ShadowMaskHistoryPass(nullptr)
+    , ShadowMaskDenoisePass(nullptr)
     , ScreenSpaceOcclusionPass(nullptr)
     , SkyboxRenderPass(nullptr)
     , TemporalAA(nullptr)
@@ -214,6 +209,7 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(CascadedShadowsRenderPass);
     SAFE_DELETE(ShadowMaskRenderPass);
     SAFE_DELETE(ShadowMaskHistoryPass);
+    SAFE_DELETE(ShadowMaskDenoisePass);
     SAFE_DELETE(ScreenSpaceOcclusionPass);
     SAFE_DELETE(SkyboxRenderPass);
     SAFE_DELETE(TemporalAA);
@@ -446,6 +442,12 @@ bool FSceneRenderer::InitializeRenderPasses()
 
     ShadowMaskHistoryPass = new FShadowMaskHistoryPass(this);
     if (!ShadowMaskHistoryPass->Initialize(Resources))
+    {
+        return false;
+    }
+
+    ShadowMaskDenoisePass = new FShadowMaskDenoisePass(this);
+    if (!ShadowMaskDenoisePass->Initialize(Resources))
     {
         return false;
     }
@@ -743,13 +745,20 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     const bool bEnableSunShadows = CVarSunShadowsEnabled.GetValue();
 
     // Depth Reduce
-    bool bAdaptiveSplitRange = false;
-    if (IConsoleVariable* CVarAdaptiveSplitRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.AdaptiveSplitRange"))
+    bool bCSMUsesDepthReducedRange = false;
+    if (IConsoleVariable* CVarCSMUseDepthReducedRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.UseDepthReducedRange"))
     {
-        bAdaptiveSplitRange = CVarAdaptiveSplitRange->GetBool();
+        bCSMUsesDepthReducedRange = CVarCSMUseDepthReducedRange->GetBool();
     }
 
-    if ((CVarCSMTightFrustum.GetValue() || bAdaptiveSplitRange) && bEnableShadows && bEnableSunShadows)
+    bool bManualDepthReduceRequest = false;
+    if (IConsoleVariable* CVarPrePassDepthReduce = FConsoleManager::Get().FindConsoleVariable("Renderer.PrePass.DepthReduce"))
+    {
+        bManualDepthReduceRequest = CVarPrePassDepthReduce->GetBool();
+    }
+
+    const bool bNeedDepthReduce = bCSMUsesDepthReducedRange || bManualDepthReduceRequest;
+    if (bNeedDepthReduce && bEnableShadows && bEnableSunShadows)
     {
         DepthReducePass->Execute(CommandList, Resources, CurrentScene);
     }
@@ -849,6 +858,8 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         if (!bUseShadowHistory)
         {
             Resources.bShadowMaskHistoryInitialized = false;
+            Resources.bShadowMaskMomentsHistoryInitialized = false;
+            Resources.ShadowMaskHistoryLatestIndex = 0;
         }
 
         const uint32 ShadowDebugMode = static_cast<uint32>(ShadowDebug);
@@ -857,6 +868,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         if (bUseShadowHistory)
         {
             ShadowMaskHistoryPass->Execute(CommandList, Resources);
+            ShadowMaskDenoisePass->Execute(CommandList, Resources);
         }
     }
     else
@@ -865,6 +877,8 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         CommandList.RequireTextureState(Resources.CascadeIndexBuffer.Get(), FRHIRequiredTextureState::Make(EResourceAccess::UnorderedAccess));
 
         Resources.bShadowMaskHistoryInitialized = false;
+        Resources.bShadowMaskMomentsHistoryInitialized = false;
+        Resources.ShadowMaskHistoryLatestIndex = 0;
 
         const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         CommandList.ClearUnorderedAccessViewFloat(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
@@ -885,7 +899,6 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     const bool bDrawCascadesOverlayMain = (SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay);
     const bool bDrawCascadesOverlayAny  = bDrawCascadesOverlayMain || (SceneRenderView.SecondaryDebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay);
-
     if (IConsoleVariable* CVarDebugData = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.DebugData"))
     {
         CVarDebugData->SetAsBool(bDrawCascadesOverlayAny, EConsoleVariableFlags::SetByCode);
@@ -993,18 +1006,30 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         CVarDrawTileDebug->SetAsBool(bTileDebug, EConsoleVariableFlags::SetByCode);
     }
 
-    const bool bMainUsesDebugPass =
-        SceneRenderView.DebugView != FSceneRenderView::EDebugView::None &&
-        SceneRenderView.DebugView != FSceneRenderView::EDebugView::ShadowCascadeOverlay &&
-        SceneRenderView.DebugView != FSceneRenderView::EDebugView::TileOccupancy;
+    const auto UsesLitSceneOutput = [](FSceneRenderView::EDebugView View) -> bool
+    {
+        switch (View)
+        {
+        case FSceneRenderView::EDebugView::None:
+        case FSceneRenderView::EDebugView::Lit:
+        case FSceneRenderView::EDebugView::TileOccupancy:
+        case FSceneRenderView::EDebugView::ShadowCascadeOverlay:
+            return true;
+        default:
+            return false;
+        }
+    };
 
-    const bool bMainUsesOverlay   = SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay;
-    const bool bHasSecondaryDebug = SceneRenderView.SecondaryDebugView != FSceneRenderView::EDebugView::None;
-    const bool bUsesDebugOutput   = bMainUsesDebugPass || bMainUsesOverlay;
+    const bool bMainUsesLitSceneOutput = UsesLitSceneOutput(SceneRenderView.DebugView);
+    const bool bMainUsesDebugPass      = !bMainUsesLitSceneOutput;
+    const bool bMainUsesOverlay        = SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay;
+    const bool bHasSecondaryDebug =
+        SceneRenderView.SecondaryDebugView != FSceneRenderView::EDebugView::None;
 
     FSceneRenderView DebugViewRender = SceneRenderView;
 
 #if EDITOR_BUILD
+    const bool bUsesDebugOutput = bMainUsesDebugPass || bMainUsesOverlay;
     FRHITexture* DebugOutputTarget = nullptr;
     if (bUsesDebugOutput && Resources.FinalTarget)
     {
@@ -1046,7 +1071,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     // Composite the grid and selection outline
 #if EDITOR_BUILD
     FRHITexture* CompositeInput = DebugOutputTarget ? DebugOutputTarget : Resources.TonemappedTarget.Get();
-    FinalCompositePass->Execute(CommandList, SceneRenderView, Resources, CompositeInput);
+    FinalCompositePass->Execute(CommandList, SceneRenderView, Resources, CompositeInput, bMainUsesLitSceneOutput);
 #endif
 
     if (bHasSecondaryDebug)
@@ -1529,6 +1554,12 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
         }
 
         if (!ShadowMaskRenderPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!ShadowMaskDenoisePass->CreateResources(Resources, InWidth, InHeight))
         {
             DEBUG_BREAK();
             return;

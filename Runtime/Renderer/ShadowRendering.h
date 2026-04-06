@@ -358,7 +358,7 @@ struct FShadowMaskShaderCombination
 
     bool operator!=(const FShadowMaskShaderCombination& Other) const
     {
-        return Hash == Other.Hash;
+        return Hash != Other.Hash;
     }
 
     friend uint64 GetHashForType(const FShadowMaskShaderCombination& Value)
@@ -382,20 +382,23 @@ struct FShadowMaskShaderCombination
             // DebugMode
             bool bDebugMode : 1;
 
-            // Select cascade from projection instead of ViewZ
-            bool bSelectCascadeFromProjection : 1;
-
             // BlendBetween cascades
             bool bBlendCascades : 1;
 
             // Allow per-tap cascade fallback sampling
             bool bCascadeFallback : 1;
 
+            // Resolve out-of-bounds taps through bounded global remap
+            bool bPerTapGlobalRemap : 1;
+
             // Number of samples (Valid for poisson- and vogel-disk)
             uint8 NumSamples : 8;
 
             // Number of samples for PCSS blocker search
             uint8 NumBlockerSamples : 8;
+
+            // Max number of coarser cascades to test when remapping out-of-bounds taps
+            uint8 MaxCascadeRemapSteps : 4;
         };
 
         uint64 Hash;
@@ -435,4 +438,19 @@ private:
     FRHIComputeShaderRef        HistoryShader;
     FRHISamplerStateRef         LinearSampler;
     uint32                      CurrentHistoryIndex = 0;
+};
+
+class FShadowMaskDenoisePass : public FRenderPass
+{
+public:
+    FShadowMaskDenoisePass(FSceneRenderer* InRenderer);
+    virtual ~FShadowMaskDenoisePass();
+
+    bool Initialize(FFrameResources& FrameResources);
+    bool CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height);
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
+
+private:
+    FRHIComputePipelineStateRef DenoisePSO;
+    FRHIComputeShaderRef        DenoiseShader;
 };

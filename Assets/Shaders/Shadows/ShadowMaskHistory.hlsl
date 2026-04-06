@@ -6,11 +6,13 @@
 
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float> Output : register(u0);
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float> HistoryOut : register(u1);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float2> MomentsHistoryOut : register(u2);
 
 Texture2D<float>  DepthBuffer    : register(t0);
 Texture2D<float2> VelocityBuffer : register(t1);
 Texture2D<float>  ShadowMaskRaw  : register(t2);
 Texture2D<float>  HistoryBuffer  : register(t3);
+Texture2D<float2> MomentsHistoryBuffer : register(t4);
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
@@ -76,6 +78,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     {
         Output[TexCoord] = CurrentSample;
         HistoryOut[TexCoord] = CurrentSample;
+        MomentsHistoryOut[TexCoord] = float2(CurrentSample, CurrentSample * CurrentSample);
         return;
     }
 
@@ -92,10 +95,21 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     const float3 Clipped = ClipAABB(float3(MinColor, MinColor, MinColor), float3(MaxColor, MaxColor, MaxColor), float3(HistorySample, HistorySample, HistorySample));
     HistorySample = Clipped.x;
 
-    const float SourceWeight  = 0.1;
-    const float HistoryWeight = 0.9;
+    const float2 HistoryMoments = MomentsHistoryBuffer.SampleLevel(LinearSampler, HistoryTexCoord, 0).rg;
+
+    const float CenterDepth = DepthBuffer[TexCoord];
+    const float MotionLengthPixels = length(MotionVector * float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight));
+    const bool bRejectHistory = (MotionLengthPixels > 32.0) || (abs(ClosestDepth - CenterDepth) > 0.01);
+
+    const float HistoryWeight = bRejectHistory ? 0.0 : 0.9;
+    const float SourceWeight  = 1.0 - HistoryWeight;
     const float NewSample = ((CurrentSample * SourceWeight) + (HistorySample * HistoryWeight)) / max(SourceWeight + HistoryWeight, 1e-6);
+
+    const float CurrentM1 = CurrentSample;
+    const float CurrentM2 = CurrentSample * CurrentSample;
+    const float2 NewMoments = ((float2(CurrentM1, CurrentM2) * SourceWeight) + (HistoryMoments * HistoryWeight)) / max(SourceWeight + HistoryWeight, 1e-6);
 
     Output[TexCoord] = NewSample;
     HistoryOut[TexCoord] = NewSample;
+    MomentsHistoryOut[TexCoord] = NewMoments;
 }

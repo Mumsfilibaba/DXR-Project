@@ -113,9 +113,7 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureBool("Renderer.CSM.EnableGeometryShaderInstancing");
     CaptureBool("Renderer.CSM.RotateSamples");
     CaptureBool("Renderer.CSM.BlendCascades");
-    CaptureBool("Renderer.CSM.TightFrustum");
     CaptureBool("Renderer.CSM.StableCascades");
-    CaptureBool("Renderer.CSM.SelectCascadeFromProjection");
 
     CaptureInt("Renderer.CSM.FilterMode");
     CaptureInt("Renderer.CSM.FilterFunction");
@@ -126,8 +124,11 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureFloat("Renderer.CSM.PCF.FilterWorld");
     CaptureFloat("Renderer.CSM.PCF.MinFilterRadiusTexels");
     CaptureBool("Renderer.CSM.ShadowPancaking");
+    CaptureBool("Renderer.CSM.UseDepthReducedRange");
+    CaptureFloat("Renderer.CSM.NearDistance");
     CaptureFloat("Renderer.CSM.MaxShadowDistance");
     CaptureFloat("Renderer.CSM.MaxShadowDistanceFade");
+    CaptureBool("Renderer.CSM.ShadowHistory");
 
     CaptureFloat("Renderer.CSM.PCSS.RadiusScale");
     CaptureFloat("Renderer.CSM.PCSS.BlockerSearchScale");
@@ -135,9 +136,12 @@ void FEditorRendererSettingsWidget::CaptureDefaultsIfNeeded()
     CaptureFloat("Renderer.CSM.PCSS.BlockerSamplingClump");
     CaptureFloat("Renderer.CSM.PCSS.MaxPenumbraWorld");
     CaptureFloat("Renderer.CSM.PCSS.MaxSearchDistanceWorld");
+    CaptureFloat("Renderer.CSM.PCSS.MaxRadiusTexels");
     CaptureFloat("Renderer.CSM.PCSS.MinFilterMaxAngularDiameter");
     CaptureFloat("Renderer.CSM.PCSS.BlockerSearchAngularDiameter");
     CaptureInt("Renderer.CSM.PCSS.NumBlockerSamples");
+    CaptureBool("Renderer.CSM.PCSS.PerTapGlobalRemap");
+    CaptureInt("Renderer.CSM.PCSS.MaxCascadeRemapSteps");
 
     // Point-lights
     CaptureBool("Renderer.Feature.PointLightShadows");
@@ -496,19 +500,6 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    // Enable Tight Frustum
-    if (IConsoleVariable* CVarCSMTightFrustum = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.TightFrustum"))
-    {
-        bool bValue  = CVarCSMTightFrustum->GetBool();
-        bool bValue0 = false;
-
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.TightFrustum", bValue0);
-        if (EditorWidgets::DrawCheckboxProperty("Enable Tight Frustum", bValue, RevertPtr))
-        {
-            CVarCSMTightFrustum->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
-        }
-    }
-
     // Enable Stable Cascades
     if (IConsoleVariable* CVarCSMStableCascades = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.StableCascades"))
     {
@@ -522,16 +513,27 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    // Adaptive Split Range
-    if (IConsoleVariable* CVarAdaptiveSplitRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.AdaptiveSplitRange"))
+    if (IConsoleVariable* CVarUseDepthReducedRange = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.UseDepthReducedRange"))
     {
-        bool bValue  = CVarAdaptiveSplitRange->GetBool();
+        bool bValue  = CVarUseDepthReducedRange->GetBool();
         bool bValue0 = false;
 
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.AdaptiveSplitRange", bValue0);
-        if (EditorWidgets::DrawCheckboxProperty("Adaptive Split Range", bValue, RevertPtr))
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.UseDepthReducedRange", bValue0);
+        if (EditorWidgets::DrawCheckboxProperty("Use depth-reduced range (Auto only)", bValue, RevertPtr))
         {
-            CVarAdaptiveSplitRange->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
+            CVarUseDepthReducedRange->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
+        }
+    }
+
+    if (IConsoleVariable* CVarCSMNearDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.NearDistance"))
+    {
+        float Value  = Math::Max(CVarCSMNearDistance->GetFloat(), 0.0f);
+        float Value0 = 0.0f;
+
+        const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.CSM.NearDistance", Value0);
+        if (EditorWidgets::DrawFloatProperty("CSM Near Distance", Value, 0.1f, 0.0f, 100000.0f, "%.1f", true, RevertPtr))
+        {
+            CVarCSMNearDistance->SetAsFloat(Value, EConsoleVariableFlags::SetByCode);
         }
     }
 
@@ -552,10 +554,10 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
     if (IConsoleVariable* CVarMaxShadowDistanceFade = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxShadowDistanceFade"))
     {
         float Value  = CVarMaxShadowDistanceFade->GetFloat();
-        float Value0 = 50.0f;
+        float Value0 = 2.0f;
 
         const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.CSM.MaxShadowDistanceFade", Value0);
-        if (EditorWidgets::DrawFloatProperty("Max Shadow Distance Fade", Value, 1.0f, 0.0f, 100000.0f, "%.1f", true, RevertPtr))
+        if (EditorWidgets::DrawFloatProperty("Max Shadow Distance Fade", Value, 0.1f, 0.0f, 10.0f, "%.1f", true, RevertPtr))
         {
             CVarMaxShadowDistanceFade->SetAsFloat(Value, EConsoleVariableFlags::SetByCode);
         }
@@ -574,16 +576,15 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         }
     }
 
-    // Select cascade from projection
-    if (IConsoleVariable* CVarSelectCascadeFromProjection = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.SelectCascadeFromProjection"))
+    if (IConsoleVariable* CVarShadowHistory = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.ShadowHistory"))
     {
-        bool bValue  = CVarSelectCascadeFromProjection->GetBool();
-        bool bValue0 = false;
+        bool bValue  = CVarShadowHistory->GetBool();
+        bool bValue0 = true;
 
-        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.SelectCascadeFromProjection", bValue0);
-        if (EditorWidgets::DrawCheckboxProperty("Select cascade from projection", bValue, RevertPtr))
+        const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.ShadowHistory", bValue0);
+        if (EditorWidgets::DrawCheckboxProperty("Temporal shadow filtering (temporal + denoise)", bValue, RevertPtr))
         {
-            CVarSelectCascadeFromProjection->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
+            CVarShadowHistory->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
         }
     }
 
@@ -796,11 +797,11 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
         // PCSS: Max filter size (world)
         if (IConsoleVariable* CVarMaxPenumbraWorld = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCSS.MaxPenumbraWorld"))
         {
-            float MaxPenumbraWorld  = Math::Clamp<float>(CVarMaxPenumbraWorld->GetFloat(), 0.0f, 10.0f);
+            float MaxPenumbraWorld  = Math::Clamp<float>(CVarMaxPenumbraWorld->GetFloat(), 0.0f, 100.0f);
             float MaxPenumbraWorld0 = 0.0f;
 
             const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.CSM.PCSS.MaxPenumbraWorld", MaxPenumbraWorld0);
-            if (EditorWidgets::DrawFloatProperty("Max filter size (world)", MaxPenumbraWorld, 0.01f, 0.0f, 10.0f, "%.2f", true, RevertPtr))
+            if (EditorWidgets::DrawFloatProperty("Max filter size (world)", MaxPenumbraWorld, 0.01f, 0.0f, 100.0f, "%.2f", true, RevertPtr))
             {
                 CVarMaxPenumbraWorld->SetAsFloat(MaxPenumbraWorld, EConsoleVariableFlags::SetByCode);
             }
@@ -816,6 +817,19 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
             if (EditorWidgets::DrawFloatProperty("Max sampling distance (world)", MaxSearchDistanceWorld, 0.01f, 0.0f, 1000.0f, "%.2f", true, RevertPtr))
             {
                 CVarMaxSearchDistanceWorld->SetAsFloat(MaxSearchDistanceWorld, EConsoleVariableFlags::SetByCode);
+            }
+        }
+
+        // PCSS: Max radius texels
+        if (IConsoleVariable* CVarMaxRadiusTexels = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCSS.MaxRadiusTexels"))
+        {
+            float MaxRadiusTexels  = Math::Clamp<float>(CVarMaxRadiusTexels->GetFloat(), 4.0f, 512.0f);
+            float MaxRadiusTexels0 = 192.0f;
+
+            const float* RevertPtr = TryGetDefaultPtr(FloatDefaults, "Renderer.CSM.PCSS.MaxRadiusTexels", MaxRadiusTexels0);
+            if (EditorWidgets::DrawFloatProperty("Max radius (texels)", MaxRadiusTexels, 1.0f, 4.0f, 512.0f, "%.0f", true, RevertPtr))
+            {
+                CVarMaxRadiusTexels->SetAsFloat(MaxRadiusTexels, EConsoleVariableFlags::SetByCode);
             }
         }
 
@@ -889,6 +903,30 @@ void FEditorRendererSettingsWidget::DrawCascadedShadowSettings()
             {
                 const int32 NewNumSamples = Samples[Math::Clamp<int32>(ItemIndex, 0, ItemCount - 1)];
                 CVarNumBlockerSamples->SetAsInt(NewNumSamples, EConsoleVariableFlags::SetByCode);
+            }
+        }
+
+        if (IConsoleVariable* CVarPerTapGlobalRemap = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCSS.PerTapGlobalRemap"))
+        {
+            bool bValue  = CVarPerTapGlobalRemap->GetBool();
+            bool bValue0 = true;
+
+            const bool* RevertPtr = TryGetDefaultPtr(BoolDefaults, "Renderer.CSM.PCSS.PerTapGlobalRemap", bValue0);
+            if (EditorWidgets::DrawCheckboxProperty("Per-tap global remap", bValue, RevertPtr))
+            {
+                CVarPerTapGlobalRemap->SetAsBool(bValue, EConsoleVariableFlags::SetByCode);
+            }
+        }
+
+        if (IConsoleVariable* CVarMaxRemapSteps = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.PCSS.MaxCascadeRemapSteps"))
+        {
+            int32 Value  = Math::Clamp<int32>(CVarMaxRemapSteps->GetInt(), 0, 3);
+            int32 Value0 = 2;
+
+            const int32* RevertPtr = TryGetDefaultPtr(IntDefaults, "Renderer.CSM.PCSS.MaxCascadeRemapSteps", Value0);
+            if (EditorWidgets::DrawIntProperty("Max remap steps", Value, 1.0f, 0, 3, "%d", true, RevertPtr))
+            {
+                CVarMaxRemapSteps->SetAsInt(Value, EConsoleVariableFlags::SetByCode);
             }
         }
     }

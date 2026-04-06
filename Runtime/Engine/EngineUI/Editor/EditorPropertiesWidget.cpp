@@ -1,8 +1,10 @@
 #include "Engine/EditorEngine.h"
 #include "Engine/World/Components/StaticMeshComponent.h"
+#include "Engine/World/Lights/DirectionalLight.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Core/Containers/StaticArray.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
@@ -456,12 +458,76 @@ void FEditorPropertiesWidget::DrawWindowContents()
                         Dir->SetShadowBias(ShadowBias);
                     }
 
-                    float Lambda = Dir->GetCascadeSplitLambda();
-                    const float Lambda0 = 0.60f;
-                    
-                    if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0))
+                    int32 SplitMode = (Dir->GetCascadeSplitMode() == ECascadeSplitMode::Manual) ? 1 : 0;
+                    const int32 SplitMode0 = 0;
                     {
-                        Dir->SetCascadeSplitLambda(Lambda);
+                        static const CHAR* const Items[] =
+                        {
+                            "Auto (Lambda)",
+                            "Manual",
+                        };
+
+                        if (EditorWidgets::DrawComboProperty("Cascade Split Mode", SplitMode, Items, static_cast<int32>(ARRAY_COUNT(Items)), &SplitMode0))
+                        {
+                            Dir->SetCascadeSplitMode((SplitMode == 1) ? ECascadeSplitMode::Manual : ECascadeSplitMode::AutoLambda);
+                        }
+                    }
+
+                    if (SplitMode == 0)
+                    {
+                        float Lambda = Dir->GetCascadeSplitLambda();
+                        const float Lambda0 = 0.60f;
+                        
+                        if (EditorWidgets::DrawFloatProperty("Cascade Split Lambda", Lambda, 0.01f, 0.0f, 1.0f, "%.2f", true, &Lambda0))
+                        {
+                            Dir->SetCascadeSplitLambda(Lambda);
+                        }
+                    }
+                    else
+                    {
+                        float ManualSplitEnds[3] =
+                        {
+                            Dir->GetManualCascadeSplitDistance(0),
+                            Dir->GetManualCascadeSplitDistance(1),
+                            Dir->GetManualCascadeSplitDistance(2),
+                        };
+                        const float ManualSplitDefaults[3] = { 50.0f, 150.0f, 400.0f };
+
+                        bool bManualSplitsChanged = false;
+                        bManualSplitsChanged |= EditorWidgets::DrawFloatProperty("Cascade 0 End Distance", ManualSplitEnds[0], 1.0f, 0.0f, 100000.0f, "%.1f", true, &ManualSplitDefaults[0]);
+                        bManualSplitsChanged |= EditorWidgets::DrawFloatProperty("Cascade 1 End Distance", ManualSplitEnds[1], 1.0f, 0.0f, 100000.0f, "%.1f", true, &ManualSplitDefaults[1]);
+                        bManualSplitsChanged |= EditorWidgets::DrawFloatProperty("Cascade 2 End Distance", ManualSplitEnds[2], 1.0f, 0.0f, 100000.0f, "%.1f", true, &ManualSplitDefaults[2]);
+
+                        if (bManualSplitsChanged)
+                        {
+                            ManualSplitEnds[0] = Math::Max(ManualSplitEnds[0], 0.0f);
+                            for (int32 SplitIndex = 1; SplitIndex < 3; ++SplitIndex)
+                            {
+                                ManualSplitEnds[SplitIndex] = Math::Max(ManualSplitEnds[SplitIndex], ManualSplitEnds[SplitIndex - 1] + 0.01f);
+                            }
+
+                            for (int32 SplitIndex = 0; SplitIndex < 3; ++SplitIndex)
+                            {
+                                Dir->SetManualCascadeSplitDistance(SplitIndex, ManualSplitEnds[SplitIndex]);
+                            }
+                        }
+
+                        float MaxShadowDistance = 0.0f;
+                        if (IConsoleVariable* CVarMaxShadowDistance = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.MaxShadowDistance"))
+                        {
+                            MaxShadowDistance = Math::Max(CVarMaxShadowDistance->GetFloat(), 0.0f);
+                        }
+
+                        TStaticArray<CHAR, 64> FinalSplitText{};
+                        if (MaxShadowDistance > 0.0f)
+                        {
+                            FCString::Snprintf(FinalSplitText.Data(), static_cast<int32>(FinalSplitText.Size()), "%.1f (Renderer.CSM.MaxShadowDistance)", MaxShadowDistance);
+                        }
+                        else
+                        {
+                            FCString::Snprintf(FinalSplitText.Data(), static_cast<int32>(FinalSplitText.Size()), "Camera far (CSM Max Shadow Distance = 0)");
+                        }
+                        EditorWidgets::DrawTextProperty("Cascade 3 End Distance", FinalSplitText.Data());
                     }
 
                     float LightArea = Dir->GetLightArea();

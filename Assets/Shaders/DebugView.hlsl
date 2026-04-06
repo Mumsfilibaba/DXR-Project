@@ -1,6 +1,7 @@
 #include "Structs.hlsli"
 #include "Helpers.hlsli"
 #include "ColorSpaceTransforms.hlsli"
+#include "Shadows/CascadeStructs.hlsli"
 
 // Debug view modes (must match FSceneRenderView::EDebugView)
 #define DEBUG_VIEW_NONE              0
@@ -22,6 +23,7 @@
 #define DEBUG_VIEW_SHADOW_CASCADE_OVERLAY    16
 #define DEBUG_VIEW_LIT                       17
 #define DEBUG_VIEW_TILE_OCCUPANCY            18
+#define DEBUG_VIEW_SHADOW_CASCADE_SPLIT_FRUSTUMS 19
 
 Texture2D<float4> GBufferAlbedo   : register(t0);
 Texture2D<float4> GBufferNormal   : register(t1);
@@ -34,6 +36,7 @@ Texture2DArray<float> ShadowCascades : register(t7);
 Texture2D<uint>   CascadeIndexBuffer : register(t8);
 Texture2D<float4> ShadowDebugBuffer : register(t9);
 Texture2D<float4> LitSceneBuffer : register(t10);
+StructuredBuffer<FCascadeSplit> ShadowSplitsBuffer : register(t11);
 
 SamplerState LinearSampler : register(s0);
 SamplerState PointSampler  : register(s1);
@@ -72,6 +75,17 @@ float3 CascadeIndexToColor(uint CascadeIndex)
     if (CascadeIndex == 2) { return float3(0.0, 0.0, 1.0); }
     if (CascadeIndex == 3) { return float3(1.0, 1.0, 0.0); }
     return float3(1.0, 1.0, 1.0);
+}
+
+float ComputeViewDepth(float2 TexCoord, float Depth)
+{
+    const float X = TexCoord.x * 2.0 - 1.0 - CameraBuffer.Jitter.x;
+    const float Y = (1.0 - TexCoord.y) * 2.0 - 1.0 - CameraBuffer.Jitter.y;
+    const float4 ProjectedPos = float4(X, Y, Depth, 1.0);
+    const float4 WorldPos4 = mul(ProjectedPos, CameraBuffer.ViewProjectionInvUnjittered);
+    const float InvW = (abs(WorldPos4.w) > 1e-6) ? rcp(WorldPos4.w) : 0.0;
+    const float3 PositionWS = WorldPos4.xyz * InvW;
+    return max(dot(PositionWS - CameraBuffer.PositionWS, CameraBuffer.Forward), 0.0);
 }
 
 float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
@@ -216,6 +230,45 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
         const float3 LitColor = LitSceneBuffer.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
         const float Mask = (Depth >= 0.9999) ? 0.0 : 1.0;
         Color = lerp(LitColor, OverlayColor, 0.55 * Mask);
+    }
+    else if (Constants.DebugMode == DEBUG_VIEW_SHADOW_CASCADE_SPLIT_FRUSTUMS)
+    {
+        const float Depth = GBufferDepth.SampleLevel(PointSampler, FullTexCoord, 0).r;
+        const float3 LitColor = LitSceneBuffer.SampleLevel(LinearSampler, FullTexCoord, 0).rgb;
+
+        if (Depth >= 0.9999)
+        {
+            Color = LitColor;
+        }
+        else
+        {
+            const float ViewDepth = ComputeViewDepth(FullTexCoord, Depth);
+            const float MinSplit = ShadowSplitsBuffer[0].PreviousSplit;
+            const float MaxSplit = ShadowSplitsBuffer[NUM_SHADOW_CASCADES - 1].Split;
+
+            if (ViewDepth < MinSplit || ViewDepth > MaxSplit)
+            {
+                Color = lerp(LitColor, float3(0.01, 0.01, 0.01), 0.75);
+            }
+            else
+            {
+                uint CascadeIndex = 0;
+
+                [unroll]
+                for (uint Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+                {
+                    const float End = ShadowSplitsBuffer[Index].Split;
+                    if (ViewDepth <= End)
+                    {
+                        CascadeIndex = Index;
+                        break;
+                    }
+                }
+
+                const float3 BandColor = CascadeIndexToColor(CascadeIndex);
+                Color = lerp(LitColor, BandColor, 0.6);
+            }
+        }
     }
     else if (Constants.DebugMode == DEBUG_VIEW_LIT)
     {

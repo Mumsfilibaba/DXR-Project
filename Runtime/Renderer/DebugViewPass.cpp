@@ -220,6 +220,10 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     RequirePixelIfNotRT(FrameResources.ShadowDebugBuffer.Get());
     RequirePixelIfNotRT(FrameResources.TonemappedTarget.Get());
     RequirePixelIfNotRT(FrameResources.FinalTarget.Get());
+    if (FrameResources.CascadeSplitsBuffer)
+    {
+        CommandList.RequireBufferState(FrameResources.CascadeSplitsBuffer.Get(), EResourceAccess::PixelShaderResource);
+    }
 
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets = 1;
@@ -241,6 +245,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ShadowCascades->GetShaderResourceView(), 7);
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 8);
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ShadowDebugBuffer->GetShaderResourceView(), 9);
+    CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.CascadeSplitsBufferSRV.Get(), 11);
 
     FRHITexture* LitSourceTexture = nullptr;
     if (bPreferTonemapped && FrameResources.TonemappedTarget)
@@ -305,6 +310,10 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     RequireNonPixelIfNotRT(FrameResources.ShadowDebugBuffer.Get());
     RequireNonPixelIfNotRT(FrameResources.TonemappedTarget.Get());
     RequireNonPixelIfNotRT(FrameResources.FinalTarget.Get());
+    if (FrameResources.CascadeSplitsBuffer)
+    {
+        CommandList.RequireBufferState(FrameResources.CascadeSplitsBuffer.Get(), EResourceAccess::NonPixelShaderResource);
+    }
 
     if (bNeedsTransition)
     {

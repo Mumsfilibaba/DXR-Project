@@ -29,6 +29,36 @@ float4 AABB_PSMain() : SV_Target
 
 #endif // AABB_DEBUG
 
+// Line Debug
+#if LINE_DEBUG
+
+struct FLineVSInput
+{
+    float3 Position : POSITION0;
+    float4 Color    : COLOR0;
+};
+
+struct FLineVSOutput
+{
+    float4 Position : SV_Position;
+    float4 Color    : COLOR0;
+};
+
+FLineVSOutput Line_VSMain(FLineVSInput Input)
+{
+    FLineVSOutput Output;
+    Output.Position = mul(float4(Input.Position, 1.0), CameraBuffer.ViewProjection);
+    Output.Color    = Input.Color;
+    return Output;
+}
+
+float4 Line_PSMain(FLineVSOutput Input) : SV_Target
+{
+    return Input.Color;
+}
+
+#endif // LINE_DEBUG
+
 // PointLight Debug
 #if POINTLIGHT_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
 

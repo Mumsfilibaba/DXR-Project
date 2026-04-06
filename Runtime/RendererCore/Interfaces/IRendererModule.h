@@ -31,6 +31,7 @@ struct FSceneRenderView
         ShadowCascadeOverlay,
         Lit,
         TileOccupancy,
+        ShadowCascadeSplitFrustums,
     };
 
     IScene*      Scene              = nullptr;

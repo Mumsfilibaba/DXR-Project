@@ -354,7 +354,7 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
     return true;
 }
 
-void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FRHITexture* InputSceneColor)
+void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FRHITexture* InputSceneColor, bool bEnableGridOverlay)
 {
     FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
     FRHITexture* SceneColor = InputSceneColor ? InputSceneColor : FrameResources.TonemappedTarget.Get();
@@ -400,7 +400,7 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
 #if EDITOR_BUILD
     FRHITexture* SelectionRingTexture = GetRenderer()->GetSelectionRingTexture();
     const bool bCanUseSelectionOutline = OutlineSettings.bEnabled && (SelectionRingTexture != nullptr);
-    const bool bCanUseGrid = GridSettings.bEnabled && (FrameResources.EditorNoJitterDepth != nullptr);
+    const bool bCanUseGrid = bEnableGridOverlay && GridSettings.bEnabled && (FrameResources.EditorNoJitterDepth != nullptr);
 #else
     FRHITexture* SelectionRingTexture = nullptr;
     const bool bCanUseSelectionOutline = false;

@@ -7,6 +7,7 @@
 #include "Renderer/Scene/SceneView.h"
 
 class FDirectionalLight;
+enum class ECascadeSplitMode : uint8;
 
 class FSceneDirectionalLight : public FSceneObject
 {
@@ -30,6 +31,11 @@ public:
     float GetShadowBias()           const { return ShadowBias; }
     float GetShadowPositionOffset() const { return ShadowPositionOffset; }
     float GetCascadeSplitLambda()   const { return CascadeSplitLambda; }
+    ECascadeSplitMode GetCascadeSplitMode() const { return CascadeSplitMode; }
+    float GetManualCascadeSplitDistance(int32 Index) const
+    {
+        return (Index >= 0 && Index < 3) ? ManualCascadeSplitDistances[Index] : 0.0f;
+    }
     float GetLightArea()            const { return LightArea; }
 
 private:
@@ -50,5 +56,7 @@ private:
     float    ShadowBias;
     float    ShadowPositionOffset;
     float    CascadeSplitLambda;
+    ECascadeSplitMode CascadeSplitMode;
+    float    ManualCascadeSplitDistances[3];
     float    LightArea;
 };
