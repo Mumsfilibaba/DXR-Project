@@ -213,11 +213,11 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         CommandList.TransitionTextureState(OutputTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
     }
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(OutputTarget, EAttachmentLoadAction::DontCare);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets            = 1;
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(OutputTarget, EAttachmentLoadAction::DontCare);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     const FRHIGraphicsPipelineStateRef& PSO = (OutputTarget->GetFormat() == RenderSettings::GetBackBufferFormat()) ? TonemapPSO_BackBuffer : TonemapPSO_Linear;
     CommandList.SetGraphicsPipelineState(PSO.Get());
@@ -369,11 +369,11 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
 
     CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::DontCare);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets            = 1;
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::DontCare);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     CommandList.SetGraphicsPipelineState(CompositePSO.Get());
 
@@ -623,12 +623,12 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
 
     CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets            = 1;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.NumRenderTargets            = 1;
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Clear);
+    RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     FRHIShaderResourceView* FinalTargetSRV = FrameResources.FinalTarget->GetShaderResourceView();
     if (CVarFXAADebug.GetValue())

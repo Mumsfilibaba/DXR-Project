@@ -167,11 +167,11 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     }
     else
     {
-        FRHISceneAccelerationStructureBuildDesc BuildScene;
-        BuildScene.Instances    = Resources.RTGeometryInstances.Data();
-        BuildScene.NumInstances = Resources.RTGeometryInstances.Size();
-        BuildScene.bUpdate      = false;
-        CommandList.BuildSceneAccelerationStructure(Resources.RTScene.Get(), BuildScene);
+        FRHISceneAccelerationStructureBuildDesc BuildSceneDesc;
+        BuildSceneDesc.Instances    = Resources.RTGeometryInstances.Data();
+        BuildSceneDesc.NumInstances = Resources.RTGeometryInstances.Size();
+        BuildSceneDesc.bUpdate      = false;
+        CommandList.BuildSceneAccelerationStructure(Resources.RTScene.Get(), BuildSceneDesc);
     }
 
     Resources.GlobalResources.Reset();

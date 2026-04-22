@@ -703,12 +703,12 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
     const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     CommandList.SetGraphicsPipelineState(bBackBuffer ? AABB_NoDepth_PSO_BB.Get() : AABB_NoDepth_PSO.Get());
     CommandList.SetConstantBuffer(AABB_VS.Get(), Resources.CameraBuffer.Get(), 0);
@@ -749,12 +749,12 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
     const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     CommandList.SetGraphicsPipelineState(bBackBuffer ? LightDebug_PSO_BB.Get() : LightDebug_PSO.Get());
     CommandList.SetConstantBuffer(LightDebug_VS.Get(), Resources.CameraBuffer.Get(), 0);
@@ -792,12 +792,12 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
     const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
 
-    FRHIBeginRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
+    FRHIBeginRenderPassDesc RenderPassDesc;
+    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets = 1;
+    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
 
-    CommandList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPassDesc);
 
     // Draw box for the light-probe
     for (FSceneLightProbe* LightProbe : Scene->LightProbes)
