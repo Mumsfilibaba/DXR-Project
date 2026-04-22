@@ -12,10 +12,12 @@ public:
 
     bool Initialize();
 
-    void BindGraphicsStates();
+    void PrepareGraphicsState();
+    void PrepareComputeState();
+
+    void BindGraphicsState();
     void BindComputeState();
-    bool BindSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
-    bool BindResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
+
     void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
     void ResetState();
     void ResetStateResources();
@@ -62,17 +64,17 @@ public:
 
     FORCEINLINE void GetRenderTargets(FD3D12RenderTargetView** RenderTargetViews, uint32& OutNumRenderTargets, FD3D12DepthStencilView** DepthStencilView) const
     {
-        const uint32 CurrentNumRenderTargets = GraphicsState.RTCache.NumRenderTargets;
+        const uint32 CurrentNumRenderTargets = GraphicsState.RenderTargetCache.NumRenderTargets;
         if (RenderTargetViews)
         {
-            FMemory::Memcpy(RenderTargetViews, GraphicsState.RTCache.RenderTargetViews, sizeof(FD3D12RenderTargetView*) * CurrentNumRenderTargets);
+            FMemory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FD3D12RenderTargetView*) * CurrentNumRenderTargets);
         }
 
         OutNumRenderTargets = CurrentNumRenderTargets;
 
         if (DepthStencilView)
         {
-            *DepthStencilView = GraphicsState.RTCache.DepthStencilView;
+            *DepthStencilView = GraphicsState.RenderTargetCache.DepthStencilView;
         }
     }
 
@@ -115,7 +117,13 @@ public:
     }
 
 private:
-    bool InternalSetRootSignature(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
+    bool PrepareResources(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage);
+    bool PrepareSamplers(FD3D12RootSignature* InRootSignature, FD3D12PipelineState* InPipelineState, EShaderVisibility StartStage, EShaderVisibility EndStage);
+
+    void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage);
+    void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage);
+
+    void InternalSetRootSignature(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
 
     FD3D12CommandContext& Context;
 
@@ -127,7 +135,7 @@ private:
             , NumScissorRects(0)
             , ShadingRateImage(nullptr)
             , ShadingRate(D3D12_SHADING_RATE_1X1)
-            , RTCache()
+            , RenderTargetCache()
             , IndexBufferCache()
             , VertexBufferCache()
         {
@@ -136,6 +144,7 @@ private:
             
             FMemory::Memzero(DepthBias, sizeof(DepthBias));
             FMemory::Memzero(SOBufferViews, sizeof(SOBufferViews));
+            FMemory::Memzero(SOBuffers, sizeof(SOBuffers));
             NumSOBuffers = 0;
 
             FMemory::Memzero(Viewports, sizeof(Viewports));
@@ -153,8 +162,9 @@ private:
         D3D12_SHADING_RATE              ShadingRate;
         float                           DepthBias[3]; // DepthBias, DepthBiasClamp, SlopeScaledDepthBias
         D3D12_STREAM_OUTPUT_BUFFER_VIEW SOBufferViews[4];
+        FD3D12Buffer*                   SOBuffers[4];
         uint32                          NumSOBuffers;
-        FD3D12RenderTargetCache         RTCache;
+        FD3D12RenderTargetCache         RenderTargetCache;
         FD3D12IndexBufferCache          IndexBufferCache;
         FD3D12VertexBufferCache         VertexBufferCache;
 

@@ -329,7 +329,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Intensity = Point->GetIntensity();
                     const float Intensity0 = 1.0f;
                     
-                    if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
+                    if (EditorWidgets::DrawFloatProperty("Intensity (Lumen)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
                     {
                         Point->SetIntensity(Intensity);
                     }
@@ -405,7 +405,7 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     float Intensity = Dir->GetIntensity();
                     const float Intensity0 = 1.0f;
 
-                    if (EditorWidgets::DrawFloatProperty("Intensity", Intensity, 0.01f, 0.01f, 1000.0f, "%.2f", true, &Intensity0))
+                    if (EditorWidgets::DrawFloatProperty("Intensity (Lux)", Intensity, 0.1f, 0.0f, 200000.0f, "%.1f", true, &Intensity0))
                     {
                         Dir->SetIntensity(Intensity);
                     }
@@ -536,6 +536,26 @@ void FEditorPropertiesWidget::DrawWindowContents()
                     if (EditorWidgets::DrawFloatProperty("Field Of View", FieldOfView, 0.1f, 40.0f, 120.0f, "%.1f", true, &FieldOfView0))
                     {
                         SelectedCamera->SetFieldOfView(FieldOfView);
+                    }
+                }
+
+                {
+                    float Near = SelectedCamera->GetNearPlane();
+                    const float Near0 = 0.01f;
+
+                    if (EditorWidgets::DrawFloatProperty("Near Plane", Near, 0.001f, 0.001f, 10.0f, "%.3f", true, &Near0))
+                    {
+                        SelectedCamera->SetNearPlane(Near);
+                    }
+                }
+
+                {
+                    float Far = SelectedCamera->GetFarPlane();
+                    const float Far0 = 200.0f;
+
+                    if (EditorWidgets::DrawFloatProperty("Far Plane", Far, 1.0f, 10.0f, 10000.0f, "%.0f", true, &Far0))
+                    {
+                        SelectedCamera->SetFarPlane(Far);
                     }
                 }
 

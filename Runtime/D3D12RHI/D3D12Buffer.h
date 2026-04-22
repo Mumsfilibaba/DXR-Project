@@ -32,9 +32,9 @@ public:
     
     FD3D12ConstantBufferView* GetOrCreateConstantBufferView();
 
-    D3D12_GPU_VIRTUAL_ADDRESS GetGpuVirtualAddress() const
+    D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
-        return ResourceStorage.GetGpuVirtualAddress();
+        return ResourceStorage.GetGPUVirtualAddress();
     }
 
 private:

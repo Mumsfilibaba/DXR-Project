@@ -5,7 +5,7 @@
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 
-class FVulkanBuffer : public FRHIBuffer, public FVulkanGenericResource
+class FVulkanBuffer : public FRHIBuffer, public FVulkanResource
 {
 public:
     static FORCEINLINE FVulkanBuffer* Cast(FRHIBuffer* Buffer)

@@ -121,13 +121,14 @@ static void DrawAxisLineForLastItem(ImU32 InColor)
     Window->DrawList->AddRectFilled(LineMin, LineMax, InColor, 1.0f);
 }
 
+static constexpr float FixedRevertButtonSize = 20.0f;
+
 static bool ResetIconButton(float InSize = 0.0f)
 {
     float ButtonSizePx = InSize;
     if (ButtonSizePx <= 0.0f)
     {
-        const float AvailableWidth = ImGui::GetContentRegionAvail().x;
-        ButtonSizePx = Math::Min(ImGui::GetFrameHeight(), AvailableWidth);
+        ButtonSizePx = FixedRevertButtonSize;
     }
 
     ButtonSizePx = Math::Max(1.0f, ButtonSizePx);
@@ -651,7 +652,10 @@ bool EditorWidgets::DrawFloat3Control(const CHAR* Label, FVector3& OutValue, flo
     ImGui::PopID();
 
     ImGui::TableSetColumnIndex(2);
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
+    {
+        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
+    }
 
     const bool bHasRevertValue         = InRevertValue != nullptr;
     const bool bShouldShowRevertButton = bHasRevertValue && (OutValue != *InRevertValue);
@@ -687,7 +691,7 @@ bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, floa
     const float RowHeight = ImGui::GetFrameHeight();
     ImGui::TableNextRow();
 
-    bool bResult = false;
+    bool bResult     = false;
     bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
 
     ImGui::TableSetColumnIndex(0);
@@ -731,25 +735,388 @@ bool EditorWidgets::DrawFloatProperty(const CHAR* Label, float& InOutValue, floa
 
     // Revert
     ImGui::TableSetColumnIndex(2);
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
+    {
+        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
+    }
 
-    const bool bCanRevert = (InRevertValue != nullptr);
-    if (!bCanRevert || !bEnabled)
+    const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
+    if (bCanRevert)
+    {
+        if (ResetIconButton())
+        {
+            InOutValue = *InRevertValue;
+            bResult    = true;
+        }
+
+        bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    }
+    else
+    {
+        ImGui::Dummy(ImVec2(FixedRevertButtonSize, FixedRevertButtonSize));
+    }
+
+    ApplyHoveredRowBg(bRowHovered);
+    return bEnabled && bResult;
+}
+
+bool EditorWidgets::DrawIntProperty(const CHAR* Label, int32& InOutValue, float Speed, int32 MinValue, int32 MaxValue, const CHAR* Format, bool bUseSlider, const int32* InRevertValue, bool bEnabled)
+{
+    ImGuiTable* Table = ImGui::GetCurrentTable();
+    if (!Table)
+    {
+        return false;
+    }
+
+    const float RowHeight = ImGui::GetFrameHeight();
+    ImGui::TableNextRow();
+
+    bool bResult     = false;
+    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+    ImGui::TableSetColumnIndex(0);
+
+    const float LabelIndent = 24.0f;
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(Label);
+
+    ImGui::TableSetColumnIndex(1);
+    ImGui::PushID(Label);
+
+    if (!bEnabled)
     {
         ImGui::BeginDisabled();
     }
 
-    if (ResetIconButton())
+    ImGui::SetNextItemWidth(-FLT_MIN);
+    if (bUseSlider)
     {
-        InOutValue = *InRevertValue;
-        bResult    = true;
+        bResult = ImGui::SliderInt("##Value", &InOutValue, MinValue, MaxValue, Format);
+    }
+    else
+    {
+        bResult = ImGui::DragInt("##Value", &InOutValue, Speed, MinValue, MaxValue, Format);
     }
 
-    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    ImGuiStyle& Style = ImGui::GetStyle();
+    DrawInputBorderLastItem(Style.FrameRounding);
 
-    if (!bCanRevert || !bEnabled)
+    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    bRowHovered |= ImGui::IsItemActive();
+
+    if (!bEnabled)
     {
         ImGui::EndDisabled();
+    }
+
+    ImGui::PopID();
+
+    ImGui::TableSetColumnIndex(2);
+    {
+        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
+    }
+
+    const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
+    if (bCanRevert)
+    {
+        if (ResetIconButton())
+        {
+            InOutValue = *InRevertValue;
+            bResult    = true;
+        }
+
+        bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    }
+    else
+    {
+        ImGui::Dummy(ImVec2(FixedRevertButtonSize, FixedRevertButtonSize));
+    }
+
+    ApplyHoveredRowBg(bRowHovered);
+    return bEnabled && bResult;
+}
+
+bool EditorWidgets::DrawComboProperty(const CHAR* Label, int32& InOutValue, const CHAR* const* Items, int32 ItemCount, const int32* InRevertValue, bool bEnabled)
+{
+    ImGuiTable* Table = ImGui::GetCurrentTable();
+    if (!Table)
+    {
+        return false;
+    }
+
+    const float RowHeight = ImGui::GetFrameHeight();
+    ImGui::TableNextRow();
+
+    bool bResult     = false;
+    bool bRowHovered = BeginFullRowHoverCatcher(RowHeight);
+
+    ImGui::TableSetColumnIndex(0);
+
+    const float LabelIndent = 24.0f;
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + LabelIndent);
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(Label);
+
+    ImGui::TableSetColumnIndex(1);
+    ImGui::PushID(Label);
+
+    if (!bEnabled)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    const ImU32 FieldBgU32     = IM_COL32(15, 15, 15, 255);
+    const ImU32 FieldTextU32   = IM_COL32(170, 170, 170, 255);
+    const ImU32 ArrowU32       = IM_COL32(192, 192, 192, 255);
+    const ImU32 PopupBgU32     = IM_COL32(26, 26, 26, 255);
+    const ImU32 PopupBorderU32 = IM_COL32(0, 90, 173, 255);
+    const ImU32 SelectBgU32    = IM_COL32(0, 112, 224, 255);
+    const ImU32 PopupTextU32   = IM_COL32(255, 255, 255, 255);
+
+    const ImGuiStyle& Style = ImGui::GetStyle();
+    const float FieldRounding = Style.FrameRounding;
+    
+    constexpr float PopupRounding = 0.0f;
+
+    const int32  ClampedIndex = Math::Clamp<int32>(InOutValue, 0, Math::Max(0, ItemCount - 1));
+    const CHAR*  PreviewText  = (Items && ItemCount > 0) ? Items[ClampedIndex] : "";
+    const float  FrameHeight  = ImGui::GetFrameHeight();
+    const ImVec2 FieldSize    = ImVec2(ImGui::GetContentRegionAvail().x, FrameHeight);
+
+    const bool bPressed      = ImGui::InvisibleButton("##Value", FieldSize);
+    const bool bFieldHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    const bool bFieldActive  = ImGui::IsItemActive();
+
+    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    bRowHovered |= ImGui::IsItemActive();
+
+    const ImVec2 FieldMin = ImGui::GetItemRectMin();
+    const ImVec2 FieldMax = ImGui::GetItemRectMax();
+
+    ImGuiWindow* Window = ImGui::GetCurrentWindow();
+    if (Window && !Window->SkipItems)
+    {
+        Window->DrawList->AddRectFilled(FieldMin, FieldMax, FieldBgU32, FieldRounding);
+
+        const float  ArrowZoneW     = FrameHeight;
+        const ImVec2 TextSize       = ImGui::CalcTextSize(PreviewText);
+        const float  TextY          = FieldMin.y + (FrameHeight - TextSize.y) * 0.5f;
+        const float  ArrowPadX      = 8.0f;
+        const float  TextStartX     = FieldMin.x + Style.FramePadding.x;
+        const float  TextMaxX       = FieldMax.x - ArrowZoneW - ArrowPadX;
+        const ImVec2 ClipMin        = ImVec2(TextStartX, FieldMin.y);
+        const ImVec2 ClipMax        = ImVec2(TextMaxX, FieldMax.y);
+        const ImU32  PreviewTextU32 = (bFieldHovered || bFieldActive) ? IM_COL32(255, 255, 255, 255) : FieldTextU32;
+        const ImU32  ArrowColorU32  = (bFieldHovered || bFieldActive) ? IM_COL32(255, 255, 255, 255) : ArrowU32;
+
+        Window->DrawList->PushClipRect(ClipMin, ClipMax, true);
+        Window->DrawList->AddText(ImVec2(TextStartX, TextY), PreviewTextU32, PreviewText);
+        Window->DrawList->PopClipRect();
+
+        const float ArrowSize = 6.0f;
+        const float CenterX   = FieldMax.x - ArrowZoneW * 0.5f;
+        const float CenterY   = (FieldMin.y + FieldMax.y) * 0.5f + 1.0f;
+        const ImVec2 P0       = ImVec2(CenterX - ArrowSize, CenterY - ArrowSize * 0.5f);
+        const ImVec2 P1       = ImVec2(CenterX + ArrowSize, CenterY - ArrowSize * 0.5f);
+        const ImVec2 P2       = ImVec2(CenterX,            CenterY + ArrowSize * 0.6f);
+        Window->DrawList->AddTriangleFilled(P0, P1, P2, ArrowColorU32);
+    }
+
+    DrawInputBorderLastItem(FieldRounding);
+
+    if (bPressed && bEnabled)
+    {
+        ImGui::OpenPopup("##ComboPopup");
+    }
+
+    constexpr float PopupTextPadX = 6.0f;
+    float PopupWidth = FieldSize.x;
+    if (Items && ItemCount > 0)
+    {
+        float MaxItemTextWidth = 0.0f;
+        for (int32 ItemIndex = 0; ItemIndex < ItemCount; ++ItemIndex)
+        {
+            const ImVec2 TextSize = ImGui::CalcTextSize(Items[ItemIndex] ? Items[ItemIndex] : "");
+            MaxItemTextWidth = Math::Max(MaxItemTextWidth, TextSize.x);
+        }
+
+        PopupWidth = Math::Max(PopupWidth, MaxItemTextWidth + PopupTextPadX * 2.0f);
+    }
+
+    float  PopupX       = FieldMin.x;
+    ImVec2 WorkMin      = ImVec2(0.0f, 0.0f);
+    ImVec2 WorkMax      = ImVec2(0.0f, 0.0f);
+    bool   bHasWorkRect = false;
+
+    ImGuiPlatformIO& PlatformIO = ImGui::GetPlatformIO();
+    if (PlatformIO.Monitors.Size > 0)
+    {
+        const ImVec2 FieldCenter = ImVec2((FieldMin.x + FieldMax.x) * 0.5f, (FieldMin.y + FieldMax.y) * 0.5f);
+        
+        int32 MonitorIndex = 0;
+        for (int32 i = 0; i < PlatformIO.Monitors.Size; ++i)
+        {
+            const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[i];
+
+            const ImVec2 Min = Monitor.WorkPos;
+            const ImVec2 Max = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
+            
+            if (FieldCenter.x >= Min.x && FieldCenter.x <= Max.x && FieldCenter.y >= Min.y && FieldCenter.y <= Max.y)
+            {
+                MonitorIndex = i;
+                break;
+            }
+        }
+
+        const ImGuiPlatformMonitor& Monitor = PlatformIO.Monitors[MonitorIndex];
+        WorkMin      = Monitor.WorkPos;
+        WorkMax      = ImVec2(Monitor.WorkPos.x + Monitor.WorkSize.x, Monitor.WorkPos.y + Monitor.WorkSize.y);
+        bHasWorkRect = (Monitor.WorkSize.x > 0.0f && Monitor.WorkSize.y > 0.0f);
+    }
+
+    if (!bHasWorkRect)
+    {
+        if (ImGuiViewport* Viewport = ImGui::GetWindowViewport())
+        {
+            WorkMin      = Viewport->WorkPos;
+            WorkMax      = ImVec2(Viewport->WorkPos.x + Viewport->WorkSize.x, Viewport->WorkPos.y + Viewport->WorkSize.y);
+            bHasWorkRect = (Viewport->WorkSize.x > 0.0f && Viewport->WorkSize.y > 0.0f);
+        }
+    }
+
+    if (bHasWorkRect)
+    {
+        const float MaxWidth = Math::Max(1.0f, WorkMax.x - WorkMin.x);
+        PopupWidth = Math::Min(PopupWidth, MaxWidth);
+
+        if ((PopupX + PopupWidth) > WorkMax.x)
+        {
+            PopupX = FieldMax.x - PopupWidth;
+        }
+
+        PopupX = Math::Clamp(PopupX, WorkMin.x, WorkMax.x - PopupWidth);
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(PopupX, FieldMax.y));
+    ImGui::SetNextWindowSize(ImVec2(PopupWidth, 0.0f));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, PopupRounding);
+
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, ImGui::ColorConvertU32ToFloat4(PopupBgU32));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(PopupTextU32));
+    ImGui::PushStyleColor(ImGuiCol_Header, ImGui::ColorConvertU32ToFloat4(PopupBgU32));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImGui::ColorConvertU32ToFloat4(SelectBgU32));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImGui::ColorConvertU32ToFloat4(SelectBgU32));
+
+    if (ImGui::BeginPopup("##ComboPopup"))
+    {
+        ImGuiWindow* PopupWindow   = ImGui::GetCurrentWindow();
+        const float  ItemHeight    = ImGui::GetFrameHeight();
+        const float  FullWidth     = PopupWindow ? PopupWindow->Size.x : ImGui::GetContentRegionAvail().x;
+        ImDrawList*  PopupDrawList = PopupWindow ? PopupWindow->DrawList : ImGui::GetWindowDrawList();
+        
+        constexpr float SelectedInsetX   = 2.0f;
+        constexpr float SelectedInsetY   = 1.0f;
+        constexpr float SelectedRounding = 4.0f;
+
+        for (int32 ItemIndex = 0; ItemIndex < ItemCount; ++ItemIndex)
+        {
+            const bool bSelected = (ItemIndex == InOutValue);
+
+            ImGui::PushID(ItemIndex);
+            ImGui::SetCursorPosX(0.0f);
+
+            const bool bItemPressed = ImGui::InvisibleButton("##Item", ImVec2(FullWidth, ItemHeight));
+            const bool bItemHovered = ImGui::IsItemHovered();
+            const bool bItemHeld    = ImGui::IsItemActive();
+
+            const ImVec2 ItemMin = ImGui::GetItemRectMin();
+            const ImVec2 ItemMax = ImGui::GetItemRectMax();
+
+            if ((bItemHovered || bItemHeld) && PopupDrawList)
+            {
+                PopupDrawList->AddRectFilled(ItemMin, ItemMax, SelectBgU32, 0.0f);
+            }
+
+            const CHAR*  ItemText     = (Items && ItemIndex < ItemCount) ? Items[ItemIndex] : "";
+            const ImVec2 ItemTextSize = ImGui::CalcTextSize(ItemText);
+            const float  ItemTextY    = ItemMin.y + (ItemHeight - ItemTextSize.y) * 0.5f;
+            const float  ItemTextX    = ItemMin.x + PopupTextPadX;
+
+            if (PopupDrawList)
+            {
+                PopupDrawList->AddText(ImVec2(ItemTextX, ItemTextY), PopupTextU32, ItemText);
+            }
+
+            if (bSelected && PopupDrawList)
+            {
+                const ImVec2 SelMin = ImVec2(ItemMin.x + SelectedInsetX, ItemMin.y + SelectedInsetY);
+                const ImVec2 SelMax = ImVec2(ItemMax.x - SelectedInsetX, ItemMax.y - SelectedInsetY);
+                PopupDrawList->AddRect(SelMin, SelMax, SelectBgU32, SelectedRounding, 0, 1.5f);
+            }
+
+            if (bItemPressed)
+            {
+                InOutValue = ItemIndex;
+                bResult    = true;
+
+                ImGui::CloseCurrentPopup();
+            }
+
+            if (bSelected)
+            {
+                ImGui::SetItemDefaultFocus();
+            }
+
+            ImGui::PopID();
+        }
+
+        if (PopupWindow && !PopupWindow->SkipItems)
+        {
+            const ImVec2 PopupMin = PopupWindow->Pos;
+            const ImVec2 PopupMax = ImVec2(PopupWindow->Pos.x + PopupWindow->Size.x, PopupWindow->Pos.y + PopupWindow->Size.y);
+            PopupWindow->DrawList->AddRect(PopupMin, PopupMax, PopupBorderU32, PopupRounding, 0, 1.0f);
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::PopStyleColor(5);
+    ImGui::PopStyleVar(3);
+
+    if (!bEnabled)
+    {
+        ImGui::EndDisabled();
+    }
+
+    ImGui::PopID();
+
+    ImGui::TableSetColumnIndex(2);
+    {
+        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
+    }
+
+    const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
+    if (bCanRevert)
+    {
+        if (ResetIconButton())
+        {
+            InOutValue = *InRevertValue;
+            bResult    = true;
+        }
+        
+        bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    }
+    else
+    {
+        ImGui::Dummy(ImVec2(FixedRevertButtonSize, FixedRevertButtonSize));
     }
 
     ApplyHoveredRowBg(bRowHovered);
@@ -803,25 +1170,25 @@ bool EditorWidgets::DrawCheckboxProperty(const CHAR* Label, bool& InOutValue, co
     ImGui::PopID();
 
     ImGui::TableSetColumnIndex(2);
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
-
-    const bool bCanRevert = (InRevertValue != nullptr);
-    if (!bCanRevert || !bEnabled)
     {
-        ImGui::BeginDisabled();
+        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
     }
 
-    if (ResetIconButton() && bCanRevert)
+    const bool bCanRevert = bEnabled && (InRevertValue != nullptr) && (InOutValue != *InRevertValue);
+    if (bCanRevert)
     {
-        InOutValue = *InRevertValue;
-        bResult    = true;
+        if (ResetIconButton())
+        {
+            InOutValue = *InRevertValue;
+            bResult    = true;
+        }
+
+        bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
     }
-
-    bRowHovered |= ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
-
-    if (!bCanRevert || !bEnabled)
+    else
     {
-        ImGui::EndDisabled();
+        ImGui::Dummy(ImVec2(FixedRevertButtonSize, FixedRevertButtonSize));
     }
 
     ApplyHoveredRowBg(bRowHovered);
@@ -995,7 +1362,10 @@ bool EditorWidgets::DrawColor3Property(const CHAR* Label, float* InOutColor, con
     ImGui::PopID();
 
     ImGui::TableSetColumnIndex(2);
-    ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 1.0f);
+    {
+        const float PadY = Math::Max((ImGui::GetFrameHeight() - FixedRevertButtonSize) * 0.5f, 0.0f);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + PadY);
+    }
 
     const bool bCanRevert = (InRevertColor != nullptr);
     if (!bCanRevert || !bEnabled)
@@ -2763,7 +3133,7 @@ static bool LoadEditorIcon(const CHAR* InRelativePath, ImTextureID& OutIconID, E
         return false;
     }
 
-    OutIcon.ImGuiTexture = MakeUniquePtr<FImGuiTexture>(TextureRHI, EResourceAccess::PixelShaderResource);
+    OutIcon.ImGuiTexture = MakeUniquePtr<FImGuiTexture>(TextureRHI);
     if (!OutIcon.ImGuiTexture)
     {
         LOG_ERROR("[EditorIcons]: Failed to create ImGui texture wrapper for '%s'.", *FullPath);

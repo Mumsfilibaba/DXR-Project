@@ -310,7 +310,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
             ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CommandList));
         }
 
-        ResetTexturesShaderResourceUsage(CommandList);
+        RenderedTextures.Clear();
     }
 }
 
@@ -473,7 +473,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                         CommandList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                     }
 
-                    CommandList.SetShaderResourceView(PShader.Get(), DrawableTexture->View.Get(), 0);
+                    CommandList.SetShaderResourceView(PShader.Get(), DrawableTexture->ShaderResourceView.Get(), 0);
                 }
                 else
                 {
@@ -592,39 +592,24 @@ void FImGuiRenderer::PrepareTexturesForShaderResourceUsage(FRHICommandList& Comm
 
 void FImGuiRenderer::PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture)
 {
-	if (!InTexture)
-	{
-		return;
-	}
+    if (!InTexture)
+    {
+        return;
+    }
 
-	// A texture can be used multiple times with ImGui, and we only want to perform a transition once
-	for (const FImGuiTexture* CurrentTexture : RenderedTextures)
-	{
-		if (CurrentTexture->Texture == InTexture->Texture)
-		{
-			return;
-		}
-	}
+    FRHITexture* Texture = InTexture->GetTexture();
+    if (!Texture)
+    {
+        return;
+    }
 
-	if (InTexture->ResourceState != EResourceAccess::PixelShaderResource)
-	{
-		CommandList.TransitionTextureState(InTexture->Texture.Get(), FRHITextureTransition::Make(InTexture->ResourceState, EResourceAccess::PixelShaderResource));
-	}
+    if (RenderedTextures.Contains(Texture))
+    {
+        return;
+    }
 
-	RenderedTextures.Emplace(InTexture);
-}
-
-void FImGuiRenderer::ResetTexturesShaderResourceUsage(FRHICommandList& CommandList)
-{
-	for (const FImGuiTexture* CurrentTexture : RenderedTextures)
-	{
-		if (CurrentTexture->ResourceState != EResourceAccess::PixelShaderResource)
-		{
-			CommandList.TransitionTextureState(CurrentTexture->Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, CurrentTexture->ResourceState));
-		}
-	}
-
-	RenderedTextures.Clear();
+    CommandList.RequireTextureState(Texture, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+    RenderedTextures.Emplace(Texture);
 }
 
 void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)

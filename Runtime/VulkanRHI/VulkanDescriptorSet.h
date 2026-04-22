@@ -7,6 +7,7 @@
 
 class FVulkanBuffer;
 class FVulkanPipelineLayout;
+class FVulkanResourceView;
 struct FVulkanDefaultResources;
 struct FVulkanDescriptorRemappingInfo;
 
@@ -369,6 +370,14 @@ struct FVulkanDescriptorWrites
     TArray<VkBufferView>           DescriptorTexelBufferViews;
 };
 
+enum class EVulkanDescriptorDirtyFlags : uint8
+{
+    None               = 0,
+    ResourcesDirty     = (1 << 0),
+    DescriptorSetDirty = (1 << 1),
+};
+ENUM_CLASS_OPERATORS(EVulkanDescriptorDirtyFlags)
+
 class FVulkanDescriptorState : public FVulkanDeviceChild, FNonCopyable
 {
 public:
@@ -379,6 +388,8 @@ public:
     void SetUAV(class FVulkanUnorderedAccessView* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex);
     void SetUniformBuffer(class FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex);
     void SetSampler(class FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex);
+
+    void TransitionBoundResources(class FVulkanCommandContext& Context);
 
     void UpdateDescriptorSets(class FVulkanTransientDescriptorAllocator* TransientAllocator);
     void Reset();
@@ -398,6 +409,36 @@ public:
         return Layout;
     }
 
+    bool IsResourcesDirty() const
+    {
+        return IsEnumFlagSet(DirtyFlags, EVulkanDescriptorDirtyFlags::ResourcesDirty);
+    }
+
+    bool IsDescriptorSetDirty() const
+    {
+        return IsEnumFlagSet(DirtyFlags, EVulkanDescriptorDirtyFlags::DescriptorSetDirty);
+    }
+
+    void DirtyResources()
+    {
+        DirtyFlags |= EVulkanDescriptorDirtyFlags::ResourcesDirty | EVulkanDescriptorDirtyFlags::DescriptorSetDirty;
+    }
+
+    void DirtyDescriptorSet()
+    {
+        DirtyFlags |= EVulkanDescriptorDirtyFlags::DescriptorSetDirty;
+    }
+
+    void ClearResourcesDirty()
+    {
+        DirtyFlags &= ~EVulkanDescriptorDirtyFlags::ResourcesDirty;
+    }
+
+    void ClearDescriptorSetDirty()
+    {
+        DirtyFlags &= ~EVulkanDescriptorDirtyFlags::DescriptorSetDirty;
+    }
+
 private:
     
     // Binds all the DescriptorSets that we want to bind
@@ -406,22 +447,23 @@ private:
     // Resets a particular bind point with null-descriptors to ensure that there is a valid resource bound
     void ResetDescriptorBinding(uint32 DescriptorSetIndex, uint32 BindingIndex);
 
-    FVulkanPipelineLayout*              Layout;
-    TArray<VkDescriptorSet>             DescriptorSetHandles;
-    TArray<FVulkanDescriptorWrites>     DescriptorSetWrites;
-    TArray<FVulkanDescriptorSetBuilder> DescriptorSetBuilders;
-    TArray<FVulkanDescriptorPoolInfo>   DescriptorPoolInfos;
-    const FVulkanDefaultResources&      DefaultResources;
-    uint64                              DescriptorSetVersion;
-
+    FVulkanPipelineLayout*               Layout;
+    const FVulkanDefaultResources&       DefaultResources;
+    TArray<VkDescriptorSet>              DescriptorSetHandles;
+    TArray<FVulkanDescriptorWrites>      DescriptorSetWrites;
+    TArray<FVulkanDescriptorSetBuilder>  DescriptorSetBuilders;
+    TArray<FVulkanDescriptorPoolInfo>    DescriptorPoolInfos;
+    uint64                               DescriptorSetVersion;
+    TArray<TArray<FVulkanResourceView*>> BoundResourceViews;
+    EVulkanDescriptorDirtyFlags          DirtyFlags = EVulkanDescriptorDirtyFlags::None;
     // Flat array of dynamic offsets passed directly to vkCmdBindDescriptorSets,
     // ordered by (set, binding). Indexed via DynamicOffsetBasePerSet + BindingToDynamicIndex.
-    TArray<uint32>                      DynamicOffsets;
+    TArray<uint32>                       DynamicOffsets;
     // Per-set base index into DynamicOffsets
-    TArray<uint32>                      DynamicOffsetBasePerSet;
+    TArray<uint32>                       DynamicOffsetBasePerSet;
     // Per-set mapping from binding index to dynamic offset slot (-1 if not dynamic)
-    TArray<TArray<int32>>               BindingToDynamicIndex;
-    bool                                bDynamicOffsetsDirty;
+    TArray<TArray<int32>>                BindingToDynamicIndex;
+    bool                                 bDynamicOffsetsDirty;
 };
 
 class FVulkanDescriptorPool : public FVulkanDeviceChild, FNonCopyable

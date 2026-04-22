@@ -593,10 +593,12 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInfo
     }
 
     // Dynamic Depth Bias
-    if (GD3D12SupportDynamicDepthBias)
+#if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS
+    if (GD3D12SupportDynamicDepthBias && D3D12RasterizerState->GetInfo().bEnableDepthBias)
     {
         PipelineStateFlags = D3D12_PIPELINE_STATE_FLAG_DYNAMIC_DEPTH_BIAS;
     }
+#endif
 
     // Build pipeline key for caching (shared by both paths)
     FD3D12GraphicsPipelineKey PipelineKey;

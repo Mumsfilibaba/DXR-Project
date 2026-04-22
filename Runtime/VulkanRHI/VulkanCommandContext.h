@@ -10,7 +10,10 @@
 
 class FVulkanDevice;
 class FVulkanBuffer;
+class FVulkanTexture;
 class FVulkanCommandBuffer;
+class FVulkanShaderResourceView;
+class FVulkanUnorderedAccessView;
 
 class FVulkanBarrierBatcher
 {
@@ -51,6 +54,8 @@ public:
     FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
     ~FVulkanCommandContext();
 
+    bool Initialize();
+    
     // IRHICommandContext Interface
     virtual void BeginFrame() override final;
     virtual void EndFrame() override final;
@@ -125,13 +130,18 @@ public:
         return reinterpret_cast<void*>(&CommandBuffer);
     }
 
-    bool Initialize();
+    void TransitionImageLayout(FVulkanTexture* Texture, VkImageLayout AfterLayout);
+    void TransitionImageLayout(FVulkanTexture* Texture, VkImageLayout BeforeLayout, VkImageLayout AfterLayout);
+    void TransitionImageLayout(FVulkanTexture* Texture, VkImageLayout AfterLayout, uint32 FirstMip, uint32 NumMips, uint32 FirstArraySlice, uint32 NumArraySlices);
+    void TransitionImageLayout(FVulkanUnorderedAccessView* View);
+    void TransitionImageLayout(FVulkanShaderResourceView* View, VkImageLayout Layout);
+
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool, bool bResolveQueries = true, FVulkanFence** OutFence = nullptr);
     void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
 
-    bool IsRecording()        const { return ContextPhase >= ECommandContextPhase::Recording; }
-    bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
+    bool IsRecording()        const { return ContextState.IsRecording(); }
+    bool IsInsideRenderPass() const { return ContextState.IsInsideRenderPass(); }
     
     bool NeedsCommandBuffer() const
     {
@@ -193,7 +203,6 @@ private:
     FVulkanQueryAllocator                          PipelineStatsQueryAllocator;
     FVulkanBarrierBatcher                          BarrierBatcher;
     TArray<FVulkanQueryRHI*>                       PendingQueries;
-    ECommandContextPhase                           ContextPhase;
     FVulkanCommandContextState                     ContextState;
     TArray<FVulkanPendingImageBarrier>             PendingImageBarriers;
     TArray<FVulkanPendingBufferBarrier>            PendingBufferBarriers;
@@ -202,7 +211,6 @@ private:
     FVulkanTransientDescriptorAllocator*           TransientDescriptorAllocator;
     int32                                          ActiveQueryCount;
     TArray<FString>                                EventStack;
-    FRHIBeginRenderPassInfo                        SavedRenderPassInfo;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection CommandContextCS;

@@ -25,6 +25,6 @@ private:
     void FlushBlocking();
 
     TFileRef<IPlatformAsyncFile> FileHandle;
-    TArray<FString>     PendingLines;
-    FCriticalSection    PendingLinesCS;
+    TArray<FString>              PendingLines;
+    FCriticalSection             PendingLinesCS;
 };

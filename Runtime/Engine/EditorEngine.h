@@ -9,6 +9,7 @@ class FEditorSceneHierarchyWidget;
 class FEditorPropertiesWidget;
 class FEditorContentBrowserWidget;
 class FEditorGuizmoWidget;
+class FEditorRendererSettingsWidget;
 class FEditorGPUProfilerWidget;
 class FEditorFrameProfilerWidget;
 class FEditorRHIInfoWidget;
@@ -29,18 +30,19 @@ public:
     virtual void RenderFrame()         override final;
 
     // Editor Widgets
-    const TSharedPtr<FEditorDockspaceWidget>&      GetDockspaceWidget()      const { return DockspaceWidget; }
-    const TSharedPtr<FEditorFooterWidget>&         GetFooterWidget()         const { return FooterWidget; }
-    const TSharedPtr<FEditorOutputLogWidget>&      GetOutputLogWidget()      const { return OutputLogWidget; }
-    const TSharedPtr<FEditorViewportWidget>&       GetEditorViewportWidget() const { return ViewportWidget; }
-    const TSharedPtr<FEditorSceneHierarchyWidget>& GetSceneHierarchyWidget() const { return SceneHierarchyWidget; }
-    const TSharedPtr<FEditorPropertiesWidget>&     GetPropertiesWidget()     const { return PropertiesWidget; }
-    const TSharedPtr<FEditorContentBrowserWidget>& GetContentBrowserWidget() const { return ContentBrowserWidget; }
-    const TSharedPtr<FEditorGuizmoWidget>&         GetGuizmoWidget()         const { return GuizmoWidget; }
-    const TSharedPtr<FEditorGPUProfilerWidget>&    GetGPUProfilerWidget()    const { return GPUProfilerWidget; }
-    const TSharedPtr<FEditorFrameProfilerWidget>& GetFrameProfilerWidget()  const { return FrameProfilerWidget; }
-    const TSharedPtr<FEditorRHIInfoWidget>&       GetRHIInfoWidget()        const { return RHIInfoWidget; }
-    const TSharedPtr<FEditorStatsWidget>&         GetStatsWidget()          const { return StatsWidget; }
+    const TSharedPtr<FEditorDockspaceWidget>&        GetDockspaceWidget()        const { return DockspaceWidget; }
+    const TSharedPtr<FEditorFooterWidget>&           GetFooterWidget()           const { return FooterWidget; }
+    const TSharedPtr<FEditorOutputLogWidget>&        GetOutputLogWidget()        const { return OutputLogWidget; }
+    const TSharedPtr<FEditorViewportWidget>&         GetEditorViewportWidget()   const { return ViewportWidget; }
+    const TSharedPtr<FEditorSceneHierarchyWidget>&   GetSceneHierarchyWidget()   const { return SceneHierarchyWidget; }
+    const TSharedPtr<FEditorPropertiesWidget>&       GetPropertiesWidget()       const { return PropertiesWidget; }
+    const TSharedPtr<FEditorContentBrowserWidget>&   GetContentBrowserWidget()   const { return ContentBrowserWidget; }
+    const TSharedPtr<FEditorGuizmoWidget>&           GetGuizmoWidget()           const { return GuizmoWidget; }
+    const TSharedPtr<FEditorRendererSettingsWidget>& GetRendererSettingsWidget() const { return RendererSettingsWidget; }
+    const TSharedPtr<FEditorGPUProfilerWidget>&      GetGPUProfilerWidget()      const { return GPUProfilerWidget; }
+    const TSharedPtr<FEditorFrameProfilerWidget>&    GetFrameProfilerWidget()    const { return FrameProfilerWidget; }
+    const TSharedPtr<FEditorRHIInfoWidget>&          GetRHIInfoWidget()          const { return RHIInfoWidget; }
+    const TSharedPtr<FEditorStatsWidget>&            GetStatsWidget()            const { return StatsWidget; }
 
     void SetSelectedActor(FActor* InActor);
     void SetSelectedLight(FLight* InLight);
@@ -62,18 +64,19 @@ private:
     FLightProbe* SelectedLightProbe;
 
     // Editor Interface
-    TSharedPtr<FEditorDockspaceWidget>      DockspaceWidget;
-    TSharedPtr<FEditorFooterWidget>         FooterWidget;
-    TSharedPtr<FEditorOutputLogWidget>      OutputLogWidget;
-    TSharedPtr<FEditorViewportWidget>       ViewportWidget;
-    TSharedPtr<FEditorSceneHierarchyWidget> SceneHierarchyWidget;
-    TSharedPtr<FEditorPropertiesWidget>     PropertiesWidget;
-    TSharedPtr<FEditorContentBrowserWidget> ContentBrowserWidget;
-    TSharedPtr<FEditorGuizmoWidget>         GuizmoWidget;
-    TSharedPtr<FEditorGPUProfilerWidget>    GPUProfilerWidget;
-    TSharedPtr<FEditorFrameProfilerWidget>  FrameProfilerWidget;
-    TSharedPtr<FEditorRHIInfoWidget>        RHIInfoWidget;
-    TSharedPtr<FEditorStatsWidget>          StatsWidget;
-    FRHITextureRef                          ViewportImage;
-    FIntVector2                             ViewportImageSize;
+    TSharedPtr<FEditorDockspaceWidget>        DockspaceWidget;
+    TSharedPtr<FEditorFooterWidget>           FooterWidget;
+    TSharedPtr<FEditorOutputLogWidget>        OutputLogWidget;
+    TSharedPtr<FEditorViewportWidget>         ViewportWidget;
+    TSharedPtr<FEditorSceneHierarchyWidget>   SceneHierarchyWidget;
+    TSharedPtr<FEditorPropertiesWidget>       PropertiesWidget;
+    TSharedPtr<FEditorContentBrowserWidget>   ContentBrowserWidget;
+    TSharedPtr<FEditorGuizmoWidget>           GuizmoWidget;
+    TSharedPtr<FEditorRendererSettingsWidget> RendererSettingsWidget;
+    TSharedPtr<FEditorGPUProfilerWidget>      GPUProfilerWidget;
+    TSharedPtr<FEditorFrameProfilerWidget>    FrameProfilerWidget;
+    TSharedPtr<FEditorRHIInfoWidget>          RHIInfoWidget;
+    TSharedPtr<FEditorStatsWidget>            StatsWidget;
+    FRHITextureRef                            ViewportImage;
+    FIntVector2                               ViewportImageSize;
 };

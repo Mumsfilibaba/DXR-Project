@@ -89,7 +89,7 @@ FVulkanTexture* FVulkanTexture::Cast(FVulkanCommandContext* InCommandContext, FR
 
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
-    , FVulkanGenericResource(InDevice)
+    , FVulkanResource(InDevice)
     , DebugName()
     , Image(VK_NULL_HANDLE)
     , CreateInfo{}
@@ -550,7 +550,7 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableI
         return nullptr;
     }
 
-    NewImageView->RegisterWithResource(this);
+    NewImageView->RegisterToResource(this);
 
     if (ImageViewInfo.NumArraySlices > 1)
     {

@@ -1,4 +1,5 @@
 #include "Engine/EditorEngine.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Engine/EngineUI/Editor/EditorDockspaceWidget.h"
 #include "Engine/EngineUI/Editor/EditorFooterWidget.h"
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
@@ -6,6 +7,7 @@
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
+#include "Engine/EngineUI/Editor/EditorRendererSettingsWidget.h"
 #include "Engine/EngineUI/Editor/EditorGPUProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorHelpers.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
@@ -26,6 +28,7 @@ FEditorEngine::FEditorEngine()
     , SceneHierarchyWidget(nullptr)
     , ContentBrowserWidget(nullptr)
     , GuizmoWidget(nullptr)
+    , RendererSettingsWidget(nullptr)
     , GPUProfilerWidget(nullptr)
     , FrameProfilerWidget(nullptr)
     , RHIInfoWidget(nullptr)
@@ -48,17 +51,18 @@ bool FEditorEngine::Init()
 
     if (IImguiPlugin::IsEnabled())
     {
-        DockspaceWidget      = MakeSharedPtr<FEditorDockspaceWidget>(this);
-        OutputLogWidget      = MakeSharedPtr<FEditorOutputLogWidget>();
-        SceneHierarchyWidget = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
-        FooterWidget         = MakeSharedPtr<FEditorFooterWidget>(OutputLogWidget);
-        PropertiesWidget	 = MakeSharedPtr<FEditorPropertiesWidget>(this);
-        ContentBrowserWidget = MakeSharedPtr<FEditorContentBrowserWidget>();
-        GuizmoWidget         = MakeSharedPtr<FEditorGuizmoWidget>(this);
-        GPUProfilerWidget    = MakeSharedPtr<FEditorGPUProfilerWidget>();
-        FrameProfilerWidget  = MakeSharedPtr<FEditorFrameProfilerWidget>();
-        RHIInfoWidget        = MakeSharedPtr<FEditorRHIInfoWidget>();
-        StatsWidget          = MakeSharedPtr<FEditorStatsWidget>();
+        DockspaceWidget        = MakeSharedPtr<FEditorDockspaceWidget>(this);
+        OutputLogWidget        = MakeSharedPtr<FEditorOutputLogWidget>();
+        SceneHierarchyWidget   = MakeSharedPtr<FEditorSceneHierarchyWidget>(this);
+        FooterWidget           = MakeSharedPtr<FEditorFooterWidget>(OutputLogWidget);
+        PropertiesWidget	   = MakeSharedPtr<FEditorPropertiesWidget>(this);
+        ContentBrowserWidget   = MakeSharedPtr<FEditorContentBrowserWidget>();
+        GuizmoWidget           = MakeSharedPtr<FEditorGuizmoWidget>(this);
+        RendererSettingsWidget = MakeSharedPtr<FEditorRendererSettingsWidget>();
+        GPUProfilerWidget      = MakeSharedPtr<FEditorGPUProfilerWidget>();
+        FrameProfilerWidget    = MakeSharedPtr<FEditorFrameProfilerWidget>();
+        RHIInfoWidget          = MakeSharedPtr<FEditorRHIInfoWidget>();
+        StatsWidget            = MakeSharedPtr<FEditorStatsWidget>();
 
         ViewportWidget = MakeSharedPtr<FEditorViewportWidget>();
         ViewportWidget->SetViewportWidget(GetViewportWidget());
@@ -95,6 +99,7 @@ void FEditorEngine::Release()
         PropertiesWidget.Reset();
         ContentBrowserWidget.Reset();
         GuizmoWidget.Reset();
+        RendererSettingsWidget.Reset();
         GPUProfilerWidget.Reset();
         FrameProfilerWidget.Reset();
         RHIInfoWidget.Reset();
@@ -118,7 +123,13 @@ void FEditorEngine::Tick(float DeltaTime)
                 IScene* Scene       = LocalWorld->GetSceneInterface();
                 FActor* PickedActor = Scene ? Scene->GetActorByObjectID(PickedObjectID) : nullptr;
 
-                LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickedObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
+                if (IConsoleVariable* PickDebug = FConsoleManager::Get().FindConsoleVariable("Editor.Pick.Debug"))
+                {
+                    if (PickDebug->GetBool())
+                    {
+                        LOG_INFO("[EditorPick] Completed. ObjectID=%u Actor=%s", PickedObjectID, PickedActor ? *PickedActor->GetName() : "nullptr");
+                    }
+                }
 
                 if (PickedActor)
                 {
@@ -147,6 +158,8 @@ void FEditorEngine::RenderFrame()
     FSceneRenderView RenderView;
     RenderView.Scene        = GetWorld()->GetSceneInterface();
     RenderView.RenderTarget = ViewportImage.Get();
+    RenderView.DebugView          = ViewportWidget->GetDebugView();
+    RenderView.SecondaryDebugView = ViewportWidget->GetSecondaryDebugView();
 
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->RenderSceneView(RenderView);

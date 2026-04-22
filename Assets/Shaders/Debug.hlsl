@@ -41,9 +41,6 @@ SHADER_CONSTANT_BLOCK_END
 struct FVSInput
 {
     float3 Position : POSITION0;
-    float3 Normal   : NORMAL0;
-    float3 Tangent  : TANGENT0;
-    float2 TexCoord : TEXCOORD0;
 };
 
 float4 Light_VSMain(FVSInput Input) : SV_Position
@@ -98,9 +95,6 @@ SHADER_CONSTANT_BLOCK_END
 struct FVSInput
 {
     float3 Position : POSITION0;
-    float3 Normal   : NORMAL0;
-    float3 Tangent  : TANGENT0;
-    float2 TexCoord : TEXCOORD0;
 };
 
 struct FVSOutput

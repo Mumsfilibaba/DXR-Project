@@ -2,9 +2,13 @@
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanPipelineState.h"
+#include "VulkanRHI/VulkanRenderPass.h"
+#include "RHI/IRHICommandContext.h"
 
 class FVulkanCommandContext;
 class FVulkanDescriptorState;
+class FVulkanResourceView;
+struct FRHIBeginRenderPassInfo;
 
 struct FVulkanVertexBufferCache
 {
@@ -61,6 +65,65 @@ struct FVulkanPushConstantsCache
     uint32 NumConstants;
 };
 
+struct FVulkanStreamOutputCache
+{
+    FVulkanStreamOutputCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        FMemory::Memzero(Buffers, sizeof(Buffers));
+        FMemory::Memzero(Offsets, sizeof(Offsets));
+        FMemory::Memzero(Sizes, sizeof(Sizes));
+        NumBuffers = 0;
+    }
+
+    VkBuffer     Buffers[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    VkDeviceSize Offsets[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    VkDeviceSize Sizes[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
+    uint32       NumBuffers;
+};
+
+struct FVulkanRenderTargetState
+{
+    FVulkanRenderTargetState()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        FMemory::Memzero(RenderTargetViews, sizeof(RenderTargetViews));
+
+        for (uint32 Index = 0; Index < RHI_MAX_RENDER_TARGETS; Index++)
+        {
+            ColorStoreActions[Index] = EAttachmentStoreAction::Store;
+        }
+
+        DepthStencilView        = nullptr;
+        DepthStencilStoreAction = EAttachmentStoreAction::Store;
+        Framebuffer             = VK_NULL_HANDLE;
+        NumRenderTargets        = 0;
+        RenderAreaWidth         = 0;
+        RenderAreaHeight        = 0;
+        RenderingLayerCount     = 0;
+        RenderingViewMask       = 0;
+    }
+
+    FVulkanResourceView*   RenderTargetViews[RHI_MAX_RENDER_TARGETS];
+    FVulkanResourceView*   DepthStencilView;
+    VkFramebuffer          Framebuffer;
+    EAttachmentStoreAction ColorStoreActions[RHI_MAX_RENDER_TARGETS];
+    EAttachmentStoreAction DepthStencilStoreAction;
+    uint32                 NumRenderTargets;
+    uint32                 RenderAreaWidth;
+    uint32                 RenderAreaHeight;
+    uint32                 RenderingLayerCount;
+    uint32                 RenderingViewMask;
+};
+
 class FVulkanCommandContextState : public FVulkanDeviceChild, public FNonCopyAndNonMovable
 {
 public:
@@ -69,14 +132,23 @@ public:
 
     bool Initialize();
     
-    void BindGraphicsStates();
+    void PrepareGraphicsState();
+    void PrepareComputeState();
+
+    void BindGraphicsState();
     void BindComputeState();
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
+
     void ResetState();
     void ResetStateForNewCommandBuffer();
+
     void EvictStaleDescriptorStates();
 
-    void SetViewInstanceInfo(const FRHIViewInstancingState& InViewInstancingInfo);
+    void BeginRenderPass(const FRHIBeginRenderPassInfo& RenderPassInfo);
+    void EndRenderPass();
+    void PauseRenderPass();
+    void ResumeRenderPass();
+
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState);
     void SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState);
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
@@ -92,6 +164,23 @@ public:
     void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
+
+    FORCEINLINE void OnStartRecording()
+    {
+        CHECK(ContextPhase == ECommandContextPhase::Finished);
+        ContextPhase = ECommandContextPhase::Recording;
+    }
+
+    FORCEINLINE void OnFinishRecording()
+    {
+        CHECK(ContextPhase == ECommandContextPhase::Recording);
+        ContextPhase = ECommandContextPhase::Finished;
+    }
+
+    FORCEINLINE bool IsRecording()        const { return ContextPhase >= ECommandContextPhase::Recording; }
+    FORCEINLINE bool IsFinished()         const { return ContextPhase == ECommandContextPhase::Finished; }
+    FORCEINLINE bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
+    FORCEINLINE bool IsRenderPassPaused() const { return ContextPhase == ECommandContextPhase::RenderPassPaused; }
 
     FORCEINLINE FVulkanCommandContext& GetContext()
     {
@@ -137,6 +226,8 @@ public:
     }
 
 private:
+    FVulkanRenderPassKey BuildRenderPassKey(const FVulkanRenderTargetState& RenderTargetState) const;
+
     struct FCachedDescriptorState
     {
         FVulkanDescriptorState* State;
@@ -157,16 +248,12 @@ private:
             , NumScissorRects(0)
             , IndexBufferCache()
             , VertexBufferCache()
+            , StencilRef(0)
         {
             FMemory::Memzero(BlendFactor, sizeof(BlendFactor));
             FMemory::Memzero(DepthBias, sizeof(DepthBias));
-            StencilRef = 0;
             FMemory::Memzero(Viewports, sizeof(Viewports));
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
-            FMemory::Memzero(StreamOutputBuffers, sizeof(StreamOutputBuffers));
-            FMemory::Memzero(StreamOutputOffsets, sizeof(StreamOutputOffsets));
-            FMemory::Memzero(StreamOutputSizes, sizeof(StreamOutputSizes));
-            NumStreamOutputBuffers = 0;
         }
 
         FVulkanPipelineLayout*          CurrentLayout;
@@ -183,10 +270,8 @@ private:
         uint32                          NumScissorRects;
         FVulkanIndexBufferCache         IndexBufferCache;
         FVulkanVertexBufferCache        VertexBufferCache;
-        VkBuffer                        StreamOutputBuffers[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
-        VkDeviceSize                    StreamOutputOffsets[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
-        VkDeviceSize                    StreamOutputSizes[VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT];
-        uint32                          NumStreamOutputBuffers;
+        FVulkanStreamOutputCache        StreamOutputCache;
+        FVulkanRenderTargetState        RenderTargetState;
 
         bool bBindBlendFactor          : 1;
         bool bBindStencilRef           : 1;
@@ -228,4 +313,5 @@ private:
     
     FVulkanCommandContext& Context;
     uint64                 CurrentFrame;
+    ECommandContextPhase   ContextPhase;
 };

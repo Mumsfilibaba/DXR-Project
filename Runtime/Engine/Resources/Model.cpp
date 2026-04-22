@@ -428,6 +428,19 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
             }
         };
 
+        auto TryCompressBC3 = [&](FRHITextureRef& Texture)
+        {
+            if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
+            {
+                FRHITextureRef Compressed;
+                if (Compressor.CompressBC3(Texture, Compressed))
+                {
+                    LOG_INFO("[FModel] Compressed texture (%dx%d) %s -> BC3", Texture->GetInfo().Extent.X, Texture->GetInfo().Extent.Y, ToString(Texture->GetFormat()));
+                    Texture = Compressed;
+                }
+            }
+        };
+
         auto TryCompressBC5 = [&](FRHITextureRef& Texture)
         {
             if (Texture && !IsBlockCompressed(Texture->GetFormat()) && IsBlockCompressedAligned(Texture->GetInfo().Extent.X) && IsBlockCompressedAligned(Texture->GetInfo().Extent.Y))
@@ -441,7 +454,15 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
             }
         };
 
-        TryCompressBC1(Material->AlbedoMap);
+        if (Material->HasAlphaMask())
+        {
+            TryCompressBC3(Material->AlbedoMap);
+        }
+        else
+        {
+            TryCompressBC1(Material->AlbedoMap);
+        }
+        
         TryCompressBC5(Material->NormalMap);
         TryCompressBC1(Material->MaterialMap);
 

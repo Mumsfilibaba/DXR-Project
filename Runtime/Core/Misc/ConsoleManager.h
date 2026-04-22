@@ -5,7 +5,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Delegates/MulticastDelegate.h"
 
-DECLARE_DELEGATE(FConsoleCommandDelegate);
+DECLARE_DELEGATE(FConsoleCommandDelegate, FStringView);
 DECLARE_DELEGATE(FConsoleVariableDelegate, struct IConsoleVariable*);
 
 struct IOutputDevice;
@@ -36,12 +36,11 @@ struct IConsoleObject
 
 struct IConsoleCommand : public IConsoleObject
 {
-    // TODO: Add parameters to console commands
-
     /**
      * @brief Execute the ConsoleCommand
+     * @param Args Arguments passed to the command
      */
-    virtual void Execute() = 0;
+    virtual void Execute(FStringView Args) = 0;
 };
 
 
@@ -320,6 +319,19 @@ public:
      * @param Command Command to execute by the console
      */
     void ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command);
+
+    /**
+     * @brief Retrieve all registered console objects
+     * @param OutObjects Array to populate with name/object pairs
+     */
+    void GetConsoleObjects(TArray<TPair<FString, IConsoleObject*>>& OutObjects) const;
+
+    /**
+     * @brief Dump all console variable values to an output device
+     * @param OutputDevice Output device to write to
+     * @param Key Optional filter key (case-insensitive substring match)
+     */
+    void DumpConsoleVariableValues(IOutputDevice& OutputDevice, const CHAR* Key = nullptr);
 
     /**
      * @brief Retrieve all the history that has been written to the console

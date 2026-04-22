@@ -51,9 +51,18 @@ public:
 private:
     static uint16 GenerateIdentifier()
     {
-        const int32 Identifier = ++NextIdentifier;
-        CHECK(Identifier < InvalidIdentifier);
-        return static_cast<uint16>(Identifier);
+        const int32 Counter = ++NextIdentifier;
+        CHECK(Counter < InvalidIdentifier);
+
+        // Bijective scramble so that sequential counters produce well-distributed
+        // uint16 values, avoiding CRC32 hash clustering in the sampler cache.
+        uint16 x = static_cast<uint16>(Counter);
+        x *= 0xA3B1;
+        x ^= (x >> 7);
+        x *= 0x27D5;
+        x ^= (x >> 9);
+
+        return (x != InvalidIdentifier) ? x : 0;
     }
 
     static D3D12RHI_API FAtomicInt32 NextIdentifier;

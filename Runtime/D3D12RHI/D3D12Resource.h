@@ -14,6 +14,8 @@ class FD3D12BuddyAllocator;
 class FD3D12GenericResource;
 class FD3D12ResourceStorage;
 
+enum class ED3D12ResourceStateMode : uint8;
+
 enum class ED3D12ResourceLifetime : uint8
 {
     Default,
@@ -80,7 +82,7 @@ public:
     FORCEINLINE void*                  GetMappedBaseAddress() const { return MappedBaseAddress; }
     FORCEINLINE uint64                 GetSize()              const { return Size; }
     FORCEINLINE uint64                 GetResourceOffset()    const { return ResourceOffset; }
-    FORCEINLINE uint64                 GetGpuVirtualAddress() const { return GpuVirtualAddress; }
+    FORCEINLINE uint64                 GetGPUVirtualAddress() const { return GpuVirtualAddress; }
     FORCEINLINE void*                  GetAllocator()         const { return AllocatorPointers.AsVoid; }
     FORCEINLINE FD3D12Resource*        GetResource()          const { return Resource; }
     FORCEINLINE FD3D12GenericResource* GetOwner()             const { return Owner; }
@@ -223,6 +225,13 @@ public:
         return DefaultState;
     }
 
+    void SetResourceStateMode(ED3D12ResourceStateMode InStateMode)
+    {
+        StateMode = InStateMode;
+    }
+
+    bool RequiresResourceStateTracking() const;
+
     uint32 GetNumSubresources() const 
     {
         return NumSubresources;
@@ -253,6 +262,7 @@ private:
     D3D12_CLEAR_VALUE         ClearValue;
     D3D12_GPU_VIRTUAL_ADDRESS Address;
     D3D12_RESOURCE_STATES     DefaultState;
+    ED3D12ResourceStateMode   StateMode;
     FD3D12ResidencyHandle     ResidencyHandle;
     FD3D12HeapRef             Heap;
     uint64                    AllocationSize;

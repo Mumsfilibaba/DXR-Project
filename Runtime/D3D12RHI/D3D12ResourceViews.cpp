@@ -82,7 +82,7 @@ void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12GenericResource* Reloca
     if (NewResourceStorage)
     {
         D3D12_CONSTANT_BUFFER_VIEW_DESC NewDesc = Desc;
-        NewDesc.BufferLocation = NewResourceStorage->GetGpuVirtualAddress();
+        NewDesc.BufferLocation = NewResourceStorage->GetGPUVirtualAddress();
 
         CreateView(NewResourceStorage->GetResource(), NewDesc);
     }

@@ -116,8 +116,8 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
     AccelerationStructureDesc.Inputs                           = Inputs;
-    AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGpuVirtualAddress();
-    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGpuVirtualAddress();
+    AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGPUVirtualAddress();
+    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGPUVirtualAddress();
 
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
 
@@ -225,7 +225,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
         D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc = {};
         SrvDesc.ViewDimension                            = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
         SrvDesc.Shader4ComponentMapping                  = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        SrvDesc.RaytracingAccelerationStructure.Location = ResultResourceStorage.GetGpuVirtualAddress();
+        SrvDesc.RaytracingAccelerationStructure.Location = ResultResourceStorage.GetGPUVirtualAddress();
 
         View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
         if (!View->AllocateHandle())
@@ -320,13 +320,13 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC AccelerationStructureDesc = {};
     AccelerationStructureDesc.Inputs                           = Inputs;
     AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
-    AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGpuVirtualAddress();
-    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGpuVirtualAddress();
+    AccelerationStructureDesc.DestAccelerationStructureData    = ResultResourceStorage.GetGPUVirtualAddress();
+    AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchResourceStorage.GetGPUVirtualAddress();
 
     if (BuildInfo.bUpdate)
     {
         CHECK((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
-        AccelerationStructureDesc.SourceAccelerationStructureData = ResultResourceStorage.GetGpuVirtualAddress();
+        AccelerationStructureDesc.SourceAccelerationStructureData = ResultResourceStorage.GetGPUVirtualAddress();
     }
 
     CmdContext.GetBarrierBatcher().FlushBarriers(CmdContext.GetCommandList());
@@ -521,7 +521,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
             FD3D12Buffer* Buffer = static_cast<FD3D12Buffer*>(Resources.ConstantBuffers[i]);
-            OutShaderBindingEntry.RootDescriptors[ParamIndex] = Buffer ? Buffer->GetGpuVirtualAddress() : 0;
+            OutShaderBindingEntry.RootDescriptors[ParamIndex] = Buffer ? Buffer->GetGPUVirtualAddress() : 0;
         }
     }
 

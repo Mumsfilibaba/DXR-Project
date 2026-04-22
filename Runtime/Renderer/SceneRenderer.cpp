@@ -5,6 +5,7 @@
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "Engine/Engine.h"
 #if EDITOR_BUILD
     #include "Engine/EditorEngine.h"
@@ -152,15 +153,13 @@ static TAutoConsoleVariable<bool> CVarCSMTightFrustum(
 static FAutoConsoleCommand CVarFreezeRendering(
     "Renderer.FreezeRendering",
     "Freezes the updating of Frustum culling",
-    FConsoleCommandDelegate::CreateLambda([]()
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
     {
         GFreezeRendering = !GFreezeRendering;
     }));
 
 FSceneRenderer::FSceneRenderer()
-    : TextureDebugger(nullptr)
-    , SettingsWindow(nullptr)
-    , CommandList()
+    : CommandList()
     , Resources()
     , CameraBuffer()
     , HaltonState()
@@ -188,6 +187,7 @@ FSceneRenderer::FSceneRenderer()
 #endif
     , LightProbeRenderer(nullptr)
     , DebugRenderer(nullptr)
+    , DebugViewPass(nullptr)
     , RayTracer(this)
     , ShadingImage(nullptr)
     , ShadingRatePipeline(nullptr)
@@ -227,6 +227,7 @@ FSceneRenderer::~FSceneRenderer()
 #endif
     SAFE_DELETE(LightProbeRenderer);
     SAFE_DELETE(DebugRenderer);
+    SAFE_DELETE(DebugViewPass);
 
     RayTracer.Release();
 
@@ -238,11 +239,6 @@ FSceneRenderer::~FSceneRenderer()
 
     TimestampQueries.Reset();
 
-    if (IImguiPlugin::IsEnabled())
-    {
-        TextureDebugger.Reset();
-        SettingsWindow.Reset();
-    }
 }
 
 bool FSceneRenderer::Initialize()
@@ -389,13 +385,6 @@ bool FSceneRenderer::Initialize()
         }
     }
 
-    // Register ImGui Windows
-    if (IImguiPlugin::IsEnabled())
-    {
-        TextureDebugger   = MakeSharedPtr<FTextureDebugWidget>();
-        SettingsWindow    = MakeSharedPtr<FRendererSettingsWidget>();
-    }
-
     return true;
 }
 
@@ -403,6 +392,12 @@ bool FSceneRenderer::InitializeRenderPasses()
 {
     DebugRenderer = new FDebugRenderer(this);
     if (!DebugRenderer->Initialize(Resources))
+    {
+        return false;
+    }
+
+    DebugViewPass = new FDebugViewPass(this);
+    if (!DebugViewPass->Initialize(Resources))
     {
         return false;
     }
@@ -531,9 +526,6 @@ bool FSceneRenderer::InitializeRenderPasses()
 void FSceneRenderer::BeginFrame()
 {
     FRHICommandListExecutor::Get().Tick();
-
-    // Clear the images that were "debug-able" last frame 
-    TextureDebugger->ClearImages();
 
     // Update FrameCounter
     FrameCounter.NextFrame();
@@ -737,18 +729,6 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
     CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView()),
-        Resources.GBuffer[GBufferIndex_Albedo], EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView()),
-        Resources.GBuffer[GBufferIndex_Normal], EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Velocity]->GetShaderResourceView()),
-        Resources.GBuffer[GBufferIndex_Velocity], EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Material]->GetShaderResourceView()),
-        Resources.GBuffer[GBufferIndex_Material], EResourceAccess::NonPixelShaderResource);
-
     // SSAO
     if (CVarEnableSSAO.GetValue())
     {
@@ -761,8 +741,33 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     CommandList.TransitionTextureState(Resources.SSAOBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
 
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView()),
-        Resources.SSAOBuffer, EResourceAccess::NonPixelShaderResource);
+    // Check for shadow texture resolution changes at runtime
+    {
+        auto ClampAndSnapPow2 = [](int32 MinSize, int32 MaxSize, int32 Value) -> int32
+        {
+            return Math::ClosestPowerOfTwo(Math::Clamp(Value, MinSize, MaxSize));
+        };
+
+        if (IConsoleVariable* CVarCascade = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.CascadeSize"))
+        {
+            const int32 NewCascadeSize = ClampAndSnapPow2(512, 4096, CVarCascade->GetInt());
+            if (NewCascadeSize != Resources.CascadeSize)
+            {
+                Resources.CascadeSize = NewCascadeSize;
+                CascadedShadowsRenderPass->CreateResources(Resources);
+            }
+        }
+
+        if (IConsoleVariable* CVarPointLight = FConsoleManager::Get().FindConsoleVariable("Renderer.Shadows.PointLightShadowMapSize"))
+        {
+            const int32 NewPointLightSize = ClampAndSnapPow2(128, 1024, CVarPointLight->GetInt());
+            if (NewPointLightSize != Resources.PointLightShadowSize)
+            {
+                Resources.PointLightShadowSize = NewPointLightSize;
+                PointLightRenderPass->CreateResources(Resources);
+            }
+        }
+    }
 
     // Render Shadows
     const bool bEnableShadows    = CVarShadowsEnabled.GetValue();
@@ -803,9 +808,15 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     // In order to render the shadow-mask, we want all these features to be enabled
     const bool bEnableShadowMask = CVarShadowMaskEnabled.GetValue();
+    const bool bNeedsCascadeDebug =
+        SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeIndex ||
+        SceneRenderView.DebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay ||
+        SceneRenderView.SecondaryDebugView == FSceneRenderView::EDebugView::ShadowCascadeIndex ||
+        SceneRenderView.SecondaryDebugView == FSceneRenderView::EDebugView::ShadowCascadeOverlay;
+
     if (bEnableShadows && bEnableShadowMask && bEnableSunShadows)
     {
-        ShadowMaskRenderPass->Execute(CommandList, Resources);
+        ShadowMaskRenderPass->Execute(CommandList, Resources, bNeedsCascadeDebug);
     }
     else
     {
@@ -836,14 +847,6 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     CommandList.TransitionTextureState(Resources.PointLightShadowMaps.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
 
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.DirectionalShadowMask->GetShaderResourceView()),
-        Resources.DirectionalShadowMask, EResourceAccess::NonPixelShaderResource);
-
-    for (int32 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
-    {
-        AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowCascadesSRVs[Index].Get()),
-            Resources.ShadowCascades, EResourceAccess::NonPixelShaderResource);
-    }
 
     if (CurrentScene)
     {
@@ -856,32 +859,11 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
 
     CommandList.TransitionTextureState(Resources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
 
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.IntegrationLUT->GetShaderResourceView()),
-        Resources.IntegrationLUT, EResourceAccess::PixelShaderResource);
-
     // Forward Pass
     // if (!Resources.ForwardVisibleCommands.IsEmpty())
     // {
         // ForwardPass->Execute(CommandList, Resources, Scene);
     // }
-
-    // Debug PointLights
-    if (CVarDrawPointLights.GetValue())
-    {
-        DebugRenderer->RenderPointLights(CommandList, Resources, CurrentScene);
-    }
-
-    // Debug LightProbes
-    if (CVarDrawLightProbes.GetValue())
-    {
-        DebugRenderer->RenderLightProbes(CommandList, Resources, CurrentScene);
-    }
-
-    // Debug AABBs
-    if (CVarDrawAABBs.GetValue())
-    {
-        DebugRenderer->RenderObjectAABBs(CommandList, Resources, CurrentScene);
-    }
 
     // Temporal AA
     if (CVarEnableTemporalAA.GetValue())
@@ -899,9 +881,6 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource));
         CommandList.TransitionTextureState(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
     }
-
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView()),
-        Resources.GBuffer[GBufferIndex_Depth], EResourceAccess::PixelShaderResource);
 
     // Editor selection outline (ObjectID -> mask -> dilate/erode -> ring -> composite after tonemap)
 #if EDITOR_BUILD
@@ -939,8 +918,63 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     TonemapPass->Execute(CommandList, Resources, SceneRenderView.RenderTarget, true);
 #endif
 
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()), 
-        Resources.FinalTarget, EResourceAccess::PixelShaderResource); 
+    // Debug geometry draws after composite so they render on top of the editor grid
+    {
+        const bool bAnyDebugDraw = CVarDrawPointLights.GetValue() || CVarDrawLightProbes.GetValue() || CVarDrawAABBs.GetValue();
+        if (bAnyDebugDraw)
+        {
+        #if EDITOR_BUILD
+            FRHITexture* DebugDepthTarget = Resources.EditorNoJitterDepth.Get();
+        #else
+            FRHITexture* DebugDepthTarget = Resources.GBuffer[GBufferIndex_Depth].Get();
+        #endif
+
+            CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+
+            CommandList.TransitionTextureState(DebugDepthTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
+
+            if (CVarDrawPointLights.GetValue())
+            {
+                DebugRenderer->RenderPointLights(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
+            }
+            
+            if (CVarDrawLightProbes.GetValue())
+            {
+                DebugRenderer->RenderLightProbes(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
+            }
+
+            if (CVarDrawAABBs.GetValue())
+            {
+                DebugRenderer->RenderObjectAABBs(CommandList, Resources, CurrentScene, SceneRenderView.RenderTarget, DebugDepthTarget);
+            }
+
+            CommandList.TransitionTextureState(DebugDepthTarget, FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource));
+
+            CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
+        }
+    }
+
+    if (SceneRenderView.DebugView != FSceneRenderView::EDebugView::None)
+    {
+        DebugViewPass->Execute(CommandList, SceneRenderView, Resources, SceneRenderView.DebugView);
+    }
+
+    if (SceneRenderView.SecondaryDebugView != FSceneRenderView::EDebugView::None)
+    {
+        FRHITexture* RenderTarget = SceneRenderView.RenderTarget;
+        if (RenderTarget)
+        {
+            const int32 TargetWidth   = static_cast<int32>(RenderTarget->GetWidth());
+            const int32 TargetHeight  = static_cast<int32>(RenderTarget->GetHeight());
+            const int32 OverlayWidth  = Math::Max(TargetWidth / 2, 1);
+            const int32 OverlayHeight = Math::Max(TargetHeight / 2, 1);
+            const int32 OverlayX      = TargetWidth - OverlayWidth;
+            const int32 OverlayY      = 0;
+
+            DebugViewPass->ExecuteOverlay(CommandList, SceneRenderView, Resources, SceneRenderView.SecondaryDebugView, OverlayX, OverlayY, OverlayWidth, OverlayHeight);
+        }
+    }
+
 } 
  
 #if EDITOR_BUILD

@@ -392,13 +392,15 @@ bool FD3D12MultiBuddyAllocator::Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOU
         return false;
     }
 
-    SCOPED_LOCK(AllocatorsCS);
-
-    for (const FD3D12BuddyAllocator* Allocator : Allocators)
     {
-        if (Allocator && Allocator->Supports(InHeapType, InInitialState, InAllocationStrategy, InResourceFlags))
+        SCOPED_LOCK(AllocatorsCS);
+        
+        for (const FD3D12BuddyAllocator* Allocator : Allocators)
         {
-            return true;
+            if (Allocator && Allocator->Supports(InHeapType, InInitialState, InAllocationStrategy, InResourceFlags))
+            {
+                return true;
+            }
         }
     }
 
@@ -1673,7 +1675,7 @@ void* FD3D12LinearAllocator::Allocate(uint64 SizeInBytes, uint64 Alignment, FD3D
 
     const FD3D12ResourceStorage&    BackingStorage     = CurrentPage->GetBackingResourceStorage();
     const uint64                    PageResourceOffset = BackingStorage.GetResourceOffset() + AllocationOffset;
-    const D3D12_GPU_VIRTUAL_ADDRESS BaseGpuAddress     = BackingStorage.GetGpuVirtualAddress();
+    const D3D12_GPU_VIRTUAL_ADDRESS BaseGpuAddress     = BackingStorage.GetGPUVirtualAddress();
     const D3D12_GPU_VIRTUAL_ADDRESS PageGpuAddress     = BaseGpuAddress ? (BaseGpuAddress + AllocationOffset) : 0;
     
     uint8* MappedBase = static_cast<uint8*>(BackingStorage.GetMappedBaseAddress());
@@ -2072,7 +2074,7 @@ bool FD3D12TextureAllocator::Initialize()
 {
     Destroy();
 
-    auto CreatePool = [this](ETexturePoolClass PoolClass, uint64 PoolAlignment) -> bool
+    const auto CreatePool = [this](ETexturePoolClass PoolClass, uint64 PoolAlignment) -> bool
     {
         const uint32 PoolIndex = static_cast<uint32>(PoolClass);
         if (PoolIndex >= TEXTURE_POOL_CLASS_COUNT)
@@ -2156,9 +2158,9 @@ bool FD3D12TextureAllocator::GetDefragCandidate(FD3D12PoolAllocatorAllocationDat
 {
     SCOPED_LOCK(PoolsCS);
 
-    uint64 MostFragmented = 0;
     FD3D12PoolAllocator* BestPool = nullptr;
-
+    uint64 MostFragmented = 0;
+    
     for (uint32 Index = 0; Index < TEXTURE_POOL_CLASS_COUNT; ++Index)
     {
         if (Pools[Index] && Pools[Index]->GetFragmentedBytes() > MostFragmented)
@@ -2184,8 +2186,7 @@ bool FD3D12TextureAllocator::Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RE
         return false;
     }
 
-    return ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D ||
-           ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D ||
+    return ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE1D || ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D ||
            ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE3D;
 }
 
@@ -2433,8 +2434,8 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
     CHECK(InCommandContext->IsRecording());
 
     FD3D12Fence& FrameFence = GetDevice()->GetFrameFence();
+    
     const uint64 CompletedFenceValue = FrameFence.GetCompletedValue();
-
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
         FPendingDefragMove& Move = PendingDefragMoves[Index];
@@ -2474,6 +2475,7 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
         }
 
         Move.Allocator->TransferOwnership(Move.OldAllocationData, nullptr);
+
         FD3D12RHI::DeferDeletion(Move.Allocator, Move.OldAllocationData);
 
         Move.NewResource->Release();
@@ -2595,6 +2597,7 @@ void FD3D12TextureAllocator::CancelPendingDefragMoves(FD3D12GenericResource* Own
             {
                 Move.NewResource->DeferredRelease();
             }
+
             Move.NewResource->Release();
 
             PendingDefragMoves.RemoveAtSwap(Index);

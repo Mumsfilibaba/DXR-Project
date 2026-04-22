@@ -70,8 +70,6 @@ private:
 
     bool Initialize();
     bool Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-    bool PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource);
-    bool RecompileSpirv(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
     FString CreateArgString(const TArrayView<LPCWSTR> Args);

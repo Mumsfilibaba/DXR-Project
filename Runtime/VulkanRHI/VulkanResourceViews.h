@@ -55,14 +55,14 @@ public:
     virtual ~FVulkanResourceView();
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
     
     bool InitializeImageView(VkImage InImage, VkFormat InFormat, VkImageViewType InImageViewType, VkImageAspectFlags InAspectMask, uint32 InBaseArrayLayer, uint32 InLayerCount, uint32 InBaseMipLevel, uint32 InLevelCount);
     bool InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset);
     bool InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange);
     bool InitializeAccelerationStructureView(VkAccelerationStructureKHR InAccelerationStructure);
 
-    void RegisterWithResource(FVulkanGenericResource* InOwner);
+    void RegisterToResource(FVulkanResource* InOwner);
     void UnregisterFromResource();
 
     void SetDebugName(const FString& InName);
@@ -96,6 +96,11 @@ public:
         return Type;
     }
 
+    FVulkanResource* GetOwnerResource() const
+    {
+        return OwnerResource;
+    }
+
     uint32 GetDescriptorVersion() const
     {
         return DescriptorVersion;
@@ -107,9 +112,9 @@ protected:
         ++DescriptorVersion;
     }
 
-    EType                   Type;
-    FVulkanGenericResource* OwnerResource;
-    uint32                  DescriptorVersion;
+    EType            Type;
+    FVulkanResource* OwnerResource;
+    uint32           DescriptorVersion;
 
     union
     {
@@ -130,7 +135,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
     bool Initialize(const FRHIShaderResourceViewInfo& InInfo);
 };
@@ -145,7 +150,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
     bool Initialize(const FRHIUnorderedAccessViewInfo& InInfo);
 };

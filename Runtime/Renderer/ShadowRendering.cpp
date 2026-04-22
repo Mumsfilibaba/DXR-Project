@@ -956,16 +956,8 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         FRHIRasterizerStateInfo RasterizerStateInfo;
         RasterizerStateInfo.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
 
-        if (RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+        if (!RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
         {
-            RasterizerStateInfo.bEnableDepthBias     = false;
-            RasterizerStateInfo.DepthBias            = 0.0f;
-            RasterizerStateInfo.DepthBiasClamp       = 0.0f;
-            RasterizerStateInfo.SlopeScaledDepthBias = 0.0f;
-        }
-        else
-        {
-            RasterizerStateInfo.bEnableDepthBias     = true;
             RasterizerStateInfo.DepthBias            = 1.0f;
             RasterizerStateInfo.DepthBiasClamp       = 0.05f;
             RasterizerStateInfo.SlopeScaledDepthBias = 1.0f;
@@ -1471,7 +1463,7 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
     return true;
 }
 
-void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources)
+void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources, bool bForceDebugMode)
 {
     if (Resources.DirectionalShadowMask->GetWidth() == 0 || Resources.DirectionalShadowMask->GetHeight() == 0)
     {
@@ -1484,7 +1476,6 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     GPU_TRACE_SCOPE(CommandList, "DirectionalLight Shadow Mask");
 
-    // Send the settings to the GPU
     FDirectionalShadowSettingsHLSL ShadowSettings;
     FMemory::Memzero(&ShadowSettings);
 
@@ -1492,6 +1483,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     ShadowSettings.MaxFilterSize = Math::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
     ShadowSettings.ShadowMapSize = Resources.ShadowCascades->GetWidth();
     ShadowSettings.FrameIndex    = GetRenderer()->GetFrameCounter().GetFrameIndex();
+    ShadowSettings.NumSamples    = Math::Clamp<uint32>(CVarCSMNumPoissonDiscSamples.GetValue(), 4, 128);
 
     CommandList.TransitionBufferState(ShadowSettingsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(ShadowSettingsBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalShadowSettingsHLSL)), &ShadowSettings);
@@ -1501,15 +1493,17 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     FShadowMaskShaderCombination Combination;
     RetrieveCurrentCombinationBasedOnCVar(Combination);
+    Combination.bDebugMode |= bForceDebugMode;
 
     FComputePipelineStateInstance PipelineStateInstance;
     if (!RetrievePipelineState(Combination, PipelineStateInstance))
     {
+        CommandList.TransitionTextureState(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
         DEBUG_BREAK();
         return;
     }
 
-    if (CVarCSMDebugCascades.GetValue())
+    if (Combination.bDebugMode)
     {
         CommandList.TransitionTextureState(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
     }
@@ -1528,7 +1522,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.DirectionalShadowMask->GetUnorderedAccessView(), 0);
 
-    if (CVarCSMDebugCascades.GetValue())
+    if (Combination.bDebugMode)
     {
         CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
     }
@@ -1543,7 +1537,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTextureState(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-    if (CVarCSMDebugCascades.GetValue())
+    if (Combination.bDebugMode)
     {
         CommandList.TransitionTextureState(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
     }
@@ -1654,26 +1648,33 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
         Defines.Emplace("ENABLE_CASCADE_BLENDING", "0");
     }
 
-    // Number of samples
-    if (Combination.NumSamples <= 16)
+    // Number of samples (only needed as compile-time define for Poisson disk fixed arrays)
+    if (Combination.FilterFunction != ECSMFilterFunction::VogelDisk)
     {
-        Defines.Emplace("NUM_SAMPLES", "16");
-        DebugName += " NumSamples=16";
+        if (Combination.NumSamples <= 16)
+        {
+            Defines.Emplace("NUM_SAMPLES", "16");
+            DebugName += " NumSamples=16";
+        }
+        else if (Combination.NumSamples <= 32)
+        {
+            Defines.Emplace("NUM_SAMPLES", "32");
+            DebugName += " NumSamples=32";
+        }
+        else if (Combination.NumSamples <= 64)
+        {
+            Defines.Emplace("NUM_SAMPLES", "64");
+            DebugName += " NumSamples=64";
+        }
+        else if (Combination.NumSamples <= 128)
+        {
+            Defines.Emplace("NUM_SAMPLES", "128");
+            DebugName += " NumSamples=128";
+        }
     }
-    else if (Combination.NumSamples <= 32)
+    else
     {
-        Defines.Emplace("NUM_SAMPLES", "32");
-        DebugName += " NumSamples=32";
-    }
-    else if (Combination.NumSamples <= 64)
-    {
-        Defines.Emplace("NUM_SAMPLES", "64");
-        DebugName += " NumSamples=64";
-    }
-    else if (Combination.NumSamples <= 128)
-    {
-        Defines.Emplace("NUM_SAMPLES", "128");
-        DebugName += " NumSamples=128";
+        DebugName += " NumSamples=runtime";
     }
 
     DebugName += ")";
@@ -1721,5 +1722,15 @@ void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskSha
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
     OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
-    OutCombination.NumSamples                   = CVarCSMNumPoissonDiscSamples.GetValue();
+
+    // Vogel disk uses runtime sample count from the cbuffer, so set 0 to avoid PSO permutations.
+    // Poisson disk needs compile-time NUM_SAMPLES for its fixed arrays.
+    if (OutCombination.FilterFunction == ECSMFilterFunction::VogelDisk)
+    {
+        OutCombination.NumSamples = 0;
+    }
+    else
+    {
+        OutCombination.NumSamples = CVarCSMNumPoissonDiscSamples.GetValue();
+    }
 }

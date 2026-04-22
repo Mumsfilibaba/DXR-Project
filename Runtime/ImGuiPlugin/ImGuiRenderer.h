@@ -58,9 +58,8 @@ private:
     void SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData);
     void PrepareTexturesForShaderResourceUsage(FRHICommandList& CommandList, ImDrawData* DrawData);
     void PrepareTextureForShaderResourceUsage(FRHICommandList& CommandList, const FImGuiTexture* InTexture);
-    void ResetTexturesShaderResourceUsage(FRHICommandList& CommandList);
 
-    TArray<const FImGuiTexture*> RenderedTextures;
+    TArray<FRHITexture*>         RenderedTextures;
     FRHITextureRef               FontAtlas;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;

@@ -34,6 +34,8 @@ public:
     FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
     ~FD3D12CommandContext();
 
+    bool Initialize();
+
     // IRHICommandContext Interface
     virtual void BeginFrame() override final;
     virtual void EndFrame() override final;
@@ -107,8 +109,6 @@ public:
     { 
         return reinterpret_cast<void*>(&CommandList);
     }
-
-    bool Initialize();
     
     void ObtainCommandList();
     void FinishCommandList(bool bFlushAllocator, bool bResolveQueries = true);
@@ -118,7 +118,14 @@ public:
     
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
     
+    void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState);
     void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+    void TransitionResourceState(FD3D12Resource* Resource, D3D12_RESOURCE_STATES AfterState, uint32 FirstMip, uint32 NumMips, uint32 FirstArraySlice, uint32 NumArraySlices);
+
+    void TransitionResourceState(FD3D12UnorderedAccessView* View);
+    void TransitionResourceState(FD3D12ShaderResourceView* View, D3D12_RESOURCE_STATES State);
+    void TransitionResourceState(FD3D12RenderTargetView* View);
+    void TransitionResourceState(FD3D12DepthStencilView* View, D3D12_RESOURCE_STATES State);
 
     FD3D12CommandList& GetCommandList() 
     {

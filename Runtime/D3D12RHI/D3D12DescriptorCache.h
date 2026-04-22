@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Templates/TypeHash.h"
+#include "Core/Templates/Utility/EnumOperators.h"
 #include "Core/Misc/CRC.h"
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12RootSignature.h"
@@ -20,10 +21,12 @@ struct FD3D12VertexBufferCache
     void Clear()
     {
         FMemory::Memzero(VertexBuffers, sizeof(VertexBuffers));
+        FMemory::Memzero(BufferResources, sizeof(BufferResources));
         NumVertexBuffers = 0;
     }
 
     D3D12_VERTEX_BUFFER_VIEW VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
+    FD3D12Buffer*            BufferResources[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     uint32                   NumVertexBuffers;
 };
 
@@ -37,9 +40,11 @@ struct FD3D12IndexBufferCache
     void Clear()
     {
         FMemory::Memzero(&IndexBuffer, sizeof(IndexBuffer));
+        BufferResource = nullptr;
     }
 
     D3D12_INDEX_BUFFER_VIEW IndexBuffer;
+    FD3D12Buffer*           BufferResource;
 };
 
 struct FD3D12RenderTargetCache
@@ -64,32 +69,71 @@ struct FD3D12RenderTargetCache
     uint32                  NumRenderTargets;
 };
 
+enum class ED3D12DescriptorState : uint8
+{
+    None                 = 0,
+    ResourcesDirty       = (1 << 0),
+    DescriptorTableDirty = (1 << 1)
+};
+ENUM_CLASS_OPERATORS(ED3D12DescriptorState)
+
 struct FD3D12ResourceCache
 {
-    bool IsDirty(EShaderVisibility ShaderStage) const
+    bool IsResourcesDirty(EShaderVisibility ShaderStage) const
     {
-        return bDirty[ShaderStage];
+        return IsEnumFlagSet(DescriptorState[ShaderStage], ED3D12DescriptorState::ResourcesDirty);
     }
 
-    void DirtyState(uint32 StartStage, uint32 EndStage)
+    bool IsDescriptorTableDirty(EShaderVisibility ShaderStage) const
     {
-        CHECK(StartStage <= EndStage && EndStage < ShaderVisibility_Count);
+        return IsEnumFlagSet(DescriptorState[ShaderStage], ED3D12DescriptorState::DescriptorTableDirty);
+    }
 
-        for (uint32 Index = StartStage; Index < EndStage; Index++)
+    void DirtyResources(EShaderVisibility ShaderStage)
+    {
+        DescriptorState[ShaderStage] |= ED3D12DescriptorState::ResourcesDirty;
+    }
+
+    void DirtyResourcesAll()
+    {
+        for (uint32 i = ShaderVisibility_All; i < ShaderVisibility_Count; i++)
         {
-            bDirty[Index] = true;
+            DescriptorState[i] |= ED3D12DescriptorState::ResourcesDirty;
         }
     }
 
-    void DirtyStateAll()
+    void DirtyDescriptorTable(EShaderVisibility ShaderStage)
     {
-        for (uint32 Index = ShaderVisibility_All; Index < ShaderVisibility_Count; Index++)
+        DescriptorState[ShaderStage] |= ED3D12DescriptorState::DescriptorTableDirty;
+    }
+
+    void DirtyDescriptorTableAll()
+    {
+        for (uint32 i = ShaderVisibility_All; i < ShaderVisibility_Count; i++)
         {
-            bDirty[Index] = true;
+            DescriptorState[i] |= ED3D12DescriptorState::DescriptorTableDirty;
         }
     }
 
-    bool bDirty[ShaderVisibility_Count];
+    void ClearResourcesDirty(EShaderVisibility ShaderStage)
+    {
+        DescriptorState[ShaderStage] &= ~ED3D12DescriptorState::ResourcesDirty;
+    }
+
+    void ClearDescriptorTableDirty(EShaderVisibility ShaderStage)
+    {
+        DescriptorState[ShaderStage] &= ~ED3D12DescriptorState::DescriptorTableDirty;
+    }
+
+    void ClearAll()
+    {
+        for (uint32 i = ShaderVisibility_All; i < ShaderVisibility_Count; i++)
+        {
+            DescriptorState[i] = ED3D12DescriptorState::None;
+        }
+    }
+
+    ED3D12DescriptorState DescriptorState[ShaderVisibility_Count];
 };
 
 struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
@@ -101,7 +145,7 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyStateAll();
+        DirtyResourcesAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -126,7 +170,7 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyStateAll();
+        DirtyResourcesAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -151,7 +195,7 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyStateAll();
+        DirtyResourcesAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -223,7 +267,7 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 
     void Clear()
     {
-        DirtyStateAll();
+        DirtyResourcesAll();
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -343,13 +387,18 @@ public:
 
     void SetCurrentHandle(uint32 InHandle)
     {
-        CHECK(Block != nullptr && InHandle < Block->NumDescriptors);
+        CHECK(Block != nullptr && InHandle <= Block->NumDescriptors);
         CurrentHandle = InHandle;
     }
 
     FORCEINLINE FD3D12DescriptorHeap* GetHeap() const
     {
         return Heap.Get();
+    }
+
+    FORCEINLINE uint32 GetBlockSize() const
+    {
+        return Block ? Block->NumDescriptors : 0;
     }
 
 private:
@@ -376,10 +425,17 @@ public:
     void SetRenderTargets(FD3D12RenderTargetCache& Cache);
     void SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers);
     void SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer);
-    void SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset);
-    void SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset);
-    void SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset);
-    void SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset);
+
+    void PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset);
+    void PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset);
+    void PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset);
+    void PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset);
+
+    void BindCBVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
+    void BindSRVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
+    void BindUAVs(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
+    void BindSamplers(FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage);
+
     void SetDescriptorHeaps();
 
     FORCEINLINE void DirtyDescriptorHeaps()

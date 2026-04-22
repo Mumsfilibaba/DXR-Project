@@ -10,8 +10,28 @@ typedef TSharedRef<class FRHISwapChain> FRHISwapChainRef;
 
 struct FSceneRenderView
 {
-    IScene*      Scene        = nullptr;
-    FRHITexture* RenderTarget = nullptr;
+    enum class EDebugView : int32
+    {
+        None = 0,
+        ShadowMask,
+        GBufferAlbedo,
+        GBufferNormal,
+        GBufferMaterial,
+        GBufferVelocity,
+        SSAO,
+        Depth,
+        ShadowCascades,
+        ShadowCascadeIndex,
+        ShadowCascadeOverlay,
+        Lit,
+
+        Count,
+    };
+
+    IScene*      Scene              = nullptr;
+    FRHITexture* RenderTarget       = nullptr;
+    EDebugView   DebugView          = EDebugView::None;
+    EDebugView   SecondaryDebugView = EDebugView::None;
 };
 
 struct IRendererModule : public FModuleInterface

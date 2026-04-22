@@ -275,6 +275,10 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     }
 
     const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
+    const ED3D12ResourceStateMode TextureStateMode = bHasDefaultState
+        ? ED3D12ResourceStateMode::SingleState
+        : ED3D12ResourceStateMode::MultipleStates;
+
     if (const IRHITextureData* InitialData = InInitialData)
     {
         InCommandContext->StartContext();
@@ -440,6 +444,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         InCommandContext->FinishContext();
     }
 
+    GetResource()->SetResourceStateMode(TextureStateMode);
     if (bHasDefaultState)
     {
         GetResource()->SetDefaultState(D3D12DefaultState);

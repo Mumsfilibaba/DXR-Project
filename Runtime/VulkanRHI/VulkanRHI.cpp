@@ -242,6 +242,7 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.OptionalFeatures.Features10.tessellationShader      = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features10.multiDrawIndirect       = VK_TRUE;
     DeviceCreateInfo.OptionalFeatures.Features10.pipelineStatisticsQuery = VK_TRUE;
+    DeviceCreateInfo.OptionalFeatures.Features10.depthClamp              = VK_TRUE;
     
 #ifndef RELEASE_BUILD
     if (CVarVulkanEnableRobustBufferAccess.GetValue())

@@ -8,7 +8,7 @@
 
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
-    , FVulkanGenericResource(InDevice)
+    , FVulkanResource(InDevice)
     , OwnedBuffer(VK_NULL_HANDLE)
     , RequiredAlignment(0)
     , DebugName()

@@ -1,20 +1,20 @@
 #include "VulkanRHI/VulkanResource.h"
 #include "VulkanRHI/VulkanDevice.h"
 
-FVulkanGenericResource::FVulkanGenericResource(FVulkanDevice* InDevice)
+FVulkanResource::FVulkanResource(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , MemoryStorage(InDevice)
 {
     MemoryStorage.SetOwner(this);
 }
 
-FVulkanGenericResource::~FVulkanGenericResource()
+FVulkanResource::~FVulkanResource()
 {
     GetDevice()->GetMemoryManager().CancelPendingDefragMoves(this);
     ResourceRelocated(nullptr);
 }
 
-void FVulkanGenericResource::AddResourceRelocatedListener(IVulkanResourceRelocationListener* Listener)
+void FVulkanResource::AddResourceRelocatedListener(IVulkanResourceRelocationListener* Listener)
 {
     if (!Listener)
     {
@@ -25,7 +25,7 @@ void FVulkanGenericResource::AddResourceRelocatedListener(IVulkanResourceRelocat
     Listeners.AddUnique(Listener);
 }
 
-void FVulkanGenericResource::RemoveResourceRelocatedListener(IVulkanResourceRelocationListener* Listener)
+void FVulkanResource::RemoveResourceRelocatedListener(IVulkanResourceRelocationListener* Listener)
 {
     if (!Listener)
     {
@@ -36,7 +36,7 @@ void FVulkanGenericResource::RemoveResourceRelocatedListener(IVulkanResourceRelo
     Listeners.Remove(Listener);
 }
 
-void FVulkanGenericResource::ResourceRelocated(FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanResource::ResourceRelocated(FVulkanMemoryStorage* NewMemoryStorage)
 {
     TScopedLock Lock(ListenersCS);
 

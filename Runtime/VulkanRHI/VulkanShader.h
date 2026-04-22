@@ -170,6 +170,8 @@ public:
 
     TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
     bool PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex);
+    bool StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords);
+    bool ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, FString* OutErrorMessage = nullptr);
 
     EShaderVisibility GetShaderVisibility() const
     {
@@ -181,12 +183,18 @@ public:
         return ShaderInfo;
     }
 
+    const FString& GetEntryPointName() const
+    {
+        return EntryPointName;
+    }
+
 protected:
     bool InitializeShaderLayout();
     
     FSpirvArray       SpirvCode;
     FVulkanShaderInfo ShaderInfo;
     EShaderVisibility ShaderVisibility;
+    FString           EntryPointName;
     
     TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
     FCriticalSection ShaderModulesCS;

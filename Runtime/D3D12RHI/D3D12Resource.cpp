@@ -14,6 +14,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, ID3D12Resource* InResourc
     , Address(0)
     , Heap(MakeSharedRef<FD3D12Heap>(InHeap))
     , DefaultState(D3D12_RESOURCE_STATE_COMMON)
+    , StateMode(ED3D12ResourceStateMode::MultipleStates)
     , AllocationSize(0)
     , NumSubresources(0)
     , bShouldDeferredRelease(true)
@@ -60,6 +61,11 @@ void FD3D12Resource::InitializeStateTracking(D3D12_RESOURCE_STATES InitialState)
 {
     ResourceState.Initialize(Math::Max(NumSubresources, 1u));
     ResourceState.SetResourceState(InitialState);
+}
+
+bool FD3D12Resource::RequiresResourceStateTracking() const
+{
+    return StateMode == ED3D12ResourceStateMode::MultipleStates;
 }
 
 void* FD3D12Resource::MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range)

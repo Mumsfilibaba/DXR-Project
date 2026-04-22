@@ -8,6 +8,7 @@
 #include "Engine/World/Lights/PointLight.h"
 #include "Renderer/DebugRendering.h"
 #include "Renderer/Scene/Scene.h"
+#include "RendererCore/RenderSettings.h"
 #include "Renderer/Scene/SceneLightProbe.h"
 #include "Renderer/Scene/SceneStaticMesh.h"
 
@@ -320,6 +321,19 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             AABB_NoDepth_PSO->SetDebugName("AABB Wireframe Debug PSO (No Depth)");
         }
 
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+        AABB_NoDepth_PSO_BB = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        if (!AABB_NoDepth_PSO_BB)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            AABB_NoDepth_PSO_BB->SetDebugName("AABB Wireframe Debug PSO (No Depth, BB)");
+        }
+
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
         PSOInfo.DepthStencilState = DepthStencilState_Depth.Get();
 
         AABB_Depth_PSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
@@ -332,6 +346,19 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         {
             AABB_Depth_PSO->SetDebugName("AABB Wireframe Debug PSO (Depth)");
         }
+    }
+
+    // Position-only input layout for debug sphere meshes (interleaved FVertex buffer, only Position used by shaders)
+    TArray<FRHIInputElementInfo> DebugSphereElements =
+    {
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+    };
+
+    FRHIInputLayoutRef DebugSphereInputLayout = FRHI::Get()->CreateInputLayout(DebugSphereElements);
+    if (!DebugSphereInputLayout)
+    {
+        DEBUG_BREAK();
+        return false;
     }
 
     // Point-Light Debug
@@ -404,7 +431,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         FRHIGraphicsPipelineStateInfo PSOInfo;
         PSOInfo.BlendState                                     = BlendState.Get();
         PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-        PSOInfo.InputLayout                                    = Resources.MeshInputLayout.Get();
+        PSOInfo.InputLayout                                    = DebugSphereInputLayout.Get();
         PSOInfo.RasterizerState                                = RasterizerState.Get();
         PSOInfo.VertexShader                                   = LightDebug_VS.Get();
         PSOInfo.PixelShader                                    = LightDebug_PS.Get();
@@ -422,6 +449,18 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         else
         {
             LightDebug_PSO->SetDebugName("Light Debug PSO");
+        }
+
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+        LightDebug_PSO_BB = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        if (!LightDebug_PSO_BB)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            LightDebug_PSO_BB->SetDebugName("Light Debug PSO (BB)");
         }
     }
 
@@ -534,6 +573,18 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         {
             AABBSolid_PSO->SetDebugName("AABB Solid Debug PSO");
         }
+
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+        AABBSolid_PSO_BB = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        if (!AABBSolid_PSO_BB)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            AABBSolid_PSO_BB->SetDebugName("AABB Solid Debug PSO (BB)");
+        }
     }
 
     // Light-Probe Debug
@@ -606,7 +657,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         FRHIGraphicsPipelineStateInfo PSOInfo;
         PSOInfo.BlendState                                     = BlendState.Get();
         PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-        PSOInfo.InputLayout                                    = Resources.MeshInputLayout.Get();
+        PSOInfo.InputLayout                                    = DebugSphereInputLayout.Get();
         PSOInfo.RasterizerState                                = RasterizerState.Get();
         PSOInfo.VertexShader                                   = ProbeDebug_VS.Get();
         PSOInfo.PixelShader                                    = ProbeDebug_PS.Get();
@@ -625,25 +676,41 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         {
             ProbeDebug_PSO->SetDebugName("LightProbe Debug PSO");
         }
+
+        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
+        ProbeDebug_PSO_BB = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        if (!ProbeDebug_PSO_BB)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            ProbeDebug_PSO_BB->SetDebugName("LightProbe Debug PSO (BB)");
+        }
     }
 
     return true;
 }
 
-void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
+void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget, FRHITexture* InDepthTarget)
 {
     RHI_EVENT_SCOPE(CommandList, "AABB DebugPass");
 
     TRACE_SCOPE("AABB DebugPass");
 
+    FRHITexture* RT = InRenderTarget ? InRenderTarget : Resources.FinalTarget.Get();
+    FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
+    const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
+
     FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPass);
 
-    CommandList.SetGraphicsPipelineState(AABB_NoDepth_PSO.Get());
+    CommandList.SetGraphicsPipelineState(bBackBuffer ? AABB_NoDepth_PSO_BB.Get() : AABB_NoDepth_PSO.Get());
     CommandList.SetConstantBuffer(AABB_VS.Get(), Resources.CameraBuffer.Get(), 0);
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer_Wireframe.Get(), EIndexFormat::uint16);
@@ -672,20 +739,24 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.EndRenderPass();
 }
 
-void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
+void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget, FRHITexture* InDepthTarget)
 {
     RHI_EVENT_SCOPE(CommandList, "PointLight DebugPass");
 
     TRACE_SCOPE("PointLight DebugPass");
 
+    FRHITexture* RT = InRenderTarget ? InRenderTarget : Resources.FinalTarget.Get();
+    FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
+    const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
+
     FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPass);
 
-    CommandList.SetGraphicsPipelineState(LightDebug_PSO.Get());
+    CommandList.SetGraphicsPipelineState(bBackBuffer ? LightDebug_PSO_BB.Get() : LightDebug_PSO.Get());
     CommandList.SetConstantBuffer(LightDebug_VS.Get(), Resources.CameraBuffer.Get(), 0);
     CommandList.SetVertexBuffers(MakeArrayView(&SphereVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(SphereIndexBuffer.Get(), EIndexFormat::uint16);
@@ -711,16 +782,20 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     CommandList.EndRenderPass();
 }
 
-void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
+void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget, FRHITexture* InDepthTarget)
 {
     RHI_EVENT_SCOPE(CommandList, "LightProbe DebugPass");
 
     TRACE_SCOPE("LightProbe DebugPass");
 
+    FRHITexture* RT = InRenderTarget ? InRenderTarget : Resources.FinalTarget.Get();
+    FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
+    const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
+
     FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPass);
 
@@ -731,7 +806,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
         if (LightProbe->bBoxProjection)
         {
             // Draw the solid AABB
-            CommandList.SetGraphicsPipelineState(AABBSolid_PSO.Get());
+            CommandList.SetGraphicsPipelineState(bBackBuffer ? AABBSolid_PSO_BB.Get() : AABBSolid_PSO.Get());
             CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
             CommandList.SetIndexBuffer(AABBIndexBuffer_Solid.Get(), EIndexFormat::uint16);
 
@@ -773,7 +848,7 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     }
 
     // Draw the probe
-    CommandList.SetGraphicsPipelineState(ProbeDebug_PSO.Get());
+    CommandList.SetGraphicsPipelineState(bBackBuffer ? ProbeDebug_PSO_BB.Get() : ProbeDebug_PSO.Get());
 
     CommandList.SetConstantBuffer(ProbeDebug_VS.Get(), Resources.CameraBuffer.Get(), 0);
     CommandList.SetConstantBuffer(ProbeDebug_PS.Get(), Resources.CameraBuffer.Get(), 0);

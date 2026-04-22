@@ -6,6 +6,60 @@
 
 #include <spirv_cross_c.h>
 
+namespace SpirvOps
+{
+    constexpr uint16 OpExtension              = 10;
+    constexpr uint16 OpDecorate               = 71;
+    constexpr uint16 OpMemberDecorate         = 72;
+    constexpr uint16 OpDecorateString         = 5632;
+    constexpr uint16 OpMemberDecorateString   = 5633;
+    constexpr uint16 OpDecorateId             = 332;
+
+    constexpr uint32 DecorationHlslCounterBufferGOOGLE = 5634;
+    constexpr uint32 DecorationHlslSemanticGOOGLE      = 5635;
+    constexpr uint32 DecorationUserTypeGOOGLE          = 5636;
+}
+
+static bool SpvReadLiteralString(const uint32* Inst, uint16 InstWords, uint16 StartWord, CHAR* OutBuf, uint32 BufSize)
+{
+    if (StartWord >= InstWords || BufSize == 0)
+    {
+        return false;
+    }
+
+    const CHAR*  Src      = reinterpret_cast<const CHAR*>(&Inst[StartWord]);
+    const uint32 MaxBytes = (InstWords - StartWord) * sizeof(uint32);
+    
+    uint32 i = 0;
+    for (; i < MaxBytes && i < (BufSize - 1); ++i)
+    {
+        OutBuf[i] = Src[i];
+        if (Src[i] == '\0')
+        {
+            return true;
+        }
+    }
+
+    OutBuf[i < BufSize ? i : BufSize - 1] = '\0';
+    return false;
+}
+
+static bool IsOneOfGoogleExtensions(const CHAR* Name)
+{
+    return (FCString::Strcmp(Name, "SPV_GOOGLE_decorate_string") == 0) || (FCString::Strcmp(Name, "SPV_GOOGLE_hlsl_functionality1") == 0) || 
+        (FCString::Strcmp(Name, "SPV_GOOGLE_user_type") == 0);
+}
+
+static bool IsGoogleDecorateStringDecoration(uint32 DecorationId)
+{
+    return DecorationId == SpirvOps::DecorationHlslSemanticGOOGLE || DecorationId == SpirvOps::DecorationUserTypeGOOGLE;
+}
+
+static bool IsGoogleDecorateIdDecoration(uint32 DecorationId)
+{
+    return DecorationId == SpirvOps::DecorationHlslCounterBufferGOOGLE;
+}
+
 FVulkanDevice* FVulkanShaderModule::StaticDevice = nullptr;
 
 FVulkanShaderModule::FVulkanShaderModule(FVulkanDevice* InDevice, VkShaderModule InShaderModule)
@@ -97,10 +151,24 @@ TSharedRef<FVulkanShaderModule> FVulkanShader::GetOrCreateShaderModule(FVulkanPi
         return nullptr;
     }
 
+    FSpirvArray StrippedCode;
+    if (!StripGoogleSpirvRequirements(PatchedCode, StrippedCode))
+    {
+        VULKAN_ERROR_CRITICAL("Failed to strip Google SPIR-V requirements");
+        return nullptr;
+    }
+
+    FString GoogleValidationError;
+    if (!ValidateNoGoogleSpirvRequirements(StrippedCode, &GoogleValidationError))
+    {
+        VULKAN_ERROR_CRITICAL("Google SPIR-V requirements remain after stripping: %s", *GoogleValidationError);
+        return nullptr;
+    }
+
     VkShaderModuleCreateInfo ShaderModuleCreateInfo = {};
     ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    ShaderModuleCreateInfo.pCode    = PatchedCode.Data();
-    ShaderModuleCreateInfo.codeSize = PatchedCode.SizeInBytes();
+    ShaderModuleCreateInfo.pCode    = StrippedCode.Data();
+    ShaderModuleCreateInfo.codeSize = StrippedCode.SizeInBytes();
 
     VkShaderModule ShaderModule = VK_NULL_HANDLE;
 
@@ -187,6 +255,18 @@ bool FVulkanShader::InitializeShaderLayout()
         return false;
     }
 
+    const spvc_entry_point* EntryPoints = nullptr;
+    size_t NumEntryPoints = 0;
+    Result = spvc_compiler_get_entry_points(Compiler, &EntryPoints, &NumEntryPoints);
+    if (Result == SPVC_SUCCESS && NumEntryPoints > 0)
+    {
+        EntryPointName = EntryPoints[0].name;
+    }
+    else
+    {
+        EntryPointName = "main";
+    }
+
     spvc_resources ShaderResources;
     Result = spvc_compiler_create_shader_resources(Compiler, &ShaderResources);
     if (Result != SPVC_SUCCESS)
@@ -207,8 +287,8 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSampledImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = VulkanBindingType_SampledImage;
-            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType          = VulkanBindingType_SampledImage;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
@@ -245,8 +325,8 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSamplers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = VulkanBindingType_Sampler;
-            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType          = VulkanBindingType_Sampler;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
@@ -283,8 +363,8 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = VulkanBindingType_StorageImage;
-            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType          = VulkanBindingType_StorageImage;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
@@ -321,8 +401,8 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumUniformBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = VulkanBindingType_UniformBuffer;
-            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingType          = VulkanBindingType_UniformBuffer;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
@@ -359,7 +439,7 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingIndex = static_cast<uint8>(GlobalBinding++);
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
             Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
@@ -450,10 +530,144 @@ bool FVulkanShader::InitializeShaderLayout()
         
         // Since all the bindings will be the same no matter what DescriptorSetIndex, only change the BindingIndex
         FVulkanShaderInfo::FResourceBinding& Binding = ShaderInfo.ResourceBindings[Index];
-        SpirvCode[Offsets.BindingOffset] = Binding.BindingIndex;
+        SpirvCode[Offsets.BindingOffset]       = Binding.BindingIndex;
         SpirvCode[Offsets.DescriptorSetOffset] = 0;
     }
     
     spvc_context_destroy(Context);
+    return true;
+}
+
+bool FVulkanShader::StripGoogleSpirvRequirements(const FSpirvArray& InWords, FSpirvArray& OutWords)
+{
+    OutWords.Clear();
+
+    if (InWords.Size() < 5)
+    {
+        return false;
+    }
+
+    OutWords.Reserve(InWords.Size());
+
+    for (uint32 i = 0; i < 5; ++i)
+    {
+        OutWords.Add(InWords[i]);
+    }
+
+    const uint32* Words     = InWords.Data();
+    const uint32  WordCount = static_cast<uint32>(InWords.Size());
+
+    uint32 Read = 5;
+    while (Read < WordCount)
+    {
+        const uint32 FirstWord = Words[Read];
+        const uint16 OpCode    = static_cast<uint16>(FirstWord & 0xFFFFu);
+        const uint16 InstWords = static_cast<uint16>(FirstWord >> 16);
+
+        if (InstWords == 0 || (Read + InstWords) > WordCount)
+        {
+            return false;
+        }
+
+        const uint32* Inst = &Words[Read];
+
+        bool bSkip = false;
+        if (OpCode == SpirvOps::OpExtension)
+        {
+            CHAR ExtName[256] = {};
+            if (SpvReadLiteralString(Inst, InstWords, 1, ExtName, sizeof(ExtName)))
+            {
+                if (IsOneOfGoogleExtensions(ExtName))
+                {
+                    bSkip = true;
+                }
+            }
+        }
+
+        if (!bSkip && (OpCode == SpirvOps::OpDecorateString || OpCode == SpirvOps::OpMemberDecorateString))
+        {
+            if (OpCode == SpirvOps::OpDecorateString && InstWords >= 3 && IsGoogleDecorateStringDecoration(Inst[2]))
+            {
+                bSkip = true;
+            }
+            else if (OpCode == SpirvOps::OpMemberDecorateString && InstWords >= 4 && IsGoogleDecorateStringDecoration(Inst[3]))
+            {
+                bSkip = true;
+            }
+        }
+
+        if (!bSkip && (OpCode == SpirvOps::OpDecorate || OpCode == SpirvOps::OpDecorateId))
+        {
+            if (InstWords >= 3 && IsGoogleDecorateIdDecoration(Inst[2]))
+            {
+                bSkip = true;
+            }
+        }
+
+        if (!bSkip && OpCode == SpirvOps::OpMemberDecorate)
+        {
+            if (InstWords >= 4 && IsGoogleDecorateIdDecoration(Inst[3]))
+            {
+                bSkip = true;
+            }
+        }
+
+        if (!bSkip)
+        {
+            for (uint16 w = 0; w < InstWords; ++w)
+            {
+                OutWords.Add(Inst[w]);
+            }
+        }
+
+        Read += InstWords;
+    }
+
+    return true;
+}
+
+bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, FString* OutErrorMessage)
+{
+    if (Words.Size() < 5)
+    {
+        return true;
+    }
+
+    const uint32* Data      = Words.Data();
+    const uint32  WordCount = static_cast<uint32>(Words.Size());
+
+    uint32 Read = 5;
+    while (Read < WordCount)
+    {
+        const uint32 FirstWord = Data[Read];
+        const uint16 OpCode    = static_cast<uint16>(FirstWord & 0xFFFFu);
+        const uint16 InstWords = static_cast<uint16>(FirstWord >> 16);
+
+        if (InstWords == 0 || (Read + InstWords) > WordCount)
+        {
+            break;
+        }
+
+        const uint32* Inst = &Data[Read];
+        if (OpCode == SpirvOps::OpExtension)
+        {
+            CHAR ExtName[256] = {};
+            if (SpvReadLiteralString(Inst, InstWords, 1, ExtName, sizeof(ExtName)))
+            {
+                if (IsOneOfGoogleExtensions(ExtName))
+                {
+                    if (OutErrorMessage)
+                    {
+                        *OutErrorMessage = FString::CreateFormatted("Found Google extension: %s", ExtName);
+                    }
+
+                    return false;
+                }
+            }
+        }
+
+        Read += InstWords;
+    }
+
     return true;
 }

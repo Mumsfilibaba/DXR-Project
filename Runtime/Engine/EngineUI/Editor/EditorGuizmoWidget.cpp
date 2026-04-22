@@ -4,6 +4,7 @@
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Reflections/LightProbe.h"
 #include "Engine/EngineUI/Editor/EditorGuizmoWidget.h"
+#include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "ImGuiPlugin/ImGuiCore.h"
 
 FEditorGuizmoWidget::FEditorGuizmoWidget(FEditorEngine* InEditorEngine)
@@ -73,6 +74,14 @@ void FEditorGuizmoWidget::Draw()
     if (!EditorEngine)
     {
         return;
+    }
+
+    if (const TSharedPtr<FEditorViewportWidget>& Viewport = EditorEngine->GetEditorViewportWidget())
+    {
+        if (Viewport->GetDebugView() != FSceneRenderView::EDebugView::None)
+        {
+            return;
+        }
     }
 
     FWorld* World = EditorEngine->GetWorld();

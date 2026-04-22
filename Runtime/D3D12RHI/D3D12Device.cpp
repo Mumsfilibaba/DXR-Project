@@ -62,7 +62,7 @@ static TAutoConsoleVariable<int32> CVarResourceOnlineDescriptorBlockSize(
 static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
     "D3D12RHI.SamplerOnlineDescriptorBlockSize",
     "Number of descriptors in each Sampler OnlineDescriptorHeap", 
-    1024);
+    256);
 
 static TAutoConsoleVariable<int32> CVarUploadHeapSmallAllocationThreshold(
     "D3D12RHI.UploadHeapSmallAllocationThreshold",
@@ -1908,7 +1908,7 @@ void FD3D12Device::QueryDeviceFeatureSupport()
             GD3D12SupportGPUUploadHeaps = !!Features16.GPUUploadHeapSupported;
             D3D12_INFO("[FD3D12Device] GPU Upload Heaps Supported: %s", GD3D12SupportGPUUploadHeaps ? "true" : "false");
 
-        #if D3D12_USE_ID3D12COMMANDLIST_9
+        #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
             GD3D12SupportDynamicDepthBias = !!Features16.DynamicDepthBiasSupported;
             D3D12_INFO("[FD3D12Device] Dynamic Depth Bias Supported: %s", GD3D12SupportDynamicDepthBias ? "true" : "false");
         #endif

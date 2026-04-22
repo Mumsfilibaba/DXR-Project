@@ -300,6 +300,7 @@ void FD3D12RootSignatureLayout::AddContiguousRegisters(EShaderVisibility Stage, 
 
 void FD3D12RootSignatureLayout::ComputeRootCBVs()
 {
+#if D3D12_ENABLE_ROOT_CONSTANT_BUFFERS
     uint32 Budget = D3D12_TARGET_ROOT_SIGNATURE_DWORD_COST;
 
     if (NumPushConstants > 0)
@@ -354,6 +355,7 @@ void FD3D12RootSignatureLayout::ComputeRootCBVs()
             Budget -= Math::Min<uint32>(Budget, 1);
         }
     }
+#endif
 }
 
 uint32 FD3D12RootSignatureLayout::ComputeCost() const

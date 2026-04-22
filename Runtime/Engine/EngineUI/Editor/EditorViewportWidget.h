@@ -2,6 +2,7 @@
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "RHI/RHIResources.h"
 #include "Application/Widgets/ViewportWidget.h"
+#include "RendererCore/Interfaces/IRendererModule.h"
 
 class FEditorViewportWidget
 {
@@ -16,6 +17,9 @@ public:
     
     FIntVector2 GetViewportSize() const;
 
+    FSceneRenderView::EDebugView GetDebugView() const;
+    FSceneRenderView::EDebugView GetSecondaryDebugView() const;
+
     bool IsVisible() const
     {
         return bVisible;
@@ -27,10 +31,12 @@ public:
     }
 
 private:
-    TSharedPtr<FViewportWidget> ViewportWidget;
-    FIntVector2                 CachedViewportSize;
-    FImGuiTexture               ViewportImage;
-    FDelegateHandle             ImGuiDelegateHandle;
-    bool                        bVisible;
-    bool                        bViewportInputActive;
+    TSharedPtr<FViewportWidget>  ViewportWidget;
+    FIntVector2                  CachedViewportSize;
+    FImGuiTexture                ViewportImage;
+    FDelegateHandle              ImGuiDelegateHandle;
+    bool                         bVisible;
+    bool                         bViewportInputActive;
+    FSceneRenderView::EDebugView DebugView;
+    FSceneRenderView::EDebugView SecondaryDebugView;
 };

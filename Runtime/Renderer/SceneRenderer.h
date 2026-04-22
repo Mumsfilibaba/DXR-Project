@@ -19,14 +19,13 @@
 #include "Renderer/ForwardPass.h"
 #include "Renderer/RayTracer.h"
 #include "Renderer/DebugRendering.h"
+#include "Renderer/DebugViewPass.h"
 #include "Renderer/TemporalAA.h"
 #include "Renderer/PostProcessing.h"
 #if EDITOR_BUILD
 #include "Renderer/SelectionOutlinePass.h"
 #endif
 #include "Renderer/Scene/Scene.h"
-#include "Renderer/RendererUI/TextureDebugWidget.h"
-#include "Renderer/RendererUI/RendererSettingsWidget.h"
 
 class FViewportWidget;
 class FSceneRenderer;
@@ -151,16 +150,6 @@ public:
 
     void ResizeResources(uint32 InWidth, uint32 InHeight);
 
-    void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess ResourceState)
-    {
-        TextureDebugger->AddTextureForDebugging(ImageView, Image, ResourceState);
-    }
-
-    TSharedPtr<FTextureDebugWidget> GetTextureDebugger() const
-    {
-        return TextureDebugger;
-    }
-
     uint32 GetRenderWidth() const
     {
         return Resources.CurrentRenderWidth;
@@ -240,6 +229,7 @@ private:
 #endif
     FLightProbeRenderer*        LightProbeRenderer;
     FDebugRenderer*             DebugRenderer;
+    FDebugViewPass*             DebugViewPass;
     FRayTracer                  RayTracer;
 
     // RHI
@@ -300,7 +290,4 @@ private:
     TArray<FEditorObjectPickInFlight>                  InFlightObjectPicks;
 #endif
 
-    // Widgets
-    TSharedPtr<FTextureDebugWidget>     TextureDebugger;
-    TSharedPtr<FRendererSettingsWidget> SettingsWindow;
 };

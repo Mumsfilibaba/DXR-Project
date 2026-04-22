@@ -135,12 +135,6 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
     CommandList.TransitionTextureState(CurrentBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
-
-    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[0]->GetShaderResourceView()),
-        TAAHistoryBuffers[0], EResourceAccess::NonPixelShaderResource);
-
-    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[1]->GetShaderResourceView()),
-        TAAHistoryBuffers[1], EResourceAccess::NonPixelShaderResource);
 }
 
 bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 Width, uint32 Height)

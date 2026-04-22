@@ -37,7 +37,7 @@ public:
 
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
-        return ResultResourceStorage.GetGpuVirtualAddress();
+        return ResultResourceStorage.GetGPUVirtualAddress();
     }
 
     FD3D12Resource* GetResource() const

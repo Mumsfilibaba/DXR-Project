@@ -735,6 +735,12 @@ constexpr VkAttachmentStoreOp ConvertStoreAction(EAttachmentStoreAction LoadActi
     return VK_ATTACHMENT_STORE_OP_DONT_CARE;
 }
 
+constexpr bool IsStencilFormat(VkFormat Format)
+{
+    return Format == VK_FORMAT_D16_UNORM_S8_UINT || Format == VK_FORMAT_D24_UNORM_S8_UINT ||
+        Format == VK_FORMAT_D32_SFLOAT_S8_UINT || Format == VK_FORMAT_S8_UINT;
+}
+
 constexpr VkIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)

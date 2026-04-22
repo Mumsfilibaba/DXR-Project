@@ -5,19 +5,19 @@
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanMemoryManager.h"
 
-class FVulkanGenericResource;
+class FVulkanResource;
 
 struct IVulkanResourceRelocationListener
 {
     virtual ~IVulkanResourceRelocationListener() = default;
-    virtual void OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) = 0;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) = 0;
 };
 
-class FVulkanGenericResource : public FVulkanDeviceChild
+class FVulkanResource : public FVulkanDeviceChild
 {
 public:
-    FVulkanGenericResource(FVulkanDevice* InDevice);
-    virtual ~FVulkanGenericResource();
+    FVulkanResource(FVulkanDevice* InDevice);
+    virtual ~FVulkanResource();
 
     void AddResourceRelocatedListener(IVulkanResourceRelocationListener* Listener);
     void RemoveResourceRelocatedListener(IVulkanResourceRelocationListener* Listener);

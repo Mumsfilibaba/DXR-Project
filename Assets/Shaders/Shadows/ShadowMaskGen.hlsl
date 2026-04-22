@@ -90,6 +90,11 @@ struct FDirectionalShadowSettings
     float MaxFilterSize;
     uint  ShadowMapSize;
     uint  FrameIndex;
+
+    uint  NumSamples;
+    uint  Padding0;
+    uint  Padding1;
+    uint  Padding2;
 };
 
 ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
@@ -135,8 +140,8 @@ float2 GenerateSampleOffset(uint SampleIndex)
 #endif
 
 #else
-    // Generate a vogel sample
-    return VogelDiskSample(SampleIndex, NUM_SAMPLES, 1);
+    // Generate a vogel sample using runtime sample count
+    return VogelDiskSample(SampleIndex, SettingsBuffer.NumSamples, 1);
 #endif
 }
 
@@ -170,11 +175,10 @@ float GetShadowMapSize()
 
 struct FFilterSetup
 {
-    float3 PositionWS;
-    float3 Normal; 
-    float2 ShadowPosition;
-    float  BiasedDepth;
-
+    float3   PositionWS;
+    float3   Normal; 
+    float2   ShadowPosition;
+    float    BiasedDepth;
 #if ROTATE_SAMPLES
     float2x2 SampleRotationMatrix;
 #endif
@@ -224,7 +228,14 @@ float ShadowAmountPCSS(uint CascadeIndex, FFilterSetup FilterSetup, float Penumb
     // if (FilterSize.x > 1.0 || FilterSize.y > 1.0)
     {
         const float2 FilterRadius = FilterSize;
-        for (int Sample = 0; Sample < NUM_SAMPLES; ++Sample)
+
+    #if FILTER_FUNCTION_VOGEL_DISK
+        const uint EffectiveNumSamples = SettingsBuffer.NumSamples;
+    #else
+        const uint EffectiveNumSamples = NUM_SAMPLES;
+    #endif
+
+        for (uint Sample = 0; Sample < EffectiveNumSamples; ++Sample)
         {
             float2 SampleOffset = GenerateSampleOffset(Sample);
         #if ROTATE_SAMPLES
@@ -235,7 +246,7 @@ float ShadowAmountPCSS(uint CascadeIndex, FFilterSetup FilterSetup, float Penumb
             Result += ShadowCascades.SampleCmpLevelZero(ShadowSamplerLinearCmp, float3(FilterSetup.ShadowPosition + SampleOffset, CascadeIndex), FilterSetup.BiasedDepth);
         }
 
-        Result = Result / float(NUM_SAMPLES);
+        Result = Result / float(EffectiveNumSamples);
     }
     // else
     // {
@@ -252,13 +263,19 @@ float ShadowAmountDiscPCF(uint CascadeIndex, FFilterSetup FilterSetup)
 
     float Result = 0.0;
     
+#if FILTER_FUNCTION_VOGEL_DISK
+    const uint EffectiveNumSamples = SettingsBuffer.NumSamples;
+#else
+    const uint EffectiveNumSamples = NUM_SAMPLES;
+#endif
+
     [branch]
     if (FilterSize.x > 1.0 || FilterSize.y > 1.0)
     {
         const float  ShadowMapSize = GetShadowMapSize();
         const float2 FilterRadius  = (FilterSize * 0.5) / ShadowMapSize;
 
-        for (int Sample = 0; Sample < NUM_SAMPLES; ++Sample)
+        for (uint Sample = 0; Sample < EffectiveNumSamples; ++Sample)
         {
             float2 SampleOffset = GenerateSampleOffset(Sample);
         #if ROTATE_SAMPLES
@@ -269,7 +286,7 @@ float ShadowAmountDiscPCF(uint CascadeIndex, FFilterSetup FilterSetup)
             Result += ShadowCascades.SampleCmpLevelZero(ShadowSamplerPointCmp, float3(FilterSetup.ShadowPosition + SampleOffset, CascadeIndex), FilterSetup.BiasedDepth);
         }
 
-        Result = Result / float(NUM_SAMPLES);
+        Result = Result / float(EffectiveNumSamples);
     }
     else
     {

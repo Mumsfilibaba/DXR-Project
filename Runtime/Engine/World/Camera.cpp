@@ -46,6 +46,18 @@ void FCamera::SetFieldOfView(float InFieldOfView)
     FieldOfView = InFieldOfView;
 }
 
+void FCamera::SetNearPlane(float InNearPlane)
+{
+    NearPlane = InNearPlane;
+    UpdateProjectionMatrix(ViewportWidth, ViewportHeight);
+}
+
+void FCamera::SetFarPlane(float InFarPlane)
+{
+    FarPlane = InFarPlane;
+    UpdateProjectionMatrix(ViewportWidth, ViewportHeight);
+}
+
 void FCamera::SetPosition(float x, float y, float z)
 {
     Position = FVector3(x, y, z);

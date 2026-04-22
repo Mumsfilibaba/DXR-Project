@@ -12,6 +12,7 @@ struct FLayoutIds
     uint32 DockCenter       = 0; // Center area
     uint32 DockCenterTop    = 0; // Center top (Viewport)
     uint32 DockCenterBottom = 0; // Center bottom (Output Log)
+    uint32 DockLeftTop      = 0; // Left column (Renderer settings)
 };
 
 class FEditorDockspaceWidget

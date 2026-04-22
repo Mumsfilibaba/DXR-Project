@@ -119,6 +119,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     }
 
     FD3D12Resource* D3D12Resource = ResourceStorage.GetResource();
+    D3D12Resource->SetResourceStateMode(StateMode);
 
     const bool bHasDefaultState = D3D12DefaultState != D3D12_RESOURCE_STATES(0);
     if (bHasDefaultState)
@@ -289,7 +290,7 @@ bool FD3D12Buffer::CreateConstantBufferView()
     FMemory::Memzero(&ViewDesc);
 
     ViewDesc.SizeInBytes = Math::AlignUp<uint32>(static_cast<uint32>(Info.Size), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-    ViewDesc.BufferLocation = ResourceStorage.GetGpuVirtualAddress();
+    ViewDesc.BufferLocation = ResourceStorage.GetGPUVirtualAddress();
 
     if (FD3D12_CPU_DESCRIPTOR_HANDLE(0) == ConstantBufferView->GetOfflineHandle())
     {

@@ -13,6 +13,8 @@ public:
     
     // NOTE: FieldOfView in degrees 
     void SetFieldOfView(float InFieldOfView);
+    void SetNearPlane(float InNearPlane);
+    void SetFarPlane(float InFarPlane);
     void SetPosition(float x, float y, float z);
     void SetRotation(float Pitch, float Yaw, float Roll);
 

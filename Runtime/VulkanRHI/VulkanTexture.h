@@ -11,7 +11,7 @@ typedef TSharedRef<FVulkanSwapChain>               FVulkanSwapChainRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
-class FVulkanTexture : public FRHITexture, public FVulkanGenericResource
+class FVulkanTexture : public FRHITexture, public FVulkanResource
 {
     friend class FVulkanBackBufferTexture;
 

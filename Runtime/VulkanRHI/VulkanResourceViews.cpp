@@ -59,7 +59,7 @@ FVulkanResourceView::~FVulkanResourceView()
     }
 }
 
-void FVulkanResourceView::OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanResourceView::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
 {
     CHECK(RelocatedResource == OwnerResource);
 
@@ -69,7 +69,7 @@ void FVulkanResourceView::OnResourceRelocated(FVulkanGenericResource* RelocatedR
     }
 }
 
-void FVulkanResourceView::RegisterWithResource(FVulkanGenericResource* InOwner)
+void FVulkanResourceView::RegisterToResource(FVulkanResource* InOwner)
 {
     OwnerResource = InOwner;
     if (OwnerResource)
@@ -221,7 +221,7 @@ FVulkanShaderResourceView::FVulkanShaderResourceView(FVulkanDevice* InDevice, FR
 {
 }
 
-void FVulkanShaderResourceView::OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanShaderResourceView::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
 {
     FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
 
@@ -315,7 +315,7 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
 			}
 		}
 
-		RegisterWithResource(VulkanBuffer);
+		RegisterToResource(VulkanBuffer);
 		return true;
     }
     else if (InInfo.IsTextureSRV())
@@ -403,7 +403,7 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
 				SetDebugName(TextureDebugName + " ImageView SRV");
 			}
 
-			RegisterWithResource(VulkanTexture);
+			RegisterToResource(VulkanTexture);
 			return true;
 		}
 		else
@@ -423,7 +423,7 @@ FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, 
 {
 }
 
-void FVulkanUnorderedAccessView::OnResourceRelocated(FVulkanGenericResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanUnorderedAccessView::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
 {
     FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
 
@@ -517,7 +517,7 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 			}
 		}
 
-		RegisterWithResource(VulkanBuffer);
+		RegisterToResource(VulkanBuffer);
 		return true;
 	}
 	else if (InInfo.IsTextureUAV())
@@ -602,7 +602,7 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 				SetDebugName(TextureDebugName + " ImageView UAV");
 			}
 
-			RegisterWithResource(VulkanTexture);
+			RegisterToResource(VulkanTexture);
 			return true;
 		}
 		else

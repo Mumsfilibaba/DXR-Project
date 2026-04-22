@@ -275,7 +275,7 @@ void FVulkanMemoryManager::DefragmentAllocations(FVulkanCommandContext* InComman
     TextureAllocator.DefragmentAllocations(InCommandContext, MaxMovesPerFrame);
 }
 
-void FVulkanMemoryManager::CancelPendingDefragMoves(FVulkanGenericResource* Owner)
+void FVulkanMemoryManager::CancelPendingDefragMoves(FVulkanResource* Owner)
 {
     TextureAllocator.CancelPendingDefragMoves(Owner);
 }
@@ -2059,7 +2059,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             continue;
         }
 
-        FVulkanGenericResource* Owner = Move.SourceStorage ? Move.SourceStorage->GetOwner() : nullptr;
+        FVulkanResource* Owner = Move.SourceStorage ? Move.SourceStorage->GetOwner() : nullptr;
 
         VkImage OldImage = VK_NULL_HANDLE;
         if (Owner)
@@ -2246,7 +2246,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
     }
 }
 
-void FVulkanTextureAllocator::CancelPendingDefragMoves(FVulkanGenericResource* Owner)
+void FVulkanTextureAllocator::CancelPendingDefragMoves(FVulkanResource* Owner)
 {
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {

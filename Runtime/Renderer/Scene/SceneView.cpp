@@ -45,6 +45,7 @@ bool FSceneView::AddStaticMesh(FSceneStaticMesh* StaticMesh)
 
     if (!Frustum)
     {
+        StaticMeshes.Add(StaticMesh);
         MeshBatcher.AddStaticMesh(StaticMesh);
         STAT_ADD(STAT_Render_ObjectsVisible, 1);
         return true;
@@ -52,6 +53,7 @@ bool FSceneView::AddStaticMesh(FSceneStaticMesh* StaticMesh)
 
     if (Frustum->IntersectsAABB(StaticMesh->GetWorldBounds()))
     {
+        StaticMeshes.Add(StaticMesh);
         MeshBatcher.AddStaticMesh(StaticMesh);
         STAT_ADD(STAT_Render_ObjectsVisible, 1);
         return true;

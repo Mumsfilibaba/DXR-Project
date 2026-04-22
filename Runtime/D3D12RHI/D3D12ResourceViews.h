@@ -37,6 +37,11 @@ public:
         return ViewResource.Get(); 
     }
 
+    FD3D12Resource* GetViewResource()
+    {
+        return ViewResource.Get();
+    }
+
     FD3D12ResidencyHandle* GetResourceResidencyHandle() const
     {
         FD3D12Resource* Resource = ViewResource.Get();

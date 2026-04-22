@@ -328,20 +328,29 @@ void FD3D12Commands::PreExecute()
         {
             if (GlobalState.AreAllSubresourcesSameState())
             {
-                BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetResourceState(), Pending.DesiredState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+                if (GlobalState.GetResourceState() != Pending.DesiredState)
+                {
+                    BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetResourceState(), Pending.DesiredState, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+                }
             }
             else
             {
                 const uint32 NumSubresources = GlobalState.GetNumSubresources();
                 for (uint32 i = 0; i < NumSubresources; i++)
                 {
-                    BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(i), Pending.DesiredState, i);
+                    if (GlobalState.GetSubresourceState(i) != Pending.DesiredState)
+                    {
+                        BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(i), Pending.DesiredState, i);
+                    }
                 }
             }
         }
         else
         {
-            BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(Pending.Subresource), Pending.DesiredState, Pending.Subresource);
+            if (GlobalState.GetSubresourceState(Pending.Subresource) != Pending.DesiredState)
+            {
+                BarrierBatcher.AddTransitionBarrier(Pending.Resource, GlobalState.GetSubresourceState(Pending.Subresource), Pending.DesiredState, Pending.Subresource);
+            }
         }
     }
 

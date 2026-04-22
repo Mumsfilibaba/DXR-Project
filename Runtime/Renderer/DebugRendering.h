@@ -13,9 +13,9 @@ public:
 
     bool Initialize(FFrameResources& Resources);
 
-    void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
-    void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
-    void RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
+    void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);
+    void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);
+    void RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);
 
 private:
     // Geometry Data
@@ -31,22 +31,26 @@ private:
 
     // Wireframe AABBs
     FRHIGraphicsPipelineStateRef AABB_NoDepth_PSO;
+    FRHIGraphicsPipelineStateRef AABB_NoDepth_PSO_BB;
     FRHIGraphicsPipelineStateRef AABB_Depth_PSO;
     FRHIVertexShaderRef          AABB_VS;
     FRHIPixelShaderRef           AABB_PS;
 
     // Solid AABBs
     FRHIGraphicsPipelineStateRef AABBSolid_PSO;
+    FRHIGraphicsPipelineStateRef AABBSolid_PSO_BB;
     FRHIVertexShaderRef          AABBSolid_VS;
     FRHIPixelShaderRef           AABBSolid_PS;
 
     // PointLights
     FRHIGraphicsPipelineStateRef LightDebug_PSO;
+    FRHIGraphicsPipelineStateRef LightDebug_PSO_BB;
     FRHIVertexShaderRef          LightDebug_VS;
     FRHIPixelShaderRef           LightDebug_PS;
 
     // LightProbes
     FRHIGraphicsPipelineStateRef ProbeDebug_PSO;
+    FRHIGraphicsPipelineStateRef ProbeDebug_PSO_BB;
     FRHIVertexShaderRef          ProbeDebug_VS;
     FRHIPixelShaderRef           ProbeDebug_PS;
 };

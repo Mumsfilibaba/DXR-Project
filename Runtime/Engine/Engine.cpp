@@ -25,43 +25,24 @@
 #include "Engine/Debug/InputDebugInputHandler.h"
 #endif
 
-static void ExitEngineFunc()
-{
-    if (FEngine::IsInitialized())
-    {
-        FEngine::Get()->Exit();
-    }
-}
- 
-static void ToggleFullScreenFunc()
-{
-    DEBUG_BREAK();
-
-    //if (FEngine::IsInitialized() && FEngine::Get()->EngineWindow)
-    //{
-    //    EWindowMode WindowMode;// = FEngine::Get()->MainWindow->GetStyle();
-    //    if (WindowMode == EWindowMode::Fullscreen)
-    //    {
-    //        WindowMode = EWindowMode::Windowed;
-    //    }
-    //    else
-    //    {
-    //        WindowMode = EWindowMode::Fullscreen;
-    //    }
-
-    //    FEngine::Get()->MainWindow->SetWindowMode(WindowMode);
-    //}
-}
-
 static FAutoConsoleCommand CVarExit(
     "Engine.Exit",
     "Exits the engine",
-    FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
+    {
+        if (FEngine::IsInitialized())
+        {
+            FEngine::Get()->Exit();
+        }
+    }));
 
 static FAutoConsoleCommand CVarToggleFullscreen(
     "Engine.ToggleFullscreen",
     "Toggles fullscreen on the main Viewport",
-    FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
+    FConsoleCommandDelegate::CreateLambda([](FStringView)
+    {
+        DEBUG_BREAK();
+    }));
 
 static TAutoConsoleVariable<int32> CVarViewportWidth(
     "Engine.ViewportWidth",

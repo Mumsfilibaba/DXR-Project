@@ -33,6 +33,7 @@ extern VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled;
 extern VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled;
 
 extern VULKANRHI_API bool   GVulkanSupportsDepthClip;
+extern VULKANRHI_API bool   GVulkanSupportsDepthClamp;
 extern VULKANRHI_API bool   GVulkanSupportsNullDescriptors;
 extern VULKANRHI_API bool   GVulkanSupportsRobustness2;
 extern VULKANRHI_API bool   GVulkanSupportsConservativeRasterization;

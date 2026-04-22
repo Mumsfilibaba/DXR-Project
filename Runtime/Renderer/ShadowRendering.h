@@ -259,6 +259,12 @@ struct FDirectionalShadowSettingsHLSL
     float  MaxFilterSize;
     uint32 ShadowMapSize;
     uint32 FrameIndex;
+
+    // 16-32
+    uint32 NumSamples;
+    uint32 Padding0;
+    uint32 Padding1;
+    uint32 Padding2;
 };
 
 MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
@@ -338,7 +344,7 @@ public:
 
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height);
-    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, bool bForceDebugMode = false);
     bool RetrievePipelineState(const FShadowMaskShaderCombination& Combination, FComputePipelineStateInstance& OutPSO);
     void RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination);
 

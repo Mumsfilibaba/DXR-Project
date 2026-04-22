@@ -216,7 +216,4 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     CommandList.DispatchRays(Resources.RTScene.Get(), Pipeline.Get(), Width, Height, 1);
 
     CommandList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
-
-    GetRenderer()->AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
-        Resources.RTOutput, EResourceAccess::UnorderedAccess);
 }

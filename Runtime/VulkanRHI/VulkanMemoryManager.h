@@ -20,7 +20,7 @@ struct FVulkanAllocatorUsage
 
 class FVulkanBuddyAllocator;
 class FVulkanPoolAllocator;
-class FVulkanGenericResource;
+class FVulkanResource;
 class FVulkanMemoryStorage;
 
 enum class EVulkanAllocatorType : uint8
@@ -74,7 +74,7 @@ public:
     FORCEINLINE VkDeviceSize             GetSize()              const { return Size; }
     FORCEINLINE EVulkanAllocatorType     GetAllocatorType()     const { return AllocatorType; }
     FORCEINLINE EVulkanMemoryStorageType GetStorageType()       const { return StorageType; }
-    FORCEINLINE FVulkanGenericResource*  GetOwner()             const { return Owner; }
+    FORCEINLINE FVulkanResource*         GetOwner()             const { return Owner; }
 
     FORCEINLINE FVulkanBuddyAllocator* GetBuddyAllocator() const
     {
@@ -97,7 +97,7 @@ public:
     FORCEINLINE void SetMappedBaseAddress(void* InAddress)           { MappedBaseAddress = InAddress; }
     FORCEINLINE void SetSize(VkDeviceSize InSize)                    { Size = InSize; }
     FORCEINLINE void SetStorageType(EVulkanMemoryStorageType InType) { StorageType = InType; }
-    FORCEINLINE void SetOwner(FVulkanGenericResource* InOwner)       { Owner = InOwner; }
+    FORCEINLINE void SetOwner(FVulkanResource* InOwner)              { Owner = InOwner; }
 
     FORCEINLINE void SetBuddyAllocator(FVulkanBuddyAllocator* InAllocator)
     {
@@ -124,7 +124,7 @@ private:
     VkDeviceSize             Size;
     EVulkanAllocatorType     AllocatorType;
     EVulkanMemoryStorageType StorageType;
-    FVulkanGenericResource*  Owner;
+    FVulkanResource*         Owner;
 
     union FAllocationData
     {
@@ -507,7 +507,7 @@ public:
     bool TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
 
     void DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame);
-    void CancelPendingDefragMoves(FVulkanGenericResource* Owner);
+    void CancelPendingDefragMoves(FVulkanResource* Owner);
 
     bool Initialize();
     void Destroy();
@@ -576,7 +576,7 @@ public:
     void CleanUpAllocators();
 
     void DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame);
-    void CancelPendingDefragMoves(FVulkanGenericResource* Owner);
+    void CancelPendingDefragMoves(FVulkanResource* Owner);
 
 #if VULKAN_ENABLE_STATS
     void UpdateMemoryStats();

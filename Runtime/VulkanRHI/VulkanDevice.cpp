@@ -24,6 +24,7 @@ VULKANRHI_API bool   GVulkanRobustBufferAccessEnabled           = false;
 VULKANRHI_API bool   GVulkanGPUAssistedValidationEnabled        = false;
 
 VULKANRHI_API bool   GVulkanSupportsDepthClip                   = false;
+VULKANRHI_API bool   GVulkanSupportsDepthClamp                  = false;
 VULKANRHI_API bool   GVulkanSupportsNullDescriptors             = false;
 VULKANRHI_API bool   GVulkanSupportsRobustness2                 = false;
 VULKANRHI_API bool   GVulkanSupportsConservativeRasterization   = false;
@@ -861,6 +862,8 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
         }
     }
 
+    GVulkanSupportsDepthClamp = (CoreDeviceFeatures10.depthClamp == VK_TRUE);
+
     if (GVulkanSupportsDepthClip && !CoreDeviceFeatures10.depthClamp)
     {
         GVulkanSupportsDepthClip = false;
@@ -932,7 +935,7 @@ bool FVulkanDevice::Initialize(FVulkanDeviceCreateInfo& InDeviceCreateInfo)
     
     GVulkanRobustBufferAccessEnabled = (EnabledFeatures.Features10.robustBufferAccess == VK_TRUE);
 
-    if (GVulkanSupportsDepthClip && AvailableFeatures.Features10.depthClamp)
+    if ((GVulkanSupportsDepthClip || GVulkanSupportsDepthClamp) && AvailableFeatures.Features10.depthClamp)
     {
         EnabledFeatures.Features10.depthClamp = VK_TRUE;
     }

@@ -7,6 +7,7 @@
 #include "Engine/EngineUI/Editor/EditorViewportWidget.h"
 #include "Engine/EngineUI/Editor/EditorPropertiesWidget.h"
 #include "Engine/EngineUI/Editor/EditorContentBrowserWidget.h"
+#include "Engine/EngineUI/Editor/EditorRendererSettingsWidget.h"
 #include "Engine/EngineUI/Editor/EditorGPUProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorFrameProfilerWidget.h"
 #include "Engine/EngineUI/Editor/EditorRHIInfoWidget.h"
@@ -146,6 +147,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
     Ids.DockCenter       = 0;
     Ids.DockCenterTop    = 0;
     Ids.DockCenterBottom = 0;
+    Ids.DockLeftTop      = 0;
 
     ImGui::DockBuilderRemoveNodeDockedWindows(Ids.Dockspace, true);
     ImGui::DockBuilderRemoveNode(Ids.Dockspace);
@@ -158,6 +160,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
     ImGui::DockBuilderSplitNode(Ids.Dockspace, ImGuiDir_Right, 0.22f, &Ids.DockRight, &Ids.DockCenter);
     ImGui::DockBuilderSplitNode(Ids.DockCenter, ImGuiDir_Down, 0.28f, &Ids.DockCenterBottom, &Ids.DockCenterTop);
     ImGui::DockBuilderSplitNode(Ids.DockRight, ImGuiDir_Up, 0.55f, &Ids.DockRightTop, &Ids.DockRightBottom);
+    ImGui::DockBuilderSplitNode(Ids.DockCenterTop, ImGuiDir_Left, 0.24f, &Ids.DockLeftTop, &Ids.DockCenterTop);
 
     // Assign windows to the Dockspace items
     ImGui::DockBuilderDockWindow("Viewport", Ids.DockCenterTop);
@@ -165,6 +168,7 @@ void FEditorDockspaceWidget::BuildDockingLayout(FLayoutIds& Ids)
     ImGui::DockBuilderDockWindow("Properties", Ids.DockRightBottom);
     ImGui::DockBuilderDockWindow("Output Log", Ids.DockCenterBottom);
     ImGui::DockBuilderDockWindow("Content Browser", Ids.DockCenterBottom);
+    ImGui::DockBuilderDockWindow("Renderer Settings", Ids.DockLeftTop);
 
     ImGui::DockBuilderFinish(Ids.Dockspace);
 }
@@ -340,6 +344,19 @@ void FEditorDockspaceWidget::DrawMenuBar()
                     else
                     {
                         EditorWidgets::MenuItem("Properties", nullptr, false, false);
+                    }
+
+                    if (FEditorRendererSettingsWidget* RendererSettingsWidget = EditorEngine->GetRendererSettingsWidget().Get())
+                    {
+                        bool bVisible = RendererSettingsWidget->IsVisible();
+                        if (EditorWidgets::MenuItem("Renderer Settings", nullptr, bVisible))
+                        {
+                            RendererSettingsWidget->SetVisible(!bVisible);
+                        }
+                    }
+                    else
+                    {
+                        EditorWidgets::MenuItem("Renderer Settings", nullptr, false, false);
                     }
 
                     if (FEditorContentBrowserWidget* ContentBrowserWidget = EditorEngine->GetContentBrowserWidget().Get())

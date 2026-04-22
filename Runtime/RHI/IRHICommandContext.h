@@ -18,6 +18,7 @@ enum class ECommandContextPhase
     Finished = 0,
     Recording,
     InsideRenderPass,
+    RenderPassPaused,
 };
 
 struct IRHICommandContext

@@ -367,6 +367,8 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
+    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::DontCare);
@@ -443,6 +445,8 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
     CommandList.DrawInstanced(3, 1, 0, 0);
 
     CommandList.EndRenderPass();
+
+    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
 }
 #endif
 
@@ -617,6 +621,8 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
     FScissorRegion ScissorRegion(Settings.Width, Settings.Height, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
+    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
+
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Clear);
@@ -643,4 +649,6 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
     CommandList.DrawInstanced(3, 1, 0, 0);
 
     CommandList.EndRenderPass();
+
+    CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::PixelShaderResource));
 }

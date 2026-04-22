@@ -67,6 +67,7 @@ static bool InitializeOutputDevices()
 
     const FString OutputLogPath = FPaths::GetProjectDir() + "/OutputLog.txt";
     GFileOutputDevice = MakeUniquePtr<FFileOutputDevice>(OutputLogPath);
+    
     if (GFileOutputDevice && GFileOutputDevice->IsValid())
     {
         FOutputDeviceLogger::Get()->RegisterOutputDevice(GFileOutputDevice.Get());

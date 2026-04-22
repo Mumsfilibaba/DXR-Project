@@ -134,12 +134,8 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     CreateInfo.depthBiasSlopeFactor    = InInfo.SlopeScaledDepthBias;
     CreateInfo.lineWidth               = 1.0f;
 
-    // NOTE: we are forced to disable this since there are not really any equivalent in D3D12
-    // The feature described in the spec, is always enabled in D3D12, and the only controllable
-    // aspect in D3D12 is DepthClip, which is disabled when 'depthClampEnable' is set to true.
-    CreateInfo.depthClampEnable = VK_FALSE;
+    CreateInfo.depthClampEnable = (!InInfo.bDepthClipEnable && GVulkanSupportsDepthClamp) ? VK_TRUE : VK_FALSE;
     
-    // NOTE: This extension is the only way to get parity with D3D12, see the above comment for more information
 #if VK_EXT_depth_clip_enable
     FMemory::Memzero(&DepthClipStateCreateInfo);
 
@@ -148,9 +144,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     
     if (GVulkanSupportsDepthClip)
     {
-        // NOTE: Since this feature is always enabled in D3D12, for now, we do the same in Vulkan
-        // since the Depth-clipping is now controlled by a separate value as in D3D12
-        CreateInfo.depthClampEnable = VK_TRUE;
+        CreateInfo.depthClampEnable = GVulkanSupportsDepthClamp ? VK_TRUE : VK_FALSE;
     }
 #endif
     
@@ -174,10 +168,18 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
 #endif
 
 #if VK_EXT_depth_clip_enable
-    AddToStructChain(CreateInfo, DepthClipStateCreateInfo);
+    const bool bUseDepthClipExt = GVulkanSupportsDepthClip;
+    if (bUseDepthClipExt)
+    {
+        AddToStructChain(CreateInfo, DepthClipStateCreateInfo);
+    }
 #endif
 #if VK_EXT_conservative_rasterization
-    AddToStructChain(CreateInfo, ConservativeStateCreateInfo);
+    const bool bUseConservativeExt = GVulkanSupportsConservativeRasterization;
+    if (bUseConservativeExt)
+    {
+        AddToStructChain(CreateInfo, ConservativeStateCreateInfo);
+    }
 #endif
 }
 
@@ -317,13 +319,13 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
     // Gather ShaderModules
     VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    ShaderStageCreateInfo.pName = "main";
     
     TArray<VkPipelineShaderStageCreateInfo> ShaderStages;
     if (TSharedRef<FVulkanShaderModule> ShaderModule = Shaders[ShaderVisibility_Vertex]->GetOrCreateShaderModule(PipelineLayout))
     {
         ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
         ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+        ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Vertex]->GetEntryPointName();
         ShaderStages.Add(ShaderStageCreateInfo);
     }
     else
@@ -338,6 +340,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Hull]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -352,6 +355,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Domain]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -366,6 +370,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_GEOMETRY_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Geometry]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -380,6 +385,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInf
         {
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
             ShaderStageCreateInfo.module = ShaderModule->GetVkShaderModule();
+            ShaderStageCreateInfo.pName  = *Shaders[ShaderVisibility_Pixel]->GetEntryPointName();
             ShaderStages.Add(ShaderStageCreateInfo);
         }
         else
@@ -614,7 +620,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInfo&
     VkPipelineShaderStageCreateInfo ShaderStageCreateInfo = {};
     ShaderStageCreateInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
-    ShaderStageCreateInfo.pName  = "main";
+    ShaderStageCreateInfo.pName  = *VulkanComputeShader->GetEntryPointName();
     
     // PipelineLayout
     FVulkanPipelineLayoutInfo LayoutInfo;
