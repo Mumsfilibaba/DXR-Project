@@ -273,7 +273,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
     TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(BuildInfo.NumInstances);
     for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
-        FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(BuildInfo.Instances[Instance].Geometry);
+        FD3D12RayTracingGeometry* D3D12Geometry = FD3D12RHI::ResourceCast(BuildInfo.Instances[Instance].Geometry);
         FMemory::Memcpy(&InstanceDescs[Instance].Transform, &BuildInfo.Instances[Instance].Transform, sizeof(FMatrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
@@ -520,7 +520,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_CBV, static_cast<uint16>(i));
         if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
-            FD3D12Buffer* Buffer = static_cast<FD3D12Buffer*>(Resources.ConstantBuffers[i]);
+            FD3D12Buffer* Buffer = FD3D12RHI::ResourceCast(Resources.ConstantBuffers[i]);
             OutShaderBindingEntry.RootDescriptors[ParamIndex] = Buffer ? Buffer->GetGPUVirtualAddress() : 0;
         }
     }
@@ -530,7 +530,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_SRV, static_cast<uint16>(i));
         if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
-            FD3D12ShaderResourceView* SRV = static_cast<FD3D12ShaderResourceView*>(Resources.ShaderResourceViews[i]);
+            FD3D12ShaderResourceView* SRV = FD3D12RHI::ResourceCast(Resources.ShaderResourceViews[i]);
             const FD3D12Resource* Resource = SRV ? SRV->GetViewResource() : nullptr;
             OutShaderBindingEntry.RootDescriptors[ParamIndex] = Resource ? Resource->GetGPUVirtualAddress() : 0;
         }
@@ -541,7 +541,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
         const int8 ParamIndex = Stage.GetRootDescriptorParameterIndex(ResourceType_UAV, static_cast<uint16>(i));
         if (ParamIndex >= 0 && ParamIndex < D3D12_MAX_LOCAL_ROOT_DESCRIPTORS)
         {
-            FD3D12UnorderedAccessView* UAV = static_cast<FD3D12UnorderedAccessView*>(Resources.UnorderedAccessViews[i]);
+            FD3D12UnorderedAccessView* UAV = FD3D12RHI::ResourceCast(Resources.UnorderedAccessViews[i]);
             const FD3D12Resource* Resource = UAV ? UAV->GetViewResource() : nullptr;
             OutShaderBindingEntry.RootDescriptors[ParamIndex] = Resource ? Resource->GetGPUVirtualAddress() : 0;
         }

@@ -506,7 +506,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
 
 void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
 {
-    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
+    FD3D12QueryRHI* D3D12Query = FD3D12RHI::ResourceCast(Query);
     CHECK(D3D12Query != nullptr);
 
     const EQueryType Type = D3D12Query->GetType();
@@ -538,7 +538,7 @@ void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
 
 void FD3D12CommandContext::EndQuery(FRHIQuery* Query)
 {
-    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
+    FD3D12QueryRHI* D3D12Query = FD3D12RHI::ResourceCast(Query);
     CHECK(D3D12Query != nullptr);
 
     if (!D3D12Query->CurrentQuery.IsValid())
@@ -555,7 +555,7 @@ void FD3D12CommandContext::EndQuery(FRHIQuery* Query)
 
 void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
 {
-    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
+    FD3D12QueryRHI* D3D12Query = FD3D12RHI::ResourceCast(Query);
     CHECK(D3D12Query != nullptr);
 
     if (!TimingQueryAllocator.Allocate(D3D12Query->CurrentQuery, D3D12Query->QueryResult, ED3D12QueryType::Timestamp))
@@ -572,7 +572,7 @@ void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Ren
 {
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(RenderTargetView.Texture);
+    FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(RenderTargetView.Texture);
     CHECK(D3D12Texture != nullptr);
 
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRenderTargetView(RenderTargetView);
@@ -585,7 +585,7 @@ void FD3D12CommandContext::ClearDepthStencilView(const FRHIDepthStencilView& Dep
 {
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(DepthStencilView.Texture);
+    FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(DepthStencilView.Texture);
     CHECK(D3D12Texture != nullptr);
 
     FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDepthStencilView(DepthStencilView);
@@ -602,7 +602,7 @@ void FD3D12CommandContext::ClearDepthStencilView(const FRHIDepthStencilView& Dep
 
 void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
-    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
+    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = FD3D12RHI::ResourceCast(UnorderedAccessView);
     CHECK(D3D12UnorderedAccessView != nullptr);
 
     BarrierBatcher.FlushBarriers(GetCommandList());
@@ -640,7 +640,7 @@ void FD3D12CommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView
 
 void FD3D12CommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
 {
-    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
+    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = FD3D12RHI::ResourceCast(UnorderedAccessView);
     CHECK(D3D12UnorderedAccessView != nullptr);
 
     BarrierBatcher.FlushBarriers(GetCommandList());
@@ -684,7 +684,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginR
     for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; ++Index)
     {
         const FRHIRenderTargetView& CurrentRTV = BeginRenderPassInfo.RenderTargets[Index];
-        if (FD3D12Texture* RenderTarget = FD3D12Texture::Cast(CurrentRTV.Texture))
+        if (FD3D12Texture* RenderTarget = FD3D12RHI::ResourceCast(CurrentRTV.Texture))
         {
             FD3D12RenderTargetView* CurrentRenderTargetView = RenderTarget->GetOrCreateRenderTargetView(CurrentRTV);
             CHECK(CurrentRenderTargetView != nullptr);
@@ -706,7 +706,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginR
     }
 
     const FRHIDepthStencilView& CurrentDSV = BeginRenderPassInfo.DepthStencilView;
-    if (FD3D12Texture* DepthStencil = FD3D12Texture::Cast(CurrentDSV.Texture))
+    if (FD3D12Texture* DepthStencil = FD3D12RHI::ResourceCast(CurrentDSV.Texture))
     {
         FD3D12DepthStencilView* CurrentDepthStencilView = DepthStencil->GetOrCreateDepthStencilView(CurrentDSV);
         CHECK(CurrentDepthStencilView != nullptr);
@@ -741,7 +741,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassInfo& BeginR
     ContextState.SetRenderTargets(RenderTargetViews, BeginRenderPassInfo.NumRenderTargets, DepthStencilView);
 
     // ShadingRate
-    FD3D12Texture* ShadingRateImage = FD3D12Texture::Cast(BeginRenderPassInfo.ShadingRateTexture);
+    FD3D12Texture* ShadingRateImage = FD3D12RHI::ResourceCast(BeginRenderPassInfo.ShadingRateTexture);
     ContextState.SetShadingRateImage(ShadingRateImage);
     ContextState.SetShadingRate(BeginRenderPassInfo.StaticShadingRate);
 }
@@ -794,26 +794,26 @@ void FD3D12CommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> 
 {
     for (int32 Index = 0; Index < InVertexBuffers.Size(); ++Index)
     {
-        FD3D12Buffer* D3DVertexBuffer = static_cast<FD3D12Buffer*>(InVertexBuffers[Index]);
+        FD3D12Buffer* D3DVertexBuffer = FD3D12RHI::ResourceCast(InVertexBuffers[Index]);
         ContextState.SetVertexBuffer(D3DVertexBuffer, BufferSlot + Index);
     }
 }
 
 void FD3D12CommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
-    FD3D12Buffer* D3DIndexBuffer = static_cast<FD3D12Buffer*>(IndexBuffer);
+    FD3D12Buffer* D3DIndexBuffer = FD3D12RHI::ResourceCast(IndexBuffer);
     ContextState.SetIndexBuffer(D3DIndexBuffer, ConvertIndexFormat(IndexFormat));
 }
 
 void FD3D12CommandContext::SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState)
 {
-    FD3D12GraphicsPipelineState* GraphicsPipelineState = static_cast<FD3D12GraphicsPipelineState*>(PipelineState);
+    FD3D12GraphicsPipelineState* GraphicsPipelineState = FD3D12RHI::ResourceCast(PipelineState);
     ContextState.SetGraphicsPipelineState(GraphicsPipelineState);
 }
 
 void FD3D12CommandContext::SetComputePipelineState(class FRHIComputePipelineState* PipelineState)
 {
-    FD3D12ComputePipelineState* ComputePipelineState = static_cast<FD3D12ComputePipelineState*>(PipelineState);
+    FD3D12ComputePipelineState* ComputePipelineState = FD3D12RHI::ResourceCast(PipelineState);
     ContextState.SetComputePipelineState(ComputePipelineState);
 }
 
@@ -830,7 +830,7 @@ void FD3D12CommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderR
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
-    FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
+    FD3D12ShaderResourceView* D3D12ShaderResourceView = FD3D12RHI::ResourceCast(ShaderResourceView);
     
     CHECK(RegisterIndex < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     ContextState.SetSRV(D3D12ShaderResourceView, D3D12Shader->GetShaderVisibility(), RegisterIndex);
@@ -844,7 +844,7 @@ void FD3D12CommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArr
     CHECK(RegisterIndex + InShaderResourceViews.Size() <= D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
-        FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(InShaderResourceViews[Index]);
+        FD3D12ShaderResourceView* D3D12ShaderResourceView = FD3D12RHI::ResourceCast(InShaderResourceViews[Index]);
         ContextState.SetSRV(D3D12ShaderResourceView, D3D12Shader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
@@ -854,7 +854,7 @@ void FD3D12CommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorde
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
-    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
+    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = FD3D12RHI::ResourceCast(UnorderedAccessView);
     
     CHECK(RegisterIndex < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
     ContextState.SetUAV(D3D12UnorderedAccessView, D3D12Shader->GetShaderVisibility(), RegisterIndex);
@@ -868,7 +868,7 @@ void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
     CHECK(RegisterIndex + InUnorderedAccessViews.Size() <= D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
-        FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(InUnorderedAccessViews[Index]);
+        FD3D12UnorderedAccessView* D3D12UnorderedAccessView = FD3D12RHI::ResourceCast(InUnorderedAccessViews[Index]);
         ContextState.SetUAV(D3D12UnorderedAccessView, D3D12Shader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
@@ -878,7 +878,7 @@ void FD3D12CommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* Con
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
-    FD3D12Buffer* D3D12Buffer = ConstantBuffer ? FD3D12Buffer::Cast(ConstantBuffer) : nullptr;
+    FD3D12Buffer* D3D12Buffer = ConstantBuffer ? FD3D12RHI::ResourceCast(ConstantBuffer) : nullptr;
     
     CHECK(RegisterIndex < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
     ContextState.SetCBV(D3D12Buffer, D3D12Shader->GetShaderVisibility(), RegisterIndex);
@@ -892,7 +892,7 @@ void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
     CHECK(RegisterIndex + InConstantBuffers.Size() <= D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
-        FD3D12Buffer* D3D12Buffer = InConstantBuffers[Index] ? FD3D12Buffer::Cast(InConstantBuffers[Index]) : nullptr;
+        FD3D12Buffer* D3D12Buffer = InConstantBuffers[Index] ? FD3D12RHI::ResourceCast(InConstantBuffers[Index]) : nullptr;
         ContextState.SetCBV(D3D12Buffer, D3D12Shader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
@@ -902,7 +902,7 @@ void FD3D12CommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState*
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
 
-    FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(SamplerState);
+    FD3D12SamplerState* D3D12SamplerState = FD3D12RHI::ResourceCast(SamplerState);
 
     CHECK(RegisterIndex < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
     ContextState.SetSampler(D3D12SamplerState, D3D12Shader->GetShaderVisibility(), RegisterIndex);
@@ -916,7 +916,7 @@ void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
     CHECK(RegisterIndex + InSamplerStates.Size() <= D3D12_DEFAULT_SAMPLER_STATE_COUNT);
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
-        FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(InSamplerStates[Index]);
+        FD3D12SamplerState* D3D12SamplerState = FD3D12RHI::ResourceCast(InSamplerStates[Index]);
         ContextState.SetSampler(D3D12SamplerState, D3D12Shader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
@@ -928,8 +928,8 @@ void FD3D12CommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12Texture* D3D12Source      = FD3D12Texture::Cast(Src);
-    FD3D12Texture* D3D12Destination = FD3D12Texture::Cast(Dst);
+    FD3D12Texture* D3D12Source      = FD3D12RHI::ResourceCast(Src);
+    FD3D12Texture* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
 
     const DXGI_FORMAT DstFormat = D3D12CastShaderResourceFormat(D3D12Destination->GetDXGIFormat());
     const DXGI_FORMAT SrcFormat = D3D12CastShaderResourceFormat(D3D12Source->GetDXGIFormat());
@@ -958,7 +958,7 @@ void FD3D12CommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& Bu
         return;
     }
 
-    FD3D12Buffer* D3D12Destination = FD3D12Buffer::Cast(Dst);
+    FD3D12Buffer* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
 
     if (D3D12Destination->GetInfo().IsTransient())
@@ -998,7 +998,7 @@ void FD3D12CommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegio
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12Texture* D3D12Destination = FD3D12Texture::Cast(Dst);
+    FD3D12Texture* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
 
     FD3D12Resource* D3D12Resource = D3D12Destination->GetResource();
@@ -1066,7 +1066,7 @@ void FD3D12CommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegio
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12Texture* D3D12Destination = FD3D12Texture::Cast(Dst);
+    FD3D12Texture* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
 
     FD3D12Resource* D3D12Resource = D3D12Destination->GetResource();
@@ -1140,10 +1140,10 @@ void FD3D12CommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FB
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12Buffer* D3D12Destination = FD3D12Buffer::Cast(Dst);
+    FD3D12Buffer* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
 
-    FD3D12Buffer* D3D12Source = FD3D12Buffer::Cast(Src);
+    FD3D12Buffer* D3D12Source = FD3D12RHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
 
     GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
@@ -1167,10 +1167,10 @@ void FD3D12CommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12Texture* D3D12Destination = FD3D12Texture::Cast(Dst);
+    FD3D12Texture* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
 
-    FD3D12Texture* D3D12Source = FD3D12Texture::Cast(Src);
+    FD3D12Texture* D3D12Source = FD3D12RHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
 
     GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
@@ -1184,10 +1184,10 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     CHECK(Dst != nullptr);
     CHECK(Src != nullptr);
 
-    FD3D12Texture* D3D12Destination = FD3D12Texture::Cast(Dst);
+    FD3D12Texture* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
     
-    FD3D12Texture* D3D12Source = FD3D12Texture::Cast(Src);
+    FD3D12Texture* D3D12Source = FD3D12RHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
 
     GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
@@ -1259,10 +1259,10 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
         return; 
     } 
  
-    FD3D12Buffer* D3D12Destination = FD3D12Buffer::Cast(Dst); 
+    FD3D12Buffer* D3D12Destination = FD3D12RHI::ResourceCast(Dst); 
     CHECK(D3D12Destination != nullptr); 
  
-    FD3D12Texture* D3D12Source = FD3D12Texture::Cast(Src); 
+    FD3D12Texture* D3D12Source = FD3D12RHI::ResourceCast(Src); 
     CHECK(D3D12Source != nullptr);
 
     GetCommandList().UpdateResidency(D3D12Source->GetResource()->GetResidencyHandle());
@@ -1334,10 +1334,10 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
         return;
     }
 
-    FD3D12Buffer* D3D12Destination = FD3D12Buffer::Cast(Dst);
+    FD3D12Buffer* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
 
-    FD3D12Texture* D3D12Source = FD3D12Texture::Cast(Src);
+    FD3D12Texture* D3D12Source = FD3D12RHI::ResourceCast(Src);
     CHECK(D3D12Source != nullptr);
 
     GetCommandList().UpdateResidency(D3D12Destination->GetResource()->GetResidencyHandle());
@@ -1393,7 +1393,7 @@ void FD3D12CommandContext::WriteFence(FRHIGpuFence* Fence)
 {
     CHECK(Fence != nullptr);
 
-    FD3D12GpuFence* D3D12Fence = static_cast<FD3D12GpuFence*>(Fence);
+    FD3D12GpuFence* D3D12Fence = FD3D12RHI::ResourceCast(Fence);
 
     SplitCommandList(true, false);
     D3D12Fence->Signal(GetDevice()->GetD3D12CommandQueue(QueueType));
@@ -1401,7 +1401,7 @@ void FD3D12CommandContext::WriteFence(FRHIGpuFence* Fence)
 
 void FD3D12CommandContext::DiscardContents(FRHITexture* Texture)
 {
-    if (FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(Texture))
+    if (FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(Texture))
     {
         GetCommandList()->DiscardResource(D3D12Texture->GetResource()->GetD3D12Resource(), nullptr);
     }
@@ -1413,7 +1413,7 @@ void FD3D12CommandContext::BuildRayTracingScene(FRHIRayTracingScene* RayTracingS
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12RayTracingScene* D3D12RayTracingScene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
+    FD3D12RayTracingScene* D3D12RayTracingScene = FD3D12RHI::ResourceCast(RayTracingScene);
     D3D12RayTracingScene->Build(*this, BuildInfo);
 }
 
@@ -1423,17 +1423,17 @@ void FD3D12CommandContext::BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTr
 
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12RayTracingGeometry* D3D12RayTracingGeometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
+    FD3D12RayTracingGeometry* D3D12RayTracingGeometry = FD3D12RHI::ResourceCast(RayTracingGeometry);
     D3D12RayTracingGeometry->Build(*this, BuildInfo);
 }
 
 void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTracingScene */, FRHIRayTracingPipelineState* /* PipelineState */, const FRayTracingShaderResources* /* GlobalResource */, const FRayTracingShaderResources* /* RayGenLocalResources */, const FRayTracingShaderResources* /* MissLocalResources */, const FRayTracingShaderResources* /* HitGroupResources */, uint32 /* NumHitGroupResources */)
 {
 #if 0
-    FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
+    FD3D12RayTracingScene* D3D12Scene = FD3D12RHI::ResourceCast(RayTracingScene);
     D3D12_ERROR_COND(D3D12Scene != nullptr, "RayTracingScene cannot be nullptr");
 
-    FD3D12RayTracingPipelineState* D3D12PipelineState = static_cast<FD3D12RayTracingPipelineState*>(PipelineState);
+    FD3D12RayTracingPipelineState* D3D12PipelineState = FD3D12RHI::ResourceCast(PipelineState);
     D3D12_ERROR_COND(D3D12PipelineState != nullptr, "PipelineState cannot be nullptr");
 
     uint32 NumDescriptorsNeeded = 0;
@@ -1492,7 +1492,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTrac
         {
             for (int32 i = 0; i < GlobalResource->ConstantBuffers.Size(); i++)
             {
-                FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(GlobalResource->ConstantBuffers[i]);
+                FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(GlobalResource->ConstantBuffers[i]);
                 ContextState.SetCBV(D3D12Buffer, ShaderVisibility_All, i);
             }
         }
@@ -1501,7 +1501,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTrac
         {
             for (int32 i = 0; i < GlobalResource->ShaderResourceViews.Size(); i++)
             {
-                FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(GlobalResource->ShaderResourceViews[i]);
+                FD3D12ShaderResourceView* D3D12ShaderResourceView = FD3D12RHI::ResourceCast(GlobalResource->ShaderResourceViews[i]);
                 ContextState.DescriptorCache.SetShaderResourceView(ShaderVisibility_All, D3D12ShaderResourceView, i);
             }
         }
@@ -1510,7 +1510,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTrac
         {
             for (int32 i = 0; i < GlobalResource->UnorderedAccessViews.Size(); i++)
             {
-                FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(GlobalResource->UnorderedAccessViews[i]);
+                FD3D12UnorderedAccessView* D3D12UnorderedAccessView = FD3D12RHI::ResourceCast(GlobalResource->UnorderedAccessViews[i]);
                 ContextState.DescriptorCache.SetUnorderedAccessView(ShaderVisibility_All, D3D12UnorderedAccessView, i);
             }
         }
@@ -1519,7 +1519,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTrac
         {
             for (int32 i = 0; i < GlobalResource->SamplerStates.Size(); i++)
             {
-                FD3D12SamplerState* DxSampler = static_cast<FD3D12SamplerState*>(GlobalResource->SamplerStates[i]);
+                FD3D12SamplerState* DxSampler = FD3D12RHI::ResourceCast(GlobalResource->SamplerStates[i]);
                 ContextState.DescriptorCache.SetSamplerState(ShaderVisibility_All, DxSampler, i);
             }
         }
@@ -1536,7 +1536,7 @@ void FD3D12CommandContext::SetRayTracingBindings(FRHIRayTracingScene* /* RayTrac
 
 void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
-    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(Texture);
+    FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(Texture);
     CHECK(D3D12Texture != nullptr);
 
     FD3D12Resource* Resource = D3D12Texture->GetResource();
@@ -1660,7 +1660,7 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
 
 void FD3D12CommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
-    FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(Buffer);
+    FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(Buffer);
     CHECK(D3D12Buffer != nullptr);
 
     FD3D12Resource* Resource = D3D12Buffer->GetResource();
@@ -2018,7 +2018,7 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12DepthStencilView* View,
 
 void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
 {
-    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(Texture);
+    FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(Texture);
     CHECK(D3D12Texture != nullptr);
 
     FD3D12Resource* Resource = D3D12Texture->GetResource();
@@ -2129,7 +2129,7 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
 
 void FD3D12CommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
 {
-    FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(Buffer);
+    FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(Buffer);
     CHECK(D3D12Buffer != nullptr);
 
     FD3D12Resource* Resource = D3D12Buffer->GetResource();
@@ -2154,7 +2154,7 @@ void FD3D12CommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAcces
 
 void FD3D12CommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
-    FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(Texture);
+    FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(Texture);
     CHECK(D3D12Texture != nullptr);
 
     BarrierBatcher.AddUnorderedAccessBarrier(D3D12Texture->GetResource());
@@ -2162,7 +2162,7 @@ void FD3D12CommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 
 void FD3D12CommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
-    FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(Buffer);
+    FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(Buffer);
     CHECK(D3D12Buffer != nullptr);
 
     BarrierBatcher.AddUnorderedAccessBarrier(D3D12Buffer->GetResource());
@@ -2246,10 +2246,10 @@ void FD3D12CommandContext::Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroup
 
 void FD3D12CommandContext::DispatchRays(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
 {
-    FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
+    FD3D12RayTracingScene* D3D12Scene = FD3D12RHI::ResourceCast(RayTracingScene);
     CHECK(D3D12Scene != nullptr);
 
-    FD3D12RayTracingPipelineState* D3D12PipelineState = static_cast<FD3D12RayTracingPipelineState*>(PipelineState);
+    FD3D12RayTracingPipelineState* D3D12PipelineState = FD3D12RHI::ResourceCast(PipelineState);
     CHECK(D3D12PipelineState != nullptr);
 
     ConditionalSplitCommandList();
@@ -2288,14 +2288,14 @@ void FD3D12CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVert
 {
     FinishCommandList(true);
 
-    FD3D12SwapChain* D3D12SwapChain = static_cast<FD3D12SwapChain*>(SwapChain);
+    FD3D12SwapChain* D3D12SwapChain = FD3D12RHI::ResourceCast(SwapChain);
     D3D12SwapChain->Present(bVerticalSync);
     ObtainCommandList();
 }
 
 void FD3D12CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
 {
-    FD3D12SwapChain* D3D12SwapChain = static_cast<FD3D12SwapChain*>(SwapChain);
+    FD3D12SwapChain* D3D12SwapChain = FD3D12RHI::ResourceCast(SwapChain);
     D3D12SwapChain->Resize(this, Width, Height);
 }
 

@@ -32,6 +32,22 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
 
 FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
+FD3D12Texture* FD3D12RHI::ResourceCast(FRHITexture* Texture)
+{
+    if (Texture)
+    {
+        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
+        {
+            FD3D12BackBufferTexture* BackBuffer = static_cast<FD3D12BackBufferTexture*>(Texture);
+            return BackBuffer->GetCurrentBackBufferTexture();
+        }
+
+        return static_cast<FD3D12Texture*>(Texture);
+    }
+
+    return nullptr;
+}
+
 FRHI* FD3D12RHIModule::CreateRHI()
 {
     TUniquePtr<FD3D12RHI> NewRHI = MakeUniquePtr<FD3D12RHI>();
@@ -550,7 +566,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
 
     if (InInfo.IsBufferSRV())
     {
-        FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.BufferSRV.Buffer);
+        FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(InInfo.BufferSRV.Buffer);
         CHECK(D3D12Buffer != nullptr);
 
         D3D12Resource = D3D12Buffer->GetResource();
@@ -575,7 +591,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
     }
     else if (InInfo.IsTextureSRV())
     {
-        FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.TextureSRV.Texture);
+        FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(InInfo.TextureSRV.Texture);
         CHECK(D3D12Texture != nullptr);
 
         D3D12Resource = D3D12Texture->GetResource();
@@ -689,7 +705,7 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnordere
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc = {};
     if (InInfo.IsBufferUAV())
     {
-        FD3D12Buffer* D3D12Buffer = FD3D12Buffer::Cast(InInfo.BufferUAV.Buffer);
+        FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(InInfo.BufferUAV.Buffer);
         CHECK(D3D12Buffer != nullptr);
 
         D3D12Resource = D3D12Buffer->GetResource();
@@ -716,7 +732,7 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnordere
     {
         Desc.Format = ConvertFormat(InInfo.TextureUAV.Format);
         
-        FD3D12Texture* D3D12Texture = FD3D12Texture::Cast(InInfo.TextureUAV.Texture);
+        FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(InInfo.TextureUAV.Texture);
         CHECK(D3D12Texture != nullptr);
 
         D3D12Resource = D3D12Texture->GetResource();
@@ -1088,7 +1104,7 @@ bool FD3D12RHI::QueryUAVFormatSupport(EFormat Format) const
 
 bool FD3D12RHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode)
 {
-    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
+    FD3D12QueryRHI* D3D12Query = FD3D12RHI::ResourceCast(Query);
     if (!D3D12Query)
     {
         return false;
@@ -1111,7 +1127,7 @@ bool FD3D12RHI::GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResult
 
 bool FD3D12RHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode)
 {
-    FD3D12QueryRHI* D3D12Query = static_cast<FD3D12QueryRHI*>(Query);
+    FD3D12QueryRHI* D3D12Query = FD3D12RHI::ResourceCast(Query);
     if (!D3D12Query)
     {
         return false;

@@ -2,6 +2,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanResourceViews.h"
+#include "VulkanRHI/VulkanRHI.h"
 
 FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
     : FVulkanDeviceChild(InDevice)
@@ -349,7 +350,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& 
     for (uint32 Index = 0; Index < RenderPassInfo.NumRenderTargets; Index++)
     {
         const FRHIRenderTargetView& RenderTargetView = RenderPassInfo.RenderTargets[Index];
-        FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(&Context, RenderTargetView.Texture);
+        FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(&Context, RenderTargetView.Texture);
         if (!VulkanTexture)
         {
             continue;
@@ -380,7 +381,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& 
     VkClearValue DepthStencilClearValue = {};
 
     const FRHIDepthStencilView& DepthStencilView = RenderPassInfo.DepthStencilView;
-    if (FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(&Context, DepthStencilView.Texture))
+    if (FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(&Context, DepthStencilView.Texture))
     {
         Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
         Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
@@ -807,7 +808,7 @@ void FVulkanCommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuf
     GraphicsState.StreamOutputCache.NumBuffers = Math::Min(static_cast<uint32>(Buffers.Size()), static_cast<uint32>(VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT));
     for (uint32 Index = 0; Index < GraphicsState.StreamOutputCache.NumBuffers; ++Index)
     {
-        FVulkanBuffer* VulkanBuffer = static_cast<FVulkanBuffer*>(Buffers[Index]);
+        FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(Buffers[Index]);
         if (VulkanBuffer)
         {
             GraphicsState.StreamOutputCache.Buffers[Index] = VulkanBuffer->GetVkBuffer();

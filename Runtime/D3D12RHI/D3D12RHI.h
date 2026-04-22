@@ -10,6 +10,7 @@
 #include "D3D12RHI/D3D12SamplerState.h"
 #include "D3D12RHI/D3D12Shader.h"
 #include "D3D12RHI/D3D12RayTracing.h"
+#include "D3D12RHI/D3D12TypeTraits.h"
 
 class FD3D12CommandContext;
 
@@ -21,10 +22,18 @@ struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
 class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
-    static FD3D12RHI* Get() 
+    static FD3D12Texture* ResourceCast(FRHITexture* Texture);
+
+    template<typename TRHIType>
+    static FORCEINLINE typename TAddPointer<typename TD3D12RHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
+    {
+        return static_cast<typename TAddPointer<typename TD3D12RHIResourceType<TRHIType>::Type>::Type>(Resource);
+    }
+
+    static FORCEINLINE FD3D12RHI* Get()
     {
         CHECK(GD3D12RHI != nullptr);
-        return GD3D12RHI; 
+        return GD3D12RHI;
     }
 
     template<typename... ArgTypes>

@@ -9,6 +9,7 @@
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanDeletionQueue.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
+#include "VulkanRHI/VulkanTypeTraits.h"
 
 struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 {
@@ -28,13 +29,22 @@ public:
     // Convert EResourceAccess to Vulkan pipeline-stage flags
     static VkPipelineStageFlags2 ResourceStateToPipelineStageFlags(EResourceAccess ResourceState);
 
+    static FVulkanTexture* ResourceCast(FRHITexture* Texture);
+    static FVulkanTexture* ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
+
+    template<typename TRHIType>
+    static FORCEINLINE typename TAddPointer<typename TVulkanRHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
+    {
+        return static_cast<typename TAddPointer<typename TVulkanRHIResourceType<TRHIType>::Type>::Type>(Resource);
+    }
+
     template<typename... ArgTypes>
     static void DeferDeletion(ArgTypes&&... Args)
     {
         Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
     }
 
-    static FVulkanRHI* Get()
+    static FORCEINLINE FVulkanRHI* Get()
     {
         CHECK(GVulkanRHI != nullptr);
         return GVulkanRHI;

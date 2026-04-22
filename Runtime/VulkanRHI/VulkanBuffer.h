@@ -8,12 +8,6 @@ typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 class FVulkanBuffer : public FRHIBuffer, public FVulkanResource
 {
 public:
-    static FORCEINLINE FVulkanBuffer* Cast(FRHIBuffer* Buffer)
-    {
-        return static_cast<FVulkanBuffer*>(Buffer);
-    }
-
-public:
     FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc);
     ~FVulkanBuffer();
 

@@ -1,6 +1,7 @@
 #include "Core/Memory/Memory.h"
 #include "D3D12RHI/D3D12CommandContextState.h"
 #include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/D3D12RHI.h"
 
 FD3D12CommandContextState::FD3D12CommandContextState(FD3D12Device* InDevice, FD3D12CommandContext& InContext)
     : FD3D12DeviceChild(InDevice)
@@ -945,7 +946,7 @@ void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuff
 
     for (uint32 Index = 0; Index < GraphicsState.NumSOBuffers; ++Index)
     {
-        FD3D12Buffer* D3DBuffer = static_cast<FD3D12Buffer*>(Buffers[Index]);
+        FD3D12Buffer* D3DBuffer = FD3D12RHI::ResourceCast(Buffers[Index]);
         GraphicsState.SOBuffers[Index] = D3DBuffer;
 
         if (D3DBuffer)

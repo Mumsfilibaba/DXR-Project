@@ -551,7 +551,7 @@ void FVulkanCommandContext::FinishContext()
 
 void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
 {
-    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
+    FVulkanQueryRHI* VulkanQuery = FVulkanRHI::ResourceCast(Query);
     CHECK(VulkanQuery != nullptr);
 
     const EQueryType Type = VulkanQuery->GetType();
@@ -582,7 +582,7 @@ void FVulkanCommandContext::BeginQuery(FRHIQuery* Query)
 
 void FVulkanCommandContext::EndQuery(FRHIQuery* Query)
 {
-    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
+    FVulkanQueryRHI* VulkanQuery = FVulkanRHI::ResourceCast(Query);
     CHECK(VulkanQuery != nullptr);
 
     if (!VulkanQuery->CurrentQuery.IsValid())
@@ -599,7 +599,7 @@ void FVulkanCommandContext::EndQuery(FRHIQuery* Query)
 
 void FVulkanCommandContext::QueryTimestamp(FRHIQuery* Query)
 {
-    FVulkanQueryRHI* VulkanQuery = static_cast<FVulkanQueryRHI*>(Query);
+    FVulkanQueryRHI* VulkanQuery = FVulkanRHI::ResourceCast(Query);
     CHECK(VulkanQuery != nullptr);
 
     if (!TimestampQueryAllocator.Allocate(VulkanQuery->CurrentQuery, VulkanQuery->QueryResult, EVulkanQueryType::Timestamp))
@@ -618,7 +618,7 @@ void FVulkanCommandContext::QueryTimestamp(FRHIQuery* Query)
 
 void FVulkanCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, RenderTargetView.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, RenderTargetView.Texture);
     CHECK(VulkanTexture != nullptr);
 
     FVulkanHashableImageView HashableImageView;
@@ -673,7 +673,7 @@ void FVulkanCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& Re
 
 void FVulkanCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, DepthStencilView.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, DepthStencilView.Texture);
     CHECK(VulkanTexture != nullptr);
 
     FVulkanHashableImageView HashableImageView;
@@ -729,7 +729,7 @@ void FVulkanCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& De
 
 void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
-    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
+    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = FVulkanRHI::ResourceCast(UnorderedAccessView);
     CHECK(VulkanUnorderedAccessView != nullptr);
     
     VkClearColorValue VulkanClearColor;
@@ -771,7 +771,7 @@ void FVulkanCommandContext::ClearUnorderedAccessViewFloat(FRHIUnorderedAccessVie
 
 void FVulkanCommandContext::ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4])
 {
-    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
+    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = FVulkanRHI::ResourceCast(UnorderedAccessView);
     CHECK(VulkanUnorderedAccessView != nullptr);
 
     const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
@@ -873,26 +873,26 @@ void FVulkanCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const>
 {
     for (int32 Index = 0; Index < InVertexBuffers.Size(); ++Index)
     {
-        FVulkanBuffer* VulkanVertexBuffer = static_cast<FVulkanBuffer*>(InVertexBuffers[Index]);
+        FVulkanBuffer* VulkanVertexBuffer = FVulkanRHI::ResourceCast(InVertexBuffers[Index]);
         ContextState.SetVertexBuffer(VulkanVertexBuffer, BufferSlot + Index);
     }
 }
 
 void FVulkanCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
-    FVulkanBuffer* VulkanIndexBuffer = static_cast<FVulkanBuffer*>(IndexBuffer);
+    FVulkanBuffer* VulkanIndexBuffer = FVulkanRHI::ResourceCast(IndexBuffer);
     ContextState.SetIndexBuffer(VulkanIndexBuffer, ConvertIndexFormat(IndexFormat));
 }
 
 void FVulkanCommandContext::SetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState)
 {
-    FVulkanGraphicsPipelineState* VulkanPipelineState = static_cast<FVulkanGraphicsPipelineState*>(PipelineState);
+    FVulkanGraphicsPipelineState* VulkanPipelineState = FVulkanRHI::ResourceCast(PipelineState);
     ContextState.SetGraphicsPipelineState(VulkanPipelineState);
 }
 
 void FVulkanCommandContext::SetComputePipelineState(class FRHIComputePipelineState* PipelineState)  
 {
-    FVulkanComputePipelineState* VulkanPipelineState = static_cast<FVulkanComputePipelineState*>(PipelineState);
+    FVulkanComputePipelineState* VulkanPipelineState = FVulkanRHI::ResourceCast(PipelineState);
     ContextState.SetComputePipelineState(VulkanPipelineState);
 }
 
@@ -909,7 +909,7 @@ void FVulkanCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShader
     CHECK(VulkanShader != nullptr);
     CHECK(RegisterIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
-    FVulkanShaderResourceView* VulkanShaderResourceView = static_cast<FVulkanShaderResourceView*>(ShaderResourceView);
+    FVulkanShaderResourceView* VulkanShaderResourceView = FVulkanRHI::ResourceCast(ShaderResourceView);
     ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
@@ -921,7 +921,7 @@ void FVulkanCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TAr
 
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
-        FVulkanShaderResourceView* VulkanShaderResourceView = static_cast<FVulkanShaderResourceView*>(InShaderResourceViews[Index]);
+        FVulkanShaderResourceView* VulkanShaderResourceView = FVulkanRHI::ResourceCast(InShaderResourceViews[Index]);
         ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
@@ -932,7 +932,7 @@ void FVulkanCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnord
     CHECK(VulkanShader != nullptr);
     CHECK(RegisterIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
-    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
+    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = FVulkanRHI::ResourceCast(UnorderedAccessView);
     ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
@@ -944,7 +944,7 @@ void FVulkanCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TA
 
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
-        FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(InUnorderedAccessViews[Index]);
+        FVulkanUnorderedAccessView* VulkanUnorderedAccessView = FVulkanRHI::ResourceCast(InUnorderedAccessViews[Index]);
         ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
@@ -955,7 +955,7 @@ void FVulkanCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* Co
     CHECK(VulkanShader != nullptr);
     CHECK(RegisterIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
 
-    FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(ConstantBuffer);
+    FVulkanBuffer* VulkanConstantBuffer = FVulkanRHI::ResourceCast(ConstantBuffer);
     ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
@@ -967,7 +967,7 @@ void FVulkanCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayV
 
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
-        FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(InConstantBuffers[Index]);
+        FVulkanBuffer* VulkanConstantBuffer = FVulkanRHI::ResourceCast(InConstantBuffers[Index]);
         ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
@@ -978,7 +978,7 @@ void FVulkanCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState
     CHECK(VulkanShader != nullptr);
     CHECK(RegisterIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
 
-    FVulkanSamplerState* VulkanSamplerState = static_cast<FVulkanSamplerState*>(SamplerState);
+    FVulkanSamplerState* VulkanSamplerState = FVulkanRHI::ResourceCast(SamplerState);
     ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), RegisterIndex);
 }
 
@@ -990,14 +990,14 @@ void FVulkanCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayVie
 
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
-        FVulkanSamplerState* VulkanSamplerState = static_cast<FVulkanSamplerState*>(InSamplerStates[Index]);
+        FVulkanSamplerState* VulkanSamplerState = FVulkanRHI::ResourceCast(InSamplerStates[Index]);
         ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), RegisterIndex + Index);
     }
 }
 
 void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)     
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Dst);
+    FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(Dst);
     CHECK(VulkanBuffer != nullptr);
 
     if (VulkanBuffer->GetInfo().IsTransient())
@@ -1043,7 +1043,7 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
 
 void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) 
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Dst);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, Dst);
     CHECK(VulkanTexture != nullptr);
 
     const VkFormat Format       = VulkanTexture->GetVkFormat();
@@ -1085,7 +1085,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
 
 void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegion3D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch, uint32 SrcDepthPitch)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Dst);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, Dst);
     CHECK(VulkanTexture != nullptr);
 
     const VkFormat Format       = VulkanTexture->GetVkFormat();
@@ -1131,10 +1131,10 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
 
 void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::Cast(this, Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanRHI::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
     
-    FVulkanTexture* DstVulkanTexture = FVulkanTexture::Cast(this, Dst);
+    FVulkanTexture* DstVulkanTexture = FVulkanRHI::ResourceCast(this, Dst);
     CHECK(DstVulkanTexture != nullptr);
     
     CHECK(SrcVulkanTexture->GetWidth()  == DstVulkanTexture->GetWidth());
@@ -1161,10 +1161,10 @@ void FVulkanCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 
 void FVulkanCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc)
 {
-    FVulkanBuffer* SrcVulkanBuffer = FVulkanBuffer::Cast(Src);
+    FVulkanBuffer* SrcVulkanBuffer = FVulkanRHI::ResourceCast(Src);
     CHECK(SrcVulkanBuffer != nullptr);
     
-    FVulkanBuffer* DstVulkanBuffer = FVulkanBuffer::Cast(Dst);
+    FVulkanBuffer* DstVulkanBuffer = FVulkanRHI::ResourceCast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
 
     VkBufferCopy BufferCopy = {};
@@ -1179,10 +1179,10 @@ void FVulkanCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const F
 
 void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::Cast(this, Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanRHI::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
     
-    FVulkanTexture* DstVulkanTexture = FVulkanTexture::Cast(this, Dst);
+    FVulkanTexture* DstVulkanTexture = FVulkanRHI::ResourceCast(this, Dst);
     CHECK(DstVulkanTexture != nullptr);
     
     CHECK(SrcVulkanTexture->GetWidth()        == DstVulkanTexture->GetWidth());
@@ -1230,10 +1230,10 @@ void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 
 void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc)
 {
-    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::Cast(this, Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanRHI::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
     
-    FVulkanTexture* DstVulkanTexture = FVulkanTexture::Cast(this, Dst);
+    FVulkanTexture* DstVulkanTexture = FVulkanRHI::ResourceCast(this, Dst);
     CHECK(DstVulkanTexture != nullptr);
     
     constexpr uint32 MaxCopies = 15;
@@ -1309,10 +1309,10 @@ void FVulkanCommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Ds
     CHECK(Dst != nullptr);
     CHECK(Src != nullptr);
 
-    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::Cast(this, Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanRHI::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
 
-    FVulkanBuffer* DstVulkanBuffer = FVulkanBuffer::Cast(Dst);
+    FVulkanBuffer* DstVulkanBuffer = FVulkanRHI::ResourceCast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
 
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
@@ -1343,10 +1343,10 @@ void FVulkanCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint
     CHECK(Dst != nullptr);
     CHECK(Src != nullptr);
 
-    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::Cast(this, Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanRHI::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
 
-    FVulkanBuffer* DstVulkanBuffer = FVulkanBuffer::Cast(Dst);
+    FVulkanBuffer* DstVulkanBuffer = FVulkanRHI::ResourceCast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
 
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
@@ -1372,7 +1372,7 @@ void FVulkanCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint
 void FVulkanCommandContext::WriteFence(FRHIGpuFence* Fence)
 {
     CHECK(Fence != nullptr);
-    FVulkanGpuFence* VulkanFence = static_cast<FVulkanGpuFence*>(Fence);
+    FVulkanGpuFence* VulkanFence = FVulkanRHI::ResourceCast(Fence);
 
     if (!CommandBuffer)
     {
@@ -1400,7 +1400,7 @@ void FVulkanCommandContext::WriteFence(FRHIGpuFence* Fence)
 
 void FVulkanCommandContext::DiscardContents(FRHITexture* Resource)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Resource);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, Resource);
     if (!VulkanTexture)
     {
         return;
@@ -1466,7 +1466,7 @@ void FVulkanCommandContext::SetRayTracingBindings(FRHIRayTracingScene* RayTracin
 
 void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, Texture);
     CHECK(VulkanTexture != nullptr);
 
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(VulkanTexture);
@@ -1603,7 +1603,7 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
 
 void FVulkanCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)   
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(Buffer);
     CHECK(VulkanBuffer != nullptr);
 
     FVulkanBufferState& LocalState = RetrievePendingBufferState(VulkanBuffer);
@@ -1644,7 +1644,7 @@ void FVulkanCommandContext::TransitionBufferState(FRHIBuffer* Buffer, EResourceA
 
 void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHIRequiredTextureState& RequiredState)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, Texture);
     CHECK(VulkanTexture != nullptr);
 
     if (VulkanTexture->GetImageLayoutState().HasDefaultLayout())
@@ -1796,7 +1796,7 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
 
 void FVulkanCommandContext::RequireBufferState(FRHIBuffer* Buffer, EResourceAccess RequiredState)
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(Buffer);
     CHECK(VulkanBuffer != nullptr);
 
     FVulkanBufferState& LocalState = RetrievePendingBufferState(VulkanBuffer);
@@ -2140,7 +2140,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanUnorderedAccessView* Vi
         return;
     }
 
-    FVulkanTexture* Texture = FVulkanTexture::Cast(this, static_cast<FRHITexture*>(View->GetResource()));
+    FVulkanTexture* Texture = FVulkanRHI::ResourceCast(this, static_cast<FRHITexture*>(View->GetResource()));
     if (!Texture)
     {
         return;
@@ -2159,7 +2159,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanShaderResourceView* Vie
         return;
     }
 
-    FVulkanTexture* Texture = FVulkanTexture::Cast(this, static_cast<FRHITexture*>(View->GetResource()));
+    FVulkanTexture* Texture = FVulkanRHI::ResourceCast(this, static_cast<FRHITexture*>(View->GetResource()));
     if (!Texture)
     {
         return;
@@ -2171,7 +2171,7 @@ void FVulkanCommandContext::TransitionImageLayout(FVulkanShaderResourceView* Vie
 
 void FVulkanCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(this, Texture);
+    FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(this, Texture);
     CHECK(VulkanTexture != nullptr);
 
     VkImageMemoryBarrier2 ImageBarrier = {};
@@ -2197,7 +2197,7 @@ void FVulkanCommandContext::UnorderedAccessTextureBarrier(FRHITexture* Texture)
 
 void FVulkanCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)   
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(Buffer);
     CHECK(VulkanBuffer != nullptr);
 
     VkBufferMemoryBarrier2 BufferBarrier = {};
@@ -2338,7 +2338,7 @@ void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bV
 
     FinishCommandBuffer(false);
 
-    FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(InSwapChain);
+    FVulkanSwapChain* VulkanSwapChain = FVulkanRHI::ResourceCast(InSwapChain);
     VulkanSwapChain->Present(this, bVerticalSync);
 
     // -------------------------------------------------------------------------------------------
@@ -2351,7 +2351,7 @@ void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bV
 
 void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
 {
-    FVulkanSwapChain* VulkanSwapChain = static_cast<FVulkanSwapChain*>(SwapChain);
+    FVulkanSwapChain* VulkanSwapChain = FVulkanRHI::ResourceCast(SwapChain);
     VulkanSwapChain->Resize(this, Width, Height);
 }
 

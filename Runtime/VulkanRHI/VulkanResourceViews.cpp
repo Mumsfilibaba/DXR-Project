@@ -3,6 +3,7 @@
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanBuffer.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
+#include "VulkanRHI/VulkanRHI.h"
 
 FVulkanResourceView::FVulkanResourceView(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
@@ -274,7 +275,7 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
 {
     if (InInfo.IsBufferSRV())
     {
-		FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.BufferSRV.Buffer);
+		FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(InInfo.BufferSRV.Buffer);
 		if (!VulkanBuffer)
 		{
 			VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
@@ -320,7 +321,7 @@ bool FVulkanShaderResourceView::Initialize(const FRHIShaderResourceViewInfo& InI
     }
     else if (InInfo.IsTextureSRV())
     {
-		FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.TextureSRV.Texture);
+		FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(InInfo.TextureSRV.Texture);
 		if (!VulkanTexture)
 		{
 			VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
@@ -476,7 +477,7 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 {
 	if (InInfo.IsBufferUAV())
 	{
-		FVulkanBuffer* VulkanBuffer = FVulkanBuffer::Cast(InInfo.BufferUAV.Buffer);
+		FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(InInfo.BufferUAV.Buffer);
 		if (!VulkanBuffer)
 		{
 			VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
@@ -522,7 +523,7 @@ bool FVulkanUnorderedAccessView::Initialize(const FRHIUnorderedAccessViewInfo& I
 	}
 	else if (InInfo.IsTextureUAV())
 	{
-		FVulkanTexture* VulkanTexture = FVulkanTexture::Cast(InInfo.TextureUAV.Texture);
+		FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(InInfo.TextureUAV.Texture);
 		if (!VulkanTexture)
 		{
 			VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");

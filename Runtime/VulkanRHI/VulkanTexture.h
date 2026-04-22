@@ -16,10 +16,6 @@ class FVulkanTexture : public FRHITexture, public FVulkanResource
     friend class FVulkanBackBufferTexture;
 
 public:
-    static FVulkanTexture* Cast(FRHITexture* Texture);
-    static FVulkanTexture* Cast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
-
-public:
     FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanTexture();
 
