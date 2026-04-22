@@ -7,7 +7,7 @@
 #include "RHI/RHICore.h"
 
 class FRHIBuffer;
-struct FRHIRayTracingGeometryInstance;
+struct FRHIGeometryAccelerationStructureInstance;
 class FRHIShader;
 class FRHIVertexShader;
 class FRHIHullShader;
@@ -25,7 +25,7 @@ class FRHIRayAnyHitShader;
 class FRHIRayClosestHitShader;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
-class FRHIGpuFence;
+class FRHIFence;
 struct IRHITextureData;
 
 typedef TSharedRef<class FRHIBuffer>                  FRHIBufferRef;
@@ -35,7 +35,7 @@ typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef
 typedef TSharedRef<class FRHISamplerState>            FRHISamplerStateRef;
 typedef TSharedRef<class FRHISwapChain>               FRHISwapChainRef;
 typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;
-typedef TSharedRef<class FRHIGpuFence>                FRHIGpuFenceRef;
+typedef TSharedRef<class FRHIFence>                   FRHIFenceRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
@@ -869,11 +869,11 @@ struct FTextureRegion3D
     uint32 PositionZ = 0;
 };
 
-struct FBufferCopyInfo
+struct FRHIBufferCopyDesc
 {
-    constexpr FBufferCopyInfo() noexcept = default;
+    constexpr FRHIBufferCopyDesc() noexcept = default;
 
-    constexpr FBufferCopyInfo(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize) noexcept
+    constexpr FRHIBufferCopyDesc(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize) noexcept
         : SrcOffset(InSrcOffset)
         , DstOffset(InDstOffset)
         , Size(InSize)
@@ -885,7 +885,7 @@ struct FBufferCopyInfo
     uint64 Size      = 0;
 };
 
-struct FTextureCopyInfo
+struct FRHITextureCopyDesc
 {
     FIntVector3 DstPosition;
     uint32 DstArraySlice = 0;
@@ -944,27 +944,27 @@ struct FScissorRegion
     float PositionY = 0.0f;
 };
 
-struct FRayTracingSceneBuildInfo
+struct FRHISceneAccelerationStructureBuildDesc
 {
-    constexpr FRayTracingSceneBuildInfo() noexcept = default;
+    constexpr FRHISceneAccelerationStructureBuildDesc() noexcept = default;
 
-    constexpr FRayTracingSceneBuildInfo(const FRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) noexcept
+    constexpr FRHISceneAccelerationStructureBuildDesc(const FRHIGeometryAccelerationStructureInstance* Instances, uint32 NumInstances, bool bUpdate) noexcept
         : Instances(Instances)
         , NumInstances(NumInstances)
         , bUpdate(bUpdate)
     {
     }
 
-    const FRHIRayTracingGeometryInstance* Instances = nullptr;
+    const FRHIGeometryAccelerationStructureInstance* Instances = nullptr;
     uint32 NumInstances = 0;
     bool   bUpdate      = false;
 };
 
-struct FRayTracingGeometryBuildInfo
+struct FRHIGeometryAccelerationStructureBuildDesc
 {
-    constexpr FRayTracingGeometryBuildInfo() noexcept = default;
+    constexpr FRHIGeometryAccelerationStructureBuildDesc() noexcept = default;
 
-    constexpr FRayTracingGeometryBuildInfo(FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate) noexcept
+    constexpr FRHIGeometryAccelerationStructureBuildDesc(FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate) noexcept
         : VertexBuffer(VertexBuffer)
         , NumVertices(NumVertices)
         , IndexBuffer(IndexBuffer)

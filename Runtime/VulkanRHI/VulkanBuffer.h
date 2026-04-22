@@ -3,13 +3,13 @@
 #include "VulkanRHI/VulkanResource.h"
 #include "VulkanRHI/VulkanResourceState.h"
 
-typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
+typedef TSharedRef<class FVulkanBufferRHI> FVulkanBufferRHIRef;
 
-class FVulkanBuffer : public FRHIBuffer, public FVulkanResource
+class FVulkanBufferRHI : public FRHIBuffer, public FVulkanResource
 {
 public:
-    FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc);
-    ~FVulkanBuffer();
+    FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
+    ~FVulkanBufferRHI();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
@@ -53,7 +53,7 @@ public:
 
     VkDeviceSize GetBindRange() const
     {
-        return Info.Size;
+        return Desc.Size;
     }
 
     VkDeviceMemory GetVkDeviceMemory() const

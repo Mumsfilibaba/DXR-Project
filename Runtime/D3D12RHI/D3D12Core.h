@@ -384,7 +384,7 @@ NODISCARD constexpr D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
     return D3D12_STENCIL_OP(-1);
 }
 
-NODISCARD inline D3D12_DEPTH_STENCILOP_DESC ConvertStencilState(const FRHIDepthStencilStateInfo::FStencilState& StencilState)
+NODISCARD inline D3D12_DEPTH_STENCILOP_DESC ConvertStencilState(const FRHIDepthStencilStateDesc::FStencilState& StencilState)
 {
     return
     {

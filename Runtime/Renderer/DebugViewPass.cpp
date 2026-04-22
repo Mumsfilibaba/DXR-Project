@@ -55,7 +55,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    FRHIDepthStencilStateInfo DepthStencilDesc;
+    FRHIDepthStencilStateDesc DepthStencilDesc;
     DepthStencilDesc.DepthFunc = EComparisonFunc::Always;
     DepthStencilDesc.bDepthEnable = false;
     DepthStencilDesc.bDepthWriteEnable = false;
@@ -67,7 +67,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    FRHIRasterizerStateInfo RasterizerDesc;
+    FRHIRasterizerStateDesc RasterizerDesc;
     RasterizerDesc.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
@@ -77,7 +77,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    FRHIBlendStateInfo BlendStateDesc;
+    FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
     FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
@@ -87,7 +87,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    FRHIGraphicsPipelineStateInfo PSODesc;
+    FRHIGraphicsPipelineStateDesc PSODesc;
     PSODesc.InputLayout = nullptr;
     PSODesc.BlendState = BlendState.Get();
     PSODesc.DepthStencilState = DepthStencilState.Get();
@@ -195,7 +195,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     RequirePixelIfNotRT(FrameResources.TonemappedTarget.Get());
     RequirePixelIfNotRT(FrameResources.FinalTarget.Get());
 
-    FRHIBeginRenderPassInfo RenderPassDesc;
+    FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets = 1;
     RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RenderTarget, bClearTarget ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load);
     RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);

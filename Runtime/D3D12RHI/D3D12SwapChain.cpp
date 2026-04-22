@@ -18,14 +18,14 @@ static TAutoConsoleVariable<int32> CVarMaxFrameLatency(
     "Maximum frame latency for the swap chain (-1 = use backbuffer count)",
     -1);
 
-FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainInfo& InSwapChainInfo)
+FD3D12SwapChainRHI::FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainDesc& InSwapChainDesc)
     : FD3D12DeviceChild(InDevice)
-    , FRHISwapChain(InSwapChainInfo)
+    , FRHISwapChain(InSwapChainDesc)
     , SwapChain(nullptr)
     , CommandContext(InCommandContext)
     , BackBufferProxy(nullptr)
     , BackBuffers()
-    , Hwnd(reinterpret_cast<HWND>(InSwapChainInfo.WindowHandle))
+    , Hwnd(reinterpret_cast<HWND>(InSwapChainDesc.WindowHandle))
     , SwapChainWaitableObject(0)
     , Flags(0)
     , NumBackBuffers(0)
@@ -34,7 +34,7 @@ FD3D12SwapChain::FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* I
 {
 }
 
-FD3D12SwapChain::~FD3D12SwapChain()
+FD3D12SwapChainRHI::~FD3D12SwapChainRHI()
 {
     BOOL FullscreenState;
     if (SwapChain)
@@ -60,7 +60,7 @@ FD3D12SwapChain::~FD3D12SwapChain()
     }
 }
 
-bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
+bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
 {
     // Ensure that the CommandContext used is the same that we created the viewport with.
     // The limitation is really just that we use the same ID3D12CommandQueue that we used for 
@@ -70,7 +70,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
 
     // Save the flags
     Flags = GetDevice()->GetAdapter()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-    if (Info.bFramePacing)
+    if (Desc.bFramePacing)
     {
         Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
     }
@@ -78,23 +78,23 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
     RECT ClientRect;
     GetClientRect(Hwnd, &ClientRect);
     
-    if (Info.Width == 0)
+    if (Desc.Width == 0)
     {
-        Info.Width = uint16(ClientRect.right - ClientRect.left);
+        Desc.Width = uint16(ClientRect.right - ClientRect.left);
     }
     
-    if (Info.Height == 0)
+    if (Desc.Height == 0)
     {
-        Info.Height = uint16(ClientRect.bottom - ClientRect.top);
+        Desc.Height = uint16(ClientRect.bottom - ClientRect.top);
     }
     
-    if (!Info.Width)
+    if (!Desc.Width)
     {
         D3D12_ERROR_CRITICAL("SwapChain width of zero is not supported");
         return false;
     }
     
-    if (!Info.Height)
+    if (!Desc.Height)
     {
         D3D12_ERROR_CRITICAL("SwapChain height of zero is not supported");
         return false;
@@ -103,9 +103,9 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
     const uint32 NumSwapChainBuffers = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
-    SwapChainDesc.Width              = Info.Width;
-    SwapChainDesc.Height             = Info.Height;
-    SwapChainDesc.Format             = ConvertFormat(Info.ColorFormat);
+    SwapChainDesc.Width              = Desc.Width;
+    SwapChainDesc.Height             = Desc.Height;
+    SwapChainDesc.Format             = ConvertFormat(Desc.ColorFormat);
     SwapChainDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     SwapChainDesc.BufferCount        = NumSwapChainBuffers;
     SwapChainDesc.SampleDesc.Count   = 1;
@@ -135,7 +135,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
         Result = DXGISwapChain1.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            D3D12_ERROR_CRITICAL("[FD3D12SwapChain]: FAILED to retrieve IDXGISwapChain3");
+            D3D12_ERROR_CRITICAL("[FD3D12SwapChainRHI]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
 
@@ -152,7 +152,7 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
     }
     else
     {
-        D3D12_ERROR_CRITICAL("[FD3D12SwapChain]: FAILED to create SwapChain");
+        D3D12_ERROR_CRITICAL("[FD3D12SwapChainRHI]: FAILED to create SwapChain");
         return false;
     }
 
@@ -163,15 +163,15 @@ bool FD3D12SwapChain::Initialize(FD3D12CommandContext* InCommandContext)
         return false;
     }
 
-    D3D12_INFO("[FD3D12SwapChain]: Created SwapChain");
+    D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain");
     return true;
 }
 
-bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
+bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
     const uint32 DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
     
-    const bool bSizeChanged        = (InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0u && InHeight > 0u;
+    const bool bSizeChanged        = (InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0u && InHeight > 0u;
     const bool bBufferCountChanged = DesiredBackBufferCount != NumBackBuffers;
 
     if (bSizeChanged || bBufferCountChanged)
@@ -185,13 +185,13 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
             InCommandContext->ClearState();
         }
 
-        for (FD3D12TextureRef& Texture : BackBuffers)
+        for (FD3D12TextureRHIRef& Texture : BackBuffers)
         {
             Texture->SetResource(nullptr);
         }
 
-        const uint32 ResizeWidth  = bSizeChanged ? InWidth  : Info.Width;
-        const uint32 ResizeHeight = bSizeChanged ? InHeight : Info.Height;
+        const uint32 ResizeWidth  = bSizeChanged ? InWidth  : Desc.Width;
+        const uint32 ResizeHeight = bSizeChanged ? InHeight : Desc.Height;
 
         HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, ResizeWidth, ResizeHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
@@ -200,13 +200,13 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
 
             if (bSizeChanged)
             {
-                Info.Width  = uint16(InWidth);
-                Info.Height = uint16(InHeight);
+                Desc.Width  = uint16(InWidth);
+                Desc.Height = uint16(InHeight);
             }
         }
         else
         {
-            D3D12_WARNING("[FD3D12SwapChain]: Resize FAILED");
+            D3D12_WARNING("[FD3D12SwapChainRHI]: Resize FAILED");
             return false;
         }
 
@@ -215,7 +215,7 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
             return false;
         }
 
-        D3D12_INFO("[FD3D12SwapChain]: Resized %u x %u (backbuffers=%u)", Info.Width, Info.Height, NumBackBuffers);
+        D3D12_INFO("[FD3D12SwapChainRHI]: Resized %u x %u (backbuffers=%u)", Desc.Width, Desc.Height, NumBackBuffers);
     }
 
     // Apply frame latency changes if needed
@@ -228,20 +228,20 @@ bool FD3D12SwapChain::Resize(FD3D12CommandContext* InCommandContext, uint32 InWi
         {
             SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
             ActiveFrameLatency = DesiredFrameLatency;
-            D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
+            D3D12_INFO("[FD3D12SwapChainRHI]: Changed max frame latency to %u", ActiveFrameLatency);
         }
     }
 
     return true;
 }
 
-void* FD3D12SwapChain::GetBackBufferRenderTargetView()
+void* FD3D12SwapChainRHI::GetBackBufferRenderTargetView()
 {
-    FD3D12Texture* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
+    FD3D12TextureRHI* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
     return CurrentBackBuffer->GetOrCreateRenderTargetView(FRHIRenderTargetView(CurrentBackBuffer));
 }
 
-bool FD3D12SwapChain::Present(bool bVerticalSync)
+bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -284,7 +284,7 @@ bool FD3D12SwapChain::Present(bool bVerticalSync)
     }
 }
 
-void FD3D12SwapChain::ApplySettingsChanges()
+void FD3D12SwapChainRHI::ApplySettingsChanges()
 {
     const uint32 DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
     if (DesiredBackBufferCount != NumBackBuffers)
@@ -292,21 +292,21 @@ void FD3D12SwapChain::ApplySettingsChanges()
         // Wait for all GPU work to complete before releasing backbuffer resources
         CommandContext->Flush();
 
-        for (FD3D12TextureRef& Texture : BackBuffers)
+        for (FD3D12TextureRHIRef& Texture : BackBuffers)
         {
             Texture->SetResource(nullptr);
         }
 
-        HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, Info.Width, Info.Height, DXGI_FORMAT_UNKNOWN, Flags);
+        HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, Desc.Width, Desc.Height, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
         {
             NumBackBuffers = DesiredBackBufferCount;
             RetrieveBackBuffers();
-            D3D12_INFO("[FD3D12SwapChain]: Changed backbuffer count to %u", NumBackBuffers);
+            D3D12_INFO("[FD3D12SwapChainRHI]: Changed backbuffer count to %u", NumBackBuffers);
         }
         else
         {
-            D3D12_WARNING("[FD3D12SwapChain]: ResizeBuffers for backbuffer count change FAILED");
+            D3D12_WARNING("[FD3D12SwapChainRHI]: ResizeBuffers for backbuffer count change FAILED");
             RetrieveBackBuffers();
         }
     }
@@ -320,22 +320,22 @@ void FD3D12SwapChain::ApplySettingsChanges()
         {
             SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
             ActiveFrameLatency = DesiredFrameLatency;
-            D3D12_INFO("[FD3D12SwapChain]: Changed max frame latency to %u", ActiveFrameLatency);
+            D3D12_INFO("[FD3D12SwapChainRHI]: Changed max frame latency to %u", ActiveFrameLatency);
         }
     }
 }
 
-bool FD3D12SwapChain::RetrieveBackBuffers()
+bool FD3D12SwapChainRHI::RetrieveBackBuffers()
 {
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
-    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, UsageFlags);
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, UsageFlags);
 
     if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
     {
         BackBuffers.Resize(NumBackBuffers);
-        for (FD3D12TextureRef& Texture : BackBuffers)
+        for (FD3D12TextureRHIRef& Texture : BackBuffers)
         {
-            Texture = new FD3D12Texture(GetDevice(), BackBufferInfo);
+            Texture = new FD3D12TextureRHI(GetDevice(), BackBufferDesc);
         }
     }
 
@@ -345,7 +345,7 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
     }
     else
     {
-        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo);
+        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
     }
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
@@ -355,7 +355,7 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
         HRESULT Result = SwapChain->GetBuffer(Index, IID_PPV_ARGS(&D3DBackBufferResource));
         if (FAILED(Result))
         {
-            D3D12_INFO("[FD3D12SwapChain]: GetBuffer(%u) Failed", Index);
+            D3D12_INFO("[FD3D12SwapChainRHI]: GetBuffer(%u) Failed", Index);
             return false;
         }
 
@@ -373,7 +373,7 @@ bool FD3D12SwapChain::RetrieveBackBuffers()
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-    if (FD3D12Texture* CurrentBackbuffer = BackBufferProxy->GetCurrentBackBufferTexture())
+    if (FD3D12TextureRHI* CurrentBackbuffer = BackBufferProxy->GetCurrentBackBufferTexture())
     {
         return true;
     }

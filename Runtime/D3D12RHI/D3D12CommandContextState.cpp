@@ -53,7 +53,7 @@ void FD3D12CommandContextState::PrepareGraphicsState()
 
     for (uint32 i = 0; i < GraphicsState.VertexBufferCache.NumVertexBuffers; i++)
     {
-        if (FD3D12Buffer* Buffer = GraphicsState.VertexBufferCache.BufferResources[i])
+        if (FD3D12BufferRHI* Buffer = GraphicsState.VertexBufferCache.BufferResources[i])
         {
             if (Buffer->GetResource()->RequiresResourceStateTracking())
             {
@@ -62,7 +62,7 @@ void FD3D12CommandContextState::PrepareGraphicsState()
         }
     }
 
-    if (FD3D12Buffer* Buffer = GraphicsState.IndexBufferCache.BufferResource)
+    if (FD3D12BufferRHI* Buffer = GraphicsState.IndexBufferCache.BufferResource)
     {
         if (Buffer->GetResource()->RequiresResourceStateTracking())
         {
@@ -72,7 +72,7 @@ void FD3D12CommandContextState::PrepareGraphicsState()
 
     for (uint32 i = 0; i < GraphicsState.NumSOBuffers; i++)
     {
-        if (FD3D12Buffer* Buffer = GraphicsState.SOBuffers[i])
+        if (FD3D12BufferRHI* Buffer = GraphicsState.SOBuffers[i])
         {
             if (Buffer->GetResource()->RequiresResourceStateTracking())
             {
@@ -82,7 +82,7 @@ void FD3D12CommandContextState::PrepareGraphicsState()
     }
 
 #if D3D12_USE_ID3D12COMMANDLIST_5
-    if (FD3D12Texture* ShadingRateTexture = GraphicsState.ShadingRateImage)
+    if (FD3D12TextureRHI* ShadingRateTexture = GraphicsState.ShadingRateImage)
     {
         if (ShadingRateTexture->GetResource()->RequiresResourceStateTracking())
         {
@@ -205,7 +205,7 @@ void FD3D12CommandContextState::BindGraphicsState()
     {
         for (uint32 i = 0; i < GraphicsState.NumSOBuffers; i++)
         {
-            if (FD3D12Buffer* Buffer = GraphicsState.SOBuffers[i])
+            if (FD3D12BufferRHI* Buffer = GraphicsState.SOBuffers[i])
             {
                 Context.GetCommandList().UpdateResidency(Buffer->GetResource()->GetResidencyHandle());
             }
@@ -421,7 +421,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
             for (uint32 Slot = 0; Slot < NumCBVs[CurrentStage]; Slot++)
             {
                 const uint16 Register = CBVMapping.GetRegisterForSlot(static_cast<uint8>(Slot));
-                if (FD3D12Buffer* Buffer = CBVCache[Register])
+                if (FD3D12BufferRHI* Buffer = CBVCache[Register])
                 {
                     if (Buffer->GetResource()->RequiresResourceStateTracking())
                     {
@@ -452,7 +452,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
             for (uint8 RootCBVIdx = 0; RootCBVIdx < Stage.GetNumRootCBVs() && !bAlreadyDirty; RootCBVIdx++)
             {
                 const uint16 Register = Stage.GetRootCBVRegister(RootCBVIdx);
-                if (FD3D12Buffer* Buffer = CBVCache[Register])
+                if (FD3D12BufferRHI* Buffer = CBVCache[Register])
                 {
                     if (Buffer->GetResource()->RequiresResourceStateTracking())
                     {
@@ -481,7 +481,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
             for (uint32 Slot = 0; Slot < NumSRVs[CurrentStage]; Slot++)
             {
                 const uint16 Register = SRVMapping.GetRegisterForSlot(static_cast<uint8>(Slot));
-                if (FD3D12ShaderResourceView* View = SRVCache[Register])
+                if (FD3D12ShaderResourceViewRHI* View = SRVCache[Register])
                 {
                     Context.TransitionResourceState(View, SRVState);
 
@@ -507,7 +507,7 @@ bool FD3D12CommandContextState::PrepareResources(FD3D12RootSignature* RootSignat
             for (uint32 Slot = 0; Slot < NumUAVs[CurrentStage]; Slot++)
             {
                 const uint16 Register = UAVMapping.GetRegisterForSlot(static_cast<uint8>(Slot));
-                if (FD3D12UnorderedAccessView* View = UAVCache[Register])
+                if (FD3D12UnorderedAccessViewRHI* View = UAVCache[Register])
                 {
                     Context.TransitionResourceState(View);
 
@@ -598,7 +598,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
                 CHECK(Register < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
 
                 D3D12_GPU_VIRTUAL_ADDRESS GPUVirtualAddress = 0;
-                if (FD3D12Buffer* Buffer = CBVCache[Register])
+                if (FD3D12BufferRHI* Buffer = CBVCache[Register])
                 {
                     GPUVirtualAddress = Buffer->GetGPUVirtualAddress();
                     Context.GetCommandList().UpdateResidency(Buffer->GetResource()->GetResidencyHandle());
@@ -769,9 +769,9 @@ void FD3D12CommandContextState::ResetStateForNewCommandList()
     ComputeState.bBindShaderConstants       = true;
 }
 
-void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineState* InGraphicsPipelineState)
+void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState)
 {
-    FD3D12GraphicsPipelineState* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
+    FD3D12GraphicsPipelineStateRHI* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
     if (CurrentGraphicsPipelineState != InGraphicsPipelineState)
     {
         FD3D12RootSignature* const RootSignature = InGraphicsPipelineState ? 
@@ -800,7 +800,7 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
             GraphicsState.bBindPrimitiveTopology = true;
         }
 
-        GraphicsState.PipelineState      = MakeSharedRef<FD3D12GraphicsPipelineState>(InGraphicsPipelineState);
+        GraphicsState.PipelineState      = MakeSharedRef<FD3D12GraphicsPipelineStateRHI>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
 
     #if D3D12_ENABLE_DYNAMIC_DEPTH_BIAS && D3D12_USE_ID3D12COMMANDLIST_9
@@ -815,9 +815,9 @@ void FD3D12CommandContextState::SetGraphicsPipelineState(FD3D12GraphicsPipelineS
     }
 }
 
-void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineState* InComputePipelineState)
+void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineStateRHI* InComputePipelineState)
 {
-    FD3D12ComputePipelineState* CurrentComputePipelineState = ComputeState.PipelineState.Get();
+    FD3D12ComputePipelineStateRHI* CurrentComputePipelineState = ComputeState.PipelineState.Get();
     if (CurrentComputePipelineState != InComputePipelineState)
     {
         FD3D12RootSignature* const RootSignature = InComputePipelineState ? 
@@ -833,7 +833,7 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
             ComputeState.bBindRootSignature = true;
         }
 
-        ComputeState.PipelineState      = MakeSharedRef<FD3D12ComputePipelineState>(InComputePipelineState);
+        ComputeState.PipelineState      = MakeSharedRef<FD3D12ComputePipelineStateRHI>(InComputePipelineState);
         ComputeState.bBindPipelineState = true;
     }
 }
@@ -869,7 +869,7 @@ void FD3D12CommandContextState::SetShadingRate(EShadingRate ShadingRate)
     }
 }
 
-void FD3D12CommandContextState::SetShadingRateImage(FD3D12Texture* ShadingRateImage)
+void FD3D12CommandContextState::SetShadingRateImage(FD3D12TextureRHI* ShadingRateImage)
 {
     if (GraphicsState.ShadingRateImage != ShadingRateImage)
     {
@@ -946,13 +946,13 @@ void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuff
 
     for (uint32 Index = 0; Index < GraphicsState.NumSOBuffers; ++Index)
     {
-        FD3D12Buffer* D3DBuffer = FD3D12RHI::ResourceCast(Buffers[Index]);
+        FD3D12BufferRHI* D3DBuffer = FD3D12RHI::ResourceCast(Buffers[Index]);
         GraphicsState.SOBuffers[Index] = D3DBuffer;
 
         if (D3DBuffer)
         {
             GraphicsState.SOBufferViews[Index].BufferLocation           = D3DBuffer->GetGPUVirtualAddress() + (Offsets ? Offsets[Index] : 0);
-            GraphicsState.SOBufferViews[Index].SizeInBytes              = D3DBuffer->GetInfo().Size;
+            GraphicsState.SOBufferViews[Index].SizeInBytes              = D3DBuffer->GetDesc().Size;
             GraphicsState.SOBufferViews[Index].BufferFilledSizeLocation = 0;
         }
         else
@@ -964,7 +964,7 @@ void FD3D12CommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuff
     GraphicsState.bBindStreamOutputTargets = true;
 }
 
-void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint32 VertexBufferSlot)
+void FD3D12CommandContextState::SetVertexBuffer(FD3D12BufferRHI* VertexBuffer, uint32 VertexBufferSlot)
 {
     CHECK(VertexBufferSlot < D3D12_MAX_VERTEX_BUFFER_SLOTS);
 
@@ -972,8 +972,8 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     if (VertexBuffer)
     {
         CurrentVBV.BufferLocation = VertexBuffer->GetGPUVirtualAddress();
-        CurrentVBV.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetInfo().Size);
-        CurrentVBV.StrideInBytes  = VertexBuffer->GetInfo().Stride;
+        CurrentVBV.SizeInBytes    = static_cast<uint32>(VertexBuffer->GetDesc().Size);
+        CurrentVBV.StrideInBytes  = VertexBuffer->GetDesc().Stride;
     }
     else
     {
@@ -991,14 +991,14 @@ void FD3D12CommandContextState::SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint
     }
 }
 
-void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_FORMAT IndexFormat)
+void FD3D12CommandContextState::SetIndexBuffer(FD3D12BufferRHI* IndexBuffer, DXGI_FORMAT IndexFormat)
 {
     D3D12_INDEX_BUFFER_VIEW NewIndexBuffer;
     if (IndexBuffer)
     {
         NewIndexBuffer.BufferLocation = IndexBuffer->GetGPUVirtualAddress();
         NewIndexBuffer.Format         = IndexFormat;
-        NewIndexBuffer.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetInfo().Size);
+        NewIndexBuffer.SizeInBytes    = static_cast<uint32>(IndexBuffer->GetDesc().Size);
     }
     else
     {
@@ -1013,7 +1013,7 @@ void FD3D12CommandContextState::SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_F
     }
 }
 
-void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[ShaderStage];
     if (SRVCache[ResourceIndex] != ShaderResourceView)
@@ -1027,7 +1027,7 @@ void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceView* ShaderResourceV
     }
 }
 
-void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     auto& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[ShaderStage];
     if (UAVCache[ResourceIndex] != UnorderedAccessView)
@@ -1042,7 +1042,7 @@ void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessView* UnorderedAcces
     }
 }
 
-void FD3D12CommandContextState::SetCBV(FD3D12Buffer* Buffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FD3D12CommandContextState::SetCBV(FD3D12BufferRHI* Buffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     auto& CBVCache = CommonState.ConstantBufferCache.ResourceViews[ShaderStage];
     if (CBVCache[ResourceIndex] != Buffer)
@@ -1057,7 +1057,7 @@ void FD3D12CommandContextState::SetCBV(FD3D12Buffer* Buffer, EShaderVisibility S
     }
 }
 
-void FD3D12CommandContextState::SetSampler(FD3D12SamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
+void FD3D12CommandContextState::SetSampler(FD3D12SamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
 {
     auto& SamplerCache = CommonState.SamplerStateCache.SamplerStates[ShaderStage];
     if (SamplerCache[SamplerIndex] != SamplerState)

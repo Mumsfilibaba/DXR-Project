@@ -247,18 +247,18 @@ bool FEngine::Init()
     }
 
     // Create material sampler (Used for now by all materials)
-    FRHISamplerStateInfo SamplerInfo;
-    SamplerInfo.AddressU       = ESamplerMode::Wrap;
-    SamplerInfo.AddressV       = ESamplerMode::Wrap;
-    SamplerInfo.AddressW       = ESamplerMode::Wrap;
-    SamplerInfo.ComparisonFunc = EComparisonFunc::Unknown;
-    SamplerInfo.Filter         = ESamplerFilter::Anistrotopic;
-    SamplerInfo.MaxAnisotropy  = 16;
-    SamplerInfo.MaxLOD         = TNumericLimits<float>::Max();
-    SamplerInfo.MinLOD         = 0.0f;
-    SamplerInfo.MipLODBias     = 0.0f;
+    FRHISamplerStateDesc SamplerDesc;
+    SamplerDesc.AddressU       = ESamplerMode::Wrap;
+    SamplerDesc.AddressV       = ESamplerMode::Wrap;
+    SamplerDesc.AddressW       = ESamplerMode::Wrap;
+    SamplerDesc.ComparisonFunc = EComparisonFunc::Unknown;
+    SamplerDesc.Filter         = ESamplerFilter::Anistrotopic;
+    SamplerDesc.MaxAnisotropy  = 16;
+    SamplerDesc.MaxLOD         = TNumericLimits<float>::Max();
+    SamplerDesc.MinLOD         = 0.0f;
+    SamplerDesc.MipLODBias     = 0.0f;
 
-    BaseMaterialSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+    BaseMaterialSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
 
     // Base material
     FMaterialInfo MaterialDesc;

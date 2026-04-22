@@ -26,7 +26,7 @@ struct FD3D12VertexBufferCache
     }
 
     D3D12_VERTEX_BUFFER_VIEW VertexBuffers[D3D12_MAX_VERTEX_BUFFER_SLOTS];
-    FD3D12Buffer*            BufferResources[D3D12_MAX_VERTEX_BUFFER_SLOTS];
+    FD3D12BufferRHI*         BufferResources[D3D12_MAX_VERTEX_BUFFER_SLOTS];
     uint32                   NumVertexBuffers;
 };
 
@@ -44,7 +44,7 @@ struct FD3D12IndexBufferCache
     }
 
     D3D12_INDEX_BUFFER_VIEW IndexBuffer;
-    FD3D12Buffer*           BufferResource;
+    FD3D12BufferRHI*        BufferResource;
 };
 
 struct FD3D12RenderTargetCache
@@ -156,9 +156,9 @@ struct FD3D12ConstantBufferCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12Buffer* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
-    uint32        ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
-    uint8         NumBuffers[ShaderVisibility_Count];
+    FD3D12BufferRHI* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint32           ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint8            NumBuffers[ShaderVisibility_Count];
 };
 
 struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
@@ -181,9 +181,9 @@ struct FD3D12ShaderResourceViewCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12ShaderResourceView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-    uint32                    ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-    uint8                     NumViews[ShaderVisibility_Count];
+    FD3D12ShaderResourceViewRHI* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+    uint32                       ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+    uint8                        NumViews[ShaderVisibility_Count];
 };
 
 struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
@@ -206,9 +206,9 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12UnorderedAccessView* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    uint32                     ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    uint8                      NumViews[ShaderVisibility_Count];
+    FD3D12UnorderedAccessViewRHI* ResourceViews[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+    uint32                        ViewVersions[ShaderVisibility_Count][D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+    uint8                         NumViews[ShaderVisibility_Count];
 };
 
 struct FD3D12ShaderConstantsCache
@@ -277,8 +277,8 @@ struct FD3D12SamplerStateCache : public FD3D12ResourceCache
         }
     }
 
-    FD3D12SamplerState* SamplerStates[ShaderVisibility_Count][D3D12_DEFAULT_SAMPLER_STATE_COUNT];
-    uint8               NumSamplers[ShaderVisibility_Count];
+    FD3D12SamplerStateRHI* SamplerStates[ShaderVisibility_Count][D3D12_DEFAULT_SAMPLER_STATE_COUNT];
+    uint8                  NumSamplers[ShaderVisibility_Count];
 };
 
 template<typename KeyType, typename ValueType>

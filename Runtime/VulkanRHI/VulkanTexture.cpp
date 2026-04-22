@@ -50,8 +50,8 @@ uint64 VkCalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height
     }
 }
 
-FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo)
-    : FRHITexture(InTextureInfo)
+FVulkanTextureRHI::FVulkanTextureRHI(FVulkanDevice* InDevice, const FRHITextureDesc& InTextureDesc)
+    : FRHITexture(InTextureDesc)
     , FVulkanResource(InDevice)
     , DebugName()
     , Image(VK_NULL_HANDLE)
@@ -63,13 +63,13 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& I
 {
 }
 
-FVulkanTexture::~FVulkanTexture()
+FVulkanTextureRHI::~FVulkanTextureRHI()
 {
 #if VULKAN_ENABLE_STATS
     const int64 AllocatedSize = static_cast<int64>(MemoryStorage.GetSize());
     if (AllocatedSize > 0)
     {
-        if (Info.IsRenderTarget() || Info.IsDepthStencil())
+        if (Desc.IsRenderTarget() || Desc.IsDepthStencil())
         {
             STAT_SUBTRACT(STAT_RHI_RenderTargetMemory, AllocatedSize);
         }
@@ -88,9 +88,9 @@ FVulkanTexture::~FVulkanTexture()
     }
 }
 
-bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
+bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
 {
-    const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Info.NumSamples);
+    const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Desc.NumSamples);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
     {
         VULKAN_ERROR_CRITICAL("Invalid SampleCount");
@@ -99,11 +99,11 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
     VkImageCreateInfo ImageCreateInfo = {};
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageCreateInfo.imageType             = ConvertTextureDimension(Info.Dimension);
-    ImageCreateInfo.format                = ConvertFormat(Info.Format);
-    ImageCreateInfo.extent.width          = Info.Extent.X;
-    ImageCreateInfo.extent.height         = Info.Extent.Y;
-    ImageCreateInfo.mipLevels             = Info.NumMipLevels;
+    ImageCreateInfo.imageType             = ConvertTextureDimension(Desc.Dimension);
+    ImageCreateInfo.format                = ConvertFormat(Desc.Format);
+    ImageCreateInfo.extent.width          = Desc.Extent.X;
+    ImageCreateInfo.extent.height         = Desc.Extent.Y;
+    ImageCreateInfo.mipLevels             = Desc.NumMipLevels;
     ImageCreateInfo.pQueueFamilyIndices   = nullptr;
     ImageCreateInfo.queueFamilyIndexCount = 0;
     ImageCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
@@ -111,7 +111,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    if (IsTypelessFormat(Info.Format))
+    if (IsTypelessFormat(Desc.Format))
     {
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
     }
@@ -119,41 +119,41 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     if (ImageCreateInfo.imageType == VK_IMAGE_TYPE_3D)
     {
         ImageCreateInfo.arrayLayers  = 1;
-        ImageCreateInfo.extent.depth = Info.Extent.Z;
+        ImageCreateInfo.extent.depth = Desc.Extent.Z;
     }
     else
     {
-        ImageCreateInfo.arrayLayers  = Info.NumArraySlices;
+        ImageCreateInfo.arrayLayers  = Desc.NumArraySlices;
         ImageCreateInfo.extent.depth = 1;
     }
     
     // Enable Texture-Cube views
-    if (Info.IsTextureCube() || Info.IsTextureCubeArray())
+    if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
     {
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-        ImageCreateInfo.arrayLayers = Info.NumArraySlices * RHI_NUM_CUBE_FACES;
+        ImageCreateInfo.arrayLayers = Desc.NumArraySlices * RHI_NUM_CUBE_FACES;
     }
 
     // TODO: Look into abstracting these flags
     ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
-    if (Info.IsRenderTarget())
+    if (Desc.IsRenderTarget())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     }
-    if (Info.IsDepthStencil())
+    if (Desc.IsDepthStencil())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
     }
-    if (Info.IsShaderResourceTexture())
+    if (Desc.IsShaderResourceTexture())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
     }
-    if (Info.IsUnorderedAccessTexture())
+    if (Desc.IsUnorderedAccessTexture())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
-	if (Info.IsShadingRateTexture())
+	if (Desc.IsShadingRateTexture())
 	{
 		ImageCreateInfo.usage |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
 	}
@@ -186,28 +186,28 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         return false;
     }
 
-    if (!Info.IsNoDefaultSRV())
+    if (!Desc.IsNoDefaultSRV())
     {
-        FRHIShaderResourceViewInfo ViewInfo;
-        ViewInfo.Type               = FRHIShaderResourceViewInfo::EType::TextureSRV;
-        ViewInfo.TextureSRV.Texture = this;
-        ViewInfo.TextureSRV.Format  = VulkanCastShaderResourceFormat(Info.Format);
+        FRHIShaderResourceViewDesc ViewDesc;
+        ViewDesc.Type               = FRHIShaderResourceViewDesc::EType::TextureSRV;
+        ViewDesc.TextureSRV.Texture = this;
+        ViewDesc.TextureSRV.Format  = VulkanCastShaderResourceFormat(Desc.Format);
 
-        if (Info.IsTexture1D() || Info.IsTexture2D() || Info.IsTextureCube())
+        if (Desc.IsTexture1D() || Desc.IsTexture2D() || Desc.IsTextureCube())
         {
-            ViewInfo.TextureSRV.FirstMipLevel   = 0;
-            ViewInfo.TextureSRV.NumMips         = static_cast<uint8>(Info.NumMipLevels);
-            ViewInfo.TextureSRV.MinLODClamp     = 0.0f;
-            ViewInfo.TextureSRV.FirstArraySlice = 0;
-            ViewInfo.TextureSRV.NumSlices       = 1;
+            ViewDesc.TextureSRV.FirstMipLevel   = 0;
+            ViewDesc.TextureSRV.NumMips         = static_cast<uint8>(Desc.NumMipLevels);
+            ViewDesc.TextureSRV.MinLODClamp     = 0.0f;
+            ViewDesc.TextureSRV.FirstArraySlice = 0;
+            ViewDesc.TextureSRV.NumSlices       = 1;
         }
-        else if (Info.IsTexture1DArray() || Info.IsTexture2DArray() || Info.IsTextureCubeArray() || Info.IsTexture3D())
+        else if (Desc.IsTexture1DArray() || Desc.IsTexture2DArray() || Desc.IsTextureCubeArray() || Desc.IsTexture3D())
         {
-            ViewInfo.TextureSRV.FirstMipLevel   = 0;
-            ViewInfo.TextureSRV.NumMips         = static_cast<uint8>(Info.NumMipLevels);
-            ViewInfo.TextureSRV.MinLODClamp     = 0.0f;
-            ViewInfo.TextureSRV.FirstArraySlice = 0;
-            ViewInfo.TextureSRV.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
+            ViewDesc.TextureSRV.FirstMipLevel   = 0;
+            ViewDesc.TextureSRV.NumMips         = static_cast<uint8>(Desc.NumMipLevels);
+            ViewDesc.TextureSRV.MinLODClamp     = 0.0f;
+            ViewDesc.TextureSRV.FirstArraySlice = 0;
+            ViewDesc.TextureSRV.NumSlices       = static_cast<uint16>(Desc.NumArraySlices);
         }
         else
         {
@@ -215,8 +215,8 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
             return false;
         }
 
-        FVulkanShaderResourceViewRef DefaultSRV = new FVulkanShaderResourceView(GetDevice(), this);
-        if (!DefaultSRV->Initialize(ViewInfo))
+        FVulkanShaderResourceViewRHIRef DefaultSRV = new FVulkanShaderResourceViewRHI(GetDevice(), this);
+        if (!DefaultSRV->Initialize(ViewDesc))
         {
             return false;
         }
@@ -224,18 +224,18 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         ShaderResourceView = DefaultSRV;
     }
 
-    if (Info.IsUnorderedAccessTexture() && !Info.IsNoDefaultUAV())
+    if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV())
     {
-        FRHIUnorderedAccessViewInfo ViewInfo;
-        ViewInfo.Type                       = FRHIUnorderedAccessViewInfo::EType::TextureUAV;
-        ViewInfo.TextureUAV.Texture         = this;
-        ViewInfo.TextureUAV.Format          = VulkanCastShaderResourceFormat(Info.Format);
-        ViewInfo.TextureUAV.FirstArraySlice = 0;
-        ViewInfo.TextureUAV.MipLevel        = 0;
-        ViewInfo.TextureUAV.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
+        FRHIUnorderedAccessViewDesc ViewDesc;
+        ViewDesc.Type                       = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
+        ViewDesc.TextureUAV.Texture         = this;
+        ViewDesc.TextureUAV.Format          = VulkanCastShaderResourceFormat(Desc.Format);
+        ViewDesc.TextureUAV.FirstArraySlice = 0;
+        ViewDesc.TextureUAV.MipLevel        = 0;
+        ViewDesc.TextureUAV.NumSlices       = static_cast<uint16>(Desc.NumArraySlices);
 
-        FVulkanUnorderedAccessViewRef DefaultUAV = new FVulkanUnorderedAccessView(GetDevice(), this);
-        if (!DefaultUAV->Initialize(ViewInfo))
+        FVulkanUnorderedAccessViewRHIRef DefaultUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), this);
+        if (!DefaultUAV->Initialize(ViewDesc))
         {
             return false;
         }
@@ -271,11 +271,11 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         const VkFormat Format         = ImageCreateInfo.format;
         const uint64   Alignment      = InCommandContext->GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
 
-        uint32 Width  = Info.Extent.X;
-        uint32 Height = Info.Extent.Y;
-        uint32 Depth  = Info.IsTexture3D() ? Info.Extent.Z : 1;
+        uint32 Width  = Desc.Extent.X;
+        uint32 Height = Desc.Extent.Y;
+        uint32 Depth  = Desc.IsTexture3D() ? Desc.Extent.Z : 1;
 
-        for (uint32 MipIndex = 0; MipIndex < Info.NumMipLevels; ++MipIndex)
+        for (uint32 MipIndex = 0; MipIndex < Desc.NumMipLevels; ++MipIndex)
         {
             void* MipData = InInitialData->GetMipData(MipIndex);
             if (!MipData)
@@ -323,7 +323,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
                 InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandBuffer());
                 InCommandContext->GetCommandBuffer()->CopyBufferToImage(UploadStorage.GetBackingBuffer(), Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
 
-                if (Info.IsTexture3D())
+                if (Desc.IsTexture3D())
                 {
                     break;
                 }
@@ -368,12 +368,12 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-        if (Info.IsDepthStencil())
+        if (Desc.IsDepthStencil())
         {
             VkClearDepthStencilValue ClearDS = {};
-            if (Info.ClearValue.IsDepthStencilValue())
+            if (Desc.ClearValue.IsDepthStencilValue())
             {
-                const FDepthStencilValue& DS = Info.ClearValue.AsDepthStencil();
+                const FDepthStencilValue& DS = Desc.ClearValue.AsDepthStencil();
                 ClearDS.depth   = DS.Depth;
                 ClearDS.stencil = static_cast<uint8>(DS.Stencil);
             }
@@ -388,9 +388,9 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         else if (!VkFormatIsBlockCompressed(ImageCreateInfo.format))
         {
             VkClearColorValue ClearColor = {};
-            if (Info.ClearValue.IsColorValue())
+            if (Desc.ClearValue.IsColorValue())
             {
-                const FFloatColor& Color = Info.ClearValue.AsColor();
+                const FFloatColor& Color = Desc.ClearValue.AsColor();
                 ClearColor.float32[0] = Color.R;
                 ClearColor.float32[1] = Color.G;
                 ClearColor.float32[2] = Color.B;
@@ -411,7 +411,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
     {
         constexpr ETextureUsageFlags WriteMask = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::DepthStencil | ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::Presentable;
-        if ((Info.UsageFlags & WriteMask) == ETextureUsageFlags::None && IsEnumFlagSet(Info.UsageFlags, ETextureUsageFlags::ShaderResourceTexture))
+        if ((Desc.UsageFlags & WriteMask) == ETextureUsageFlags::None && IsEnumFlagSet(Desc.UsageFlags, ETextureUsageFlags::ShaderResourceTexture))
         {
             ImageLayoutState.SetDefaultLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
@@ -420,7 +420,7 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     return true;
 }
 
-FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableImageView& ImageViewInfo)
+FVulkanResourceView* FVulkanTextureRHI::GetOrCreateImageView(const FVulkanHashableImageView& ImageViewInfo)
 {
     if (!VULKAN_CHECK_HANDLE(Image))
     {
@@ -467,7 +467,7 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableI
     }
 
     VkImageViewType ImageViewType;
-    switch (Info.Dimension)
+    switch (Desc.Dimension)
     {
         case ETextureDimension::Texture1D:
         {
@@ -528,7 +528,7 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableI
     return NewImageView;
 }
 
-void FVulkanTexture::DestroyImageViews()
+void FVulkanTextureRHI::DestroyImageViews()
 {
     for (FVulkanResourceView* ImageView : ImageViews)
     {
@@ -544,17 +544,17 @@ void FVulkanTexture::DestroyImageViews()
     ImageViewMap.Clear();
 }
 
-void FVulkanTexture::SetVkImage(VkImage InImage)
+void FVulkanTextureRHI::SetVkImage(VkImage InImage)
 {
     DestroyImageViews();
     Image = InImage;
 
     if (CreateInfo.format == VK_FORMAT_UNDEFINED)
     {
-        CreateInfo.format      = ConvertFormat(Info.Format);
-        CreateInfo.mipLevels   = Info.NumMipLevels;
-        CreateInfo.arrayLayers = Info.NumArraySlices;
-        CreateInfo.extent      = { Info.GetWidth(), Info.GetHeight(), Math::Max(Info.GetDepth(), 1u) };
+        CreateInfo.format      = ConvertFormat(Desc.Format);
+        CreateInfo.mipLevels   = Desc.NumMipLevels;
+        CreateInfo.arrayLayers = Desc.NumArraySlices;
+        CreateInfo.extent      = { Desc.GetWidth(), Desc.GetHeight(), Math::Max(Desc.GetDepth(), 1u) };
     }
 
     const uint32 NumSubresources = CreateInfo.mipLevels * CreateInfo.arrayLayers;
@@ -562,7 +562,7 @@ void FVulkanTexture::SetVkImage(VkImage InImage)
     ImageLayoutState.SetImageLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 }
 
-void FVulkanTexture::SetDebugName(const FString& InName)
+void FVulkanTextureRHI::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(Image))
     {
@@ -571,14 +571,14 @@ void FVulkanTexture::SetDebugName(const FString& InName)
     }
 }
 
-FString FVulkanTexture::GetDebugName() const
+FString FVulkanTextureRHI::GetDebugName() const
 {
     return DebugName;
 }
 
 
-FVulkanBackBufferTexture::FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo)
-    : FVulkanTexture(InDevice, InTextureInfo)
+FVulkanBackBufferTexture::FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc)
+    : FVulkanTextureRHI(InDevice, InTextureDesc)
     , SwapChain(InSwapChain)
 {
 }
@@ -590,20 +590,20 @@ FVulkanBackBufferTexture::~FVulkanBackBufferTexture()
 
 void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
 {
-    Info.Extent.X = InWidth;
-    Info.Extent.Y = InHeight;
+    Desc.Extent.X = InWidth;
+    Desc.Extent.Y = InHeight;
     
     const uint32 NumBackBuffers = SwapChain->GetNumBackBuffers();
     for (uint32 Index = 0; Index < NumBackBuffers; Index++)
     {
-        FVulkanTexture* BackBuffer = SwapChain->GetBackBufferFromIndex(Index);
-        BackBuffer->Info.Extent.X = InWidth;
-        BackBuffer->Info.Extent.Y = InHeight;
+        FVulkanTextureRHI* BackBuffer = SwapChain->GetBackBufferFromIndex(Index);
+        BackBuffer->Desc.Extent.X = InWidth;
+        BackBuffer->Desc.Extent.Y = InHeight;
         BackBuffer->DestroyImageViews();
     }
 }
 
-FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext)
+FVulkanTextureRHI* FVulkanBackBufferTexture::GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext)
 {
     return SwapChain ? SwapChain->GetCurrentBackBuffer(InCommandContext) : nullptr;
 }

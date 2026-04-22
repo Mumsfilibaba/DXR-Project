@@ -3,8 +3,8 @@
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanResource.h"
 
-typedef TSharedRef<class FVulkanShaderResourceView>  FVulkanShaderResourceViewRef;
-typedef TSharedRef<class FVulkanUnorderedAccessView> FVulkanUnorderedAccessViewRef;
+typedef TSharedRef<class FVulkanShaderResourceViewRHI>  FVulkanShaderResourceViewRHIRef;
+typedef TSharedRef<class FVulkanUnorderedAccessViewRHI> FVulkanUnorderedAccessViewRHIRef;
 
 class FVulkanResourceView : public FVulkanDeviceChild, public IVulkanResourceRelocationListener
 {
@@ -125,11 +125,11 @@ protected:
     };
 };
 
-class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanResourceView
+class FVulkanShaderResourceViewRHI : public FRHIShaderResourceView, public FVulkanResourceView
 {
 public:
-    FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
-    virtual ~FVulkanShaderResourceView() = default;
+    FVulkanShaderResourceViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    virtual ~FVulkanShaderResourceViewRHI() = default;
 
     // FRHIShaderResourceView Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
@@ -137,14 +137,14 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
-    bool Initialize(const FRHIShaderResourceViewInfo& InInfo);
+    bool Initialize(const FRHIShaderResourceViewDesc& InDesc);
 };
 
-class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanResourceView
+class FVulkanUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FVulkanResourceView
 {
 public:
-    FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);
-    virtual ~FVulkanUnorderedAccessView() = default;
+    FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    virtual ~FVulkanUnorderedAccessViewRHI() = default;
 
     // FRHIUnorderedAccessView Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
@@ -152,5 +152,5 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
-    bool Initialize(const FRHIUnorderedAccessViewInfo& InInfo);
+    bool Initialize(const FRHIUnorderedAccessViewDesc& InDesc);
 };

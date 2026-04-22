@@ -83,9 +83,9 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     const FClearValue ClearValue(EFormat::R8_Unorm, 0.0f, 0.0f, 0.0f, 1.0f);
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Unorm, Width, Height, 1, 1, Usage, ClearValue);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Unorm, Width, Height, 1, 1, Usage, ClearValue);
 
-    SelectionMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
+    SelectionMask = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!SelectionMask)
     {
         return false;
@@ -93,7 +93,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     SelectionMask->SetDebugName("SelectionMask");
 
-    DilationTemp = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
+    DilationTemp = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!DilationTemp)
     {
         return false;
@@ -101,7 +101,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     DilationTemp->SetDebugName("SelectionMask Dilate Temp");
 
-    DilatedMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
+    DilatedMask = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!DilatedMask)
     {
         return false;
@@ -109,7 +109,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     DilatedMask->SetDebugName("SelectionMask Dilated");
 
-    ErosionTemp = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
+    ErosionTemp = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!ErosionTemp)
     {
         return false;
@@ -117,7 +117,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     ErosionTemp->SetDebugName("SelectionMask Erode Temp");
 
-    ErodedMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
+    ErodedMask = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!ErodedMask)
     {
         return false;
@@ -125,7 +125,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     ErodedMask->SetDebugName("SelectionMask Eroded");
 
-    RingMask = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
+    RingMask = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!RingMask)
     {
         return false;
@@ -138,12 +138,12 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
 bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
 {
-    FRHIBufferInfo BufferInfo;
-    BufferInfo.Stride = sizeof(uint32);
-    BufferInfo.Size   = uint64(BufferInfo.Stride) * MaxSelectedIDs;
-    BufferInfo.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::Default;
+    FRHIBufferDesc BufferDesc;
+    BufferDesc.Stride = sizeof(uint32);
+    BufferDesc.Size   = uint64(BufferDesc.Stride) * MaxSelectedIDs;
+    BufferDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::Default;
 
-    SelectedIDsBuffer = FRHI::Get()->CreateBuffer(BufferInfo, EResourceAccess::PixelShaderResource, nullptr);
+    SelectedIDsBuffer = FRHI::Get()->CreateBuffer(BufferDesc, EResourceAccess::PixelShaderResource, nullptr);
     if (!SelectedIDsBuffer)
     {
         return false;
@@ -151,8 +151,8 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
 
     SelectedIDsBuffer->SetDebugName("SelectedIDs Buffer");
 
-    FRHIShaderResourceViewInfo SRVInfo = FRHIShaderResourceViewInfo::CreateBufferSRV(SelectedIDsBuffer.Get(), 0, MaxSelectedIDs);
-    SelectedIDsSRV = FRHI::Get()->CreateShaderResourceView(SRVInfo);
+    FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(SelectedIDsBuffer.Get(), 0, MaxSelectedIDs);
+    SelectedIDsSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
     if (!SelectedIDsSRV)
     {
         return false;
@@ -177,30 +177,30 @@ bool FSelectionOutlinePass::CreatePipelineStates()
         return false;
     }
 
-    FRHIDepthStencilStateInfo DepthStencilInfo;
-    DepthStencilInfo.DepthFunc         = EComparisonFunc::Always;
-    DepthStencilInfo.bDepthEnable      = false;
-    DepthStencilInfo.bDepthWriteEnable = false;
+    FRHIDepthStencilStateDesc DepthStencilStateDesc;
+    DepthStencilStateDesc.DepthFunc         = EComparisonFunc::Always;
+    DepthStencilStateDesc.bDepthEnable      = false;
+    DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilInfo);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         return false;
     }
 
-    FRHIRasterizerStateInfo RasterizerInfo;
-    RasterizerInfo.CullMode = ECullMode::None;
+    FRHIRasterizerStateDesc RasterizerStateDesc;
+    RasterizerStateDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInfo);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         return false;
     }
 
-    FRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.NumRenderTargets = 1;
+    FRHIBlendStateDesc BlendStateDesc;
+    BlendStateDesc.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
     if (!BlendState)
     {
         return false;
@@ -220,19 +220,19 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        FRHIGraphicsPipelineStateInfo PSOInfo;
-        PSOInfo.InputLayout                                    = nullptr;
-        PSOInfo.BlendState                                     = BlendState.Get();
-        PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-        PSOInfo.RasterizerState                                = RasterizerState.Get();
-        PSOInfo.VertexShader                                   = FullscreenVS.Get();
-        PSOInfo.PixelShader                                    = MaskShader.Get();
-        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
-        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
-        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
+        FRHIGraphicsPipelineStateDesc PSODesc;
+        PSODesc.InputLayout                                    = nullptr;
+        PSODesc.BlendState                                     = BlendState.Get();
+        PSODesc.DepthStencilState                              = DepthStencilState.Get();
+        PSODesc.RasterizerState                                = RasterizerState.Get();
+        PSODesc.VertexShader                                   = FullscreenVS.Get();
+        PSODesc.PixelShader                                    = MaskShader.Get();
+        PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
+        PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        MaskPSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        MaskPSO = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
         if (!MaskPSO)
         {
             return false;
@@ -255,19 +255,19 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        FRHIGraphicsPipelineStateInfo PSOInfo;
-        PSOInfo.InputLayout                                    = nullptr;
-        PSOInfo.BlendState                                     = BlendState.Get();
-        PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-        PSOInfo.RasterizerState                                = RasterizerState.Get();
-        PSOInfo.VertexShader                                   = FullscreenVS.Get();
-        PSOInfo.PixelShader                                    = DilateShader.Get();
-        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
-        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
-        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
+        FRHIGraphicsPipelineStateDesc PSODesc;
+        PSODesc.InputLayout                                    = nullptr;
+        PSODesc.BlendState                                     = BlendState.Get();
+        PSODesc.DepthStencilState                              = DepthStencilState.Get();
+        PSODesc.RasterizerState                                = RasterizerState.Get();
+        PSODesc.VertexShader                                   = FullscreenVS.Get();
+        PSODesc.PixelShader                                    = DilateShader.Get();
+        PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
+        PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        DilatePSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        DilatePSO = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
         if (!DilatePSO)
         {
             return false;
@@ -290,19 +290,19 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        FRHIGraphicsPipelineStateInfo PSOInfo;
-        PSOInfo.InputLayout                                    = nullptr;
-        PSOInfo.BlendState                                     = BlendState.Get();
-        PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-        PSOInfo.RasterizerState                                = RasterizerState.Get();
-        PSOInfo.VertexShader                                   = FullscreenVS.Get();
-        PSOInfo.PixelShader                                    = ErodeShader.Get();
-        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
-        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
-        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
+        FRHIGraphicsPipelineStateDesc PSODesc;
+        PSODesc.InputLayout                                    = nullptr;
+        PSODesc.BlendState                                     = BlendState.Get();
+        PSODesc.DepthStencilState                              = DepthStencilState.Get();
+        PSODesc.RasterizerState                                = RasterizerState.Get();
+        PSODesc.VertexShader                                   = FullscreenVS.Get();
+        PSODesc.PixelShader                                    = ErodeShader.Get();
+        PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
+        PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        ErodePSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        ErodePSO = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
         if (!ErodePSO)
         {
             return false;
@@ -325,19 +325,19 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        FRHIGraphicsPipelineStateInfo PSOInfo;
-        PSOInfo.InputLayout                                    = nullptr;
-        PSOInfo.BlendState                                     = BlendState.Get();
-        PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-        PSOInfo.RasterizerState                                = RasterizerState.Get();
-        PSOInfo.VertexShader                                   = FullscreenVS.Get();
-        PSOInfo.PixelShader                                    = ResolveShader.Get();
-        PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
-        PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
-        PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-        PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
+        FRHIGraphicsPipelineStateDesc PSODesc;
+        PSODesc.InputLayout                                    = nullptr;
+        PSODesc.BlendState                                     = BlendState.Get();
+        PSODesc.DepthStencilState                              = DepthStencilState.Get();
+        PSODesc.RasterizerState                                = RasterizerState.Get();
+        PSODesc.VertexShader                                   = FullscreenVS.Get();
+        PSODesc.PixelShader                                    = ResolveShader.Get();
+        PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+        PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::R8_Unorm;
+        PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+        PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        ResolvePSO = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+        ResolvePSO = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
         if (!ResolvePSO)
         {
             return false;
@@ -442,7 +442,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassInfo RenderPass;
+        FRHIBeginRenderPassDesc RenderPass;
         RenderPass.NumRenderTargets = 1;
         RenderPass.RenderTargets[0] = FRHIRenderTargetView(SelectionMask.Get(), EAttachmentLoadAction::Clear);
         RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -478,7 +478,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.TransitionTextureState(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
-            FRHIBeginRenderPassInfo RenderPass;
+            FRHIBeginRenderPassDesc RenderPass;
             RenderPass.NumRenderTargets = 1;
             RenderPass.RenderTargets[0] = FRHIRenderTargetView(ErosionTemp.Get(), EAttachmentLoadAction::Clear);
             RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -508,7 +508,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.TransitionTextureState(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
-            FRHIBeginRenderPassInfo RenderPass;
+            FRHIBeginRenderPassDesc RenderPass;
             RenderPass.NumRenderTargets = 1;
             RenderPass.RenderTargets[0] = FRHIRenderTargetView(ErodedMask.Get(), EAttachmentLoadAction::Clear);
             RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -543,7 +543,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassInfo RenderPass;
+        FRHIBeginRenderPassDesc RenderPass;
         RenderPass.NumRenderTargets = 1;
         RenderPass.RenderTargets[0] = FRHIRenderTargetView(DilationTemp.Get(), EAttachmentLoadAction::Clear);
         RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -576,7 +576,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassInfo RenderPass;
+        FRHIBeginRenderPassDesc RenderPass;
         RenderPass.NumRenderTargets = 1;
         RenderPass.RenderTargets[0] = FRHIRenderTargetView(DilatedMask.Get(), EAttachmentLoadAction::Clear);
         RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -609,7 +609,7 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
-        FRHIBeginRenderPassInfo RenderPass;
+        FRHIBeginRenderPassDesc RenderPass;
         RenderPass.NumRenderTargets = 1;
         RenderPass.RenderTargets[0] = FRHIRenderTargetView(RingMask.Get(), EAttachmentLoadAction::Clear);
         RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);

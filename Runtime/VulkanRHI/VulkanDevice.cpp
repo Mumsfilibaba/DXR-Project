@@ -1333,23 +1333,23 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
     return true;
 }
 
-bool FVulkanDevice::FindOrCreateSampler(const FRHISamplerStateInfo& SamplerInfo, VkSampler& OutSampler)
+bool FVulkanDevice::FindOrCreateSampler(const FRHISamplerStateDesc& SamplerDesc, VkSampler& OutSampler)
 {
     VkSamplerCreateInfo CreateInfo = {};
     CreateInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    CreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(SamplerInfo.Filter);
-    CreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(SamplerInfo.Filter);
-    CreateInfo.mipmapMode              = ConvertSamplerFilterToMipmapMode(SamplerInfo.Filter);
-    CreateInfo.addressModeU            = ConvertSamplerMode(SamplerInfo.AddressU);
-    CreateInfo.addressModeV            = ConvertSamplerMode(SamplerInfo.AddressV);
-    CreateInfo.addressModeW            = ConvertSamplerMode(SamplerInfo.AddressW);
-    CreateInfo.mipLodBias              = SamplerInfo.MipLODBias;
-    CreateInfo.anisotropyEnable        = IsAnisotropySampler(SamplerInfo.Filter);
-    CreateInfo.maxAnisotropy           = SamplerInfo.MaxAnisotropy;
-    CreateInfo.compareEnable           = IsComparisonSampler(SamplerInfo.Filter);
-    CreateInfo.compareOp               = ConvertComparisonFunc(SamplerInfo.ComparisonFunc);
-    CreateInfo.minLod                  = SamplerInfo.MinLOD;
-    CreateInfo.maxLod                  = SamplerInfo.MaxLOD;
+    CreateInfo.magFilter               = ConvertSamplerFilterToMagFilter(SamplerDesc.Filter);
+    CreateInfo.minFilter               = ConvertSamplerFilterToMinFilter(SamplerDesc.Filter);
+    CreateInfo.mipmapMode              = ConvertSamplerFilterToMipmapMode(SamplerDesc.Filter);
+    CreateInfo.addressModeU            = ConvertSamplerMode(SamplerDesc.AddressU);
+    CreateInfo.addressModeV            = ConvertSamplerMode(SamplerDesc.AddressV);
+    CreateInfo.addressModeW            = ConvertSamplerMode(SamplerDesc.AddressW);
+    CreateInfo.mipLodBias              = SamplerDesc.MipLODBias;
+    CreateInfo.anisotropyEnable        = IsAnisotropySampler(SamplerDesc.Filter);
+    CreateInfo.maxAnisotropy           = SamplerDesc.MaxAnisotropy;
+    CreateInfo.compareEnable           = IsComparisonSampler(SamplerDesc.Filter);
+    CreateInfo.compareOp               = ConvertComparisonFunc(SamplerDesc.ComparisonFunc);
+    CreateInfo.minLod                  = SamplerDesc.MinLOD;
+    CreateInfo.maxLod                  = SamplerDesc.MaxLOD;
     CreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
     CreateInfo.unnormalizedCoordinates = false;
 
@@ -1372,7 +1372,7 @@ bool FVulkanDevice::FindOrCreateSampler(const FRHISamplerStateInfo& SamplerInfo,
 
 bool FVulkanDevice::FindOrCreateSampler(const FRHIStaticSamplerInfo& StaticSamplerInfo, VkSampler& OutSampler)
 {
-    return FindOrCreateSampler(StaticSamplerInfo.GetSamplerStateInfo(), OutSampler);
+    return FindOrCreateSampler(StaticSamplerInfo.GetSamplerStateDesc(), OutSampler);
 }
 
 FVulkanQueryPoolManager* FVulkanDevice::GetQueryPoolManager(VkQueryType QueryType)

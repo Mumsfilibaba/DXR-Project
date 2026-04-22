@@ -4,20 +4,20 @@
 #include "VulkanRHI/VulkanResourceViews.h"
 #include "VulkanRHI/VulkanResourceState.h"
 
-class FVulkanSwapChain;
+class FVulkanSwapChainRHI;
 class FVulkanCommandContext;
 
-typedef TSharedRef<FVulkanSwapChain>               FVulkanSwapChainRef;
-typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
+typedef TSharedRef<FVulkanSwapChainRHI>               FVulkanSwapChainRHIRef;
+typedef TSharedRef<class FVulkanTextureRHI>           FVulkanTextureRHIRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
-class FVulkanTexture : public FRHITexture, public FVulkanResource
+class FVulkanTextureRHI : public FRHITexture, public FVulkanResource
 {
     friend class FVulkanBackBufferTexture;
 
 public:
-    FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
-    virtual ~FVulkanTexture();
+    FVulkanTextureRHI(FVulkanDevice* InDevice, const FRHITextureDesc& InTextureDesc);
+    virtual ~FVulkanTextureRHI();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
@@ -58,35 +58,35 @@ public:
 protected:
     using FImageViewMap = TMap<FVulkanHashableImageView, FVulkanResourceView*>;
 
-    FString                       DebugName;
-    VkImage                       Image;
-    VkImageCreateInfo             CreateInfo;
-    FVulkanImageLayoutState       ImageLayoutState;
-    FVulkanShaderResourceViewRef  ShaderResourceView;
-    FVulkanUnorderedAccessViewRef UnorderedAccessView;
-    TArray<FVulkanResourceView*>  ImageViews;
-    FImageViewMap                 ImageViewMap;
+    FString                          DebugName;
+    VkImage                          Image;
+    VkImageCreateInfo                CreateInfo;
+    FVulkanImageLayoutState          ImageLayoutState;
+    FVulkanShaderResourceViewRHIRef  ShaderResourceView;
+    FVulkanUnorderedAccessViewRHIRef UnorderedAccessView;
+    TArray<FVulkanResourceView*>     ImageViews;
+    FImageViewMap                    ImageViewMap;
 };
 
-class FVulkanBackBufferTexture : public FVulkanTexture
+class FVulkanBackBufferTexture : public FVulkanTextureRHI
 {
 public:
-    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChain* InSwapChain, const FRHITextureInfo& InTextureInfo);
+    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc);
     virtual ~FVulkanBackBufferTexture();
 
     void ResizeBackBuffer(int32 InWidth, int32 InHeight);
-    FVulkanTexture* GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext);
+    FVulkanTextureRHI* GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext);
     
-    FVulkanSwapChain* GetSwapChain() const
+    FVulkanSwapChainRHI* GetSwapChain() const
     {
         return SwapChain;
     }
     
-    void SetSwapChain(FVulkanSwapChain* InSwapChain)
+    void SetSwapChain(FVulkanSwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
     }
 
 private:
-    FVulkanSwapChain* SwapChain;
+    FVulkanSwapChainRHI* SwapChain;
 };

@@ -119,8 +119,8 @@ struct FSwapChainResizeInfo
     }
 
     FRHISwapChainRef SwapChain = nullptr;
-    uint32 Width  = 0;
-    uint32 Height = 0;
+    uint32           Width     = 0;
+    uint32           Height    = 0;
 };
 
 class FSceneRenderer
@@ -258,8 +258,8 @@ private:
     {
         FScene*         Scene = nullptr;
 
+        FRHIFenceRef    Fence;
         FRHIBufferRef   ReadbackBuffer;
-        FRHIGpuFenceRef Fence;
 
         uint32          SampleRadius = 0;
         uint32          PixelX       = 0;
@@ -286,6 +286,7 @@ private:
     };
 
     static constexpr uint32 MaxInFlightObjectPicks = 4;
+
     TQueue<FEditorObjectPickRequest, EQueueType::MPSC> PendingObjectPicks;
     TArray<FEditorObjectPickInFlight>                  InFlightObjectPicks;
 #endif

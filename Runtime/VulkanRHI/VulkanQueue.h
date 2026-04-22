@@ -128,20 +128,20 @@ struct FVulkanCommands
         return CommandBuffers.IsEmpty();
     }
 
-    FVulkanQueue&                                  Queue;
-    FVulkanDevice* const                           Device;
-    EVulkanCommandsFlags                           Flags;
-    FVulkanFence*                                  Fence;
-    TArray<FVulkanCommandPool*>                    CommandPools;
-    TArray<FVulkanCommandBuffer*>                  CommandBuffers;
-    TArray<FVulkanQueryRange>                      QueryRanges;
-    TArray<FVulkanQuery>                           TimestampQueries;
-    TArray<FVulkanQuery>                           OcclusionQueries;
-    TArray<FVulkanQuery>                           PipelineStatsQueries;
-    TArray<struct FVulkanQueryRHI*>                PendingQueries;
-    TArray<FVulkanDeferredObject>                  DeferredObjects;
-    TArray<FVulkanPendingImageBarrier>             PendingImageBarriers;
-    TArray<FVulkanPendingBufferBarrier>            PendingBufferBarriers;
-    TMap<FVulkanTexture*, FVulkanImageLayoutState> PendingImageStates;
-    TMap<FVulkanBuffer*, FVulkanBufferState>       PendingBufferStates;
+    FVulkanQueue&                                     Queue;
+    FVulkanDevice* const                              Device;
+    EVulkanCommandsFlags                              Flags;
+    FVulkanFence*                                     Fence;
+    TArray<FVulkanCommandPool*>                       CommandPools;
+    TArray<FVulkanCommandBuffer*>                     CommandBuffers;
+    TArray<FVulkanQueryRange>                         QueryRanges;
+    TArray<FVulkanQuery>                              TimestampQueries;
+    TArray<FVulkanQuery>                              OcclusionQueries;
+    TArray<FVulkanQuery>                              PipelineStatsQueries;
+    TArray<struct FVulkanQueryRHI*>                   PendingQueries;
+    TArray<FVulkanDeferredObject>                     DeferredObjects;
+    TArray<FVulkanPendingImageBarrier>                PendingImageBarriers;
+    TArray<FVulkanPendingBufferBarrier>               PendingBufferBarriers;
+    TMap<FVulkanTextureRHI*, FVulkanImageLayoutState> PendingImageStates;
+    TMap<FVulkanBufferRHI*, FVulkanBufferState>       PendingBufferStates;
 };

@@ -61,53 +61,53 @@ struct IRHITextureData
     virtual void* GetMipData(uint32 MipLevel = 0)       const = 0;
 };
 
-struct FRHITextureInfo
+struct FRHITextureDesc
 {
-    NODISCARD static FRHITextureInfo CreateTexture1D(EFormat InFormat, uint32 InWidth, uint32 InNumMipLevels,
+    NODISCARD static FRHITextureDesc CreateTexture1D(EFormat InFormat, uint32 InWidth, uint32 InNumMipLevels,
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(ETextureDimension::Texture1D, InFormat, FIntVector3(InWidth, 1, 0), 1, InNumMipLevels, 1, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture1D, InFormat, FIntVector3(InWidth, 1, 0), 1, InNumMipLevels, 1, InUsageFlags, InClearValue);
     }
 
-    NODISCARD static FRHITextureInfo CreateTexture1DArray(EFormat InFormat, uint32 InWidth, uint32 InArraySlices, uint32 InNumMipLevels,
+    NODISCARD static FRHITextureDesc CreateTexture1DArray(EFormat InFormat, uint32 InWidth, uint32 InArraySlices, uint32 InNumMipLevels,
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(ETextureDimension::Texture1DArray, InFormat, FIntVector3(InWidth, 1, 0), InArraySlices, InNumMipLevels, 1, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture1DArray, InFormat, FIntVector3(InWidth, 1, 0), InArraySlices, InNumMipLevels, 1, InUsageFlags, InClearValue);
     }
 
-    NODISCARD static FRHITextureInfo CreateTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMipLevels, uint32 InNumSamples,
+    NODISCARD static FRHITextureDesc CreateTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMipLevels, uint32 InNumSamples,
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(ETextureDimension::Texture2D, InFormat, FIntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture2D, InFormat, FIntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
-    NODISCARD static FRHITextureInfo CreateTexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InArraySlices, uint32 InNumMipLevels,
+    NODISCARD static FRHITextureDesc CreateTexture2DArray(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InArraySlices, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(ETextureDimension::Texture2DArray, InFormat, FIntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture2DArray, InFormat, FIntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
-    NODISCARD static FRHITextureInfo CreateTextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMipLevels, uint32 InNumSamples, 
+    NODISCARD static FRHITextureDesc CreateTextureCube(EFormat InFormat, uint32 InExtent, uint32 InNumMipLevels, uint32 InNumSamples, 
         ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(ETextureDimension::TextureCube, InFormat, FIntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::TextureCube, InFormat, FIntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
-    NODISCARD static FRHITextureInfo CreateTextureCubeArray(EFormat InFormat, uint32 InExtent, uint32 InArraySlices, uint32 InNumMipLevels,
+    NODISCARD static FRHITextureDesc CreateTextureCubeArray(EFormat InFormat, uint32 InExtent, uint32 InArraySlices, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(ETextureDimension::TextureCubeArray, InFormat, FIntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::TextureCubeArray, InFormat, FIntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
-    NODISCARD static FRHITextureInfo CreateTexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMipLevels,
+    NODISCARD static FRHITextureDesc CreateTexture3D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InDepth, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(ETextureDimension::Texture3D, InFormat, FIntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
+        return FRHITextureDesc(ETextureDimension::Texture3D, InFormat, FIntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
-    FRHITextureInfo() noexcept = default;
+    FRHITextureDesc() noexcept = default;
 
-    FRHITextureInfo(ETextureDimension InDimension, EFormat InFormat, FIntVector3 InExtent, uint32 InNumArraySlices, uint32 InNumMipLevels,
+    FRHITextureDesc(ETextureDimension InDimension, EFormat InFormat, FIntVector3 InExtent, uint32 InNumArraySlices, uint32 InNumMipLevels,
         uint32 InNumSamples, ETextureUsageFlags InUsageFlags, const FClearValue& InClearValue = FClearValue()) noexcept
         : Dimension(InDimension)
         , Format(InFormat)
@@ -150,7 +150,7 @@ struct FRHITextureInfo
     NODISCARD constexpr const FIntVector3& GetExtent()         const { return Extent; }
     NODISCARD constexpr const FClearValue& GetClearValue()     const { return ClearValue; }
 
-    bool operator==(const FRHITextureInfo& Other) const noexcept = default;
+    bool operator==(const FRHITextureDesc& Other) const noexcept = default;
 
     ETextureDimension  Dimension      = ETextureDimension::None;
     EFormat            Format         = EFormat::Unknown;
@@ -165,9 +165,9 @@ struct FRHITextureInfo
 class FRHITexture : public FRHIResource
 {
 protected:
-    explicit FRHITexture(const FRHITextureInfo& InTextureInfo)
+    explicit FRHITexture(const FRHITextureDesc& InTextureDesc)
         : FRHIResource()
-        , Info(InTextureInfo)
+        , Desc(InTextureDesc)
     {
     }
 
@@ -184,61 +184,61 @@ public:
     virtual void SetDebugName(const FString&) { }
     virtual FString GetDebugName() const { return ""; }
 
-    const FRHITextureInfo& GetInfo() const
+    const FRHITextureDesc& GetDesc() const
     {
-        return Info;
+        return Desc;
     }
 
     ETextureDimension GetDimension() const
     {
-        return Info.Dimension;
+        return Desc.Dimension;
     }
     
     EFormat GetFormat() const
     {
-        return Info.Format;
+        return Desc.Format;
     }
     
     ETextureUsageFlags GetFlags() const
     {
-        return Info.UsageFlags;
+        return Desc.UsageFlags;
     }
     
     const FIntVector3& GetExtent() const
     {
-        return Info.Extent;
+        return Desc.Extent;
     }
 
     uint32 GetWidth() const
     {
-        return Info.Extent.X;
+        return Desc.Extent.X;
     }
     
     uint32 GetHeight() const
     {
-        return Info.Extent.Y;
+        return Desc.Extent.Y;
     }
     
     uint32 GetDepth() const
     {
-        return Info.Extent.Z;
+        return Desc.Extent.Z;
     }
     
     uint32 GetNumArraySlices() const
     {
-        return Info.NumArraySlices;
+        return Desc.NumArraySlices;
     }
     
     uint32 GetNumMipLevels() const
     {
-        return Info.NumMipLevels;
+        return Desc.NumMipLevels;
     }
     
     uint32 GetNumSamples() const
     {
-        return Info.NumSamples;
+        return Desc.NumSamples;
     }
 
 protected:
-    FRHITextureInfo Info;
+    FRHITextureDesc Desc;
 };

@@ -63,12 +63,12 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
 
     // VertexBuffer
-    FRHIBufferInfo VBInfo;
-    VBInfo.Size   = SkyboxVertices.SizeInBytes();
-    VBInfo.Stride = SkyboxVertices.Stride();
-    VBInfo.Flags  = EBufferFlags::Default | EBufferFlags::VertexBuffer;
+    FRHIBufferDesc VertexBufferDesc;
+    VertexBufferDesc.Size   = SkyboxVertices.SizeInBytes();
+    VertexBufferDesc.Stride = SkyboxVertices.Stride();
+    VertexBufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::VertexBuffer;
 
-    SkyboxVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
+    SkyboxVertexBuffer = FRHI::Get()->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -79,12 +79,12 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
 
     // IndexBuffers
-    FRHIBufferInfo IBInfo;
-    IBInfo.Stride = GetStrideFromIndexFormat(SkyboxIndexFormat);
-    IBInfo.Size   = SkyboxIndexCount * IBInfo.Stride;
-    IBInfo.Flags  = EBufferFlags::Default | EBufferFlags::IndexBuffer;
+    FRHIBufferDesc IndexBufferDesc;
+    IndexBufferDesc.Stride = GetStrideFromIndexFormat(SkyboxIndexFormat);
+    IndexBufferDesc.Size   = SkyboxIndexCount * IndexBufferDesc.Stride;
+    IndexBufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::IndexBuffer;
 
-    SkyboxIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
+    SkyboxIndexBuffer = FRHI::Get()->CreateBuffer(IndexBufferDesc, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
         reinterpret_cast<void*>(SkyboxIndicies16.Data()) :
         reinterpret_cast<void*>(SkyboxIndicies32.Data()));
 
@@ -97,15 +97,15 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         SkyboxIndexBuffer->SetDebugName("Skybox IndexBuffer");
     }
 
-    FRHISamplerStateInfo Initializer;
-    Initializer.AddressU = ESamplerMode::Wrap;
-    Initializer.AddressV = ESamplerMode::Wrap;
-    Initializer.AddressW = ESamplerMode::Wrap;
-    Initializer.Filter   = ESamplerFilter::MinMagMipLinear;
-    Initializer.MinLOD   = 0.0f;
-    Initializer.MaxLOD   = 0.0f;
+    FRHISamplerStateDesc SamplerStateDesc;
+    SamplerStateDesc.AddressU = ESamplerMode::Wrap;
+    SamplerStateDesc.AddressV = ESamplerMode::Wrap;
+    SamplerStateDesc.AddressW = ESamplerMode::Wrap;
+    SamplerStateDesc.Filter   = ESamplerFilter::MinMagMipLinear;
+    SamplerStateDesc.MinLOD   = 0.0f;
+    SamplerStateDesc.MaxLOD   = 0.0f;
 
-    SkyboxSampler = FRHI::Get()->CreateSamplerState(Initializer);
+    SkyboxSampler = FRHI::Get()->CreateSamplerState(SamplerStateDesc);
     if (!SkyboxSampler)
     {
         return false;
@@ -142,7 +142,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     }
     
     // Initialize standard input layout
-    TArray<FRHIInputElementInfo> InputElements =
+    TArray<FRHIInputElementDesc> InputElements =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
     };
@@ -154,50 +154,50 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    FRHIRasterizerStateInfo RasterizerInitializer;
-    RasterizerInitializer.CullMode = ECullMode::None;
+    FRHIRasterizerStateDesc RasterizerStateDesc;
+    RasterizerStateDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerInitializer);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.NumRenderTargets = 1;
+    FRHIBlendStateDesc BlendStateDesc;
+    BlendStateDesc.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
     if (!BlendState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIDepthStencilStateInfo DepthStencilStateInitializer;
-    DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
-    DepthStencilStateInitializer.bDepthEnable      = true;
-    DepthStencilStateInitializer.bDepthWriteEnable = false;
+    FRHIDepthStencilStateDesc DepthStencilStateDesc;
+    DepthStencilStateDesc.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilStateDesc.bDepthEnable      = true;
+    DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIGraphicsPipelineStateInfo PSOInfo;
-    PSOInfo.InputLayout                                    = InputLayout.Get();
-    PSOInfo.BlendState                                     = BlendState.Get();
-    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-    PSOInfo.RasterizerState                                = RasterizerState.Get();
-    PSOInfo.VertexShader                                   = SkyboxVertexShader.Get();
-    PSOInfo.PixelShader                                    = SkyboxPixelShader.Get();
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
-    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSOInfo.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
+    FRHIGraphicsPipelineStateDesc PSODesc;
+    PSODesc.InputLayout                                    = InputLayout.Get();
+    PSODesc.BlendState                                     = BlendState.Get();
+    PSODesc.DepthStencilState                              = DepthStencilState.Get();
+    PSODesc.RasterizerState                                = RasterizerState.Get();
+    PSODesc.VertexShader                                   = SkyboxVertexShader.Get();
+    PSODesc.PixelShader                                    = SkyboxPixelShader.Get();
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();
@@ -225,7 +225,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
-    FRHIBeginRenderPassInfo RenderPass;
+    FRHIBeginRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);

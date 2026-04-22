@@ -1,11 +1,11 @@
 #pragma once
 #include "RHI/RHIResource.h"
 
-struct FRHISwapChainInfo
+struct FRHISwapChainDesc
 {
-    constexpr FRHISwapChainInfo() noexcept = default;
+    constexpr FRHISwapChainDesc() noexcept = default;
 
-    constexpr FRHISwapChainInfo(void* InWindowHandle, EFormat InColorFormat, uint16 InWidth, uint16 InHeight) noexcept
+    constexpr FRHISwapChainDesc(void* InWindowHandle, EFormat InColorFormat, uint16 InWidth, uint16 InHeight) noexcept
         : WindowHandle(InWindowHandle)
         , ColorFormat(InColorFormat)
         , Width(InWidth)
@@ -13,7 +13,7 @@ struct FRHISwapChainInfo
     {
     }
 
-    constexpr bool operator==(const FRHISwapChainInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHISwapChainDesc& Other) const noexcept = default;
 
     void*   WindowHandle  = nullptr;
     EFormat ColorFormat   = EFormat::Unknown;
@@ -25,9 +25,9 @@ struct FRHISwapChainInfo
 class FRHISwapChain : public FRHIResource
 {
 protected:
-    explicit FRHISwapChain(const FRHISwapChainInfo& InSwapChainInfo)
+    explicit FRHISwapChain(const FRHISwapChainDesc& InSwapChainDesc)
         : FRHIResource()
-        , Info(InSwapChainInfo)
+        , Desc(InSwapChainDesc)
     {
     }
 
@@ -40,24 +40,24 @@ public:
 
     EFormat GetColorFormat() const
     {
-        return Info.ColorFormat;
+        return Desc.ColorFormat;
     }
 
     uint32 GetWidth() const
     {
-        return Info.Width;
+        return Desc.Width;
     }
 
     uint32 GetHeight() const
     {
-        return Info.Height;
+        return Desc.Height;
     }
 
-    const FRHISwapChainInfo& GetInfo() const
+    const FRHISwapChainDesc& GetDesc() const
     {
-        return Info;
+        return Desc;
     }
 
 protected:
-    FRHISwapChainInfo Info;
+    FRHISwapChainDesc Desc;
 };

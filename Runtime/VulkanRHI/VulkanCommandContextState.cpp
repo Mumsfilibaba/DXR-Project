@@ -301,8 +301,8 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
             continue;
         }
 
-        FVulkanTexture* Texture = static_cast<FVulkanTexture*>(View->GetOwnerResource());
-        RenderPassKey.RenderTargetFormats[Index]             = Texture->GetInfo().Format;
+        FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(View->GetOwnerResource());
+        RenderPassKey.RenderTargetFormats[Index]             = Texture->GetDesc().Format;
         RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetState.ColorStoreActions[Index];
         NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetNumSamples()), NumSamples);
@@ -310,8 +310,8 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
 
     if (FVulkanResourceView* DepthView = RenderTargetState.DepthStencilView)
     {
-        FVulkanTexture* Texture = static_cast<FVulkanTexture*>(DepthView->GetOwnerResource());
-        RenderPassKey.DepthStencilFormat              = Texture->GetInfo().Format;
+        FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(DepthView->GetOwnerResource());
+        RenderPassKey.DepthStencilFormat              = Texture->GetDesc().Format;
         RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.DepthStencilActions.StoreAction = RenderTargetState.DepthStencilStoreAction;
         NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetNumSamples()), NumSamples);
@@ -327,15 +327,15 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
     return RenderPassKey;
 }
 
-void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& RenderPassInfo)
+void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& RenderPassDesc)
 {
     CHECK(ContextPhase == ECommandContextPhase::Recording);
 
-    GraphicsState.ViewInstancingState = RenderPassInfo.ViewInstancingState;
+    GraphicsState.ViewInstancingState = RenderPassDesc.ViewInstancingState;
 
     FVulkanRenderTargetState& RenderTargetState = GraphicsState.RenderTargetState;
     RenderTargetState.Clear();
-    RenderTargetState.NumRenderTargets = RenderPassInfo.NumRenderTargets;
+    RenderTargetState.NumRenderTargets = RenderPassDesc.NumRenderTargets;
 
     uint32 Width          = TNumericLimits<uint32>::Max();
     uint32 Height         = TNumericLimits<uint32>::Max();
@@ -345,12 +345,12 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& 
     VkClearValue ColorClearValues[RHI_MAX_RENDER_TARGETS] = {};
 
     FVulkanRenderPassKey RenderPassKey;
-    RenderPassKey.NumRenderTargets = static_cast<uint8>(RenderPassInfo.NumRenderTargets);
+    RenderPassKey.NumRenderTargets = static_cast<uint8>(RenderPassDesc.NumRenderTargets);
 
-    for (uint32 Index = 0; Index < RenderPassInfo.NumRenderTargets; Index++)
+    for (uint32 Index = 0; Index < RenderPassDesc.NumRenderTargets; Index++)
     {
-        const FRHIRenderTargetView& RenderTargetView = RenderPassInfo.RenderTargets[Index];
-        FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(&Context, RenderTargetView.Texture);
+        const FRHIRenderTargetView& RenderTargetView = RenderPassDesc.RenderTargets[Index];
+        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(&Context, RenderTargetView.Texture);
         if (!VulkanTexture)
         {
             continue;
@@ -380,8 +380,8 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& 
 
     VkClearValue DepthStencilClearValue = {};
 
-    const FRHIDepthStencilView& DepthStencilView = RenderPassInfo.DepthStencilView;
-    if (FVulkanTexture* VulkanTexture = FVulkanRHI::ResourceCast(&Context, DepthStencilView.Texture))
+    const FRHIDepthStencilView& DepthStencilView = RenderPassDesc.DepthStencilView;
+    if (FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(&Context, DepthStencilView.Texture))
     {
         Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
         Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
@@ -406,7 +406,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& 
         DepthStencilClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
     }
 
-    if (RenderPassInfo.ViewInstancingState.bEnableViewInstancing)
+    if (RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
         NumArrayLayers = 1;
     }
@@ -416,19 +416,19 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& 
     RenderTargetState.RenderingLayerCount = Math::Max(NumArrayLayers, 1u);
 
     RenderPassKey.NumSamples = NumSamples;
-    if (RenderPassInfo.ViewInstancingState.bEnableViewInstancing)
+    if (RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
-        RenderPassKey.ViewInstancingState = RenderPassInfo.ViewInstancingState;
+        RenderPassKey.ViewInstancingState = RenderPassDesc.ViewInstancingState;
     }
 
-    if (GVulkanSupportsMultiviews && RenderPassInfo.ViewInstancingState.bEnableViewInstancing)
+    if (GVulkanSupportsMultiviews && RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
         constexpr uint32 MaxArraySlices = 32;
-        const uint32 NumViews = Math::Min<uint32>(RenderPassInfo.ViewInstancingState.NumArraySlices, MaxArraySlices);
+        const uint32 NumViews = Math::Min<uint32>(RenderPassDesc.ViewInstancingState.NumArraySlices, MaxArraySlices);
         uint32 ViewMask = 0;
         for (uint32 i = 0; i < NumViews; i++)
         {
-            const uint32 BitIndex = RenderPassInfo.ViewInstancingState.StartRenderTargetArrayIndex + i;
+            const uint32 BitIndex = RenderPassDesc.ViewInstancingState.StartRenderTargetArrayIndex + i;
             CHECK(BitIndex < 32);
             ViewMask |= (1u << BitIndex);
         }
@@ -443,7 +443,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassInfo& 
         VkRenderingAttachmentInfo ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
         for (uint32 i = 0; i < RenderTargetState.NumRenderTargets; i++)
         {
-            const FRHIRenderTargetView& RenderTargetView = RenderPassInfo.RenderTargets[i];
+            const FRHIRenderTargetView& RenderTargetView = RenderPassDesc.RenderTargets[i];
             ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             ColorAttachments[i].imageView   = RenderTargetState.RenderTargetViews[i] ? RenderTargetState.RenderTargetViews[i]->GetImageViewInfo().ImageView : VK_NULL_HANDLE;
             ColorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -647,12 +647,12 @@ void FVulkanCommandContextState::ResumeRenderPass()
     ContextPhase = ECommandContextPhase::InsideRenderPass;
 }
 
-void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState)
+void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelineStateRHI* InGraphicsPipelineState)
 {
-    FVulkanGraphicsPipelineState* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
+    FVulkanGraphicsPipelineStateRHI* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
     if (CurrentGraphicsPipelineState != InGraphicsPipelineState || GVulkanForceBinding)
     {
-        GraphicsState.PipelineState      = MakeSharedRef<FVulkanGraphicsPipelineState>(InGraphicsPipelineState);
+        GraphicsState.PipelineState      = MakeSharedRef<FVulkanGraphicsPipelineStateRHI>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
 
         if (InGraphicsPipelineState)
@@ -697,12 +697,12 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
     }
 }
 
-void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState)
+void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineStateRHI* InComputePipelineState)
 {
-    FVulkanComputePipelineState* CurrentComputePipelineState = ComputeState.PipelineState.Get();
+    FVulkanComputePipelineStateRHI* CurrentComputePipelineState = ComputeState.PipelineState.Get();
     if (CurrentComputePipelineState != InComputePipelineState || GVulkanForceBinding)
     {
-        ComputeState.PipelineState      = MakeSharedRef<FVulkanComputePipelineState>(InComputePipelineState);
+        ComputeState.PipelineState      = MakeSharedRef<FVulkanComputePipelineStateRHI>(InComputePipelineState);
         ComputeState.bBindPipelineState = true;
 
         if (InComputePipelineState)
@@ -808,12 +808,12 @@ void FVulkanCommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuf
     GraphicsState.StreamOutputCache.NumBuffers = Math::Min(static_cast<uint32>(Buffers.Size()), static_cast<uint32>(VULKAN_MAX_STREAM_OUTPUT_BUFFER_COUNT));
     for (uint32 Index = 0; Index < GraphicsState.StreamOutputCache.NumBuffers; ++Index)
     {
-        FVulkanBuffer* VulkanBuffer = FVulkanRHI::ResourceCast(Buffers[Index]);
+        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(Buffers[Index]);
         if (VulkanBuffer)
         {
             GraphicsState.StreamOutputCache.Buffers[Index] = VulkanBuffer->GetVkBuffer();
             GraphicsState.StreamOutputCache.Offsets[Index] = Offsets ? Offsets[Index] : 0;
-            GraphicsState.StreamOutputCache.Sizes[Index]   = VulkanBuffer->GetInfo().Size;
+            GraphicsState.StreamOutputCache.Sizes[Index]   = VulkanBuffer->GetDesc().Size;
         }
         else
         {
@@ -826,7 +826,7 @@ void FVulkanCommandContextState::SetStreamOutputTargets(const TArrayView<FRHIBuf
     GraphicsState.bBindStreamOutputTargets = true;
 }
 
-void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 VertexBufferSlot)
+void FVulkanCommandContextState::SetVertexBuffer(FVulkanBufferRHI* VertexBuffer, uint32 VertexBufferSlot)
 {
     CHECK(VertexBufferSlot < VULKAN_MAX_VERTEX_BUFFER_SLOTS);
     
@@ -856,7 +856,7 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
     }
 }
 
-void FVulkanCommandContextState::SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexType)
+void FVulkanCommandContextState::SetIndexBuffer(FVulkanBufferRHI* IndexBuffer, VkIndexType IndexType)
 {
     VkBuffer     Buffer;
     VkDeviceSize Offset;
@@ -898,7 +898,7 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
     }
 }
 
-void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     
@@ -937,7 +937,7 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourc
     DescriptorState->SetSRV(ShaderResourceView, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
@@ -976,7 +976,7 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAcc
     DescriptorState->SetUAV(UnorderedAccessView, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+void FVulkanCommandContextState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     CHECK(ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
     
@@ -1015,7 +1015,7 @@ void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, 
     DescriptorState->SetUniformBuffer(UniformBuffer, DescriptorSetIndex, BindingIndex);
 }
 
-void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
+void FVulkanCommandContextState::SetSampler(FVulkanSamplerStateRHI* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
 {
     CHECK(SamplerIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
 
@@ -1070,8 +1070,8 @@ void FVulkanCommandContextState::EvictStaleDescriptorStates()
 
     // Evict stale graphics descriptor states
     {
-        TArray<FVulkanGraphicsPipelineState*> StaleKeys;
-        GraphicsState.DescriptorStates.Foreach([&StaleKeys, EvictionCutoff](FVulkanGraphicsPipelineState* const& Key, const FCachedDescriptorState& Cached)
+        TArray<FVulkanGraphicsPipelineStateRHI*> StaleKeys;
+        GraphicsState.DescriptorStates.Foreach([&StaleKeys, EvictionCutoff](FVulkanGraphicsPipelineStateRHI* const& Key, const FCachedDescriptorState& Cached)
         {
             if (Cached.LastUsedFrame < EvictionCutoff)
             {
@@ -1079,7 +1079,7 @@ void FVulkanCommandContextState::EvictStaleDescriptorStates()
             }
         });
 
-        for (FVulkanGraphicsPipelineState* Key : StaleKeys)
+        for (FVulkanGraphicsPipelineStateRHI* Key : StaleKeys)
         {
             FCachedDescriptorState Cached;
             if (GraphicsState.DescriptorStates.RemoveKey(Key, &Cached))
@@ -1097,8 +1097,8 @@ void FVulkanCommandContextState::EvictStaleDescriptorStates()
 
     // Evict stale compute descriptor states
     {
-        TArray<FVulkanComputePipelineState*> StaleKeys;
-        ComputeState.DescriptorStates.Foreach([&StaleKeys, EvictionCutoff](FVulkanComputePipelineState* const& Key, const FCachedDescriptorState& Cached)
+        TArray<FVulkanComputePipelineStateRHI*> StaleKeys;
+        ComputeState.DescriptorStates.Foreach([&StaleKeys, EvictionCutoff](FVulkanComputePipelineStateRHI* const& Key, const FCachedDescriptorState& Cached)
         {
             if (Cached.LastUsedFrame < EvictionCutoff)
             {
@@ -1106,7 +1106,7 @@ void FVulkanCommandContextState::EvictStaleDescriptorStates()
             }
         });
 
-        for (FVulkanComputePipelineState* Key : StaleKeys)
+        for (FVulkanComputePipelineStateRHI* Key : StaleKeys)
         {
             FCachedDescriptorState Cached;
             if (ComputeState.DescriptorStates.RemoveKey(Key, &Cached))

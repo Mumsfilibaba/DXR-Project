@@ -726,6 +726,9 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , TimingQueryHeapManager(nullptr)
     , OcclusionQueryHeapManager(nullptr)
     , PipelineStatsQueryHeapManager(nullptr)
+#if D3D12_USE_DEBUG_MESSAGE_CALLBACK
+    , DebugMessageCallbackCookie(0)
+#endif
 {
     // Create CommandAllocatorManagers
     DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
@@ -1387,7 +1390,7 @@ bool FD3D12Device::CreateDefaultResources()
     UAVDesc.Texture2D.MipSlice   = 0;
     UAVDesc.Texture2D.PlaneSlice = 0;
 
-    DefaultDescriptors.DefaultUAV = new FD3D12UnorderedAccessView(this, GetResourceOfflineDescriptorHeap(), nullptr);
+    DefaultDescriptors.DefaultUAV = new FD3D12UnorderedAccessViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr);
     if (!DefaultDescriptors.DefaultUAV->AllocateHandle())
     {
         return false;
@@ -1407,7 +1410,7 @@ bool FD3D12Device::CreateDefaultResources()
     SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
-    DefaultDescriptors.DefaultSRV = new FD3D12ShaderResourceView(this, GetResourceOfflineDescriptorHeap(), nullptr);
+    DefaultDescriptors.DefaultSRV = new FD3D12ShaderResourceViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr);
     if (!DefaultDescriptors.DefaultSRV->AllocateHandle())
     {
         return false;
@@ -1450,7 +1453,7 @@ bool FD3D12Device::CreateDefaultResources()
     SamplerDesc.MinLOD         = TNumericLimits<float>::Lowest();
     SamplerDesc.MipLODBias     = 0.0f;
 
-    DefaultDescriptors.DefaultSampler = new FD3D12SamplerState(this, GetSamplerOfflineDescriptorHeap(), FRHISamplerStateInfo());
+    DefaultDescriptors.DefaultSampler = new FD3D12SamplerStateRHI(this, GetSamplerOfflineDescriptorHeap(), FRHISamplerStateDesc());
     if (!DefaultDescriptors.DefaultSampler->CreateSampler(SamplerDesc))
     {
         return false;

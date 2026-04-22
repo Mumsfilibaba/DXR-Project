@@ -2,32 +2,32 @@
 #include "Core/Templates/TypeTraits.h"
 #include "RHI/RHIResources.h"
 
-class FVulkanBuffer;
-class FVulkanTexture;
+class FVulkanBufferRHI;
+class FVulkanTextureRHI;
 struct FVulkanQueryRHI;
-class FVulkanShaderResourceView;
-class FVulkanUnorderedAccessView;
-class FVulkanSamplerState;
-class FVulkanGpuFence;
-class FVulkanSwapChain;
-class FVulkanRayTracingGeometry;
-class FVulkanGraphicsPipelineState;
-class FVulkanComputePipelineState;
-class FVulkanRayTracingPipelineState;
-class FVulkanInputLayout;
-class FVulkanRasterizerState;
-class FVulkanDepthStencilState;
-class FVulkanBlendState;
-class FVulkanVertexShader;
-class FVulkanHullShader;
-class FVulkanDomainShader;
-class FVulkanGeometryShader;
-class FVulkanPixelShader;
-class FVulkanComputeShader;
-class FVulkanRayGenShader;
-class FVulkanRayAnyHitShader;
-class FVulkanRayClosestHitShader;
-class FVulkanRayMissShader;
+class FVulkanShaderResourceViewRHI;
+class FVulkanUnorderedAccessViewRHI;
+class FVulkanSamplerStateRHI;
+class FVulkanFenceRHI;
+class FVulkanSwapChainRHI;
+class FVulkanGeometryAccelerationStructureRHI;
+class FVulkanGraphicsPipelineStateRHI;
+class FVulkanComputePipelineStateRHI;
+class FVulkanRayTracingPipelineStateRHI;
+class FVulkanInputLayoutRHI;
+class FVulkanRasterizerStateRHI;
+class FVulkanDepthStencilStateRHI;
+class FVulkanBlendStateRHI;
+class FVulkanVertexShaderRHI;
+class FVulkanHullShaderRHI;
+class FVulkanDomainShaderRHI;
+class FVulkanGeometryShaderRHI;
+class FVulkanPixelShaderRHI;
+class FVulkanComputeShaderRHI;
+class FVulkanRayGenShaderRHI;
+class FVulkanRayAnyHitShaderRHI;
+class FVulkanRayClosestHitShaderRHI;
+class FVulkanRayMissShaderRHI;
 
 template<typename T>
 struct TVulkanRHIResourceType
@@ -36,7 +36,7 @@ struct TVulkanRHIResourceType
 
 template<> struct TVulkanRHIResourceType<FRHIBuffer>
 {
-    typedef FVulkanBuffer Type;
+    typedef FVulkanBufferRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIQuery>
@@ -46,115 +46,115 @@ template<> struct TVulkanRHIResourceType<FRHIQuery>
 
 template<> struct TVulkanRHIResourceType<FRHIShaderResourceView>
 {
-    typedef FVulkanShaderResourceView Type;
+    typedef FVulkanShaderResourceViewRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIUnorderedAccessView>
 {
-    typedef FVulkanUnorderedAccessView Type;
+    typedef FVulkanUnorderedAccessViewRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHISamplerState>
 {
-    typedef FVulkanSamplerState Type;
+    typedef FVulkanSamplerStateRHI Type;
 };
 
-template<> struct TVulkanRHIResourceType<FRHIGpuFence>
+template<> struct TVulkanRHIResourceType<FRHIFence>
 {
-    typedef FVulkanGpuFence Type;
+    typedef FVulkanFenceRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHISwapChain>
 {
-    typedef FVulkanSwapChain Type;
+    typedef FVulkanSwapChainRHI Type;
 };
 
-template<> struct TVulkanRHIResourceType<FRHIRayTracingGeometry>
+template<> struct TVulkanRHIResourceType<FRHIGeometryAccelerationStructure>
 {
-    typedef FVulkanRayTracingGeometry Type;
+    typedef FVulkanGeometryAccelerationStructureRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIGraphicsPipelineState>
 {
-    typedef FVulkanGraphicsPipelineState Type;
+    typedef FVulkanGraphicsPipelineStateRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIComputePipelineState>
 {
-    typedef FVulkanComputePipelineState Type;
+    typedef FVulkanComputePipelineStateRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIRayTracingPipelineState>
 {
-    typedef FVulkanRayTracingPipelineState Type;
+    typedef FVulkanRayTracingPipelineStateRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIInputLayout>
 {
-    typedef FVulkanInputLayout Type;
+    typedef FVulkanInputLayoutRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIRasterizerState>
 {
-    typedef FVulkanRasterizerState Type;
+    typedef FVulkanRasterizerStateRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIDepthStencilState>
 {
-    typedef FVulkanDepthStencilState Type;
+    typedef FVulkanDepthStencilStateRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIBlendState>
 {
-    typedef FVulkanBlendState Type;
+    typedef FVulkanBlendStateRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIVertexShader>
 {
-    typedef FVulkanVertexShader Type;
+    typedef FVulkanVertexShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIHullShader>
 {
-    typedef FVulkanHullShader Type;
+    typedef FVulkanHullShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIDomainShader>
 {
-    typedef FVulkanDomainShader Type;
+    typedef FVulkanDomainShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIGeometryShader>
 {
-    typedef FVulkanGeometryShader Type;
+    typedef FVulkanGeometryShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIPixelShader>
 {
-    typedef FVulkanPixelShader Type;
+    typedef FVulkanPixelShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIComputeShader>
 {
-    typedef FVulkanComputeShader Type;
+    typedef FVulkanComputeShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIRayGenShader>
 {
-    typedef FVulkanRayGenShader Type;
+    typedef FVulkanRayGenShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIRayAnyHitShader>
 {
-    typedef FVulkanRayAnyHitShader Type;
+    typedef FVulkanRayAnyHitShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIRayClosestHitShader>
 {
-    typedef FVulkanRayClosestHitShader Type;
+    typedef FVulkanRayClosestHitShaderRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHIRayMissShader>
 {
-    typedef FVulkanRayMissShader Type;
+    typedef FVulkanRayMissShaderRHI Type;
 };

@@ -2,11 +2,11 @@
 #include "Core/Containers/String.h"
 #include "RHI/RHIResource.h"
 
-class FRHIGpuFence : public FRHIResource 
+class FRHIFence : public FRHIResource 
 { 
 public: 
-    FRHIGpuFence() = default; 
-    virtual ~FRHIGpuFence() = default; 
+    FRHIFence() = default; 
+    virtual ~FRHIFence() = default; 
  
     virtual bool IsSignaled() const = 0; 
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const = 0; 

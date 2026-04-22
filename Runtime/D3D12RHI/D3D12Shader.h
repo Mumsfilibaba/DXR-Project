@@ -6,18 +6,18 @@
 #include "D3D12RHI/D3D12Constants.h"
 #include <d3d12shader.h>
 
-typedef TSharedRef<class FD3D12Shader>              FD3D12ShaderRef;
-typedef TSharedRef<class FD3D12VertexShader>        FD3D12VertexShaderRef;
-typedef TSharedRef<class FD3D12HullShader>          FD3D12HullShaderRef;
-typedef TSharedRef<class FD3D12DomainShader>        FD3D12DomainShaderRef;
-typedef TSharedRef<class FD3D12GeometryShader>      FD3D12GeometryShaderRef;
-typedef TSharedRef<class FD3D12PixelShader>         FD3D12PixelShaderRef;
-typedef TSharedRef<class FD3D12ComputeShader>       FD3D12ComputeShaderRef;
-typedef TSharedRef<class FD3D12RayTracingShader>    FD3D12RayTracingShaderRef;
-typedef TSharedRef<class FD3D12RayGenShader>        FD3D12RayGenShaderRef;
-typedef TSharedRef<class FD3D12RayAnyHitShader>     FD3D12RayAnyHitShaderRef;
-typedef TSharedRef<class FD3D12RayClosestHitShader> FD3D12RayClosestHitShaderRef;
-typedef TSharedRef<class FD3D12RayMissShader>       FD3D12RayMissShaderRef;
+typedef TSharedRef<class FD3D12Shader>                 FD3D12ShaderRef;
+typedef TSharedRef<class FD3D12VertexShaderRHI>        FD3D12VertexShaderRHIRef;
+typedef TSharedRef<class FD3D12HullShaderRHI>          FD3D12HullShaderRHIRef;
+typedef TSharedRef<class FD3D12DomainShaderRHI>        FD3D12DomainShaderRHIRef;
+typedef TSharedRef<class FD3D12GeometryShaderRHI>      FD3D12GeometryShaderRHIRef;
+typedef TSharedRef<class FD3D12PixelShaderRHI>         FD3D12PixelShaderRHIRef;
+typedef TSharedRef<class FD3D12ComputeShaderRHI>       FD3D12ComputeShaderRHIRef;
+typedef TSharedRef<class FD3D12RayTracingShader>       FD3D12RayTracingShaderRef;
+typedef TSharedRef<class FD3D12RayGenShaderRHI>        FD3D12RayGenShaderRHIRef;
+typedef TSharedRef<class FD3D12RayAnyHitShaderRHI>     FD3D12RayAnyHitShaderRHIRef;
+typedef TSharedRef<class FD3D12RayClosestHitShaderRHI> FD3D12RayClosestHitShaderRHIRef;
+typedef TSharedRef<class FD3D12RayMissShaderRHI>       FD3D12RayMissShaderRHIRef;
 
 enum EShaderVisibility : int32
 {
@@ -169,10 +169,10 @@ public:
     virtual bool Initialize(const TArray<uint8>& InCode) override final;
 };
 
-class FD3D12VertexShader : public FRHIVertexShader, public FD3D12GraphicsShader
+class FD3D12VertexShaderRHI : public FRHIVertexShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12VertexShader(FD3D12Device* InDevice)
+    FD3D12VertexShaderRHI(FD3D12Device* InDevice)
         : FRHIVertexShader()
         , FD3D12GraphicsShader(InDevice, ShaderVisibility_Vertex)
     {
@@ -183,10 +183,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
-class FD3D12HullShader : public FRHIHullShader, public FD3D12GraphicsShader
+class FD3D12HullShaderRHI : public FRHIHullShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12HullShader(FD3D12Device* InDevice)
+    FD3D12HullShaderRHI(FD3D12Device* InDevice)
         : FRHIHullShader()
         , FD3D12GraphicsShader(InDevice, ShaderVisibility_Hull)
     {
@@ -197,10 +197,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
-class FD3D12DomainShader : public FRHIDomainShader, public FD3D12GraphicsShader
+class FD3D12DomainShaderRHI : public FRHIDomainShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12DomainShader(FD3D12Device* InDevice)
+    FD3D12DomainShaderRHI(FD3D12Device* InDevice)
         : FRHIDomainShader()
         , FD3D12GraphicsShader(InDevice, ShaderVisibility_Domain)
     {
@@ -211,10 +211,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
-class FD3D12GeometryShader : public FRHIGeometryShader, public FD3D12GraphicsShader
+class FD3D12GeometryShaderRHI : public FRHIGeometryShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12GeometryShader(FD3D12Device* InDevice)
+    FD3D12GeometryShaderRHI(FD3D12Device* InDevice)
         : FRHIGeometryShader()
         , FD3D12GraphicsShader(InDevice, ShaderVisibility_Geometry)
     {
@@ -225,10 +225,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
 };
 
-class FD3D12PixelShader : public FRHIPixelShader, public FD3D12GraphicsShader
+class FD3D12PixelShaderRHI : public FRHIPixelShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12PixelShader(FD3D12Device* InDevice)
+    FD3D12PixelShaderRHI(FD3D12Device* InDevice)
         : FRHIPixelShader()
         , FD3D12GraphicsShader(InDevice, ShaderVisibility_Pixel)
     {
@@ -268,10 +268,10 @@ private:
     FD3D12ShaderBindingInfo LocalBindingInfo;
 };
 
-class FD3D12RayGenShader : public FRHIRayGenShader, public FD3D12RayTracingShader
+class FD3D12RayGenShaderRHI : public FRHIRayGenShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayGenShader(FD3D12Device* InDevice)
+    FD3D12RayGenShaderRHI(FD3D12Device* InDevice)
         : FRHIRayGenShader()
         , FD3D12RayTracingShader(InDevice)
     {
@@ -282,10 +282,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
-class FD3D12RayAnyHitShader : public FRHIRayAnyHitShader, public FD3D12RayTracingShader
+class FD3D12RayAnyHitShaderRHI : public FRHIRayAnyHitShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayAnyHitShader(FD3D12Device* InDevice)
+    FD3D12RayAnyHitShaderRHI(FD3D12Device* InDevice)
         : FRHIRayAnyHitShader()
         , FD3D12RayTracingShader(InDevice)
     {
@@ -296,10 +296,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
-class FD3D12RayClosestHitShader : public FRHIRayClosestHitShader, public FD3D12RayTracingShader
+class FD3D12RayClosestHitShaderRHI : public FRHIRayClosestHitShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayClosestHitShader(FD3D12Device* InDevice)
+    FD3D12RayClosestHitShaderRHI(FD3D12Device* InDevice)
         : FRHIRayClosestHitShader()
         , FD3D12RayTracingShader(InDevice)
     {
@@ -310,10 +310,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
-class FD3D12RayMissShader : public FRHIRayMissShader, public FD3D12RayTracingShader
+class FD3D12RayMissShaderRHI : public FRHIRayMissShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayMissShader(FD3D12Device* InDevice)
+    FD3D12RayMissShaderRHI(FD3D12Device* InDevice)
         : FRHIRayMissShader()
         , FD3D12RayTracingShader(InDevice)
     {
@@ -324,10 +324,10 @@ public:
     virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
 };
 
-class FD3D12ComputeShader : public FRHIComputeShader, public FD3D12Shader
+class FD3D12ComputeShaderRHI : public FRHIComputeShader, public FD3D12Shader
 {
 public:
-    FD3D12ComputeShader(FD3D12Device* InDevice)
+    FD3D12ComputeShaderRHI(FD3D12Device* InDevice)
         : FRHIComputeShader()
         , FD3D12Shader(InDevice, ShaderVisibility_All)
         , ThreadGroupXYZ(0, 0, 0)

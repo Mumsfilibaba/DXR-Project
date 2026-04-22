@@ -13,13 +13,13 @@ FLightProbeRenderer::~FLightProbeRenderer()
 
 bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
 {
-    FRHISamplerStateInfo SamplerInfo;
-    SamplerInfo.AddressU = ESamplerMode::Wrap;
-    SamplerInfo.AddressV = ESamplerMode::Wrap;
-    SamplerInfo.AddressW = ESamplerMode::Wrap;
-    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    FRHISamplerStateDesc SamplerDesc;
+    SamplerDesc.AddressU = ESamplerMode::Wrap;
+    SamplerDesc.AddressV = ESamplerMode::Wrap;
+    SamplerDesc.AddressW = ESamplerMode::Wrap;
+    SamplerDesc.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.LightProbeSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+    FrameResources.LightProbeSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
     if (!FrameResources.LightProbeSampler)
     {
         return false;

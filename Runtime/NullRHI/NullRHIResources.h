@@ -7,8 +7,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class FNullRHIBuffer : public FRHIBuffer
 {
 public:
-    FNullRHIBuffer(const FRHIBufferInfo& InBufferInfo)
-        : FRHIBuffer(InBufferInfo)
+    FNullRHIBuffer(const FRHIBufferDesc& InBufferDesc)
+        : FRHIBuffer(InBufferDesc)
     {
     }
 
@@ -55,8 +55,8 @@ struct FNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
 class FNullRHITexture : public FRHITexture
 {
 public:
-    FNullRHITexture(const FRHITextureInfo& InTextureInfo)
-        : FRHITexture(InTextureInfo)
+    FNullRHITexture(const FRHITextureDesc& InTextureDesc)
+        : FRHITexture(InTextureDesc)
         , ShaderResourceView(new FNullRHIShaderResourceView(this))
         , UnorderedAccessView(new FNullRHIUnorderedAccessView(this))
     {
@@ -73,21 +73,21 @@ private:
     TSharedRef<FNullRHIUnorderedAccessView> UnorderedAccessView;
 };
 
-struct FNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
+struct FNullRHIRayTracingGeometry : public FRHIGeometryAccelerationStructure
 {
-    FNullRHIRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
-        : FRHIRayTracingGeometry(InGeometryInfo)
+    FNullRHIRayTracingGeometry(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
+        : FRHIGeometryAccelerationStructure(InGeometryDesc)
     {
     }
 
     virtual void* GetRHINativeHandle() const override final { return nullptr; }
 };
 
-class FNullRHIRayTracingScene : public FRHIRayTracingScene
+class FNullRHIRayTracingScene : public FRHISceneAccelerationStructure
 {
 public:
-    FNullRHIRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
-        : FRHIRayTracingScene(InSceneInfo)
+    FNullRHIRayTracingScene(const FRHISceneAccelerationStructureDesc& InSceneDesc)
+        : FRHISceneAccelerationStructure(InSceneDesc)
         , View(new FNullRHIShaderResourceView(this))
     {
     }
@@ -102,8 +102,8 @@ private:
 
 struct FNullRHISamplerState : public FRHISamplerState
 {
-    FNullRHISamplerState(const FRHISamplerStateInfo& InSamplerInfo)
-        : FRHISamplerState(InSamplerInfo)
+    FNullRHISamplerState(const FRHISamplerStateDesc& InSamplerDesc)
+        : FRHISamplerState(InSamplerDesc)
     {
     }
 
@@ -113,18 +113,18 @@ struct FNullRHISamplerState : public FRHISamplerState
 class FNullRHISwapChain : public FRHISwapChain
 {
 public:
-    FNullRHISwapChain(const FRHISwapChainInfo& InSwapChainInfo)
-        : FRHISwapChain(InSwapChainInfo)
+    FNullRHISwapChain(const FRHISwapChainDesc& InSwapChainDesc)
+        : FRHISwapChain(InSwapChainDesc)
         , BackBuffer(nullptr)
     { 
-        FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(Info.ColorFormat, Info.Width, Info.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
-        BackBuffer = new FNullRHITexture(BackBufferInfo);
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
+        BackBuffer = new FNullRHITexture(BackBufferDesc);
     }
 
     bool Resize(uint32 InWidth, uint32 InHeight)
     {
-        Info.Width  = uint16(InWidth);
-        Info.Height = uint16(InHeight);
+        Desc.Width  = uint16(InWidth);
+        Desc.Height = uint16(InHeight);
         return true;
     }
 
@@ -142,16 +142,16 @@ struct FNullRHIQuery : public FRHIQuery
     }
 };
 
-class FNullRHIGpuFence : public FRHIGpuFence
+class FNullRHIGpuFence : public FRHIFence
 {
 public:
     FNullRHIGpuFence()
-        : FRHIGpuFence()
+        : FRHIFence()
         , DebugName()
     {
     }
 
-    // FRHIGpuFence Interface
+    // FRHIFence Interface
     virtual bool IsSignaled() const override final { return true; }
     virtual bool Wait(uint64 TimeoutNs) const override final { (void)TimeoutNs; return true; }
     virtual void SetDebugName(const FString& InName) override final { DebugName = InName; }
@@ -164,78 +164,78 @@ private:
 class FNullRHIInputLayout : public FRHIInputLayout
 {
 public:
-    FNullRHIInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+    FNullRHIInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
         : FRHIInputLayout()
         , InputElements(InInputElements)
     {
     }
 
-    virtual const FRHIInputElementInfo* GetInputElementInfo(uint32 Index) const override final
+    virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final
     {
         return &InputElements[Index];
     }
 
-    virtual uint32 GetNumInputElementInfos() const override final
+    virtual uint32 GetNumInputElementDescs() const override final
     {
         return InputElements.Size();
     }
 
 private:
-    TArray<FRHIInputElementInfo> InputElements;
+    TArray<FRHIInputElementDesc> InputElements;
 };
 
 class FNullRHIDepthStencilState : public FRHIDepthStencilState
 {
 public:
-    FNullRHIDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
+    FNullRHIDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
         : FRHIDepthStencilState()
-        , Info(InInfo)
+        , Desc(InDesc)
     {
     }
 
-    virtual FRHIDepthStencilStateInfo GetInfo() const override final
+    virtual FRHIDepthStencilStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
 
 private:
-    FRHIDepthStencilStateInfo Info;
+    FRHIDepthStencilStateDesc Desc;
 };
 
 class FNullRHIRasterizerState : public FRHIRasterizerState
 {
 public:
-    FNullRHIRasterizerState(const FRHIRasterizerStateInfo& InInfo)
+    FNullRHIRasterizerState(const FRHIRasterizerStateDesc& InDesc)
         : FRHIRasterizerState()
-        , Info(InInfo)
+        , Desc(InDesc)
     {
     }
 
-    virtual FRHIRasterizerStateInfo GetInfo() const override final
+    virtual FRHIRasterizerStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
 
 private:
-    FRHIRasterizerStateInfo Info;
+    FRHIRasterizerStateDesc Desc;
 };
 
 struct FNullRHIBlendState : public FRHIBlendState
 {
 public:
-    FNullRHIBlendState(const FRHIBlendStateInfo& InInfo)
+    FNullRHIBlendState(const FRHIBlendStateDesc& InDesc)
         : FRHIBlendState()
-        , Info(InInfo)
+        , Desc(InDesc)
     {
     }
 
-    virtual FRHIBlendStateInfo GetInfo() const override final
+    virtual FRHIBlendStateDesc GetDesc() const override final
     {
-        return Info;
+        return Desc;
     }
 
 private:
-    FRHIBlendStateInfo Info;
+    FRHIBlendStateDesc Desc;
 };
 
 struct FNullRHIGraphicsPipelineState : public FRHIGraphicsPipelineState

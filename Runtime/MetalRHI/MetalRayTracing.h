@@ -4,11 +4,11 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalRayTracingGeometry : public FRHIRayTracingGeometry
+class FMetalRayTracingGeometry : public FRHIGeometryAccelerationStructure
 {
 public:
-    FMetalRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
-        : FRHIRayTracingGeometry(InGeometryInfo)
+    FMetalRayTracingGeometry(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
+        : FRHIGeometryAccelerationStructure(InGeometryDesc)
     {
     }
 
@@ -18,11 +18,11 @@ public:
     virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 };
 
-class FMetalRayTracingScene : public FRHIRayTracingScene
+class FMetalRayTracingScene : public FRHISceneAccelerationStructure
 {
 public:
-    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneInfo& InSceneInfo)
-        : FRHIRayTracingScene(InSceneInfo)
+    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHISceneAccelerationStructureDesc& InSceneDesc)
+        : FRHISceneAccelerationStructure(InSceneDesc)
         , View(new FMetalShaderResourceView(InDeviceContext, this))
     {
     }

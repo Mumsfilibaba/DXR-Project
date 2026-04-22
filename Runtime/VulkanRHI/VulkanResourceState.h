@@ -6,8 +6,8 @@ constexpr VkImageLayout          VK_IMAGE_LAYOUT_TO_BE_DETERMINED           = st
 constexpr VkAccessFlags2         VK_ACCESS_FLAGS_2_TO_BE_DETERMINED         = ~static_cast<VkAccessFlags2>(0);
 constexpr VkPipelineStageFlags2  VK_PIPELINE_STAGE_FLAGS_2_TO_BE_DETERMINED = ~static_cast<VkPipelineStageFlags2>(0);
 
-class FVulkanTexture;
-class FVulkanBuffer;
+class FVulkanTextureRHI;
+class FVulkanBufferRHI;
 
 class FVulkanImageLayoutState
 {
@@ -52,10 +52,10 @@ public:
     }
 
 private:
-    VkImageLayout         ImageLayout      = VK_IMAGE_LAYOUT_UNDEFINED;
-    VkImageLayout         DefaultLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
-    uint32                NumSubresources  = 0;
-    bool                  bAllSameLayout   = true;
+    VkImageLayout         ImageLayout       = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkImageLayout         DefaultLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+    uint32                NumSubresources   = 0;
+    bool                  bAllSameLayout    = true;
     bool                  bHasDefaultLayout = false;
     TArray<VkImageLayout> SubresourceLayouts;
 };
@@ -82,14 +82,14 @@ private:
 
 struct FVulkanPendingImageBarrier
 {
-    FVulkanTexture* Texture;
-    VkImageLayout   DesiredLayout;
-    uint32          Subresource;
+    FVulkanTextureRHI* Texture;
+    VkImageLayout      DesiredLayout;
+    uint32             Subresource;
 };
 
 struct FVulkanPendingBufferBarrier
 {
-    FVulkanBuffer*        Buffer;
+    FVulkanBufferRHI*     Buffer;
     VkAccessFlags2        DesiredAccess;
     VkPipelineStageFlags2 DesiredStage;
 };

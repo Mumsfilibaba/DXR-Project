@@ -25,7 +25,7 @@ enum class EBufferFlags : uint16
 
 ENUM_CLASS_OPERATORS(EBufferFlags);
 
-struct FRHIBufferInfo
+struct FRHIBufferDesc
 {
     NODISCARD constexpr bool IsDefault()   const { return IsEnumFlagSet(Flags, EBufferFlags::Default); }
     NODISCARD constexpr bool IsDynamic()   const { return IsEnumFlagSet(Flags, EBufferFlags::Dynamic); }
@@ -47,9 +47,9 @@ struct FRHIBufferInfo
 class FRHIBuffer : public FRHIResource 
 { 
 protected: 
-    explicit FRHIBuffer(const FRHIBufferInfo& InBufferInfo) 
+    explicit FRHIBuffer(const FRHIBufferDesc& InBufferDesc) 
         : FRHIResource()
-        , Info(InBufferInfo)
+        , Desc(InBufferDesc)
     {
     }
 
@@ -63,13 +63,13 @@ public:
     virtual void SetDebugName(const FString& InName) = 0; 
     virtual FString GetDebugName() const = 0; 
  
-    const FRHIBufferInfo& GetInfo() const 
+    const FRHIBufferDesc& GetDesc() const 
     { 
-        return Info; 
+        return Desc; 
     } 
 
 protected: 
-    FRHIBufferInfo Info; 
+    FRHIBufferDesc Desc; 
 }; 
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -217,9 +217,9 @@ bool FEditorEngine::CreateViewportRenderTarget()
     }
 
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(RenderSettings::GetBackBufferFormat(), Size.X, Size.Y, 1, 1, UsageFlags);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(RenderSettings::GetBackBufferFormat(), Size.X, Size.Y, 1, 1, UsageFlags);
 
-    FRHITextureRef NewViewportImage = FRHI::Get()->CreateTexture(TextureInfo, EResourceAccess::RenderTarget);
+    FRHITextureRef NewViewportImage = FRHI::Get()->CreateTexture(TextureDesc, EResourceAccess::RenderTarget);
     if (NewViewportImage)
     {
         ViewportImage = NewViewportImage;

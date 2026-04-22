@@ -2,13 +2,13 @@
 #include "RHI/RHIResources.h"
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
-typedef TSharedRef<class FVulkanSamplerState> FVulkanSamplerStateRef;
+typedef TSharedRef<class FVulkanSamplerStateRHI> FVulkanSamplerStateRHIRef;
 
-class FVulkanSamplerState : public FRHISamplerState, public FVulkanDeviceChild
+class FVulkanSamplerStateRHI : public FRHISamplerState, public FVulkanDeviceChild
 {
 public:
-    FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateInfo& InSamplerInfo);
-    virtual ~FVulkanSamplerState();
+    FVulkanSamplerStateRHI(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InSamplerDesc);
+    virtual ~FVulkanSamplerStateRHI();
 
     bool Initialize();
     

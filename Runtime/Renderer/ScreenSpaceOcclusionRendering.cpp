@@ -64,10 +64,10 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIComputePipelineStateInfo PSOInfo;
-    PSOInfo.Shader = SSAOShader.Get();
+    FRHIComputePipelineStateDesc PSODesc;
+    PSODesc.Shader = SSAOShader.Get();
 
-    PipelineState = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    PipelineState = FRHI::Get()->CreateComputePipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();
@@ -97,8 +97,8 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInfo.Shader = BlurHorizontalShader.Get();
-    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    PSODesc.Shader = BlurHorizontalShader.Get();
+    BlurHorizontalPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
 
     if (!BlurHorizontalPSO)
     {
@@ -127,9 +127,9 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PSOInfo.Shader = BlurVerticalShader.Get();
+    PSODesc.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSOInfo);
+    BlurVerticalPSO = FRHI::Get()->CreateComputePipelineState(PSODesc);
     if (!BlurVerticalPSO)
     {
         DEBUG_BREAK();
@@ -242,8 +242,8 @@ bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources,
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
-    FRHITextureInfo SSAOBufferInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
-    FrameResources.SSAOBuffer = FRHI::Get()->CreateTexture(SSAOBufferInfo, EResourceAccess::NonPixelShaderResource);
+    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
+    FrameResources.SSAOBuffer = FRHI::Get()->CreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();

@@ -1,8 +1,8 @@
 #include "VulkanRHI/VulkanRayTracing.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
-FVulkanRayTracingGeometry::FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo)
-    : FRHIRayTracingGeometry(InGeometryInfo)
+FVulkanGeometryAccelerationStructureRHI::FVulkanGeometryAccelerationStructureRHI(FVulkanDevice* InDevice, const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
+    : FRHIGeometryAccelerationStructure(InGeometryDesc)
     , FVulkanDeviceChild(InDevice)
     , Geometry(VK_NULL_HANDLE)
     , GeometryDeviceAddress(0)
@@ -14,7 +14,7 @@ FVulkanRayTracingGeometry::FVulkanRayTracingGeometry(FVulkanDevice* InDevice, co
 {
 }
 
-FVulkanRayTracingGeometry::~FVulkanRayTracingGeometry()
+FVulkanGeometryAccelerationStructureRHI::~FVulkanGeometryAccelerationStructureRHI()
 {
     if (VULKAN_CHECK_HANDLE(Geometry))
     {
@@ -23,7 +23,7 @@ FVulkanRayTracingGeometry::~FVulkanRayTracingGeometry()
     }
 }
 
-void FVulkanRayTracingGeometry::SetDebugName(const FString& InName)
+void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(Geometry))
     {
@@ -33,15 +33,15 @@ void FVulkanRayTracingGeometry::SetDebugName(const FString& InName)
     DebugName = InName;
 }
 
-FString FVulkanRayTracingGeometry::GetDebugName() const
+FString FVulkanGeometryAccelerationStructureRHI::GetDebugName() const
 {
     return DebugName;
 }
 
-bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo)
+bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
-    VertexBuffer = MakeSharedRef<FVulkanBuffer>(BuildInfo.VertexBuffer);
-    IndexBuffer  = MakeSharedRef<FVulkanBuffer>(BuildInfo.IndexBuffer);
+    VertexBuffer = MakeSharedRef<FVulkanBufferRHI>(BuildDesc.VertexBuffer);
+    IndexBuffer  = MakeSharedRef<FVulkanBufferRHI>(BuildDesc.IndexBuffer);
 
     VkDeviceOrHostAddressConstKHR VertexData = {};
     VertexData.deviceAddress = VertexBuffer->GetDeviceAddress();
@@ -55,10 +55,10 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     AccelerationStructureGeometry.geometryType                    = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
     AccelerationStructureGeometry.geometry.triangles.sType        = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
     AccelerationStructureGeometry.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-    AccelerationStructureGeometry.geometry.triangles.maxVertex    = Math::Max<uint32>(BuildInfo.NumVertices - 1, 1);
-    AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetInfo().Stride;
+    AccelerationStructureGeometry.geometry.triangles.maxVertex    = Math::Max<uint32>(BuildDesc.NumVertices - 1, 1);
+    AccelerationStructureGeometry.geometry.triangles.vertexStride = VertexBuffer->GetDesc().Stride;
     AccelerationStructureGeometry.geometry.triangles.vertexData   = VertexData;
-    AccelerationStructureGeometry.geometry.triangles.indexType    = ConvertIndexFormat(BuildInfo.IndexFormat);
+    AccelerationStructureGeometry.geometry.triangles.indexType    = ConvertIndexFormat(BuildDesc.IndexFormat);
     AccelerationStructureGeometry.geometry.triangles.indexData    = IndexData;
 
     VkAccelerationStructureBuildGeometryInfoKHR AccelerationStructureBuildGeometryInfo = {};
@@ -72,8 +72,8 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     VkAccelerationStructureBuildSizesInfoKHR AccelerationStructureBuildSizesInfo = {};
     AccelerationStructureBuildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
-    const uint32 NumTriangles = BuildInfo.NumIndices / 3;
-    if ((BuildInfo.NumIndices % 3) != 0)
+    const uint32 NumTriangles = BuildDesc.NumIndices / 3;
+    if ((BuildDesc.NumIndices % 3) != 0)
     {
         VULKAN_WARNING("Creating acceleration structure with an indexcount that is not a multiple of 3");
     }

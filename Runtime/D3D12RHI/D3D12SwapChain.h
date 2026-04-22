@@ -9,13 +9,13 @@
 
 class FD3D12CommandContext;
 
-typedef TSharedRef<class FD3D12SwapChain> FD3D12SwapChainRef;
+typedef TSharedRef<class FD3D12SwapChainRHI> FD3D12SwapChainRHIRef;
 
-class FD3D12SwapChain : public FRHISwapChain, public FD3D12DeviceChild
+class FD3D12SwapChainRHI : public FRHISwapChain, public FD3D12DeviceChild
 {
 public:
-    FD3D12SwapChain(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainInfo& InSwapChainInfo);
-    virtual ~FD3D12SwapChain();
+    FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainDesc& InSwapChainDesc);
+    virtual ~FD3D12SwapChainRHI();
 
     // FRHISwapChain Interface
     virtual FRHITexture* GetBackBuffer() const override final { return BackBufferProxy.Get(); }
@@ -26,7 +26,7 @@ public:
     bool Resize(FD3D12CommandContext* InCommandContext, uint32 Width, uint32 Height);
     bool Present(bool bVerticalSync);
 
-    FD3D12Texture* GetCurrentBackBuffer() const 
+    FD3D12TextureRHI* GetCurrentBackBuffer() const 
     { 
         return BackBuffers[BackBufferIndex].Get();
     }
@@ -35,14 +35,14 @@ private:
     bool RetrieveBackBuffers();
     void ApplySettingsChanges();
 
-    TComPtr<IDXGISwapChain3>   SwapChain;
-    FD3D12CommandContext*      CommandContext;
-    FD3D12BackBufferTextureRef BackBufferProxy;
-    TArray<FD3D12TextureRef>   BackBuffers;
-    HWND                       Hwnd;
-    HANDLE                     SwapChainWaitableObject;
-    uint32                     Flags;
-    uint32                     NumBackBuffers;
-    uint32                     ActiveFrameLatency;
-    uint32                     BackBufferIndex;
+    TComPtr<IDXGISwapChain3>    SwapChain;
+    FD3D12CommandContext*       CommandContext;
+    FD3D12BackBufferTextureRef  BackBufferProxy;
+    TArray<FD3D12TextureRHIRef> BackBuffers;
+    HWND                        Hwnd;
+    HANDLE                      SwapChainWaitableObject;
+    uint32                      Flags;
+    uint32                      NumBackBuffers;
+    uint32                      ActiveFrameLatency;
+    uint32                      BackBufferIndex;
 };

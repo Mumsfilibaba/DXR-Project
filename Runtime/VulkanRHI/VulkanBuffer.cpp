@@ -6,7 +6,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "RHI/RHIStats.h"
 
-FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
+FVulkanBufferRHI::FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
     , FVulkanResource(InDevice)
     , OwnedBuffer(VK_NULL_HANDLE)
@@ -15,25 +15,25 @@ FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBu
 {
 }
 
-FVulkanBuffer::~FVulkanBuffer()
+FVulkanBufferRHI::~FVulkanBufferRHI()
 {
 #if VULKAN_ENABLE_STATS
     const int64 AllocatedSize = static_cast<int64>(MemoryStorage.GetSize());
     if (AllocatedSize > 0)
     {
-        if (Info.IsVertexBuffer())
+        if (Desc.IsVertexBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_VertexBufferMemory, AllocatedSize);
         }
-        else if (Info.IsIndexBuffer())
+        else if (Desc.IsIndexBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_IndexBufferMemory, AllocatedSize);
         }
-        else if (Info.IsConstantBuffer())
+        else if (Desc.IsConstantBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_ConstantBufferMemory, AllocatedSize);
         }
-        else if (Info.IsShaderResourceBuffer() || Info.IsUnorderedAccessBuffer())
+        else if (Desc.IsShaderResourceBuffer() || Desc.IsUnorderedAccessBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_StructuredBufferMemory, AllocatedSize);
         }
@@ -42,11 +42,11 @@ FVulkanBuffer::~FVulkanBuffer()
             STAT_SUBTRACT(STAT_RHI_MiscBufferMemory, AllocatedSize);
         }
 
-        if (Info.IsReadBack())
+        if (Desc.IsReadBack())
         {
             STAT_SUBTRACT(STAT_RHI_ReadbackMemory, AllocatedSize);
         }
-        if (Info.IsDynamic() || Info.IsTransient())
+        if (Desc.IsDynamic() || Desc.IsTransient())
         {
             STAT_SUBTRACT(STAT_RHI_UploadMemory, AllocatedSize);
         }
@@ -60,7 +60,7 @@ FVulkanBuffer::~FVulkanBuffer()
     }
 }
 
-bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
+bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
@@ -70,14 +70,14 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     VkBufferUsageFlags UsageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
     VkMemoryAllocateFlags AllocateFlags = 0;
-    if (Info.IsDefault())
+    if (Desc.IsDefault())
     {
         AllocateFlags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
         UsageFlags |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     }
 
     const bool bIsRayTracingSupported = GVulkanSupportsAccelerationStructures;
-    if (Info.IsVertexBuffer())
+    if (Desc.IsVertexBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
@@ -89,7 +89,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
-    if (Info.IsIndexBuffer())
+    if (Desc.IsIndexBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
@@ -101,35 +101,35 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
-    if (Info.IsConstantBuffer())
+    if (Desc.IsConstantBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
     }
-    if (Info.IsUnorderedAccessBuffer() || Info.IsShaderResourceBuffer())
+    if (Desc.IsUnorderedAccessBuffer() || Desc.IsShaderResourceBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
-    if (Info.IsShaderResourceBuffer())
+    if (Desc.IsShaderResourceBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minTexelBufferOffsetAlignment);
     }
-    if (Info.IsUnorderedAccessBuffer())
+    if (Desc.IsUnorderedAccessBuffer())
     {
         UsageFlags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
         RequiredAlignment = Math::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minTexelBufferOffsetAlignment);
     }
 
-    const VkDeviceSize AlignedSize = Math::AlignUp(static_cast<VkDeviceSize>(Info.Size), RequiredAlignment);
+    const VkDeviceSize AlignedSize = Math::AlignUp(static_cast<VkDeviceSize>(Desc.Size), RequiredAlignment);
 
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    if (Info.IsDynamic() || Info.IsTransient())
+    if (Desc.IsDynamic() || Desc.IsTransient())
     {
         MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
-    else if (Info.IsReadBack())
+    else if (Desc.IsReadBack())
     {
         MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
@@ -178,7 +178,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 
     if (InInitialData)
     {
-        if (Info.IsDynamic() || Info.IsTransient())
+        if (Desc.IsDynamic() || Desc.IsTransient())
         {
             void* BufferData = MemoryStorage.GetMappedBaseAddress();
             if (!BufferData)
@@ -187,7 +187,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
                 return false;
             }
 
-            FMemory::Memcpy(BufferData, InInitialData, Info.Size);
+            FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
         }
         else
         {
@@ -195,7 +195,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 
             InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             
-            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
 
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
@@ -209,7 +209,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
     return true;
 }
 
-void FVulkanBuffer::SetDebugName(const FString& InName)
+void FVulkanBufferRHI::SetDebugName(const FString& InName)
 {
     VkBuffer BufferHandle = GetVkBuffer();
     if (BufferHandle != VK_NULL_HANDLE)
@@ -220,19 +220,19 @@ void FVulkanBuffer::SetDebugName(const FString& InName)
     DebugName = InName;
 }
 
-FString FVulkanBuffer::GetDebugName() const
+FString FVulkanBufferRHI::GetDebugName() const
 {
     return DebugName;
 }
 
-void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
+void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
 {
     if (!MemoryStorage.IsValid())
     {
         return nullptr;
     }
 
-    if (!Info.IsDynamic() && !Info.IsReadBack() && !Info.IsTransient())
+    if (!Desc.IsDynamic() && !Desc.IsReadBack() && !Desc.IsTransient())
     {
         VULKAN_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
         return nullptr;
@@ -244,14 +244,14 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    CHECK(Offset <= Info.Size);
+    CHECK(Offset <= Desc.Size);
     uint64 MapSize = Size;
     if (MapSize == UINT64_MAX)
     {
-        MapSize = Info.Size - Offset;
+        MapSize = Desc.Size - Offset;
     }
 
-    if (Info.IsReadBack())
+    if (Desc.IsReadBack())
     {
         VkMappedMemoryRange Range = {};
         Range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -267,7 +267,7 @@ void* FVulkanBuffer::Map(uint64 Offset, uint64 Size)
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-void FVulkanBuffer::Unmap(uint64 Offset, uint64 Size)
+void FVulkanBufferRHI::Unmap(uint64 Offset, uint64 Size)
 {
 }
 

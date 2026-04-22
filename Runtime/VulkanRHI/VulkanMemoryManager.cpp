@@ -2064,7 +2064,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
         VkImage OldImage = VK_NULL_HANDLE;
         if (Owner)
         {
-            FVulkanTexture* Texture = static_cast<FVulkanTexture*>(Owner);
+            FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(Owner);
             OldImage = Texture->GetVkImage();
 
             Texture->DestroyImageViews();
@@ -2122,7 +2122,7 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             break;
         }
 
-        FVulkanTexture* Texture = static_cast<FVulkanTexture*>(Candidate.Owner->GetOwner());
+        FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(Candidate.Owner->GetOwner());
         
         VkImage OldImage = Texture->GetVkImage();
         VkImage NewImage = VK_NULL_HANDLE;

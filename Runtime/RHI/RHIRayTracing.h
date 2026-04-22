@@ -8,16 +8,16 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FRHIRayTracingScene;
-class FRHIRayTracingGeometry;
+class FRHISceneAccelerationStructure;
+class FRHIGeometryAccelerationStructure;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
 class FRHIBuffer;
 class FRHISamplerState;
-struct FRHIRayTracingGeometryInstance;
+struct FRHIGeometryAccelerationStructureInstance;
 
-typedef TSharedRef<FRHIRayTracingScene>    FRHIRayTracingSceneRef;
-typedef TSharedRef<FRHIRayTracingGeometry> FRHIRayTracingGeometryRef;
+typedef TSharedRef<FRHISceneAccelerationStructure>    FRHISceneAccelerationStructureRef;
+typedef TSharedRef<FRHIGeometryAccelerationStructure> FRHIGeometryAccelerationStructureRef;
 
 struct FRayPayload
 {
@@ -52,11 +52,11 @@ enum class ERayTracingInstanceFlags : uint8
 
 ENUM_CLASS_OPERATORS(ERayTracingInstanceFlags);
 
-struct FRHIRayTracingGeometryInstance
+struct FRHIGeometryAccelerationStructureInstance
 {
-    FRHIRayTracingGeometryInstance() noexcept = default;
+    FRHIGeometryAccelerationStructureInstance() noexcept = default;
 
-    FRHIRayTracingGeometryInstance(FRHIRayTracingGeometry* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex,
+    FRHIGeometryAccelerationStructureInstance(FRHIGeometryAccelerationStructure* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex,
         ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform) noexcept
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
@@ -67,9 +67,9 @@ struct FRHIRayTracingGeometryInstance
     {
     }
 
-    bool operator==(const FRHIRayTracingGeometryInstance& Other) const noexcept = default;
+    bool operator==(const FRHIGeometryAccelerationStructureInstance& Other) const noexcept = default;
 
-    FRHIRayTracingGeometry*  Geometry      = nullptr;
+    FRHIGeometryAccelerationStructure*  Geometry      = nullptr;
     uint32                   InstanceIndex = 0;
     uint32                   HitGroupIndex = 0;
     ERayTracingInstanceFlags Flags         = ERayTracingInstanceFlags::None;
@@ -77,11 +77,11 @@ struct FRHIRayTracingGeometryInstance
     FMatrix3x4               Transform     = { };
 };
 
-struct FRHIRayTracingGeometryInfo
+struct FRHIGeometryAccelerationStructureDesc
 {
-    constexpr FRHIRayTracingGeometryInfo() noexcept = default;
+    constexpr FRHIGeometryAccelerationStructureDesc() noexcept = default;
 
-    constexpr FRHIRayTracingGeometryInfo(FRHIBuffer* InVertexBuffer, uint32 InNumVerticies, FRHIBuffer* InIndexBuffer, uint32 InNumIndices,
+    constexpr FRHIGeometryAccelerationStructureDesc(FRHIBuffer* InVertexBuffer, uint32 InNumVerticies, FRHIBuffer* InIndexBuffer, uint32 InNumIndices,
         EIndexFormat InIndexFormat, EAccelerationStructureBuildFlags InFlags) noexcept
         : VertexBuffer(InVertexBuffer)
         , NumVertices(InNumVerticies)
@@ -97,7 +97,7 @@ struct FRHIRayTracingGeometryInfo
     NODISCARD constexpr bool PreferFastTrace() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
     NODISCARD constexpr bool PreferFastBuild() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
-    constexpr bool operator==(const FRHIRayTracingGeometryInfo& Other) const noexcept = default;
+    constexpr bool operator==(const FRHIGeometryAccelerationStructureDesc& Other) const noexcept = default;
     
     FRHIBuffer*                      VertexBuffer = nullptr;
     uint32                           NumVertices  = 0;
@@ -107,11 +107,11 @@ struct FRHIRayTracingGeometryInfo
     EAccelerationStructureBuildFlags Flags        = EAccelerationStructureBuildFlags::None;
 };
 
-struct FRHIRayTracingSceneInfo
+struct FRHISceneAccelerationStructureDesc
 {
-    FRHIRayTracingSceneInfo() noexcept = default;
+    FRHISceneAccelerationStructureDesc() noexcept = default;
 
-    FRHIRayTracingSceneInfo(const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags) noexcept
+    FRHISceneAccelerationStructureDesc(const TArrayView<const FRHIGeometryAccelerationStructureInstance>& InInstances, EAccelerationStructureBuildFlags InFlags) noexcept
         : Instances(InInstances)
         , Flags(InFlags)
     {
@@ -122,22 +122,22 @@ struct FRHIRayTracingSceneInfo
     NODISCARD constexpr bool PreferFastTrace() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
     NODISCARD constexpr bool PreferFastBuild() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
-    bool operator==(const FRHIRayTracingSceneInfo& Other) const noexcept = default;
+    bool operator==(const FRHISceneAccelerationStructureDesc& Other) const noexcept = default;
     
-    TArray<FRHIRayTracingGeometryInstance> Instances;
+    TArray<FRHIGeometryAccelerationStructureInstance> Instances;
     EAccelerationStructureBuildFlags       Flags = EAccelerationStructureBuildFlags::None;
 };
 
-class FRHIRayTracingGeometry : public FRHIResource
+class FRHIGeometryAccelerationStructure : public FRHIResource
 {
 protected: 
-    explicit FRHIRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
+    explicit FRHIGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
         : FRHIResource()
-        , Flags(InGeometryInfo.Flags)
+        , Flags(InGeometryDesc.Flags)
     {
     }
 
-    virtual ~FRHIRayTracingGeometry() = default;
+    virtual ~FRHIGeometryAccelerationStructure() = default;
 
 public:
     virtual void* GetRHINativeHandle() const { return nullptr; }
@@ -154,16 +154,16 @@ protected:
     EAccelerationStructureBuildFlags Flags;
 };
 
-class FRHIRayTracingScene : public FRHIResource
+class FRHISceneAccelerationStructure : public FRHIResource
 {
 protected:
-    explicit FRHIRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
+    explicit FRHISceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
         : FRHIResource()
-        , Flags(InSceneInfo.Flags)
+        , Flags(InSceneDesc.Flags)
     {
     }
 
-    virtual ~FRHIRayTracingScene() = default;
+    virtual ~FRHISceneAccelerationStructure() = default;
 
 public:
     virtual void* GetRHINativeHandle() const { return nullptr; }

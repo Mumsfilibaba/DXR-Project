@@ -3,31 +3,31 @@
 #include "D3D12RHI/D3D12Buffer.h"
 #include "RHI/RHIStats.h"
 
-FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo)
-    : FRHIBuffer(InBufferInfo)
+FD3D12BufferRHI::FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc)
+    : FRHIBuffer(InBufferDesc)
     , FD3D12GenericResource(InDevice)
 {
 }
 
-FD3D12Buffer::~FD3D12Buffer()
+FD3D12BufferRHI::~FD3D12BufferRHI()
 {
 #if D3D12_ENABLE_STATS
     const int64 AllocatedSize = static_cast<int64>(ResourceStorage.GetSize());
     if (AllocatedSize > 0)
     {
-        if (Info.IsVertexBuffer())
+        if (Desc.IsVertexBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_VertexBufferMemory, AllocatedSize);
         }
-        else if (Info.IsIndexBuffer())
+        else if (Desc.IsIndexBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_IndexBufferMemory, AllocatedSize);
         }
-        else if (Info.IsConstantBuffer())
+        else if (Desc.IsConstantBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_ConstantBufferMemory, AllocatedSize);
         }
-        else if (Info.IsShaderResourceBuffer() || Info.IsUnorderedAccessBuffer())
+        else if (Desc.IsShaderResourceBuffer() || Desc.IsUnorderedAccessBuffer())
         {
             STAT_SUBTRACT(STAT_RHI_StructuredBufferMemory, AllocatedSize);
         }
@@ -36,11 +36,11 @@ FD3D12Buffer::~FD3D12Buffer()
             STAT_SUBTRACT(STAT_RHI_MiscBufferMemory, AllocatedSize);
         }
 
-        if (Info.IsReadBack())
+        if (Desc.IsReadBack())
         {
             STAT_SUBTRACT(STAT_RHI_ReadbackMemory, AllocatedSize);
         }
-        if (Info.IsDynamic() || Info.IsTransient())
+        if (Desc.IsDynamic() || Desc.IsTransient())
         {
             STAT_SUBTRACT(STAT_RHI_UploadMemory, AllocatedSize);
         }
@@ -48,14 +48,14 @@ FD3D12Buffer::~FD3D12Buffer()
 #endif
 }
 
-bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
+bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
-    const uint64 Alignment   = GetBufferAlignment(Info.Flags);
-    const uint64 AlignedSize = Math::AlignUp(Info.Size, Alignment);
+    const uint64 Alignment   = GetBufferAlignment(Desc.Flags);
+    const uint64 AlignedSize = Math::AlignUp(Desc.Size, Alignment);
 
     D3D12_RESOURCE_DESC ResourceDesc = {};
     ResourceDesc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    ResourceDesc.Flags              = ConvertBufferFlags(Info.Flags);
+    ResourceDesc.Flags              = ConvertBufferFlags(Desc.Flags);
     ResourceDesc.Format             = DXGI_FORMAT_UNKNOWN;
     ResourceDesc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
     ResourceDesc.Width              = AlignedSize;
@@ -69,9 +69,9 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     ED3D12ResourceStateMode StateMode         = ED3D12ResourceStateMode::MultipleStates;
     D3D12_RESOURCE_STATES   D3D12InitialState = D3D12_RESOURCE_STATE_COMMON;
     D3D12_HEAP_TYPE         D3D12HeapType     = D3D12_HEAP_TYPE_DEFAULT;
-    D3D12_RESOURCE_STATES   D3D12DefaultState = DetermineDefaultBufferState(Info.Flags);
+    D3D12_RESOURCE_STATES   D3D12DefaultState = DetermineDefaultBufferState(Desc.Flags);
 
-    if (Info.IsReadBack())
+    if (Desc.IsReadBack())
     {
         D3D12HeapType      = D3D12_HEAP_TYPE_READBACK;
         D3D12InitialState  = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -79,7 +79,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         StateMode          = ED3D12ResourceStateMode::SingleState;
         ResourceDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
     }
-    else if (Info.IsDynamic() || Info.IsTransient())
+    else if (Desc.IsDynamic() || Desc.IsTransient())
     {
         D3D12HeapType     = D3D12_HEAP_TYPE_UPLOAD;
         D3D12InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
@@ -93,9 +93,9 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     }
 
     bool bAllocated = false;
-    if (Info.IsTransient())
+    if (Desc.IsTransient())
     {
-        if (Info.IsConstantBuffer())
+        if (Desc.IsConstantBuffer())
         {
             bAllocated = GetDevice()->GetDynamicConstantsAllocator()->Allocate(AlignedSize, ResourceStorage) != nullptr;
         }
@@ -104,7 +104,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
             bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(AlignedSize, Alignment, ResourceStorage) != nullptr;
         }
     }
-    else if (Info.IsDynamic())
+    else if (Desc.IsDynamic())
     {
         bAllocated = GetDevice()->GetUploadHeapAllocator()->Allocate(AlignedSize, Alignment, ResourceStorage) != nullptr;
     }
@@ -129,7 +129,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
 
     if (InInitialData)
     {
-        if (Info.IsDynamic() || Info.IsTransient())
+        if (Desc.IsDynamic() || Desc.IsTransient())
         {
             void* MappedAddress = ResourceStorage.GetMappedBaseAddress();
             if (!MappedAddress)
@@ -141,12 +141,12 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
                     return false;
                 }
 
-                FMemory::Memcpy(MappedAddress, InInitialData, Info.Size);
+                FMemory::Memcpy(MappedAddress, InInitialData, Desc.Size);
                 D3D12Resource->UnmapRange(0, nullptr);
             }
             else
             {
-                FMemory::Memcpy(MappedAddress, InInitialData, Info.Size);
+                FMemory::Memcpy(MappedAddress, InInitialData, Desc.Size);
             }
         }
         else if (bHasDefaultState)
@@ -154,7 +154,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
             InCommandContext->StartContext();
 
             InCommandContext->TransitionResourceState(D3D12Resource, D3D12DefaultState, D3D12_RESOURCE_STATE_COPY_DEST);
-            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
             InCommandContext->TransitionResourceState(D3D12Resource, D3D12_RESOURCE_STATE_COPY_DEST, D3D12DefaultState);
 
             InCommandContext->FinishContext();
@@ -164,7 +164,7 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
             InCommandContext->StartContext();
 
             InCommandContext->TransitionBufferState(this, EResourceAccess::Common, EResourceAccess::CopyDest);
-            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->UpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
             InCommandContext->TransitionBufferState(this, EResourceAccess::CopyDest, InInitialAccess);
 
             InCommandContext->FinishContext();
@@ -180,14 +180,14 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
     return true;
 }
 
-void* FD3D12Buffer::Map(uint64 Offset, uint64 Size)
+void* FD3D12BufferRHI::Map(uint64 Offset, uint64 Size)
 {
     if (!ResourceStorage.GetResource())
     {
         return nullptr;
     }
 
-    if (!Info.IsDynamic() && !Info.IsReadBack() && !Info.IsTransient())
+    if (!Desc.IsDynamic() && !Desc.IsReadBack() && !Desc.IsTransient())
     {
         D3D12_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
         return nullptr;
@@ -220,7 +220,7 @@ void* FD3D12Buffer::Map(uint64 Offset, uint64 Size)
     return MappedData + Offset;
 }
 
-void FD3D12Buffer::Unmap(uint64 /* Offset */, uint64 /* Size */)
+void FD3D12BufferRHI::Unmap(uint64 /* Offset */, uint64 /* Size */)
 {
     if (!ResourceStorage.GetResource())
     {
@@ -234,7 +234,7 @@ void FD3D12Buffer::Unmap(uint64 /* Offset */, uint64 /* Size */)
     }
 }
 
-void FD3D12Buffer::SetDebugName(const FString& InName)
+void FD3D12BufferRHI::SetDebugName(const FString& InName)
 {
     if (ResourceStorage.GetResource())
     {
@@ -242,7 +242,7 @@ void FD3D12Buffer::SetDebugName(const FString& InName)
     }
 }
 
-FString FD3D12Buffer::GetDebugName() const
+FString FD3D12BufferRHI::GetDebugName() const
 {
     FString DebugName;
     if (ResourceStorage.GetResource())
@@ -253,7 +253,7 @@ FString FD3D12Buffer::GetDebugName() const
     return DebugName;
 }
 
-void FD3D12Buffer::SetResource(FD3D12Resource* InResource)
+void FD3D12BufferRHI::SetResource(FD3D12Resource* InResource)
 {
     ResourceStorage.ReleaseResource();
     
@@ -262,13 +262,13 @@ void FD3D12Buffer::SetResource(FD3D12Resource* InResource)
         ResourceStorage.InitStandalone(InResource);
     }
 
-    if (Info.IsConstantBuffer() && ConstantBufferView.IsValid())
+    if (Desc.IsConstantBuffer() && ConstantBufferView.IsValid())
     {
         CreateConstantBufferView();
     }
 }
 
-FD3D12ConstantBufferView* FD3D12Buffer::GetOrCreateConstantBufferView()
+FD3D12ConstantBufferView* FD3D12BufferRHI::GetOrCreateConstantBufferView()
 {
     if (!ConstantBufferView.IsValid())
     {
@@ -282,14 +282,14 @@ FD3D12ConstantBufferView* FD3D12Buffer::GetOrCreateConstantBufferView()
     return ConstantBufferView.Get();
 }
 
-bool FD3D12Buffer::CreateConstantBufferView()
+bool FD3D12BufferRHI::CreateConstantBufferView()
 {
     CHECK(ResourceStorage.GetResource() != nullptr);
 
     D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
     FMemory::Memzero(&ViewDesc);
 
-    ViewDesc.SizeInBytes = Math::AlignUp<uint32>(static_cast<uint32>(Info.Size), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    ViewDesc.SizeInBytes = Math::AlignUp<uint32>(static_cast<uint32>(Desc.Size), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     ViewDesc.BufferLocation = ResourceStorage.GetGPUVirtualAddress();
 
     if (FD3D12_CPU_DESCRIPTOR_HANDLE(0) == ConstantBufferView->GetOfflineHandle())

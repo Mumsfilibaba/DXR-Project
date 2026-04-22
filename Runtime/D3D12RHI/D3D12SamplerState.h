@@ -4,7 +4,7 @@
 #include "RHI/RHIResources.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12Device.h"
-typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
+typedef TSharedRef<class FD3D12SamplerStateRHI> FD3D12SamplerStateRHIRef;
 
 struct FD3D12SamplerStateIdentifier
 {
@@ -69,11 +69,11 @@ private:
 };
 
 
-class FD3D12SamplerState : public FRHISamplerState, public FD3D12DeviceChild
+class FD3D12SamplerStateRHI : public FRHISamplerState, public FD3D12DeviceChild
 {
 public:
-    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateInfo& InSamplerInfo);
-    virtual ~FD3D12SamplerState();
+    FD3D12SamplerStateRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateDesc& InSamplerDesc);
+    virtual ~FD3D12SamplerStateRHI();
 
     // FRHISamplerState Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }

@@ -4,11 +4,11 @@
 #include "D3D12RHI/D3D12ResourceViews.h"
 class FD3D12CommandContext;
 
-class FD3D12Buffer : public FRHIBuffer, public FD3D12GenericResource
+class FD3D12BufferRHI : public FRHIBuffer, public FD3D12GenericResource
 {
 public:
-    FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo);
-    ~FD3D12Buffer();
+    FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc);
+    ~FD3D12BufferRHI();
 
     bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 

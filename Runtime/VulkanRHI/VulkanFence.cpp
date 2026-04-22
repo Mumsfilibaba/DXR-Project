@@ -195,8 +195,8 @@ void FVulkanTimelineFence::SetDebugName(const FString& Name)
     }
 }
 
-FVulkanGpuFence::FVulkanGpuFence(FVulkanDevice* InDevice)
-    : FRHIGpuFence()
+FVulkanFenceRHI::FVulkanFenceRHI(FVulkanDevice* InDevice)
+    : FRHIFence()
     , FVulkanDeviceChild(InDevice)
     , bUsesTimeline(false)
     , TimelineSemaphore(VK_NULL_HANDLE)
@@ -208,7 +208,7 @@ FVulkanGpuFence::FVulkanGpuFence(FVulkanDevice* InDevice)
 {
 }
 
-FVulkanGpuFence::~FVulkanGpuFence()
+FVulkanFenceRHI::~FVulkanFenceRHI()
 {
     if (SubmissionFence)
     {
@@ -223,7 +223,7 @@ FVulkanGpuFence::~FVulkanGpuFence()
     }
 }
 
-bool FVulkanGpuFence::Initialize()
+bool FVulkanFenceRHI::Initialize()
 {
     const VkPhysicalDeviceVulkan12Features& Features12 = GetDevice()->GetPhysicalDevice()->GetFeaturesVulkan12();
     if (Features12.timelineSemaphore != VK_TRUE)
@@ -255,7 +255,7 @@ bool FVulkanGpuFence::Initialize()
     return true;
 }
 
-bool FVulkanGpuFence::IsSignaled() const
+bool FVulkanFenceRHI::IsSignaled() const
 {
     if (!bHasPendingSignal.Load())
     {
@@ -283,7 +283,7 @@ bool FVulkanGpuFence::IsSignaled() const
     return SubmissionFence ? SubmissionFence->IsSignaled() : false;
 }
 
-bool FVulkanGpuFence::Wait(uint64 TimeoutNs) const
+bool FVulkanFenceRHI::Wait(uint64 TimeoutNs) const
 {
     if (!bHasPendingSignal.Load())
     {
@@ -323,7 +323,7 @@ bool FVulkanGpuFence::Wait(uint64 TimeoutNs) const
     return SubmissionFence ? SubmissionFence->Wait(TimeoutNs) : false;
 }
 
-void FVulkanGpuFence::SetDebugName(const FString& InName)
+void FVulkanFenceRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
 
@@ -333,12 +333,12 @@ void FVulkanGpuFence::SetDebugName(const FString& InName)
     }
 }
 
-FString FVulkanGpuFence::GetDebugName() const
+FString FVulkanFenceRHI::GetDebugName() const
 {
     return DebugName;
 }
 
-void FVulkanGpuFence::EnqueueSignal(FVulkanQueue& Queue)
+void FVulkanFenceRHI::EnqueueSignal(FVulkanQueue& Queue)
 {
     if (bUsesTimeline)
     {
@@ -348,7 +348,7 @@ void FVulkanGpuFence::EnqueueSignal(FVulkanQueue& Queue)
     }
 }
 
-void FVulkanGpuFence::SetSubmissionFence(FVulkanFence* InFence)
+void FVulkanFenceRHI::SetSubmissionFence(FVulkanFence* InFence)
 {
     CHECK(!bUsesTimeline);
 

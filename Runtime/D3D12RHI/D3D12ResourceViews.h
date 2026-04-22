@@ -6,11 +6,11 @@
 
 class FD3D12OfflineDescriptorHeap;
 
-typedef TSharedRef<class FD3D12ConstantBufferView>  FD3D12ConstantBufferViewRef;
-typedef TSharedRef<class FD3D12ShaderResourceView>  FD3D12ShaderResourceViewRef;
-typedef TSharedRef<class FD3D12UnorderedAccessView> FD3D12UnorderedAccessViewRef;
-typedef TSharedRef<class FD3D12RenderTargetView>    FD3D12RenderTargetViewRef;
-typedef TSharedRef<class FD3D12DepthStencilView>    FD3D12DepthStencilViewRef;
+typedef TSharedRef<class FD3D12ConstantBufferView>     FD3D12ConstantBufferViewRef;
+typedef TSharedRef<class FD3D12ShaderResourceViewRHI>  FD3D12ShaderResourceViewRHIRef;
+typedef TSharedRef<class FD3D12UnorderedAccessViewRHI> FD3D12UnorderedAccessViewRHIRef;
+typedef TSharedRef<class FD3D12RenderTargetView>       FD3D12RenderTargetViewRef;
+typedef TSharedRef<class FD3D12DepthStencilView>       FD3D12DepthStencilViewRef;
 
 class FD3D12View : public FD3D12DeviceChild, public ID3D12ResourceRelocationListener
 {
@@ -86,11 +86,11 @@ private:
     D3D12_CONSTANT_BUFFER_VIEW_DESC Desc;
 };
 
-class FD3D12ShaderResourceView : public FRHIShaderResourceView, public FD3D12View
+class FD3D12ShaderResourceViewRHI : public FRHIShaderResourceView, public FD3D12View
 {
 public:
-    FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
-    virtual ~FD3D12ShaderResourceView() = default;
+    FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
+    virtual ~FD3D12ShaderResourceViewRHI() = default;
 
     // FRHIShaderResourceView Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
@@ -109,11 +109,11 @@ private:
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
 };
 
-class FD3D12UnorderedAccessView : public FRHIUnorderedAccessView, public FD3D12View
+class FD3D12UnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FD3D12View
 {
 public:
-    FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
-    virtual ~FD3D12UnorderedAccessView() = default;
+    FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
+    virtual ~FD3D12UnorderedAccessViewRHI() = default;
  
     // FRHIUnorderedAccessView Interface
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }

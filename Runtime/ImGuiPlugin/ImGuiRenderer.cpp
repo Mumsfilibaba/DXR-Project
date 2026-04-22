@@ -119,7 +119,7 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    TArray<FRHIInputElementInfo> InputElements =
+    TArray<FRHIInputElementDesc> InputElements =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
         { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
@@ -133,97 +133,97 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIDepthStencilStateInfo DepthStencilStateInfo;
-    DepthStencilStateInfo.bDepthEnable      = false;
-    DepthStencilStateInfo.bDepthWriteEnable = false;
+    FRHIDepthStencilStateDesc DepthStencilStateDesc;
+    DepthStencilStateDesc.bDepthEnable      = false;
+    DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateInfo);
+    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIRasterizerStateInfo RasterizerStateInfo;
-    RasterizerStateInfo.CullMode               = ECullMode::None;
-    RasterizerStateInfo.bAntialiasedLineEnable = true;
+    FRHIRasterizerStateDesc RasterizerStateDesc;
+    RasterizerStateDesc.CullMode               = ECullMode::None;
+    RasterizerStateDesc.bAntialiasedLineEnable = true;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIBlendStateInfo BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable        = false;
-    BlendStateInfo.NumRenderTargets               = 1;
-    BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
-    BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
-    BlendStateInfo.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
-    BlendStateInfo.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
-    BlendStateInfo.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
-    BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
-    BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
+    FRHIBlendStateDesc BlendStateDesc;
+    BlendStateDesc.bIndependentBlendEnable        = false;
+    BlendStateDesc.NumRenderTargets               = 1;
+    BlendStateDesc.RenderTargets[0].bBlendEnable  = true;
+    BlendStateDesc.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
+    BlendStateDesc.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+    BlendStateDesc.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
+    BlendStateDesc.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
+    BlendStateDesc.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+    BlendStateDesc.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    BlendStateInfo.RenderTargets[0].bBlendEnable = false;
+    BlendStateDesc.RenderTargets[0].bBlendEnable = false;
 
-    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIGraphicsPipelineStateInfo PSOInfo;
-    PSOInfo.VertexShader                                   = VShader.Get();
-    PSOInfo.PixelShader                                    = PShader.Get();
-    PSOInfo.InputLayout                                    = InputLayout.Get();
-    PSOInfo.DepthStencilState                              = DepthStencilState.Get();
-    PSOInfo.BlendState                                     = BlendStateBlending.Get();
-    PSOInfo.RasterizerState                                = RasterizerState.Get();
-    PSOInfo.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
-    PSOInfo.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSOInfo.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    FRHIGraphicsPipelineStateDesc PSODesc;
+    PSODesc.VertexShader                                   = VShader.Get();
+    PSODesc.PixelShader                                    = PShader.Get();
+    PSODesc.InputLayout                                    = InputLayout.Get();
+    PSODesc.DepthStencilState                              = DepthStencilState.Get();
+    PSODesc.BlendState                                     = BlendStateBlending.Get();
+    PSODesc.RasterizerState                                = RasterizerState.Get();
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
+    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    PSOInfo.BlendState = BlendStateNoBlending.Get();
+    PSODesc.BlendState = BlendStateNoBlending.Get();
 
-    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSOInfo);
+    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
     if (!PipelineStateNoBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHISamplerStateInfo SamplerInfo;
-    SamplerInfo.AddressU = ESamplerMode::Clamp;
-    SamplerInfo.AddressV = ESamplerMode::Clamp;
-    SamplerInfo.AddressW = ESamplerMode::Clamp;
-    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    FRHISamplerStateDesc SamplerDesc;
+    SamplerDesc.AddressU = ESamplerMode::Clamp;
+    SamplerDesc.AddressV = ESamplerMode::Clamp;
+    SamplerDesc.AddressW = ESamplerMode::Clamp;
+    SamplerDesc.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
     if (!LinearSampler)
     {
         return false;
     }
 
-    SamplerInfo.Filter = ESamplerFilter::MinMagMipPoint;
+    SamplerDesc.Filter = ESamplerFilter::MinMagMipPoint;
 
-    PointSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+    PointSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
     if (!PointSampler)
     {
         return false;
@@ -296,7 +296,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
         // Render to the main SwapChain
-        FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHISwapChain->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
+        FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(RHISwapChain->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
         CommandList.BeginRenderPass(RenderPassDesc);
         
         RenderDrawData(CommandList, DrawData);
@@ -321,7 +321,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
 
     PrepareDrawData(CommandList, DrawData);
 
-    FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
+    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
     CommandList.BeginRenderPass(RenderPassDesc);
     
     RenderDrawData(CommandList, DrawData);
@@ -345,12 +345,12 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     {
         const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
 
-        FRHIBufferInfo VBInfo;
-        VBInfo.Stride = sizeof(ImDrawVert);
-        VBInfo.Size   = VBInfo.Stride * NewVertexCount;
-        VBInfo.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
+        FRHIBufferDesc VertexBufferDesc;
+        VertexBufferDesc.Stride = sizeof(ImDrawVert);
+        VertexBufferDesc.Size   = VertexBufferDesc.Stride * NewVertexCount;
+        VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
-        TSharedRef<FRHIBuffer> NewVertexBuffer = FRHI::Get()->CreateBuffer(VBInfo, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewVertexBuffer = FRHI::Get()->CreateBuffer(VertexBufferDesc, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
             NewVertexBuffer->SetDebugName("ImGui VertexBuffer");
@@ -367,12 +367,12 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* D
     {
         const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
 
-        FRHIBufferInfo IBInfo;
-        IBInfo.Stride = sizeof(ImDrawIdx);
-        IBInfo.Size   = IBInfo.Stride * NewIndexCount;
-        IBInfo.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
+        FRHIBufferDesc IndexBufferDesc;
+        IndexBufferDesc.Stride = sizeof(ImDrawIdx);
+        IndexBufferDesc.Size   = IndexBufferDesc.Stride * NewIndexCount;
+        IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-        TSharedRef<FRHIBuffer> NewIndexBuffer = FRHI::Get()->CreateBuffer(IBInfo, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewIndexBuffer = FRHI::Get()->CreateBuffer(IndexBufferDesc, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
             NewIndexBuffer->SetDebugName("ImGui IndexBuffer");
@@ -620,17 +620,17 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
 
-    FRHISwapChainInfo SwapChainInfo;
-    SwapChainInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
-    SwapChainInfo.ColorFormat  = RenderSettings::GetBackBufferFormat();
-    SwapChainInfo.Width        = static_cast<uint16>(Viewport->Size.x);
-    SwapChainInfo.Height       = static_cast<uint16>(Viewport->Size.y);
+    FRHISwapChainDesc SwapChainDesc;
+    SwapChainDesc.WindowHandle = PlatformWindow->GetPlatformHandle();
+    SwapChainDesc.ColorFormat  = RenderSettings::GetBackBufferFormat();
+    SwapChainDesc.Width        = static_cast<uint16>(Viewport->Size.x);
+    SwapChainDesc.Height       = static_cast<uint16>(Viewport->Size.y);
         
-    ViewportData->SwapChain = FRHI::Get()->CreateSwapChain(SwapChainInfo);
+    ViewportData->SwapChain = FRHI::Get()->CreateSwapChain(SwapChainDesc);
     if (ViewportData->SwapChain)
     {
-        ViewportData->Width  = SwapChainInfo.Width;
-        ViewportData->Height = SwapChainInfo.Height;
+        ViewportData->Width  = SwapChainDesc.Width;
+        ViewportData->Height = SwapChainDesc.Height;
         
         Viewport->RendererUserData = Viewport->PlatformUserData;
     }

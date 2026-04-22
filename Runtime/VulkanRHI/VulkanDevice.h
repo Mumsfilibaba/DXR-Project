@@ -301,7 +301,7 @@ public:
 
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
-    bool FindOrCreateSampler(const struct FRHISamplerStateInfo& SamplerInfo, VkSampler& OutSampler);
+    bool FindOrCreateSampler(const struct FRHISamplerStateDesc& SamplerDesc, VkSampler& OutSampler);
     bool FindOrCreateSampler(const struct FRHIStaticSamplerInfo& StaticSamplerInfo, VkSampler& OutSampler);
 
     FVulkanQueryPoolManager* GetQueryPoolManager(VkQueryType QueryType);

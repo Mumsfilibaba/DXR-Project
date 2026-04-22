@@ -1,21 +1,21 @@
 #include "VulkanRHI/VulkanSamplerState.h"
 #include "VulkanRHI/VulkanDevice.h"
 
-FVulkanSamplerState::FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateInfo& InSamplerInfo)
-    : FRHISamplerState(InSamplerInfo)
+FVulkanSamplerStateRHI::FVulkanSamplerStateRHI(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InSamplerDesc)
+    : FRHISamplerState(InSamplerDesc)
     , FVulkanDeviceChild(InDevice)
     , Sampler(VK_NULL_HANDLE)
 {
 }
 
-FVulkanSamplerState::~FVulkanSamplerState()
+FVulkanSamplerStateRHI::~FVulkanSamplerStateRHI()
 {
     Sampler = VK_NULL_HANDLE;
 }
 
-bool FVulkanSamplerState::Initialize()
+bool FVulkanSamplerStateRHI::Initialize()
 {
-    if (!GetDevice()->FindOrCreateSampler(Info, Sampler))
+    if (!GetDevice()->FindOrCreateSampler(Desc, Sampler))
     {
         VULKAN_ERROR_CRITICAL("Failed to create sampler");
         return false;

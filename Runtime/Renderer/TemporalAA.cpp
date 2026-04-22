@@ -49,10 +49,10 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateInfo TemporalAA_PSOInfo;
-        TemporalAA_PSOInfo.Shader = TemporalAAShader.Get();
+        FRHIComputePipelineStateDesc TemporalAA_PSODesc;
+        TemporalAA_PSODesc.Shader = TemporalAAShader.Get();
         
-        TemporalAAPSO = FRHI::Get()->CreateComputePipelineState(TemporalAA_PSOInfo);
+        TemporalAAPSO = FRHI::Get()->CreateComputePipelineState(TemporalAA_PSODesc);
         if (!TemporalAAPSO)
         {
             DEBUG_BREAK();
@@ -64,8 +64,8 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
         }
     }
 
-    FRHISamplerStateInfo SamplerInfo = FRHISamplerStateInfo::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
-    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerInfo);
+    FRHISamplerStateDesc SamplerDesc = FRHISamplerStateDesc::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
+    LinearSampler = FRHI::Get()->CreateSamplerState(SamplerDesc);
     if (!LinearSampler)
     {
         DEBUG_BREAK();
@@ -140,12 +140,12 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 Width, uint32 Height)
 {
     // TAA History-Buffer
-    FRHITextureInfo TAABufferInfo = FRHITextureInfo::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture);
+    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture);
 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
     {
-        TAABuffer = FRHI::Get()->CreateTexture(TAABufferInfo, EResourceAccess::NonPixelShaderResource);
+        TAABuffer = FRHI::Get()->CreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
         if (TAABuffer)
         {
             TAABuffer->SetDebugName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));

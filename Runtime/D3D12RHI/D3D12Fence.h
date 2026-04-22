@@ -5,7 +5,7 @@
 #include "D3D12RHI/D3D12DeviceChild.h"
 
 typedef TSharedRef<class FD3D12Fence>    FD3D12FenceRef;
-typedef TSharedRef<class FD3D12GpuFence> FD3D12GpuFenceRef;
+typedef TSharedRef<class FD3D12FenceRHI> FD3D12FenceRHIRef;
 
 class FD3D12Fence : public FD3D12DeviceChild, public FRefCountedBase
 {
@@ -86,16 +86,16 @@ private:
     uint64       FenceValue;
 };
 
-class FD3D12GpuFence final : public FRHIGpuFence, public FD3D12DeviceChild
+class FD3D12FenceRHI final : public FRHIFence, public FD3D12DeviceChild
 {
 public:
-    explicit FD3D12GpuFence(FD3D12Device* InDevice);
-    virtual ~FD3D12GpuFence() = default;
+    explicit FD3D12FenceRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12FenceRHI() = default;
 
     bool Initialize();
     void Signal(ID3D12CommandQueue* Queue);
 
-    // FRHIGpuFence Interface
+    // FRHIFence Interface
     virtual bool IsSignaled() const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
 

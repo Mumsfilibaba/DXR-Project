@@ -5,7 +5,7 @@
 #include "Core/Platform/CriticalSection.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
-class FVulkanBuffer;
+class FVulkanBufferRHI;
 class FVulkanPipelineLayout;
 class FVulkanResourceView;
 struct FVulkanDefaultResources;
@@ -384,10 +384,10 @@ public:
     FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanPipelineLayout* InLayout, const FVulkanDefaultResources& InDefaultResources);
     ~FVulkanDescriptorState() = default;
 
-    void SetSRV(class FVulkanShaderResourceView* ShaderResourceView, uint32 DescriptorSetIndex, uint32 BindingIndex);
-    void SetUAV(class FVulkanUnorderedAccessView* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex);
-    void SetUniformBuffer(class FVulkanBuffer* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex);
-    void SetSampler(class FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex);
+    void SetSRV(class FVulkanShaderResourceViewRHI* ShaderResourceView, uint32 DescriptorSetIndex, uint32 BindingIndex);
+    void SetUAV(class FVulkanUnorderedAccessViewRHI* UnorderedAccessView, uint32 DescriptorSetIndex, uint32 BindingIndex);
+    void SetUniformBuffer(class FVulkanBufferRHI* UniformBuffer, uint32 DescriptorSetIndex, uint32 BindingIndex);
+    void SetSampler(class FVulkanSamplerStateRHI* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex);
 
     void TransitionBoundResources(class FVulkanCommandContext& Context);
 

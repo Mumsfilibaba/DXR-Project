@@ -180,7 +180,7 @@ void FD3D12DescriptorCache::SetVertexBuffers(FD3D12VertexBufferCache& VertexBuff
     {
         for (uint32 i = 0; i < VertexBuffers.NumVertexBuffers; i++)
         {
-            if (FD3D12Buffer* Buffer = VertexBuffers.BufferResources[i])
+            if (FD3D12BufferRHI* Buffer = VertexBuffers.BufferResources[i])
             {
                 Context.GetCommandList().UpdateResidency(Buffer->GetResource()->GetResidencyHandle());
             }
@@ -192,7 +192,7 @@ void FD3D12DescriptorCache::SetVertexBuffers(FD3D12VertexBufferCache& VertexBuff
 
 void FD3D12DescriptorCache::SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer)
 {
-    if (FD3D12Buffer* Buffer = IndexBuffer.BufferResource)
+    if (FD3D12BufferRHI* Buffer = IndexBuffer.BufferResource)
     {
         Context.GetCommandList().UpdateResidency(Buffer->GetResource()->GetResidencyHandle());
     }
@@ -226,7 +226,7 @@ void FD3D12DescriptorCache::PrepareCBVs(FD3D12ConstantBufferCache& Cache, FD3D12
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
         CHECK(Register < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
 
-        if (FD3D12Buffer* Buffer = CBVCache[Register])
+        if (FD3D12BufferRHI* Buffer = CBVCache[Register])
         {
             if (FD3D12ConstantBufferView* View = Buffer->GetOrCreateConstantBufferView())
             {
@@ -312,7 +312,7 @@ void FD3D12DescriptorCache::PrepareSRVs(FD3D12ShaderResourceViewCache& Cache, FD
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
         CHECK(Register < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
-        if (FD3D12ShaderResourceView* ShaderResourceView = SRVCache[Register])
+        if (FD3D12ShaderResourceViewRHI* ShaderResourceView = SRVCache[Register])
         {
             OfflineHandles[Slot] = ShaderResourceView->GetOfflineHandle();
             Context.GetCommandList().UpdateResidency(ShaderResourceView->GetResourceResidencyHandle());
@@ -391,7 +391,7 @@ void FD3D12DescriptorCache::PrepareUAVs(FD3D12UnorderedAccessViewCache& Cache, F
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
         CHECK(Register < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
-        if (FD3D12UnorderedAccessView* UnorderedAccessView = UAVCache[Register])
+        if (FD3D12UnorderedAccessViewRHI* UnorderedAccessView = UAVCache[Register])
         {
             OfflineHandles[Slot] = UnorderedAccessView->GetOfflineHandle();
             Context.GetCommandList().UpdateResidency(UnorderedAccessView->GetResourceResidencyHandle());
@@ -470,7 +470,7 @@ void FD3D12DescriptorCache::PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D
         const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
         CHECK(Register < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
 
-        if (FD3D12SamplerState* SamplerState = SamplerStates[Register])
+        if (FD3D12SamplerStateRHI* SamplerState = SamplerStates[Register])
         {
             UniqueTable.UniqueIDs[Slot] = SamplerState->GetUniqueID().Identifier;
         }
@@ -489,7 +489,7 @@ void FD3D12DescriptorCache::PrepareSamplers(FD3D12SamplerStateCache& Cache, FD3D
             const uint16 Register = Mapping.GetRegisterForSlot(static_cast<uint8>(Slot));
             CHECK(Register < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
 
-            if (FD3D12SamplerState* SamplerState = SamplerStates[Register])
+            if (FD3D12SamplerStateRHI* SamplerState = SamplerStates[Register])
             {
                 OfflineHandles[Slot] = SamplerState->GetOfflineHandle();
             }

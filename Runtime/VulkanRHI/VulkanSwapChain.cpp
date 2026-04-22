@@ -4,6 +4,389 @@
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 
+static constexpr bool GVulkanReportSwapChainAcquireImageNonSuccessResult = true;
+
+FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
+	: FVulkanDeviceChild(InDevice)
+	, PresentResult(VK_SUCCESS)
+	, SwapChain(VK_NULL_HANDLE)
+	, Extent{ 0, 0 }
+	, BufferIndex(0)
+	, BufferCount(0)
+	, Format{ VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR }
+{
+}
+
+FVulkanSwapChain::~FVulkanSwapChain()
+{
+	if (VULKAN_CHECK_HANDLE(SwapChain))
+	{
+		vkDestroySwapchainKHR(GetDevice()->GetVkDevice(), SwapChain, nullptr);
+		SwapChain = VK_NULL_HANDLE;
+	}
+
+	BufferIndex = 0;
+}
+
+bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
+{
+	FVulkanSurface* Surface = CreateInfo.Surface;
+	CHECK(Surface != nullptr);
+
+    VkSurfaceCapabilitiesKHR Capabilities = { };
+	{
+		ESurfaceStatus SurfaceStatus = Surface->GetCapabilities(Capabilities);
+		if (SurfaceStatus != ESurfaceStatus::Ok)
+		{
+			VULKAN_WARNING("Swapchain init aborted: GetCapabilities returned (status=%s)", ToString(SurfaceStatus));
+			return false;
+		}
+	}
+
+	TArray<VkSurfaceFormatKHR> SupportedFormats;
+	{
+		ESurfaceStatus SurfaceStatus = Surface->GetSupportedFormats(SupportedFormats);
+		if (SurfaceStatus != ESurfaceStatus::Ok || SupportedFormats.IsEmpty())
+		{
+			VULKAN_WARNING("Swapchain init aborted: no supported surface formats (status=%s)", ToString(SurfaceStatus));
+			return false;
+		}
+	}
+
+	TArray<VkPresentModeKHR> SupportedPresentModes;
+	{
+		ESurfaceStatus SurfaceStatus = Surface->GetSupportedPresentModes(SupportedPresentModes);
+		if (SurfaceStatus != ESurfaceStatus::Ok || SupportedPresentModes.IsEmpty())
+		{
+			VULKAN_WARNING("Swapchain init aborted: no supported present modes (status=%s)", ToString(SurfaceStatus));
+			return false;
+		}
+	}
+
+	// Pick surface format
+	const auto MatchFormat = [&](VkSurfaceFormatKHR Desired) -> VkSurfaceFormatKHR
+	{
+		VkSurfaceFormatKHR Selected = { VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+		for (const VkSurfaceFormatKHR& Format : SupportedFormats)
+		{
+			if (Format.format == Desired.format && Format.colorSpace == Desired.colorSpace)
+            { 
+                Selected = Format;
+                break;
+            }
+
+			if (Format.format == Desired.format)
+            {
+                // Keep best partial match
+                Selected = Format;
+            }
+		}
+
+		// If still undefined, just take first supported as absolute fallback.
+        if (Selected.format == VK_FORMAT_UNDEFINED)
+        {
+            Selected = SupportedFormats[0];
+        }
+
+		return Selected;
+	};
+
+	const VkSurfaceFormatKHR DesiredFormat =
+	{ 
+		ConvertFormat(CreateInfo.Format),
+		CreateInfo.ColorSpace
+	};
+	
+	VkSurfaceFormatKHR SelectedFormat = MatchFormat(DesiredFormat);
+	if (SelectedFormat.format == VK_FORMAT_UNDEFINED)
+	{
+		VULKAN_ERROR("Failed to select a surface format");
+		return false;
+	}
+	else
+	{
+		VULKAN_INFO("Selected format '%s' (colorspace=%d) for SwapChain", ToString(SelectedFormat.format), int(SelectedFormat.colorSpace));
+	}
+
+	// Pick present mode (FIFO guaranteed by spec)
+	const auto HasPresentMode = [&](const VkPresentModeKHR& InPresentMode)
+	{
+		for (const VkPresentModeKHR& PresentMode : SupportedPresentModes)
+		{
+			if (PresentMode == InPresentMode)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+	if (CreateInfo.bVerticalSync)
+	{
+		// FIFO is true vsync (frame rate capped to display refresh, spec-guaranteed).
+		// FIFO_RELAXED allows late frames to present immediately to reduce stuttering.
+		if (HasPresentMode(VK_PRESENT_MODE_FIFO_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+		}
+		else if (HasPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+		}
+	}
+	else
+	{
+		// IMMEDIATE has no vsync and lowest latency.
+		// MAILBOX replaces queued frames (triple-buffered, no frame-rate cap, reduced tearing).
+		if (HasPresentMode(VK_PRESENT_MODE_IMMEDIATE_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+		}
+		else if (HasPresentMode(VK_PRESENT_MODE_MAILBOX_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+		}
+		else if (HasPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
+		{
+			SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+		}
+	}
+
+	VULKAN_INFO("Selected present mode '%s' for SwapChain", ToString(SelectedPresentMode));
+
+	// Determine extent (handle undefined and zero-sized properly)
+	VkExtent2D CurrentExtent = { };
+    if (!IsUndefinedExtent(Capabilities))
+	{
+        // Surface dictates size
+		CurrentExtent = Capabilities.currentExtent;
+	}
+	else
+	{
+		if (CreateInfo.Extent.width == 0 || CreateInfo.Extent.height == 0)
+		{
+			// Caller should wait until non-zero before init/recreate.
+			VULKAN_WARNING("Swapchain creation requested with zero-sized extent (probably minimized).");
+			return false;
+		}
+
+		CurrentExtent.width  = Math::Clamp(CreateInfo.Extent.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+		CurrentExtent.height = Math::Clamp(CreateInfo.Extent.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+	}
+
+	CurrentExtent.width  = Math::Max(CurrentExtent.width, 1u);
+	CurrentExtent.height = Math::Max(CurrentExtent.height, 1u);
+
+	VULKAN_INFO("SwapChain Extent: current=(%u,%u) min=(%u,%u) max=(%u,%u) chosen=(%u,%u)", Capabilities.currentExtent.width, Capabilities.currentExtent.height,
+		Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height, 
+		CurrentExtent.width, CurrentExtent.height);
+
+	// Image count (respect min/max)
+	uint32 DesiredCount = Math::Max<uint32>(CreateInfo.BufferCount, Capabilities.minImageCount);
+    if (Capabilities.maxImageCount > 0)
+    {
+		DesiredCount = Math::Min(DesiredCount, Capabilities.maxImageCount);
+    }
+
+	if (DesiredCount != CreateInfo.BufferCount)
+	{
+		VULKAN_INFO("Adjusted buffer count from %u to %u (min=%u max=%u)", CreateInfo.BufferCount, DesiredCount, Capabilities.minImageCount, Capabilities.maxImageCount);
+	}
+
+	GraphicsQueueFamilyIndex = GetDevice()->GetQueueIndexFromType(EVulkanCommandQueueType::Graphics);
+	PresentQueueFamilyIndex  = GetDevice()->GetQueueIndexFromType(EVulkanCommandQueueType::Present);
+
+	// Pre-transform 
+	const VkSurfaceTransformFlagBitsKHR PreTransform = (Capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) ? 
+		VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR : Capabilities.currentTransform;
+
+	// Composite alpha
+	const VkCompositeAlphaFlagBitsKHR CompositeAlpha = [](VkCompositeAlphaFlagsKHR Supported) -> VkCompositeAlphaFlagBitsKHR
+	{
+		const VkCompositeAlphaFlagBitsKHR Preferences[] =
+		{
+			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+			VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
+		};
+
+		for (VkCompositeAlphaFlagBitsKHR CurrentFlag : Preferences)
+		{
+			if (Supported & CurrentFlag)
+			{
+				return CurrentFlag;
+			}
+		}
+
+		return VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	}(Capabilities.supportedCompositeAlpha);
+
+	// Ensure that all the image usage flags are supported
+	const VkImageUsageFlags SupportedUsage = Capabilities.supportedUsageFlags;
+	const VkImageUsageFlags RequestedUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	
+	const VkImageUsageFlags FinalUsage = RequestedUsage & SupportedUsage;
+	if (FinalUsage != RequestedUsage)
+	{
+		VULKAN_ERROR_CRITICAL("Surface does not support the requested ImageUsage flags");
+		return false;
+	}
+
+	// Create swapchain
+	VkSwapchainCreateInfoKHR SwapChainCreateInfo = { };
+	SwapChainCreateInfo.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	SwapChainCreateInfo.pNext                 = nullptr;
+	SwapChainCreateInfo.surface               = Surface->GetVkSurface();
+	SwapChainCreateInfo.oldSwapchain          = CreateInfo.PreviousSwapChain ? CreateInfo.PreviousSwapChain->GetVkSwapChain() : VK_NULL_HANDLE;
+	SwapChainCreateInfo.minImageCount         = DesiredCount;
+	SwapChainCreateInfo.imageFormat           = SelectedFormat.format;
+	SwapChainCreateInfo.imageColorSpace       = SelectedFormat.colorSpace;
+	SwapChainCreateInfo.imageExtent           = CurrentExtent;
+	SwapChainCreateInfo.imageArrayLayers      = 1;
+	SwapChainCreateInfo.imageUsage            = FinalUsage;
+	SwapChainCreateInfo.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+	SwapChainCreateInfo.queueFamilyIndexCount = 0;
+	SwapChainCreateInfo.pQueueFamilyIndices   = nullptr;
+	SwapChainCreateInfo.preTransform          = PreTransform;
+	SwapChainCreateInfo.compositeAlpha        = CompositeAlpha;
+	SwapChainCreateInfo.presentMode           = SelectedPresentMode;
+	SwapChainCreateInfo.clipped               = VK_TRUE;
+
+	VkResult Result = vkCreateSwapchainKHR(GetDevice()->GetVkDevice(), &SwapChainCreateInfo, nullptr, &SwapChain);
+	if (VULKAN_FAILED(Result))
+	{
+		VULKAN_ERROR_CRITICAL("Failed to create SwapChain (vkCreateSwapchainKHR=%s)", ToString(Result));
+		return false;
+	}
+
+	// Fetch image count
+	Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, nullptr);
+	if (VULKAN_FAILED(Result) || BufferCount == 0)
+	{
+		VULKAN_ERROR_CRITICAL("Failed to retrieve the number of images in SwapChain (res=%s count=%u)", ToString(Result), BufferCount);
+		return false;
+	}
+
+	Extent = CurrentExtent;
+	Format = SelectedFormat;
+	return true;
+}
+
+bool FVulkanSwapChain::GetSwapChainImages(VkImage* OutImages)
+{
+	VkResult Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, OutImages);
+	if (VULKAN_FAILED(Result))
+	{
+		VULKAN_ERROR_CRITICAL("Failed to retrieve the images of the SwapChain (%s)", ToString(Result));
+		return false;
+	}
+
+	return true;
+}
+
+void FVulkanSwapChain::ReleaseOwnershipForPresent(FVulkanCommandBuffer& GraphicsCmdBuffer, VkImage SwapChainImage)
+{
+	if (!HasSeparatePresentQueue())
+	{
+		return;
+	}
+
+	VkImageMemoryBarrier Barrier = {};
+	Barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	Barrier.srcAccessMask                   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	Barrier.dstAccessMask                   = 0;
+	Barrier.oldLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.srcQueueFamilyIndex             = GraphicsQueueFamilyIndex;
+	Barrier.dstQueueFamilyIndex             = PresentQueueFamilyIndex;
+	Barrier.image                           = SwapChainImage;
+	Barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	Barrier.subresourceRange.baseMipLevel   = 0;
+	Barrier.subresourceRange.levelCount     = 1;
+	Barrier.subresourceRange.baseArrayLayer = 0;
+	Barrier.subresourceRange.layerCount     = 1;
+
+	vkCmdPipelineBarrier(GraphicsCmdBuffer.GetVkCommandBuffer(),
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		0, 0, nullptr, 0, nullptr, 1, &Barrier);
+}
+
+void FVulkanSwapChain::AcquireOwnershipAfterPresent(FVulkanCommandBuffer& GraphicsCmdBuffer, VkImage SwapChainImage)
+{
+	if (!HasSeparatePresentQueue())
+	{
+		return;
+	}
+
+	VkImageMemoryBarrier Barrier = {};
+	Barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	Barrier.srcAccessMask                   = 0;
+	Barrier.dstAccessMask                   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	Barrier.oldLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	Barrier.srcQueueFamilyIndex             = PresentQueueFamilyIndex;
+	Barrier.dstQueueFamilyIndex             = GraphicsQueueFamilyIndex;
+	Barrier.image                           = SwapChainImage;
+	Barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	Barrier.subresourceRange.baseMipLevel   = 0;
+	Barrier.subresourceRange.levelCount     = 1;
+	Barrier.subresourceRange.baseArrayLayer = 0;
+	Barrier.subresourceRange.layerCount     = 1;
+
+	vkCmdPipelineBarrier(GraphicsCmdBuffer.GetVkCommandBuffer(),
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		0, 0, nullptr, 0, nullptr, 1, &Barrier);
+}
+
+VkResult FVulkanSwapChain::Present(FVulkanQueue& GraphicsQueue, FVulkanQueue* PresentQueue, FVulkanSemaphore* WaitSemaphore)
+{
+	FVulkanQueue& QueueForPresent = PresentQueue ? *PresentQueue : GraphicsQueue;
+
+	VkPresentInfoKHR PresentInfo = { };
+	PresentInfo.sType          = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	PresentInfo.swapchainCount = 1;
+	PresentInfo.pSwapchains    = &SwapChain;
+	PresentInfo.pImageIndices  = &BufferIndex;
+	PresentInfo.pResults       = &PresentResult;
+
+	VkSemaphore WaitSemaphoreHandle = WaitSemaphore ? WaitSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
+	if (WaitSemaphoreHandle)
+	{
+		PresentInfo.waitSemaphoreCount = 1;
+		PresentInfo.pWaitSemaphores    = &WaitSemaphoreHandle;
+	}
+	else
+	{
+		PresentInfo.waitSemaphoreCount = 0;
+		PresentInfo.pWaitSemaphores    = nullptr;
+	}
+
+	return vkQueuePresentKHR(QueueForPresent.GetVkQueue(), &PresentInfo);
+}
+
+VkResult FVulkanSwapChain::AcquireNextImage(FVulkanSemaphore* AcquireSemaphore)
+{
+	VkSemaphore Semaphore = AcquireSemaphore ? AcquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
+
+	VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, Semaphore, VK_NULL_HANDLE, &BufferIndex);
+	if (GVulkanReportSwapChainAcquireImageNonSuccessResult && Result != VK_SUCCESS)
+	{
+		VULKAN_WARNING("FVulkanSwapChain::AcquireNextImage vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+	}
+	
+	// BufferIndex is only valid on SUCCESS/SUBOPTIMAL
+	if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
+	{
+		BufferIndex = 0;
+	}
+
+	// Caller should treat OUT_OF_DATE -> recreate now, and SUBOPTIMAL -> recreate soon/skip frame.
+	return Result;
+}
+
 static TAutoConsoleVariable<int32> CVarBackbufferCount(
     "VulkanRHI.SwapChain.BackBufferCount",
     "The preferred number of backbuffers for the SwapChain",
@@ -18,10 +401,10 @@ static TAutoConsoleVariable<bool> CVarEnableVSync(
 
 static constexpr const bool GVulkanLogSemaphoreIndex = false;
 
-FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainInfo& InSwapChainInfo)
-    : FRHISwapChain(InSwapChainInfo)
+FVulkanSwapChainRHI::FVulkanSwapChainRHI(FVulkanDevice* InDevice, const FRHISwapChainDesc& InSwapChainDesc)
+    : FRHISwapChain(InSwapChainDesc)
     , FVulkanDeviceChild(InDevice)
-    , WindowHandle(InSwapChainInfo.WindowHandle)
+    , WindowHandle(InSwapChainDesc.WindowHandle)
     , Surface(nullptr)
     , SwapChainResource(nullptr)
     , BackBuffer(nullptr)
@@ -34,13 +417,13 @@ FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice, const FRHISwapChainI
 {
 }
 
-FVulkanSwapChain::~FVulkanSwapChain()
+FVulkanSwapChainRHI::~FVulkanSwapChainRHI()
 {
     FVulkanCommandContext* InCommandContext = FVulkanRHI::Get()->ObtainVulkanCommandContext();
     DestroySwapChain(InCommandContext);
 }
 
-bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
+bool FVulkanSwapChainRHI::Initialize(FVulkanCommandContext* InCommandContext)
 {
     if (!InCommandContext)
     {
@@ -67,8 +450,8 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
     InCommandContext->FinishContext();
     InCommandContext->Flush();
 
-    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
-    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferDesc);
     
     if (!BackBuffer)
     {
@@ -79,7 +462,7 @@ bool FVulkanSwapChain::Initialize(FVulkanCommandContext* InCommandContext)
     return true;
 }
 
-bool FVulkanSwapChain::RecreateSurface(FVulkanCommandContext* InCommandContext)
+bool FVulkanSwapChainRHI::RecreateSurface(FVulkanCommandContext* InCommandContext)
 {
 	Surface = new FVulkanSurface(GetDevice(), InCommandContext->GetCommandQueue(), WindowHandle);
 	if (!Surface->Initialize())
@@ -91,14 +474,14 @@ bool FVulkanSwapChain::RecreateSurface(FVulkanCommandContext* InCommandContext)
 	return true;
 }
 
-bool FVulkanSwapChain::ValidateSurfaceAndSize(FVulkanCommandContext* InCommandContext, uint32& OutWidth, uint32& OutHeight)
+bool FVulkanSwapChainRHI::ValidateSurfaceAndSize(FVulkanCommandContext* InCommandContext, uint32& OutWidth, uint32& OutHeight)
 {
 	VkSurfaceCapabilitiesKHR Capabilities = { };
 
 	ESurfaceStatus SurfaceStatus = Surface->GetCapabilities(Capabilities);
 	if (SurfaceStatus == ESurfaceStatus::SurfaceLost)
 	{
-		VULKAN_INFO("FVulkanSwapChain::ValidateSurfaceAndSize Surface lost. Attempting one recreation.");
+		VULKAN_INFO("FVulkanSwapChainRHI::ValidateSurfaceAndSize Surface lost. Attempting one recreation.");
         if (!RecreateSurface(InCommandContext))
         {
 			return false;
@@ -107,7 +490,7 @@ bool FVulkanSwapChain::ValidateSurfaceAndSize(FVulkanCommandContext* InCommandCo
 		SurfaceStatus = Surface->GetCapabilities(Capabilities);
 		if (SurfaceStatus != ESurfaceStatus::Ok)
 		{
-			VULKAN_WARNING("FVulkanSwapChain::ValidateSurfaceAndSize Capabilities still not OK after surface recreation (status=%s)", ToString(SurfaceStatus));
+			VULKAN_WARNING("FVulkanSwapChainRHI::ValidateSurfaceAndSize Capabilities still not OK after surface recreation (status=%s)", ToString(SurfaceStatus));
 			return false;
 		}
 	}
@@ -125,8 +508,8 @@ bool FVulkanSwapChain::ValidateSurfaceAndSize(FVulkanCommandContext* InCommandCo
 	else
 	{
 		// Caller provided size must be non-zero
-		OutWidth  = OutWidth ? OutWidth : Info.Width;
-		OutHeight = OutHeight ? OutHeight : Info.Height;
+		OutWidth  = OutWidth ? OutWidth : Desc.Width;
+		OutHeight = OutHeight ? OutHeight : Desc.Height;
 
         if (OutWidth == 0 || OutHeight == 0)
         {
@@ -138,7 +521,7 @@ bool FVulkanSwapChain::ValidateSurfaceAndSize(FVulkanCommandContext* InCommandCo
 	return true;
 }
 
-bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
+bool FVulkanSwapChainRHI::CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
 	if (InWidth == 0 || InHeight == 0)
 	{
@@ -165,7 +548,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
 	SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
 
 	// NOTE: Create a temporary SwapChain, keeping old alive until success
-    FVulkanSwapChainResourceRef NewSwapChainResource = new FVulkanSwapChainResource(GetDevice());
+    FVulkanSwapChainRef NewSwapChainResource = new FVulkanSwapChain(GetDevice());
 	if (!NewSwapChainResource->Initialize(SwapChainCreateInfo))
 	{
         VULKAN_ERROR_CRITICAL("Failed to create SwapChain");
@@ -183,15 +566,15 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     VkExtent2D SwapChainExtent = SwapChainResource->GetExtent();
     if (InWidth != SwapChainExtent.width || InHeight != SwapChainExtent.height)
     {
-        VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Info.Width, Info.Height, SwapChainExtent.width, SwapChainExtent.height);
+        VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Desc.Width, Desc.Height, SwapChainExtent.width, SwapChainExtent.height);
         
         // Update the size of the viewport to the actual swapchain size
-        Info.Width  = static_cast<uint16>(SwapChainExtent.width);
-        Info.Height = static_cast<uint16>(SwapChainExtent.height);
+        Desc.Width  = static_cast<uint16>(SwapChainExtent.width);
+        Desc.Height = static_cast<uint16>(SwapChainExtent.height);
 
         if (BackBuffer)
         {
-            BackBuffer->ResizeBackBuffer(Info.Width, Info.Height);
+            BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
         }
     }
 
@@ -206,9 +589,9 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
 
         // Setup the info for each back-buffer, and ensure that we create the info with the actual image-size
         const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
-        FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
         
-        // Create a FVulkanTexture for each back-buffer
+        // Create a FVulkanTextureRHI for each back-buffer
         for (uint32 i = 0; i < BufferCount; ++i)
         {
             // Create semaphores
@@ -235,7 +618,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
             }
 
             // Create image texture-wrapper
-            if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferInfo))
+            if (FVulkanTextureRHIRef NewTexture = new FVulkanTextureRHI(GetDevice(), BackBufferDesc))
             {
                 BackBuffers[i] = NewTexture;
             }
@@ -297,7 +680,7 @@ bool FVulkanSwapChain::CreateSwapChain(FVulkanCommandContext* InCommandContext, 
     return true;
 }
 
-void FVulkanSwapChain::DestroySwapChain(FVulkanCommandContext* InCommandContext)
+void FVulkanSwapChainRHI::DestroySwapChain(FVulkanCommandContext* InCommandContext)
 {
     // Ensure that all work is completed
     InCommandContext->GetCommandQueue().WaitForCompletion();
@@ -309,9 +692,9 @@ void FVulkanSwapChain::DestroySwapChain(FVulkanCommandContext* InCommandContext)
 	SemaphoreIndex  = 0;
 }
 
-bool FVulkanSwapChain::Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
+bool FVulkanSwapChainRHI::Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
-    if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
+    if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
     {
         CHECK(!InCommandContext->IsInsideRenderPass());
         CHECK(InCommandContext->IsRecording());
@@ -319,26 +702,26 @@ bool FVulkanSwapChain::Resize(FVulkanCommandContext* InCommandContext, uint32 In
         // Ensure that all work is completed. If this function is called from a RHICommandList the we do 
         // this "manually" since the context is already started and we need to ensure that there is a valid CommandBuffer
         InCommandContext->SplitCommandBuffer(false, true);
-        VULKAN_INFO("FVulkanSwapChain::Resize w=%d h=%d", InWidth, InHeight);
+        VULKAN_INFO("FVulkanSwapChainRHI::Resize w=%d h=%d", InWidth, InHeight);
 
         if (!CreateSwapChain(InCommandContext, InWidth, InHeight))
         {
-            VULKAN_WARNING("FVulkanSwapChain::Resize FAILED");
+            VULKAN_WARNING("FVulkanSwapChainRHI::Resize FAILED");
             return false;
         }
 
-        Info.Width  = static_cast<uint16>(InWidth);
-        Info.Height = static_cast<uint16>(InHeight);
-        BackBuffer->ResizeBackBuffer(Info.Width, Info.Height);
+        Desc.Width  = static_cast<uint16>(InWidth);
+        Desc.Height = static_cast<uint16>(InHeight);
+        BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
     }
 
     return true;
 }
 
-bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync)
+bool FVulkanSwapChainRHI::Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync)
 {
 	// If we don't have a drawable size, don't try to acquire/present
-    if (Info.Width == 0 || Info.Height == 0 || !SwapChainResource)
+    if (Desc.Width == 0 || Desc.Height == 0 || !SwapChainResource)
     {
 		return false;
     }
@@ -348,14 +731,14 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     // RenderSemaphore unsignaled when vkQueuePresentKHR tries to wait on it.
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
-        VULKAN_WARNING("FVulkanSwapChain::Present skipped - no image was acquired this frame");
+        VULKAN_WARNING("FVulkanSwapChainRHI::Present skipped - no image was acquired this frame");
         return true;
     }
 
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 	if constexpr (GVulkanLogSemaphoreIndex)
 	{
-		VULKAN_INFO("FVulkanSwapChain::Present SemaphoreIndex=%d", SemaphoreIndex);
+		VULKAN_INFO("FVulkanSwapChainRHI::Present SemaphoreIndex=%d", SemaphoreIndex);
 	}
 
     bool bNeedsRecreation = false;
@@ -364,20 +747,20 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     VkResult Result = SwapChainResource->Present(InCommandContext->GetCommandQueue(), PresentQueue, RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR || Result == VK_ERROR_SURFACE_LOST_KHR)
     {
-		VULKAN_INFO("FVulkanSwapChain::Present [Present] SwapChain is %s", (Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" :
+		VULKAN_INFO("FVulkanSwapChainRHI::Present [Present] SwapChain is %s", (Result == VK_SUBOPTIMAL_KHR ? "Suboptimal" :
 				(Result == VK_ERROR_SURFACE_LOST_KHR ? "SurfaceLost" : "OutOfDate")));
         bNeedsRecreation = true;
     }
 	else if (Result != VK_SUCCESS)
 	{
-		VULKAN_ERROR_CRITICAL("FVulkanSwapChain::Present vkQueuePresentKHR failed with %s.", ToString(Result));
+		VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI::Present vkQueuePresentKHR failed with %s.", ToString(Result));
 		return false;
 	}
 
     // Detect runtime settings changes that require swapchain recreation
     if (bVerticalSync != bActiveVSync)
     {
-        VULKAN_INFO("FVulkanSwapChain::Present VSync changed (%s -> %s)", bActiveVSync ? "on" : "off", bVerticalSync ? "on" : "off");
+        VULKAN_INFO("FVulkanSwapChainRHI::Present VSync changed (%s -> %s)", bActiveVSync ? "on" : "off", bVerticalSync ? "on" : "off");
         CVarEnableVSync->SetAsBool(bVerticalSync, EConsoleVariableFlags::SetByCode);
         bNeedsRecreation = true;
     }
@@ -385,13 +768,13 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     const int32 DesiredBackBufferCount = CVarBackbufferCount.GetValue();
     if (DesiredBackBufferCount != ActiveBackBufferCount)
     {
-        VULKAN_INFO("FVulkanSwapChain::Present BackBuffer count changed (%d -> %d)", ActiveBackBufferCount, DesiredBackBufferCount);
+        VULKAN_INFO("FVulkanSwapChainRHI::Present BackBuffer count changed (%d -> %d)", ActiveBackBufferCount, DesiredBackBufferCount);
         bNeedsRecreation = true;
     }
 
     if (CVarEnableVSync.GetValue() != bActiveVSync)
     {
-        VULKAN_INFO("FVulkanSwapChain::Present VSync CVar changed (%s -> %s)", bActiveVSync ? "on" : "off", CVarEnableVSync.GetValue() ? "on" : "off");
+        VULKAN_INFO("FVulkanSwapChainRHI::Present VSync CVar changed (%s -> %s)", bActiveVSync ? "on" : "off", CVarEnableVSync.GetValue() ? "on" : "off");
         bNeedsRecreation = true;
     }
 
@@ -401,7 +784,7 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
 
         if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
         {
-            VULKAN_WARNING("FVulkanSwapChain::Present CreateSwapChain Failed");
+            VULKAN_WARNING("FVulkanSwapChainRHI::Present CreateSwapChain Failed");
             return false;
         }
     }
@@ -411,7 +794,7 @@ bool FVulkanSwapChain::Present(FVulkanCommandContext* InCommandContext, bool bVe
     return true;
 }
 
-void FVulkanSwapChain::SetDebugName(const FString& InName)
+void FVulkanSwapChainRHI::SetDebugName(const FString& InName)
 {
     // Name the swapchain object
     if (SwapChainResource)
@@ -428,11 +811,11 @@ void FVulkanSwapChain::SetDebugName(const FString& InName)
     }
 }
 
-FVulkanTexture* FVulkanSwapChain::GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext)
+FVulkanTextureRHI* FVulkanSwapChainRHI::GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext)
 {
-    if (!SwapChainResource || Info.Width == 0 || Info.Height == 0)
+    if (!SwapChainResource || Desc.Width == 0 || Desc.Height == 0)
     {
-        VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is Invalid");
+        VULKAN_WARNING("FVulkanSwapChainRHI::GetCurrentBackBuffer SwapChain is Invalid");
 		return nullptr;
     }
 
@@ -441,24 +824,24 @@ FVulkanTexture* FVulkanSwapChain::GetCurrentBackBuffer(FVulkanCommandContext* In
         VkResult Result = AcquireNextImage(InCommandContext);
 		if (Result == VK_SUBOPTIMAL_KHR)
 		{
-			VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is Suboptimal");
+			VULKAN_WARNING("FVulkanSwapChainRHI::GetCurrentBackBuffer SwapChain is Suboptimal");
 		}
         
         if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
         {
-            VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain is OutOfDate");
+            VULKAN_WARNING("FVulkanSwapChainRHI::GetCurrentBackBuffer SwapChain is OutOfDate");
 			InCommandContext->SplitCommandBuffer(false, true);
 
-			if (!CreateSwapChain(InCommandContext, Info.Width, Info.Height))
+			if (!CreateSwapChain(InCommandContext, Desc.Width, Desc.Height))
 			{
-                VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer SwapChain recreation failed");
+                VULKAN_WARNING("FVulkanSwapChainRHI::GetCurrentBackBuffer SwapChain recreation failed");
 				return nullptr;
 			}
 
             Result = AcquireNextImage(InCommandContext);
             if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
             {
-                VULKAN_WARNING("FVulkanSwapChain::GetCurrentBackBuffer acquire failed after recreate");
+                VULKAN_WARNING("FVulkanSwapChainRHI::GetCurrentBackBuffer acquire failed after recreate");
                 return nullptr;
             }
         }
@@ -467,36 +850,36 @@ FVulkanTexture* FVulkanSwapChain::GetCurrentBackBuffer(FVulkanCommandContext* In
     return BackBuffers[BackBufferIndex].Get();
 }
 
-FRHITexture* FVulkanSwapChain::GetBackBuffer() const
+FRHITexture* FVulkanSwapChainRHI::GetBackBuffer() const
 {
     return BackBuffer.Get();
 }
 
-void* FVulkanSwapChain::GetBackBufferRenderTargetView()
+void* FVulkanSwapChainRHI::GetBackBufferRenderTargetView()
 {
     if (BackBufferIndex < 0 || !BackBuffers.IsValidIndex(BackBufferIndex))
     {
         return nullptr;
     }
 
-    FVulkanTexture* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
+    FVulkanTextureRHI* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
 
     FVulkanHashableImageView HashableImageView;
     HashableImageView.ArrayIndex     = 0;
     HashableImageView.NumArraySlices = 1;
-    HashableImageView.Format         = Info.ColorFormat;
+    HashableImageView.Format         = Desc.ColorFormat;
     HashableImageView.MipLevel       = 0;
     return CurrentBackBuffer->GetOrCreateImageView(HashableImageView);
 }
 
-VkResult FVulkanSwapChain::AcquireNextImage(FVulkanCommandContext* InCommandContext)
+VkResult FVulkanSwapChainRHI::AcquireNextImage(FVulkanCommandContext* InCommandContext)
 {
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
 
     if constexpr (GVulkanLogSemaphoreIndex)
     {
-        VULKAN_INFO("FVulkanSwapChain::AcquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
+        VULKAN_INFO("FVulkanSwapChainRHI::AcquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
     }
 
 	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])

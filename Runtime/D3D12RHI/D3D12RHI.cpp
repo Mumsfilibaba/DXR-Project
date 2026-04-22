@@ -32,7 +32,7 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
 
 FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
-FD3D12Texture* FD3D12RHI::ResourceCast(FRHITexture* Texture)
+FD3D12TextureRHI* FD3D12RHI::ResourceCast(FRHITexture* Texture)
 {
     if (Texture)
     {
@@ -42,7 +42,7 @@ FD3D12Texture* FD3D12RHI::ResourceCast(FRHITexture* Texture)
             return BackBuffer->GetCurrentBackBufferTexture();
         }
 
-        return static_cast<FD3D12Texture*>(Texture);
+        return static_cast<FD3D12TextureRHI*>(Texture);
     }
 
     return nullptr;
@@ -396,9 +396,9 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
 }
 
 
-FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InTextureInfo);
+    FD3D12TextureRHIRef NewTexture = new FD3D12TextureRHI(GetDevice(), InTextureDesc);
     if (!NewTexture->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
@@ -407,7 +407,7 @@ FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERes
 #if D3D12_ENABLE_STATS
     {
         const int64 AllocatedSize = static_cast<int64>(NewTexture->GetResourceStorage().GetSize());
-        if (InTextureInfo.IsRenderTarget() || InTextureInfo.IsDepthStencil())
+        if (InTextureDesc.IsRenderTarget() || InTextureDesc.IsDepthStencil())
         {
             STAT_ADD(STAT_RHI_RenderTargetMemory, AllocatedSize);
         }
@@ -422,9 +422,9 @@ FRHITexture* FD3D12RHI::CreateTexture(const FRHITextureInfo& InTextureInfo, ERes
     return NewTexture.ReleaseOwnership();
 }
 
-FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData)
 {
-    TSharedRef<FD3D12Buffer> NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
+    TSharedRef<FD3D12BufferRHI> NewBuffer = new FD3D12BufferRHI(GetDevice(), InBufferDesc);
     if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
@@ -433,19 +433,19 @@ FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourc
 #if D3D12_ENABLE_STATS
     {
         const int64 AllocatedSize = static_cast<int64>(NewBuffer->GetResourceStorage().GetSize());
-        if (InBufferInfo.IsVertexBuffer())
+        if (InBufferDesc.IsVertexBuffer())
         {
             STAT_ADD(STAT_RHI_VertexBufferMemory, AllocatedSize);
         }
-        else if (InBufferInfo.IsIndexBuffer())
+        else if (InBufferDesc.IsIndexBuffer())
         {
             STAT_ADD(STAT_RHI_IndexBufferMemory, AllocatedSize);
         }
-        else if (InBufferInfo.IsConstantBuffer())
+        else if (InBufferDesc.IsConstantBuffer())
         {
             STAT_ADD(STAT_RHI_ConstantBufferMemory, AllocatedSize);
         }
-        else if (InBufferInfo.IsShaderResourceBuffer() || InBufferInfo.IsUnorderedAccessBuffer())
+        else if (InBufferDesc.IsShaderResourceBuffer() || InBufferDesc.IsUnorderedAccessBuffer())
         {
             STAT_ADD(STAT_RHI_StructuredBufferMemory, AllocatedSize);
         }
@@ -454,11 +454,11 @@ FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourc
             STAT_ADD(STAT_RHI_MiscBufferMemory, AllocatedSize);
         }
 
-        if (InBufferInfo.IsReadBack())
+        if (InBufferDesc.IsReadBack())
         {
             STAT_ADD(STAT_RHI_ReadbackMemory, AllocatedSize);
         }
-        if (InBufferInfo.IsDynamic() || InBufferInfo.IsTransient())
+        if (InBufferDesc.IsDynamic() || InBufferDesc.IsTransient())
         {
             STAT_ADD(STAT_RHI_UploadMemory, AllocatedSize);
         }
@@ -469,57 +469,57 @@ FRHIBuffer* FD3D12RHI::CreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourc
     return NewBuffer.ReleaseOwnership();
 }
 
-FRHISamplerState* FD3D12RHI::CreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
+FRHISamplerState* FD3D12RHI::CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc)
 {
     TScopedLock Lock(SamplerStateMapCS);
 
-    FD3D12SamplerStateRef Result;
+    FD3D12SamplerStateRHIRef Result;
 
     // Check if there already is an existing sampler state with this description
-    if (FD3D12SamplerStateRef* ExistingSamplerState = SamplerStateMap.Find(InSamplerInfo))
+    if (FD3D12SamplerStateRHIRef* ExistingSamplerState = SamplerStateMap.Find(InSamplerDesc))
     {
         Result = *ExistingSamplerState;
     }
     else
     {
         D3D12_SAMPLER_DESC Desc = {};
-        Desc.AddressU       = ConvertSamplerMode(InSamplerInfo.AddressU);
-        Desc.AddressV       = ConvertSamplerMode(InSamplerInfo.AddressV);
-        Desc.AddressW       = ConvertSamplerMode(InSamplerInfo.AddressW);
-        Desc.ComparisonFunc = ConvertComparisonFunc(InSamplerInfo.ComparisonFunc);
-        Desc.Filter         = ConvertSamplerFilter(InSamplerInfo.Filter);
-        Desc.MaxAnisotropy  = InSamplerInfo.MaxAnisotropy;
-        Desc.MaxLOD         = InSamplerInfo.MaxLOD;
-        Desc.MinLOD         = InSamplerInfo.MinLOD;
-        Desc.MipLODBias     = InSamplerInfo.MipLODBias;
+        Desc.AddressU       = ConvertSamplerMode(InSamplerDesc.AddressU);
+        Desc.AddressV       = ConvertSamplerMode(InSamplerDesc.AddressV);
+        Desc.AddressW       = ConvertSamplerMode(InSamplerDesc.AddressW);
+        Desc.ComparisonFunc = ConvertComparisonFunc(InSamplerDesc.ComparisonFunc);
+        Desc.Filter         = ConvertSamplerFilter(InSamplerDesc.Filter);
+        Desc.MaxAnisotropy  = InSamplerDesc.MaxAnisotropy;
+        Desc.MaxLOD         = InSamplerDesc.MaxLOD;
+        Desc.MinLOD         = InSamplerDesc.MinLOD;
+        Desc.MipLODBias     = InSamplerDesc.MipLODBias;
         
-        FMemory::Memcpy(Desc.BorderColor, InSamplerInfo.BorderColor.RGBA, sizeof(Desc.BorderColor));
+        FMemory::Memcpy(Desc.BorderColor, InSamplerDesc.BorderColor.RGBA, sizeof(Desc.BorderColor));
 
-        Result = new FD3D12SamplerState(GetDevice(), GetDevice()->GetSamplerOfflineDescriptorHeap(), InSamplerInfo);
+        Result = new FD3D12SamplerStateRHI(GetDevice(), GetDevice()->GetSamplerOfflineDescriptorHeap(), InSamplerDesc);
         if (!Result->CreateSampler(Desc))
         {
             return nullptr;
         }
         else
         {
-            SamplerStateMap.Add(InSamplerInfo, Result);
+            SamplerStateMap.Add(InSamplerDesc, Result);
         }
     }
 
     return Result.ReleaseOwnership();
 }
 
-FRHIRayTracingScene* FD3D12RHI::CreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
+FRHISceneAccelerationStructure* FD3D12RHI::CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
 {
-    FRayTracingSceneBuildInfo BuildInfo;
-    BuildInfo.Instances    = InSceneInfo.Instances.Data();
-    BuildInfo.NumInstances = InSceneInfo.Instances.Size();
-    BuildInfo.bUpdate      = false;
+    FRHISceneAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.Instances    = InSceneDesc.Instances.Data();
+    BuildDesc.NumInstances = InSceneDesc.Instances.Size();
+    BuildDesc.bUpdate      = false;
 
     DirectCommandContext->StartContext();
 
-    TSharedRef<FD3D12RayTracingScene> D3D12Scene = new FD3D12RayTracingScene(GetDevice(), InSceneInfo);
-    if (!D3D12Scene->Build(*DirectCommandContext, BuildInfo))
+    TSharedRef<FD3D12SceneAccelerationStructureRHI> D3D12Scene = new FD3D12SceneAccelerationStructureRHI(GetDevice(), InSceneDesc);
+    if (!D3D12Scene->Build(*DirectCommandContext, BuildDesc))
     {
         DEBUG_BREAK();
         D3D12Scene.Reset();
@@ -531,20 +531,20 @@ FRHIRayTracingScene* FD3D12RHI::CreateRayTracingScene(const FRHIRayTracingSceneI
     return D3D12Scene.ReleaseOwnership();
 }
 
-FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
+FRHIGeometryAccelerationStructure* FD3D12RHI::CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
 {
-    FRayTracingGeometryBuildInfo BuildInfo;
-    BuildInfo.VertexBuffer = InGeometryInfo.VertexBuffer;
-    BuildInfo.NumVertices  = InGeometryInfo.NumVertices;
-    BuildInfo.IndexBuffer  = InGeometryInfo.IndexBuffer;
-    BuildInfo.NumIndices   = InGeometryInfo.NumIndices;
-    BuildInfo.IndexFormat  = InGeometryInfo.IndexFormat;
-    BuildInfo.bUpdate      = false;
+    FRHIGeometryAccelerationStructureBuildDesc BuildDesc;
+    BuildDesc.VertexBuffer = InGeometryDesc.VertexBuffer;
+    BuildDesc.NumVertices  = InGeometryDesc.NumVertices;
+    BuildDesc.IndexBuffer  = InGeometryDesc.IndexBuffer;
+    BuildDesc.NumIndices   = InGeometryDesc.NumIndices;
+    BuildDesc.IndexFormat  = InGeometryDesc.IndexFormat;
+    BuildDesc.bUpdate      = false;
 
     DirectCommandContext->StartContext();
 
-    TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InGeometryInfo);
-    if (!D3D12Geometry->Build(*DirectCommandContext, BuildInfo))
+    TSharedRef<FD3D12GeometryAccelerationStructureRHI> D3D12Geometry = new FD3D12GeometryAccelerationStructureRHI(GetDevice(), InGeometryDesc);
+    if (!D3D12Geometry->Build(*DirectCommandContext, BuildDesc))
     {
         DEBUG_BREAK();
         D3D12Geometry.Reset();
@@ -556,7 +556,7 @@ FRHIRayTracingGeometry* FD3D12RHI::CreateRayTracingGeometry(const FRHIRayTracing
     return D3D12Geometry.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderResourceViewInfo& InInfo)
+FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc)
 {
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc = {};
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -564,23 +564,23 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
     FRHIResource*   Resource      = nullptr;
     FD3D12Resource* D3D12Resource = nullptr;
 
-    if (InInfo.IsBufferSRV())
+    if (InDesc.IsBufferSRV())
     {
-        FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(InInfo.BufferSRV.Buffer);
+        FD3D12BufferRHI* D3D12Buffer = FD3D12RHI::ResourceCast(InDesc.BufferSRV.Buffer);
         CHECK(D3D12Buffer != nullptr);
 
         D3D12Resource = D3D12Buffer->GetResource();
         Resource      = D3D12Buffer;
 
         Desc.ViewDimension       = D3D12_SRV_DIMENSION_BUFFER;
-        Desc.Buffer.FirstElement = InInfo.BufferSRV.FirstElement;
-        Desc.Buffer.NumElements  = InInfo.BufferSRV.NumElements;
+        Desc.Buffer.FirstElement = InDesc.BufferSRV.FirstElement;
+        Desc.Buffer.NumElements  = InDesc.BufferSRV.NumElements;
 
-        if (InInfo.BufferSRV.Format == EBufferSRVFormat::None)
+        if (InDesc.BufferSRV.Format == EBufferSRVFormat::None)
         {
             Desc.Format                     = DXGI_FORMAT_UNKNOWN;
             Desc.Buffer.Flags               = D3D12_BUFFER_SRV_FLAG_NONE;
-            Desc.Buffer.StructureByteStride = InInfo.BufferSRV.Buffer->GetInfo().Stride;
+            Desc.Buffer.StructureByteStride = InDesc.BufferSRV.Buffer->GetDesc().Stride;
         }
         else
         {
@@ -589,41 +589,41 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
             Desc.Buffer.StructureByteStride = 0;
         }
     }
-    else if (InInfo.IsTextureSRV())
+    else if (InDesc.IsTextureSRV())
     {
-        FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(InInfo.TextureSRV.Texture);
+        FD3D12TextureRHI* D3D12Texture = FD3D12RHI::ResourceCast(InDesc.TextureSRV.Texture);
         CHECK(D3D12Texture != nullptr);
 
         D3D12Resource = D3D12Texture->GetResource();
         Resource      = D3D12Texture;
 
-        Desc.Format = ConvertFormat(InInfo.TextureSRV.Format);
+        Desc.Format = ConvertFormat(InDesc.TextureSRV.Format);
 
-        const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
-        if (TextureInfo.IsTexture1D())
+        const FRHITextureDesc& TextureDesc = D3D12Texture->GetDesc();
+        if (TextureDesc.IsTexture1D())
         {
             Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE1D;
-            Desc.Texture1D.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
-            Desc.Texture1D.MipLevels           = InInfo.TextureSRV.NumMips;
-            Desc.Texture1D.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+            Desc.Texture1D.MostDetailedMip     = InDesc.TextureSRV.FirstMipLevel;
+            Desc.Texture1D.MipLevels           = InDesc.TextureSRV.NumMips;
+            Desc.Texture1D.ResourceMinLODClamp = InDesc.TextureSRV.MinLODClamp;
         }
-        else if (TextureInfo.IsTexture1DArray())
+        else if (TextureDesc.IsTexture1DArray())
         {
             Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-            Desc.Texture1DArray.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
-            Desc.Texture1DArray.MipLevels           = InInfo.TextureSRV.NumMips;
-            Desc.Texture1DArray.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
-            Desc.Texture1DArray.FirstArraySlice     = InInfo.TextureSRV.FirstArraySlice;
-            Desc.Texture1DArray.ArraySize           = InInfo.TextureSRV.NumSlices;
+            Desc.Texture1DArray.MostDetailedMip     = InDesc.TextureSRV.FirstMipLevel;
+            Desc.Texture1DArray.MipLevels           = InDesc.TextureSRV.NumMips;
+            Desc.Texture1DArray.ResourceMinLODClamp = InDesc.TextureSRV.MinLODClamp;
+            Desc.Texture1DArray.FirstArraySlice     = InDesc.TextureSRV.FirstArraySlice;
+            Desc.Texture1DArray.ArraySize           = InDesc.TextureSRV.NumSlices;
         }
-        else if (TextureInfo.IsTexture2D())
+        else if (TextureDesc.IsTexture2D())
         {
-            if (!TextureInfo.IsMultisampled())
+            if (!TextureDesc.IsMultisampled())
             {
                 Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
-                Desc.Texture2D.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
-                Desc.Texture2D.MipLevels           = InInfo.TextureSRV.NumMips;
-                Desc.Texture2D.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+                Desc.Texture2D.MostDetailedMip     = InDesc.TextureSRV.FirstMipLevel;
+                Desc.Texture2D.MipLevels           = InDesc.TextureSRV.NumMips;
+                Desc.Texture2D.ResourceMinLODClamp = InDesc.TextureSRV.MinLODClamp;
                 Desc.Texture2D.PlaneSlice          = 0;
             }
             else
@@ -631,47 +631,47 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
                 Desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
             }
         }
-        else if (TextureInfo.IsTexture2DArray())
+        else if (TextureDesc.IsTexture2DArray())
         {
-            if (!TextureInfo.IsMultisampled())
+            if (!TextureDesc.IsMultisampled())
             {
                 Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                Desc.Texture2DArray.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
-                Desc.Texture2DArray.MipLevels           = InInfo.TextureSRV.NumMips;
-                Desc.Texture2DArray.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
-                Desc.Texture2DArray.FirstArraySlice     = InInfo.TextureSRV.FirstArraySlice;
-                Desc.Texture2DArray.ArraySize           = InInfo.TextureSRV.NumSlices;
+                Desc.Texture2DArray.MostDetailedMip     = InDesc.TextureSRV.FirstMipLevel;
+                Desc.Texture2DArray.MipLevels           = InDesc.TextureSRV.NumMips;
+                Desc.Texture2DArray.ResourceMinLODClamp = InDesc.TextureSRV.MinLODClamp;
+                Desc.Texture2DArray.FirstArraySlice     = InDesc.TextureSRV.FirstArraySlice;
+                Desc.Texture2DArray.ArraySize           = InDesc.TextureSRV.NumSlices;
                 Desc.Texture2DArray.PlaneSlice          = 0;
             }
             else
             {
                 Desc.ViewDimension                    = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-                Desc.Texture2DMSArray.FirstArraySlice = InInfo.TextureSRV.FirstArraySlice;
-                Desc.Texture2DMSArray.ArraySize       = InInfo.TextureSRV.NumSlices;
+                Desc.Texture2DMSArray.FirstArraySlice = InDesc.TextureSRV.FirstArraySlice;
+                Desc.Texture2DMSArray.ArraySize       = InDesc.TextureSRV.NumSlices;
             }
         }
-        else if (TextureInfo.IsTextureCube())
+        else if (TextureDesc.IsTextureCube())
         {
             Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            Desc.TextureCube.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
-            Desc.TextureCube.MipLevels           = InInfo.TextureSRV.NumMips;
-            Desc.TextureCube.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+            Desc.TextureCube.MostDetailedMip     = InDesc.TextureSRV.FirstMipLevel;
+            Desc.TextureCube.MipLevels           = InDesc.TextureSRV.NumMips;
+            Desc.TextureCube.ResourceMinLODClamp = InDesc.TextureSRV.MinLODClamp;
         }
-        else if (TextureInfo.IsTextureCubeArray())
+        else if (TextureDesc.IsTextureCubeArray())
         {
             Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-            Desc.TextureCubeArray.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
-            Desc.TextureCubeArray.MipLevels           = InInfo.TextureSRV.NumMips;
-            Desc.TextureCubeArray.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
-            Desc.TextureCubeArray.First2DArrayFace    = InInfo.TextureSRV.FirstArraySlice * RHI_NUM_CUBE_FACES;
-            Desc.TextureCubeArray.NumCubes            = InInfo.TextureSRV.NumSlices;
+            Desc.TextureCubeArray.MostDetailedMip     = InDesc.TextureSRV.FirstMipLevel;
+            Desc.TextureCubeArray.MipLevels           = InDesc.TextureSRV.NumMips;
+            Desc.TextureCubeArray.ResourceMinLODClamp = InDesc.TextureSRV.MinLODClamp;
+            Desc.TextureCubeArray.First2DArrayFace    = InDesc.TextureSRV.FirstArraySlice * RHI_NUM_CUBE_FACES;
+            Desc.TextureCubeArray.NumCubes            = InDesc.TextureSRV.NumSlices;
         }
-        else if (TextureInfo.IsTexture3D())
+        else if (TextureDesc.IsTexture3D())
         {
             Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
-            Desc.Texture3D.MostDetailedMip     = InInfo.TextureSRV.FirstMipLevel;
-            Desc.Texture3D.MipLevels           = InInfo.TextureSRV.NumMips;
-            Desc.Texture3D.ResourceMinLODClamp = InInfo.TextureSRV.MinLODClamp;
+            Desc.Texture3D.MostDetailedMip     = InDesc.TextureSRV.FirstMipLevel;
+            Desc.Texture3D.MipLevels           = InDesc.TextureSRV.NumMips;
+            Desc.Texture3D.ResourceMinLODClamp = InDesc.TextureSRV.MinLODClamp;
         }
     }
     else
@@ -679,7 +679,7 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
         return nullptr;
     }
 
-    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), Resource);
+    FD3D12ShaderResourceViewRHIRef D3D12View = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), Resource);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -697,29 +697,29 @@ FRHIShaderResourceView* FD3D12RHI::CreateShaderResourceView(const FRHIShaderReso
     }
 }
 
-FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnorderedAccessViewInfo& InInfo)
+FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc)
 {
     FRHIResource*   Resource      = nullptr;
     FD3D12Resource* D3D12Resource = nullptr;
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc = {};
-    if (InInfo.IsBufferUAV())
+    if (InDesc.IsBufferUAV())
     {
-        FD3D12Buffer* D3D12Buffer = FD3D12RHI::ResourceCast(InInfo.BufferUAV.Buffer);
+        FD3D12BufferRHI* D3D12Buffer = FD3D12RHI::ResourceCast(InDesc.BufferUAV.Buffer);
         CHECK(D3D12Buffer != nullptr);
 
         D3D12Resource = D3D12Buffer->GetResource();
         Resource      = D3D12Buffer;
 
         Desc.ViewDimension       = D3D12_UAV_DIMENSION_BUFFER;
-        Desc.Buffer.FirstElement = InInfo.BufferUAV.FirstElement;
-        Desc.Buffer.NumElements  = InInfo.BufferUAV.NumElements;
+        Desc.Buffer.FirstElement = InDesc.BufferUAV.FirstElement;
+        Desc.Buffer.NumElements  = InDesc.BufferUAV.NumElements;
 
-        if (InInfo.BufferUAV.Format == EBufferUAVFormat::None)
+        if (InDesc.BufferUAV.Format == EBufferUAVFormat::None)
         {
             Desc.Format                     = DXGI_FORMAT_UNKNOWN;
             Desc.Buffer.Flags               = D3D12_BUFFER_UAV_FLAG_NONE;
-            Desc.Buffer.StructureByteStride = InInfo.BufferUAV.Buffer->GetInfo().Stride;
+            Desc.Buffer.StructureByteStride = InDesc.BufferUAV.Buffer->GetDesc().Stride;
         }
         else
         {
@@ -728,35 +728,35 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnordere
             Desc.Buffer.StructureByteStride = 0;
         }
     }
-    else if (InInfo.IsTextureUAV())
+    else if (InDesc.IsTextureUAV())
     {
-        Desc.Format = ConvertFormat(InInfo.TextureUAV.Format);
+        Desc.Format = ConvertFormat(InDesc.TextureUAV.Format);
         
-        FD3D12Texture* D3D12Texture = FD3D12RHI::ResourceCast(InInfo.TextureUAV.Texture);
+        FD3D12TextureRHI* D3D12Texture = FD3D12RHI::ResourceCast(InDesc.TextureUAV.Texture);
         CHECK(D3D12Texture != nullptr);
 
         D3D12Resource = D3D12Texture->GetResource();
         Resource      = D3D12Texture;
 
-        const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
-        if (TextureInfo.IsTexture1D())
+        const FRHITextureDesc& TextureDesc = D3D12Texture->GetDesc();
+        if (TextureDesc.IsTexture1D())
         {
             Desc.ViewDimension      = D3D12_UAV_DIMENSION_TEXTURE1D;
-            Desc.Texture1D.MipSlice = InInfo.TextureUAV.MipLevel;
+            Desc.Texture1D.MipSlice = InDesc.TextureUAV.MipLevel;
         }
-        else if (TextureInfo.IsTexture1DArray())
+        else if (TextureDesc.IsTexture1DArray())
         {
             Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-            Desc.Texture1DArray.MipSlice        = InInfo.TextureUAV.MipLevel;
-            Desc.Texture1DArray.FirstArraySlice = InInfo.TextureUAV.FirstArraySlice;
-            Desc.Texture1DArray.ArraySize       = InInfo.TextureUAV.NumSlices;
+            Desc.Texture1DArray.MipSlice        = InDesc.TextureUAV.MipLevel;
+            Desc.Texture1DArray.FirstArraySlice = InDesc.TextureUAV.FirstArraySlice;
+            Desc.Texture1DArray.ArraySize       = InDesc.TextureUAV.NumSlices;
         }
-        else if (TextureInfo.IsTexture2D())
+        else if (TextureDesc.IsTexture2D())
         {
-            if (!TextureInfo.IsMultisampled())
+            if (!TextureDesc.IsMultisampled())
             {
                 Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
-                Desc.Texture2D.MipSlice   = InInfo.TextureUAV.MipLevel;
+                Desc.Texture2D.MipSlice   = InDesc.TextureUAV.MipLevel;
                 Desc.Texture2D.PlaneSlice = 0;
             }
             else
@@ -764,39 +764,39 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnordere
                 D3D12_ERROR("MultiSampled Textures is not supported");
             }
         }
-        else if (TextureInfo.IsTexture2DArray())
+        else if (TextureDesc.IsTexture2DArray())
         {
-            if (!TextureInfo.IsMultisampled())
+            if (!TextureDesc.IsMultisampled())
             {
                 Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-                Desc.Texture2DArray.MipSlice        = InInfo.TextureUAV.MipLevel;
+                Desc.Texture2DArray.MipSlice        = InDesc.TextureUAV.MipLevel;
                 Desc.Texture2DArray.PlaneSlice      = 0;
-                Desc.Texture2DArray.FirstArraySlice = InInfo.TextureUAV.FirstArraySlice;
-                Desc.Texture2DArray.ArraySize       = InInfo.TextureUAV.NumSlices;
+                Desc.Texture2DArray.FirstArraySlice = InDesc.TextureUAV.FirstArraySlice;
+                Desc.Texture2DArray.ArraySize       = InDesc.TextureUAV.NumSlices;
             }
             else
             {
                 D3D12_ERROR("MultiSampled Textures is not supported");
             }
         }
-        else if (TextureInfo.IsTextureCube() || TextureInfo.IsTextureCubeArray())
+        else if (TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
         {
             Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            Desc.Texture2DArray.MipSlice        = InInfo.TextureUAV.MipLevel;
+            Desc.Texture2DArray.MipSlice        = InDesc.TextureUAV.MipLevel;
             Desc.Texture2DArray.PlaneSlice      = 0;
-            Desc.Texture2DArray.FirstArraySlice = InInfo.TextureUAV.FirstArraySlice * RHI_NUM_CUBE_FACES;
-            Desc.Texture2DArray.ArraySize       = InInfo.TextureUAV.NumSlices * RHI_NUM_CUBE_FACES;
+            Desc.Texture2DArray.FirstArraySlice = InDesc.TextureUAV.FirstArraySlice * RHI_NUM_CUBE_FACES;
+            Desc.Texture2DArray.ArraySize       = InDesc.TextureUAV.NumSlices * RHI_NUM_CUBE_FACES;
         }
-        else if (TextureInfo.IsTexture3D())
+        else if (TextureDesc.IsTexture3D())
         {
             Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
-            Desc.Texture3D.FirstWSlice = InInfo.TextureUAV.FirstArraySlice;
-            Desc.Texture3D.WSize       = InInfo.TextureUAV.NumSlices;
-            Desc.Texture3D.MipSlice    = InInfo.TextureUAV.MipLevel;
+            Desc.Texture3D.FirstWSlice = InDesc.TextureUAV.FirstArraySlice;
+            Desc.Texture3D.WSize       = InDesc.TextureUAV.NumSlices;
+            Desc.Texture3D.MipSlice    = InDesc.TextureUAV.MipLevel;
         }
     }
 
-    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), Resource);
+    FD3D12UnorderedAccessViewRHIRef D3D12View = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), Resource);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -814,7 +814,7 @@ FRHIUnorderedAccessView* FD3D12RHI::CreateUnorderedAccessView(const FRHIUnordere
 
 FRHIComputeShader* FD3D12RHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12ComputeShader> NewShader = new FD3D12ComputeShader(GetDevice());
+    TSharedRef<FD3D12ComputeShaderRHI> NewShader = new FD3D12ComputeShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
@@ -827,7 +827,7 @@ FRHIComputeShader* FD3D12RHI::CreateComputeShader(const TArray<uint8>& ShaderCod
 
 FRHIVertexShader* FD3D12RHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12VertexShader> NewShader = new FD3D12VertexShader(GetDevice());
+    TSharedRef<FD3D12VertexShaderRHI> NewShader = new FD3D12VertexShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
@@ -840,7 +840,7 @@ FRHIVertexShader* FD3D12RHI::CreateVertexShader(const TArray<uint8>& ShaderCode)
 
 FRHIHullShader* FD3D12RHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12HullShader> NewShader = new FD3D12HullShader(GetDevice());
+    TSharedRef<FD3D12HullShaderRHI> NewShader = new FD3D12HullShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
@@ -853,7 +853,7 @@ FRHIHullShader* FD3D12RHI::CreateHullShader(const TArray<uint8>& ShaderCode)
 
 FRHIDomainShader* FD3D12RHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12DomainShader> NewShader = new FD3D12DomainShader(GetDevice());
+    TSharedRef<FD3D12DomainShaderRHI> NewShader = new FD3D12DomainShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
@@ -866,7 +866,7 @@ FRHIDomainShader* FD3D12RHI::CreateDomainShader(const TArray<uint8>& ShaderCode)
 
 FRHIGeometryShader* FD3D12RHI::CreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12GeometryShader> NewShader = new FD3D12GeometryShader(GetDevice());
+    TSharedRef<FD3D12GeometryShaderRHI> NewShader = new FD3D12GeometryShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
@@ -893,7 +893,7 @@ FRHIAmplificationShader* FD3D12RHI::CreateAmplificationShader(const TArray<uint8
 
 FRHIPixelShader* FD3D12RHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12PixelShader> NewShader = new FD3D12PixelShader(GetDevice());
+    TSharedRef<FD3D12PixelShaderRHI> NewShader = new FD3D12PixelShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         return nullptr;
@@ -906,7 +906,7 @@ FRHIPixelShader* FD3D12RHI::CreatePixelShader(const TArray<uint8>& ShaderCode)
 
 FRHIRayGenShader* FD3D12RHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayGenShader> NewShader = new FD3D12RayGenShader(GetDevice());
+    TSharedRef<FD3D12RayGenShaderRHI> NewShader = new FD3D12RayGenShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
@@ -920,7 +920,7 @@ FRHIRayGenShader* FD3D12RHI::CreateRayGenShader(const TArray<uint8>& ShaderCode)
 
 FRHIRayAnyHitShader* FD3D12RHI::CreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayAnyHitShader> NewShader = new FD3D12RayAnyHitShader(GetDevice());
+    TSharedRef<FD3D12RayAnyHitShaderRHI> NewShader = new FD3D12RayAnyHitShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
@@ -934,7 +934,7 @@ FRHIRayAnyHitShader* FD3D12RHI::CreateRayAnyHitShader(const TArray<uint8>& Shade
 
 FRHIRayClosestHitShader* FD3D12RHI::CreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayClosestHitShader> NewShader = new FD3D12RayClosestHitShader(GetDevice());
+    TSharedRef<FD3D12RayClosestHitShaderRHI> NewShader = new FD3D12RayClosestHitShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
@@ -948,7 +948,7 @@ FRHIRayClosestHitShader* FD3D12RHI::CreateRayClosestHitShader(const TArray<uint8
 
 FRHIRayMissShader* FD3D12RHI::CreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12RayMissShader> NewShader = new FD3D12RayMissShader(GetDevice());
+    TSharedRef<FD3D12RayMissShaderRHI> NewShader = new FD3D12RayMissShaderRHI(GetDevice());
     if (!NewShader->Initialize(ShaderCode))
     {
         D3D12_ERROR_CRITICAL("[FD3D12RHI]: Failed to retrieve Shader Identifier");
@@ -960,30 +960,30 @@ FRHIRayMissShader* FD3D12RHI::CreateRayMissShader(const TArray<uint8>& ShaderCod
     }
 }
 
-FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencilStateInfo& InInfo)
+FRHIDepthStencilState* FD3D12RHI::CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
 {
-    return new FD3D12DepthStencilState(InInfo);
+    return new FD3D12DepthStencilStateRHI(InDesc);
 }
 
-FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateInfo& InInfo)
+FRHIRasterizerState* FD3D12RHI::CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
 {
-    return new FD3D12RasterizerState(InInfo);
+    return new FD3D12RasterizerStateRHI(InDesc);
 }
 
-FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateInfo& InInfo)
+FRHIBlendState* FD3D12RHI::CreateBlendState(const FRHIBlendStateDesc& InDesc)
 {
-    return new FD3D12BlendState(InInfo);
+    return new FD3D12BlendStateRHI(InDesc);
 }
 
-FRHIInputLayout* FD3D12RHI::CreateInputLayout(const TArray<FRHIInputElementInfo>& InInputElements)
+FRHIInputLayout* FD3D12RHI::CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements)
 {
-    return new FD3D12InputLayout(InInputElements);
+    return new FD3D12InputLayoutRHI(InInputElements);
 }
 
-FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInfo& InInfo)
+FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
 {
-    FD3D12GraphicsPipelineStateRef NewPipelineState = new FD3D12GraphicsPipelineState(GetDevice());
-    if (!NewPipelineState->Initialize(InInfo))
+    FD3D12GraphicsPipelineStateRHIRef NewPipelineState = new FD3D12GraphicsPipelineStateRHI(GetDevice());
+    if (!NewPipelineState->Initialize(InDesc))
     {
         return nullptr;
     }
@@ -993,10 +993,10 @@ FRHIGraphicsPipelineState* FD3D12RHI::CreateGraphicsPipelineState(const FRHIGrap
     }
 }
 
-FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateInfo& InInfo)
+FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
-    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInfo.Shader));
-    if (!NewPipelineState->Initialize(InInfo))
+    FD3D12ComputePipelineStateRHIRef NewPipelineState = new FD3D12ComputePipelineStateRHI(GetDevice(), MakeSharedRef<FD3D12ComputeShaderRHI>(InDesc.Shader));
+    if (!NewPipelineState->Initialize(InDesc))
     {
         return nullptr;
     }
@@ -1006,10 +1006,10 @@ FRHIComputePipelineState* FD3D12RHI::CreateComputePipelineState(const FRHIComput
     }
 }
 
-FRHIRayTracingPipelineState* FD3D12RHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
+FRHIRayTracingPipelineState* FD3D12RHI::CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
 {
-    FD3D12RayTracingPipelineStateRef NewPipelineState = new FD3D12RayTracingPipelineState(GetDevice());
-    if (!NewPipelineState->Initialize(InInitializer))
+    FD3D12RayTracingPipelineStateRHIRef NewPipelineState = new FD3D12RayTracingPipelineStateRHI(GetDevice());
+    if (!NewPipelineState->Initialize(InDesc))
     {
         return nullptr;
     }
@@ -1024,9 +1024,9 @@ FRHIQuery* FD3D12RHI::CreateQuery(EQueryType InQueryType)
     return new FD3D12QueryRHI(GetDevice(), InQueryType);
 }
 
-FRHIGpuFence* FD3D12RHI::CreateFence()
+FRHIFence* FD3D12RHI::CreateFence()
 {
-    FD3D12GpuFenceRef NewFence = new FD3D12GpuFence(GetDevice());
+    FD3D12FenceRHIRef NewFence = new FD3D12FenceRHI(GetDevice());
     if (!NewFence->Initialize())
     {
         return nullptr;
@@ -1035,11 +1035,11 @@ FRHIGpuFence* FD3D12RHI::CreateFence()
     return NewFence.ReleaseOwnership();
 }
 
-FRHISwapChain* FD3D12RHI::CreateSwapChain(const FRHISwapChainInfo& InSwapChainInfo)
+FRHISwapChain* FD3D12RHI::CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc)
 {
-    CHECK(InSwapChainInfo.WindowHandle != nullptr);
+    CHECK(InSwapChainDesc.WindowHandle != nullptr);
 
-    FD3D12SwapChainRef NewSwapChain = new FD3D12SwapChain(GetDevice(), DirectCommandContext, InSwapChainInfo);
+    FD3D12SwapChainRHIRef NewSwapChain = new FD3D12SwapChainRHI(GetDevice(), DirectCommandContext, InSwapChainDesc);
     if (!NewSwapChain->Initialize(DirectCommandContext))
     {
         return nullptr;
@@ -1050,7 +1050,7 @@ FRHISwapChain* FD3D12RHI::CreateSwapChain(const FRHISwapChainInfo& InSwapChainIn
     }
 }
 
-bool FD3D12RHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const
+bool FD3D12RHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const
 {
     if (!Adapter)
     {
@@ -1069,9 +1069,9 @@ bool FD3D12RHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemor
         return false;
     }
 
-    OutMemoryStats.MemoryType   = MemoryType;
-    OutMemoryStats.MemoryUsage  = VideoMemoryInfo.CurrentUsage;
-    OutMemoryStats.MemoryBudget = VideoMemoryInfo.Budget;
+    OutMemoryInfo.MemoryType   = MemoryType;
+    OutMemoryInfo.MemoryUsage  = VideoMemoryInfo.CurrentUsage;
+    OutMemoryInfo.MemoryBudget = VideoMemoryInfo.Budget;
     return true;
 }
 

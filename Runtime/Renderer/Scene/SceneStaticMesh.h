@@ -10,21 +10,16 @@ class FMaterial;
 class FMesh;
 class FStaticMeshComponent;
 class FRHIBuffer;
-class FRHIRayTracingGeometry;
+class FRHIGeometryAccelerationStructure;
 
 struct FTransformBufferHLSL
 {
-    // Row-major float3x4 affine transform.
-    // Shaders treat positions as column vectors: result = Transform * float4(Position, 1).
-    FMatrix3x4 Transform;
-
-    // Inverse-transpose for normal/tangent transforms (w=0 so translation is ignored).
-    FMatrix3x4 TransformInvT;
-
-    uint32 ObjectID = 0;
-    uint32 Padding0 = 0;
-    uint32 Padding1 = 0;
-    uint32 Padding2 = 0;
+    FMatrix3x4 Transform     = {}; // Row-major float3x4 affine transform. Shaders treat positions as column vectors: result = Transform * float4(Position, 1).
+    FMatrix3x4 TransformInvT = {}; // Inverse-transpose for normal/tangent transforms (w=0 so translation is ignored).
+    uint32     ObjectID      = 0;
+    uint32     Padding0      = 0;
+    uint32     Padding1      = 0;
+    uint32     Padding2      = 0;
 };
 
 MARK_AS_REALLOCATABLE(FTransformBufferHLSL);
@@ -38,44 +33,26 @@ public:
     // FSceneObject Interface
     virtual void Tick() override final;
 
-    TSharedPtr<FMesh>     GetMesh() const { return Mesh; }
-    TSharedPtr<FMaterial> GetMaterial(int32 Index = 0) const { return Materials.IsValidIndex(Index) ? Materials[Index] : nullptr; }
-
-    uint32 GetNumMaterials() const
-    {
-        return Materials.Size();
-    }
-
-    const FAABB&                GetWorldBounds()         const { return WorldBounds; };
-    const FTransformBufferHLSL& GetTransformShaderData() const { return TransformBuffer; }
-
-    FRHIBuffer*  GetIndexBuffer() const { return IndexBuffer; }
-    EIndexFormat GetIndexFormat() const { return IndexFormat; }
-
-    FRHIRayTracingGeometry* GetRayTracingGeometry() const { return Geometry; }
+    TSharedPtr<FMesh>                  GetMesh()                    const { return Mesh; }
+    TSharedPtr<FMaterial>              GetMaterial(int32 Index = 0) const { return Materials.IsValidIndex(Index) ? Materials[Index] : nullptr; }
+    uint32                             GetNumMaterials()            const { return Materials.Size(); }
+    const FAABB&                       GetWorldBounds()             const { return WorldBounds; };
+    const FTransformBufferHLSL&        GetTransformShaderData()     const { return TransformBuffer; }
+    FRHIBuffer*                        GetIndexBuffer()             const { return IndexBuffer; }
+    EIndexFormat                       GetIndexFormat()             const { return IndexFormat; }
+    FRHIGeometryAccelerationStructure* GetRayTracingGeometry()      const { return Geometry; }
 
 private:
-    // Reference to the Actor
-    class FActor*         Actor;
-    FStaticMeshComponent* MeshComponent;
-
-    // TransformData for this object
-    FTransformBufferHLSL TransformBuffer;
-
-    // AABB in world-space
-    FAABB WorldBounds;
-
-    // Reference to the Mesh
-    TSharedPtr<FMesh> Mesh;
-
-    // Reference to the material array
-    TArray<TSharedPtr<FMaterial>> Materials;
-
-    // Geometry Objects
-    FRHIRayTracingGeometry* Geometry;
-    FRHIBuffer*             VertexBuffer;
-    FRHIBuffer*             IndexBuffer;
-    uint32                  NumVertices;
-    uint32                  NumIndices;
-    EIndexFormat            IndexFormat;
+    class FActor*                      Actor;           // Reference to the Actor
+    FStaticMeshComponent*              MeshComponent;
+    FTransformBufferHLSL               TransformBuffer; // TransformData for this object
+    FAABB                              WorldBounds;     // AABB in world-space
+    TSharedPtr<FMesh>                  Mesh;            // Reference to the Mesh
+    TArray<TSharedPtr<FMaterial>>      Materials;       // Reference to the material array
+    FRHIGeometryAccelerationStructure* Geometry;        // Geometry Objects
+    FRHIBuffer*                        VertexBuffer;
+    FRHIBuffer*                        IndexBuffer;
+    uint32                             NumVertices;
+    uint32                             NumIndices;
+    EIndexFormat                       IndexFormat;
 };

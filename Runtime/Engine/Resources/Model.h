@@ -55,7 +55,7 @@ public:
         return IndexBufferSRV.Get();
     }
     
-    FRHIRayTracingGeometry* GetRayTracingGeometry() const
+    FRHIGeometryAccelerationStructure* GetRayTracingGeometry() const
     {
         return RTGeometry.Get();
     }
@@ -103,23 +103,23 @@ public:
 private:
     void CreateBoundingBox(const FMeshCreateInfo& CreateInfo);
 
-    FString                   MeshName;
-    FRHIBufferRef             VertexBuffer;
-    FRHIShaderResourceViewRef VertexBufferSRV;
-    FRHIBufferRef             VertexPositionBuffer;
-    FRHIShaderResourceViewRef VertexPositionBufferSRV;
-    FRHIBufferRef             VertexNormalBuffer;
-    FRHIShaderResourceViewRef VertexNormalBufferSRV;
-    FRHIBufferRef             VertexTexCoordBuffer;
-    FRHIShaderResourceViewRef VertexTexCoordBufferSRV;
-    FRHIBufferRef             IndexBuffer;
-    FRHIShaderResourceViewRef IndexBufferSRV;
-    FRHIRayTracingGeometryRef RTGeometry;
-    EIndexFormat              IndexFormat;
-    int32                     IndexCount;
-    int32                     VertexCount;
-    FAABB                     BoundingBox;
-    TArray<FSubMesh>          SubMeshes;
+    FString                              MeshName;
+    FRHIBufferRef                        VertexBuffer;
+    FRHIShaderResourceViewRef            VertexBufferSRV;
+    FRHIBufferRef                        VertexPositionBuffer;
+    FRHIShaderResourceViewRef            VertexPositionBufferSRV;
+    FRHIBufferRef                        VertexNormalBuffer;
+    FRHIShaderResourceViewRef            VertexNormalBufferSRV;
+    FRHIBufferRef                        VertexTexCoordBuffer;
+    FRHIShaderResourceViewRef            VertexTexCoordBufferSRV;
+    FRHIBufferRef                        IndexBuffer;
+    FRHIShaderResourceViewRef            IndexBufferSRV;
+    FRHIGeometryAccelerationStructureRef RTGeometry;
+    EIndexFormat                         IndexFormat;
+    int32                                IndexCount;
+    int32                                VertexCount;
+    FAABB                                BoundingBox;
+    TArray<FSubMesh>                     SubMeshes;
 };
 
 class ENGINE_API FModel : public FResource
@@ -158,6 +158,6 @@ public:
 private:
     TArray<TSharedPtr<FMesh>>     Meshes;
     TArray<TSharedPtr<FMaterial>> Materials;
-    float UniformScale;
-    FAABB BoundingBox;
+    float                         UniformScale;
+    FAABB                         BoundingBox;
 };

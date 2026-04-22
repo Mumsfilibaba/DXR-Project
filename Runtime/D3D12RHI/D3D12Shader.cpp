@@ -502,7 +502,7 @@ bool FD3D12GraphicsShader::Initialize(const TArray<uint8>& InCode)
 	return true;
 }
 
-bool FD3D12ComputeShader::Initialize(const TArray<uint8>& InCode)
+bool FD3D12ComputeShaderRHI::Initialize(const TArray<uint8>& InCode)
 {
     if (!FD3D12Shader::Initialize(InCode))
     {

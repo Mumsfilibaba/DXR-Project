@@ -9,7 +9,7 @@
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Query.h"
 
-class FD3D12ComputePipelineState;
+class FD3D12ComputePipelineStateRHI;
 
 class FD3D12CommandAllocator : public FD3D12DeviceChild, FNonCopyable
 {

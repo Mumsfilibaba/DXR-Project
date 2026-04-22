@@ -109,8 +109,8 @@ void FD3D12Fence::SetDebugName(const FString& Name)
     Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), *Name);
 }
 
-FD3D12GpuFence::FD3D12GpuFence(FD3D12Device* InDevice)
-    : FRHIGpuFence()
+FD3D12FenceRHI::FD3D12FenceRHI(FD3D12Device* InDevice)
+    : FRHIFence()
     , FD3D12DeviceChild(InDevice)
     , Fence(nullptr)
     , bHasPendingSignal(false)
@@ -118,7 +118,7 @@ FD3D12GpuFence::FD3D12GpuFence(FD3D12Device* InDevice)
 {
 }
 
-bool FD3D12GpuFence::Initialize()
+bool FD3D12FenceRHI::Initialize()
 {
     FD3D12FenceRef NewFence = new FD3D12Fence(GetDevice());
     if (!(NewFence && NewFence->Initialize(0)))
@@ -130,14 +130,14 @@ bool FD3D12GpuFence::Initialize()
     return true;
 }
 
-void FD3D12GpuFence::Signal(ID3D12CommandQueue* Queue)
+void FD3D12FenceRHI::Signal(ID3D12CommandQueue* Queue)
 {
     CHECK(Fence != nullptr);
     bHasPendingSignal.Store(true);
     Fence->Signal(Queue);
 }
 
-bool FD3D12GpuFence::IsSignaled() const
+bool FD3D12FenceRHI::IsSignaled() const
 {
     CHECK(Fence != nullptr);
 
@@ -149,7 +149,7 @@ bool FD3D12GpuFence::IsSignaled() const
     return Fence->GetLastSignaledValue() <= Fence->GetCompletedValue();
 }
 
-bool FD3D12GpuFence::Wait(uint64 TimeoutNs) const
+bool FD3D12FenceRHI::Wait(uint64 TimeoutNs) const
 {
     CHECK(Fence != nullptr);
 
@@ -174,7 +174,7 @@ bool FD3D12GpuFence::Wait(uint64 TimeoutNs) const
     return Fence->WaitForValue(Fence->GetLastSignaledValue(), TimeoutMs);
 }
 
-void FD3D12GpuFence::SetDebugName(const FString& InName)
+void FD3D12FenceRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;
     if (Fence)
@@ -183,7 +183,7 @@ void FD3D12GpuFence::SetDebugName(const FString& InName)
     }
 }
 
-FString FD3D12GpuFence::GetDebugName() const
+FString FD3D12FenceRHI::GetDebugName() const
 {
     return DebugName;
 }

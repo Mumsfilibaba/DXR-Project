@@ -18,7 +18,7 @@ class FD3D12Device;
 class FD3D12Adapter;
 class FD3D12RHI;
 class FD3D12RootSignature;
-class FD3D12ComputePipelineState;
+class FD3D12ComputePipelineStateRHI;
 class FD3D12OnlineDescriptorHeap;
 class FD3D12OfflineDescriptorHeap;
 class FD3D12QueryHeap;
@@ -153,11 +153,11 @@ private:
 
 struct FD3D12DefaultDescriptors
 {
-    FD3D12ConstantBufferViewRef  DefaultCBV;
-    FD3D12ShaderResourceViewRef  DefaultSRV;
-    FD3D12UnorderedAccessViewRef DefaultUAV;
-    FD3D12RenderTargetViewRef    DefaultRTV;
-    FD3D12SamplerStateRef        DefaultSampler;
+    FD3D12ConstantBufferViewRef     DefaultCBV;
+    FD3D12ShaderResourceViewRHIRef  DefaultSRV;
+    FD3D12UnorderedAccessViewRHIRef DefaultUAV;
+    FD3D12RenderTargetViewRef       DefaultRTV;
+    FD3D12SamplerStateRHIRef        DefaultSampler;
 };
 
 class FD3D12Device
@@ -346,6 +346,6 @@ private:
 #endif
 #if D3D12_USE_DEBUG_MESSAGE_CALLBACK
     TComPtr<ID3D12InfoQueue1> DebugInfoQueue;
-    DWORD                     DebugMessageCallbackCookie = 0;
+    DWORD                     DebugMessageCallbackCookie;
 #endif
 };
