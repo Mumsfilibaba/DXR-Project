@@ -1,6 +1,8 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12Descriptors.h"
 #include "D3D12RHI/D3D12ResourceViews.h"
+#include "D3D12RHI/D3D12SwapChain.h"
+#include "D3D12RHI/D3D12Texture.h"
 
 FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
     : FD3D12DeviceChild(InDevice)
@@ -100,6 +102,7 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
 
     GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, GetOfflineHandle());
+    
     IncrementDescriptorVersion();
     return true;
 }
@@ -110,6 +113,11 @@ FD3D12ShaderResourceViewRHI::FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice,
     , Desc()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+FRHIDescriptorHandle FD3D12ShaderResourceViewRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
 }
 
 void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
@@ -141,6 +149,7 @@ bool FD3D12ShaderResourceViewRHI::CreateView(FD3D12Resource* InResource, const D
     }
 
     GetDevice()->GetD3D12Device()->CreateShaderResourceView(D3DResource, &Desc, GetOfflineHandle());
+
     IncrementDescriptorVersion();
     return true;
 }
@@ -152,6 +161,11 @@ FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevic
     , CounterResource(nullptr)
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+FRHIDescriptorHandle FD3D12UnorderedAccessViewRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
 }
 
 void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
@@ -190,18 +204,25 @@ bool FD3D12UnorderedAccessViewRHI::CreateView(FD3D12Resource* InCounterResource,
     }
 
     GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(D3DResource, D3DCounterResource, &Desc, GetOfflineHandle());
+
     IncrementDescriptorVersion();
     return true;
 }
 
-FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
-    : FD3D12View(InDevice, InOfflineHeap)
+FD3D12RenderTargetViewRHI::FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
+    : FD3D12RenderTargetViewBase(InResource)
+    , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void FD3D12RenderTargetView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+FD3D12RenderTargetViewRHI* FD3D12RenderTargetViewRHI::GetRenderTargetViewInterface() const
+{
+    return const_cast<FD3D12RenderTargetViewRHI*>(this);
+}
+
+void FD3D12RenderTargetViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -211,11 +232,11 @@ void FD3D12RenderTargetView::OnResourceRelocated(FD3D12GenericResource* Relocate
     }
 }
 
-bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
+bool FD3D12RenderTargetViewRHI::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
-        D3D12_ERROR_CRITICAL("[FD3D12RenderTargetView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12RenderTargetViewRHI] Invalid Descriptor");
         return false;
     }
 
@@ -230,18 +251,20 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
     }
 
     GetDevice()->GetD3D12Device()->CreateRenderTargetView(D3DResource, &Desc, GetOfflineHandle());
+    
     IncrementDescriptorVersion();
     return true;
 }
 
-FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
-    : FD3D12View(InDevice, InOfflineHeap)
+FD3D12DepthStencilViewRHI::FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
+    : FRHIDepthStencilView(InResource)
+    , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
-void FD3D12DepthStencilView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12DepthStencilViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -251,11 +274,11 @@ void FD3D12DepthStencilView::OnResourceRelocated(FD3D12GenericResource* Relocate
     }
 }
 
-bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+bool FD3D12DepthStencilViewRHI::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
-        D3D12_ERROR_CRITICAL("[FD3D12DepthStencilView] Invalid Descriptor");
+        D3D12_ERROR_CRITICAL("[FD3D12DepthStencilViewRHI] Invalid Descriptor");
         return false;
     }
 
@@ -270,6 +293,23 @@ bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_
     }
 
     GetDevice()->GetD3D12Device()->CreateDepthStencilView(D3DResource, &Desc, GetOfflineHandle());
+
     IncrementDescriptorVersion();
     return true;
+}
+
+FD3D12BackBufferProxyRenderTargetViewRHI::FD3D12BackBufferProxyRenderTargetViewRHI(FD3D12SwapChainRHI* InSwapChain, FD3D12BackBufferProxyTextureRHI* InProxyTexture)
+    : FD3D12RenderTargetViewBase(InProxyTexture)
+    , SwapChain(InSwapChain)
+{
+}
+
+FD3D12BackBufferProxyRenderTargetViewRHI::~FD3D12BackBufferProxyRenderTargetViewRHI()
+{
+    SwapChain = nullptr;
+}
+
+FD3D12RenderTargetViewRHI* FD3D12BackBufferProxyRenderTargetViewRHI::GetRenderTargetViewInterface() const
+{
+    return SwapChain ? SwapChain->GetCurrentBackBufferRenderTargetView() : nullptr;
 }

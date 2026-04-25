@@ -136,10 +136,13 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
+    FRHIRenderTargetView* RenderTargetView = FrameResources.FinalTarget->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
-    RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets       = 1;
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
     CommandList.BeginRenderPass(RenderPassDesc);
 
     CommandList.SetGraphicsPipelineState(PipelineState.Get());

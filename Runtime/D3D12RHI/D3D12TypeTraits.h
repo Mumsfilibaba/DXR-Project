@@ -7,6 +7,8 @@ class FD3D12TextureRHI;
 struct FD3D12QueryRHI;
 class FD3D12ShaderResourceViewRHI;
 class FD3D12UnorderedAccessViewRHI;
+class FD3D12RenderTargetViewRHI;
+class FD3D12DepthStencilViewRHI;
 class FD3D12SamplerStateRHI;
 class FD3D12FenceRHI;
 class FD3D12SwapChainRHI;
@@ -53,6 +55,16 @@ template<> struct TD3D12RHIResourceType<FRHIShaderResourceView>
 template<> struct TD3D12RHIResourceType<FRHIUnorderedAccessView>
 {
     typedef FD3D12UnorderedAccessViewRHI Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIRenderTargetView>
+{
+    typedef FD3D12RenderTargetViewRHI Type;
+};
+
+template<> struct TD3D12RHIResourceType<FRHIDepthStencilView>
+{
+    typedef FD3D12DepthStencilViewRHI Type;
 };
 
 template<> struct TD3D12RHIResourceType<FRHISamplerState>

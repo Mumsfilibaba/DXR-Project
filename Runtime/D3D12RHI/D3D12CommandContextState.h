@@ -25,7 +25,7 @@ public:
 
     void SetGraphicsPipelineState(FD3D12GraphicsPipelineStateRHI* InGraphicsPipelineState);
     void SetComputePipelineState(FD3D12ComputePipelineStateRHI* InComputePipelineState);
-    void SetRenderTargets(FD3D12RenderTargetView* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilView* DepthStencil);
+    void SetRenderTargets(FD3D12RenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilViewRHI* DepthStencil);
     void SetShadingRate(EShadingRate ShadingRate);
     void SetShadingRateImage(FD3D12TextureRHI* ShadingRateImage);
     void SetViewports(D3D12_VIEWPORT* Viewports, uint32 NumViewports);
@@ -62,12 +62,12 @@ public:
         return ComputeState.PipelineState.Get();
     }
 
-    FORCEINLINE void GetRenderTargets(FD3D12RenderTargetView** RenderTargetViews, uint32& OutNumRenderTargets, FD3D12DepthStencilView** DepthStencilView) const
+    FORCEINLINE void GetRenderTargets(FD3D12RenderTargetViewRHI** RenderTargetViews, uint32& OutNumRenderTargets, FD3D12DepthStencilViewRHI** DepthStencilView) const
     {
         const uint32 CurrentNumRenderTargets = GraphicsState.RenderTargetCache.NumRenderTargets;
         if (RenderTargetViews)
         {
-            FMemory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FD3D12RenderTargetView*) * CurrentNumRenderTargets);
+            FMemory::Memcpy(RenderTargetViews, GraphicsState.RenderTargetCache.RenderTargetViews, sizeof(FD3D12RenderTargetViewRHI*) * CurrentNumRenderTargets);
         }
 
         OutNumRenderTargets = CurrentNumRenderTargets;

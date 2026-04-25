@@ -703,10 +703,13 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
     const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
 
+    FRHIRenderTargetView* RenderTargetView = RT->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
-    RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets       = 1;
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -749,10 +752,13 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
     const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
 
+    FRHIRenderTargetView* RenderTargetView = RT->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
-    RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets       = 1;
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -792,10 +798,13 @@ void FDebugRenderer::RenderLightProbes(FRHICommandList& CommandList, FFrameResou
     FRHITexture* DepthTex = InDepthTarget ? InDepthTarget : Resources.GBuffer[GBufferIndex_Depth].Get();
     const bool bBackBuffer = (RT->GetFormat() == RenderSettings::GetBackBufferFormat());
 
+    FRHIRenderTargetView* RenderTargetView = RT->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView = DepthTex->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RT, EAttachmentLoadAction::Load);
-    RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(DepthTex, EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets       = 1;
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 

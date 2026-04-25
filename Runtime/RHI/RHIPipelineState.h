@@ -434,7 +434,7 @@ public:
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
     virtual void SetDebugName(const FString& InName) { }
-    virtual FString GetDebugName() const { return ""; }
+    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
 };
 
 struct FRHIGraphicsPipelineFormats

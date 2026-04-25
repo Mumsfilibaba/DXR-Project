@@ -1427,7 +1427,7 @@ bool FD3D12Device::CreateDefaultResources()
     RTVDesc.Texture2D.MipSlice   = 0;
     RTVDesc.Texture2D.PlaneSlice = 0;
 
-    DefaultDescriptors.DefaultRTV = new FD3D12RenderTargetView(this, GetRenderTargetOfflineDescriptorHeap());
+    DefaultDescriptors.DefaultRTV = new FD3D12RenderTargetViewRHI(this, GetRenderTargetOfflineDescriptorHeap(), nullptr);
     if (!DefaultDescriptors.DefaultRTV->AllocateHandle())
     {
         return false;

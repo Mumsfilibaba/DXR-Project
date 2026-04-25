@@ -10,10 +10,11 @@
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanSemaphore.h"
 #include "VulkanRHI/VulkanTexture.h"
+#include "VulkanRHI/VulkanResourceViews.h"
+
+class FRHIRenderTargetView;
 
 #define NUM_BACK_BUFFERS (3)
-
-static constexpr int32 VULKAN_INVALID_BACK_BUFFER_INDEX = -1;
 
 typedef TSharedRef<class FVulkanSwapChain>    FVulkanSwapChainRef;
 typedef TSharedRef<class FVulkanSwapChainRHI> FVulkanSwapChainRHIRef;
@@ -79,29 +80,31 @@ private:
 class FVulkanSwapChainRHI final : public FRHISwapChain, public FVulkanDeviceChild
 {
 public:
-    FVulkanSwapChainRHI(FVulkanDevice* InDevice, const FRHISwapChainDesc& InSwapChainDesc);
+    FVulkanSwapChainRHI(FVulkanDevice* InDevice, FVulkanCommandContext* InCommandContext, const FRHISwapChainDesc& InSwapChainDesc);
     virtual ~FVulkanSwapChainRHI();
 
     // FRHISwapChain Interface
-    virtual FRHITexture* GetBackBuffer() const override final;
-    virtual void* GetBackBufferRenderTargetView() override final;
+    virtual FRHITexture*          GetBackBuffer()                 const override final;
+    virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final;
+    virtual void*                 GetNativeSwapChain()            const override final;
 
-    virtual void* GetNativeSwapChain() const override final
-    {
-        return reinterpret_cast<void*>(SwapChainResource->GetVkSwapChain());
-    }
+    bool Initialize();
+    bool Resize(uint32 InWidth, uint32 InHeight);
+    bool Present(bool bVerticalSync);
 
-    bool Initialize(FVulkanCommandContext* InCommandContext);
-    bool Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
-    bool Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync);
-    FVulkanTextureRHI* GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext);
+    FVulkanTextureRHI*          GetCurrentBackBuffer() const;
+    FVulkanRenderTargetViewRHI* GetCurrentBackBufferRenderTargetView() const;
 
     void SetDebugName(const FString& InName);
 
-    FVulkanTextureRHI* GetBackBufferFromIndex(uint32 Index) const
+    FVulkanTextureRHI* GetBackBufferAtIndex(uint32 Index) const
     {
-        CHECK(BackBuffers.IsValidIndex(Index));
-        return BackBuffers[Index].Get();
+        return BackBuffers.IsValidIndex(Index) ? BackBuffers[Index].Texture.Get() : nullptr;
+    }
+
+    FVulkanRenderTargetViewRHI* GetBackBufferRenderTargetViewAtIndex(uint32 Index) const
+    {
+        return BackBuffers.IsValidIndex(Index) ? BackBuffers[Index].RenderTargetView.Get() : nullptr;
     }
 
     uint32 GetNumBackBuffers() const
@@ -119,12 +122,17 @@ public:
         return Surface.Get();
     }
 
+    FVulkanCommandContext* GetCommandContext() const
+    {
+        return CommandContext;
+    }
+
 private:
-	bool RecreateSurface(FVulkanCommandContext* InCommandContext);
-	bool ValidateSurfaceAndSize(FVulkanCommandContext* InCommandContext, uint32& OutW, uint32& OutH);
-    bool CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
-    void DestroySwapChain(FVulkanCommandContext* InCommandContext);
-    VkResult AcquireNextImage(FVulkanCommandContext* InCommandContext);
+    VkResult AcquireNextImage();
+    bool     RecreateSurface();
+    bool     ValidateSurfaceAndSize(uint32& OutWidth, uint32& OutHeight);
+    bool     CreateSwapChain(uint32 InWidth, uint32 InHeight);
+    void     DestroySwapChain();
 
     void AdvanceSemaphoreIndex()
     {
@@ -135,16 +143,24 @@ private:
     typedef TArray<FVulkanFence*, TInlineArrayAllocator<FVulkanFence*, NUM_BACK_BUFFERS>>             FVulkanFenceArray;
     typedef TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> FVulkanSemaphoreArray;
 
-    void*                        WindowHandle;
-    FVulkanSurfaceRef            Surface;
-    FVulkanSwapChainRef          SwapChainResource;
-    FVulkanBackBufferTextureRef  BackBuffer;
-    TArray<FVulkanTextureRHIRef> BackBuffers;
-    FVulkanFenceArray            ImageFences;
-    FVulkanSemaphoreArray        ImageSemaphores;
-    FVulkanSemaphoreArray        RenderSemaphores;
-    int32                        SemaphoreIndex;
-    int32                        BackBufferIndex;
-    int32                        ActiveBackBufferCount;
-    bool                         bActiveVSync;
+    struct FBackBufferData
+    {
+        FVulkanTextureRHIRef          Texture;
+        FVulkanRenderTargetViewRHIRef RenderTargetView;
+    };
+
+    void*                                        WindowHandle;
+    FVulkanCommandContext*                       CommandContext;
+    FVulkanSurfaceRef                            Surface;
+    FVulkanSwapChainRef                          SwapChainResource;
+    FVulkanBackBufferProxyTextureRHIRef          BackBufferProxy;
+    FVulkanBackBufferProxyRenderTargetViewRHIRef BackBufferProxyRenderTargetView;
+    TArray<FBackBufferData>                      BackBuffers;
+    FVulkanFenceArray                            ImageFences;
+    FVulkanSemaphoreArray                        ImageSemaphores;
+    FVulkanSemaphoreArray                        RenderSemaphores;
+    int32                                        SemaphoreIndex;
+    uint32                                       BackBufferIndex;
+    int32                                        ActiveBackBufferCount;
+    bool                                         bActiveVSync;
 };

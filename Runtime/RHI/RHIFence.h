@@ -12,5 +12,5 @@ public:
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const = 0; 
  
     virtual void SetDebugName(const FString& InName) = 0; 
-    virtual FString GetDebugName() const = 0; 
+    virtual void GetDebugName(FString& OutDebugName) const = 0; 
 }; 

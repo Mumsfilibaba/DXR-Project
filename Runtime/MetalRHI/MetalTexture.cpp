@@ -9,6 +9,8 @@ FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITex
     , Texture(nil)
     , SwapChain(nullptr)
     , ShaderResourceView(nullptr)
+    , RenderTargetView(nullptr)
+    , DepthStencilView(nullptr)
 {
 }
 
@@ -129,6 +131,16 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         }
     }
 
+    if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
+    {
+        RenderTargetView = new FMetalRenderTargetView(GetDeviceContext(), FRHIRenderTargetViewDesc(this));
+    }
+
+    if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
+    {
+        DepthStencilView = new FMetalDepthStencilView(GetDeviceContext(), FRHIDepthStencilViewDesc(this));
+    }
+
     return true;
 }
 
@@ -144,20 +156,18 @@ void FMetalTexture::SetDebugName(const FString& InName)
     }
 }
 
-FString FMetalTexture::GetDebugName() const
+void FMetalTexture::GetDebugName(FString& OutDebugName) const
 {
-    FString Result;
-    
+    OutDebugName.Clear();
+
     @autoreleasepool
     {
         id<MTLTexture> TextureHandle = GetMTLTexture();
         if (TextureHandle)
         {
-            Result = FString(TextureHandle.label);
+            OutDebugName = FString(TextureHandle.label);
         }
     }
-    
-    return Result;
 }
 
 id<MTLTexture> FMetalTexture::GetMTLTexture() const

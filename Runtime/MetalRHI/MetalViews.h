@@ -12,7 +12,10 @@ public:
     {
     }
 
-    id<MTLTexture> GetMTLTexture() const { return TextureView; }
+    id<MTLTexture> GetMTLTexture() const
+    {
+        return TextureView;
+    }
     
 private:
     id<MTLTexture> TextureView;
@@ -43,6 +46,50 @@ public:
     }
 
     ~FMetalUnorderedAccessView() = default;
+};
+
+
+class FMetalRenderTargetView : public FRHIRenderTargetView, public FMetalView
+{
+public:
+    explicit FMetalRenderTargetView(FMetalDeviceContext* InDeviceContext, const FRHIRenderTargetViewDesc& InDesc)
+        : FRHIRenderTargetView(InDesc.Texture)
+        , FMetalView(InDeviceContext)
+        , MipLevel(InDesc.MipLevel)
+        , ArrayIndex(InDesc.ArrayIndex)
+    {
+    }
+
+    ~FMetalRenderTargetView() = default;
+
+    uint8  GetMipLevel()   const { return MipLevel; }
+    uint16 GetArrayIndex() const { return ArrayIndex; }
+
+private:
+    uint8  MipLevel;
+    uint16 ArrayIndex;
+};
+
+
+class FMetalDepthStencilView : public FRHIDepthStencilView, public FMetalView
+{
+public:
+    explicit FMetalDepthStencilView(FMetalDeviceContext* InDeviceContext, const FRHIDepthStencilViewDesc& InDesc)
+        : FRHIDepthStencilView(InDesc.Texture)
+        , FMetalView(InDeviceContext)
+        , MipLevel(InDesc.MipLevel)
+        , ArrayIndex(InDesc.ArrayIndex)
+    {
+    }
+
+    ~FMetalDepthStencilView() = default;
+
+    uint8  GetMipLevel()   const { return MipLevel; }
+    uint16 GetArrayIndex() const { return ArrayIndex; }
+
+private:
+    uint8  MipLevel;
+    uint16 ArrayIndex;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -61,7 +61,7 @@ public:
     virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) { } 
  
     virtual void SetDebugName(const FString& InName) = 0; 
-    virtual FString GetDebugName() const = 0; 
+    virtual void GetDebugName(FString& OutDebugName) const = 0; 
  
     const FRHIBufferDesc& GetDesc() const 
     { 

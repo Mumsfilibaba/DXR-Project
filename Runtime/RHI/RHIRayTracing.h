@@ -143,7 +143,7 @@ public:
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
     virtual void SetDebugName(const FString& InName) { }
-    virtual FString GetDebugName() const { return FString(); }
+    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
 
     EAccelerationStructureBuildFlags GetFlags() const 
     {
@@ -172,7 +172,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
     virtual void SetDebugName(const FString& InName) { }
-    virtual FString GetDebugName() const { return FString(); }
+    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
 
     EAccelerationStructureBuildFlags GetFlags() const 
     {

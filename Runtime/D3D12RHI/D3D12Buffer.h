@@ -4,23 +4,26 @@
 #include "D3D12RHI/D3D12ResourceViews.h"
 class FD3D12CommandContext;
 
+typedef TSharedRef<class FD3D12BufferRHI> FD3D12BufferRHIRef;
+
 class FD3D12BufferRHI : public FRHIBuffer, public FD3D12GenericResource
 {
 public:
     FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc);
     ~FD3D12BufferRHI();
 
-    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
-
     // FRHIBuffer Interface 
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(ResourceStorage.GetResource()); } 
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); } 
+    virtual void* GetRHINativeHandle() const override final;
     
-    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final; 
-    virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final; 
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
     
-    virtual void SetDebugName(const FString& InName) override final; 
-    virtual FString GetDebugName() const override final; 
+    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX)   override final; 
+    virtual void  Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final; 
+    
+    virtual void SetDebugName(const FString& InName)       override final; 
+    virtual void GetDebugName(FString& OutDebugName) const override final; 
+    
+    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
     void SetResource(FD3D12Resource* InResource); 
     

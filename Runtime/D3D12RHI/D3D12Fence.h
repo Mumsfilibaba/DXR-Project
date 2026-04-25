@@ -89,18 +89,18 @@ private:
 class FD3D12FenceRHI final : public FRHIFence, public FD3D12DeviceChild
 {
 public:
-    explicit FD3D12FenceRHI(FD3D12Device* InDevice);
+    FD3D12FenceRHI(FD3D12Device* InDevice);
     virtual ~FD3D12FenceRHI() = default;
+    
+    // FRHIFence Interface
+    virtual bool IsSignaled()                        const override final;
+    virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Initialize();
     void Signal(ID3D12CommandQueue* Queue);
-
-    // FRHIFence Interface
-    virtual bool IsSignaled() const override final;
-    virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
-
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
 
 private:
     FD3D12FenceRef Fence;

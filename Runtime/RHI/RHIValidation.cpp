@@ -606,6 +606,88 @@ FRHIUnorderedAccessView* FRHIValidation::CreateUnorderedAccessView(const FRHIUno
     return RealRHI->CreateUnorderedAccessView(InDesc);
 }
 
+FRHIRenderTargetView* FRHIValidation::CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc)
+{
+    if (!InDesc.Texture)
+    {
+        RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a RenderTargetView");
+        return nullptr;
+    }
+
+    const FRHITextureDesc& TextureDesc = InDesc.Texture->GetDesc();
+    if (!TextureDesc.IsRenderTarget())
+    {
+        RHI_VALIDATION_ERROR("Texture must have the ETextureUsageFlags::RenderTarget flag to be used with a RenderTargetView");
+        return nullptr;
+    }
+
+    if (InDesc.Format == EFormat::Unknown)
+    {
+        RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a RenderTargetView");
+        return nullptr;
+    }
+
+    if (IsTypelessFormat(InDesc.Format))
+    {
+        RHI_VALIDATION_ERROR("Format cannot be a typeless format when creating a RenderTargetView");
+        return nullptr;
+    }
+
+    const uint32 RequestedEndSlice       = uint32(InDesc.ArrayIndex) + uint32(InDesc.NumArraySlices);
+    const uint32 FullResourceSliceCount  = SafeGetFullResourceSliceCount(InDesc.Texture);
+    if (RequestedEndSlice > FullResourceSliceCount)
+    {
+        RHI_VALIDATION_ERROR("Trying to create a RenderTargetView with '%u' ArraySlices, but texture only contains '%u'", RequestedEndSlice, FullResourceSliceCount);
+        return nullptr;
+    }
+
+    if (InDesc.MipLevel >= TextureDesc.NumMipLevels)
+    {
+        RHI_VALIDATION_ERROR("Trying to create a RenderTargetView for MipLevel '%u', but texture only contains '%u'", InDesc.MipLevel, TextureDesc.NumMipLevels);
+        return nullptr;
+    }
+
+    return RealRHI->CreateRenderTargetView(InDesc);
+}
+
+FRHIDepthStencilView* FRHIValidation::CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc)
+{
+    if (!InDesc.Texture)
+    {
+        RHI_VALIDATION_ERROR("Texture cannot be nullptr when creating a DepthStencilView");
+        return nullptr;
+    }
+
+    const FRHITextureDesc& TextureDesc = InDesc.Texture->GetDesc();
+    if (!TextureDesc.IsDepthStencil())
+    {
+        RHI_VALIDATION_ERROR("Texture must have the ETextureUsageFlags::DepthStencil flag to be used with a DepthStencilView");
+        return nullptr;
+    }
+
+    if (InDesc.Format == EFormat::Unknown)
+    {
+        RHI_VALIDATION_ERROR("Format cannot be EFormat::Unknown when creating a DepthStencilView");
+        return nullptr;
+    }
+
+    const uint32 RequestedEndSlice       = uint32(InDesc.ArrayIndex) + uint32(InDesc.NumArraySlices);
+    const uint32 FullResourceSliceCount  = SafeGetFullResourceSliceCount(InDesc.Texture);
+    if (RequestedEndSlice > FullResourceSliceCount)
+    {
+        RHI_VALIDATION_ERROR("Trying to create a DepthStencilView with '%u' ArraySlices, but texture only contains '%u'", RequestedEndSlice, FullResourceSliceCount);
+        return nullptr;
+    }
+
+    if (InDesc.MipLevel >= TextureDesc.NumMipLevels)
+    {
+        RHI_VALIDATION_ERROR("Trying to create a DepthStencilView for MipLevel '%u', but texture only contains '%u'", InDesc.MipLevel, TextureDesc.NumMipLevels);
+        return nullptr;
+    }
+
+    return RealRHI->CreateDepthStencilView(InDesc);
+}
+
 FRHIComputeShader* FRHIValidation::CreateComputeShader(const TArray<uint8>& ShaderCode)
 {
     return RealRHI->CreateComputeShader(ShaderCode);
@@ -907,22 +989,22 @@ void FRHIValidationCommandContext::QueryTimestamp(FRHIQuery* Query)
     RealContext->QueryTimestamp(Query);
 }
 
-void FRHIValidationCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
+void FRHIValidationCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
 {
-    if (!RenderTargetView.Texture)
+    if (!RenderTargetView)
     {
-        RHI_VALIDATION_ERROR("Invalid to call ClearRenderTargetView when Texture is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call ClearRenderTargetView when RenderTargetView is nullptr");
         return;
     }
 
     RealContext->ClearRenderTargetView(RenderTargetView, ClearColor);
 }
 
-void FRHIValidationCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, const uint8 Stencil)
+void FRHIValidationCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, const uint8 Stencil)
 {
-    if (!DepthStencilView.Texture)
+    if (!DepthStencilView)
     {
-        RHI_VALIDATION_ERROR("Invalid to call ClearDepthStencilView when Texture is nullptr");
+        RHI_VALIDATION_ERROR("Invalid to call ClearDepthStencilView when DepthStencilView is nullptr");
         return;
     }
 

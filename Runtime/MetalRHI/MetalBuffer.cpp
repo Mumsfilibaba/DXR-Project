@@ -94,20 +94,18 @@ void FMetalBuffer::SetDebugName(const FString& InName)
     }
 }
 
-FString FMetalBuffer::GetDebugName() const
+void FMetalBuffer::GetDebugName(FString& OutDebugName) const
 {
-    FString Result;
-    
+    OutDebugName.Clear();
+
     @autoreleasepool
     {
         id<MTLBuffer> BufferHandle = GetMTLBuffer();
         if (BufferHandle)
         {
-            Result = FString(BufferHandle.label);
+            OutDebugName = FString(BufferHandle.label);
         }
     }
-    
-    return Result;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -442,10 +442,11 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(SelectionMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
+        FRHIRenderTargetView* RenderTargetView = SelectionMask->GetRenderTargetView();
+
         FRHIBeginRenderPassDesc RenderPassDesc;
         RenderPassDesc.NumRenderTargets = 1;
-        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(SelectionMask.Get(), EAttachmentLoadAction::Clear);
-        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
         CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -478,10 +479,11 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.TransitionTextureState(ErosionTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
-            FRHIBeginRenderPassDesc RenderPassDesc;
-            RenderPassDesc.NumRenderTargets = 1;
-            RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(ErosionTemp.Get(), EAttachmentLoadAction::Clear);
-            RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        FRHIRenderTargetView* RenderTargetView = ErosionTemp->GetRenderTargetView();
+
+        FRHIBeginRenderPassDesc RenderPassDesc;
+        RenderPassDesc.NumRenderTargets = 1;
+        RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
             CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -508,10 +510,11 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.TransitionTextureState(ErodedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
         {
-            FRHIBeginRenderPassDesc RenderPassDesc;
-            RenderPassDesc.NumRenderTargets = 1;
-            RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(ErodedMask.Get(), EAttachmentLoadAction::Clear);
-            RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        FRHIRenderTargetView* RenderTargetView = ErodedMask->GetRenderTargetView();
+
+        FRHIBeginRenderPassDesc RenderPassDesc;
+        RenderPassDesc.NumRenderTargets = 1;
+        RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
             CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -543,10 +546,11 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(DilationTemp.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
+        FRHIRenderTargetView* RenderTargetView = DilationTemp->GetRenderTargetView();
+
         FRHIBeginRenderPassDesc RenderPassDesc;
         RenderPassDesc.NumRenderTargets = 1;
-        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(DilationTemp.Get(), EAttachmentLoadAction::Clear);
-        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
         CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -576,10 +580,11 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(DilatedMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
+        FRHIRenderTargetView* RenderTargetView = DilatedMask->GetRenderTargetView();
+
         FRHIBeginRenderPassDesc RenderPassDesc;
         RenderPassDesc.NumRenderTargets = 1;
-        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(DilatedMask.Get(), EAttachmentLoadAction::Clear);
-        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
         CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -609,10 +614,11 @@ void FSelectionOutlinePass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTextureState(RingMask.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
 
     {
+        FRHIRenderTargetView* RenderTargetView = RingMask->GetRenderTargetView();
+
         FRHIBeginRenderPassDesc RenderPassDesc;
         RenderPassDesc.NumRenderTargets = 1;
-        RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RingMask.Get(), EAttachmentLoadAction::Clear);
-        RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+        RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
         CommandList.BeginRenderPass(RenderPassDesc);
 

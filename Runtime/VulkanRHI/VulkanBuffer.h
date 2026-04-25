@@ -14,14 +14,15 @@ public:
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
     // FRHIBuffer Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkBuffer()); }
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-    
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
+    virtual void* GetRHINativeHandle() const override final;
 
-    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
-    virtual void Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
+    
+    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX)   override final;
+    virtual void  Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
+
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     FVulkanBufferState&       GetBufferState()       { return BufferState; }
     const FVulkanBufferState& GetBufferState() const { return BufferState; }
@@ -72,8 +73,8 @@ public:
     }
 
 protected:
-    VkBuffer             OwnedBuffer;
-    VkDeviceSize         RequiredAlignment;
-    FVulkanBufferState   BufferState;
-    FString              DebugName;
+    VkBuffer           OwnedBuffer;
+    VkDeviceSize       RequiredAlignment;
+    FVulkanBufferState BufferState;
+    FString            DebugName;
 };

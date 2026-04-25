@@ -127,11 +127,11 @@ DECLARE_RHICOMMAND(FRHICommandQueryTimestamp)
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
 {
-    FORCEINLINE FRHICommandClearRenderTargetView(const FRHIRenderTargetView& InRenderTargetView, const FVector4& InClearColor)
+    FORCEINLINE FRHICommandClearRenderTargetView(FRHIRenderTargetView* InRenderTargetView, const FVector4& InClearColor)
         : RenderTargetView(InRenderTargetView)
         , ClearColor(InClearColor)
     {
-        CHECK(RenderTargetView.Texture != nullptr);
+        CHECK(InRenderTargetView != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -139,18 +139,18 @@ DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
         CommandContext.ClearRenderTargetView(RenderTargetView, ClearColor);
     }
 
-    FRHIRenderTargetView RenderTargetView;
-    FVector4             ClearColor;
+    FRHIRenderTargetView* RenderTargetView;
+    FVector4              ClearColor;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
 {
-    FORCEINLINE FRHICommandClearDepthStencilView(const FRHIDepthStencilView& InDepthStencilView, const float InDepth, const uint8 InStencil)
+    FORCEINLINE FRHICommandClearDepthStencilView(FRHIDepthStencilView* InDepthStencilView, const float InDepth, const uint8 InStencil)
         : DepthStencilView(InDepthStencilView)
         , Depth(InDepth)
         , Stencil(InStencil)
     {
-        CHECK(DepthStencilView.Texture != nullptr);
+        CHECK(InDepthStencilView != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -158,9 +158,9 @@ DECLARE_RHICOMMAND(FRHICommandClearDepthStencilView)
         CommandContext.ClearDepthStencilView(DepthStencilView, Depth, Stencil);
     }
 
-    FRHIDepthStencilView DepthStencilView;
-    const float          Depth;
-    const uint8          Stencil;
+    FRHIDepthStencilView* DepthStencilView;
+    const float           Depth;
+    const uint8           Stencil;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)

@@ -213,9 +213,11 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         CommandList.TransitionTextureState(OutputTarget, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::RenderTarget));
     }
 
+    FRHIRenderTargetView* RenderTargetView = OutputTarget->GetRenderTargetView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets            = 1;
-    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(OutputTarget, EAttachmentLoadAction::DontCare);
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::DontCare);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -369,9 +371,11 @@ void FFinalCompositePass::Execute(FRHICommandList& CommandList, const FSceneRend
 
     CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
 
+    FRHIRenderTargetView* RenderTargetView = SceneRenderView.RenderTarget->GetRenderTargetView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets            = 1;
-    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::DontCare);
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::DontCare);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -623,10 +627,11 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& Sc
 
     CommandList.RequireTextureState(SceneRenderView.RenderTarget, FRHIRequiredTextureState::Make(EResourceAccess::RenderTarget));
 
+    FRHIRenderTargetView* RenderTargetView = SceneRenderView.RenderTarget->GetRenderTargetView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets            = 1;
-    RenderPassDesc.RenderTargets[0]            = FRHIRenderTargetView(SceneRenderView.RenderTarget, EAttachmentLoadAction::Clear);
-    RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPassDesc.RenderTargets[0]            = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
     CommandList.BeginRenderPass(RenderPassDesc);
 

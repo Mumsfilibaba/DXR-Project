@@ -77,7 +77,15 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
+        bool bResult = Allocator->TryAllocate(
+            D3D12_HEAP_TYPE_DEFAULT, 
+            ResourceDesc, 
+            D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, 
+            ED3D12ResourceStateMode::MultipleStates, 
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, 
+            ResultResourceStorage);
+
+        if (!bResult || ResultResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -106,7 +114,15 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
+        bool bScratchResult = Allocator->TryAllocate(
+            D3D12_HEAP_TYPE_DEFAULT, 
+            ResourceDesc, 
+            D3D12_RESOURCE_STATE_COMMON, 
+            ED3D12ResourceStateMode::MultipleStates, 
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, 
+            ScratchResourceStorage);
+
+        if (!bScratchResult || ScratchResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -124,14 +140,17 @@ bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdCont
     FD3D12CommandList& CommandList = CmdContext.GetCommandList();
     CommandList.UpdateResidency(ResultResourceStorage.GetResource()->GetResidencyHandle());
     CommandList.UpdateResidency(ScratchResourceStorage.GetResource()->GetResidencyHandle());
+
     if (VertexBuffer)
     {
         CommandList.UpdateResidency(VertexBuffer->GetResource()->GetResidencyHandle());
     }
+
     if (IndexBuffer)
     {
         CommandList.UpdateResidency(IndexBuffer->GetResource()->GetResidencyHandle());
     }
+
 #if D3D12_USE_ID3D12COMMANDLIST_4
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 #endif
@@ -153,15 +172,16 @@ void FD3D12GeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
     }
 }
 
-FString FD3D12GeometryAccelerationStructureRHI::GetDebugName() const
+void FD3D12GeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
-    FString DebugName;
-    FD3D12Resource* D3D12Resource = GetResource();
-    if (D3D12Resource)
+    if (FD3D12Resource* D3D12Resource = GetResource())
     {
-        D3D12Resource->GetDebugName(DebugName);
+        D3D12Resource->GetDebugName(OutDebugName);
     }
-    return DebugName;
+    else
+    {
+        OutDebugName.Clear();
+    }
 }
 
 FD3D12SceneAccelerationStructureRHI::FD3D12SceneAccelerationStructureRHI(FD3D12Device* InDevice, const FRHISceneAccelerationStructureDesc& InSceneDesc)
@@ -218,7 +238,15 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ResultResourceStorage) || ResultResourceStorage.GetResource() == nullptr)
+        bool bResult = Allocator->TryAllocate(
+            D3D12_HEAP_TYPE_DEFAULT, 
+            ResourceDesc, 
+            D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, 
+            ED3D12ResourceStateMode::MultipleStates, 
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, 
+            ResultResourceStorage);
+
+        if (!bResult || ResultResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -263,7 +291,15 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
         ResourceDesc.SampleDesc.Count   = 1;
         ResourceDesc.SampleDesc.Quality = 0;
 
-        if (!Allocator->TryAllocate(D3D12_HEAP_TYPE_DEFAULT, ResourceDesc, D3D12_RESOURCE_STATE_COMMON, ED3D12ResourceStateMode::MultipleStates, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, ScratchResourceStorage) || ScratchResourceStorage.GetResource() == nullptr)
+        bool bResult = Allocator->TryAllocate(
+            D3D12_HEAP_TYPE_DEFAULT,
+            ResourceDesc, 
+            D3D12_RESOURCE_STATE_COMMON, 
+            ED3D12ResourceStateMode::MultipleStates, 
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BYTE_ALIGNMENT, 
+            ScratchResourceStorage);
+
+        if (!bResult || ScratchResourceStorage.GetResource() == nullptr)
         {
             return false;
         }
@@ -336,6 +372,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
     CommandList.UpdateResidency(ResultResourceStorage.GetResource()->GetResidencyHandle());
     CommandList.UpdateResidency(ScratchResourceStorage.GetResource()->GetResidencyHandle());
     CommandList.UpdateResidency(InstanceBuffer->GetResidencyHandle());
+
 #if D3D12_USE_ID3D12COMMANDLIST_4
     CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 #endif
@@ -436,6 +473,7 @@ bool FD3D12SceneAccelerationStructureRHI::BuildBindingTable(
     CmdContext.GetBarrierBatcher().AddTransitionBarrier(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     ShaderBindingTableBuilder.Reset();
+    
 #if 0
     BindingTableHeaps[0] = ResourceHeap->GetD3D12Heap();
     BindingTableHeaps[1] = SamplerHeap->GetD3D12Heap();
@@ -486,15 +524,16 @@ void FD3D12SceneAccelerationStructureRHI::SetDebugName(const FString& InName)
     }
 }
 
-FString FD3D12SceneAccelerationStructureRHI::GetDebugName() const
+void FD3D12SceneAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
-    FString DebugName;
-    FD3D12Resource* D3D12Resource = GetResource();
-    if (D3D12Resource)
+    if (FD3D12Resource* D3D12Resource = GetResource())
     {
-        D3D12Resource->GetDebugName(DebugName);
+        D3D12Resource->GetDebugName(OutDebugName);
     }
-    return DebugName;
+    else
+    {
+        OutDebugName.Clear();
+    }
 }
 
 FD3D12ShaderBindingTableBuilder::FD3D12ShaderBindingTableBuilder(FD3D12Device* InDevice)

@@ -5,47 +5,53 @@
 
 class FD3D12SwapChainRHI;
 class FD3D12CommandContext;
+class FD3D12BackBufferProxyRenderTargetViewRHI;
 
-typedef TSharedRef<class FD3D12TextureRHI>        FD3D12TextureRHIRef;
-typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
+typedef TSharedRef<class FD3D12TextureRHI>                FD3D12TextureRHIRef;
+typedef TSharedRef<class FD3D12BackBufferProxyTextureRHI> FD3D12BackBufferProxyTextureRHIRef;
 
-class FD3D12TextureRHI : public FRHITexture, public FD3D12GenericResource
+class FD3D12TextureBase : public FRHITexture
+{
+protected:
+    explicit FD3D12TextureBase(const FRHITextureDesc& InTextureDesc)
+        : FRHITexture(InTextureDesc)
+    {
+    }
+
+    virtual ~FD3D12TextureBase() = default;
+
+public:
+    virtual FD3D12TextureRHI* GetTextureInterface() const = 0;
+};
+
+class FD3D12TextureRHI : public FD3D12TextureBase, public FD3D12GenericResource
 {
 public:
     FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc& InTextureDesc);
     virtual ~FD3D12TextureRHI();
-
-    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
-
+    
+    // FD3D12TextureBase Interface
+    virtual FD3D12TextureRHI* GetTextureInterface() const override;
+    
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(ResourceStorage.GetResource()); }
+    virtual void* GetRHINativeHandle() const override final;
     
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
-    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
     
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
-
-    FD3D12RenderTargetView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
-    FD3D12DepthStencilView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
-    void DestroyRenderTargetViews();
-    void DestroyDepthStencilViews();
-
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
+    
+    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+    
     DXGI_FORMAT GetDXGIFormat() const 
     { 
         return ResourceStorage.GetResource() ? ResourceStorage.GetResource()->GetDesc().Format : DXGI_FORMAT_UNKNOWN; 
-    }
-
-    void SetShaderResourceView(FD3D12ShaderResourceViewRHI* InShaderResourceView)
-    { 
-        ShaderResourceView = InShaderResourceView; 
-    }
-    
-    void SetUnorderedAccessView(FD3D12UnorderedAccessViewRHI* InUnorderedAccessView) 
-    { 
-        UnorderedAccessView = InUnorderedAccessView; 
     }
     
     void SetResource(FD3D12Resource* InResource) 
@@ -56,41 +62,41 @@ public:
         {
             ResourceStorage.InitStandalone(InResource);
         }
-
-        RenderTargetViews.Clear();
-        DepthStencilViews.Clear();
-		RenderTargetViewMap.Clear();
-		DepthStencilViewMap.Clear();
     }
 
 protected:
-    using FRenderTargetViewMap = TMap<FD3D12HashableTextureView, FD3D12RenderTargetViewRef>;
-    using FDepthStencilViewMap = TMap<FD3D12HashableTextureView, FD3D12DepthStencilViewRef>;
-
-    FD3D12ShaderResourceViewRHIRef    ShaderResourceView;
-    FD3D12UnorderedAccessViewRHIRef   UnorderedAccessView;
-    TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
-    TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
-    FRenderTargetViewMap              RenderTargetViewMap;
-    FDepthStencilViewMap              DepthStencilViewMap;
+    FD3D12ShaderResourceViewRHIRef  ShaderResourceView;
+    FD3D12UnorderedAccessViewRHIRef UnorderedAccessView;
+    FD3D12RenderTargetViewRHIRef    RenderTargetView;
+    FD3D12DepthStencilViewRHIRef    DepthStencilView;
 };
 
-class FD3D12BackBufferTexture : public FD3D12TextureRHI
+class FD3D12BackBufferProxyTextureRHI : public FD3D12TextureBase
 {
 public:
-    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12SwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc);
-    virtual ~FD3D12BackBufferTexture();
+    FD3D12BackBufferProxyTextureRHI(FD3D12SwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc);
+    virtual ~FD3D12BackBufferProxyTextureRHI();
+
+    // FD3D12TextureBase Interface
+    virtual FD3D12TextureRHI* GetTextureInterface() const override final;
 
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override final
-    {
-        FD3D12TextureRHI* CurrentBackBuffer = GetCurrentBackBufferTexture();
-        return CurrentBackBuffer ? reinterpret_cast<void*>(CurrentBackBuffer->GetResource()) : nullptr;
-    }
+    virtual void* GetRHINativeHandle() const override final;
+    
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
+    
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     void Resize(uint32 InWidth, uint32 InHeight);
-    
-    FD3D12TextureRHI* GetCurrentBackBufferTexture() const;
+
+    void SetProxyRenderTargetView(FD3D12BackBufferProxyRenderTargetViewRHI* InProxyRenderTargetView);
 
     FD3D12SwapChainRHI* GetSwapChain() const
     { 
@@ -103,5 +109,6 @@ public:
     }
 
 private:
-    FD3D12SwapChainRHI* SwapChain;
+    FD3D12SwapChainRHI*                                  SwapChain;
+    FD3D12BackBufferProxyRenderTargetViewRHIRef ProxyRenderTargetView;
 };

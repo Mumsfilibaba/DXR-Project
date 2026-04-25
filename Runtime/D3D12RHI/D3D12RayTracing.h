@@ -9,6 +9,9 @@
 class FD3D12CommandList;
 class FMaterial;
 
+typedef TSharedRef<class FD3D12GeometryAccelerationStructureRHI> FD3D12GeometryAccelerationStructureRHIRef;
+typedef TSharedRef<class FD3D12SceneAccelerationStructureRHI>    FD3D12SceneAccelerationStructureRHIRef;
+
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) FD3D12ShaderBindingTableEntry
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
@@ -66,8 +69,8 @@ public:
     // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
     
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     FD3D12BufferRHI* GetVertexBuffer() const
     { 
@@ -91,16 +94,24 @@ public:
     virtual ~FD3D12SceneAccelerationStructureRHI() = default;
 
     bool Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildDesc);
-	bool BuildBindingTable(class FD3D12CommandContext& CmdContext, FD3D12RayTracingPipelineStateRHI* PipelineState, FD3D12OnlineDescriptorHeap* ResourceHeap, FD3D12OnlineDescriptorHeap* SamplerHeap,
-		const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources);
+	bool BuildBindingTable(
+        class FD3D12CommandContext& CmdContext, 
+        FD3D12RayTracingPipelineStateRHI* PipelineState, 
+        FD3D12OnlineDescriptorHeap* ResourceHeap, 
+        FD3D12OnlineDescriptorHeap* SamplerHeap,
+		const FRayTracingShaderResources* RayGenLocalResources, 
+        const FRayTracingShaderResources* MissLocalResources, 
+        const FRayTracingShaderResources* HitGroupResources, 
+        uint32 NumHitGroupResources);
 
     // FRHISceneAccelerationStructure Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
+    virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final { return FRHIDescriptorHandle(); }
+
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable()      const;
@@ -118,13 +129,12 @@ public:
 
 private:
     TArray<FRHIGeometryAccelerationStructureInstance> Instances;
-
-    FD3D12ShaderResourceViewRHIRef  View;
-    FD3D12ResourceRef               InstanceBuffer;
-    FD3D12ResourceRef               BindingTable;
-    uint32                          BindingTableStride;
-    uint32                          NumHitGroups;
+    FD3D12ShaderResourceViewRHIRef                    View;
+    FD3D12ResourceRef                                 InstanceBuffer;
+    FD3D12ResourceRef                                 BindingTable;
+    uint32                                            BindingTableStride;
+    uint32                                            NumHitGroups;
     // TODO: Maybe move these somewhere else
-    FD3D12ShaderBindingTableBuilder ShaderBindingTableBuilder;
-    ID3D12DescriptorHeap*           BindingTableHeaps[2];
+    FD3D12ShaderBindingTableBuilder                   ShaderBindingTableBuilder;
+    ID3D12DescriptorHeap*                             BindingTableHeaps[2];
 };

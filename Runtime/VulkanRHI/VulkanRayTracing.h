@@ -17,8 +17,8 @@ public:
     // FRHIGeometryAccelerationStructure Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(Geometry); }
 
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     VkAccelerationStructureKHR GetVkAccelerationStructure() const
     {

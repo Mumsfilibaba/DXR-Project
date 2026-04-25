@@ -150,7 +150,7 @@ void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetCache& Cache)
     D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetViewHandles[D3D12_MAX_RENDER_TARGET_COUNT];
     for (uint32 Index = 0; Index < Cache.NumRenderTargets; ++Index)
     {
-        if (FD3D12RenderTargetView* CurrentView = Cache.RenderTargetViews[Index])
+        if (FD3D12RenderTargetViewRHI* CurrentView = Cache.RenderTargetViews[Index])
         {
             RenderTargetViewHandles[Index] = CurrentView->GetOfflineHandle();
             Context.GetCommandList().UpdateResidency(CurrentView->GetResourceResidencyHandle());

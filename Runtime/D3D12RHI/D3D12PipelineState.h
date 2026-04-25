@@ -25,8 +25,8 @@ public:
     virtual ~FD3D12InputLayoutRHI();
 
     // FRHIInputLayout Interface
-    virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final { return &InputElements[Index]; }
-    virtual uint32 GetNumInputElementDescs() const override final { return InputElements.Size(); }
+    virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final;
+    virtual uint32 GetNumInputElementDescs() const override final;
 
     const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
     {
@@ -53,7 +53,7 @@ public:
     virtual ~FD3D12DepthStencilStateRHI();
 
     // FRHIDepthStencilState Interface
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final { return Desc; }
+    virtual FRHIDepthStencilStateDesc GetDesc() const override final;
 
     const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
     {
@@ -78,7 +78,7 @@ public:
     virtual ~FD3D12RasterizerStateRHI();
 
     // FRHIRasterizerState Interface
-    virtual FRHIRasterizerStateDesc GetDesc() const override final { return Desc; }
+    virtual FRHIRasterizerStateDesc GetDesc() const override final;
 
     const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
     {
@@ -103,7 +103,7 @@ public:
     virtual ~FD3D12BlendStateRHI();
 
     // FRHIBlendState Interface
-    virtual FRHIBlendStateDesc GetDesc() const override final { return Desc; }
+    virtual FRHIBlendStateDesc GetDesc() const override final;
 
     const D3D12_BLEND_DESC& GetD3D12Desc() const
     {
@@ -317,9 +317,10 @@ public:
     bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
 
     // FRHIPipelineState Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
+    virtual void* GetRHINativeHandle() const override final;
 
     virtual void SetDebugName(const FString& InName) override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
     {
@@ -373,9 +374,10 @@ public:
     bool Initialize(const FRHIComputePipelineStateDesc& Desc);
 
     // FRHIPipelineState Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
+    virtual void* GetRHINativeHandle() const override final;
 
     virtual void SetDebugName(const FString& InName) override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     FORCEINLINE FD3D12ComputeShaderRHI* GetComputeShader() const
     {
@@ -400,9 +402,10 @@ public:
     bool Initialize(const FRHIRayTracingPipelineStateDesc& Desc);
 
     // FRHIPipelineState Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12StateObject()); }
+    virtual void* GetRHINativeHandle() const override final;
 
     virtual void SetDebugName(const FString& InName) override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     void* GetShaderIdentifier(const FString& ExportName);
 
@@ -429,6 +432,7 @@ private:
     FD3D12RootSignatureRef                          MissLocalRootSignature;
     FD3D12RootSignatureRef                          HitLocalRootSignature;
     TMap<FString, FD3D12RayTracingShaderIdentifier> ShaderIdentifiers;
+    FString                                         DebugName;
 };
 
 struct FD3D12PipelineDiskHeader

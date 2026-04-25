@@ -224,8 +224,10 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
     GPU_TRACE_SCOPE(CommandList, "Depth Pre-Pass");
 
+    FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get());
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -561,13 +563,19 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
     const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
 
+    FRHIRenderTargetView* AlbedoRenderTargetView   = FrameResources.GBuffer[GBufferIndex_Albedo]->GetRenderTargetView();
+    FRHIRenderTargetView* NormalRenderTargetView   = FrameResources.GBuffer[GBufferIndex_Normal]->GetRenderTargetView();
+    FRHIRenderTargetView* MaterialRenderTargetView = FrameResources.GBuffer[GBufferIndex_Material]->GetRenderTargetView();
+    FRHIRenderTargetView* VelocityRenderTargetView = FrameResources.GBuffer[GBufferIndex_Velocity]->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView         = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets                     = GBuffer_NumRenderTargets;
-    RenderPassDesc.RenderTargets[GBufferIndex_Albedo]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
-    RenderPassDesc.RenderTargets[GBufferIndex_Normal]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);
-    RenderPassDesc.RenderTargets[GBufferIndex_Material] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), LoadAction);
-    RenderPassDesc.RenderTargets[GBufferIndex_Velocity] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), LoadAction);
-    RenderPassDesc.DepthStencilView                     = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[GBufferIndex_Albedo]   = FRHIRenderPassAttachment(AlbedoRenderTargetView, LoadAction);
+    RenderPassDesc.RenderTargets[GBufferIndex_Normal]   = FRHIRenderPassAttachment(NormalRenderTargetView, EAttachmentLoadAction::Clear);
+    RenderPassDesc.RenderTargets[GBufferIndex_Material] = FRHIRenderPassAttachment(MaterialRenderTargetView, LoadAction);
+    RenderPassDesc.RenderTargets[GBufferIndex_Velocity] = FRHIRenderPassAttachment(VelocityRenderTargetView, LoadAction);
+    RenderPassDesc.DepthStencilAttachment               = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 

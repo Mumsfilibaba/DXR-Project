@@ -33,9 +33,9 @@ void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const FString& InName
     DebugName = InName;
 }
 
-FString FVulkanGeometryAccelerationStructureRHI::GetDebugName() const
+void FVulkanGeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
-    return DebugName;
+    OutDebugName = DebugName;
 }
 
 bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)

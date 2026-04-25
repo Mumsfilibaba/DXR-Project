@@ -333,9 +333,9 @@ void FVulkanFenceRHI::SetDebugName(const FString& InName)
     }
 }
 
-FString FVulkanFenceRHI::GetDebugName() const
+void FVulkanFenceRHI::GetDebugName(FString& OutDebugName) const
 {
-    return DebugName;
+    OutDebugName = DebugName;
 }
 
 void FVulkanFenceRHI::EnqueueSignal(FVulkanQueue& Queue)

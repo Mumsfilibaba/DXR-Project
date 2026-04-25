@@ -2067,7 +2067,6 @@ void FVulkanTextureAllocator::DefragmentAllocations(FVulkanCommandContext* InCom
             FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(Owner);
             OldImage = Texture->GetVkImage();
 
-            Texture->DestroyImageViews();
             Texture->SetVkImage(Move.NewImage);
 
             Move.SourceStorage->SetMemory(Move.Allocator->GetBackingMemory(Move.NewAllocationData.PageIndex));

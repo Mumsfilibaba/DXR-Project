@@ -349,61 +349,69 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
 
     for (uint32 Index = 0; Index < RenderPassDesc.NumRenderTargets; Index++)
     {
-        const FRHIRenderTargetView& RenderTargetView = RenderPassDesc.RenderTargets[Index];
-        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(&Context, RenderTargetView.Texture);
-        if (!VulkanTexture)
+        const FRHIRenderPassAttachment& Attachment = RenderPassDesc.RenderTargets[Index];
+        FVulkanRenderTargetViewRHI* VulkanRenderTargetView = FVulkanRHI::ResourceCast(Attachment.View);
+        if (!VulkanRenderTargetView)
         {
+            VULKAN_ERROR("BeginRenderPass: RenderTargetView at slot %u is null (NumRenderTargets=%u)",
+                Index, RenderPassDesc.NumRenderTargets);
             continue;
         }
 
+        FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(VulkanRenderTargetView->GetOwnerResource());
+        if (!VulkanTexture)
+        {
+            VULKAN_ERROR("BeginRenderPass: RenderTargetView at slot %u has no OwnerResource (source texture was destroyed)", Index);
+            continue;
+        }
+
+        const FVulkanResourceView::FImageView& ImageViewInfo = VulkanRenderTargetView->GetImageViewInfo();
+
         Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
         Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
-        NumArrayLayers = Math::Max<uint32>(RenderTargetView.NumArraySlices, NumArrayLayers);
+        NumArrayLayers = Math::Max<uint32>(ImageViewInfo.SubresourceRange.layerCount, NumArrayLayers);
         NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
 
-        FVulkanHashableImageView HashableImageView;
-        HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
-        HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
-        HashableImageView.Format         = RenderTargetView.Format;
-        HashableImageView.MipLevel       = RenderTargetView.MipLevel;
+        RenderTargetState.RenderTargetViews[Index] = VulkanRenderTargetView;
+        RenderTargetState.ColorStoreActions[Index] = Attachment.StoreAction;
 
-        FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView);
-        RenderTargetState.RenderTargetViews[Index] = ImageView;
-        RenderTargetState.ColorStoreActions[Index] = RenderTargetView.StoreAction;
+        RenderPassKey.RenderTargetFormats[Index]             = VulkanTexture->GetDesc().Format;
+        RenderPassKey.RenderTargetActions[Index].LoadAction  = Attachment.LoadAction;
+        RenderPassKey.RenderTargetActions[Index].StoreAction = Attachment.StoreAction;
 
-        RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
-        RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
-        RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
-
-        FMemory::Memcpy(ColorClearValues[Index].color.float32, RenderTargetView.ClearValue.RGBA, sizeof(ColorClearValues[Index].color.float32));
+        FMemory::Memcpy(ColorClearValues[Index].color.float32, Attachment.ClearValue.RGBA, sizeof(ColorClearValues[Index].color.float32));
     }
 
     VkClearValue DepthStencilClearValue = {};
 
-    const FRHIDepthStencilView& DepthStencilView = RenderPassDesc.DepthStencilView;
-    if (FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(&Context, DepthStencilView.Texture))
+    const FRHIDepthStencilAttachment& DepthStencilAttachment = RenderPassDesc.DepthStencilAttachment;
+    FVulkanDepthStencilViewRHI* VulkanDepthStencilView = FVulkanRHI::ResourceCast(DepthStencilAttachment.View);
+    if (VulkanDepthStencilView)
     {
-        Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
-        Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
-        NumArrayLayers = Math::Max<uint32>(DepthStencilView.NumArraySlices, NumArrayLayers);
-        NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+        FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(VulkanDepthStencilView->GetOwnerResource());
+        if (!VulkanTexture)
+        {
+            VULKAN_ERROR("BeginRenderPass: DepthStencilView has no OwnerResource (source texture was destroyed)");
+        }
+        if (VulkanTexture)
+        {
+            const FVulkanResourceView::FImageView& ImageViewInfo = VulkanDepthStencilView->GetImageViewInfo();
 
-        FVulkanHashableImageView HashableImageView;
-        HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
-        HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
-        HashableImageView.Format         = DepthStencilView.Format;
-        HashableImageView.MipLevel       = DepthStencilView.MipLevel;
+            Width          = Math::Min<uint32>(VulkanTexture->GetWidth(), Width);
+            Height         = Math::Min<uint32>(VulkanTexture->GetHeight(), Height);
+            NumArrayLayers = Math::Max<uint32>(ImageViewInfo.SubresourceRange.layerCount, NumArrayLayers);
+            NumSamples     = Math::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
 
-        FVulkanResourceView* DepthImageView = VulkanTexture->GetOrCreateImageView(HashableImageView);
-        RenderTargetState.DepthStencilView        = DepthImageView;
-        RenderTargetState.DepthStencilStoreAction = DepthStencilView.StoreAction;
+            RenderTargetState.DepthStencilView        = VulkanDepthStencilView;
+            RenderTargetState.DepthStencilStoreAction = DepthStencilAttachment.StoreAction;
 
-        RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
-        RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
-        RenderPassKey.DepthStencilActions.StoreAction = DepthStencilView.StoreAction;
+            RenderPassKey.DepthStencilFormat              = VulkanTexture->GetDesc().Format;
+            RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilAttachment.LoadAction;
+            RenderPassKey.DepthStencilActions.StoreAction = DepthStencilAttachment.StoreAction;
 
-        DepthStencilClearValue.depthStencil.depth   = DepthStencilView.ClearValue.Depth;
-        DepthStencilClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
+            DepthStencilClearValue.depthStencil.depth   = DepthStencilAttachment.ClearValue.Depth;
+            DepthStencilClearValue.depthStencil.stencil = DepthStencilAttachment.ClearValue.Stencil;
+        }
     }
 
     if (RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
@@ -415,6 +423,12 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
     RenderTargetState.RenderAreaHeight    = (Height != TNumericLimits<uint32>::Max()) ? Height : 0;
     RenderTargetState.RenderingLayerCount = Math::Max(NumArrayLayers, 1u);
 
+    if (RenderTargetState.RenderAreaWidth == 0 || RenderTargetState.RenderAreaHeight == 0)
+    {
+        VULKAN_ERROR("FVulkanCommandContextState::BeginRenderPass produced a zero-sized render area (W=%u H=%u NumRenderTargets=%u)",
+            RenderTargetState.RenderAreaWidth, RenderTargetState.RenderAreaHeight, RenderPassDesc.NumRenderTargets);
+    }
+
     RenderPassKey.NumSamples = NumSamples;
     if (RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
@@ -425,6 +439,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
     {
         constexpr uint32 MaxArraySlices = 32;
         const uint32 NumViews = Math::Min<uint32>(RenderPassDesc.ViewInstancingState.NumArraySlices, MaxArraySlices);
+
         uint32 ViewMask = 0;
         for (uint32 i = 0; i < NumViews; i++)
         {
@@ -443,16 +458,16 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         VkRenderingAttachmentInfo ColorAttachments[RHI_MAX_RENDER_TARGETS] = {};
         for (uint32 i = 0; i < RenderTargetState.NumRenderTargets; i++)
         {
-            const FRHIRenderTargetView& RenderTargetView = RenderPassDesc.RenderTargets[i];
+            const FRHIRenderPassAttachment& ColorAttachment = RenderPassDesc.RenderTargets[i];
             ColorAttachments[i].sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             ColorAttachments[i].imageView   = RenderTargetState.RenderTargetViews[i] ? RenderTargetState.RenderTargetViews[i]->GetImageViewInfo().ImageView : VK_NULL_HANDLE;
             ColorAttachments[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            ColorAttachments[i].loadOp      = ConvertLoadAction(RenderTargetView.LoadAction);
-            ColorAttachments[i].storeOp     = ConvertStoreAction(RenderTargetView.StoreAction);
+            ColorAttachments[i].loadOp      = ConvertLoadAction(ColorAttachment.LoadAction);
+            ColorAttachments[i].storeOp     = ConvertStoreAction(ColorAttachment.StoreAction);
             ColorAttachments[i].clearValue  = ColorClearValues[i];
         }
 
-        VkRenderingAttachmentInfo DepthStencilAttachment = {};
+        VkRenderingAttachmentInfo DepthStencilAttachmentInfo = {};
         const bool bHasDepthStencil = (RenderTargetState.DepthStencilView != nullptr);
         bool bHasStencil = false;
         if (bHasDepthStencil)
@@ -460,12 +475,12 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             const VkFormat DepthStencilVkFormat = RenderTargetState.DepthStencilView->GetImageViewInfo().Format;
             bHasStencil = IsStencilFormat(DepthStencilVkFormat);
 
-            DepthStencilAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-            DepthStencilAttachment.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
-            DepthStencilAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-            DepthStencilAttachment.loadOp      = ConvertLoadAction(DepthStencilView.LoadAction);
-            DepthStencilAttachment.storeOp     = ConvertStoreAction(DepthStencilView.StoreAction);
-            DepthStencilAttachment.clearValue  = DepthStencilClearValue;
+            DepthStencilAttachmentInfo.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            DepthStencilAttachmentInfo.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
+            DepthStencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            DepthStencilAttachmentInfo.loadOp      = ConvertLoadAction(DepthStencilAttachment.LoadAction);
+            DepthStencilAttachmentInfo.storeOp     = ConvertStoreAction(DepthStencilAttachment.StoreAction);
+            DepthStencilAttachmentInfo.clearValue  = DepthStencilClearValue;
         }
 
         VkRenderingInfo RenderingInfo = {};
@@ -474,8 +489,8 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         RenderingInfo.layerCount           = RenderTargetState.RenderingLayerCount;
         RenderingInfo.colorAttachmentCount = RenderTargetState.NumRenderTargets;
         RenderingInfo.pColorAttachments    = ColorAttachments;
-        RenderingInfo.pDepthAttachment     = bHasDepthStencil ? &DepthStencilAttachment : nullptr;
-        RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &DepthStencilAttachment : nullptr;
+        RenderingInfo.pDepthAttachment     = bHasDepthStencil ? &DepthStencilAttachmentInfo : nullptr;
+        RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &DepthStencilAttachmentInfo : nullptr;
         RenderingInfo.viewMask             = RenderTargetState.RenderingViewMask;
 
         Context.GetCommandBuffer()->BeginRendering(&RenderingInfo);
@@ -489,6 +504,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         }
 
         VkImageView AttachmentViews[RHI_MAX_RENDER_TARGETS + 1] = {};
+        
         uint16 NumAttachmentViews = 0;
         for (uint32 i = 0; i < RenderTargetState.NumRenderTargets; i++)
         {

@@ -21,7 +21,7 @@ FD3D12Fence::~FD3D12Fence()
 
 bool FD3D12Fence::Initialize(uint64 InitialValue)
 {
-    CurrentValue     = InitialValue;
+    CurrentValue      = InitialValue;
     LastSignaledValue = InitialValue;
 
     HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitialValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
@@ -183,7 +183,7 @@ void FD3D12FenceRHI::SetDebugName(const FString& InName)
     }
 }
 
-FString FD3D12FenceRHI::GetDebugName() const
+void FD3D12FenceRHI::GetDebugName(FString& OutDebugName) const
 {
-    return DebugName;
+    OutDebugName = DebugName;
 }

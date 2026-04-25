@@ -19,6 +19,17 @@ struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 class VULKANRHI_API FVulkanRHI : public FRHI
 {
 public:
+    static FORCEINLINE FVulkanRHI* Get()
+    {
+        CHECK(GVulkanRHI != nullptr);
+        return GVulkanRHI;
+    }
+
+    template<typename... ArgTypes>
+    static void DeferDeletion(ArgTypes&&... Args)
+    {
+        Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
+    }
 
     // Convert EResourceAccess to Vulkan access flags
     static VkAccessFlags2 ResourceStateToAccessFlags(EResourceAccess ResourceState);
@@ -29,25 +40,13 @@ public:
     // Convert EResourceAccess to Vulkan pipeline-stage flags
     static VkPipelineStageFlags2 ResourceStateToPipelineStageFlags(EResourceAccess ResourceState);
 
-    static FVulkanTextureRHI* ResourceCast(FRHITexture* Texture);
-    static FVulkanTextureRHI* ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
+    static FVulkanTextureRHI*          ResourceCast(FRHITexture* Texture);
+    static FVulkanRenderTargetViewRHI* ResourceCast(FRHIRenderTargetView* RenderTargetView);
 
     template<typename TRHIType>
     static FORCEINLINE typename TAddPointer<typename TVulkanRHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
     {
         return static_cast<typename TAddPointer<typename TVulkanRHIResourceType<TRHIType>::Type>::Type>(Resource);
-    }
-
-    template<typename... ArgTypes>
-    static void DeferDeletion(ArgTypes&&... Args)
-    {
-        Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
-    }
-
-    static FORCEINLINE FVulkanRHI* Get()
-    {
-        CHECK(GVulkanRHI != nullptr);
-        return GVulkanRHI;
     }
 
 public:
@@ -58,37 +57,39 @@ public:
 
     // FRHI Interface
     virtual void BeginFrame() override final;
-    virtual void EndFrame() override final;
+    virtual void EndFrame()   override final;
 
-    virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
-    virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
-    virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc) override final;
-    virtual FRHISwapChain* CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc) override final;
-    virtual FRHIQuery* CreateQuery(EQueryType InQueryType) override final;
-    virtual FRHIFence* CreateFence() override final;
-    virtual FRHISceneAccelerationStructure* CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc) override final;
+    virtual FRHITexture*                       CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
+    virtual FRHIBuffer*                        CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
+    virtual FRHISamplerState*                  CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc) override final;
+    virtual FRHISwapChain*                     CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc) override final;
+    virtual FRHIQuery*                         CreateQuery(EQueryType InQueryType) override final;
+    virtual FRHIFence*                         CreateFence() override final;
+    virtual FRHISceneAccelerationStructure*    CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc) override final;
     virtual FRHIGeometryAccelerationStructure* CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) override final;
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc) override final;
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) override final;
-    virtual FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIDomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIGeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIMeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIAmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIRayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIRayClosestHitShader* CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIRayMissShader* CreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final;
-    virtual FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final;
-    virtual FRHIBlendState* CreateBlendState(const FRHIBlendStateDesc& InDesc) override final;
-    virtual FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements) override final;
-    virtual FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final;
-    virtual FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final;
-    virtual FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
+    virtual FRHIShaderResourceView*            CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc) override final;
+    virtual FRHIUnorderedAccessView*           CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) override final;
+    virtual FRHIRenderTargetView*              CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) override final;
+    virtual FRHIDepthStencilView*              CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc) override final;
+    virtual FRHIComputeShader*                 CreateComputeShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIVertexShader*                  CreateVertexShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIHullShader*                    CreateHullShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIDomainShader*                  CreateDomainShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIGeometryShader*                CreateGeometryShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIPixelShader*                   CreatePixelShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIMeshShader*                    CreateMeshShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIAmplificationShader*           CreateAmplificationShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIRayGenShader*                  CreateRayGenShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIRayAnyHitShader*               CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIRayClosestHitShader*           CreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIRayMissShader*                 CreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIDepthStencilState*             CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final;
+    virtual FRHIRasterizerState*               CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final;
+    virtual FRHIBlendState*                    CreateBlendState(const FRHIBlendStateDesc& InDesc) override final;
+    virtual FRHIInputLayout*                   CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements) override final;
+    virtual FRHIGraphicsPipelineState*         CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final;
+    virtual FRHIComputePipelineState*          CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final;
+    virtual FRHIRayTracingPipelineState*       CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
@@ -100,11 +101,11 @@ public:
     
     virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
     
-    virtual void* GetNativeAdapter() override final;
-    virtual void* GetNativeDevice() override final;
-    virtual void* GetNativeDirectCommandQueue() override final;
+    virtual void* GetNativeAdapter()             override final;
+    virtual void* GetNativeDevice()              override final;
+    virtual void* GetNativeDirectCommandQueue()  override final;
     virtual void* GetNativeComputeCommandQueue() override final;
-    virtual void* GetNativeCopyCommandQueue() override final;
+    virtual void* GetNativeCopyCommandQueue()    override final;
 
     virtual FString GetAdapterName() const override final;
 

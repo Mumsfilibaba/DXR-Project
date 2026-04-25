@@ -161,6 +161,20 @@ public:
     virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) = 0;
 
     /**
+     * @brief Creates a new render target view for a texture.
+     * @param InDesc Structure containing information about the render target view.
+     * @return The newly created render target view.
+     */
+    virtual FRHIRenderTargetView* CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) = 0;
+
+    /**
+     * @brief Creates a new depth-stencil view for a texture.
+     * @param InDesc Structure containing information about the depth-stencil view.
+     * @return The newly created depth-stencil view.
+     */
+    virtual FRHIDepthStencilView* CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc) = 0;
+
+    /**
      * @brief Creates a new compute shader.
      * @param ShaderCode Shader bytecode used to create the shader.
      * @return The newly created shader.

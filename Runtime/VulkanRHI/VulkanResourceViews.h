@@ -3,8 +3,14 @@
 #include "VulkanRHI/VulkanLoader.h"
 #include "VulkanRHI/VulkanResource.h"
 
-typedef TSharedRef<class FVulkanShaderResourceViewRHI>  FVulkanShaderResourceViewRHIRef;
-typedef TSharedRef<class FVulkanUnorderedAccessViewRHI> FVulkanUnorderedAccessViewRHIRef;
+class FVulkanSwapChainRHI;
+class FVulkanBackBufferProxyTextureRHI;
+
+typedef TSharedRef<class FVulkanShaderResourceViewRHI>              FVulkanShaderResourceViewRHIRef;
+typedef TSharedRef<class FVulkanUnorderedAccessViewRHI>             FVulkanUnorderedAccessViewRHIRef;
+typedef TSharedRef<class FVulkanRenderTargetViewRHI>                FVulkanRenderTargetViewRHIRef;
+typedef TSharedRef<class FVulkanDepthStencilViewRHI>                FVulkanDepthStencilViewRHIRef;
+typedef TSharedRef<class FVulkanBackBufferProxyRenderTargetViewRHI> FVulkanBackBufferProxyRenderTargetViewRHIRef;
 
 class FVulkanResourceView : public FVulkanDeviceChild, public IVulkanResourceRelocationListener
 {
@@ -57,7 +63,16 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
     
-    bool InitializeImageView(VkImage InImage, VkFormat InFormat, VkImageViewType InImageViewType, VkImageAspectFlags InAspectMask, uint32 InBaseArrayLayer, uint32 InLayerCount, uint32 InBaseMipLevel, uint32 InLevelCount);
+    bool InitializeImageView(
+        VkImage InImage, 
+        VkFormat InFormat, 
+        VkImageViewType InImageViewType, 
+        VkImageAspectFlags InAspectMask, 
+        uint32 InBaseArrayLayer, 
+        uint32 InLayerCount, 
+        uint32 InBaseMipLevel, 
+        uint32 InLevelCount);
+
     bool InitializeStructuredBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange, VkDeviceSize InViewOffset);
     bool InitializeTypedBufferView(VkBuffer InBuffer, VkFormat InFormat, VkDeviceSize InOffset, VkDeviceSize InRange);
     bool InitializeAccelerationStructureView(VkAccelerationStructureKHR InAccelerationStructure);
@@ -132,7 +147,7 @@ public:
     virtual ~FVulkanShaderResourceViewRHI() = default;
 
     // FRHIShaderResourceView Interface
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
@@ -147,10 +162,74 @@ public:
     virtual ~FVulkanUnorderedAccessViewRHI() = default;
 
     // FRHIUnorderedAccessView Interface
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
     bool Initialize(const FRHIUnorderedAccessViewDesc& InDesc);
+};
+
+class FVulkanRenderTargetViewBase : public FRHIRenderTargetView
+{
+protected:
+    explicit FVulkanRenderTargetViewBase(FRHIResource* InResource)
+        : FRHIRenderTargetView(InResource)
+    {
+    }
+
+    virtual ~FVulkanRenderTargetViewBase() = default;
+
+public:
+    virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const = 0;
+};
+
+class FVulkanRenderTargetViewRHI : public FVulkanRenderTargetViewBase, public FVulkanResourceView
+{
+public:
+    FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    virtual ~FVulkanRenderTargetViewRHI() = default;
+
+    // FVulkanRenderTargetViewBase Interface
+    virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
+
+    // IVulkanResourceRelocationListener Interface
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+
+    bool Initialize(const FRHIRenderTargetViewDesc& InDesc);
+};
+
+class FVulkanBackBufferProxyRenderTargetViewRHI : public FVulkanRenderTargetViewBase
+{
+public:
+    FVulkanBackBufferProxyRenderTargetViewRHI(FVulkanSwapChainRHI* InSwapChain, FVulkanBackBufferProxyTextureRHI* InProxyTexture);
+    virtual ~FVulkanBackBufferProxyRenderTargetViewRHI();
+
+    // FVulkanRenderTargetViewBase Interface
+    virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
+
+    void SetSwapChain(FVulkanSwapChainRHI* InSwapChain)
+    {
+        SwapChain = InSwapChain;
+    }
+
+    FVulkanSwapChainRHI* GetSwapChain() const
+    {
+        return SwapChain;
+    }
+
+private:
+    FVulkanSwapChainRHI* SwapChain;
+};
+
+class FVulkanDepthStencilViewRHI : public FRHIDepthStencilView, public FVulkanResourceView
+{
+public:
+    FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
+    virtual ~FVulkanDepthStencilViewRHI() = default;
+
+    // IVulkanResourceRelocationListener Interface
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+
+    bool Initialize(const FRHIDepthStencilViewDesc& InDesc);
 };

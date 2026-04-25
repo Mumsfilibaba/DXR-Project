@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Map.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Containers/StaticArray.h"
 #include "Core/Math/Vector4.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
@@ -236,6 +237,11 @@ struct FFrameResources
     FRHIBufferRef                            ShadowCastingPointLightsPosRadBuffer;
     FRHITextureRef                           PointLightShadowMaps;
 
+    // Per-light DSV covering all 6 cube faces of a single shadow-casting point light
+    TArray<FRHIDepthStencilViewRef>          PointLightShadowMapDSVs;
+    // Per-face DSV: size MaxPointLightShadows * RHI_NUM_CUBE_FACES
+    TArray<FRHIDepthStencilViewRef>          PointLightShadowMapFaceDSVs;
+
     // DirectionalLight NOTE: Only one directional light
     FDirectionalLightDataHLSL DirectionalLightData;
     FRHIBufferRef             DirectionalLightDataBuffer;
@@ -248,6 +254,12 @@ struct FFrameResources
 
     FRHITextureRef            ShadowCascades;
     FRHIShaderResourceViewRef ShadowCascadesSRVs[NUM_SHADOW_CASCADES];
+
+    // Covers all cascades
+    FRHIDepthStencilViewRef                                    ShadowCascadesCombinedDSV;
+    // One DSV per cascade
+    TStaticArray<FRHIDepthStencilViewRef, NUM_SHADOW_CASCADES> ShadowCascadePerCascadeDSVs;
+
     FRHITextureRef            DirectionalShadowMask;
     FRHITextureRef            CascadeIndexBuffer;
 

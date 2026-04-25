@@ -66,14 +66,14 @@ struct IRHICommandContext
      * @param RenderTargetView RenderTargetView to clear
      * @param ClearColor Color to set each pixel within the RenderTargetView to
      */
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) = 0;
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) = 0;
 
     /**
      * @brief Clears a DepthStencilView with a specific value
      * @param DepthStencilView DepthStencilView to clear
      * @param ClearValue Value to set each pixel within the DepthStencilView to
      */
-    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, const uint8 Stencil) = 0;
+    virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, const uint8 Stencil) = 0;
 
     /**
      * @brief Clears a UnorderedAccessView with float values

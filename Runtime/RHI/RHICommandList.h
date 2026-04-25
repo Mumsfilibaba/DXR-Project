@@ -12,8 +12,8 @@
 #include "RHI/RHIRayTracing.h"
 #include "RHI/RHIStats.h"
 
-struct FRHIRenderTargetView;
-struct FRHIDepthStencilView;
+class FRHIRenderTargetView;
+class FRHIDepthStencilView;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
 class FRHIShader;
@@ -149,12 +149,12 @@ public:
         EmplaceCommand<FRHICommandQueryTimestamp>(Query);
     }
 
-    FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) noexcept
+    FORCEINLINE void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) noexcept
     {
         EmplaceCommand<FRHICommandClearRenderTargetView>(RenderTargetView, ClearColor);
     }
 
-    FORCEINLINE void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) noexcept
+    FORCEINLINE void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) noexcept
     {
         EmplaceCommand<FRHICommandClearDepthStencilView>(DepthStencilView, Depth, Stencil);
     }

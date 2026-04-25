@@ -14,7 +14,7 @@ public:
     virtual bool IsSignaled() const override final { return true; }
     virtual bool Wait(uint64 TimeoutNs) const override final { (void)TimeoutNs; return true; }
     virtual void SetDebugName(const FString& InName) override final { DebugName = InName; }
-    virtual FString GetDebugName() const override final { return DebugName; }
+    virtual void GetDebugName(FString& OutDebugName) const override final { OutDebugName = DebugName; }
 
 private:
     FString DebugName;

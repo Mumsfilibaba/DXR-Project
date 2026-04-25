@@ -64,9 +64,9 @@ struct FD3D12RenderTargetCache
         DepthStencilView = nullptr;
     }
 
-    FD3D12RenderTargetView* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
-    FD3D12DepthStencilView* DepthStencilView;
-    uint32                  NumRenderTargets;
+    FD3D12RenderTargetViewRHI* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
+    FD3D12DepthStencilViewRHI* DepthStencilView;
+    uint32                     NumRenderTargets;
 };
 
 enum class ED3D12DescriptorState : uint8

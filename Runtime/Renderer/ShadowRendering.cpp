@@ -363,7 +363,7 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 {
     const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
 
-    const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
+    const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::NoDefaultDSV;
     FRHITextureDesc PointLightDesc = FRHITextureDesc::CreateTextureCubeArray(FGlobalTextureFormats::ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
     Resources.PointLightShadowMaps = FRHI::Get()->CreateTexture(PointLightDesc, EResourceAccess::PixelShaderResource);
 
@@ -374,6 +374,47 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
     else
     {
         return false;
+    }
+
+    // Pre-create per-light and per-face DSVs. Since these cover all 6 cube faces of a single
+    // shadow-casting point light (or a single cube face), they can be cached for the lifetime of the
+    // owning texture instead of being recreated each frame.
+    Resources.PointLightShadowMapDSVs.Clear();
+    Resources.PointLightShadowMapDSVs.Reserve(Resources.MaxPointLightShadows);
+
+    Resources.PointLightShadowMapFaceDSVs.Clear();
+    Resources.PointLightShadowMapFaceDSVs.Reserve(Resources.MaxPointLightShadows * RHI_NUM_CUBE_FACES);
+
+    for (uint32 LightIndex = 0; LightIndex < Resources.MaxPointLightShadows; ++LightIndex)
+    {
+        FRHIDepthStencilViewDesc PerLightDSVDesc(Resources.PointLightShadowMaps.Get());
+        PerLightDSVDesc.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES);
+        PerLightDSVDesc.NumArraySlices = RHI_NUM_CUBE_FACES;
+        PerLightDSVDesc.MipLevel       = 0;
+
+        FRHIDepthStencilViewRef PerLightDSV = FRHI::Get()->CreateDepthStencilView(PerLightDSVDesc);
+        if (!PerLightDSV)
+        {
+            return false;
+        }
+
+        Resources.PointLightShadowMapDSVs.Add(PerLightDSV);
+
+        for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
+        {
+            FRHIDepthStencilViewDesc PerFaceDSVDesc(Resources.PointLightShadowMaps.Get());
+            PerFaceDSVDesc.ArrayIndex     = static_cast<uint16>((LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex);
+            PerFaceDSVDesc.NumArraySlices = 1;
+            PerFaceDSVDesc.MipLevel       = 0;
+
+            FRHIDepthStencilViewRef PerFaceDSV = FRHI::Get()->CreateDepthStencilView(PerFaceDSVDesc);
+            if (!PerFaceDSV)
+            {
+                return false;
+            }
+
+            Resources.PointLightShadowMapFaceDSVs.Add(PerFaceDSV);
+        }
     }
 
     return true;
@@ -453,13 +494,10 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.UpdateBuffer(SinglePassShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FSinglePassPointLightBufferHLSL)), &SinglePassPointLightBuffer);
             CommandList.TransitionBufferState(SinglePassShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
+            FRHIDepthStencilView* DepthStencilView = Resources.PointLightShadowMapDSVs[LightIndex].Get();
+
             FRHIBeginRenderPassDesc RenderPassDesc;
-            RenderPassDesc.DepthStencilView                = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
-            RenderPassDesc.DepthStencilView.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES);
-            RenderPassDesc.DepthStencilView.NumArraySlices = RHI_NUM_CUBE_FACES;
-            RenderPassDesc.DepthStencilView.LoadAction     = EAttachmentLoadAction::Clear;
-            RenderPassDesc.DepthStencilView.StoreAction    = EAttachmentStoreAction::Store;
-            RenderPassDesc.DepthStencilView.ClearValue     = FDepthStencilValue(1.0f, 0);
+            RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FDepthStencilValue(1.0f, 0));
 
             CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -577,11 +615,10 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 CommandList.TransitionBufferState(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
                 const uint32 ArrayIndex = (LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
+                FRHIDepthStencilView* DepthStencilView = Resources.PointLightShadowMapFaceDSVs[ArrayIndex].Get();
+
                 FRHIBeginRenderPassDesc RenderPassDesc;
-                RenderPassDesc.DepthStencilView             = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
-                RenderPassDesc.DepthStencilView.LoadAction  = EAttachmentLoadAction::Clear;
-                RenderPassDesc.DepthStencilView.StoreAction = EAttachmentStoreAction::Store;
-                RenderPassDesc.DepthStencilView.ClearValue  = FDepthStencilValue(1.0f, 0);
+                RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FDepthStencilValue(1.0f, 0));
 
                 CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -1060,7 +1097,7 @@ bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
 
 bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 {
-    const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture;
+    const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::NoDefaultDSV;
 
     const FClearValue DepthClearValue(FGlobalTextureFormats::ShadowMapFormat, 1.0f, 0);
     FRHITextureDesc CascadeDesc = FRHITextureDesc::CreateTexture2DArray(FGlobalTextureFormats::ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, NUM_SHADOW_CASCADES, 1, 1, Flags, DepthClearValue);
@@ -1084,6 +1121,37 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
         Resources.ShadowCascadesSRVs[Index] = FRHI::Get()->CreateShaderResourceView(SRVDesc);
         if (!Resources.ShadowCascadesSRVs[Index])
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+    }
+
+    // Pre-create the combined cascade DSV (covers all cascades in one pass) and per-cascade DSVs
+    // so they are reused across frames instead of being recreated each time.
+    {
+        FRHIDepthStencilViewDesc CombinedDSVDesc(Resources.ShadowCascades.Get());
+        CombinedDSVDesc.ArrayIndex     = 0;
+        CombinedDSVDesc.NumArraySlices = NUM_SHADOW_CASCADES;
+        CombinedDSVDesc.MipLevel       = 0;
+
+        Resources.ShadowCascadesCombinedDSV = FRHI::Get()->CreateDepthStencilView(CombinedDSVDesc);
+        if (!Resources.ShadowCascadesCombinedDSV)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+    }
+
+    for (uint16 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+    {
+        FRHIDepthStencilViewDesc PerCascadeDSVDesc(Resources.ShadowCascades.Get());
+        PerCascadeDSVDesc.ArrayIndex     = Index;
+        PerCascadeDSVDesc.NumArraySlices = 1;
+        PerCascadeDSVDesc.MipLevel       = 0;
+
+        Resources.ShadowCascadePerCascadeDSVs[Index] = FRHI::Get()->CreateDepthStencilView(PerCascadeDSVDesc);
+        if (!Resources.ShadowCascadePerCascadeDSVs[Index])
         {
             DEBUG_BREAK();
             return false;
@@ -1166,10 +1234,10 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     FSceneDirectionalLight* SceneDirectionalLight = Scene->DirectionalLight;
     if constexpr (bIsSinglePass)
     {
+        FRHIDepthStencilView* DepthStencilView = Resources.ShadowCascadesCombinedDSV.Get();
+
         FRHIBeginRenderPassDesc RenderPassDesc;
-        RenderPassDesc.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowCascades.Get());
-        RenderPassDesc.DepthStencilView.ArrayIndex     = 0;
-        RenderPassDesc.DepthStencilView.NumArraySlices = NUM_SHADOW_CASCADES;
+        RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView);
 
         // Setup view-instancing
         if constexpr (RenderPassType == ECascadeRenderPassType::ViewInstancingSinglePass)
@@ -1290,9 +1358,10 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
             CommandList.TransitionBufferState(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
+            FRHIDepthStencilView* DepthStencilView = Resources.ShadowCascadePerCascadeDSVs[Index].Get();
+
             FRHIBeginRenderPassDesc RenderPassDesc;
-            RenderPassDesc.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowCascades.Get());
-            RenderPassDesc.DepthStencilView.ArrayIndex = static_cast<uint16>(Index);
+            RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView);
 
             CommandList.BeginRenderPass(RenderPassDesc);
 

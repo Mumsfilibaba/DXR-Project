@@ -252,6 +252,46 @@ void FVulkanQueue::WaitForCompletion()
     vkQueueWaitIdle(Queue);
 }
 
+void FVulkanQueue::ClearPendingSemaphores()
+{
+    WaitSemaphores.Clear();
+    WaitStages.Clear();
+    WaitSemaphoreValues.Clear();
+
+    SignalSemaphores.Clear();
+    SignalSemaphoreValues.Clear();
+}
+
+void FVulkanQueue::RemovePendingSemaphore(VkSemaphore Semaphore)
+{
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitSemaphoreValues.Size(), "The size of WaitSemaphores and WaitSemaphoreValues must be the same");
+    VULKAN_ERROR_COND(SignalSemaphores.Size() == SignalSemaphoreValues.Size(), "The size of SignalSemaphores and SignalSemaphoreValues must be the same");
+
+    for (int32 Index = static_cast<int32>(WaitSemaphores.Size()) - 1; Index >= 0; --Index)
+    {
+        if (WaitSemaphores[Index] == Semaphore)
+        {
+            WaitSemaphores.RemoveAt(Index);
+            WaitStages.RemoveAt(Index);
+            WaitSemaphoreValues.RemoveAt(Index);
+        }
+    }
+
+    for (int32 Index = static_cast<int32>(SignalSemaphores.Size()) - 1; Index >= 0; --Index)
+    {
+        if (SignalSemaphores[Index] == Semaphore)
+        {
+            SignalSemaphores.RemoveAt(Index);
+            SignalSemaphoreValues.RemoveAt(Index);
+        }
+    }
+
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitStages.Size(), "The size of WaitSemaphores and WaitStages must be the same");
+    VULKAN_ERROR_COND(WaitSemaphores.Size() == WaitSemaphoreValues.Size(), "The size of WaitSemaphores and WaitSemaphoreValues must be the same");
+    VULKAN_ERROR_COND(SignalSemaphores.Size() == SignalSemaphoreValues.Size(), "The size of SignalSemaphores and SignalSemaphoreValues must be the same");
+}
+
 bool FVulkanQueue::FlushWaitSemaphoresAndWait()
 {
     VkSubmitInfo SubmitInfo = {};

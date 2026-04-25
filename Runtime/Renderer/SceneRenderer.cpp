@@ -674,7 +674,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
     else
     {
-        FRHIDepthStencilView DepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get());
+        FRHIDepthStencilView* DepthStencilView = Resources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
         CommandList.ClearDepthStencilView(DepthStencilView, 1.0f, 0);
     }
 

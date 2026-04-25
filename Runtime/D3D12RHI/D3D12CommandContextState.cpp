@@ -40,13 +40,13 @@ void FD3D12CommandContextState::PrepareGraphicsState()
     FD3D12RenderTargetCache& RenderTargetCache = GraphicsState.RenderTargetCache;
     for (uint32 i = 0; i < RenderTargetCache.NumRenderTargets; i++)
     {
-        if (FD3D12RenderTargetView* RenderTargetView = RenderTargetCache.RenderTargetViews[i])
+        if (FD3D12RenderTargetViewRHI* RenderTargetView = RenderTargetCache.RenderTargetViews[i])
         {
             Context.TransitionResourceState(RenderTargetView);
         }
     }
 
-    if (FD3D12DepthStencilView* DepthStencilView = RenderTargetCache.DepthStencilView)
+    if (FD3D12DepthStencilViewRHI* DepthStencilView = RenderTargetCache.DepthStencilView)
     {
         Context.TransitionResourceState(DepthStencilView, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     }
@@ -838,7 +838,7 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
     }
 }
 
-void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetView* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilView* DepthStencil)
+void FD3D12CommandContextState::SetRenderTargets(FD3D12RenderTargetViewRHI* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilViewRHI* DepthStencil)
 {
     if (GraphicsState.RenderTargetCache.DepthStencilView != DepthStencil)
     {

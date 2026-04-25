@@ -65,11 +65,6 @@ FD3D12CommandAllocator* FD3D12CommandAllocatorManager::ObtainAllocator()
     if (!AvailableAllocators.IsEmpty())
     {
         AvailableAllocators.Dequeue(CommandAllocator);
-        if (!CommandAllocator->Reset())
-        {
-            DEBUG_BREAK();
-            return nullptr;
-        }
     }
     else
     {
@@ -89,6 +84,11 @@ FD3D12CommandAllocator* FD3D12CommandAllocatorManager::ObtainAllocator()
 void FD3D12CommandAllocatorManager::RecycleAllocator(FD3D12CommandAllocator* InAllocator)
 {
     CHECK(InAllocator != nullptr);
+
+    if (!InAllocator->Reset())
+    {
+        DEBUG_BREAK();
+    }
 
     TScopedLock Lock(CommandAllocatorsCS);
     AvailableAllocators.Enqueue(InAllocator);

@@ -9,6 +9,16 @@ FD3D12BufferRHI::FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& I
 {
 }
 
+void* FD3D12BufferRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(ResourceStorage.GetResource());
+}
+
+FRHIDescriptorHandle FD3D12BufferRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
 FD3D12BufferRHI::~FD3D12BufferRHI()
 {
 #if D3D12_ENABLE_STATS
@@ -189,7 +199,9 @@ void* FD3D12BufferRHI::Map(uint64 Offset, uint64 Size)
 
     if (!Desc.IsDynamic() && !Desc.IsReadBack() && !Desc.IsTransient())
     {
-        D3D12_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
+        FString DebugName;
+        GetDebugName(DebugName);
+        D3D12_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *DebugName);
         return nullptr;
     }
 
@@ -242,15 +254,16 @@ void FD3D12BufferRHI::SetDebugName(const FString& InName)
     }
 }
 
-FString FD3D12BufferRHI::GetDebugName() const
+void FD3D12BufferRHI::GetDebugName(FString& OutDebugName) const
 {
-    FString DebugName;
     if (ResourceStorage.GetResource())
     {
-        ResourceStorage.GetResource()->GetDebugName(DebugName);
+        ResourceStorage.GetResource()->GetDebugName(OutDebugName);
     }
-
-    return DebugName;
+    else
+    {
+        OutDebugName.Clear();
+    }
 }
 
 void FD3D12BufferRHI::SetResource(FD3D12Resource* InResource)
@@ -273,6 +286,7 @@ FD3D12ConstantBufferView* FD3D12BufferRHI::GetOrCreateConstantBufferView()
     if (!ConstantBufferView.IsValid())
     {
         ConstantBufferView = new FD3D12ConstantBufferView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap());
+
         if (!CreateConstantBufferView())
         {
             return nullptr;
@@ -289,7 +303,7 @@ bool FD3D12BufferRHI::CreateConstantBufferView()
     D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
     FMemory::Memzero(&ViewDesc);
 
-    ViewDesc.SizeInBytes = Math::AlignUp<uint32>(static_cast<uint32>(Desc.Size), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+    ViewDesc.SizeInBytes    = Math::AlignUp<uint32>(static_cast<uint32>(Desc.Size), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     ViewDesc.BufferLocation = ResourceStorage.GetGPUVirtualAddress();
 
     if (FD3D12_CPU_DESCRIPTOR_HANDLE(0) == ConstantBufferView->GetOfflineHandle())

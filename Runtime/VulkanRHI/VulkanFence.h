@@ -76,17 +76,17 @@ private:
 class FVulkanFenceRHI final : public FRHIFence, public FVulkanDeviceChild
 {
 public:
-    explicit FVulkanFenceRHI(FVulkanDevice* InDevice);
+    FVulkanFenceRHI(FVulkanDevice* InDevice);
     virtual ~FVulkanFenceRHI();
 
     bool Initialize();
 
     // FRHIFence Interface
-    virtual bool IsSignaled() const override final;
+    virtual bool IsSignaled()                        const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
     
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
  
     // Called by the command context to enqueue a GPU signal at the next submission.
     void EnqueueSignal(FVulkanQueue& Queue);

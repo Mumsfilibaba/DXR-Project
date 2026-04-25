@@ -220,8 +220,10 @@ void FEditorNoJitterDepthPass::Execute(FRHICommandList& CommandList, FFrameResou
     TRACE_SCOPE("Editor NoJitter Depth");
     GPU_TRACE_SCOPE(CommandList, "Editor NoJitter Depth");
 
+    FRHIDepthStencilView* DepthStencilView = FrameResources.EditorNoJitterDepth->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.EditorNoJitterDepth.Get(), EAttachmentLoadAction::Clear);
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Clear);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -525,11 +527,13 @@ void FEditorSelectionIDPass::Execute(FRHICommandList& CommandList, FFrameResourc
     TRACE_SCOPE("Editor SelectionID");
     GPU_TRACE_SCOPE(CommandList, "Editor SelectionID");
 
+    FRHIRenderTargetView* RenderTargetView = FrameResources.EditorObjectID_NoJitter->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView = FrameResources.EditorNoJitterDepth->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(FrameResources.EditorObjectID_NoJitter.Get(), EAttachmentLoadAction::Clear);
-    RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.EditorNoJitterDepth.Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.NumRenderTargets       = 1;
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, EAttachmentLoadAction::Clear, EAttachmentStoreAction::Store, FFloatColor(0.0f, 0.0f, 0.0f, 0.0f));
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 

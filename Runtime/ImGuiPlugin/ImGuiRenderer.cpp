@@ -45,6 +45,7 @@ FImGuiRenderer::~FImGuiRenderer()
 bool FImGuiRenderer::InitializeRHI()
 {
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
+
 #ifdef EDITOR_BUILD
     PlatformState.Renderer_CreateWindow = [](ImGuiViewport* Viewport)
     {
@@ -295,8 +296,8 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
         PrepareDrawData(CommandList, DrawData);
         PrepareTexturesForShaderResourceUsage(CommandList, DrawData);
 
-        // Render to the main SwapChain
-        FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(RHISwapChain->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
+        FRHIRenderTargetView* BackBufferRTV = RHISwapChain->GetBackBufferRenderTargetView();
+        FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderPassAttachment(BackBufferRTV, EAttachmentLoadAction::Load) }, 1);
         CommandList.BeginRenderPass(RenderPassDesc);
         
         RenderDrawData(CommandList, DrawData);
@@ -321,7 +322,8 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
 
     PrepareDrawData(CommandList, DrawData);
 
-    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
+    FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
+    FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderPassAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
     CommandList.BeginRenderPass(RenderPassDesc);
     
     RenderDrawData(CommandList, DrawData);

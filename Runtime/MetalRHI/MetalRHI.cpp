@@ -126,6 +126,16 @@ FRHIShaderResourceView* FMetalRHI::CreateShaderResourceView(const FRHIShaderReso
     }
 }
 
+FRHIRenderTargetView* FMetalRHI::CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc)
+{
+    return new FMetalRenderTargetView(GetDeviceContext(), InDesc);
+}
+
+FRHIDepthStencilView* FMetalRHI::CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc)
+{
+    return new FMetalDepthStencilView(GetDeviceContext(), InDesc);
+}
+
 FRHIUnorderedAccessView* FMetalRHI::CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc)
 {
     if (InDesc.IsBufferUAV())

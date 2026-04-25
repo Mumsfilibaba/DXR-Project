@@ -70,8 +70,8 @@ public:
     virtual void BeginQuery(FRHIQuery* Query) override final { }
     virtual void EndQuery(FRHIQuery* Query) override final { }
     virtual void QueryTimestamp(FRHIQuery* Query) override final;
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
-    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) override final;
+    virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
     virtual void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) override final;
     virtual void BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc) override final;
@@ -153,7 +153,7 @@ private:
     // VertexBuffer- state
     TStaticArray<id<MTLBuffer>, RHI_MAX_VERTEX_BUFFERS> CurrentVertexBuffers;
     TStaticArray<NSUInteger   , RHI_MAX_VERTEX_BUFFERS> CurrentVertexOffsets;
-    NSRange CurrentVertexBufferRange;
+    NSRange                                             CurrentVertexBufferRange;
     
     // Resources
     enum
@@ -168,9 +168,8 @@ private:
     TStaticArray<TSharedRef<FMetalShaderResourceView>, kMaxSRVs>  CurrentSRVs[ShaderVisibility_Count];
     TStaticArray<TSharedRef<FMetalUnorderedAccessView>, kMaxUAVs> CurrentUAVs[ShaderVisibility_Count];
     TStaticArray<FMetalBufferRef, kMaxConstantBuffers>            CurrentConstantBuffers[ShaderVisibility_Count];
-    
-    TStaticArray<id<MTLBuffer> , kMaxBuffers>  CurrentBuffers[ShaderVisibility_Count];
-    TStaticArray<id<MTLTexture>, kMaxTextures> CurrentTextures[ShaderVisibility_Count];
+    TStaticArray<id<MTLBuffer> , kMaxBuffers>                     CurrentBuffers[ShaderVisibility_Count];
+    TStaticArray<id<MTLTexture>, kMaxTextures>                    CurrentTextures[ShaderVisibility_Count];
     
     // Contexts
     FMetalCopyCommandContext CopyContext;

@@ -23,6 +23,8 @@ public:
     virtual FRHIGeometryAccelerationStructure* CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) override final;
     virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc) override final;
     virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) override final;
+    virtual FRHIRenderTargetView* CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) override final;
+    virtual FRHIDepthStencilView* CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc) override final;
     virtual FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) override final;
@@ -85,8 +87,8 @@ public:
     virtual void EndQuery(FRHIQuery* Query) override final;
     virtual void QueryTimestamp(FRHIQuery* Query) override final;
 
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
-    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, const uint8 Stencil) override final;
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) override final;
+    virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, const uint8 Stencil) override final;
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
     virtual void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) override final;
 

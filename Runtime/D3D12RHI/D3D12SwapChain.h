@@ -18,31 +18,58 @@ public:
     virtual ~FD3D12SwapChainRHI();
 
     // FRHISwapChain Interface
-    virtual FRHITexture* GetBackBuffer() const override final { return BackBufferProxy.Get(); }
-    virtual void* GetNativeSwapChain() const override final { return SwapChain.Get(); }
-    virtual void* GetBackBufferRenderTargetView() override final;
+    virtual FRHITexture*          GetBackBuffer()                 const override final;
+    virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final;
+    virtual void*                 GetNativeSwapChain()            const override final;
 
     bool Initialize(FD3D12CommandContext* InCommandContext);
     bool Resize(FD3D12CommandContext* InCommandContext, uint32 Width, uint32 Height);
     bool Present(bool bVerticalSync);
 
-    FD3D12TextureRHI* GetCurrentBackBuffer() const 
-    { 
-        return BackBuffers[BackBufferIndex].Get();
+    FD3D12TextureRHI* GetCurrentBackBuffer() const
+    {
+        return BackBuffers.IsValidIndex(static_cast<int32>(BackBufferIndex)) ? BackBuffers[BackBufferIndex].Texture.Get() : nullptr;
+    }
+
+    FD3D12RenderTargetViewRHI* GetCurrentBackBufferRenderTargetView() const
+    {
+        return BackBuffers.IsValidIndex(static_cast<int32>(BackBufferIndex)) ? BackBuffers[BackBufferIndex].RenderTargetView.Get() : nullptr;
+    }
+
+    uint32 GetBackBufferCount() const
+    {
+        return static_cast<uint32>(BackBuffers.Size());
+    }
+
+    FD3D12TextureRHI* GetBackBufferAtIndex(uint32 Index) const
+    {
+        return BackBuffers.IsValidIndex(static_cast<int32>(Index)) ? BackBuffers[Index].Texture.Get() : nullptr;
+    }
+
+    FD3D12RenderTargetViewRHI* GetBackBufferRenderTargetViewAtIndex(uint32 Index) const
+    {
+        return BackBuffers.IsValidIndex(static_cast<int32>(Index)) ? BackBuffers[Index].RenderTargetView.Get() : nullptr;
     }
 
 private:
     bool RetrieveBackBuffers();
     void ApplySettingsChanges();
 
-    TComPtr<IDXGISwapChain3>    SwapChain;
-    FD3D12CommandContext*       CommandContext;
-    FD3D12BackBufferTextureRef  BackBufferProxy;
-    TArray<FD3D12TextureRHIRef> BackBuffers;
-    HWND                        Hwnd;
-    HANDLE                      SwapChainWaitableObject;
-    uint32                      Flags;
-    uint32                      NumBackBuffers;
-    uint32                      ActiveFrameLatency;
-    uint32                      BackBufferIndex;
+    struct FBackBufferData
+    {
+        FD3D12TextureRHIRef          Texture;
+        FD3D12RenderTargetViewRHIRef RenderTargetView;
+    };
+
+    TComPtr<IDXGISwapChain3>                    SwapChain;
+    FD3D12CommandContext*                       CommandContext;
+    FD3D12BackBufferProxyTextureRHIRef          BackBufferProxy;
+    FD3D12BackBufferProxyRenderTargetViewRHIRef BackBufferProxyRenderTargetView;
+    TArray<FBackBufferData>                     BackBuffers;
+    HWND                                        Hwnd;
+    HANDLE                                      SwapChainWaitableObject;
+    uint32                                      Flags;
+    uint32                                      NumBackBuffers;
+    uint32                                      ActiveFrameLatency;
+    uint32                                      BackBufferIndex;
 };

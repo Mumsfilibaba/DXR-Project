@@ -47,7 +47,6 @@ static TAutoConsoleVariable<bool> CVarVulkanEnableCrashMarkers(
     true);
 #endif
 
-
 FRHI* FVulkanRHIModule::CreateRHI()
 {
     TUniquePtr<FVulkanRHI> NewRHI = MakeUniquePtr<FVulkanRHI>();
@@ -65,39 +64,22 @@ FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 
 FVulkanTextureRHI* FVulkanRHI::ResourceCast(FRHITexture* Texture)
 {
-    FVulkanTextureRHI* VulkanTexture = nullptr;
     if (Texture)
     {
-        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
-        {
-            VulkanTexture = static_cast<FVulkanBackBufferTexture*>(Texture);
-        }
-        else
-        {
-            VulkanTexture = static_cast<FVulkanTextureRHI*>(Texture);
-        }
+        return static_cast<FVulkanTextureBase*>(Texture)->GetTextureInterface();
     }
 
-    return VulkanTexture;
+    return nullptr;
 }
 
-FVulkanTextureRHI* FVulkanRHI::ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture)
+FVulkanRenderTargetViewRHI* FVulkanRHI::ResourceCast(FRHIRenderTargetView* RenderTargetView)
 {
-    FVulkanTextureRHI* VulkanTexture = nullptr;
-    if (Texture)
+    if (RenderTargetView)
     {
-        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
-        {
-            FVulkanBackBufferTexture* BackBuffer = static_cast<FVulkanBackBufferTexture*>(Texture);
-            VulkanTexture = BackBuffer->GetCurrentBackBufferTexture(InCommandContext);
-        }
-        else
-        {
-            VulkanTexture = static_cast<FVulkanTextureRHI*>(Texture);
-        }
+        return static_cast<FVulkanRenderTargetViewBase*>(RenderTargetView)->GetRenderTargetViewInterface();
     }
 
-    return VulkanTexture;
+    return nullptr;
 }
 
 FVulkanRHI::FVulkanRHI()
@@ -552,8 +534,8 @@ FRHISwapChain* FVulkanRHI::CreateSwapChain(const FRHISwapChainDesc& InSwapChainD
 {
     CHECK(InSwapChainDesc.WindowHandle != nullptr);
 
-    FVulkanSwapChainRHIRef NewSwapChain = new FVulkanSwapChainRHI(Device, InSwapChainDesc);
-    if (!NewSwapChain->Initialize(GraphicsCommandContext))
+    FVulkanSwapChainRHIRef NewSwapChain = new FVulkanSwapChainRHI(Device, GraphicsCommandContext, InSwapChainDesc);
+    if (!NewSwapChain->Initialize())
     {
         return nullptr;
     }
@@ -699,6 +681,40 @@ FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIUnorder
     {
         return NewUnorderedAccessView.ReleaseOwnership();
     }
+}
+
+FRHIRenderTargetView* FVulkanRHI::CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc)
+{
+    if (!InDesc.Texture)
+    {
+        VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
+        return nullptr;
+    }
+
+    FVulkanRenderTargetViewRHIRef NewRenderTargetView = new FVulkanRenderTargetViewRHI(GetDevice(), InDesc.Texture);
+    if (!NewRenderTargetView->Initialize(InDesc))
+    {
+        return nullptr;
+    }
+
+    return NewRenderTargetView.ReleaseOwnership();
+}
+
+FRHIDepthStencilView* FVulkanRHI::CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc)
+{
+    if (!InDesc.Texture)
+    {
+        VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
+        return nullptr;
+    }
+
+    FVulkanDepthStencilViewRHIRef NewDepthStencilView = new FVulkanDepthStencilViewRHI(GetDevice(), InDesc.Texture);
+    if (!NewDepthStencilView->Initialize(InDesc))
+    {
+        return nullptr;
+    }
+
+    return NewDepthStencilView.ReleaseOwnership();
 }
 
 FRHIComputeShader* FVulkanRHI::CreateComputeShader(const TArray<uint8>& ShaderCode)
@@ -991,6 +1007,7 @@ bool FVulkanRHI::GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStati
         {
             return false;
         }
+        
         VulkanQuery->SyncFence->Wait(UINT64_MAX);
     }
 

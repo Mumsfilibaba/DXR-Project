@@ -15,6 +15,16 @@ FVulkanBufferRHI::FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc
 {
 }
 
+void* FVulkanBufferRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(GetVkBuffer());
+}
+
+FRHIDescriptorHandle FVulkanBufferRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
 FVulkanBufferRHI::~FVulkanBufferRHI()
 {
 #if VULKAN_ENABLE_STATS
@@ -220,9 +230,9 @@ void FVulkanBufferRHI::SetDebugName(const FString& InName)
     DebugName = InName;
 }
 
-FString FVulkanBufferRHI::GetDebugName() const
+void FVulkanBufferRHI::GetDebugName(FString& OutDebugName) const
 {
-    return DebugName;
+    OutDebugName = DebugName;
 }
 
 void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
@@ -234,7 +244,9 @@ void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
 
     if (!Desc.IsDynamic() && !Desc.IsReadBack() && !Desc.IsTransient())
     {
-        VULKAN_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *GetDebugName());
+        FString DebugNameStr;
+        GetDebugName(DebugNameStr);
+        VULKAN_ERROR("Attempting to map a non-mappable buffer. Name='%s'", *DebugNameStr);
         return nullptr;
     }
 

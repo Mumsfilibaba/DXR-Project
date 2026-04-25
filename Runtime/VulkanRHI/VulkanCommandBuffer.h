@@ -181,6 +181,11 @@ class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
         {
             vkCmdCopyBufferToImage(CommandBuffer, SrcBuffer, DstImage, DstImageLayout, RegionCount, Regions);
         }
+
+        FORCEINLINE void CopyImageToBuffer(VkImage SrcImage, VkImageLayout SrcImageLayout, VkBuffer DstBuffer, uint32 RegionCount, const VkBufferImageCopy* Regions)
+        {
+            vkCmdCopyImageToBuffer(CommandBuffer, SrcImage, SrcImageLayout, DstBuffer, RegionCount, Regions);
+        }
     
         FORCEINLINE void CopyImage(VkImage SrcImage, VkImageLayout SrcImageLayout, VkImage DstImage, VkImageLayout DstImageLayout,
             uint32 RegionCount, const VkImageCopy* Regions)

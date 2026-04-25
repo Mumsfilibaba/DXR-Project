@@ -7,6 +7,8 @@ class FVulkanTextureRHI;
 struct FVulkanQueryRHI;
 class FVulkanShaderResourceViewRHI;
 class FVulkanUnorderedAccessViewRHI;
+class FVulkanRenderTargetViewRHI;
+class FVulkanDepthStencilViewRHI;
 class FVulkanSamplerStateRHI;
 class FVulkanFenceRHI;
 class FVulkanSwapChainRHI;
@@ -52,6 +54,16 @@ template<> struct TVulkanRHIResourceType<FRHIShaderResourceView>
 template<> struct TVulkanRHIResourceType<FRHIUnorderedAccessView>
 {
     typedef FVulkanUnorderedAccessViewRHI Type;
+};
+
+template<> struct TVulkanRHIResourceType<FRHIRenderTargetView>
+{
+    typedef FVulkanRenderTargetViewRHI Type;
+};
+
+template<> struct TVulkanRHIResourceType<FRHIDepthStencilView>
+{
+    typedef FVulkanDepthStencilViewRHI Type;
 };
 
 template<> struct TVulkanRHIResourceType<FRHISamplerState>

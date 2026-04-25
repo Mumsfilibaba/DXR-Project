@@ -27,9 +27,9 @@ public:
         DebugName = InDebugName;
     }
     
-    virtual FString GetDebugName() const override final
+    virtual void GetDebugName(FString& OutDebugName) const override final
     {
-        return DebugName;
+        OutDebugName = DebugName;
     }
 
 private:
@@ -52,25 +52,93 @@ struct FNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
     }
 };
 
+struct FNullRHIRenderTargetView : public FRHIRenderTargetView
+{
+    FNullRHIRenderTargetView(FRHIResource* InResource)
+        : FRHIRenderTargetView(InResource)
+    {
+    }
+};
+
+struct FNullRHIDepthStencilView : public FRHIDepthStencilView
+{
+    FNullRHIDepthStencilView(FRHIResource* InResource)
+        : FRHIDepthStencilView(InResource)
+    {
+    }
+};
+
 class FNullRHITexture : public FRHITexture
 {
 public:
     FNullRHITexture(const FRHITextureDesc& InTextureDesc)
         : FRHITexture(InTextureDesc)
-        , ShaderResourceView(new FNullRHIShaderResourceView(this))
-        , UnorderedAccessView(new FNullRHIUnorderedAccessView(this))
+        , ShaderResourceView(nullptr)
+        , UnorderedAccessView(nullptr)
+        , RenderTargetView(nullptr)
+        , DepthStencilView(nullptr)
     {
+        if (Desc.IsShaderResourceTexture() && !Desc.IsNoDefaultSRV())
+        {
+            ShaderResourceView = new FNullRHIShaderResourceView(this);
+        }
+
+        if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV())
+        {
+            UnorderedAccessView = new FNullRHIUnorderedAccessView(this);
+        }
+
+        if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
+        {
+            RenderTargetView = new FNullRHIRenderTargetView(this);
+        }
+
+        if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
+        {
+            DepthStencilView = new FNullRHIDepthStencilView(this);
+        }
     }
 
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
-    virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return nullptr; }
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual void* GetRHINativeHandle() const override final
+    {
+        return nullptr;
+    }
+
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final
+    {
+        return ShaderResourceView.Get();
+    }
+
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final
+    {
+        return UnorderedAccessView.Get();
+    }
+
+    virtual FRHIRenderTargetView* GetRenderTargetView() const override final
+    {
+        return RenderTargetView.Get();
+    }
+
+    virtual FRHIDepthStencilView* GetDepthStencilView() const override final
+    {
+        return DepthStencilView.Get();
+    }
+
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final
+    {
+        return FRHIDescriptorHandle();
+    }
+
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final
+    {
+        return FRHIDescriptorHandle();
+    }
 
 private:
     TSharedRef<FNullRHIShaderResourceView>  ShaderResourceView;
     TSharedRef<FNullRHIUnorderedAccessView> UnorderedAccessView;
+    TSharedRef<FNullRHIRenderTargetView>    RenderTargetView;
+    TSharedRef<FNullRHIDepthStencilView>    DepthStencilView;
 };
 
 struct FNullRHIRayTracingGeometry : public FRHIGeometryAccelerationStructure
@@ -80,7 +148,10 @@ struct FNullRHIRayTracingGeometry : public FRHIGeometryAccelerationStructure
     {
     }
 
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final
+    {
+        return nullptr;
+    }
 };
 
 class FNullRHIRayTracingScene : public FRHISceneAccelerationStructure
@@ -92,9 +163,20 @@ public:
     {
     }
 
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual void* GetRHINativeHandle() const override final
+    {
+        return nullptr;
+    }
+    
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final
+    {
+        return View.Get();
+    }
+    
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final
+    {
+        return FRHIDescriptorHandle();
+    }
 
 private:
     TSharedRef<FNullRHIShaderResourceView> View;
@@ -107,7 +189,10 @@ struct FNullRHISamplerState : public FRHISamplerState
     {
     }
 
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final
+    {
+        return FRHIDescriptorHandle();
+    }
 };
 
 class FNullRHISwapChain : public FRHISwapChain
@@ -117,8 +202,24 @@ public:
         : FRHISwapChain(InSwapChainDesc)
         , BackBuffer(nullptr)
     { 
-        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
+            Desc.ColorFormat, 
+            Desc.Width, 
+            Desc.Height, 
+            1, 
+            1, 
+            ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
         BackBuffer = new FNullRHITexture(BackBufferDesc);
+    }
+    
+    virtual FRHITexture* GetBackBuffer() const override final 
+    {
+        return BackBuffer.Get();
+    }
+    
+    virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final
+    {
+        return BackBuffer ? BackBuffer->GetRenderTargetView() : nullptr;
     }
 
     bool Resize(uint32 InWidth, uint32 InHeight)
@@ -127,8 +228,6 @@ public:
         Desc.Height = uint16(InHeight);
         return true;
     }
-
-    virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
 private:
     TSharedRef<FNullRHITexture> BackBuffer;
@@ -152,10 +251,26 @@ public:
     }
 
     // FRHIFence Interface
-    virtual bool IsSignaled() const override final { return true; }
-    virtual bool Wait(uint64 TimeoutNs) const override final { (void)TimeoutNs; return true; }
-    virtual void SetDebugName(const FString& InName) override final { DebugName = InName; }
-    virtual FString GetDebugName() const override final { return DebugName; }
+    virtual bool IsSignaled() const override final
+    {
+        return true;
+    }
+
+    virtual bool Wait(uint64 TimeoutNs) const override final
+    {
+        UNREFERENCED_VARIABLE(TimeoutNs);
+        return true;
+    }
+
+    virtual void SetDebugName(const FString& InName) override final
+    {
+        DebugName = InName;
+    }
+
+    virtual void GetDebugName(FString& OutDebugName) const override final
+    {
+        OutDebugName = DebugName;
+    }
 
 private:
     FString DebugName;
@@ -240,17 +355,26 @@ private:
 
 struct FNullRHIGraphicsPipelineState : public FRHIGraphicsPipelineState
 {
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final
+    {
+        return nullptr;
+    }
 };
 
 struct FNullRHIComputePipelineState : public FRHIComputePipelineState
 {
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final
+    {
+        return nullptr;
+    }
 };
 
 struct FNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final
+    {
+        return nullptr;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

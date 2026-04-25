@@ -14,6 +14,8 @@ enum class ETextureUsageFlags
     Presentable            = FLAG(6), // Indicates that the texture is a BackBuffer resource
     NoDefaultSRV           = FLAG(7), // Do not create a default ShaderResourceView at texture creation time
     NoDefaultUAV           = FLAG(8), // Do not create a default UnorderedAccessView at texture creation time
+    NoDefaultRTV           = FLAG(9), // Do not create a default RenderTargetView at texture creation time
+    NoDefaultDSV           = FLAG(10), // Do not create a default DepthStencilView at texture creation time
 };
 
 ENUM_CLASS_OPERATORS(ETextureUsageFlags);
@@ -136,6 +138,8 @@ struct FRHITextureDesc
     NODISCARD constexpr bool IsShadingRateTexture()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShadingRateTexture); }
     NODISCARD constexpr bool IsNoDefaultSRV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultSRV); }
     NODISCARD constexpr bool IsNoDefaultUAV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultUAV); }
+    NODISCARD constexpr bool IsNoDefaultRTV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultRTV); }
+    NODISCARD constexpr bool IsNoDefaultDSV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultDSV); }
     NODISCARD constexpr bool IsMultisampled()           const { return (NumSamples > 1); }
 
     NODISCARD constexpr ETextureDimension  GetDimension()      const { return Dimension; }
@@ -177,12 +181,15 @@ public:
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
-    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const { return FRHIDescriptorHandle(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
-    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const { return FRHIDescriptorHandle(); }
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const { return nullptr; }
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const { return nullptr; }
+
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
 
     virtual void SetDebugName(const FString&) { }
-    virtual FString GetDebugName() const { return ""; }
+    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
 
     const FRHITextureDesc& GetDesc() const
     {

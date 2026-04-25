@@ -252,7 +252,7 @@ public:
     }
 
     virtual void SetDebugName(const FString& InName) override final {}
-    virtual FString GetDebugName() const override final { return ""; }
+    virtual void GetDebugName(FString& OutDebugName) const override final { OutDebugName.Clear(); }
     
 public:
     FMetalBlendState*        GetMetalBlendState()        const { return BlendState.Get(); }
@@ -287,7 +287,7 @@ public:
     ~FMetalComputePipelineState() = default;
 
     virtual void SetDebugName(const FString& InName) override final {}
-    virtual FString GetDebugName() const override final { return ""; }
+    virtual void GetDebugName(FString& OutDebugName) const override final { OutDebugName.Clear(); }
 };
 
 class FMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
@@ -297,7 +297,7 @@ public:
     ~FMetalRayTracingPipelineState() = default;
 
     virtual void SetDebugName(const FString& InName) override final {}
-    virtual FString GetDebugName() const override final { return ""; }
+    virtual void GetDebugName(FString& OutDebugName) const override final { OutDebugName.Clear(); }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

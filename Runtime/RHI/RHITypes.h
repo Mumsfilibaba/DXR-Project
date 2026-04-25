@@ -25,6 +25,8 @@ class FRHIRayAnyHitShader;
 class FRHIRayClosestHitShader;
 class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
+class FRHIRenderTargetView;
+class FRHIDepthStencilView;
 class FRHIFence;
 struct IRHITextureData;
 
@@ -32,6 +34,8 @@ typedef TSharedRef<class FRHIBuffer>                  FRHIBufferRef;
 typedef TSharedRef<class FRHITexture>                 FRHITextureRef;
 typedef TSharedRef<FRHIShaderResourceView>            FRHIShaderResourceViewRef;
 typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef;
+typedef TSharedRef<FRHIRenderTargetView>              FRHIRenderTargetViewRef;
+typedef TSharedRef<FRHIDepthStencilView>              FRHIDepthStencilViewRef;
 typedef TSharedRef<class FRHISamplerState>            FRHISamplerStateRef;
 typedef TSharedRef<class FRHISwapChain>               FRHISwapChainRef;
 typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;

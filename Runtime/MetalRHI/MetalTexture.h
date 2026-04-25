@@ -18,13 +18,16 @@ public:
 
     // FRHITexture Interface
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final { return RenderTargetView.Get(); }
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final { return DepthStencilView.Get(); }
+
+    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     id<MTLTexture> GetMTLTexture() const;
 
@@ -48,6 +51,8 @@ protected:
     id<MTLTexture>  Texture;
     FMetalSwapChain* SwapChain;
     TSharedRef<FMetalShaderResourceView> ShaderResourceView;
+    TSharedRef<FMetalRenderTargetView>   RenderTargetView;
+    TSharedRef<FMetalDepthStencilView>   DepthStencilView;
 };
 
 FORCEINLINE FMetalTexture* GetMetalTexture(FRHITexture* Texture)

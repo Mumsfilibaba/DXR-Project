@@ -90,7 +90,7 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
         if (ExistingTransitionBarrier.StateBefore == BeforeState && ExistingTransitionBarrier.StateAfter == AfterState)
         {
         #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-            LOG_INFO("  Redundant barrier FirstRange->SecondRange kept (SubresourceIndex=%u, %s->%s)", SubresourceIndex, ToString(BeforeState), ToString(AfterState));
+            LOG_INFO("  Redundant barrier FirstRange->SecondRange kept (SubresourceIndex=%u, %s->%s)",SubresourceIndex, ToString(BeforeState), ToString(AfterState));
         #endif
             return;
         }
@@ -100,14 +100,16 @@ void FD3D12BarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_
         {
             ExistingTransitionBarrier.StateAfter = AfterState;
         #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-            LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter), SubresourceIndex);
+            LOG_INFO("  Extended barrier to %s->%s (SubresourceIndex=%u)", 
+                ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter), SubresourceIndex);
         #endif
 
             // If we changed state to the same before- and after-state, remove it
             if (ExistingTransitionBarrier.StateBefore == ExistingTransitionBarrier.StateAfter)
             {
             #if D3D12_ENABLE_RESOURCE_STATE_VALIDATION
-                LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", SubresourceIndex, ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter));
+                LOG_INFO("  Cancelled barrier (SubresourceIndex=%u, %s<->%s)", 
+                    SubresourceIndex, ToString(ExistingTransitionBarrier.StateBefore), ToString(ExistingTransitionBarrier.StateAfter));
             #endif
                 Barriers.RemoveAt(It.GetIndex());
             }
@@ -154,6 +156,7 @@ void FD3D12BarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
     Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
     Barrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
     Barrier.UAV.pResource = Resource;
+
     Barriers.Emplace(Barrier);
 }
 
@@ -191,9 +194,7 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
 {
 }
 
-FD3D12CommandContext::~FD3D12CommandContext()
-{
-}
+FD3D12CommandContext::~FD3D12CommandContext() = default;
 
 bool FD3D12CommandContext::Initialize()
 {
@@ -263,6 +264,7 @@ void FD3D12CommandContext::AddPendingBarrier(FD3D12Resource* Resource, D3D12_RES
     PendingBarrier.Resource     = Resource;
     PendingBarrier.DesiredState = DesiredState;
     PendingBarrier.Subresource  = Subresource;
+
     PendingBarriers.Add(PendingBarrier);
 }
 
@@ -421,31 +423,64 @@ void FD3D12CommandContext::EndFrame()
 
 void FD3D12CommandContext::StartContext()
 {
-    // TODO: Remove lock, the command context itself should only be used from a single thread
-    // Lock to the thread that started the context
+    // -------------------------------------------------------------------------------------------
+    // NOTE: This context is intended to be used from a single thread. The lock only enforces 
+    // that the same thread which starts the context is the one that later finishes it. Once 
+    // the codebase guarantees single-threaded use per context, this lock can be removed.
+    // -------------------------------------------------------------------------------------------
+
     CommandContextCS.Lock();
 
-    // Reset the state
+    // -------------------------------------------------------------------------------------------
+    // Phase Transition: Finished -> Recording
+    // -------------------------------------------------------------------------------------------
+
+    bIsRecording = true;
+
+    // -------------------------------------------------------------------------------------------
+    // Clear cached bindings, barriers, and any transient state accumulated in the previous 
+    // frame/phase.
+    // -------------------------------------------------------------------------------------------
+
     ContextState.ResetState();
     EventStack.Clear();
 
-    // Retrieve a new CommandList
-    ObtainCommandList();
+    // -------------------------------------------------------------------------------------------
+    // Acquire/allocate a fresh command list so the caller can immediately begin recording 
+    // GPU work in this context.
+    // -------------------------------------------------------------------------------------------
 
-    // Starting recording commands
-    bIsRecording = true;
+    ObtainCommandList();
 }
 
 void FD3D12CommandContext::FinishContext()
 {
-    // Submit the CommandList
+    // -------------------------------------------------------------------------------------------
+    // Phase Validation
+    // -------------------------------------------------------------------------------------------
+
+    CHECK(bIsRecording);
+
+    // -------------------------------------------------------------------------------------------
+    // Close and submit the active command-list. Unlike Vulkan, D3D12 does not maintain a 
+    // persistent command-pool that accumulates allocations across frames: every 
+    // FinishCommandList(true) hands the paired ID3D12CommandAllocator to the submitted 
+    // FD3D12Commands, which recycles (and Reset()s) it after GPU completion.
+    // -------------------------------------------------------------------------------------------
+
     FinishCommandList(true);
 
-    // Stopped recording commands
+    // -------------------------------------------------------------------------------------------
+    // Phase Transition: Recording -> Finished
+    // -------------------------------------------------------------------------------------------
+
     bIsRecording = false;
 
-    // TODO: Remove lock, the command context itself should only be used from a single thread
-    // Unlock from the thread that started the context
+    // -------------------------------------------------------------------------------------------
+    // See note in StartContext(): once guaranteed single-threaded use is enforced by design, 
+    // this lock can be removed.
+    // -------------------------------------------------------------------------------------------
+
     CommandContextCS.Unlock();
 }
 
@@ -512,11 +547,17 @@ void FD3D12CommandContext::BeginQuery(FRHIQuery* Query)
     const EQueryType Type = D3D12Query->GetType();
     if (Type == EQueryType::Occlusion)
     {
-        OcclusionQueryAllocator.Allocate(D3D12Query->CurrentQuery, D3D12Query->QueryResult, ED3D12QueryType::Occlusion);
+        OcclusionQueryAllocator.Allocate(
+            D3D12Query->CurrentQuery, 
+            D3D12Query->QueryResult, 
+            ED3D12QueryType::Occlusion);
     }
     else if (Type == EQueryType::PipelineStatistics)
     {
-        PipelineStatsQueryAllocator.Allocate(D3D12Query->CurrentQuery, D3D12Query->QueryResult, ED3D12QueryType::PipelineStatistics);
+        PipelineStatsQueryAllocator.Allocate(
+            D3D12Query->CurrentQuery, 
+            D3D12Query->QueryResult, 
+            ED3D12QueryType::PipelineStatistics);
     }
     else
     {
@@ -568,31 +609,25 @@ void FD3D12CommandContext::QueryTimestamp(FRHIQuery* Query)
     PendingQueries.Add(D3D12Query);
 }
 
-void FD3D12CommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
+void FD3D12CommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
 {
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12TextureRHI* D3D12Texture = FD3D12RHI::ResourceCast(RenderTargetView.Texture);
-    CHECK(D3D12Texture != nullptr);
-
-    FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRenderTargetView(RenderTargetView);
+    FD3D12RenderTargetViewRHI* D3D12RenderTargetView = FD3D12RHI::ResourceCast(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
 
     GetCommandList()->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.XYZW, 0, nullptr);
 }
 
-void FD3D12CommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
+void FD3D12CommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
 {
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12TextureRHI* D3D12Texture = FD3D12RHI::ResourceCast(DepthStencilView.Texture);
-    CHECK(D3D12Texture != nullptr);
-
-    FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDepthStencilView(DepthStencilView);
+    FD3D12DepthStencilViewRHI* D3D12DepthStencilView = FD3D12RHI::ResourceCast(DepthStencilView);
     CHECK(D3D12DepthStencilView != nullptr);
 
     D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-    if (FormatHasStencil(DepthStencilView.Format))
+    if (FormatHasStencil(D3D12DepthStencilView->GetDesc().Format))
     {
         ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
     }
@@ -678,23 +713,24 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
 {
     BarrierBatcher.FlushBarriers(GetCommandList());
 
-    FD3D12RenderTargetView* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
-    FD3D12DepthStencilView* DepthStencilView = nullptr;
+    FD3D12RenderTargetViewRHI* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
+    FD3D12DepthStencilViewRHI* DepthStencilView = nullptr;
 
     for (uint32 Index = 0; Index < BeginRenderPassDesc.NumRenderTargets; ++Index)
     {
-        const FRHIRenderTargetView& CurrentRTV = BeginRenderPassDesc.RenderTargets[Index];
-        if (FD3D12TextureRHI* RenderTarget = FD3D12RHI::ResourceCast(CurrentRTV.Texture))
+        const FRHIRenderPassAttachment& CurrentAttachment = BeginRenderPassDesc.RenderTargets[Index];
+        if (FD3D12RenderTargetViewRHI* CurrentRenderTargetView = FD3D12RHI::ResourceCast(CurrentAttachment.View))
         {
-            FD3D12RenderTargetView* CurrentRenderTargetView = RenderTarget->GetOrCreateRenderTargetView(CurrentRTV);
-            CHECK(CurrentRenderTargetView != nullptr);
-
             // Clear the RenderTarget here, since we expect it to be cleared when the RenderPass begin, however
             // it is not certain that there will be a call to draw inside of the RenderPass
 
-            if (CurrentRTV.LoadAction == EAttachmentLoadAction::Clear)
+            if (CurrentAttachment.LoadAction == EAttachmentLoadAction::Clear)
             {
-                GetCommandList()->ClearRenderTargetView(CurrentRenderTargetView->GetOfflineHandle(), &CurrentRTV.ClearValue.R, 0, nullptr);
+                GetCommandList()->ClearRenderTargetView(
+                    CurrentRenderTargetView->GetOfflineHandle(), 
+                    CurrentAttachment.ClearValue.RGBA, 
+                    0, 
+                    nullptr);
             }
             
             RenderTargetViews[Index] = CurrentRenderTargetView;
@@ -705,19 +741,16 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
         }
     }
 
-    const FRHIDepthStencilView& CurrentDSV = BeginRenderPassDesc.DepthStencilView;
-    if (FD3D12TextureRHI* DepthStencil = FD3D12RHI::ResourceCast(CurrentDSV.Texture))
+    const FRHIDepthStencilAttachment& CurrentDSAttachment = BeginRenderPassDesc.DepthStencilAttachment;
+    if (FD3D12DepthStencilViewRHI* CurrentDepthStencilView = FD3D12RHI::ResourceCast(CurrentDSAttachment.View))
     {
-        FD3D12DepthStencilView* CurrentDepthStencilView = DepthStencil->GetOrCreateDepthStencilView(CurrentDSV);
-        CHECK(CurrentDepthStencilView != nullptr);
-
         // Clear the DepthStencil here, since we expect it to be cleared when the RenderPass begin, however
         // it is not certain that there will be a call to draw inside of the RenderPass
 
-        if (CurrentDSV.LoadAction == EAttachmentLoadAction::Clear)
+        if (CurrentDSAttachment.LoadAction == EAttachmentLoadAction::Clear)
         {
             D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-            if (FormatHasStencil(CurrentDSV.Format))
+            if (FormatHasStencil(CurrentDepthStencilView->GetDesc().Format))
             {
                 ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
             }
@@ -725,17 +758,13 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
             GetCommandList()->ClearDepthStencilView(
                 CurrentDepthStencilView->GetOfflineHandle(),
                 ClearFlags,
-                CurrentDSV.ClearValue.Depth,
-                static_cast<uint8>(CurrentDSV.ClearValue.Stencil),
+                CurrentDSAttachment.ClearValue.Depth,
+                static_cast<uint8>(CurrentDSAttachment.ClearValue.Stencil),
                 0,
                 nullptr);
         }
 
         DepthStencilView = CurrentDepthStencilView;
-    }
-    else
-    {
-        DepthStencilView = nullptr;
     }
 
     ContextState.SetRenderTargets(RenderTargetViews, BeginRenderPassDesc.NumRenderTargets, DepthStencilView);
@@ -864,8 +893,8 @@ void FD3D12CommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TAr
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
     CHECK(RegisterIndex + InUnorderedAccessViews.Size() <= D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
         FD3D12UnorderedAccessViewRHI* D3D12UnorderedAccessView = FD3D12RHI::ResourceCast(InUnorderedAccessViews[Index]);
@@ -888,8 +917,8 @@ void FD3D12CommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayVi
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
     CHECK(RegisterIndex + InConstantBuffers.Size() <= D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
+
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         FD3D12BufferRHI* D3D12Buffer = InConstantBuffers[Index] ? FD3D12RHI::ResourceCast(InConstantBuffers[Index]) : nullptr;
@@ -912,8 +941,8 @@ void FD3D12CommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
     CHECK(RegisterIndex + InSamplerStates.Size() <= D3D12_DEFAULT_SAMPLER_STATE_COUNT);
+
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
         FD3D12SamplerStateRHI* D3D12SamplerState = FD3D12RHI::ResourceCast(InSamplerStates[Index]);
@@ -1207,16 +1236,25 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     {
         for (uint32 MipLevel = 0; MipLevel < InCopyDesc.NumMipLevels; MipLevel++)
         {
-            // Source
-            D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
-            SourceLocation.pResource        = D3D12Source->GetResource()->GetD3D12Resource();
-            SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-            SourceLocation.SubresourceIndex = D3D12CalculateSubresource(
+            const uint32 SrcSubresourceIndex = D3D12CalculateSubresource(
                 InCopyDesc.SrcMipSlice + MipLevel,
                 SrcArraySlice + ArraySlice,
                 0,
                 Src->GetNumMipLevels(),
                 NumSrcArraySlices);
+
+            const uint32 DstSubresourceIndex = D3D12CalculateSubresource(
+                InCopyDesc.DstMipSlice + MipLevel,
+                DstArraySlice + ArraySlice,
+                0,
+                Dst->GetNumMipLevels(),
+                NumDstArraySlices);
+
+            // Source
+            D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
+            SourceLocation.pResource        = D3D12Source->GetResource()->GetD3D12Resource();
+            SourceLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+            SourceLocation.SubresourceIndex = SrcSubresourceIndex;
 
             D3D12_BOX SourceBox;
             SourceBox.left   = InCopyDesc.SrcPosition.X >> MipLevel;
@@ -1230,12 +1268,7 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
             D3D12_TEXTURE_COPY_LOCATION DestLocation = {};
             DestLocation.pResource        = D3D12Destination->GetResource()->GetD3D12Resource();
             DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-            DestLocation.SubresourceIndex = D3D12CalculateSubresource(
-                InCopyDesc.DstMipSlice + MipLevel,
-                DstArraySlice + ArraySlice,
-                0,
-                Dst->GetNumMipLevels(),
-                NumDstArraySlices);
+            DestLocation.SubresourceIndex = DstSubresourceIndex;
 
             const uint32 DestPositionX = InCopyDesc.DstPosition.X >> MipLevel;
             const uint32 DestPositionY = InCopyDesc.DstPosition.Y >> MipLevel;
@@ -1545,7 +1578,6 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(TextureTransition.AfterState);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-
     if (TextureTransition.MipLevel != RHI_ALL_MIP_LEVELS || TextureTransition.ArraySlice != RHI_ALL_ARRAY_SLICES)
     {
         const D3D12_RESOURCE_DESC& ResourceDesc = Resource->GetDesc();
@@ -1695,7 +1727,6 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
     CHECK(Resource != nullptr);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-
     if (LocalState.AreAllSubresourcesSameState())
     {
         const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
@@ -1735,7 +1766,6 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12Resource* Resource, D3D
     CHECK(BeforeState != D3D12_RESOURCE_STATE_TO_BE_DETERMINED);
 
     FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-
     if (LocalState.AreAllSubresourcesSameState())
     {
         const D3D12_RESOURCE_STATES CurrentState = LocalState.GetResourceState();
@@ -1817,7 +1847,13 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12UnorderedAccessViewRHI*
         case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
         case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
         {
-            TransitionResourceState(Resource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, ViewDesc.Texture2DArray.MipSlice, 1, ViewDesc.Texture2DArray.FirstArraySlice, ViewDesc.Texture2DArray.ArraySize);
+            TransitionResourceState(
+                Resource, 
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 
+                ViewDesc.Texture2DArray.MipSlice, 
+                1, 
+                ViewDesc.Texture2DArray.FirstArraySlice, 
+                ViewDesc.Texture2DArray.ArraySize);
             break;
         }
 
@@ -1883,7 +1919,7 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12ShaderResourceViewRHI* 
                 NumMips = ResourceDesc.MipLevels - ViewDesc.TextureCube.MostDetailedMip;
             }
 
-            TransitionResourceState(Resource, State, ViewDesc.TextureCube.MostDetailedMip, NumMips, 0, 6);
+            TransitionResourceState(Resource, State, ViewDesc.TextureCube.MostDetailedMip, NumMips, 0, RHI_NUM_CUBE_FACES);
             break;
         }
 
@@ -1895,7 +1931,13 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12ShaderResourceViewRHI* 
                 NumMips = ResourceDesc.MipLevels - ViewDesc.TextureCubeArray.MostDetailedMip;
             }
 
-            TransitionResourceState(Resource, State, ViewDesc.TextureCubeArray.MostDetailedMip, NumMips, ViewDesc.TextureCubeArray.First2DArrayFace, ViewDesc.TextureCubeArray.NumCubes * 6);
+            TransitionResourceState(
+                Resource, 
+                State, 
+                ViewDesc.TextureCubeArray.MostDetailedMip, 
+                NumMips, 
+                ViewDesc.TextureCubeArray.First2DArrayFace, 
+                ViewDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES);
             break;
         }
 
@@ -1925,7 +1967,7 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12ShaderResourceViewRHI* 
     }
 }
 
-void FD3D12CommandContext::TransitionResourceState(FD3D12RenderTargetView* View)
+void FD3D12CommandContext::TransitionResourceState(FD3D12RenderTargetViewRHI* View)
 {
     FD3D12Resource* Resource = View->GetViewResource();
     if (!Resource || !Resource->RequiresResourceStateTracking())
@@ -1947,7 +1989,13 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12RenderTargetView* View)
         case D3D12_RTV_DIMENSION_TEXTURE1DARRAY:
         case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
         {
-            TransitionResourceState(Resource, D3D12_RESOURCE_STATE_RENDER_TARGET, ViewDesc.Texture2DArray.MipSlice, 1, ViewDesc.Texture2DArray.FirstArraySlice, ViewDesc.Texture2DArray.ArraySize);
+            TransitionResourceState(
+                Resource, 
+                D3D12_RESOURCE_STATE_RENDER_TARGET, 
+                ViewDesc.Texture2DArray.MipSlice, 
+                1, 
+                ViewDesc.Texture2DArray.FirstArraySlice, 
+                ViewDesc.Texture2DArray.ArraySize);
             break;
         }
 
@@ -1959,7 +2007,13 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12RenderTargetView* View)
 
         case D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY:
         {
-            TransitionResourceState(Resource, D3D12_RESOURCE_STATE_RENDER_TARGET, 0, 1, ViewDesc.Texture2DMSArray.FirstArraySlice, ViewDesc.Texture2DMSArray.ArraySize);
+            TransitionResourceState(
+                Resource, 
+                D3D12_RESOURCE_STATE_RENDER_TARGET, 
+                0, 
+                1, 
+                ViewDesc.Texture2DMSArray.FirstArraySlice, 
+                ViewDesc.Texture2DMSArray.ArraySize);
             break;
         }
 
@@ -1971,7 +2025,7 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12RenderTargetView* View)
     }
 }
 
-void FD3D12CommandContext::TransitionResourceState(FD3D12DepthStencilView* View, D3D12_RESOURCE_STATES State)
+void FD3D12CommandContext::TransitionResourceState(FD3D12DepthStencilViewRHI* View, D3D12_RESOURCE_STATES State)
 {
     FD3D12Resource* Resource = View->GetViewResource();
     if (!Resource || !Resource->RequiresResourceStateTracking())
@@ -2024,14 +2078,13 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
     FD3D12Resource* Resource = D3D12Texture->GetResource();
     CHECK(Resource != nullptr);
 
-    FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
-    
     const D3D12_RESOURCE_DESC&  ResourceDesc = Resource->GetDesc();
     const D3D12_RESOURCE_STATES DesiredState = ConvertResourceState(RequiredState.State);
-
+    
     const uint32 NumMipLevels   = ResourceDesc.MipLevels;
     const uint32 NumArraySlices = ResourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? ResourceDesc.DepthOrArraySize : 1u;
-
+    
+    FD3D12ResourceState& LocalState = RetrievePendingResourceState(Resource);
     if (RequiredState.MipLevel == RHI_ALL_MIP_LEVELS && RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES)
     {
         if (LocalState.AreAllSubresourcesSameState())
@@ -2286,10 +2339,22 @@ void FD3D12CommandContext::DispatchRays(FRHISceneAccelerationStructure* RayTraci
 
 void FD3D12CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
+    // -------------------------------------------------------------------------------------------
+    // Close and submit the active command-list before presenting. In D3D12, 
+    // FinishCommandList(true) already hands the paired ID3D12CommandAllocator to the submitted 
+    // FD3D12Commands, which enqueues it for recycle/reset after GPU completion.
+    // -------------------------------------------------------------------------------------------
+
     FinishCommandList(true);
 
     FD3D12SwapChainRHI* D3D12SwapChain = FD3D12RHI::ResourceCast(SwapChain);
     D3D12SwapChain->Present(bVerticalSync);
+
+    // -------------------------------------------------------------------------------------------
+    // Acquire or allocate a fresh command-list so that subsequent GPU work can continue 
+    // recording immediately after presenting.
+    // -------------------------------------------------------------------------------------------
+
     ObtainCommandList();
 }
 

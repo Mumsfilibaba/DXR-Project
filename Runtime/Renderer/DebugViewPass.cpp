@@ -56,8 +56,8 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     }
 
     FRHIDepthStencilStateDesc DepthStencilDesc;
-    DepthStencilDesc.DepthFunc = EComparisonFunc::Always;
-    DepthStencilDesc.bDepthEnable = false;
+    DepthStencilDesc.DepthFunc         = EComparisonFunc::Always;
+    DepthStencilDesc.bDepthEnable      = false;
     DepthStencilDesc.bDepthWriteEnable = false;
 
     FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilDesc);
@@ -88,15 +88,15 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     }
 
     FRHIGraphicsPipelineStateDesc PSODesc;
-    PSODesc.InputLayout = nullptr;
-    PSODesc.BlendState = BlendState.Get();
-    PSODesc.DepthStencilState = DepthStencilState.Get();
-    PSODesc.RasterizerState = RasterizerState.Get();
-    PSODesc.VertexShader = DebugVertexShader.Get();
-    PSODesc.PixelShader = DebugPixelShader.Get();
-    PSODesc.PrimitiveTopology = EPrimitiveTopology::TriangleList;
-    PSODesc.RasterizerOutputFormats.NumRenderTargets = 1;
-    PSODesc.RasterizerOutputFormats.DepthStencilFormat = EFormat::Unknown;
+    PSODesc.InputLayout                                    = nullptr;
+    PSODesc.BlendState                                     = BlendState.Get();
+    PSODesc.DepthStencilState                              = DepthStencilState.Get();
+    PSODesc.RasterizerState                                = RasterizerState.Get();
+    PSODesc.VertexShader                                   = DebugVertexShader.Get();
+    PSODesc.PixelShader                                    = DebugPixelShader.Get();
+    PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
 
     DebugPSO_Linear = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
@@ -144,15 +144,15 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     TRACE_SCOPE("DebugView");
     GPU_TRACE_SCOPE(CommandList, "DebugView");
 
-    const int32 TargetWidth = static_cast<int32>(RenderTarget->GetWidth());
+    const int32 TargetWidth  = static_cast<int32>(RenderTarget->GetWidth());
     const int32 TargetHeight = static_cast<int32>(RenderTarget->GetHeight());
-    const int32 ViewX = Math::Clamp(X, 0, TargetWidth);
-    const int32 ViewY = Math::Clamp(Y, 0, TargetHeight);
+    const int32 ViewX        = Math::Clamp(X, 0, TargetWidth);
+    const int32 ViewY        = Math::Clamp(Y, 0, TargetHeight);
 
-    int32 ViewWidth = Width > 0 ? Width : TargetWidth;
+    int32 ViewWidth  = Width > 0 ? Width : TargetWidth;
     int32 ViewHeight = Height > 0 ? Height : TargetHeight;
 
-    ViewWidth = Math::Clamp(ViewWidth, 0, TargetWidth - ViewX);
+    ViewWidth  = Math::Clamp(ViewWidth, 0, TargetWidth - ViewX);
     ViewHeight = Math::Clamp(ViewHeight, 0, TargetHeight - ViewY);
 
     if (ViewWidth <= 0 || ViewHeight <= 0)
@@ -195,10 +195,15 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     RequirePixelIfNotRT(FrameResources.TonemappedTarget.Get());
     RequirePixelIfNotRT(FrameResources.FinalTarget.Get());
 
+    FRHIRenderTargetView* RenderTargetView = RenderTarget->GetRenderTargetView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(RenderTarget, bClearTarget ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load);
-    RenderPassDesc.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPassDesc.RenderTargets[0] = FRHIRenderPassAttachment(
+        RenderTargetView, 
+        bClearTarget ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load, 
+        EAttachmentStoreAction::Store, 
+        FFloatColor(0.0f, 0.0f, 0.0f, 1.0f));
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
@@ -244,32 +249,33 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     CommandList.SetConstantBuffer(DebugPixelShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    FRHISamplerState* PointSampler = FrameResources.GBufferSampler.Get();
+    FRHISamplerState* PointSampler  = FrameResources.GBufferSampler.Get();
     FRHISamplerState* LinearSampler = FrameResources.FXAASampler ? FrameResources.FXAASampler.Get() : FrameResources.GBufferSampler.Get();
+    
     CommandList.SetSamplerState(DebugPixelShader.Get(), LinearSampler, 0);
     CommandList.SetSamplerState(DebugPixelShader.Get(), PointSampler, 1);
 
     struct FDebugViewConstants
     {
-        int32 DebugMode = 0;
-        int32 ShadowMapSize = 0;
-        int32 OutputWidth = 0;
-        int32 OutputHeight = 0;
-        int32 ViewX = 0;
-        int32 ViewY = 0;
-        int32 TargetWidth = 0;
-        int32 TargetHeight = 0;
+        int32 DebugMode          = 0;
+        int32 ShadowMapSize      = 0;
+        int32 OutputWidth        = 0;
+        int32 OutputHeight       = 0;
+        int32 ViewX              = 0;
+        int32 ViewY              = 0;
+        int32 TargetWidth        = 0;
+        int32 TargetHeight       = 0;
         int32 OutputIsBackBuffer = 0;
     } Constants;
 
-    Constants.DebugMode = static_cast<int32>(DebugView);
-    Constants.ShadowMapSize = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetWidth()) : 0;
-    Constants.OutputWidth = ViewWidth;
-    Constants.OutputHeight = ViewHeight;
-    Constants.ViewX = ViewX;
-    Constants.ViewY = ViewY;
-    Constants.TargetWidth = TargetWidth;
-    Constants.TargetHeight = TargetHeight;
+    Constants.DebugMode          = static_cast<int32>(DebugView);
+    Constants.ShadowMapSize      = FrameResources.ShadowCascades ? static_cast<int32>(FrameResources.ShadowCascades->GetWidth()) : 0;
+    Constants.OutputWidth        = ViewWidth;
+    Constants.OutputHeight       = ViewHeight;
+    Constants.ViewX              = ViewX;
+    Constants.ViewY              = ViewY;
+    Constants.TargetWidth        = TargetWidth;
+    Constants.TargetHeight       = TargetHeight;
     Constants.OutputIsBackBuffer = (RenderTarget->GetFormat() == RenderSettings::GetBackBufferFormat()) ? 1 : 0;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);

@@ -225,10 +225,13 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
+    FRHIRenderTargetView* RenderTargetView = FrameResources.FinalTarget->GetRenderTargetView();
+    FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+
     FRHIBeginRenderPassDesc RenderPassDesc;
-    RenderPassDesc.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);
-    RenderPassDesc.NumRenderTargets = 1;
-    RenderPassDesc.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, LoadAction, EAttachmentStoreAction::Store, ClearColor);
+    RenderPassDesc.NumRenderTargets       = 1;
+    RenderPassDesc.DepthStencilAttachment = FRHIDepthStencilAttachment(DepthStencilView, EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPassDesc);
 

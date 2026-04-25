@@ -1,6 +1,8 @@
 #pragma once
 #include "RHI/RHIResource.h"
 
+class FRHIRenderTargetView;
+
 struct FRHISwapChainDesc
 {
     constexpr FRHISwapChainDesc() noexcept = default;
@@ -34,9 +36,9 @@ protected:
     virtual ~FRHISwapChain() = default;
 
 public:
-    virtual FRHITexture* GetBackBuffer() const { return nullptr; }
-    virtual void* GetNativeSwapChain() const { return nullptr; }
-    virtual void* GetBackBufferRenderTargetView() { return nullptr; }
+    virtual FRHITexture*          GetBackBuffer()                 const { return nullptr; }
+    virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const { return nullptr; }
+    virtual void*                 GetNativeSwapChain()            const { return nullptr; }
 
     EFormat GetColorFormat() const
     {

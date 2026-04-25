@@ -46,8 +46,8 @@ public:
     virtual void BeginQuery(FRHIQuery* Query) override final;
     virtual void EndQuery(FRHIQuery* Query) override final;
     virtual void QueryTimestamp(FRHIQuery* Query) override final;
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
-    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) override final;
+    virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
     virtual void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) override final;
     virtual void BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc) override final;
@@ -124,8 +124,8 @@ public:
 
     void TransitionResourceState(FD3D12UnorderedAccessViewRHI* View);
     void TransitionResourceState(FD3D12ShaderResourceViewRHI* View, D3D12_RESOURCE_STATES State);
-    void TransitionResourceState(FD3D12RenderTargetView* View);
-    void TransitionResourceState(FD3D12DepthStencilView* View, D3D12_RESOURCE_STATES State);
+    void TransitionResourceState(FD3D12RenderTargetViewRHI* View);
+    void TransitionResourceState(FD3D12DepthStencilViewRHI* View, D3D12_RESOURCE_STATES State);
 
     FD3D12CommandList& GetCommandList() 
     {

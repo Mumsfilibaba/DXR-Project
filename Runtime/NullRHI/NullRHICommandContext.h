@@ -8,16 +8,16 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 struct FNullRHICommandContext final : public IRHICommandContext
 {
     virtual void BeginFrame() override final { }
-    virtual void EndFrame() override final { }
+    virtual void EndFrame()   override final { }
 
-    virtual void StartContext() override final { }
+    virtual void StartContext()  override final { }
     virtual void FinishContext() override final { }
 
     virtual void BeginQuery(FRHIQuery* Query) override final { }
     virtual void EndQuery(FRHIQuery* Query) override final { }
     virtual void QueryTimestamp(FRHIQuery* Query) override final { }
-    virtual void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final { }
-    virtual void ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final { }
+    virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) override final { }
+    virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final { }
     virtual void ClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final { }
     virtual void ClearUnorderedAccessViewUint(FRHIUnorderedAccessView* UnorderedAccessView, const uint32 Values[4]) override final { }
     virtual void BeginRenderPass(const FRHIBeginRenderPassDesc& BeginRenderPassDesc) override final { }
@@ -80,7 +80,7 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void Flush() override final { }
 
     virtual void PushEvent(const FStringView& Name) override final { }
-    virtual void PopEvent() override final { }
+    virtual void PopEvent()                         override final { }
 
     virtual void* GetNativeCommandList() override final { return nullptr; }
 };

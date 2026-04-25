@@ -156,7 +156,7 @@ struct FD3D12DefaultDescriptors
     FD3D12ConstantBufferViewRef     DefaultCBV;
     FD3D12ShaderResourceViewRHIRef  DefaultSRV;
     FD3D12UnorderedAccessViewRHIRef DefaultUAV;
-    FD3D12RenderTargetViewRef       DefaultRTV;
+    FD3D12RenderTargetViewRHIRef    DefaultRTV;
     FD3D12SamplerStateRHIRef        DefaultSampler;
 };
 
@@ -174,15 +174,14 @@ public:
     bool CreateCommittedResource(const D3D12_RESOURCE_DESC& Desc, D3D12_HEAP_TYPE HeapType, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreatePlacedResource(FD3D12Heap* Heap, uint64 Offset, const D3D12_RESOURCE_DESC& Desc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* ClearValue, FD3D12ResourceRef& OutResource);
     bool CreateHeap(const D3D12_HEAP_DESC& Desc, FD3D12HeapRef& OutHeap);
-
-    int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
-
+    
     ID3D12CommandQueue*              GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
     FD3D12Queue*                     GetQueue(ED3D12CommandQueueType QueueType);
     FD3D12CommandAllocatorManager*   GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
     FD3D12QueryHeapManager*          GetQueryHeapManager(EQueryType QueryType);
     FD3D12QueryHeap*                 ObtainQueryHeap(D3D12_QUERY_HEAP_TYPE HeapType);
     void                             RecycleQueryHeap(FD3D12QueryHeap* Heap);
+    int32                            QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     FD3D12RootSignatureManager&      GetRootSignatureManager()              const { return *RootSignatureManager; }
     FD3D12PipelineStateManager&      GetPipelineStateManager()              const { return *PipelineStateManager; }
@@ -216,31 +215,31 @@ public:
     }
 
 #if D3D12_USE_ID3D12DEVICE_1
-    FORCEINLINE ID3D12Device1* GetD3D12Device1() const { return D3D12Device1.Get(); }
+    FORCEINLINE ID3D12Device1*  GetD3D12Device1()  const { return D3D12Device1.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_2
-    FORCEINLINE ID3D12Device2* GetD3D12Device2() const { return D3D12Device2.Get(); }
+    FORCEINLINE ID3D12Device2*  GetD3D12Device2()  const { return D3D12Device2.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_3
-    FORCEINLINE ID3D12Device3* GetD3D12Device3() const { return D3D12Device3.Get(); }
+    FORCEINLINE ID3D12Device3*  GetD3D12Device3()  const { return D3D12Device3.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_4
-    FORCEINLINE ID3D12Device4* GetD3D12Device4() const { return D3D12Device4.Get(); }
+    FORCEINLINE ID3D12Device4*  GetD3D12Device4()  const { return D3D12Device4.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_5
-    FORCEINLINE ID3D12Device5* GetD3D12Device5() const { return D3D12Device5.Get(); }
+    FORCEINLINE ID3D12Device5*  GetD3D12Device5()  const { return D3D12Device5.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_6
-    FORCEINLINE ID3D12Device6* GetD3D12Device6() const { return D3D12Device6.Get(); }
+    FORCEINLINE ID3D12Device6*  GetD3D12Device6()  const { return D3D12Device6.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_7
-    FORCEINLINE ID3D12Device7* GetD3D12Device7() const { return D3D12Device7.Get(); }
+    FORCEINLINE ID3D12Device7*  GetD3D12Device7()  const { return D3D12Device7.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_8
-    FORCEINLINE ID3D12Device8* GetD3D12Device8() const { return D3D12Device8.Get(); }
+    FORCEINLINE ID3D12Device8*  GetD3D12Device8()  const { return D3D12Device8.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_9
-    FORCEINLINE ID3D12Device9* GetD3D12Device9() const { return D3D12Device9.Get(); }
+    FORCEINLINE ID3D12Device9*  GetD3D12Device9()  const { return D3D12Device9.Get(); }
 #endif
 #if D3D12_USE_ID3D12DEVICE_10
     FORCEINLINE ID3D12Device10* GetD3D12Device10() const { return D3D12Device10.Get(); }
@@ -301,48 +300,48 @@ private:
     uint32                           NodeMask;
     uint32                           NodeCount;
 
-    TComPtr<ID3D12Device>  D3D12Device;
+    TComPtr<ID3D12Device>     D3D12Device;
 #if D3D12_USE_ID3D12DEVICE_1
-    TComPtr<ID3D12Device1> D3D12Device1;
+    TComPtr<ID3D12Device1>    D3D12Device1;
 #endif
 #if D3D12_USE_ID3D12DEVICE_2
-    TComPtr<ID3D12Device2> D3D12Device2;
+    TComPtr<ID3D12Device2>    D3D12Device2;
 #endif
 #if D3D12_USE_ID3D12DEVICE_3
-    TComPtr<ID3D12Device3> D3D12Device3;
+    TComPtr<ID3D12Device3>    D3D12Device3;
 #endif
 #if D3D12_USE_ID3D12DEVICE_4
-    TComPtr<ID3D12Device4> D3D12Device4;
+    TComPtr<ID3D12Device4>    D3D12Device4;
 #endif
 #if D3D12_USE_ID3D12DEVICE_5
-    TComPtr<ID3D12Device5> D3D12Device5;
+    TComPtr<ID3D12Device5>    D3D12Device5;
 #endif
 #if D3D12_USE_ID3D12DEVICE_6
-    TComPtr<ID3D12Device6> D3D12Device6;
+    TComPtr<ID3D12Device6>    D3D12Device6;
 #endif
 #if D3D12_USE_ID3D12DEVICE_7
-    TComPtr<ID3D12Device7> D3D12Device7;
+    TComPtr<ID3D12Device7>    D3D12Device7;
 #endif
 #if D3D12_USE_ID3D12DEVICE_8
-    TComPtr<ID3D12Device8> D3D12Device8;
+    TComPtr<ID3D12Device8>    D3D12Device8;
 #endif
 #if D3D12_USE_ID3D12DEVICE_9
-    TComPtr<ID3D12Device9> D3D12Device9;
+    TComPtr<ID3D12Device9>    D3D12Device9;
 #endif
 #if D3D12_USE_ID3D12DEVICE_10
-    TComPtr<ID3D12Device10> D3D12Device10;
+    TComPtr<ID3D12Device10>   D3D12Device10;
 #endif
 #if D3D12_USE_ID3D12DEVICE_11
-    TComPtr<ID3D12Device11> D3D12Device11;
+    TComPtr<ID3D12Device11>   D3D12Device11;
 #endif
 #if D3D12_USE_ID3D12DEVICE_12
-    TComPtr<ID3D12Device12> D3D12Device12;
+    TComPtr<ID3D12Device12>   D3D12Device12;
 #endif
 #if D3D12_USE_ID3D12DEVICE_13
-    TComPtr<ID3D12Device13> D3D12Device13;
+    TComPtr<ID3D12Device13>   D3D12Device13;
 #endif
 #if D3D12_USE_ID3D12DEVICE_14
-    TComPtr<ID3D12Device14> D3D12Device14;
+    TComPtr<ID3D12Device14>   D3D12Device14;
 #endif
 #if D3D12_USE_DEBUG_MESSAGE_CALLBACK
     TComPtr<ID3D12InfoQueue1> DebugInfoQueue;

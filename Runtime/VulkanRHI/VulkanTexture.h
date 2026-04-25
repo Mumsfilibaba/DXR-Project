@@ -6,34 +6,50 @@
 
 class FVulkanSwapChainRHI;
 class FVulkanCommandContext;
+class FVulkanBackBufferProxyRenderTargetViewRHI;
 
-typedef TSharedRef<FVulkanSwapChainRHI>               FVulkanSwapChainRHIRef;
-typedef TSharedRef<class FVulkanTextureRHI>           FVulkanTextureRHIRef;
-typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
+typedef TSharedRef<FVulkanSwapChainRHI>                    FVulkanSwapChainRHIRef;
+typedef TSharedRef<class FVulkanTextureRHI>                FVulkanTextureRHIRef;
+typedef TSharedRef<class FVulkanBackBufferProxyTextureRHI> FVulkanBackBufferProxyTextureRHIRef;
 
-class FVulkanTextureRHI : public FRHITexture, public FVulkanResource
+class FVulkanTextureBase : public FRHITexture
 {
-    friend class FVulkanBackBufferTexture;
+protected:
+    explicit FVulkanTextureBase(const FRHITextureDesc& InTextureDesc)
+        : FRHITexture(InTextureDesc)
+    {
+    }
 
+    virtual ~FVulkanTextureBase() = default;
+
+public:
+    virtual FVulkanTextureRHI* GetTextureInterface() const = 0;
+};
+
+class FVulkanTextureRHI : public FVulkanTextureBase, public FVulkanResource
+{
 public:
     FVulkanTextureRHI(FVulkanDevice* InDevice, const FRHITextureDesc& InTextureDesc);
     virtual ~FVulkanTextureRHI();
 
-    bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
-
+    // FVulkanTextureBase Interface
+    virtual FVulkanTextureRHI* GetTextureInterface() const override;
+    
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetVkImage()); }
+    virtual void* GetRHINativeHandle() const override final;
     
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
-    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const override final { return FRHIDescriptorHandle(); }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
     
-    virtual void SetDebugName(const FString& InName) override final;
-    virtual FString GetDebugName() const override final;
-
-    FVulkanResourceView* GetOrCreateImageView(const FVulkanHashableImageView& RenderTargetView);
-    void DestroyImageViews();
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
+    
+    bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
     void SetVkImage(VkImage InImage);
     
@@ -56,37 +72,54 @@ public:
     }
     
 protected:
-    using FImageViewMap = TMap<FVulkanHashableImageView, FVulkanResourceView*>;
-
     FString                          DebugName;
     VkImage                          Image;
     VkImageCreateInfo                CreateInfo;
     FVulkanImageLayoutState          ImageLayoutState;
     FVulkanShaderResourceViewRHIRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRHIRef UnorderedAccessView;
-    TArray<FVulkanResourceView*>     ImageViews;
-    FImageViewMap                    ImageViewMap;
+    FVulkanRenderTargetViewRHIRef    RenderTargetView;
+    FVulkanDepthStencilViewRHIRef    DepthStencilView;
 };
 
-class FVulkanBackBufferTexture : public FVulkanTextureRHI
+class FVulkanBackBufferProxyTextureRHI : public FVulkanTextureBase
 {
 public:
-    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanSwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc);
-    virtual ~FVulkanBackBufferTexture();
+    FVulkanBackBufferProxyTextureRHI(FVulkanSwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc);
+    virtual ~FVulkanBackBufferProxyTextureRHI();
 
-    void ResizeBackBuffer(int32 InWidth, int32 InHeight);
-    FVulkanTextureRHI* GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext);
+    // FVulkanTextureBase Interface
+    virtual FVulkanTextureRHI* GetTextureInterface() const override final;
+
+    // FRHITexture Interface
+    virtual void* GetRHINativeHandle() const override final;
     
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
+    
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
+
+    void Resize(uint32 InWidth, uint32 InHeight);
+
+    void SetProxyRenderTargetView(FVulkanBackBufferProxyRenderTargetViewRHI* InProxyRenderTargetView);
+
     FVulkanSwapChainRHI* GetSwapChain() const
     {
         return SwapChain;
     }
-    
+
     void SetSwapChain(FVulkanSwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
     }
-
+    
 private:
-    FVulkanSwapChainRHI* SwapChain;
+    FVulkanSwapChainRHI*                                  SwapChain;
+    TSharedRef<FVulkanBackBufferProxyRenderTargetViewRHI> ProxyRenderTargetView;
 };

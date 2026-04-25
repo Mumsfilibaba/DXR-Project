@@ -24,6 +24,7 @@ FD3D12SwapChainRHI::FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandCont
     , SwapChain(nullptr)
     , CommandContext(InCommandContext)
     , BackBufferProxy(nullptr)
+    , BackBufferProxyRenderTargetView(nullptr)
     , BackBuffers()
     , Hwnd(reinterpret_cast<HWND>(InSwapChainDesc.WindowHandle))
     , SwapChainWaitableObject(0)
@@ -58,6 +59,26 @@ FD3D12SwapChainRHI::~FD3D12SwapChainRHI()
     {
         BackBufferProxy->SetSwapChain(nullptr);
     }
+
+    if (BackBufferProxyRenderTargetView)
+    {
+        BackBufferProxyRenderTargetView->SetSwapChain(nullptr);
+    }
+
+    for (FBackBufferData& Data : BackBuffers)
+    {        
+        if (Data.Texture)
+        {
+            Data.Texture->SetResource(nullptr);
+        }
+
+        if (Data.RenderTargetView)
+        {
+            Data.RenderTargetView->ReleaseViewResource();
+        }
+    }
+
+    BackBuffers.Clear();
 }
 
 bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
@@ -185,9 +206,17 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
             InCommandContext->ClearState();
         }
 
-        for (FD3D12TextureRHIRef& Texture : BackBuffers)
+        for (FBackBufferData& Data : BackBuffers)
         {
-            Texture->SetResource(nullptr);
+            if (Data.Texture)
+            {
+                Data.Texture->SetResource(nullptr);
+            }
+
+            if (Data.RenderTargetView)
+            {
+                Data.RenderTargetView->ReleaseViewResource();
+            }
         }
 
         const uint32 ResizeWidth  = bSizeChanged ? InWidth  : Desc.Width;
@@ -235,10 +264,19 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
     return true;
 }
 
-void* FD3D12SwapChainRHI::GetBackBufferRenderTargetView()
+FRHITexture* FD3D12SwapChainRHI::GetBackBuffer() const
 {
-    FD3D12TextureRHI* CurrentBackBuffer = BackBuffers[BackBufferIndex].Get();
-    return CurrentBackBuffer->GetOrCreateRenderTargetView(FRHIRenderTargetView(CurrentBackBuffer));
+    return BackBufferProxy.Get();
+}
+
+FRHIRenderTargetView* FD3D12SwapChainRHI::GetBackBufferRenderTargetView() const
+{
+    return BackBufferProxyRenderTargetView.Get();
+}
+
+void* FD3D12SwapChainRHI::GetNativeSwapChain() const
+{
+    return SwapChain.Get();
 }
 
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
@@ -290,11 +328,19 @@ void FD3D12SwapChainRHI::ApplySettingsChanges()
     if (DesiredBackBufferCount != NumBackBuffers)
     {
         // Wait for all GPU work to complete before releasing backbuffer resources
-        CommandContext->Flush();
+        CommandContext->SplitCommandListAndResetState(false, true);
 
-        for (FD3D12TextureRHIRef& Texture : BackBuffers)
+        for (FBackBufferData& Data : BackBuffers)
         {
-            Texture->SetResource(nullptr);
+            if (Data.Texture)
+            {
+                Data.Texture->SetResource(nullptr);
+            }
+
+            if (Data.RenderTargetView)
+            {
+                Data.RenderTargetView->ReleaseViewResource();
+            }
         }
 
         HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, Desc.Width, Desc.Height, DXGI_FORMAT_UNKNOWN, Flags);
@@ -330,13 +376,10 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
     FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, UsageFlags);
 
-    if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
+    BackBuffers.Resize(NumBackBuffers);
+    for (int32 Index = 0; Index < BackBuffers.Size(); ++Index)
     {
-        BackBuffers.Resize(NumBackBuffers);
-        for (FD3D12TextureRHIRef& Texture : BackBuffers)
-        {
-            Texture = new FD3D12TextureRHI(GetDevice(), BackBufferDesc);
-        }
+        BackBuffers[Index].Texture = new FD3D12TextureRHI(GetDevice(), BackBufferDesc);
     }
 
     if (BackBufferProxy)
@@ -345,7 +388,7 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
     }
     else
     {
-        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
+        BackBufferProxy = new FD3D12BackBufferProxyTextureRHI(this, BackBufferDesc);
     }
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
@@ -359,21 +402,46 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
             return false;
         }
 
-        FD3D12ResourceRef BackBufferResource = new FD3D12Resource(
-            GetDevice(), 
+		FD3D12ResourceRef BackBufferResource = new FD3D12Resource(
+			GetDevice(),
             D3DBackBufferResource.ReleaseOwnership(), 
             D3D12_HEAP_TYPE_DEFAULT, 
             D3D12_RESOURCE_STATE_PRESENT);
 
         BackBufferResource->DisableDeferredRelease();
         
-        BackBuffers[Index]->SetResource(BackBufferResource.Get());
-        BackBuffers[Index]->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
+        BackBuffers[Index].Texture->SetResource(BackBufferResource.Get());
+        BackBuffers[Index].Texture->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-    if (FD3D12TextureRHI* CurrentBackbuffer = BackBufferProxy->GetCurrentBackBufferTexture())
+    for (FBackBufferData& Data : BackBuffers)
+    {
+        Data.RenderTargetView = nullptr;
+    }
+
+    for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
+    {
+        FRHIRenderTargetViewDesc RTVDesc(BackBuffers[Index].Texture.Get());
+        
+        FRHIRenderTargetView* RenderTargetView = FD3D12RHI::Get()->CreateRenderTargetView(RTVDesc);
+        if (!RenderTargetView)
+        {
+            D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer RTV for index %u", Index);
+            return false;
+        }
+
+        BackBuffers[Index].RenderTargetView = FD3D12RenderTargetViewRHIRef(FD3D12RHI::ResourceCast(RenderTargetView));
+    }
+
+    if (!BackBufferProxyRenderTargetView)
+    {
+        BackBufferProxyRenderTargetView = new FD3D12BackBufferProxyRenderTargetViewRHI(this, BackBufferProxy.Get());
+        BackBufferProxy->SetProxyRenderTargetView(BackBufferProxyRenderTargetView.Get());
+    }
+
+    if (FD3D12TextureRHI* CurrentBackbuffer = BackBufferProxy->GetTextureInterface())
     {
         return true;
     }

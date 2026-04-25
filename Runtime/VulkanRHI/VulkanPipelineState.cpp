@@ -92,6 +92,16 @@ FVulkanInputLayoutRHI::~FVulkanInputLayoutRHI()
 {
 }
 
+const FRHIInputElementDesc* FVulkanInputLayoutRHI::GetInputElementDesc(uint32 Index) const
+{
+    return &InputElements[Index];
+}
+
+uint32 FVulkanInputLayoutRHI::GetNumInputElementDescs() const
+{
+    return InputElements.Size();
+}
+
 FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc)
     : FRHIDepthStencilState()
     , Desc(InDesc)
@@ -115,6 +125,11 @@ FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilS
 
 FVulkanDepthStencilStateRHI::~FVulkanDepthStencilStateRHI()
 {
+}
+
+FRHIDepthStencilStateDesc FVulkanDepthStencilStateRHI::GetDesc() const
+{
+    return Desc;
 }
 
 FVulkanRasterizerStateRHI::FVulkanRasterizerStateRHI(FVulkanDevice* InDevice, const FRHIRasterizerStateDesc& InDesc)
@@ -188,6 +203,11 @@ FVulkanRasterizerStateRHI::~FVulkanRasterizerStateRHI()
 {
 }
 
+FRHIRasterizerStateDesc FVulkanRasterizerStateRHI::GetDesc() const
+{
+    return Desc;
+}
+
 FVulkanBlendStateRHI::FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc)
     : FRHIBlendState()
     , Desc(InDesc)
@@ -216,6 +236,11 @@ FVulkanBlendStateRHI::FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc)
 
 FVulkanBlendStateRHI::~FVulkanBlendStateRHI()
 {
+}
+
+FRHIBlendStateDesc FVulkanBlendStateRHI::GetDesc() const
+{
+    return Desc;
 }
 
 FVulkanPipeline::FVulkanPipeline(FVulkanDevice* InDevice)
@@ -251,6 +276,21 @@ FVulkanGraphicsPipelineStateRHI::FVulkanGraphicsPipelineStateRHI(FVulkanDevice* 
 
 FVulkanGraphicsPipelineStateRHI::~FVulkanGraphicsPipelineStateRHI()
 {
+}
+
+void* FVulkanGraphicsPipelineStateRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(GetVkPipeline());
+}
+
+void FVulkanGraphicsPipelineStateRHI::SetDebugName(const FString& InName)
+{
+    FVulkanPipeline::SetDebugName(InName);
+}
+
+void FVulkanGraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
+{
+    OutDebugName = DebugName;
 }
 
 bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateDesc& InDesc)
@@ -607,6 +647,21 @@ FVulkanComputePipelineStateRHI::FVulkanComputePipelineStateRHI(FVulkanDevice* In
 
 FVulkanComputePipelineStateRHI::~FVulkanComputePipelineStateRHI()
 {
+}
+
+void* FVulkanComputePipelineStateRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(GetVkPipeline());
+}
+
+void FVulkanComputePipelineStateRHI::SetDebugName(const FString& InName)
+{
+    FVulkanPipeline::SetDebugName(InName);
+}
+
+void FVulkanComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
+{
+    OutDebugName = DebugName;
 }
 
 bool FVulkanComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDesc& InDesc)

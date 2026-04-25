@@ -45,35 +45,38 @@ void FMetalCommandContext::QueryTimestamp(FRHIQuery* Query)
 {
 }
 
-void FMetalCommandContext::ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
+void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
 {
     SCOPED_AUTORELEASE_POOL();
-    
-    FMetalTexture* RTVTexture = GetMetalTexture(RenderTargetView.Texture);
-    
+
+    FMetalRenderTargetView* MetalRTV = static_cast<FMetalRenderTargetView*>(RenderTargetView);
+    CHECK(MetalRTV != nullptr);
+
+    FMetalTexture* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));
+
     MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
 
     ColorAttachment.texture            = RTVTexture->GetMTLTexture();
-    ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
-    ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
-    ColorAttachment.level              = RenderTargetView.MipLevel;
-    ColorAttachment.slice              = RenderTargetView.ArrayIndex;
+    ColorAttachment.loadAction         = MTLLoadActionClear;
+    ColorAttachment.clearColor         = MTLClearColorMake(ClearColor.X, ClearColor.Y, ClearColor.Z, ClearColor.W);
+    ColorAttachment.level              = MetalRTV->GetMipLevel();
+    ColorAttachment.slice              = MetalRTV->GetArrayIndex();
     ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
-    ColorAttachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
-    
-    if(!GraphicsEncoder)
+    ColorAttachment.storeAction        = MTLStoreActionStore;
+
+    if (!GraphicsEncoder)
     {
         GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     }
-    
+
     [RenderPassDescriptor release];
-    
+
     [GraphicsEncoder endEncoding];
     GraphicsEncoder = nil;
 }
 
-void FMetalCommandContext::ClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
+void FMetalCommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil)
 {
 }
 
@@ -93,7 +96,8 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     
     CopyContext.FinishEncoder();
 
-    FMetalTexture* DSVTexture = GetMetalTexture(BeginRenderPassDesc.DepthStencilView.Texture);
+    FMetalDepthStencilView* MetalDSV = static_cast<FMetalDepthStencilView*>(BeginRenderPassDesc.DepthStencilAttachment.View);
+    FMetalTexture* DSVTexture = MetalDSV ? GetMetalTexture(static_cast<FRHITexture*>(MetalDSV->GetResource())) : nullptr;
     METAL_ERROR_COND((BeginRenderPassDesc.NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
     
     MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
@@ -102,33 +106,35 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     
     for (uint32 Index = 0; Index < BeginRenderPassDesc.NumRenderTargets; ++Index)
     {
-        const FRHIRenderTargetView& RenderTargetView = BeginRenderPassDesc.RenderTargets[Index];
-        
-        FMetalTexture* RTVTexture = GetMetalTexture(RenderTargetView.Texture);
+        const FRHIRenderPassAttachment& Attachment = BeginRenderPassDesc.RenderTargets[Index];
+        FMetalRenderTargetView* MetalRTV = static_cast<FMetalRenderTargetView*>(Attachment.View);
+        METAL_ERROR_COND(MetalRTV != nullptr, "RenderTargetView cannot be nullptr");
+
+        FMetalTexture* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));
         METAL_ERROR_COND(RTVTexture != nullptr, "Texture cannot be nullptr");
-        
+
         MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[Index];
         ColorAttachment.texture            = RTVTexture->GetMTLTexture();
-        ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
-        ColorAttachment.level              = RenderTargetView.MipLevel;
-        ColorAttachment.slice              = RenderTargetView.ArrayIndex;
+        ColorAttachment.loadAction         = ConvertAttachmentLoadAction(Attachment.LoadAction);
+        ColorAttachment.level              = MetalRTV->GetMipLevel();
+        ColorAttachment.slice              = MetalRTV->GetArrayIndex();
         ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
-        ColorAttachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
-        ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
+        ColorAttachment.storeAction        = ConvertAttachmentStoreAction(Attachment.StoreAction);
+        ColorAttachment.clearColor         = MTLClearColorMake(Attachment.ClearValue.R, Attachment.ClearValue.G, Attachment.ClearValue.B, Attachment.ClearValue.A);
     }
 
     if (DSVTexture)
     {
-        const FRHIDepthStencilView& DepthStencilView = BeginRenderPassDesc.DepthStencilView;
-        
+        const FRHIDepthStencilAttachment& DepthStencilAttachment = BeginRenderPassDesc.DepthStencilAttachment;
+
         MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
         DepthAttachment.texture            = DSVTexture->GetMTLTexture();
-        DepthAttachment.loadAction         = ConvertAttachmentLoadAction(DepthStencilView.LoadAction);
-        DepthAttachment.clearDepth         = DepthStencilView.ClearValue.Depth;
-        DepthAttachment.level              = DepthStencilView.MipLevel;
-        DepthAttachment.slice              = DepthStencilView.ArrayIndex;
+        DepthAttachment.loadAction         = ConvertAttachmentLoadAction(DepthStencilAttachment.LoadAction);
+        DepthAttachment.clearDepth         = DepthStencilAttachment.ClearValue.Depth;
+        DepthAttachment.level              = MetalDSV->GetMipLevel();
+        DepthAttachment.slice              = MetalDSV->GetArrayIndex();
         DepthAttachment.storeActionOptions = MTLStoreActionOptionNone;
-        DepthAttachment.storeAction        = ConvertAttachmentStoreAction(DepthStencilView.StoreAction);
+        DepthAttachment.storeAction        = ConvertAttachmentStoreAction(DepthStencilAttachment.StoreAction);
     }
     
     // TODO: Stencil Attachment

@@ -102,6 +102,16 @@ FD3D12InputLayoutRHI::~FD3D12InputLayoutRHI()
 {
 }
 
+const FRHIInputElementDesc* FD3D12InputLayoutRHI::GetInputElementDesc(uint32 Index) const
+{
+    return &InputElements[Index];
+}
+
+uint32 FD3D12InputLayoutRHI::GetNumInputElementDescs() const
+{
+    return InputElements.Size();
+}
+
 FD3D12DepthStencilStateRHI::FD3D12DepthStencilStateRHI(const FRHIDepthStencilStateDesc& InDesc)
     : FRHIDepthStencilState()
     , Desc(InDesc)
@@ -123,6 +133,11 @@ FD3D12DepthStencilStateRHI::FD3D12DepthStencilStateRHI(const FRHIDepthStencilSta
 
 FD3D12DepthStencilStateRHI::~FD3D12DepthStencilStateRHI()
 {
+}
+
+FRHIDepthStencilStateDesc FD3D12DepthStencilStateRHI::GetDesc() const
+{
+    return Desc;
 }
 
 FD3D12RasterizerStateRHI::FD3D12RasterizerStateRHI(const FRHIRasterizerStateDesc& InDesc)
@@ -149,6 +164,11 @@ FD3D12RasterizerStateRHI::FD3D12RasterizerStateRHI(const FRHIRasterizerStateDesc
 
 FD3D12RasterizerStateRHI::~FD3D12RasterizerStateRHI()
 {
+}
+
+FRHIRasterizerStateDesc FD3D12RasterizerStateRHI::GetDesc() const
+{
+    return Desc;
 }
 
 FD3D12BlendStateRHI::FD3D12BlendStateRHI(const FRHIBlendStateDesc& InDesc)
@@ -181,6 +201,11 @@ FD3D12BlendStateRHI::FD3D12BlendStateRHI(const FRHIBlendStateDesc& InDesc)
 
 FD3D12BlendStateRHI::~FD3D12BlendStateRHI()
 {
+}
+
+FRHIBlendStateDesc FD3D12BlendStateRHI::GetDesc() const
+{
+    return Desc;
 }
 
 FD3D12PipelineState::FD3D12PipelineState(FD3D12Device* InDevice)
@@ -247,6 +272,16 @@ FD3D12GraphicsPipelineStateRHI::~FD3D12GraphicsPipelineStateRHI()
 void FD3D12GraphicsPipelineStateRHI::SetDebugName(const FString& InName)
 {
     FD3D12PipelineState::SetDebugName(InName);
+}
+
+void FD3D12GraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
+{
+    OutDebugName = DebugName;
+}
+
+void* FD3D12GraphicsPipelineStateRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(GetD3D12PipelineState());
 }
 
 bool FD3D12GraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateDesc& Desc)
@@ -762,6 +797,16 @@ void FD3D12ComputePipelineStateRHI::SetDebugName(const FString& InName)
     FD3D12PipelineState::SetDebugName(InName);
 }
 
+void FD3D12ComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
+{
+    OutDebugName = DebugName;
+}
+
+void* FD3D12ComputePipelineStateRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(GetD3D12PipelineState());
+}
+
 bool FD3D12ComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDesc& Desc)
 {
     D3D12_SHADER_BYTECODE ComputeShaderCode = Shader->GetByteCode().GetD3D12Bytecode();
@@ -1085,6 +1130,17 @@ void FD3D12RayTracingPipelineStateRHI::SetDebugName(const FString& InName)
 {
     FStringWide WideName = CharToWide(InName);
     StateObject->SetName(*WideName);
+    DebugName = InName;
+}
+
+void FD3D12RayTracingPipelineStateRHI::GetDebugName(FString& OutDebugName) const
+{
+    OutDebugName = DebugName;
+}
+
+void* FD3D12RayTracingPipelineStateRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(GetD3D12StateObject());
 }
 
 bool FD3D12RayTracingPipelineStateRHI::Initialize(const FRHIRayTracingPipelineStateDesc& Desc)

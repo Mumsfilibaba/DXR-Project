@@ -18,6 +18,7 @@ enum class EVulkanCommandsFlags : uint32
     None           = 0,
     ResolveQueries = 1 << 0,
 };
+
 ENUM_CLASS_OPERATORS(EVulkanCommandsFlags);
 
 class FVulkanCommandPool;
@@ -52,6 +53,14 @@ public:
 
     // Create empty submit that waits for the semaphores and waits for completion
     bool FlushWaitSemaphoresAndWait();
+
+    // Drop any pending WAIT/SIGNAL entries without submitting them. Caller must ensure the GPU is idle
+    // (e.g. via WaitForCompletion) so that discarding the referenced binary/timeline semaphores is safe.
+    void ClearPendingSemaphores();
+
+    // Remove all pending WAIT and SIGNAL entries that reference the given semaphore (binary or timeline).
+    // Keeps WaitSemaphores/WaitStages/WaitSemaphoreValues in lockstep and likewise for Signal*.
+    void RemovePendingSemaphore(VkSemaphore Semaphore);
 
     void SetDebugName(const FString& Name)
     {

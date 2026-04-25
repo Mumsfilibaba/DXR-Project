@@ -18,7 +18,7 @@ public:
     ~FNullRHI();
 
     virtual void BeginFrame() override final { }
-    virtual void EndFrame() override final { }
+    virtual void EndFrame()   override final { }
 
     virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final
     {
@@ -80,6 +80,16 @@ public:
         {
             return nullptr;
         }
+    }
+
+    virtual FRHIRenderTargetView* CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) override final
+    {
+        return new FNullRHIRenderTargetView(InDesc.Texture);
+    }
+
+    virtual FRHIDepthStencilView* CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc) override final
+    {
+        return new FNullRHIDepthStencilView(InDesc.Texture);
     }
 
     virtual class FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final
