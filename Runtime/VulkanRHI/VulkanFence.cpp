@@ -323,6 +323,11 @@ bool FVulkanFenceRHI::Wait(uint64 TimeoutNs) const
     return SubmissionFence ? SubmissionFence->Wait(TimeoutNs) : false;
 }
 
+void* FVulkanFenceRHI::GetRHINativeFence() const
+{
+    return reinterpret_cast<void*>(TimelineSemaphore);
+}
+
 void FVulkanFenceRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;

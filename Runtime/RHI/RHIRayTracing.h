@@ -70,11 +70,11 @@ struct FRHIGeometryAccelerationStructureInstance
     bool operator==(const FRHIGeometryAccelerationStructureInstance& Other) const noexcept = default;
 
     FRHIGeometryAccelerationStructure*  Geometry      = nullptr;
-    uint32                   InstanceIndex = 0;
-    uint32                   HitGroupIndex = 0;
-    ERayTracingInstanceFlags Flags         = ERayTracingInstanceFlags::None;
-    uint32                   Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
-    FMatrix3x4               Transform     = { };
+    uint32                              InstanceIndex = 0;
+    uint32                              HitGroupIndex = 0;
+    ERayTracingInstanceFlags            Flags         = ERayTracingInstanceFlags::None;
+    uint32                              Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
+    FMatrix3x4                          Transform     = { };
 };
 
 struct FRHIGeometryAccelerationStructureDesc
@@ -92,8 +92,7 @@ struct FRHIGeometryAccelerationStructureDesc
     {
     }
 
-    NODISCARD constexpr bool AllowUpdate() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
-
+    NODISCARD constexpr bool AllowUpdate()     const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
     NODISCARD constexpr bool PreferFastTrace() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
     NODISCARD constexpr bool PreferFastBuild() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
@@ -117,15 +116,14 @@ struct FRHISceneAccelerationStructureDesc
     {
     }
 
-    NODISCARD constexpr bool AllowUpdate() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
-
+    NODISCARD constexpr bool AllowUpdate()     const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
     NODISCARD constexpr bool PreferFastTrace() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
     NODISCARD constexpr bool PreferFastBuild() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
     bool operator==(const FRHISceneAccelerationStructureDesc& Other) const noexcept = default;
     
-    TArray<FRHIGeometryAccelerationStructureInstance> Instances;
-    EAccelerationStructureBuildFlags       Flags = EAccelerationStructureBuildFlags::None;
+    TArray<FRHIGeometryAccelerationStructureInstance> Instances = { };
+    EAccelerationStructureBuildFlags                  Flags     = EAccelerationStructureBuildFlags::None;
 };
 
 class FRHIGeometryAccelerationStructure : public FRHIResource
@@ -140,10 +138,12 @@ protected:
     virtual ~FRHIGeometryAccelerationStructure() = default;
 
 public:
-    virtual void* GetRHINativeHandle() const { return nullptr; }
 
-    virtual void SetDebugName(const FString& InName) { }
-    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
+    // D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal/Null: nullptr.
+    virtual void* GetRHINativeResource() const = 0;
+
+    virtual void SetDebugName(const FString& InName) = 0;
+    virtual void GetDebugName(FString& OutDebugName) const = 0;
 
     EAccelerationStructureBuildFlags GetFlags() const 
     {
@@ -166,13 +166,15 @@ protected:
     virtual ~FRHISceneAccelerationStructure() = default;
 
 public:
-    virtual void* GetRHINativeHandle() const { return nullptr; }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+    // D3D12: ID3D12Resource* (result heap). Vulkan: VkAccelerationStructureKHR. Metal/Null: nullptr.
+    virtual void* GetRHINativeResource() const = 0;
 
-    virtual void SetDebugName(const FString& InName) { }
-    virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const = 0;
+    virtual FRHIDescriptorHandle    GetBindlessHandle()     const = 0;
+
+    virtual void SetDebugName(const FString& InName) = 0;
+    virtual void GetDebugName(FString& OutDebugName) const = 0;
 
     EAccelerationStructureBuildFlags GetFlags() const 
     {

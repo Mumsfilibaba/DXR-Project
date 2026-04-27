@@ -101,11 +101,11 @@ public:
     
     virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
     
-    virtual void* GetNativeAdapter()             override final;
-    virtual void* GetNativeDevice()              override final;
-    virtual void* GetNativeDirectCommandQueue()  override final;
-    virtual void* GetNativeComputeCommandQueue() override final;
-    virtual void* GetNativeCopyCommandQueue()    override final;
+    virtual void* GetRHINativeAdapter()             override final;
+    virtual void* GetRHINativeDevice()              override final;
+    virtual void* GetRHINativeDirectCommandQueue()  override final;
+    virtual void* GetRHINativeComputeCommandQueue() override final;
+    virtual void* GetRHINativeCopyCommandQueue()    override final;
 
     virtual FString GetAdapterName() const override final;
 

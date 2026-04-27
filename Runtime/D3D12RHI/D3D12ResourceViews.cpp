@@ -115,6 +115,11 @@ FD3D12ShaderResourceViewRHI::FD3D12ShaderResourceViewRHI(FD3D12Device* InDevice,
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
+void* FD3D12ShaderResourceViewRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(static_cast<UPTR_INT>(GetOfflineHandle().ptr));
+}
+
 FRHIDescriptorHandle FD3D12ShaderResourceViewRHI::GetBindlessHandle() const
 {
     return FRHIDescriptorHandle();
@@ -161,6 +166,11 @@ FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevic
     , CounterResource(nullptr)
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+}
+
+void* FD3D12UnorderedAccessViewRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(static_cast<UPTR_INT>(GetOfflineHandle().ptr));
 }
 
 FRHIDescriptorHandle FD3D12UnorderedAccessViewRHI::GetBindlessHandle() const
@@ -217,6 +227,11 @@ FD3D12RenderTargetViewRHI::FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
+void* FD3D12RenderTargetViewRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(static_cast<UPTR_INT>(GetOfflineHandle().ptr));
+}
+
 FD3D12RenderTargetViewRHI* FD3D12RenderTargetViewRHI::GetRenderTargetViewInterface() const
 {
     return const_cast<FD3D12RenderTargetViewRHI*>(this);
@@ -264,6 +279,11 @@ FD3D12DepthStencilViewRHI::FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
+void* FD3D12DepthStencilViewRHI::GetRHINativeHandle() const
+{
+    return reinterpret_cast<void*>(static_cast<UPTR_INT>(GetOfflineHandle().ptr));
+}
+
 void FD3D12DepthStencilViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
@@ -307,6 +327,12 @@ FD3D12BackBufferProxyRenderTargetViewRHI::FD3D12BackBufferProxyRenderTargetViewR
 FD3D12BackBufferProxyRenderTargetViewRHI::~FD3D12BackBufferProxyRenderTargetViewRHI()
 {
     SwapChain = nullptr;
+}
+
+void* FD3D12BackBufferProxyRenderTargetViewRHI::GetRHINativeHandle() const
+{
+    FD3D12RenderTargetViewRHI* CurrentRTV = GetRenderTargetViewInterface();
+    return CurrentRTV ? CurrentRTV->GetRHINativeHandle() : nullptr;
 }
 
 FD3D12RenderTargetViewRHI* FD3D12BackBufferProxyRenderTargetViewRHI::GetRenderTargetViewInterface() const

@@ -196,7 +196,11 @@ protected:
     virtual ~FRHISamplerState() = default;
 
 public:
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
+    // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkSampler. Metal: id<MTLSamplerState>. Null: nullptr.
+    virtual void* GetRHINativeSampler() const = 0;
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
 
     const FRHISamplerStateDesc& GetDesc() const
     {

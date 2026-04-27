@@ -79,14 +79,16 @@ public:
     FVulkanFenceRHI(FVulkanDevice* InDevice);
     virtual ~FVulkanFenceRHI();
 
-    bool Initialize();
-
     // FRHIFence Interface
+    virtual void* GetRHINativeFence() const override final;
+    
     virtual bool IsSignaled()                        const override final;
     virtual bool Wait(uint64 TimeoutNs = UINT64_MAX) const override final;
     
     virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
+
+    bool Initialize();
  
     // Called by the command context to enqueue a GPU signal at the next submission.
     void EnqueueSignal(FVulkanQueue& Queue);

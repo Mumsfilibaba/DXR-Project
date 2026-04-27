@@ -90,6 +90,10 @@ protected:
     virtual ~FRHIDepthStencilState() = default;
 
 public:
+
+    // All backends: nullptr (modern APIs expose no native depth-stencil state object).
+    virtual void* GetRHINativeState() const = 0;
+
     virtual FRHIDepthStencilStateDesc GetDesc() const = 0;
 };
 
@@ -170,6 +174,10 @@ protected:
     virtual ~FRHIRasterizerState() = default;
 
 public:
+
+    // All backends: nullptr (modern APIs expose no native rasterizer state object).
+    virtual void* GetRHINativeState() const = 0;
+
     virtual FRHIRasterizerStateDesc GetDesc() const = 0;
 };
 
@@ -363,6 +371,10 @@ protected:
     virtual ~FRHIBlendState() = default;
 
 public:
+
+    // All backends: nullptr (modern APIs expose no native blend state object).
+    virtual void* GetRHINativeState() const = 0;
+
     virtual FRHIBlendStateDesc GetDesc() const = 0;
 };
 
@@ -420,6 +432,9 @@ protected:
     virtual ~FRHIInputLayout() = default;
     
 public:
+    // All backends: nullptr (input layout baked into the pipeline state).
+    virtual void* GetRHINativeState() const = 0;
+
     virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const = 0;
     virtual uint32 GetNumInputElementDescs() const = 0; 
 };
@@ -431,7 +446,11 @@ protected:
     virtual ~FRHIPipelineState() = default;
 
 public:
-    virtual void* GetRHINativeHandle() const { return nullptr; }
+
+    // D3D12: ID3D12PipelineState* (graphics/compute) or ID3D12StateObject* (ray tracing). 
+    // Vulkan: VkPipeline (graphics/compute) or nullptr (RT). 
+    // Metal: id<MTLRenderPipelineState> (graphics) or nullptr. Null: nullptr.
+    virtual void* GetRHINativeState() const = 0;
 
     virtual void SetDebugName(const FString& InName) { }
     virtual void GetDebugName(FString& OutDebugName) const { OutDebugName.Clear(); }

@@ -15,7 +15,7 @@ FVulkanBufferRHI::FVulkanBufferRHI(FVulkanDevice* InDevice, const FRHIBufferDesc
 {
 }
 
-void* FVulkanBufferRHI::GetRHINativeHandle() const
+void* FVulkanBufferRHI::GetRHINativeResource() const
 {
     return reinterpret_cast<void*>(GetVkBuffer());
 }

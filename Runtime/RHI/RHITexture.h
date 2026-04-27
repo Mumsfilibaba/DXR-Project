@@ -177,8 +177,8 @@ protected:
 
 public:
     
-    // Returns the native handle for this resource
-    virtual void* GetRHINativeHandle() const { return nullptr; }
+    // D3D12: ID3D12Resource*. Vulkan: VkImage. Metal: id<MTLTexture>. Null: nullptr.
+    virtual void* GetRHINativeResource() const = 0;
 
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }

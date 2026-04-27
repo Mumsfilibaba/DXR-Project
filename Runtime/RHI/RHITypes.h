@@ -668,8 +668,8 @@ struct FRHIDescriptorHandle
     {
         struct
         {
-            uint32 Index : 24;
-            EDescriptorType Type : 8;
+            uint32          Index : 24;
+            EDescriptorType Type  : 8;
         };
 
         uint32 Handle;
@@ -744,7 +744,7 @@ struct FClearValue
         }
     }
 
-    NODISCARD bool IsColorValue() const noexcept { return Type == EType::Color; }
+    NODISCARD bool IsColorValue()        const noexcept { return Type == EType::Color; }
     NODISCARD bool IsDepthStencilValue() const noexcept { return Type == EType::DepthStencil; }
 
     NODISCARD FFloatColor& AsColor() noexcept 
@@ -812,6 +812,7 @@ struct FClearValue
 
     EType   Type;
     EFormat Format;
+
     union
     {
         FFloatColor        ColorValue;
@@ -891,17 +892,15 @@ struct FRHIBufferCopyDesc
 
 struct FRHITextureCopyDesc
 {
-    FIntVector3 DstPosition;
-    uint32 DstArraySlice = 0;
-    uint32 DstMipSlice = 0;
-
-    FIntVector3 SrcPosition;
-    uint32 SrcArraySlice = 0;
-    uint32 SrcMipSlice = 0;
-
-    FIntVector3 Size;
-    uint32 NumArraySlices = 0;
-    uint32 NumMipLevels = 0;
+    FIntVector3 DstPosition    = {};
+    uint32      DstArraySlice  = 0;
+    uint32      DstMipSlice    = 0;
+    FIntVector3 SrcPosition    = {};
+    uint32      SrcArraySlice  = 0;
+    uint32      SrcMipSlice    = 0;
+    FIntVector3 Size           = {};
+    uint32      NumArraySlices = 0;
+    uint32      NumMipLevels   = 0;
 };
 
 struct FViewportRegion
@@ -959,9 +958,9 @@ struct FRHISceneAccelerationStructureBuildDesc
     {
     }
 
-    const FRHIGeometryAccelerationStructureInstance* Instances = nullptr;
-    uint32 NumInstances = 0;
-    bool   bUpdate      = false;
+    const FRHIGeometryAccelerationStructureInstance* Instances    = nullptr;
+    uint32                                           NumInstances = 0;
+    bool                                             bUpdate      = false;
 };
 
 struct FRHIGeometryAccelerationStructureBuildDesc

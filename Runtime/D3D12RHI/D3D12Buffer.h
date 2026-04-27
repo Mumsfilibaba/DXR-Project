@@ -12,8 +12,8 @@ public:
     FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc);
     ~FD3D12BufferRHI();
 
-    // FRHIBuffer Interface 
-    virtual void* GetRHINativeHandle() const override final;
+    // FRHIBuffer Interface
+    virtual void* GetRHINativeResource() const override final;
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
     

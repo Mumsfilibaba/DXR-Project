@@ -1,19 +1,14 @@
 #pragma once
 #include "MetalRHI/MetalCore.h"
 
-class FMetalRHI;
-
-class FMetalDeviceContext 
+class FMetalDevice
 {
-private:
-    friend class FMetalRHI;
-    
-    FMetalDeviceContext(id<MTLDevice> InDevice);
-    ~FMetalDeviceContext();
-
 public:
-    static FMetalDeviceContext* CreateContext();
-    
+    FMetalDevice();
+    ~FMetalDevice();
+
+    bool Initialize();
+
     id<MTLDevice> GetMTLDevice() const
     {
         return Device;

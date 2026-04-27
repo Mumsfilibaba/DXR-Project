@@ -2,19 +2,19 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHIShader.h"
 #include "MetalRHI/MetalDeviceChild.h"
-#include "MetalRHI/MetalDeviceContext.h"
+#include "MetalRHI/MetalDevice.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalShader>              FMetalShaderRef;
-typedef TSharedRef<class FMetalVertexShader>        FMetalVertexShaderRef;
-typedef TSharedRef<class FMetalPixelShader>         FMetalPixelShaderRef;
-typedef TSharedRef<class FMetalComputeShader>       FMetalComputeShaderRef;
-typedef TSharedRef<class FMetalRayTracingShader>    FMetalRayTracingShaderRef;
-typedef TSharedRef<class FMetalRayGenShader>        FMetalRayGenShaderRef;
-typedef TSharedRef<class FMetalRayAnyHitShader>     FMetalRayAnyHitShaderRef;
-typedef TSharedRef<class FMetalRayClosestHitShader> FMetalRayClosestHitShaderRef;
-typedef TSharedRef<class FMetalRayMissShader>       FMetalRayMissShaderRef;
+typedef TSharedRef<class FMetalShader>                 FMetalShaderRef;
+typedef TSharedRef<class FMetalVertexShaderRHI>        FMetalVertexShaderRef;
+typedef TSharedRef<class FMetalPixelShaderRHI>         FMetalPixelShaderRef;
+typedef TSharedRef<class FMetalComputeShaderRHI>       FMetalComputeShaderRef;
+typedef TSharedRef<class FMetalRayTracingShader>       FMetalRayTracingShaderRef;
+typedef TSharedRef<class FMetalRayGenShaderRHI>        FMetalRayGenShaderRef;
+typedef TSharedRef<class FMetalRayAnyHitShaderRHI>     FMetalRayAnyHitShaderRef;
+typedef TSharedRef<class FMetalRayClosestHitShaderRHI> FMetalRayClosestHitShaderRef;
+typedef TSharedRef<class FMetalRayMissShaderRHI>       FMetalRayMissShaderRef;
 
 enum EShaderVisibility : uint8
 {
@@ -27,7 +27,7 @@ enum EShaderVisibility : uint8
 class FMetalShader : public FMetalDeviceChild
 {
 public:
-    FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility);
+    FMetalShader(FMetalDevice* InDevice, EShaderVisibility InVisibility);
     ~FMetalShader();
     
     bool Initialize(const TArray<uint8>& InCode);
@@ -55,32 +55,26 @@ protected:
     id<MTLFunction>   Function;
 };
 
-class FMetalVertexShader : public FRHIVertexShader, public FMetalShader
+class FMetalVertexShaderRHI : public FRHIVertexShader, public FMetalShader
 {
 public:
-    FMetalVertexShader(FMetalDeviceContext* InDevice)
-        : FRHIVertexShader()
-        , FMetalShader(InDevice, ShaderVisibility_Vertex)
-    {
-    }
+    FMetalVertexShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalVertexShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
-class FMetalPixelShader : public FRHIPixelShader, public FMetalShader
+class FMetalPixelShaderRHI : public FRHIPixelShader, public FMetalShader
 {
 public:
-    FMetalPixelShader(FMetalDeviceContext* InDevice)
-        : FRHIPixelShader()
-        , FMetalShader(InDevice, ShaderVisibility_Pixel)
-    {
-    }
+    FMetalPixelShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalPixelShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FMetalRayTracingShader : public FMetalShader
@@ -89,10 +83,8 @@ public:
     static bool GetRayTracingShaderReflection(class FMetalRayTracingShader* Shader);
 
 public:
-    FMetalRayTracingShader(FMetalDeviceContext* InDevice)
-        : FMetalShader(InDevice, ShaderVisibility_Compute)
-    {
-    }
+    FMetalRayTracingShader(FMetalDevice* InDevice);
+    virtual ~FMetalRayTracingShader();
 
     const FString& GetIdentifier() const
     {
@@ -103,75 +95,59 @@ protected:
     FString Identifier;
 };
 
-class FMetalRayGenShader : public FRHIRayGenShader, public FMetalRayTracingShader
+class FMetalRayGenShaderRHI : public FRHIRayGenShader, public FMetalRayTracingShader
 {
 public:
-    FMetalRayGenShader(FMetalDeviceContext* InDevice)
-        : FRHIRayGenShader()
-        , FMetalRayTracingShader(InDevice)
-    {
-    }
+    FMetalRayGenShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalRayGenShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
-class FMetalRayAnyHitShader : public FRHIRayAnyHitShader, public FMetalRayTracingShader
+class FMetalRayAnyHitShaderRHI : public FRHIRayAnyHitShader, public FMetalRayTracingShader
 {
 public:
-    FMetalRayAnyHitShader(FMetalDeviceContext* InDevice)
-        : FRHIRayAnyHitShader()
-        , FMetalRayTracingShader(InDevice)
-    {
-    }
+    FMetalRayAnyHitShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalRayAnyHitShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
-class FMetalRayClosestHitShader : public FRHIRayClosestHitShader, public FMetalRayTracingShader
+class FMetalRayClosestHitShaderRHI : public FRHIRayClosestHitShader, public FMetalRayTracingShader
 {
 public:
-    
-    FMetalRayClosestHitShader(FMetalDeviceContext* InDevice)
-        : FRHIRayClosestHitShader()
-        , FMetalRayTracingShader(InDevice)
-    {
-    }
+    FMetalRayClosestHitShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalRayClosestHitShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
-class FMetalRayMissShader : public FRHIRayMissShader, public FMetalRayTracingShader
+class FMetalRayMissShaderRHI : public FRHIRayMissShader, public FMetalRayTracingShader
 {
 public:
-    FMetalRayMissShader(FMetalDeviceContext* InDevice)
-        : FRHIRayMissShader()
-        , FMetalRayTracingShader(InDevice)
-    {
-    }
+    FMetalRayMissShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalRayMissShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
-class FMetalComputeShader : public FRHIComputeShader, public FMetalShader
+class FMetalComputeShaderRHI : public FRHIComputeShader, public FMetalShader
 {
 public:
-    FMetalComputeShader(FMetalDeviceContext* InDevice)
-        : FRHIComputeShader()
-        , FMetalShader(InDevice, ShaderVisibility_Compute)
-    {
-    }
+    FMetalComputeShaderRHI(FMetalDevice* InDevice);
+    virtual ~FMetalComputeShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
-    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 inline FMetalShader* GetMetalShader(FRHIShader* Shader)

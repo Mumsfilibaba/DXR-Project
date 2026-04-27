@@ -7,60 +7,51 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class FMetalView : public FMetalDeviceChild
 {
 public:
-    explicit FMetalView(FMetalDeviceContext* InDeviceContext)
-        : FMetalDeviceChild(InDeviceContext)
-    {
-    }
+    FMetalView(FMetalDevice* InDevice);
+    virtual ~FMetalView();
 
     id<MTLTexture> GetMTLTexture() const
     {
         return TextureView;
     }
-    
+
 private:
     id<MTLTexture> TextureView;
     // id<MTLBuffer>  Buffer;
 };
 
-
-class FMetalShaderResourceView : public FRHIShaderResourceView, public FMetalView
+class FMetalShaderResourceViewRHI : public FRHIShaderResourceView, public FMetalView
 {
 public:
-    explicit FMetalShaderResourceView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
-        : FRHIShaderResourceView(InResource)
-        , FMetalView(InDeviceContext)
-    {
-    }
+    FMetalShaderResourceViewRHI(FMetalDevice* InDevice, FRHIResource* InResource);
+    virtual ~FMetalShaderResourceViewRHI();
 
-    ~FMetalShaderResourceView() = default;
+    // FRHIShaderResourceView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 };
 
-
-class FMetalUnorderedAccessView : public FRHIUnorderedAccessView, public FMetalView
+class FMetalUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FMetalView
 {
 public:
-    explicit FMetalUnorderedAccessView(FMetalDeviceContext* InDeviceContext, FRHIResource* InResource)
-        : FRHIUnorderedAccessView(InResource)
-        , FMetalView(InDeviceContext)
-    {
-    }
+    FMetalUnorderedAccessViewRHI(FMetalDevice* InDevice, FRHIResource* InResource);
+    virtual ~FMetalUnorderedAccessViewRHI();
 
-    ~FMetalUnorderedAccessView() = default;
+    // FRHIUnorderedAccessView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 };
 
-
-class FMetalRenderTargetView : public FRHIRenderTargetView, public FMetalView
+class FMetalRenderTargetViewRHI : public FRHIRenderTargetView, public FMetalView
 {
 public:
-    explicit FMetalRenderTargetView(FMetalDeviceContext* InDeviceContext, const FRHIRenderTargetViewDesc& InDesc)
-        : FRHIRenderTargetView(InDesc.Texture)
-        , FMetalView(InDeviceContext)
-        , MipLevel(InDesc.MipLevel)
-        , ArrayIndex(InDesc.ArrayIndex)
-    {
-    }
+    FMetalRenderTargetViewRHI(FMetalDevice* InDevice, const FRHIRenderTargetViewDesc& InDesc);
+    virtual ~FMetalRenderTargetViewRHI();
 
-    ~FMetalRenderTargetView() = default;
+    // FRHIRenderTargetView Interface
+    virtual void* GetRHINativeHandle() const override final;
 
     uint8  GetMipLevel()   const { return MipLevel; }
     uint16 GetArrayIndex() const { return ArrayIndex; }
@@ -70,19 +61,14 @@ private:
     uint16 ArrayIndex;
 };
 
-
-class FMetalDepthStencilView : public FRHIDepthStencilView, public FMetalView
+class FMetalDepthStencilViewRHI : public FRHIDepthStencilView, public FMetalView
 {
 public:
-    explicit FMetalDepthStencilView(FMetalDeviceContext* InDeviceContext, const FRHIDepthStencilViewDesc& InDesc)
-        : FRHIDepthStencilView(InDesc.Texture)
-        , FMetalView(InDeviceContext)
-        , MipLevel(InDesc.MipLevel)
-        , ArrayIndex(InDesc.ArrayIndex)
-    {
-    }
+    FMetalDepthStencilViewRHI(FMetalDevice* InDevice, const FRHIDepthStencilViewDesc& InDesc);
+    virtual ~FMetalDepthStencilViewRHI();
 
-    ~FMetalDepthStencilView() = default;
+    // FRHIDepthStencilView Interface
+    virtual void* GetRHINativeHandle() const override final;
 
     uint8  GetMipLevel()   const { return MipLevel; }
     uint16 GetArrayIndex() const { return ArrayIndex; }

@@ -64,14 +64,14 @@ public:
     FD3D12GeometryAccelerationStructureRHI(FD3D12Device* InDevice, const FRHIGeometryAccelerationStructureDesc& InGeometryDesc);
     virtual ~FD3D12GeometryAccelerationStructureRHI() = default;
     
-    bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
-
     // FRHIGeometryAccelerationStructure Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
-    
+    virtual void* GetRHINativeResource() const override final;
+
     virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
-
+    
+    bool Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
+    
     FD3D12BufferRHI* GetVertexBuffer() const
     { 
         return VertexBuffer.Get();
@@ -92,26 +92,26 @@ class FD3D12SceneAccelerationStructureRHI : public FRHISceneAccelerationStructur
 public:
     FD3D12SceneAccelerationStructureRHI(FD3D12Device* InDevice, const FRHISceneAccelerationStructureDesc& InSceneDesc);
     virtual ~FD3D12SceneAccelerationStructureRHI() = default;
+    
+    // FRHISceneAccelerationStructure Interface
+    virtual void* GetRHINativeResource() const override final;
+
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final;
+    virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final;
+
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     bool Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildDesc);
-	bool BuildBindingTable(
+    bool BuildBindingTable(
         class FD3D12CommandContext& CmdContext, 
         FD3D12RayTracingPipelineStateRHI* PipelineState, 
         FD3D12OnlineDescriptorHeap* ResourceHeap, 
         FD3D12OnlineDescriptorHeap* SamplerHeap,
-		const FRayTracingShaderResources* RayGenLocalResources, 
+        const FRayTracingShaderResources* RayGenLocalResources, 
         const FRayTracingShaderResources* MissLocalResources, 
         const FRayTracingShaderResources* HitGroupResources, 
         uint32 NumHitGroupResources);
-
-    // FRHISceneAccelerationStructure Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetResource()); }
-
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-    virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final { return FRHIDescriptorHandle(); }
-
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
 
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
     D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable()      const;
@@ -134,6 +134,7 @@ private:
     FD3D12ResourceRef                                 BindingTable;
     uint32                                            BindingTableStride;
     uint32                                            NumHitGroups;
+    
     // TODO: Maybe move these somewhere else
     FD3D12ShaderBindingTableBuilder                   ShaderBindingTableBuilder;
     ID3D12DescriptorHeap*                             BindingTableHeaps[2];

@@ -111,6 +111,20 @@ public:
         return Type;
     }
 
+    // Returns the concrete Vulkan view/handle as void* (VkImageView / VkBufferView /
+    // VkAccelerationStructureKHR). StructuredBufferView has no dedicated Vulkan view
+    // object so it returns nullptr.
+    void* GetRHINativeHandleForType() const
+    {
+        switch (Type)
+        {
+        case EType::ImageView:                 return reinterpret_cast<void*>(ImageViewInfo.ImageView);
+        case EType::TypedBufferView:           return reinterpret_cast<void*>(TypedBufferInfo.BufferView);
+        case EType::AccelerationStructureView: return reinterpret_cast<void*>(AccelerationStructureInfo.AccelerationStructure);
+        default:                               return nullptr;
+        }
+    }
+
     FVulkanResource* GetOwnerResource() const
     {
         return OwnerResource;
@@ -147,6 +161,8 @@ public:
     virtual ~FVulkanShaderResourceViewRHI() = default;
 
     // FRHIShaderResourceView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
@@ -162,6 +178,8 @@ public:
     virtual ~FVulkanUnorderedAccessViewRHI() = default;
 
     // FRHIUnorderedAccessView Interface
+    virtual void* GetRHINativeHandle() const override final;
+    
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
@@ -193,6 +211,9 @@ public:
     // FVulkanRenderTargetViewBase Interface
     virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
 
+    // FRHIRenderTargetView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
@@ -207,6 +228,9 @@ public:
 
     // FVulkanRenderTargetViewBase Interface
     virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
+
+    // FRHIRenderTargetView Interface
+    virtual void* GetRHINativeHandle() const override final;
 
     void SetSwapChain(FVulkanSwapChainRHI* InSwapChain)
     {
@@ -227,6 +251,9 @@ class FVulkanDepthStencilViewRHI : public FRHIDepthStencilView, public FVulkanRe
 public:
     FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanDepthStencilViewRHI() = default;
+
+    // FRHIDepthStencilView Interface
+    virtual void* GetRHINativeHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;

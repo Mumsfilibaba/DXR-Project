@@ -24,9 +24,9 @@
 @end
 
 
-FMetalSwapChain::FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRHISwapChainDesc& SwapChainDesc)
+FMetalSwapChainRHI::FMetalSwapChainRHI(FMetalDevice* InDevice, const FRHISwapChainDesc& SwapChainDesc)
     : FRHISwapChain(SwapChainDesc)
-    , FMetalDeviceChild(InDeviceContext)
+    , FMetalDeviceChild(InDevice)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
     , MetalLayer(nullptr)
@@ -34,7 +34,7 @@ FMetalSwapChain::FMetalSwapChain(FMetalDeviceContext* InDeviceContext, const FRH
 {
 }
 
-FMetalSwapChain::~FMetalSwapChain()
+FMetalSwapChainRHI::~FMetalSwapChainRHI()
 {
     // The view is a UI object and needs to be released on the main-thread
     FMacThreadManager::Get().MainThreadDispatch(^
@@ -44,7 +44,39 @@ FMetalSwapChain::~FMetalSwapChain()
     }, NSDefaultRunLoopMode, true);
 }
 
-bool FMetalSwapChain::Initialize()
+FRHITexture* FMetalSwapChainRHI::GetBackBuffer() const
+{
+    return BackBuffer.Get();
+}
+
+FRHIRenderTargetView* FMetalSwapChainRHI::GetBackBufferRenderTargetView() const
+{
+    return nullptr;
+}
+
+void* FMetalSwapChainRHI::GetRHINativeHandle() const
+{
+    return (__bridge void*)MetalLayer;
+}
+
+uint32 FMetalSwapChainRHI::GetRHINativeBackBufferCount() const
+{
+    return 1;
+}
+
+void* FMetalSwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
+{
+    UNREFERENCED_VARIABLE(Index);
+    return BackBuffer ? BackBuffer->GetRHINativeResource() : nullptr;
+}
+
+void* FMetalSwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
+{
+    UNREFERENCED_VARIABLE(Index);
+    return nullptr;
+}
+
+bool FMetalSwapChainRHI::Initialize()
 {
     if (!Desc.WindowHandle)
     {
@@ -79,7 +111,7 @@ bool FMetalSwapChain::Initialize()
         NewMetalLayer.magnificationFilter     = kCAFilterNearest;
         NewMetalLayer.minificationFilter      = kCAFilterNearest;
 
-        [NewMetalLayer setDevice:GetDeviceContext()->GetMTLDevice()];
+        [NewMetalLayer setDevice:GetDevice()->GetMTLDevice()];
         [NewMetalLayer setFramebufferOnly:NO];
         [NewMetalLayer removeAllAnimations];
 
@@ -105,12 +137,12 @@ bool FMetalSwapChain::Initialize()
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
 
     FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), Desc.Width, Desc.Height, 1, 1, Flags);
-    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferDesc);
+    BackBuffer = new FMetalTextureRHI(GetDevice(), BackBufferDesc);
     BackBuffer->SetSwapChain(this);
     return true;
 }
 
-bool FMetalSwapChain::Resize(uint32 InWidth, uint32 InHeight)
+bool FMetalSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -132,7 +164,7 @@ bool FMetalSwapChain::Resize(uint32 InWidth, uint32 InHeight)
     return true;
 }
 
-bool FMetalSwapChain::Present(bool bVerticalSync)
+bool FMetalSwapChainRHI::Present(bool bVerticalSync)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -153,7 +185,7 @@ bool FMetalSwapChain::Present(bool bVerticalSync)
     return true;
 }
 
-id<CAMetalDrawable> FMetalSwapChain::GetDrawable()
+id<CAMetalDrawable> FMetalSwapChainRHI::GetDrawable()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -172,7 +204,7 @@ id<CAMetalDrawable> FMetalSwapChain::GetDrawable()
     return Drawable;
 }
 
-id<MTLTexture> FMetalSwapChain::GetDrawableTexture()
+id<MTLTexture> FMetalSwapChainRHI::GetDrawableTexture()
 {
     SCOPED_AUTORELEASE_POOL();
     

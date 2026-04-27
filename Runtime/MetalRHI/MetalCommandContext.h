@@ -1,14 +1,11 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
 #include "RHI/IRHICommandContext.h"
-#include "MetalRHI/MetalPipelineState.h"
-#include "MetalRHI/MetalBuffer.h"
-#include "MetalRHI/MetalViews.h"
-#include "MetalRHI/MetalSamplerState.h"
+#include "MetalRHI/MetalCommandContextState.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalDeviceContext;
+class FMetalDevice;
 
 class FMetalCopyCommandContext final
 {
@@ -53,22 +50,21 @@ private:
 
 class FMetalCommandContext final : public FMetalDeviceChild, public IRHICommandContext
 {
-    friend class FMetalRHI;
-
-    FMetalCommandContext(FMetalDeviceContext* InDeviceContext);
-    ~FMetalCommandContext() = default;
-
 public:
-    static FMetalCommandContext* CreateMetalContext(FMetalDeviceContext* InDeviceContext);
+    FMetalCommandContext(FMetalDevice* InDevice);
+    ~FMetalCommandContext();
 
-    virtual void BeginFrame() override final { }
-    virtual void EndFrame() override final { }
+    bool Initialize();
 
-    virtual void StartContext() override final;
+    // IRHICommandContext Interface
+    virtual void BeginFrame() override final;
+    virtual void EndFrame()   override final;
+
+    virtual void StartContext()  override final;
     virtual void FinishContext() override final;
 
-    virtual void BeginQuery(FRHIQuery* Query) override final { }
-    virtual void EndQuery(FRHIQuery* Query) override final { }
+    virtual void BeginQuery(FRHIQuery* Query) override final;
+    virtual void EndQuery(FRHIQuery* Query) override final;
     virtual void QueryTimestamp(FRHIQuery* Query) override final;
     virtual void ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor) override final;
     virtual void ClearDepthStencilView(FRHIDepthStencilView* DepthStencilView, const float Depth, uint8 Stencil) override final;
@@ -125,55 +121,42 @@ public:
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final;
 
     virtual void ClearState() override final;
-
-    virtual void Flush() override final;
+    virtual void Flush()      override final;
 
     virtual void PushEvent(const FStringView& Name) override final;
-    virtual void PopEvent() override final;
+    virtual void PopEvent()                         override final;
 
-    virtual void* GetNativeCommandList() override final
+    virtual void* GetRHINativeCommandList() override final;
+
+    FORCEINLINE FMetalCommandContextState& GetContextState()
     {
-        return nullptr;
+        return ContextState;
     }
-    
+
+    FORCEINLINE id<MTLCommandBuffer> GetCommandBuffer() const
+    {
+        return CommandBuffer;
+    }
+
+    FORCEINLINE id<MTLRenderCommandEncoder> GetGraphicsEncoder() const
+    {
+        return GraphicsEncoder;
+    }
+
+    FORCEINLINE id<MTLComputeCommandEncoder> GetComputeEncoder() const
+    {
+        return ComputeEncoder;
+    }
+
 private:
     void PrepareForDraw();
-    
-    id<MTLCommandBuffer>        CommandBuffer;
-    
-    // RenderEncoder
-    id<MTLRenderCommandEncoder> GraphicsEncoder;
-    MTLViewport                 CurrentViewport;
-    
-    // PipelineState
-    FMetalBufferRef                         CurrentIndexBuffer;
-    TSharedRef<FMetalGraphicsPipelineState> CurrentGraphicsPipeline;
-    MTLPrimitiveType                        CurrentPrimitiveType;
+    void PrepareForDispatch();
 
-    // VertexBuffer- state
-    TStaticArray<id<MTLBuffer>, RHI_MAX_VERTEX_BUFFERS> CurrentVertexBuffers;
-    TStaticArray<NSUInteger   , RHI_MAX_VERTEX_BUFFERS> CurrentVertexOffsets;
-    NSRange                                             CurrentVertexBufferRange;
-    
-    // Resources
-    enum
-    {
-        kMaxSRVs            = 16,
-        kMaxUAVs            = 16,
-        kMaxConstantBuffers = 16,
-        kMaxSamplerStates   = 16,
-    };
-    
-    TStaticArray<FMetalSamplerStateRef, kMaxSamplerStates>        CurrentSamplerStates[ShaderVisibility_Count];
-    TStaticArray<TSharedRef<FMetalShaderResourceView>, kMaxSRVs>  CurrentSRVs[ShaderVisibility_Count];
-    TStaticArray<TSharedRef<FMetalUnorderedAccessView>, kMaxUAVs> CurrentUAVs[ShaderVisibility_Count];
-    TStaticArray<FMetalBufferRef, kMaxConstantBuffers>            CurrentConstantBuffers[ShaderVisibility_Count];
-    TStaticArray<id<MTLBuffer> , kMaxBuffers>                     CurrentBuffers[ShaderVisibility_Count];
-    TStaticArray<id<MTLTexture>, kMaxTextures>                    CurrentTextures[ShaderVisibility_Count];
-    
-    // Contexts
-    FMetalCopyCommandContext CopyContext;
-    
+    id<MTLCommandBuffer>         CommandBuffer;
+    id<MTLRenderCommandEncoder>  GraphicsEncoder;
+    id<MTLComputeCommandEncoder> ComputeEncoder;
+    FMetalCopyCommandContext     CopyContext;
+    FMetalCommandContextState    ContextState;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

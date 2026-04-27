@@ -15,7 +15,7 @@ public:
     bool Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc);
     
     // FRHIGeometryAccelerationStructure Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(Geometry); }
+    virtual void* GetRHINativeResource() const override final;
 
     virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;

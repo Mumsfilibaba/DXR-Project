@@ -19,6 +19,12 @@ FD3D12GeometryAccelerationStructureRHI::FD3D12GeometryAccelerationStructureRHI(F
 {
 }
 
+void* FD3D12GeometryAccelerationStructureRHI::GetRHINativeResource() const
+{
+    FD3D12Resource* Resource = GetResource();
+    return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
+}
+
 bool FD3D12GeometryAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)
 {
     VertexBuffer = MakeSharedRef<FD3D12BufferRHI>(BuildDesc.VertexBuffer);
@@ -196,6 +202,22 @@ FD3D12SceneAccelerationStructureRHI::FD3D12SceneAccelerationStructureRHI(FD3D12D
     , ShaderBindingTableBuilder(InDevice)
     , BindingTableHeaps{ nullptr, nullptr }
 {
+}
+
+void* FD3D12SceneAccelerationStructureRHI::GetRHINativeResource() const
+{
+    FD3D12Resource* Resource = GetResource();
+    return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
+}
+
+FRHIShaderResourceView* FD3D12SceneAccelerationStructureRHI::GetShaderResourceView() const
+{
+    return View.Get();
+}
+
+FRHIDescriptorHandle FD3D12SceneAccelerationStructureRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
 }
 
 bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext, const FRHISceneAccelerationStructureBuildDesc& BuildDesc)

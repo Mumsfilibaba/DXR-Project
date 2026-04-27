@@ -3,54 +3,70 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Debug.h"
 #include "RHI/RHIResources.h"
+#include "MetalRHI/MetalConfiguration.h"
 #include <Metal/Metal.h>
 #include <QuartzCore/QuartzCore.h>
 
-#if !RELEASE_BUILD
-    #define METAL_ERROR(...)                      \
-        do                                        \
-        {                                         \
+#if METAL_ENABLE_LOGGING
+    #define METAL_ERROR_CRITICAL(...) \
+        do \
+        { \
+            LOG_ERROR_CRITICAL("[MetalRHI] " __VA_ARGS__); \
+        } while (false)
+
+    #define METAL_ERROR(...) \
+        do \
+        { \
             LOG_ERROR("[MetalRHI] " __VA_ARGS__); \
-            DEBUG_BREAK();                 \
         } while (false)
-    
+
     #define METAL_ERROR_COND(bCondition, ...) \
-        do                                    \
-        {                                     \
-            if (!(bCondition))                \
-            {                                 \
-                METAL_ERROR(__VA_ARGS__);     \
-            }                                 \
+        do \
+        { \
+            if (!(bCondition)) \
+            { \
+                METAL_ERROR(__VA_ARGS__); \
+            } \
         } while (false)
-    
-    #define METAL_WARNING(...)                      \
-        do                                          \
-        {                                           \
+
+    #define METAL_WARNING(...) \
+        do \
+        { \
             LOG_WARNING("[MetalRHI] " __VA_ARGS__); \
         } while (false)
 
     #define METAL_WARNING_COND(bCondition, ...) \
-        do                                      \
-        {                                       \
-            if (!(bCondition))                  \
-            {                                   \
-                METAL_WARNING(__VA_ARGS__);     \
-            }                                   \
+        do \
+        { \
+            if (!(bCondition)) \
+            { \
+                METAL_WARNING(__VA_ARGS__); \
+            } \
         } while (false)
 
-    #define METAL_INFO(...)                      \
-        do                                       \
-        {                                        \
+    #define METAL_INFO(...) \
+        do \
+        { \
             LOG_INFO("[MetalRHI] " __VA_ARGS__); \
         } while (false)
 #else
-    #define METAL_ERROR_COND(bCondition, ...) do { (void)(bCondition); } while(false)
-    #define METAL_ERROR(...) do { (void)(0); } while(false)
+    #define METAL_ERROR_CRITICAL(...) \
+        do { } while(false)
 
-    #define METAL_WARNING_COND(bCondition, ...) do { (void)(bCondition); } while(false)
-    #define METAL_WARNING(...) do { (void)(0); } while(false)
+    #define METAL_ERROR_COND(bCondition, ...) \
+        do { UNREFERENCED_VARIABLE(bCondition); } while(false)
 
-    #define METAL_INFO(...) do { (void)(0); } while(false)
+    #define METAL_ERROR(...) \
+        do { } while(false)
+
+    #define METAL_WARNING_COND(bCondition, ...) \
+        do { UNREFERENCED_VARIABLE(bCondition); } while(false)
+
+    #define METAL_WARNING(...) \
+        do { } while(false)
+
+    #define METAL_INFO(...) \
+        do { } while(false)
 #endif
 
 enum : uint32
@@ -62,6 +78,9 @@ enum : uint32
     
     kMaxTextures        = 32,
     kMaxBuffers         = 48,
+
+    kMaxShaderConstants = 32,
+    kMaxViewports       = 16,
     
     kBufferAlignment         = 16,
     kConstantBufferAlignment = 256,

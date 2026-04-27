@@ -161,92 +161,75 @@ protected:
 class FD3D12GraphicsShader : public FD3D12Shader
 {
 public:
-    FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility)
-		: FD3D12Shader(InDevice, InShaderVisibility)
-	{
-	}
+    FD3D12GraphicsShader(FD3D12Device* InDevice, EShaderVisibility InShaderVisibility);
+    virtual ~FD3D12GraphicsShader();
 
+    // FD3D12Shader Interface
     virtual bool Initialize(const TArray<uint8>& InCode) override final;
 };
 
 class FD3D12VertexShaderRHI : public FRHIVertexShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12VertexShaderRHI(FD3D12Device* InDevice)
-        : FRHIVertexShader()
-        , FD3D12GraphicsShader(InDevice, ShaderVisibility_Vertex)
-    {
-    }
+    FD3D12VertexShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12VertexShaderRHI();
 
     // FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12HullShaderRHI : public FRHIHullShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12HullShaderRHI(FD3D12Device* InDevice)
-        : FRHIHullShader()
-        , FD3D12GraphicsShader(InDevice, ShaderVisibility_Hull)
-    {
-    }
+    FD3D12HullShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12HullShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12DomainShaderRHI : public FRHIDomainShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12DomainShaderRHI(FD3D12Device* InDevice)
-        : FRHIDomainShader()
-        , FD3D12GraphicsShader(InDevice, ShaderVisibility_Domain)
-    {
-    }
+    FD3D12DomainShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12DomainShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12GeometryShaderRHI : public FRHIGeometryShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12GeometryShaderRHI(FD3D12Device* InDevice)
-        : FRHIGeometryShader()
-        , FD3D12GraphicsShader(InDevice, ShaderVisibility_Geometry)
-    {
-    }
+    FD3D12GeometryShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12GeometryShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12PixelShaderRHI : public FRHIPixelShader, public FD3D12GraphicsShader
 {
 public:
-    FD3D12PixelShaderRHI(FD3D12Device* InDevice)
-        : FRHIPixelShader()
-        , FD3D12GraphicsShader(InDevice, ShaderVisibility_Pixel)
-    {
-    }
+    FD3D12PixelShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12PixelShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12GraphicsShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12RayTracingShader : public FD3D12Shader
 {
 public:
-    FD3D12RayTracingShader(FD3D12Device* InDevice)
-        : FD3D12Shader(InDevice, ShaderVisibility_All)
-    {
-    }
+    FD3D12RayTracingShader(FD3D12Device* InDevice);
+    virtual ~FD3D12RayTracingShader();
 
+    // FD3D12Shader Interface
     virtual bool Initialize(const TArray<uint8>& InCode) override final;
     
     FORCEINLINE const FString& GetIdentifier() const
@@ -271,74 +254,59 @@ private:
 class FD3D12RayGenShaderRHI : public FRHIRayGenShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayGenShaderRHI(FD3D12Device* InDevice)
-        : FRHIRayGenShader()
-        , FD3D12RayTracingShader(InDevice)
-    {
-    }
+    FD3D12RayGenShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12RayGenShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12RayAnyHitShaderRHI : public FRHIRayAnyHitShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayAnyHitShaderRHI(FD3D12Device* InDevice)
-        : FRHIRayAnyHitShader()
-        , FD3D12RayTracingShader(InDevice)
-    {
-    }
+    FD3D12RayAnyHitShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12RayAnyHitShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12RayClosestHitShaderRHI : public FRHIRayClosestHitShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayClosestHitShaderRHI(FD3D12Device* InDevice)
-        : FRHIRayClosestHitShader()
-        , FD3D12RayTracingShader(InDevice)
-    {
-    }
+    FD3D12RayClosestHitShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12RayClosestHitShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12RayMissShaderRHI : public FRHIRayMissShader, public FD3D12RayTracingShader
 {
 public:
-    FD3D12RayMissShaderRHI(FD3D12Device* InDevice)
-        : FRHIRayMissShader()
-        , FD3D12RayTracingShader(InDevice)
-    {
-    }
+    FD3D12RayMissShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12RayMissShaderRHI();
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12RayTracingShader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 };
 
 class FD3D12ComputeShaderRHI : public FRHIComputeShader, public FD3D12Shader
 {
 public:
-    FD3D12ComputeShaderRHI(FD3D12Device* InDevice)
-        : FRHIComputeShader()
-        , FD3D12Shader(InDevice, ShaderVisibility_All)
-        , ThreadGroupXYZ(0, 0, 0)
-    {
-    }
+    FD3D12ComputeShaderRHI(FD3D12Device* InDevice);
+    virtual ~FD3D12ComputeShaderRHI();
 
+    // FD3D12Shader Interface
     virtual bool Initialize(const TArray<uint8>& InCode) override final;
 
-	// FRHIShader Interface
-    virtual void* GetRHINativeHandle()  override final { return const_cast<D3D12_SHADER_BYTECODE*>(&ByteCode.GetD3D12Bytecode()); }
-    virtual void* GetRHIBaseInterface() override final { return static_cast<FD3D12Shader*>(this); }
+    // FRHIShader Interface
+    virtual void* GetRHINativeHandle()  override final;
+    virtual void* GetRHIBaseInterface() override final;
 
 protected:
     FIntVector3 ThreadGroupXYZ;

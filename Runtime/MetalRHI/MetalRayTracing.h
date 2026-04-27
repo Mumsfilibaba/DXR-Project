@@ -4,39 +4,45 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalRayTracingGeometry : public FRHIGeometryAccelerationStructure
+typedef TSharedRef<class FMetalSceneAccelerationStructureRHI>    FMetalSceneAccelerationStructureRHIRef;
+typedef TSharedRef<class FMetalGeometryAccelerationStructureRHI> FMetalGeometryAccelerationStructureRHIRef;
+
+class FMetalGeometryAccelerationStructureRHI : public FRHIGeometryAccelerationStructure
 {
 public:
-    FMetalRayTracingGeometry(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
-        : FRHIGeometryAccelerationStructure(InGeometryDesc)
-    {
-    }
+    FMetalGeometryAccelerationStructureRHI(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc);
+    virtual ~FMetalGeometryAccelerationStructureRHI();
 
-    ~FMetalRayTracingGeometry() = default;
+    // FRHIGeometryAccelerationStructure Interface
+    virtual void* GetRHIBaseInterface()        override final;
+    virtual void* GetRHINativeResource() const override final;
 
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
-    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
+
+private:
+    FString DebugName;
 };
 
-class FMetalRayTracingScene : public FRHISceneAccelerationStructure
+class FMetalSceneAccelerationStructureRHI : public FRHISceneAccelerationStructure
 {
 public:
-    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHISceneAccelerationStructureDesc& InSceneDesc)
-        : FRHISceneAccelerationStructure(InSceneDesc)
-        , View(new FMetalShaderResourceView(InDeviceContext, this))
-    {
-    }
+    FMetalSceneAccelerationStructureRHI(FMetalDevice* InDevice, const FRHISceneAccelerationStructureDesc& InSceneDesc);
+    virtual ~FMetalSceneAccelerationStructureRHI();
 
-    ~FMetalRayTracingScene() = default;
+    // FRHISceneAccelerationStructure Interface
+    virtual void* GetRHIBaseInterface()        override final;
+    virtual void* GetRHINativeResource() const override final;
 
-    virtual void* GetRHINativeHandle() const override final { return nullptr; }
-    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final;
+    virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final;
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
- 
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
+
 private:
-    TSharedRef<FMetalShaderResourceView> View;
+    TSharedRef<FMetalShaderResourceViewRHI> View;
+    FString                                 DebugName;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

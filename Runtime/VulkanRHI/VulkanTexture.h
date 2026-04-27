@@ -36,7 +36,7 @@ public:
     virtual FVulkanTextureRHI* GetTextureInterface() const override;
     
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override final;
+    virtual void* GetRHINativeResource() const override final;
     
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
@@ -92,7 +92,7 @@ public:
     virtual FVulkanTextureRHI* GetTextureInterface() const override final;
 
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override final;
+    virtual void* GetRHINativeResource() const override final;
     
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;

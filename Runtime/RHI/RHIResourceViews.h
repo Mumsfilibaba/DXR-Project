@@ -322,7 +322,10 @@ protected:
     virtual ~FRHIShaderResourceView() = default;
 
 public:
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+    // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView / VkAccelerationStructureKHR. Metal/Null: nullptr.
+    virtual void* GetRHINativeHandle() const = 0;
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
 };
 
 class FRHIUnorderedAccessView : public FRHIResourceView
@@ -336,7 +339,10 @@ protected:
     virtual ~FRHIUnorderedAccessView() = default;
 
 public:
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+    // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView. Metal/Null: nullptr.
+    virtual void* GetRHINativeHandle() const = 0;
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const = 0;
 };
 
 struct FRHIRenderTargetViewDesc
@@ -389,6 +395,10 @@ protected:
     }
 
     virtual ~FRHIRenderTargetView() = default;
+
+public:
+    // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal/Null: nullptr.
+    virtual void* GetRHINativeHandle() const = 0;
 };
 
 struct FRHIDepthStencilViewDesc
@@ -443,6 +453,10 @@ protected:
     }
 
     virtual ~FRHIDepthStencilView() = default;
+
+public:
+    // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal/Null: nullptr.
+    virtual void* GetRHINativeHandle() const = 0;
 };
 
 struct FRHIRenderPassAttachment

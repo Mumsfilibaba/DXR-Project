@@ -164,6 +164,11 @@ FVulkanCommandContext::~FVulkanCommandContext()
     SAFE_DELETE(TransientDescriptorAllocator);
 }
 
+void* FVulkanCommandContext::GetRHINativeCommandList()
+{
+    return reinterpret_cast<void*>(CommandBuffer.GetVkCommandBuffer());
+}
+
 bool FVulkanCommandContext::Initialize()
 {
     if (!ContextState.Initialize())

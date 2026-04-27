@@ -22,43 +22,43 @@ public:
 
     virtual FRHITexture* CreateTexture(const FRHITextureDesc& InTextureDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final
     {
-        return new FNullRHITexture(InTextureDesc);
+        return new FNullTextureRHI(InTextureDesc);
     }
 
     virtual FRHIBuffer* CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResourceAccess InInitialState, const void* InInitialData) override final
     {
-        return new FNullRHIBuffer(InBufferDesc);
+        return new FNullBufferRHI(InBufferDesc);
     }
 
     virtual FRHISamplerState* CreateSamplerState(const FRHISamplerStateDesc& InSamplerDesc) override final
     {
-        return new FNullRHISamplerState(InSamplerDesc);
+        return new FNullSamplerStateRHI(InSamplerDesc);
     }
 
     virtual class FRHISwapChain* CreateSwapChain(const FRHISwapChainDesc& InSwapChainDesc) override final
     {
-        return new FNullRHISwapChain(InSwapChainDesc);
+        return new FNullSwapChainRHI(InSwapChainDesc);
     }
 
     virtual FRHISceneAccelerationStructure* CreateSceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc) override final
     {
-        return new FNullRHIRayTracingScene(InSceneDesc);
+        return new FNullRayTracingSceneRHI(InSceneDesc);
     }
 
     virtual FRHIGeometryAccelerationStructure* CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) override final
     {
-        return new FNullRHIRayTracingGeometry(InGeometryDesc);
+        return new FNullRayTracingGeometryRHI(InGeometryDesc);
     }
 
     virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc)
     {
         if (InDesc.IsBufferSRV())
         {
-            return new FNullRHIShaderResourceView(InDesc.BufferSRV.Buffer);
+            return new FNullShaderResourceViewRHI(InDesc.BufferSRV.Buffer);
         }
         else if (InDesc.IsTextureSRV())
         {
-            return new FNullRHIShaderResourceView(InDesc.TextureSRV.Texture);
+            return new FNullShaderResourceViewRHI(InDesc.TextureSRV.Texture);
         }
         else
         {
@@ -70,11 +70,11 @@ public:
     {
         if (InDesc.IsBufferUAV())
         {
-            return new FNullRHIUnorderedAccessView(InDesc.BufferUAV.Buffer);
+            return new FNullUnorderedAccessViewRHI(InDesc.BufferUAV.Buffer);
         }
         else if (InDesc.IsTextureUAV())
         {
-            return new FNullRHIUnorderedAccessView(InDesc.TextureUAV.Texture);
+            return new FNullUnorderedAccessViewRHI(InDesc.TextureUAV.Texture);
         }
         else
         {
@@ -84,22 +84,22 @@ public:
 
     virtual FRHIRenderTargetView* CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) override final
     {
-        return new FNullRHIRenderTargetView(InDesc.Texture);
+        return new FNullRenderTargetViewRHI(InDesc.Texture);
     }
 
     virtual FRHIDepthStencilView* CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc) override final
     {
-        return new FNullRHIDepthStencilView(InDesc.Texture);
+        return new FNullDepthStencilViewRHI(InDesc.Texture);
     }
 
     virtual class FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final
     {
-        return new FNullRHIComputeShader();
+        return new FNullComputeShaderRHI();
     }
 
     virtual class FRHIVertexShader* CreateVertexShader(const TArray<uint8>& ShaderCode) override final
     {
-        return new FNullRHIVertexShader();
+        return new FNullVertexShaderRHI();
     }
 
     virtual class FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) override final
@@ -129,12 +129,12 @@ public:
 
     virtual class FRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) override final
     {
-        return new FNullRHIPixelShader();
+        return new FNullPixelShaderRHI();
     }
 
     virtual class FRHIRayGenShader* CreateRayGenShader(const TArray<uint8>& ShaderCode) override final
     {
-        return new FNullRHIRayGenShader();
+        return new FNullRayGenShaderRHI();
     }
 
     virtual class FRHIRayAnyHitShader* CreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final
@@ -154,47 +154,47 @@ public:
 
     virtual class FRHIDepthStencilState* CreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final
     {
-        return new FNullRHIDepthStencilState(InDesc);
+        return new FNullDepthStencilStateRHI(InDesc);
     }
 
     virtual class FRHIRasterizerState* CreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final
     {
-        return new FNullRHIRasterizerState(InDesc);
+        return new FNullRasterizerStateRHI(InDesc);
     }
 
     virtual class FRHIBlendState* CreateBlendState(const FRHIBlendStateDesc& InDesc) override final
     {
-        return new FNullRHIBlendState(InDesc);
+        return new FNullBlendStateRHI(InDesc);
     }
 
     virtual class FRHIInputLayout* CreateInputLayout(const TArray<FRHIInputElementDesc>& InInputElements) override final
     {
-        return new FNullRHIInputLayout(InInputElements);
+        return new FNullInputLayoutRHI(InInputElements);
     }
 
     virtual class FRHIGraphicsPipelineState* CreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final
     {
-        return new FNullRHIGraphicsPipelineState();
+        return new FNullGraphicsPipelineStateRHI();
     }
     
     virtual class FRHIComputePipelineState* CreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) override final
     {
-        return new FNullRHIComputePipelineState();
+        return new FNullComputePipelineStateRHI();
     }
     
     virtual class FRHIRayTracingPipelineState* CreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final
     {
-        return new FNullRHIRayTracingPipelineState();
+        return new FNullRayTracingPipelineStateRHI();
     }
 
     virtual class FRHIQuery* CreateQuery(EQueryType InQueryType) override final
     {
-        return new FNullRHIQuery(InQueryType);
+        return new FNullQueryRHI(InQueryType);
     }
 
     virtual FRHIFence* CreateFence() override final
     {
-        return new FNullRHIGpuFence();
+        return new FNullFenceRHI();
     }
 
     virtual struct IRHICommandContext* ObtainCommandContext() override final
@@ -230,11 +230,30 @@ public:
         delete Resource;
     }
 
-    virtual void* GetNativeAdapter()             override final { return nullptr; }
-    virtual void* GetNativeDevice()              override final { return nullptr; }
-    virtual void* GetNativeDirectCommandQueue()  override final { return nullptr; }
-    virtual void* GetNativeComputeCommandQueue() override final { return nullptr; }
-    virtual void* GetNativeCopyCommandQueue()    override final { return nullptr; }
+    virtual void* GetRHINativeAdapter() override final
+    {
+        return nullptr;
+    }
+
+    virtual void* GetRHINativeDevice() override final
+    {
+        return nullptr;
+    }
+
+    virtual void* GetRHINativeDirectCommandQueue() override final
+    {
+        return nullptr;
+    }
+
+    virtual void* GetRHINativeComputeCommandQueue() override final
+    {
+        return nullptr;
+    }
+
+    virtual void* GetRHINativeCopyCommandQueue() override final
+    {
+        return nullptr;
+    }
 
     virtual FString GetAdapterName() const override final
     {

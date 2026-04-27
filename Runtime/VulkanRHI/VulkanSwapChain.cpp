@@ -919,9 +919,26 @@ FRHIRenderTargetView* FVulkanSwapChainRHI::GetBackBufferRenderTargetView() const
     return BackBufferProxyRenderTargetView.Get();
 }
 
-void* FVulkanSwapChainRHI::GetNativeSwapChain() const
+void* FVulkanSwapChainRHI::GetRHINativeHandle() const
 {
     return reinterpret_cast<void*>(SwapChainResource->GetVkSwapChain());
+}
+
+uint32 FVulkanSwapChainRHI::GetRHINativeBackBufferCount() const
+{
+    return GetNumBackBuffers();
+}
+
+void* FVulkanSwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
+{
+    FVulkanTextureRHI* Texture = GetBackBufferAtIndex(Index);
+    return Texture ? Texture->GetRHINativeResource() : nullptr;
+}
+
+void* FVulkanSwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
+{
+    FVulkanRenderTargetViewRHI* RenderTargetView = GetBackBufferRenderTargetViewAtIndex(Index);
+    return RenderTargetView ? RenderTargetView->GetRHINativeHandle() : nullptr;
 }
 
 VkResult FVulkanSwapChainRHI::AcquireNextImage()

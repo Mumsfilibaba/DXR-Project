@@ -94,11 +94,11 @@ protected:
 
 public:
 
-    // Retrieves the native handle for the RHI, can also be byte-code for some backends
-    virtual void* GetRHINativeHandle() { return nullptr; }
+    // D3D12: D3D12_SHADER_BYTECODE*. Vulkan: TArray<uint32>* (SPIR-V). Metal: id<MTLFunction>. Null: nullptr.
+    virtual void* GetRHINativeHandle() = 0;
 
     // Retrieve the base-interface for the backend
-    virtual void* GetRHIBaseInterface() { return this; }
+    virtual void* GetRHIBaseInterface() = 0;
 
     EShaderStage GetShaderStage() const
     { 

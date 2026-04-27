@@ -21,8 +21,9 @@ public:
     virtual ~FRHIResource();
 
     // IRefCounted Interface
-    virtual int32 AddRef() const override;
+    virtual int32 AddRef()  const override;
     virtual int32 Release() const override;
+    
     virtual int32 GetRefCount() const override;
 
 private:

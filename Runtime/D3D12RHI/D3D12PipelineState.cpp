@@ -102,6 +102,11 @@ FD3D12InputLayoutRHI::~FD3D12InputLayoutRHI()
 {
 }
 
+void* FD3D12InputLayoutRHI::GetRHINativeState() const
+{
+    return nullptr;
+}
+
 const FRHIInputElementDesc* FD3D12InputLayoutRHI::GetInputElementDesc(uint32 Index) const
 {
     return &InputElements[Index];
@@ -135,6 +140,11 @@ FD3D12DepthStencilStateRHI::~FD3D12DepthStencilStateRHI()
 {
 }
 
+void* FD3D12DepthStencilStateRHI::GetRHINativeState() const
+{
+    return nullptr;
+}
+
 FRHIDepthStencilStateDesc FD3D12DepthStencilStateRHI::GetDesc() const
 {
     return Desc;
@@ -164,6 +174,11 @@ FD3D12RasterizerStateRHI::FD3D12RasterizerStateRHI(const FRHIRasterizerStateDesc
 
 FD3D12RasterizerStateRHI::~FD3D12RasterizerStateRHI()
 {
+}
+
+void* FD3D12RasterizerStateRHI::GetRHINativeState() const
+{
+    return nullptr;
 }
 
 FRHIRasterizerStateDesc FD3D12RasterizerStateRHI::GetDesc() const
@@ -201,6 +216,11 @@ FD3D12BlendStateRHI::FD3D12BlendStateRHI(const FRHIBlendStateDesc& InDesc)
 
 FD3D12BlendStateRHI::~FD3D12BlendStateRHI()
 {
+}
+
+void* FD3D12BlendStateRHI::GetRHINativeState() const
+{
+    return nullptr;
 }
 
 FRHIBlendStateDesc FD3D12BlendStateRHI::GetDesc() const
@@ -279,7 +299,7 @@ void FD3D12GraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
     OutDebugName = DebugName;
 }
 
-void* FD3D12GraphicsPipelineStateRHI::GetRHINativeHandle() const
+void* FD3D12GraphicsPipelineStateRHI::GetRHINativeState() const
 {
     return reinterpret_cast<void*>(GetD3D12PipelineState());
 }
@@ -802,7 +822,7 @@ void FD3D12ComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
     OutDebugName = DebugName;
 }
 
-void* FD3D12ComputePipelineStateRHI::GetRHINativeHandle() const
+void* FD3D12ComputePipelineStateRHI::GetRHINativeState() const
 {
     return reinterpret_cast<void*>(GetD3D12PipelineState());
 }
@@ -1138,7 +1158,7 @@ void FD3D12RayTracingPipelineStateRHI::GetDebugName(FString& OutDebugName) const
     OutDebugName = DebugName;
 }
 
-void* FD3D12RayTracingPipelineStateRHI::GetRHINativeHandle() const
+void* FD3D12RayTracingPipelineStateRHI::GetRHINativeState() const
 {
     return reinterpret_cast<void*>(GetD3D12StateObject());
 }

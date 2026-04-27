@@ -34,7 +34,7 @@ public:
     virtual FD3D12TextureRHI* GetTextureInterface() const override;
     
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override final;
+    virtual void* GetRHINativeResource() const override final;
     
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
@@ -81,7 +81,7 @@ public:
     virtual FD3D12TextureRHI* GetTextureInterface() const override final;
 
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override final;
+    virtual void* GetRHINativeResource() const override final;
     
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
@@ -109,6 +109,6 @@ public:
     }
 
 private:
-    FD3D12SwapChainRHI*                                  SwapChain;
+    FD3D12SwapChainRHI*                         SwapChain;
     FD3D12BackBufferProxyRenderTargetViewRHIRef ProxyRenderTargetView;
 };

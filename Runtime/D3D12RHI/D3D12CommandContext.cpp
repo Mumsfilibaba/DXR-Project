@@ -2402,6 +2402,11 @@ void FD3D12CommandContext::Flush()
     Fence.WaitForValue(Fence.GetLastSignaledValue());
 }
 
+void* FD3D12CommandContext::GetRHINativeCommandList()
+{
+    return reinterpret_cast<void*>(CommandList->GetCommandList());
+}
+
 void FD3D12CommandContext::PushEvent(const FStringView& Name)
 {
     EventStack.Emplace(Name.Data());

@@ -848,29 +848,29 @@ void FRHIValidation::EnqueueResourceDeletion(FRHIResource* Resource)
     RealRHI->EnqueueResourceDeletion(Resource);
 }
 
-void* FRHIValidation::GetNativeAdapter()
+void* FRHIValidation::GetRHINativeAdapter()
 {
-    return RealRHI->GetNativeAdapter();
+    return RealRHI->GetRHINativeAdapter();
 }
 
-void* FRHIValidation::GetNativeDevice()
+void* FRHIValidation::GetRHINativeDevice()
 {
-    return RealRHI->GetNativeDevice();
+    return RealRHI->GetRHINativeDevice();
 }
 
-void* FRHIValidation::GetNativeDirectCommandQueue()
+void* FRHIValidation::GetRHINativeDirectCommandQueue()
 {
-    return RealRHI->GetNativeDirectCommandQueue();
+    return RealRHI->GetRHINativeDirectCommandQueue();
 }
 
-void* FRHIValidation::GetNativeComputeCommandQueue()
+void* FRHIValidation::GetRHINativeComputeCommandQueue()
 {
-    return RealRHI->GetNativeComputeCommandQueue();
+    return RealRHI->GetRHINativeComputeCommandQueue();
 }
 
-void* FRHIValidation::GetNativeCopyCommandQueue()
+void* FRHIValidation::GetRHINativeCopyCommandQueue()
 {
-    return RealRHI->GetNativeCopyCommandQueue();
+    return RealRHI->GetRHINativeCopyCommandQueue();
 }
 
 bool FRHIValidation::QueryUAVFormatSupport(EFormat Format) const
@@ -1639,7 +1639,7 @@ void FRHIValidationCommandContext::PopEvent()
     RealContext->PopEvent();
 }
 
-void* FRHIValidationCommandContext::GetNativeCommandList()
+void* FRHIValidationCommandContext::GetRHINativeCommandList()
 {
-    return RealContext->GetNativeCommandList();
+    return RealContext->GetRHINativeCommandList();
 }

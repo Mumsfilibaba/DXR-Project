@@ -84,9 +84,13 @@ public:
     virtual ~FVulkanSwapChainRHI();
 
     // FRHISwapChain Interface
+    virtual void*  GetRHINativeHandle()                                          const override final;
+    virtual void*  GetRHINativeBackBufferResourceFromIndex(uint32 Index)         const override final;
+    virtual void*  GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const override final;
+    virtual uint32 GetRHINativeBackBufferCount()                                 const override final;
+
     virtual FRHITexture*          GetBackBuffer()                 const override final;
     virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final;
-    virtual void*                 GetNativeSwapChain()            const override final;
 
     bool Initialize();
     bool Resize(uint32 InWidth, uint32 InHeight);

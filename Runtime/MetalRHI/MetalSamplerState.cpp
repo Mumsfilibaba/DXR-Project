@@ -1,19 +1,29 @@
 #include "MetalRHI/MetalSamplerState.h"
-#include "MetalRHI/MetalDeviceContext.h"
+#include "MetalRHI/MetalDevice.h"
 
-FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateDesc& InSamplerDesc)
+FMetalSamplerStateRHI::FMetalSamplerStateRHI(FMetalDevice* InDevice, const FRHISamplerStateDesc& InSamplerDesc)
     : FRHISamplerState(InSamplerDesc)
-    , FMetalDeviceChild(InDeviceContext)
+    , FMetalDeviceChild(InDevice)
     , SamplerState(nullptr)
 {
 }
 
-FMetalSamplerState::~FMetalSamplerState()
+FMetalSamplerStateRHI::~FMetalSamplerStateRHI()
 {
     [SamplerState release];
 }
 
-bool FMetalSamplerState::Initialize()
+FRHIDescriptorHandle FMetalSamplerStateRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
+void* FMetalSamplerStateRHI::GetRHINativeSampler() const
+{
+    return (__bridge void*)SamplerState;
+}
+
+bool FMetalSamplerStateRHI::Initialize()
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -32,7 +42,7 @@ bool FMetalSamplerState::Initialize()
     SamplerDesc.borderColor           = MTLSamplerBorderColorOpaqueBlack;
     SamplerDesc.normalizedCoordinates = YES;
 
-    id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
+    id<MTLDevice> Device = GetDevice()->GetMTLDevice();
     CHECK(Device != nil);
     
     id<MTLSamplerState> NewSamplerState = [Device newSamplerStateWithDescriptor:SamplerDesc];

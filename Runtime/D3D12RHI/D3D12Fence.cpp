@@ -174,6 +174,11 @@ bool FD3D12FenceRHI::Wait(uint64 TimeoutNs) const
     return Fence->WaitForValue(Fence->GetLastSignaledValue(), TimeoutMs);
 }
 
+void* FD3D12FenceRHI::GetRHINativeFence() const
+{
+    return Fence ? reinterpret_cast<void*>(Fence->GetD3D12Fence()) : nullptr;
+}
+
 void FD3D12FenceRHI::SetDebugName(const FString& InName)
 {
     DebugName = InName;

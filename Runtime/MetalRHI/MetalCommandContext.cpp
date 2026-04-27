@@ -1,5 +1,5 @@
 #include "MetalRHI/MetalCommandContext.h"
-#include "MetalRHI/MetalDeviceContext.h"
+#include "MetalRHI/MetalDevice.h"
 #include "MetalRHI/MetalBuffer.h"
 #include "MetalRHI/MetalTexture.h"
 #include "MetalRHI/MetalSwapChain.h"
@@ -7,26 +7,43 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FMetalCommandContext::FMetalCommandContext(FMetalDeviceContext* InDeviceContext)
-    : FMetalDeviceChild(InDeviceContext)
+static MTLIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
+{
+    return (IndexFormat == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16;
+}
+
+FMetalCommandContext::FMetalCommandContext(FMetalDevice* InDevice)
+    : FMetalDeviceChild(InDevice)
     , IRHICommandContext()
     , CommandBuffer(nil)
     , GraphicsEncoder(nil)
+    , ComputeEncoder(nil)
+    , CopyContext()
+    , ContextState(InDevice, *this)
 {
-    ClearState();
 }
 
-FMetalCommandContext* FMetalCommandContext::CreateMetalContext(FMetalDeviceContext* InDeviceContext)
-{ 
-    return new FMetalCommandContext(InDeviceContext);
+FMetalCommandContext::~FMetalCommandContext() = default;
+
+bool FMetalCommandContext::Initialize()
+{
+    if (!ContextState.Initialize())
+    {
+        METAL_ERROR_CRITICAL("Failed to initialize ContextState");
+        return false;
+    }
+
+    return true;
 }
 
 void FMetalCommandContext::StartContext() 
 {
     CHECK(CommandBuffer == nil);
     
-    id<MTLCommandQueue> CommandQueue = GetDeviceContext()->GetMTLCommandQueue();
+    id<MTLCommandQueue> CommandQueue = GetDevice()->GetMTLCommandQueue();
     CommandBuffer = [CommandQueue commandBuffer];
+
+    ContextState.ResetStateForNewCommandBuffer();
 }
 
 void FMetalCommandContext::FinishContext()
@@ -45,14 +62,35 @@ void FMetalCommandContext::QueryTimestamp(FRHIQuery* Query)
 {
 }
 
+void FMetalCommandContext::BeginFrame()
+{
+}
+
+void FMetalCommandContext::EndFrame()
+{
+}
+
+void FMetalCommandContext::BeginQuery(FRHIQuery* Query)
+{
+}
+
+void FMetalCommandContext::EndQuery(FRHIQuery* Query)
+{
+}
+
+void* FMetalCommandContext::GetRHINativeCommandList()
+{
+    return nullptr;
+}
+
 void FMetalCommandContext::ClearRenderTargetView(FRHIRenderTargetView* RenderTargetView, const FVector4& ClearColor)
 {
     SCOPED_AUTORELEASE_POOL();
 
-    FMetalRenderTargetView* MetalRTV = static_cast<FMetalRenderTargetView*>(RenderTargetView);
+    FMetalRenderTargetViewRHI* MetalRTV = static_cast<FMetalRenderTargetViewRHI*>(RenderTargetView);
     CHECK(MetalRTV != nullptr);
 
-    FMetalTexture* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));
+    FMetalTextureRHI* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));
 
     MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[0];
@@ -96,21 +134,30 @@ void FMetalCommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
     
     CopyContext.FinishEncoder();
 
-    FMetalDepthStencilView* MetalDSV = static_cast<FMetalDepthStencilView*>(BeginRenderPassDesc.DepthStencilAttachment.View);
-    FMetalTexture* DSVTexture = MetalDSV ? GetMetalTexture(static_cast<FRHITexture*>(MetalDSV->GetResource())) : nullptr;
-    METAL_ERROR_COND((BeginRenderPassDesc.NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
+    FMetalRenderTargetViewRHI* CachedRenderTargets[RHI_MAX_RENDER_TARGETS] = { };
+    const uint32 NumRenderTargets = BeginRenderPassDesc.NumRenderTargets;
+    for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
+    {
+        CachedRenderTargets[Index] = static_cast<FMetalRenderTargetViewRHI*>(BeginRenderPassDesc.RenderTargets[Index].View);
+    }
+
+    FMetalDepthStencilViewRHI* MetalDSV = static_cast<FMetalDepthStencilViewRHI*>(BeginRenderPassDesc.DepthStencilAttachment.View);
+    ContextState.SetRenderTargets(CachedRenderTargets, NumRenderTargets, MetalDSV);
+
+    FMetalTextureRHI* DSVTexture = MetalDSV ? GetMetalTexture(static_cast<FRHITexture*>(MetalDSV->GetResource())) : nullptr;
+    METAL_ERROR_COND((NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
     
     MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     RenderPassDescriptor.defaultRasterSampleCount = 1;
     RenderPassDescriptor.renderTargetArrayLength  = 1;
     
-    for (uint32 Index = 0; Index < BeginRenderPassDesc.NumRenderTargets; ++Index)
+    for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
     {
         const FRHIRenderPassAttachment& Attachment = BeginRenderPassDesc.RenderTargets[Index];
-        FMetalRenderTargetView* MetalRTV = static_cast<FMetalRenderTargetView*>(Attachment.View);
+        FMetalRenderTargetViewRHI* MetalRTV = static_cast<FMetalRenderTargetViewRHI*>(Attachment.View);
         METAL_ERROR_COND(MetalRTV != nullptr, "RenderTargetView cannot be nullptr");
 
-        FMetalTexture* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));
+        FMetalTextureRHI* RTVTexture = GetMetalTexture(static_cast<FRHITexture*>(MetalRTV->GetResource()));
         METAL_ERROR_COND(RTVTexture != nullptr, "Texture cannot be nullptr");
 
         MTLRenderPassColorAttachmentDescriptor* ColorAttachment = RenderPassDescriptor.colorAttachments[Index];
@@ -152,6 +199,7 @@ void FMetalCommandContext::EndRenderPass()
         
     [GraphicsEncoder endEncoding];
     [GraphicsEncoder release];
+    GraphicsEncoder = nil;
 }
 
 void FMetalCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
@@ -163,36 +211,30 @@ void FMetalCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
     Viewport.originY = ViewportRegion.PositionY;
     Viewport.znear   = ViewportRegion.MinDepth;
     Viewport.zfar    = ViewportRegion.MaxDepth;
-    
-    CurrentViewport = Viewport;
+
+    ContextState.SetViewports(&Viewport, 1);
 }
 
 void FMetalCommandContext::SetScissorRect(const FScissorRegion& ScissorRegion)
 {
-    // TODO: ImGui is screwing something up here
-    /*// Ensure that the size is correct;
-    Width  = Width - x;
-    Height = Height - y;
-    
-    MTLScissorRect ScissorRect;
-    ScissorRect.width  = Width;
-    ScissorRect.height = Height;
-    ScissorRect.x      = x;
-    ScissorRect.y      = y;
-    
-    [GraphicsEncoder setScissorRect:ScissorRect];*/
+    // TODO: ImGui is screwing something up here; once fixed, forward a properly sized rect to ContextState.
+    UNREFERENCED_VARIABLE(ScissorRegion);
 }
 
 void FMetalCommandContext::SetBlendFactor(const FVector4& Color)
 {
+    const float BlendFactor[4] = { Color.X, Color.Y, Color.Z, Color.W };
+    ContextState.SetBlendFactor(BlendFactor);
 }
 
 void FMetalCommandContext::SetStencilRef(uint32 StencilRef)
 {
+    ContextState.SetStencilRef(StencilRef);
 }
 
 void FMetalCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
 {
+    ContextState.SetDepthBias(DepthBias, DepthBiasClamp, SlopeScaledDepthBias);
 }
 
 void FMetalCommandContext::SetStreamOutputTargets(const TArrayView<FRHIBuffer* const> Buffers, const uint64* Offsets)
@@ -203,54 +245,59 @@ void FMetalCommandContext::SetVertexBuffers(const TArrayView<FRHIBuffer* const> 
 {
     for (int32 BufferIndex = 0; BufferIndex < InVertexBuffers.Size(); ++BufferIndex)
     {
-        const uint32 Index = BufferSlot + BufferIndex;
-        
-        FMetalBuffer* Buffer  = static_cast<FMetalBuffer*>(InVertexBuffers[Index]);
-        CurrentVertexBuffers[Index] = Buffer ? Buffer->GetMTLBuffer() : nil;
-        CurrentVertexOffsets[Index] = 0;
+        FMetalBufferRHI* Buffer = static_cast<FMetalBufferRHI*>(InVertexBuffers[BufferIndex]);
+        ContextState.SetVertexBuffer(Buffer, BufferSlot + BufferIndex);
     }
-    
-    CurrentVertexBufferRange = NSMakeRange(Math::Min<uint64>(BufferSlot, CurrentVertexBufferRange.location), Math::Max<uint64>(InVertexBuffers.Size(), CurrentVertexBufferRange.length));
 }
 
 void FMetalCommandContext::SetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
 {
-    CurrentIndexBuffer = MakeSharedRef<FMetalBuffer>(IndexBuffer);
+    FMetalBufferRHI* MetalIndexBuffer = static_cast<FMetalBufferRHI*>(IndexBuffer);
+    ContextState.SetIndexBuffer(MetalIndexBuffer, ConvertIndexFormat(IndexFormat));
 }
 
 void FMetalCommandContext::SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
 {
-    CurrentGraphicsPipeline = MakeSharedRef<FMetalGraphicsPipelineState>(PipelineState);
+    FMetalGraphicsPipelineStateRHI* MetalPipelineState = static_cast<FMetalGraphicsPipelineStateRHI*>(PipelineState);
+    ContextState.SetGraphicsPipelineState(MetalPipelineState);
 }
 
 void FMetalCommandContext::SetComputePipelineState(FRHIComputePipelineState* PipelineState)
 {
+    FMetalComputePipelineStateRHI* MetalPipelineState = static_cast<FMetalComputePipelineStateRHI*>(PipelineState);
+    ContextState.SetComputePipelineState(MetalPipelineState);
 }
 
 void FMetalCommandContext::SetShaderConstants(FRHIShader* Shader, const void* ShaderConstants, uint32 NumShaderConstants)
 {
+    FMetalShader* MetalShader = GetMetalShader(Shader);
+    if (!MetalShader)
+    {
+        return;
+    }
+
+    ContextState.SetShaderConstants(MetalShader->GetVisibility(), reinterpret_cast<const uint32*>(ShaderConstants), NumShaderConstants);
 }
 
 void FMetalCommandContext::SetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(RegisterIndex < kMaxSRVs);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentSRVs[Visibility][RegisterIndex] = MakeSharedRef<FMetalShaderResourceView>(ShaderResourceView);
+    FMetalShaderResourceViewRHI* MetalSRV = static_cast<FMetalShaderResourceViewRHI*>(ShaderResourceView);
+    ContextState.SetSRV(MetalSRV, MetalShader->GetVisibility(), RegisterIndex);
 }
 
 void FMetalCommandContext::SetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((RegisterIndex + InShaderResourceViews.Size()) < kMaxSRVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
-        CurrentSRVs[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalShaderResourceView>(InShaderResourceViews[Index]);
+        FMetalShaderResourceViewRHI* MetalSRV = static_cast<FMetalShaderResourceViewRHI*>(InShaderResourceViews[Index]);
+        ContextState.SetSRV(MetalSRV, Visibility, RegisterIndex + Index);
     }
 }
 
@@ -258,22 +305,21 @@ void FMetalCommandContext::SetUnorderedAccessView(FRHIShader* Shader, FRHIUnorde
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(RegisterIndex < kMaxUAVs);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentUAVs[Visibility][RegisterIndex] = MakeSharedRef<FMetalUnorderedAccessView>(UnorderedAccessView);
+    FMetalUnorderedAccessViewRHI* MetalUAV = static_cast<FMetalUnorderedAccessViewRHI*>(UnorderedAccessView);
+    ContextState.SetUAV(MetalUAV, MetalShader->GetVisibility(), RegisterIndex);
 }
 
 void FMetalCommandContext::SetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((RegisterIndex + InUnorderedAccessViews.Size()) < kMaxUAVs);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
-        CurrentUAVs[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalUnorderedAccessView>(InUnorderedAccessViews[Index]);
+        FMetalUnorderedAccessViewRHI* MetalUAV = static_cast<FMetalUnorderedAccessViewRHI*>(InUnorderedAccessViews[Index]);
+        ContextState.SetUAV(MetalUAV, Visibility, RegisterIndex + Index);
     }
 }
 
@@ -281,22 +327,21 @@ void FMetalCommandContext::SetConstantBuffer(FRHIShader* Shader, FRHIBuffer* Con
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(RegisterIndex < kMaxConstantBuffers);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentConstantBuffers[Visibility][RegisterIndex] = MakeSharedRef<FMetalBuffer>(ConstantBuffer);
+    FMetalBufferRHI* MetalBuffer = static_cast<FMetalBufferRHI*>(ConstantBuffer);
+    ContextState.SetCBV(MetalBuffer, MetalShader->GetVisibility(), RegisterIndex);
 }
 
 void FMetalCommandContext::SetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((RegisterIndex + InConstantBuffers.Size()) < kMaxConstantBuffers);
-        
+
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
-        CurrentConstantBuffers[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalBuffer>(InConstantBuffers[Index]);
+        FMetalBufferRHI* MetalBuffer = static_cast<FMetalBufferRHI*>(InConstantBuffers[Index]);
+        ContextState.SetCBV(MetalBuffer, Visibility, RegisterIndex + Index);
     }
 }
 
@@ -304,27 +349,22 @@ void FMetalCommandContext::SetSamplerState(FRHIShader* Shader, FRHISamplerState*
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK(RegisterIndex < kMaxConstantBuffers);
 
-    const EShaderVisibility Visibility = MetalShader->GetVisibility();
-    CurrentSamplerStates[Visibility][RegisterIndex] = MakeSharedRef<FMetalSamplerState>(SamplerState);
+    FMetalSamplerStateRHI* MetalSamplerState = static_cast<FMetalSamplerStateRHI*>(SamplerState);
+    ContextState.SetSampler(MetalSamplerState, MetalShader->GetVisibility(), RegisterIndex);
 }
 
 void FMetalCommandContext::SetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 RegisterIndex)
 {
     FMetalShader* MetalShader = GetMetalShader(Shader);
     CHECK(MetalShader != nullptr);
-    CHECK((RegisterIndex + InSamplerStates.Size()) < kMaxSamplerStates);
 
     const EShaderVisibility Visibility = MetalShader->GetVisibility();
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
-        CurrentSamplerStates[Visibility][RegisterIndex + Index] = MakeSharedRef<FMetalSamplerState>(InSamplerStates[Index]);
+        FMetalSamplerStateRHI* MetalSamplerState = static_cast<FMetalSamplerStateRHI*>(InSamplerStates[Index]);
+        ContextState.SetSampler(MetalSamplerState, Visibility, RegisterIndex + Index);
     }
-
-    /*CurrentSamplerStates[Visibility] = NSMakeRange(
-        Math::Min<uint32>(RegisterIndex, CurrentSamplerStateRange[Visibility].location),
-        Math::Max<uint32>(InSamplerStates.Size(), CurrentSamplerStateRange[Visibility].length));*/
 }
 
 void FMetalCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SourceData)
@@ -345,8 +385,8 @@ void FMetalCommandContext::ResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 
 void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
 {
-    FMetalBuffer* MetalDst = GetMetalBuffer(Dst);
-    FMetalBuffer* MetalSrc = GetMetalBuffer(Src);
+    FMetalBufferRHI* MetalDst = GetMetalBuffer(Dst);
+    FMetalBufferRHI* MetalSrc = GetMetalBuffer(Src);
     
     CHECK(CommandBuffer != nil);
     CHECK(MetalDst      != nullptr);
@@ -366,8 +406,8 @@ void FMetalCommandContext::CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FR
 
 void FMetalCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    FMetalTexture* MetalDst = GetMetalTexture(Dst);
-    FMetalTexture* MetalSrc = GetMetalTexture(Src);
+    FMetalTextureRHI* MetalDst = GetMetalTexture(Dst);
+    FMetalTextureRHI* MetalSrc = GetMetalTexture(Src);
     
     CHECK(CommandBuffer != nil);
     CHECK(MetalDst      != nullptr);
@@ -440,54 +480,22 @@ void FMetalCommandContext::UnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 void FMetalCommandContext::PrepareForDraw()
 {
     CHECK(GraphicsEncoder != nil);
-    
-    [GraphicsEncoder setViewport:CurrentViewport];
-    
-    // Necessary to retrieve all states and the resource bindings
-    if (CurrentGraphicsPipeline)
+
+    ContextState.PrepareGraphicsState();
+    ContextState.BindGraphicsState();
+}
+
+void FMetalCommandContext::PrepareForDispatch()
+{
+    if (ComputeEncoder == nil)
     {
-        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
-                                  offsets:CurrentVertexOffsets.Data()
-                                withRange:CurrentVertexBufferRange];
-
-        FMetalDepthStencilState* DepthStencilState = CurrentGraphicsPipeline->GetMetalDepthStencilState();
-        CHECK(DepthStencilState != nullptr);
-        
-        [GraphicsEncoder setDepthStencilState:DepthStencilState->GetMTLDepthStencilState()];
-        
-        FMetalRasterizerState* RasterizerState = CurrentGraphicsPipeline->GetMetalRasterizerState();
-        CHECK(RasterizerState != nullptr);
-        
-        [GraphicsEncoder setFrontFacingWinding:RasterizerState->FrontFaceWinding];
-        [GraphicsEncoder setTriangleFillMode:RasterizerState->FillMode];
-        
-        // [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
-        
-        // Vertex-Buffers stage
-        [GraphicsEncoder setVertexBuffers:CurrentVertexBuffers.Data()
-                                  offsets:CurrentVertexOffsets.Data()
-                                withRange:CurrentVertexBufferRange];
-        
-        /*
-        // Set resources for each shaderstage
-        for (EShaderVisibility ShaderStage = ShaderVisibility_Compute; ShaderStage < ShaderVisibility_Count; ShaderStage = EShaderVisibility(ShaderStage + 1))
-        {
-            id<MTLSamplerState>* SamplerStates = CurrentSamplerStates[ShaderVisibility_Vertex].Data();
-            [GraphicsEncoder setVertexSamplerStates:SamplerStates withRange:CurrentSamplerStateRange[ShaderVisibility_Vertex]];
-
-            const uint32 NumConstantBuffer = CurrentGraphicsPipeline->GetNumBuffers(ShaderStage);
-            for (uint32 Index = 0; Index < kMaxConstantBuffers; ++Index)
-            {
-                //const uint8 BindingIndex = CurrentGraphicsPipeline->GetConstantBufferBinding(Index);
-                //CurrentBuffers[ShaderStage][BindingIndex] = CurrentConstantBuffers[ShaderStage] ? CurrentConstantBuffers[ShaderStage]->GetMTLBuffer() : nil;
-            }
-
-            [GraphicsEncoder setVertexBuffers:CurrentBuffers[ShaderStage].Data()
-                                      offsets:nil
-                                    withRange:NSMakeRange(0, 0)];
-        }
-         */
+        CHECK(CommandBuffer != nil);
+        ComputeEncoder = [CommandBuffer computeCommandEncoder];
+        [ComputeEncoder retain];
     }
+
+    ContextState.PrepareComputeState();
+    ContextState.BindComputeState();
 }
 
 void FMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
@@ -496,8 +504,9 @@ void FMetalCommandContext::Draw(uint32 VertexCount, uint32 StartVertexLocation)
     
     PrepareForDraw();
     
-    CHECK(CurrentPrimitiveType != MTLPrimitiveType(-1));
-    //[GraphicsEncoder drawPrimitives:CurrentPrimitiveType vertexStart:StartVertexLocation vertexCount:VertexCount];
+    const MTLPrimitiveType PrimitiveType = ContextState.GetPrimitiveType();
+    CHECK(PrimitiveType != MTLPrimitiveType(-1));
+    //[GraphicsEncoder drawPrimitives:PrimitiveType vertexStart:StartVertexLocation vertexCount:VertexCount];
 }
 
 void FMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
@@ -506,14 +515,16 @@ void FMetalCommandContext::DrawIndexed(uint32 IndexCount, uint32 StartIndexLocat
     
     PrepareForDraw();
     
-    CHECK(CurrentIndexBuffer   != nullptr);
-    CHECK(CurrentPrimitiveType != MTLPrimitiveType(-1));
-    
-    /*[GraphicsEncoder drawIndexedPrimitives:CurrentPrimitiveType
+    const FMetalIndexBufferCache& IndexBufferCache = ContextState.GetIndexBufferCache();
+    const MTLPrimitiveType        PrimitiveType    = ContextState.GetPrimitiveType();
+    CHECK(IndexBufferCache.IndexBuffer != nil);
+    CHECK(PrimitiveType                != MTLPrimitiveType(-1));
+
+    /*[GraphicsEncoder drawIndexedPrimitives:PrimitiveType
                                 indexCount:IndexCount
-                                 indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
-                               indexBuffer:CurrentIndexBuffer->GetMTLBuffer()
-                         indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
+                                 indexType:IndexBufferCache.IndexType
+                               indexBuffer:IndexBufferCache.IndexBuffer
+                         indexBufferOffset:IndexBufferCache.BufferResource->GetStride() * StartIndexLocation
                              instanceCount:1
                                 baseVertex:BaseVertexLocation
                               baseInstance:0];*/
@@ -525,8 +536,9 @@ void FMetalCommandContext::DrawInstanced(uint32 VertexCountPerInstance, uint32 I
     
     PrepareForDraw();
     
-    CHECK(CurrentPrimitiveType != MTLPrimitiveType(-1));
-    /*[GraphicsEncoder drawPrimitives:CurrentPrimitiveType
+    const MTLPrimitiveType PrimitiveType = ContextState.GetPrimitiveType();
+    CHECK(PrimitiveType != MTLPrimitiveType(-1));
+    /*[GraphicsEncoder drawPrimitives:PrimitiveType
                         vertexStart:StartVertexLocation
                         vertexCount:VertexCountPerInstance
                       instanceCount:InstanceCount
@@ -539,14 +551,16 @@ void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
     
     PrepareForDraw();
     
-    CHECK(CurrentIndexBuffer   != nullptr);
-    CHECK(CurrentPrimitiveType != MTLPrimitiveType(-1));
-    
-    /*[GraphicsEncoder drawIndexedPrimitives:CurrentPrimitiveType
+    const FMetalIndexBufferCache& IndexBufferCache = ContextState.GetIndexBufferCache();
+    const MTLPrimitiveType        PrimitiveType    = ContextState.GetPrimitiveType();
+    CHECK(IndexBufferCache.IndexBuffer != nil);
+    CHECK(PrimitiveType                != MTLPrimitiveType(-1));
+
+    /*[GraphicsEncoder drawIndexedPrimitives:PrimitiveType
                                 indexCount:IndexCountPerInstance
-                                 indexType:(CurrentIndexBuffer->GetFormat() == EIndexFormat::uint32) ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16
-                               indexBuffer:CurrentIndexBuffer->GetMTLBuffer()
-                         indexBufferOffset:CurrentIndexBuffer->GetStride() * StartIndexLocation
+                                 indexType:IndexBufferCache.IndexType
+                               indexBuffer:IndexBufferCache.IndexBuffer
+                         indexBufferOffset:IndexBufferCache.BufferResource->GetStride() * StartIndexLocation
                              instanceCount:InstanceCount
                                 baseVertex:BaseVertexLocation
                               baseInstance:StartInstanceLocation];*/
@@ -554,6 +568,7 @@ void FMetalCommandContext::DrawIndexedInstanced(uint32 IndexCountPerInstance, ui
 
 void FMetalCommandContext::Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
+    PrepareForDispatch();
 }
 
 void FMetalCommandContext::DispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
@@ -562,47 +577,19 @@ void FMetalCommandContext::DispatchRays(FRHISceneAccelerationStructure* InScene,
 
 void FMetalCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync)
 {
-    FMetalSwapChain* MetalSwapChain = static_cast<FMetalSwapChain*>(SwapChain);
+    FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
     MetalSwapChain->Present(bVerticalSync);
 }
 
 void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
 {
-    FMetalSwapChain* MetalSwapChain = static_cast<FMetalSwapChain*>(SwapChain);
+    FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
     MetalSwapChain->Resize(Width, Height);
 }
 
 void FMetalCommandContext::ClearState()
 {
-    FMemory::Memzero(&CurrentViewport);
-    
-    CurrentIndexBuffer      = nullptr;
-    CurrentGraphicsPipeline = nullptr;
-    
-    CurrentVertexBuffers.Fill(nil);
-    CurrentVertexOffsets.Memzero();
-    CurrentVertexBufferRange = NSMakeRange(0, 0);
-
-    CurrentIndexBuffer = nullptr;
-    
-    // Pipeline
-    CurrentPrimitiveType    = MTLPrimitiveType(-1);
-    CurrentGraphicsPipeline = nullptr;
-    
-    // Resources
-    for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
-    {
-        CurrentSamplerStates[ShaderStage].Fill(nil);
-        // CurrentSamplerStateRange[ShaderStage] = NSMakeRange(0, 0);
-        
-        CurrentSRVs[ShaderStage].Fill(nullptr);
-        CurrentUAVs[ShaderStage].Fill(nullptr);
-        CurrentConstantBuffers[ShaderStage].Fill(nullptr);
-        
-        CurrentBuffers[ShaderStage].Fill(nil);
-        CurrentTextures[ShaderStage].Fill(nil);
-    }
-    
+    ContextState.ResetState();
     Flush();
 }
 
@@ -652,3 +639,5 @@ void FMetalCommandContext::PopEvent()
         [Encoder popDebugGroup];
     }
 }
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -1,6 +1,6 @@
 #include "MetalRHI/MetalShader.h"
 
-FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility)
+FMetalShader::FMetalShader(FMetalDevice* InDevice, EShaderVisibility InVisibility)
     : FMetalDeviceChild(InDevice)
     , Library(nil)
     , FunctionName(nil)
@@ -30,7 +30,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         CHECK(Source != nil);
         [Source retain];
         
-        id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
+        id<MTLDevice> Device = GetDevice()->GetMTLDevice();
         CHECK(Device != nil);
         
         NSError* Error = nil;
@@ -56,4 +56,137 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
     }
     
     return true;
+}
+
+FMetalVertexShaderRHI::FMetalVertexShaderRHI(FMetalDevice* InDevice)
+    : FRHIVertexShader()
+    , FMetalShader(InDevice, ShaderVisibility_Vertex)
+{
+}
+
+FMetalVertexShaderRHI::~FMetalVertexShaderRHI() = default;
+
+FMetalPixelShaderRHI::FMetalPixelShaderRHI(FMetalDevice* InDevice)
+    : FRHIPixelShader()
+    , FMetalShader(InDevice, ShaderVisibility_Pixel)
+{
+}
+
+FMetalPixelShaderRHI::~FMetalPixelShaderRHI() = default;
+
+FMetalComputeShaderRHI::FMetalComputeShaderRHI(FMetalDevice* InDevice)
+    : FRHIComputeShader()
+    , FMetalShader(InDevice, ShaderVisibility_Compute)
+{
+}
+
+FMetalComputeShaderRHI::~FMetalComputeShaderRHI() = default;
+
+FMetalRayTracingShader::FMetalRayTracingShader(FMetalDevice* InDevice)
+    : FMetalShader(InDevice, ShaderVisibility_Compute)
+{
+}
+
+FMetalRayTracingShader::~FMetalRayTracingShader() = default;
+
+FMetalRayGenShaderRHI::FMetalRayGenShaderRHI(FMetalDevice* InDevice)
+    : FRHIRayGenShader()
+    , FMetalRayTracingShader(InDevice)
+{
+}
+
+FMetalRayGenShaderRHI::~FMetalRayGenShaderRHI() = default;
+
+FMetalRayAnyHitShaderRHI::FMetalRayAnyHitShaderRHI(FMetalDevice* InDevice)
+    : FRHIRayAnyHitShader()
+    , FMetalRayTracingShader(InDevice)
+{
+}
+
+FMetalRayAnyHitShaderRHI::~FMetalRayAnyHitShaderRHI() = default;
+
+FMetalRayClosestHitShaderRHI::FMetalRayClosestHitShaderRHI(FMetalDevice* InDevice)
+    : FRHIRayClosestHitShader()
+    , FMetalRayTracingShader(InDevice)
+{
+}
+
+FMetalRayClosestHitShaderRHI::~FMetalRayClosestHitShaderRHI() = default;
+
+FMetalRayMissShaderRHI::FMetalRayMissShaderRHI(FMetalDevice* InDevice)
+    : FRHIRayMissShader()
+    , FMetalRayTracingShader(InDevice)
+{
+}
+
+FMetalRayMissShaderRHI::~FMetalRayMissShaderRHI() = default;
+
+void* FMetalVertexShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalVertexShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalShader*>(this);
+}
+
+void* FMetalPixelShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalPixelShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalShader*>(this);
+}
+
+void* FMetalRayGenShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalRayGenShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalRayTracingShader*>(this);
+}
+
+void* FMetalRayAnyHitShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalRayAnyHitShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalRayTracingShader*>(this);
+}
+
+void* FMetalRayClosestHitShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalRayClosestHitShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalRayTracingShader*>(this);
+}
+
+void* FMetalRayMissShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalRayMissShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalRayTracingShader*>(this);
+}
+
+void* FMetalComputeShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(GetMTLFunction());
+}
+
+void* FMetalComputeShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FMetalShader*>(this);
 }

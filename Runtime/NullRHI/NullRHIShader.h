@@ -6,23 +6,21 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 template<typename T>
 struct TNullRHIShader;
 
-typedef TNullRHIShader<class FRHIVertexShader>           FNullRHIVertexShader;
-typedef TNullRHIShader<class FRHIHullShader>             FNullRHIHullShader;
-typedef TNullRHIShader<class FRHIDomainShader>           FNullRHIDomainShader;
-typedef TNullRHIShader<class FRHIGeometryShader>         FNullRHIGeometryShader;
-typedef TNullRHIShader<class FRHIAmplificationShader>    FNullRHIAmplificationShader;
-typedef TNullRHIShader<class FRHIMeshShader>             FNullRHIMeshShader;
-typedef TNullRHIShader<class FRHIPixelShader>            FNullRHIPixelShader;
-
-typedef TNullRHIShader<class FRHIComputeShader>          FNullRHIComputeShader;
-
-typedef TNullRHIShader<class FRHIRayTracingShader>       FNullRHIRayTracingShader;
-typedef TNullRHIShader<class FRHIRayGenShader>           FNullRHIRayGenShader;
-typedef TNullRHIShader<class FRHIRayMissShader>          FNullRHIRayMissShader;
-typedef TNullRHIShader<class FRHIRayClosestHitShader>    FNullRHIRayClosestHitShader;
-typedef TNullRHIShader<class FRHIRayAnyHitShader>        FNullRHIRayAnyHitShader;
-typedef TNullRHIShader<class FRHIRayIntersectionShader>  FNullRHIRayIntersectionShader;
-typedef TNullRHIShader<class FRHIRayCallableShader>      FNullRHIRayCallableShader;
+typedef TNullRHIShader<class FRHIVertexShader>          FNullVertexShaderRHI;
+typedef TNullRHIShader<class FRHIHullShader>            FNullHullShaderRHI;
+typedef TNullRHIShader<class FRHIDomainShader>          FNullDomainShaderRHI;
+typedef TNullRHIShader<class FRHIGeometryShader>        FNullGeometryShaderRHI;
+typedef TNullRHIShader<class FRHIAmplificationShader>   FNullAmplificationShaderRHI;
+typedef TNullRHIShader<class FRHIMeshShader>            FNullMeshShaderRHI;
+typedef TNullRHIShader<class FRHIPixelShader>           FNullPixelShaderRHI;
+typedef TNullRHIShader<class FRHIComputeShader>         FNullComputeShaderRHI;
+typedef TNullRHIShader<class FRHIRayTracingShader>      FNullRayTracingShaderRHI;
+typedef TNullRHIShader<class FRHIRayGenShader>          FNullRayGenShaderRHI;
+typedef TNullRHIShader<class FRHIRayMissShader>         FNullRayMissShaderRHI;
+typedef TNullRHIShader<class FRHIRayClosestHitShader>   FNullRayClosestHitShaderRHI;
+typedef TNullRHIShader<class FRHIRayAnyHitShader>       FNullRayAnyHitShaderRHI;
+typedef TNullRHIShader<class FRHIRayIntersectionShader> FNullRayIntersectionShaderRHI;
+typedef TNullRHIShader<class FRHIRayCallableShader>     FNullRayCallableShaderRHI;
 
 template<typename BaseShaderType>
 struct TNullRHIShader final : public BaseShaderType
@@ -32,7 +30,15 @@ struct TNullRHIShader final : public BaseShaderType
     {
     }
 
-    virtual void* GetRHIBaseInterface() override final { return this; }
+    virtual void* GetRHINativeHandle() override final
+    {
+        return nullptr;
+    }
+
+    virtual void* GetRHIBaseInterface() override final
+    {
+        return this;
+    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

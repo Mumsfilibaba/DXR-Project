@@ -228,6 +228,11 @@ FRHIDescriptorHandle FVulkanShaderResourceViewRHI::GetBindlessHandle() const
     return FRHIDescriptorHandle();
 }
 
+void* FVulkanShaderResourceViewRHI::GetRHINativeHandle() const
+{
+    return GetRHINativeHandleForType();
+}
+
 void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
 {
     FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
@@ -436,6 +441,11 @@ FRHIDescriptorHandle FVulkanUnorderedAccessViewRHI::GetBindlessHandle() const
     return FRHIDescriptorHandle();
 }
 
+void* FVulkanUnorderedAccessViewRHI::GetRHINativeHandle() const
+{
+    return GetRHINativeHandleForType();
+}
+
 void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
 {
     FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
@@ -636,6 +646,11 @@ FVulkanRenderTargetViewRHI::FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, 
 {
 }
 
+void* FVulkanRenderTargetViewRHI::GetRHINativeHandle() const
+{
+    return GetRHINativeHandleForType();
+}
+
 FVulkanRenderTargetViewRHI* FVulkanRenderTargetViewRHI::GetRenderTargetViewInterface() const
 {
     return const_cast<FVulkanRenderTargetViewRHI*>(this);
@@ -754,6 +769,11 @@ FVulkanDepthStencilViewRHI::FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, 
     : FRHIDepthStencilView(InResource)
     , FVulkanResourceView(InDevice)
 {
+}
+
+void* FVulkanDepthStencilViewRHI::GetRHINativeHandle() const
+{
+    return GetRHINativeHandleForType();
 }
 
 void FVulkanDepthStencilViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
@@ -879,4 +899,10 @@ FVulkanBackBufferProxyRenderTargetViewRHI::~FVulkanBackBufferProxyRenderTargetVi
 FVulkanRenderTargetViewRHI* FVulkanBackBufferProxyRenderTargetViewRHI::GetRenderTargetViewInterface() const
 {
     return SwapChain ? SwapChain->GetCurrentBackBufferRenderTargetView() : nullptr;
+}
+
+void* FVulkanBackBufferProxyRenderTargetViewRHI::GetRHINativeHandle() const
+{
+    FVulkanRenderTargetViewRHI* CurrentRTV = GetRenderTargetViewInterface();
+    return CurrentRTV ? CurrentRTV->GetRHINativeHandle() : nullptr;
 }

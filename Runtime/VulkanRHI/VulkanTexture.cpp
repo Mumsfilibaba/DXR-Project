@@ -68,7 +68,7 @@ FVulkanTextureRHI* FVulkanTextureRHI::GetTextureInterface() const
     return const_cast<FVulkanTextureRHI*>(this);
 }
 
-void* FVulkanTextureRHI::GetRHINativeHandle() const
+void* FVulkanTextureRHI::GetRHINativeResource() const
 {
     return reinterpret_cast<void*>(GetVkImage());
 }
@@ -592,11 +592,11 @@ FVulkanTextureRHI* FVulkanBackBufferProxyTextureRHI::GetTextureInterface() const
     return SwapChain ? SwapChain->GetCurrentBackBuffer() : nullptr;
 }
 
-void* FVulkanBackBufferProxyTextureRHI::GetRHINativeHandle() const
+void* FVulkanBackBufferProxyTextureRHI::GetRHINativeResource() const
 {
     if (FVulkanTextureRHI* CurrentBackBuffer = GetTextureInterface())
     {
-        return CurrentBackBuffer->GetRHINativeHandle();
+        return CurrentBackBuffer->GetRHINativeResource();
     }
     else
     {

@@ -3,17 +3,20 @@
 #include "MetalRHI/MetalDeviceChild.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalSamplerState> FMetalSamplerStateRef;
+typedef TSharedRef<class FMetalSamplerStateRHI> FMetalSamplerStateRef;
 
-class FMetalSamplerState : public FRHISamplerState, public FMetalDeviceChild
+class FMetalSamplerStateRHI : public FRHISamplerState, public FMetalDeviceChild
 {
 public:
-    FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateDesc& InSamplerDesc);
-    ~FMetalSamplerState();
+    FMetalSamplerStateRHI(FMetalDevice* InDevice, const FRHISamplerStateDesc& InSamplerDesc);
+    ~FMetalSamplerStateRHI();
 
+    // FRHISamplerState Interface
+    virtual void* GetRHINativeSampler() const override final;
+    
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
+    
     bool Initialize();
-
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     id<MTLSamplerState> GetMTLSamplerState() const
     {

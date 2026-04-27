@@ -18,9 +18,13 @@ public:
     virtual ~FD3D12SwapChainRHI();
 
     // FRHISwapChain Interface
+    virtual void*  GetRHINativeHandle()                                          const override final;
+    virtual void*  GetRHINativeBackBufferResourceFromIndex(uint32 Index)         const override final;
+    virtual void*  GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const override final;
+    virtual uint32 GetRHINativeBackBufferCount()                                 const override final;
+
     virtual FRHITexture*          GetBackBuffer()                 const override final;
     virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final;
-    virtual void*                 GetNativeSwapChain()            const override final;
 
     bool Initialize(FD3D12CommandContext* InCommandContext);
     bool Resize(FD3D12CommandContext* InCommandContext, uint32 Width, uint32 Height);

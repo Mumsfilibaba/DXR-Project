@@ -3,9 +3,9 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FMetalQuery : public FRHIQuery
+struct FMetalQueryRHI : public FRHIQuery
 {
-    FMetalQuery(EQueryType InQueryType)
+    FMetalQueryRHI(EQueryType InQueryType)
         : FRHIQuery(InQueryType)
     {
     }

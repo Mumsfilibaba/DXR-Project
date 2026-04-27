@@ -13,7 +13,9 @@ public:
     bool Initialize();
     
     // FRHISamplerState Interface
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual void* GetRHINativeSampler() const override final;
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
     
     VkSampler GetVkSampler() const
     {

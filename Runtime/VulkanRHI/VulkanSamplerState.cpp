@@ -13,6 +13,16 @@ FVulkanSamplerStateRHI::~FVulkanSamplerStateRHI()
     Sampler = VK_NULL_HANDLE;
 }
 
+void* FVulkanSamplerStateRHI::GetRHINativeSampler() const
+{
+    return reinterpret_cast<void*>(Sampler);
+}
+
+FRHIDescriptorHandle FVulkanSamplerStateRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
 bool FVulkanSamplerStateRHI::Initialize()
 {
     if (!GetDevice()->FindOrCreateSampler(Desc, Sampler))

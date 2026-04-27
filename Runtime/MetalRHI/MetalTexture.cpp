@@ -3,9 +3,9 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureDesc& InTextureDesc)
+FMetalTextureRHI::FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc& InTextureDesc)
     : FRHITexture(InTextureDesc)
-    , FMetalDeviceChild(InDeviceContext)
+    , FMetalDeviceChild(InDevice)
     , Texture(nil)
     , SwapChain(nullptr)
     , ShaderResourceView(nullptr)
@@ -14,12 +14,47 @@ FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITex
 {
 }
 
-FMetalTexture::~FMetalTexture()
+FMetalTextureRHI::~FMetalTextureRHI()
 {
     [Texture release];
 }
 
-bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
+void* FMetalTextureRHI::GetRHINativeResource() const
+{
+    return reinterpret_cast<void*>(GetMTLTexture());
+}
+
+FRHIShaderResourceView* FMetalTextureRHI::GetShaderResourceView() const
+{
+    return ShaderResourceView.Get();
+}
+
+FRHIUnorderedAccessView* FMetalTextureRHI::GetUnorderedAccessView() const
+{
+    return nullptr;
+}
+
+FRHIRenderTargetView* FMetalTextureRHI::GetRenderTargetView() const
+{
+    return RenderTargetView.Get();
+}
+
+FRHIDepthStencilView* FMetalTextureRHI::GetDepthStencilView() const
+{
+    return DepthStencilView.Get();
+}
+
+FRHIDescriptorHandle FMetalTextureRHI::GetBindlessUAVHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
+FRHIDescriptorHandle FMetalTextureRHI::GetBindlessSRVHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
+bool FMetalTextureRHI::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -49,7 +84,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         TextureDescriptor.arrayLength = Math::Max(Desc.Extent.Z, 1);
     }
     
-    id<MTLDevice>  Device = GetDeviceContext()->GetMTLDevice();
+    id<MTLDevice>  Device = GetDevice()->GetMTLDevice();
     id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
     if (!NewTexture)
     {
@@ -65,7 +100,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         {
             @autoreleasepool
             {
-                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
+                id<MTLCommandQueue>       CommandQueue  = GetDevice()->GetMTLCommandQueue();
                 id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
                 id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
 
@@ -133,18 +168,18 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
 
     if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
     {
-        RenderTargetView = new FMetalRenderTargetView(GetDeviceContext(), FRHIRenderTargetViewDesc(this));
+        RenderTargetView = new FMetalRenderTargetViewRHI(GetDevice(), FRHIRenderTargetViewDesc(this));
     }
 
     if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
     {
-        DepthStencilView = new FMetalDepthStencilView(GetDeviceContext(), FRHIDepthStencilViewDesc(this));
+        DepthStencilView = new FMetalDepthStencilViewRHI(GetDevice(), FRHIDepthStencilViewDesc(this));
     }
 
     return true;
 }
 
-void FMetalTexture::SetDebugName(const FString& InName)
+void FMetalTextureRHI::SetDebugName(const FString& InName)
 {
     @autoreleasepool
     {
@@ -156,7 +191,7 @@ void FMetalTexture::SetDebugName(const FString& InName)
     }
 }
 
-void FMetalTexture::GetDebugName(FString& OutDebugName) const
+void FMetalTextureRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName.Clear();
 
@@ -170,7 +205,7 @@ void FMetalTexture::GetDebugName(FString& OutDebugName) const
     }
 }
 
-id<MTLTexture> FMetalTexture::GetMTLTexture() const
+id<MTLTexture> FMetalTextureRHI::GetMTLTexture() const
 {
     // Need to get the texture from the viewport
     if (SwapChain)

@@ -1,20 +1,20 @@
 #pragma once
 #include "RHI/RHIFence.h"
 
-class FMetalGpuFence final : public FRHIFence
+class FMetalFenceRHI final : public FRHIFence
 {
 public:
-    FMetalGpuFence()
-        : FRHIFence()
-        , DebugName()
-    {
-    }
+    FMetalFenceRHI();
+    virtual ~FMetalFenceRHI();
 
     // FRHIFence Interface
-    virtual bool IsSignaled() const override final { return true; }
-    virtual bool Wait(uint64 TimeoutNs) const override final { (void)TimeoutNs; return true; }
-    virtual void SetDebugName(const FString& InName) override final { DebugName = InName; }
-    virtual void GetDebugName(FString& OutDebugName) const override final { OutDebugName = DebugName; }
+    virtual void* GetRHINativeFence() const override final;
+    
+    virtual bool IsSignaled()           const override final;
+    virtual bool Wait(uint64 TimeoutNs) const override final;
+
+    virtual void SetDebugName(const FString& InName)       override final;
+    virtual void GetDebugName(FString& OutDebugName) const override final;
 
 private:
     FString DebugName;

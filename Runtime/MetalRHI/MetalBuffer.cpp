@@ -1,21 +1,53 @@
 #include "MetalRHI/MetalBuffer.h"
-#include "MetalRHI/MetalDeviceContext.h"
+#include "MetalRHI/MetalDevice.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FMetalBuffer::FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferDesc& InBufferDesc)
+FMetalBufferRHI::FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
-    , FMetalDeviceChild(DeviceContext)
+    , FMetalDeviceChild(InDevice)
     , Buffer(nil)
 {
 }
 
-FMetalBuffer::~FMetalBuffer()
+FMetalBufferRHI::~FMetalBufferRHI()
 {
     [Buffer release];
 }
 
-bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)
+void* FMetalBufferRHI::GetRHINativeResource() const
+{
+    return reinterpret_cast<void*>(GetMTLBuffer());
+}
+
+FRHIDescriptorHandle FMetalBufferRHI::GetBindlessHandle() const
+{
+    return FRHIDescriptorHandle();
+}
+
+void* FMetalBufferRHI::Map(uint64 Offset, uint64 Size)
+{
+    id<MTLBuffer> BufferHandle = GetMTLBuffer();
+    if (!BufferHandle)
+    {
+        return nullptr;
+    }
+
+    // Only shared-storage (CPU-visible) buffers can be mapped directly.
+    if (BufferHandle.storageMode != MTLStorageModeShared)
+    {
+        return nullptr;
+    }
+
+    uint8* Contents = static_cast<uint8*>([BufferHandle contents]);
+    return Contents ? (Contents + Offset) : nullptr;
+}
+
+void FMetalBufferRHI::Unmap(uint64 Offset, uint64 Size)
+{
+}
+
+bool FMetalBufferRHI::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -32,7 +64,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     const uint64 Alignment   = Desc.IsConstantBuffer() ? kConstantBufferAlignment : kBufferAlignment;
     const uint64 AlignedSize = Math::AlignUp(Desc.Size, Alignment);
     
-    id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
+    id<MTLDevice> Device = GetDevice()->GetMTLDevice();
     CHECK(Device != nil);
     
     id<MTLBuffer> NewBuffer = [Device newBufferWithLength:AlignedSize options:ResourceOptions];
@@ -58,7 +90,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
                 id<MTLBuffer> StagingBuffer = [Device newBufferWithLength:Desc.Size options:MTLResourceCPUCacheModeDefaultCache];
                 FMemory::Memcpy(StagingBuffer.contents, InInitialData, Desc.Size);
                 
-                id<MTLCommandQueue>       CommandQueue  = GetDeviceContext()->GetMTLCommandQueue();
+                id<MTLCommandQueue>       CommandQueue  = GetDevice()->GetMTLCommandQueue();
                 id<MTLCommandBuffer>      CommandBuffer = [CommandQueue commandBuffer];
                 id<MTLBlitCommandEncoder> CopyEncoder   = [CommandBuffer blitCommandEncoder];
                 
@@ -82,7 +114,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     return true;
 }
 
-void FMetalBuffer::SetDebugName(const FString& InName)
+void FMetalBufferRHI::SetDebugName(const FString& InName)
 {
     @autoreleasepool
     {
@@ -94,7 +126,7 @@ void FMetalBuffer::SetDebugName(const FString& InName)
     }
 }
 
-void FMetalBuffer::GetDebugName(FString& OutDebugName) const
+void FMetalBufferRHI::GetDebugName(FString& OutDebugName) const
 {
     OutDebugName.Clear();
 

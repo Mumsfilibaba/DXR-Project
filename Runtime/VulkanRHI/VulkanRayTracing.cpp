@@ -23,6 +23,11 @@ FVulkanGeometryAccelerationStructureRHI::~FVulkanGeometryAccelerationStructureRH
     }
 }
 
+void* FVulkanGeometryAccelerationStructureRHI::GetRHINativeResource() const
+{
+    return reinterpret_cast<void*>(Geometry);
+}
+
 void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(Geometry))

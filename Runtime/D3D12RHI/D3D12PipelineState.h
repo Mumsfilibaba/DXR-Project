@@ -25,6 +25,8 @@ public:
     virtual ~FD3D12InputLayoutRHI();
 
     // FRHIInputLayout Interface
+    virtual void* GetRHINativeState() const override final;
+
     virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final;
     virtual uint32 GetNumInputElementDescs() const override final;
 
@@ -53,6 +55,8 @@ public:
     virtual ~FD3D12DepthStencilStateRHI();
 
     // FRHIDepthStencilState Interface
+    virtual void* GetRHINativeState() const override final;
+
     virtual FRHIDepthStencilStateDesc GetDesc() const override final;
 
     const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
@@ -78,6 +82,8 @@ public:
     virtual ~FD3D12RasterizerStateRHI();
 
     // FRHIRasterizerState Interface
+    virtual void* GetRHINativeState() const override final;
+
     virtual FRHIRasterizerStateDesc GetDesc() const override final;
 
     const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
@@ -103,6 +109,8 @@ public:
     virtual ~FD3D12BlendStateRHI();
 
     // FRHIBlendState Interface
+    virtual void* GetRHINativeState() const override final;
+
     virtual FRHIBlendStateDesc GetDesc() const override final;
 
     const D3D12_BLEND_DESC& GetD3D12Desc() const
@@ -314,13 +322,13 @@ public:
     FD3D12GraphicsPipelineStateRHI(FD3D12Device* InDevice);
     virtual ~FD3D12GraphicsPipelineStateRHI();
 
-    bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
-
     // FRHIPipelineState Interface
-    virtual void* GetRHINativeHandle() const override final;
-
-    virtual void SetDebugName(const FString& InName) override final;
+    virtual void* GetRHINativeState() const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
+
+    bool Initialize(const FRHIGraphicsPipelineStateDesc& Desc);
 
     D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
     {
@@ -334,7 +342,7 @@ public:
     FORCEINLINE FD3D12PixelShaderRHI*    GetPixelShader()    const { return PixelShader.Get(); }
 
 private:
-    D3D12_PRIMITIVE_TOPOLOGY         PrimitiveTopology;
+    D3D12_PRIMITIVE_TOPOLOGY            PrimitiveTopology;
     TSharedRef<FD3D12VertexShaderRHI>   VertexShader;
     TSharedRef<FD3D12HullShaderRHI>     HullShader;
     TSharedRef<FD3D12DomainShaderRHI>   DomainShader;
@@ -371,13 +379,13 @@ public:
     FD3D12ComputePipelineStateRHI(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShaderRHI>& InShader);
     virtual ~FD3D12ComputePipelineStateRHI();
 
-    bool Initialize(const FRHIComputePipelineStateDesc& Desc);
-
     // FRHIPipelineState Interface
-    virtual void* GetRHINativeHandle() const override final;
-
-    virtual void SetDebugName(const FString& InName) override final;
+    virtual void* GetRHINativeState() const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
+    
+    bool Initialize(const FRHIComputePipelineStateDesc& Desc);
 
     FORCEINLINE FD3D12ComputeShaderRHI* GetComputeShader() const
     {
@@ -399,13 +407,13 @@ public:
     FD3D12RayTracingPipelineStateRHI(FD3D12Device* InDevice);
     virtual ~FD3D12RayTracingPipelineStateRHI();
 
-    bool Initialize(const FRHIRayTracingPipelineStateDesc& Desc);
-
     // FRHIPipelineState Interface
-    virtual void* GetRHINativeHandle() const override final;
-
-    virtual void SetDebugName(const FString& InName) override final;
+    virtual void* GetRHINativeState() const override final;
+    
+    virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
+    
+    bool Initialize(const FRHIRayTracingPipelineStateDesc& Desc);
 
     void* GetShaderIdentifier(const FString& ExportName);
 

@@ -92,6 +92,11 @@ FVulkanInputLayoutRHI::~FVulkanInputLayoutRHI()
 {
 }
 
+void* FVulkanInputLayoutRHI::GetRHINativeState() const
+{
+    return nullptr;
+}
+
 const FRHIInputElementDesc* FVulkanInputLayoutRHI::GetInputElementDesc(uint32 Index) const
 {
     return &InputElements[Index];
@@ -125,6 +130,11 @@ FVulkanDepthStencilStateRHI::FVulkanDepthStencilStateRHI(const FRHIDepthStencilS
 
 FVulkanDepthStencilStateRHI::~FVulkanDepthStencilStateRHI()
 {
+}
+
+void* FVulkanDepthStencilStateRHI::GetRHINativeState() const
+{
+    return nullptr;
 }
 
 FRHIDepthStencilStateDesc FVulkanDepthStencilStateRHI::GetDesc() const
@@ -203,6 +213,11 @@ FVulkanRasterizerStateRHI::~FVulkanRasterizerStateRHI()
 {
 }
 
+void* FVulkanRasterizerStateRHI::GetRHINativeState() const
+{
+    return nullptr;
+}
+
 FRHIRasterizerStateDesc FVulkanRasterizerStateRHI::GetDesc() const
 {
     return Desc;
@@ -236,6 +251,11 @@ FVulkanBlendStateRHI::FVulkanBlendStateRHI(const FRHIBlendStateDesc& InDesc)
 
 FVulkanBlendStateRHI::~FVulkanBlendStateRHI()
 {
+}
+
+void* FVulkanBlendStateRHI::GetRHINativeState() const
+{
+    return nullptr;
 }
 
 FRHIBlendStateDesc FVulkanBlendStateRHI::GetDesc() const
@@ -278,7 +298,7 @@ FVulkanGraphicsPipelineStateRHI::~FVulkanGraphicsPipelineStateRHI()
 {
 }
 
-void* FVulkanGraphicsPipelineStateRHI::GetRHINativeHandle() const
+void* FVulkanGraphicsPipelineStateRHI::GetRHINativeState() const
 {
     return reinterpret_cast<void*>(GetVkPipeline());
 }
@@ -649,7 +669,7 @@ FVulkanComputePipelineStateRHI::~FVulkanComputePipelineStateRHI()
 {
 }
 
-void* FVulkanComputePipelineStateRHI::GetRHINativeHandle() const
+void* FVulkanComputePipelineStateRHI::GetRHINativeState() const
 {
     return reinterpret_cast<void*>(GetVkPipeline());
 }
@@ -736,6 +756,11 @@ bool FVulkanComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDe
     {
         return true;
     }
+}
+
+void* FVulkanRayTracingPipelineStateRHI::GetRHINativeState() const
+{
+    return nullptr;
 }
 
 FVulkanPipelineStateManager::FVulkanPipelineStateManager(FVulkanDevice* InDevice)

@@ -365,33 +365,33 @@ public:
 
     /**
      * @brief Gets the native adapter.
-     * @return The native adapter.
+     * @return D3D12: IDXGIAdapter*. Vulkan: VkPhysicalDevice. Metal/Null: nullptr (TODO on Metal).
      */
-    virtual void* GetNativeAdapter() = 0;
+    virtual void* GetRHINativeAdapter() = 0;
 
     /**
      * @brief Gets the native device.
-     * @return The native device.
+     * @return D3D12: ID3D12Device*. Vulkan: VkDevice. Metal: id<MTLDevice>. Null: nullptr.
      */
-    virtual void* GetNativeDevice() = 0;
+    virtual void* GetRHINativeDevice() = 0;
 
     /**
      * @brief Gets the native direct (graphics) command queue.
-     * @return The native direct command queue.
+     * @return D3D12: ID3D12CommandQueue* (direct). Vulkan: VkQueue (graphics). Metal: id<MTLCommandQueue>. Null: nullptr.
      */
-    virtual void* GetNativeDirectCommandQueue() = 0;
+    virtual void* GetRHINativeDirectCommandQueue() = 0;
 
     /**
      * @brief Gets the native compute command queue.
-     * @return The native compute command queue.
+     * @return D3D12: ID3D12CommandQueue* (compute). Vulkan/Metal: nullptr (TODO). Null: nullptr.
      */
-    virtual void* GetNativeComputeCommandQueue() = 0;
+    virtual void* GetRHINativeComputeCommandQueue() = 0;
 
     /**
      * @brief Gets the native copy command queue.
-     * @return The native copy command queue.
+     * @return D3D12: ID3D12CommandQueue* (copy). Vulkan/Metal: nullptr (TODO). Null: nullptr.
      */
-    virtual void* GetNativeCopyCommandQueue() = 0;
+    virtual void* GetRHINativeCopyCommandQueue() = 0;
 
     /**
      * @brief Gets the adapter name.

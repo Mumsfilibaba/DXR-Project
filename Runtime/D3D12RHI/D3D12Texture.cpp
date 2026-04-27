@@ -15,14 +15,33 @@ FD3D12TextureRHI::FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc
 {
 }
 
+FD3D12TextureRHI::~FD3D12TextureRHI()
+{
+#if D3D12_ENABLE_STATS
+    const int64 AllocatedSize = static_cast<int64>(ResourceStorage.GetSize());
+    if (AllocatedSize > 0)
+    {
+        if (Desc.IsRenderTarget() || Desc.IsDepthStencil())
+        {
+            STAT_SUBTRACT(STAT_RHI_RenderTargetMemory, AllocatedSize);
+        }
+        else
+        {
+            STAT_SUBTRACT(STAT_RHI_TextureMemory, AllocatedSize);
+        }
+    }
+#endif
+}
+
 FD3D12TextureRHI* FD3D12TextureRHI::GetTextureInterface() const
 {
     return const_cast<FD3D12TextureRHI*>(this);
 }
 
-void* FD3D12TextureRHI::GetRHINativeHandle() const
+void* FD3D12TextureRHI::GetRHINativeResource() const
 {
-    return reinterpret_cast<void*>(ResourceStorage.GetResource());
+    FD3D12Resource* Resource = ResourceStorage.GetResource();
+    return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
 }
 
 FRHIShaderResourceView* FD3D12TextureRHI::GetShaderResourceView() const
@@ -53,24 +72,6 @@ FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessSRVHandle() const
 FRHIDescriptorHandle FD3D12TextureRHI::GetBindlessUAVHandle() const
 {
     return FRHIDescriptorHandle();
-}
-
-FD3D12TextureRHI::~FD3D12TextureRHI()
-{
-#if D3D12_ENABLE_STATS
-    const int64 AllocatedSize = static_cast<int64>(ResourceStorage.GetSize());
-    if (AllocatedSize > 0)
-    {
-        if (Desc.IsRenderTarget() || Desc.IsDepthStencil())
-        {
-            STAT_SUBTRACT(STAT_RHI_RenderTargetMemory, AllocatedSize);
-        }
-        else
-        {
-            STAT_SUBTRACT(STAT_RHI_TextureMemory, AllocatedSize);
-        }
-    }
-#endif
 }
 
 bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
@@ -719,11 +720,11 @@ FD3D12TextureRHI* FD3D12BackBufferProxyTextureRHI::GetTextureInterface() const
     return SwapChain ? SwapChain->GetCurrentBackBuffer() : nullptr;
 }
 
-void* FD3D12BackBufferProxyTextureRHI::GetRHINativeHandle() const
+void* FD3D12BackBufferProxyTextureRHI::GetRHINativeResource() const
 {
     if (FD3D12TextureRHI* CurrentBackBuffer = GetTextureInterface())
     {
-        return CurrentBackBuffer->GetRHINativeHandle();
+        return CurrentBackBuffer->GetRHINativeResource();
     }
     else
     {

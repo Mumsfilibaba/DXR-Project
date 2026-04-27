@@ -101,6 +101,8 @@ public:
     virtual ~FD3D12ShaderResourceViewRHI() = default;
 
     // FRHIShaderResourceView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // ID3D12ResourceRelocationListener Interface
@@ -124,6 +126,8 @@ public:
     virtual ~FD3D12UnorderedAccessViewRHI() = default;
  
     // FRHIUnorderedAccessView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // ID3D12ResourceRelocationListener Interface
@@ -166,6 +170,9 @@ public:
     FD3D12RenderTargetViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
     virtual ~FD3D12RenderTargetViewRHI() = default;
 
+    // FRHIRenderTargetView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
     // FD3D12RenderTargetViewBase Interface
     virtual FD3D12RenderTargetViewRHI* GetRenderTargetViewInterface() const override;
 
@@ -189,6 +196,9 @@ public:
     FD3D12BackBufferProxyRenderTargetViewRHI(FD3D12SwapChainRHI* InSwapChain, FD3D12BackBufferProxyTextureRHI* InProxyTexture);
     virtual ~FD3D12BackBufferProxyRenderTargetViewRHI();
 
+    // FRHIRenderTargetView Interface
+    virtual void* GetRHINativeHandle() const override final;
+
     // FD3D12RenderTargetViewBase Interface
     virtual FD3D12RenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
 
@@ -211,6 +221,9 @@ class FD3D12DepthStencilViewRHI : public FRHIDepthStencilView, public FD3D12View
 public:
     FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
     virtual ~FD3D12DepthStencilViewRHI() = default;
+
+    // FRHIDepthStencilView Interface
+    virtual void* GetRHINativeHandle() const override final;
 
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;

@@ -3,23 +3,26 @@
 #include "MetalRHI/MetalDeviceChild.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalBuffer> FMetalBufferRef;
+typedef TSharedRef<class FMetalBufferRHI> FMetalBufferRef;
 
-class FMetalBuffer : public FRHIBuffer, public FMetalDeviceChild
+class FMetalBufferRHI : public FRHIBuffer, public FMetalDeviceChild
 {
 public:
-    FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferDesc& InBufferDesc);
-    ~FMetalBuffer();
-
-    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
+    FMetalBufferRHI(FMetalDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
+    ~FMetalBufferRHI();
 
     // FRHIBuffer Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLBuffer()); }
-    
-    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    virtual void* GetRHINativeResource() const override final;
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
+
+    virtual void* Map(uint64 Offset = 0, uint64 Size = UINT64_MAX)   override final;
+    virtual void  Unmap(uint64 Offset = 0, uint64 Size = UINT64_MAX) override final;
 
     virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
+    
+    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
     
     FORCEINLINE id<MTLBuffer> GetMTLBuffer() const 
     { 
@@ -35,9 +38,9 @@ private:
     id<MTLBuffer> Buffer;
 };
 
-inline FMetalBuffer* GetMetalBuffer(FRHIBuffer* Buffer)
+inline FMetalBufferRHI* GetMetalBuffer(FRHIBuffer* Buffer)
 {
-    return Buffer ? reinterpret_cast<FMetalBuffer*>(Buffer->GetRHINativeHandle()) : nullptr;
+    return static_cast<FMetalBufferRHI*>(Buffer);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

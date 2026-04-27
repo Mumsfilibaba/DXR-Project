@@ -92,6 +92,13 @@ FVulkanShader::~FVulkanShader()
     ShaderModules.Clear();
 }
 
+FVulkanRayTracingShader::FVulkanRayTracingShader(FVulkanDevice* InDevice)
+    : FVulkanShader(InDevice, ShaderVisibility_Compute)
+{
+}
+
+FVulkanRayTracingShader::~FVulkanRayTracingShader() = default;
+
 bool FVulkanShader::Initialize(const TArray<uint8>& InCode)
 {
     if (InCode.Size() % sizeof(uint32) != 0)
@@ -671,3 +678,184 @@ bool FVulkanShader::ValidateNoGoogleSpirvRequirements(const FSpirvArray& Words, 
 
     return true;
 }
+
+FVulkanVertexShaderRHI::FVulkanVertexShaderRHI(FVulkanDevice* InDevice)
+    : FRHIVertexShader()
+    , FVulkanShader(InDevice, ShaderVisibility_Vertex)
+{
+}
+
+FVulkanVertexShaderRHI::~FVulkanVertexShaderRHI() = default;
+
+FVulkanHullShaderRHI::FVulkanHullShaderRHI(FVulkanDevice* InDevice)
+    : FRHIHullShader()
+    , FVulkanShader(InDevice, ShaderVisibility_Hull)
+{
+}
+
+FVulkanHullShaderRHI::~FVulkanHullShaderRHI() = default;
+
+FVulkanDomainShaderRHI::FVulkanDomainShaderRHI(FVulkanDevice* InDevice)
+    : FRHIDomainShader()
+    , FVulkanShader(InDevice, ShaderVisibility_Domain)
+{
+}
+
+FVulkanDomainShaderRHI::~FVulkanDomainShaderRHI() = default;
+
+FVulkanGeometryShaderRHI::FVulkanGeometryShaderRHI(FVulkanDevice* InDevice)
+    : FRHIGeometryShader()
+    , FVulkanShader(InDevice, ShaderVisibility_Geometry)
+{
+}
+
+FVulkanGeometryShaderRHI::~FVulkanGeometryShaderRHI() = default;
+
+FVulkanPixelShaderRHI::FVulkanPixelShaderRHI(FVulkanDevice* InDevice)
+    : FRHIPixelShader()
+    , FVulkanShader(InDevice, ShaderVisibility_Pixel)
+{
+}
+
+FVulkanPixelShaderRHI::~FVulkanPixelShaderRHI() = default;
+
+FVulkanRayGenShaderRHI::FVulkanRayGenShaderRHI(FVulkanDevice* InDevice)
+    : FRHIRayGenShader()
+    , FVulkanRayTracingShader(InDevice)
+{
+}
+
+FVulkanRayGenShaderRHI::~FVulkanRayGenShaderRHI() = default;
+
+FVulkanRayAnyHitShaderRHI::FVulkanRayAnyHitShaderRHI(FVulkanDevice* InDevice)
+    : FRHIRayAnyHitShader()
+    , FVulkanRayTracingShader(InDevice)
+{
+}
+
+FVulkanRayAnyHitShaderRHI::~FVulkanRayAnyHitShaderRHI() = default;
+
+FVulkanRayClosestHitShaderRHI::FVulkanRayClosestHitShaderRHI(FVulkanDevice* InDevice)
+    : FRHIRayClosestHitShader()
+    , FVulkanRayTracingShader(InDevice)
+{
+}
+
+FVulkanRayClosestHitShaderRHI::~FVulkanRayClosestHitShaderRHI() = default;
+
+FVulkanRayMissShaderRHI::FVulkanRayMissShaderRHI(FVulkanDevice* InDevice)
+    : FRHIRayMissShader()
+    , FVulkanRayTracingShader(InDevice)
+{
+}
+
+FVulkanRayMissShaderRHI::~FVulkanRayMissShaderRHI() = default;
+
+FVulkanComputeShaderRHI::FVulkanComputeShaderRHI(FVulkanDevice* InDevice)
+    : FRHIComputeShader()
+    , FVulkanShader(InDevice, ShaderVisibility_Compute)
+{
+}
+
+FVulkanComputeShaderRHI::~FVulkanComputeShaderRHI() = default;
+
+void* FVulkanVertexShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanHullShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanDomainShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanGeometryShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanPixelShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanRayGenShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanRayAnyHitShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanRayClosestHitShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanRayMissShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanComputeShaderRHI::GetRHINativeHandle()
+{
+    return reinterpret_cast<void*>(&SpirvCode);
+}
+
+void* FVulkanVertexShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+
+void* FVulkanHullShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+
+void* FVulkanDomainShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+
+void* FVulkanGeometryShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+
+void* FVulkanPixelShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+
+void* FVulkanRayGenShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanRayTracingShader*>(this);
+}
+
+void* FVulkanRayAnyHitShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanRayTracingShader*>(this);
+}
+
+void* FVulkanRayClosestHitShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanRayTracingShader*>(this);
+}
+
+void* FVulkanRayMissShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanRayTracingShader*>(this);
+}
+
+void* FVulkanComputeShaderRHI::GetRHIBaseInterface()
+{
+    return static_cast<FVulkanShader*>(this);
+}
+

@@ -125,10 +125,7 @@ public:
     virtual void ClearState() override final;
     virtual void Flush()      override final;
 
-    virtual void* GetNativeCommandList() override final 
-    { 
-        return reinterpret_cast<void*>(&CommandBuffer);
-    }
+    virtual void* GetRHINativeCommandList() override final;
 
     void TransitionImageLayout(FVulkanTextureRHI* Texture, VkImageLayout AfterLayout);
     void TransitionImageLayout(FVulkanTextureRHI* Texture, VkImageLayout BeforeLayout, VkImageLayout AfterLayout);

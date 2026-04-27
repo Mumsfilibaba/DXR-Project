@@ -4,31 +4,32 @@
 #include "MetalRHI/MetalDeviceChild.h"
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalSwapChain;
+class FMetalSwapChainRHI;
 
-typedef TSharedRef<class FMetalTexture> FMetalTextureRef;
+typedef TSharedRef<class FMetalTextureRHI> FMetalTextureRef;
 
-class FMetalTexture : public FRHITexture, public FMetalDeviceChild
+class FMetalTextureRHI : public FRHITexture, public FMetalDeviceChild
 {
 public:
-    FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureDesc& InTextureDesc);
-    virtual ~FMetalTexture();
-
-    bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+    FMetalTextureRHI(FMetalDevice* InDevice, const FRHITextureDesc& InTextureDesc);
+    virtual ~FMetalTextureRHI();
 
     // FRHITexture Interface
-    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
-    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final { return RenderTargetView.Get(); }
-    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final { return DepthStencilView.Get(); }
+    virtual void* GetRHINativeResource() const override final;
 
-    virtual FRHIDescriptorHandle     GetBindlessUAVHandle()   const override final { return FRHIDescriptorHandle(); }
-    virtual FRHIDescriptorHandle     GetBindlessSRVHandle()   const override final { return FRHIDescriptorHandle(); }
-    
-    virtual void SetDebugName(const FString& InName) override final;
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
+    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
+    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
+
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
+
+    virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;
-
+    
+    bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+    
     id<MTLTexture> GetMTLTexture() const;
 
     void SetDrawableTexture(id<MTLTexture> InTexture) 
@@ -37,27 +38,27 @@ public:
         Texture = [InTexture retain];
     }
 
-    void SetSwapChain(FMetalSwapChain* InSwapChain)
+    void SetSwapChain(FMetalSwapChainRHI* InSwapChain)
     {
         SwapChain = InSwapChain;
     }
 
-    FMetalShaderResourceView* GetMetalShaderResourceView() const
+    FMetalShaderResourceViewRHI* GetMetalShaderResourceView() const
     {
         return ShaderResourceView.Get();
     }
 
 protected:
-    id<MTLTexture>  Texture;
-    FMetalSwapChain* SwapChain;
-    TSharedRef<FMetalShaderResourceView> ShaderResourceView;
-    TSharedRef<FMetalRenderTargetView>   RenderTargetView;
-    TSharedRef<FMetalDepthStencilView>   DepthStencilView;
+    id<MTLTexture>                          Texture;
+    FMetalSwapChainRHI*                     SwapChain;
+    TSharedRef<FMetalShaderResourceViewRHI> ShaderResourceView;
+    TSharedRef<FMetalRenderTargetViewRHI>   RenderTargetView;
+    TSharedRef<FMetalDepthStencilViewRHI>   DepthStencilView;
 };
 
-FORCEINLINE FMetalTexture* GetMetalTexture(FRHITexture* Texture)
+FORCEINLINE FMetalTextureRHI* GetMetalTexture(FRHITexture* Texture)
 {
-    return Texture ? static_cast<FMetalTexture*>(Texture) : nullptr;
+    return Texture ? static_cast<FMetalTextureRHI*>(Texture) : nullptr;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

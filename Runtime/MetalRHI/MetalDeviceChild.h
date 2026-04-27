@@ -1,27 +1,24 @@
 #pragma once
 #include "MetalRHI/MetalCore.h"
 
-class FMetalDeviceContext;
+class FMetalDevice;
 
 class FMetalDeviceChild
 {
 public:
-    FMetalDeviceChild(FMetalDeviceContext* InDeviceContext)
-        : DeviceContext(InDeviceContext)
+    FMetalDeviceChild(FMetalDevice* InDevice)
+        : Device(InDevice)
     {
-        CHECK(DeviceContext != nullptr);
+        CHECK(Device != nullptr);
     }
 
-    virtual ~FMetalDeviceChild()
-    {
-        DeviceContext = nullptr;
-    }
+    virtual ~FMetalDeviceChild();
 
-    FORCEINLINE FMetalDeviceContext* GetDeviceContext() const
+    FORCEINLINE FMetalDevice* GetDevice() const
     {
-        return DeviceContext;
+        return Device;
     }
 
 private:
-    FMetalDeviceContext* DeviceContext;
+    FMetalDevice* Device;
 };

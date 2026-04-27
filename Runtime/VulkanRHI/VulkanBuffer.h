@@ -14,7 +14,7 @@ public:
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
     // FRHIBuffer Interface
-    virtual void* GetRHINativeHandle() const override final;
+    virtual void* GetRHINativeResource() const override final;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
     

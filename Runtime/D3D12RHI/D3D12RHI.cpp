@@ -1354,31 +1354,31 @@ IRHICommandContext* FD3D12RHI::ObtainCommandContext()
     return DirectCommandContext;
 }
 
-void* FD3D12RHI::GetNativeAdapter() 
+void* FD3D12RHI::GetRHINativeAdapter() 
 {
     CHECK(Adapter != nullptr);
     return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
 }
 
-void* FD3D12RHI::GetNativeDevice()
+void* FD3D12RHI::GetRHINativeDevice()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12Device());
 }
 
-void* FD3D12RHI::GetNativeDirectCommandQueue()
+void* FD3D12RHI::GetRHINativeDirectCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
 }
 
-void* FD3D12RHI::GetNativeComputeCommandQueue()
+void* FD3D12RHI::GetRHINativeComputeCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Compute));
 }
 
-void* FD3D12RHI::GetNativeCopyCommandQueue()
+void* FD3D12RHI::GetRHINativeCopyCommandQueue()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));

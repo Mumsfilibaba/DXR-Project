@@ -274,9 +274,26 @@ FRHIRenderTargetView* FD3D12SwapChainRHI::GetBackBufferRenderTargetView() const
     return BackBufferProxyRenderTargetView.Get();
 }
 
-void* FD3D12SwapChainRHI::GetNativeSwapChain() const
+void* FD3D12SwapChainRHI::GetRHINativeHandle() const
 {
     return SwapChain.Get();
+}
+
+void* FD3D12SwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
+{
+    FD3D12TextureRHI* Texture = GetBackBufferAtIndex(Index);
+    return Texture ? Texture->GetRHINativeResource() : nullptr;
+}
+
+void* FD3D12SwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
+{
+    FD3D12RenderTargetViewRHI* RenderTargetView = GetBackBufferRenderTargetViewAtIndex(Index);
+    return RenderTargetView ? RenderTargetView->GetRHINativeHandle() : nullptr;
+}
+
+uint32 FD3D12SwapChainRHI::GetRHINativeBackBufferCount() const
+{
+    return GetBackBufferCount();
 }
 
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)

@@ -9,9 +9,10 @@ FD3D12BufferRHI::FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& I
 {
 }
 
-void* FD3D12BufferRHI::GetRHINativeHandle() const
+void* FD3D12BufferRHI::GetRHINativeResource() const
 {
-    return reinterpret_cast<void*>(ResourceStorage.GetResource());
+    FD3D12Resource* Resource = ResourceStorage.GetResource();
+    return Resource ? reinterpret_cast<void*>(Resource->GetD3D12Resource()) : nullptr;
 }
 
 FRHIDescriptorHandle FD3D12BufferRHI::GetBindlessHandle() const
@@ -120,7 +121,13 @@ bool FD3D12BufferRHI::Initialize(FD3D12CommandContext* InCommandContext, EResour
     }
     else
     {
-        bAllocated = GetDevice()->GetBufferAllocator()->TryAllocate(D3D12HeapType, ResourceDesc, D3D12InitialState, StateMode, Alignment, ResourceStorage);
+        bAllocated = GetDevice()->GetBufferAllocator()->TryAllocate(
+            D3D12HeapType, 
+            ResourceDesc, 
+            D3D12InitialState, 
+            StateMode, 
+            Alignment, 
+            ResourceStorage);
     }
 
     if (!bAllocated || ResourceStorage.GetResource() == nullptr)
@@ -241,7 +248,6 @@ void FD3D12BufferRHI::Unmap(uint64 /* Offset */, uint64 /* Size */)
 
     if (!ResourceStorage.GetMappedBaseAddress())
     {
-        // We generally use these mappings for readback or full-buffer writes; keep it simple here.
         ResourceStorage.GetResource()->UnmapRange(0, nullptr);
     }
 }

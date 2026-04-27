@@ -1033,32 +1033,32 @@ IRHICommandContext* FVulkanRHI::ObtainCommandContext()
     return GraphicsCommandContext;
 }
 
-void* FVulkanRHI::GetNativeAdapter()
+void* FVulkanRHI::GetRHINativeAdapter()
 {
     CHECK(PhysicalDevice != nullptr);
     return reinterpret_cast<void*>(PhysicalDevice->GetVkPhysicalDevice());
 }
 
-void* FVulkanRHI::GetNativeDevice()
+void* FVulkanRHI::GetRHINativeDevice()
 {
     CHECK(Device != nullptr);
     return reinterpret_cast<void*>(Device->GetVkDevice());
 }
 
-void* FVulkanRHI::GetNativeDirectCommandQueue()
+void* FVulkanRHI::GetRHINativeDirectCommandQueue()
 {
     CHECK(GraphicsQueue != nullptr);
     return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
 }
 
-void* FVulkanRHI::GetNativeComputeCommandQueue()
+void* FVulkanRHI::GetRHINativeComputeCommandQueue()
 {
     // TODO: Finish
     CHECK(false);
     return nullptr;
 }
 
-void* FVulkanRHI::GetNativeCopyCommandQueue()
+void* FVulkanRHI::GetRHINativeCopyCommandQueue()
 {
     // TODO: Finish
     CHECK(false);

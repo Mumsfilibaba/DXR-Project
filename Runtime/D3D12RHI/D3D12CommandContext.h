@@ -105,11 +105,8 @@ public:
     virtual void ClearState() override final;
     virtual void Flush() override final;
 
-    virtual void* GetNativeCommandList() override final 
-    { 
-        return reinterpret_cast<void*>(&CommandList);
-    }
-    
+    virtual void* GetRHINativeCommandList() override final;
+
     void ObtainCommandList();
     void FinishCommandList(bool bFlushAllocator, bool bResolveQueries = true);
     void SplitCommandList(bool bFlushAllocator, bool bWaitForQueue);

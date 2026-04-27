@@ -67,11 +67,17 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final { }
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final { }
     virtual void DispatchRays(FRHISceneAccelerationStructure* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final { }
-    virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final { }
+    virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final
+    {
+        if (FNullSwapChainRHI* NullSwapChain = static_cast<FNullSwapChainRHI*>(SwapChain))
+        {
+            NullSwapChain->Present(bVerticalSync);
+        }
+    }
 
     virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final 
     {
-        FNullRHISwapChain* NullSwapChain = static_cast<FNullRHISwapChain*>(SwapChain);
+        FNullSwapChainRHI* NullSwapChain = static_cast<FNullSwapChainRHI*>(SwapChain);
         NullSwapChain->Resize(Width, Height);
     }
 
@@ -82,7 +88,7 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void PushEvent(const FStringView& Name) override final { }
     virtual void PopEvent()                         override final { }
 
-    virtual void* GetNativeCommandList() override final { return nullptr; }
+    virtual void* GetRHINativeCommandList() override final { return nullptr; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
