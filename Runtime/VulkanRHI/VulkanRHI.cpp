@@ -92,6 +92,36 @@ FVulkanUnorderedAccessViewRHI* FVulkanRHI::ResourceCast(FRHIUnorderedAccessView*
     return nullptr;
 }
 
+const FVulkanTextureRHI* FVulkanRHI::ResourceCast(const FRHITexture* Texture)
+{
+    if (Texture)
+    {
+        return static_cast<const FVulkanTextureBase*>(Texture)->GetTextureInterface();
+    }
+
+    return nullptr;
+}
+
+const FVulkanRenderTargetViewRHI* FVulkanRHI::ResourceCast(const FRHIRenderTargetView* RenderTargetView)
+{
+    if (RenderTargetView)
+    {
+        return static_cast<const FVulkanRenderTargetViewBase*>(RenderTargetView)->GetRenderTargetViewInterface();
+    }
+
+    return nullptr;
+}
+
+const FVulkanUnorderedAccessViewRHI* FVulkanRHI::ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView)
+{
+    if (UnorderedAccessView)
+    {
+        return static_cast<const FVulkanUnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
+    }
+
+    return nullptr;
+}
+
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
     , Instance()

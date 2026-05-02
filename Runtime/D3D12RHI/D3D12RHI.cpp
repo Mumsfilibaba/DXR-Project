@@ -61,6 +61,36 @@ FD3D12UnorderedAccessViewRHI* FD3D12RHI::ResourceCast(FRHIUnorderedAccessView* U
     return nullptr;
 }
 
+const FD3D12TextureRHI* FD3D12RHI::ResourceCast(const FRHITexture* Texture)
+{
+    if (Texture)
+    {
+        return static_cast<const FD3D12TextureBase*>(Texture)->GetTextureInterface();
+    }
+
+    return nullptr;
+}
+
+const FD3D12RenderTargetViewRHI* FD3D12RHI::ResourceCast(const FRHIRenderTargetView* RenderTargetView)
+{
+    if (RenderTargetView)
+    {
+        return static_cast<const FD3D12RenderTargetViewBase*>(RenderTargetView)->GetRenderTargetViewInterface();
+    }
+
+    return nullptr;
+}
+
+const FD3D12UnorderedAccessViewRHI* FD3D12RHI::ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView)
+{
+    if (UnorderedAccessView)
+    {
+        return static_cast<const FD3D12UnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
+    }
+
+    return nullptr;
+}
+
 FRHI* FD3D12RHIModule::CreateRHI()
 {
     TUniquePtr<FD3D12RHI> NewRHI = MakeUniquePtr<FD3D12RHI>();

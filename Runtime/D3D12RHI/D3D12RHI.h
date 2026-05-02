@@ -34,14 +34,25 @@ public:
         Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
     }
 
-    static FD3D12TextureRHI*             ResourceCast(FRHITexture* Texture);
-    static FD3D12UnorderedAccessViewRHI* ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView);
-    static FD3D12RenderTargetViewRHI*    ResourceCast(FRHIRenderTargetView* RenderTargetView);
+    static FD3D12TextureRHI*                   ResourceCast(FRHITexture* Texture);
+    static const FD3D12TextureRHI*             ResourceCast(const FRHITexture* Texture);
+    
+    static FD3D12UnorderedAccessViewRHI*       ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView);
+    static const FD3D12UnorderedAccessViewRHI* ResourceCast(const FRHIUnorderedAccessView* UnorderedAccessView);
+
+    static FD3D12RenderTargetViewRHI*          ResourceCast(FRHIRenderTargetView* RenderTargetView);
+    static const FD3D12RenderTargetViewRHI*    ResourceCast(const FRHIRenderTargetView* RenderTargetView);
 
     template<typename TRHIType>
     static FORCEINLINE typename TAddPointer<typename TD3D12RHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)
     {
         return static_cast<typename TAddPointer<typename TD3D12RHIResourceType<TRHIType>::Type>::Type>(Resource);
+    }
+
+    template<typename TRHIType>
+    static FORCEINLINE typename TAddPointer<const typename TD3D12RHIResourceType<TRHIType>::Type>::Type ResourceCast(const TRHIType* Resource)
+    {
+        return static_cast<typename TAddPointer<const typename TD3D12RHIResourceType<TRHIType>::Type>::Type>(Resource);
     }
 
 public:
