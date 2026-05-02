@@ -10,6 +10,16 @@ FD3D12CommandAllocator::FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12Com
 {
 }
 
+FD3D12CommandAllocator::~FD3D12CommandAllocator()
+{
+#if D3D12_ENABLE_STATS
+    if (Allocator)
+    {
+        STAT_SUBTRACT(STAT_D3D12_CommandAllocatorCount, 1);
+    }
+#endif
+}
+
 bool FD3D12CommandAllocator::Initialize()
 {
     const D3D12_COMMAND_LIST_TYPE Type = ToCommandListType(QueueType);
@@ -18,6 +28,11 @@ bool FD3D12CommandAllocator::Initialize()
     if (SUCCEEDED(Result))
     {
         D3D12_INFO("[FD3D12CommandAllocator]: Created CommandAllocator");
+
+    #if D3D12_ENABLE_STATS
+        STAT_ADD(STAT_D3D12_CommandAllocatorCount, 1);
+    #endif
+
         return true;
     }
     else
@@ -108,7 +123,15 @@ FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
 {
 }
 
-FD3D12CommandList::~FD3D12CommandList() = default;
+FD3D12CommandList::~FD3D12CommandList()
+{
+#if D3D12_ENABLE_STATS
+    if (CmdList)
+    {
+        STAT_SUBTRACT(STAT_D3D12_CommandListCount, 1);
+    }
+#endif
+}
 
 bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline)
 {
@@ -119,6 +142,10 @@ bool FD3D12CommandList::Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAl
         CmdList->Close();
 
         LOG_INFO("[FD3D12CommandList]: Created CommandList");
+
+    #if D3D12_ENABLE_STATS
+        STAT_ADD(STAT_D3D12_CommandListCount, 1);
+    #endif
 
     #if D3D12_USE_ID3D12COMMANDLIST_1
         if (FAILED(CmdList.GetAs<ID3D12GraphicsCommandList1>(&CmdList1)))

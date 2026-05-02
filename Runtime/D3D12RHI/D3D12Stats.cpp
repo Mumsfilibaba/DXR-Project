@@ -21,3 +21,10 @@ STAT_DEFINE_MEMORY(STAT_D3D12_CommittedReadbackMemory,  "Committed Readback Memo
 // PSO Stats
 STAT_DEFINE_COUNTER(STAT_D3D12_PSOCreateCount, "PSOs Created",          "D3D12 PSO");
 STAT_DEFINE_MEMORY(STAT_D3D12_PSOCacheSize,    "Cache Serialized Size", "D3D12 PSO");
+
+// Command Primitive Stats
+STAT_DEFINE_COUNTER(STAT_D3D12_CommandListCount,      "Command Lists",      "D3D12 Commands");
+STAT_DEFINE_COUNTER(STAT_D3D12_CommandAllocatorCount, "Command Allocators", "D3D12 Commands");
+
+// Query Stats
+STAT_DEFINE_COUNTER(STAT_D3D12_QueryHeapCount, "Query Heaps", "D3D12 Queries");

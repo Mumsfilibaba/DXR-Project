@@ -17,3 +17,10 @@ STAT_DEFINE_COUNTER(STAT_Vulkan_ActiveAllocations, "Active Allocations", "Vulkan
 // PSO Stats
 STAT_DEFINE_COUNTER(STAT_Vulkan_PSOCreateCount, "PSOs Created",          "Vulkan PSO");
 STAT_DEFINE_MEMORY(STAT_Vulkan_PSOCacheSize,    "Cache Serialized Size", "Vulkan PSO");
+
+// Command Primitive Stats
+STAT_DEFINE_COUNTER(STAT_Vulkan_CommandBufferCount, "Command Buffers", "Vulkan Commands");
+STAT_DEFINE_COUNTER(STAT_Vulkan_CommandPoolCount,   "Command Pools",   "Vulkan Commands");
+
+// Query Stats
+STAT_DEFINE_COUNTER(STAT_Vulkan_QueryPoolCount, "Query Pools", "Vulkan Queries");

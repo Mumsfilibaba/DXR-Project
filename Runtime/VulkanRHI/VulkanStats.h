@@ -25,3 +25,16 @@ STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_ActiveAllocations);
 
 STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_PSOCreateCount);
 STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_PSOCacheSize);
+
+// -------------------------------------------------------------------------------------------
+// Vulkan Command Primitive Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_CommandBufferCount);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_CommandPoolCount);
+
+// -------------------------------------------------------------------------------------------
+// Vulkan Query Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_QueryPoolCount);

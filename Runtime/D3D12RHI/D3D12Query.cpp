@@ -57,6 +57,13 @@ FD3D12QueryHeap::~FD3D12QueryHeap()
     {
         ResidencyManager->EndTrackingObject(&ResidencyHandle);
     }
+
+#if D3D12_ENABLE_STATS
+    if (QueryHeap.IsValid())
+    {
+        STAT_SUBTRACT(STAT_D3D12_QueryHeapCount, 1);
+    }
+#endif
 }
 
 bool FD3D12QueryHeap::Initialize()
@@ -110,6 +117,10 @@ bool FD3D12QueryHeap::Initialize()
         D3D12_ERROR_CRITICAL("[FD3D12QueryHeap]: FAILED to persistently map readback buffer");
         return false;
     }
+
+#if D3D12_ENABLE_STATS
+    STAT_ADD(STAT_D3D12_QueryHeapCount, 1);
+#endif
 
     return true;
 }

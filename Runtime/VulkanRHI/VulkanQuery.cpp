@@ -91,6 +91,10 @@ FVulkanQueryPool::~FVulkanQueryPool()
     {
         vkDestroyQueryPool(GetDevice()->GetVkDevice(), QueryPool, nullptr);
         QueryPool = VK_NULL_HANDLE;
+
+#if VULKAN_ENABLE_STATS
+        STAT_SUBTRACT(STAT_Vulkan_QueryPoolCount, 1);
+#endif
     }
 }
 
@@ -146,6 +150,10 @@ bool FVulkanQueryPool::Initialize()
         VULKAN_ERROR_CRITICAL("Failed to map query readback buffer");
         return false;
     }
+#endif
+
+#if VULKAN_ENABLE_STATS
+    STAT_ADD(STAT_Vulkan_QueryPoolCount, 1);
 #endif
 
     return true;

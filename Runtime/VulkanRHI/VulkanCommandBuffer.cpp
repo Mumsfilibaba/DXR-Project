@@ -16,6 +16,13 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanComma
 
 FVulkanCommandBuffer::~FVulkanCommandBuffer()
 {
+#if VULKAN_ENABLE_STATS
+    if (VULKAN_CHECK_HANDLE(CommandBuffer.GetVkCommandBuffer()))
+    {
+        STAT_SUBTRACT(STAT_Vulkan_CommandBufferCount, 1);
+    }
+#endif
+
     CommandBuffer.FreeCommandBuffer(GetDevice()->GetVkDevice(), OwnerPool->GetVkCommandPool());
     CommandBuffer = FCommandBuffer();
 }
@@ -37,6 +44,9 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
     }
     else
     {
+    #if VULKAN_ENABLE_STATS
+        STAT_ADD(STAT_Vulkan_CommandBufferCount, 1);
+    #endif
         return true;
     }
 }
@@ -164,6 +174,10 @@ FVulkanCommandPool::~FVulkanCommandPool()
     {
         vkDestroyCommandPool(GetDevice()->GetVkDevice(), CommandPool, nullptr);
         CommandPool = VK_NULL_HANDLE;
+
+#if VULKAN_ENABLE_STATS
+        STAT_SUBTRACT(STAT_Vulkan_CommandPoolCount, 1);
+#endif
     }
 }
 
@@ -184,6 +198,9 @@ bool FVulkanCommandPool::Initialize(VkCommandPoolCreateFlags InFlags)
     else
     {
         Flags = InFlags;
+    #if VULKAN_ENABLE_STATS
+        STAT_ADD(STAT_Vulkan_CommandPoolCount, 1);
+    #endif
         return true;
     }
 }

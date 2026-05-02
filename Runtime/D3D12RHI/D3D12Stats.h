@@ -29,3 +29,16 @@ STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_CommittedReadbackMemory);
 
 STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_PSOCreateCount);
 STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_PSOCacheSize);
+
+// -------------------------------------------------------------------------------------------
+// D3D12 Command Primitive Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_CommandListCount);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_CommandAllocatorCount);
+
+// -------------------------------------------------------------------------------------------
+// D3D12 Query Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_QueryHeapCount);

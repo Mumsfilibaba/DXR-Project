@@ -15,7 +15,7 @@ class FD3D12CommandAllocator : public FD3D12DeviceChild, FNonCopyable
 {
 public:
     FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
-    ~FD3D12CommandAllocator() = default;
+    ~FD3D12CommandAllocator();
 
     bool Initialize();
     bool Reset();
