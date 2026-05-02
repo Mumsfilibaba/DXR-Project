@@ -6,14 +6,12 @@
 
 class FD3D12OfflineDescriptorHeap;
 class FD3D12SwapChainRHI;
-class FD3D12BackBufferProxyTextureRHI;
 
-typedef TSharedRef<class FD3D12ConstantBufferView>                 FD3D12ConstantBufferViewRef;
-typedef TSharedRef<class FD3D12ShaderResourceViewRHI>              FD3D12ShaderResourceViewRHIRef;
-typedef TSharedRef<class FD3D12UnorderedAccessViewRHI>             FD3D12UnorderedAccessViewRHIRef;
-typedef TSharedRef<class FD3D12RenderTargetViewRHI>                FD3D12RenderTargetViewRHIRef;
-typedef TSharedRef<class FD3D12DepthStencilViewRHI>                FD3D12DepthStencilViewRHIRef;
-typedef TSharedRef<class FD3D12BackBufferProxyRenderTargetViewRHI> FD3D12BackBufferProxyRenderTargetViewRHIRef;
+typedef TSharedRef<class FD3D12ConstantBufferView>     FD3D12ConstantBufferViewRef;
+typedef TSharedRef<class FD3D12ShaderResourceViewRHI>  FD3D12ShaderResourceViewRHIRef;
+typedef TSharedRef<class FD3D12UnorderedAccessViewRHI> FD3D12UnorderedAccessViewRHIRef;
+typedef TSharedRef<class FD3D12RenderTargetViewRHI>    FD3D12RenderTargetViewRHIRef;
+typedef TSharedRef<class FD3D12DepthStencilViewRHI>    FD3D12DepthStencilViewRHIRef;
 
 class FD3D12View : public FD3D12DeviceChild, public ID3D12ResourceRelocationListener
 {
@@ -119,7 +117,21 @@ private:
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
 };
 
-class FD3D12UnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FD3D12View
+class FD3D12UnorderedAccessViewBase : public FRHIUnorderedAccessView
+{
+protected:
+    explicit FD3D12UnorderedAccessViewBase(FRHIResource* InResource)
+        : FRHIUnorderedAccessView(InResource)
+    {
+    }
+
+    virtual ~FD3D12UnorderedAccessViewBase() = default;
+
+public:
+    virtual class FD3D12UnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const = 0;
+};
+
+class FD3D12UnorderedAccessViewRHI : public FD3D12UnorderedAccessViewBase, public FD3D12View
 {
 public:
     FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource);
@@ -129,6 +141,9 @@ public:
     virtual void* GetRHINativeHandle() const override final;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
+
+    // FD3D12UnorderedAccessViewBase Interface
+    virtual FD3D12UnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const override;
 
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
@@ -188,32 +203,6 @@ public:
 
 private:
     D3D12_RENDER_TARGET_VIEW_DESC Desc;
-};
-
-class FD3D12BackBufferProxyRenderTargetViewRHI : public FD3D12RenderTargetViewBase
-{
-public:
-    FD3D12BackBufferProxyRenderTargetViewRHI(FD3D12SwapChainRHI* InSwapChain, FD3D12BackBufferProxyTextureRHI* InProxyTexture);
-    virtual ~FD3D12BackBufferProxyRenderTargetViewRHI();
-
-    // FRHIRenderTargetView Interface
-    virtual void* GetRHINativeHandle() const override final;
-
-    // FD3D12RenderTargetViewBase Interface
-    virtual FD3D12RenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
-
-    void SetSwapChain(FD3D12SwapChainRHI* InSwapChain)
-    {
-        SwapChain = InSwapChain;
-    }
-
-    FD3D12SwapChainRHI* GetSwapChain() const
-    {
-        return SwapChain;
-    }
-
-private:
-    FD3D12SwapChainRHI* SwapChain;
 };
 
 class FD3D12DepthStencilViewRHI : public FRHIDepthStencilView, public FD3D12View

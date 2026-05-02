@@ -82,6 +82,16 @@ FVulkanRenderTargetViewRHI* FVulkanRHI::ResourceCast(FRHIRenderTargetView* Rende
     return nullptr;
 }
 
+FVulkanUnorderedAccessViewRHI* FVulkanRHI::ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView)
+{
+    if (UnorderedAccessView)
+    {
+        return static_cast<FVulkanUnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
+    }
+
+    return nullptr;
+}
+
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
     , Instance()
@@ -967,7 +977,7 @@ bool FVulkanRHI::QueryUAVFormatSupport(EFormat Format) const
             return true;
         }
     }
-    
+
     return false;
 }
 

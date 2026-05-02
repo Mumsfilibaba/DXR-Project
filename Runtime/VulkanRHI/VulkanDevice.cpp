@@ -9,6 +9,7 @@
 #include "VulkanRHI/VulkanInstance.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanExtensions.h"
+#include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/Platform/VulkanPlatform.h"
 #include "RHI/RHISamplerState.h"
 
@@ -1005,40 +1006,42 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // Baseline defaults
     // -------------------------------------------------------------------------------------------
 
-    RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = false;
-    RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
+    RHI::DefaultSwapChainFormat = GetVulkanDefaultBackBufferFormat();
 
-    RHIDeviceFeatureSupport::bSupportsViewInstancing     = false;
-    RHIDeviceFeatureSupport::MaxViewInstanceCount        = 1;
+    RHI::bSupportsGeometryShaders                       = false;
+    RHI::bSupportRenderTargetArrayIndexFromVertexShader = false;
 
-    RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
-    RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
-    RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+    RHI::bSupportsViewInstancing     = false;
+    RHI::MaxViewInstanceCount        = 1;
 
-    RHIDeviceFeatureSupport::bSupportsVRS                = false;
-    RHIDeviceFeatureSupport::ShadingRateTier             = EShadingRateTier::NotSupported;
-    RHIDeviceFeatureSupport::ShadingRateImageTileSize    = 0;
+    RHI::bSupportsRayTracing         = false;
+    RHI::RayTracingTier              = ERayTracingTier::NotSupported;
+    RHI::RayTracingMaxRecursionDepth = 0;
 
-    RHIDeviceFeatureSupport::bSupportDrawIndirect        = true;
-    RHIDeviceFeatureSupport::bSupportMultiDrawIndirect   = false;
-    RHIDeviceFeatureSupport::MaxDrawIndirectCount        = 1;
+    RHI::bSupportsVRS                = false;
+    RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
+    RHI::ShadingRateImageTileSize    = 0;
 
-    RHIDeviceFeatureSupport::MaxTexture1DSize            = 0;
-    RHIDeviceFeatureSupport::MaxTexture1DArrayLayers     = 0;
-    RHIDeviceFeatureSupport::MaxTexture2DSize            = 0;
-    RHIDeviceFeatureSupport::MaxTexture2DArrayLayers     = 0;
-    RHIDeviceFeatureSupport::MaxTexture3DWidth           = 0;
-    RHIDeviceFeatureSupport::MaxTexture3DHeight          = 0;
-    RHIDeviceFeatureSupport::MaxTexture3DDepth           = 0;
-    RHIDeviceFeatureSupport::MaxCubeTextureSize          = 0;
-    RHIDeviceFeatureSupport::MaxCubeArrayCount           = 0;
+    RHI::bSupportDrawIndirect        = true;
+    RHI::bSupportMultiDrawIndirect   = false;
+    RHI::MaxDrawIndirectCount        = 1;
 
-    RHIDeviceFeatureSupport::MaxBufferSize               = 0;
-    RHIDeviceFeatureSupport::MaxConstantBufferSize       = 0;
-    RHIDeviceFeatureSupport::MaxStorageBufferSize        = 0;
-    RHIDeviceFeatureSupport::StructuredBufferMinStride   = 4;
-    RHIDeviceFeatureSupport::StructuredBufferMaxStride   = 2048;
-    RHIDeviceFeatureSupport::RawBufferRequiredAlignment  = 4;
+    RHI::MaxTexture1DSize            = 0;
+    RHI::MaxTexture1DArrayLayers     = 0;
+    RHI::MaxTexture2DSize            = 0;
+    RHI::MaxTexture2DArrayLayers     = 0;
+    RHI::MaxTexture3DWidth           = 0;
+    RHI::MaxTexture3DHeight          = 0;
+    RHI::MaxTexture3DDepth           = 0;
+    RHI::MaxCubeTextureSize          = 0;
+    RHI::MaxCubeArrayCount           = 0;
+
+    RHI::MaxBufferSize               = 0;
+    RHI::MaxConstantBufferSize       = 0;
+    RHI::MaxStorageBufferSize        = 0;
+    RHI::StructuredBufferMinStride   = 4;
+    RHI::StructuredBufferMaxStride   = 2048;
+    RHI::RawBufferRequiredAlignment  = 4;
 
     // -------------------------------------------------------------------------------------------
     // Core features/properties
@@ -1050,7 +1053,7 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
     if (GVulkanAllowGeometryShaders && PhysicalDeviceFeatures.geometryShader)
     {
-        RHIDeviceFeatureSupport::bSupportsGeometryShaders = true;
+        RHI::bSupportsGeometryShaders = true;
     }
 
     // Core properties
@@ -1060,34 +1063,34 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
         // DrawIndirect + MultiDrawIndirect
         if (PhysicalDeviceFeatures.multiDrawIndirect)
         {
-            RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = true;
-            RHIDeviceFeatureSupport::MaxDrawIndirectCount      = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
+            RHI::bSupportMultiDrawIndirect = true;
+            RHI::MaxDrawIndirectCount      = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
         }
         else
         {
-            RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = false;
-            RHIDeviceFeatureSupport::MaxDrawIndirectCount      = 1;
+            RHI::bSupportMultiDrawIndirect = false;
+            RHI::MaxDrawIndirectCount      = 1;
         }
 
         // Texture / Image limits
-        RHIDeviceFeatureSupport::MaxTexture1DSize        = PhysicalDeviceProperties.limits.maxImageDimension1D;
-        RHIDeviceFeatureSupport::MaxTexture2DSize        = PhysicalDeviceProperties.limits.maxImageDimension2D;
-        RHIDeviceFeatureSupport::MaxTexture3DWidth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
-        RHIDeviceFeatureSupport::MaxTexture3DHeight      = PhysicalDeviceProperties.limits.maxImageDimension3D;
-        RHIDeviceFeatureSupport::MaxTexture3DDepth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
-        RHIDeviceFeatureSupport::MaxCubeTextureSize      = PhysicalDeviceProperties.limits.maxImageDimensionCube;
-        RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
-        RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
-        RHIDeviceFeatureSupport::MaxCubeArrayCount       = PhysicalDeviceProperties.limits.maxImageArrayLayers / RHI_NUM_CUBE_FACES;
+        RHI::MaxTexture1DSize        = PhysicalDeviceProperties.limits.maxImageDimension1D;
+        RHI::MaxTexture2DSize        = PhysicalDeviceProperties.limits.maxImageDimension2D;
+        RHI::MaxTexture3DWidth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
+        RHI::MaxTexture3DHeight      = PhysicalDeviceProperties.limits.maxImageDimension3D;
+        RHI::MaxTexture3DDepth       = PhysicalDeviceProperties.limits.maxImageDimension3D;
+        RHI::MaxCubeTextureSize      = PhysicalDeviceProperties.limits.maxImageDimensionCube;
+        RHI::MaxTexture1DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
+        RHI::MaxTexture2DArrayLayers = PhysicalDeviceProperties.limits.maxImageArrayLayers;
+        RHI::MaxCubeArrayCount       = PhysicalDeviceProperties.limits.maxImageArrayLayers / RHI_NUM_CUBE_FACES;
 
         // Buffer / Memory Limits 
         const uint32 MinBufferStride = sizeof(uint32); 
-        RHIDeviceFeatureSupport::MaxConstantBufferSize      = PhysicalDeviceProperties.limits.maxUniformBufferRange; 
-        RHIDeviceFeatureSupport::MaxStorageBufferSize       = PhysicalDeviceProperties.limits.maxStorageBufferRange; 
-        RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0); 
-        RHIDeviceFeatureSupport::StructuredBufferMinStride  = MinBufferStride; 
-        RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint32(~0); 
-        RHIDeviceFeatureSupport::RawBufferRequiredAlignment = MinBufferStride; 
+        RHI::MaxConstantBufferSize      = PhysicalDeviceProperties.limits.maxUniformBufferRange; 
+        RHI::MaxStorageBufferSize       = PhysicalDeviceProperties.limits.maxStorageBufferRange; 
+        RHI::MaxBufferSize              = uint64(~0); 
+        RHI::StructuredBufferMinStride  = MinBufferStride; 
+        RHI::StructuredBufferMaxStride  = uint32(~0); 
+        RHI::RawBufferRequiredAlignment = MinBufferStride; 
     } 
 
     // -------------------------------------------------------------------------------------------
@@ -1095,17 +1098,17 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
     // -------------------------------------------------------------------------------------------
 
     const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
-    RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
-    RHIDeviceFeatureSupport::bSupportsDynamicDepthBias = true;
-    RHIDeviceFeatureSupport::bSupportsStreamOutput     = GVulkanSupportsTransformFeedback;
+    RHI::bSupportRenderTargetArrayIndexFromVertexShader = PhysicalDeviceFeatures12.shaderOutputLayer ? true : false;
+    RHI::bSupportsDynamicDepthBias = true;
+    RHI::bSupportsStreamOutput     = GVulkanSupportsTransformFeedback;
 
     // -------------------------------------------------------------------------------------------
     // Query Support
     // -------------------------------------------------------------------------------------------
 
-    RHIDeviceFeatureSupport::bSupportsTimestampQueries           = PhysicalDeviceProperties.limits.timestampComputeAndGraphics ? true : false;
-    RHIDeviceFeatureSupport::bSupportsPipelineStatisticsQueries  = PhysicalDeviceFeatures.pipelineStatisticsQuery ? true : false;
-    RHIDeviceFeatureSupport::bSupportsGPUTimestampBubblesRemoval = true;
+    RHI::bSupportsTimestampQueries           = PhysicalDeviceProperties.limits.timestampComputeAndGraphics ? true : false;
+    RHI::bSupportsPipelineStatisticsQueries  = PhysicalDeviceFeatures.pipelineStatisticsQuery ? true : false;
+    RHI::bSupportsGPUTimestampBubblesRemoval = true;
 
     // -------------------------------------------------------------------------------------------
     // View Instancing (multiview)
@@ -1113,13 +1116,13 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
 
     if (GVulkanSupportsMultiviews)
     {
-        RHIDeviceFeatureSupport::MaxViewInstanceCount    = GVulkanMaxMultiviewViewCount;
-        RHIDeviceFeatureSupport::bSupportsViewInstancing = RHIDeviceFeatureSupport::MaxViewInstanceCount > 1;
+        RHI::MaxViewInstanceCount    = GVulkanMaxMultiviewViewCount;
+        RHI::bSupportsViewInstancing = RHI::MaxViewInstanceCount > 1;
     }
     else
     {
-        RHIDeviceFeatureSupport::MaxViewInstanceCount    = 1;
-        RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
+        RHI::MaxViewInstanceCount    = 1;
+        RHI::bSupportsViewInstancing = false;
     }
 
     // -------------------------------------------------------------------------------------------
@@ -1146,15 +1149,15 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
 
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
-        RHIDeviceFeatureSupport::bSupportsRayTracing         = true;
-        RHIDeviceFeatureSupport::RayTracingTier              = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
-        RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = DeviceRayTracingPipelineProperties.maxRayRecursionDepth;
+        RHI::bSupportsRayTracing         = true;
+        RHI::RayTracingTier              = bHasRayQuery ? ERayTracingTier::Tier1_1 : ERayTracingTier::Tier1;
+        RHI::RayTracingMaxRecursionDepth = DeviceRayTracingPipelineProperties.maxRayRecursionDepth;
     }
     else
     {
-        RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
-        RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
-        RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+        RHI::bSupportsRayTracing         = false;
+        RHI::RayTracingTier              = ERayTracingTier::NotSupported;
+        RHI::RayTracingMaxRecursionDepth = 0;
     }
 
     // -------------------------------------------------------------------------------------------
@@ -1189,25 +1192,25 @@ bool FVulkanDevice::InitializeDeviceFeatureSupport()
 
         if (DeviceFragmentShadingRateFeatures.attachmentFragmentShadingRate)
         {
-            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier2; // image-based
+            RHI::ShadingRateTier = EShadingRateTier::Tier2; // image-based
         }
         else if (DeviceFragmentShadingRateFeatures.pipelineFragmentShadingRate || DeviceFragmentShadingRateFeatures.primitiveFragmentShadingRate)
         {
-            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier1; // per-draw/per-primitive
+            RHI::ShadingRateTier = EShadingRateTier::Tier1; // per-draw/per-primitive
         }
         else
         {
-            RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+            RHI::ShadingRateTier = EShadingRateTier::NotSupported;
         }
 
-        RHIDeviceFeatureSupport::ShadingRateImageTileSize = Math::Max<uint32>(1u, DeviceFragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width);
-        RHIDeviceFeatureSupport::bSupportsVRS             = RHIDeviceFeatureSupport::ShadingRateTier != EShadingRateTier::NotSupported;
+        RHI::ShadingRateImageTileSize = Math::Max<uint32>(1u, DeviceFragmentShadingRateProperties.minFragmentShadingRateAttachmentTexelSize.width);
+        RHI::bSupportsVRS             = RHI::ShadingRateTier != EShadingRateTier::NotSupported;
     }
     else
     {
-        RHIDeviceFeatureSupport::bSupportsVRS             = false;
-        RHIDeviceFeatureSupport::ShadingRateTier          = EShadingRateTier::NotSupported;
-        RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+        RHI::bSupportsVRS             = false;
+        RHI::ShadingRateTier          = EShadingRateTier::NotSupported;
+        RHI::ShadingRateImageTileSize = 0;
     }
 
     return true;

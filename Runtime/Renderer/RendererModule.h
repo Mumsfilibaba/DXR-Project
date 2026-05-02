@@ -26,7 +26,7 @@ public:
     virtual void RequestEditorObjectPick(IScene* Scene, uint32 PixelX, uint32 PixelY) override final; 
     virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID)       override final; 
  
-    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height) override final; 
+    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format = EFormat::Unknown, EColorSpace ColorSpace = EColorSpace::Unknown) override final; 
     virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) override final; 
     virtual void PresentSwapChain(FRHISwapChainRef SwapChain) override final; 
 

@@ -13,60 +13,65 @@ FNullRHI::FNullRHI()
     , CommandContext(new FNullRHICommandContext())
 {
     // -------------------------------------------------------------------------------------------
+    // Swap-Chain Defaults
+    // -------------------------------------------------------------------------------------------
+    RHI::DefaultSwapChainFormat = EFormat::B8G8R8A8_Unorm;
+
+    // -------------------------------------------------------------------------------------------
     // Shader / Pipeline Features
     // -------------------------------------------------------------------------------------------
-    RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = true;
-    RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = true;
+    RHI::bSupportsGeometryShaders                       = true;
+    RHI::bSupportRenderTargetArrayIndexFromVertexShader = true;
 
     // -------------------------------------------------------------------------------------------
     // View Instancing
     // -------------------------------------------------------------------------------------------
-    RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
-    RHIDeviceFeatureSupport::MaxViewInstanceCount    = 1;
+    RHI::bSupportsViewInstancing = false;
+    RHI::MaxViewInstanceCount    = 1;
 
     // -------------------------------------------------------------------------------------------
     // Hardware Ray Tracing
     // -------------------------------------------------------------------------------------------
-    RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
-    RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
-    RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+    RHI::bSupportsRayTracing         = false;
+    RHI::RayTracingTier              = ERayTracingTier::NotSupported;
+    RHI::RayTracingMaxRecursionDepth = 0;
 
     // -------------------------------------------------------------------------------------------
     // Variable Rate Shading (VRS)
     // -------------------------------------------------------------------------------------------
-    RHIDeviceFeatureSupport::bSupportsVRS             = false;
-    RHIDeviceFeatureSupport::ShadingRateTier          = EShadingRateTier::NotSupported;
-    RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+    RHI::bSupportsVRS             = false;
+    RHI::ShadingRateTier          = EShadingRateTier::NotSupported;
+    RHI::ShadingRateImageTileSize = 0;
 
     // -------------------------------------------------------------------------------------------
     // Draw Indirect
     // -------------------------------------------------------------------------------------------
-    RHIDeviceFeatureSupport::bSupportDrawIndirect      = true;
-    RHIDeviceFeatureSupport::bSupportMultiDrawIndirect = false; 
-    RHIDeviceFeatureSupport::MaxDrawIndirectCount      = 1;
+    RHI::bSupportDrawIndirect      = true;
+    RHI::bSupportMultiDrawIndirect = false; 
+    RHI::MaxDrawIndirectCount      = 1;
 
     // -------------------------------------------------------------------------------------------
     // Texture / Image Limits
     // -------------------------------------------------------------------------------------------
-    RHIDeviceFeatureSupport::MaxTexture1DSize        = 8192;
-    RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = 256;
-    RHIDeviceFeatureSupport::MaxTexture2DSize        = 8192;
-    RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = 256;
-    RHIDeviceFeatureSupport::MaxTexture3DWidth       = 2048;
-    RHIDeviceFeatureSupport::MaxTexture3DHeight      = 2048;
-    RHIDeviceFeatureSupport::MaxTexture3DDepth       = 2048;
-    RHIDeviceFeatureSupport::MaxCubeTextureSize      = 8192;
-    RHIDeviceFeatureSupport::MaxCubeArrayCount       = 256 / RHI_NUM_CUBE_FACES; // 42 cubes
+    RHI::MaxTexture1DSize        = 8192;
+    RHI::MaxTexture1DArrayLayers = 256;
+    RHI::MaxTexture2DSize        = 8192;
+    RHI::MaxTexture2DArrayLayers = 256;
+    RHI::MaxTexture3DWidth       = 2048;
+    RHI::MaxTexture3DHeight      = 2048;
+    RHI::MaxTexture3DDepth       = 2048;
+    RHI::MaxCubeTextureSize      = 8192;
+    RHI::MaxCubeArrayCount       = 256 / RHI_NUM_CUBE_FACES; // 42 cubes
 
     // -------------------------------------------------------------------------------------------
     // Buffer / Memory Limits
     // -------------------------------------------------------------------------------------------
-    RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0);
-    RHIDeviceFeatureSupport::MaxConstantBufferSize      = 64 * 1024; // 64 KB
-    RHIDeviceFeatureSupport::MaxStorageBufferSize       = uint64(~0);
-    RHIDeviceFeatureSupport::StructuredBufferMinStride  = 4;
-    RHIDeviceFeatureSupport::StructuredBufferMaxStride  = 2048;
-    RHIDeviceFeatureSupport::RawBufferRequiredAlignment = 4;
+    RHI::MaxBufferSize              = uint64(~0);
+    RHI::MaxConstantBufferSize      = 64 * 1024; // 64 KB
+    RHI::MaxStorageBufferSize       = uint64(~0);
+    RHI::StructuredBufferMinStride  = 4;
+    RHI::StructuredBufferMaxStride  = 2048;
+    RHI::RawBufferRequiredAlignment = 4;
 }
 
 FNullRHI::~FNullRHI()

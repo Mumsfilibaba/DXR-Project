@@ -157,7 +157,7 @@ struct FGlobalTextureFormats
 {
     static constexpr EFormat DepthBufferFormat  = EFormat::D32_Float;
     static constexpr EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
-    static constexpr EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
+    static constexpr EFormat SceneTargetFormat  = EFormat::R16G16B16A16_Float;
     static constexpr EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
     static constexpr EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
     static constexpr EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
@@ -191,11 +191,11 @@ struct FFrameResources
     int32 SpecularIrradianceProbeSize = 0;
 
     // Global VertexInput
-    FRHIInputLayoutRef MeshInputLayout;
+    FRHIInputLayoutRef  MeshInputLayout;
 
     // Global Buffers
-    FRHIBufferRef CameraBuffer;
-    FRHIBufferRef TransformBuffer;
+    FRHIBufferRef       CameraBuffer;
+    FRHIBufferRef       TransformBuffer;
 
     // Global Samplers
     FRHISamplerStateRef PointLightShadowSampler;
@@ -210,10 +210,10 @@ struct FFrameResources
     FRHISamplerStateRef IntegrationLUTSampler;
 
     // GBuffer
-    FRHITextureRef SSAOBuffer;
-    FRHITextureRef FinalTarget;
-    FRHITextureRef TonemappedTarget;
-    FRHITextureRef GBuffer[GBuffer_NumBuffers];
+    FRHITextureRef      SSAOBuffer;
+    FRHITextureRef      SceneTarget;
+    FRHITextureRef      TonemappedTarget;
+    FRHITextureRef      GBuffer[GBuffer_NumBuffers];
 
 #if EDITOR_BUILD
     // Editor-only: non-jittered depth + ObjectID buffers (used for stable selection outlines and picking).
@@ -226,11 +226,10 @@ struct FFrameResources
     FRHITextureRef ReducedDepthBuffer[NumReducedDepthBuffers];
 
     // PointLights
-    TArray<FVector4>            PointLightsPosRad;
-    TArray<FPointLightDataHLSL> PointLightsData;
-    FRHIBufferRef               PointLightsBuffer;
-    FRHIBufferRef               PointLightsPosRadBuffer;
-
+    TArray<FVector4>                         PointLightsPosRad;
+    TArray<FPointLightDataHLSL>              PointLightsData;
+    FRHIBufferRef                            PointLightsBuffer;
+    FRHIBufferRef                            PointLightsPosRadBuffer;
     TArray<FVector4>                         ShadowCastingPointLightsPosRad;
     TArray<FShadowCastingPointLightDataHLSL> ShadowCastingPointLightsData;
     FRHIBufferRef                            ShadowCastingPointLightsBuffer;
@@ -243,52 +242,47 @@ struct FFrameResources
     TArray<FRHIDepthStencilViewRef>          PointLightShadowMapFaceDSVs;
 
     // DirectionalLight NOTE: Only one directional light
-    FDirectionalLightDataHLSL DirectionalLightData;
-    FRHIBufferRef             DirectionalLightDataBuffer;
-    bool                      DirectionalLightDataDirty;
-    float                     CascadeSplitLambda;
+    FDirectionalLightDataHLSL  DirectionalLightData;
+    FRHIBufferRef              DirectionalLightDataBuffer;
+    bool                       DirectionalLightDataDirty;
+    float                      CascadeSplitLambda;
 
     FCascadeGenerationInfoHLSL CascadeGenerationData;
     bool                       CascadeGenerationDataDirty;
     FRHIBufferRef              CascadeGenerationDataBuffer;
 
-    FRHITextureRef            ShadowCascades;
-    FRHIShaderResourceViewRef ShadowCascadesSRVs[NUM_SHADOW_CASCADES];
+    FRHITextureRef             ShadowCascades;
+    FRHIShaderResourceViewRef  ShadowCascadesSRVs[NUM_SHADOW_CASCADES];
 
     // Covers all cascades
     FRHIDepthStencilViewRef                                    ShadowCascadesCombinedDSV;
     // One DSV per cascade
     TStaticArray<FRHIDepthStencilViewRef, NUM_SHADOW_CASCADES> ShadowCascadePerCascadeDSVs;
 
-    FRHITextureRef            DirectionalShadowMask;
-    FRHITextureRef            CascadeIndexBuffer;
-
-    FRHIBufferRef              CascadeMatrixBuffer;
-    FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;
-    FRHIUnorderedAccessViewRef CascadeMatrixBufferUAV;
-
-    FRHIBufferRef              CascadeSplitsBuffer;
-    FRHIShaderResourceViewRef  CascadeSplitsBufferSRV;
-    FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
-
+    FRHITextureRef              DirectionalShadowMask;
+    FRHITextureRef              CascadeIndexBuffer;
+    FRHIBufferRef               CascadeMatrixBuffer;
+    FRHIShaderResourceViewRef   CascadeMatrixBufferSRV;
+    FRHIUnorderedAccessViewRef  CascadeMatrixBufferUAV;
+    FRHIBufferRef               CascadeSplitsBuffer;
+    FRHIShaderResourceViewRef   CascadeSplitsBufferSRV;
+    FRHIUnorderedAccessViewRef  CascadeSplitsBufferUAV;
     // Light-Probes
     FRHIBufferRef               LightProbeBuffer;
     TArray<FLightProbeInfoHLSL> LightProbeInfos;
 
     // RayTracing
-    FRHITextureRef         RTOutput;
-    FRHISceneAccelerationStructureRef RTScene;
-
-    FRayTracingShaderResources             GlobalResources;
-    FRayTracingShaderResources             RayGenLocalResources;
-    FRayTracingShaderResources             MissLocalResources;
+    FRHITextureRef                                    RTOutput;
+    FRHISceneAccelerationStructureRef                 RTScene;
+    FRayTracingShaderResources                        GlobalResources;
+    FRayTracingShaderResources                        RayGenLocalResources;
+    FRayTracingShaderResources                        MissLocalResources;
     TArray<FRHIGeometryAccelerationStructureInstance> RTGeometryInstances;
+    TArray<FRayTracingShaderResources>                RTHitGroupResources;
+    TMap<class FMesh*, uint32>                        RTMeshToHitGroupIndex;
+    TResourceCache<FRHIShaderResourceView>            RTMaterialTextureCache;
 
-    TArray<FRayTracingShaderResources>     RTHitGroupResources;
-    TMap<class FMesh*, uint32>             RTMeshToHitGroupIndex;
-    TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
-
-    // BackBuffer
+    // Output Target
 	uint32 CurrentRenderWidth;
 	uint32 CurrentRenderHeight;
 };

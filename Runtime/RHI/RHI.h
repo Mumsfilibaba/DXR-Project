@@ -417,7 +417,6 @@ protected:
 private:
     ERHIType RHIType;
 
-    /** @brief Global pointer for the RHI interface */
     static RHI_API FRHI* GRHI;
 };
 

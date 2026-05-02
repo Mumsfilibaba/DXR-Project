@@ -377,7 +377,7 @@ bool FSceneRenderer::Initialize()
         return false;
     }
 
-    if (false/*RHIDeviceFeatureSupport::bSupportsRayTracing*/)
+    if (false/*RHI::bSupportsRayTracing*/)
     {
         if (!RayTracer.Initialize(Resources))
         {
@@ -534,13 +534,16 @@ void FSceneRenderer::BeginFrame()
 
     CommandList.PushEvent("Frame");
     
-    // Resize SwapChains before doing anything else
+    // Resize / re-format SwapChains before doing anything else.
     {
         TRACE_SCOPE("Resize SwapChains");
 
         for (const FSwapChainResizeInfo& ResizeInfo : SwapChainsToResize)
         {
-            CommandList.ResizeSwapChain(ResizeInfo.SwapChain.Get(), ResizeInfo.Width, ResizeInfo.Height);
+            if (ResizeInfo.HasPendingChange())
+            {
+                CommandList.ResizeSwapChain(ResizeInfo.SwapChain.Get(), ResizeInfo.Width, ResizeInfo.Height, ResizeInfo.Format, ResizeInfo.ColorSpace);
+            }
         }
 
         SwapChainsToResize.Clear();
@@ -563,21 +566,73 @@ void FSceneRenderer::BeginFrame()
     }
 }
 
-void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
+void FSceneRenderer::PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene)
 {
+    TRACE_SCOPE("PrepareResources");
+
+    if (!SceneRenderView.RenderTarget)
+    {
+        LOG_WARNING("[FSceneRenderer]: PrepareResources called without an output target; nothing to prepare for this view.");
+        return;
+    }
+
     if (RenderSettings::NeedsResize())
     {
         ResizeResources(RenderSettings::GetRenderWidth(), RenderSettings::GetRenderHeight());
     }
 
-    // Cast and cache the current scene being rendered
-    FScene* CurrentScene = static_cast<FScene*>(SceneRenderView.Scene);
-    
-    // Prepare Lights
-    Resources.BuildLightBuffers(CommandList, CurrentScene);
+    Resources.BuildLightBuffers(CommandList, Scene);
 
-    // Update camera-buffer
-    FCamera* Camera = CurrentScene->Camera;
+    PrepareCameraData(SceneRenderView, Scene);
+
+    if (Scene)
+    {
+        for (FMaterial* Material : Scene->Materials)
+        {
+            // TODO: Only do this once?
+            DepthPrePass->PreparePipelineState(Material, Resources);
+
+        #if EDITOR_BUILD
+            EditorNoJitterDepthPass->PreparePipelineState(Material, Resources);
+            EditorSelectionIDPass->PreparePipelineState(Material, Resources);
+        #endif
+
+            BasePass->PreparePipelineState(Material, Resources);
+
+            PointLightRenderPass->PreparePipelineState(Material, Resources);
+
+            CascadedShadowsRenderPass->PreparePipelineState(Material, Resources);
+
+            if (Material->IsBufferDirty())
+            {
+                Material->BuildBuffer(CommandList);
+            }
+        }
+    }
+
+    const EFormat OutputFormat = SceneRenderView.RenderTarget->GetFormat();
+
+#if EDITOR_BUILD
+    TonemapPass->PreparePipelineState(FGlobalTextureFormats::SceneTargetFormat);
+    FinalCompositePass->PreparePipelineState(OutputFormat);
+#else
+    TonemapPass->PreparePipelineState(OutputFormat);
+#endif
+
+    FXAAPass->PreparePipelineState(OutputFormat);
+    DebugRenderer->PreparePipelineState(OutputFormat);
+    DebugViewPass->PreparePipelineState(OutputFormat);
+}
+
+void FSceneRenderer::PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene)
+{
+    TRACE_SCOPE("PrepareCameraData");
+
+    FCamera* Camera = Scene ? Scene->Camera : nullptr;
+    if (!Camera)
+    {
+        return;
+    }
 
     CameraBuffer.PrevViewProjection          = CameraBuffer.ViewProjection;
     CameraBuffer.ViewProjection              = Camera->GetViewProjectionMatrix();
@@ -605,10 +660,9 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
         const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
 
         // Add Jitter to projection matrix
-        FMatrix4 JitterOffset      = FMatrix4::Translation(FVector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
-        CameraBuffer.Projection    = CameraBuffer.Projection * JitterOffset;
-        CameraBuffer.ProjectionInv = CameraBuffer.Projection.GetInverse();
-
+        FMatrix4 JitterOffset          = FMatrix4::Translation(FVector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
+        CameraBuffer.Projection        = CameraBuffer.Projection * JitterOffset;
+        CameraBuffer.ProjectionInv     = CameraBuffer.Projection.GetInverse();
         // Calculate new ViewProjection
         CameraBuffer.ViewProjection    = CameraBuffer.View * CameraBuffer.Projection;
         CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.GetInverse();
@@ -637,29 +691,13 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     CommandList.TransitionBufferState(Resources.CameraBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraHLSL)), &CameraBuffer);
     CommandList.TransitionBufferState(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+}
 
-    // Compile material PSOs
-    for (FMaterial* Material : CurrentScene->Materials)
-    {
-        // TODO: Only do this once?
-        DepthPrePass->InitializePipelineState(Material, Resources);
-
-    #if EDITOR_BUILD
-        EditorNoJitterDepthPass->InitializePipelineState(Material, Resources);
-        EditorSelectionIDPass->InitializePipelineState(Material, Resources);
-    #endif
-        
-        BasePass->InitializePipelineState(Material, Resources);
-        
-        PointLightRenderPass->InitializePipelineState(Material, Resources);
-
-        CascadedShadowsRenderPass->InitializePipelineState(Material, Resources);
-
-        if (Material->IsBufferDirty())
-        {
-            Material->BuildBuffer(CommandList);
-        }
-    }
+void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
+{
+    // Cast and cache the current scene being rendered
+    FScene* CurrentScene = static_cast<FScene*>(SceneRenderView.Scene);
+    PrepareResources(SceneRenderView, CurrentScene);
 
     CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Albedo].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
     CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Normal].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget));
@@ -716,7 +754,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
 
     // RayTracing PrePass
-    if (false /*RHIDeviceFeatureSupport::bSupportsRayTracing*/)
+    if (false /*RHI::bSupportsRayTracing*/)
     {
         GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
         RayTracer.PreRender(CommandList, Resources, CurrentScene);
@@ -794,7 +832,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
 
     // ShadowMask and GBuffer
-    CommandList.TransitionTextureState(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess));
     CommandList.TransitionTextureState(Resources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
 
     if (CurrentScene)
@@ -837,7 +875,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     TiledLightPass->Execute(CommandList, Resources, CurrentScene);
 
     CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
-    CommandList.TransitionTextureState(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget));
+    CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget));
 
     // Skybox Pass
     if (CVarSkyboxEnabled.GetValue())
@@ -869,17 +907,17 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     if (CVarEnableTemporalAA.GetValue())
     {
         CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
-        CommandList.TransitionTextureState(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess));
+        CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess));
 
         TemporalAA->Execute(CommandList, Resources);
 
         CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
-        CommandList.TransitionTextureState(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
     }
     else
     {
         CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource));
-        CommandList.TransitionTextureState(Resources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
     }
 
     // Editor selection outline (ObjectID -> mask -> dilate/erode -> ring -> composite after tonemap)
@@ -1390,22 +1428,42 @@ void FSceneRenderer::EndFrame()
     }
 }
 
-void FSceneRenderer::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight)
+void FSceneRenderer::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat, EColorSpace InColorSpace)
 {
-    if (SwapChain)
+    if (!SwapChain)
     {
-        for (FSwapChainResizeInfo& Existing : SwapChainsToResize)
-        {
-            if (Existing.SwapChain == SwapChain)
-            {
-                Existing.Width  = InWidth;
-                Existing.Height = InHeight;
-                return;
-            }
-        }
-
-        SwapChainsToResize.Emplace(SwapChain, InWidth, InHeight);
+        return;
     }
+
+    for (FSwapChainResizeInfo& Existing : SwapChainsToResize)
+    {
+        if (Existing.SwapChain == SwapChain)
+        {
+            if (InWidth  > 0u)
+            {
+                Existing.Width = InWidth;
+            }
+
+            if (InHeight > 0u)
+            {
+                Existing.Height = InHeight;
+            }
+
+            if (InFormat != EFormat::Unknown)
+            {
+                Existing.Format = InFormat;
+            }
+
+            if (InColorSpace != EColorSpace::Unknown)
+            {
+                Existing.ColorSpace = InColorSpace;
+            }
+
+            return;
+        }
+    }
+
+    SwapChainsToResize.Emplace(SwapChain, InWidth, InHeight, InFormat, InColorSpace);
 }
 
 void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
@@ -1483,10 +1541,10 @@ void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 #endif
 
         // Resize ShadingImage if VRS is active (shader/pipeline are unchanged)
-        if (ShadingImage && RHIDeviceFeatureSupport::ShadingRateImageTileSize > 0)
+        if (ShadingImage && RHI::ShadingRateImageTileSize > 0)
         {
-            const uint32 ShadingWidth  = InWidth / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
-            const uint32 ShadingHeight = InHeight / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
+            const uint32 ShadingWidth  = InWidth / RHI::ShadingRateImageTileSize;
+            const uint32 ShadingHeight = InHeight / RHI::ShadingRateImageTileSize;
 
             if (ShadingWidth > 0 && ShadingHeight > 0)
             {
@@ -1528,13 +1586,13 @@ void FSceneRenderer::PresentSwapChain(FRHISwapChainRef SwapChain)
 
 bool FSceneRenderer::InitShadingImage()
 {
-    if (RHIDeviceFeatureSupport::ShadingRateTier != EShadingRateTier::Tier2 || RHIDeviceFeatureSupport::ShadingRateImageTileSize == 0)
+    if (RHI::ShadingRateTier != EShadingRateTier::Tier2 || RHI::ShadingRateImageTileSize == 0)
     {
         return true;
     }
 
-    const uint32 Width  = Resources.CurrentRenderWidth / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
-    const uint32 Height = Resources.CurrentRenderHeight / RHIDeviceFeatureSupport::ShadingRateImageTileSize;
+    const uint32 Width  = Resources.CurrentRenderWidth / RHI::ShadingRateImageTileSize;
+    const uint32 Height = Resources.CurrentRenderHeight / RHI::ShadingRateImageTileSize;
 
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::ShadingRateTexture;
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, UsageFlags);

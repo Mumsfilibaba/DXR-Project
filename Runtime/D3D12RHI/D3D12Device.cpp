@@ -1569,6 +1569,34 @@ int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCou
     return static_cast<uint32>(Data.NumQualityLevels - 1);
 }
 
+bool FD3D12Device::SupportsSwapChainFormat(DXGI_FORMAT DXGIFormat, ESwapChainUsageFlags Usage) const
+{
+    if (DXGIFormat == DXGI_FORMAT_UNKNOWN)
+    {
+        return false;
+    }
+
+    D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {};
+    FormatSupport.Format = DXGIFormat;
+    if (FAILED(D3D12Device->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport))))
+    {
+        return false;
+    }
+
+    UINT RequiredSupport1 = D3D12_FORMAT_SUPPORT1_DISPLAY;
+    if (IsEnumFlagSet(Usage, ESwapChainUsageFlags::RenderTarget))
+    {
+        RequiredSupport1 |= D3D12_FORMAT_SUPPORT1_RENDER_TARGET;
+    }
+
+    if (IsEnumFlagSet(Usage, ESwapChainUsageFlags::UnorderedAccess))
+    {
+        RequiredSupport1 |= D3D12_FORMAT_SUPPORT1_TYPED_UNORDERED_ACCESS_VIEW;
+    }
+
+    return (FormatSupport.Support1 & RequiredSupport1) == RequiredSupport1;
+}
+
 ID3D12CommandQueue* FD3D12Device::GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
 {
     FD3D12Queue* Queue = GetQueue(QueueType);

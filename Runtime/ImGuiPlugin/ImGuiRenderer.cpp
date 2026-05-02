@@ -11,7 +11,6 @@
 #include "RHI/RHIResources.h"
 #include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
-#include "RendererCore/RenderSettings.h"
 #include <imgui.h>
 
 struct FVertexConstantBuffer
@@ -26,7 +25,14 @@ FImGuiRenderer::FImGuiRenderer()
     , FontAtlas(nullptr)
     , PipelineState(nullptr)
     , PipelineStateNoBlending(nullptr)
+    , PipelineStateFormat(EFormat::Unknown)
+    , VShader(nullptr)
     , PShader(nullptr)
+    , InputLayout(nullptr)
+    , DepthStencilState(nullptr)
+    , RasterizerState(nullptr)
+    , BlendStateBlending(nullptr)
+    , BlendStateNoBlending(nullptr)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
     , LinearSampler(nullptr)
@@ -99,7 +105,7 @@ bool FImGuiRenderer::InitializeRHI()
         return false;
     }
 
-    FRHIVertexShaderRef VShader = FRHI::Get()->CreateVertexShader(ShaderCode);
+    VShader = FRHI::Get()->CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         DEBUG_BREAK();
@@ -127,7 +133,7 @@ bool FImGuiRenderer::InitializeRHI()
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
-    FRHIInputLayoutRef InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
+    InputLayout = FRHI::Get()->CreateInputLayout(InputElements);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -138,7 +144,7 @@ bool FImGuiRenderer::InitializeRHI()
     DepthStencilStateDesc.bDepthEnable      = false;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
+    DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -149,7 +155,7 @@ bool FImGuiRenderer::InitializeRHI()
     RasterizerStateDesc.CullMode               = ECullMode::None;
     RasterizerStateDesc.bAntialiasedLineEnable = true;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
+    RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -167,7 +173,7 @@ bool FImGuiRenderer::InitializeRHI()
     BlendStateDesc.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
     BlendStateDesc.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    FRHIBlendStateRef BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
+    BlendStateBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
@@ -176,35 +182,8 @@ bool FImGuiRenderer::InitializeRHI()
 
     BlendStateDesc.RenderTargets[0].bBlendEnable = false;
 
-    FRHIBlendStateRef BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
-    if (!BlendStateBlending)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIGraphicsPipelineStateDesc PSODesc;
-    PSODesc.VertexShader                                   = VShader.Get();
-    PSODesc.PixelShader                                    = PShader.Get();
-    PSODesc.InputLayout                                    = InputLayout.Get();
-    PSODesc.DepthStencilState                              = DepthStencilState.Get();
-    PSODesc.BlendState                                     = BlendStateBlending.Get();
-    PSODesc.RasterizerState                                = RasterizerState.Get();
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
-    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
-
-    PipelineState = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
-    if (!PipelineState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    PSODesc.BlendState = BlendStateNoBlending.Get();
-
-    PipelineStateNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
-    if (!PipelineStateNoBlending)
+    BlendStateNoBlending = FRHI::Get()->CreateBlendState(BlendStateDesc);
+    if (!BlendStateNoBlending)
     {
         DEBUG_BREAK();
         return false;
@@ -239,7 +218,14 @@ void FImGuiRenderer::ReleaseRHI()
     FontAtlas.Reset();
     PipelineState.Reset();
     PipelineStateNoBlending.Reset();
+    PipelineStateFormat = EFormat::Unknown;
+    VShader.Reset();
     PShader.Reset();
+    InputLayout.Reset();
+    DepthStencilState.Reset();
+    RasterizerState.Reset();
+    BlendStateBlending.Reset();
+    BlendStateNoBlending.Reset();
     VertexBuffer.Reset();
     IndexBuffer.Reset();
     LinearSampler.Reset();
@@ -279,6 +265,45 @@ bool FImGuiRenderer::UpdateFontAtlas()
     return true;
 }
 
+void FImGuiRenderer::PreparePipelineState(EFormat OutputFormat)
+{
+    if (PipelineState && PipelineStateNoBlending && PipelineStateFormat == OutputFormat)
+    {
+        return;
+    }
+
+    FRHIGraphicsPipelineStateDesc PSODesc;
+    PSODesc.VertexShader                                   = VShader.Get();
+    PSODesc.PixelShader                                    = PShader.Get();
+    PSODesc.InputLayout                                    = InputLayout.Get();
+    PSODesc.DepthStencilState                              = DepthStencilState.Get();
+    PSODesc.RasterizerState                                = RasterizerState.Get();
+    PSODesc.BlendState                                     = BlendStateBlending.Get();
+    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
+    PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+
+    FRHIGraphicsPipelineStateRef NewBlending = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+    if (!NewBlending)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    PSODesc.BlendState = BlendStateNoBlending.Get();
+
+    FRHIGraphicsPipelineStateRef NewNoBlending = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+    if (!NewNoBlending)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    PipelineState           = NewBlending;
+    PipelineStateNoBlending = NewNoBlending;
+    PipelineStateFormat     = OutputFormat;
+}
+
 void FImGuiRenderer::Render(FRHICommandList& CommandList)
 {
     if (ImGuiViewport* MainViewport = ImGui::GetMainViewport())
@@ -288,6 +313,8 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
 
         FRHISwapChainRef RHISwapChain = MainViewportData->SwapChain;
         CHECK(RHISwapChain != nullptr);
+
+        PreparePipelineState(RHISwapChain->GetColorFormat());
 
         // Render
         ImGui::Render();
@@ -320,16 +347,16 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     FRHITexture* BackBuffer = ViewportData.SwapChain->GetBackBuffer();
     CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
 
+    PreparePipelineState(ViewportData.SwapChain->GetColorFormat());
     PrepareDrawData(CommandList, DrawData);
 
     FRHIRenderTargetView* BackBufferRTV = ViewportData.SwapChain->GetBackBufferRenderTargetView();
     FRHIBeginRenderPassDesc RenderPassDesc({ FRHIRenderPassAttachment(BackBufferRTV, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
+    
     CommandList.BeginRenderPass(RenderPassDesc);
-    
     RenderDrawData(CommandList, DrawData);
-    
     CommandList.EndRenderPass();
-
+    
     CommandList.TransitionTextureState(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
 }
 
@@ -624,7 +651,7 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
 
     FRHISwapChainDesc SwapChainDesc;
     SwapChainDesc.WindowHandle = PlatformWindow->GetPlatformHandle();
-    SwapChainDesc.ColorFormat  = RenderSettings::GetBackBufferFormat();
+    SwapChainDesc.ColorFormat  = EFormat::Unknown;
     SwapChainDesc.Width        = static_cast<uint16>(Viewport->Size.x);
     SwapChainDesc.Height       = static_cast<uint16>(Viewport->Size.y);
         

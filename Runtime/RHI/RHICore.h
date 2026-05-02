@@ -1,6 +1,8 @@
 #pragma once
 #include "Core/Core.h"
 
+enum class EFormat : uint8;
+
 // -------------------------------------------------------------------------------------------
 // Resource Range Macros
 // -------------------------------------------------------------------------------------------
@@ -76,7 +78,7 @@ NODISCARD constexpr const CHAR* ToString(EShadingRateTier ShadingRateTier)
     }
 }
 
-struct RHIDeviceFeatureSupport
+struct RHI
 {
     // -------------------------------------------------------------------------------------------
     // Shader / Pipeline Features
@@ -227,5 +229,18 @@ struct RHIDeviceFeatureSupport
 
     /** Whether the backend can filter out GPU idle bubbles from timestamp results */
     static RHI_API bool bSupportsGPUTimestampBubblesRemoval;
+
+    // -------------------------------------------------------------------------------------------
+    // Swap-Chain Defaults
+    // -------------------------------------------------------------------------------------------
+
+    /**
+     * The format the active RHI backend picks when an FRHISwapChainDesc is created with
+     * EFormat::Unknown. Populated during backend initialisation from the per-backend CVar
+     * (D3D12RHI.DefaultBackBufferFormat / VulkanRHI.DefaultBackBufferFormat). Read-only
+     * outside of init - use it when a caller needs to know up front what a swap chain
+     * created with Unknown will end up with.
+     */
+    static RHI_API EFormat DefaultSwapChainFormat;
 };
 

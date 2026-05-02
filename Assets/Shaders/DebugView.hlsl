@@ -41,7 +41,7 @@ SHADER_CONSTANT_BLOCK_BEGIN
     int ViewY;
     int TargetWidth;
     int TargetHeight;
-    int OutputIsBackBuffer;
+    int bIsOutputSceneTarget;
 SHADER_CONSTANT_BLOCK_END
 
 float3 VisualizeDepth(float Depth)
@@ -191,7 +191,7 @@ float4 Main(float2 TexCoord : TEXCOORD0) : SV_Target
         Color = 0.0;
     }
 
-    if (Constants.OutputIsBackBuffer != 0)
+    if (Constants.bIsOutputSceneTarget == 0)
     {
         Color = LinearToSRGB(Color);
     }

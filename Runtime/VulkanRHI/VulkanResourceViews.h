@@ -4,13 +4,14 @@
 #include "VulkanRHI/VulkanResource.h"
 
 class FVulkanSwapChainRHI;
-class FVulkanBackBufferProxyTextureRHI;
+class FVulkanShaderResourceViewRHI;
+class FVulkanUnorderedAccessViewRHI;
+class FVulkanRenderTargetViewRHI;
 
-typedef TSharedRef<class FVulkanShaderResourceViewRHI>              FVulkanShaderResourceViewRHIRef;
-typedef TSharedRef<class FVulkanUnorderedAccessViewRHI>             FVulkanUnorderedAccessViewRHIRef;
-typedef TSharedRef<class FVulkanRenderTargetViewRHI>                FVulkanRenderTargetViewRHIRef;
-typedef TSharedRef<class FVulkanDepthStencilViewRHI>                FVulkanDepthStencilViewRHIRef;
-typedef TSharedRef<class FVulkanBackBufferProxyRenderTargetViewRHI> FVulkanBackBufferProxyRenderTargetViewRHIRef;
+typedef TSharedRef<FVulkanShaderResourceViewRHI>     FVulkanShaderResourceViewRHIRef;
+typedef TSharedRef<FVulkanUnorderedAccessViewRHI>    FVulkanUnorderedAccessViewRHIRef;
+typedef TSharedRef<FVulkanRenderTargetViewRHI>       FVulkanRenderTargetViewRHIRef;
+typedef TSharedRef<class FVulkanDepthStencilViewRHI> FVulkanDepthStencilViewRHIRef;
 
 class FVulkanResourceView : public FVulkanDeviceChild, public IVulkanResourceRelocationListener
 {
@@ -171,11 +172,28 @@ public:
     bool Initialize(const FRHIShaderResourceViewDesc& InDesc);
 };
 
-class FVulkanUnorderedAccessViewRHI : public FRHIUnorderedAccessView, public FVulkanResourceView
+class FVulkanUnorderedAccessViewBase : public FRHIUnorderedAccessView
+{
+protected:
+    explicit FVulkanUnorderedAccessViewBase(FRHIResource* InResource)
+        : FRHIUnorderedAccessView(InResource)
+    {
+    }
+
+    virtual ~FVulkanUnorderedAccessViewBase() = default;
+
+public:
+    virtual FVulkanUnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const = 0;
+};
+
+class FVulkanUnorderedAccessViewRHI : public FVulkanUnorderedAccessViewBase, public FVulkanResourceView
 {
 public:
     FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanUnorderedAccessViewRHI() = default;
+
+    // FVulkanUnorderedAccessViewBase Interface
+    virtual FVulkanUnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const override final;
 
     // FRHIUnorderedAccessView Interface
     virtual void* GetRHINativeHandle() const override final;
@@ -220,31 +238,7 @@ public:
     bool Initialize(const FRHIRenderTargetViewDesc& InDesc);
 };
 
-class FVulkanBackBufferProxyRenderTargetViewRHI : public FVulkanRenderTargetViewBase
-{
-public:
-    FVulkanBackBufferProxyRenderTargetViewRHI(FVulkanSwapChainRHI* InSwapChain, FVulkanBackBufferProxyTextureRHI* InProxyTexture);
-    virtual ~FVulkanBackBufferProxyRenderTargetViewRHI();
-
-    // FVulkanRenderTargetViewBase Interface
-    virtual FVulkanRenderTargetViewRHI* GetRenderTargetViewInterface() const override final;
-
-    // FRHIRenderTargetView Interface
-    virtual void* GetRHINativeHandle() const override final;
-
-    void SetSwapChain(FVulkanSwapChainRHI* InSwapChain)
-    {
-        SwapChain = InSwapChain;
-    }
-
-    FVulkanSwapChainRHI* GetSwapChain() const
-    {
-        return SwapChain;
-    }
-
-private:
-    FVulkanSwapChainRHI* SwapChain;
-};
+// FVulkanBackBufferProxyRenderTargetViewRHI was moved to VulkanBackBufferProxies.h.
 
 class FVulkanDepthStencilViewRHI : public FRHIDepthStencilView, public FVulkanResourceView
 {

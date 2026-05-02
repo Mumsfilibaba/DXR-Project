@@ -92,17 +92,17 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
     if (!bHistoryValid)
     {
         // After resize or first frame: seed both history buffers with the current
-        // FinalTarget so subsequent frames have valid history to blend with.
-        CommandList.TransitionTextureState(FrameResources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+        // SceneTarget so subsequent frames have valid history to blend with.
+        CommandList.TransitionTextureState(FrameResources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
 
         for (FRHITextureRef& HistoryBuffer : TAAHistoryBuffers)
         {
             CommandList.TransitionTextureState(HistoryBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::CopyDest));
-            CommandList.CopyTexture(HistoryBuffer.Get(), FrameResources.FinalTarget.Get());
+            CommandList.CopyTexture(HistoryBuffer.Get(), FrameResources.SceneTarget.Get());
             CommandList.TransitionTextureState(HistoryBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
         }
 
-        CommandList.TransitionTextureState(FrameResources.FinalTarget.Get(), FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::UnorderedAccess));
+        CommandList.TransitionTextureState(FrameResources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::UnorderedAccess));
 
         CurrentBufferIndex = 0;
         bHistoryValid = true;
@@ -118,7 +118,7 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 
     CommandList.SetConstantBuffer(TemporalAAShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    CommandList.SetUnorderedAccessView(TemporalAAShader.Get(), FrameResources.FinalTarget->GetUnorderedAccessView(), 0);
+    CommandList.SetUnorderedAccessView(TemporalAAShader.Get(), FrameResources.SceneTarget->GetUnorderedAccessView(), 0);
     CommandList.SetUnorderedAccessView(TemporalAAShader.Get(), CurrentBuffer->GetUnorderedAccessView(), 1);
     
     CommandList.SetShaderResourceView(TemporalAAShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
@@ -140,7 +140,8 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 Width, uint32 Height)
 {
     // TAA History-Buffer
-    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture);
+    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::ShaderResourceTexture | ETextureUsageFlags::UnorderedAccessTexture;
+    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SceneTargetFormat, Width, Height, 1, 1, UsageFlags);
 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)

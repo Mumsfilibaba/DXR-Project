@@ -431,9 +431,14 @@ bool FVulkanShaderResourceViewRHI::Initialize(const FRHIShaderResourceViewDesc& 
 }
 
 FVulkanUnorderedAccessViewRHI::FVulkanUnorderedAccessViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
-    : FRHIUnorderedAccessView(InResource)
+    : FVulkanUnorderedAccessViewBase(InResource)
     , FVulkanResourceView(InDevice)
 {
+}
+
+FVulkanUnorderedAccessViewRHI* FVulkanUnorderedAccessViewRHI::GetUnorderedAccessViewInterface() const
+{
+    return const_cast<FVulkanUnorderedAccessViewRHI*>(this);
 }
 
 FRHIDescriptorHandle FVulkanUnorderedAccessViewRHI::GetBindlessHandle() const
@@ -883,26 +888,4 @@ bool FVulkanDepthStencilViewRHI::Initialize(const FRHIDepthStencilViewDesc& InDe
 
     RegisterToResource(VulkanTexture);
     return true;
-}
-
-FVulkanBackBufferProxyRenderTargetViewRHI::FVulkanBackBufferProxyRenderTargetViewRHI(FVulkanSwapChainRHI* InSwapChain, FVulkanBackBufferProxyTextureRHI* InProxyTexture)
-    : FVulkanRenderTargetViewBase(InProxyTexture)
-    , SwapChain(InSwapChain)
-{
-}
-
-FVulkanBackBufferProxyRenderTargetViewRHI::~FVulkanBackBufferProxyRenderTargetViewRHI()
-{
-    SwapChain = nullptr;
-}
-
-FVulkanRenderTargetViewRHI* FVulkanBackBufferProxyRenderTargetViewRHI::GetRenderTargetViewInterface() const
-{
-    return SwapChain ? SwapChain->GetCurrentBackBufferRenderTargetView() : nullptr;
-}
-
-void* FVulkanBackBufferProxyRenderTargetViewRHI::GetRHINativeHandle() const
-{
-    FVulkanRenderTargetViewRHI* CurrentRTV = GetRenderTargetViewInterface();
-    return CurrentRTV ? CurrentRTV->GetRHINativeHandle() : nullptr;
 }

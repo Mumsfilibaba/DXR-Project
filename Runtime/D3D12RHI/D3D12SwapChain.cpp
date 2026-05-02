@@ -2,6 +2,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12SwapChain.h"
+#include "D3D12RHI/D3D12BackBufferProxies.h"
 
 static TAutoConsoleVariable<int32> CVarSwapChainBackBufferCount(
     "D3D12RHI.SwapChain.BackBufferCount",
@@ -18,6 +19,64 @@ static TAutoConsoleVariable<int32> CVarMaxFrameLatency(
     "Maximum frame latency for the swap chain (-1 = use backbuffer count)",
     -1);
 
+static TAutoConsoleVariable<int32> CVarD3D12DefaultBackBufferFormat(
+    "D3D12RHI.DefaultBackBufferFormat",
+    "Default back-buffer format used when ColorFormat is Unknown. "
+    "0=B8G8R8A8_Unorm, "
+    "1=R8G8B8A8_Unorm (default), "
+    "2=R10G10B10A2_Unorm, "
+    "3=R16G16B16A16_Float.",
+    1); // D3D12 default: R8G8B8A8_Unorm
+
+static TAutoConsoleVariable<int32> CVarD3D12DefaultBackBufferColorSpace(
+    "D3D12RHI.DefaultBackBufferColorSpace",
+    "Default back-buffer color space used when ColorSpace is Unknown. "
+    "0=RGB_Full_G22_None_P709 / sRGB (default), "
+    "1=RGB_Full_G10_None_P709 / scRGB, "
+    "2=RGB_Full_G2084_None_P2020 / HDR10, "
+    "3=RGB_Full_G22_None_P2020.",
+    0);
+
+EFormat GetD3D12DefaultBackBufferFormat()
+{
+    static constexpr EFormat FormatTable[] =
+    {
+        EFormat::B8G8R8A8_Unorm,      // 0
+        EFormat::R8G8B8A8_Unorm,      // 1 (D3D12 default)
+        EFormat::R10G10B10A2_Unorm,   // 2 (HDR10 candidate)
+        EFormat::R16G16B16A16_Float,  // 3 (scRGB candidate)
+    };
+
+    int32 Index = CVarD3D12DefaultBackBufferFormat.GetValue();
+    if (Index < 0 || Index >= static_cast<int32>(ARRAY_COUNT(FormatTable)))
+    {
+        D3D12_WARNING("D3D12RHI.DefaultBackBufferFormat=%d is out of range [0..%d]; clamping to 0.", Index, static_cast<int32>(ARRAY_COUNT(FormatTable)) - 1);
+        Index = 0;
+    }
+
+    return FormatTable[Index];
+}
+
+static EColorSpace GetD3D12DefaultBackBufferColorSpace()
+{
+    static constexpr EColorSpace ColorSpaceTable[] =
+    {
+        EColorSpace::RGB_Full_G22_None_P709,    // 0 (default)
+        EColorSpace::RGB_Full_G10_None_P709,    // 1 (scRGB)
+        EColorSpace::RGB_Full_G2084_None_P2020, // 2 (HDR10)
+        EColorSpace::RGB_Full_G22_None_P2020,   // 3
+    };
+
+    int32 Index = CVarD3D12DefaultBackBufferColorSpace.GetValue();
+    if (Index < 0 || Index >= static_cast<int32>(ARRAY_COUNT(ColorSpaceTable)))
+    {
+        D3D12_WARNING("D3D12RHI.DefaultBackBufferColorSpace=%d is out of range [0..%d]; clamping to 0.", Index, static_cast<int32>(ARRAY_COUNT(ColorSpaceTable)) - 1);
+        Index = 0;
+    }
+
+    return ColorSpaceTable[Index];
+}
+
 FD3D12SwapChainRHI::FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHISwapChainDesc& InSwapChainDesc)
     : FD3D12DeviceChild(InDevice)
     , FRHISwapChain(InSwapChainDesc)
@@ -25,9 +84,11 @@ FD3D12SwapChainRHI::FD3D12SwapChainRHI(FD3D12Device* InDevice, FD3D12CommandCont
     , CommandContext(InCommandContext)
     , BackBufferProxy(nullptr)
     , BackBufferProxyRenderTargetView(nullptr)
+    , BackBufferProxyUnorderedAccessView(nullptr)
     , BackBuffers()
     , Hwnd(reinterpret_cast<HWND>(InSwapChainDesc.WindowHandle))
     , SwapChainWaitableObject(0)
+    , CurrentColorSpace(EColorSpace::RGB_Full_G22_None_P709)
     , Flags(0)
     , NumBackBuffers(0)
     , ActiveFrameLatency(0)
@@ -65,8 +126,13 @@ FD3D12SwapChainRHI::~FD3D12SwapChainRHI()
         BackBufferProxyRenderTargetView->SetSwapChain(nullptr);
     }
 
+    if (BackBufferProxyUnorderedAccessView)
+    {
+        BackBufferProxyUnorderedAccessView->SetSwapChain(nullptr);
+    }
+
     for (FBackBufferData& Data : BackBuffers)
-    {        
+    {
         if (Data.Texture)
         {
             Data.Texture->SetResource(nullptr);
@@ -75,6 +141,11 @@ FD3D12SwapChainRHI::~FD3D12SwapChainRHI()
         if (Data.RenderTargetView)
         {
             Data.RenderTargetView->ReleaseViewResource();
+        }
+
+        if (Data.UnorderedAccessView)
+        {
+            Data.UnorderedAccessView->ReleaseViewResource();
         }
     }
 
@@ -121,13 +192,41 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
         return false;
     }
 
+    if (!Desc.IsRenderTarget() && !Desc.IsUnorderedAccess())
+    {
+        D3D12_ERROR("[FD3D12SwapChainRHI]: Desc.Usage must include at least one of ESwapChainUsageFlags::RenderTarget or ESwapChainUsageFlags::UnorderedAccess");
+        return false;
+    }
+
+    EFormat ResolvedFormat = EFormat::Unknown;
+    if (Desc.ColorFormat == EFormat::Unknown)
+    {
+        ResolvedFormat = GetD3D12DefaultBackBufferFormat();
+    }
+    else
+    {
+        if (!GetDevice()->SupportsSwapChainFormat(ConvertFormat(Desc.ColorFormat), Desc.Usage))
+        {
+            D3D12_ERROR("[FD3D12SwapChainRHI]: Requested back-buffer format %s is not supported on this device.", ToString(Desc.ColorFormat));
+            return false;
+        }
+
+        ResolvedFormat = Desc.ColorFormat;
+    }
+
+    Desc.ColorFormat = ResolvedFormat;
+
+    const EColorSpace ResolvedColorSpace = (Desc.ColorSpace == EColorSpace::Unknown)
+        ? GetD3D12DefaultBackBufferColorSpace()
+        : Desc.ColorSpace;
+
     const uint32 NumSwapChainBuffers = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc = {};
     SwapChainDesc.Width              = Desc.Width;
     SwapChainDesc.Height             = Desc.Height;
-    SwapChainDesc.Format             = ConvertFormat(Desc.ColorFormat);
-    SwapChainDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    SwapChainDesc.Format             = ConvertFormat(ResolvedFormat);
+    SwapChainDesc.BufferUsage        = ConvertSwapChainUsage(Desc.Usage);
     SwapChainDesc.BufferCount        = NumSwapChainBuffers;
     SwapChainDesc.SampleDesc.Count   = 1;
     SwapChainDesc.SampleDesc.Quality = 0;
@@ -179,23 +278,64 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
 
     Factory->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
 
+    // Apply color space
+    {
+        const DXGI_COLOR_SPACE_TYPE RequestedDXGI = ConvertColorSpace(ResolvedColorSpace);
+        
+        UINT SupportFlags = 0;
+        SwapChain->CheckColorSpaceSupport(RequestedDXGI, &SupportFlags);
+        
+        if ((SupportFlags & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) == 0)
+        {
+            D3D12_ERROR("[FD3D12SwapChainRHI]: Requested (%s, %s) combination not supported on this output; aborting.", ToString(ResolvedFormat), ToString(ResolvedColorSpace));
+            return false;
+        }
+
+        const HRESULT SetColorSpaceResult = SwapChain->SetColorSpace1(RequestedDXGI);
+        if (FAILED(SetColorSpaceResult))
+        {
+            D3D12_ERROR("[FD3D12SwapChainRHI]: SetColorSpace1 failed (hr=0x%x).", static_cast<uint32>(SetColorSpaceResult));
+            return false;
+        }
+
+        CurrentColorSpace = ResolvedColorSpace;
+        Desc.ColorSpace   = ResolvedColorSpace;
+    }
+
     if (!RetrieveBackBuffers())
     {
         return false;
     }
 
-    D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain");
+    D3D12_INFO("[FD3D12SwapChainRHI]: Created SwapChain (%s, %s)", ToString(ResolvedFormat), ToString(ResolvedColorSpace));
     return true;
 }
 
-bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
+bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight, EFormat NewFormat, EColorSpace NewColorSpace)
 {
-    const uint32 DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
-    
-    const bool bSizeChanged        = (InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0u && InHeight > 0u;
-    const bool bBufferCountChanged = DesiredBackBufferCount != NumBackBuffers;
+    const uint32      ResolvedWidth          = (InWidth  > 0u) ? InWidth  : Desc.Width;
+    const uint32      ResolvedHeight         = (InHeight > 0u) ? InHeight : Desc.Height;
+    const EFormat     EffectiveFormat        = (NewFormat     == EFormat::Unknown)     ? GetColorFormat()    : NewFormat;
+    const EColorSpace EffectiveColorSpace    = (NewColorSpace == EColorSpace::Unknown) ? CurrentColorSpace   : NewColorSpace;
+    const uint32      DesiredBackBufferCount = Math::Clamp<int32>(CVarSwapChainBackBufferCount.GetValue(), 2, 8);
 
-    if (bSizeChanged || bBufferCountChanged)
+    const bool bSizeChanged        = (ResolvedWidth != Desc.Width || ResolvedHeight != Desc.Height) && ResolvedWidth > 0u && ResolvedHeight > 0u;
+    const bool bBufferCountChanged = DesiredBackBufferCount != NumBackBuffers;
+    const bool bFormatChanged      = (NewFormat     != EFormat::Unknown)     && (EffectiveFormat     != GetColorFormat());
+    const bool bColorSpaceChanged  = (NewColorSpace != EColorSpace::Unknown) && (EffectiveColorSpace != CurrentColorSpace);
+
+    if (bFormatChanged || bColorSpaceChanged)
+    {
+        if (!IsFormatSupported(EffectiveFormat, EffectiveColorSpace))
+        {
+            D3D12_WARNING("[FD3D12SwapChainRHI]: Resize: (%s, %s) not supported on this swap-chain; leaving unchanged.", 
+                ToString(EffectiveFormat), ToString(EffectiveColorSpace));
+            return false;
+        }
+    }
+
+    const bool bNeedsResizeBuffers = bSizeChanged || bBufferCountChanged || bFormatChanged;
+    if (bNeedsResizeBuffers)
     {
         if (InCommandContext->IsRecording())
         {
@@ -217,20 +357,29 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
             {
                 Data.RenderTargetView->ReleaseViewResource();
             }
+
+            if (Data.UnorderedAccessView)
+            {
+                Data.UnorderedAccessView->ReleaseViewResource();
+            }
         }
 
-        const uint32 ResizeWidth  = bSizeChanged ? InWidth  : Desc.Width;
-        const uint32 ResizeHeight = bSizeChanged ? InHeight : Desc.Height;
+        const DXGI_FORMAT ResizeDXGIFormat = bFormatChanged ? ConvertFormat(EffectiveFormat) : DXGI_FORMAT_UNKNOWN;
 
-        HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, ResizeWidth, ResizeHeight, DXGI_FORMAT_UNKNOWN, Flags);
+        HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, ResolvedWidth, ResolvedHeight, ResizeDXGIFormat, Flags);
         if (SUCCEEDED(Result))
         {
             NumBackBuffers = DesiredBackBufferCount;
 
             if (bSizeChanged)
             {
-                Desc.Width  = uint16(InWidth);
-                Desc.Height = uint16(InHeight);
+                Desc.Width  = uint16(ResolvedWidth);
+                Desc.Height = uint16(ResolvedHeight);
+            }
+
+            if (bFormatChanged)
+            {
+                Desc.ColorFormat = EffectiveFormat;
             }
         }
         else
@@ -244,10 +393,26 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
             return false;
         }
 
-        D3D12_INFO("[FD3D12SwapChainRHI]: Resized %u x %u (backbuffers=%u)", Desc.Width, Desc.Height, NumBackBuffers);
+        D3D12_INFO("[FD3D12SwapChainRHI]: Resized Width=%u Height=%u Format=%s Colorspace=%s BackBuffers=%u",
+            Desc.Width, Desc.Height, ToString(ConvertFormat(GetColorFormat())), ToString(ConvertColorSpace(EffectiveColorSpace)), NumBackBuffers);
     }
 
-    // Apply frame latency changes if needed
+    if (bColorSpaceChanged)
+    {
+        const DXGI_COLOR_SPACE_TYPE NewDXGI = ConvertColorSpace(EffectiveColorSpace);
+        if (FAILED(SwapChain->SetColorSpace1(NewDXGI)))
+        {
+            D3D12_WARNING("[FD3D12SwapChainRHI]: SetColorSpace1(%s) failed", ToString(EffectiveColorSpace));
+            return false;
+        }
+
+        CurrentColorSpace = EffectiveColorSpace;
+        Desc.ColorSpace   = EffectiveColorSpace;
+
+        D3D12_INFO("[FD3D12SwapChainRHI]: Color space changed to %s", ToString(EffectiveColorSpace));
+    }
+
+    // Apply frame latency changes if needed.
     if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
     {
         const int32  FrameLatencyCVar    = CVarMaxFrameLatency.GetValue();
@@ -257,21 +422,12 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
         {
             SwapChain->SetMaximumFrameLatency(DesiredFrameLatency);
             ActiveFrameLatency = DesiredFrameLatency;
+
             D3D12_INFO("[FD3D12SwapChainRHI]: Changed max frame latency to %u", ActiveFrameLatency);
         }
     }
 
     return true;
-}
-
-FRHITexture* FD3D12SwapChainRHI::GetBackBuffer() const
-{
-    return BackBufferProxy.Get();
-}
-
-FRHIRenderTargetView* FD3D12SwapChainRHI::GetBackBufferRenderTargetView() const
-{
-    return BackBufferProxyRenderTargetView.Get();
 }
 
 void* FD3D12SwapChainRHI::GetRHINativeHandle() const
@@ -287,13 +443,60 @@ void* FD3D12SwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) 
 
 void* FD3D12SwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
 {
-    FD3D12RenderTargetViewRHI* RenderTargetView = GetBackBufferRenderTargetViewAtIndex(Index);
-    return RenderTargetView ? RenderTargetView->GetRHINativeHandle() : nullptr;
+    FD3D12RenderTargetViewRHI* View = GetBackBufferRenderTargetViewAtIndex(Index);
+    return View ? View->GetRHINativeHandle() : nullptr;
 }
 
-uint32 FD3D12SwapChainRHI::GetRHINativeBackBufferCount() const
+void* FD3D12SwapChainRHI::GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const
+{
+    FD3D12UnorderedAccessViewRHI* View = GetBackBufferUnorderedAccessViewAtIndex(Index);
+    return View ? View->GetRHINativeHandle() : nullptr;
+}
+
+FRHITexture* FD3D12SwapChainRHI::GetBackBuffer() const
+{
+    return BackBufferProxy.Get();
+}
+
+FRHITexture* FD3D12SwapChainRHI::GetBackBufferResourceFromIndex(uint32 Index) const
+{
+    return GetBackBufferAtIndex(Index);
+}
+
+uint32 FD3D12SwapChainRHI::GetNumBackBufferResources() const
 {
     return GetBackBufferCount();
+}
+
+FRHIRenderTargetView* FD3D12SwapChainRHI::GetBackBufferRenderTargetView() const
+{
+    return BackBufferProxyRenderTargetView.Get();
+}
+
+FRHIUnorderedAccessView* FD3D12SwapChainRHI::GetBackBufferUnorderedAccessView() const
+{
+    return Desc.IsUnorderedAccess() ? BackBufferProxyUnorderedAccessView.Get() : nullptr;
+}
+
+bool FD3D12SwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const
+{
+    if (!SwapChain)
+    {
+        return false;
+    }
+
+    if (!GetDevice()->SupportsSwapChainFormat(ConvertFormat(Format), Desc.Usage))
+    {
+        return false;
+    }
+
+    UINT SupportFlags = 0;
+    if (FAILED(SwapChain->CheckColorSpaceSupport(ConvertColorSpace(ColorSpace), &SupportFlags)))
+    {
+        return false;
+    }
+
+    return (SupportFlags & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) != 0;
 }
 
 bool FD3D12SwapChainRHI::Present(bool bVerticalSync)
@@ -358,6 +561,11 @@ void FD3D12SwapChainRHI::ApplySettingsChanges()
             {
                 Data.RenderTargetView->ReleaseViewResource();
             }
+
+            if (Data.UnorderedAccessView)
+            {
+                Data.UnorderedAccessView->ReleaseViewResource();
+            }
         }
 
         HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, Desc.Width, Desc.Height, DXGI_FORMAT_UNKNOWN, Flags);
@@ -390,9 +598,18 @@ void FD3D12SwapChainRHI::ApplySettingsChanges()
 
 bool FD3D12SwapChainRHI::RetrieveBackBuffers()
 {
-    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, UsageFlags);
+    ETextureUsageFlags UsageFlags = ETextureUsageFlags::Presentable;
+    if (Desc.IsRenderTarget())
+    {
+        UsageFlags |= ETextureUsageFlags::RenderTarget;
+    }
+    if (Desc.IsUnorderedAccess())
+    {
+        UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
+    }
 
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, UsageFlags);
+    
     BackBuffers.Resize(NumBackBuffers);
     for (int32 Index = 0; Index < BackBuffers.Size(); ++Index)
     {
@@ -419,14 +636,14 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
             return false;
         }
 
-		FD3D12ResourceRef BackBufferResource = new FD3D12Resource(
-			GetDevice(),
-            D3DBackBufferResource.ReleaseOwnership(), 
-            D3D12_HEAP_TYPE_DEFAULT, 
+        FD3D12ResourceRef BackBufferResource = new FD3D12Resource(
+            GetDevice(),
+            D3DBackBufferResource.ReleaseOwnership(),
+            D3D12_HEAP_TYPE_DEFAULT,
             D3D12_RESOURCE_STATE_PRESENT);
 
         BackBufferResource->DisableDeferredRelease();
-        
+
         BackBuffers[Index].Texture->SetResource(BackBufferResource.Get());
         BackBuffers[Index].Texture->GetResource()->SetDebugName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
@@ -435,27 +652,49 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
 
     for (FBackBufferData& Data : BackBuffers)
     {
-        Data.RenderTargetView = nullptr;
+        Data.RenderTargetView    = nullptr;
+        Data.UnorderedAccessView = nullptr;
     }
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
-        FRHIRenderTargetViewDesc RTVDesc(BackBuffers[Index].Texture.Get());
-        
-        FRHIRenderTargetView* RenderTargetView = FD3D12RHI::Get()->CreateRenderTargetView(RTVDesc);
-        if (!RenderTargetView)
+        if (Desc.IsRenderTarget())
         {
-            D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer RTV for index %u", Index);
-            return false;
+            FRHIRenderTargetViewDesc RTVDesc(BackBuffers[Index].Texture.Get());
+            FRHIRenderTargetView*    RenderTargetView = FD3D12RHI::Get()->CreateRenderTargetView(RTVDesc);
+            if (!RenderTargetView)
+            {
+                D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer RTV for index %u", Index);
+                return false;
+            }
+
+            BackBuffers[Index].RenderTargetView = FD3D12RenderTargetViewRHIRef(FD3D12RHI::ResourceCast(RenderTargetView));
         }
 
-        BackBuffers[Index].RenderTargetView = FD3D12RenderTargetViewRHIRef(FD3D12RHI::ResourceCast(RenderTargetView));
+        if (Desc.IsUnorderedAccess())
+        {
+            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureUAV(BackBuffers[Index].Texture.Get(), GetColorFormat(), 0, 0, 1);
+            FRHIUnorderedAccessView* UnorderedAccessView = FD3D12RHI::Get()->CreateUnorderedAccessView(UAVDesc);
+            if (!UnorderedAccessView)
+            {
+                D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer UAV for index %u", Index);
+                return false;
+            }
+
+            BackBuffers[Index].UnorderedAccessView = FD3D12UnorderedAccessViewRHIRef(FD3D12RHI::ResourceCast(UnorderedAccessView));
+        }
     }
 
-    if (!BackBufferProxyRenderTargetView)
+    if (Desc.IsRenderTarget() && !BackBufferProxyRenderTargetView)
     {
         BackBufferProxyRenderTargetView = new FD3D12BackBufferProxyRenderTargetViewRHI(this, BackBufferProxy.Get());
         BackBufferProxy->SetProxyRenderTargetView(BackBufferProxyRenderTargetView.Get());
+    }
+
+    if (Desc.IsUnorderedAccess() && !BackBufferProxyUnorderedAccessView)
+    {
+        BackBufferProxyUnorderedAccessView = new FD3D12BackBufferProxyUnorderedAccessViewRHI(this, BackBufferProxy.Get());
+        BackBufferProxy->SetProxyUnorderedAccessView(BackBufferProxyUnorderedAccessView.Get());
     }
 
     if (FD3D12TextureRHI* CurrentBackbuffer = BackBufferProxy->GetTextureInterface())

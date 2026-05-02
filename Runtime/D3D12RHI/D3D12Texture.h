@@ -5,10 +5,8 @@
 
 class FD3D12SwapChainRHI;
 class FD3D12CommandContext;
-class FD3D12BackBufferProxyRenderTargetViewRHI;
 
-typedef TSharedRef<class FD3D12TextureRHI>                FD3D12TextureRHIRef;
-typedef TSharedRef<class FD3D12BackBufferProxyTextureRHI> FD3D12BackBufferProxyTextureRHIRef;
+typedef TSharedRef<class FD3D12TextureRHI> FD3D12TextureRHIRef;
 
 class FD3D12TextureBase : public FRHITexture
 {
@@ -69,46 +67,4 @@ protected:
     FD3D12UnorderedAccessViewRHIRef UnorderedAccessView;
     FD3D12RenderTargetViewRHIRef    RenderTargetView;
     FD3D12DepthStencilViewRHIRef    DepthStencilView;
-};
-
-class FD3D12BackBufferProxyTextureRHI : public FD3D12TextureBase
-{
-public:
-    FD3D12BackBufferProxyTextureRHI(FD3D12SwapChainRHI* InSwapChain, const FRHITextureDesc& InTextureDesc);
-    virtual ~FD3D12BackBufferProxyTextureRHI();
-
-    // FD3D12TextureBase Interface
-    virtual FD3D12TextureRHI* GetTextureInterface() const override final;
-
-    // FRHITexture Interface
-    virtual void* GetRHINativeResource() const override final;
-    
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
-    virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
-    virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
-    
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
-    
-    virtual void SetDebugName(const FString& InName)       override final;
-    virtual void GetDebugName(FString& OutDebugName) const override final;
-
-    void Resize(uint32 InWidth, uint32 InHeight);
-
-    void SetProxyRenderTargetView(FD3D12BackBufferProxyRenderTargetViewRHI* InProxyRenderTargetView);
-
-    FD3D12SwapChainRHI* GetSwapChain() const
-    { 
-        return SwapChain;
-    }
-
-    void SetSwapChain(FD3D12SwapChainRHI* InSwapChain)
-    {
-        SwapChain = InSwapChain;
-    }
-
-private:
-    FD3D12SwapChainRHI*                         SwapChain;
-    FD3D12BackBufferProxyRenderTargetViewRHIRef ProxyRenderTargetView;
 };

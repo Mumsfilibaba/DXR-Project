@@ -44,30 +44,16 @@ FMetalSwapChainRHI::~FMetalSwapChainRHI()
     }, NSDefaultRunLoopMode, true);
 }
 
-FRHITexture* FMetalSwapChainRHI::GetBackBuffer() const
-{
-    return BackBuffer.Get();
-}
-
-FRHIRenderTargetView* FMetalSwapChainRHI::GetBackBufferRenderTargetView() const
-{
-    return nullptr;
-}
-
 void* FMetalSwapChainRHI::GetRHINativeHandle() const
 {
     return (__bridge void*)MetalLayer;
 }
 
-uint32 FMetalSwapChainRHI::GetRHINativeBackBufferCount() const
-{
-    return 1;
-}
-
 void* FMetalSwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
 {
     UNREFERENCED_VARIABLE(Index);
-    return BackBuffer ? BackBuffer->GetRHINativeResource() : nullptr;
+    FRHITexture* Texture = BackBuffer.Get();
+    return Texture ? Texture->GetRHINativeResource() : nullptr;
 }
 
 void* FMetalSwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
@@ -76,12 +62,54 @@ void* FMetalSwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32
     return nullptr;
 }
 
+void* FMetalSwapChainRHI::GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const
+{
+    UNREFERENCED_VARIABLE(Index);
+    return nullptr;
+}
+
+FRHITexture* FMetalSwapChainRHI::GetBackBuffer() const
+{
+    return BackBuffer.Get();
+}
+
+FRHITexture* FMetalSwapChainRHI::GetBackBufferResourceFromIndex(uint32 Index) const
+{
+    UNREFERENCED_VARIABLE(Index);
+    return BackBuffer.Get();
+}
+
+uint32 FMetalSwapChainRHI::GetNumBackBufferResources() const
+{
+    return 1;
+}
+
+FRHIRenderTargetView* FMetalSwapChainRHI::GetBackBufferRenderTargetView() const
+{
+    return nullptr;
+}
+
+FRHIUnorderedAccessView* FMetalSwapChainRHI::GetBackBufferUnorderedAccessView() const
+{
+    return nullptr;
+}
+
+bool FMetalSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const
+{
+    return Format != EFormat::Unknown && ColorSpace == EColorSpace::RGB_Full_G22_None_P709;
+}
+
 bool FMetalSwapChainRHI::Initialize()
 {
     if (!Desc.WindowHandle)
     {
         LOG_ERROR("WindowHandle cannot be null");
         return false;
+    }
+
+    if (Desc.ColorSpace == EColorSpace::Unknown)
+    {
+        Desc.ColorSpace = EColorSpace::RGB_Full_G22_None_P709;
     }
 
     __block bool bResult = false;

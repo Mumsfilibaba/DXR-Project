@@ -111,16 +111,25 @@ struct FSwapChainResizeInfo
 {
     FSwapChainResizeInfo() = default;
 
-    FSwapChainResizeInfo(FRHISwapChainRef InSwapChain, uint32 InWidth, uint32 InHeight)
+    FSwapChainResizeInfo(FRHISwapChainRef InSwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown)
         : SwapChain(InSwapChain)
         , Width(InWidth)
         , Height(InHeight)
+        , Format(InFormat)
+        , ColorSpace(InColorSpace)
     {
     }
 
-    FRHISwapChainRef SwapChain = nullptr;
-    uint32           Width     = 0;
-    uint32           Height    = 0;
+    NODISCARD bool HasPendingChange() const
+    {
+        return Width != 0u || Height != 0u || Format != EFormat::Unknown || ColorSpace != EColorSpace::Unknown;
+    }
+
+    FRHISwapChainRef SwapChain  = nullptr;
+    uint32           Width      = 0;                    // 0 == keep current
+    uint32           Height     = 0;                    // 0 == keep current
+    EFormat          Format     = EFormat::Unknown;     // Unknown == keep current
+    EColorSpace      ColorSpace = EColorSpace::Unknown; // Unknown == keep current
 };
 
 class FSceneRenderer
@@ -135,7 +144,9 @@ public:
     void BeginFrame();
     
     void Tick(FScene* Scene);
-    
+
+    void PrepareResources(const FSceneRenderView& SceneRenderView, FScene* Scene);
+
     void RenderSceneView(const FSceneRenderView& SceneRenderView);
     void RenderUI();
 
@@ -144,7 +155,7 @@ public:
     void RequestEditorObjectPick(FScene* Scene, uint32 PixelX, uint32 PixelY); 
     bool PollEditorObjectPickResult(FScene* Scene, uint32& OutObjectID); 
  
-    void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight); 
+    void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown); 
     void PrepareSwapChain(FRHISwapChainRef SwapChain); 
     void PresentSwapChain(FRHISwapChainRef SwapChain); 
 
@@ -194,6 +205,7 @@ public:
 
 private: 
     bool InitShadingImage(); 
+    void PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene);
 #if EDITOR_BUILD
     void ProcessEditorObjectPickRequests(FRHICommandList& InCommandList, FFrameResources& InResources, FScene* CurrentScene);
 #endif
@@ -290,5 +302,4 @@ private:
     TQueue<FEditorObjectPickRequest, EQueueType::MPSC> PendingObjectPicks;
     TArray<FEditorObjectPickInFlight>                  InFlightObjectPicks;
 #endif
-
 };

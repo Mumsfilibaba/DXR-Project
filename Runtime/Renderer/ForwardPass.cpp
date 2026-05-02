@@ -101,7 +101,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     PSODesc.DepthStencilState                              = DepthStencilState.Get();
     PSODesc.BlendState                                     = BlendState.Get();
     PSODesc.RasterizerState                                = RasterizerState.Get();
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::SceneTargetFormat;
     PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
     PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
@@ -136,7 +136,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    FRHIRenderTargetView* RenderTargetView = FrameResources.FinalTarget->GetRenderTargetView();
+    FRHIRenderTargetView* RenderTargetView = FrameResources.SceneTarget->GetRenderTargetView();
     FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;

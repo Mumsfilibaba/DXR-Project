@@ -426,7 +426,7 @@ void FFrameResources::Release()
     IntegrationLUTSampler.Reset();
 
     SSAOBuffer.Reset();
-    FinalTarget.Reset();
+    SceneTarget.Reset();
     TonemappedTarget.Reset();
 
     for (FRHITextureRef& Buffer : GBuffer)

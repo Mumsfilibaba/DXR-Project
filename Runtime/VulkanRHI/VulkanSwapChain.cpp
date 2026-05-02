@@ -3,6 +3,7 @@
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanDeviceDebug.h"
+#include "VulkanRHI/VulkanBackBufferProxies.h"
 
 static TAutoConsoleVariable<int32> CVarBackbufferCount(
     "VulkanRHI.SwapChain.BackBufferCount",
@@ -16,8 +17,67 @@ static TAutoConsoleVariable<bool> CVarEnableVSync(
     true,
     EConsoleVariableFlags::Default);
 
-static constexpr const bool GVulkanLogSemaphoreIndex                           = false;
-static constexpr const bool GVulkanReportSwapChainAcquireImageNonSuccessResult = true;
+static TAutoConsoleVariable<int32> CVarVulkanDefaultBackBufferFormat(
+    "VulkanRHI.DefaultBackBufferFormat",
+    "Default back-buffer format used when FRHISwapChainDesc::ColorFormat is Unknown. "
+    "0=B8G8R8A8_Unorm (default), "
+    "1=R8G8B8A8_Unorm, "
+    "2=B8G8R8A8_Unorm_SRGB, "
+    "3=R8G8B8A8_Unorm_SRGB, "
+    "4=R10G10B10A2_Unorm (HDR10 candidate), "
+    "5=R16G16B16A16_Float (scRGB candidate).",
+    0);
+
+static TAutoConsoleVariable<int32> CVarVulkanDefaultBackBufferColorSpace(
+    "VulkanRHI.DefaultBackBufferColorSpace",
+    "Default back-buffer color space used when FRHISwapChainDesc::ColorSpace is Unknown. "
+    "0=RGB_Full_G22_None_P709 / sRGB (default), "
+    "1=RGB_Full_G10_None_P709 / scRGB, "
+    "2=RGB_Full_G2084_None_P2020 / HDR10, "
+    "3=RGB_Full_G22_None_P2020.",
+    0);
+
+EFormat GetVulkanDefaultBackBufferFormat()
+{
+    static constexpr EFormat FormatTable[] =
+    {
+        EFormat::B8G8R8A8_Unorm,
+        EFormat::R8G8B8A8_Unorm,
+        EFormat::B8G8R8A8_Unorm_SRGB,
+        EFormat::R8G8B8A8_Unorm_SRGB,
+        EFormat::R10G10B10A2_Unorm,
+        EFormat::R16G16B16A16_Float,
+    };
+
+    int32 Index = CVarVulkanDefaultBackBufferFormat.GetValue();
+    if (Index < 0 || Index >= static_cast<int32>(ARRAY_COUNT(FormatTable)))
+    {
+        VULKAN_WARNING("VulkanRHI.DefaultBackBufferFormat=%d is out of range; clamping to 0.", Index);
+        Index = 0;
+    }
+
+    return FormatTable[Index];
+}
+
+static EColorSpace GetVulkanDefaultBackBufferColorSpace()
+{
+    static constexpr EColorSpace ColorSpaceTable[] =
+    {
+        EColorSpace::RGB_Full_G22_None_P709,
+        EColorSpace::RGB_Full_G10_None_P709,
+        EColorSpace::RGB_Full_G2084_None_P2020,
+        EColorSpace::RGB_Full_G22_None_P2020,
+    };
+
+    int32 Index = CVarVulkanDefaultBackBufferColorSpace.GetValue();
+    if (Index < 0 || Index >= static_cast<int32>(ARRAY_COUNT(ColorSpaceTable)))
+    {
+        VULKAN_WARNING("VulkanRHI.DefaultBackBufferColorSpace=%d is out of range; clamping to 0.", Index);
+        Index = 0;
+    }
+
+    return ColorSpaceTable[Index];
+}
 
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
 	: FVulkanDeviceChild(InDevice)
@@ -120,7 +180,9 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 	}
 	else
 	{
-		VULKAN_INFO("Selected format '%s' (colorspace=%d) for SwapChain", ToString(SelectedFormat.format), int(SelectedFormat.colorSpace));
+		VULKAN_INFO("Selected Format='%s' Colorspace='%s' for SwapChain",
+		            ToString(SelectedFormat.format),
+		            ToString(SelectedFormat.colorSpace));
 	}
 
 	// Pick present mode (FIFO guaranteed by spec)
@@ -194,9 +256,9 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 	CurrentExtent.width  = Math::Max(CurrentExtent.width, 1u);
 	CurrentExtent.height = Math::Max(CurrentExtent.height, 1u);
 
-	VULKAN_INFO("SwapChain Extent: current=(%u,%u) min=(%u,%u) max=(%u,%u) chosen=(%u,%u)", Capabilities.currentExtent.width, Capabilities.currentExtent.height,
-		Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height, 
-		CurrentExtent.width, CurrentExtent.height);
+	VULKAN_INFO("SwapChain Extent: current=(%u,%u) min=(%u,%u) max=(%u,%u) chosen=(%u,%u)", Capabilities.currentExtent.width, 
+        Capabilities.currentExtent.height, Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, 
+        Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height, CurrentExtent.width, CurrentExtent.height);
 
 	// Image count (respect min/max)
 	uint32 DesiredCount = Math::Max<uint32>(CreateInfo.BufferCount, Capabilities.minImageCount);
@@ -207,7 +269,8 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 
 	if (DesiredCount != CreateInfo.BufferCount)
 	{
-		VULKAN_INFO("Adjusted buffer count from %u to %u (min=%u max=%u)", CreateInfo.BufferCount, DesiredCount, Capabilities.minImageCount, Capabilities.maxImageCount);
+		VULKAN_INFO("Adjusted buffer count from %u to %u (min=%u max=%u)", 
+            CreateInfo.BufferCount, DesiredCount, Capabilities.minImageCount, Capabilities.maxImageCount);
 	}
 
 	GraphicsQueueFamilyIndex = GetDevice()->GetQueueIndexFromType(EVulkanCommandQueueType::Graphics);
@@ -241,12 +304,12 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 
 	// Ensure that all the image usage flags are supported
 	const VkImageUsageFlags SupportedUsage = Capabilities.supportedUsageFlags;
-	const VkImageUsageFlags RequestedUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-	
-	const VkImageUsageFlags FinalUsage = RequestedUsage & SupportedUsage;
+	const VkImageUsageFlags RequestedUsage = ConvertSwapChainUsage(CreateInfo.Usage);
+	const VkImageUsageFlags FinalUsage     = RequestedUsage & SupportedUsage;
+
 	if (FinalUsage != RequestedUsage)
 	{
-		VULKAN_ERROR_CRITICAL("Surface does not support the requested ImageUsage flags");
+		VULKAN_ERROR_CRITICAL("Surface does not support the requested ImageUsage flags (requested=0x%x, supported=0x%x)", RequestedUsage, SupportedUsage);
 		return false;
 	}
 
@@ -383,10 +446,12 @@ VkResult FVulkanSwapChain::AcquireNextImage(FVulkanSemaphore* AcquireSemaphore)
 	VkSemaphore Semaphore = AcquireSemaphore ? AcquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
 
 	VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, Semaphore, VK_NULL_HANDLE, &BufferIndex);
-	if (GVulkanReportSwapChainAcquireImageNonSuccessResult && Result != VK_SUCCESS)
+#if VULKAN_REPORT_SWAPCHAIN_ACQUIRE_IMAGE_NON_SUCCESS_RESULT
+	if (Result != VK_SUCCESS)
 	{
 		VULKAN_WARNING("FVulkanSwapChain::AcquireNextImage vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
 	}
+#endif
 	
 	// BufferIndex is only valid on SUCCESS/SUBOPTIMAL
 	if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
@@ -407,9 +472,11 @@ FVulkanSwapChainRHI::FVulkanSwapChainRHI(FVulkanDevice* InDevice, FVulkanCommand
     , SwapChainResource(nullptr)
     , BackBufferProxy(nullptr)
     , BackBufferProxyRenderTargetView(nullptr)
+    , BackBufferProxyUnorderedAccessView(nullptr)
     , BackBuffers()
     , ImageSemaphores()
     , RenderSemaphores()
+    , CurrentColorSpace(EColorSpace::RGB_Full_G22_None_P709)
     , SemaphoreIndex(0)
     , BackBufferIndex(0)
     , ActiveBackBufferCount(0)
@@ -430,6 +497,11 @@ FVulkanSwapChainRHI::~FVulkanSwapChainRHI()
     {
         BackBufferProxyRenderTargetView->SetSwapChain(nullptr);
     }
+
+    if (BackBufferProxyUnorderedAccessView)
+    {
+        BackBufferProxyUnorderedAccessView->SetSwapChain(nullptr);
+    }
 }
 
 bool FVulkanSwapChainRHI::Initialize()
@@ -447,8 +519,41 @@ bool FVulkanSwapChainRHI::Initialize()
         return false;
     }
 
+    // Resolve format / color space using the policy described on FRHISwapChainDesc.
+    EFormat     RequestedFormat     = Desc.ColorFormat;
+    EColorSpace RequestedColorSpace = Desc.ColorSpace;
+
+    if (RequestedFormat == EFormat::Unknown)
+    {
+        RequestedFormat = GetVulkanDefaultBackBufferFormat();
+    }
+
+    if (RequestedColorSpace == EColorSpace::Unknown)
+    {
+        RequestedColorSpace = GetVulkanDefaultBackBufferColorSpace();
+    }
+
+    Desc.ColorFormat  = RequestedFormat;
+    Desc.ColorSpace   = RequestedColorSpace;
+    CurrentColorSpace = RequestedColorSpace;
+
+    if (!Desc.IsRenderTarget() && !Desc.IsUnorderedAccess())
+    {
+        VULKAN_ERROR("FVulkanSwapChainRHI::Initialize: Desc.Usage must include at least one of ESwapChainUsageFlags::RenderTarget or ESwapChainUsageFlags::UnorderedAccess.");
+        return false;
+    }
+
     // Create the proxy texture/RTV up-front so that higher-level code always gets a stable handle.
-    const ETextureUsageFlags BackBufferUsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
+    ETextureUsageFlags BackBufferUsageFlags = ETextureUsageFlags::Presentable;
+    if (Desc.IsRenderTarget())
+    {
+        BackBufferUsageFlags |= ETextureUsageFlags::RenderTarget;
+    }
+    if (Desc.IsUnorderedAccess())
+    {
+        BackBufferUsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
+    }
+
     const FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, BackBufferUsageFlags);
     BackBufferProxy = new FVulkanBackBufferProxyTextureRHI(this, BackBufferDesc);
 
@@ -458,8 +563,17 @@ bool FVulkanSwapChainRHI::Initialize()
         return false;
     }
 
-    BackBufferProxyRenderTargetView = new FVulkanBackBufferProxyRenderTargetViewRHI(this, BackBufferProxy.Get());
-    BackBufferProxy->SetProxyRenderTargetView(BackBufferProxyRenderTargetView.Get());
+    if (Desc.IsRenderTarget())
+    {
+        BackBufferProxyRenderTargetView = new FVulkanBackBufferProxyRenderTargetViewRHI(this, BackBufferProxy.Get());
+        BackBufferProxy->SetProxyRenderTargetView(BackBufferProxyRenderTargetView.Get());
+    }
+
+    if (Desc.IsUnorderedAccess())
+    {
+        BackBufferProxyUnorderedAccessView = new FVulkanBackBufferProxyUnorderedAccessViewRHI(this, BackBufferProxy.Get());
+        BackBufferProxy->SetProxyUnorderedAccessView(BackBufferProxyUnorderedAccessView.Get());
+    }
     
     // We need to start the context since that locks it to this thread
     CommandContext->StartContext();
@@ -469,8 +583,6 @@ bool FVulkanSwapChainRHI::Initialize()
         return false;
     }
 
-    // Eagerly acquire the first image so GetCurrentBackBuffer / GetCurrentBackBufferRenderTargetView
-    // always resolve to a valid per-image resource.
     const VkResult AcquireResult = AcquireNextImage();
     if (AcquireResult != VK_SUCCESS && AcquireResult != VK_SUBOPTIMAL_KHR)
     {
@@ -564,13 +676,14 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 	}
 
 	FVulkanSwapChainCreateInfo SwapChainCreateInfo;
-	SwapChainCreateInfo.ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+	SwapChainCreateInfo.ColorSpace        = ConvertColorSpace(CurrentColorSpace);
 	SwapChainCreateInfo.Surface           = Surface.Get();
 	SwapChainCreateInfo.PreviousSwapChain = SwapChainResource.Get();
 	SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
 	SwapChainCreateInfo.Extent.width      = CreateWidth;
 	SwapChainCreateInfo.Extent.height     = CreateHeight;
 	SwapChainCreateInfo.Format            = GetColorFormat();
+	SwapChainCreateInfo.Usage             = Desc.Usage;
 	SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
 
 	// NOTE: Create a temporary SwapChain, keeping old alive until success
@@ -645,7 +758,15 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
     ImageFences.Resize(BufferCount);
     BackBuffers.Resize(BufferCount);
 
-    const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
+    ETextureUsageFlags UsageFlags = ETextureUsageFlags::Presentable;
+    if (Desc.IsRenderTarget())
+    {
+        UsageFlags |= ETextureUsageFlags::RenderTarget;
+    }
+    if (Desc.IsUnorderedAccess())
+    {
+        UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
+    }
     FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
 
     for (uint32 i = 0; i < BufferCount; ++i)
@@ -672,7 +793,8 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 
     for (FBackBufferData& Data : BackBuffers)
     {
-        Data.RenderTargetView = nullptr;
+        Data.RenderTargetView    = nullptr;
+        Data.UnorderedAccessView = nullptr;
     }
 
     int32 Index = 0;
@@ -698,18 +820,34 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
         BackBuffers[Index].Texture->SetVkImage(Image);
 
-        FRHIRenderTargetViewDesc RTVDesc(BackBuffers[Index].Texture.Get());
-        
-		FRHIRenderTargetView* RenderTargetView = FVulkanRHI::Get()->CreateRenderTargetView(RTVDesc);
-        if (!RenderTargetView)
+        if (Desc.IsRenderTarget())
         {
-            VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer RTV for index %d", Index);
-            return false;
+            FRHIRenderTargetViewDesc RTVDesc(BackBuffers[Index].Texture.Get());
+
+            FRHIRenderTargetView* RenderTargetView = FVulkanRHI::Get()->CreateRenderTargetView(RTVDesc);
+            if (!RenderTargetView)
+            {
+                VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer RTV for index %d", Index);
+                return false;
+            }
+            else
+            {
+                BackBuffers[Index].RenderTargetView = FVulkanRenderTargetViewRHIRef(FVulkanRHI::ResourceCast(RenderTargetView));
+            }
         }
-		else
-		{
-			BackBuffers[Index].RenderTargetView = FVulkanRenderTargetViewRHIRef(FVulkanRHI::ResourceCast(RenderTargetView));
-		}
+
+        if (Desc.IsUnorderedAccess())
+        {
+            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureUAV(
+                BackBuffers[Index].Texture.Get(), GetColorFormat(), 0, 0, 1);
+            FRHIUnorderedAccessView* UnorderedAccessView = FVulkanRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+            if (!UnorderedAccessView)
+            {
+                VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer UAV for index %d", Index);
+                return false;
+            }
+            BackBuffers[Index].UnorderedAccessView = FVulkanUnorderedAccessViewRHIRef(FVulkanRHI::ResourceCast(UnorderedAccessView));
+        }
 
         ++Index;
     }
@@ -739,47 +877,87 @@ void FVulkanSwapChainRHI::DestroySwapChain()
 	SemaphoreIndex  = 0;
 }
 
-bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight)
+bool FVulkanSwapChainRHI::Resize(uint32 InWidth, uint32 InHeight, EFormat NewFormat, EColorSpace NewColorSpace)
 {
-    if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
+    // -------------------------------------------------------------------------------------------
+    // Resolve effective values - 0 / Unknown means "keep current".
+    // -------------------------------------------------------------------------------------------
+    const uint32      ResolvedWidth       = (InWidth  > 0u) ? InWidth  : Desc.Width;
+    const uint32      ResolvedHeight      = (InHeight > 0u) ? InHeight : Desc.Height;
+    const EFormat     EffectiveFormat     = (NewFormat     == EFormat::Unknown)     ? Desc.ColorFormat   : NewFormat;
+    const EColorSpace EffectiveColorSpace = (NewColorSpace == EColorSpace::Unknown) ? CurrentColorSpace  : NewColorSpace;
+
+    const bool bSizeChanged       = (ResolvedWidth != Desc.Width || ResolvedHeight != Desc.Height) && ResolvedWidth > 0 && ResolvedHeight > 0;
+    const bool bFormatChanged     = (NewFormat     != EFormat::Unknown)     && (EffectiveFormat     != Desc.ColorFormat);
+    const bool bColorSpaceChanged = (NewColorSpace != EColorSpace::Unknown) && (EffectiveColorSpace != CurrentColorSpace);
+
+    if (!bSizeChanged && !bFormatChanged && !bColorSpaceChanged)
     {
-        CHECK(!CommandContext->IsInsideRenderPass());
-        CHECK(CommandContext->IsRecording());
+        return true;
+    }
 
-        // Ensure that all work is completed. If this function is called from a RHICommandList the we do 
-        // this "manually" since the context is already started and we need to ensure that there is a valid CommandBuffer
-        CommandContext->SplitCommandBuffer(false, true);
-
-        // The end-of-Present eager AcquireNextImage queues WAIT IS[k] / SIGNAL RS[k] on the queue's
-        // pending semaphore lists. When the CB before Resize is empty those pending entries are not
-        // drained by the SplitCommandBuffer above, and would otherwise be flushed by the barrier
-        // submit inside CreateSwapChain without a matching wait. Drop them now; the GPU is idle and
-        // the referenced VkSemaphores are about to be destroyed and recreated.
-        CommandContext->GetCommandQueue().ClearPendingSemaphores();
-
-        VULKAN_INFO("FVulkanSwapChainRHI::Resize w=%d h=%d", InWidth, InHeight);
-
-        if (!CreateSwapChain(InWidth, InHeight))
+    // -------------------------------------------------------------------------------------------
+    // Fail-fast on an unsupported (Format, ColorSpace) combination before we touch GPU state.
+    // -------------------------------------------------------------------------------------------
+    if (bFormatChanged || bColorSpaceChanged)
+    {
+        if (!IsFormatSupported(EffectiveFormat, EffectiveColorSpace))
         {
-            VULKAN_WARNING("FVulkanSwapChainRHI::Resize FAILED");
+            VULKAN_ERROR("FVulkanSwapChainRHI::Resize: requested (%s, %s) not supported by this swap-chain.",
+                         ToString(EffectiveFormat), ToString(EffectiveColorSpace));
             return false;
         }
+    }
 
-        Desc.Width  = static_cast<uint16>(InWidth);
-        Desc.Height = static_cast<uint16>(InHeight);
-		
-        if (BackBufferProxy)
-        {
-            BackBufferProxy->Resize(Desc.Width, Desc.Height);
-        }
+    CHECK(!CommandContext->IsInsideRenderPass());
+    CHECK(CommandContext->IsRecording());
 
-        // Eagerly acquire the first image after a resize so the proxy stays resolved.
-        const VkResult AcquireResult = AcquireNextImage();
-        if (AcquireResult != VK_SUCCESS && AcquireResult != VK_SUBOPTIMAL_KHR)
-        {
-            VULKAN_WARNING("FVulkanSwapChainRHI::Resize AcquireNextImage after resize failed (%s)", ToString(AcquireResult));
-            return false;
-        }
+    // Ensure that all work is completed. If this function is called from a RHICommandList we do
+    // this "manually" since the context is already started and we need to ensure that there is a
+    // valid CommandBuffer.
+    CommandContext->SplitCommandBuffer(false, true);
+
+    // The end-of-Present eager AcquireNextImage queues WAIT IS[k] / SIGNAL RS[k] on the queue's
+    // pending semaphore lists. When the CB before Resize is empty those pending entries are not
+    // drained by the SplitCommandBuffer above, and would otherwise be flushed by the barrier
+    // submit inside CreateSwapChain without a matching wait. Drop them now; the GPU is idle and
+    // the referenced VkSemaphores are about to be destroyed and recreated.
+    CommandContext->GetCommandQueue().ClearPendingSemaphores();
+
+    VULKAN_INFO("FVulkanSwapChainRHI::Resize Width=%u Height=%u Format=%s Colorspace=%s",
+        ResolvedWidth, ResolvedHeight, ToString(ConvertFormat(EffectiveFormat)), ToString(ConvertColorSpace(EffectiveColorSpace)));
+
+    // Capture the new resolved format / color space BEFORE CreateSwapChain so the create info uses
+    // them. The size is applied below from the actual VkSurfaceCapabilitiesKHR-clamped extent.
+    if (bFormatChanged)
+    {
+        Desc.ColorFormat = EffectiveFormat;
+    }
+
+    if (bColorSpaceChanged)
+    {
+        CurrentColorSpace = EffectiveColorSpace;
+        Desc.ColorSpace   = EffectiveColorSpace;
+    }
+
+    if (!CreateSwapChain(ResolvedWidth, ResolvedHeight))
+    {
+        VULKAN_WARNING("FVulkanSwapChainRHI::Resize FAILED");
+        return false;
+    }
+
+    // CreateSwapChain may have clamped the extent to the surface capabilities; reflect that.
+    if (BackBufferProxy)
+    {
+        BackBufferProxy->Resize(Desc.Width, Desc.Height);
+    }
+
+    // Eagerly acquire the first image after a resize so the proxy stays resolved.
+    const VkResult AcquireResult = AcquireNextImage();
+    if (AcquireResult != VK_SUCCESS && AcquireResult != VK_SUBOPTIMAL_KHR)
+    {
+        VULKAN_WARNING("FVulkanSwapChainRHI::Resize AcquireNextImage after resize failed (%s)", ToString(AcquireResult));
+        return false;
     }
 
     return true;
@@ -794,10 +972,9 @@ bool FVulkanSwapChainRHI::Present(bool bVerticalSync)
     }
 
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
-	if constexpr (GVulkanLogSemaphoreIndex)
-	{
-		VULKAN_INFO("FVulkanSwapChainRHI::Present SemaphoreIndex=%d", SemaphoreIndex);
-	}
+#if VULKAN_LOG_SEMAPHORE_INDEX
+	VULKAN_INFO("FVulkanSwapChainRHI::Present SemaphoreIndex=%d", SemaphoreIndex);
+#endif
 
     bool bNeedsRecreation = false;
 
@@ -909,24 +1086,19 @@ FVulkanRenderTargetViewRHI* FVulkanSwapChainRHI::GetCurrentBackBufferRenderTarge
     return BackBuffers[BackBufferIndex].RenderTargetView.Get();
 }
 
-FRHITexture* FVulkanSwapChainRHI::GetBackBuffer() const
+FVulkanUnorderedAccessViewRHI* FVulkanSwapChainRHI::GetCurrentBackBufferUnorderedAccessView() const
 {
-    return BackBufferProxy.Get();
-}
-
-FRHIRenderTargetView* FVulkanSwapChainRHI::GetBackBufferRenderTargetView() const
-{
-    return BackBufferProxyRenderTargetView.Get();
+    if (!BackBuffers.IsValidIndex(static_cast<int32>(BackBufferIndex)))
+    {
+        return nullptr;
+    }
+    
+    return BackBuffers[BackBufferIndex].UnorderedAccessView.Get();
 }
 
 void* FVulkanSwapChainRHI::GetRHINativeHandle() const
 {
     return reinterpret_cast<void*>(SwapChainResource->GetVkSwapChain());
-}
-
-uint32 FVulkanSwapChainRHI::GetRHINativeBackBufferCount() const
-{
-    return GetNumBackBuffers();
 }
 
 void* FVulkanSwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index) const
@@ -937,8 +1109,71 @@ void* FVulkanSwapChainRHI::GetRHINativeBackBufferResourceFromIndex(uint32 Index)
 
 void* FVulkanSwapChainRHI::GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const
 {
-    FVulkanRenderTargetViewRHI* RenderTargetView = GetBackBufferRenderTargetViewAtIndex(Index);
-    return RenderTargetView ? RenderTargetView->GetRHINativeHandle() : nullptr;
+    FVulkanRenderTargetViewRHI* View = GetBackBufferRenderTargetViewAtIndex(Index);
+    return View ? View->GetRHINativeHandle() : nullptr;
+}
+
+void* FVulkanSwapChainRHI::GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const
+{
+    FVulkanUnorderedAccessViewRHI* View = GetBackBufferUnorderedAccessViewAtIndex(Index);
+    return View ? View->GetRHINativeHandle() : nullptr;
+}
+
+FRHITexture* FVulkanSwapChainRHI::GetBackBuffer() const
+{
+    return BackBufferProxy.Get();
+}
+
+FRHITexture* FVulkanSwapChainRHI::GetBackBufferResourceFromIndex(uint32 Index) const
+{
+    return GetBackBufferAtIndex(Index);
+}
+
+uint32 FVulkanSwapChainRHI::GetNumBackBufferResources() const
+{
+    return GetNumBackBuffers();
+}
+
+FRHIRenderTargetView* FVulkanSwapChainRHI::GetBackBufferRenderTargetView() const
+{
+    return BackBufferProxyRenderTargetView.Get();
+}
+
+FRHIUnorderedAccessView* FVulkanSwapChainRHI::GetBackBufferUnorderedAccessView() const
+{
+    return BackBufferProxyUnorderedAccessView.Get();
+}
+
+bool FVulkanSwapChainRHI::IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const
+{
+    if (Format == EFormat::Unknown || ColorSpace == EColorSpace::Unknown)
+    {
+        return false;
+    }
+
+    if (!Surface)
+    {
+        return false;
+    }
+
+    TArray<VkSurfaceFormatKHR> SupportedFormats;
+    if (Surface->GetSupportedFormats(SupportedFormats) != ESurfaceStatus::Ok)
+    {
+        return false;
+    }
+
+    const VkFormat        TargetFormat     = ConvertFormat(Format);
+    const VkColorSpaceKHR TargetColorSpace = ConvertColorSpace(ColorSpace);
+
+    for (const VkSurfaceFormatKHR& SupportedFormat : SupportedFormats)
+    {
+        if (SupportedFormat.format == TargetFormat && SupportedFormat.colorSpace == TargetColorSpace)
+        {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 VkResult FVulkanSwapChainRHI::AcquireNextImage()
@@ -946,10 +1181,9 @@ VkResult FVulkanSwapChainRHI::AcquireNextImage()
 	FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 
-    if constexpr (GVulkanLogSemaphoreIndex)
-    {
-        VULKAN_INFO("FVulkanSwapChainRHI::AcquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
-    }
+#if VULKAN_LOG_SEMAPHORE_INDEX
+    VULKAN_INFO("FVulkanSwapChainRHI::AcquireNextImage SemaphoreIndex=%d", SemaphoreIndex);
+#endif
 
 	if (FVulkanFence* Fence = ImageFences[SemaphoreIndex])
 	{

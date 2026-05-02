@@ -6,15 +6,15 @@ enum class ETextureUsageFlags
 {
     None = 0,
 
-    RenderTarget           = FLAG(1), // RenderTargetView
-    DepthStencil           = FLAG(2), // DepthStencilView
-    UnorderedAccessTexture = FLAG(3), // UnorderedAccessView
-    ShaderResourceTexture  = FLAG(4), // ShaderResourceView
-    ShadingRateTexture     = FLAG(5), // Indicates that the texture is going to be used as a shading rate texture
-    Presentable            = FLAG(6), // Indicates that the texture is a BackBuffer resource
-    NoDefaultSRV           = FLAG(7), // Do not create a default ShaderResourceView at texture creation time
-    NoDefaultUAV           = FLAG(8), // Do not create a default UnorderedAccessView at texture creation time
-    NoDefaultRTV           = FLAG(9), // Do not create a default RenderTargetView at texture creation time
+    RenderTarget           = FLAG(1),  // RenderTargetView
+    DepthStencil           = FLAG(2),  // DepthStencilView
+    UnorderedAccessTexture = FLAG(3),  // UnorderedAccessView
+    ShaderResourceTexture  = FLAG(4),  // ShaderResourceView
+    ShadingRateTexture     = FLAG(5),  // Indicates that the texture is going to be used as a shading rate texture
+    Presentable            = FLAG(6),  // Indicates that the texture is a BackBuffer resource
+    NoDefaultSRV           = FLAG(7),  // Do not create a default ShaderResourceView at texture creation time
+    NoDefaultUAV           = FLAG(8),  // Do not create a default UnorderedAccessView at texture creation time
+    NoDefaultRTV           = FLAG(9),  // Do not create a default RenderTargetView at texture creation time
     NoDefaultDSV           = FLAG(10), // Do not create a default DepthStencilView at texture creation time
 };
 

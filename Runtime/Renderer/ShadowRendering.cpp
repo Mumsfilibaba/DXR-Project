@@ -424,8 +424,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 {
     const auto GetRenderMapRenderPassType = []() -> ECubeMapRenderPassType
     {
-        const bool bUseVSInstancing = RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader && CVarPointLightsEnableSinglePassRendering.GetValue();
-        const bool bUseGSInstancing = !bUseVSInstancing && RHIDeviceFeatureSupport::bSupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
+        const bool bUseVSInstancing = RHI::bSupportRenderTargetArrayIndexFromVertexShader && CVarPointLightsEnableSinglePassRendering.GetValue();
+        const bool bUseGSInstancing = !bUseVSInstancing && RHI::bSupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
         if (bUseVSInstancing)
         {
             return ECubeMapRenderPassType::SinglePass;
@@ -993,7 +993,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         FRHIRasterizerStateDesc RasterizerStateDesc;
         RasterizerStateDesc.bDepthClipEnable = ShaderCombination.bEnableDepthClipping;
 
-        if (!RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+        if (!RHI::bSupportsDynamicDepthBias)
         {
             RasterizerStateDesc.DepthBias            = 1.0f;
             RasterizerStateDesc.DepthBiasClamp       = 0.05f;
@@ -1167,9 +1167,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     {
         constexpr uint32 MinViewInstanceCount = 4;
 
-        const bool bUseVSInstancing   = RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader && CVarCSMEnableSinglePassRendering.GetValue();
-        const bool bUseGSInstancing   = !bUseVSInstancing && RHIDeviceFeatureSupport::bSupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
-        const bool bUseViewInstancing = !bUseGSInstancing && RHIDeviceFeatureSupport::bSupportsViewInstancing && RHIDeviceFeatureSupport::MaxViewInstanceCount >= MinViewInstanceCount && CVarCSMEnableViewInstancing.GetValue();
+        const bool bUseVSInstancing   = RHI::bSupportRenderTargetArrayIndexFromVertexShader && CVarCSMEnableSinglePassRendering.GetValue();
+        const bool bUseGSInstancing   = !bUseVSInstancing && RHI::bSupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
+        const bool bUseViewInstancing = !bUseGSInstancing && RHI::bSupportsViewInstancing && RHI::MaxViewInstanceCount >= MinViewInstanceCount && CVarCSMEnableViewInstancing.GetValue();
 
         if (bUseVSInstancing)
         {
@@ -1249,7 +1249,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
         CommandList.BeginRenderPass(RenderPassDesc);
 
-        if (RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+        if (RHI::bSupportsDynamicDepthBias)
         {
             CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
         }
@@ -1365,7 +1365,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
             CommandList.BeginRenderPass(RenderPassDesc);
 
-            if (RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+            if (RHI::bSupportsDynamicDepthBias)
             {
                 CommandList.SetDepthBias(1.0f, 0.05f, 1.0f);
             }

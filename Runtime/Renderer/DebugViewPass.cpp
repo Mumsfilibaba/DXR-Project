@@ -4,23 +4,26 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Renderer/Performance/GPUProfiler.h"
-#include "RendererCore/RenderSettings.h"
 
 FDebugViewPass::FDebugViewPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
-    , DebugPSO_Linear(nullptr)
-    , DebugPSO_BackBuffer(nullptr)
+    , DebugPSO(nullptr)
     , DebugVertexShader(nullptr)
     , DebugPixelShader(nullptr)
+    , DebugDepthStencilState(nullptr)
+    , DebugRasterizerState(nullptr)
+    , DebugBlendState(nullptr)
 {
 }
 
 FDebugViewPass::~FDebugViewPass()
 {
-    DebugPSO_Linear.Reset();
-    DebugPSO_BackBuffer.Reset();
+    DebugPSO.Reset();
     DebugVertexShader.Reset();
     DebugPixelShader.Reset();
+    DebugDepthStencilState.Reset();
+    DebugRasterizerState.Reset();
+    DebugBlendState.Reset();
 }
 
 bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
@@ -60,8 +63,8 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     DepthStencilDesc.bDepthEnable      = false;
     DepthStencilDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilDesc);
-    if (!DepthStencilState)
+    DebugDepthStencilState = FRHI::Get()->CreateDepthStencilState(DepthStencilDesc);
+    if (!DebugDepthStencilState)
     {
         DEBUG_BREAK();
         return false;
@@ -70,8 +73,8 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIRasterizerStateDesc RasterizerDesc;
     RasterizerDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
-    if (!RasterizerState)
+    DebugRasterizerState = FRHI::Get()->CreateRasterizerState(RasterizerDesc);
+    if (!DebugRasterizerState)
     {
         DEBUG_BREAK();
         return false;
@@ -80,42 +83,44 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
-    if (!BlendState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIGraphicsPipelineStateDesc PSODesc;
-    PSODesc.InputLayout                                    = nullptr;
-    PSODesc.BlendState                                     = BlendState.Get();
-    PSODesc.DepthStencilState                              = DepthStencilState.Get();
-    PSODesc.RasterizerState                                = RasterizerState.Get();
-    PSODesc.VertexShader                                   = DebugVertexShader.Get();
-    PSODesc.PixelShader                                    = DebugPixelShader.Get();
-    PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
-    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
-    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
-
-    DebugPSO_Linear = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
-    if (!DebugPSO_Linear)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = RenderSettings::GetBackBufferFormat();
-
-    DebugPSO_BackBuffer = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
-    if (!DebugPSO_BackBuffer)
+    DebugBlendState = FRHI::Get()->CreateBlendState(BlendStateDesc);
+    if (!DebugBlendState)
     {
         DEBUG_BREAK();
         return false;
     }
 
     return true;
+}
+
+void FDebugViewPass::PreparePipelineState(EFormat OutputFormat)
+{
+    if (DebugPSO && DebugPSOFormat == OutputFormat)
+    {
+        return;
+    }
+
+    FRHIGraphicsPipelineStateDesc PSODesc;
+    PSODesc.InputLayout                                    = nullptr;
+    PSODesc.BlendState                                     = DebugBlendState.Get();
+    PSODesc.DepthStencilState                              = DebugDepthStencilState.Get();
+    PSODesc.RasterizerState                                = DebugRasterizerState.Get();
+    PSODesc.VertexShader                                   = DebugVertexShader.Get();
+    PSODesc.PixelShader                                    = DebugPixelShader.Get();
+    PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
+    PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
+    PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
+
+    FRHIGraphicsPipelineStateRef NewPSO = FRHI::Get()->CreateGraphicsPipelineState(PSODesc);
+    if (!NewPSO)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
+    DebugPSO       = NewPSO;
+    DebugPSOFormat = OutputFormat;
 }
 
 void FDebugViewPass::Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources, FSceneRenderView::EDebugView DebugView)
@@ -193,7 +198,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     RequirePixelIfNotRT(FrameResources.ShadowCascades.Get());
     RequirePixelIfNotRT(FrameResources.CascadeIndexBuffer.Get());
     RequirePixelIfNotRT(FrameResources.TonemappedTarget.Get());
-    RequirePixelIfNotRT(FrameResources.FinalTarget.Get());
+    RequirePixelIfNotRT(FrameResources.SceneTarget.Get());
 
     FRHIRenderTargetView* RenderTargetView = RenderTarget->GetRenderTargetView();
 
@@ -207,8 +212,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
 
     CommandList.BeginRenderPass(RenderPassDesc);
 
-    const FRHIGraphicsPipelineStateRef& PSO = RenderTarget->GetFormat() == RenderSettings::GetBackBufferFormat() ? DebugPSO_BackBuffer : DebugPSO_Linear;
-    CommandList.SetGraphicsPipelineState(PSO.Get());
+    CommandList.SetGraphicsPipelineState(DebugPSO.Get());
 
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
     CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
@@ -220,18 +224,22 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     {
         CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.DirectionalShadowMask->GetShaderResourceView(), 5);
     }
+    
     if (FrameResources.SSAOBuffer)
     {
         CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.SSAOBuffer->GetShaderResourceView(), 6);
     }
+    
     if (FrameResources.ShadowCascades)
     {
         CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.ShadowCascades->GetShaderResourceView(), 7);
     }
+    
     if (FrameResources.CascadeIndexBuffer)
     {
         CommandList.SetShaderResourceView(DebugPixelShader.Get(), FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 8);
     }
+
     FRHITexture* LitSourceTexture = nullptr;
     if (bPreferTonemapped && FrameResources.TonemappedTarget)
     {
@@ -239,7 +247,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     }
     else
     {
-        LitSourceTexture = FrameResources.FinalTarget.Get();
+        LitSourceTexture = FrameResources.SceneTarget.Get();
     }
 
     if (LitSourceTexture)
@@ -265,7 +273,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
         int32 ViewY              = 0;
         int32 TargetWidth        = 0;
         int32 TargetHeight       = 0;
-        int32 OutputIsBackBuffer = 0;
+        int32 bIsOutputSceneTarget = 0;
     } Constants;
 
     Constants.DebugMode          = static_cast<int32>(DebugView);
@@ -276,7 +284,7 @@ void FDebugViewPass::ExecuteInternal(FRHICommandList& CommandList, const FSceneR
     Constants.ViewY              = ViewY;
     Constants.TargetWidth        = TargetWidth;
     Constants.TargetHeight       = TargetHeight;
-    Constants.OutputIsBackBuffer = (RenderTarget->GetFormat() == RenderSettings::GetBackBufferFormat()) ? 1 : 0;
+    Constants.bIsOutputSceneTarget = (RenderTarget->GetFormat() == FGlobalTextureFormats::SceneTargetFormat) ? 1 : 0;
 
     constexpr uint32 NumConstants = sizeof(FDebugViewConstants) / sizeof(uint32);
     CommandList.SetShaderConstants(DebugPixelShader.Get(), &Constants, NumConstants);

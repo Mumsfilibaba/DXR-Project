@@ -88,9 +88,9 @@ public:
     virtual ~FVulkanBlendStateRHI();
 
     // FRHIBlendState Interface
-    virtual FRHIBlendStateDesc GetDesc() const override final;
-
     virtual void* GetRHINativeState() const override final;
+
+    virtual FRHIBlendStateDesc GetDesc() const override final;
 
     const VkPipelineColorBlendStateCreateInfo& GetVkCreateInfo() const
     {

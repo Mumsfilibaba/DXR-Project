@@ -53,6 +53,7 @@ public:
     void OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList);
     
 private:
+    void PreparePipelineState(EFormat OutputFormat);
     void PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData);
@@ -63,7 +64,14 @@ private:
     FRHITextureRef               FontAtlas;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIGraphicsPipelineStateRef PipelineStateNoBlending;
+    EFormat                      PipelineStateFormat = EFormat::Unknown;
+    FRHIVertexShaderRef          VShader;
     FRHIPixelShaderRef           PShader;
+    FRHIInputLayoutRef           InputLayout;
+    FRHIDepthStencilStateRef     DepthStencilState;
+    FRHIRasterizerStateRef       RasterizerState;
+    FRHIBlendStateRef            BlendStateBlending;
+    FRHIBlendStateRef            BlendStateNoBlending;
     FRHIBufferRef                VertexBuffer;
     FRHIBufferRef                IndexBuffer;
     FRHISamplerStateRef          LinearSampler;

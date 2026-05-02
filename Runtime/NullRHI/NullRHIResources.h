@@ -273,6 +273,10 @@ public:
         : FRHISwapChain(InSwapChainDesc)
         , BackBufferIndex(0)
     {
+        if (Desc.ColorSpace == EColorSpace::Unknown)
+        {
+            Desc.ColorSpace = EColorSpace::RGB_Full_G22_None_P709;
+        }
         AllocateBackBuffers();
     }
 
@@ -281,22 +285,19 @@ public:
         return nullptr;
     }
 
-    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index) const override final
+    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 /*Index*/) const override final
     {
-        FNullTextureRHI* Texture = (Index < kNumBackBuffers) ? BackBuffers[Index].Get() : nullptr;
-        return Texture ? Texture->GetRHINativeResource() : nullptr;
+        return nullptr;
     }
 
-    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const override final
+    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 /*Index*/) const override final
     {
-        FNullTextureRHI*      Texture          = (Index < kNumBackBuffers) ? BackBuffers[Index].Get() : nullptr;
-        FRHIRenderTargetView* RenderTargetView = Texture ? Texture->GetRenderTargetView() : nullptr;
-        return RenderTargetView ? RenderTargetView->GetRHINativeHandle() : nullptr;
+        return nullptr;
     }
 
-    virtual uint32 GetRHINativeBackBufferCount() const override final
+    virtual void* GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 /*Index*/) const override final
     {
-        return kNumBackBuffers;
+        return nullptr;
     }
 
     virtual FRHITexture* GetBackBuffer() const override final
@@ -304,10 +305,31 @@ public:
         return BackBuffers[BackBufferIndex].Get();
     }
 
+    virtual FRHITexture* GetBackBufferResourceFromIndex(uint32 Index) const override final
+    {
+        return (Index < kNumBackBuffers) ? BackBuffers[Index].Get() : nullptr;
+    }
+
+    virtual uint32 GetNumBackBufferResources() const override final
+    {
+        return kNumBackBuffers;
+    }
+
     virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final
     {
         FNullTextureRHI* Texture = BackBuffers[BackBufferIndex].Get();
         return Texture ? Texture->GetRenderTargetView() : nullptr;
+    }
+
+    virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const override final
+    {
+        FNullTextureRHI* Texture = BackBuffers[BackBufferIndex].Get();
+        return Texture ? Texture->GetUnorderedAccessView() : nullptr;
+    }
+
+    virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final
+    {
+        return Format != EFormat::Unknown && ColorSpace == EColorSpace::RGB_Full_G22_None_P709;
     }
 
     uint32 GetCurrentBackBufferIndex() const
@@ -321,10 +343,15 @@ public:
         return true;
     }
 
-    bool Resize(uint32 InWidth, uint32 InHeight)
+    bool Resize(uint32 InWidth, uint32 InHeight, EFormat NewFormat = EFormat::Unknown, EColorSpace /*NewColorSpace*/ = EColorSpace::Unknown)
     {
         Desc.Width  = uint16(InWidth);
         Desc.Height = uint16(InHeight);
+
+        if (NewFormat != EFormat::Unknown)
+        {
+            Desc.ColorFormat = NewFormat;
+        }
 
         AllocateBackBuffers();
         BackBufferIndex = 0;

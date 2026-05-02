@@ -13,6 +13,8 @@ public:
 
     bool Initialize(FFrameResources& Resources);
 
+    void PreparePipelineState(EFormat OutputFormat);
+
     void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);
     void RenderLightProbes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene, FRHITexture* InRenderTarget = nullptr, FRHITexture* InDepthTarget = nullptr);
@@ -31,26 +33,43 @@ private:
 
     // Wireframe AABBs
     FRHIGraphicsPipelineStateRef AABB_NoDepth_PSO;
-    FRHIGraphicsPipelineStateRef AABB_NoDepth_PSO_BB;
+    EFormat                      AABB_NoDepth_PSOFormat = EFormat::Unknown;
     FRHIGraphicsPipelineStateRef AABB_Depth_PSO;
+    EFormat                      AABB_Depth_PSOFormat = EFormat::Unknown;
     FRHIVertexShaderRef          AABB_VS;
     FRHIPixelShaderRef           AABB_PS;
+    FRHIInputLayoutRef           AABBInputLayout;
+    FRHIDepthStencilStateRef     AABB_NoDepthStencilState;
+    FRHIDepthStencilStateRef     AABB_DepthStencilState;
+    FRHIRasterizerStateRef       AABBRasterizerState;
+    FRHIBlendStateRef            AABBBlendState;
 
     // Solid AABBs
     FRHIGraphicsPipelineStateRef AABBSolid_PSO;
-    FRHIGraphicsPipelineStateRef AABBSolid_PSO_BB;
+    EFormat                      AABBSolid_PSOFormat = EFormat::Unknown;
     FRHIVertexShaderRef          AABBSolid_VS;
     FRHIPixelShaderRef           AABBSolid_PS;
+    FRHIInputLayoutRef           AABBSolidInputLayout;
+    FRHIDepthStencilStateRef     AABBSolidDepthStencilState;
+    FRHIRasterizerStateRef       AABBSolidRasterizerState;
+    FRHIBlendStateRef            AABBSolidBlendState;
 
     // PointLights
     FRHIGraphicsPipelineStateRef LightDebug_PSO;
-    FRHIGraphicsPipelineStateRef LightDebug_PSO_BB;
+    EFormat                      LightDebug_PSOFormat = EFormat::Unknown;
     FRHIVertexShaderRef          LightDebug_VS;
     FRHIPixelShaderRef           LightDebug_PS;
+    FRHIInputLayoutRef           DebugSphereInputLayout;
+    FRHIDepthStencilStateRef     LightDebugDepthStencilState;
+    FRHIRasterizerStateRef       LightDebugRasterizerState;
+    FRHIBlendStateRef            LightDebugBlendState;
 
     // LightProbes
     FRHIGraphicsPipelineStateRef ProbeDebug_PSO;
-    FRHIGraphicsPipelineStateRef ProbeDebug_PSO_BB;
+    EFormat                      ProbeDebug_PSOFormat = EFormat::Unknown;
     FRHIVertexShaderRef          ProbeDebug_VS;
     FRHIPixelShaderRef           ProbeDebug_PS;
+    FRHIDepthStencilStateRef     ProbeDebugDepthStencilState;
+    FRHIRasterizerStateRef       ProbeDebugRasterizerState;
+    FRHIBlendStateRef            ProbeDebugBlendState;
 };

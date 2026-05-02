@@ -56,6 +56,8 @@ public:
     FLightProbe* GetSelectedLightProbe() const { return SelectedLightProbe; }
 
 private:
+    static constexpr EFormat ViewportImageFormat = EFormat::R8G8B8A8_Unorm;
+
     bool CreateViewportRenderTarget();
 
     FActor*      SelectedActor;

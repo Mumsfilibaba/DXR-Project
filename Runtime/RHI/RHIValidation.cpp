@@ -169,47 +169,47 @@ FRHITexture* FRHIValidation::CreateTexture(const FRHITextureDesc& InTextureDesc,
 	// -------------------------------------------------------------------------------------------
 	if (InTextureDesc.IsTexture3D())
 	{
-		if (InTextureDesc.GetWidth() > RHIDeviceFeatureSupport::MaxTexture3DWidth || InTextureDesc.GetHeight() > RHIDeviceFeatureSupport::MaxTexture3DHeight ||
-			InTextureDesc.GetDepth() > RHIDeviceFeatureSupport::MaxTexture3DDepth)
+		if (InTextureDesc.GetWidth() > RHI::MaxTexture3DWidth || InTextureDesc.GetHeight() > RHI::MaxTexture3DHeight ||
+			InTextureDesc.GetDepth() > RHI::MaxTexture3DDepth)
 		{
 			RHI_VALIDATION_ERROR("CreateTexture: (Texture3D) Extent (%u,%u,%u) exceeds device feature support limit (%u,%u,%u).", InTextureDesc.GetWidth(), InTextureDesc.GetHeight(),
-                InTextureDesc.GetDepth(), RHIDeviceFeatureSupport::MaxTexture3DWidth, RHIDeviceFeatureSupport::MaxTexture3DHeight, RHIDeviceFeatureSupport::MaxTexture3DDepth);
+                InTextureDesc.GetDepth(), RHI::MaxTexture3DWidth, RHI::MaxTexture3DHeight, RHI::MaxTexture3DDepth);
 			return nullptr;
 		}
 	}
 	else if (InTextureDesc.IsTextureCube() || InTextureDesc.IsTextureCubeArray())
 	{
-		if (InTextureDesc.GetWidth() > RHIDeviceFeatureSupport::MaxCubeTextureSize || InTextureDesc.GetHeight() > RHIDeviceFeatureSupport::MaxCubeTextureSize)
+		if (InTextureDesc.GetWidth() > RHI::MaxCubeTextureSize || InTextureDesc.GetHeight() > RHI::MaxCubeTextureSize)
 		{
 			RHI_VALIDATION_ERROR("CreateTexture: (TextureCube) Face extent (%u,%u) exceeds device feature support limit (%u).", InTextureDesc.GetWidth(), InTextureDesc.GetHeight(),
-				RHIDeviceFeatureSupport::MaxCubeTextureSize);
+				RHI::MaxCubeTextureSize);
 			return nullptr;
 		}
 
 		if (InTextureDesc.IsTextureCubeArray())
 		{
-			const uint32 MaxCubeArraySlices = RHIDeviceFeatureSupport::MaxCubeArrayCount * RHI_NUM_CUBE_FACES;
+			const uint32 MaxCubeArraySlices = RHI::MaxCubeArrayCount * RHI_NUM_CUBE_FACES;
 			if (InTextureDesc.NumArraySlices > MaxCubeArraySlices)
 			{
 				RHI_VALIDATION_ERROR("CreateTexture: (TextureCubeArray) NumArraySlices (%u) exceeds device feature support limit (%u). (Cubes=%u)", 
-                    InTextureDesc.NumArraySlices, MaxCubeArraySlices, RHIDeviceFeatureSupport::MaxCubeArrayCount);
+                    InTextureDesc.NumArraySlices, MaxCubeArraySlices, RHI::MaxCubeArrayCount);
 				return nullptr;
 			}
 		}
 	}
 	else
 	{
-		if (InTextureDesc.GetWidth() > RHIDeviceFeatureSupport::MaxTexture2DSize || InTextureDesc.GetHeight() > RHIDeviceFeatureSupport::MaxTexture2DSize)
+		if (InTextureDesc.GetWidth() > RHI::MaxTexture2DSize || InTextureDesc.GetHeight() > RHI::MaxTexture2DSize)
 		{
 			RHI_VALIDATION_ERROR("CreateTexture: (Texture2D) Extent (%u,%u) exceeds device feature support limit (%u).", InTextureDesc.GetWidth(), InTextureDesc.GetHeight(),
-                RHIDeviceFeatureSupport::MaxTexture2DSize);
+                RHI::MaxTexture2DSize);
 			return nullptr;
 		}
 
-		if (InTextureDesc.IsTexture2DArray() && InTextureDesc.NumArraySlices > RHIDeviceFeatureSupport::MaxTexture2DArrayLayers)
+		if (InTextureDesc.IsTexture2DArray() && InTextureDesc.NumArraySlices > RHI::MaxTexture2DArrayLayers)
 		{
 			RHI_VALIDATION_ERROR("CreateTexture: (Texture2DArray) NumArraySlices (%u) exceeds device feature support limit (%u).", InTextureDesc.NumArraySlices, 
-                RHIDeviceFeatureSupport::MaxTexture2DArrayLayers);
+                RHI::MaxTexture2DArrayLayers);
 			return nullptr;
 		}
 	}
@@ -309,10 +309,10 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferDesc, EReso
         return nullptr;
     }
 
-    if (BufferDesc.Size > RHIDeviceFeatureSupport::MaxBufferSize)
+    if (BufferDesc.Size > RHI::MaxBufferSize)
     {
 		RHI_VALIDATION_ERROR("CreateBuffer: The buffer size (%llu bytes) exceeds device feature support. (MaxBufferSize=%llu)",
-			static_cast<uint64>(BufferDesc.Size), static_cast<uint64>(RHIDeviceFeatureSupport::MaxBufferSize));
+			static_cast<uint64>(BufferDesc.Size), static_cast<uint64>(RHI::MaxBufferSize));
         return nullptr;
     }
 
@@ -349,10 +349,10 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferDesc, EReso
             return nullptr;
         }
 
-        if (BufferDesc.Size > RHIDeviceFeatureSupport::MaxConstantBufferSize)
+        if (BufferDesc.Size > RHI::MaxConstantBufferSize)
         {
             RHI_VALIDATION_ERROR("CreateBuffer: size (%llu bytes) exceeds device feature support. (MaxConstantBufferSize=%u)", 
-                static_cast<uint64>(BufferDesc.Size), RHIDeviceFeatureSupport::MaxConstantBufferSize);
+                static_cast<uint64>(BufferDesc.Size), RHI::MaxConstantBufferSize);
             return nullptr;
         }
     }
@@ -396,19 +396,19 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferDesc, EReso
     // -------------------------------------------------------------------------------------------
     if (bIsShaderResourceBuffer || bIsUnorderedAccessBuffer)
     {
-        if (BufferDesc.Size > RHIDeviceFeatureSupport::MaxStorageBufferSize)
+        if (BufferDesc.Size > RHI::MaxStorageBufferSize)
         {
 			RHI_VALIDATION_ERROR("CreateBuffer: %s size exceeds device feature support. (Size=%llu, MaxStorageBufferSize=%llu)",
 				bIsUnorderedAccessBuffer ? "UnorderedAccessBuffer" : "ShaderResourceBuffer", static_cast<uint64>(BufferDesc.Size),
-				static_cast<uint64>(RHIDeviceFeatureSupport::MaxStorageBufferSize));
+				static_cast<uint64>(RHI::MaxStorageBufferSize));
             return nullptr;
         }
 
         if (BufferDesc.Stride > 0)
         {
             // Structured: enforce stride window and size divisibility
-            const uint32 MinStride = RHIDeviceFeatureSupport::StructuredBufferMinStride;
-            const uint32 MaxStride = RHIDeviceFeatureSupport::StructuredBufferMaxStride;
+            const uint32 MinStride = RHI::StructuredBufferMinStride;
+            const uint32 MaxStride = RHI::StructuredBufferMaxStride;
 
             if (BufferDesc.Stride < MinStride || BufferDesc.Stride > MaxStride)
             {
@@ -426,7 +426,7 @@ FRHIBuffer* FRHIValidation::CreateBuffer(const FRHIBufferDesc& BufferDesc, EReso
         }
         else
         {
-            const uint64 RequiredAlignment = static_cast<uint64>(RHIDeviceFeatureSupport::RawBufferRequiredAlignment);
+            const uint64 RequiredAlignment = static_cast<uint64>(RHI::RawBufferRequiredAlignment);
             if ((BufferDesc.Size % RequiredAlignment) != 0ull)
             {
                 RHI_VALIDATION_ERROR("CreateBuffer: RWBuffer size must be aligned to satisfy device feature support. (Size=%llu, RequiredAlignment=%llu)",
@@ -1087,7 +1087,7 @@ void FRHIValidationCommandContext::SetStencilRef(uint32 StencilRef)
 
 void FRHIValidationCommandContext::SetDepthBias(float DepthBias, float DepthBiasClamp, float SlopeScaledDepthBias)
 {
-    if (!RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+    if (!RHI::bSupportsDynamicDepthBias)
     {
         RHI_VALIDATION_ERROR("SetDepthBias called but dynamic depth bias is not supported on this device");
     }
@@ -1608,7 +1608,7 @@ void FRHIValidationCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bo
     RealContext->PresentSwapChain(SwapChain, bVerticalSync);
 }
 
-void FRHIValidationCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
+void FRHIValidationCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {
     if (!SwapChain)
     {
@@ -1616,7 +1616,7 @@ void FRHIValidationCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uin
         return;
     }
 
-    RealContext->ResizeSwapChain(SwapChain, Width, Height);
+    RealContext->ResizeSwapChain(SwapChain, Width, Height, Format, ColorSpace);
 }
 
 void FRHIValidationCommandContext::ClearState()

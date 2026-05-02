@@ -166,7 +166,7 @@ FVulkanCommandContext::~FVulkanCommandContext()
 
 void* FVulkanCommandContext::GetRHINativeCommandList()
 {
-    return reinterpret_cast<void*>(CommandBuffer.GetVkCommandBuffer());
+    return reinterpret_cast<void*>(CommandBuffer->GetVkCommandBuffer());
 }
 
 bool FVulkanCommandContext::Initialize()
@@ -302,6 +302,8 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool, bool bResolveQu
     CloseEventStack();
 
 #if VULKAN_USE_CPU_QUERY_RESOLVE
+    UNREFERENCED_VARIABLE(bResolveQueries);
+
     TimestampQueryAllocator.Reset(Commands->QueryRanges);
     OcclusionQueryAllocator.Reset(Commands->QueryRanges);
     PipelineStatsQueryAllocator.Reset(Commands->QueryRanges);
@@ -2450,10 +2452,10 @@ void FVulkanCommandContext::PresentSwapChain(FRHISwapChain* InSwapChain, bool bV
     ObtainCommandBuffer();
 }
 
-void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
+void FVulkanCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {
     FVulkanSwapChainRHI* VulkanSwapChain = FVulkanRHI::ResourceCast(SwapChain);
-    VulkanSwapChain->Resize(Width, Height);
+    VulkanSwapChain->Resize(Width, Height, Format, ColorSpace);
 }
 
 void FVulkanCommandContext::ClearState()

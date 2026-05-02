@@ -1178,20 +1178,24 @@ DECLARE_RHICOMMAND(FRHICommandPresentSwapChain)
 
 DECLARE_RHICOMMAND(FRHICommandResizeSwapChain)
 {
-    FORCEINLINE FRHICommandResizeSwapChain(FRHISwapChain* InSwapChain, uint32 InWidth, uint32 InHeight)
+    FORCEINLINE FRHICommandResizeSwapChain(FRHISwapChain* InSwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat, EColorSpace InColorSpace)
         : SwapChain(InSwapChain)
         , Width(InWidth)
         , Height(InHeight)
+        , Format(InFormat)
+        , ColorSpace(InColorSpace)
     {
         CHECK(SwapChain != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.ResizeSwapChain(SwapChain, Width, Height);
+        CommandContext.ResizeSwapChain(SwapChain, Width, Height, Format, ColorSpace);
     }
 
     FRHISwapChain* SwapChain;
     uint32         Width;
     uint32         Height;
+    EFormat        Format;
+    EColorSpace    ColorSpace;
 };

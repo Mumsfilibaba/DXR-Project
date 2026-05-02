@@ -160,7 +160,7 @@ bool FD3D12ShaderResourceViewRHI::CreateView(FD3D12Resource* InResource, const D
 }
 
 FD3D12UnorderedAccessViewRHI::FD3D12UnorderedAccessViewRHI(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
-    : FRHIUnorderedAccessView(InResource)
+    : FD3D12UnorderedAccessViewBase(InResource)
     , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
     , CounterResource(nullptr)
@@ -176,6 +176,11 @@ void* FD3D12UnorderedAccessViewRHI::GetRHINativeHandle() const
 FRHIDescriptorHandle FD3D12UnorderedAccessViewRHI::GetBindlessHandle() const
 {
     return FRHIDescriptorHandle();
+}
+
+FD3D12UnorderedAccessViewRHI* FD3D12UnorderedAccessViewRHI::GetUnorderedAccessViewInterface() const
+{
+    return const_cast<FD3D12UnorderedAccessViewRHI*>(this);
 }
 
 void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
@@ -316,26 +321,4 @@ bool FD3D12DepthStencilViewRHI::CreateView(FD3D12Resource* InResource, const D3D
 
     IncrementDescriptorVersion();
     return true;
-}
-
-FD3D12BackBufferProxyRenderTargetViewRHI::FD3D12BackBufferProxyRenderTargetViewRHI(FD3D12SwapChainRHI* InSwapChain, FD3D12BackBufferProxyTextureRHI* InProxyTexture)
-    : FD3D12RenderTargetViewBase(InProxyTexture)
-    , SwapChain(InSwapChain)
-{
-}
-
-FD3D12BackBufferProxyRenderTargetViewRHI::~FD3D12BackBufferProxyRenderTargetViewRHI()
-{
-    SwapChain = nullptr;
-}
-
-void* FD3D12BackBufferProxyRenderTargetViewRHI::GetRHINativeHandle() const
-{
-    FD3D12RenderTargetViewRHI* CurrentRTV = GetRenderTargetViewInterface();
-    return CurrentRTV ? CurrentRTV->GetRHINativeHandle() : nullptr;
-}
-
-FD3D12RenderTargetViewRHI* FD3D12BackBufferProxyRenderTargetViewRHI::GetRenderTargetViewInterface() const
-{
-    return SwapChain ? SwapChain->GetCurrentBackBufferRenderTargetView() : nullptr;
 }

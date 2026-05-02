@@ -75,10 +75,12 @@ struct FNullRHICommandContext final : public IRHICommandContext
         }
     }
 
-    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final 
+    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final
     {
         FNullSwapChainRHI* NullSwapChain = static_cast<FNullSwapChainRHI*>(SwapChain);
-        NullSwapChain->Resize(Width, Height);
+        const uint32 ResolvedWidth  = (Width  > 0u) ? Width  : NullSwapChain->GetWidth();
+        const uint32 ResolvedHeight = (Height > 0u) ? Height : NullSwapChain->GetHeight();
+        NullSwapChain->Resize(ResolvedWidth, ResolvedHeight, Format, ColorSpace);
     }
 
     virtual void ClearState() override final { }

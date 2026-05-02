@@ -2358,10 +2358,10 @@ void FD3D12CommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVert
     ObtainCommandList();
 }
 
-void FD3D12CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
+void FD3D12CommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {
     FD3D12SwapChainRHI* D3D12SwapChain = FD3D12RHI::ResourceCast(SwapChain);
-    D3D12SwapChain->Resize(this, Width, Height);
+    D3D12SwapChain->Resize(this, Width, Height, Format, ColorSpace);
 }
 
 void FD3D12CommandContext::ClearState()

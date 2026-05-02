@@ -581,10 +581,12 @@ void FMetalCommandContext::PresentSwapChain(FRHISwapChain* SwapChain, bool bVert
     MetalSwapChain->Present(bVerticalSync);
 }
 
-void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height)
+void FMetalCommandContext::ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat /*Format*/, EColorSpace /*ColorSpace*/)
 {
     FMetalSwapChainRHI* MetalSwapChain = static_cast<FMetalSwapChainRHI*>(SwapChain);
-    MetalSwapChain->Resize(Width, Height);
+    const uint32 ResolvedWidth  = (Width  > 0u) ? Width  : MetalSwapChain->GetWidth();
+    const uint32 ResolvedHeight = (Height > 0u) ? Height : MetalSwapChain->GetHeight();
+    MetalSwapChain->Resize(ResolvedWidth, ResolvedHeight);
 }
 
 void FMetalCommandContext::ClearState()

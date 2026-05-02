@@ -32,7 +32,7 @@ public:
     FRenderPass(FSceneRenderer* InRenderer);
     virtual ~FRenderPass();
 
-    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) { }
+    virtual void PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources) { }
 
     FSceneRenderer* GetRenderer() const
     {

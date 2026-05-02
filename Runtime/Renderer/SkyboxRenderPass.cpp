@@ -193,7 +193,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     PSODesc.RasterizerState                                = RasterizerState.Get();
     PSODesc.VertexShader                                   = SkyboxVertexShader.Get();
     PSODesc.PixelShader                                    = SkyboxPixelShader.Get();
-    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::FinalTargetFormat;
+    PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = FGlobalTextureFormats::SceneTargetFormat;
     PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
@@ -225,7 +225,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
-    FRHIRenderTargetView* RenderTargetView = FrameResources.FinalTarget->GetRenderTargetView();
+    FRHIRenderTargetView* RenderTargetView = FrameResources.SceneTarget->GetRenderTargetView();
     FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
 
     FRHIBeginRenderPassDesc RenderPassDesc;

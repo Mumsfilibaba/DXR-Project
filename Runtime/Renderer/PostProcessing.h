@@ -33,10 +33,17 @@ public:
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRHITexture* OutputTarget, bool bOutputSRGB);
 
+    void PreparePipelineState(EFormat OutputFormat);
+
 private:
-    FRHIGraphicsPipelineStateRef TonemapPSO_Linear;
-    FRHIGraphicsPipelineStateRef TonemapPSO_BackBuffer;
+    FRHIGraphicsPipelineStateRef TonemapPSO;
+    EFormat                      TonemapPSOFormat = EFormat::Unknown;
+
+    FRHIVertexShaderRef          TonemapVertexShader;
     FRHIPixelShaderRef           TonemapShader;
+    FRHIDepthStencilStateRef     TonemapDepthStencilState;
+    FRHIRasterizerStateRef       TonemapRasterizerState;
+    FRHIBlendStateRef            TonemapBlendState;
 };
 
 struct FFinalCompositeInfoHLSL
@@ -78,9 +85,17 @@ public:
     bool Initialize(const FFrameResources& FrameResources);
     void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
 
+    void PreparePipelineState(EFormat OutputFormat);
+
 private:
     FRHIGraphicsPipelineStateRef CompositePSO;
+    EFormat                      CompositePSOFormat = EFormat::Unknown;
+
+    FRHIVertexShaderRef          CompositeVertexShader;
     FRHIPixelShaderRef           CompositeShader;
+    FRHIDepthStencilStateRef     CompositeDepthStencilState;
+    FRHIRasterizerStateRef       CompositeRasterizerState;
+    FRHIBlendStateRef            CompositeBlendState;
 };
 #endif
 
@@ -93,9 +108,19 @@ public:
     bool Initialize(FFrameResources& FrameResources);
     void Execute(FRHICommandList& CommandList, const FSceneRenderView& SceneRenderView, const FFrameResources& FrameResources);
 
+    void PreparePipelineState(EFormat OutputFormat);
+
 private:
     FRHIGraphicsPipelineStateRef FXAAPSO;
+    EFormat                      FXAAPSOFormat = EFormat::Unknown;
     FRHIPixelShaderRef           FXAAShader;
+
     FRHIGraphicsPipelineStateRef FXAADebugPSO;
+    EFormat                      FXAADebugPSOFormat = EFormat::Unknown;
     FRHIPixelShaderRef           FXAADebugShader;
+
+    FRHIVertexShaderRef          FXAAVertexShader;
+    FRHIDepthStencilStateRef     FXAADepthStencilState;
+    FRHIRasterizerStateRef       FXAARasterizerState;
+    FRHIBlendStateRef            FXAABlendState;
 };

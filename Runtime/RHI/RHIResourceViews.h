@@ -322,6 +322,7 @@ protected:
     virtual ~FRHIShaderResourceView() = default;
 
 public:
+
     // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView / VkAccelerationStructureKHR. Metal/Null: nullptr.
     virtual void* GetRHINativeHandle() const = 0;
 
@@ -339,6 +340,7 @@ protected:
     virtual ~FRHIUnorderedAccessView() = default;
 
 public:
+
     // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView / VkBufferView. Metal/Null: nullptr.
     virtual void* GetRHINativeHandle() const = 0;
 
@@ -397,6 +399,7 @@ protected:
     virtual ~FRHIRenderTargetView() = default;
 
 public:
+
     // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal/Null: nullptr.
     virtual void* GetRHINativeHandle() const = 0;
 };
@@ -455,6 +458,7 @@ protected:
     virtual ~FRHIDepthStencilView() = default;
 
 public:
+
     // D3D12: D3D12_CPU_DESCRIPTOR_HANDLE::ptr. Vulkan: VkImageView. Metal/Null: nullptr.
     virtual void* GetRHINativeHandle() const = 0;
 };

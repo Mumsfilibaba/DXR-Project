@@ -40,8 +40,9 @@ public:
     // Convert EResourceAccess to Vulkan pipeline-stage flags
     static VkPipelineStageFlags2 ResourceStateToPipelineStageFlags(EResourceAccess ResourceState);
 
-    static FVulkanTextureRHI*          ResourceCast(FRHITexture* Texture);
-    static FVulkanRenderTargetViewRHI* ResourceCast(FRHIRenderTargetView* RenderTargetView);
+    static FVulkanTextureRHI*             ResourceCast(FRHITexture* Texture);
+    static FVulkanUnorderedAccessViewRHI* ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView);
+    static FVulkanRenderTargetViewRHI*    ResourceCast(FRHIRenderTargetView* RenderTargetView);
 
     template<typename TRHIType>
     static FORCEINLINE typename TAddPointer<typename TVulkanRHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)

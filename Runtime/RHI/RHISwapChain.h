@@ -2,6 +2,28 @@
 #include "RHI/RHIResource.h"
 
 class FRHIRenderTargetView;
+class FRHIUnorderedAccessView;
+
+enum class ESwapChainUsageFlags : uint8
+{
+    None            = 0,
+    RenderTarget    = FLAG(1),
+    UnorderedAccess = FLAG(2),
+};
+
+ENUM_CLASS_OPERATORS(ESwapChainUsageFlags);
+
+NODISCARD constexpr const CHAR* ToString(ESwapChainUsageFlags Usage)
+{
+    switch (Usage)
+    {
+        case ESwapChainUsageFlags::None:            return "None";
+        case ESwapChainUsageFlags::RenderTarget:    return "RenderTarget";
+        case ESwapChainUsageFlags::UnorderedAccess: return "UnorderedAccess";
+
+        default: return "Unknown";
+    }
+}
 
 struct FRHISwapChainDesc
 {
@@ -17,11 +39,16 @@ struct FRHISwapChainDesc
 
     constexpr bool operator==(const FRHISwapChainDesc& Other) const noexcept = default;
 
-    void*   WindowHandle  = nullptr;
-    EFormat ColorFormat   = EFormat::Unknown;
-    uint16  Width         = 0;
-    uint16  Height        = 0;
-    bool    bFramePacing  = false;
+    NODISCARD constexpr bool IsRenderTarget()    const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::RenderTarget); }
+    NODISCARD constexpr bool IsUnorderedAccess() const { return IsEnumFlagSet(Usage, ESwapChainUsageFlags::UnorderedAccess); }
+
+    void*                WindowHandle = nullptr;
+    EFormat              ColorFormat  = EFormat::Unknown;
+    uint16               Width        = 0;
+    uint16               Height       = 0;
+    bool                 bFramePacing = false;
+    ESwapChainUsageFlags Usage        = ESwapChainUsageFlags::RenderTarget;
+    EColorSpace          ColorSpace   = EColorSpace::Unknown;
 };
 
 class FRHISwapChain : public FRHIResource
@@ -36,37 +63,46 @@ protected:
     virtual ~FRHISwapChain() = default;
 
 public:
-    virtual FRHITexture*          GetBackBuffer()                 const = 0;
-    virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const = 0;
+    virtual void* GetRHINativeHandle()                                             const = 0;
+    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index)            const = 0;
+    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index)    const = 0;
+    virtual void* GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const = 0;
 
-    // D3D12: IDXGISwapChain*. Vulkan: VkSwapchainKHR. Metal: CAMetalLayer*. Null: nullptr.
-    virtual void* GetRHINativeHandle() const = 0;
+    virtual FRHITexture* GetBackBuffer()                              const = 0;
+    virtual FRHITexture* GetBackBufferResourceFromIndex(uint32 Index) const = 0;
+    virtual uint32       GetNumBackBufferResources()                  const = 0;
+
+    virtual FRHIRenderTargetView*    GetBackBufferRenderTargetView()    const = 0;
+    virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const = 0;
     
-    // Native back-buffer resource at Index. Same semantics as FRHITexture::GetRHINativeResource.
-    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index) const = 0;
+    virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const = 0;
     
-    // Native RTV handle for the back-buffer at Index. Same semantics as FRHIRenderTargetView::GetRHINativeHandle.
-    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const = 0;
-
-    // Number of back-buffers owned by this swap-chain.
-    virtual uint32 GetRHINativeBackBufferCount() const = 0;
-
-    EFormat GetColorFormat() const
+    NODISCARD EColorSpace GetColorSpace() const
+    {
+        return Desc.ColorSpace;
+    }
+    
+    NODISCARD EFormat GetColorFormat() const
     {
         return Desc.ColorFormat;
     }
-
-    uint32 GetWidth() const
+    
+    NODISCARD uint32 GetWidth() const
     {
         return Desc.Width;
     }
-
-    uint32 GetHeight() const
+    
+    NODISCARD uint32 GetHeight() const
     {
         return Desc.Height;
     }
+    
+    NODISCARD ESwapChainUsageFlags GetUsage() const
+    {
+        return Desc.Usage;
+    }
 
-    const FRHISwapChainDesc& GetDesc() const
+    NODISCARD const FRHISwapChainDesc& GetDesc() const
     {
         return Desc;
     }

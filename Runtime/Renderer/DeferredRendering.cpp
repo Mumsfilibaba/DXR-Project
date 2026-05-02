@@ -30,7 +30,7 @@ FDepthPrePass::~FDepthPrePass()
     MaterialPSOs.Clear();
 }
 
-void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+void FDepthPrePass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
 
@@ -335,7 +335,7 @@ FDeferredBasePass::~FDeferredBasePass()
     MaterialPSOs.Clear();
 }
 
-void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+void FDeferredBasePass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
 
@@ -899,11 +899,12 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
-    FRHITextureDesc FinalTargetDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::FinalTargetFormat, Width, Height, 1, 1, Usage);
-    FrameResources.FinalTarget = FRHI::Get()->CreateTexture(FinalTargetDesc, EResourceAccess::PixelShaderResource);
-    if (FrameResources.FinalTarget)
+    FRHITextureDesc SceneTargetDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage);
+    FrameResources.SceneTarget = FRHI::Get()->CreateTexture(SceneTargetDesc, EResourceAccess::PixelShaderResource);
+    
+    if (FrameResources.SceneTarget)
     {
-        FrameResources.FinalTarget->SetDebugName("Final Target");
+        FrameResources.SceneTarget->SetDebugName("Scene Target");
     }
     else
     {
@@ -1002,8 +1003,8 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetSamplerState(LightPassShader, FrameResources.GBufferSampler.Get(), 2);
     CommandList.SetSamplerState(LightPassShader, FrameResources.PointLightShadowSampler.Get(), 3);
 
-    FRHIUnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
-    CommandList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
+    FRHIUnorderedAccessView* SceneTargetUAV = FrameResources.SceneTarget->GetUnorderedAccessView();
+    CommandList.SetUnorderedAccessView(LightPassShader, SceneTargetUAV, 0);
 
     struct FLightPassSettingsHLSL
     {

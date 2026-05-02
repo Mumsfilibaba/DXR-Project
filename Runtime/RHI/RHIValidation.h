@@ -10,7 +10,7 @@ public:
     FRHIValidation(FRHI* InRealRHI);
     ~FRHIValidation();
 
-    virtual bool Initialize() override final;
+    bool Initialize();
 
     virtual void BeginFrame() override final;
     virtual void EndFrame()   override final;
@@ -49,6 +49,9 @@ public:
 
     virtual IRHICommandContext* ObtainCommandContext() override final;
 
+    virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
+    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const override final;
+
     virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final;
     virtual bool GetPipelineStatisticsResult(FRHIQuery* Query, FRHIPipelineStatistics& OutResult, EQueryResultMode Mode) override final;
 
@@ -59,9 +62,6 @@ public:
     virtual void* GetRHINativeDirectCommandQueue()  override final;
     virtual void* GetRHINativeComputeCommandQueue() override final;
     virtual void* GetRHINativeCopyCommandQueue()    override final;
-
-    virtual bool QueryUAVFormatSupport(EFormat Format) const override final;
-    virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const override final;
 
     virtual FString GetAdapterName() const override final;
 
@@ -137,7 +137,7 @@ public:
     virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
     virtual void DispatchRays(FRHISceneAccelerationStructure* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) override final;
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) override final;
-    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) override final;
+    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) override final;
 
     virtual void ClearState() override final;
     virtual void Flush()      override final;

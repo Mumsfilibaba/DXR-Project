@@ -27,7 +27,7 @@ FEditorNoJitterDepthPass::~FEditorNoJitterDepthPass()
     MaterialPSOs.Clear();
 }
 
-void FEditorNoJitterDepthPass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+void FEditorNoJitterDepthPass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
 
@@ -334,7 +334,7 @@ FEditorSelectionIDPass::~FEditorSelectionIDPass()
     MaterialPSOs.Clear();
 }
 
-void FEditorSelectionIDPass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+void FEditorSelectionIDPass::PreparePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
 

@@ -34,8 +34,9 @@ public:
         Get()->DeferDeletionInternal(Forward<ArgTypes>(Args)...);
     }
 
-    static FD3D12TextureRHI*          ResourceCast(FRHITexture* Texture);
-    static FD3D12RenderTargetViewRHI* ResourceCast(FRHIRenderTargetView* RenderTargetView);
+    static FD3D12TextureRHI*             ResourceCast(FRHITexture* Texture);
+    static FD3D12UnorderedAccessViewRHI* ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView);
+    static FD3D12RenderTargetViewRHI*    ResourceCast(FRHIRenderTargetView* RenderTargetView);
 
     template<typename TRHIType>
     static FORCEINLINE typename TAddPointer<typename TD3D12RHIResourceType<TRHIType>::Type>::Type ResourceCast(TRHIType* Resource)

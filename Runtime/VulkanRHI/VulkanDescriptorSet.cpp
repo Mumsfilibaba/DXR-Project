@@ -436,8 +436,9 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
     for (int32 Index = 0; Index < DescriptorSetHandles.Size(); Index++)
     {
     #if VULKAN_VALIDATE_NO_NULL_DESCRIPTORS
-        const FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[Index];
+        const FVulkanDescriptorWrites&        DSWrites      = DescriptorSetWrites[Index];
         const FVulkanDescriptorRemappingInfo& RemappingInfo = Layout->GetDescriptorRemappingInfo(Index);
+
         for (int32 BindIdx = 0; BindIdx < DSWrites.DescriptorWrites.Size(); BindIdx++)
         {
             const VkWriteDescriptorSet& WriteInfo = DSWrites.DescriptorWrites[BindIdx];
@@ -491,6 +492,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllo
         FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[Index];
 
         #if VULKAN_USE_DESCRIPTOR_CACHE
+            UNREFERENCED_VARIABLE(TransientAllocator);
             DSBuilder.UpdateHash();
 
             // Must run every draw even when not dirty. The cache hit updates LastUsedFrame,

@@ -11,6 +11,7 @@
 #include "VulkanRHI/VulkanSemaphore.h"
 #include "VulkanRHI/VulkanTexture.h"
 #include "VulkanRHI/VulkanResourceViews.h"
+#include "VulkanRHI/VulkanBackBufferProxies.h"
 
 class FRHIRenderTargetView;
 
@@ -20,6 +21,10 @@ typedef TSharedRef<class FVulkanSwapChain>    FVulkanSwapChainRef;
 typedef TSharedRef<class FVulkanSwapChainRHI> FVulkanSwapChainRHIRef;
 
 class FVulkanCommandContext;
+
+// Resolves the VulkanRHI.DefaultBackBufferFormat CVar into the EFormat used when the swap-chain
+// is created with EFormat::Unknown. Read directly during backend init.
+EFormat GetVulkanDefaultBackBufferFormat();
 
 inline bool IsUndefinedExtent(const VkSurfaceCapabilitiesKHR& Capabilities)
 {
@@ -33,13 +38,14 @@ inline bool IsExtentZero(const VkExtent2D& Extent)
 
 struct FVulkanSwapChainCreateInfo
 {
-    FVulkanSurface*   Surface           = nullptr;
-    FVulkanSwapChain* PreviousSwapChain = nullptr;
-    VkExtent2D        Extent            = { 0, 0 };
-    EFormat           Format            = EFormat::B8G8R8A8_Unorm;
-    VkColorSpaceKHR   ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    uint32            BufferCount       = 2;
-    bool              bVerticalSync     = true;
+    FVulkanSurface*      Surface           = nullptr;
+    FVulkanSwapChain*    PreviousSwapChain = nullptr;
+    VkExtent2D           Extent            = { 0, 0 };
+    EFormat              Format            = EFormat::B8G8R8A8_Unorm;
+    VkColorSpaceKHR      ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    ESwapChainUsageFlags Usage             = ESwapChainUsageFlags::RenderTarget;
+    uint32               BufferCount       = 2;
+    bool                 bVerticalSync     = true;
 };
 
 class FVulkanSwapChain : public FVulkanDeviceChild, public FRefCountedBase
@@ -84,20 +90,28 @@ public:
     virtual ~FVulkanSwapChainRHI();
 
     // FRHISwapChain Interface
-    virtual void*  GetRHINativeHandle()                                          const override final;
-    virtual void*  GetRHINativeBackBufferResourceFromIndex(uint32 Index)         const override final;
-    virtual void*  GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index) const override final;
-    virtual uint32 GetRHINativeBackBufferCount()                                 const override final;
+    virtual void* GetRHINativeHandle()                                             const override final;
+    virtual void* GetRHINativeBackBufferResourceFromIndex(uint32 Index)            const override final;
+    virtual void* GetRHINativeBackBufferRenderTargetViewFromIndex(uint32 Index)    const override final;
+    virtual void* GetRHINativeBackBufferUnorderedAccessViewFromIndex(uint32 Index) const override final;
 
-    virtual FRHITexture*          GetBackBuffer()                 const override final;
-    virtual FRHIRenderTargetView* GetBackBufferRenderTargetView() const override final;
+    virtual FRHITexture* GetBackBuffer()                              const override final;
+    virtual FRHITexture* GetBackBufferResourceFromIndex(uint32 Index) const override final;
+    virtual uint32       GetNumBackBufferResources()                  const override final;
+
+    virtual FRHIRenderTargetView*    GetBackBufferRenderTargetView()    const override final;
+    virtual FRHIUnorderedAccessView* GetBackBufferUnorderedAccessView() const override final;
+
+    virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final;
 
     bool Initialize();
-    bool Resize(uint32 InWidth, uint32 InHeight);
+    
+    bool Resize(uint32 InWidth, uint32 InHeight, EFormat NewFormat, EColorSpace NewColorSpace);
     bool Present(bool bVerticalSync);
 
-    FVulkanTextureRHI*          GetCurrentBackBuffer() const;
-    FVulkanRenderTargetViewRHI* GetCurrentBackBufferRenderTargetView() const;
+    FVulkanTextureRHI*             GetCurrentBackBuffer() const;
+    FVulkanRenderTargetViewRHI*    GetCurrentBackBufferRenderTargetView() const;
+    FVulkanUnorderedAccessViewRHI* GetCurrentBackBufferUnorderedAccessView() const;
 
     void SetDebugName(const FString& InName);
 
@@ -109,6 +123,11 @@ public:
     FVulkanRenderTargetViewRHI* GetBackBufferRenderTargetViewAtIndex(uint32 Index) const
     {
         return BackBuffers.IsValidIndex(Index) ? BackBuffers[Index].RenderTargetView.Get() : nullptr;
+    }
+
+    FVulkanUnorderedAccessViewRHI* GetBackBufferUnorderedAccessViewAtIndex(uint32 Index) const
+    {
+        return BackBuffers.IsValidIndex(Index) ? BackBuffers[Index].UnorderedAccessView.Get() : nullptr;
     }
 
     uint32 GetNumBackBuffers() const
@@ -149,22 +168,25 @@ private:
 
     struct FBackBufferData
     {
-        FVulkanTextureRHIRef          Texture;
-        FVulkanRenderTargetViewRHIRef RenderTargetView;
+        FVulkanTextureRHIRef             Texture;
+        FVulkanRenderTargetViewRHIRef    RenderTargetView;
+        FVulkanUnorderedAccessViewRHIRef UnorderedAccessView;
     };
 
-    void*                                        WindowHandle;
-    FVulkanCommandContext*                       CommandContext;
-    FVulkanSurfaceRef                            Surface;
-    FVulkanSwapChainRef                          SwapChainResource;
-    FVulkanBackBufferProxyTextureRHIRef          BackBufferProxy;
-    FVulkanBackBufferProxyRenderTargetViewRHIRef BackBufferProxyRenderTargetView;
-    TArray<FBackBufferData>                      BackBuffers;
-    FVulkanFenceArray                            ImageFences;
-    FVulkanSemaphoreArray                        ImageSemaphores;
-    FVulkanSemaphoreArray                        RenderSemaphores;
-    int32                                        SemaphoreIndex;
-    uint32                                       BackBufferIndex;
-    int32                                        ActiveBackBufferCount;
-    bool                                         bActiveVSync;
+    void*                                           WindowHandle;
+    FVulkanCommandContext*                          CommandContext;
+    FVulkanSurfaceRef                               Surface;
+    FVulkanSwapChainRef                             SwapChainResource;
+    FVulkanBackBufferProxyTextureRHIRef             BackBufferProxy;
+    FVulkanBackBufferProxyRenderTargetViewRHIRef    BackBufferProxyRenderTargetView;
+    FVulkanBackBufferProxyUnorderedAccessViewRHIRef BackBufferProxyUnorderedAccessView;
+    TArray<FBackBufferData>                         BackBuffers;
+    FVulkanFenceArray                               ImageFences;
+    FVulkanSemaphoreArray                           ImageSemaphores;
+    FVulkanSemaphoreArray                           RenderSemaphores;
+    EColorSpace                                     CurrentColorSpace;
+    int32                                           SemaphoreIndex;
+    uint32                                          BackBufferIndex;
+    int32                                           ActiveBackBufferCount;
+    bool                                            bActiveVSync;
 };

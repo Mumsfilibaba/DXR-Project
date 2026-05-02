@@ -156,11 +156,11 @@ void FRendererModule::PresentSwapChain(FRHISwapChainRef SwapChain)
     }
 }
 
-void FRendererModule::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height)
+void FRendererModule::ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace)
 {
     if (Renderer)
     {
-        Renderer->ResizeSwapChain(SwapChain, Width, Height);
+        Renderer->ResizeSwapChain(SwapChain, Width, Height, Format, ColorSpace);
     }
 }
 

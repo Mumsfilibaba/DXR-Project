@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHITypes.h"
 #include "RendererCore/Interfaces/IScene.h"
 
 class FWorld;
@@ -68,8 +69,12 @@ struct IRendererModule : public FModuleInterface
     /** @brief Poll for a completed editor ObjectID pick. Returns true if a result was produced. */ 
     virtual bool PollEditorObjectPickResult(IScene* Scene, uint32& OutObjectID) = 0; 
  
-    /** @brief Resize a SwapChain on the RHIThread */ 
-    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight) = 0; 
+    /**
+     * @brief Queue an extent/format/color-space change for a swap-chain. The change is coalesced 
+     * with any other pending request for the same swap-chain and applied as a single RHI command 
+     * at the start of the next frame.
+     */
+    virtual void ResizeSwapChain(FRHISwapChainRef SwapChain, uint32 InWidth, uint32 InHeight, EFormat InFormat = EFormat::Unknown, EColorSpace InColorSpace = EColorSpace::Unknown) = 0; 
 
     /** @brief Prepare a swapchain for being used in rendering */
     virtual void PrepareSwapChain(FRHISwapChainRef SwapChain) = 0;

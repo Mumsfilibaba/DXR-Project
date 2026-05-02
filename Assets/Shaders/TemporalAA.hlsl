@@ -7,7 +7,7 @@
 #define FLT_EPS (0.00000001)
 #define HDR_CORRECTION (1)
 
-TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> FinalTarget : register(u0);
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> SceneTarget : register(u0);
 TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> Output      : register(u1);
 
 Texture2D<float>  DepthBuffer    : register(t0);
@@ -73,9 +73,9 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
             // Sample and ensure its a valid sample
         #if HDR_CORRECTION
             // Take HDR into account
-            float3 SubSample = Tonemap(FinalTarget[CurrentPosition].rgb);
+            float3 SubSample = Tonemap(SceneTarget[CurrentPosition].rgb);
         #else
-            float3 SubSample = FinalTarget[CurrentPosition].rgb;
+            float3 SubSample = SceneTarget[CurrentPosition].rgb;
         #endif   
             SubSample = max(0.0, SubSample);
 
@@ -111,7 +111,7 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     #endif
 
         Output[TexCoord]      = float4(CurrentSample, 1.0);
-        FinalTarget[TexCoord] = float4(CurrentSample, 1.0);
+        SceneTarget[TexCoord] = float4(CurrentSample, 1.0);
         return;
     }
 
@@ -155,6 +155,6 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     NewSample = InvTonemap(NewSample);
 #endif
 
-    FinalTarget[TexCoord] = float4(NewSample, 1.0);
+    SceneTarget[TexCoord] = float4(NewSample, 1.0);
     Output[TexCoord]      = float4(NewSample, 1.0);
 }

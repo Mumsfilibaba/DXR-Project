@@ -125,7 +125,7 @@ struct IRHICommandContext
     virtual void SetStencilRef(uint32 StencilRef) = 0;
 
     /**
-     * @brief Set the depth bias parameters dynamically (requires RHIDeviceFeatureSupport::bSupportsDynamicDepthBias)
+     * @brief Set the depth bias parameters dynamically (requires RHI::bSupportsDynamicDepthBias)
      * @param DepthBias Constant depth bias
      * @param DepthBiasClamp Maximum depth bias clamp
      * @param SlopeScaledDepthBias Slope-scaled depth bias
@@ -448,12 +448,14 @@ struct IRHICommandContext
     virtual void PresentSwapChain(FRHISwapChain* SwapChain, bool bVerticalSync) = 0;
 
     /**
-     * @brief Resizes the specified swap-chain.
-     * @param SwapChain The swap-chain to resize.
-     * @param Width New width of the swap-chain.
-     * @param Height New height of the swap-chain.
+     * @brief Resize the swap-chain and / or change its back-buffer format and color space.
+     * @param SwapChain The swap-chain to mutate.
+     * @param Width New width, or 0 to keep the current width.
+     * @param Height New height, or 0 to keep the current height.
+     * @param Format New back-buffer format, or EFormat::Unknown to keep the current format.
+     * @param ColorSpace New color space, or EColorSpace::Unknown to keep the current color space.
      */
-    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) = 0;
+    virtual void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format, EColorSpace ColorSpace) = 0;
 
     /**
      * @brief Clears the state of the context, clearing all bound references currently bound

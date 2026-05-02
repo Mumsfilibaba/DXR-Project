@@ -432,9 +432,9 @@ public:
         EmplaceCommand<FRHICommandPresentSwapChain>(SwapChain, bVerticalSync);
     }
 
-    FORCEINLINE void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height) noexcept
+    FORCEINLINE void ResizeSwapChain(FRHISwapChain* SwapChain, uint32 Width, uint32 Height, EFormat Format = EFormat::Unknown, EColorSpace ColorSpace = EColorSpace::Unknown) noexcept
     {
-        EmplaceCommand<FRHICommandResizeSwapChain>(SwapChain, Width, Height);
+        EmplaceCommand<FRHICommandResizeSwapChain>(SwapChain, Width, Height, Format, ColorSpace);
     }
 
     FORCEINLINE void PushEvent(const FStringView& Name) noexcept

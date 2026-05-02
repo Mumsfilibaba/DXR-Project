@@ -476,7 +476,7 @@ struct FRHIViewInstancingState
 
     uint8 NumArraySlices;
     uint8 StartRenderTargetArrayIndex : 7;
-    uint8 bEnableViewInstancing : 1;
+    uint8 bEnableViewInstancing       : 1;
 };
 
 struct FRHIMultiSampleState

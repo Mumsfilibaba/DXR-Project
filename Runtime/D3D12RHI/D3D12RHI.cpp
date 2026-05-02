@@ -51,6 +51,16 @@ FD3D12RenderTargetViewRHI* FD3D12RHI::ResourceCast(FRHIRenderTargetView* RenderT
     return nullptr;
 }
 
+FD3D12UnorderedAccessViewRHI* FD3D12RHI::ResourceCast(FRHIUnorderedAccessView* UnorderedAccessView)
+{
+    if (UnorderedAccessView)
+    {
+        return static_cast<FD3D12UnorderedAccessViewBase*>(UnorderedAccessView)->GetUnorderedAccessViewInterface();
+    }
+
+    return nullptr;
+}
+
 FRHI* FD3D12RHIModule::CreateRHI()
 {
     TUniquePtr<FD3D12RHI> NewRHI = MakeUniquePtr<FD3D12RHI>();
@@ -254,48 +264,50 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
     // Baseline defaults
     // -------------------------------------------------------------------------------------------
 
-    RHIDeviceFeatureSupport::bSupportsGeometryShaders                       = true; // Geometry Shaders are always supported
-    RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = false;
+    RHI::DefaultSwapChainFormat = GetD3D12DefaultBackBufferFormat();
 
-    RHIDeviceFeatureSupport::bSupportsViewInstancing     = false;
-    RHIDeviceFeatureSupport::MaxViewInstanceCount        = 1;
+    RHI::bSupportsGeometryShaders                       = true; // Geometry Shaders are always supported
+    RHI::bSupportRenderTargetArrayIndexFromVertexShader = false;
 
-    RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
-    RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
-    RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
+    RHI::bSupportsViewInstancing     = false;
+    RHI::MaxViewInstanceCount        = 1;
 
-    RHIDeviceFeatureSupport::bSupportsVRS                = false;
-    RHIDeviceFeatureSupport::ShadingRateTier             = EShadingRateTier::NotSupported;
-    RHIDeviceFeatureSupport::ShadingRateImageTileSize    = 0;
+    RHI::bSupportsRayTracing         = false;
+    RHI::RayTracingTier              = ERayTracingTier::NotSupported;
+    RHI::RayTracingMaxRecursionDepth = 0;
 
-    RHIDeviceFeatureSupport::bSupportDrawIndirect        = true;
-    RHIDeviceFeatureSupport::bSupportMultiDrawIndirect   = true;
-    RHIDeviceFeatureSupport::MaxDrawIndirectCount        = uint32(~0u);
+    RHI::bSupportsVRS                = false;
+    RHI::ShadingRateTier             = EShadingRateTier::NotSupported;
+    RHI::ShadingRateImageTileSize    = 0;
+
+    RHI::bSupportDrawIndirect        = true;
+    RHI::bSupportMultiDrawIndirect   = true;
+    RHI::MaxDrawIndirectCount        = uint32(~0u);
 
     // -------------------------------------------------------------------------------------------
     // Texture / image limits (canonical D3D12 defines)
     // -------------------------------------------------------------------------------------------
 
-    RHIDeviceFeatureSupport::MaxTexture1DSize        = D3D12_REQ_TEXTURE1D_U_DIMENSION;
-    RHIDeviceFeatureSupport::MaxTexture1DArrayLayers = D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION;
-    RHIDeviceFeatureSupport::MaxTexture2DSize        = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-    RHIDeviceFeatureSupport::MaxTexture2DArrayLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
-    RHIDeviceFeatureSupport::MaxTexture3DWidth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHIDeviceFeatureSupport::MaxTexture3DHeight      = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHIDeviceFeatureSupport::MaxTexture3DDepth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
-    RHIDeviceFeatureSupport::MaxCubeTextureSize      = D3D12_REQ_TEXTURECUBE_DIMENSION;
-    RHIDeviceFeatureSupport::MaxCubeArrayCount       = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / RHI_NUM_CUBE_FACES;
+    RHI::MaxTexture1DSize        = D3D12_REQ_TEXTURE1D_U_DIMENSION;
+    RHI::MaxTexture1DArrayLayers = D3D12_REQ_TEXTURE1D_ARRAY_AXIS_DIMENSION;
+    RHI::MaxTexture2DSize        = D3D12_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+    RHI::MaxTexture2DArrayLayers = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
+    RHI::MaxTexture3DWidth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+    RHI::MaxTexture3DHeight      = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+    RHI::MaxTexture3DDepth       = D3D12_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
+    RHI::MaxCubeTextureSize      = D3D12_REQ_TEXTURECUBE_DIMENSION;
+    RHI::MaxCubeArrayCount       = D3D12_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION / RHI_NUM_CUBE_FACES;
 
     // -------------------------------------------------------------------------------------------
     // Buffer / memory limits
     // -------------------------------------------------------------------------------------------
 
-    RHIDeviceFeatureSupport::MaxBufferSize              = uint64(~0ull);
-    RHIDeviceFeatureSupport::MaxConstantBufferSize      = D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16;
-    RHIDeviceFeatureSupport::MaxStorageBufferSize       = uint64(~0ull);
-    RHIDeviceFeatureSupport::StructuredBufferMinStride  = 0;
-    RHIDeviceFeatureSupport::StructuredBufferMaxStride  = uint32(~0u);
-    RHIDeviceFeatureSupport::RawBufferRequiredAlignment = D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT;
+    RHI::MaxBufferSize              = uint64(~0ull);
+    RHI::MaxConstantBufferSize      = D3D12_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * 16;
+    RHI::MaxStorageBufferSize       = uint64(~0ull);
+    RHI::StructuredBufferMinStride  = 0;
+    RHI::StructuredBufferMaxStride  = uint32(~0u);
+    RHI::RawBufferRequiredAlignment = D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT;
 
     // -------------------------------------------------------------------------------------------
     // SV_RenderTargetArrayIndex from VS
@@ -305,7 +317,7 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
         D3D12_FEATURE_DATA_D3D12_OPTIONS Features = {};
         if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(Features))))
         {
-            RHIDeviceFeatureSupport::bSupportRenderTargetArrayIndexFromVertexShader = 
+            RHI::bSupportRenderTargetArrayIndexFromVertexShader = 
                 !!Features.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation;
         }
     }
@@ -316,23 +328,23 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
 
     if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
     {
-        RHIDeviceFeatureSupport::bSupportsRayTracing         = true;
-        RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+        RHI::bSupportsRayTracing         = true;
+        RHI::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
 
         if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
         {
-            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1_1;
+            RHI::RayTracingTier = ERayTracingTier::Tier1_1;
         }
         else
         {
-            RHIDeviceFeatureSupport::RayTracingTier = ERayTracingTier::Tier1;
+            RHI::RayTracingTier = ERayTracingTier::Tier1;
         }
     }
     else
     {
-        RHIDeviceFeatureSupport::bSupportsRayTracing         = false;
-        RHIDeviceFeatureSupport::RayTracingMaxRecursionDepth = 0;
-        RHIDeviceFeatureSupport::RayTracingTier              = ERayTracingTier::NotSupported;
+        RHI::bSupportsRayTracing         = false;
+        RHI::RayTracingMaxRecursionDepth = 0;
+        RHI::RayTracingTier              = ERayTracingTier::NotSupported;
     }
 
     // -------------------------------------------------------------------------------------------
@@ -341,13 +353,13 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
 
     if (GD3D12ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
     {
-        RHIDeviceFeatureSupport::bSupportsViewInstancing = true;
-        RHIDeviceFeatureSupport::MaxViewInstanceCount    = D3D12_MAX_VIEW_INSTANCE_COUNT;
+        RHI::bSupportsViewInstancing = true;
+        RHI::MaxViewInstanceCount    = D3D12_MAX_VIEW_INSTANCE_COUNT;
     }
     else
     {
-        RHIDeviceFeatureSupport::bSupportsViewInstancing = false;
-        RHIDeviceFeatureSupport::MaxViewInstanceCount    = 1;
+        RHI::bSupportsViewInstancing = false;
+        RHI::MaxViewInstanceCount    = 1;
     }
 
     // -------------------------------------------------------------------------------------------
@@ -358,41 +370,41 @@ bool FD3D12RHI::InitializeDeviceFeatureSupport()
     {
     default:
     case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
-        RHIDeviceFeatureSupport::ShadingRateTier          = EShadingRateTier::NotSupported;
-        RHIDeviceFeatureSupport::bSupportsVRS             = false;
-        RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+        RHI::ShadingRateTier          = EShadingRateTier::NotSupported;
+        RHI::bSupportsVRS             = false;
+        RHI::ShadingRateImageTileSize = 0;
         break;
 
     case D3D12_VARIABLE_SHADING_RATE_TIER_1:
-        RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier1;
-        RHIDeviceFeatureSupport::bSupportsVRS    = true;
+        RHI::ShadingRateTier = EShadingRateTier::Tier1;
+        RHI::bSupportsVRS    = true;
         break;
 
     case D3D12_VARIABLE_SHADING_RATE_TIER_2:
-        RHIDeviceFeatureSupport::ShadingRateTier = EShadingRateTier::Tier2;
-        RHIDeviceFeatureSupport::bSupportsVRS    = true;
+        RHI::ShadingRateTier = EShadingRateTier::Tier2;
+        RHI::bSupportsVRS    = true;
         break;
     }
 
-    if (RHIDeviceFeatureSupport::bSupportsVRS)
+    if (RHI::bSupportsVRS)
     {
         // Tile size is not cached
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6 = {};
         if (SUCCEEDED(GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(Features6))))
         {
-            RHIDeviceFeatureSupport::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+            RHI::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
         }
         else
         {
-            RHIDeviceFeatureSupport::ShadingRateImageTileSize = 0;
+            RHI::ShadingRateImageTileSize = 0;
         }
     }
 
-    RHIDeviceFeatureSupport::bSupportsDynamicDepthBias           = GD3D12SupportDynamicDepthBias;
-    RHIDeviceFeatureSupport::bSupportsStreamOutput               = true;
-    RHIDeviceFeatureSupport::bSupportsTimestampQueries           = true;
-    RHIDeviceFeatureSupport::bSupportsPipelineStatisticsQueries  = true;
-    RHIDeviceFeatureSupport::bSupportsGPUTimestampBubblesRemoval = true;
+    RHI::bSupportsDynamicDepthBias           = GD3D12SupportDynamicDepthBias;
+    RHI::bSupportsStreamOutput               = true;
+    RHI::bSupportsTimestampQueries           = true;
+    RHI::bSupportsPipelineStatisticsQueries  = true;
+    RHI::bSupportsGPUTimestampBubblesRemoval = true;
 
     return true;
 }
