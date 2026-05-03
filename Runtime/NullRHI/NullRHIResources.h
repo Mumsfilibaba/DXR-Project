@@ -173,11 +173,22 @@ public:
         return FRHIDescriptorHandle();
     }
 
+    virtual void SetDebugName(const FString& InDebugName) override final
+    {
+        DebugName = InDebugName;
+    }
+
+    virtual void GetDebugName(FString& OutDebugName) const override final
+    {
+        OutDebugName = DebugName;
+    }
+
 private:
     TSharedRef<FNullShaderResourceViewRHI>  ShaderResourceView;
     TSharedRef<FNullUnorderedAccessViewRHI> UnorderedAccessView;
     TSharedRef<FNullRenderTargetViewRHI>    RenderTargetView;
     TSharedRef<FNullDepthStencilViewRHI>    DepthStencilView;
+    FString                                 DebugName;
 };
 
 class FNullRayTracingGeometryRHI : public FRHIGeometryAccelerationStructure
@@ -277,6 +288,14 @@ public:
         {
             Desc.ColorSpace = EColorSpace::RGB_Full_G22_None_P709;
         }
+
+        if (Desc.ColorFormat == EFormat::Unknown)
+        {
+            Desc.ColorFormat = (RHI::DefaultSwapChainFormat != EFormat::Unknown)
+                ? RHI::DefaultSwapChainFormat
+                : EFormat::B8G8R8A8_Unorm;
+        }
+
         AllocateBackBuffers();
     }
 
@@ -329,7 +348,8 @@ public:
 
     virtual bool IsFormatSupported(EFormat Format, EColorSpace ColorSpace) const override final
     {
-        return Format != EFormat::Unknown && ColorSpace == EColorSpace::RGB_Full_G22_None_P709;
+        // NullRHI is permissive: any well-defined format / color-space combination is "supported".
+        return Format != EFormat::Unknown && ColorSpace != EColorSpace::Unknown;
     }
 
     uint32 GetCurrentBackBufferIndex() const
@@ -442,7 +462,7 @@ public:
 
     virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final
     {
-        return &InputElements[Index];
+        return (Index < InputElements.Size()) ? &InputElements[Index] : nullptr;
     }
 
     virtual uint32 GetNumInputElementDescs() const override final
@@ -529,6 +549,19 @@ struct FNullGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState
     {
         return nullptr;
     }
+
+    virtual void SetDebugName(const FString& InDebugName) override final
+    {
+        DebugName = InDebugName;
+    }
+
+    virtual void GetDebugName(FString& OutDebugName) const override final
+    {
+        OutDebugName = DebugName;
+    }
+
+private:
+    FString DebugName;
 };
 
 struct FNullComputePipelineStateRHI : public FRHIComputePipelineState
@@ -537,6 +570,19 @@ struct FNullComputePipelineStateRHI : public FRHIComputePipelineState
     {
         return nullptr;
     }
+
+    virtual void SetDebugName(const FString& InDebugName) override final
+    {
+        DebugName = InDebugName;
+    }
+
+    virtual void GetDebugName(FString& OutDebugName) const override final
+    {
+        OutDebugName = DebugName;
+    }
+
+private:
+    FString DebugName;
 };
 
 struct FNullRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
@@ -545,6 +591,19 @@ struct FNullRayTracingPipelineStateRHI : public FRHIRayTracingPipelineState
     {
         return nullptr;
     }
+
+    virtual void SetDebugName(const FString& InDebugName) override final
+    {
+        DebugName = InDebugName;
+    }
+
+    virtual void GetDebugName(FString& OutDebugName) const override final
+    {
+        OutDebugName = DebugName;
+    }
+
+private:
+    FString DebugName;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

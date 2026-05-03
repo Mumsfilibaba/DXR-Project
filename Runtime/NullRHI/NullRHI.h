@@ -50,7 +50,7 @@ public:
         return new FNullRayTracingGeometryRHI(InGeometryDesc);
     }
 
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc)
+    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc) override final
     {
         if (InDesc.IsBufferSRV())
         {
@@ -60,13 +60,11 @@ public:
         {
             return new FNullShaderResourceViewRHI(InDesc.TextureSRV.Texture);
         }
-        else
-        {
-            return nullptr;
-        }
+
+        return new FNullShaderResourceViewRHI(nullptr);
     }
 
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc)
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) override final
     {
         if (InDesc.IsBufferUAV())
         {
@@ -76,10 +74,8 @@ public:
         {
             return new FNullUnorderedAccessViewRHI(InDesc.TextureUAV.Texture);
         }
-        else
-        {
-            return nullptr;
-        }
+
+        return new FNullUnorderedAccessViewRHI(nullptr);
     }
 
     virtual FRHIRenderTargetView* CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) override final
@@ -104,27 +100,27 @@ public:
 
     virtual class FRHIHullShader* CreateHullShader(const TArray<uint8>& ShaderCode) override final
     {
-        return nullptr;
+        return new FNullHullShaderRHI();
     }
 
     virtual class FRHIDomainShader* CreateDomainShader(const TArray<uint8>& ShaderCode) override final
     {
-        return nullptr;
+        return new FNullDomainShaderRHI();
     }
 
     virtual class FRHIGeometryShader* CreateGeometryShader(const TArray<uint8>& ShaderCode) override final
     {
-        return nullptr;
+        return new FNullGeometryShaderRHI();
     }
 
     virtual class FRHIMeshShader* CreateMeshShader(const TArray<uint8>& ShaderCode) override final
     {
-        return nullptr;
+        return new FNullMeshShaderRHI();
     }
 
     virtual class FRHIAmplificationShader* CreateAmplificationShader(const TArray<uint8>& ShaderCode) override final
     {
-        return nullptr;
+        return new FNullAmplificationShaderRHI();
     }
 
     virtual class FRHIPixelShader* CreatePixelShader(const TArray<uint8>& ShaderCode) override final
@@ -209,8 +205,12 @@ public:
 
     virtual bool QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryInfo) const override final
     {
-        OutMemoryInfo = {};
-        return false;
+        OutMemoryInfo.MemoryType   = MemoryType;
+        OutMemoryInfo.MemoryUsage  = 0;
+        OutMemoryInfo.MemoryBudget = (MemoryType == EVideoMemoryType::Local)
+            ? uint64(8) * 1024ull * 1024ull * 1024ull   // 8 GiB local "VRAM"
+            : uint64(16) * 1024ull * 1024ull * 1024ull; // 16 GiB non-local "system"
+        return true;
     }
 
     virtual bool GetQueryResult(FRHIQuery* Query, uint64& OutResult, EQueryResultMode Mode) override final
