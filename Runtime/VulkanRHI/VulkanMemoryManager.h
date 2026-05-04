@@ -22,6 +22,7 @@ class FVulkanBuddyAllocator;
 class FVulkanPoolAllocator;
 class FVulkanResource;
 class FVulkanMemoryStorage;
+class FVulkanCommandContext;
 
 enum class EVulkanAllocatorType : uint8
 {
@@ -409,6 +410,60 @@ private:
     FCriticalSection                    AllocatorCS;
 };
 
+struct FVulkanPendingDefragMove
+{
+    FVulkanMemoryStorage*              SourceStorage        = nullptr;
+    VkImage                            NewImage             = VK_NULL_HANDLE;
+    VkBuffer                           NewBuffer            = VK_NULL_HANDLE;
+    FVulkanPoolAllocator*              Allocator            = nullptr;
+    FVulkanPoolAllocatorAllocationData OldAllocationData    = {};
+    FVulkanPoolAllocatorAllocationData NewAllocationData    = {};
+    uint64                             FenceValueAtCreation = 0;
+};
+
+#if VULKAN_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
+class FVulkanBufferAllocatorPool : public FVulkanDeviceChild
+{
+public:
+    FVulkanBufferAllocatorPool(FVulkanDevice* InDevice, uint32 InMemoryTypeIndex, VkBufferUsageFlags InBufferUsageFlags, uint64 InPageSizeBytes, uint64 InMaxSuballocationSize, VkMemoryAllocateFlags InAllocateFlags);
+    ~FVulkanBufferAllocatorPool();
+
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+
+    bool Initialize();
+    void CleanUp();
+
+    bool           GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate);
+    bool           TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 ExcludePageIndex, FVulkanPoolAllocatorAllocationData& OutData);
+    void           TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryStorage* NewStorage);
+    VkDeviceMemory GetBackingMemory(uint32 PageIndex);
+
+    FVulkanPoolAllocator& GetPoolAllocator() { return PoolAllocator; }
+
+    FORCEINLINE uint32                GetMemoryTypeIndex()  const { return MemoryTypeIndex;  }
+    FORCEINLINE VkBufferUsageFlags    GetBufferUsageFlags() const { return BufferUsageFlags; }
+    FORCEINLINE VkMemoryAllocateFlags GetAllocateFlags()    const { return AllocateFlags;    }
+    FORCEINLINE uint64                GetFragmentedBytes()  const { return PoolAllocator.GetFragmentedBytes(); }
+    FORCEINLINE uint64                GetAlignment()        const { return PoolAllocator.GetAlignment();       }
+
+#if VULKAN_ENABLE_STATS
+    void UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const
+    {
+        PoolAllocator.UpdateMemoryStats(OutUsage);
+    }
+#endif
+
+private:
+    void Destroy();
+
+    uint32                MemoryTypeIndex;
+    VkBufferUsageFlags    BufferUsageFlags;
+    VkMemoryAllocateFlags AllocateFlags;
+    uint64                PageSizeBytes;
+    uint64                MaxSuballocationSize;
+    FVulkanPoolAllocator  PoolAllocator;
+};
+#else
 class FVulkanBufferAllocatorPool : public FVulkanDeviceChild
 {
 public:
@@ -448,7 +503,39 @@ private:
     uint64                     MaxSuballocationSize;
     FVulkanMultiBuddyAllocator MultiBuddyAllocator;
 };
+#endif
 
+#if VULKAN_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
+class FVulkanBufferAllocator : public FVulkanDeviceChild
+{
+public:
+    FVulkanBufferAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize);
+    ~FVulkanBufferAllocator();
+
+    bool TryAllocate(VkMemoryPropertyFlags MemoryProperties, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+
+    void DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame);
+    void CancelPendingDefragMoves(FVulkanResource* Owner);
+
+    bool Initialize();
+    void Destroy();
+    void CleanUp();
+
+#if VULKAN_ENABLE_STATS
+    void UpdateMemoryStats();
+#endif
+
+private:
+    bool GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate, FVulkanBufferAllocatorPool*& OutPool);
+    void ReleasePools();
+
+    uint64                              PageSizeBytes;
+    uint64                              MaxSuballocationSize;
+    TArray<FVulkanBufferAllocatorPool*> Pools;
+    TArray<FVulkanPendingDefragMove>    PendingDefragMoves;
+    FCriticalSection                    PoolsCS;
+};
+#else
 class FVulkanBufferAllocator : public FVulkanDeviceChild
 {
 public:
@@ -474,9 +561,9 @@ private:
     TArray<FVulkanBufferAllocatorPool*> Pools;
     FCriticalSection                    PoolsCS;
 };
+#endif
 
-class FVulkanCommandContext;
-
+#if VULKAN_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
 class FVulkanTextureAllocator : public FVulkanDeviceChild
 {
     enum class ETexturePoolClass : uint32
@@ -489,16 +576,6 @@ class FVulkanTextureAllocator : public FVulkanDeviceChild
     };
 
     static constexpr uint32 TEXTURE_POOL_CLASS_COUNT = static_cast<uint32>(ETexturePoolClass::Count);
-
-    struct FPendingDefragMove
-    {
-        FVulkanMemoryStorage*                SourceStorage;
-        VkImage                              NewImage;
-        FVulkanPoolAllocator*                Allocator;
-        FVulkanPoolAllocatorAllocationData   OldAllocationData;
-        FVulkanPoolAllocatorAllocationData   NewAllocationData;
-        uint64                               FenceValueAtCreation;
-    };
 
 public:
     FVulkanTextureAllocator(FVulkanDevice* InDevice, uint64 InDefaultPageSizeBytes);
@@ -522,11 +599,48 @@ private:
     bool GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate, FVulkanPoolAllocator*& OutAllocator);
     void ReleasePools();
 
-    uint64                     DefaultPageSizeBytes;
-    FVulkanPoolAllocator*      Pools[TEXTURE_POOL_CLASS_COUNT];
-    TArray<FPendingDefragMove> PendingDefragMoves;
-    FCriticalSection           PoolsCS;
+    uint64                           DefaultPageSizeBytes;
+    FVulkanPoolAllocator*            Pools[TEXTURE_POOL_CLASS_COUNT];
+    TArray<FVulkanPendingDefragMove> PendingDefragMoves;
+    FCriticalSection                 PoolsCS;
 };
+#else
+class FVulkanTextureAllocator : public FVulkanDeviceChild
+{
+    enum class ETexturePoolClass : uint32
+    {
+        SmallReadOnly            = 0,
+        ReadOnly                 = 1,
+        RenderTargetDepthStencil = 2,
+        StorageOnly              = 3,
+        Count
+    };
+
+    static constexpr uint32 TEXTURE_POOL_CLASS_COUNT = static_cast<uint32>(ETexturePoolClass::Count);
+
+public:
+    FVulkanTextureAllocator(FVulkanDevice* InDevice, uint64 InDefaultPageSizeBytes);
+    ~FVulkanTextureAllocator();
+
+    bool TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
+
+    bool Initialize();
+    void Destroy();
+    void CleanUp();
+
+#if VULKAN_ENABLE_STATS
+    void UpdateMemoryStats();
+#endif
+
+private:
+    ETexturePoolClass ClassifyTexture(VkImageUsageFlags UsageFlags, uint64 Alignment) const;
+    void ReleasePools();
+
+    uint64                      DefaultPageSizeBytes;
+    FVulkanMultiBuddyAllocator* Pools[TEXTURE_POOL_CLASS_COUNT];
+    FCriticalSection            PoolsCS;
+};
+#endif
 
 class FVulkanUploadHeapAllocator : public FVulkanDeviceChild
 {

@@ -176,7 +176,8 @@ void FEditorRHIInfoWidget::DrawAllocatorDetails()
             (FCString::Strcmp(GroupName, "D3D12 Commands") == 0) ||
             (FCString::Strcmp(GroupName, "Vulkan Commands") == 0) ||
             (FCString::Strcmp(GroupName, "D3D12 Queries") == 0) ||
-            (FCString::Strcmp(GroupName, "Vulkan Queries") == 0);
+            (FCString::Strcmp(GroupName, "Vulkan Queries") == 0) ||
+            (FCString::Strcmp(GroupName, "D3D12 Residency") == 0);
 
         if (!bIsRHIDetailGroup)
         {

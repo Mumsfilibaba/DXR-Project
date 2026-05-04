@@ -34,13 +34,13 @@ public:
     // FRHITexture Interface
     virtual void* GetRHINativeResource() const override final;
     
+    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
+    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
+
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final;
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final;
     virtual FRHIRenderTargetView*    GetRenderTargetView()    const override final;
     virtual FRHIDepthStencilView*    GetDepthStencilView()    const override final;
-    
-    virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final;
-    virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final;
     
     virtual void SetDebugName(const FString& InName)       override final;
     virtual void GetDebugName(FString& OutDebugName) const override final;

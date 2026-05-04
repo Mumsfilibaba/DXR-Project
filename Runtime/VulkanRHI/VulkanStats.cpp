@@ -14,6 +14,15 @@ STAT_DEFINE_MEMORY(STAT_Vulkan_UploadHeapFragmented,  "Upload Heap Fragmented", 
 
 STAT_DEFINE_COUNTER(STAT_Vulkan_ActiveAllocations, "Active Allocations", "Vulkan Allocators");
 
+// Defrag Activity Stats
+STAT_DEFINE_COUNTER(STAT_Vulkan_TextureDefragPending,        "Texture Defrag Pending",         "Vulkan Allocators");
+STAT_DEFINE_COUNTER(STAT_Vulkan_TextureDefragMovesCompleted, "Texture Defrag Moves Completed", "Vulkan Allocators");
+STAT_DEFINE_MEMORY(STAT_Vulkan_TextureDefragBytesMoved,      "Texture Defrag Bytes Moved",     "Vulkan Allocators");
+
+STAT_DEFINE_COUNTER(STAT_Vulkan_BufferDefragPending,         "Buffer Defrag Pending",          "Vulkan Allocators");
+STAT_DEFINE_COUNTER(STAT_Vulkan_BufferDefragMovesCompleted,  "Buffer Defrag Moves Completed",  "Vulkan Allocators");
+STAT_DEFINE_MEMORY(STAT_Vulkan_BufferDefragBytesMoved,       "Buffer Defrag Bytes Moved",      "Vulkan Allocators");
+
 // PSO Stats
 STAT_DEFINE_COUNTER(STAT_Vulkan_PSOCreateCount, "PSOs Created",          "Vulkan PSO");
 STAT_DEFINE_MEMORY(STAT_Vulkan_PSOCacheSize,    "Cache Serialized Size", "Vulkan PSO");

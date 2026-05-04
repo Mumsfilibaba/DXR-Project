@@ -3,6 +3,7 @@
 #include "Core/Platform/PlatformEvent.h"
 #include "D3D12RHI/D3D12ResidencyManager.h"
 #include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Stats.h"
 
 static TAutoConsoleVariable<int32> CVarResidencyDebugBudgetMB(
     "D3D12RHI.ResidencyDebugBudgetMB",
@@ -222,6 +223,8 @@ void FD3D12ResidencyManager::BeginTrackingObject(FD3D12ResidencyHandle* Handle)
     Handle->bIsTracked    = true;
     Handle->LastUsedFrame = CurrentFrame;
     TrackedObjects.Add(Handle);
+
+    STAT_ADD(STAT_D3D12_ResidencyTrackedCount, 1);
 }
 
 void FD3D12ResidencyManager::EndTrackingObject(FD3D12ResidencyHandle* Handle)
@@ -240,6 +243,8 @@ void FD3D12ResidencyManager::EndTrackingObject(FD3D12ResidencyHandle* Handle)
 
     TrackedObjects.Remove(Handle);
     Handle->bIsTracked = false;
+
+    STAT_SUBTRACT(STAT_D3D12_ResidencyTrackedCount, 1);
 }
 
 void FD3D12ResidencyManager::UpdateResidency(FD3D12ResidencyHandle* Handle)
@@ -270,8 +275,17 @@ void FD3D12ResidencyManager::MakeResident(FD3D12ResidencyHandle* Handle)
     }
 
     SCOPED_LOCK(Mutex);
+    
+    const bool bWasResident = Handle->bIsResident;
     Handle->bIsResident   = true;
     Handle->LastUsedFrame = CurrentFrame;
+
+    if (!bWasResident)
+    {
+        STAT_ADD(STAT_D3D12_ResidencyMakeResidentCount, 1);
+        STAT_ADD(STAT_D3D12_ResidencyMakeResidentBytes, Handle->SizeBytes);
+        STAT_ADD(STAT_D3D12_ResidencyResidentBytes,     Handle->SizeBytes);
+    }
 
 #if D3D12_ENABLE_RESIDENCY_LOGGING
     if (CVarLogResidencyEvents.GetValue())
@@ -344,7 +358,13 @@ void FD3D12ResidencyManager::EvictIfNeeded()
 
         Victim->bIsResident = false;
         Usage = Usage > Victim->SizeBytes ? (Usage - Victim->SizeBytes) : 0;
+
+        STAT_ADD(STAT_D3D12_ResidencyEvictionCount, 1);
+        STAT_ADD(STAT_D3D12_ResidencyEvictedBytes, Victim->SizeBytes);
+        STAT_SUBTRACT(STAT_D3D12_ResidencyResidentBytes, Victim->SizeBytes);
     }
+
+    STAT_SET(STAT_D3D12_ResidencyBudget, Budget);
 }
 
 void FD3D12ResidencyManager::PrepareForExecution(FD3D12ResidencySet* const* Sets, uint32 NumSets)
@@ -393,10 +413,16 @@ void FD3D12ResidencyManager::PrepareForExecution(FD3D12ResidencySet* const* Sets
 
         if (MakeResidentAsync(Pageables))
         {
+            uint64 ResidentBytesAdded = 0;
             for (FD3D12ResidencyHandle* Handle : ObjectsToMakeResident)
             {
                 Handle->bIsResident = true;
+                ResidentBytesAdded += Handle->SizeBytes;
             }
+
+            STAT_ADD(STAT_D3D12_ResidencyMakeResidentCount, ObjectsToMakeResident.Size());
+            STAT_ADD(STAT_D3D12_ResidencyMakeResidentBytes, ResidentBytesAdded);
+            STAT_ADD(STAT_D3D12_ResidencyResidentBytes,     ResidentBytesAdded);
 
 #if D3D12_ENABLE_RESIDENCY_LOGGING
             if (CVarLogResidencyEvents.GetValue())

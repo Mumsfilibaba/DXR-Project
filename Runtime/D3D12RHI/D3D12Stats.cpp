@@ -18,6 +18,26 @@ STAT_DEFINE_MEMORY(STAT_D3D12_CommittedDefaultMemory,   "Committed Default Memor
 STAT_DEFINE_MEMORY(STAT_D3D12_CommittedUploadMemory,    "Committed Upload Memory",    "D3D12 Allocators");
 STAT_DEFINE_MEMORY(STAT_D3D12_CommittedReadbackMemory,  "Committed Readback Memory",  "D3D12 Allocators");
 
+// Defrag Activity Stats
+STAT_DEFINE_COUNTER(STAT_D3D12_TextureDefragPending,        "Texture Defrag Pending",         "D3D12 Allocators");
+STAT_DEFINE_COUNTER(STAT_D3D12_TextureDefragMovesCompleted, "Texture Defrag Moves Completed", "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_TextureDefragBytesMoved,      "Texture Defrag Bytes Moved",     "D3D12 Allocators");
+
+STAT_DEFINE_COUNTER(STAT_D3D12_BufferDefragPending,         "Buffer Defrag Pending",          "D3D12 Allocators");
+STAT_DEFINE_COUNTER(STAT_D3D12_BufferDefragMovesCompleted,  "Buffer Defrag Moves Completed",  "D3D12 Allocators");
+STAT_DEFINE_MEMORY(STAT_D3D12_BufferDefragBytesMoved,       "Buffer Defrag Bytes Moved",      "D3D12 Allocators");
+
+// Residency Stats
+STAT_DEFINE_COUNTER(STAT_D3D12_ResidencyEvictionCount,      "Eviction Count",       "D3D12 Residency");
+STAT_DEFINE_MEMORY(STAT_D3D12_ResidencyEvictedBytes,        "Evicted Bytes",        "D3D12 Residency");
+
+STAT_DEFINE_COUNTER(STAT_D3D12_ResidencyMakeResidentCount,  "Make Resident Count",  "D3D12 Residency");
+STAT_DEFINE_MEMORY(STAT_D3D12_ResidencyMakeResidentBytes,   "Make Resident Bytes",  "D3D12 Residency");
+
+STAT_DEFINE_COUNTER(STAT_D3D12_ResidencyTrackedCount,       "Tracked Count",        "D3D12 Residency");
+STAT_DEFINE_MEMORY(STAT_D3D12_ResidencyResidentBytes,       "Resident Bytes",       "D3D12 Residency");
+STAT_DEFINE_MEMORY(STAT_D3D12_ResidencyBudget,              "Budget",               "D3D12 Residency");
+
 // PSO Stats
 STAT_DEFINE_COUNTER(STAT_D3D12_PSOCreateCount, "PSOs Created",          "D3D12 PSO");
 STAT_DEFINE_MEMORY(STAT_D3D12_PSOCacheSize,    "Cache Serialized Size", "D3D12 PSO");

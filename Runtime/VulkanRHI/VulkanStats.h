@@ -20,6 +20,18 @@ STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_UploadHeapFragmented);
 STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_ActiveAllocations);
 
 // -------------------------------------------------------------------------------------------
+// Vulkan Defrag Activity Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_TextureDefragPending);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_TextureDefragMovesCompleted);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_TextureDefragBytesMoved);
+
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_BufferDefragPending);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_BufferDefragMovesCompleted);
+STAT_DECLARE_EXTERN(VULKANRHI_API, STAT_Vulkan_BufferDefragBytesMoved);
+
+// -------------------------------------------------------------------------------------------
 // Vulkan PSO Stats
 // -------------------------------------------------------------------------------------------
 

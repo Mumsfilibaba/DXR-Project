@@ -935,21 +935,40 @@ void FD3D12Device::BeginFrame(FD3D12CommandContext* InCommandContext)
         TextureAllocator->CleanUp();
     }
 
+#if D3D12_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
     if (TextureAllocator)
     {
         const int32 MaxMovesPerFrame = CVarMaxDefragMovesPerFrame.GetValue();
         TextureAllocator->DefragmentAllocations(InCommandContext, MaxMovesPerFrame);
     }
+#endif
+
+#if D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (BufferAllocator)
+    {
+        const int32 MaxMovesPerFrame = CVarMaxDefragMovesPerFrame.GetValue();
+        BufferAllocator->DefragmentAllocations(InCommandContext, MaxMovesPerFrame);
+    }
+#endif
 
     FrameFence->Signal(DirectQueue->GetD3D12CommandQueue());
 }
 
 void FD3D12Device::CancelPendingDefragMoves(FD3D12GenericResource* Owner)
 {
+#if D3D12_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
     if (TextureAllocator)
     {
         TextureAllocator->CancelPendingDefragMoves(Owner);
     }
+#endif
+
+#if D3D12_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
+    if (BufferAllocator)
+    {
+        BufferAllocator->CancelPendingDefragMoves(Owner);
+    }
+#endif
 }
 
 bool FD3D12Device::Initialize()

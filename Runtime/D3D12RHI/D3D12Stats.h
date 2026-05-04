@@ -24,6 +24,32 @@ STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_CommittedUploadMemory);
 STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_CommittedReadbackMemory);
 
 // -------------------------------------------------------------------------------------------
+// D3D12 Defrag Activity Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_TextureDefragPending);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_TextureDefragMovesCompleted);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_TextureDefragBytesMoved);
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_BufferDefragPending);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_BufferDefragMovesCompleted);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_BufferDefragBytesMoved);
+
+// -------------------------------------------------------------------------------------------
+// D3D12 Residency Stats
+// -------------------------------------------------------------------------------------------
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyEvictionCount);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyEvictedBytes);
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyMakeResidentCount);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyMakeResidentBytes);
+
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyTrackedCount);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyResidentBytes);
+STAT_DECLARE_EXTERN(D3D12RHI_API, STAT_D3D12_ResidencyBudget);
+
+// -------------------------------------------------------------------------------------------
 // D3D12 PSO Stats
 // -------------------------------------------------------------------------------------------
 
