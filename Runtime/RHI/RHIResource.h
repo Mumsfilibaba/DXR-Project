@@ -1,10 +1,11 @@
 #pragma once
 #include "Core/IRefCounted.h"
 #include "Core/Threading/Atomic.h"
+#include "Core/Templates/Utility/NonCopyable.h"
 #include "RHI/RHICore.h"
 #include "RHI/RHITypes.h"
 
-class RHI_API FRHIResource : public IRefCounted
+class RHI_API FRHIResource : public IRefCounted, public FNonCopyable
 {
     enum class EState : int32
     {
@@ -14,9 +15,6 @@ class RHI_API FRHIResource : public IRefCounted
     };
 
 public:
-    FRHIResource(const FRHIResource&) = delete;
-    FRHIResource& operator=(const FRHIResource&) = delete;
-
     FRHIResource();
     virtual ~FRHIResource();
 
