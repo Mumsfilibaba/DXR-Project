@@ -20,12 +20,12 @@ public:
     virtual ~FD3D12View();
 
     // ID3D12ResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
+    virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
     bool AllocateHandle();
     void InvalidateAndFreeHandle();
 
-    void RegisterWithResource(FD3D12GenericResource* InOwner);
+    void RegisterWithResource(FD3D12ResourceBase* InOwner);
     void UnregisterFromResource();
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
@@ -68,7 +68,7 @@ protected:
     FD3D12ResourceRef            ViewResource;
     FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
-    FD3D12GenericResource*       OwnerResource;
+    FD3D12ResourceBase*          OwnerResource;
     uint32                       DescriptorVersion;
 };
 
@@ -79,7 +79,7 @@ public:
     virtual ~FD3D12ConstantBufferView() = default;
 
     // ID3D12ResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
+    virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
@@ -104,7 +104,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // ID3D12ResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
+    virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
@@ -146,7 +146,7 @@ public:
     virtual FD3D12UnorderedAccessViewRHI* GetUnorderedAccessViewInterface() const override;
 
     // ID3D12ResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
+    virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
     bool CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
@@ -192,7 +192,7 @@ public:
     virtual FD3D12RenderTargetViewRHI* GetRenderTargetViewInterface() const override;
 
     // ID3D12ResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
+    virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
@@ -215,7 +215,7 @@ public:
     virtual void* GetRHINativeHandle() const override final;
 
     // ID3D12ResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
+    virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 

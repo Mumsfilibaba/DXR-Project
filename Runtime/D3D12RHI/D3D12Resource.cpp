@@ -352,14 +352,14 @@ void FD3D12ResourceStorage::ResetAllocator()
     AllocatorType            = ED3D12AllocatorType::None;
 }
 
-FD3D12GenericResource::FD3D12GenericResource(FD3D12Device* InDevice)
+FD3D12ResourceBase::FD3D12ResourceBase(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , ResourceStorage(InDevice)
 {
     ResourceStorage.SetOwner(this);
 }
 
-FD3D12GenericResource::~FD3D12GenericResource()
+FD3D12ResourceBase::~FD3D12ResourceBase()
 {
     GetDevice()->CancelPendingDefragMoves(this);
 
@@ -368,7 +368,7 @@ FD3D12GenericResource::~FD3D12GenericResource()
     ResourceStorage.ReleaseResource();
 }
 
-void FD3D12GenericResource::AddResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener)
+void FD3D12ResourceBase::AddResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener)
 {
     if (!Listener)
     {
@@ -379,7 +379,7 @@ void FD3D12GenericResource::AddResourceRelocatedListener(ID3D12ResourceRelocatio
     Listeners.AddUnique(Listener);
 }
 
-void FD3D12GenericResource::RemoveResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener)
+void FD3D12ResourceBase::RemoveResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener)
 {
     if (!Listener)
     {
@@ -390,7 +390,7 @@ void FD3D12GenericResource::RemoveResourceRelocatedListener(ID3D12ResourceReloca
     Listeners.Remove(Listener);
 }
 
-void FD3D12GenericResource::ResourceRelocated(FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12ResourceBase::ResourceRelocated(FD3D12ResourceStorage* NewResourceStorage)
 {
     TScopedLock Lock(ListenersCS);
 

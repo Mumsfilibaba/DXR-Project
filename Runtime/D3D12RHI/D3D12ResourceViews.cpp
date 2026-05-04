@@ -20,7 +20,7 @@ FD3D12View::~FD3D12View()
     InvalidateAndFreeHandle();
 }
 
-void FD3D12View::RegisterWithResource(FD3D12GenericResource* InOwner)
+void FD3D12View::RegisterWithResource(FD3D12ResourceBase* InOwner)
 {
     if (InOwner == OwnerResource)
     {
@@ -45,7 +45,7 @@ void FD3D12View::UnregisterFromResource()
     }
 }
 
-void FD3D12View::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12View::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     CHECK(RelocatedResource == OwnerResource);
 
@@ -77,7 +77,7 @@ FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D1
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -125,7 +125,7 @@ FRHIDescriptorHandle FD3D12ShaderResourceViewRHI::GetBindlessHandle() const
     return FRHIDescriptorHandle();
 }
 
-void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -183,7 +183,7 @@ FD3D12UnorderedAccessViewRHI* FD3D12UnorderedAccessViewRHI::GetUnorderedAccessVi
     return const_cast<FD3D12UnorderedAccessViewRHI*>(this);
 }
 
-void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -242,7 +242,7 @@ FD3D12RenderTargetViewRHI* FD3D12RenderTargetViewRHI::GetRenderTargetViewInterfa
     return const_cast<FD3D12RenderTargetViewRHI*>(this);
 }
 
-void FD3D12RenderTargetViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12RenderTargetViewRHI::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 
@@ -289,7 +289,7 @@ void* FD3D12DepthStencilViewRHI::GetRHINativeHandle() const
     return reinterpret_cast<void*>(static_cast<UPTR_INT>(GetOfflineHandle().ptr));
 }
 
-void FD3D12DepthStencilViewRHI::OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
+void FD3D12DepthStencilViewRHI::OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage)
 {
     FD3D12View::OnResourceRelocated(RelocatedResource, NewResourceStorage);
 

@@ -22,7 +22,7 @@ public:
     virtual FD3D12TextureRHI* GetTextureInterface() const = 0;
 };
 
-class FD3D12TextureRHI : public FD3D12TextureBase, public FD3D12GenericResource
+class FD3D12TextureRHI : public FD3D12TextureBase, public FD3D12ResourceBase
 {
 public:
     FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc& InTextureDesc);

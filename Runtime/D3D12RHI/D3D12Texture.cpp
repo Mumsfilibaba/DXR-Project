@@ -7,7 +7,7 @@
 
 FD3D12TextureRHI::FD3D12TextureRHI(FD3D12Device* InDevice, const FRHITextureDesc& InTextureDesc)
     : FD3D12TextureBase(InTextureDesc)
-    , FD3D12GenericResource(InDevice)
+    , FD3D12ResourceBase(InDevice)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
     , RenderTargetView(nullptr)

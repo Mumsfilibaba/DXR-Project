@@ -6,7 +6,7 @@ class FD3D12CommandContext;
 
 typedef TSharedRef<class FD3D12BufferRHI> FD3D12BufferRHIRef;
 
-class FD3D12BufferRHI : public FRHIBuffer, public FD3D12GenericResource
+class FD3D12BufferRHI : public FRHIBuffer, public FD3D12ResourceBase
 {
 public:
     FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc);

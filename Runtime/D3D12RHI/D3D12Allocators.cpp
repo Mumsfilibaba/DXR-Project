@@ -2443,7 +2443,7 @@ void FD3D12BufferAllocator::DefragmentAllocations(FD3D12CommandContext* InComman
 
         FD3D12ResourceStorage* Storage     = Move.SourceStorage;
         FD3D12Resource*        OldResource = Storage ? Storage->GetResource() : nullptr;
-        FD3D12GenericResource* Owner       = Storage ? Storage->GetOwner() : nullptr;
+        FD3D12ResourceBase*    Owner       = Storage ? Storage->GetOwner() : nullptr;
 
         if (OldResource)
         {
@@ -2590,7 +2590,7 @@ void FD3D12BufferAllocator::DefragmentAllocations(FD3D12CommandContext* InComman
     STAT_SET(STAT_D3D12_BufferDefragPending, static_cast<int64>(PendingDefragMoves.Size()));
 }
 
-void FD3D12BufferAllocator::CancelPendingDefragMoves(FD3D12GenericResource* Owner)
+void FD3D12BufferAllocator::CancelPendingDefragMoves(FD3D12ResourceBase* Owner)
 {
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {
@@ -3007,7 +3007,7 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
 
         FD3D12ResourceStorage* Storage     = Move.SourceStorage;
         FD3D12Resource*        OldResource = Storage->GetResource();
-        FD3D12GenericResource* Owner       = Storage->GetOwner();
+        FD3D12ResourceBase*    Owner       = Storage->GetOwner();
 
         if (OldResource)
         {
@@ -3150,7 +3150,7 @@ void FD3D12TextureAllocator::DefragmentAllocations(FD3D12CommandContext* InComma
     STAT_SET(STAT_D3D12_TextureDefragPending, static_cast<int64>(PendingDefragMoves.Size()));
 }
 
-void FD3D12TextureAllocator::CancelPendingDefragMoves(FD3D12GenericResource* Owner)
+void FD3D12TextureAllocator::CancelPendingDefragMoves(FD3D12ResourceBase* Owner)
 {
     for (int32 Index = PendingDefragMoves.Size() - 1; Index >= 0; --Index)
     {

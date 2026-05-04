@@ -493,7 +493,7 @@ public:
     bool Supports(D3D12_HEAP_TYPE InHeapType, D3D12_RESOURCE_STATES InInitialState, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
     void DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame);
-    void CancelPendingDefragMoves(FD3D12GenericResource* Owner);
+    void CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
 
     bool Initialize();
     void Destroy();
@@ -571,7 +571,7 @@ public:
     bool Supports(D3D12_HEAP_TYPE InHeapType, const D3D12_RESOURCE_DESC& ResourceDesc) const;
 
     void DefragmentAllocations(FD3D12CommandContext* InCommandContext, int32 MaxMovesPerFrame);
-    void CancelPendingDefragMoves(FD3D12GenericResource* Owner);
+    void CancelPendingDefragMoves(FD3D12ResourceBase* Owner);
 
     bool Initialize();
     void Destroy();

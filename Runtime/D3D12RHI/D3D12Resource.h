@@ -11,7 +11,7 @@ typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 class FD3D12PoolAllocator;
 class FD3D12BucketAllocator;
 class FD3D12BuddyAllocator;
-class FD3D12GenericResource;
+class FD3D12ResourceBase;
 class FD3D12ResourceStorage;
 
 enum class ED3D12ResourceStateMode : uint8;
@@ -79,16 +79,16 @@ public:
     FORCEINLINE bool IsValid()          const { return StorageType != EResourceStorageType::Unknown; }
     FORCEINLINE bool IsPlacedResource() const { return StorageType == EResourceStorageType::SuballocatedHeap; }
 
-    FORCEINLINE void*                  GetMappedBaseAddress() const { return MappedBaseAddress; }
-    FORCEINLINE uint64                 GetSize()              const { return Size; }
-    FORCEINLINE uint64                 GetResourceOffset()    const { return ResourceOffset; }
-    FORCEINLINE uint64                 GetGPUVirtualAddress() const { return GpuVirtualAddress; }
-    FORCEINLINE void*                  GetAllocator()         const { return AllocatorPointers.AsVoid; }
-    FORCEINLINE FD3D12Resource*        GetResource()          const { return Resource; }
-    FORCEINLINE FD3D12GenericResource* GetOwner()             const { return Owner; }
-    FORCEINLINE FD3D12PoolAllocator*   GetPoolAllocator()     const { return (AllocatorType == ED3D12AllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr; }
-    FORCEINLINE ED3D12AllocatorType    GetAllocatorType()     const { return AllocatorType; }
-    FORCEINLINE EResourceStorageType   GetStorageType()       const { return StorageType; }
+    FORCEINLINE void*                GetMappedBaseAddress() const { return MappedBaseAddress; }
+    FORCEINLINE uint64               GetSize()              const { return Size; }
+    FORCEINLINE uint64               GetResourceOffset()    const { return ResourceOffset; }
+    FORCEINLINE uint64               GetGPUVirtualAddress() const { return GpuVirtualAddress; }
+    FORCEINLINE void*                GetAllocator()         const { return AllocatorPointers.AsVoid; }
+    FORCEINLINE FD3D12Resource*      GetResource()          const { return Resource; }
+    FORCEINLINE FD3D12ResourceBase*  GetOwner()             const { return Owner; }
+    FORCEINLINE FD3D12PoolAllocator* GetPoolAllocator()     const { return (AllocatorType == ED3D12AllocatorType::PoolAllocator) ? AllocatorPointers.PoolAllocator : nullptr; }
+    FORCEINLINE ED3D12AllocatorType  GetAllocatorType()     const { return AllocatorType; }
+    FORCEINLINE EResourceStorageType GetStorageType()       const { return StorageType; }
 
     FORCEINLINE const FD3D12PoolAllocatorAllocationData&   GetPoolAllocationData()   const { return AllocationData.Pool; }
     FORCEINLINE const FD3D12BuddyAllocatorAllocationData&  GetBuddyAllocationData()  const { return AllocationData.Buddy; }
@@ -99,7 +99,7 @@ public:
     FORCEINLINE void SetGpuVirtualAddress(D3D12_GPU_VIRTUAL_ADDRESS InGpuVirtualAddress) { GpuVirtualAddress = InGpuVirtualAddress; }
     FORCEINLINE void SetMappedBaseAddress(void* InMappedBaseAddress)                     { MappedBaseAddress = InMappedBaseAddress; }
     FORCEINLINE void SetStorageType(EResourceStorageType InStorageType)                  { StorageType = InStorageType; }
-    FORCEINLINE void SetOwner(FD3D12GenericResource* InOwner)                            { Owner = InOwner; }
+    FORCEINLINE void SetOwner(FD3D12ResourceBase* InOwner)                               { Owner = InOwner; }
 
     FORCEINLINE void SetBuddyAllocator(FD3D12BuddyAllocator* InAllocator)
     {
@@ -149,7 +149,7 @@ private:
     } AllocatorPointers;
 
     FD3D12Resource*           Resource;
-    FD3D12GenericResource*    Owner;
+    FD3D12ResourceBase*       Owner;
     uint64                    ResourceOffset;
     D3D12_GPU_VIRTUAL_ADDRESS GpuVirtualAddress;
     void*                     MappedBaseAddress;
@@ -171,6 +171,7 @@ public:
     
     void StartResidencyTracking();
     void EndResidencyTracking();
+    bool RequiresResourceStateTracking() const;
 
     void SetDebugName(const FString& InDebugName);
     void GetDebugName(FString& OutDebugName) const;
@@ -190,13 +191,18 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const { return Address; }
     
     // Resource Accessors
-    D3D12_RESOURCE_DIMENSION   GetDimension()     const { return Desc.Dimension; }
-    D3D12_HEAP_TYPE            GetHeapType()      const { return HeapType; }
-    const D3D12_CLEAR_VALUE&   GetClearValue()    const { return ClearValue; }
     FD3D12ResourceState&       GetResourceState()       { return ResourceState; }
     const FD3D12ResourceState& GetResourceState() const { return ResourceState; }
-    FD3D12Heap*                GetHeap()          const { return Heap.Get(); }
-    FD3D12ResidencyHandle*     GetResidencyHandle()     { return Heap ? Heap->GetResidencyHandle() : &ResidencyHandle; }
+
+    D3D12_RESOURCE_DIMENSION GetDimension()  const { return Desc.Dimension; }
+    D3D12_HEAP_TYPE          GetHeapType()   const { return HeapType; }
+    const D3D12_CLEAR_VALUE& GetClearValue() const { return ClearValue; }
+    FD3D12Heap*              GetHeap()       const { return Heap.Get(); }
+
+    FD3D12ResidencyHandle* GetResidencyHandle()
+    {
+        return Heap ? Heap->GetResidencyHandle() : &ResidencyHandle;
+    }
 
     void SetClearValue(const D3D12_CLEAR_VALUE& InClearValue)
     {
@@ -229,8 +235,6 @@ public:
     {
         StateMode = InStateMode;
     }
-
-    bool RequiresResourceStateTracking() const;
 
     uint32 GetNumSubresources() const 
     {
@@ -275,14 +279,14 @@ private:
 struct ID3D12ResourceRelocationListener
 {
     virtual ~ID3D12ResourceRelocationListener() = default;
-    virtual void OnResourceRelocated(FD3D12GenericResource* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) = 0;
+    virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) = 0;
 };
 
-class FD3D12GenericResource : public FD3D12DeviceChild
+class FD3D12ResourceBase : public FD3D12DeviceChild
 {
 public:
-    FD3D12GenericResource(FD3D12Device* InDevice);
-    virtual ~FD3D12GenericResource();
+    FD3D12ResourceBase(FD3D12Device* InDevice);
+    virtual ~FD3D12ResourceBase();
     
     void AddResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener);
     void RemoveResourceRelocatedListener(ID3D12ResourceRelocationListener* Listener);

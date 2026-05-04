@@ -5,7 +5,7 @@
 
 FD3D12BufferRHI::FD3D12BufferRHI(FD3D12Device* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
-    , FD3D12GenericResource(InDevice)
+    , FD3D12ResourceBase(InDevice)
 {
 }
 

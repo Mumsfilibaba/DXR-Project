@@ -954,7 +954,7 @@ void FD3D12Device::BeginFrame(FD3D12CommandContext* InCommandContext)
     FrameFence->Signal(DirectQueue->GetD3D12CommandQueue());
 }
 
-void FD3D12Device::CancelPendingDefragMoves(FD3D12GenericResource* Owner)
+void FD3D12Device::CancelPendingDefragMoves(FD3D12ResourceBase* Owner)
 {
 #if D3D12_TEXTURE_ALLOCATOR_USE_POOL_ALLOCATOR
     if (TextureAllocator)
