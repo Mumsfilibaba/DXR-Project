@@ -96,8 +96,9 @@ struct FNullRenderTargetViewRHI : public FRHIRenderTargetView
 
 struct FNullDepthStencilViewRHI : public FRHIDepthStencilView
 {
-    FNullDepthStencilViewRHI(FRHIResource* InResource)
+    FNullDepthStencilViewRHI(FRHIResource* InResource, EDepthStencilViewFlags InFlags = EDepthStencilViewFlags::None)
         : FRHIDepthStencilView(InResource)
+        , Flags(InFlags)
     {
     }
 
@@ -105,6 +106,14 @@ struct FNullDepthStencilViewRHI : public FRHIDepthStencilView
     {
         return nullptr;
     }
+
+    EDepthStencilViewFlags GetFlags() const
+    {
+        return Flags;
+    }
+
+private:
+    EDepthStencilViewFlags Flags;
 };
 
 class FNullTextureRHI : public FRHITexture
@@ -291,9 +300,7 @@ public:
 
         if (Desc.ColorFormat == EFormat::Unknown)
         {
-            Desc.ColorFormat = (RHI::DefaultSwapChainFormat != EFormat::Unknown)
-                ? RHI::DefaultSwapChainFormat
-                : EFormat::B8G8R8A8_Unorm;
+            Desc.ColorFormat = (RHI::DefaultSwapChainFormat != EFormat::Unknown) ? RHI::DefaultSwapChainFormat : EFormat::B8G8R8A8_Unorm;
         }
 
         AllocateBackBuffers();
@@ -462,7 +469,7 @@ public:
 
     virtual const FRHIInputElementDesc* GetInputElementDesc(uint32 Index) const override final
     {
-        return (Index < InputElements.Size()) ? &InputElements[Index] : nullptr;
+        return (Index < static_cast<uint32>(InputElements.Size())) ? &InputElements[Index] : nullptr;
     }
 
     virtual uint32 GetNumInputElementDescs() const override final

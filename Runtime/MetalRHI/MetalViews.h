@@ -47,7 +47,7 @@ public:
 class FMetalRenderTargetViewRHI : public FRHIRenderTargetView, public FMetalView
 {
 public:
-    FMetalRenderTargetViewRHI(FMetalDevice* InDevice, const FRHIRenderTargetViewDesc& InDesc);
+    FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc);
     virtual ~FMetalRenderTargetViewRHI();
 
     // FRHIRenderTargetView Interface
@@ -64,18 +64,20 @@ private:
 class FMetalDepthStencilViewRHI : public FRHIDepthStencilView, public FMetalView
 {
 public:
-    FMetalDepthStencilViewRHI(FMetalDevice* InDevice, const FRHIDepthStencilViewDesc& InDesc);
+    FMetalDepthStencilViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc);
     virtual ~FMetalDepthStencilViewRHI();
 
     // FRHIDepthStencilView Interface
     virtual void* GetRHINativeHandle() const override final;
 
-    uint8  GetMipLevel()   const { return MipLevel; }
-    uint16 GetArrayIndex() const { return ArrayIndex; }
+    uint8                  GetMipLevel()   const { return MipLevel; }
+    uint16                 GetArrayIndex() const { return ArrayIndex; }
+    EDepthStencilViewFlags GetFlags()      const { return Flags; }
 
 private:
-    uint8  MipLevel;
-    uint16 ArrayIndex;
+    uint8                  MipLevel;
+    uint16                 ArrayIndex;
+    EDepthStencilViewFlags Flags;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

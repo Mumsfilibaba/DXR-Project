@@ -313,7 +313,7 @@ struct IRHICommandContext
      * @param Src Source texture
      * @param SrcRegion Source region (3D texel coordinates)
      * @param SrcMipLevel Source mip level
-     * @param SrcArraySlice Source array slice (0 for 3D textures)
+     * @param SrcArraySlice Source array slice as a raw 2D layer index (cubeIndex * RHI_NUM_CUBE_FACES + faceIndex for cubes; 0 for 3D textures)
      */
     virtual void CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint64 DstOffset, FRHITexture* Src, const FTextureRegion3D& SrcRegion, uint32 SrcMipLevel, uint32 SrcArraySlice) = 0;
 

@@ -5,7 +5,11 @@
 class FRHIFence : public FRHIResource 
 { 
 public: 
-    FRHIFence() = default; 
+    FRHIFence()
+        : FRHIResource(ERHIResourceType::Fence)
+    {
+    }
+
     virtual ~FRHIFence() = default; 
  
     // D3D12: ID3D12Fence*. Vulkan: VkSemaphore (timeline). Metal/Null: nullptr.

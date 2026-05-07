@@ -1292,16 +1292,10 @@ void FVulkanCommandContext::CopyTexture(FRHITexture* Dst, FRHITexture* Src)
         ImageCopy.dstSubresource.baseArrayLayer = 0;
 
         // NOTE: We want to copy the full function
-        if (IsTextureCube(DstVulkanTexture->GetDimension()))
-        {
-            ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices() * RHI_NUM_CUBE_FACES;
-            ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices() * RHI_NUM_CUBE_FACES;
-        }
-        else
-        {
-            ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices();
-            ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices();
-        }
+        const ETextureDimension SrcDimension = SrcVulkanTexture->GetDimension();
+        const ETextureDimension DstDimension = DstVulkanTexture->GetDimension();
+        ImageCopy.srcSubresource.layerCount = RHIDimensionArrayLayers(SrcDimension, SrcVulkanTexture->GetNumArraySlices());
+        ImageCopy.dstSubresource.layerCount = RHIDimensionArrayLayers(DstDimension, DstVulkanTexture->GetNumArraySlices());
     }
 
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
@@ -1322,35 +1316,22 @@ void FVulkanCommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src
     
     FVulkanTextureRHI* DstVulkanTexture = FVulkanRHI::ResourceCast(Dst);
     CHECK(DstVulkanTexture != nullptr);
+
+    {
+        const ETextureDimension SrcDimension = Src->GetDimension();
+        const ETextureDimension DstDimension = Dst->GetDimension();
+        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetNumArraySlices());
+        const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetNumArraySlices());
+        CHECK(CopyDesc.SrcArraySlice + CopyDesc.NumArraySlices <= SrcNumArrayLayers);
+        CHECK(CopyDesc.DstArraySlice + CopyDesc.NumArraySlices <= DstNumArrayLayers);
+    }
     
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopy[MaxCopies];
     
-    uint32 NumArrayLayers    = 0;
-    uint32 DstBaseArrayLayer = 0;
-    uint32 SrcBaseArrayLayer = 0;
-
-    if (IsTextureCube(SrcVulkanTexture->GetDimension()))
-    {
-        SrcBaseArrayLayer = CopyDesc.SrcArraySlice  * RHI_NUM_CUBE_FACES;
-        NumArrayLayers    = CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES;
-    }
-    else
-    {
-        SrcBaseArrayLayer = CopyDesc.SrcArraySlice;
-        NumArrayLayers    = CopyDesc.NumArraySlices;
-    }
-    
-    if (IsTextureCube(DstVulkanTexture->GetDimension()))
-    {
-        DstBaseArrayLayer = CopyDesc.DstArraySlice * RHI_NUM_CUBE_FACES;
-        NumArrayLayers    = Math::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
-    }
-    else
-    {
-        DstBaseArrayLayer = CopyDesc.DstArraySlice;
-        NumArrayLayers    = Math::Max(CopyDesc.NumArraySlices, NumArrayLayers);
-    }
+    const uint32 SrcBaseArrayLayer = CopyDesc.SrcArraySlice;
+    const uint32 DstBaseArrayLayer = CopyDesc.DstArraySlice;
+    const uint32 NumArrayLayers    = CopyDesc.NumArraySlices;
 
     // Flush barriers
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
@@ -1440,6 +1421,12 @@ void FVulkanCommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint
 {
     CHECK(Dst != nullptr);
     CHECK(Src != nullptr);
+
+    {
+        const ETextureDimension SrcDimension = Src->GetDimension();
+        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetNumArraySlices());
+        CHECK(SrcArraySlice < SrcNumArrayLayers);
+    }
 
     FVulkanTextureRHI* SrcVulkanTexture = FVulkanRHI::ResourceCast(Src);
     CHECK(SrcVulkanTexture != nullptr);
@@ -1572,6 +1559,12 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
     FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(Texture);
     CHECK(VulkanTexture != nullptr);
 
+    {
+        const ETextureDimension Dimension = Texture->GetDimension();
+        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetNumArraySlices());
+        CHECK(TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES || TextureTransition.ArraySlice < NumArrayLayers);
+    }
+
     FVulkanImageLayoutState& LocalState = RetrievePendingImageState(VulkanTexture);
 
     const VkImageLayout NewLayout      = FVulkanRHI::ResourceStateToImageLayout(TextureTransition.AfterState);
@@ -1658,22 +1651,8 @@ void FVulkanCommandContext::TransitionTextureState(FRHITexture* Texture, const F
         }
         else
         {
-            uint32 LayerCount;
-            uint32 BaseArrayLayer;
-
-            if (IsTextureCube(VulkanTexture->GetDimension()))
-            {
-                LayerCount     = RHI_NUM_CUBE_FACES;
-                BaseArrayLayer = TextureTransition.ArraySlice * RHI_NUM_CUBE_FACES;
-            }
-            else
-            {
-                LayerCount     = 1u;
-                BaseArrayLayer = TextureTransition.ArraySlice;
-            }
-
-            ImageBarrier.subresourceRange.baseArrayLayer = BaseArrayLayer;
-            ImageBarrier.subresourceRange.layerCount     = LayerCount;
+            ImageBarrier.subresourceRange.baseArrayLayer = TextureTransition.ArraySlice;
+            ImageBarrier.subresourceRange.layerCount     = 1u;
         }
 
         CHECK(!IsInsideRenderPass());
@@ -1749,6 +1728,12 @@ void FVulkanCommandContext::RequireTextureState(FRHITexture* Texture, const FRHI
 {
     FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(Texture);
     CHECK(VulkanTexture != nullptr);
+
+    {
+        const ETextureDimension Dimension = Texture->GetDimension();
+        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetNumArraySlices());
+        CHECK(RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES || RequiredState.ArraySlice < NumArrayLayers);
+    }
 
     if (VulkanTexture->GetImageLayoutState().HasDefaultLayout())
     {

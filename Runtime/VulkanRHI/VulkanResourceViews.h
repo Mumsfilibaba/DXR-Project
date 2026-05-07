@@ -112,17 +112,18 @@ public:
         return Type;
     }
 
-    // Returns the concrete Vulkan view/handle as void* (VkImageView / VkBufferView /
-    // VkAccelerationStructureKHR). StructuredBufferView has no dedicated Vulkan view
-    // object so it returns nullptr.
     void* GetRHINativeHandleForType() const
     {
         switch (Type)
         {
-        case EType::ImageView:                 return reinterpret_cast<void*>(ImageViewInfo.ImageView);
-        case EType::TypedBufferView:           return reinterpret_cast<void*>(TypedBufferInfo.BufferView);
-        case EType::AccelerationStructureView: return reinterpret_cast<void*>(AccelerationStructureInfo.AccelerationStructure);
-        default:                               return nullptr;
+        case EType::ImageView:
+            return reinterpret_cast<void*>(ImageViewInfo.ImageView);
+        case EType::TypedBufferView:
+            return reinterpret_cast<void*>(TypedBufferInfo.BufferView);
+        case EType::AccelerationStructureView:
+            return reinterpret_cast<void*>(AccelerationStructureInfo.AccelerationStructure);
+        default:
+            return nullptr;
         }
     }
 
@@ -169,7 +170,7 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
-    bool Initialize(const FRHIShaderResourceViewDesc& InDesc);
+    bool Initialize(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc);
 };
 
 class FVulkanUnorderedAccessViewBase : public FRHIUnorderedAccessView
@@ -203,7 +204,7 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
-    bool Initialize(const FRHIUnorderedAccessViewDesc& InDesc);
+    bool Initialize(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc);
 };
 
 class FVulkanRenderTargetViewBase : public FRHIRenderTargetView
@@ -235,10 +236,8 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
-    bool Initialize(const FRHIRenderTargetViewDesc& InDesc);
+    bool Initialize(FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc);
 };
-
-// FVulkanBackBufferProxyRenderTargetViewRHI was moved to VulkanBackBufferProxies.h.
 
 class FVulkanDepthStencilViewRHI : public FRHIDepthStencilView, public FVulkanResourceView
 {
@@ -252,5 +251,34 @@ public:
     // IVulkanResourceRelocationListener Interface
     virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
 
-    bool Initialize(const FRHIDepthStencilViewDesc& InDesc);
+    bool Initialize(FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc);
+
+    NODISCARD FORCEINLINE EDepthStencilViewFlags GetFlags() const
+    {
+        return Flags;
+    }
+
+    NODISCARD FORCEINLINE bool HasStencilFormat() const
+    {
+        return bHasStencil;
+    }
+
+    NODISCARD FORCEINLINE bool IsReadOnly() const
+    {
+        return IsDepthReadOnly() && (!HasStencilFormat() || IsStencilReadOnly());
+    }
+
+    NODISCARD FORCEINLINE bool IsDepthReadOnly() const
+    {
+        return IsEnumFlagSet(Flags, EDepthStencilViewFlags::ReadOnlyDepth);
+    }
+
+    NODISCARD FORCEINLINE bool IsStencilReadOnly() const
+    {
+        return IsEnumFlagSet(Flags, EDepthStencilViewFlags::ReadOnlyStencil);
+    }
+
+private:
+    EDepthStencilViewFlags Flags;
+    bool                   bHasStencil;
 };

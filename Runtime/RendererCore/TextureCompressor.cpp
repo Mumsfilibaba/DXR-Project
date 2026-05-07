@@ -301,17 +301,10 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
 
     for (uint32 Mip = 0; Mip < NumMips; Mip++)
     {
-        FRHIShaderResourceViewDesc SRVDesc;
-        SRVDesc.Type                       = FRHIShaderResourceViewDesc::EType::TextureSRV;
-        SRVDesc.TextureSRV.Texture         = SrcTexture.Get();
-        SRVDesc.TextureSRV.Format          = SrcTexture->GetFormat();
-        SRVDesc.TextureSRV.FirstArraySlice = 0;
-        SRVDesc.TextureSRV.NumSlices       = 1;
-        SRVDesc.TextureSRV.FirstMipLevel   = uint8(Mip);
-        SRVDesc.TextureSRV.MinLODClamp     = 0;
-        SRVDesc.TextureSRV.NumMips         = 1;
+        const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTexture2D(
+            SrcTexture->GetFormat(), uint8(Mip), 1);
 
-        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SrcTexture.Get(), SRVDesc);
         if (!SourceSRV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create source SRV for mip %u", Mip);
@@ -320,15 +313,10 @@ bool FTextureCompressor::CompressSinglePass64(FRHICommandList& CommandList, cons
 
         SourceSRVs.Emplace(SourceSRV);
 
-        FRHIUnorderedAccessViewDesc UAVDesc;
-        UAVDesc.Type                       = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
-        UAVDesc.TextureUAV.Texture         = CompressedTex.Get();
-        UAVDesc.TextureUAV.Format          = EFormat::R32G32_Uint;
-        UAVDesc.TextureUAV.FirstArraySlice = 0;
-        UAVDesc.TextureUAV.MipLevel        = uint8(Mip);
-        UAVDesc.TextureUAV.NumSlices       = 1;
+        const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(
+            EFormat::R32G32_Uint, uint8(Mip));
 
-        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(CompressedTex.Get(), UAVDesc);
         if (!CompressedUAV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create compressed UAV for mip %u", Mip);
@@ -425,17 +413,10 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
 
     for (uint32 Mip = 0; Mip < NumMips; Mip++)
     {
-        FRHIShaderResourceViewDesc SRVDesc;
-        SRVDesc.Type                       = FRHIShaderResourceViewDesc::EType::TextureSRV;
-        SRVDesc.TextureSRV.Texture         = SrcTexture.Get();
-        SRVDesc.TextureSRV.Format          = SrcTexture->GetFormat();
-        SRVDesc.TextureSRV.FirstArraySlice = 0;
-        SRVDesc.TextureSRV.NumSlices       = 1;
-        SRVDesc.TextureSRV.FirstMipLevel   = uint8(Mip);
-        SRVDesc.TextureSRV.MinLODClamp     = 0;
-        SRVDesc.TextureSRV.NumMips         = 1;
+        const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTexture2D(
+            SrcTexture->GetFormat(), uint8(Mip), 1);
 
-        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SrcTexture.Get(), SRVDesc);
         if (!SourceSRV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create source SRV for mip %u", Mip);
@@ -444,15 +425,10 @@ bool FTextureCompressor::CompressSinglePass128(FRHICommandList& CommandList, con
 
         SourceSRVs.Emplace(SourceSRV);
 
-        FRHIUnorderedAccessViewDesc UAVDesc;
-        UAVDesc.Type                       = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
-        UAVDesc.TextureUAV.Texture         = CompressedTex.Get();
-        UAVDesc.TextureUAV.Format          = EFormat::R32G32B32A32_Uint;
-        UAVDesc.TextureUAV.FirstArraySlice = 0;
-        UAVDesc.TextureUAV.MipLevel        = uint8(Mip);
-        UAVDesc.TextureUAV.NumSlices       = 1;
+        const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(
+            EFormat::R32G32B32A32_Uint, uint8(Mip));
 
-        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(CompressedTex.Get(), UAVDesc);
         if (!CompressedUAV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create compressed UAV for mip %u", Mip);
@@ -650,17 +626,10 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
 
     for (uint32 Mip = 0; Mip < NumMips; Mip++)
     {
-        FRHIShaderResourceViewDesc SRVDesc;
-        SRVDesc.Type                       = FRHIShaderResourceViewDesc::EType::TextureSRV;
-        SRVDesc.TextureSRV.Texture         = SrcTexture.Get();
-        SRVDesc.TextureSRV.Format          = SrcTexture->GetFormat();
-        SRVDesc.TextureSRV.FirstArraySlice = 0;
-        SRVDesc.TextureSRV.NumSlices       = 1;
-        SRVDesc.TextureSRV.FirstMipLevel   = uint8(Mip);
-        SRVDesc.TextureSRV.MinLODClamp     = 0;
-        SRVDesc.TextureSRV.NumMips         = 1;
+        const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTexture2D(
+            SrcTexture->GetFormat(), uint8(Mip), 1);
 
-        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SrcTexture.Get(), SRVDesc);
         if (!SourceSRV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create source SRV for mip %u", Mip);
@@ -669,15 +638,10 @@ bool FTextureCompressor::CompressBC6(FRHICommandList& CommandList, const FRHITex
 
         SourceSRVs.Emplace(SourceSRV);
 
-        FRHIUnorderedAccessViewDesc UAVDesc;
-        UAVDesc.Type                       = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
-        UAVDesc.TextureUAV.Texture         = CompressedTex.Get();
-        UAVDesc.TextureUAV.Format          = EFormat::R32G32B32A32_Uint;
-        UAVDesc.TextureUAV.FirstArraySlice = 0;
-        UAVDesc.TextureUAV.MipLevel        = uint8(Mip);
-        UAVDesc.TextureUAV.NumSlices       = 1;
+        const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(
+            EFormat::R32G32B32A32_Uint, uint8(Mip));
 
-        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(CompressedTex.Get(), UAVDesc);
         if (!CompressedUAV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create compressed UAV for mip %u", Mip);
@@ -809,15 +773,15 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
         return false;
     }
 
-    FRHIShaderResourceViewDesc  SrvInfoA = FRHIShaderResourceViewDesc::CreateBufferSRV(BufA.Get(), 0, MaxTotalBlocks);
-    FRHIShaderResourceViewDesc  SrvInfoB = FRHIShaderResourceViewDesc::CreateBufferSRV(BufB.Get(), 0, MaxTotalBlocks);
-    FRHIUnorderedAccessViewDesc UavInfoA = FRHIUnorderedAccessViewDesc::CreateBufferUAV(BufA.Get(), 0, MaxTotalBlocks);
-    FRHIUnorderedAccessViewDesc UavInfoB = FRHIUnorderedAccessViewDesc::CreateBufferUAV(BufB.Get(), 0, MaxTotalBlocks);
+    const FRHIShaderResourceViewDesc  SrvInfoA = FRHIShaderResourceViewDesc::CreateBuffer(0, MaxTotalBlocks);
+    const FRHIShaderResourceViewDesc  SrvInfoB = FRHIShaderResourceViewDesc::CreateBuffer(0, MaxTotalBlocks);
+    const FRHIUnorderedAccessViewDesc UavInfoA = FRHIUnorderedAccessViewDesc::CreateBuffer(0, MaxTotalBlocks);
+    const FRHIUnorderedAccessViewDesc UavInfoB = FRHIUnorderedAccessViewDesc::CreateBuffer(0, MaxTotalBlocks);
 
-    FRHIShaderResourceViewRef  SrvA = FRHI::Get()->CreateShaderResourceView(SrvInfoA);
-    FRHIShaderResourceViewRef  SrvB = FRHI::Get()->CreateShaderResourceView(SrvInfoB);
-    FRHIUnorderedAccessViewRef UavA = FRHI::Get()->CreateUnorderedAccessView(UavInfoA);
-    FRHIUnorderedAccessViewRef UavB = FRHI::Get()->CreateUnorderedAccessView(UavInfoB);
+    FRHIShaderResourceViewRef  SrvA = FRHI::Get()->CreateShaderResourceView(BufA.Get(), SrvInfoA);
+    FRHIShaderResourceViewRef  SrvB = FRHI::Get()->CreateShaderResourceView(BufB.Get(), SrvInfoB);
+    FRHIUnorderedAccessViewRef UavA = FRHI::Get()->CreateUnorderedAccessView(BufA.Get(), UavInfoA);
+    FRHIUnorderedAccessViewRef UavB = FRHI::Get()->CreateUnorderedAccessView(BufB.Get(), UavInfoB);
 
     if (!SrvA || !SrvB || !UavA || !UavB)
     {
@@ -853,17 +817,10 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
 
     for (uint32 Mip = 0; Mip < NumMips; Mip++)
     {
-        FRHIShaderResourceViewDesc SRVDesc;
-        SRVDesc.Type                       = FRHIShaderResourceViewDesc::EType::TextureSRV;
-        SRVDesc.TextureSRV.Texture         = SrcTexture.Get();
-        SRVDesc.TextureSRV.Format          = SrcTexture->GetFormat();
-        SRVDesc.TextureSRV.FirstArraySlice = 0;
-        SRVDesc.TextureSRV.NumSlices       = 1;
-        SRVDesc.TextureSRV.FirstMipLevel   = uint8(Mip);
-        SRVDesc.TextureSRV.MinLODClamp     = 0;
-        SRVDesc.TextureSRV.NumMips         = 1;
+        const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTexture2D(
+            SrcTexture->GetFormat(), uint8(Mip), 1);
 
-        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SrcTexture.Get(), SRVDesc);
         if (!SourceSRV)
         {
             LOG_ERROR("[FTextureCompressor] BC7: Failed to create source SRV for mip %u", Mip);
@@ -872,15 +829,10 @@ bool FTextureCompressor::CompressBC7(FRHICommandList& CommandList, const FRHITex
 
         SourceSRVs.Emplace(SourceSRV);
 
-        FRHIUnorderedAccessViewDesc UAVDesc;
-        UAVDesc.Type                       = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
-        UAVDesc.TextureUAV.Texture         = CompressedTex.Get();
-        UAVDesc.TextureUAV.Format          = EFormat::R32G32B32A32_Uint;
-        UAVDesc.TextureUAV.FirstArraySlice = 0;
-        UAVDesc.TextureUAV.MipLevel        = uint8(Mip);
-        UAVDesc.TextureUAV.NumSlices       = 1;
+        const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(
+            EFormat::R32G32B32A32_Uint, uint8(Mip));
 
-        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+        FRHIUnorderedAccessViewRef CompressedUAV = FRHI::Get()->CreateUnorderedAccessView(CompressedTex.Get(), UAVDesc);
         if (!CompressedUAV)
         {
             LOG_ERROR("[FTextureCompressor] BC7: Failed to create compressed UAV for mip %u", Mip);
@@ -1069,15 +1021,10 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
 
     for (uint8 Index = 0; Index < CompressedTexDesc.NumMipLevels; Index++)
     {
-        FRHIUnorderedAccessViewDesc CompressedTexUAVDesc;
-        CompressedTexUAVDesc.Type = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
-        CompressedTexUAVDesc.TextureUAV.Texture         = CompressedTex.Get();
-        CompressedTexUAVDesc.TextureUAV.Format          = EFormat::R32G32B32A32_Uint;
-        CompressedTexUAVDesc.TextureUAV.FirstArraySlice = 0;
-        CompressedTexUAVDesc.TextureUAV.MipLevel        = Index;
-        CompressedTexUAVDesc.TextureUAV.NumSlices       = 1;
+        const FRHIUnorderedAccessViewDesc CompressedTexUAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureCube(
+            EFormat::R32G32B32A32_Uint, Index);
 
-        FRHIUnorderedAccessViewRef CompressedTexUAV = FRHI::Get()->CreateUnorderedAccessView(CompressedTexUAVDesc);
+        FRHIUnorderedAccessViewRef CompressedTexUAV = FRHI::Get()->CreateUnorderedAccessView(CompressedTex.Get(), CompressedTexUAVDesc);
         if (!CompressedTexUAV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create compressed texture UAV");
@@ -1086,17 +1033,10 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
 
         CompressedUAVs.Emplace(CompressedTexUAV);
 
-        FRHIShaderResourceViewDesc SRVDesc;
-        SRVDesc.Type = FRHIShaderResourceViewDesc::EType::TextureSRV;
-        SRVDesc.TextureSRV.Texture         = SrcCubeMap.Get();
-        SRVDesc.TextureSRV.Format          = SrcCubeMap->GetFormat();
-        SRVDesc.TextureSRV.FirstArraySlice = 0;
-        SRVDesc.TextureSRV.NumSlices       = 1;
-        SRVDesc.TextureSRV.FirstMipLevel   = Index;
-        SRVDesc.TextureSRV.MinLODClamp     = 0;
-        SRVDesc.TextureSRV.NumMips         = 1;
+        const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTextureCube(
+            SrcCubeMap->GetFormat(), Index, 1);
 
-        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        FRHIShaderResourceViewRef SourceSRV = FRHI::Get()->CreateShaderResourceView(SrcCubeMap.Get(), SRVDesc);
         if (!SourceSRV)
         {
             LOG_ERROR("[FTextureCompressor] Failed to create source SRV");
@@ -1172,7 +1112,7 @@ bool FTextureCompressor::CompressCubeMapBC6(FRHICommandList& CommandList, const 
     CopyDesc.Size.Y         = CompressedTexDesc.Extent.Y;
     CopyDesc.Size.Z         = CompressedTexDesc.Extent.Z;
     CopyDesc.NumMipLevels   = CompressedTexDesc.NumMipLevels;
-    CopyDesc.NumArraySlices = 1;
+    CopyDesc.NumArraySlices = RHI_NUM_CUBE_FACES;
 
     CommandList.TransitionTextureState(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
 

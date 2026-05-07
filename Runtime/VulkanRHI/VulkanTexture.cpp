@@ -162,15 +162,14 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
     }
     else
     {
-        ImageCreateInfo.arrayLayers  = Desc.NumArraySlices;
+        ImageCreateInfo.arrayLayers  = RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
         ImageCreateInfo.extent.depth = 1;
     }
-    
+
     // Enable Texture-Cube views
     if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
     {
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-        ImageCreateInfo.arrayLayers = Desc.NumArraySlices * RHI_NUM_CUBE_FACES;
     }
 
     // TODO: Look into abstracting these flags
@@ -200,6 +199,23 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
 	{
 		ImageCreateInfo.usage |= VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR;
 	}
+
+    VkImageFormatListCreateInfo FormatListInfo = {};
+
+    TArray<VkFormat> ViewFormats;
+    if ((ImageCreateInfo.flags & VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT) != 0)
+    {
+        ViewFormats = GetVulkanFormatCompatibilityClass(ImageCreateInfo.format);
+
+        if (ViewFormats.Size() > 0)
+        {
+            FormatListInfo.sType           = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO;
+            FormatListInfo.viewFormatCount = static_cast<uint32>(ViewFormats.Size());
+            FormatListInfo.pViewFormats    = ViewFormats.Data();
+            FormatListInfo.pNext           = ImageCreateInfo.pNext;
+            ImageCreateInfo.pNext          = &FormatListInfo;
+        }
+    }
 
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
     if (VULKAN_FAILED(Result))
@@ -232,35 +248,48 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
 
     if (!Desc.IsNoDefaultSRV())
     {
-        FRHIShaderResourceViewDesc ViewDesc;
-        ViewDesc.Type               = FRHIShaderResourceViewDesc::EType::TextureSRV;
-        ViewDesc.TextureSRV.Texture = this;
-        ViewDesc.TextureSRV.Format  = VulkanCastShaderResourceFormat(Desc.Format);
+        const EFormat  SRVFormat      = Desc.Format;
+        const uint8    NumMipLevels   = static_cast<uint8>(Desc.NumMipLevels);
+        const uint16   NumArraySlices = static_cast<uint16>(Desc.NumArraySlices);
 
-        if (Desc.IsTexture1D() || Desc.IsTexture2D() || Desc.IsTextureCube())
+        FRHIShaderResourceViewDesc ViewDesc;
+        if (Desc.IsTexture1D())
         {
-            ViewDesc.TextureSRV.FirstMipLevel   = 0;
-            ViewDesc.TextureSRV.NumMips         = static_cast<uint8>(Desc.NumMipLevels);
-            ViewDesc.TextureSRV.MinLODClamp     = 0.0f;
-            ViewDesc.TextureSRV.FirstArraySlice = 0;
-            ViewDesc.TextureSRV.NumSlices       = 1;
+            ViewDesc = FRHIShaderResourceViewDesc::CreateTexture1D(SRVFormat, 0, NumMipLevels);
         }
-        else if (Desc.IsTexture1DArray() || Desc.IsTexture2DArray() || Desc.IsTextureCubeArray() || Desc.IsTexture3D())
+        else if (Desc.IsTexture1DArray())
         {
-            ViewDesc.TextureSRV.FirstMipLevel   = 0;
-            ViewDesc.TextureSRV.NumMips         = static_cast<uint8>(Desc.NumMipLevels);
-            ViewDesc.TextureSRV.MinLODClamp     = 0.0f;
-            ViewDesc.TextureSRV.FirstArraySlice = 0;
-            ViewDesc.TextureSRV.NumSlices       = static_cast<uint16>(Desc.NumArraySlices);
+            ViewDesc = FRHIShaderResourceViewDesc::CreateTexture1DArray(SRVFormat, 0, NumMipLevels, 0, NumArraySlices);
+        }
+        else if (Desc.IsTexture2D())
+        {
+            ViewDesc = FRHIShaderResourceViewDesc::CreateTexture2D(SRVFormat, 0, NumMipLevels);
+        }
+        else if (Desc.IsTexture2DArray())
+        {
+            ViewDesc = FRHIShaderResourceViewDesc::CreateTexture2DArray(SRVFormat, 0, NumMipLevels, 0, NumArraySlices);
+        }
+        else if (Desc.IsTextureCube())
+        {
+            ViewDesc = FRHIShaderResourceViewDesc::CreateTextureCube(SRVFormat, 0, NumMipLevels);
+        }
+        else if (Desc.IsTextureCubeArray())
+        {
+            ViewDesc = FRHIShaderResourceViewDesc::CreateTextureCubeArray(SRVFormat, 0, NumMipLevels, 0, NumArraySlices);
+        }
+        else if (Desc.IsTexture3D())
+        {
+            ViewDesc = FRHIShaderResourceViewDesc::CreateTexture3D(SRVFormat, 0, NumMipLevels);
         }
         else
         {
-            VULKAN_ERROR_CRITICAL("Unsupported resource dimension");
+            VULKAN_ERROR_CRITICAL("Unsupported resource dimension for default SRV");
+            CHECK(false);
             return false;
         }
 
         FVulkanShaderResourceViewRHIRef DefaultSRV = new FVulkanShaderResourceViewRHI(GetDevice(), this);
-        if (!DefaultSRV->Initialize(ViewDesc))
+        if (!DefaultSRV->Initialize(this, ViewDesc))
         {
             return false;
         }
@@ -270,16 +299,42 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
 
     if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV())
     {
+        const EFormat UAVFormat = Desc.Format;
+
         FRHIUnorderedAccessViewDesc ViewDesc;
-        ViewDesc.Type                       = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
-        ViewDesc.TextureUAV.Texture         = this;
-        ViewDesc.TextureUAV.Format          = VulkanCastShaderResourceFormat(Desc.Format);
-        ViewDesc.TextureUAV.FirstArraySlice = 0;
-        ViewDesc.TextureUAV.MipLevel        = 0;
-        ViewDesc.TextureUAV.NumSlices       = static_cast<uint16>(Desc.NumArraySlices);
+        if (Desc.IsTexture1D())
+        {
+            ViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture1D(UAVFormat, 0);
+        }
+        else if (Desc.IsTexture1DArray())
+        {
+            ViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture1DArray(UAVFormat, 0, 0, static_cast<uint16>(Desc.NumArraySlices));
+        }
+        else if (Desc.IsTexture2D())
+        {
+            ViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(UAVFormat, 0);
+        }
+        else if (Desc.IsTexture2DArray())
+        {
+            ViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture2DArray(UAVFormat, 0, 0, static_cast<uint16>(Desc.NumArraySlices));
+        }
+        else if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+        {
+            ViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture2DArray(UAVFormat, 0, 0, static_cast<uint16>(RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices)));
+        }
+        else if (Desc.IsTexture3D())
+        {
+            ViewDesc = FRHIUnorderedAccessViewDesc::CreateTexture3D(UAVFormat, 0, 0, static_cast<uint16>(Desc.Extent.Z));
+        }
+        else
+        {
+            VULKAN_ERROR_CRITICAL("Unsupported resource dimension for default UAV");
+            CHECK(false);
+            return false;
+        }
 
         FVulkanUnorderedAccessViewRHIRef DefaultUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), this);
-        if (!DefaultUAV->Initialize(ViewDesc))
+        if (!DefaultUAV->Initialize(this, ViewDesc))
         {
             return false;
         }
@@ -287,21 +342,42 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
         UnorderedAccessView = DefaultUAV;
     }
 
-    const uint16 FullResourceSliceCount = (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
-        ? static_cast<uint16>(Desc.NumArraySlices * RHI_NUM_CUBE_FACES)
-        : static_cast<uint16>(Desc.NumArraySlices);
+    const uint16 FullResourceSliceCount = Desc.IsTexture3D()
+        ? static_cast<uint16>(Desc.NumArraySlices)
+        : static_cast<uint16>(RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices));
 
     if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
     {
         FRHIRenderTargetViewDesc ViewDesc;
-        ViewDesc.Texture        = this;
-        ViewDesc.Format         = Desc.Format;
-        ViewDesc.MipLevel       = 0;
-        ViewDesc.ArrayIndex     = 0;
-        ViewDesc.NumArraySlices = FullResourceSliceCount;
+        if (Desc.IsTexture1D())
+        {
+            ViewDesc = FRHIRenderTargetViewDesc::CreateTexture1D(Desc.Format, 0);
+        }
+        else if (Desc.IsTexture1DArray())
+        {
+            ViewDesc = FRHIRenderTargetViewDesc::CreateTexture1DArray(Desc.Format, 0, 0, FullResourceSliceCount);
+        }
+        else if (Desc.IsTexture2D())
+        {
+            ViewDesc = FRHIRenderTargetViewDesc::CreateTexture2D(Desc.Format, 0);
+        }
+        else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+        {
+            ViewDesc = FRHIRenderTargetViewDesc::CreateTexture2DArray(Desc.Format, 0, 0, FullResourceSliceCount);
+        }
+        else if (Desc.IsTexture3D())
+        {
+            ViewDesc = FRHIRenderTargetViewDesc::CreateTexture3D(Desc.Format, 0, 0, static_cast<uint16>(Desc.Extent.Z));
+        }
+        else
+        {
+            VULKAN_ERROR_CRITICAL("Unsupported resource dimension for default RTV");
+            CHECK(false);
+            return false;
+        }
 
         FVulkanRenderTargetViewRHIRef DefaultRTV = new FVulkanRenderTargetViewRHI(GetDevice(), this);
-        if (!DefaultRTV->Initialize(ViewDesc))
+        if (!DefaultRTV->Initialize(this, ViewDesc))
         {
             return false;
         }
@@ -311,15 +387,34 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
 
     if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
     {
+        const EFormat DSVFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
+
         FRHIDepthStencilViewDesc ViewDesc;
-        ViewDesc.Texture        = this;
-        ViewDesc.Format         = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
-        ViewDesc.MipLevel       = 0;
-        ViewDesc.ArrayIndex     = 0;
-        ViewDesc.NumArraySlices = FullResourceSliceCount;
+        if (Desc.IsTexture1D())
+        {
+            ViewDesc = FRHIDepthStencilViewDesc::CreateTexture1D(DSVFormat, 0);
+        }
+        else if (Desc.IsTexture1DArray())
+        {
+            ViewDesc = FRHIDepthStencilViewDesc::CreateTexture1DArray(DSVFormat, 0, 0, FullResourceSliceCount);
+        }
+        else if (Desc.IsTexture2D())
+        {
+            ViewDesc = FRHIDepthStencilViewDesc::CreateTexture2D(DSVFormat, 0);
+        }
+        else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+        {
+            ViewDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(DSVFormat, 0, 0, FullResourceSliceCount);
+        }
+        else
+        {
+            VULKAN_ERROR_CRITICAL("Unsupported resource dimension for default DSV");
+            CHECK(false);
+            return false;
+        }
 
         FVulkanDepthStencilViewRHIRef DefaultDSV = new FVulkanDepthStencilViewRHI(GetDevice(), this);
-        if (!DefaultDSV->Initialize(ViewDesc))
+        if (!DefaultDSV->Initialize(this, ViewDesc))
         {
             return false;
         }
@@ -537,7 +632,7 @@ void FVulkanTextureRHI::SetVkImage(VkImage InImage)
         CreateInfo.format      = ConvertFormat(Desc.Format);
         CreateInfo.mipLevels   = Desc.NumMipLevels;
         CreateInfo.arrayLayers = Desc.NumArraySlices;
-        CreateInfo.extent      = { Desc.GetWidth(), Desc.GetHeight(), Math::Max(Desc.GetDepth(), 1u) };
+        CreateInfo.extent      = { static_cast<uint32>(Desc.Extent.X), static_cast<uint32>(Desc.Extent.Y), Math::Max(static_cast<uint32>(Desc.Extent.Z), 1u) };
     }
 
     const uint32 NumSubresources = CreateInfo.mipLevels * CreateInfo.arrayLayers;

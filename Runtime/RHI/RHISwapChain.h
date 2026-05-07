@@ -55,7 +55,7 @@ class FRHISwapChain : public FRHIResource
 {
 protected:
     explicit FRHISwapChain(const FRHISwapChainDesc& InSwapChainDesc)
-        : FRHIResource()
+        : FRHIResource(ERHIResourceType::SwapChain)
         , Desc(InSwapChainDesc)
     {
     }

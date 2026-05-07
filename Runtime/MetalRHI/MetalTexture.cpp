@@ -81,11 +81,12 @@ bool FMetalTextureRHI::Initialize(EResourceAccess InInitialAccess, const IRHITex
     else
     {
         TextureDescriptor.depth       = 1;
-        TextureDescriptor.arrayLength = Math::Max(Desc.Extent.Z, 1);
+        TextureDescriptor.arrayLength = Math::Max(Desc.NumArraySlices, 1u);
     }
     
-    id<MTLDevice>  Device = GetDevice()->GetMTLDevice();
+    id<MTLDevice>  Device     = GetDevice()->GetMTLDevice();
     id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
+
     if (!NewTexture)
     {
         return false;
@@ -121,6 +122,7 @@ bool FMetalTextureRHI::Initialize(EResourceAccess InInitialAccess, const IRHITex
                 uint32 Width        = Desc.Extent.X;
                 uint32 Height       = Desc.Extent.Y;
                 uint64 SourceOffset = 0;
+
                 for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
                 {
                     // TODO: This does not feel optimal
@@ -168,12 +170,61 @@ bool FMetalTextureRHI::Initialize(EResourceAccess InInitialAccess, const IRHITex
 
     if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
     {
-        RenderTargetView = new FMetalRenderTargetViewRHI(GetDevice(), FRHIRenderTargetViewDesc(this));
+        FRHIRenderTargetViewDesc RTVDesc;
+        if (Desc.IsTexture1D())
+        {
+            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture1D(Desc.Format, 0);
+        }
+        else if (Desc.IsTexture1DArray())
+        {
+            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture1DArray(Desc.Format, 0, 0, Desc.NumArraySlices);
+        }
+        else if (Desc.IsTexture2D())
+        {
+            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2D(Desc.Format, 0);
+        }
+        else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+        {
+            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2DArray(Desc.Format, 0, 0, static_cast<uint16>(Desc.NumArraySlices));
+        }
+        else if (Desc.IsTexture3D())
+        {
+            RTVDesc = FRHIRenderTargetViewDesc::CreateTexture3D(Desc.Format, 0, 0, static_cast<uint16>(Desc.Extent.Z));
+        }
+        else
+        {
+            CHECK(false);
+        }
+
+        RenderTargetView = new FMetalRenderTargetViewRHI(GetDevice(), this, RTVDesc);
     }
 
     if (Desc.IsDepthStencil() && !Desc.IsNoDefaultDSV())
     {
-        DepthStencilView = new FMetalDepthStencilViewRHI(GetDevice(), FRHIDepthStencilViewDesc(this));
+        const EFormat DSVFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
+        FRHIDepthStencilViewDesc DSVDesc;
+        if (Desc.IsTexture1D())
+        {
+            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture1D(DSVFormat, 0);
+        }
+        else if (Desc.IsTexture1DArray())
+        {
+            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture1DArray(DSVFormat, 0, 0, Desc.NumArraySlices);
+        }
+        else if (Desc.IsTexture2D())
+        {
+            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture2D(DSVFormat, 0);
+        }
+        else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+        {
+            DSVDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(DSVFormat, 0, 0, static_cast<uint16>(Desc.NumArraySlices));
+        }
+        else
+        {
+            CHECK(false);
+        }
+
+        DepthStencilView = new FMetalDepthStencilViewRHI(GetDevice(), this, DSVDesc);
     }
 
     return true;

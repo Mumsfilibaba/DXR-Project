@@ -28,33 +28,38 @@ public:
     void RegisterWithResource(FD3D12ResourceBase* InOwner);
     void UnregisterFromResource();
 
-    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
+    NODISCARD FORCEINLINE bool IsValid() const
+    {
+        return Descriptor;
+    }
+
+    NODISCARD FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
     {
         return Descriptor.Handle;
     }
 
-    const FD3D12Resource* GetViewResource() const 
+    NODISCARD FORCEINLINE const FD3D12Resource* GetViewResource() const 
     { 
         return ViewResource.Get(); 
     }
 
-    FD3D12Resource* GetViewResource()
+    NODISCARD FORCEINLINE FD3D12Resource* GetViewResource()
     {
         return ViewResource.Get();
     }
 
-    FD3D12ResidencyHandle* GetResourceResidencyHandle() const
+    NODISCARD FORCEINLINE FD3D12ResidencyHandle* GetResourceResidencyHandle() const
     {
         FD3D12Resource* Resource = ViewResource.Get();
         return Resource ? Resource->GetResidencyHandle() : nullptr;
     }
 
-    void ReleaseViewResource()
+    NODISCARD FORCEINLINE void ReleaseViewResource()
     {
         ViewResource = nullptr;
     }
 
-    uint32 GetDescriptorVersion() const
+    NODISCARD FORCEINLINE uint32 GetDescriptorVersion() const
     {
         return DescriptorVersion;
     }
@@ -81,9 +86,10 @@ public:
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
-    bool CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
+    bool Initialize(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
+    bool UpdateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
-    const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const 
+    NODISCARD FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const 
     {
         return Desc;
     }
@@ -106,9 +112,10 @@ public:
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
-    bool CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
+    bool Initialize(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
+    bool UpdateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
-    const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
+    NODISCARD FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -148,14 +155,15 @@ public:
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
-    bool CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+    bool Initialize(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
+    bool UpdateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
-    const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
+    NODISCARD FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
     { 
         return Desc;
     }
 
-    const FD3D12Resource* GetCounterResource() const
+    NODISCARD FORCEINLINE const FD3D12Resource* GetCounterResource() const
     { 
         return CounterResource.Get(); 
     }
@@ -194,9 +202,10 @@ public:
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
-    bool CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
+    bool Initialize(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
+    bool UpdateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
-    const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const 
+    NODISCARD FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const 
     {
         return Desc;
     }
@@ -217,13 +226,35 @@ public:
     // ID3D12ResourceRelocationListener Interface
     virtual void OnResourceRelocated(FD3D12ResourceBase* RelocatedResource, FD3D12ResourceStorage* NewResourceStorage) override;
 
-    bool CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
+    bool Initialize(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
+    bool UpdateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
-    const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const 
+    NODISCARD FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const 
     { 
         return Desc;
     }
 
+    NODISCARD FORCEINLINE bool HasStencilFormat() const
+    {
+        return bHasStencil;
+    }
+
+    NODISCARD FORCEINLINE bool IsReadOnly() const
+    {
+        return IsDepthReadOnly() && (!HasStencilFormat() || IsStencilReadOnly());
+    }
+
+    NODISCARD FORCEINLINE bool IsDepthReadOnly() const
+    {
+        return (Desc.Flags & D3D12_DSV_FLAG_READ_ONLY_DEPTH) != 0;
+    }
+
+    NODISCARD FORCEINLINE bool IsStencilReadOnly() const
+    {
+        return (Desc.Flags & D3D12_DSV_FLAG_READ_ONLY_STENCIL) != 0;
+    }
+
 private:
     D3D12_DEPTH_STENCIL_VIEW_DESC Desc;
+    bool                          bHasStencil;
 };

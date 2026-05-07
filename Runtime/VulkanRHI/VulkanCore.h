@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Containers/Array.h"
 #include "Core/Containers/String.h"
 #include "Core/Templates/TypeTraits/BasicTraits.h"
 #include "Core/Templates/TypeTraits/EqualTraits.h"
@@ -839,7 +840,7 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R16G16_Uint:           return VK_FORMAT_R16G16_UINT;
         case EFormat::R16G16_Snorm:          return VK_FORMAT_R16G16_SNORM;
         case EFormat::R16G16_Sint:           return VK_FORMAT_R16G16_SINT;
-        case EFormat::R32_Typeless:          return VK_FORMAT_D32_SFLOAT;
+        case EFormat::R32_Typeless:          return VK_FORMAT_R32_SFLOAT;
         case EFormat::D32_Float:             return VK_FORMAT_D32_SFLOAT;
         case EFormat::R32_Float:             return VK_FORMAT_R32_SFLOAT;
         case EFormat::R32_Uint:              return VK_FORMAT_R32_UINT;
@@ -1094,42 +1095,146 @@ constexpr VkImageAspectFlags GetImageAspectFlagsFromFormat(VkFormat Format)
     }
 }
 
-constexpr EFormat VulkanCastShaderResourceFormat(EFormat Format)
+NODISCARD inline TArray<VkFormat> GetVulkanFormatCompatibilityClass(VkFormat Format)
 {
     switch (Format)
     {
-        case EFormat::R32G32B32A32_Typeless: return EFormat::R32G32B32A32_Float;
-        case EFormat::R32G32B32_Typeless:    return EFormat::R32G32B32_Float;
-        case EFormat::R16G16B16A16_Typeless: return EFormat::R16G16B16A16_Float;
-        case EFormat::R32G32_Typeless:       return EFormat::R32G32_Float;
-        case EFormat::R10G10B10A2_Typeless:  return EFormat::R10G10B10A2_Unorm;
-        case EFormat::R8G8B8A8_Typeless:     return EFormat::R8G8B8A8_Unorm;
-        case EFormat::B8G8R8A8_Typeless:     return EFormat::B8G8R8A8_Unorm;
-        case EFormat::R16G16_Typeless:       return EFormat::R16G16_Float;
-        
-        case EFormat::R32_Typeless:
-        case EFormat::D32_Float:
-            return EFormat::R32_Float;
-        
-        case EFormat::R24G8_Typeless:
-        case EFormat::D24_Unorm_S8_Uint:
-            return EFormat::R24_Unorm_X8_Typeless;
+        // 128-bit (4x32-bit components)
+        case VK_FORMAT_R32G32B32A32_SFLOAT:
+        case VK_FORMAT_R32G32B32A32_UINT:
+        case VK_FORMAT_R32G32B32A32_SINT:
+            return { VK_FORMAT_R32G32B32A32_SFLOAT, VK_FORMAT_R32G32B32A32_UINT, VK_FORMAT_R32G32B32A32_SINT };
 
-        case EFormat::R8G8_Typeless:         return EFormat::R8G8_Unorm;
-        case EFormat::R16_Typeless:          return EFormat::R16_Float;
-        case EFormat::D16_Unorm:             return EFormat::R16_Unorm;
-        case EFormat::R8_Typeless:           return EFormat::R8_Unorm;
-        case EFormat::BC1_Typeless:          return EFormat::BC1_UNorm;
-        case EFormat::BC2_Typeless:          return EFormat::BC2_UNorm;
-        case EFormat::BC3_Typeless:          return EFormat::BC3_UNorm;
-        case EFormat::BC4_Typeless:          return EFormat::BC4_UNorm;
-        case EFormat::BC5_Typeless:          return EFormat::BC5_UNorm;
-        case EFormat::BC6H_Typeless:         return EFormat::BC6H_UF16;
-        case EFormat::BC7_Typeless:          return EFormat::BC7_UNorm;
+        // 96-bit (3x32-bit components)
+        case VK_FORMAT_R32G32B32_SFLOAT:
+        case VK_FORMAT_R32G32B32_UINT:
+        case VK_FORMAT_R32G32B32_SINT:
+            return { VK_FORMAT_R32G32B32_SFLOAT, VK_FORMAT_R32G32B32_UINT, VK_FORMAT_R32G32B32_SINT };
+
+        // 64-bit (4x16-bit components)
+        case VK_FORMAT_R16G16B16A16_SFLOAT:
+        case VK_FORMAT_R16G16B16A16_UNORM:
+        case VK_FORMAT_R16G16B16A16_UINT:
+        case VK_FORMAT_R16G16B16A16_SNORM:
+        case VK_FORMAT_R16G16B16A16_SINT:
+            return { VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_UNORM, VK_FORMAT_R16G16B16A16_UINT, 
+                     VK_FORMAT_R16G16B16A16_SNORM, VK_FORMAT_R16G16B16A16_SINT };
+
+        // 64-bit (2x32-bit components)
+        case VK_FORMAT_R32G32_SFLOAT:
+        case VK_FORMAT_R32G32_UINT:
+        case VK_FORMAT_R32G32_SINT:
+            return { VK_FORMAT_R32G32_SFLOAT, VK_FORMAT_R32G32_UINT, VK_FORMAT_R32G32_SINT };
+
+        // 32-bit (RGBA8)
+        case VK_FORMAT_R8G8B8A8_UNORM:
+        case VK_FORMAT_R8G8B8A8_SRGB:
+        case VK_FORMAT_R8G8B8A8_UINT:
+        case VK_FORMAT_R8G8B8A8_SNORM:
+        case VK_FORMAT_R8G8B8A8_SINT:
+        case VK_FORMAT_B8G8R8A8_UNORM:
+        case VK_FORMAT_B8G8R8A8_SRGB:
+        case VK_FORMAT_B8G8R8A8_UINT:
+        case VK_FORMAT_B8G8R8A8_SNORM:
+        case VK_FORMAT_B8G8R8A8_SINT:
+            return { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_R8G8B8A8_UINT, VK_FORMAT_R8G8B8A8_SNORM,
+                     VK_FORMAT_R8G8B8A8_SINT, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UINT,
+                     VK_FORMAT_B8G8R8A8_SNORM, VK_FORMAT_B8G8R8A8_SINT };
+
+        // 32-bit (10/10/10/2)
+        case VK_FORMAT_A2B10G10R10_UNORM_PACK32:
+        case VK_FORMAT_A2B10G10R10_UINT_PACK32:
+            return { VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_FORMAT_A2B10G10R10_UINT_PACK32 };
+
+        // 32-bit (2x16-bit components)
+        case VK_FORMAT_R16G16_SFLOAT:
+        case VK_FORMAT_R16G16_UNORM:
+        case VK_FORMAT_R16G16_UINT:
+        case VK_FORMAT_R16G16_SNORM:
+        case VK_FORMAT_R16G16_SINT:
+            return { VK_FORMAT_R16G16_SFLOAT, VK_FORMAT_R16G16_UNORM, VK_FORMAT_R16G16_UINT, VK_FORMAT_R16G16_SNORM, VK_FORMAT_R16G16_SINT };
+
+        // 32-bit single-channel
+        case VK_FORMAT_R32_SFLOAT:
+        case VK_FORMAT_R32_UINT:
+        case VK_FORMAT_R32_SINT:
+            return { VK_FORMAT_R32_SFLOAT, VK_FORMAT_R32_UINT, VK_FORMAT_R32_SINT };
+
+        // 16-bit (RG8)
+        case VK_FORMAT_R8G8_UNORM:
+        case VK_FORMAT_R8G8_UINT:
+        case VK_FORMAT_R8G8_SNORM:
+        case VK_FORMAT_R8G8_SINT:
+            return { VK_FORMAT_R8G8_UNORM, VK_FORMAT_R8G8_UINT, VK_FORMAT_R8G8_SNORM, VK_FORMAT_R8G8_SINT };
+
+        // 16-bit single-channel
+        case VK_FORMAT_R16_SFLOAT:
+        case VK_FORMAT_R16_UNORM:
+        case VK_FORMAT_R16_UINT:
+        case VK_FORMAT_R16_SNORM:
+        case VK_FORMAT_R16_SINT:
+            return { VK_FORMAT_R16_SFLOAT, VK_FORMAT_R16_UNORM, VK_FORMAT_R16_UINT, VK_FORMAT_R16_SNORM, VK_FORMAT_R16_SINT };
+
+        // 8-bit single-channel
+        case VK_FORMAT_R8_UNORM:
+        case VK_FORMAT_R8_UINT:
+        case VK_FORMAT_R8_SNORM:
+        case VK_FORMAT_R8_SINT:
+            return { VK_FORMAT_R8_UNORM, VK_FORMAT_R8_UINT, VK_FORMAT_R8_SNORM, VK_FORMAT_R8_SINT };
+
+        // BC compressed families
+        case VK_FORMAT_BC1_RGB_UNORM_BLOCK:
+        case VK_FORMAT_BC1_RGB_SRGB_BLOCK:
+        case VK_FORMAT_BC1_RGBA_UNORM_BLOCK:
+        case VK_FORMAT_BC1_RGBA_SRGB_BLOCK:
+            return { VK_FORMAT_BC1_RGB_UNORM_BLOCK, VK_FORMAT_BC1_RGB_SRGB_BLOCK, VK_FORMAT_BC1_RGBA_UNORM_BLOCK, VK_FORMAT_BC1_RGBA_SRGB_BLOCK };
+
+        case VK_FORMAT_BC2_UNORM_BLOCK:
+        case VK_FORMAT_BC2_SRGB_BLOCK:
+            return { VK_FORMAT_BC2_UNORM_BLOCK, VK_FORMAT_BC2_SRGB_BLOCK };
+
+        case VK_FORMAT_BC3_UNORM_BLOCK:
+        case VK_FORMAT_BC3_SRGB_BLOCK:
+            return { VK_FORMAT_BC3_UNORM_BLOCK, VK_FORMAT_BC3_SRGB_BLOCK };
+
+        case VK_FORMAT_BC4_UNORM_BLOCK:
+        case VK_FORMAT_BC4_SNORM_BLOCK:
+            return { VK_FORMAT_BC4_UNORM_BLOCK, VK_FORMAT_BC4_SNORM_BLOCK };
+
+        case VK_FORMAT_BC5_UNORM_BLOCK:
+        case VK_FORMAT_BC5_SNORM_BLOCK:
+            return { VK_FORMAT_BC5_UNORM_BLOCK, VK_FORMAT_BC5_SNORM_BLOCK };
+
+        case VK_FORMAT_BC6H_UFLOAT_BLOCK:
+        case VK_FORMAT_BC6H_SFLOAT_BLOCK:
+            return { VK_FORMAT_BC6H_UFLOAT_BLOCK, VK_FORMAT_BC6H_SFLOAT_BLOCK };
+
+        case VK_FORMAT_BC7_UNORM_BLOCK:
+        case VK_FORMAT_BC7_SRGB_BLOCK:
+            return { VK_FORMAT_BC7_UNORM_BLOCK, VK_FORMAT_BC7_SRGB_BLOCK };
 
         default:
-            return Format;
+            return { Format };
     }
+}
+
+NODISCARD inline bool IsFormatInCompatibilityClass(VkFormat ImageFormat, VkFormat ViewFormat)
+{
+    if (ImageFormat == ViewFormat)
+    {
+        return true;
+    }
+
+    const TArray<VkFormat> CompatClass = GetVulkanFormatCompatibilityClass(ImageFormat);
+    for (VkFormat Member : CompatClass)
+    {
+        if (Member == ViewFormat)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 constexpr const CHAR* ToString(VkFormat Format)
@@ -1465,112 +1570,76 @@ constexpr const CHAR* GetVkErrorString(VkResult Result)
     {
     case VK_SUCCESS:
         return "Command successfully completed";
-
     case VK_NOT_READY:
         return "A fence or query has not yet completed";
-
     case VK_TIMEOUT:
         return "A wait operation has not completed in the specified time";
-
     case VK_EVENT_SET:
         return "An event is signaled";
-
     case VK_EVENT_RESET:
         return "An event is unsignaled";
-
     case VK_INCOMPLETE:
         return "A return array was too small for the result";
-
     case VK_ERROR_PIPELINE_COMPILE_REQUIRED_EXT:
         return "A requested pipeline creation would have required compilation, but the application requested compilation to not be performed.";
-
     case VK_ERROR_OUT_OF_HOST_MEMORY:
         return "A host memory allocation has failed.";
-
     case VK_ERROR_OUT_OF_DEVICE_MEMORY:
         return "A device memory allocation has failed.";
-
     case VK_ERROR_INITIALIZATION_FAILED:
         return "Initialization of an object could not be completed for implementation-specific reasons.";
-
     case VK_ERROR_DEVICE_LOST:
         return "The logical or physical device has been lost.";
-
     case VK_ERROR_MEMORY_MAP_FAILED:
         return "Mapping of a memory object has failed.";
-
     case VK_ERROR_LAYER_NOT_PRESENT:
         return "A requested layer is not present or could not be loaded.";
-
     case VK_ERROR_EXTENSION_NOT_PRESENT:
         return "A requested extension is not supported.";
-
     case VK_ERROR_FEATURE_NOT_PRESENT:
         return "A requested feature is not supported.";
-
     case VK_ERROR_INCOMPATIBLE_DRIVER:
         return "The requested version of Vulkan is not supported by the driver or is otherwise incompatible for implementation-specific reasons.";
-
     case VK_ERROR_TOO_MANY_OBJECTS:
         return "Too many objects of the type have already been created.";
-
     case VK_ERROR_FORMAT_NOT_SUPPORTED:
         return "A requested format is not supported on this device.";
-
     case VK_ERROR_FRAGMENTED_POOL:
         return "A descriptor pool creation has failed due to fragmentation.";
-
     case VK_ERROR_OUT_OF_POOL_MEMORY:
         return "A pool memory allocation has failed. ";
-
     case VK_ERROR_INVALID_EXTERNAL_HANDLE:
         return "VK_ERROR_INVALID_EXTERNAL_HANDLE";
-
     case VK_ERROR_SURFACE_LOST_KHR:
         return "VK_ERROR_SURFACE_LOST_KHR";
-
     case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR:
         return "VK_ERROR_NATIVE_WINDOW_IN_USE_KHR";
-
     case VK_SUBOPTIMAL_KHR:
         return "A swapchain no longer matches the surface properties exactly, but can still be used to present to the surface successfully.";
-
     case VK_ERROR_OUT_OF_DATE_KHR:
         return "A surface has changed in such a way that it is no longer compatible with the swapchain, and further presentation requests using the swapchain will fail. Applications must query the new surface properties and recreate their swapchain if they wish to continue presenting to the surface.";
-
     case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR:
         return "The display used by a swapchain does not use the same presentable image layout, or is incompatible in a way that prevents sharing an image.";
-
     case VK_ERROR_VALIDATION_FAILED_EXT:
         return "VK_ERROR_VALIDATION_FAILED_EXT";
-
     case VK_ERROR_INVALID_SHADER_NV:
         return "One or more shaders failed to compile or link.";
-
     case VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT:
         return "VK_ERROR_INVALID_DRM_FORMAT_MODIFIER_PLANE_LAYOUT_EXT";
-
     case VK_ERROR_FRAGMENTATION:
         return "A descriptor pool creation has failed due to fragmentation.";
-
     case VK_ERROR_NOT_PERMITTED_EXT:
         return "VK_ERROR_NOT_PERMITTED_EXT";
-
     case VK_ERROR_INVALID_DEVICE_ADDRESS_EXT:
         return "A buffer creation failed because the requested address is not available.";
-
     case VK_ERROR_FULL_SCREEN_EXCLUSIVE_MODE_LOST_EXT:
         return "An operation on a swapchain created with VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT failed as it did not have exlusive full-screen access. This may occur due to implementation-dependent reasons, outside of the applications control.";
-
     case VK_THREAD_IDLE_KHR:
         return "A deferred operation is not complete but there is currently no work for this thread to do at the time of this call.";
-
     case VK_THREAD_DONE_KHR:
         return "A deferred operation is not complete but there is no work remaining to assign to additional threads.";
-
     case VK_OPERATION_DEFERRED_KHR:
         return "A deferred operation was requested and at least some of the work was deferred.";
-
     case VK_OPERATION_NOT_DEFERRED_KHR:
         return "A deferred operation was requested and no operations were deferred.";
 

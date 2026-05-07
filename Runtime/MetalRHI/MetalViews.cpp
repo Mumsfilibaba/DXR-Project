@@ -1,5 +1,88 @@
 #include "MetalRHI/MetalViews.h"
 
+static void ResolveRTVMipAndSlice(const FRHIRenderTargetViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex)
+{
+    OutMipLevel   = 0;
+    OutArrayIndex = 0;
+
+    switch (InDesc.ViewDimension)
+    {
+        case EViewDimension::Texture1D:
+            OutMipLevel = InDesc.Texture1D.MipLevel;
+            break;
+
+        case EViewDimension::Texture1DArray:
+            OutMipLevel   = InDesc.Texture1DArray.MipLevel;
+            OutArrayIndex = InDesc.Texture1DArray.FirstArraySlice;
+            break;
+
+        case EViewDimension::Texture2D:
+            OutMipLevel = InDesc.Texture2D.MipLevel;
+            break;
+
+        case EViewDimension::Texture2DArray:
+            OutMipLevel   = InDesc.Texture2DArray.MipLevel;
+            OutArrayIndex = InDesc.Texture2DArray.FirstArraySlice;
+            break;
+
+        case EViewDimension::TextureCube:
+            OutMipLevel = InDesc.TextureCube.MipLevel;
+            break;
+
+        case EViewDimension::TextureCubeArray:
+            OutMipLevel   = InDesc.TextureCubeArray.MipLevel;
+            OutArrayIndex = InDesc.TextureCubeArray.FirstCube;
+            break;
+
+        case EViewDimension::Texture3D:
+            OutMipLevel   = InDesc.Texture3D.MipLevel;
+            OutArrayIndex = InDesc.Texture3D.FirstWSlice;
+            break;
+
+        default:
+            break;
+    }
+}
+
+static void ResolveDSVMipAndSlice(const FRHIDepthStencilViewDesc& InDesc, uint8& OutMipLevel, uint16& OutArrayIndex)
+{
+    OutMipLevel   = 0;
+    OutArrayIndex = 0;
+
+    switch (InDesc.ViewDimension)
+    {
+        case EViewDimension::Texture1D:
+            OutMipLevel = InDesc.Texture1D.MipLevel;
+            break;
+        
+        case EViewDimension::Texture1DArray:
+            OutMipLevel   = InDesc.Texture1DArray.MipLevel;
+            OutArrayIndex = InDesc.Texture1DArray.FirstArraySlice;
+            break;
+
+        case EViewDimension::Texture2D:
+            OutMipLevel = InDesc.Texture2D.MipLevel;
+            break;
+
+        case EViewDimension::Texture2DArray:
+            OutMipLevel   = InDesc.Texture2DArray.MipLevel;
+            OutArrayIndex = InDesc.Texture2DArray.FirstArraySlice;
+            break;
+        
+        case EViewDimension::TextureCube:
+            OutMipLevel = InDesc.TextureCube.MipLevel;
+            break;
+        
+        case EViewDimension::TextureCubeArray: 
+            OutMipLevel   = InDesc.TextureCubeArray.MipLevel; 
+            OutArrayIndex = InDesc.TextureCubeArray.FirstCube;
+            break;
+        
+        default: 
+            break;
+    }
+}
+
 FMetalView::FMetalView(FMetalDevice* InDevice)
     : FMetalDeviceChild(InDevice)
 {
@@ -23,22 +106,25 @@ FMetalUnorderedAccessViewRHI::FMetalUnorderedAccessViewRHI(FMetalDevice* InDevic
 
 FMetalUnorderedAccessViewRHI::~FMetalUnorderedAccessViewRHI() = default;
 
-FMetalRenderTargetViewRHI::FMetalRenderTargetViewRHI(FMetalDevice* InDevice, const FRHIRenderTargetViewDesc& InDesc)
-    : FRHIRenderTargetView(InDesc.Texture)
+FMetalRenderTargetViewRHI::FMetalRenderTargetViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc)
+    : FRHIRenderTargetView(InTexture)
     , FMetalView(InDevice)
-    , MipLevel(InDesc.MipLevel)
-    , ArrayIndex(InDesc.ArrayIndex)
+    , MipLevel(0)
+    , ArrayIndex(0)
 {
+    ResolveRTVMipAndSlice(InDesc, MipLevel, ArrayIndex);
 }
 
 FMetalRenderTargetViewRHI::~FMetalRenderTargetViewRHI() = default;
 
-FMetalDepthStencilViewRHI::FMetalDepthStencilViewRHI(FMetalDevice* InDevice, const FRHIDepthStencilViewDesc& InDesc)
-    : FRHIDepthStencilView(InDesc.Texture)
+FMetalDepthStencilViewRHI::FMetalDepthStencilViewRHI(FMetalDevice* InDevice, FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc)
+    : FRHIDepthStencilView(InTexture)
     , FMetalView(InDevice)
-    , MipLevel(InDesc.MipLevel)
-    , ArrayIndex(InDesc.ArrayIndex)
+    , MipLevel(0)
+    , ArrayIndex(0)
+    , Flags(InDesc.Flags)
 {
+    ResolveDSVMipAndSlice(InDesc, MipLevel, ArrayIndex);
 }
 
 FMetalDepthStencilViewRHI::~FMetalDepthStencilViewRHI() = default;

@@ -448,7 +448,7 @@ void FVulkanRHI::EndFrame()
     {
         Device->GetPipelineStateManager().SaveCacheDataAsync();
 
-#if VULKAN_ENABLE_STATS
+    #if VULKAN_ENABLE_STATS
         Device->GetMemoryManager().UpdateMemoryStats();
 
         {
@@ -466,7 +466,7 @@ void FVulkanRHI::EndFrame()
                 STAT_SET(STAT_RHI_NonLocalMemoryUsage,  NonLocalMemory.MemoryUsage);
             }
         }
-#endif
+    #endif
     }
 }
 
@@ -665,26 +665,37 @@ FRHIGeometryAccelerationStructure* FVulkanRHI::CreateGeometryAccelerationStructu
     return NewGeometry.ReleaseOwnership();
 }
 
-FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc)
+FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
 {
-    FRHIResource* Resource = nullptr;
+    if (!InResource)
+    {
+        VULKAN_ERROR_CRITICAL("CreateShaderResourceView: Resource cannot be nullptr");
+        return nullptr;
+    }
+
     if (InDesc.IsBufferSRV())
     {
-        Resource = InDesc.BufferSRV.Buffer;
+        VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Buffer,
+            "CreateShaderResourceView: buffer view requires an FRHIBuffer resource");
     }
     else if (InDesc.IsTextureSRV())
     {
-        Resource = InDesc.TextureSRV.Texture;
+        VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+            "CreateShaderResourceView: texture view requires an FRHITexture resource");
+        CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+    }
+    else if (InDesc.IsAccelerationStructureSRV())
+    {
+        VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::SceneAccelerationStructure,
+            "CreateShaderResourceView: AccelerationStructure view requires an FRHISceneAccelerationStructure resource");
     }
     else
     {
         return nullptr;
     }
 
-	CHECK(Resource != nullptr);
-
-    FVulkanShaderResourceViewRHIRef NewShaderResourceView = new FVulkanShaderResourceViewRHI(GetDevice(), Resource);
-    if (!NewShaderResourceView->Initialize(InDesc))
+    FVulkanShaderResourceViewRHIRef NewShaderResourceView = new FVulkanShaderResourceViewRHI(GetDevice(), InResource);
+    if (!NewShaderResourceView->Initialize(InResource, InDesc))
     {
         return nullptr;
     }
@@ -694,26 +705,32 @@ FRHIShaderResourceView* FVulkanRHI::CreateShaderResourceView(const FRHIShaderRes
     }
 }
 
-FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc)
+FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
 {
-	FRHIResource* Resource = nullptr;
-	if (InDesc.IsBufferUAV())
-	{
-		Resource = InDesc.BufferUAV.Buffer;
-	}
-	else if (InDesc.IsTextureUAV())
-	{
-		Resource = InDesc.TextureUAV.Texture;
-	}
-	else
-	{
-		return nullptr;
-	}
+    if (!InResource)
+    {
+        VULKAN_ERROR_CRITICAL("CreateUnorderedAccessView: Resource cannot be nullptr");
+        return nullptr;
+    }
 
-	CHECK(Resource != nullptr);
+    if (InDesc.IsBufferUAV())
+    {
+        VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Buffer,
+            "CreateUnorderedAccessView: buffer view requires an FRHIBuffer resource");
+    }
+    else if (InDesc.IsTextureUAV())
+    {
+        VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+            "CreateUnorderedAccessView: texture view requires an FRHITexture resource");
+        CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+    }
+    else
+    {
+        return nullptr;
+    }
 
-    FVulkanUnorderedAccessViewRHIRef NewUnorderedAccessView = new FVulkanUnorderedAccessViewRHI(GetDevice(), Resource);
-    if (!NewUnorderedAccessView->Initialize(InDesc))
+    FVulkanUnorderedAccessViewRHIRef NewUnorderedAccessView = new FVulkanUnorderedAccessViewRHI(GetDevice(), InResource);
+    if (!NewUnorderedAccessView->Initialize(InResource, InDesc))
     {
         return nullptr;
     }
@@ -723,16 +740,20 @@ FRHIUnorderedAccessView* FVulkanRHI::CreateUnorderedAccessView(const FRHIUnorder
     }
 }
 
-FRHIRenderTargetView* FVulkanRHI::CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc)
+FRHIRenderTargetView* FVulkanRHI::CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc)
 {
-    if (!InDesc.Texture)
+    if (!InResource)
     {
-        VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("CreateRenderTargetView: Resource cannot be nullptr");
         return nullptr;
     }
 
-    FVulkanRenderTargetViewRHIRef NewRenderTargetView = new FVulkanRenderTargetViewRHI(GetDevice(), InDesc.Texture);
-    if (!NewRenderTargetView->Initialize(InDesc))
+    VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+        "CreateRenderTargetView: requires an FRHITexture resource");
+    CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+
+    FVulkanRenderTargetViewRHIRef NewRenderTargetView = new FVulkanRenderTargetViewRHI(GetDevice(), InResource);
+    if (!NewRenderTargetView->Initialize(static_cast<FRHITexture*>(InResource), InDesc))
     {
         return nullptr;
     }
@@ -740,16 +761,20 @@ FRHIRenderTargetView* FVulkanRHI::CreateRenderTargetView(const FRHIRenderTargetV
     return NewRenderTargetView.ReleaseOwnership();
 }
 
-FRHIDepthStencilView* FVulkanRHI::CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc)
+FRHIDepthStencilView* FVulkanRHI::CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc)
 {
-    if (!InDesc.Texture)
+    if (!InResource)
     {
-        VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
+        VULKAN_ERROR_CRITICAL("CreateDepthStencilView: Resource cannot be nullptr");
         return nullptr;
     }
 
-    FVulkanDepthStencilViewRHIRef NewDepthStencilView = new FVulkanDepthStencilViewRHI(GetDevice(), InDesc.Texture);
-    if (!NewDepthStencilView->Initialize(InDesc))
+    VULKAN_ERROR_COND(InResource->GetResourceType() == ERHIResourceType::Texture,
+        "CreateDepthStencilView: requires an FRHITexture resource");
+    CHECK(IsViewDimensionCompatible(static_cast<FRHITexture*>(InResource)->GetDimension(), InDesc.ViewDimension));
+
+    FVulkanDepthStencilViewRHIRef NewDepthStencilView = new FVulkanDepthStencilViewRHI(GetDevice(), InResource);
+    if (!NewDepthStencilView->Initialize(static_cast<FRHITexture*>(InResource), InDesc))
     {
         return nullptr;
     }
@@ -979,9 +1004,9 @@ bool FVulkanRHI::QueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemo
     const VkPhysicalDeviceMemoryProperties& memoryProperties = MemoryProperties2.memoryProperties;
     for (uint32 Index = 0; Index < memoryProperties.memoryHeapCount; Index++)
     {
-        const VkMemoryHeap& MemoryHeap  = memoryProperties.memoryHeaps[Index];
-        const bool          bDeviceLocal = (MemoryHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0;
-
+        const VkMemoryHeap& MemoryHeap = memoryProperties.memoryHeaps[Index];
+        
+        const bool bDeviceLocal = (MemoryHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) != 0;
         if ((MemoryType == EVideoMemoryType::Local) == bDeviceLocal)
         {
             OutMemoryInfo.MemoryBudget += MemoryBudgetProperties.heapBudget[Index];

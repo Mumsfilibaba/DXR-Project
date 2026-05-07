@@ -50,42 +50,24 @@ public:
         return new FNullRayTracingGeometryRHI(InGeometryDesc);
     }
 
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc) override final
+    virtual FRHIShaderResourceView* CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc) override final
     {
-        if (InDesc.IsBufferSRV())
-        {
-            return new FNullShaderResourceViewRHI(InDesc.BufferSRV.Buffer);
-        }
-        else if (InDesc.IsTextureSRV())
-        {
-            return new FNullShaderResourceViewRHI(InDesc.TextureSRV.Texture);
-        }
-
-        return new FNullShaderResourceViewRHI(nullptr);
+        return new FNullShaderResourceViewRHI(InResource);
     }
 
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) override final
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc) override final
     {
-        if (InDesc.IsBufferUAV())
-        {
-            return new FNullUnorderedAccessViewRHI(InDesc.BufferUAV.Buffer);
-        }
-        else if (InDesc.IsTextureUAV())
-        {
-            return new FNullUnorderedAccessViewRHI(InDesc.TextureUAV.Texture);
-        }
-
-        return new FNullUnorderedAccessViewRHI(nullptr);
+        return new FNullUnorderedAccessViewRHI(InResource);
     }
 
-    virtual FRHIRenderTargetView* CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) override final
+    virtual FRHIRenderTargetView* CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc) override final
     {
-        return new FNullRenderTargetViewRHI(InDesc.Texture);
+        return new FNullRenderTargetViewRHI(InResource);
     }
 
-    virtual FRHIDepthStencilView* CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc) override final
+    virtual FRHIDepthStencilView* CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc) override final
     {
-        return new FNullDepthStencilViewRHI(InDesc.Texture);
+        return new FNullDepthStencilViewRHI(InResource, InDesc.Flags);
     }
 
     virtual class FRHIComputeShader* CreateComputeShader(const TArray<uint8>& ShaderCode) override final

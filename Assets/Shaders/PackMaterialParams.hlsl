@@ -4,10 +4,11 @@ SHADER_CONSTANT_BLOCK_BEGIN
 	uint2 TextureSize;
 SHADER_CONSTANT_BLOCK_END
 
-Texture2D<float>    AOTexture        : register(t0);
-Texture2D<float>    RoughnessTexture : register(t1);
-Texture2D<float>    MetallicTexture  : register(t2);
-RWTexture2D<float4> Output           : register(u0);
+Texture2D<float> AOTexture        : register(t0);
+Texture2D<float> RoughnessTexture : register(t1);
+Texture2D<float> MetallicTexture  : register(t2);
+
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> Output : register(u0);
 
 [numthreads(8, 8, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)

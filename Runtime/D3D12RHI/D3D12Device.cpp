@@ -1393,12 +1393,7 @@ bool FD3D12Device::CreateDefaultResources()
     CBVDesc.SizeInBytes    = 0;
 
     DefaultDescriptors.DefaultCBV = new FD3D12ConstantBufferView(this, GetResourceOfflineDescriptorHeap());
-    if (!DefaultDescriptors.DefaultCBV->AllocateHandle())
-    {
-        return false;
-    }
-
-    if (!DefaultDescriptors.DefaultCBV->CreateView(nullptr, CBVDesc))
+    if (!DefaultDescriptors.DefaultCBV->Initialize(nullptr, CBVDesc))
     {
         return false;
     }
@@ -1410,12 +1405,7 @@ bool FD3D12Device::CreateDefaultResources()
     UAVDesc.Texture2D.PlaneSlice = 0;
 
     DefaultDescriptors.DefaultUAV = new FD3D12UnorderedAccessViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr);
-    if (!DefaultDescriptors.DefaultUAV->AllocateHandle())
-    {
-        return false;
-    }
-
-    if (!DefaultDescriptors.DefaultUAV->CreateView(nullptr, nullptr, UAVDesc))
+    if (!DefaultDescriptors.DefaultUAV->Initialize(nullptr, nullptr, UAVDesc))
     {
         return false;
     }
@@ -1430,12 +1420,7 @@ bool FD3D12Device::CreateDefaultResources()
     SRVDesc.Texture2D.PlaneSlice          = 0;
 
     DefaultDescriptors.DefaultSRV = new FD3D12ShaderResourceViewRHI(this, GetResourceOfflineDescriptorHeap(), nullptr);
-    if (!DefaultDescriptors.DefaultSRV->AllocateHandle())
-    {
-        return false;
-    }
-
-    if (!DefaultDescriptors.DefaultSRV->CreateView(nullptr, SRVDesc))
+    if (!DefaultDescriptors.DefaultSRV->Initialize(nullptr, SRVDesc))
     {
         return false;
     }
@@ -1447,12 +1432,7 @@ bool FD3D12Device::CreateDefaultResources()
     RTVDesc.Texture2D.PlaneSlice = 0;
 
     DefaultDescriptors.DefaultRTV = new FD3D12RenderTargetViewRHI(this, GetRenderTargetOfflineDescriptorHeap(), nullptr);
-    if (!DefaultDescriptors.DefaultRTV->AllocateHandle())
-    {
-        return false;
-    }
-
-    if (!DefaultDescriptors.DefaultRTV->CreateView(nullptr, RTVDesc))
+    if (!DefaultDescriptors.DefaultRTV->Initialize(nullptr, RTVDesc))
     {
         return false;
     }

@@ -1,8 +1,9 @@
 #include "RHI/RHIResource.h"
 #include "RHI/RHICommandList.h"
 
-FRHIResource::FRHIResource()
-    : StrongReferences(1)
+FRHIResource::FRHIResource(ERHIResourceType InResourceType)
+    : ResourceType(InResourceType)
+    , StrongReferences(1)
     , State(static_cast<int32>(EState::Alive))
 {
 }

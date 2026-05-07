@@ -18,6 +18,7 @@ FSkyboxRenderPass::FSkyboxRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , SkyboxIndexCount(0)
     , SkyboxIndexFormat(EIndexFormat::Unknown)
+    , CachedReadOnlyDepthTarget(nullptr)
 {
 }
 
@@ -225,8 +226,22 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
+    FRHITexture*          DepthTarget      = FrameResources.GBuffer[GBufferIndex_Depth].Get();
     FRHIRenderTargetView* RenderTargetView = FrameResources.SceneTarget->GetRenderTargetView();
-    FRHIDepthStencilView* DepthStencilView = FrameResources.GBuffer[GBufferIndex_Depth]->GetDepthStencilView();
+
+    if (CachedReadOnlyDepthTarget != DepthTarget)
+    {
+        CachedReadOnlyDepthDSV.Reset();
+        CachedReadOnlyDepthTarget = DepthTarget;
+
+        if (DepthTarget)
+        {
+            const FRHIDepthStencilViewDesc DSVDesc = FRHIDepthStencilViewDesc::CreateTexture2D(DepthTarget->GetFormat(), 0, EDepthStencilViewFlags::ReadOnlyDepth);
+            CachedReadOnlyDepthDSV = FRHI::Get()->CreateDepthStencilView(DepthTarget, DSVDesc);
+        }
+    }
+
+    FRHIDepthStencilView* DepthStencilView = CachedReadOnlyDepthDSV.Get();
 
     FRHIBeginRenderPassDesc RenderPassDesc;
     RenderPassDesc.RenderTargets[0]       = FRHIRenderPassAttachment(RenderTargetView, LoadAction, EAttachmentStoreAction::Store, ClearColor);

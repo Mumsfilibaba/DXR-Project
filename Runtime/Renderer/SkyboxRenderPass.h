@@ -23,4 +23,6 @@ private:
     uint32                       SkyboxIndexCount;
     EIndexFormat                 SkyboxIndexFormat;
     FRHISamplerStateRef          SkyboxSampler;
+    FRHITexture*                 CachedReadOnlyDepthTarget;
+    FRHIDepthStencilViewRef      CachedReadOnlyDepthDSV;
 };

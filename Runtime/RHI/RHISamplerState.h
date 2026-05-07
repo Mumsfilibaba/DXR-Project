@@ -189,7 +189,8 @@ class FRHISamplerState : public FRHIResource
 {
 protected:
     explicit FRHISamplerState(const FRHISamplerStateDesc& InSamplerDesc)
-        : Desc(InSamplerDesc)
+        : FRHIResource(ERHIResourceType::SamplerState)
+        , Desc(InSamplerDesc)
     {
     }
 

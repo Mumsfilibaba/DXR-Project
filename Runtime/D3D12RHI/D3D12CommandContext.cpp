@@ -627,7 +627,7 @@ void FD3D12CommandContext::ClearDepthStencilView(FRHIDepthStencilView* DepthSten
     CHECK(D3D12DepthStencilView != nullptr);
 
     D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-    if (FormatHasStencil(D3D12DepthStencilView->GetDesc().Format))
+    if (IsStencilFormat(D3D12DepthStencilView->GetDesc().Format))
     {
         ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
     }
@@ -750,7 +750,7 @@ void FD3D12CommandContext::BeginRenderPass(const FRHIBeginRenderPassDesc& BeginR
         if (CurrentDSAttachment.LoadAction == EAttachmentLoadAction::Clear)
         {
             D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-            if (FormatHasStencil(CurrentDepthStencilView->GetDesc().Format))
+            if (IsStencilFormat(CurrentDepthStencilView->GetDesc().Format))
             {
                 ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
             }
@@ -1213,6 +1213,16 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
     CHECK(Dst != nullptr);
     CHECK(Src != nullptr);
 
+    {
+        const ETextureDimension SrcDimension = Src->GetDimension();
+        const ETextureDimension DstDimension = Dst->GetDimension();
+        
+        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetNumArraySlices());
+        const uint32 DstNumArrayLayers = RHIDimensionArrayLayers(DstDimension, Dst->GetNumArraySlices());
+        CHECK(InCopyDesc.SrcArraySlice + InCopyDesc.NumArraySlices <= SrcNumArrayLayers);
+        CHECK(InCopyDesc.DstArraySlice + InCopyDesc.NumArraySlices <= DstNumArrayLayers);
+    }
+
     FD3D12TextureRHI* D3D12Destination = FD3D12RHI::ResourceCast(Dst);
     CHECK(D3D12Destination != nullptr);
     
@@ -1226,11 +1236,11 @@ void FD3D12CommandContext::CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src,
 
     const ETextureDimension TextureDimension = Src->GetDimension();
 
-    const uint32 NumArraySlices    = D3D12CalculateArraySlices(TextureDimension, InCopyDesc.NumArraySlices);
-    const uint32 SrcArraySlice     = D3D12CalculateArraySlices(TextureDimension, InCopyDesc.SrcArraySlice);
-    const uint32 DstArraySlice     = D3D12CalculateArraySlices(TextureDimension, InCopyDesc.DstArraySlice);
-    const uint32 NumSrcArraySlices = D3D12CalculateArraySlices(TextureDimension, Src->GetNumArraySlices());
-    const uint32 NumDstArraySlices = D3D12CalculateArraySlices(TextureDimension, Dst->GetNumArraySlices());
+    const uint32 NumArraySlices    = InCopyDesc.NumArraySlices;
+    const uint32 SrcArraySlice     = InCopyDesc.SrcArraySlice;
+    const uint32 DstArraySlice     = InCopyDesc.DstArraySlice;
+    const uint32 NumSrcArraySlices = RHIDimensionArrayLayers(TextureDimension, Src->GetNumArraySlices());
+    const uint32 NumDstArraySlices = RHIDimensionArrayLayers(Dst->GetDimension(), Dst->GetNumArraySlices());
 
     for (uint32 ArraySlice = 0; ArraySlice < NumArraySlices; ArraySlice++)
     {
@@ -1313,7 +1323,7 @@ void FD3D12CommandContext::CopyTextureRegionToBuffer(FRHIBuffer* Dst, uint64 Dst
 
     const ETextureDimension TextureDimension = Src->GetDimension();
 
-    const uint32 NumArraySlices = D3D12CalculateArraySlices(TextureDimension, Src->GetNumArraySlices());
+    const uint32 NumArraySlices = RHIDimensionArrayLayers(TextureDimension, Src->GetNumArraySlices());
     const uint32 SrcSubresource = D3D12CalculateSubresource(SrcMipLevel, 0, 0, Src->GetNumMipLevels(), NumArraySlices);
 
     D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
@@ -1359,6 +1369,12 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
     CHECK(Dst != nullptr);
     CHECK(Src != nullptr);
 
+    {
+        const ETextureDimension SrcDimension = Src->GetDimension();
+        const uint32 SrcNumArrayLayers = RHIDimensionArrayLayers(SrcDimension, Src->GetNumArraySlices());
+        CHECK(SrcArraySlice < SrcNumArrayLayers);
+    }
+
     BarrierBatcher.FlushBarriers(GetCommandList());
 
     if ((DstOffset % D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT) != 0)
@@ -1388,7 +1404,7 @@ void FD3D12CommandContext::CopyTextureSubresourceToBuffer(FRHIBuffer* Dst, uint6
 
     const ETextureDimension TextureDimension = Src->GetDimension();
 
-    const uint32 NumArraySlices = D3D12CalculateArraySlices(TextureDimension, Src->GetNumArraySlices());
+    const uint32 NumArraySlices = RHIDimensionArrayLayers(TextureDimension, Src->GetNumArraySlices());
     const uint32 SrcSubresource = D3D12CalculateSubresource(SrcMipLevel, SrcArraySlice, 0, Src->GetNumMipLevels(), NumArraySlices);
 
     D3D12_TEXTURE_COPY_LOCATION SourceLocation = {};
@@ -1572,6 +1588,12 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
     FD3D12TextureRHI* D3D12Texture = FD3D12RHI::ResourceCast(Texture);
     CHECK(D3D12Texture != nullptr);
 
+    {
+        const ETextureDimension Dimension = Texture->GetDimension();
+        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetNumArraySlices());
+        CHECK(TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES || TextureTransition.ArraySlice < NumArrayLayers);
+    }
+
     FD3D12Resource* Resource = D3D12Texture->GetResource();
 
     const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(TextureTransition.BeforeState);
@@ -1601,7 +1623,12 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 }
                 else
                 {
-                    CHECK(CurrentState == D3D12BeforeState);
+                    if (CurrentState != D3D12BeforeState)
+                    {
+                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("array-slice loop, slice=%u, mip=%u", ArraySlice, TextureTransition.MipLevel),
+                            TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
+                        CHECK(CurrentState == D3D12BeforeState);
+                    }
                 }
 
                 BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
@@ -1623,7 +1650,12 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 }
                 else
                 {
-                    CHECK(CurrentState == D3D12BeforeState);
+                    if (CurrentState != D3D12BeforeState)
+                    {
+                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("mip loop, slice=%u, mip=%u", TextureTransition.ArraySlice, MipLevel),
+                            TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
+                        CHECK(CurrentState == D3D12BeforeState);
+                    }
                 }
 
                 BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
@@ -1645,7 +1677,12 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
             }
             else
             {
-                CHECK(CurrentState == D3D12BeforeState);
+                if (CurrentState != D3D12BeforeState)
+                {
+                    D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("single subresource, slice=%u, mip=%u", TextureTransition.ArraySlice, TextureTransition.MipLevel),
+                        TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
+                    CHECK(CurrentState == D3D12BeforeState);
+                }
             }
 
             BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
@@ -1663,7 +1700,12 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
             }
             else
             {
-                CHECK(CurrentState == D3D12BeforeState);
+                if (CurrentState != D3D12BeforeState)
+                {
+                    D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, "all-subresources (uniform state)",
+                        TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
+                    CHECK(CurrentState == D3D12BeforeState);
+                }
             }
 
             BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState);
@@ -1679,7 +1721,12 @@ void FD3D12CommandContext::TransitionTextureState(FRHITexture* Texture, const FR
                 }
                 else
                 {
-                    CHECK(CurrentState == D3D12BeforeState);
+                    if (CurrentState != D3D12BeforeState)
+                    {
+                        D3D12_LOG_TRANSITION_MISMATCH(D3D12Texture, *FString::CreateFormatted("per-subresource (divergent), subresource=%u", i),
+                            TextureTransition.BeforeState, D3D12BeforeState, D3D12AfterState, CurrentState);
+                        CHECK(CurrentState == D3D12BeforeState);
+                    }
                 }
 
                 BarrierBatcher.AddTransitionBarrier(Resource, D3D12BeforeState, D3D12AfterState, i);
@@ -1937,7 +1984,7 @@ void FD3D12CommandContext::TransitionResourceState(FD3D12ShaderResourceViewRHI* 
                 ViewDesc.TextureCubeArray.MostDetailedMip, 
                 NumMips, 
                 ViewDesc.TextureCubeArray.First2DArrayFace, 
-                ViewDesc.TextureCubeArray.NumCubes * RHI_NUM_CUBE_FACES);
+                RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, ViewDesc.TextureCubeArray.NumCubes));
             break;
         }
 
@@ -2074,6 +2121,12 @@ void FD3D12CommandContext::RequireTextureState(FRHITexture* Texture, const FRHIR
 {
     FD3D12TextureRHI* D3D12Texture = FD3D12RHI::ResourceCast(Texture);
     CHECK(D3D12Texture != nullptr);
+
+    {
+        const ETextureDimension Dimension = Texture->GetDimension();
+        const uint32 NumArrayLayers = RHIDimensionArrayLayers(Dimension, Texture->GetNumArraySlices());
+        CHECK(RequiredState.ArraySlice == RHI_ALL_ARRAY_SLICES || RequiredState.ArraySlice < NumArrayLayers);
+    }
 
     FD3D12Resource* Resource = D3D12Texture->GetResource();
     CHECK(Resource != nullptr);

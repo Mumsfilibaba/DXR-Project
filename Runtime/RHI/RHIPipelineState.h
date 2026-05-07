@@ -86,7 +86,11 @@ struct FRHIDepthStencilStateDesc
 class FRHIDepthStencilState : public FRHIResource
 {
 protected:
-    FRHIDepthStencilState() = default;
+    FRHIDepthStencilState()
+        : FRHIResource(ERHIResourceType::DepthStencilState)
+    {
+    }
+
     virtual ~FRHIDepthStencilState() = default;
 
 public:
@@ -170,7 +174,11 @@ struct FRHIRasterizerStateDesc
 class FRHIRasterizerState : public FRHIResource
 {
 protected:
-    FRHIRasterizerState() = default;
+    FRHIRasterizerState()
+        : FRHIResource(ERHIResourceType::RasterizerState)
+    {
+    }
+
     virtual ~FRHIRasterizerState() = default;
 
 public:
@@ -367,7 +375,11 @@ struct FRHIBlendStateDesc
 class FRHIBlendState : public FRHIResource
 {
 protected:
-    FRHIBlendState() = default;
+    FRHIBlendState()
+        : FRHIResource(ERHIResourceType::BlendState)
+    {
+    }
+
     virtual ~FRHIBlendState() = default;
 
 public:
@@ -428,7 +440,11 @@ struct FRHIInputElementDesc
 class FRHIInputLayout : public FRHIResource
 {
 protected:
-    FRHIInputLayout() = default;
+    FRHIInputLayout()
+        : FRHIResource(ERHIResourceType::InputLayout)
+    {
+    }
+
     virtual ~FRHIInputLayout() = default;
     
 public:
@@ -442,7 +458,11 @@ public:
 class FRHIPipelineState : public FRHIResource
 {
 protected:
-    FRHIPipelineState() = default;
+    FRHIPipelineState()
+        : FRHIResource(ERHIResourceType::PipelineState)
+    {
+    }
+
     virtual ~FRHIPipelineState() = default;
 
 public:

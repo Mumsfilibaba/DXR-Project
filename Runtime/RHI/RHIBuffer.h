@@ -46,7 +46,7 @@ class FRHIBuffer : public FRHIResource
 { 
 protected: 
     explicit FRHIBuffer(const FRHIBufferDesc& InBufferDesc) 
-        : FRHIResource()
+        : FRHIResource(ERHIResourceType::Buffer)
         , Desc(InBufferDesc)
     {
     }

@@ -820,33 +820,34 @@ bool FVulkanSwapChainRHI::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
         BackBuffers[Index].Texture->SetVkImage(Image);
 
+        FVulkanTextureRHI* BackBufferTexture = BackBuffers[Index].Texture.Get();
+
         if (Desc.IsRenderTarget())
         {
-            FRHIRenderTargetViewDesc RTVDesc(BackBuffers[Index].Texture.Get());
+            const FRHIRenderTargetViewDesc RTVDesc = FRHIRenderTargetViewDesc::CreateTexture2D(GetColorFormat(), 0);
 
-            FRHIRenderTargetView* RenderTargetView = FVulkanRHI::Get()->CreateRenderTargetView(RTVDesc);
-            if (!RenderTargetView)
+            FVulkanRenderTargetViewRHIRef NewRTV = new FVulkanRenderTargetViewRHI(GetDevice(), BackBufferTexture);
+            if (!NewRTV->Initialize(BackBufferTexture, RTVDesc))
             {
                 VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer RTV for index %d", Index);
                 return false;
             }
-            else
-            {
-                BackBuffers[Index].RenderTargetView = FVulkanRenderTargetViewRHIRef(FVulkanRHI::ResourceCast(RenderTargetView));
-            }
+
+            BackBuffers[Index].RenderTargetView = NewRTV;
         }
 
         if (Desc.IsUnorderedAccess())
         {
-            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureUAV(
-                BackBuffers[Index].Texture.Get(), GetColorFormat(), 0, 0, 1);
-            FRHIUnorderedAccessView* UnorderedAccessView = FVulkanRHI::Get()->CreateUnorderedAccessView(UAVDesc);
-            if (!UnorderedAccessView)
+            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTexture2D(GetColorFormat(), 0);
+
+            FVulkanUnorderedAccessViewRHIRef NewUAV = new FVulkanUnorderedAccessViewRHI(GetDevice(), BackBufferTexture);
+            if (!NewUAV->Initialize(BackBufferTexture, UAVDesc))
             {
                 VULKAN_ERROR_CRITICAL("FVulkanSwapChainRHI: Failed to create back-buffer UAV for index %d", Index);
                 return false;
             }
-            BackBuffers[Index].UnorderedAccessView = FVulkanUnorderedAccessViewRHIRef(FVulkanRHI::ResourceCast(UnorderedAccessView));
+
+            BackBuffers[Index].UnorderedAccessView = NewUAV;
         }
 
         ++Index;

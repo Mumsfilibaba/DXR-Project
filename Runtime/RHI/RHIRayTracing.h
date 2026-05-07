@@ -130,7 +130,7 @@ class FRHIGeometryAccelerationStructure : public FRHIResource
 {
 protected: 
     explicit FRHIGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc)
-        : FRHIResource()
+        : FRHIResource(ERHIResourceType::GeometryAccelerationStructure)
         , Flags(InGeometryDesc.Flags)
     {
     }
@@ -158,7 +158,7 @@ class FRHISceneAccelerationStructure : public FRHIResource
 {
 protected:
     explicit FRHISceneAccelerationStructure(const FRHISceneAccelerationStructureDesc& InSceneDesc)
-        : FRHIResource()
+        : FRHIResource(ERHIResourceType::SceneAccelerationStructure)
         , Flags(InSceneDesc.Flags)
     {
     }

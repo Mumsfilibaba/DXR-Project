@@ -10,7 +10,6 @@
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanRHI.h"
 
-
 static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
     "VulkanRHI.MaxDescriptorSetsPerPool",
     "The number of DescriptorSets that can be created from a DescriptorPool",
@@ -20,6 +19,23 @@ static TAutoConsoleVariable<int32> CVarVulkanTransientDescriptorSetsPerPool(
     "VulkanRHI.TransientDescriptorSetsPerPool",
     "The number of DescriptorSets per pool when using transient (non-cached) descriptor allocation",
     256);
+
+#if VULKAN_VALIDATE_NO_NULL_DESCRIPTORS
+static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
+{
+    switch (Type)
+    {
+        case VK_DESCRIPTOR_TYPE_SAMPLER:                return "SAMPLER";
+        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:          return "SAMPLED_IMAGE";
+        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:          return "STORAGE_IMAGE";
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:         return "UNIFORM_BUFFER";
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:         return "STORAGE_BUFFER";
+        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return "UNIFORM_BUFFER_DYNAMIC";
+        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return "STORAGE_BUFFER_DYNAMIC";
+        default:                                        return "UNKNOWN";
+    }
+}
+#endif
 
 FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanPipelineLayout* InLayout, const FVulkanDefaultResources& InDefaultResources)
     : FVulkanDeviceChild(InDevice)
@@ -63,9 +79,10 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         FMemory::Memzero(BoundResourceViews[DescriptorSetIndex].Data(), BoundResourceViews[DescriptorSetIndex].SizeInBytes());
         
         // Init DescriptorWrites and count the other bindings
-        uint32 NumImageInfos       = 0;
-        uint32 NumBufferInfos      = 0;
-        uint32 NumTexelBufferViews = 0;
+        uint32 NumImageInfos               = 0;
+        uint32 NumBufferInfos              = 0;
+        uint32 NumTexelBufferViews         = 0;
+        uint32 NumAccelerationStructInfos  = 0;
 
         for (int32 Index = 0; Index < SetRemappingInfo.RemappingInfo.Size(); Index++)
         {
@@ -88,6 +105,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     NumBufferInfos++;
                     break;
                 }
+
                 case VK_DESCRIPTOR_TYPE_SAMPLER:
                 case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
                 case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
@@ -95,12 +113,20 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     NumImageInfos++;
                     break;
                 }
+
                 case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
                 case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
                 {
                     NumTexelBufferViews++;
                     break;
                 }
+
+                case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+                {
+                    NumAccelerationStructInfos++;
+                    break;
+                }
+
                 default:
                 {
                     VULKAN_ERROR_CRITICAL("Unhandled DescriptorType");
@@ -111,7 +137,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             DescriptorCountMap[WriteDescriptorSet.descriptorType]++;
         }
 
-        // Allocate Buffer, Image, and TexelBufferView Infos
+        // Allocate Buffer, Image, TexelBufferView, and AccelerationStructure Infos
         DSWrites.DescriptorImageInfos.Resize(NumImageInfos);
         FMemory::Memzero(DSWrites.DescriptorImageInfos.Data(), DSWrites.DescriptorImageInfos.SizeInBytes());
 
@@ -121,10 +147,17 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         DSWrites.DescriptorTexelBufferViews.Resize(NumTexelBufferViews);
         FMemory::Memzero(DSWrites.DescriptorTexelBufferViews.Data(), DSWrites.DescriptorTexelBufferViews.SizeInBytes());
 
-        // Setup Buffer, Image, and TexelBufferView Infos
-        uint32 CurrentImageInfo       = 0;
-        uint32 CurrentBufferInfo      = 0;
-        uint32 CurrentTexelBufferView = 0;
+        DSWrites.DescriptorAccelerationStructureInfos.Resize(NumAccelerationStructInfos);
+        FMemory::Memzero(DSWrites.DescriptorAccelerationStructureInfos.Data(), DSWrites.DescriptorAccelerationStructureInfos.SizeInBytes());
+
+        DSWrites.DescriptorAccelerationStructures.Resize(NumAccelerationStructInfos);
+        FMemory::Memzero(DSWrites.DescriptorAccelerationStructures.Data(), DSWrites.DescriptorAccelerationStructures.SizeInBytes());
+
+        // Setup Buffer, Image, TexelBufferView, and AccelerationStructure Infos
+        uint32 CurrentImageInfo                  = 0;
+        uint32 CurrentBufferInfo                 = 0;
+        uint32 CurrentTexelBufferView            = 0;
+        uint32 CurrentAccelerationStructureInfo  = 0;
 
         for (int32 Index = 0; Index < DSWrites.DescriptorWrites.Size(); Index++)
         {
@@ -143,6 +176,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     BufferDesc->range  = VK_WHOLE_SIZE;
                     break;
                 }
+
                 case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
                 case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
                 {
@@ -154,6 +188,7 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     ImageInfo->sampler     = VK_NULL_HANDLE;
                     break;
                 }
+
                 case VK_DESCRIPTOR_TYPE_SAMPLER:
                 {
                     WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
@@ -164,12 +199,28 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     ImageInfo->sampler     = DefaultResources.NullSampler;
                     break;
                 }
+
                 case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
                 case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
                 {
                     WriteDescriptorSet.pTexelBufferView = &DSWrites.DescriptorTexelBufferViews[CurrentTexelBufferView++];
                     break;
                 }
+
+                case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+                {
+                    const uint32 AsSlot = CurrentAccelerationStructureInfo++;
+
+                    VkWriteDescriptorSetAccelerationStructureKHR& AsInfo = DSWrites.DescriptorAccelerationStructureInfos[AsSlot];
+                    AsInfo.sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+                    AsInfo.pNext                      = nullptr;
+                    AsInfo.accelerationStructureCount = 1;
+                    AsInfo.pAccelerationStructures    = &DSWrites.DescriptorAccelerationStructures[AsSlot];
+
+                    WriteDescriptorSet.pNext = &AsInfo;
+                    break;
+                }
+
                 default:
                 {
                     VULKAN_ERROR_CRITICAL("Unhandled DescriptorType");
@@ -183,7 +234,8 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         PoolInfo.DescriptorSetLayout = Layout->GetVkDescriptorSetLayout(DescriptorSetIndex);
 
         // Setup the builders
-        DescriptorSetBuilders[DescriptorSetIndex].SetupDescriptorWrites(PoolInfo.DescriptorSetLayout, DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.Size());
+        DescriptorSetBuilders[DescriptorSetIndex].SetupDescriptorWrites(
+            PoolInfo.DescriptorSetLayout, DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.Size());
 
         for (int32 BindingIndex = 0; BindingIndex < SetRemappingInfo.RemappingInfo.Size(); BindingIndex++)
         {
@@ -256,6 +308,7 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = ShaderResourceView;
                 break; 
             }
+
             case FVulkanResourceView::EType::StructuredBufferView:
             {
                 const FVulkanResourceView::FStructuredBufferView& StructuredBufferView = ShaderResourceView->GetStructuredBufferInfo();
@@ -263,6 +316,7 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
                 break; 
             }
+
             case FVulkanResourceView::EType::TypedBufferView:
             {
                 const FVulkanResourceView::FTypedBufferView& TypedBufferView = ShaderResourceView->GetTypedBufferInfo();
@@ -270,6 +324,15 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceViewRHI* ShaderResource
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
                 break;
             }
+
+            case FVulkanResourceView::EType::AccelerationStructureView:
+            {
+                const FVulkanResourceView::FAccelerationStructureView& AsInfo = ShaderResourceView->GetAccelerationStructureInfo();
+                DSBuilder.WriteAccelerationStructure(BindingIndex, AsInfo.AccelerationStructure);
+                BoundResourceViews[DescriptorSetIndex][BindingIndex] = ShaderResourceView;
+                break;
+            }
+
             default:
             {
                 VULKAN_ERROR_CRITICAL("Invalid ShaderResourveView, probably uninitialized resource");
@@ -302,6 +365,7 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = UnorderedAccessView;
                 break;
             }
+
             case FVulkanResourceView::EType::StructuredBufferView:
             {
                 const FVulkanResourceView::FStructuredBufferView& StructuredBufferView = UnorderedAccessView->GetStructuredBufferInfo();
@@ -309,6 +373,7 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
                 break;
             }
+
             case FVulkanResourceView::EType::TypedBufferView:
             {
                 const FVulkanResourceView::FTypedBufferView& TypedBufferView = UnorderedAccessView->GetTypedBufferInfo();
@@ -316,6 +381,7 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessViewRHI* UnorderedAcce
                 BoundResourceViews[DescriptorSetIndex][BindingIndex] = nullptr;
                 break;
             }
+
             default:
             {
                 VULKAN_ERROR_CRITICAL("Invalid ShaderResourveView, probably uninitialized resource");
@@ -350,6 +416,7 @@ void FVulkanDescriptorState::SetUniformBuffer(FVulkanBufferRHI* UniformBuffer, u
 
             const uint32 FlatIndex     = DynamicOffsetBasePerSet[DescriptorSetIndex] + DynamicIndex;
             const uint32 DynamicOffset = static_cast<uint32>(Offset);
+
             if (DynamicOffsets[FlatIndex] != DynamicOffset)
             {
                 DynamicOffsets[FlatIndex] = DynamicOffset;
@@ -413,23 +480,6 @@ void FVulkanDescriptorState::TransitionBoundResources(FVulkanCommandContext& Con
         }
     }
 }
-
-#if VULKAN_VALIDATE_NO_NULL_DESCRIPTORS
-static const CHAR* GetDescriptorTypeName(VkDescriptorType Type)
-{
-    switch (Type)
-    {
-        case VK_DESCRIPTOR_TYPE_SAMPLER:                return "SAMPLER";
-        case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:          return "SAMPLED_IMAGE";
-        case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:          return "STORAGE_IMAGE";
-        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:         return "UNIFORM_BUFFER";
-        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:         return "STORAGE_BUFFER";
-        case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC: return "UNIFORM_BUFFER_DYNAMIC";
-        case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC: return "STORAGE_BUFFER_DYNAMIC";
-        default:                                        return "UNKNOWN";
-    }
-}
-#endif
 
 void FVulkanDescriptorState::UpdateDescriptorSets(FVulkanTransientDescriptorAllocator* TransientAllocator)
 {
@@ -545,7 +595,9 @@ void FVulkanDescriptorState::Reset()
 void FVulkanDescriptorState::BindDescriptorSets(class FVulkanCommandBuffer& CommandBuffer, VkPipelineBindPoint BindPoint)
 {
     CHECK(DescriptorSetHandles.Size() > 0);
-    CommandBuffer->BindDescriptorSets(BindPoint, Layout->GetVkPipelineLayout(), 0, DescriptorSetHandles.Size(), DescriptorSetHandles.Data(), DynamicOffsets.Size(), DynamicOffsets.Data());
+    CommandBuffer->BindDescriptorSets(BindPoint, Layout->GetVkPipelineLayout(), 0, DescriptorSetHandles.Size(), 
+        DescriptorSetHandles.Data(),DynamicOffsets.Size(), DynamicOffsets.Data());
+
     bDynamicOffsetsDirty = false;
 }
 
@@ -562,11 +614,13 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
             DSBuilder.WriteStorageBuffer(BindingIndex, DefaultResources.NullBuffer, 0, VK_WHOLE_SIZE);
             break;
         }
+
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
         {
             DSBuilder.WriteUniformBuffer(BindingIndex, DefaultResources.NullBuffer, 0, VK_WHOLE_SIZE);
             break;
         }
+
         case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
         {
             DSBuilder.WriteDynamicUniformBuffer(BindingIndex, DefaultResources.NullBuffer, VK_WHOLE_SIZE);
@@ -583,21 +637,31 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
             }
             break;
         }
+
         case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
         {
             DSBuilder.WriteStorageImage(BindingIndex, DefaultResources.NullImageView, VK_IMAGE_LAYOUT_GENERAL);
             break;
         }
+
         case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
         {
             DSBuilder.WriteSampledImage(BindingIndex, DefaultResources.NullImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             break;
         }
+
         case VK_DESCRIPTOR_TYPE_SAMPLER:
         {
             DSBuilder.WriteSampler(BindingIndex, DefaultResources.NullSampler);
             break;
         }
+
+        case VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+        {
+            DSBuilder.WriteAccelerationStructure(BindingIndex, VK_NULL_HANDLE);
+            break;
+        }
+
         default:
         {
             VULKAN_ERROR_CRITICAL("Unhandled DescriptorType");

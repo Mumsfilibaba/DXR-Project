@@ -41,6 +41,7 @@ struct FVulkanRenderPassKey
         {
             EFormat                  DepthStencilFormat;
             FVulkanRenderPassActions DepthStencilActions;
+            EDepthStencilViewFlags   DepthStencilFlags;
             uint8                    NumSamples : 4;
             uint8                    NumRenderTargets : 4;
             FRHIViewInstancingState  ViewInstancingState;

@@ -574,18 +574,12 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         }
 
         const VkFormat DepthStencilVkFormat = ConvertFormat(InDesc.RasterizerOutputFormats.DepthStencilFormat);
-        
-        const auto FormatHasStencil = [](VkFormat Format) -> bool
-        {
-            return Format == VK_FORMAT_D16_UNORM_S8_UINT || Format == VK_FORMAT_D24_UNORM_S8_UINT ||
-                Format == VK_FORMAT_D32_SFLOAT_S8_UINT || Format == VK_FORMAT_S8_UINT;
-        };
 
         PipelineRenderingInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
         PipelineRenderingInfo.colorAttachmentCount    = InDesc.RasterizerOutputFormats.NumRenderTargets;
         PipelineRenderingInfo.pColorAttachmentFormats = ColorAttachmentFormats;
         PipelineRenderingInfo.depthAttachmentFormat   = DepthStencilVkFormat;
-        PipelineRenderingInfo.stencilAttachmentFormat = FormatHasStencil(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
+        PipelineRenderingInfo.stencilAttachmentFormat = IsStencilFormat(DepthStencilVkFormat) ? DepthStencilVkFormat : VK_FORMAT_UNDEFINED;
 
         if (GVulkanSupportsMultiviews && InDesc.ViewInstancingState.bEnableViewInstancing)
         {

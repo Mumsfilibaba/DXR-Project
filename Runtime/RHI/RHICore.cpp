@@ -1,4 +1,5 @@
 #include "RHI/RHICore.h"
+#include "RHI/RHITexture.h"
 #include "RHI/RHITypes.h"
 
 // -------------------------------------------------------------------------------------------
@@ -58,7 +59,7 @@ RHI_API uint32 RHI::MaxTexture3DHeight      = 2048;
 RHI_API uint32 RHI::MaxTexture3DDepth       = 2048;
 
 RHI_API uint32 RHI::MaxCubeTextureSize      = 8192;
-RHI_API uint32 RHI::MaxCubeArrayCount       = 256 / RHI_NUM_CUBE_FACES; // 42
+RHI_API uint32 RHI::MaxCubeArrayCount       = RHIArrayLayersToCubes(ETextureDimension::TextureCubeArray, 252); // 42
 
 // -------------------------------------------------------------------------------------------
 // Buffer / Memory Limits

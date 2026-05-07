@@ -215,6 +215,27 @@ public:
         WriteTexelBuffer(Binding, BufferView);
     }
     
+    void WriteAccelerationStructure(int32 Binding, VkAccelerationStructureKHR AccelerationStructure)
+    {
+        CHECK(Binding < NumDescriptorWrites);
+        CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR);
+
+        VkWriteDescriptorSetAccelerationStructureKHR* AccelerationStructureInfo = const_cast<VkWriteDescriptorSetAccelerationStructureKHR*>(
+            reinterpret_cast<const VkWriteDescriptorSetAccelerationStructureKHR*>(DescriptorWrites[Binding].pNext));
+        CHECK(AccelerationStructureInfo != nullptr);
+        
+        VkAccelerationStructureKHR* AccelerationStructureHandles = const_cast<VkAccelerationStructureKHR*>(AccelerationStructureInfo->pAccelerationStructures);
+        CHECK(AccelerationStructureHandles != nullptr);
+
+        const uint64 Resource = reinterpret_cast<uint64>(AccelerationStructure);
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource)
+        {
+            AccelerationStructureHandles[0] = AccelerationStructure;
+            DescriptorSetKey.Resources[Binding].Resource = Resource;
+            bKeyIsDirty = true;
+        }
+    }
+
     void WriteSampler(int32 Binding, VkSampler Sampler)
     {
         CHECK(Binding < NumDescriptorWrites);
@@ -364,10 +385,12 @@ private:
 
 struct FVulkanDescriptorWrites
 {
-    TArray<VkWriteDescriptorSet>   DescriptorWrites;
-    TArray<VkDescriptorBufferInfo> DescriptorBufferInfos;
-    TArray<VkDescriptorImageInfo>  DescriptorImageInfos;
-    TArray<VkBufferView>           DescriptorTexelBufferViews;
+    TArray<VkWriteDescriptorSet>                         DescriptorWrites;
+    TArray<VkDescriptorBufferInfo>                       DescriptorBufferInfos;
+    TArray<VkDescriptorImageInfo>                        DescriptorImageInfos;
+    TArray<VkBufferView>                                 DescriptorTexelBufferViews;
+    TArray<VkWriteDescriptorSetAccelerationStructureKHR> DescriptorAccelerationStructureInfos;
+    TArray<VkAccelerationStructureKHR>                   DescriptorAccelerationStructures;
 };
 
 enum class EVulkanDescriptorDirtyFlags : uint8
@@ -376,6 +399,7 @@ enum class EVulkanDescriptorDirtyFlags : uint8
     ResourcesDirty     = (1 << 0),
     DescriptorSetDirty = (1 << 1),
 };
+
 ENUM_CLASS_OPERATORS(EVulkanDescriptorDirtyFlags)
 
 class FVulkanDescriptorState : public FVulkanDeviceChild, FNonCopyable
@@ -544,6 +568,13 @@ private:
 
 class FVulkanDescriptorSetCache : public FVulkanDeviceChild
 {
+    struct FCachedDescriptorSet
+    {
+        VkDescriptorSet        DescriptorSet = VK_NULL_HANDLE;
+        uint64                 LastUsedFrame = 0;
+        FVulkanDescriptorPool* OwnerPool     = nullptr;
+    };
+
     class FCachedPool : public FVulkanDeviceChild
     {
     public:
@@ -556,13 +587,6 @@ class FVulkanDescriptorSetCache : public FVulkanDeviceChild
         FVulkanDescriptorPool*         CurrentDescriptorPool;
         TArray<FVulkanDescriptorPool*> DescriptorPools;
         FVulkanDescriptorPoolInfo      PoolInfo;
-    };
-
-    struct FCachedDescriptorSet
-    {
-        VkDescriptorSet        DescriptorSet = VK_NULL_HANDLE;
-        uint64                 LastUsedFrame = 0;
-        FVulkanDescriptorPool* OwnerPool     = nullptr;
     };
 
 public:

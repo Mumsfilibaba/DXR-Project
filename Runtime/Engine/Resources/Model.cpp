@@ -170,36 +170,36 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
             RTGeometry->SetDebugName("RayTracing Geometry");
         }
 
-        FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(VertexBuffer.Get(), 0, VertexCount);
-        VertexBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
+        VertexBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexBuffer.Get(), SRVDesc);
         if (!VertexBufferSRV)
         {
             return false;
         }
-        
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(VertexPositionBuffer.Get(), 0, VertexCount);
-        VertexPositionBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+
+        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
+        VertexPositionBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexPositionBuffer.Get(), SRVDesc);
         if (!VertexPositionBufferSRV)
         {
             return false;
         }
-        
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(VertexNormalBuffer.Get(), 0, VertexCount);
-        VertexNormalBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+
+        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
+        VertexNormalBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexNormalBuffer.Get(), SRVDesc);
         if (!VertexNormalBufferSRV)
         {
             return false;
         }
-        
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(VertexTexCoordBuffer.Get(), 0, VertexCount);
-        VertexTexCoordBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+
+        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, VertexCount);
+        VertexTexCoordBufferSRV = FRHI::Get()->CreateShaderResourceView(VertexTexCoordBuffer.Get(), SRVDesc);
         if (!VertexTexCoordBufferSRV)
         {
             return false;
         }
 
-        SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::UInt32);
-        IndexBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, IndexCount, EBufferViewType::ByteAddress);
+        IndexBufferSRV = FRHI::Get()->CreateShaderResourceView(IndexBuffer.Get(), SRVDesc);
         if (!IndexBufferSRV)
         {
             return false;

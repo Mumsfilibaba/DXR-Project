@@ -4,9 +4,10 @@ SHADER_CONSTANT_BLOCK_BEGIN
 	uint2 TextureSize;
 SHADER_CONSTANT_BLOCK_END
 
-Texture2D<float4>   AlbedoTexture : register(t0);
-Texture2D<float>    AlphaTexture  : register(t1);
-RWTexture2D<float4> OutputAlbedo  : register(u0);
+Texture2D<float4> AlbedoTexture : register(t0);
+Texture2D<float>  AlphaTexture  : register(t1);
+
+TEXTURE_FORMAT_UNKNOWN RWTexture2D<float4> OutputAlbedo : register(u0);
 
 [numthreads(8, 8, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)

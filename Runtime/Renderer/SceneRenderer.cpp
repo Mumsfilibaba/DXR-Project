@@ -624,7 +624,7 @@ void FSceneRenderer::PrepareResources(const FSceneRenderView& SceneRenderView, F
     DebugViewPass->PreparePipelineState(OutputFormat);
 }
 
-void FSceneRenderer::PrepareCameraData(const FSceneRenderView& SceneRenderView, FScene* Scene)
+void FSceneRenderer::PrepareCameraData(const FSceneRenderView& /*SceneRenderView*/, FScene* Scene)
 {
     TRACE_SCOPE("PrepareCameraData");
 
@@ -874,7 +874,8 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     // Main LightPass
     TiledLightPass->Execute(CommandList, Resources, CurrentScene);
 
-    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
+    // The skybox pass binds depth as a ReadOnlyDepth DSV (bDepthWriteEnable = false)
+    CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthRead));
     CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget));
 
     // Skybox Pass
@@ -906,7 +907,8 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     // Temporal AA
     if (CVarEnableTemporalAA.GetValue())
     {
-        CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
+        // Source state matches the ReadOnlyDepth transition done before the skybox pass above.
+        CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::NonPixelShaderResource));
         CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess));
 
         TemporalAA->Execute(CommandList, Resources);
@@ -916,7 +918,7 @@ void FSceneRenderer::RenderSceneView(const FSceneRenderView& SceneRenderView)
     }
     else
     {
-        CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource));
+        CommandList.TransitionTextureState(Resources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthRead, EResourceAccess::PixelShaderResource));
         CommandList.TransitionTextureState(Resources.SceneTarget.Get(), FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource));
     }
 

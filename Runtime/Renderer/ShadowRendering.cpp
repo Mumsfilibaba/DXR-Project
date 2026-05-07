@@ -385,14 +385,13 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
     Resources.PointLightShadowMapFaceDSVs.Clear();
     Resources.PointLightShadowMapFaceDSVs.Reserve(Resources.MaxPointLightShadows * RHI_NUM_CUBE_FACES);
 
+    const EFormat ShadowMapFormat = Resources.PointLightShadowMaps->GetFormat();
     for (uint32 LightIndex = 0; LightIndex < Resources.MaxPointLightShadows; ++LightIndex)
     {
-        FRHIDepthStencilViewDesc PerLightDSVDesc(Resources.PointLightShadowMaps.Get());
-        PerLightDSVDesc.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES);
-        PerLightDSVDesc.NumArraySlices = RHI_NUM_CUBE_FACES;
-        PerLightDSVDesc.MipLevel       = 0;
+        const FRHIDepthStencilViewDesc PerLightDSVDesc = FRHIDepthStencilViewDesc::CreateTextureCubeArray(
+            ShadowMapFormat, 0, static_cast<uint16>(LightIndex), 1);
 
-        FRHIDepthStencilViewRef PerLightDSV = FRHI::Get()->CreateDepthStencilView(PerLightDSVDesc);
+        FRHIDepthStencilViewRef PerLightDSV = FRHI::Get()->CreateDepthStencilView(Resources.PointLightShadowMaps.Get(), PerLightDSVDesc);
         if (!PerLightDSV)
         {
             return false;
@@ -402,12 +401,10 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
 
         for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
         {
-            FRHIDepthStencilViewDesc PerFaceDSVDesc(Resources.PointLightShadowMaps.Get());
-            PerFaceDSVDesc.ArrayIndex     = static_cast<uint16>((LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex);
-            PerFaceDSVDesc.NumArraySlices = 1;
-            PerFaceDSVDesc.MipLevel       = 0;
+            const FRHIDepthStencilViewDesc PerFaceDSVDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(
+                ShadowMapFormat, 0, static_cast<uint16>((LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex), 1);
 
-            FRHIDepthStencilViewRef PerFaceDSV = FRHI::Get()->CreateDepthStencilView(PerFaceDSVDesc);
+            FRHIDepthStencilViewRef PerFaceDSV = FRHI::Get()->CreateDepthStencilView(Resources.PointLightShadowMaps.Get(), PerFaceDSVDesc);
             if (!PerFaceDSV)
             {
                 return false;
@@ -760,16 +757,16 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeMatrixBuffer->SetDebugName("Cascade Matrices Buffer");
     }
 
-    FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+    FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, NUM_SHADOW_CASCADES);
+    Resources.CascadeMatrixBufferSRV = FRHI::Get()->CreateShaderResourceView(Resources.CascadeMatrixBuffer.Get(), SRVDesc);
     if (!Resources.CascadeMatrixBufferSRV)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+    FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateBuffer(0, NUM_SHADOW_CASCADES);
+    Resources.CascadeMatrixBufferUAV = FRHI::Get()->CreateUnorderedAccessView(Resources.CascadeMatrixBuffer.Get(), UAVDesc);
     if (!Resources.CascadeMatrixBufferUAV)
     {
         DEBUG_BREAK();
@@ -792,16 +789,16 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeSplitsBuffer->SetDebugName("Cascade SplitBuffer");
     }
 
-    SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+    SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, NUM_SHADOW_CASCADES);
+    Resources.CascadeSplitsBufferSRV = FRHI::Get()->CreateShaderResourceView(Resources.CascadeSplitsBuffer.Get(), SRVDesc);
     if (!Resources.CascadeSplitsBufferSRV)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    UAVDesc = FRHIUnorderedAccessViewDesc::CreateBufferUAV(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+    UAVDesc = FRHIUnorderedAccessViewDesc::CreateBuffer(0, NUM_SHADOW_CASCADES);
+    Resources.CascadeSplitsBufferUAV = FRHI::Get()->CreateUnorderedAccessView(Resources.CascadeSplitsBuffer.Get(), UAVDesc);
     if (!Resources.CascadeSplitsBufferUAV)
     {
         DEBUG_BREAK();
@@ -1116,10 +1113,10 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     for (uint16 Index = 0; Index < NUM_SHADOW_CASCADES; Index++)
     {
-        FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTextureSRV(Resources.ShadowCascades.Get(), 
-            CastSRVFormat(Resources.ShadowCascades->GetFormat()), 0, 1, Index, 1);
+        const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateTexture2DArray(
+            Resources.ShadowCascades->GetFormat(), 0, 1, Index, 1);
 
-        Resources.ShadowCascadesSRVs[Index] = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        Resources.ShadowCascadesSRVs[Index] = FRHI::Get()->CreateShaderResourceView(Resources.ShadowCascades.Get(), SRVDesc);
         if (!Resources.ShadowCascadesSRVs[Index])
         {
             DEBUG_BREAK();
@@ -1130,12 +1127,10 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
     // Pre-create the combined cascade DSV (covers all cascades in one pass) and per-cascade DSVs
     // so they are reused across frames instead of being recreated each time.
     {
-        FRHIDepthStencilViewDesc CombinedDSVDesc(Resources.ShadowCascades.Get());
-        CombinedDSVDesc.ArrayIndex     = 0;
-        CombinedDSVDesc.NumArraySlices = NUM_SHADOW_CASCADES;
-        CombinedDSVDesc.MipLevel       = 0;
+        const FRHIDepthStencilViewDesc CombinedDSVDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(
+            Resources.ShadowCascades->GetFormat(), 0, 0, NUM_SHADOW_CASCADES);
 
-        Resources.ShadowCascadesCombinedDSV = FRHI::Get()->CreateDepthStencilView(CombinedDSVDesc);
+        Resources.ShadowCascadesCombinedDSV = FRHI::Get()->CreateDepthStencilView(Resources.ShadowCascades.Get(), CombinedDSVDesc);
         if (!Resources.ShadowCascadesCombinedDSV)
         {
             DEBUG_BREAK();
@@ -1145,12 +1140,10 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
 
     for (uint16 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
     {
-        FRHIDepthStencilViewDesc PerCascadeDSVDesc(Resources.ShadowCascades.Get());
-        PerCascadeDSVDesc.ArrayIndex     = Index;
-        PerCascadeDSVDesc.NumArraySlices = 1;
-        PerCascadeDSVDesc.MipLevel       = 0;
+        const FRHIDepthStencilViewDesc PerCascadeDSVDesc = FRHIDepthStencilViewDesc::CreateTexture2DArray(
+            Resources.ShadowCascades->GetFormat(), 0, Index, 1);
 
-        Resources.ShadowCascadePerCascadeDSVs[Index] = FRHI::Get()->CreateDepthStencilView(PerCascadeDSVDesc);
+        Resources.ShadowCascadePerCascadeDSVs[Index] = FRHI::Get()->CreateDepthStencilView(Resources.ShadowCascades.Get(), PerCascadeDSVDesc);
         if (!Resources.ShadowCascadePerCascadeDSVs[Index])
         {
             DEBUG_BREAK();

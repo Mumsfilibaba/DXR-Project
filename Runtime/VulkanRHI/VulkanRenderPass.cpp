@@ -104,6 +104,27 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     VkAttachmentReference DepthAttachmentRef = {};
     if (Key.DepthStencilFormat != EFormat::Unknown)
     {
+        const bool bIsReadOnlyDepth   = IsEnumFlagSet(Key.DepthStencilFlags, EDepthStencilViewFlags::ReadOnlyDepth);
+        const bool bIsReadOnlyStencil = IsEnumFlagSet(Key.DepthStencilFlags, EDepthStencilViewFlags::ReadOnlyStencil);
+
+        VkImageLayout DepthStencilLayout;
+        if (bIsReadOnlyDepth && bIsReadOnlyStencil)
+        {
+            DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+        }
+        else if (bIsReadOnlyDepth)
+        {
+            DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
+        }
+        else if (bIsReadOnlyStencil)
+        {
+            DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+        }
+        else
+        {
+            DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        }
+
         VkAttachmentDescription DepthAttachment = {};
         DepthAttachment.format         = ConvertFormat(Key.DepthStencilFormat);
         DepthAttachment.samples        = SampleCount;
@@ -111,11 +132,11 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         DepthAttachment.storeOp        = ConvertStoreAction(Key.DepthStencilActions.StoreAction);
         DepthAttachment.stencilLoadOp  = DepthAttachment.loadOp;
         DepthAttachment.stencilStoreOp = DepthAttachment.storeOp;
-        DepthAttachment.initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        DepthAttachment.finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        DepthAttachment.initialLayout  = DepthStencilLayout;
+        DepthAttachment.finalLayout    = DepthStencilLayout;
 
         DepthAttachmentRef.attachment = Attachments.Size();
-        DepthAttachmentRef.layout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        DepthAttachmentRef.layout     = DepthStencilLayout;
         Attachments.Add(DepthAttachment);
         
         Subpass.pDepthStencilAttachment = &DepthAttachmentRef;

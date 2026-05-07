@@ -48,7 +48,11 @@ void FD3D12CommandContextState::PrepareGraphicsState()
 
     if (FD3D12DepthStencilViewRHI* DepthStencilView = RenderTargetCache.DepthStencilView)
     {
-        Context.TransitionResourceState(DepthStencilView, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        const D3D12_RESOURCE_STATES DesiredState = DepthStencilView->IsReadOnly()
+            ? D3D12_RESOURCE_STATE_DEPTH_READ
+            : D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
+        Context.TransitionResourceState(DepthStencilView, DesiredState);
     }
 
     for (uint32 i = 0; i < GraphicsState.VertexBufferCache.NumVertexBuffers; i++)

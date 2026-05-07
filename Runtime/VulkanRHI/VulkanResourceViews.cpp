@@ -5,6 +5,7 @@
 #include "VulkanRHI/VulkanDeviceDebug.h"
 #include "VulkanRHI/VulkanRHI.h"
 #include "VulkanRHI/VulkanSwapChain.h"
+#include "RHI/RHIRayTracing.h"
 
 FVulkanResourceView::FVulkanResourceView(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
@@ -21,14 +22,12 @@ FVulkanResourceView::~FVulkanResourceView()
 
     if (Type == EType::ImageView)
     {
-        // Destroy the actual view
         if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
         {
             GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
             vkDestroyImageView(GetDevice()->GetVkDevice(), ImageViewInfo.ImageView, nullptr);
         }
 
-        // Reset the view
         ImageViewInfo.Image            = VK_NULL_HANDLE;
         ImageViewInfo.ImageView        = VK_NULL_HANDLE;
         ImageViewInfo.Format           = VK_FORMAT_UNDEFINED;
@@ -37,26 +36,22 @@ FVulkanResourceView::~FVulkanResourceView()
     }
     else if (Type == EType::TypedBufferView)
     {
-        // Destroy the actual view
         if (VULKAN_CHECK_HANDLE(TypedBufferInfo.BufferView))
         {
             vkDestroyBufferView(GetDevice()->GetVkDevice(), TypedBufferInfo.BufferView, nullptr);
         }
 
-        // Reset the view
         TypedBufferInfo.Buffer     = VK_NULL_HANDLE;
         TypedBufferInfo.BufferView = VK_NULL_HANDLE;
     }
     else if (Type == EType::StructuredBufferView)
     {
-        // Reset the view
         StructuredBufferInfo.Buffer = VK_NULL_HANDLE;
         StructuredBufferInfo.Offset = 0;
         StructuredBufferInfo.Range  = 0;
     }
     else if (Type == EType::AccelerationStructureView)
     {
-        // Reset the view
         AccelerationStructureInfo.AccelerationStructure = VK_NULL_HANDLE;
     }
 }
@@ -126,7 +121,7 @@ bool FVulkanResourceView::InitializeImageView(VkImage InImage, VkFormat InFormat
         return false;
     }
 
-    Type = EType::ImageView;
+    Type                                          = EType::ImageView;
     ImageViewInfo.Image                           = InImage;
     ImageViewInfo.Format                          = InFormat;
     ImageViewInfo.ImageViewType                   = InImageViewType;
@@ -197,7 +192,7 @@ bool FVulkanResourceView::InitializeAccelerationStructureView(VkAccelerationStru
         return false;
     }
 
-    Type = EType::AccelerationStructureView;
+    Type                                            = EType::AccelerationStructureView;
     AccelerationStructureInfo.AccelerationStructure = InAccelerationStructure;
     return true;
 }
@@ -242,7 +237,6 @@ void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* Relocate
         if (Type == EType::ImageView)
         {
             FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
-            
             if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
             {
                 GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
@@ -269,7 +263,6 @@ void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* Relocate
         else if (Type == EType::TypedBufferView)
         {
             FVulkanBufferRHI* VulkanBuffer = static_cast<FVulkanBufferRHI*>(RelocatedResource);
-
             if (VULKAN_CHECK_HANDLE(TypedBufferInfo.BufferView))
             {
                 vkDestroyBufferView(GetDevice()->GetVkDevice(), TypedBufferInfo.BufferView, nullptr);
@@ -282,147 +275,207 @@ void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* Relocate
     }
 }
 
-bool FVulkanShaderResourceViewRHI::Initialize(const FRHIShaderResourceViewDesc& InDesc)
+bool FVulkanShaderResourceViewRHI::Initialize(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc)
 {
     if (InDesc.IsBufferSRV())
     {
-		FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(InDesc.BufferSRV.Buffer);
-		if (!VulkanBuffer)
-		{
-			VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
-			return false;
-		}
+        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
+        if (!VulkanBuffer)
+        {
+            VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
+            return false;
+        }
 
-		const VkBuffer Buffer = VulkanBuffer->GetBindVkBuffer();
+        const auto& BufferDesc = InDesc.Buffer;
+        if (BufferDesc.Type == EBufferViewType::ByteAddress)
+        {
+            const VkFormat     VulkanFormat = VK_FORMAT_R32_UINT;
+            const VkDeviceSize ElementSize  = sizeof(uint32);
+            const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
+            const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
+            const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-		if (InDesc.BufferSRV.Format != EBufferSRVFormat::None)
-		{
-			VkFormat     VulkanFormat = VK_FORMAT_UNDEFINED;
-			VkDeviceSize ElementSize  = 0;
-			if (InDesc.BufferSRV.Format == EBufferSRVFormat::UInt32)
-			{
-				VulkanFormat = VK_FORMAT_R32_UINT;
-				ElementSize  = sizeof(uint32);
-			}
+            if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            const VkDeviceSize Stride     = VulkanBuffer->GetDesc().Stride;
+            const VkDeviceSize ViewOffset = Stride * BufferDesc.FirstElement;
+            const VkDeviceSize Range      = Stride * BufferDesc.NumElements;
+            const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-			const VkDeviceSize ViewOffset = ElementSize * InDesc.BufferSRV.FirstElement;
-			const VkDeviceSize Range      = ElementSize * InDesc.BufferSRV.NumElements;
-			const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
+            if (!InitializeStructuredBufferView(VulkanBuffer->GetBindVkBuffer(), Offset, Range, ViewOffset))
+            {
+                return false;
+            }
+        }
 
-			if (!InitializeTypedBufferView(Buffer, VulkanFormat, Offset, Range))
-			{
-				return false;
-			}
-		}
-		else
-		{
-			const VkDeviceSize Stride     = VulkanBuffer->GetDesc().Stride;
-			const VkDeviceSize ViewOffset = Stride * InDesc.BufferSRV.FirstElement;
-			const VkDeviceSize Range      = Stride * InDesc.BufferSRV.NumElements;
-			const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
-
-			if (!InitializeStructuredBufferView(Buffer, Offset, Range, ViewOffset))
-			{
-				return false;
-			}
-		}
-
-		RegisterToResource(VulkanBuffer);
-		return true;
+        RegisterToResource(VulkanBuffer);
+        return true;
     }
     else if (InDesc.IsTextureSRV())
     {
-		FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InDesc.TextureSRV.Texture);
-		if (!VulkanTexture)
-		{
-			VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
-			return false;
-		}
+        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+        if (!VulkanTexture)
+        {
+            VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
+            return false;
+        }
 
-		if (IsTypelessFormat(InDesc.TextureSRV.Format))
-		{
-			VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
-			return false;
-		}
+        VkImageViewType  VulkanImageType  = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+        EFormat          ViewFormat       = EFormat::Unknown;
+        uint8            FirstMipLevel    = 0;
+        uint8            NumMips          = 1;
+        uint32           BaseArrayLayer   = 0;
+        uint32           LayerCount       = 1;
 
-		VkImageViewType VulkanImageType;
-		switch (VulkanTexture->GetDimension())
-		{
-			case ETextureDimension::Texture1D:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
-				break;
-			}
-			case ETextureDimension::Texture1DArray:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-				break;
-			}
-			case ETextureDimension::Texture2D:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
-				break;
-			}
-			case ETextureDimension::Texture2DArray:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-				break;
-			}
-			case ETextureDimension::TextureCube:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE;
-				break;
-			}
-			case ETextureDimension::TextureCubeArray:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
-				break;
-			}
-			case ETextureDimension::Texture3D:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
-				break;
-			}
-			default:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
-				break;
-			}
-		}
+        switch (InDesc.ViewDimension)
+        {
+            case EViewDimension::Texture1D:
+            {
+                const auto& TextureDesc = InDesc.Texture1D;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
+                ViewFormat      = TextureDesc.Format;
+                FirstMipLevel   = TextureDesc.FirstMipLevel;
+                NumMips         = TextureDesc.NumMips;
+                break;
+            }
 
-		uint32 LayerCount;
-		uint32 BaseArrayLayer;
-		if (IsTextureCube(VulkanTexture->GetDimension()))
-		{
-			BaseArrayLayer = InDesc.TextureSRV.FirstArraySlice * RHI_NUM_CUBE_FACES;
-			LayerCount     = Math::Max<uint16>(InDesc.TextureSRV.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
-		}
-		else
-		{
-			BaseArrayLayer = InDesc.TextureSRV.FirstArraySlice;
-			LayerCount     = Math::Max<uint16>(InDesc.TextureSRV.NumSlices, 1u);
-		}
+            case EViewDimension::Texture1DArray:
+            {
+                const auto& TextureDesc = InDesc.Texture1DArray;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+                ViewFormat      = TextureDesc.Format;
+                FirstMipLevel   = TextureDesc.FirstMipLevel;
+                NumMips         = TextureDesc.NumMips;
+                BaseArrayLayer  = TextureDesc.FirstArraySlice;
+                LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                break;
+            }
 
-		const VkFormat           VulkanFormat     = VulkanTexture->GetVkFormat();
-		const VkImage            Image            = VulkanTexture->GetVkImage();
-		const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+            case EViewDimension::Texture2D:
+            {
+                const auto& TextureDesc = InDesc.Texture2D;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
+                ViewFormat      = TextureDesc.Format;
+                FirstMipLevel   = TextureDesc.FirstMipLevel;
+                NumMips         = TextureDesc.NumMips;
+                break;
+            }
 
-		if (InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.TextureSRV.FirstMipLevel, InDesc.TextureSRV.NumMips))
-		{
-			FString TextureDebugName;
-			VulkanTexture->GetDebugName(TextureDebugName);
-			if (!TextureDebugName.IsEmpty())
-			{
-				SetDebugName(TextureDebugName + " ImageView SRV");
-			}
+            case EViewDimension::Texture2DArray:
+            {
+                const auto& TextureDesc = InDesc.Texture2DArray;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                ViewFormat      = TextureDesc.Format;
+                FirstMipLevel   = TextureDesc.FirstMipLevel;
+                NumMips         = TextureDesc.NumMips;
+                BaseArrayLayer  = TextureDesc.FirstArraySlice;
+                LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                break;
+            }
 
-			RegisterToResource(VulkanTexture);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+            case EViewDimension::TextureCube:
+            {
+                const auto& TextureDesc = InDesc.TextureCube;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE;
+                ViewFormat      = TextureDesc.Format;
+                FirstMipLevel   = TextureDesc.FirstMipLevel;
+                NumMips         = TextureDesc.NumMips;
+                BaseArrayLayer  = 0;
+                LayerCount      = RHI_NUM_CUBE_FACES;
+                break;
+            }
+
+            case EViewDimension::TextureCubeArray:
+            {
+                const auto& TextureDesc = InDesc.TextureCubeArray;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+                ViewFormat      = TextureDesc.Format;
+                FirstMipLevel   = TextureDesc.FirstMipLevel;
+                NumMips         = TextureDesc.NumMips;
+                BaseArrayLayer  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+                LayerCount      = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
+                break;
+            }
+
+            case EViewDimension::Texture3D:
+            {
+                const auto& TextureDesc = InDesc.Texture3D;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
+                ViewFormat      = TextureDesc.Format;
+                FirstMipLevel   = TextureDesc.FirstMipLevel;
+                NumMips         = TextureDesc.NumMips;
+                break;
+            }
+
+            default:
+            {
+                VULKAN_ERROR_CRITICAL("Unsupported texture ViewDimension for SRV");
+                return false;
+            }
+        }
+
+        if (IsTypelessFormat(ViewFormat))
+        {
+            VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
+            return false;
+        }
+
+        const VkImage            Image            = VulkanTexture->GetVkImage();
+        const VkFormat           ImageFormat      = VulkanTexture->GetVkFormat();
+        const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
+        const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+
+        if (ImageFormat != VK_FORMAT_UNDEFINED && ImageFormat != VulkanFormat)
+        {
+            if (!IsFormatInCompatibilityClass(ImageFormat, VulkanFormat))
+            {
+                VULKAN_ERROR_CRITICAL("Cannot create SRV with format '%s' on image with format '%s' (different compatibility class)",
+                    ToString(VulkanFormat), ToString(ImageFormat));
+                return false;
+            }
+
+            if ((VulkanTexture->GetVkImageCreateInfo().flags & VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT) == 0)
+            {
+                VULKAN_ERROR_CRITICAL("Cannot create SRV with format '%s' on non-mutable image with format '%s' (declare the texture as a typeless EFormat to allow cross-format views)",
+                    ToString(VulkanFormat), ToString(ImageFormat));
+                return false;
+            }
+        }
+
+        if (InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, FirstMipLevel, NumMips))
+        {
+            FString TextureDebugName;
+            VulkanTexture->GetDebugName(TextureDebugName);
+
+            if (!TextureDebugName.IsEmpty())
+            {
+                SetDebugName(TextureDebugName + " ImageView SRV");
+            }
+
+            RegisterToResource(VulkanTexture);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else if (InDesc.IsAccelerationStructureSRV())
+    {
+        FRHISceneAccelerationStructure* SceneAS = static_cast<FRHISceneAccelerationStructure*>(InResource);
+        if (!SceneAS)
+        {
+            VULKAN_ERROR_CRITICAL("AccelerationStructure cannot be nullptr");
+            return false;
+        }
+
+        VkAccelerationStructureKHR Handle = reinterpret_cast<VkAccelerationStructureKHR>(SceneAS->GetRHINativeResource());
+        return InitializeAccelerationStructureView(Handle);
     }
     else
     {
@@ -460,7 +513,6 @@ void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* Relocat
         if (Type == EType::ImageView)
         {
             FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
-            
             if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
             {
                 GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
@@ -487,7 +539,6 @@ void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* Relocat
         else if (Type == EType::TypedBufferView)
         {
             FVulkanBufferRHI* VulkanBuffer = static_cast<FVulkanBufferRHI*>(RelocatedResource);
-
             if (VULKAN_CHECK_HANDLE(TypedBufferInfo.BufferView))
             {
                 vkDestroyBufferView(GetDevice()->GetVkDevice(), TypedBufferInfo.BufferView, nullptr);
@@ -500,149 +551,193 @@ void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* Relocat
     }
 }
 
-bool FVulkanUnorderedAccessViewRHI::Initialize(const FRHIUnorderedAccessViewDesc& InDesc)
+bool FVulkanUnorderedAccessViewRHI::Initialize(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc)
 {
-	if (InDesc.IsBufferUAV())
-	{
-		FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(InDesc.BufferUAV.Buffer);
-		if (!VulkanBuffer)
-		{
-			VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
-			return false;
-		}
+    if (InDesc.IsBufferUAV())
+    {
+        FVulkanBufferRHI* VulkanBuffer = FVulkanRHI::ResourceCast(static_cast<FRHIBuffer*>(InResource));
+        if (!VulkanBuffer)
+        {
+            VULKAN_ERROR_CRITICAL("Buffer cannot be nullptr");
+            return false;
+        }
 
-		const VkBuffer Buffer = VulkanBuffer->GetBindVkBuffer();
+        const auto& BufferDesc = InDesc.Buffer;
+        if (BufferDesc.Type == EBufferViewType::ByteAddress)
+        {
+            const VkFormat     VulkanFormat = VK_FORMAT_R32_UINT;
+            const VkDeviceSize ElementSize  = sizeof(uint32);
+            const VkDeviceSize ViewOffset   = ElementSize * BufferDesc.FirstElement;
+            const VkDeviceSize Range        = ElementSize * BufferDesc.NumElements;
+            const VkDeviceSize Offset       = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-		if (InDesc.BufferUAV.Format != EBufferUAVFormat::None)
-		{
-			VkFormat     VulkanFormat = VK_FORMAT_UNDEFINED;
-			VkDeviceSize ElementSize  = 0;
-			if (InDesc.BufferUAV.Format == EBufferUAVFormat::UInt32)
-			{
-				VulkanFormat = VK_FORMAT_R32_UINT;
-				ElementSize  = sizeof(uint32);
-			}
+            if (!InitializeTypedBufferView(VulkanBuffer->GetBindVkBuffer(), VulkanFormat, Offset, Range))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            const VkDeviceSize Stride     = VulkanBuffer->GetDesc().Stride;
+            const VkDeviceSize ViewOffset = Stride * BufferDesc.FirstElement;
+            const VkDeviceSize Range      = Stride * BufferDesc.NumElements;
+            const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
 
-			const VkDeviceSize ViewOffset = ElementSize * InDesc.BufferUAV.FirstElement;
-			const VkDeviceSize Range      = ElementSize * InDesc.BufferUAV.NumElements;
-			const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
+            if (!InitializeStructuredBufferView(VulkanBuffer->GetBindVkBuffer(), Offset, Range, ViewOffset))
+            {
+                return false;
+            }
+        }
 
-			if (!InitializeTypedBufferView(Buffer, VulkanFormat, Offset, Range))
-			{
-				return false;
-			}
-		}
-		else
-		{
-			const VkDeviceSize Stride     = VulkanBuffer->GetDesc().Stride;
-			const VkDeviceSize ViewOffset = Stride * InDesc.BufferUAV.FirstElement;
-			const VkDeviceSize Range      = Stride * InDesc.BufferUAV.NumElements;
-			const VkDeviceSize Offset     = VulkanBuffer->GetBindOffset() + ViewOffset;
+        RegisterToResource(VulkanBuffer);
+        return true;
+    }
+    else if (InDesc.IsTextureUAV())
+    {
+        FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(static_cast<FRHITexture*>(InResource));
+        if (!VulkanTexture)
+        {
+            VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
+            return false;
+        }
 
-			if (!InitializeStructuredBufferView(Buffer, Offset, Range, ViewOffset))
-			{
-				return false;
-			}
-		}
+        VkImageViewType VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+        EFormat         ViewFormat      = EFormat::Unknown;
+        uint8           MipLevel        = 0;
+        uint32          BaseArrayLayer  = 0;
+        uint32          LayerCount      = 1;
 
-		RegisterToResource(VulkanBuffer);
-		return true;
-	}
-	else if (InDesc.IsTextureUAV())
-	{
-		FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InDesc.TextureUAV.Texture);
-		if (!VulkanTexture)
-		{
-			VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
-			return false;
-		}
+        switch (InDesc.ViewDimension)
+        {
+            case EViewDimension::Texture1D:
+            {
+                const auto& TextureDesc = InDesc.Texture1D;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
+                ViewFormat      = TextureDesc.Format;
+                MipLevel        = TextureDesc.MipLevel;
+                break;
+            }
 
-		if (IsTypelessFormat(InDesc.TextureUAV.Format))
-		{
-			VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
-			return false;
-		}
+            case EViewDimension::Texture1DArray:
+            {
+                const auto& TextureDesc = InDesc.Texture1DArray;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+                ViewFormat      = TextureDesc.Format;
+                MipLevel        = TextureDesc.MipLevel;
+                BaseArrayLayer  = TextureDesc.FirstArraySlice;
+                LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                break;
+            }
 
-		VkImageViewType VulkanImageType;
-		switch (VulkanTexture->GetDimension())
-		{
-			case ETextureDimension::Texture1D:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
-				break;
-			}
-			
-			case ETextureDimension::Texture1DArray:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-				break;
-			}
-			
-			case ETextureDimension::Texture2D:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
-				break;
-			}
-			
-			case ETextureDimension::Texture2DArray:
-			case ETextureDimension::TextureCube:
-			case ETextureDimension::TextureCubeArray:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-				break;
-			}
-			
-			case ETextureDimension::Texture3D:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
-				break;
-			}
+            case EViewDimension::Texture2D:
+            {
+                const auto& TextureDesc = InDesc.Texture2D;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
+                ViewFormat      = TextureDesc.Format;
+                MipLevel        = TextureDesc.MipLevel;
+                break;
+            }
 
-			default:
-			{
-				VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
-				break;
-			}
-		}
+            case EViewDimension::Texture2DArray:
+            {
+                const auto& TextureDesc = InDesc.Texture2DArray;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                ViewFormat      = TextureDesc.Format;
+                MipLevel        = TextureDesc.MipLevel;
+                BaseArrayLayer  = TextureDesc.FirstArraySlice;
+                LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
+                break;
+            }
 
-		uint32 LayerCount;
-		uint32 BaseArrayLayer;
-		if (IsTextureCube(VulkanTexture->GetDimension()))
-		{
-			BaseArrayLayer = InDesc.TextureUAV.FirstArraySlice * RHI_NUM_CUBE_FACES;
-			LayerCount     = Math::Max<uint16>(InDesc.TextureUAV.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
-		}
-		else
-		{
-			BaseArrayLayer = InDesc.TextureUAV.FirstArraySlice;
-			LayerCount     = Math::Max<uint16>(InDesc.TextureUAV.NumSlices, 1u);
-		}
+            case EViewDimension::TextureCube:
+            {
+                const auto& TextureDesc = InDesc.TextureCube;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                ViewFormat      = TextureDesc.Format;
+                MipLevel        = TextureDesc.MipLevel;
+                BaseArrayLayer  = 0;
+                LayerCount      = RHI_NUM_CUBE_FACES;
+                break;
+            }
 
-		const VkFormat           VulkanFormat     = VulkanTexture->GetVkFormat();
-		const VkImage            Image            = VulkanTexture->GetVkImage();
-		const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+            case EViewDimension::TextureCubeArray:
+            {
+                const auto& TextureDesc = InDesc.TextureCubeArray;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+                ViewFormat      = TextureDesc.Format;
+                MipLevel        = TextureDesc.MipLevel;
+                BaseArrayLayer  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+                LayerCount      = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
+                break;
+            }
 
-		if (InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.TextureUAV.MipLevel, 1u))
-		{
-			FString TextureDebugName;
-			VulkanTexture->GetDebugName(TextureDebugName);
-			if (!TextureDebugName.IsEmpty())
-			{
-				SetDebugName(TextureDebugName + " ImageView UAV");
-			}
+            case EViewDimension::Texture3D:
+            {
+                const auto& TextureDesc = InDesc.Texture3D;
+                VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
+                ViewFormat      = TextureDesc.Format;
+                MipLevel        = TextureDesc.MipLevel;
+                BaseArrayLayer  = TextureDesc.FirstWSlice;
+                LayerCount      = Math::Max<uint16>(TextureDesc.WSize, 1u);
+                break;
+            }
 
-			RegisterToResource(VulkanTexture);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
+            default:
+            {
+                VULKAN_ERROR_CRITICAL("Unsupported texture ViewDimension for UAV");
+                return false;
+            }
+        }
+
+        if (IsTypelessFormat(ViewFormat))
+        {
+            VULKAN_ERROR_CRITICAL("Cannot create a view of a typeless format");
+            return false;
+        }
+
+        const VkImage            Image            = VulkanTexture->GetVkImage();
+        const VkFormat           ImageFormat      = VulkanTexture->GetVkFormat();
+        const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
+        const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+
+        if (ImageFormat != VK_FORMAT_UNDEFINED && ImageFormat != VulkanFormat)
+        {
+            if (!IsFormatInCompatibilityClass(ImageFormat, VulkanFormat))
+            {
+                VULKAN_ERROR_CRITICAL("Cannot create UAV with format '%s' on image with format '%s' (different compatibility class)",
+                    ToString(VulkanFormat), ToString(ImageFormat));
+                return false;
+            }
+
+            if ((VulkanTexture->GetVkImageCreateInfo().flags & VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT) == 0)
+            {
+                VULKAN_ERROR_CRITICAL("Cannot create UAV with format '%s' on non-mutable image with format '%s' (declare the texture as a typeless EFormat to allow cross-format views)",
+                    ToString(VulkanFormat), ToString(ImageFormat));
+                return false;
+            }
+        }
+
+        if (InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, MipLevel, 1u))
+        {
+            FString TextureDebugName;
+            VulkanTexture->GetDebugName(TextureDebugName);
+            if (!TextureDebugName.IsEmpty())
+            {
+                SetDebugName(TextureDebugName + " ImageView UAV");
+            }
+
+            RegisterToResource(VulkanTexture);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 }
 
 FVulkanRenderTargetViewRHI::FVulkanRenderTargetViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
@@ -685,13 +780,14 @@ void FVulkanRenderTargetViewRHI::OnResourceRelocated(FVulkanResource* RelocatedR
             ImageViewInfo.SubresourceRange.layerCount,
             ImageViewInfo.SubresourceRange.baseMipLevel,
             ImageViewInfo.SubresourceRange.levelCount);
+
         IncrementDescriptorVersion();
     }
 }
 
-bool FVulkanRenderTargetViewRHI::Initialize(const FRHIRenderTargetViewDesc& InDesc)
+bool FVulkanRenderTargetViewRHI::Initialize(FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc)
 {
-    FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InDesc.Texture);
+    FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InTexture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
@@ -705,62 +801,105 @@ bool FVulkanRenderTargetViewRHI::Initialize(const FRHIRenderTargetViewDesc& InDe
         return false;
     }
 
-    VkImageViewType VulkanImageType;
-    switch (VulkanTexture->GetDimension())
+    VkImageViewType VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+    EFormat         ViewFormat      = EFormat::Unknown;
+    uint8           MipLevel        = 0;
+    uint32          BaseArrayLayer  = 0;
+    uint32          LayerCount      = 1;
+
+    switch (InDesc.ViewDimension)
     {
-        case ETextureDimension::Texture1D:
+        case EViewDimension::Texture1D:
         {
+            const auto& TextureDesc = InDesc.Texture1D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
             break;
         }
 
-        case ETextureDimension::Texture1DArray:
+        case EViewDimension::Texture1DArray:
         {
+            const auto& TextureDesc = InDesc.Texture1DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = TextureDesc.FirstArraySlice;
+            LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
             break;
         }
 
-        case ETextureDimension::Texture2D:
+        case EViewDimension::Texture2D:
         {
+            const auto& TextureDesc = InDesc.Texture2D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
             break;
         }
 
-        case ETextureDimension::Texture2DArray:
-        case ETextureDimension::TextureCube:
-        case ETextureDimension::TextureCubeArray:
+        case EViewDimension::Texture2DArray:
         {
+            const auto& TextureDesc = InDesc.Texture2DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = TextureDesc.FirstArraySlice;
+            LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
             break;
         }
 
-        case ETextureDimension::Texture3D:
+        case EViewDimension::TextureCube:
         {
+            const auto& TextureDesc = InDesc.TextureCube;
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = 0;
+            LayerCount      = RHI_NUM_CUBE_FACES;
+            break;
+        }
+
+        case EViewDimension::TextureCubeArray:
+        {
+            const auto& TextureDesc = InDesc.TextureCubeArray;
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+            LayerCount      = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
+            break;
+        }
+
+        case EViewDimension::Texture3D:
+        {
+            const auto& TextureDesc = InDesc.Texture3D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = TextureDesc.FirstWSlice;
+            LayerCount      = Math::Max<uint16>(TextureDesc.WSize, 1u);
             break;
         }
 
         default:
         {
-            VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
-            break;
+            VULKAN_ERROR_CRITICAL("Unsupported ViewDimension for RTV");
+            return false;
         }
     }
 
-    const VkFormat           VulkanFormat     = ConvertFormat(InDesc.Format);
+    const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
     const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
 
-    constexpr uint32 NumMipLevels = 1;
-    const uint32 LayerCount       = Math::Max<uint16>(InDesc.NumArraySlices, 1u);
-    const uint32 BaseArrayLayer   = InDesc.ArrayIndex;
-
-    if (!InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.MipLevel, NumMipLevels))
+    if (!InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, MipLevel, /*NumMips=*/1u))
     {
         return false;
     }
 
     FString TextureDebugName;
     VulkanTexture->GetDebugName(TextureDebugName);
+
     if (!TextureDebugName.IsEmpty())
     {
         SetDebugName(TextureDebugName + " ImageView RTV");
@@ -773,6 +912,8 @@ bool FVulkanRenderTargetViewRHI::Initialize(const FRHIRenderTargetViewDesc& InDe
 FVulkanDepthStencilViewRHI::FVulkanDepthStencilViewRHI(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIDepthStencilView(InResource)
     , FVulkanResourceView(InDevice)
+    , Flags(EDepthStencilViewFlags::None)
+    , bHasStencil(false)
 {
 }
 
@@ -805,18 +946,22 @@ void FVulkanDepthStencilViewRHI::OnResourceRelocated(FVulkanResource* RelocatedR
             ImageViewInfo.SubresourceRange.layerCount,
             ImageViewInfo.SubresourceRange.baseMipLevel,
             ImageViewInfo.SubresourceRange.levelCount);
+
         IncrementDescriptorVersion();
     }
 }
 
-bool FVulkanDepthStencilViewRHI::Initialize(const FRHIDepthStencilViewDesc& InDesc)
+bool FVulkanDepthStencilViewRHI::Initialize(FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc)
 {
-    FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InDesc.Texture);
+    FVulkanTextureRHI* VulkanTexture = FVulkanRHI::ResourceCast(InTexture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR_CRITICAL("Texture cannot be nullptr");
         return false;
     }
+
+    Flags       = InDesc.Flags;
+    bHasStencil = InDesc.HasStencilFormat();
 
     const VkImage Image = VulkanTexture->GetVkImage();
     if (!VULKAN_CHECK_HANDLE(Image))
@@ -825,56 +970,87 @@ bool FVulkanDepthStencilViewRHI::Initialize(const FRHIDepthStencilViewDesc& InDe
         return false;
     }
 
-    VkImageViewType VulkanImageType;
-    switch (VulkanTexture->GetDimension())
+    VkImageViewType VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+    EFormat         ViewFormat      = EFormat::Unknown;
+    uint8           MipLevel        = 0;
+    uint32          BaseArrayLayer  = 0;
+    uint32          LayerCount      = 1;
+
+    switch (InDesc.ViewDimension)
     {
-        case ETextureDimension::Texture1D:
+        case EViewDimension::Texture1D:
         {
+            const auto& TextureDesc = InDesc.Texture1D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
             break;
         }
-
-        case ETextureDimension::Texture1DArray:
+        
+        case EViewDimension::Texture1DArray:
         {
+            const auto& TextureDesc = InDesc.Texture1DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = TextureDesc.FirstArraySlice;
+            LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
             break;
         }
 
-        case ETextureDimension::Texture2D:
+        case EViewDimension::Texture2D:
         {
+            const auto& TextureDesc = InDesc.Texture2D;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
             break;
         }
 
-        case ETextureDimension::Texture2DArray:
-        case ETextureDimension::TextureCube:
-        case ETextureDimension::TextureCubeArray:
+        case EViewDimension::Texture2DArray:
         {
+            const auto& TextureDesc = InDesc.Texture2DArray;
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = TextureDesc.FirstArraySlice;
+            LayerCount      = Math::Max<uint16>(TextureDesc.NumSlices, 1u);
             break;
         }
 
-        case ETextureDimension::Texture3D:
+        case EViewDimension::TextureCube:
         {
-            VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
+            const auto& TextureDesc = InDesc.TextureCube;
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = 0;
+            LayerCount      = RHI_NUM_CUBE_FACES;
+            break;
+        }
+        
+        case EViewDimension::TextureCubeArray:
+        {
+            const auto& TextureDesc = InDesc.TextureCubeArray;
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            ViewFormat      = TextureDesc.Format;
+            MipLevel        = TextureDesc.MipLevel;
+            BaseArrayLayer  = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, TextureDesc.FirstCube);
+            LayerCount      = RHICubesToArrayLayers(ETextureDimension::TextureCubeArray, Math::Max<uint16>(TextureDesc.NumCubes, 1u));
             break;
         }
 
         default:
         {
-            VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
-            break;
+            VULKAN_ERROR_CRITICAL("Unsupported ViewDimension for DSV");
+            return false;
         }
     }
 
-    const VkFormat           VulkanFormat     = ConvertFormat(InDesc.Format);
+    const VkFormat           VulkanFormat     = ConvertFormat(ViewFormat);
     const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
 
-    constexpr uint32 NumMipLevels = 1;
-    const uint32 LayerCount       = Math::Max<uint16>(InDesc.NumArraySlices, 1u);
-    const uint32 BaseArrayLayer   = InDesc.ArrayIndex;
-
-    if (!InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.MipLevel, NumMipLevels))
+    if (!InitializeImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, MipLevel, /*NumMips=*/1u))
     {
         return false;
     }

@@ -86,11 +86,21 @@ void FD3D12ConstantBufferView::OnResourceRelocated(FD3D12ResourceBase* Relocated
         D3D12_CONSTANT_BUFFER_VIEW_DESC NewDesc = Desc;
         NewDesc.BufferLocation = NewResourceStorage->GetGPUVirtualAddress();
 
-        CreateView(NewResourceStorage->GetResource(), NewDesc);
+        UpdateView(NewResourceStorage->GetResource(), NewDesc);
     }
 }
 
-bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
+bool FD3D12ConstantBufferView::Initialize(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
+{
+    if (!AllocateHandle())
+    {
+        return false;
+    }
+
+    return UpdateView(InResource, InDesc);
+}
+
+bool FD3D12ConstantBufferView::UpdateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
@@ -131,11 +141,21 @@ void FD3D12ShaderResourceViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloca
 
     if (NewResourceStorage)
     {
-        CreateView(NewResourceStorage->GetResource(), Desc);
+        UpdateView(NewResourceStorage->GetResource(), Desc);
     }
 }
 
-bool FD3D12ShaderResourceViewRHI::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
+bool FD3D12ShaderResourceViewRHI::Initialize(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
+{
+    if (!AllocateHandle())
+    {
+        return false;
+    }
+
+    return UpdateView(InResource, InDesc);
+}
+
+bool FD3D12ShaderResourceViewRHI::UpdateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
@@ -189,11 +209,21 @@ void FD3D12UnorderedAccessViewRHI::OnResourceRelocated(FD3D12ResourceBase* Reloc
 
     if (NewResourceStorage)
     {
-        CreateView(CounterResource.Get(), NewResourceStorage->GetResource(), Desc);
+        UpdateView(CounterResource.Get(), NewResourceStorage->GetResource(), Desc);
     }
 }
 
-bool FD3D12UnorderedAccessViewRHI::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
+bool FD3D12UnorderedAccessViewRHI::Initialize(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
+{
+    if (!AllocateHandle())
+    {
+        return false;
+    }
+
+    return UpdateView(InCounterResource, InResource, InDesc);
+}
+
+bool FD3D12UnorderedAccessViewRHI::UpdateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
@@ -248,11 +278,21 @@ void FD3D12RenderTargetViewRHI::OnResourceRelocated(FD3D12ResourceBase* Relocate
 
     if (NewResourceStorage)
     {
-        CreateView(NewResourceStorage->GetResource(), Desc);
+        UpdateView(NewResourceStorage->GetResource(), Desc);
     }
 }
 
-bool FD3D12RenderTargetViewRHI::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
+bool FD3D12RenderTargetViewRHI::Initialize(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
+{
+    if (!AllocateHandle())
+    {
+        return false;
+    }
+
+    return UpdateView(InResource, InDesc);
+}
+
+bool FD3D12RenderTargetViewRHI::UpdateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
@@ -280,6 +320,7 @@ FD3D12DepthStencilViewRHI::FD3D12DepthStencilViewRHI(FD3D12Device* InDevice, FD3
     : FRHIDepthStencilView(InResource)
     , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
+    , bHasStencil(false)
 {
     CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
@@ -295,11 +336,21 @@ void FD3D12DepthStencilViewRHI::OnResourceRelocated(FD3D12ResourceBase* Relocate
 
     if (NewResourceStorage)
     {
-        CreateView(NewResourceStorage->GetResource(), Desc);
+        UpdateView(NewResourceStorage->GetResource(), Desc);
     }
 }
 
-bool FD3D12DepthStencilViewRHI::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+bool FD3D12DepthStencilViewRHI::Initialize(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
+{
+    if (!AllocateHandle())
+    {
+        return false;
+    }
+    
+    return UpdateView(InResource, InDesc);
+}
+
+bool FD3D12DepthStencilViewRHI::UpdateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
     if (!Descriptor)
     {
@@ -308,8 +359,9 @@ bool FD3D12DepthStencilViewRHI::CreateView(FD3D12Resource* InResource, const D3D
     }
 
     Desc         = InDesc;
+    bHasStencil  = IsStencilFormat(InDesc.Format);
     ViewResource = MakeSharedRef<FD3D12Resource>(InResource);
-    
+
     ID3D12Resource* D3DResource = nullptr;
     if (ViewResource)
     {

@@ -84,6 +84,25 @@
         do { } while(false)
 #endif
 
+#if D3D12_ENABLE_RESOURCE_STATE_LOGGING
+    #define D3D12_LOG_TRANSITION_MISMATCH(InTexture, InContext, InEngineBeforeState, InD3D12BeforeState, InD3D12AfterState, InCurrentState) \
+        do \
+        { \
+            FString TransitionDebugName; \
+            (InTexture)->GetDebugName(TransitionDebugName); \
+            D3D12_ERROR( \
+                "TransitionTextureState mismatch on '%s' [%s]: " \
+                "engine BeforeState=%s, D3D12 BeforeState=%s, AfterState=%s, CurrentState=%s", \
+                *TransitionDebugName, \
+                (InContext), \
+                ToString(InEngineBeforeState), \
+                ToString(InD3D12BeforeState), \
+                ToString(InD3D12AfterState), \
+                ToString(InCurrentState)); \
+        } while (false)
+#else
+    #define D3D12_LOG_TRANSITION_MISMATCH(InTexture, InContext, InEngineBeforeState, InD3D12BeforeState, InD3D12AfterState, InCurrentState) ((void)0)
+#endif
 
 void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
 
@@ -441,7 +460,7 @@ constexpr const CHAR* ToString(DXGI_FORMAT Format)
     }
 }
 
-NODISCARD constexpr bool FormatHasStencil(DXGI_FORMAT Format)
+NODISCARD constexpr bool IsStencilFormat(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -701,14 +720,17 @@ NODISCARD constexpr uint8 ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlag
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_RED;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Green))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_GREEN;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Blue))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_BLUE;
         }
+
         if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Alpha))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_ALPHA;
@@ -932,7 +954,7 @@ NODISCARD constexpr D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFla
 }
 
 
-constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
+NODISCARD constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -1032,7 +1054,7 @@ constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
     }
 }
 
-constexpr bool IsFormatCompressed(DXGI_FORMAT Format)
+NODISCARD constexpr bool IsFormatCompressed(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -1063,7 +1085,7 @@ constexpr bool IsFormatCompressed(DXGI_FORMAT Format)
     }
 }
 
-constexpr uint32 GetBitsPerPixel(DXGI_FORMAT Format)
+NODISCARD constexpr uint32 GetBitsPerPixel(DXGI_FORMAT Format)
 {
     if (IsFormatCompressed(Format))
     {
@@ -1085,7 +1107,7 @@ constexpr uint32 GetBitsPerPixel(DXGI_FORMAT Format)
     return BytesPerTexel ? (BytesPerTexel * 8u) : 0u;
 }
 
-constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
+NODISCARD constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -1101,8 +1123,7 @@ constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
         case DXGI_FORMAT_R10G10B10A2_TYPELESS: return DXGI_FORMAT_R10G10B10A2_UNORM;
         case DXGI_FORMAT_R8G8B8A8_TYPELESS:    return DXGI_FORMAT_R8G8B8A8_UNORM;
         case DXGI_FORMAT_B8G8R8A8_TYPELESS:    return DXGI_FORMAT_B8G8R8A8_UNORM;
-
-        case DXGI_FORMAT_R16G16_TYPELESS: return DXGI_FORMAT_R16G16_FLOAT;
+        case DXGI_FORMAT_R16G16_TYPELESS:      return DXGI_FORMAT_R16G16_FLOAT;
 
         case DXGI_FORMAT_R32_TYPELESS:
         case DXGI_FORMAT_D32_FLOAT:
@@ -1113,12 +1134,9 @@ constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
             return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 
         case DXGI_FORMAT_R8G8_TYPELESS: return DXGI_FORMAT_R8G8_UNORM;
-
-        case DXGI_FORMAT_R16_TYPELESS: return DXGI_FORMAT_R16_FLOAT;
-        case DXGI_FORMAT_D16_UNORM:    return DXGI_FORMAT_R16_UNORM;
-
-        case DXGI_FORMAT_R8_TYPELESS: return DXGI_FORMAT_R8_UNORM;
-
+        case DXGI_FORMAT_R16_TYPELESS:  return DXGI_FORMAT_R16_FLOAT;
+        case DXGI_FORMAT_D16_UNORM:     return DXGI_FORMAT_R16_UNORM;
+        case DXGI_FORMAT_R8_TYPELESS:   return DXGI_FORMAT_R8_UNORM;
         case DXGI_FORMAT_BC1_TYPELESS:  return DXGI_FORMAT_BC1_UNORM;
         case DXGI_FORMAT_BC2_TYPELESS:  return DXGI_FORMAT_BC2_UNORM;
         case DXGI_FORMAT_BC3_TYPELESS:  return DXGI_FORMAT_BC3_UNORM;
@@ -1127,7 +1145,60 @@ constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
         case DXGI_FORMAT_BC6H_TYPELESS: return DXGI_FORMAT_BC6H_UF16;
         case DXGI_FORMAT_BC7_TYPELESS:  return DXGI_FORMAT_BC7_UNORM;
 
-        default: return Format;
+        default: 
+            return Format;
+    }
+}
+
+NODISCARD constexpr DXGI_FORMAT D3D12CastUnorderedAccessFormat(DXGI_FORMAT Format)
+{
+    switch (Format)
+    {
+        case DXGI_FORMAT_R32G32B32A32_TYPELESS: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case DXGI_FORMAT_R32G32B32_TYPELESS:    return DXGI_FORMAT_R32G32B32_FLOAT;
+        case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+        case DXGI_FORMAT_R32G32_TYPELESS:       return DXGI_FORMAT_R32G32_FLOAT;
+        case DXGI_FORMAT_R10G10B10A2_TYPELESS:  return DXGI_FORMAT_R10G10B10A2_UNORM;
+        case DXGI_FORMAT_R8G8B8A8_TYPELESS:     return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case DXGI_FORMAT_B8G8R8A8_TYPELESS:     return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_FLOAT;
+        case DXGI_FORMAT_R32_TYPELESS:          return DXGI_FORMAT_R32_FLOAT;
+        case DXGI_FORMAT_R8G8_TYPELESS:         return DXGI_FORMAT_R8G8_UNORM;
+        case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_FLOAT;
+        case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
+        default:                                return Format;
+    }
+}
+
+NODISCARD constexpr DXGI_FORMAT D3D12CastRenderTargetFormat(DXGI_FORMAT Format)
+{
+    switch (Format)
+    {
+        case DXGI_FORMAT_R32G32B32A32_TYPELESS: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case DXGI_FORMAT_R32G32B32_TYPELESS:    return DXGI_FORMAT_R32G32B32_FLOAT;
+        case DXGI_FORMAT_R16G16B16A16_TYPELESS: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+        case DXGI_FORMAT_R32G32_TYPELESS:       return DXGI_FORMAT_R32G32_FLOAT;
+        case DXGI_FORMAT_R10G10B10A2_TYPELESS:  return DXGI_FORMAT_R10G10B10A2_UNORM;
+        case DXGI_FORMAT_R8G8B8A8_TYPELESS:     return DXGI_FORMAT_R8G8B8A8_UNORM;
+        case DXGI_FORMAT_B8G8R8A8_TYPELESS:     return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case DXGI_FORMAT_R16G16_TYPELESS:       return DXGI_FORMAT_R16G16_FLOAT;
+        case DXGI_FORMAT_R32_TYPELESS:          return DXGI_FORMAT_R32_FLOAT;
+        case DXGI_FORMAT_R8G8_TYPELESS:         return DXGI_FORMAT_R8G8_UNORM;
+        case DXGI_FORMAT_R16_TYPELESS:          return DXGI_FORMAT_R16_FLOAT;
+        case DXGI_FORMAT_R8_TYPELESS:           return DXGI_FORMAT_R8_UNORM;
+        default:                                return Format;
+    }
+}
+
+NODISCARD constexpr DXGI_FORMAT D3D12CastDepthStencilFormat(DXGI_FORMAT Format)
+{
+    switch (Format)
+    {
+        case DXGI_FORMAT_R32G8X24_TYPELESS: return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+        case DXGI_FORMAT_R32_TYPELESS:      return DXGI_FORMAT_D32_FLOAT;
+        case DXGI_FORMAT_R24G8_TYPELESS:    return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        case DXGI_FORMAT_R16_TYPELESS:      return DXGI_FORMAT_D16_UNORM;
+        default:                            return Format;
     }
 }
 
@@ -1424,14 +1495,3 @@ NODISCARD constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint
     return MipLevels * ArraySize * PlaneCount;
 }
 
-NODISCARD constexpr uint32 D3D12CalculateArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
-{
-    if (IsTextureCube(Dimension))
-    {
-        return NumArraySlices * RHI_NUM_CUBE_FACES;
-    }
-    else
-    {
-        return NumArraySlices;
-    }
-}

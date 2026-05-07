@@ -59,7 +59,8 @@ enum EVulkanBindingType : uint8
     VulkanBindingType_TexelBufferRead,
     VulkanBindingType_TexelBufferReadWrite,
     VulkanBindingType_ImmutableSampler,
-    VulkanBindingType_Count = VulkanBindingType_ImmutableSampler + 1,
+    VulkanBindingType_AccelerationStructure,
+    VulkanBindingType_Count = VulkanBindingType_AccelerationStructure + 1,
 };
 
 inline const CHAR* ToString(EVulkanBindingType Binding)
@@ -76,6 +77,7 @@ inline const CHAR* ToString(EVulkanBindingType Binding)
         "TexelBufferRead",
         "TexelBufferReadWrite",
         "ImmutableSampler",
+        "AccelerationStructure",
     };
     
     static_assert(ARRAY_COUNT(BindingTypeStrings) == VulkanBindingType_Count, "BindingTypeStrings is out of date");
@@ -107,6 +109,8 @@ inline VkDescriptorType GetDescriptorTypeFromBindingType(EVulkanBindingType Bind
         VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
         // Immutable Sampler (baked into layout, no descriptor write needed)
         VK_DESCRIPTOR_TYPE_SAMPLER,
+        // RaytracingAccelerationStructure (TLAS bound via VkWriteDescriptorSetAccelerationStructureKHR)
+        VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR,
     };
 
     static_assert(ARRAY_COUNT(DescriptorTypes) == VulkanBindingType_Count, "The DescriptorTypes array is out of date");

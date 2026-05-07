@@ -151,8 +151,8 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
 
     SelectedIDsBuffer->SetDebugName("SelectedIDs Buffer");
 
-    FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBufferSRV(SelectedIDsBuffer.Get(), 0, MaxSelectedIDs);
-    SelectedIDsSRV = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+    const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, MaxSelectedIDs);
+    SelectedIDsSRV = FRHI::Get()->CreateShaderResourceView(SelectedIDsBuffer.Get(), SRVDesc);
     if (!SelectedIDsSRV)
     {
         return false;

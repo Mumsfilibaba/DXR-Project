@@ -287,7 +287,8 @@ bool FD3D12SwapChainRHI::Initialize(FD3D12CommandContext* InCommandContext)
         
         if ((SupportFlags & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) == 0)
         {
-            D3D12_ERROR("[FD3D12SwapChainRHI]: Requested (%s, %s) combination not supported on this output; aborting.", ToString(ResolvedFormat), ToString(ResolvedColorSpace));
+            D3D12_ERROR("[FD3D12SwapChainRHI]: Requested (%s, %s) combination not supported on this output; aborting.", 
+                ToString(ResolvedFormat), ToString(ResolvedColorSpace));
             return false;
         }
 
@@ -365,7 +366,6 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
         }
 
         const DXGI_FORMAT ResizeDXGIFormat = bFormatChanged ? ConvertFormat(EffectiveFormat) : DXGI_FORMAT_UNKNOWN;
-
         HRESULT Result = SwapChain->ResizeBuffers(DesiredBackBufferCount, ResolvedWidth, ResolvedHeight, ResizeDXGIFormat, Flags);
         if (SUCCEEDED(Result))
         {
@@ -406,8 +406,8 @@ bool FD3D12SwapChainRHI::Resize(FD3D12CommandContext* InCommandContext, uint32 I
             return false;
         }
 
-        CurrentColorSpace = EffectiveColorSpace;
         Desc.ColorSpace   = EffectiveColorSpace;
+        CurrentColorSpace = EffectiveColorSpace;
 
         D3D12_INFO("[FD3D12SwapChainRHI]: Color space changed to %s", ToString(EffectiveColorSpace));
     }
@@ -658,30 +658,42 @@ bool FD3D12SwapChainRHI::RetrieveBackBuffers()
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
+        FD3D12TextureRHI* BackBufferTexture = BackBuffers[Index].Texture.Get();
+
         if (Desc.IsRenderTarget())
         {
-            FRHIRenderTargetViewDesc RTVDesc(BackBuffers[Index].Texture.Get());
-            FRHIRenderTargetView*    RenderTargetView = FD3D12RHI::Get()->CreateRenderTargetView(RTVDesc);
-            if (!RenderTargetView)
+            D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
+            RTVDesc.Format               = ConvertFormat(GetColorFormat());
+            RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+            RTVDesc.Texture2D.MipSlice   = 0;
+            RTVDesc.Texture2D.PlaneSlice = 0;
+
+            FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), BackBufferTexture);
+            if (!NewRTV->Initialize(BackBufferTexture->GetResource(), RTVDesc))
             {
                 D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer RTV for index %u", Index);
                 return false;
             }
 
-            BackBuffers[Index].RenderTargetView = FD3D12RenderTargetViewRHIRef(FD3D12RHI::ResourceCast(RenderTargetView));
+            BackBuffers[Index].RenderTargetView = NewRTV;
         }
 
         if (Desc.IsUnorderedAccess())
         {
-            const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureUAV(BackBuffers[Index].Texture.Get(), GetColorFormat(), 0, 0, 1);
-            FRHIUnorderedAccessView* UnorderedAccessView = FD3D12RHI::Get()->CreateUnorderedAccessView(UAVDesc);
-            if (!UnorderedAccessView)
+            D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
+            UAVDesc.Format                = ConvertFormat(GetColorFormat());
+            UAVDesc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE2D;
+            UAVDesc.Texture2D.MipSlice    = 0;
+            UAVDesc.Texture2D.PlaneSlice  = 0;
+
+            FD3D12UnorderedAccessViewRHIRef NewUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), BackBufferTexture);
+            if (!NewUAV->Initialize(nullptr, BackBufferTexture->GetResource(), UAVDesc))
             {
                 D3D12_ERROR("[FD3D12SwapChainRHI]: Failed to create back-buffer UAV for index %u", Index);
                 return false;
             }
 
-            BackBuffers[Index].UnorderedAccessView = FD3D12UnorderedAccessViewRHIRef(FD3D12RHI::ResourceCast(UnorderedAccessView));
+            BackBuffers[Index].UnorderedAccessView = NewUAV;
         }
     }
 

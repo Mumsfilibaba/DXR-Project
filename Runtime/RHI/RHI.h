@@ -147,32 +147,36 @@ public:
     virtual FRHIGeometryAccelerationStructure* CreateGeometryAccelerationStructure(const FRHIGeometryAccelerationStructureDesc& InGeometryDesc) = 0;
 
     /**
-     * @brief Creates a new shader resource view for a texture.
-     * @param InDesc Structure containing information about the shader resource view.
+     * @brief Creates a new shader resource view for a buffer or texture.
+     * @param InResource Resource to create the view for. Buffer views require an FRHIBuffer; texture views require an FRHITexture.
+     * @param InDesc Structure containing information about the shader resource view (must have an explicit EViewDimension).
      * @return The newly created shader resource view.
      */
-    virtual FRHIShaderResourceView* CreateShaderResourceView(const FRHIShaderResourceViewDesc& InDesc) = 0;
+    virtual FRHIShaderResourceView* CreateShaderResourceView(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc) = 0;
 
     /**
-     * @brief Creates a new unordered access view for a texture.
-     * @param InDesc Structure containing information about the unordered access view.
+     * @brief Creates a new unordered access view for a buffer or texture.
+     * @param InResource Resource to create the view for. Buffer views require an FRHIBuffer; texture views require an FRHITexture.
+     * @param InDesc Structure containing information about the unordered access view (must have an explicit EViewDimension).
      * @return The newly created unordered access view.
      */
-    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(const FRHIUnorderedAccessViewDesc& InDesc) = 0;
+    virtual FRHIUnorderedAccessView* CreateUnorderedAccessView(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new render target view for a texture.
-     * @param InDesc Structure containing information about the render target view.
+     * @param InResource Texture to create the view for.
+     * @param InDesc Structure containing information about the render target view (must have an explicit EViewDimension).
      * @return The newly created render target view.
      */
-    virtual FRHIRenderTargetView* CreateRenderTargetView(const FRHIRenderTargetViewDesc& InDesc) = 0;
+    virtual FRHIRenderTargetView* CreateRenderTargetView(FRHIResource* InResource, const FRHIRenderTargetViewDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new depth-stencil view for a texture.
-     * @param InDesc Structure containing information about the depth-stencil view.
+     * @param InResource Texture to create the view for.
+     * @param InDesc Structure containing information about the depth-stencil view (must have an explicit EViewDimension).
      * @return The newly created depth-stencil view.
      */
-    virtual FRHIDepthStencilView* CreateDepthStencilView(const FRHIDepthStencilViewDesc& InDesc) = 0;
+    virtual FRHIDepthStencilView* CreateDepthStencilView(FRHIResource* InResource, const FRHIDepthStencilViewDesc& InDesc) = 0;
 
     /**
      * @brief Creates a new compute shader.

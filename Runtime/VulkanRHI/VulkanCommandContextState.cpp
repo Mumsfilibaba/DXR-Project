@@ -310,10 +310,13 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
 
     if (FVulkanResourceView* DepthView = RenderTargetState.DepthStencilView)
     {
-        FVulkanTextureRHI* Texture = static_cast<FVulkanTextureRHI*>(DepthView->GetOwnerResource());
+        FVulkanTextureRHI*                Texture          = static_cast<FVulkanTextureRHI*>(DepthView->GetOwnerResource());
+        const FVulkanDepthStencilViewRHI* DepthStencilView = static_cast<const FVulkanDepthStencilViewRHI*>(DepthView);
+
         RenderPassKey.DepthStencilFormat              = Texture->GetDesc().Format;
         RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
         RenderPassKey.DepthStencilActions.StoreAction = RenderTargetState.DepthStencilStoreAction;
+        RenderPassKey.DepthStencilFlags               = DepthStencilView->GetFlags();
         NumSamples = Math::Max<uint8>(static_cast<uint8>(Texture->GetNumSamples()), NumSamples);
     }
 
@@ -468,19 +471,38 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         }
 
         VkRenderingAttachmentInfo DepthStencilAttachmentInfo = {};
-        const bool bHasDepthStencil = (RenderTargetState.DepthStencilView != nullptr);
+        VkRenderingAttachmentInfo StencilAttachmentInfo      = {};
+
         bool bHasStencil = false;
+
+        const bool bHasDepthStencil = (RenderTargetState.DepthStencilView != nullptr);
         if (bHasDepthStencil)
         {
-            const VkFormat DepthStencilVkFormat = RenderTargetState.DepthStencilView->GetImageViewInfo().Format;
-            bHasStencil = IsStencilFormat(DepthStencilVkFormat);
+            const FVulkanDepthStencilViewRHI* DepthStencilView = static_cast<const FVulkanDepthStencilViewRHI*>(RenderTargetState.DepthStencilView);
+            bHasStencil = DepthStencilView->HasStencilFormat();
+
+            VkImageLayout DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            if (DepthStencilView->IsReadOnly())
+            {
+                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+            }
+            else if (DepthStencilView->IsDepthReadOnly())
+            {
+                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
+            }
+            else if (DepthStencilView->IsStencilReadOnly())
+            {
+                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+            }
 
             DepthStencilAttachmentInfo.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             DepthStencilAttachmentInfo.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
-            DepthStencilAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            DepthStencilAttachmentInfo.imageLayout = DepthStencilLayout;
             DepthStencilAttachmentInfo.loadOp      = ConvertLoadAction(DepthStencilAttachment.LoadAction);
             DepthStencilAttachmentInfo.storeOp     = ConvertStoreAction(DepthStencilAttachment.StoreAction);
             DepthStencilAttachmentInfo.clearValue  = DepthStencilClearValue;
+
+            StencilAttachmentInfo = DepthStencilAttachmentInfo;
         }
 
         VkRenderingInfo RenderingInfo = {};
@@ -490,7 +512,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         RenderingInfo.colorAttachmentCount = RenderTargetState.NumRenderTargets;
         RenderingInfo.pColorAttachments    = ColorAttachments;
         RenderingInfo.pDepthAttachment     = bHasDepthStencil ? &DepthStencilAttachmentInfo : nullptr;
-        RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &DepthStencilAttachmentInfo : nullptr;
+        RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &StencilAttachmentInfo : nullptr;
         RenderingInfo.viewMask             = RenderTargetState.RenderingViewMask;
 
         Context.GetCommandBuffer()->BeginRendering(&RenderingInfo);
@@ -613,18 +635,37 @@ void FVulkanCommandContextState::ResumeRenderPass()
         }
 
         VkRenderingAttachmentInfo DepthStencilAttachment = {};
-        const bool bHasDepthStencil = (RenderTargetState.DepthStencilView != nullptr);
+        VkRenderingAttachmentInfo StencilAttachment      = {};
+
         bool bHasStencil = false;
+        
+        const bool bHasDepthStencil = (RenderTargetState.DepthStencilView != nullptr);
         if (bHasDepthStencil)
         {
-            const VkFormat DepthStencilVkFormat = RenderTargetState.DepthStencilView->GetImageViewInfo().Format;
-            bHasStencil = IsStencilFormat(DepthStencilVkFormat);
+            const FVulkanDepthStencilViewRHI* DepthStencilView = static_cast<const FVulkanDepthStencilViewRHI*>(RenderTargetState.DepthStencilView);
+            bHasStencil = DepthStencilView->HasStencilFormat();
+
+            VkImageLayout DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            if (DepthStencilView->IsReadOnly())
+            {
+                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+            }
+            else if (DepthStencilView->IsDepthReadOnly())
+            {
+                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
+            }
+            else if (DepthStencilView->IsStencilReadOnly())
+            {
+                DepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+            }
 
             DepthStencilAttachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             DepthStencilAttachment.imageView   = RenderTargetState.DepthStencilView->GetImageViewInfo().ImageView;
-            DepthStencilAttachment.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            DepthStencilAttachment.imageLayout = DepthStencilLayout;
             DepthStencilAttachment.loadOp      = VK_ATTACHMENT_LOAD_OP_LOAD;
             DepthStencilAttachment.storeOp     = ConvertStoreAction(RenderTargetState.DepthStencilStoreAction);
+
+            StencilAttachment = DepthStencilAttachment;
         }
 
         VkRenderingInfo RenderingInfo = {};
@@ -634,7 +675,7 @@ void FVulkanCommandContextState::ResumeRenderPass()
         RenderingInfo.colorAttachmentCount = RenderTargetState.NumRenderTargets;
         RenderingInfo.pColorAttachments    = ColorAttachments;
         RenderingInfo.pDepthAttachment     = bHasDepthStencil ? &DepthStencilAttachment : nullptr;
-        RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &DepthStencilAttachment : nullptr;
+        RenderingInfo.pStencilAttachment   = (bHasDepthStencil && bHasStencil) ? &StencilAttachment : nullptr;
         RenderingInfo.viewMask             = RenderTargetState.RenderingViewMask;
 
         Context.GetCommandBuffer()->BeginRendering(&RenderingInfo);

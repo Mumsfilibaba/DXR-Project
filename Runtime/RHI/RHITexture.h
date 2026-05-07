@@ -54,6 +54,31 @@ NODISCARD constexpr bool IsTextureCube(ETextureDimension Dimension)
     return Dimension == ETextureDimension::TextureCube || Dimension == ETextureDimension::TextureCubeArray;
 }
 
+NODISCARD inline uint32 RHICubesToArrayLayers(ETextureDimension Dimension, uint32 NumCubes)
+{
+    CHECK(IsTextureCube(Dimension));
+    return NumCubes * RHI_NUM_CUBE_FACES;
+}
+
+NODISCARD inline uint32 RHIArrayLayersToCubes(ETextureDimension Dimension, uint32 NumLayers)
+{
+    CHECK(IsTextureCube(Dimension));
+    CHECK((NumLayers % RHI_NUM_CUBE_FACES) == 0);
+    return NumLayers / RHI_NUM_CUBE_FACES;
+}
+
+NODISCARD inline uint32 RHIDimensionArrayLayers(ETextureDimension Dimension, uint32 NumArraySlices)
+{
+    CHECK(Dimension != ETextureDimension::None);
+    
+    if (Dimension == ETextureDimension::Texture3D)
+    {
+        return 1;
+    }
+
+    return IsTextureCube(Dimension) ? NumArraySlices * RHI_NUM_CUBE_FACES : NumArraySlices;
+}
+
 struct IRHITextureData
 {
     virtual ~IRHITextureData() = default;
@@ -142,18 +167,6 @@ struct FRHITextureDesc
     NODISCARD constexpr bool IsNoDefaultDSV()           const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::NoDefaultDSV); }
     NODISCARD constexpr bool IsMultisampled()           const { return (NumSamples > 1); }
 
-    NODISCARD constexpr ETextureDimension  GetDimension()      const { return Dimension; }
-    NODISCARD constexpr EFormat            GetFormat()         const { return Format; }
-    NODISCARD constexpr ETextureUsageFlags GetUsageFlags()     const { return UsageFlags; }
-    NODISCARD constexpr uint32             GetNumArraySlices() const { return NumArraySlices; }
-    NODISCARD constexpr uint32             GetNumMipLevels()   const { return NumMipLevels; }
-    NODISCARD constexpr uint32             GetNumSamples()     const { return NumSamples; }
-    NODISCARD constexpr uint32             GetWidth()          const { return Extent.X; }
-    NODISCARD constexpr uint32             GetHeight()         const { return Extent.Y; }
-    NODISCARD constexpr uint32             GetDepth()          const { return Extent.Z; }
-    NODISCARD constexpr const FIntVector3& GetExtent()         const { return Extent; }
-    NODISCARD constexpr const FClearValue& GetClearValue()     const { return ClearValue; }
-
     bool operator==(const FRHITextureDesc& Other) const noexcept = default;
 
     ETextureDimension  Dimension      = ETextureDimension::None;
@@ -170,7 +183,7 @@ class FRHITexture : public FRHIResource
 {
 protected:
     explicit FRHITexture(const FRHITextureDesc& InTextureDesc)
-        : FRHIResource()
+        : FRHIResource(ERHIResourceType::Texture)
         , Desc(InTextureDesc)
     {
     }

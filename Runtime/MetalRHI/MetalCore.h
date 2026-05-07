@@ -333,7 +333,7 @@ constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, b
         case ETextureDimension::Texture2D:        return bIsMultisampled ? MTLTextureType2DMultisample      : MTLTextureType2D;
         case ETextureDimension::Texture2DArray:   return bIsMultisampled ? MTLTextureType2DMultisampleArray : MTLTextureType2DArray;
         case ETextureDimension::TextureCube:      return MTLTextureTypeCube;
-        case ETextureDimension::TextureCubeArray: return MTLTextureTypeCube;
+        case ETextureDimension::TextureCubeArray: return MTLTextureTypeCubeArray;
         case ETextureDimension::Texture3D:        return MTLTextureType3D;
 
         default:

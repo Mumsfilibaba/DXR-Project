@@ -70,7 +70,7 @@ class FRHIQuery : public FRHIResource
 {
 protected:
     FRHIQuery(EQueryType InQuery)
-        : FRHIResource()
+        : FRHIResource(ERHIResourceType::Query)
         , Query(InQuery)
     {
     }

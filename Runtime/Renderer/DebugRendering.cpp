@@ -102,7 +102,7 @@ FDebugRenderer::~FDebugRenderer()
     ProbeDebugBlendState.Reset();
 }
 
-bool FDebugRenderer::Initialize(FFrameResources& Resources)
+bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 {
     FMeshCreateInfo SphereMesh = FMeshFactory::CreateSphere(2, 0.35f);
 

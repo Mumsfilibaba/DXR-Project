@@ -279,12 +279,7 @@ bool FD3D12SceneAccelerationStructureRHI::Build(FD3D12CommandContext& CmdContext
         SrvDesc.RaytracingAccelerationStructure.Location = ResultResourceStorage.GetGPUVirtualAddress();
 
         View = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
-        if (!View->AllocateHandle())
-        {
-            return false;
-        }
-
-        if (!View->CreateView(nullptr, SrvDesc))
+        if (!View->Initialize(nullptr, SrvDesc))
         {
             return false;
         }

@@ -86,7 +86,8 @@ class FRHIShader : public FRHIResource
 {
 protected:
     explicit FRHIShader(EShaderStage InShaderStage)
-        : ShaderStage(InShaderStage)
+        : FRHIResource(ERHIResourceType::Shader)
+        , ShaderStage(InShaderStage)
     {
     }
 

@@ -358,9 +358,9 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
     }
 
     // Create UAV for the staging-texture
-    FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureUAV(StagingTexture.Get(), StagingTexture->GetFormat(), 0, 0, 1);
+    const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureCube(StagingTexture->GetFormat(), 0);
 
-    FRHIUnorderedAccessViewRef StagingTextureUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+    FRHIUnorderedAccessViewRef StagingTextureUAV = FRHI::Get()->CreateUnorderedAccessView(StagingTexture.Get(), UAVDesc);
     if (!StagingTextureUAV)
     {
         return false;
@@ -478,34 +478,18 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
     const uint32 NumMipLevels  = StagingTexture->GetNumMipLevels();
     const uint32 NumDispatches = Math::AlignUp<uint32>(NumMipLevels, MipLevelsPerDispatch) / MipLevelsPerDispatch;
 
-    // Create a SRV for source mips
-    FRHIShaderResourceViewDesc SRVDesc;
-    SRVDesc.Type = FRHIShaderResourceViewDesc::EType::TextureSRV;
-    SRVDesc.TextureSRV.Texture         = StagingTexture.Get();
-    SRVDesc.TextureSRV.Format          = StagingTexture->GetFormat();
-    SRVDesc.TextureSRV.FirstArraySlice = 0;
-    SRVDesc.TextureSRV.NumSlices       = 1;
-    SRVDesc.TextureSRV.MinLODClamp     = 0;
-    SRVDesc.TextureSRV.NumMips         = 1;
-
     TArray<FRHIShaderResourceViewRef> ShaderResourceViews;
     ShaderResourceViews.Reserve(NumDispatches);
 
     for (uint32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel += MipLevelsPerDispatch)
     {
-        SRVDesc.TextureSRV.FirstMipLevel = static_cast<uint8>(MipLevel);
+        const FRHIShaderResourceViewDesc SRVDesc = bIsTextureCube
+            ? FRHIShaderResourceViewDesc::CreateTextureCube(StagingTexture->GetFormat(), static_cast<uint8>(MipLevel), 1)
+            : FRHIShaderResourceViewDesc::CreateTexture2D  (StagingTexture->GetFormat(), static_cast<uint8>(MipLevel), 1);
 
-        FRHIShaderResourceView* ShaderResourceView = FRHI::Get()->CreateShaderResourceView(SRVDesc);
+        FRHIShaderResourceView* ShaderResourceView = FRHI::Get()->CreateShaderResourceView(StagingTexture.Get(), SRVDesc);
         ShaderResourceViews.Emplace(ShaderResourceView);
     }
-
-    // Create UAV for each miplevel
-    FRHIUnorderedAccessViewDesc UAVDesc;
-    UAVDesc.Type = FRHIUnorderedAccessViewDesc::EType::TextureUAV;
-    UAVDesc.TextureUAV.Texture         = StagingTexture.Get();
-    UAVDesc.TextureUAV.Format          = StagingTexture->GetFormat();
-    UAVDesc.TextureUAV.FirstArraySlice = 0;
-    UAVDesc.TextureUAV.NumSlices       = 1;
 
     // Skip the first mip since that will only be used as a source
     TArray<FRHIUnorderedAccessViewRef> UnorderedAccessViews;
@@ -513,9 +497,11 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
 
     for (uint32 MipLevel = 1; MipLevel < NumMipLevels; MipLevel++)
     {
-        UAVDesc.TextureUAV.MipLevel = static_cast<uint8>(MipLevel);
+        const FRHIUnorderedAccessViewDesc UAVDesc = bIsTextureCube
+            ? FRHIUnorderedAccessViewDesc::CreateTextureCube(StagingTexture->GetFormat(), static_cast<uint8>(MipLevel))
+            : FRHIUnorderedAccessViewDesc::CreateTexture2D  (StagingTexture->GetFormat(), static_cast<uint8>(MipLevel));
 
-        FRHIUnorderedAccessView* UnorderedAccessView = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+        FRHIUnorderedAccessView* UnorderedAccessView = FRHI::Get()->CreateUnorderedAccessView(StagingTexture.Get(), UAVDesc);
         UnorderedAccessViews.Emplace(UnorderedAccessView);
     }
 
@@ -666,9 +652,9 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
     const int32 SpecularIrradianceMiplevels = DstCubeMap->GetNumMipLevels();
     for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureUAV(DstCubeMap, DstCubeMap->GetFormat(), uint8(MipLevel), 0, 1);
+        const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureCube(DstCubeMap->GetFormat(), uint8(MipLevel));
 
-        FRHIUnorderedAccessViewRef UAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+        FRHIUnorderedAccessViewRef UAV = FRHI::Get()->CreateUnorderedAccessView(DstCubeMap, UAVDesc);
         if (UAV)
         {
             SpecularIrradianceMapUAVs.Emplace(UAV);
@@ -762,9 +748,9 @@ bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITex
         return false;
     }
 
-    FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureUAV(DstCubeMap, DstCubeMap->GetFormat(), 0, 0, 1);
+    const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureCube(DstCubeMap->GetFormat(), 0);
 
-    FRHIUnorderedAccessViewRef DstCubeMapUAV = FRHI::Get()->CreateUnorderedAccessView(UAVDesc);
+    FRHIUnorderedAccessViewRef DstCubeMapUAV = FRHI::Get()->CreateUnorderedAccessView(DstCubeMap, UAVDesc);
     if (!DstCubeMapUAV)
     {
         DEBUG_BREAK();

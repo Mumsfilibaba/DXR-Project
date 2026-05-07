@@ -93,12 +93,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
     }
     else 
     {
-        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(Desc.NumArraySlices);
-    }
-
-    if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
-    {
-        ResourceDesc.DepthOrArraySize = ResourceDesc.DepthOrArraySize * RHI_NUM_CUBE_FACES;
+        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices));
     }
 
     if (Desc.NumSamples > 1)
@@ -205,17 +200,13 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         }
         else
         {
-            D3D12_ERROR("Unsupported resource dimension");
+            D3D12_ERROR("Unsupported resource dimension for default SRV");
+            CHECK(false);
             return false;
         }
 
         FD3D12ShaderResourceViewRHIRef DefaultSRV = new FD3D12ShaderResourceViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
-        if (!DefaultSRV->AllocateHandle())
-        {
-            return false;
-        }
-
-        if (!DefaultSRV->CreateView(GetResource(), ViewDesc))
+        if (!DefaultSRV->Initialize(GetResource(), ViewDesc))
         {
             return false;
         }
@@ -227,7 +218,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
     if (Desc.IsUnorderedAccessTexture() && !Desc.IsNoDefaultUAV())
     {
         D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc = {};
-        ViewDesc.Format = D3D12CastShaderResourceFormat(ResourceDesc.Format);
+        ViewDesc.Format = D3D12CastUnorderedAccessFormat(ResourceDesc.Format);
 
         if (Desc.IsTexture1D())
         {
@@ -261,7 +252,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             ViewDesc.Texture2DArray.MipSlice        = 0;
             ViewDesc.Texture2DArray.PlaneSlice      = 0;
             ViewDesc.Texture2DArray.FirstArraySlice = 0;
-            ViewDesc.Texture2DArray.ArraySize       = Desc.NumArraySlices * RHI_NUM_CUBE_FACES;
+            ViewDesc.Texture2DArray.ArraySize       = RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
         }
         else if (Desc.IsTexture3D())
         {
@@ -273,16 +264,12 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         else
         {
             D3D12_ERROR("Unsupported resource dimension for default UAV");
+            CHECK(false);
             return false;
         }
 
         FD3D12UnorderedAccessViewRHIRef DefaultUAV = new FD3D12UnorderedAccessViewRHI(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
-        if (!DefaultUAV->AllocateHandle())
-        {
-            return false;
-        }
-
-        if (!DefaultUAV->CreateView(nullptr, GetResource(), ViewDesc))
+        if (!DefaultUAV->Initialize(nullptr, GetResource(), ViewDesc))
         {
             return false;
         }
@@ -294,7 +281,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
     if (Desc.IsRenderTarget() && !Desc.IsNoDefaultRTV())
     {
         D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
-        RTVDesc.Format = ConvertFormat(Desc.Format);
+        RTVDesc.Format = D3D12CastRenderTargetFormat(ResourceDesc.Format);
 
         if (Desc.IsTexture1D())
         {
@@ -323,9 +310,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         }
         else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
         {
-            const uint32 ArraySize = Desc.IsTexture2DArray()
-                ? Desc.NumArraySlices
-                : Desc.NumArraySlices * RHI_NUM_CUBE_FACES;
+            const uint32 ArraySize = RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
 
             if (!Desc.IsMultisampled())
             {
@@ -352,16 +337,12 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         else
         {
             D3D12_ERROR("Unsupported resource dimension for default RTV");
+            CHECK(false);
             return false;
         }
 
         FD3D12RenderTargetViewRHIRef DefaultRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this);
-        if (!DefaultRTV->AllocateHandle())
-        {
-            return false;
-        }
-
-        if (!DefaultRTV->CreateView(GetResource(), RTVDesc))
+        if (!DefaultRTV->Initialize(GetResource(), RTVDesc))
         {
             return false;
         }
@@ -374,7 +355,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
     {
         D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
         const EFormat DSVFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
-        DSVDesc.Format = ConvertFormat(DSVFormat);
+        DSVDesc.Format = D3D12CastDepthStencilFormat(ConvertFormat(DSVFormat));
 
         if (Desc.IsTexture1D())
         {
@@ -402,9 +383,7 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         }
         else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
         {
-            const uint32 ArraySize = Desc.IsTexture2DArray()
-                ? Desc.NumArraySlices
-                : Desc.NumArraySlices * RHI_NUM_CUBE_FACES;
+            const uint32 ArraySize = RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
 
             if (!Desc.IsMultisampled())
             {
@@ -423,16 +402,12 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         else
         {
             D3D12_ERROR("Unsupported resource dimension for default DSV");
+            CHECK(false);
             return false;
         }
 
         FD3D12DepthStencilViewRHIRef DefaultDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this);
-        if (!DefaultDSV->AllocateHandle())
-        {
-            return false;
-        }
-
-        if (!DefaultDSV->CreateView(GetResource(), DSVDesc))
+        if (!DefaultDSV->Initialize(GetResource(), DSVDesc))
         {
             return false;
         }
@@ -451,9 +426,9 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
         InCommandContext->StartContext();
         InCommandContext->TransitionTextureState(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
-        const uint32 NumArraySlices = Desc.IsTexture3D() ? 1 : (Desc.IsTextureCube() || Desc.IsTextureCubeArray() ? 
-            Desc.NumArraySlices * RHI_NUM_CUBE_FACES : 
-            Desc.NumArraySlices);
+        CHECK(IsTextureCube(Desc.Dimension) || !Desc.IsTexture3D() || Desc.NumArraySlices == 1);
+
+        const uint32 NumArraySlices = RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
 
         uint32 Width  = Desc.Extent.X;
         uint32 Height = Desc.Extent.Y;
@@ -581,10 +556,75 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             }
             else
             {
-                FRHIRenderTargetViewDesc RTVDesc(this);
-                ClearRenderTargetView = FD3D12RHI::Get()->CreateRenderTargetView(RTVDesc);
-                CHECK(ClearRenderTargetView != nullptr);
-                D3D12RenderTargetView = FD3D12RHI::ResourceCast(ClearRenderTargetView.Get());
+                D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = {};
+                RTVDesc.Format = D3D12CastRenderTargetFormat(ResourceDesc.Format);
+
+                if (Desc.IsTexture1D())
+                {
+                    RTVDesc.ViewDimension      = D3D12_RTV_DIMENSION_TEXTURE1D;
+                    RTVDesc.Texture1D.MipSlice = 0;
+                }
+                else if (Desc.IsTexture1DArray())
+                {
+                    RTVDesc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
+                    RTVDesc.Texture1DArray.MipSlice        = 0;
+                    RTVDesc.Texture1DArray.FirstArraySlice = 0;
+                    RTVDesc.Texture1DArray.ArraySize       = Desc.NumArraySlices;
+                }
+                else if (Desc.IsTexture2D())
+                {
+                    if (!Desc.IsMultisampled())
+                    {
+                        RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+                        RTVDesc.Texture2D.MipSlice   = 0;
+                        RTVDesc.Texture2D.PlaneSlice = 0;
+                    }
+                    else
+                    {
+                        RTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+                    }
+                }
+                else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+                {
+                    const uint32 ArraySize = RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
+
+                    if (!Desc.IsMultisampled())
+                    {
+                        RTVDesc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+                        RTVDesc.Texture2DArray.MipSlice        = 0;
+                        RTVDesc.Texture2DArray.FirstArraySlice = 0;
+                        RTVDesc.Texture2DArray.ArraySize       = ArraySize;
+                        RTVDesc.Texture2DArray.PlaneSlice      = 0;
+                    }
+                    else
+                    {
+                        RTVDesc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+                        RTVDesc.Texture2DMSArray.FirstArraySlice = 0;
+                        RTVDesc.Texture2DMSArray.ArraySize       = ArraySize;
+                    }
+                }
+                else if (Desc.IsTexture3D())
+                {
+                    RTVDesc.ViewDimension         = D3D12_RTV_DIMENSION_TEXTURE3D;
+                    RTVDesc.Texture3D.MipSlice    = 0;
+                    RTVDesc.Texture3D.FirstWSlice = 0;
+                    RTVDesc.Texture3D.WSize       = static_cast<UINT>(Desc.Extent.Z);
+                }
+                else
+                {
+                    D3D12_ERROR("Unsupported resource dimension for Clear RTV");
+                    return false;
+                }
+
+                FD3D12RenderTargetViewRHIRef NewRTV = new FD3D12RenderTargetViewRHI(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap(), this);
+                if (!NewRTV->Initialize(GetResource(), RTVDesc))
+                {
+                    D3D12_ERROR("Clear: Failed to create temporary RTV");
+                    return false;
+                }
+
+                ClearRenderTargetView = NewRTV;
+                D3D12RenderTargetView = NewRTV.Get();
             }
 
             const float ClearColor[4] = 
@@ -620,16 +660,74 @@ bool FD3D12TextureRHI::Initialize(FD3D12CommandContext* InCommandContext, EResou
             }
             else
             {
-                FRHIDepthStencilViewDesc DSVDesc(this);
-                ClearDepthStencilView = FD3D12RHI::Get()->CreateDepthStencilView(DSVDesc);
-                CHECK(ClearDepthStencilView != nullptr);
-                D3D12DepthStencilView = FD3D12RHI::ResourceCast(ClearDepthStencilView.Get());
+                const EFormat DSVViewFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
+
+                D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = {};
+                DSVDesc.Format = D3D12CastDepthStencilFormat(ConvertFormat(DSVViewFormat));
+
+                if (Desc.IsTexture1D())
+                {
+                    DSVDesc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE1D;
+                    DSVDesc.Texture1D.MipSlice = 0;
+                }
+                else if (Desc.IsTexture1DArray())
+                {
+                    DSVDesc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+                    DSVDesc.Texture1DArray.MipSlice        = 0;
+                    DSVDesc.Texture1DArray.FirstArraySlice = 0;
+                    DSVDesc.Texture1DArray.ArraySize       = Desc.NumArraySlices;
+                }
+                else if (Desc.IsTexture2D())
+                {
+                    if (!Desc.IsMultisampled())
+                    {
+                        DSVDesc.ViewDimension      = D3D12_DSV_DIMENSION_TEXTURE2D;
+                        DSVDesc.Texture2D.MipSlice = 0;
+                    }
+                    else
+                    {
+                        DSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
+                    }
+                }
+                else if (Desc.IsTexture2DArray() || Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+                {
+                    const uint32 ArraySize = RHIDimensionArrayLayers(Desc.Dimension, Desc.NumArraySlices);
+
+                    if (!Desc.IsMultisampled())
+                    {
+                        DSVDesc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+                        DSVDesc.Texture2DArray.MipSlice        = 0;
+                        DSVDesc.Texture2DArray.FirstArraySlice = 0;
+                        DSVDesc.Texture2DArray.ArraySize       = ArraySize;
+                    }
+                    else
+                    {
+                        DSVDesc.ViewDimension                    = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                        DSVDesc.Texture2DMSArray.FirstArraySlice = 0;
+                        DSVDesc.Texture2DMSArray.ArraySize       = ArraySize;
+                    }
+                }
+                else
+                {
+                    D3D12_ERROR("Unsupported resource dimension for Clear DSV");
+                    return false;
+                }
+
+                FD3D12DepthStencilViewRHIRef NewDSV = new FD3D12DepthStencilViewRHI(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap(), this);
+                if (!NewDSV->Initialize(GetResource(), DSVDesc))
+                {
+                    D3D12_ERROR("Clear: Failed to create temporary DSV");
+                    return false;
+                }
+
+                ClearDepthStencilView = NewDSV;
+                D3D12DepthStencilView = NewDSV.Get();
             }
 
             const EFormat DepthStencilFormat = Desc.ClearValue.Format != EFormat::Unknown ? Desc.ClearValue.Format : Desc.Format;
 
             D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH;
-            if (FormatHasStencil(DepthStencilFormat))
+            if (IsStencilFormat(DepthStencilFormat))
             {
                 ClearFlags |= D3D12_CLEAR_FLAG_STENCIL;
             }

@@ -312,16 +312,11 @@ bool FD3D12BufferRHI::CreateConstantBufferView()
     ViewDesc.SizeInBytes    = Math::AlignUp<uint32>(static_cast<uint32>(Desc.Size), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
     ViewDesc.BufferLocation = ResourceStorage.GetGPUVirtualAddress();
 
-    if (FD3D12_CPU_DESCRIPTOR_HANDLE(0) == ConstantBufferView->GetOfflineHandle())
-    {
-        if (!ConstantBufferView->AllocateHandle())
-        {
-            D3D12_ERROR_CRITICAL("Failed to allocate ConstantBuffer Descriptor");
-            return false;
-        }
-    }
+    const bool bSuccess = ConstantBufferView->IsValid()
+        ? ConstantBufferView->UpdateView(ResourceStorage.GetResource(), ViewDesc)
+        : ConstantBufferView->Initialize(ResourceStorage.GetResource(), ViewDesc);
 
-    if (!ConstantBufferView->CreateView(ResourceStorage.GetResource(), ViewDesc))
+    if (!bSuccess)
     {
         D3D12_ERROR_CRITICAL("Failed to Create ConstantBufferView");
         return false;

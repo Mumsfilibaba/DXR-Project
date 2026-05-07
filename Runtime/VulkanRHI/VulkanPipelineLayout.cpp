@@ -21,6 +21,20 @@ static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageF
     }
 }
 
+static VkShaderStageFlags GetVkStageFlagsFromShaderStage(EShaderStage Stage)
+{
+    switch (Stage)
+    {
+    case EShaderStage::Vertex:   return VK_SHADER_STAGE_VERTEX_BIT;
+    case EShaderStage::Hull:     return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+    case EShaderStage::Domain:   return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+    case EShaderStage::Geometry: return VK_SHADER_STAGE_GEOMETRY_BIT;
+    case EShaderStage::Pixel:    return VK_SHADER_STAGE_FRAGMENT_BIT;
+    case EShaderStage::Compute:  return VK_SHADER_STAGE_COMPUTE_BIT;
+    default:                     return 0; // All stages
+    }
+}
+
 void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo)
 {
     // Setup all the bindings
@@ -92,20 +106,6 @@ void FVulkanPipelineLayoutInfo::PromoteUniformBuffersToDynamic()
             SetRemappingInfo.RemappingInfo[BindingIndex].BindingType = VulkanBindingType_UniformBufferDynamic;
             RemainingBudget -= DynamicUBCostDwords;
         }
-    }
-}
-
-static VkShaderStageFlags GetVkStageFlagsFromShaderStage(EShaderStage Stage)
-{
-    switch (Stage)
-    {
-    case EShaderStage::Vertex:   return VK_SHADER_STAGE_VERTEX_BIT;
-    case EShaderStage::Hull:     return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-    case EShaderStage::Domain:   return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-    case EShaderStage::Geometry: return VK_SHADER_STAGE_GEOMETRY_BIT;
-    case EShaderStage::Pixel:    return VK_SHADER_STAGE_FRAGMENT_BIT;
-    case EShaderStage::Compute:  return VK_SHADER_STAGE_COMPUTE_BIT;
-    default:                     return 0; // All stages
     }
 }
 
@@ -273,6 +273,7 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
     //   Descriptor sets  = 1 DWORD each
     //   Push constants   = 1 DWORD per 4 bytes
     //   Dynamic buffers  = 4 DWORDs each (with robust buffer access) or 2 DWORDs (without)
+
     const uint32 DynamicBufferCostDwords = GVulkanRobustBufferAccessEnabled ? 4 : 2;
     uint32 UserDataCostDwords = 0;
     UserDataCostDwords += SetLayoutHandles.Size();
@@ -316,12 +317,15 @@ bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, 
     case ResourceType_SRV:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT ? StageMapping.SRVMappings[ResourceIndex] : UINT8_MAX;
         break;
+
     case ResourceType_UAV:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT ? StageMapping.UAVMappings[ResourceIndex] : UINT8_MAX;
         break;
+
     case ResourceType_UniformBuffer:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT ? StageMapping.UniformMappings[ResourceIndex] : UINT8_MAX;
         break;
+
     case ResourceType_Sampler:
         OutBinding = ResourceIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT ? StageMapping.SamplerMappings[ResourceIndex] : UINT8_MAX;
         break;
@@ -358,6 +362,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
     for (FStageDescriptorMap& StageMapping : DescriptorBindMap)
     {
         StageMapping.DescriptorSetIndex = UINT8_MAX;
+
         FMemory::Memset(StageMapping.SRVMappings, UINT8_MAX, sizeof(StageMapping.SRVMappings));
         FMemory::Memset(StageMapping.UAVMappings, UINT8_MAX, sizeof(StageMapping.UAVMappings));
         FMemory::Memset(StageMapping.UniformMappings, UINT8_MAX, sizeof(StageMapping.UniformMappings));
@@ -385,19 +390,25 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             case VulkanBindingType_UniformBufferDynamic:
                 StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
+
             case VulkanBindingType_Sampler:
                 StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
+
             case VulkanBindingType_SampledImage:
             case VulkanBindingType_StorageBufferRead:
+            case VulkanBindingType_AccelerationStructure:
                 StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
+
             case VulkanBindingType_StorageImage:
             case VulkanBindingType_StorageBufferReadWrite:
                 StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
+
             case VulkanBindingType_ImmutableSampler:
                 break;
+                
             default:
                 DEBUG_BREAK();
                 break;
