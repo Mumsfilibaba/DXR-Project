@@ -9,19 +9,10 @@
 
 static constexpr uint64 VULKAN_MIN_BUDDY_ALLOCATOR_BLOCK_SIZE = 16ull;
 
-#if VULKAN_ENABLE_STATS
-struct FVulkanAllocatorUsage
-{
-    uint64 AllocatedBytes  = 0;
-    uint64 UsedBytes       = 0;
-    uint64 FragmentedBytes = 0;
-};
-#endif
-
 class FVulkanBuddyAllocator;
 class FVulkanPoolAllocator;
 class FVulkanResource;
-class FVulkanMemoryStorage;
+class FVulkanMemoryLocation;
 class FVulkanCommandContext;
 
 enum class EVulkanAllocatorType : uint8
@@ -31,12 +22,21 @@ enum class EVulkanAllocatorType : uint8
     PoolAllocator
 };
 
-enum class EVulkanMemoryStorageType : uint8
+enum class EVulkanMemoryLocationType : uint8
 {
     Unknown,
     Dedicated,
     Suballocated
 };
+
+#if VULKAN_ENABLE_STATS
+struct FVulkanAllocatorUsage
+{
+    uint64 AllocatedBytes  = 0;
+    uint64 UsedBytes       = 0;
+    uint64 FragmentedBytes = 0;
+};
+#endif
 
 struct FVulkanBuddyAllocatorAllocationData
 {
@@ -47,35 +47,46 @@ struct FVulkanBuddyAllocatorAllocationData
 
 struct FVulkanPoolAllocatorAllocationData
 {
-    uint32                PageIndex = UINT32_MAX;
-    uint64                Offset    = 0;
-    uint64                Size      = 0;
-    FVulkanMemoryStorage* Owner     = nullptr;
+    uint32                 PageIndex = UINT32_MAX;
+    uint64                 Offset    = 0;
+    uint64                 Size      = 0;
+    FVulkanMemoryLocation* Owner     = nullptr;
 };
 
-class FVulkanMemoryStorage : public FVulkanDeviceChild, public FNonCopyable
+struct FVulkanPendingDefragMove
+{
+    FVulkanMemoryLocation*             SourceLocation       = nullptr;
+    VkImage                            NewImage             = VK_NULL_HANDLE;
+    VkBuffer                           NewBuffer            = VK_NULL_HANDLE;
+    FVulkanPoolAllocator*              Allocator            = nullptr;
+    FVulkanPoolAllocatorAllocationData OldAllocationData    = {};
+    FVulkanPoolAllocatorAllocationData NewAllocationData    = {};
+    uint64                             FenceValueAtCreation = 0;
+};
+
+class FVulkanMemoryLocation : public FVulkanDeviceChild, public FNonCopyable
 {
 public:
-    FVulkanMemoryStorage(FVulkanDevice* InDevice);
-    ~FVulkanMemoryStorage();
+    FVulkanMemoryLocation(FVulkanDevice* InDevice);
+    ~FVulkanMemoryLocation();
 
-    void Swap(FVulkanMemoryStorage& Other);
+    void Swap(FVulkanMemoryLocation& Other);
     void ReleaseMemory();
     void Reset();
 
-    bool IsValid()        const { return StorageType != EVulkanMemoryStorageType::Unknown; }
-    bool IsSuballocated() const { return StorageType == EVulkanMemoryStorageType::Suballocated; }
+    bool IsValid()        const { return LocationType != EVulkanMemoryLocationType::Unknown; }
+    bool IsSuballocated() const { return LocationType == EVulkanMemoryLocationType::Suballocated; }
 
-    FORCEINLINE VkDeviceMemory           GetMemory()            const { return Memory; }
-    FORCEINLINE VkDeviceSize             GetMemoryOffset()      const { return MemoryOffset; }
-    FORCEINLINE VkBuffer                 GetBackingBuffer()     const { return BackingBuffer; }
-    FORCEINLINE VkDeviceSize             GetBufferOffset()      const { return BufferOffset; }
-    FORCEINLINE VkDeviceAddress          GetDeviceAddress()     const { return DeviceAddress; }
-    FORCEINLINE void*                    GetMappedBaseAddress() const { return MappedBaseAddress; }
-    FORCEINLINE VkDeviceSize             GetSize()              const { return Size; }
-    FORCEINLINE EVulkanAllocatorType     GetAllocatorType()     const { return AllocatorType; }
-    FORCEINLINE EVulkanMemoryStorageType GetStorageType()       const { return StorageType; }
-    FORCEINLINE FVulkanResource*         GetOwner()             const { return Owner; }
+    FORCEINLINE VkDeviceMemory            GetMemory()            const { return Memory; }
+    FORCEINLINE VkDeviceSize              GetMemoryOffset()      const { return MemoryOffset; }
+    FORCEINLINE VkBuffer                  GetBackingBuffer()     const { return BackingBuffer; }
+    FORCEINLINE VkDeviceSize              GetBufferOffset()      const { return BufferOffset; }
+    FORCEINLINE VkDeviceAddress           GetDeviceAddress()     const { return DeviceAddress; }
+    FORCEINLINE void*                     GetMappedBaseAddress() const { return MappedBaseAddress; }
+    FORCEINLINE VkDeviceSize              GetSize()              const { return Size; }
+    FORCEINLINE EVulkanAllocatorType      GetAllocatorType()     const { return AllocatorType; }
+    FORCEINLINE EVulkanMemoryLocationType GetLocationType()      const { return LocationType; }
+    FORCEINLINE FVulkanResource*          GetOwner()             const { return Owner; }
 
     FORCEINLINE FVulkanBuddyAllocator* GetBuddyAllocator() const
     {
@@ -90,15 +101,15 @@ public:
     FORCEINLINE const FVulkanPoolAllocatorAllocationData&  GetPoolAllocationData()  const { return AllocationData.Pool; }
     FORCEINLINE const FVulkanBuddyAllocatorAllocationData& GetBuddyAllocationData() const { return AllocationData.Buddy; }
 
-    FORCEINLINE void SetMemory(VkDeviceMemory InMemory)              { Memory = InMemory; }
-    FORCEINLINE void SetMemoryOffset(VkDeviceSize InOffset)          { MemoryOffset = InOffset; }
-    FORCEINLINE void SetBackingBuffer(VkBuffer InBuffer)             { BackingBuffer = InBuffer; }
-    FORCEINLINE void SetBufferOffset(VkDeviceSize InOffset)          { BufferOffset = InOffset; }
-    FORCEINLINE void SetDeviceAddress(VkDeviceAddress InAddress)     { DeviceAddress = InAddress; }
-    FORCEINLINE void SetMappedBaseAddress(void* InAddress)           { MappedBaseAddress = InAddress; }
-    FORCEINLINE void SetSize(VkDeviceSize InSize)                    { Size = InSize; }
-    FORCEINLINE void SetStorageType(EVulkanMemoryStorageType InType) { StorageType = InType; }
-    FORCEINLINE void SetOwner(FVulkanResource* InOwner)              { Owner = InOwner; }
+    FORCEINLINE void SetMemory(VkDeviceMemory InMemory)                { Memory = InMemory; }
+    FORCEINLINE void SetMemoryOffset(VkDeviceSize InOffset)            { MemoryOffset = InOffset; }
+    FORCEINLINE void SetBackingBuffer(VkBuffer InBuffer)               { BackingBuffer = InBuffer; }
+    FORCEINLINE void SetBufferOffset(VkDeviceSize InOffset)            { BufferOffset = InOffset; }
+    FORCEINLINE void SetDeviceAddress(VkDeviceAddress InAddress)       { DeviceAddress = InAddress; }
+    FORCEINLINE void SetMappedBaseAddress(void* InAddress)             { MappedBaseAddress = InAddress; }
+    FORCEINLINE void SetSize(VkDeviceSize InSize)                      { Size = InSize; }
+    FORCEINLINE void SetLocationType(EVulkanMemoryLocationType InType) { LocationType = InType; }
+    FORCEINLINE void SetOwner(FVulkanResource* InOwner)                { Owner = InOwner; }
 
     FORCEINLINE void SetBuddyAllocator(FVulkanBuddyAllocator* InAllocator)
     {
@@ -124,7 +135,7 @@ private:
     void*                    MappedBaseAddress;
     VkDeviceSize             Size;
     EVulkanAllocatorType     AllocatorType;
-    EVulkanMemoryStorageType StorageType;
+    EVulkanMemoryLocationType LocationType;
     FVulkanResource*         Owner;
 
     union FAllocationData
@@ -155,8 +166,8 @@ public:
     FVulkanBuddyAllocator(FVulkanDevice* InDevice, uint64 InBackingStorageSize, uint64 InMinBlockBytes, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags);
     ~FVulkanBuddyAllocator();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
-    void Deallocate(const FVulkanMemoryStorage& Storage);
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
+    void Deallocate(const FVulkanMemoryLocation& Location);
     
     bool Initialize();
     void Destroy();
@@ -214,7 +225,7 @@ public:
     FVulkanMultiBuddyAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags);
     ~FVulkanMultiBuddyAllocator();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
 
     bool Initialize();
     void Destroy();
@@ -249,13 +260,13 @@ public:
     FVulkanPoolAllocatorPage(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags = 0);
     ~FVulkanPoolAllocatorPage();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(uint64 SizeInBytes, uint64 InAlignment, uint32 InPageIndex, FVulkanMemoryLocation& OutLocation);
     bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 InAlignment, FVulkanPoolAllocatorAllocationData& OutData);
     
     bool Initialize();
     
     void RecycleAllocation(uint64 Offset, uint64 SizeInBytes);
-    void TransferOwnership(uint64 Offset, FVulkanMemoryStorage* NewStorage);
+    void TransferOwnership(uint64 Offset, FVulkanMemoryLocation* NewLocation);
 
     FORCEINLINE bool IsEmpty() const
     {
@@ -312,9 +323,9 @@ public:
     FVulkanPoolAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InMaxAllocationSize, uint32 InMemoryTypeIndex, VkMemoryAllocateFlags InAllocateFlags, VkBufferUsageFlags InBufferUsageFlags = 0);
     ~FVulkanPoolAllocator();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
     bool TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 ExcludePageIndex, FVulkanPoolAllocatorAllocationData& OutData);
-    void Deallocate(const FVulkanMemoryStorage& Storage);
+    void Deallocate(const FVulkanMemoryLocation& Location);
     
     bool Initialize();
     void Destroy();
@@ -322,7 +333,7 @@ public:
 
     bool GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate) const;
     void RecycleAllocation(const FVulkanPoolAllocatorAllocationData& AllocationData);
-    void TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryStorage* NewStorage);
+    void TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryLocation* NewLocation);
 
 #if VULKAN_ENABLE_STATS
     void UpdateMemoryStats(FVulkanAllocatorUsage& OutUsage) const;
@@ -365,14 +376,14 @@ public:
 
     bool Initialize();
 
-    FORCEINLINE FVulkanMemoryStorage& GetBackingStorage()
+    FORCEINLINE FVulkanMemoryLocation& GetBackingLocation()
     {
-        return BackingStorage;
+        return BackingLocation;
     }
 
-    FORCEINLINE const FVulkanMemoryStorage& GetBackingStorage() const
+    FORCEINLINE const FVulkanMemoryLocation& GetBackingLocation() const
     {
-        return BackingStorage;
+        return BackingLocation;
     }
 
 private:
@@ -380,7 +391,7 @@ private:
     VkMemoryPropertyFlags MemoryProperties;
     VkBufferUsageFlags    BufferUsageFlags;
     VkMemoryAllocateFlags AllocateFlags;
-    FVulkanMemoryStorage  BackingStorage;
+    FVulkanMemoryLocation BackingLocation;
 };
 
 class FVulkanLinearAllocator : public FVulkanDeviceChild
@@ -391,14 +402,14 @@ public:
     FVulkanLinearAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, VkMemoryPropertyFlags InMemoryProperties, VkBufferUsageFlags InBufferUsageFlags, VkMemoryAllocateFlags InAllocateFlags);
     ~FVulkanLinearAllocator();
 
-    void* Allocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    void* Allocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
     void  ReturnPage(FVulkanLinearAllocatorPage* InPage);
     void  CleanUp();
 
 private:
     FVulkanLinearAllocatorPage* AcquirePage();
     FVulkanLinearAllocatorPage* CreatePage();
-    void* AllocateOversized(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    void* AllocateOversized(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
 
     uint64                              PageSizeBytes;
     VkMemoryPropertyFlags               MemoryProperties;
@@ -410,17 +421,6 @@ private:
     FCriticalSection                    AllocatorCS;
 };
 
-struct FVulkanPendingDefragMove
-{
-    FVulkanMemoryStorage*              SourceStorage        = nullptr;
-    VkImage                            NewImage             = VK_NULL_HANDLE;
-    VkBuffer                           NewBuffer            = VK_NULL_HANDLE;
-    FVulkanPoolAllocator*              Allocator            = nullptr;
-    FVulkanPoolAllocatorAllocationData OldAllocationData    = {};
-    FVulkanPoolAllocatorAllocationData NewAllocationData    = {};
-    uint64                             FenceValueAtCreation = 0;
-};
-
 #if VULKAN_BUFFER_ALLOCATOR_USE_POOL_ALLOCATOR
 class FVulkanBufferAllocatorPool : public FVulkanDeviceChild
 {
@@ -428,14 +428,14 @@ public:
     FVulkanBufferAllocatorPool(FVulkanDevice* InDevice, uint32 InMemoryTypeIndex, VkBufferUsageFlags InBufferUsageFlags, uint64 InPageSizeBytes, uint64 InMaxSuballocationSize, VkMemoryAllocateFlags InAllocateFlags);
     ~FVulkanBufferAllocatorPool();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
 
     bool Initialize();
     void CleanUp();
 
     bool           GetDefragCandidate(FVulkanPoolAllocatorAllocationData& OutCandidate);
     bool           TryAllocateForDefrag(uint64 SizeInBytes, uint64 Alignment, uint32 ExcludePageIndex, FVulkanPoolAllocatorAllocationData& OutData);
-    void           TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryStorage* NewStorage);
+    void           TransferOwnership(const FVulkanPoolAllocatorAllocationData& Data, FVulkanMemoryLocation* NewLocation);
     VkDeviceMemory GetBackingMemory(uint32 PageIndex);
 
     FVulkanPoolAllocator& GetPoolAllocator() { return PoolAllocator; }
@@ -470,7 +470,7 @@ public:
     FVulkanBufferAllocatorPool(FVulkanDevice* InDevice, uint32 InMemoryTypeIndex, VkBufferUsageFlags InBufferUsageFlags, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize, VkMemoryAllocateFlags InAllocateFlags);
     ~FVulkanBufferAllocatorPool();
 
-    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
 
     bool Initialize();
     void CleanUp();
@@ -512,7 +512,7 @@ public:
     FVulkanBufferAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize);
     ~FVulkanBufferAllocator();
 
-    bool TryAllocate(VkMemoryPropertyFlags MemoryProperties, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(VkMemoryPropertyFlags MemoryProperties, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
 
     void DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame);
     void CancelPendingDefragMoves(FVulkanResource* Owner);
@@ -542,7 +542,7 @@ public:
     FVulkanBufferAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InMinBlockBytes, uint64 InMaxSuballocationSize);
     ~FVulkanBufferAllocator();
 
-    bool TryAllocate(VkMemoryPropertyFlags MemoryProperties, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(VkMemoryPropertyFlags MemoryProperties, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
 
     bool Initialize();
     void Destroy();
@@ -581,7 +581,7 @@ public:
     FVulkanTextureAllocator(FVulkanDevice* InDevice, uint64 InDefaultPageSizeBytes);
     ~FVulkanTextureAllocator();
 
-    bool TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryLocation& OutLocation);
 
     void DefragmentAllocations(FVulkanCommandContext* InCommandContext, int32 MaxMovesPerFrame);
     void CancelPendingDefragMoves(FVulkanResource* Owner);
@@ -622,7 +622,7 @@ public:
     FVulkanTextureAllocator(FVulkanDevice* InDevice, uint64 InDefaultPageSizeBytes);
     ~FVulkanTextureAllocator();
 
-    bool TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
+    bool TryAllocate(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags MemoryProperties, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryLocation& OutLocation);
 
     bool Initialize();
     void Destroy();
@@ -648,7 +648,7 @@ public:
     FVulkanUploadHeapAllocator(FVulkanDevice* InDevice, uint64 InPageSizeBytes, uint64 InAlignment, uint64 InSmallThreshold, uint64 InLargeThreshold);
     ~FVulkanUploadHeapAllocator();
 
-    void* Allocate(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage);
+    void* Allocate(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryLocation& OutLocation);
 
     bool Initialize(uint32 InMemoryTypeIndex);
     void Destroy();
@@ -659,7 +659,7 @@ public:
 #endif
 
 private:
-    void* AllocateOversized(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage);
+    void* AllocateOversized(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryLocation& OutLocation);
 
     uint64                      PageSizeBytes;
     uint64                      DefaultAlignment;
@@ -677,11 +677,11 @@ public:
     FVulkanMemoryManager(FVulkanDevice* InDevice);
     ~FVulkanMemoryManager();
         
-    void* AllocateUploadMemory(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryStorage& OutStorage);
-    void* AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
-    void* AllocateStagingBuffer(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
-    bool  AllocateBufferMemory(VkMemoryPropertyFlags PropertyFlags, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryStorage& OutStorage);
-    bool  AllocateImageMemory(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryStorage& OutStorage);
+    void* AllocateUploadMemory(uint64 SizeInBytes, uint64 Alignment, VkBufferUsageFlags BufferUsageFlags, FVulkanMemoryLocation& OutLocation);
+    void* AllocateConstants(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
+    void* AllocateStagingBuffer(uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
+    bool  AllocateBufferMemory(VkMemoryPropertyFlags PropertyFlags, VkBufferUsageFlags UsageFlags, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, FVulkanMemoryLocation& OutLocation);
+    bool  AllocateImageMemory(VkImage Image, const VkImageCreateInfo& ImageCreateInfo, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, FVulkanMemoryLocation& OutLocation);
 
     VkResult AllocateMemory(const VkMemoryAllocateInfo* AllocateInfo, VkDeviceMemory* OutMemory);
     void FreeMemory(VkDeviceMemory Memory);

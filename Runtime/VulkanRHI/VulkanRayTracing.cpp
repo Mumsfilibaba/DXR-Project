@@ -6,8 +6,8 @@ FVulkanGeometryAccelerationStructureRHI::FVulkanGeometryAccelerationStructureRHI
     , FVulkanDeviceChild(InDevice)
     , Geometry(VK_NULL_HANDLE)
     , GeometryDeviceAddress(0)
-    , GeometryStorage(InDevice)
-    , ScratchStorage(InDevice)
+    , GeometryLocation(InDevice)
+    , ScratchLocation(InDevice)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
     , DebugName()
@@ -91,7 +91,7 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     const VkBufferUsageFlags    ScratchUsage     = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, GeometryUsage, AllocateFlags, AccelerationStructureBuildSizesInfo.accelerationStructureSize, 256, GeometryStorage))
+    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, GeometryUsage, AllocateFlags, AccelerationStructureBuildSizesInfo.accelerationStructureSize, 256, GeometryLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate geometry buffer memory");
         return false;
@@ -100,8 +100,8 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
     VkAccelerationStructureCreateInfoKHR AccelerationStructureCreateInfo = {};
     AccelerationStructureCreateInfo.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
     AccelerationStructureCreateInfo.createFlags   = 0;
-    AccelerationStructureCreateInfo.buffer        = GeometryStorage.GetBackingBuffer();
-    AccelerationStructureCreateInfo.offset        = GeometryStorage.GetBufferOffset();
+    AccelerationStructureCreateInfo.buffer        = GeometryLocation.GetBackingBuffer();
+    AccelerationStructureCreateInfo.offset        = GeometryLocation.GetBufferOffset();
     AccelerationStructureCreateInfo.size          = AccelerationStructureBuildSizesInfo.accelerationStructureSize;
     AccelerationStructureCreateInfo.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
     AccelerationStructureCreateInfo.deviceAddress = 0;
@@ -113,14 +113,14 @@ bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdCo
         return false;
     }
 
-    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, ScratchUsage, AllocateFlags, AccelerationStructureBuildSizesInfo.buildScratchSize, 256, ScratchStorage))
+    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, ScratchUsage, AllocateFlags, AccelerationStructureBuildSizesInfo.buildScratchSize, 256, ScratchLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate scratch-buffer memory");
         return false;
     }
 
     AccelerationStructureBuildGeometryInfo.dstAccelerationStructure  = Geometry;
-    AccelerationStructureBuildGeometryInfo.scratchData.deviceAddress = ScratchStorage.GetDeviceAddress();
+    AccelerationStructureBuildGeometryInfo.scratchData.deviceAddress = ScratchLocation.GetDeviceAddress();
 
     VkAccelerationStructureBuildRangeInfoKHR AccelerationStructureBuildRangeInfo = {};
     AccelerationStructureBuildRangeInfo.primitiveCount  = NumTriangles;

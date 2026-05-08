@@ -158,12 +158,12 @@ public:
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     VkBuffer GetReadbackBuffer() const
     {
-        return ReadbackStorage.GetBackingBuffer();
+        return ReadbackLocation.GetBackingBuffer();
     }
 
     VkDeviceSize GetReadbackBufferOffset() const
     {
-        return ReadbackStorage.GetBufferOffset();
+        return ReadbackLocation.GetBufferOffset();
     }
 
     uint64* GetReadbackData() const
@@ -176,11 +176,11 @@ public:
     const int32       NumQueries;
 
 private:
-    VkQueryPool          QueryPool;
-    FString              DebugName;
+    VkQueryPool           QueryPool;
+    FString               DebugName;
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
-    FVulkanMemoryStorage ReadbackStorage;
-    uint64*              ReadbackData;
+    FVulkanMemoryLocation ReadbackLocation;
+    uint64*               ReadbackData;
 #endif
 };
 

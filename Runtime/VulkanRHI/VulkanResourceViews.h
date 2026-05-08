@@ -62,7 +62,7 @@ public:
     virtual ~FVulkanResourceView();
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation) override;
     
     bool InitializeImageView(
         VkImage InImage, 
@@ -168,7 +168,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation) override;
 
     bool Initialize(FRHIResource* InResource, const FRHIShaderResourceViewDesc& InDesc);
 };
@@ -202,7 +202,7 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation) override;
 
     bool Initialize(FRHIResource* InResource, const FRHIUnorderedAccessViewDesc& InDesc);
 };
@@ -234,7 +234,7 @@ public:
     virtual void* GetRHINativeHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation) override;
 
     bool Initialize(FRHITexture* InTexture, const FRHIRenderTargetViewDesc& InDesc);
 };
@@ -249,7 +249,7 @@ public:
     virtual void* GetRHINativeHandle() const override final;
 
     // IVulkanResourceRelocationListener Interface
-    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) override;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation) override;
 
     bool Initialize(FRHITexture* InTexture, const FRHIDepthStencilViewDesc& InDesc);
 

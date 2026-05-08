@@ -56,11 +56,11 @@ FVulkanResourceView::~FVulkanResourceView()
     }
 }
 
-void FVulkanResourceView::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanResourceView::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation)
 {
     CHECK(RelocatedResource == OwnerResource);
 
-    if (!NewMemoryStorage)
+    if (!NewMemoryLocation)
     {
         OwnerResource = nullptr;
     }
@@ -228,11 +228,11 @@ void* FVulkanShaderResourceViewRHI::GetRHINativeHandle() const
     return GetRHINativeHandleForType();
 }
 
-void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation)
 {
-    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
+    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryLocation);
 
-    if (NewMemoryStorage)
+    if (NewMemoryLocation)
     {
         if (Type == EType::ImageView)
         {
@@ -504,11 +504,11 @@ void* FVulkanUnorderedAccessViewRHI::GetRHINativeHandle() const
     return GetRHINativeHandleForType();
 }
 
-void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation)
 {
-    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
+    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryLocation);
 
-    if (NewMemoryStorage)
+    if (NewMemoryLocation)
     {
         if (Type == EType::ImageView)
         {
@@ -756,11 +756,11 @@ FVulkanRenderTargetViewRHI* FVulkanRenderTargetViewRHI::GetRenderTargetViewInter
     return const_cast<FVulkanRenderTargetViewRHI*>(this);
 }
 
-void FVulkanRenderTargetViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanRenderTargetViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation)
 {
-    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
+    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryLocation);
 
-    if (NewMemoryStorage)
+    if (NewMemoryLocation)
     {
         FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
 
@@ -922,11 +922,11 @@ void* FVulkanDepthStencilViewRHI::GetRHINativeHandle() const
     return GetRHINativeHandleForType();
 }
 
-void FVulkanDepthStencilViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanDepthStencilViewRHI::OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation)
 {
-    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryStorage);
+    FVulkanResourceView::OnResourceRelocated(RelocatedResource, NewMemoryLocation);
 
-    if (NewMemoryStorage)
+    if (NewMemoryLocation)
     {
         FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
 

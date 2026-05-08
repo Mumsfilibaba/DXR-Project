@@ -93,7 +93,7 @@ private:
 
     ECrashMarkerExtension Extension;
     FVulkanQueue*         GraphicsQueue;
-    FVulkanMemoryStorage  MemoryStorage;
+    FVulkanMemoryLocation MemoryLocation;
     uint32*               MappedData;
     uint32                NextIndex;
     uint32                DrawCounter;

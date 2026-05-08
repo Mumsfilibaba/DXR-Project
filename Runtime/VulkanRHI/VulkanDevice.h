@@ -166,10 +166,10 @@ struct FVulkanDefaultResources
 {
 	FVulkanDefaultResources()
 		: NullBuffer(VK_NULL_HANDLE)
-		, NullBufferStorage(nullptr)
+		, NullBufferLocation(nullptr)
 		, NullImage(VK_NULL_HANDLE)
 		, NullImageView(VK_NULL_HANDLE)
-		, NullImageStorage(nullptr)
+		, NullImageLocation(nullptr)
 		, NullSampler(VK_NULL_HANDLE)
 	{
 	}
@@ -187,12 +187,12 @@ struct FVulkanDefaultResources
 	bool InitializeNullBufferAndImage(FVulkanDevice& Device);
 	void Release(FVulkanDevice& Device);
 
-	VkBuffer             NullBuffer;
-	FVulkanMemoryStorage NullBufferStorage;
-	VkImage              NullImage;
-	VkImageView          NullImageView;
-	FVulkanMemoryStorage NullImageStorage;
-	VkSampler            NullSampler;
+	VkBuffer              NullBuffer;
+	FVulkanMemoryLocation NullBufferLocation;
+	VkImage               NullImage;
+	VkImageView           NullImageView;
+	FVulkanMemoryLocation NullImageLocation;
+	VkSampler             NullSampler;
 };
 
 struct FVulkanHashableSamplerCreateInfo

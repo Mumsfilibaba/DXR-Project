@@ -64,7 +64,7 @@ class RHI_API FRHIResource : public IRefCounted, public FNonCopyable
     };
 
 public:
-    explicit FRHIResource(ERHIResourceType InResourceType);
+    FRHIResource(ERHIResourceType InResourceType);
     virtual ~FRHIResource();
 
     // IRefCounted Interface

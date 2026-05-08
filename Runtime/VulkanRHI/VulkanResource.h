@@ -10,7 +10,7 @@ class FVulkanResource;
 struct IVulkanResourceRelocationListener
 {
     virtual ~IVulkanResourceRelocationListener() = default;
-    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryStorage* NewMemoryStorage) = 0;
+    virtual void OnResourceRelocated(FVulkanResource* RelocatedResource, FVulkanMemoryLocation* NewMemoryLocation) = 0;
 };
 
 class FVulkanResource : public FVulkanDeviceChild
@@ -22,13 +22,13 @@ public:
     void AddResourceRelocatedListener(IVulkanResourceRelocationListener* Listener);
     void RemoveResourceRelocatedListener(IVulkanResourceRelocationListener* Listener);
 
-    void ResourceRelocated(FVulkanMemoryStorage* NewMemoryStorage);
+    void ResourceRelocated(FVulkanMemoryLocation* NewMemoryLocation);
 
-    FVulkanMemoryStorage&       GetMemoryStorage()       { return MemoryStorage; }
-    const FVulkanMemoryStorage& GetMemoryStorage() const { return MemoryStorage; }
+    FVulkanMemoryLocation&       GetMemoryLocation()       { return MemoryLocation; }
+    const FVulkanMemoryLocation& GetMemoryLocation() const { return MemoryLocation; }
 
 protected:
-    FVulkanMemoryStorage MemoryStorage;
+    FVulkanMemoryLocation MemoryLocation;
 
 private:
     TArray<IVulkanResourceRelocationListener*> Listeners;

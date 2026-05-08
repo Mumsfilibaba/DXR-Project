@@ -74,7 +74,7 @@ FVulkanQueryPool::FVulkanQueryPool(FVulkanDevice* InDevice, VkQueryType InQueryT
     , NumQueries(InNumQueries)
     , QueryPool(VK_NULL_HANDLE)
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
-    , ReadbackStorage(InDevice)
+    , ReadbackLocation(InDevice)
     , ReadbackData(nullptr)
 #endif
 {
@@ -83,7 +83,7 @@ FVulkanQueryPool::FVulkanQueryPool(FVulkanDevice* InDevice, VkQueryType InQueryT
 FVulkanQueryPool::~FVulkanQueryPool()
 {
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
-    ReadbackStorage.ReleaseMemory();
+    ReadbackLocation.ReleaseMemory();
     ReadbackData = nullptr;
 #endif
 
@@ -138,13 +138,13 @@ bool FVulkanQueryPool::Initialize()
         0,
         ReadbackSize,
         sizeof(uint64),
-        ReadbackStorage))
+        ReadbackLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate query readback buffer");
         return false;
     }
 
-    ReadbackData = reinterpret_cast<uint64*>(ReadbackStorage.GetMappedBaseAddress());
+    ReadbackData = reinterpret_cast<uint64*>(ReadbackLocation.GetMappedBaseAddress());
     if (!ReadbackData)
     {
         VULKAN_ERROR_CRITICAL("Failed to map query readback buffer");

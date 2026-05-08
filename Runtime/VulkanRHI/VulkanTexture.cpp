@@ -106,7 +106,7 @@ FRHIDescriptorHandle FVulkanTextureRHI::GetBindlessSRVHandle() const
 FVulkanTextureRHI::~FVulkanTextureRHI()
 {
 #if VULKAN_ENABLE_STATS
-    const int64 AllocatedSize = static_cast<int64>(MemoryStorage.GetSize());
+    const int64 AllocatedSize = static_cast<int64>(MemoryLocation.GetSize());
     if (AllocatedSize > 0)
     {
         if (Desc.IsRenderTarget() || Desc.IsDepthStencil())
@@ -120,7 +120,7 @@ FVulkanTextureRHI::~FVulkanTextureRHI()
     }
 #endif
 
-    if (MemoryStorage.IsValid() && VULKAN_CHECK_HANDLE(Image))
+    if (MemoryLocation.IsValid() && VULKAN_CHECK_HANDLE(Image))
     {
         vkDestroyImage(GetDevice()->GetVkDevice(), Image, nullptr);
         Image = VK_NULL_HANDLE;
@@ -232,14 +232,14 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateImageMemory(Image, ImageCreateInfo, MemoryProperties, AllocateFlags, MemoryStorage))
+    if (!MemoryManager.AllocateImageMemory(Image, ImageCreateInfo, MemoryProperties, AllocateFlags, MemoryLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory (Width=%u, Height=%u, Format=%u, Usage=0x%x)", 
             ImageCreateInfo.extent.width, ImageCreateInfo.extent.height, ImageCreateInfo.format, ImageCreateInfo.usage);
         return false;
     }
 
-    VkResult BindResult = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, MemoryStorage.GetMemory(), MemoryStorage.GetMemoryOffset());
+    VkResult BindResult = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, MemoryLocation.GetMemory(), MemoryLocation.GetMemoryOffset());
     if (VULKAN_FAILED(BindResult))
     {
         VULKAN_ERROR_CRITICAL("Failed to bind ImageMemory");
@@ -472,12 +472,12 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
             {
                 const uint64 SliceSize = static_cast<uint64>(RowPitch) * NumRows * Depth;
 
-                FVulkanMemoryStorage UploadStorage(InCommandContext->GetDevice());
+                FVulkanMemoryLocation UploadLocation(InCommandContext->GetDevice());
                 uint8* UploadMemory = static_cast<uint8*>(InCommandContext->GetDevice()->GetMemoryManager().AllocateUploadMemory(
                     SliceSize, 
                     Alignment, 
                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-                    UploadStorage));
+                    UploadLocation));
                 CHECK(UploadMemory != nullptr);
 
                 const uint8* Source = reinterpret_cast<const uint8*>(MipData) + ArrayLayer * SrcSlicePitch;
@@ -492,7 +492,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
                 }
 
                 VkBufferImageCopy BufferImageCopy = {};
-                BufferImageCopy.bufferOffset                    = UploadStorage.GetBufferOffset();
+                BufferImageCopy.bufferOffset                    = UploadLocation.GetBufferOffset();
                 BufferImageCopy.bufferRowLength                 = 0;
                 BufferImageCopy.bufferImageHeight               = 0;
                 BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
@@ -505,7 +505,7 @@ bool FVulkanTextureRHI::Initialize(FVulkanCommandContext* InCommandContext, ERes
                 InCommandContext->GetBarrierBatcher().FlushBarriers(InCommandContext->GetCommandBuffer());
                 
                 InCommandContext->GetCommandBuffer()->CopyBufferToImage(
-                    UploadStorage.GetBackingBuffer(), 
+                    UploadLocation.GetBackingBuffer(), 
                     Image, 
                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
                     1, 

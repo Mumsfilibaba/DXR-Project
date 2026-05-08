@@ -480,7 +480,7 @@ FRHITexture* FVulkanRHI::CreateTexture(const FRHITextureDesc& InTextureDesc, ERe
 
 #if VULKAN_ENABLE_STATS
     {
-        const int64 AllocatedSize = static_cast<int64>(NewTexture->GetMemoryStorage().GetSize());
+        const int64 AllocatedSize = static_cast<int64>(NewTexture->GetMemoryLocation().GetSize());
         if (InTextureDesc.IsRenderTarget() || InTextureDesc.IsDepthStencil())
         {
             STAT_ADD(STAT_RHI_RenderTargetMemory, AllocatedSize);
@@ -506,7 +506,7 @@ FRHIBuffer* FVulkanRHI::CreateBuffer(const FRHIBufferDesc& InBufferDesc, EResour
 
 #if VULKAN_ENABLE_STATS
     {
-        const int64 AllocatedSize = static_cast<int64>(NewBuffer->GetMemoryStorage().GetSize());
+        const int64 AllocatedSize = static_cast<int64>(NewBuffer->GetMemoryLocation().GetSize());
         if (InBufferDesc.IsVertexBuffer())
         {
             STAT_ADD(STAT_RHI_VertexBufferMemory, AllocatedSize);

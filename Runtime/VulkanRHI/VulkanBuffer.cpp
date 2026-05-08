@@ -28,7 +28,7 @@ FRHIDescriptorHandle FVulkanBufferRHI::GetBindlessHandle() const
 FVulkanBufferRHI::~FVulkanBufferRHI()
 {
 #if VULKAN_ENABLE_STATS
-    const int64 AllocatedSize = static_cast<int64>(MemoryStorage.GetSize());
+    const int64 AllocatedSize = static_cast<int64>(MemoryLocation.GetSize());
     if (AllocatedSize > 0)
     {
         if (Desc.IsVertexBuffer())
@@ -145,13 +145,13 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     }
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, UsageFlags, AllocateFlags, AlignedSize, RequiredAlignment, MemoryStorage))
+    if (!MemoryManager.AllocateBufferMemory(MemoryProperties, UsageFlags, AllocateFlags, AlignedSize, RequiredAlignment, MemoryLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory (Size=%llu, UsageFlags=0x%x)", AlignedSize, UsageFlags);
         return false;
     }
 
-    if (!MemoryStorage.IsSuballocated())
+    if (!MemoryLocation.IsSuballocated())
     {
         VkBufferCreateInfo BufferCreateInfo = {};
         BufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -166,7 +166,7 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
             return false;
         }
 
-        Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), OwnedBuffer, MemoryStorage.GetMemory(), MemoryStorage.GetMemoryOffset());
+        Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), OwnedBuffer, MemoryLocation.GetMemory(), MemoryLocation.GetMemoryOffset());
         if (VULKAN_FAILED(Result))
         {
             VULKAN_ERROR_CRITICAL("Failed to bind dedicated buffer memory");
@@ -178,7 +178,7 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
             VkBufferDeviceAddressInfo AddressInfo = {};
             AddressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
             AddressInfo.buffer = OwnedBuffer;
-            MemoryStorage.SetDeviceAddress(vkGetBufferDeviceAddress(GetDevice()->GetVkDevice(), &AddressInfo));
+            MemoryLocation.SetDeviceAddress(vkGetBufferDeviceAddress(GetDevice()->GetVkDevice(), &AddressInfo));
         }
     }
 
@@ -190,7 +190,7 @@ bool FVulkanBufferRHI::Initialize(FVulkanCommandContext* InCommandContext, EReso
     {
         if (Desc.IsDynamic() || Desc.IsTransient())
         {
-            void* BufferData = MemoryStorage.GetMappedBaseAddress();
+            void* BufferData = MemoryLocation.GetMappedBaseAddress();
             if (!BufferData)
             {
                 VULKAN_ERROR_CRITICAL("Failed to get mapped memory for buffer");
@@ -237,7 +237,7 @@ void FVulkanBufferRHI::GetDebugName(FString& OutDebugName) const
 
 void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
 {
-    if (!MemoryStorage.IsValid())
+    if (!MemoryLocation.IsValid())
     {
         return nullptr;
     }
@@ -250,7 +250,7 @@ void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
         return nullptr;
     }
 
-    uint8* Mapped = static_cast<uint8*>(MemoryStorage.GetMappedBaseAddress());
+    uint8* Mapped = static_cast<uint8*>(MemoryLocation.GetMappedBaseAddress());
     if (!Mapped)
     {
         return nullptr;
@@ -268,8 +268,8 @@ void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)
         VkMappedMemoryRange Range = {};
         Range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         Range.pNext  = nullptr;
-        Range.memory = MemoryStorage.GetMemory();
-        Range.offset = MemoryStorage.GetMemoryOffset() + Offset;
+        Range.memory = MemoryLocation.GetMemory();
+        Range.offset = MemoryLocation.GetMemoryOffset() + Offset;
         Range.size   = MapSize;
         vkInvalidateMappedMemoryRanges(GetDevice()->GetVkDevice(), 1, &Range);
     }

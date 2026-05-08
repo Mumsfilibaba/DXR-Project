@@ -29,7 +29,7 @@ public:
 
     bool IsSuballocated() const
     {
-        return MemoryStorage.IsSuballocated() && OwnedBuffer == VK_NULL_HANDLE;
+        return MemoryLocation.IsSuballocated() && OwnedBuffer == VK_NULL_HANDLE;
     }
 
     VkBuffer GetVkBuffer() const
@@ -39,7 +39,7 @@ public:
             return OwnedBuffer;
         }
 
-        return MemoryStorage.GetBackingBuffer();
+        return MemoryLocation.GetBackingBuffer();
     }
 
     VkBuffer GetBindVkBuffer() const
@@ -49,7 +49,7 @@ public:
 
     VkDeviceSize GetBindOffset() const
     {
-        return MemoryStorage.GetBufferOffset();
+        return MemoryLocation.GetBufferOffset();
     }
 
     VkDeviceSize GetBindRange() const
@@ -59,12 +59,12 @@ public:
 
     VkDeviceMemory GetVkDeviceMemory() const
     {
-        return MemoryStorage.GetMemory();
+        return MemoryLocation.GetMemory();
     }
 
     VkDeviceAddress GetDeviceAddress() const
     {
-        return MemoryStorage.GetDeviceAddress();
+        return MemoryLocation.GetDeviceAddress();
     }
 
     VkDeviceSize GetRequiredAlignment() const

@@ -113,7 +113,7 @@ FVulkanCrashMarkers::FVulkanCrashMarkers(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , Extension(ECrashMarkerExtension::None)
     , GraphicsQueue(nullptr)
-    , MemoryStorage(InDevice)
+    , MemoryLocation(InDevice)
     , MappedData(nullptr)
     , NextIndex(0)
     , DrawCounter(0)
@@ -140,18 +140,18 @@ bool FVulkanCrashMarkers::Initialize(FVulkanQueue& InGraphicsQueue)
         constexpr VkBufferUsageFlags    BufferUsage      = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
         FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-        if (!MemoryManager.AllocateBufferMemory(MemoryProperties, BufferUsage, 0, BufferSize, sizeof(uint32), MemoryStorage))
+        if (!MemoryManager.AllocateBufferMemory(MemoryProperties, BufferUsage, 0, BufferSize, sizeof(uint32), MemoryLocation))
         {
             VULKAN_ERROR("FVulkanCrashMarkers: Failed to allocate marker buffer");
             Extension = ECrashMarkerExtension::None;
             return false;
         }
 
-        MappedData = reinterpret_cast<uint32*>(MemoryStorage.GetMappedBaseAddress());
+        MappedData = reinterpret_cast<uint32*>(MemoryLocation.GetMappedBaseAddress());
         if (!MappedData)
         {
             VULKAN_ERROR("FVulkanCrashMarkers: Marker buffer is not host-mapped");
-            MemoryStorage.ReleaseMemory();
+            MemoryLocation.ReleaseMemory();
             Extension = ECrashMarkerExtension::None;
             return false;
         }
@@ -181,7 +181,7 @@ void FVulkanCrashMarkers::Release()
 #if VK_AMD_buffer_marker
     if (Extension == ECrashMarkerExtension::AMDBufferMarker)
     {
-        MemoryStorage.ReleaseMemory();
+        MemoryLocation.ReleaseMemory();
         MappedData = nullptr;
     }
 #endif
@@ -251,11 +251,11 @@ void FVulkanCrashMarkers::WriteMarkerInternal(FVulkanCommandBuffer& CmdBuf, cons
     {
     #if VK_AMD_buffer_marker
         const uint32       RingSlot      = RESERVED_SLOTS + (NextIndex % DATA_SLOTS);
-        const VkDeviceSize HashOffset    = MemoryStorage.GetBufferOffset() + static_cast<VkDeviceSize>(RingSlot) * sizeof(uint32);
-        const VkDeviceSize CounterOffset = MemoryStorage.GetBufferOffset() + static_cast<VkDeviceSize>(SLOT_COUNTER) * sizeof(uint32);
+        const VkDeviceSize HashOffset    = MemoryLocation.GetBufferOffset() + static_cast<VkDeviceSize>(RingSlot) * sizeof(uint32);
+        const VkDeviceSize CounterOffset = MemoryLocation.GetBufferOffset() + static_cast<VkDeviceSize>(SLOT_COUNTER) * sizeof(uint32);
 
-        vkCmdWriteBufferMarkerAMD(CmdBuf.GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, MemoryStorage.GetBackingBuffer(), HashOffset, Hash);
-        vkCmdWriteBufferMarkerAMD(CmdBuf.GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, MemoryStorage.GetBackingBuffer(), CounterOffset, NextIndex + 1);
+        vkCmdWriteBufferMarkerAMD(CmdBuf.GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, MemoryLocation.GetBackingBuffer(), HashOffset, Hash);
+        vkCmdWriteBufferMarkerAMD(CmdBuf.GetVkCommandBuffer(), VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, MemoryLocation.GetBackingBuffer(), CounterOffset, NextIndex + 1);
     #endif
     }
     else if (Extension == ECrashMarkerExtension::NVCheckpoints)

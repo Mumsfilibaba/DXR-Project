@@ -28,8 +28,8 @@ public:
 private:
     VkAccelerationStructureKHR Geometry;
     VkDeviceAddress            GeometryDeviceAddress;
-    FVulkanMemoryStorage       GeometryStorage;
-    FVulkanMemoryStorage       ScratchStorage;
+    FVulkanMemoryLocation      GeometryLocation;
+    FVulkanMemoryLocation      ScratchLocation;
     FVulkanBufferRHIRef        VertexBuffer;
     FVulkanBufferRHIRef        IndexBuffer;
     FString                    DebugName;

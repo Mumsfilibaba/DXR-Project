@@ -3,9 +3,9 @@
 
 FVulkanResource::FVulkanResource(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
-    , MemoryStorage(InDevice)
+    , MemoryLocation(InDevice)
 {
-    MemoryStorage.SetOwner(this);
+    MemoryLocation.SetOwner(this);
 }
 
 FVulkanResource::~FVulkanResource()
@@ -36,7 +36,7 @@ void FVulkanResource::RemoveResourceRelocatedListener(IVulkanResourceRelocationL
     Listeners.Remove(Listener);
 }
 
-void FVulkanResource::ResourceRelocated(FVulkanMemoryStorage* NewMemoryStorage)
+void FVulkanResource::ResourceRelocated(FVulkanMemoryLocation* NewMemoryLocation)
 {
     TScopedLock Lock(ListenersCS);
 
@@ -44,11 +44,11 @@ void FVulkanResource::ResourceRelocated(FVulkanMemoryStorage* NewMemoryStorage)
     {
         if (Listener)
         {
-            Listener->OnResourceRelocated(this, NewMemoryStorage);
+            Listener->OnResourceRelocated(this, NewMemoryLocation);
         }
     }
 
-    if (!NewMemoryStorage)
+    if (!NewMemoryLocation)
     {
         Listeners.Clear();
     }

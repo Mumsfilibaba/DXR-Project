@@ -1044,16 +1044,16 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
 
     if (VulkanBuffer->GetDesc().IsTransient())
     {
-        FVulkanMemoryStorage NewStorage(GetDevice());
+        FVulkanMemoryLocation NewLocation(GetDevice());
         void* MappedMemory = GetDevice()->GetMemoryManager().AllocateConstants(
             BufferRegion.Size, 
             0, 
-            NewStorage);
+            NewLocation);
         CHECK(MappedMemory != nullptr);
 
         FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
-        VulkanBuffer->GetMemoryStorage().Swap(NewStorage);
-        VulkanBuffer->ResourceRelocated(&VulkanBuffer->GetMemoryStorage());
+        VulkanBuffer->GetMemoryLocation().Swap(NewLocation);
+        VulkanBuffer->ResourceRelocated(&VulkanBuffer->GetMemoryLocation());
     }
     else if (VulkanBuffer->GetDesc().IsDynamic())
     {
@@ -1069,25 +1069,25 @@ void FVulkanCommandContext::UpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& B
     }
     else
     {
-        FVulkanMemoryStorage UploadStorage(GetDevice());
+        FVulkanMemoryLocation UploadLocation(GetDevice());
         void* MappedMemory = GetDevice()->GetMemoryManager().AllocateUploadMemory(
             BufferRegion.Size, 
             1, 
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-            UploadStorage);
+            UploadLocation);
         CHECK(MappedMemory != nullptr);
 
         FMemory::Memcpy(MappedMemory, SrcData, BufferRegion.Size);
         
         VkBufferCopy BufferCopy = {};
-        BufferCopy.srcOffset = UploadStorage.GetBufferOffset();
+        BufferCopy.srcOffset = UploadLocation.GetBufferOffset();
         BufferCopy.dstOffset = VulkanBuffer->GetBindOffset() + BufferRegion.Offset;
         BufferCopy.size      = BufferRegion.Size;
         
         BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
         GetCommandBuffer()->CopyBuffer(
-            UploadStorage.GetBackingBuffer(), 
+            UploadLocation.GetBackingBuffer(), 
             VulkanBuffer->GetBindVkBuffer(), 
             1, 
             &BufferCopy);
@@ -1103,12 +1103,12 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     const uint64   RequiredSize = VkCalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
     const uint64   Alignment    = GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
 
-    FVulkanMemoryStorage UploadStorage(GetDevice());
+    FVulkanMemoryLocation UploadLocation(GetDevice());
     uint8* UploadMemory = static_cast<uint8*>(GetDevice()->GetMemoryManager().AllocateUploadMemory(
         RequiredSize, 
         Alignment, 
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-        UploadStorage));
+        UploadLocation));
     CHECK(UploadMemory != nullptr);
 
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
@@ -1125,7 +1125,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     }
 
     VkBufferImageCopy BufferImageCopy = {};
-    BufferImageCopy.bufferOffset                    = UploadStorage.GetBufferOffset();
+    BufferImageCopy.bufferOffset                    = UploadLocation.GetBufferOffset();
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
     BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
@@ -1138,7 +1138,7 @@ void FVulkanCommandContext::UpdateTexture2D(FRHITexture* Dst, const FTextureRegi
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     GetCommandBuffer()->CopyBufferToImage(
-        UploadStorage.GetBackingBuffer(), 
+        UploadLocation.GetBackingBuffer(), 
         VulkanTexture->GetVkImage(), 
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
         1, 
@@ -1157,12 +1157,12 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
     const uint64   RequiredSize = SliceSize * TextureRegion.Depth;
     const uint64   Alignment    = GetDevice()->GetPhysicalDevice()->GetProperties().limits.optimalBufferCopyOffsetAlignment;
 
-    FVulkanMemoryStorage UploadStorage(GetDevice());
+    FVulkanMemoryLocation UploadLocation(GetDevice());
     uint8* UploadMemory = static_cast<uint8*>(GetDevice()->GetMemoryManager().AllocateUploadMemory(
         RequiredSize, 
         Alignment, 
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-        UploadStorage));
+        UploadLocation));
     CHECK(UploadMemory != nullptr);
 
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
@@ -1180,7 +1180,7 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
     }
 
     VkBufferImageCopy BufferImageCopy = {};
-    BufferImageCopy.bufferOffset                    = UploadStorage.GetBufferOffset();
+    BufferImageCopy.bufferOffset                    = UploadLocation.GetBufferOffset();
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
     BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
@@ -1193,7 +1193,7 @@ void FVulkanCommandContext::UpdateTexture3D(FRHITexture* Dst, const FTextureRegi
     BarrierBatcher.FlushBarriers(GetCommandBuffer());
 
     GetCommandBuffer()->CopyBufferToImage(
-        UploadStorage.GetBackingBuffer(), 
+        UploadLocation.GetBackingBuffer(), 
         VulkanTexture->GetVkImage(), 
         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
         1, 

@@ -1568,18 +1568,18 @@ bool FVulkanDefaultResources::InitializeNullBuffer(FVulkanDevice& Device)
     }
 
     {
-        FVulkanMemoryStorage TempStorage(&Device);
-        NullBufferStorage.Swap(TempStorage);
+        FVulkanMemoryLocation TempLocation(&Device);
+        NullBufferLocation.Swap(TempLocation);
     }
 
     FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, BufferCreateInfo.usage, 0, BufferCreateInfo.size, 256, NullBufferStorage))
+    if (!MemoryManager.AllocateBufferMemory(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, BufferCreateInfo.usage, 0, BufferCreateInfo.size, 256, NullBufferLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate buffer memory");
         return false;
     }
 
-    VkResult BindResult = vkBindBufferMemory(Device.GetVkDevice(), NullBuffer, NullBufferStorage.GetMemory(), NullBufferStorage.GetMemoryOffset());
+    VkResult BindResult = vkBindBufferMemory(Device.GetVkDevice(), NullBuffer, NullBufferLocation.GetMemory(), NullBufferLocation.GetMemoryOffset());
     if (VULKAN_FAILED(BindResult))
     {
         VULKAN_ERROR_CRITICAL("Failed to bind NullBuffer memory");
@@ -1633,17 +1633,17 @@ bool FVulkanDefaultResources::InitializeNullBufferAndImage(FVulkanDevice& Device
     }
 
     {
-        FVulkanMemoryStorage TempStorage(&Device);
-        NullImageStorage.Swap(TempStorage);
+        FVulkanMemoryLocation TempLocation(&Device);
+        NullImageLocation.Swap(TempLocation);
     }
 
-    if (!MemoryManager.AllocateImageMemory(NullImage, ImageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, NullImageStorage))
+    if (!MemoryManager.AllocateImageMemory(NullImage, ImageCreateInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, NullImageLocation))
     {
         VULKAN_ERROR_CRITICAL("Failed to allocate ImageMemory");
         return false;
     }
 
-    VkResult BindImageResult = vkBindImageMemory(Device.GetVkDevice(), NullImage, NullImageStorage.GetMemory(), NullImageStorage.GetMemoryOffset());
+    VkResult BindImageResult = vkBindImageMemory(Device.GetVkDevice(), NullImage, NullImageLocation.GetMemory(), NullImageLocation.GetMemoryOffset());
     if (VULKAN_FAILED(BindImageResult))
     {
         VULKAN_ERROR_CRITICAL("Failed to bind NullImage memory");
@@ -1688,7 +1688,7 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
     {
         vkDestroyBuffer(VulkanDevice, NullBuffer, nullptr);
         NullBuffer = VK_NULL_HANDLE;
-        NullBufferStorage.ReleaseMemory();
+        NullBufferLocation.ReleaseMemory();
     }
 
     if (VULKAN_CHECK_HANDLE(NullImageView))
@@ -1701,7 +1701,7 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
     {
         vkDestroyImage(VulkanDevice, NullImage, nullptr);
         NullImage = VK_NULL_HANDLE;
-        NullImageStorage.ReleaseMemory();
+        NullImageLocation.ReleaseMemory();
     }
 
     NullSampler = VK_NULL_HANDLE;
