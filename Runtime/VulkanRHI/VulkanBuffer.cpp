@@ -227,12 +227,18 @@ void FVulkanBufferRHI::SetDebugName(const FString& InName)
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, BufferHandle, VK_OBJECT_TYPE_BUFFER);
     }
 
+#if VULKAN_STORE_DEBUG_NAMES
     DebugName = InName;
+#endif
 }
 
 void FVulkanBufferRHI::GetDebugName(FString& OutDebugName) const
 {
+#if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }
 
 void* FVulkanBufferRHI::Map(uint64 Offset, uint64 Size)

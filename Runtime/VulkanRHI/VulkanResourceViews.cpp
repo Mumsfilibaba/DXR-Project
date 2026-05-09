@@ -24,7 +24,9 @@ FVulkanResourceView::~FVulkanResourceView()
     {
         if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
         {
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
             GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
+#endif
             vkDestroyImageView(GetDevice()->GetVkDevice(), ImageViewInfo.ImageView, nullptr);
         }
 
@@ -239,7 +241,9 @@ void FVulkanShaderResourceViewRHI::OnResourceRelocated(FVulkanResource* Relocate
             FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
             if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
             {
+            #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
                 GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
+            #endif
                 vkDestroyImageView(GetDevice()->GetVkDevice(), ImageViewInfo.ImageView, nullptr);
                 ImageViewInfo.ImageView = VK_NULL_HANDLE;
             }
@@ -515,7 +519,9 @@ void FVulkanUnorderedAccessViewRHI::OnResourceRelocated(FVulkanResource* Relocat
             FVulkanTextureRHI* VulkanTexture = static_cast<FVulkanTextureRHI*>(RelocatedResource);
             if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
             {
+            #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
                 GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
+            #endif
                 vkDestroyImageView(GetDevice()->GetVkDevice(), ImageViewInfo.ImageView, nullptr);
                 ImageViewInfo.ImageView = VK_NULL_HANDLE;
             }
@@ -766,7 +772,9 @@ void FVulkanRenderTargetViewRHI::OnResourceRelocated(FVulkanResource* RelocatedR
 
         if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
         {
+        #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
             GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
+        #endif
             vkDestroyImageView(GetDevice()->GetVkDevice(), ImageViewInfo.ImageView, nullptr);
             ImageViewInfo.ImageView = VK_NULL_HANDLE;
         }
@@ -932,7 +940,9 @@ void FVulkanDepthStencilViewRHI::OnResourceRelocated(FVulkanResource* RelocatedR
 
         if (VULKAN_CHECK_HANDLE(ImageViewInfo.ImageView))
         {
+        #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
             GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageViewInfo.ImageView);
+        #endif
             vkDestroyImageView(GetDevice()->GetVkDevice(), ImageViewInfo.ImageView, nullptr);
             ImageViewInfo.ImageView = VK_NULL_HANDLE;
         }

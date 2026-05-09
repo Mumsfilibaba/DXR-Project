@@ -1,6 +1,8 @@
 #include "VulkanRHI/VulkanRenderPass.h"
 #include "VulkanRHI/VulkanDevice.h"
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+
 static void DestroyFramebuffer(VkDevice Device, VkFramebuffer Framebuffer)
 {
     if (VULKAN_CHECK_HANDLE(Framebuffer))
@@ -313,3 +315,5 @@ void FVulkanRenderPassCache::EvictStaleFramebuffers()
         VULKAN_INFO("Evicted %d stale framebuffer(s)", StaleKeys.Size());
     }
 }
+
+#endif // VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH

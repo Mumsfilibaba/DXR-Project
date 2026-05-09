@@ -574,6 +574,9 @@ void FVulkanInstanceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanInsta
 
 void FVulkanDeviceExtension::RegisterExtensions(TArray<TUniquePtr<FVulkanDeviceExtension>>& OutExtensions)
 {
+#if !VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH && VK_KHR_dynamic_rendering
+    OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, /*bRequired=*/true, /*bShouldEnable=*/true));
+#endif
 #if VK_KHR_portability_subset
     OutExtensions.Add(MakeUniquePtr<FVulkanDeviceExtension>(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, false, true));
 #endif

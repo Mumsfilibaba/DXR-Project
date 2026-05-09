@@ -645,11 +645,17 @@ void FVulkanTextureRHI::SetDebugName(const FString& InName)
     if (VULKAN_CHECK_HANDLE(Image))
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, Image, VK_OBJECT_TYPE_IMAGE);
+    #if VULKAN_STORE_DEBUG_NAMES
         DebugName = InName;
+    #endif
     }
 }
 
 void FVulkanTextureRHI::GetDebugName(FString& OutDebugName) const
 {
+#if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }

@@ -32,8 +32,6 @@ static int32 GetCrashMarkerLevel()
 }
 #endif
 
-static constexpr bool GVulkanEnableNegativeViewportHeight = true;
-
 void FVulkanBarrierBatcher::AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2& InBarrier)
 {
     CHECK(InBarrier.sType == VK_STRUCTURE_TYPE_MEMORY_BARRIER_2);
@@ -858,25 +856,22 @@ void FVulkanCommandContext::EndRenderPass()
 void FVulkanCommandContext::SetViewport(const FViewportRegion& ViewportRegion)
 {
     VkViewport Viewport = {};
-    if (GVulkanEnableNegativeViewportHeight)
-    {
-        Viewport.width    =  ViewportRegion.Width;
-        Viewport.height   = -ViewportRegion.Height;
-        Viewport.maxDepth =  ViewportRegion.MaxDepth;
-        Viewport.minDepth =  ViewportRegion.MinDepth;
-        Viewport.x        =  ViewportRegion.PositionX;
-        Viewport.y        =  ViewportRegion.Height - ViewportRegion.PositionY;
-    }
-    else
-    {
-        Viewport.width    = ViewportRegion.Width;
-        Viewport.height   = ViewportRegion.Height;
-        Viewport.maxDepth = ViewportRegion.MaxDepth;
-        Viewport.minDepth = ViewportRegion.MinDepth;
-        Viewport.x        = ViewportRegion.PositionX;
-        Viewport.y        = ViewportRegion.PositionY;
-    }
-    
+#if VULKAN_ENABLE_NEGATIVE_VIEWPORT_HEIGHT
+    Viewport.width    =  ViewportRegion.Width;
+    Viewport.height   = -ViewportRegion.Height;
+    Viewport.maxDepth =  ViewportRegion.MaxDepth;
+    Viewport.minDepth =  ViewportRegion.MinDepth;
+    Viewport.x        =  ViewportRegion.PositionX;
+    Viewport.y        =  ViewportRegion.Height - ViewportRegion.PositionY;
+#else
+    Viewport.width    = ViewportRegion.Width;
+    Viewport.height   = ViewportRegion.Height;
+    Viewport.maxDepth = ViewportRegion.MaxDepth;
+    Viewport.minDepth = ViewportRegion.MinDepth;
+    Viewport.x        = ViewportRegion.PositionX;
+    Viewport.y        = ViewportRegion.PositionY;
+#endif
+
     ContextState.SetViewports(&Viewport, 1);
 }
 

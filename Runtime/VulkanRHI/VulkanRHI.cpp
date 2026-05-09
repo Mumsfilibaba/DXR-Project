@@ -25,11 +25,13 @@ static TAutoConsoleVariable<int32> CVarMaxDefragMovesPerFrame(
     "Maximum number of texture defragmentation moves per frame (0 to disable)",
     4);
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 static TAutoConsoleVariable<bool> CVarVulkanUseDynamicRendering(
     "VulkanRHI.UseDynamicRendering",
     "Use VK_KHR_dynamic_rendering instead of VkRenderPass and VkFramebuffer",
     true,
     EConsoleVariableFlags::Default);
+#endif
 
 static TAutoConsoleVariable<bool> CVarVulkanEnableRobustBufferAccess(
     "VulkanRHI.EnableRobustBufferAccess",
@@ -422,10 +424,12 @@ void FVulkanRHI::BeginFrame()
     Device->GetDescriptorPoolManager().EvictUnusedPools();
 #endif
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     if (!GVulkanUseDynamicRendering)
     {
         Device->GetRenderPassCache().EvictStaleFramebuffers();
     }
+#endif
 
     // NOTE: Currently only GraphicsCommandContext exists. When additional contexts
     // are added (async compute, copy), iterate all contexts here.

@@ -43,5 +43,17 @@ bool FVulkanSemaphore::SetDebugName(const FString& Name)
         return false;
     }
 
+#if VULKAN_STORE_DEBUG_NAMES
+    DebugName = Name;
+#endif
     return true;
+}
+
+void FVulkanSemaphore::GetDebugName(FString& OutDebugName) const
+{
+#if VULKAN_STORE_DEBUG_NAMES
+    OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }

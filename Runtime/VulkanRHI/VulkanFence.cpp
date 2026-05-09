@@ -193,6 +193,19 @@ void FVulkanTimelineFence::SetDebugName(const FString& Name)
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *Name, TimelineSemaphore, VK_OBJECT_TYPE_SEMAPHORE);
     }
+
+#if VULKAN_STORE_DEBUG_NAMES
+    DebugName = Name;
+#endif
+}
+
+void FVulkanTimelineFence::GetDebugName(FString& OutDebugName) const
+{
+#if VULKAN_STORE_DEBUG_NAMES
+    OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }
 
 FVulkanFenceRHI::FVulkanFenceRHI(FVulkanDevice* InDevice)
@@ -204,7 +217,9 @@ FVulkanFenceRHI::FVulkanFenceRHI(FVulkanDevice* InDevice)
     , TargetValue(0)
     , bHasPendingSignal(false)
     , SubmissionFence(nullptr)
+#if VULKAN_STORE_DEBUG_NAMES
     , DebugName()
+#endif
 {
 }
 
@@ -330,7 +345,9 @@ void* FVulkanFenceRHI::GetRHINativeFence() const
 
 void FVulkanFenceRHI::SetDebugName(const FString& InName)
 {
+#if VULKAN_STORE_DEBUG_NAMES
     DebugName = InName;
+#endif
 
     if (bUsesTimeline && VULKAN_CHECK_HANDLE(TimelineSemaphore))
     {
@@ -340,7 +357,11 @@ void FVulkanFenceRHI::SetDebugName(const FString& InName)
 
 void FVulkanFenceRHI::GetDebugName(FString& OutDebugName) const
 {
+#if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }
 
 void FVulkanFenceRHI::EnqueueSignal(FVulkanQueue& Queue)

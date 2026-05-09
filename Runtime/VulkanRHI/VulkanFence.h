@@ -50,6 +50,7 @@ public:
     bool WaitForValue(uint64 Value, uint64 TimeoutNs = UINT64_MAX);
 
     void SetDebugName(const FString& Name);
+    void GetDebugName(FString& OutDebugName) const;
 
     uint64 GetLastSignaledValue() const
     {
@@ -71,6 +72,9 @@ private:
     mutable uint64 LastCompletedValue;
     uint64         CurrentValue;
     uint64         LastSignaledValue;
+#if VULKAN_STORE_DEBUG_NAMES
+    FString        DebugName;
+#endif
 };
 
 class FVulkanFenceRHI final : public FRHIFence, public FVulkanDeviceChild
@@ -118,5 +122,7 @@ private:
     uint64        TargetValue;
     FAtomicBool   bHasPendingSignal;
     bool          bUsesTimeline;
+#if VULKAN_STORE_DEBUG_NAMES
     FString       DebugName;
+#endif
 };

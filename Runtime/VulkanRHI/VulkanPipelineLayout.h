@@ -299,7 +299,9 @@ private:
     uint32                                 TotalDynamicOffsets;
     FPushConstantsInfo                     ConstantsInfo;
     FStageDescriptorMap                    DescriptorBindMap[ShaderVisibility_Count];
+#if VULKAN_STORE_DEBUG_NAMES
     FString                                DebugName;
+#endif
 };
 
 class FVulkanPipelineLayoutManager : public FVulkanDeviceChild

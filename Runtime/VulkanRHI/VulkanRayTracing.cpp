@@ -35,12 +35,18 @@ void FVulkanGeometryAccelerationStructureRHI::SetDebugName(const FString& InName
         VulkanSetObjectName(GetDevice()->GetVkDevice(), InName.Data(), Geometry, VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR);
     }
 
+#if VULKAN_STORE_DEBUG_NAMES
     DebugName = InName;
+#endif
 }
 
 void FVulkanGeometryAccelerationStructureRHI::GetDebugName(FString& OutDebugName) const
 {
+#if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }
 
 bool FVulkanGeometryAccelerationStructureRHI::Build(FVulkanCommandContext& CmdContext, const FRHIGeometryAccelerationStructureBuildDesc& BuildDesc)

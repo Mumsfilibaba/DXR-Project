@@ -2,7 +2,9 @@
 #include "VulkanRHI/VulkanQueue.h"
 #include "VulkanRHI/VulkanCommandBuffer.h"
 #include "VulkanRHI/VulkanPipelineState.h"
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 #include "VulkanRHI/VulkanRenderPass.h"
+#endif
 #include "RHI/IRHICommandContext.h"
 
 class FVulkanCommandContext;
@@ -104,7 +106,9 @@ struct FVulkanRenderTargetState
 
         DepthStencilView        = nullptr;
         DepthStencilStoreAction = EAttachmentStoreAction::Store;
+    #if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
         Framebuffer             = VK_NULL_HANDLE;
+    #endif
         NumRenderTargets        = 0;
         RenderAreaWidth         = 0;
         RenderAreaHeight        = 0;
@@ -114,7 +118,9 @@ struct FVulkanRenderTargetState
 
     FVulkanResourceView*   RenderTargetViews[RHI_MAX_RENDER_TARGETS];
     FVulkanResourceView*   DepthStencilView;
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     VkFramebuffer          Framebuffer;
+#endif
     EAttachmentStoreAction ColorStoreActions[RHI_MAX_RENDER_TARGETS];
     EAttachmentStoreAction DepthStencilStoreAction;
     uint32                 NumRenderTargets;
@@ -226,7 +232,9 @@ public:
     }
 
 private:
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     FVulkanRenderPassKey BuildRenderPassKey(const FVulkanRenderTargetState& RenderTargetState) const;
+#endif
 
     struct FCachedDescriptorState
     {

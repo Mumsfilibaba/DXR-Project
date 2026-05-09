@@ -9,7 +9,7 @@
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanFence.h"
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
-#include "VulkanRHI/VulkanMemoryManager.h"
+    #include "VulkanRHI/VulkanMemoryManager.h"
 #endif
 
 #define VULKAN_INVALID_QUERY_INDEX (-1)
@@ -139,9 +139,13 @@ public:
         return QueryPool;
     }
 
-    const FString& GetDebugName() const
+    void GetDebugName(FString& OutDebugName) const
     {
-        return DebugName;
+    #if VULKAN_STORE_DEBUG_NAMES
+        OutDebugName = DebugName;
+    #else
+        OutDebugName.Clear();
+    #endif
     }
 
     uint64 GetQuerySize() const
@@ -177,7 +181,9 @@ public:
 
 private:
     VkQueryPool           QueryPool;
+#if VULKAN_STORE_DEBUG_NAMES
     FString               DebugName;
+#endif
 #if !VULKAN_USE_CPU_QUERY_RESOLVE
     FVulkanMemoryLocation ReadbackLocation;
     uint64*               ReadbackData;

@@ -90,7 +90,9 @@ VULKANRHI_API bool GVulkanSupportsTransformFeedback = false;
 // Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
 // -------------------------------------------------------------------------------------------
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 VULKANRHI_API bool GVulkanUseDynamicRendering = true;
+#endif
 
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
@@ -565,7 +567,9 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     : Instance(InInstance)
     , PhysicalDevice(InAdapter)
     , Device(VK_NULL_HANDLE)
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     , RenderPassCache(nullptr)
+#endif
     , MemoryManager(nullptr)
     , FenceManager(nullptr)
     , FrameFence(nullptr)
@@ -584,10 +588,12 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , bSupportsNVDiagnosticCheckpoints(false)
 #endif
 {
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     if (IConsoleVariable* UseDynamicRenderingVar = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.UseDynamicRendering"))
     {
         GVulkanUseDynamicRendering = UseDynamicRenderingVar->GetBool();
     }
+#endif
 
 #if VULKAN_USE_DESCRIPTOR_CACHE
     DescriptorSetCache            = new FVulkanDescriptorSetCache(this);
@@ -599,7 +605,9 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     PipelineStatsQueryPoolManager = new FVulkanQueryPoolManager(this, VK_QUERY_TYPE_PIPELINE_STATISTICS, VULKAN_DEFAULT_QUERY_COUNT);
     PipelineLayoutManager         = new FVulkanPipelineLayoutManager(this);
     FenceManager                  = new FVulkanFenceManager(this);
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     RenderPassCache               = new FVulkanRenderPassCache(this);
+#endif
 }
 
 FVulkanDevice::~FVulkanDevice()
@@ -638,7 +646,9 @@ FVulkanDevice::~FVulkanDevice()
     SAFE_DELETE(OcclusionQueryPoolManager);
     SAFE_DELETE(PipelineStatsQueryPoolManager);
     SAFE_DELETE(PipelineLayoutManager);
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     SAFE_DELETE(RenderPassCache);
+#endif
     SAFE_DELETE(FrameFence);
     SAFE_DELETE(FenceManager);
     SAFE_DELETE(MemoryManager);

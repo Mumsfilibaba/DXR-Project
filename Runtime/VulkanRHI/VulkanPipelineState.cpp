@@ -285,7 +285,9 @@ FVulkanPipeline::~FVulkanPipeline()
 void FVulkanPipeline::SetDebugName(const FString& InName)
 {
     VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, Pipeline, VK_OBJECT_TYPE_PIPELINE);
+#if VULKAN_STORE_DEBUG_NAMES
     DebugName = InName;
+#endif
 }
 
 FVulkanGraphicsPipelineStateRHI::FVulkanGraphicsPipelineStateRHI(FVulkanDevice* InDevice)
@@ -310,7 +312,11 @@ void FVulkanGraphicsPipelineStateRHI::SetDebugName(const FString& InName)
 
 void FVulkanGraphicsPipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
+#if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }
 
 bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineStateDesc& InDesc)
@@ -600,6 +606,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         PipelineCreateInfo.pNext      = &PipelineRenderingInfo;
         PipelineCreateInfo.renderPass = VK_NULL_HANDLE;
     }
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     else
     {
         FVulkanRenderPassKey RenderPassKey;
@@ -630,6 +637,7 @@ bool FVulkanGraphicsPipelineStateRHI::Initialize(const FRHIGraphicsPipelineState
         PipelineCreateInfo.renderPass = RenderPass;
         PipelineCreateInfo.subpass    = 0;
     }
+#endif // VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 
     FVulkanPipelineStateManager& PipelineCache = GetDevice()->GetPipelineStateManager();
     if (PipelineCache.CreateGraphicsPipeline(PipelineCreateInfo, Pipeline))
@@ -675,7 +683,11 @@ void FVulkanComputePipelineStateRHI::SetDebugName(const FString& InName)
 
 void FVulkanComputePipelineStateRHI::GetDebugName(FString& OutDebugName) const
 {
+#if VULKAN_STORE_DEBUG_NAMES
     OutDebugName = DebugName;
+#else
+    OutDebugName.Clear();
+#endif
 }
 
 bool FVulkanComputePipelineStateRHI::Initialize(const FRHIComputePipelineStateDesc& InDesc)

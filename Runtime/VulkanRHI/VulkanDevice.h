@@ -98,7 +98,11 @@ extern VULKANRHI_API bool   GVulkanSupportsTransformFeedback;
 // Dynamic Rendering (VK_KHR_dynamic_rendering / Vulkan 1.3)
 // -------------------------------------------------------------------------------------------
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 extern VULKANRHI_API bool   GVulkanUseDynamicRendering;
+#else
+inline constexpr bool       GVulkanUseDynamicRendering = true;
+#endif
 
 // -------------------------------------------------------------------------------------------
 // Descriptor / Heap Limits
@@ -310,7 +314,9 @@ public:
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
     bool   InitializePresentQueueFamily(VkSurfaceKHR Surface);
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     FVulkanRenderPassCache&       GetRenderPassCache()       { return *RenderPassCache; }
+#endif
     FVulkanMemoryManager&         GetMemoryManager()         { return *MemoryManager; }
     FVulkanFenceManager&          GetFenceManager()          { return *FenceManager; }
     FVulkanTimelineFence&         GetFrameFence()            { return *FrameFence; }
@@ -358,7 +364,9 @@ private:
     FVulkanInstance*                     Instance;
     FVulkanPhysicalDevice*               PhysicalDevice;
     VkDevice                             Device;
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     FVulkanRenderPassCache*              RenderPassCache;
+#endif
     FVulkanMemoryManager*                MemoryManager;
     FVulkanFenceManager*                 FenceManager;
     FVulkanTimelineFence*                FrameFence;

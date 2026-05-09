@@ -287,6 +287,7 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
     }
 }
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulkanRenderTargetState& RenderTargetState) const
 {
     FVulkanRenderPassKey RenderPassKey;
@@ -329,6 +330,7 @@ FVulkanRenderPassKey FVulkanCommandContextState::BuildRenderPassKey(const FVulka
 
     return RenderPassKey;
 }
+#endif // VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 
 void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& RenderPassDesc)
 {
@@ -347,8 +349,10 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
 
     VkClearValue ColorClearValues[RHI_MAX_RENDER_TARGETS] = {};
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     FVulkanRenderPassKey RenderPassKey;
     RenderPassKey.NumRenderTargets = static_cast<uint8>(RenderPassDesc.NumRenderTargets);
+#endif
 
     for (uint32 Index = 0; Index < RenderPassDesc.NumRenderTargets; Index++)
     {
@@ -378,9 +382,11 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
         RenderTargetState.RenderTargetViews[Index] = VulkanRenderTargetView;
         RenderTargetState.ColorStoreActions[Index] = Attachment.StoreAction;
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
         RenderPassKey.RenderTargetFormats[Index]             = VulkanTexture->GetDesc().Format;
         RenderPassKey.RenderTargetActions[Index].LoadAction  = Attachment.LoadAction;
         RenderPassKey.RenderTargetActions[Index].StoreAction = Attachment.StoreAction;
+#endif
 
         FMemory::Memcpy(ColorClearValues[Index].color.float32, Attachment.ClearValue.RGBA, sizeof(ColorClearValues[Index].color.float32));
     }
@@ -408,9 +414,11 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             RenderTargetState.DepthStencilView        = VulkanDepthStencilView;
             RenderTargetState.DepthStencilStoreAction = DepthStencilAttachment.StoreAction;
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
             RenderPassKey.DepthStencilFormat              = VulkanTexture->GetDesc().Format;
             RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilAttachment.LoadAction;
             RenderPassKey.DepthStencilActions.StoreAction = DepthStencilAttachment.StoreAction;
+#endif
 
             DepthStencilClearValue.depthStencil.depth   = DepthStencilAttachment.ClearValue.Depth;
             DepthStencilClearValue.depthStencil.stencil = DepthStencilAttachment.ClearValue.Stencil;
@@ -432,11 +440,13 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
             RenderTargetState.RenderAreaWidth, RenderTargetState.RenderAreaHeight, RenderPassDesc.NumRenderTargets);
     }
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     RenderPassKey.NumSamples = NumSamples;
     if (RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
         RenderPassKey.ViewInstancingState = RenderPassDesc.ViewInstancingState;
     }
+#endif
 
     if (GVulkanSupportsMultiviews && RenderPassDesc.ViewInstancingState.bEnableViewInstancing)
     {
@@ -517,6 +527,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
 
         Context.GetCommandBuffer()->BeginRendering(&RenderingInfo);
     }
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     else
     {
         const VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
@@ -579,6 +590,7 @@ void FVulkanCommandContextState::BeginRenderPass(const FRHIBeginRenderPassDesc& 
 
         Context.GetCommandBuffer()->BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
+#endif // VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 
     ContextPhase = ECommandContextPhase::InsideRenderPass;
 }
@@ -591,10 +603,12 @@ void FVulkanCommandContextState::EndRenderPass()
     {
         Context.GetCommandBuffer()->EndRendering();
     }
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     else
     {
         Context.GetCommandBuffer()->EndRenderPass();
     }
+#endif
 
     ContextPhase = ECommandContextPhase::Recording;
 }
@@ -607,10 +621,12 @@ void FVulkanCommandContextState::PauseRenderPass()
     {
         Context.GetCommandBuffer()->EndRendering();
     }
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     else
     {
         Context.GetCommandBuffer()->EndRenderPass();
     }
+#endif
 
     ContextPhase = ECommandContextPhase::RenderPassPaused;
 }
@@ -680,6 +696,7 @@ void FVulkanCommandContextState::ResumeRenderPass()
 
         Context.GetCommandBuffer()->BeginRendering(&RenderingInfo);
     }
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
     else
     {
         const FVulkanRenderPassKey RenderPassKey = BuildRenderPassKey(RenderTargetState);
@@ -700,6 +717,7 @@ void FVulkanCommandContextState::ResumeRenderPass()
 
         Context.GetCommandBuffer()->BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     }
+#endif // VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
 
     ContextPhase = ECommandContextPhase::InsideRenderPass;
 }

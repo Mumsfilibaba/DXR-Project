@@ -124,7 +124,9 @@ public:
 protected:
     VkPipeline             Pipeline;
     FVulkanPipelineLayout* PipelineLayout; // Layout is NOT owned by this class and should not be deleted when the FVulkanPipeline is destroyed
+#if VULKAN_STORE_DEBUG_NAMES
     FString                DebugName;
+#endif
 };
 
 class FVulkanGraphicsPipelineStateRHI : public FRHIGraphicsPipelineState, public FVulkanPipeline

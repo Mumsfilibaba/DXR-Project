@@ -32,5 +32,7 @@ private:
     FVulkanMemoryLocation      ScratchLocation;
     FVulkanBufferRHIRef        VertexBuffer;
     FVulkanBufferRHIRef        IndexBuffer;
+#if VULKAN_STORE_DEBUG_NAMES
     FString                    DebugName;
+#endif
 };

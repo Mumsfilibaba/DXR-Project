@@ -92,9 +92,9 @@ FVulkanQueryPool::~FVulkanQueryPool()
         vkDestroyQueryPool(GetDevice()->GetVkDevice(), QueryPool, nullptr);
         QueryPool = VK_NULL_HANDLE;
 
-#if VULKAN_ENABLE_STATS
+    #if VULKAN_ENABLE_STATS
         STAT_SUBTRACT(STAT_Vulkan_QueryPoolCount, 1);
-#endif
+    #endif
     }
 }
 
@@ -169,7 +169,9 @@ void FVulkanQueryPool::SetDebugName(const FString& InName)
     if (VULKAN_CHECK_HANDLE(QueryPool))
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *InName, QueryPool, VK_OBJECT_TYPE_QUERY_POOL);
+    #if VULKAN_STORE_DEBUG_NAMES
         DebugName = InName;
+    #endif
     }
 }
 

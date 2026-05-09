@@ -2,6 +2,8 @@
 #include "Core/Containers/Map.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 
+#if VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH
+
 struct FVulkanRenderPassActions
 {
     EAttachmentLoadAction  LoadAction  : 4;
@@ -164,3 +166,5 @@ private:
     FCriticalSection                                FramebuffersCS;
     uint64                                          CurrentFrame;
 };
+
+#endif // VULKAN_ENABLE_NON_DYNAMIC_RENDERING_PATH

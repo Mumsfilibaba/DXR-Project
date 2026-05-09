@@ -76,5 +76,7 @@ protected:
     VkBuffer           OwnedBuffer;
     VkDeviceSize       RequiredAlignment;
     FVulkanBufferState BufferState;
+#if VULKAN_STORE_DEBUG_NAMES
     FString            DebugName;
+#endif
 };

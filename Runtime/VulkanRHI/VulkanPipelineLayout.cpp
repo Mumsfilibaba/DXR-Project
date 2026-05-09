@@ -300,7 +300,9 @@ void FVulkanPipelineLayout::SetDebugName(const CHAR* InName)
     if (InName)
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), InName, LayoutHandle, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
+    #if VULKAN_STORE_DEBUG_NAMES
         DebugName = InName;
+    #endif
     }
 }
 
@@ -408,7 +410,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
 
             case VulkanBindingType_ImmutableSampler:
                 break;
-                
+
             default:
                 DEBUG_BREAK();
                 break;

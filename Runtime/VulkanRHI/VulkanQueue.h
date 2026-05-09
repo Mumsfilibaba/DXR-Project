@@ -65,6 +65,18 @@ public:
     void SetDebugName(const FString& Name)
     {
         VulkanSetObjectName(GetDevice()->GetVkDevice(), *Name, Queue, VK_OBJECT_TYPE_QUEUE);
+    #if VULKAN_STORE_DEBUG_NAMES
+        DebugName = Name;
+    #endif
+    }
+
+    void GetDebugName(FString& OutDebugName) const
+    {
+    #if VULKAN_STORE_DEBUG_NAMES
+        OutDebugName = DebugName;
+    #else
+        OutDebugName.Clear();
+    #endif
     }
 
     VkQueue GetVkQueue() const
@@ -104,6 +116,9 @@ private:
     TArray<FVulkanQuery>         PendingOcclusionQueries;
     TArray<FVulkanQuery>         PendingPipelineStatsQueries;
     TArray<FVulkanQueryRHI*>     PendingQueryRHIs;
+#endif
+#if VULKAN_STORE_DEBUG_NAMES
+    FString                      DebugName;
 #endif
 };
 
