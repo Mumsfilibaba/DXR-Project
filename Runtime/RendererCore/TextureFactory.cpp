@@ -77,7 +77,7 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    PanoramCS = RHI::Device->CreateComputeShader(Code);
+    PanoramCS = RHI::CreateComputeShader(Code);
     if (!PanoramCS)
     {
         return false;
@@ -87,7 +87,7 @@ bool FTextureFactory::CreateResources()
     FRHIComputePipelineStateDesc PanoramaPSODesc;
     PanoramaPSODesc.Shader = PanoramCS.Get();
 
-    PanoramaPSO = RHI::Device->CreateComputePipelineState(PanoramaPSODesc);
+    PanoramaPSO = RHI::CreateComputePipelineState(PanoramaPSODesc);
     if (PanoramaPSO)
     {
         PanoramaPSO->SetDebugName("Generate CubeMap RootSignature");
@@ -104,7 +104,7 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    GenerateMipsTex2D_CS = RHI::Device->CreateComputeShader(Code);
+    GenerateMipsTex2D_CS = RHI::CreateComputeShader(Code);
     if (!GenerateMipsTex2D_CS)
     {
         return false;
@@ -124,7 +124,7 @@ bool FTextureFactory::CreateResources()
     GenerateMipsTex2D_PSODesc.Shader         = GenerateMipsTex2D_CS.Get();
     GenerateMipsTex2D_PSODesc.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&GenMipsStaticSampler, 1);
 
-    GenerateMipsTex2D_PSO = RHI::Device->CreateComputePipelineState(GenerateMipsTex2D_PSODesc);
+    GenerateMipsTex2D_PSO = RHI::CreateComputePipelineState(GenerateMipsTex2D_PSODesc);
     if (GenerateMipsTex2D_PSO)
     {
         GenerateMipsTex2D_PSO->SetDebugName("GenerateMips Texure2D PSO");
@@ -141,7 +141,7 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    GenerateMipsTexCube_CS = RHI::Device->CreateComputeShader(Code);
+    GenerateMipsTexCube_CS = RHI::CreateComputeShader(Code);
     if (!GenerateMipsTexCube_CS)
     {
         return false;
@@ -152,7 +152,7 @@ bool FTextureFactory::CreateResources()
     GenerateMipsTexCube_PSODesc.Shader         = GenerateMipsTexCube_CS.Get();
     GenerateMipsTexCube_PSODesc.StaticSamplers = TArrayView<const FRHIStaticSamplerInfo>(&GenMipsStaticSampler, 1);
 
-    GenerateMipsTexCube_PSO = RHI::Device->CreateComputePipelineState(GenerateMipsTexCube_PSODesc);
+    GenerateMipsTexCube_PSO = RHI::CreateComputePipelineState(GenerateMipsTexCube_PSODesc);
     if (GenerateMipsTexCube_PSO)
     {
         GenerateMipsTexCube_PSO->SetDebugName("GenerateMips TexureCube PSO");
@@ -169,7 +169,7 @@ bool FTextureFactory::CreateResources()
         LOG_ERROR("Failed to compile IrradianceGen Shader");
     }
 
-    DiffuseCubeMapFilter_CS = RHI::Device->CreateComputeShader(Code);
+    DiffuseCubeMapFilter_CS = RHI::CreateComputeShader(Code);
     if (!DiffuseCubeMapFilter_CS)
     {
         LOG_ERROR("Failed to create IrradianceGen Shader");
@@ -178,7 +178,7 @@ bool FTextureFactory::CreateResources()
 	FRHIComputePipelineStateDesc DiffuseCubeMapFilter_PSODesc;
     DiffuseCubeMapFilter_PSODesc.Shader = DiffuseCubeMapFilter_CS.Get();
 
-    DiffuseCubeMapFilter_PSO = RHI::Device->CreateComputePipelineState(DiffuseCubeMapFilter_PSODesc);
+    DiffuseCubeMapFilter_PSO = RHI::CreateComputePipelineState(DiffuseCubeMapFilter_PSODesc);
     if (!DiffuseCubeMapFilter_PSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -195,7 +195,7 @@ bool FTextureFactory::CreateResources()
         LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
     }
 
-    SpecularCubeMapFilter_CS = RHI::Device->CreateComputeShader(Code);
+    SpecularCubeMapFilter_CS = RHI::CreateComputeShader(Code);
     if (!SpecularCubeMapFilter_CS)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
@@ -204,7 +204,7 @@ bool FTextureFactory::CreateResources()
 	FRHIComputePipelineStateDesc SpecularCubeMapFilter_PSODesc;
     SpecularCubeMapFilter_PSODesc.Shader = SpecularCubeMapFilter_CS.Get();
 
-    SpecularCubeMapFilter_PSO = RHI::Device->CreateComputePipelineState(SpecularCubeMapFilter_PSODesc);
+    SpecularCubeMapFilter_PSO = RHI::CreateComputePipelineState(SpecularCubeMapFilter_PSODesc);
     if (!SpecularCubeMapFilter_PSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");
@@ -222,7 +222,7 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    PackMaterialParams_CS = RHI::Device->CreateComputeShader(Code);
+    PackMaterialParams_CS = RHI::CreateComputeShader(Code);
     if (!PackMaterialParams_CS)
     {
         LOG_ERROR("Failed to create PackMaterialParams shader");
@@ -232,7 +232,7 @@ bool FTextureFactory::CreateResources()
     FRHIComputePipelineStateDesc PackMaterialParams_PSODesc;
     PackMaterialParams_PSODesc.Shader = PackMaterialParams_CS.Get();
 
-    PackMaterialParams_PSO = RHI::Device->CreateComputePipelineState(PackMaterialParams_PSODesc);
+    PackMaterialParams_PSO = RHI::CreateComputePipelineState(PackMaterialParams_PSODesc);
     if (!PackMaterialParams_PSO)
     {
         LOG_ERROR("Failed to create PackMaterialParams PSO");
@@ -247,7 +247,7 @@ bool FTextureFactory::CreateResources()
         return false;
     }
 
-    BakeAlpha_CS = RHI::Device->CreateComputeShader(Code);
+    BakeAlpha_CS = RHI::CreateComputeShader(Code);
     if (!BakeAlpha_CS)
     {
         LOG_ERROR("Failed to create BakeAlpha shader");
@@ -257,7 +257,7 @@ bool FTextureFactory::CreateResources()
     FRHIComputePipelineStateDesc BakeAlpha_PSODesc;
     BakeAlpha_PSODesc.Shader = BakeAlpha_CS.Get();
 
-    BakeAlpha_PSO = RHI::Device->CreateComputePipelineState(BakeAlpha_PSODesc);
+    BakeAlpha_PSO = RHI::CreateComputePipelineState(BakeAlpha_PSODesc);
     if (!BakeAlpha_PSO)
     {
         LOG_ERROR("Failed to create BakeAlpha PSO");
@@ -273,7 +273,7 @@ bool FTextureFactory::CreateResources()
     LinearSamplerDesc.MinLOD   = 0.0f;
     LinearSamplerDesc.MaxLOD   = TNumericLimits<float>::Max();
 
-    LinearSampler = RHI::Device->CreateSamplerState(LinearSamplerDesc);
+    LinearSampler = RHI::CreateSamplerState(LinearSamplerDesc);
     if (!LinearSampler)
     {
         return false;
@@ -285,7 +285,7 @@ bool FTextureFactory::CreateResources()
     CubeMapFilterSamplerDesc.AddressW = ESamplerMode::Wrap;
     CubeMapFilterSamplerDesc.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    CubeMapFilterSampler = RHI::Device->CreateSamplerState(CubeMapFilterSamplerDesc);
+    CubeMapFilterSampler = RHI::CreateSamplerState(CubeMapFilterSamplerDesc);
     if (!CubeMapFilterSampler)
     {
         return false;
@@ -311,7 +311,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     InitalData.InitMipData(Pixels, RowPitch, RowPitch * Height);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMiplevels, 1, ETextureUsageFlags::ShaderResourceTexture);
-    FRHITextureRef Texture = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, &InitalData);
+    FRHITextureRef Texture = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
         DEBUG_BREAK();
@@ -342,7 +342,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         FRHITextureDesc TextureDesc = Dest->GetDesc();
         TextureDesc.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
 
-        StagingTexture = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
+        StagingTexture = RHI::CreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
         if (!StagingTexture)
         {
             return false;
@@ -360,7 +360,7 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
     // Create UAV for the staging-texture
     const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureCube(StagingTexture->GetDesc().Format, 0);
 
-    FRHIUnorderedAccessViewRef StagingTextureUAV = RHI::Device->CreateUnorderedAccessView(StagingTexture.Get(), UAVDesc);
+    FRHIUnorderedAccessViewRef StagingTextureUAV = RHI::CreateUnorderedAccessView(StagingTexture.Get(), UAVDesc);
     if (!StagingTextureUAV)
     {
         return false;
@@ -458,7 +458,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
         FRHITextureDesc TextureDesc = Texture->GetDesc();
         TextureDesc.UsageFlags |= ETextureUsageFlags::UnorderedAccessTexture;
 
-        StagingTexture = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
+        StagingTexture = RHI::CreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
         if (!StagingTexture)
         {
             return false;
@@ -487,7 +487,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
             ? FRHIShaderResourceViewDesc::CreateTextureCube(StagingTexture->GetDesc().Format, static_cast<uint8>(MipLevel), 1)
             : FRHIShaderResourceViewDesc::CreateTexture2D  (StagingTexture->GetDesc().Format, static_cast<uint8>(MipLevel), 1);
 
-        FRHIShaderResourceView* ShaderResourceView = RHI::Device->CreateShaderResourceView(StagingTexture.Get(), SRVDesc);
+        FRHIShaderResourceView* ShaderResourceView = RHI::CreateShaderResourceView(StagingTexture.Get(), SRVDesc);
         ShaderResourceViews.Emplace(ShaderResourceView);
     }
 
@@ -501,7 +501,7 @@ bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITextur
             ? FRHIUnorderedAccessViewDesc::CreateTextureCube(StagingTexture->GetDesc().Format, static_cast<uint8>(MipLevel))
             : FRHIUnorderedAccessViewDesc::CreateTexture2D  (StagingTexture->GetDesc().Format, static_cast<uint8>(MipLevel));
 
-        FRHIUnorderedAccessView* UnorderedAccessView = RHI::Device->CreateUnorderedAccessView(StagingTexture.Get(), UAVDesc);
+        FRHIUnorderedAccessView* UnorderedAccessView = RHI::CreateUnorderedAccessView(StagingTexture.Get(), UAVDesc);
         UnorderedAccessViews.Emplace(UnorderedAccessView);
     }
 
@@ -654,7 +654,7 @@ bool FTextureFactory::FilterSpecularCubeMap(FRHICommandList& CommandList, FRHITe
     {
         const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureCube(DstCubeMap->GetDesc().Format, uint8(MipLevel));
 
-        FRHIUnorderedAccessViewRef UAV = RHI::Device->CreateUnorderedAccessView(DstCubeMap, UAVDesc);
+        FRHIUnorderedAccessViewRef UAV = RHI::CreateUnorderedAccessView(DstCubeMap, UAVDesc);
         if (UAV)
         {
             SpecularIrradianceMapUAVs.Emplace(UAV);
@@ -750,7 +750,7 @@ bool FTextureFactory::FilterDiffuseCubeMap(FRHICommandList& CommandList, FRHITex
 
     const FRHIUnorderedAccessViewDesc UAVDesc = FRHIUnorderedAccessViewDesc::CreateTextureCube(DstCubeMap->GetDesc().Format, 0);
 
-    FRHIUnorderedAccessViewRef DstCubeMapUAV = RHI::Device->CreateUnorderedAccessView(DstCubeMap, UAVDesc);
+    FRHIUnorderedAccessViewRef DstCubeMapUAV = RHI::CreateUnorderedAccessView(DstCubeMap, UAVDesc);
     if (!DstCubeMapUAV)
     {
         DEBUG_BREAK();
@@ -795,7 +795,7 @@ bool FTextureFactory::PackMaterialParamsTexture(const FRHITextureRef& AOTexture,
     const uint32 Height = SizeRef->GetDesc().Extent.Y;
 
     FRHITextureDesc TempDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
-    FRHITextureRef  TempTex  = RHI::Device->CreateTexture(TempDesc, EResourceAccess::UnorderedAccess, nullptr);
+    FRHITextureRef  TempTex  = RHI::CreateTexture(TempDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!TempTex)
     {
         LOG_ERROR("[FTextureFactory] PackMaterialParamsTexture: Failed to create temporary UAV texture");
@@ -803,7 +803,7 @@ bool FTextureFactory::PackMaterialParamsTexture(const FRHITextureRef& AOTexture,
     }
 
     FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
-    OutTexture = RHI::Device->CreateTexture(OutputDesc, EResourceAccess::CopyDest, nullptr);
+    OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest, nullptr);
     if (!OutTexture)
     {
         LOG_ERROR("[FTextureFactory] PackMaterialParamsTexture: Failed to create output texture");
@@ -901,7 +901,7 @@ bool FTextureFactory::BakeAlphaIntoAlbedo(const FRHITextureRef& AlbedoTexture, c
     const uint32 Height = AlbedoTexture->GetDesc().Extent.Y;
 
     FRHITextureDesc TempDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture);
-    FRHITextureRef  TempTex  = RHI::Device->CreateTexture(TempDesc, EResourceAccess::UnorderedAccess, nullptr);
+    FRHITextureRef  TempTex  = RHI::CreateTexture(TempDesc, EResourceAccess::UnorderedAccess, nullptr);
     if (!TempTex)
     {
         LOG_ERROR("[FTextureFactory] BakeAlphaIntoAlbedo: Failed to create temporary UAV texture");
@@ -909,7 +909,7 @@ bool FTextureFactory::BakeAlphaIntoAlbedo(const FRHITextureRef& AlbedoTexture, c
     }
 
     FRHITextureDesc OutputDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8G8B8A8_Unorm, Width, Height, 1, 1, ETextureUsageFlags::ShaderResourceTexture);
-    OutTexture = RHI::Device->CreateTexture(OutputDesc, EResourceAccess::CopyDest, nullptr);
+    OutTexture = RHI::CreateTexture(OutputDesc, EResourceAccess::CopyDest, nullptr);
     if (!OutTexture)
     {
         LOG_ERROR("[FTextureFactory] BakeAlphaIntoAlbedo: Failed to create output texture");

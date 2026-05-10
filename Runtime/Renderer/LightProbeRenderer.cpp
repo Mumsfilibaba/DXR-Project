@@ -19,7 +19,7 @@ bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
     SamplerDesc.AddressW = ESamplerMode::Wrap;
     SamplerDesc.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.LightProbeSampler = RHI::Device->CreateSamplerState(SamplerDesc);
+    FrameResources.LightProbeSampler = RHI::CreateSamplerState(SamplerDesc);
     if (!FrameResources.LightProbeSampler)
     {
         return false;

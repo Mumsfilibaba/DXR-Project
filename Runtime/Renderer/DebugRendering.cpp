@@ -112,7 +112,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     VertexBufferDesc.Size   = SphereMesh.Vertices.SizeInBytes();
     VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
-    SphereVertexBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::Common, SphereMesh.Vertices.Data());
+    SphereVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::Common, SphereMesh.Vertices.Data());
 
     if (!SphereVertexBuffer)
     {
@@ -133,7 +133,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     IndexBufferDesc.Size   = SphereMeshSmallIndicies.SizeInBytes();
     IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-    SphereIndexBuffer = RHI::Device->CreateBuffer(IndexBufferDesc, EResourceAccess::Common, SphereMeshSmallIndicies.Data());
+    SphereIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::Common, SphereMeshSmallIndicies.Data());
     if (!SphereIndexBuffer)
     {
         DEBUG_BREAK();
@@ -160,7 +160,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     VertexBufferDesc.Size   = AABBVertices.SizeInBytes();
     VertexBufferDesc.Flags  = EBufferFlags::VertexBuffer | EBufferFlags::Default;
 
-    AABBVertexBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::Common, AABBVertices.Data());
+    AABBVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::Common, AABBVertices.Data());
 
     if (!AABBVertexBuffer)
     {
@@ -193,7 +193,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
     IndexBufferDesc.Size   = AABBWireframeIndices.SizeInBytes();
     IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-    AABBIndexBuffer_Wireframe = RHI::Device->CreateBuffer(IndexBufferDesc, EResourceAccess::Common, AABBWireframeIndices.Data());
+    AABBIndexBuffer_Wireframe = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::Common, AABBWireframeIndices.Data());
 
     if (!AABBIndexBuffer_Wireframe)
     {
@@ -227,7 +227,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 	IndexBufferDesc.Size   = AABBSolidIndices.SizeInBytes();
 	IndexBufferDesc.Flags  = EBufferFlags::IndexBuffer | EBufferFlags::Default;
 
-    AABBIndexBuffer_Solid = RHI::Device->CreateBuffer(IndexBufferDesc, EResourceAccess::Common, AABBSolidIndices.Data());
+    AABBIndexBuffer_Solid = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::Common, AABBSolidIndices.Data());
 
     if (!AABBIndexBuffer_Solid)
     {
@@ -257,7 +257,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        AABB_VS = RHI::Device->CreateVertexShader(ShaderCode);
+        AABB_VS = RHI::CreateVertexShader(ShaderCode);
         if (!AABB_VS)
         {
             DEBUG_BREAK();
@@ -271,7 +271,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        AABB_PS = RHI::Device->CreatePixelShader(ShaderCode);
+        AABB_PS = RHI::CreatePixelShader(ShaderCode);
         if (!AABB_PS)
         {
             DEBUG_BREAK();
@@ -283,7 +283,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        AABBInputLayout = RHI::Device->CreateInputLayout(InputElements);
+        AABBInputLayout = RHI::CreateInputLayout(InputElements);
         if (!AABBInputLayout)
         {
             DEBUG_BREAK();
@@ -295,7 +295,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         DepthStencilStateDesc.bDepthEnable      = false;
         DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        AABB_NoDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+        AABB_NoDepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
         if (!AABB_NoDepthStencilState)
         {
             DEBUG_BREAK();
@@ -304,7 +304,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
 
         DepthStencilStateDesc.bDepthEnable = true;
 
-        AABB_DepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+        AABB_DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
         if (!AABB_DepthStencilState)
         {
             DEBUG_BREAK();
@@ -314,7 +314,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         FRHIRasterizerStateDesc RasterizerStateDesc;
         RasterizerStateDesc.CullMode = ECullMode::None;
 
-        AABBRasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+        AABBRasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
         if (!AABBRasterizerState)
         {
             DEBUG_BREAK();
@@ -324,7 +324,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         FRHIBlendStateDesc BlendStateDesc;
         BlendStateDesc.NumRenderTargets = 1;
 
-        AABBBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+        AABBBlendState = RHI::CreateBlendState(BlendStateDesc);
         if (!AABBBlendState)
         {
             DEBUG_BREAK();
@@ -338,7 +338,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
-    DebugSphereInputLayout = RHI::Device->CreateInputLayout(DebugSphereElements);
+    DebugSphereInputLayout = RHI::CreateInputLayout(DebugSphereElements);
     if (!DebugSphereInputLayout)
     {
         DEBUG_BREAK();
@@ -359,7 +359,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        LightDebug_VS = RHI::Device->CreateVertexShader(ShaderCode);
+        LightDebug_VS = RHI::CreateVertexShader(ShaderCode);
         if (!LightDebug_VS)
         {
             DEBUG_BREAK();
@@ -373,7 +373,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        LightDebug_PS = RHI::Device->CreatePixelShader(ShaderCode);
+        LightDebug_PS = RHI::CreatePixelShader(ShaderCode);
         if (!LightDebug_PS)
         {
             DEBUG_BREAK();
@@ -385,7 +385,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        LightDebugDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+        LightDebugDepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
         if (!LightDebugDepthStencilState)
         {
             DEBUG_BREAK();
@@ -395,7 +395,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         FRHIRasterizerStateDesc RasterizerStateDesc;
         RasterizerStateDesc.CullMode = ECullMode::None;
 
-        LightDebugRasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+        LightDebugRasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
         if (!LightDebugRasterizerState)
         {
             DEBUG_BREAK();
@@ -405,7 +405,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         FRHIBlendStateDesc BlendStateDesc;
         BlendStateDesc.NumRenderTargets = 1;
 
-        LightDebugBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+        LightDebugBlendState = RHI::CreateBlendState(BlendStateDesc);
         if (!LightDebugBlendState)
         {
             DEBUG_BREAK();
@@ -427,7 +427,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        AABBSolid_VS = RHI::Device->CreateVertexShader(ShaderCode);
+        AABBSolid_VS = RHI::CreateVertexShader(ShaderCode);
         if (!AABBSolid_VS)
         {
             DEBUG_BREAK();
@@ -441,7 +441,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        AABBSolid_PS = RHI::Device->CreatePixelShader(ShaderCode);
+        AABBSolid_PS = RHI::CreatePixelShader(ShaderCode);
         if (!AABBSolid_PS)
         {
             DEBUG_BREAK();
@@ -453,7 +453,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        AABBSolidInputLayout = RHI::Device->CreateInputLayout(InputElements);
+        AABBSolidInputLayout = RHI::CreateInputLayout(InputElements);
         if (!AABBSolidInputLayout)
         {
             DEBUG_BREAK();
@@ -465,7 +465,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        AABBSolidDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+        AABBSolidDepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
         if (!AABBSolidDepthStencilState)
         {
             DEBUG_BREAK();
@@ -475,7 +475,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         FRHIRasterizerStateDesc RasterizerStateDesc;
         RasterizerStateDesc.CullMode = ECullMode::None;
 
-        AABBSolidRasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+        AABBSolidRasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
         if (!AABBSolidRasterizerState)
         {
             DEBUG_BREAK();
@@ -493,7 +493,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         BlendStateDesc.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
         BlendStateDesc.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-        AABBSolidBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+        AABBSolidBlendState = RHI::CreateBlendState(BlendStateDesc);
         if (!AABBSolidBlendState)
         {
             DEBUG_BREAK();
@@ -515,7 +515,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        ProbeDebug_VS = RHI::Device->CreateVertexShader(ShaderCode);
+        ProbeDebug_VS = RHI::CreateVertexShader(ShaderCode);
         if (!ProbeDebug_VS)
         {
             DEBUG_BREAK();
@@ -529,7 +529,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
             return false;
         }
 
-        ProbeDebug_PS = RHI::Device->CreatePixelShader(ShaderCode);
+        ProbeDebug_PS = RHI::CreatePixelShader(ShaderCode);
         if (!ProbeDebug_PS)
         {
             DEBUG_BREAK();
@@ -541,7 +541,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         DepthStencilStateDesc.bDepthEnable      = true;
         DepthStencilStateDesc.bDepthWriteEnable = false;
 
-        ProbeDebugDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+        ProbeDebugDepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
         if (!ProbeDebugDepthStencilState)
         {
             DEBUG_BREAK();
@@ -551,7 +551,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         FRHIRasterizerStateDesc RasterizerStateDesc;
         RasterizerStateDesc.CullMode = ECullMode::Back;
 
-        ProbeDebugRasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+        ProbeDebugRasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
         if (!ProbeDebugRasterizerState)
         {
             DEBUG_BREAK();
@@ -561,7 +561,7 @@ bool FDebugRenderer::Initialize(FFrameResources& /*Resources*/)
         FRHIBlendStateDesc BlendStateDesc;
         BlendStateDesc.NumRenderTargets = 1;
 
-        ProbeDebugBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+        ProbeDebugBlendState = RHI::CreateBlendState(BlendStateDesc);
         if (!ProbeDebugBlendState)
         {
             DEBUG_BREAK();
@@ -588,7 +588,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
             NewPSO->SetDebugName("AABB Wireframe Debug PSO (No Depth)");
@@ -615,7 +615,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
             NewPSO->SetDebugName("AABB Wireframe Debug PSO (Depth)");
@@ -642,7 +642,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
             NewPSO->SetDebugName("Light Debug PSO");
@@ -669,7 +669,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
             NewPSO->SetDebugName("AABB Solid Debug PSO");
@@ -696,7 +696,7 @@ void FDebugRenderer::PreparePipelineState(EFormat OutputFormat)
         PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-        FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
             NewPSO->SetDebugName("LightProbe Debug PSO");

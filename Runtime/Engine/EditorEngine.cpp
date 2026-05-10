@@ -219,7 +219,7 @@ bool FEditorEngine::CreateViewportRenderTarget()
     const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FEditorEngine::ViewportImageFormat, Size.X, Size.Y, 1, 1, UsageFlags);
 
-    FRHITextureRef NewViewportImage = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::RenderTarget);
+    FRHITextureRef NewViewportImage = RHI::CreateTexture(TextureDesc, EResourceAccess::RenderTarget);
     if (NewViewportImage)
     {
         ViewportImage = NewViewportImage;

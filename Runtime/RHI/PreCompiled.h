@@ -3,6 +3,7 @@
 #include "RHI/RHIBuffer.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHICore.h"
+#include "RHI/RHIDevice.h"
 #include "RHI/RHIPipelineState.h"
 #include "RHI/RHIQuery.h"
 #include "RHI/RHIRayTracing.h"

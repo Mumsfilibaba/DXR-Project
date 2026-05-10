@@ -85,7 +85,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
     const FClearValue ClearValue(EFormat::R8_Unorm, 0.0f, 0.0f, 0.0f, 1.0f);
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Unorm, Width, Height, 1, 1, Usage, ClearValue);
 
-    SelectionMask = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    SelectionMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!SelectionMask)
     {
         return false;
@@ -93,7 +93,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     SelectionMask->SetDebugName("SelectionMask");
 
-    DilationTemp = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    DilationTemp = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!DilationTemp)
     {
         return false;
@@ -101,7 +101,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     DilationTemp->SetDebugName("SelectionMask Dilate Temp");
 
-    DilatedMask = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    DilatedMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!DilatedMask)
     {
         return false;
@@ -109,7 +109,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     DilatedMask->SetDebugName("SelectionMask Dilated");
 
-    ErosionTemp = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    ErosionTemp = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!ErosionTemp)
     {
         return false;
@@ -117,7 +117,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     ErosionTemp->SetDebugName("SelectionMask Erode Temp");
 
-    ErodedMask = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    ErodedMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!ErodedMask)
     {
         return false;
@@ -125,7 +125,7 @@ bool FSelectionOutlinePass::CreateResources(uint32 Width, uint32 Height)
 
     ErodedMask->SetDebugName("SelectionMask Eroded");
 
-    RingMask = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    RingMask = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!RingMask)
     {
         return false;
@@ -143,7 +143,7 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
     BufferDesc.Size   = uint64(BufferDesc.Stride) * MaxSelectedIDs;
     BufferDesc.Flags  = EBufferFlags::ShaderResourceBuffer | EBufferFlags::Default;
 
-    SelectedIDsBuffer = RHI::Device->CreateBuffer(BufferDesc, EResourceAccess::PixelShaderResource, nullptr);
+    SelectedIDsBuffer = RHI::CreateBuffer(BufferDesc, EResourceAccess::PixelShaderResource, nullptr);
     if (!SelectedIDsBuffer)
     {
         return false;
@@ -152,7 +152,7 @@ bool FSelectionOutlinePass::CreateSelectedIDsBuffer()
     SelectedIDsBuffer->SetDebugName("SelectedIDs Buffer");
 
     const FRHIShaderResourceViewDesc SRVDesc = FRHIShaderResourceViewDesc::CreateBuffer(0, MaxSelectedIDs);
-    SelectedIDsSRV = RHI::Device->CreateShaderResourceView(SelectedIDsBuffer.Get(), SRVDesc);
+    SelectedIDsSRV = RHI::CreateShaderResourceView(SelectedIDsBuffer.Get(), SRVDesc);
     if (!SelectedIDsSRV)
     {
         return false;
@@ -171,7 +171,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
         return false;
     }
 
-    FRHIVertexShaderRef FullscreenVS = RHI::Device->CreateVertexShader(ShaderCode);
+    FRHIVertexShaderRef FullscreenVS = RHI::CreateVertexShader(ShaderCode);
     if (!FullscreenVS)
     {
         return false;
@@ -182,7 +182,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
     DepthStencilStateDesc.bDepthEnable      = false;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         return false;
@@ -191,7 +191,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+    FRHIRasterizerStateRef RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         return false;
@@ -200,7 +200,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+    FRHIBlendStateRef BlendState = RHI::CreateBlendState(BlendStateDesc);
     if (!BlendState)
     {
         return false;
@@ -214,7 +214,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        MaskShader = RHI::Device->CreatePixelShader(ShaderCode);
+        MaskShader = RHI::CreatePixelShader(ShaderCode);
         if (!MaskShader)
         {
             return false;
@@ -232,7 +232,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        MaskPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        MaskPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!MaskPSO)
         {
             return false;
@@ -249,7 +249,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        DilateShader = RHI::Device->CreatePixelShader(ShaderCode);
+        DilateShader = RHI::CreatePixelShader(ShaderCode);
         if (!DilateShader)
         {
             return false;
@@ -267,7 +267,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        DilatePSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        DilatePSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!DilatePSO)
         {
             return false;
@@ -284,7 +284,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        ErodeShader = RHI::Device->CreatePixelShader(ShaderCode);
+        ErodeShader = RHI::CreatePixelShader(ShaderCode);
         if (!ErodeShader)
         {
             return false;
@@ -302,7 +302,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        ErodePSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        ErodePSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!ErodePSO)
         {
             return false;
@@ -319,7 +319,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
             return false;
         }
 
-        ResolveShader = RHI::Device->CreatePixelShader(ShaderCode);
+        ResolveShader = RHI::CreatePixelShader(ShaderCode);
         if (!ResolveShader)
         {
             return false;
@@ -337,7 +337,7 @@ bool FSelectionOutlinePass::CreatePipelineStates()
         PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
         PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-        ResolvePSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        ResolvePSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (!ResolvePSO)
         {
             return false;

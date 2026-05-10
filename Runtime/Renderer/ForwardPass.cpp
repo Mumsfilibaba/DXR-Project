@@ -38,7 +38,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    VShader = RHI::Device->CreateVertexShader(ShaderCode);
+    VShader = RHI::CreateVertexShader(ShaderCode);
     if (!VShader)
     {
         DEBUG_BREAK();
@@ -52,7 +52,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    PShader = RHI::Device->CreatePixelShader(ShaderCode);
+    PShader = RHI::CreatePixelShader(ShaderCode);
     if (!PShader)
     {
         DEBUG_BREAK();
@@ -64,7 +64,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     DepthStencilStateDesc.bDepthEnable      = true;
     DepthStencilStateDesc.bDepthWriteEnable = true;
 
-    FRHIDepthStencilStateRef DepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -74,7 +74,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+    FRHIRasterizerStateRef RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -87,7 +87,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     BlendStateDesc.RenderTargets[0].SrcBlend = EBlendType::One;
     BlendStateDesc.RenderTargets[0].DstBlend = EBlendType::Zero;
 
-    FRHIBlendStateRef BlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+    FRHIBlendStateRef BlendState = RHI::CreateBlendState(BlendStateDesc);
     if (!BlendState)
     {
         DEBUG_BREAK();
@@ -106,7 +106,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
     PSODesc.PrimitiveTopology                              = EPrimitiveTopology::TriangleList;
 
-    PipelineState = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+    PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();

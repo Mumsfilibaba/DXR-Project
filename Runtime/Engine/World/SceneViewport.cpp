@@ -52,7 +52,7 @@ bool FSceneViewport::InitializeRHI()
     SwapChainDesc.Usage        = ESwapChainUsageFlags::RenderTarget;
     SwapChainDesc.bFramePacing = true;
 
-    FRHISwapChainRef NewSwapChain = RHI::Device->CreateSwapChain(SwapChainDesc);
+    FRHISwapChainRef NewSwapChain = RHI::CreateSwapChain(SwapChainDesc);
     if (!NewSwapChain)
     {
         DEBUG_BREAK();

@@ -1200,7 +1200,7 @@ FRHITextureRef FSandbox::LoadCubeMapFromPanorama(const FString& Filename)
     constexpr ETextureUsageFlags TextureFlags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, TextureFlags);
 
-    FRHITextureRef Skybox = RHI::Device->CreateTexture(TextureDesc);
+    FRHITextureRef Skybox = RHI::CreateTexture(TextureDesc);
     if (!Skybox)
     {
         DEBUG_BREAK();

@@ -64,7 +64,7 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TonemapVertexShader = RHI::Device->CreateVertexShader(ShaderCode);
+    TonemapVertexShader = RHI::CreateVertexShader(ShaderCode);
     if (!TonemapVertexShader)
     {
         DEBUG_BREAK();
@@ -78,7 +78,7 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    TonemapShader = RHI::Device->CreatePixelShader(ShaderCode);
+    TonemapShader = RHI::CreatePixelShader(ShaderCode);
     if (!TonemapShader)
     {
         DEBUG_BREAK();
@@ -90,7 +90,7 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
     DepthStencilStateDesc.bDepthEnable      = false;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    TonemapDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+    TonemapDepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
     if (!TonemapDepthStencilState)
     {
         DEBUG_BREAK();
@@ -100,7 +100,7 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = ECullMode::None;
 
-    TonemapRasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+    TonemapRasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!TonemapRasterizerState)
     {
         DEBUG_BREAK();
@@ -110,7 +110,7 @@ bool FTonemapPass::Initialize(FFrameResources& FrameResources)
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    TonemapBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+    TonemapBlendState = RHI::CreateBlendState(BlendStateDesc);
     if (!TonemapBlendState)
     {
         DEBUG_BREAK();
@@ -139,7 +139,7 @@ void FTonemapPass::PreparePipelineState(EFormat OutputFormat)
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+    FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!NewPSO)
     {
         DEBUG_BREAK();
@@ -167,7 +167,7 @@ bool FTonemapPass::CreateResources(FFrameResources& FrameResources, uint32 Width
     const FClearValue ClearValue(FGlobalTextureFormats::SceneTargetFormat, 0.0f, 0.0f, 0.0f, 1.0f);
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SceneTargetFormat, Width, Height, 1, 1, Usage, ClearValue);
 
-    FrameResources.TonemappedTarget = RHI::Device->CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    FrameResources.TonemappedTarget = RHI::CreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (!FrameResources.TonemappedTarget)
     {
         return false;
@@ -288,7 +288,7 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    CompositeVertexShader = RHI::Device->CreateVertexShader(ShaderCode);
+    CompositeVertexShader = RHI::CreateVertexShader(ShaderCode);
     if (!CompositeVertexShader)
     {
         DEBUG_BREAK();
@@ -302,7 +302,7 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    CompositeShader = RHI::Device->CreatePixelShader(ShaderCode);
+    CompositeShader = RHI::CreatePixelShader(ShaderCode);
     if (!CompositeShader)
     {
         DEBUG_BREAK();
@@ -314,7 +314,7 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
     DepthStencilStateDesc.bDepthEnable      = false;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    CompositeDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+    CompositeDepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
     if (!CompositeDepthStencilState)
     {
         DEBUG_BREAK();
@@ -324,7 +324,7 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = ECullMode::None;
 
-    CompositeRasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+    CompositeRasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!CompositeRasterizerState)
     {
         DEBUG_BREAK();
@@ -334,7 +334,7 @@ bool FFinalCompositePass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    CompositeBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+    CompositeBlendState = RHI::CreateBlendState(BlendStateDesc);
     if (!CompositeBlendState)
     {
         DEBUG_BREAK();
@@ -363,7 +363,7 @@ void FFinalCompositePass::PreparePipelineState(EFormat OutputFormat)
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+    FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!NewPSO)
     {
         DEBUG_BREAK();
@@ -514,7 +514,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FXAAVertexShader = RHI::Device->CreateVertexShader(ShaderCode);
+    FXAAVertexShader = RHI::CreateVertexShader(ShaderCode);
     if (!FXAAVertexShader)
     {
         DEBUG_BREAK();
@@ -528,7 +528,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FXAAShader = RHI::Device->CreatePixelShader(ShaderCode);
+    FXAAShader = RHI::CreatePixelShader(ShaderCode);
     if (!FXAAShader)
     {
         DEBUG_BREAK();
@@ -540,7 +540,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     DepthStencilStateDesc.bDepthEnable      = false;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FXAADepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+    FXAADepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
     if (!FXAADepthStencilState)
     {
         DEBUG_BREAK();
@@ -550,7 +550,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = ECullMode::None;
 
-    FXAARasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+    FXAARasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!FXAARasterizerState)
     {
         DEBUG_BREAK();
@@ -560,7 +560,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    FXAABlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+    FXAABlendState = RHI::CreateBlendState(BlendStateDesc);
     if (!FXAABlendState)
     {
         DEBUG_BREAK();
@@ -579,7 +579,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FXAADebugShader = RHI::Device->CreatePixelShader(ShaderCode);
+    FXAADebugShader = RHI::CreatePixelShader(ShaderCode);
     if (!FXAADebugShader)
     {
         DEBUG_BREAK();
@@ -593,7 +593,7 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     SamplerDesc.AddressW = ESamplerMode::Clamp;
     SamplerDesc.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.FXAASampler = RHI::Device->CreateSamplerState(SamplerDesc);
+    FrameResources.FXAASampler = RHI::CreateSamplerState(SamplerDesc);
     if (!FrameResources.FXAASampler)
     {
         return false;
@@ -619,7 +619,7 @@ void FFXAAPass::PreparePipelineState(EFormat OutputFormat)
     {
         PSODesc.PixelShader = FXAAShader.Get();
 
-        FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
             NewPSO->SetDebugName("FXAA PipelineState");
@@ -636,7 +636,7 @@ void FFXAAPass::PreparePipelineState(EFormat OutputFormat)
     {
         PSODesc.PixelShader = FXAADebugShader.Get();
 
-        FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+        FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
         if (NewPSO)
         {
             FXAADebugPSO       = NewPSO;

@@ -1,6 +1,5 @@
-#include "RHI/RHICore.h"
+#include "RHI/RHI.h"
 #include "RHI/RHITexture.h"
-#include "RHI/RHITypes.h"
 
 // -------------------------------------------------------------------------------------------
 // Feature Support

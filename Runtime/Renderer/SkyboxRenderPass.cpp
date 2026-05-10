@@ -70,7 +70,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     VertexBufferDesc.Stride = SkyboxVertices.Stride();
     VertexBufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::VertexBuffer;
 
-    SkyboxVertexBuffer = RHI::Device->CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
+    SkyboxVertexBuffer = RHI::CreateBuffer(VertexBufferDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -86,7 +86,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     IndexBufferDesc.Size   = SkyboxIndexCount * IndexBufferDesc.Stride;
     IndexBufferDesc.Flags  = EBufferFlags::Default | EBufferFlags::IndexBuffer;
 
-    SkyboxIndexBuffer = RHI::Device->CreateBuffer(IndexBufferDesc, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
+    SkyboxIndexBuffer = RHI::CreateBuffer(IndexBufferDesc, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
         reinterpret_cast<void*>(SkyboxIndicies16.Data()) :
         reinterpret_cast<void*>(SkyboxIndicies32.Data()));
 
@@ -107,7 +107,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     SamplerStateDesc.MinLOD   = 0.0f;
     SamplerStateDesc.MaxLOD   = 0.0f;
 
-    SkyboxSampler = RHI::Device->CreateSamplerState(SamplerStateDesc);
+    SkyboxSampler = RHI::CreateSamplerState(SamplerStateDesc);
     if (!SkyboxSampler)
     {
         return false;
@@ -122,7 +122,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    SkyboxVertexShader = RHI::Device->CreateVertexShader(ShaderCode);
+    SkyboxVertexShader = RHI::CreateVertexShader(ShaderCode);
     if (!SkyboxVertexShader)
     {
         DEBUG_BREAK();
@@ -136,7 +136,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         return false;
     }
 
-    SkyboxPixelShader = RHI::Device->CreatePixelShader(ShaderCode);
+    SkyboxPixelShader = RHI::CreatePixelShader(ShaderCode);
     if (!SkyboxPixelShader)
     {
         DEBUG_BREAK();
@@ -149,7 +149,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
     };
 
-    FRHIInputLayoutRef InputLayout = RHI::Device->CreateInputLayout(InputElements);
+    FRHIInputLayoutRef InputLayout = RHI::CreateInputLayout(InputElements);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -159,7 +159,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     FRHIRasterizerStateDesc RasterizerStateDesc;
     RasterizerStateDesc.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = RHI::Device->CreateRasterizerState(RasterizerStateDesc);
+    FRHIRasterizerStateRef RasterizerState = RHI::CreateRasterizerState(RasterizerStateDesc);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
@@ -169,7 +169,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    FRHIBlendStateRef BlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+    FRHIBlendStateRef BlendState = RHI::CreateBlendState(BlendStateDesc);
     if (!BlendState)
     {
         DEBUG_BREAK();
@@ -181,7 +181,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     DepthStencilStateDesc.bDepthEnable      = true;
     DepthStencilStateDesc.bDepthWriteEnable = false;
 
-    FRHIDepthStencilStateRef DepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilStateDesc);
+    FRHIDepthStencilStateRef DepthStencilState = RHI::CreateDepthStencilState(DepthStencilStateDesc);
     if (!DepthStencilState)
     {
         DEBUG_BREAK();
@@ -199,7 +199,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& /* FrameResources */)
     PSODesc.RasterizerOutputFormats.NumRenderTargets       = 1;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = FGlobalTextureFormats::DepthBufferFormat;
 
-    PipelineState = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+    PipelineState = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();
@@ -238,7 +238,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
         if (DepthTarget)
         {
             const FRHIDepthStencilViewDesc DSVDesc = FRHIDepthStencilViewDesc::CreateTexture2D(DepthTarget->GetDesc().Format, 0, EDepthStencilViewFlags::ReadOnlyDepth);
-            CachedReadOnlyDepthDSV = RHI::Device->CreateDepthStencilView(DepthTarget, DSVDesc);
+            CachedReadOnlyDepthDSV = RHI::CreateDepthStencilView(DepthTarget, DSVDesc);
         }
     }
 

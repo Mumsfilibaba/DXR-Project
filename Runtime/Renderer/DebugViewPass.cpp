@@ -37,7 +37,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    DebugVertexShader = RHI::Device->CreateVertexShader(ShaderCode);
+    DebugVertexShader = RHI::CreateVertexShader(ShaderCode);
     if (!DebugVertexShader)
     {
         DEBUG_BREAK();
@@ -51,7 +51,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
         return false;
     }
 
-    DebugPixelShader = RHI::Device->CreatePixelShader(ShaderCode);
+    DebugPixelShader = RHI::CreatePixelShader(ShaderCode);
     if (!DebugPixelShader)
     {
         DEBUG_BREAK();
@@ -63,7 +63,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     DepthStencilDesc.bDepthEnable      = false;
     DepthStencilDesc.bDepthWriteEnable = false;
 
-    DebugDepthStencilState = RHI::Device->CreateDepthStencilState(DepthStencilDesc);
+    DebugDepthStencilState = RHI::CreateDepthStencilState(DepthStencilDesc);
     if (!DebugDepthStencilState)
     {
         DEBUG_BREAK();
@@ -73,7 +73,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIRasterizerStateDesc RasterizerDesc;
     RasterizerDesc.CullMode = ECullMode::None;
 
-    DebugRasterizerState = RHI::Device->CreateRasterizerState(RasterizerDesc);
+    DebugRasterizerState = RHI::CreateRasterizerState(RasterizerDesc);
     if (!DebugRasterizerState)
     {
         DEBUG_BREAK();
@@ -83,7 +83,7 @@ bool FDebugViewPass::Initialize(const FFrameResources& /*FrameResources*/)
     FRHIBlendStateDesc BlendStateDesc;
     BlendStateDesc.NumRenderTargets = 1;
 
-    DebugBlendState = RHI::Device->CreateBlendState(BlendStateDesc);
+    DebugBlendState = RHI::CreateBlendState(BlendStateDesc);
     if (!DebugBlendState)
     {
         DEBUG_BREAK();
@@ -112,7 +112,7 @@ void FDebugViewPass::PreparePipelineState(EFormat OutputFormat)
     PSODesc.RasterizerOutputFormats.RenderTargetFormats[0] = OutputFormat;
     PSODesc.RasterizerOutputFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    FRHIGraphicsPipelineStateRef NewPSO = RHI::Device->CreateGraphicsPipelineState(PSODesc);
+    FRHIGraphicsPipelineStateRef NewPSO = RHI::CreateGraphicsPipelineState(PSODesc);
     if (!NewPSO)
     {
         DEBUG_BREAK();

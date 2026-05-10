@@ -18,7 +18,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FMetalModuleRHI final : public FRHIModule
 {
-    virtual class FRHIDevice* CreateDevice() override final;
+    virtual FRHIDevice* CreateDevice() override final;
 };
 
 class FMetalDeviceRHI : public FRHIDevice

@@ -20,7 +20,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayGenShader = RHI::Device->CreateRayGenShader(Code);
+    RayGenShader = RHI::CreateRayGenShader(Code);
     if (!RayGenShader)
     {
         DEBUG_BREAK();
@@ -36,7 +36,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayClosestHitShader = RHI::Device->CreateRayClosestHitShader(Code);
+    RayClosestHitShader = RHI::CreateRayClosestHitShader(Code);
     if (!RayClosestHitShader)
     {
         DEBUG_BREAK();
@@ -52,7 +52,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         }
     }
 
-    RayMissShader = RHI::Device->CreateRayMissShader(Code);
+    RayMissShader = RHI::CreateRayMissShader(Code);
     if (!RayMissShader)
     {
         DEBUG_BREAK();
@@ -67,7 +67,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     PSODesc.MaxAttributeSizeInBytes = sizeof(FRayIntersectionAttributes);
     PSODesc.MaxPayloadSizeInBytes   = sizeof(FRayPayload);
 
-    Pipeline = RHI::Device->CreateRayTracingPipelineState(PSODesc);
+    Pipeline = RHI::CreateRayTracingPipelineState(PSODesc);
     if (!Pipeline)
     {
         DEBUG_BREAK();
@@ -78,7 +78,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
 	const uint32 Height = Resources.CurrentRenderHeight;
 
     FRHITextureDesc RTOutputDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::RTOutputFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture);
-    Resources.RTOutput = RHI::Device->CreateTexture(RTOutputDesc, EResourceAccess::UnorderedAccess);
+    Resources.RTOutput = RHI::CreateTexture(RTOutputDesc, EResourceAccess::UnorderedAccess);
     if (!Resources.RTOutput)
     {
         DEBUG_BREAK();
@@ -163,7 +163,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     if (!Resources.RTScene)
     {
         FRHISceneAccelerationStructureDesc SceneDesc(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
-        Resources.RTScene = RHI::Device->CreateSceneAccelerationStructure(SceneDesc);
+        Resources.RTScene = RHI::CreateSceneAccelerationStructure(SceneDesc);
     }
     else
     {

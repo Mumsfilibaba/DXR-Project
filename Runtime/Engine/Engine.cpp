@@ -258,7 +258,7 @@ bool FEngine::Init()
     SamplerDesc.MinLOD         = 0.0f;
     SamplerDesc.MipLODBias     = 0.0f;
 
-    BaseMaterialSampler = RHI::Device->CreateSamplerState(SamplerDesc);
+    BaseMaterialSampler = RHI::CreateSamplerState(SamplerDesc);
 
     // Base material
     FMaterialInfo MaterialDesc;

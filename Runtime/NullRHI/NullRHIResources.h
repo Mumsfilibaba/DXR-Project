@@ -1,4 +1,5 @@
 #pragma once
+#include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
 

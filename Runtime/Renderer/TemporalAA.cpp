@@ -42,7 +42,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        TemporalAAShader = RHI::Device->CreateComputeShader(ShaderCode);
+        TemporalAAShader = RHI::CreateComputeShader(ShaderCode);
         if (!TemporalAAShader)
         {
             DEBUG_BREAK();
@@ -52,7 +52,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
         FRHIComputePipelineStateDesc TemporalAA_PSODesc;
         TemporalAA_PSODesc.Shader = TemporalAAShader.Get();
         
-        TemporalAAPSO = RHI::Device->CreateComputePipelineState(TemporalAA_PSODesc);
+        TemporalAAPSO = RHI::CreateComputePipelineState(TemporalAA_PSODesc);
         if (!TemporalAAPSO)
         {
             DEBUG_BREAK();
@@ -65,7 +65,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
     }
 
     FRHISamplerStateDesc SamplerDesc = FRHISamplerStateDesc::Create(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
-    LinearSampler = RHI::Device->CreateSamplerState(SamplerDesc);
+    LinearSampler = RHI::CreateSamplerState(SamplerDesc);
     if (!LinearSampler)
     {
         DEBUG_BREAK();
@@ -146,7 +146,7 @@ bool FTemporalAA::CreateResources(FFrameResources& /* FrameResources */, uint32 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
     {
-        TAABuffer = RHI::Device->CreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
+        TAABuffer = RHI::CreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
         if (TAABuffer)
         {
             TAABuffer->SetDebugName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));

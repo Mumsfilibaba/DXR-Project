@@ -60,7 +60,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    SSAOShader = RHI::Device->CreateComputeShader(ShaderCode);
+    SSAOShader = RHI::CreateComputeShader(ShaderCode);
     if (!SSAOShader)
     {
         DEBUG_BREAK();
@@ -70,7 +70,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     FRHIComputePipelineStateDesc PSODesc;
     PSODesc.Shader = SSAOShader.Get();
 
-    PipelineState = RHI::Device->CreateComputePipelineState(PSODesc);
+    PipelineState = RHI::CreateComputePipelineState(PSODesc);
     if (!PipelineState)
     {
         DEBUG_BREAK();
@@ -93,7 +93,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    BlurHorizontalShader = RHI::Device->CreateComputeShader(ShaderCode);
+    BlurHorizontalShader = RHI::CreateComputeShader(ShaderCode);
     if (!BlurHorizontalShader)
     {
         DEBUG_BREAK();
@@ -101,7 +101,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
 
     PSODesc.Shader = BlurHorizontalShader.Get();
-    BlurHorizontalPSO = RHI::Device->CreateComputePipelineState(PSODesc);
+    BlurHorizontalPSO = RHI::CreateComputePipelineState(PSODesc);
 
     if (!BlurHorizontalPSO)
     {
@@ -123,7 +123,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    BlurVerticalShader = RHI::Device->CreateComputeShader(ShaderCode);
+    BlurVerticalShader = RHI::CreateComputeShader(ShaderCode);
     if (!BlurVerticalShader)
     {
         DEBUG_BREAK();
@@ -132,7 +132,7 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 
     PSODesc.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = RHI::Device->CreateComputePipelineState(PSODesc);
+    BlurVerticalPSO = RHI::CreateComputePipelineState(PSODesc);
     if (!BlurVerticalPSO)
     {
         DEBUG_BREAK();
@@ -246,7 +246,7 @@ bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources,
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccessTexture | ETextureUsageFlags::ShaderResourceTexture;
 
     FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FGlobalTextureFormats::SSAOBufferFormat, Width, Height, 1, 1, Flags);
-    FrameResources.SSAOBuffer = RHI::Device->CreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.SSAOBuffer = RHI::CreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();
